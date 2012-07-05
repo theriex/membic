@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="robots" content="noodp" />
+  <meta name="description" 
+        content="An open place for personal media reviews." />
+  <title>My Open Reviews</title>
+  <link href="css/mor.css" rel="stylesheet" type="text/css" />
+</head>
+<body id="bodyid">
+
+<div id="logodiv"> 
+  <img src="img/remo.png" border="0"/>
+</div>
+
+<div id="titlediv"> 
+  <span id="logotitle">MyOpenReviews</span>
+</div>
+
+<div id="appspace"> 
+  <div id="content" class="mtext">
+
+    <p>A place to host your personal media reviews, with the freedom to
+      pull, post, upload and download your reviews anytime and anywhere you
+      want.  Review tools that go beyond simple buttons and text.  Separate
+      profiles for every pen name.  Free,
+      <a id="foss" href="#foss">open source</a> and 
+      <a id="opendata" href="#opendata">open data</a>.
+    </p>
+
+    <noscript>
+      <p>MyOpenReviews needs Javascript to do anything useful, please 
+        enable.</p>
+    </noscript>
+
+  </div>
+
+  <div id="contentfill"> &nbsp; 
+  </div>
+
+  <div id="bottomnav"> 
+    <a href="docs/about.html">about</a> 
+    <a href="docs/terms.html">terms</a> 
+    <a href="docs/privacy.html">privacy</a> 
+    <a href="docs/FOSS.html">FOSS</a> 
+    <a href="docs/API.html">API</a>
+  </div>
+</div>
+
+<div id="topdiv">  <!-- above and in front of content -->
+</div>
+
+<div id="dlgdiv"></div>
+
+
+<script src="http://yui.yahooapis.com/3.5.1/build/yui/yui-min.js"></script>
+<script src="js/mor.js"></script>
+
+<script>
+YUI().use('node', 'event', function (Y) {
+    mor.init(Y);
+});
+</script>
+
+
+</body>
+</html>
+
+

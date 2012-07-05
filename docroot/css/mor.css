@@ -1,0 +1,47 @@
+/*
+ ************************************************************
+ * HTML tag level settings
+ ************************************************************
+ */
+A:link {text-decoration:none; color:#006666; }
+A:visited {text-decoration:none; color:#006666; }
+A:active {text-decoration:none; color:#006666; }
+A:hover {text-decoration:underline; color:#3399CC; }
+
+body {
+  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
+  font-style:normal;
+  font-weight:normal;
+  word-spacing:normal;
+  color:#000000;
+  background:#f6f6f6;
+  margin:0px;
+}
+
+/*
+ ************************************************************
+ * class and id formatting
+ * padding: top right bottom left, or topbottom leftright
+ ************************************************************
+ */
+
+#logodiv { position:absolute; left:0px; top:25px; }
+#titlediv { position:absolute; left:0px; top:0px; padding:0px 10px; }
+#topdiv { position:absolute; left:230px; top:0px; padding:5px 10px; }
+#appspace { position:absolute; left:0px; top:0px; 
+  padding:20px 40px 40px 72px; }
+#bottomnav { font-size:x-small; word-spacing:20px; padding:0px 20px; }
+#logotitle { 
+  font-size:x-large;
+  color:#2f478e;
+  text-shadow:
+   -1px -1px 0 #000,  
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000;
+}
+#dlgdiv { position:absolute; left:80px; top:80px; padding:20px;
+  background:url('../img/dlgtop.png') repeat-x, #eeeeee url('../img/dlgback.png') repeat;
+  visibility:hidden; border-radius:10px; 
+  box-shadow:10px 10px 5px #888888; border: 2px solid #666666; }
+
