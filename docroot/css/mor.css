@@ -3,9 +3,9 @@
  * HTML tag level settings
  ************************************************************
  */
-A:link {text-decoration:none; color:#006666; }
-A:visited {text-decoration:none; color:#006666; }
-A:active {text-decoration:none; color:#006666; }
+A:link {text-decoration:none; color:#3150b2; }
+A:visited {text-decoration:none; color:#3150b2; }
+A:active {text-decoration:none; color:#3150b2; }
 A:hover {text-decoration:underline; color:#3399CC; }
 
 body {
@@ -13,8 +13,8 @@ body {
   font-style:normal;
   font-weight:normal;
   word-spacing:normal;
-  color:#000000;
-  background:#f6f6f6;
+  color:#111111;
+  background:#fffff6;
   margin:0px;
 }
 
@@ -40,8 +40,8 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
-#dlgdiv { position:absolute; left:80px; top:80px; padding:20px;
-  background:url('../img/dlgtop.png') repeat-x, #eeeeee url('../img/dlgback.png') repeat;
+#dlgdiv { position:absolute; left:80px; top:120px; padding:10px 20px;
+  background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; 
-  box-shadow:10px 10px 5px #888888; border: 2px solid #666666; }
+  box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 

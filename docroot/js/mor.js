@@ -17,8 +17,10 @@ var mor = {};  //Top level function closure container
     mor.sessiontoken = "";
     mor.sesscook = "morsession=";
     mor.y = null;
-    mor.colors = { bodybg: "#f6f6f6",
-                   text: "#000000" };
+    mor.colors = { bodybg: "#fffff6",
+                   text: "#111111",
+                   link: "#3150b2",
+                   hover: "#3399cc" };
 
     ////////////////////////////////////////
     // general utility functions
@@ -60,6 +62,13 @@ var mor = {};  //Top level function closure container
                 e.preventDefault();
                 e.stopPropagation();
                 func(); });
+    };
+
+
+    mor.prefixed = function (string, prefix) {
+        if(string && string.indexOf(prefix) === 0) {
+            return true; }
+        return false;
     };
 
 
@@ -109,18 +118,54 @@ var mor = {};  //Top level function closure container
     "use strict";
 
     var oldcolors,
+        colorcontrols,
+        presets = [ { name: "paper (warm)", id: "paperw", 
+                      bodybg: "#fffff6", text: "#111111",
+                      link: "#3150b2", hover: "#3399cc" },
+                    { name: "paper (cool)", id: "paperc",
+                      bodybg: "#f8f8f8", text: "#000000",
+                      link: "#006666", hover: "#3399cc" },
+                    { name: "sky", id: "sky",
+                      bodybg: "#caf1f8", text: "#000000",
+                      link: "#ae464b", hover: "#fc464b" },
+                    { name: "pink", id: "pink",
+                      bodybg: "#ffeef3", text: "#000000",
+                      link: "#dd464b", hover: "#ff464b" },
+                    { name: "matrix", id: "matrix",
+                      bodybg: "#000000", text: "#00cc00",
+                      link: "#006666", hover: "#3399cc" }
+                  ],
 
 
     copycolors = function (colors) {
         var cc = { bodybg: colors.bodybg,
-                   text: colors.text };
+                   text: colors.text,
+                   link: colors.link,
+                   hover: colors.hover };
         return cc;
     },
 
 
+    safeSetColorProp = function (rule, color) {
+        if(rule.style.setProperty) {
+            rule.style.setProperty('color', color, null); }
+    },
+
+
     updateColors = function () {
+        var rules, i;
         mor.byId('bodyid').style.backgroundColor = mor.colors.bodybg;
         mor.byId('bodyid').style.color = mor.colors.text;
+        rules = document.styleSheets[0].cssRules;
+        for(i = 0; i < rules.length; i += 1) {
+            if(mor.prefixed(rules[i].cssText, "A:link")) {
+                safeSetColorProp(rules[i], mor.colors.link); }
+            else if(mor.prefixed(rules[i].cssText, "A:visited")) {
+                safeSetColorProp(rules[i], mor.colors.link); }
+            else if(mor.prefixed(rules[i].cssText, "A:active")) {
+                safeSetColorProp(rules[i], mor.colors.link); }
+            else if(mor.prefixed(rules[i].cssText, "A:hover")) {
+                safeSetColorProp(rules[i], mor.colors.hover); } }
     },
 
 
@@ -225,36 +270,94 @@ var mor = {};  //Top level function closure container
                     mor.colors[colorfield] = outval;
                     mor.byId(domid).value = outval;
                     updateColors(); } });
+        colorcontrols.push([domid, colorfield]);
     },
 
 
-    displayDialog = function () {
-        var html, div;
-        oldcolors = copycolors(mor.colors);
-        html = "<p id=\"directions\">" + 
-            "R/r, G/g, U/u to adjust Red/Green/Blue...</p>" +
+   setControlValuesAndUpdate = function (colors) {
+       var i, input;
+       for(i = 0; i < colorcontrols.length; i += 1) {
+           input = mor.byId(colorcontrols[i][0]);
+           input.value = colors[colorcontrols[i][1]]; }
+       mor.colors = copycolors(colors);
+       updateColors();
+   },
+
+
+    setColorsFromPreset = function () {
+        var i, sel = mor.byId('presetsel');
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                setControlValuesAndUpdate(presets[i]);
+                break; } }
+    },
+
+
+    presetSelectorHTML = function () {
+        var html, i;
+        html = "<table>" +
+          "<tr>" + 
+            "<td align=\"right\">Starting preset skin</td>" +
+            "<td align=\"left\">" +
+                "<select id=\"presetsel\">";
+        for(i = 0; i < presets.length; i += 1) {
+            html += "<option id=\"" + presets[i].id + "\">" + 
+                presets[i].name + "</option>"; }
+        html += "</select>" +
+          "</tr>" +
+        "</table>";
+        return html;
+    },
+
+
+    colorControlsHTML = function () {
+        var link = "", hover = "", html;
+        if(document.styleSheets[0].cssRules[0].style.setProperty) {
+            link = "</td>" +
+            "<td align=\"right\">link</td>" +
+            "<td align=\"left\">" + 
+              "<input type=\"text\" id=\"linkin\" size=\"7\"" + 
+                    " value=\"" + mor.colors.link + "\"/>" + 
+                "</td>";
+            hover = "</td>" +
+            "<td align=\"right\">hover</td>" +
+            "<td align=\"left\">" + 
+              "<input type=\"text\" id=\"hoverin\" size=\"7\"" + 
+                    " value=\"" + mor.colors.hover + "\"/>" + 
+                "</td>"; }
+        html = "R/r, G/g, U/u to adjust Red/Green/Blue..." +
         "<table>" +
           "<tr>" +
             "<td align=\"right\">background</td>" +
             "<td align=\"left\">" + 
               "<input type=\"text\" id=\"bgbodyin\" size=\"7\"" + 
                     " value=\"" + mor.colors.bodybg + "\"/>" + 
-            "</td>" +
+            link + 
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">text</td>" +
             "<td align=\"left\">" + 
               "<input type=\"text\" id=\"textcolin\" size=\"7\"" + 
                     " value=\"" + mor.colors.text + "\"/>" + 
-            "</td>" +
+            hover +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\">" + 
+            "<td colspan=\"4\" align=\"center\">" + 
               "<button type=\"button\" id=\"skincancel\">Cancel</button>" +
+              "&nbsp;" +
               "<button type=\"button\" id=\"skinok\">Ok</button>" +
             "</td>" +
           "</tr>" +
         "</table>";
+        return html;
+    },
+
+
+    displayDialog = function () {
+        var html, div;
+        oldcolors = copycolors(mor.colors);
+        colorcontrols = [];
+        html = presetSelectorHTML() + colorControlsHTML();
         mor.out(html, 'dlgdiv');
         div = mor.byId('dlgdiv');
         div.style.visibility = "visible";
@@ -262,6 +365,13 @@ var mor = {};  //Top level function closure container
         mor.click('skinok', dialogOk);
         colorControl("bgbodyin", "bodybg");
         colorControl("textcolin", "text");
+        if(document.styleSheets[0].cssRules[0].style.setProperty) {
+            colorControl("linkin", "link");
+            colorControl("hoverin", "hover"); }
+        mor.y.one("#presetsel").on("change", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setColorsFromPreset(); });
     },
 
 
