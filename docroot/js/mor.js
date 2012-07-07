@@ -56,12 +56,33 @@ var mor = {};  //Top level function closure container
 
 
     //factored method to handle a click with no propagation
-    mor.click = function (divid, func) {
+    mor.onclick = function (divid, func) {
         var node = mor.y.one("#" + divid);
         node.on("click", function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 func(); });
+    };
+
+
+    //factored method to handle a change with no propagation
+    mor.onchange = function (divid, func) {
+        var node = mor.y.one("#" + divid);
+        node.on("change", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                func(); });
+    };
+
+
+    //general key handling
+    mor.onescapefunc = null;
+    mor.globkey = function (e) {
+        if(e && e.keyCode === 27) {  //ESC
+            if(mor.onescapefunc) {
+                e.preventDefault();
+                e.stopPropagation();
+                mor.onescapefunc(); } }
     };
 
 
@@ -76,7 +97,9 @@ var mor = {};  //Top level function closure container
     mor.init = function (Y) {
         mor.y = Y;
         mor.layout.init();
-        mor.skinner.init();
+        mor.y.on("keypress", mor.globkey);
+        mor.login.init();
+        //mor.skinner.init();
     };
 
 } () );
@@ -92,23 +115,153 @@ var mor = {};  //Top level function closure container
     var
 
 
+    closeDialog = function () {
+        mor.out("", 'dlgdiv');
+        mor.byId('dlgdiv').style.visibility = "hidden";
+        mor.layout.adjust();
+        mor.onescapefunc = null;
+    },
+
+
+    displayDocContent = function (url, html) {
+        var bodyidx;
+        if(!html || !html.trim()) {
+            html = url + " contains no text"; }
+        bodyidx = html.indexOf("<body>");
+        if(bodyidx > 0) {
+            html = html.slice(bodyidx + "<body>".length,
+                              html.indexOf("</body")); }
+        html = "<div id=\"closeline\">" +
+          "<a id=\"closedlg\" href=\"#close\">&lt;close&nbsp;&nbsp;X&gt;</a>" +
+          "</div>" + html;
+        mor.out(html, 'dlgdiv');
+        mor.onclick('closedlg', closeDialog);
+        mor.onescapefunc = closeDialog;
+    },
+
+
+    relativeToAbsolute = function (url) {
+        var loc = window.location.href;
+        loc = loc.slice(0, loc.lastIndexOf("/") + 1);
+        return loc + url;
+    },
+
+
+    displayDoc = function (url) {
+        var html = "Fetching " + url + " ...";
+        mor.out(html, 'dlgdiv');
+        mor.byId('dlgdiv').style.visibility = "visible";
+        if(url.indexOf(":") < 0) {
+            url = relativeToAbsolute(url); }
+        mor.y.io(url, { method: 'GET',
+            on: { complete: function (transid, resp) {
+                        displayDocContent(url, resp.responseText); } } });
+    },
+
+
+    localDocLinks = function () {
+        var nodelist = mor.y.all('a');
+        nodelist.each(function (node) {
+                var href = node.getAttribute("href");
+                if(href && href.indexOf("docs/") === 0) {
+                    node.on("click", function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            displayDoc(this.getAttribute("href")); }); 
+                } });
+    },
+
+
     fullContentHeight = function () {
         var ch = mor.byId("content").offsetHeight,
             wh = window.innerHeight - 110,
             filldiv = mor.byId("contentfill");
         if(ch < wh) {
             filldiv.style.height = (wh - ch) + "px"; }
+        else {  //not filling, just leave a little separator space
+            filldiv.style.height = "16px"; }
     };
 
 
     mor.layout = {
         init: function () {
             mor.y.on('windowresize', fullContentHeight);
+            localDocLinks();
+            fullContentHeight(); },
+        adjust: function () {
             fullContentHeight(); }
     };
 
 } () );
 
+
+////////////////////////////////////////
+// m o r . l o g i n
+//
+(function () {
+    "use strict";
+
+    var loginprompt = "Login is currently restricted to developers only.",
+
+    userpassLogin = function () {
+        var username, password, statmsg;
+        username = mor.byId('userin').value;
+        password = mor.byId('passin').value;
+        if(!username || !password || !username.trim() || !password.trim()) {
+            statmsg = "Please specify a username and password"; }
+        else {
+            username = username.trim();
+            password = password.trim();
+            statmsg = "Server not connected yet..."; }
+        mor.out(statmsg, 'loginstatdiv');
+        setTimeout(function () {
+                mor.out(loginprompt, 'loginstatdiv');
+                mor.byId('userin').value = "";
+                mor.byId('passin').value = "";
+                mor.byId('userin').focus(); }, 1800);
+    },
+
+
+    displayForm = function () {
+        var cdiv, ldiv, html = "";
+        cdiv = mor.byId('content');
+        ldiv = document.createElement('div');
+        ldiv.setAttribute('id','logindiv');
+        cdiv.appendChild(ldiv);
+        html +=  "<div id=\"loginstatdiv\">&nbsp;</div>" +
+        "<table>" +
+          "<tr>" +
+            "<td align=\"right\">username</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">password</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"password\" id=\"passin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\">" +
+              "<button type=\"button\" id=\"loginbutton\">Login</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out(html, 'logindiv');
+        mor.onclick('loginbutton', userpassLogin);
+        mor.onchange('userin', function () { mor.byId('passin').focus(); });
+        mor.onchange('passin', userpassLogin);
+        mor.layout.adjust();
+        mor.byId('userin').focus();
+        mor.out(loginprompt, 'loginstatdiv');
+    };
+
+
+    mor.login = {
+        init: function () {
+            displayForm(); }
+    };
+
+} () );
 
 
 ////////////////////////////////////////
@@ -331,14 +484,14 @@ var mor = {};  //Top level function closure container
             "<td align=\"right\">background</td>" +
             "<td align=\"left\">" + 
               "<input type=\"text\" id=\"bgbodyin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.bodybg + "\"/>" + 
+                    " value=\"" + mor.colors.bodybg + "\"/></td>" + 
             link + 
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">text</td>" +
             "<td align=\"left\">" + 
               "<input type=\"text\" id=\"textcolin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.text + "\"/>" + 
+                    " value=\"" + mor.colors.text + "\"/></td>" + 
             hover +
           "</tr>" +
           "<tr>" +
@@ -361,8 +514,8 @@ var mor = {};  //Top level function closure container
         mor.out(html, 'dlgdiv');
         div = mor.byId('dlgdiv');
         div.style.visibility = "visible";
-        mor.click('skincancel', dialogCancel);
-        mor.click('skinok', dialogOk);
+        mor.onclick('skincancel', dialogCancel);
+        mor.onclick('skinok', dialogOk);
         colorControl("bgbodyin", "bodybg");
         colorControl("textcolin", "text");
         if(document.styleSheets[0].cssRules[0].style.setProperty) {
@@ -379,7 +532,7 @@ var mor = {};  //Top level function closure container
         var html;
         html = "<a href=\"skinit.html\" id=\"skinit\">skin it</a>";
         mor.out(html, 'topdiv');
-        mor.click('skinit', displayDialog);
+        mor.onclick('skinit', displayDialog);
     };
 
 

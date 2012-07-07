@@ -40,8 +40,8 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
-#dlgdiv { position:absolute; left:80px; top:120px; padding:10px 20px;
+#dlgdiv { position:absolute; left:70px; top:30px; padding:10px 20px;
   background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
-  visibility:hidden; border-radius:10px; 
+  visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
-
+#closeline { text-align:right; font-size:x-small; }
