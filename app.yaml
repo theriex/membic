@@ -1,0 +1,32 @@
+application: myopenreviews
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+######################################################################
+#                  API
+## Get an access token from MyOpenReviews
+## params: user 
+- url: /login.*
+  script: src.py.moracct.app
+## Create a new account on MyOpenReviews
+## params: user, pass, email
+- url: /newacct.*
+  script: src.py.moracct.app
+######################################################################
+# Static files and other stuff not really part of the API
+#
+- url: /cluck2.*
+  script: src.py.cluck2.app
+- url: /cluck.*
+  script: src.py.cluck.app
+# Trap anything ending with a slash and send it to index.html since there
+# is no default processing to figure that out otherwise.
+- url: (.*)/
+  static_files: docroot/index.html
+  upload: docroot
+# Catchall is to look in docroot.
+- url: /
+  static_dir: docroot

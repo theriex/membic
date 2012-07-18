@@ -1,4 +1,4 @@
-/*global alert: false, console: false, escape: false, unescape: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -26,8 +26,8 @@ var mor = {};  //Top level function closure container
     // general utility functions
     ////////////////////////////////////////
 
-    //TODO: history push/pop
-    //TODO: window resize adjustment
+    //ATTENTION: need history push/pop
+    //ATTENTION: need window resize adjustment
 
     //shorthand to log text to the console
     mor.log = function (text) {
@@ -102,6 +102,14 @@ var mor = {};  //Top level function closure container
         //mor.skinner.init();
     };
 
+
+    //shorthand to save typing and improve readability
+    mor.enc = function (text) {
+        text = text || "";
+        return encodeURIComponent(text.trim());
+    };
+
+
 } () );
 
 
@@ -140,6 +148,7 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //relative paths don't work when you are running file://...
     relativeToAbsolute = function (url) {
         var loc = window.location.href;
         loc = loc.slice(0, loc.lastIndexOf("/") + 1);
@@ -201,24 +210,96 @@ var mor = {};  //Top level function closure container
 (function () {
     "use strict";
 
-    var loginprompt = "Login is currently restricted to developers only.",
+    var loginprompt = "Please log in",
+        defaultusername = "",
+
+
+    createAccount = function () {
+        var username = mor.byId('userin').value,
+            password = mor.byId('passin').value,
+            email = mor.byId('emailin').value || "",
+            data = "";
+        if(!username || !password || !username.trim() || !password.trim()) {
+            mor.out("Please specify a username and password", 'maccstatdiv');
+            return; }
+        data = "user=" + mor.enc(username) +
+               "&pass=" + mor.enc(password) +
+               "&email=" + mor.enc(email);
+        mor.y.io("newacct", { method: 'POST', data: data,
+            on: { success: function (transid, resp) {
+                        defaultusername = mor.byId('userin').value;
+                        mor.login.init(); },
+                  failure: function (transid, resp) {
+                        mor.out(resp.responseText, 'maccstatdiv'); } } });
+    },
+
+
+    //Some people habitually use their email address as their username,
+    //but if they forget their password it still has to be searched via
+    //the email field, so copy it over.  They can fix it if not right.
+    usernamechange = function () {
+        var uname = mor.byId('userin').value;
+        if(uname.match(/^\S+@\S+\.\S+$/)) {
+            mor.byId('emailin').value = uname; }
+        mor.byId('passin').focus();
+    },
+
+
+    displayNewAccountForm = function () {
+        var html = "";
+        html += "<div id=\"maccstatdiv\">Creating a new account</div>" +
+        "<table>" +
+          "<tr>" +
+            "<td align=\"right\">username</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">password</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"password\" id=\"passin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">email</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
+            "<td align=\"left\">" + 
+              "(optional - used if you forget your login)</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\">" +
+              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "&nbsp;" +
+              "<button type=\"button\" id=\"createbutton\">Create</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out(html, 'logindiv');
+        mor.onclick('cancelbutton', mor.login.init);
+        mor.onclick('createbutton', createAccount);
+        mor.onchange('userin', usernamechange);
+        mor.onchange('passin', function () { mor.byId('emailin').focus(); });
+        mor.onchange('emailin', createAccount);
+        mor.layout.adjust();
+        mor.byId('userin').focus();
+    },
+
 
     userpassLogin = function () {
-        var username, password, statmsg;
-        username = mor.byId('userin').value;
-        password = mor.byId('passin').value;
+        var username = mor.byId('userin').value,
+            password = mor.byId('passin').value,
+            url="login";
         if(!username || !password || !username.trim() || !password.trim()) {
-            statmsg = "Please specify a username and password"; }
-        else {
-            username = username.trim();
-            password = password.trim();
-            statmsg = "Server not connected yet..."; }
-        mor.out(statmsg, 'loginstatdiv');
-        setTimeout(function () {
-                mor.out(loginprompt, 'loginstatdiv');
-                mor.byId('userin').value = "";
-                mor.byId('passin').value = "";
-                mor.byId('userin').focus(); }, 1800);
+            mor.out("Please specify a username and password", 'loginstatdiv');
+            return; }
+        url += "?user=" + mor.enc(username) + "&pass=" + mor.enc(password);
+        mor.y.io(url, { method: 'GET',
+            on: { success: function (transid, resp) {
+                        mor.out("Account credentials valid", 
+                                'loginstatdiv'); },
+                  failure: function (transid, resp) {
+                        mor.out("Login failed: " + resp.responseText,
+                                'loginstatdiv'); } } });
     },
 
 
@@ -245,12 +326,21 @@ var mor = {};  //Top level function closure container
               "<button type=\"button\" id=\"loginbutton\">Login</button>" +
             "</td>" +
           "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"left\">" +
+              "<a id=\"macc\" href=\"create new account...\">" + 
+                  "Create a new account</a>" +
+            "</td>" +
+          "</tr>" +
         "</table>";
         mor.out(html, 'logindiv');
+        mor.onclick('macc', displayNewAccountForm);
         mor.onclick('loginbutton', userpassLogin);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
         mor.onchange('passin', userpassLogin);
         mor.layout.adjust();
+        if(defaultusername) {
+            mor.byId('userin').value = defaultusername; }
         mor.byId('userin').focus();
         mor.out(loginprompt, 'loginstatdiv');
     };
