@@ -9,15 +9,25 @@
 </head>
 <body>
 
-<p>All the server calls used by the MyOpenReviews site are also
-available for your direct use.  So if you would like to build a custom
-data synchronization module or anything else you think might be
-useful, you have the exactly the same capabilities as this site. </p>
+<p>All the server calls used by the MyOpenReviews site are available
+for general use. </p>
 
-<p>The application programming interface is currently under
-development.  The goal is to make the server side self-describing so
-the descriptions stay up to date.  There will be a link here as soon
-as that is availble... </p>
+<p>The API consists of HTTP GET or POST calls, with results formatted
+as JSON, XML, or CSV.  Rather than maintain separate documentation to
+describe each of the possible server endpoints and how they are used,
+the mappings are described directly in the actual source.  To see the
+API, check out 
+<a href="https://github.com/theriex/myopenreviews/blob/master/app.yaml"
+   onclick="window.open('https://github.com/theriex/myopenreviews/blob/master/app.yaml');return false">app.yaml</a> </p>
+
+<p>If you want to delve deeper into the processing for any url/script
+pairing, you can substitute the dots in the associated script to read
+the source.  For example if you want to read the <code>/login</code>
+script <code>src.py.moracct.app</code>, check
+out <code>myopenreviews/src/py/moracct.py</code>. </p>
+
+<p>Questions, suggestions, corrections, pull requests etc. are very
+welcome. </p>
 
 
 </body>

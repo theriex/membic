@@ -285,6 +285,17 @@ var mor = {};  //Top level function closure container
     },
 
 
+    interimEndMessage = function () {
+        var msg = "<p>You have successfully logged in.</p>" +
+        "<p>Unfortunately that's all there is to the site right now. " +
+        "Please check back, there should be more in a week or so...</p>" +
+        "<p>Thanks, <br/>" +
+        "-ep <br/>" +
+        "Wed 18jul12";
+        mor.out(msg, 'content');
+    },
+
+
     userpassLogin = function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
@@ -295,8 +306,7 @@ var mor = {};  //Top level function closure container
         url += "?user=" + mor.enc(username) + "&pass=" + mor.enc(password);
         mor.y.io(url, { method: 'GET',
             on: { success: function (transid, resp) {
-                        mor.out("Account credentials valid", 
-                                'loginstatdiv'); },
+                        interimEndMessage(); },
                   failure: function (transid, resp) {
                         mor.out("Login failed: " + resp.responseText,
                                 'loginstatdiv'); } } });
