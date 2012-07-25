@@ -110,6 +110,29 @@ var mor = {};  //Top level function closure container
     };
 
 
+    //return true if the given text can be reasonably construed to be an
+    //email address.
+    mor.isProbablyEmail = function (text) {
+        return text && text.match(/^\S+@\S+\.\S+$/);
+    };
+
+
+    //factored method to deal with JSON parsing in success call. 
+    mor.call = function (url, method, data, success, failure) {
+        mor.y.io(url, { method: method, data: data,
+            on: { success: function (transid, resp) {
+                        try {
+                            resp = mor.y.JSON.parse(resp.responseText);
+                        } catch (e) {
+                            mor.log("JSON parse failure: " + e);
+                            return failure("Bad data returned");
+                        }
+                        success(resp); },
+                  failure: function (transid, resp) {
+                        failure(resp.responseText); } } });
+    };
+
+
 } () );
 
 
@@ -184,11 +207,15 @@ var mor = {};  //Top level function closure container
     fullContentHeight = function () {
         var ch = mor.byId("content").offsetHeight,
             wh = window.innerHeight - 110,
-            filldiv = mor.byId("contentfill");
+            ww = window.innerWidth - 280,
+            filldiv = mor.byId("contentfill"),
+            topdiv = mor.byId("topdiv");
         if(ch < wh) {
             filldiv.style.height = (wh - ch) + "px"; }
         else {  //not filling, just leave a little separator space
             filldiv.style.height = "16px"; }
+        if(topdiv.offsetHeight < ww) {
+            topdiv.style.width = ww + "px"; }
     };
 
 
@@ -211,7 +238,118 @@ var mor = {};  //Top level function closure container
     "use strict";
 
     var loginprompt = "Please log in",
-        defaultusername = "",
+        authmethod = "",
+        authtoken = "",
+        authname = "",
+        changepwdprompt = "Changing your login password",
+
+
+    authparams = function () {
+        var params = "&am=" + authmethod + "&at=" + authtoken + 
+                     "&an=" + mor.enc(authname);
+        return params;
+    },
+
+
+    logout = function () {
+        mor.y.Cookie.remove("authentication");
+        authmethod = "";
+        authtoken = "";
+        authname = "";
+        mor.login.updateAuthentDisplay();
+        mor.login.init();
+    },
+
+
+    setAuthentication = function (method, token, name) {
+        var expiration = new Date();
+        expiration.setFullYear(expiration.getFullYear() + 1);
+        authmethod = method;
+        authtoken = token;
+        authname = name;
+        mor.y.Cookie.setSubs("authentication", 
+            { method: method, token: token, name: name },
+            { expires: expiration });
+        mor.login.updateAuthentDisplay();
+    },
+
+
+    readAuthCookie = function () {
+        var authentication = mor.y.Cookie.getSubs("authentication");
+        if(authentication) {
+            authmethod = authentication.method;
+            authtoken = authentication.token;
+            authname = authentication.name; }
+        mor.login.updateAuthentDisplay();
+        return authtoken;
+    },
+
+
+    changePassword = function () {
+        var pwd = mor.byId('npin').value, data;
+        if(!pwd || !pwd.trim()) {
+            changepwdprompt = "New password must have a value";
+            return mor.login.displayChangePassForm(); }
+        data = "pass=" + mor.enc(pwd) + mor.login.authparams();
+        mor.call("chgpwd", 'POST', data,
+                 function (objs) {
+                     setAuthentication("mid", objs[0].token, authname);
+                     mor.activity.init(); },
+                 function (errtxt) {
+                     changepwdprompt = errtxt;
+                     mor.login.displayChangePassForm(); });
+    },
+
+
+    displayChangePassForm = function () {
+        var html = "";
+        html += "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
+        "<table>" +
+          "<tr>" +
+            "<td align=\"right\">old password</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"password\" id=\"opin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">new password</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"password\" id=\"npin\" size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\">" +
+              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "&nbsp;" +
+              "<button type=\"button\" id=\"changebutton\">Change</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out(html, 'content');
+        mor.onclick('cancelbutton', mor.activity.init);
+        mor.onclick('changebutton', changePassword);
+        mor.onchange('opin', function () { mor.byId('npin').focus(); });
+        mor.onchange('npin', changePassword);
+        mor.layout.adjust();
+        mor.byId('opin').focus();
+    },
+
+
+    updateAuthentDisplay = function () {
+        var html = "";
+        mor.out(html, 'topdiv');
+        if(authtoken) {
+            //html += "Logged in ";
+            //add "via facebook" or whoever based on authmethod
+            //html += "as ";
+            html += "<em>" + authname + "</em>";
+            html += " &nbsp; <a id=\"logout\" href=\"logout\">logout</a>";
+            if(authmethod === "mid") {
+                html += " &nbsp; <a id=\"cpwd\" href=\"changepwd\">" + 
+                    "change password</a>"; }
+            mor.out(html, 'topdiv');
+            mor.onclick('logout', logout);
+            if(authmethod === "mid") {
+                mor.onclick('cpwd', displayChangePassForm); } }
+    },
 
 
     createAccount = function () {
@@ -225,12 +363,12 @@ var mor = {};  //Top level function closure container
         data = "user=" + mor.enc(username) +
                "&pass=" + mor.enc(password) +
                "&email=" + mor.enc(email);
-        mor.y.io("newacct", { method: 'POST', data: data,
-            on: { success: function (transid, resp) {
-                        defaultusername = mor.byId('userin').value;
-                        mor.login.init(); },
-                  failure: function (transid, resp) {
-                        mor.out(resp.responseText, 'maccstatdiv'); } } });
+        mor.call("newacct", 'POST', data, 
+                 function (objs) {
+                     setAuthentication("mid", objs[0].token, username);
+                     mor.login.init(); },
+                 function (errtxt) {
+                     mor.out(errtxt, 'maccstatdiv'); });
     },
 
 
@@ -239,7 +377,7 @@ var mor = {};  //Top level function closure container
     //the email field, so copy it over.  They can fix it if not right.
     usernamechange = function () {
         var uname = mor.byId('userin').value;
-        if(uname.match(/^\S+@\S+\.\S+$/)) {
+        if(mor.isProbablyEmail(uname)) {
             mor.byId('emailin').value = uname; }
         mor.byId('passin').focus();
     },
@@ -285,14 +423,69 @@ var mor = {};  //Top level function closure container
     },
 
 
-    interimEndMessage = function () {
-        var msg = "<p>You have successfully logged in.</p>" +
-        "<p>Unfortunately that's all there is to the site right now. " +
-        "Please check back, there should be more in a week or so...</p>" +
-        "<p>Thanks, <br/>" +
-        "-ep <br/>" +
-        "Wed 18jul12";
-        mor.out(msg, 'content');
+    dispEmailSent = function () {
+        var html = "";
+        html += "<p>Your account information has been emailed to <code>" +
+        mor.byId('emailin').value + 
+        "</code> and should arrive in a few " +
+        "minutes.  If it doesn't show up, please </p>" +
+        "<ol>" +
+        "<li>Make sure you have entered your email address correctly" +
+        "<li>Check your spam folder to see if the message was filtered out" +
+        "<li>Verify the email address you entered is the same one you used" +
+           " when you created your account." +
+        "</ol>" +
+        "<p>If you did not specify an email address when you created your " +
+        "account, then your login information cannot be retrieved. </p>" +
+        "<p><a id=\"retlogin\" href=\"return to login\">" +
+        "return to login</a></p>";
+        mor.out(html, 'logindiv');
+        mor.onclick('retlogin', mor.login.init);
+        mor.layout.adjust();
+    },
+
+
+    emailCredentials = function () {
+        var eaddr = mor.byId('emailin').value,
+            data = "";
+        if(!eaddr || !eaddr.trim() || !mor.isProbablyEmail(eaddr)) {
+            mor.out("Please enter your email address", 'emcrediv');
+            return; }  //nothing to send to
+        mor.out("Sending...", 'sendbuttons');
+        data = "email=" + mor.enc(eaddr);
+        mor.call("mailcred", 'POST', data,
+                 function (objs) {
+                     dispEmailSent(); },
+                 function (errtxt) {
+                     mor.out(errtxt, 'emcrediv'); });
+    },
+
+
+    displayEmailCredForm = function () {
+        var html = "";
+        html += "<div id=\"emcrediv\">If you filled out your email address" +
+        " when you created your account, then your username and password" +
+        " can be mailed to you. </div>" +
+        "<table>" + 
+          "<tr>" +
+            "<td align=\"right\">email</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\" id=\"sendbuttons\">" +
+              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "&nbsp;" +
+              "<button type=\"button\" id=\"sendbutton\">Send</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out(html, 'logindiv');
+        mor.onclick('cancelbutton', mor.login.init);
+        mor.onclick('sendbutton', emailCredentials);
+        mor.onchange('emailin', emailCredentials);
+        mor.layout.adjust();
+        mor.byId('emailin').focus();
     },
 
 
@@ -304,12 +497,12 @@ var mor = {};  //Top level function closure container
             mor.out("Please specify a username and password", 'loginstatdiv');
             return; }
         url += "?user=" + mor.enc(username) + "&pass=" + mor.enc(password);
-        mor.y.io(url, { method: 'GET',
-            on: { success: function (transid, resp) {
-                        interimEndMessage(); },
-                  failure: function (transid, resp) {
-                        mor.out("Login failed: " + resp.responseText,
-                                'loginstatdiv'); } } });
+        mor.call(url, 'GET', null,
+                 function (objs) {
+                     setAuthentication("mid", objs[0].token, username);
+                     mor.login.init(); },
+                 function (errtxt) {
+                     mor.out("Login failed: " + errtxt, 'loginstatdiv'); });
     },
 
 
@@ -338,19 +531,27 @@ var mor = {};  //Top level function closure container
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"left\">" +
-              "<a id=\"macc\" href=\"create new account...\">" + 
-                  "Create a new account</a>" +
+              "<a id=\"macc\" href=\"create new account...\"" + 
+              ">" + "Create a new account</a>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"left\">" +
+              "<a id=\"forgot\" href=\"forgot credentials...\"" + 
+              ">" + "forgot my password</a>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out(html, 'logindiv');
         mor.onclick('macc', displayNewAccountForm);
+        mor.byId('forgot').style.fontSize = "x-small";
+        mor.onclick('forgot', displayEmailCredForm);
         mor.onclick('loginbutton', userpassLogin);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
         mor.onchange('passin', userpassLogin);
         mor.layout.adjust();
-        if(defaultusername) {
-            mor.byId('userin').value = defaultusername; }
+        if(authname) {
+            mor.byId('userin').value = authname; }
         mor.byId('userin').focus();
         mor.out(loginprompt, 'loginstatdiv');
     };
@@ -358,10 +559,108 @@ var mor = {};  //Top level function closure container
 
     mor.login = {
         init: function () {
-            displayForm(); }
+            if(authtoken || readAuthCookie()) {
+                mor.activity.init(); }
+            else {
+                displayForm(); } },
+        updateAuthentDisplay: function () {
+            updateAuthentDisplay(); },
+        displayChangePassForm: function () {
+            displayChangePassForm(); },
+        authparams: function () {
+            return authparams(); }
     };
 
 } () );
+
+
+
+////////////////////////////////////////
+// m o r . a c t i v i t y
+//
+(function () {
+    "use strict";
+
+    var
+
+    initDisplay = function (penName) {
+        var msg = "<p>Activity display not implemented yet</p>";
+        mor.out(msg, 'content');
+        mor.layout.adjust();
+    };
+
+    
+    mor.activity = {
+        init: function () {
+            mor.pen.name(initDisplay); }
+    };
+
+} () );
+
+
+
+////////////////////////////////////////
+// m o r . p r o f i l e
+//
+(function () {
+    "use strict";
+
+    var
+
+    initDisplay = function (penName) {
+        var msg = "<p>Profile display not implemented yet</p>";
+        mor.out(msg, 'content');
+        mor.layout.adjust();
+    };
+
+    mor.profile = {
+        init: function () {
+            mor.pen.name(initDisplay); }
+    };
+
+} () );
+
+
+
+////////////////////////////////////////
+// m o r . p e n
+//
+(function () {
+    "use strict";
+
+    var penNames,
+        pidx = 0,
+        returnFunc,
+
+
+//     fetchPenNames = function () {
+//         var url, msg = "<p>Retrieving your pen name(s)...</p>"
+//         mor.out(msg, 'content');
+//         mor.layout.adjust();
+//         url = 
+//         mor.call
+//     },
+
+
+    getPenName = function () {
+        var msg = "<p>Pen Names are not ready yet.  Should have something by the end of the week.  Try back Friday. </p>";
+        mor.out(msg, 'content');
+        mor.layout.adjust();
+        //if(!penNames) {
+        //    return fetchPenNames(); }
+    };
+
+
+    mor.pen = {
+        name: function (callback) {
+            if(penNames && penNames.length > 0) {
+                callback(penNames[pidx]); }
+            returnFunc = callback;
+            getPenName(); }
+    };
+
+} () );
+
 
 
 ////////////////////////////////////////

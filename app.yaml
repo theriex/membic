@@ -4,17 +4,36 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+libraries:
+- name: pycrypto
+  version: "2.3"
+
 handlers:
 ######################################################################
 #                  API
-## Get an access token from MyOpenReviews
-## params: user 
+######################################################################
+
+## Get an access token from MyOpenReviews credentials
+## params: user, pass 
 - url: /login.*
   script: src.py.moracct.app
-## Create a new account on MyOpenReviews
+
+## Create a new native account on MyOpenReviews
 ## params: user, pass, email
 - url: /newacct.*
   script: src.py.moracct.app
+
+## Email forgotten native account credentials
+## params: email
+- url: /mailcred.*
+  script: src.py.moracct.app
+
+## Change native account password
+## params: password, am, at
+- url: /chgpwd.*
+  script: src.py.moracct.app
+
+
 ######################################################################
 # Static files and other stuff not really part of the API
 #
