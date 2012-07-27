@@ -29,8 +29,8 @@ body {
 #titlediv { position:absolute; left:0px; top:0px; padding:0px 10px; }
 #topdiv { position:absolute; left:230px; top:0px; padding:5px 10px;
   text-align:right; font-size:x-small; }
-#appspace { position:absolute; left:0px; top:0px; 
-  padding:20px 40px 40px 72px; }
+#appspacediv { position:absolute; left:0px; top:0px; 
+  padding:30px 40px 40px 72px; }
 #bottomnav { font-size:x-small; word-spacing:20px; padding:0px 20px; }
 #logotitle { 
   font-size:x-large;

@@ -46,7 +46,7 @@ var mor = {};  //Top level function closure container
 
 
     //output via the library so it can do housekeeping if it needs to
-    mor.out = function (html, domid) {
+    mor.out = function (domid, html) {
         var node = mor.y.one("#" + domid);
         if(node) {
             node.setHTML(html); }
@@ -117,8 +117,27 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.crash = function (url, method, data, code, errtxt) {
+        var html = "<p>The server crashed.</p>" +
+        "<p>If you want to help out, copy the contents of this page and " +
+        "post it to " +
+        "<a href=\"https://github.com/theriex/myopenreviews/issues\" " +
+        "onclick=\"window.open('https://github.com/theriex/myopenreviews/" +
+        "issues');return false\">open issues</a>.  Otherwise reload the" +
+        "page in your browser and see if it happens again...</p>" +
+        "<ul>" +
+        "<li>method: " + method +
+        "<li>url: " + url +
+        "<li>data: " + data +
+        "<li>code: " + code +
+        "</ul>" +
+        errtxt;
+        mor.out('contentdiv', html);
+    };
+
+
     //factored method to deal with JSON parsing in success call. 
-    mor.call = function (url, method, data, success, failure) {
+    mor.call = function (url, method, data, success, failure, errs) {
         mor.y.io(url, { method: method, data: data,
             on: { success: function (transid, resp) {
                         try {
@@ -129,7 +148,31 @@ var mor = {};  //Top level function closure container
                         }
                         success(resp); },
                   failure: function (transid, resp) {
-                        failure(resp.responseText); } } });
+                        var code = resp.status, errtxt = resp.responseText;
+                        if(!errs) {
+                            errs = []; }
+                        errs = mor.y.Array(errs);
+                        if(errs.indexOf(code) < 0) {
+                            switch(code) {
+                            case 401: return mor.login.logout();
+                            case 500: return mor.crash(url, method, data,
+                                                       code, errtxt);
+                            } }
+                        failure(code, errtxt); } } });
+    };
+
+
+    //return the given object field and values as html POST data
+    mor.objdata = function (obj) {
+        var str = "", name;
+        if(!obj) {
+            return ""; }
+        for(name in obj) {
+            if(obj.hasOwnProperty(name)) {
+                if(str) {
+                    str += "&"; }
+                str += name + "=" + mor.enc(obj[name]); } }
+        return str;
     };
 
 
@@ -147,7 +190,7 @@ var mor = {};  //Top level function closure container
 
 
     closeDialog = function () {
-        mor.out("", 'dlgdiv');
+        mor.out('dlgdiv', "");
         mor.byId('dlgdiv').style.visibility = "hidden";
         mor.layout.adjust();
         mor.onescapefunc = null;
@@ -165,7 +208,7 @@ var mor = {};  //Top level function closure container
         html = "<div id=\"closeline\">" +
           "<a id=\"closedlg\" href=\"#close\">&lt;close&nbsp;&nbsp;X&gt;</a>" +
           "</div>" + html;
-        mor.out(html, 'dlgdiv');
+        mor.out('dlgdiv', html);
         mor.onclick('closedlg', closeDialog);
         mor.onescapefunc = closeDialog;
     },
@@ -181,7 +224,7 @@ var mor = {};  //Top level function closure container
 
     displayDoc = function (url) {
         var html = "Fetching " + url + " ...";
-        mor.out(html, 'dlgdiv');
+        mor.out('dlgdiv', html);
         mor.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
@@ -205,8 +248,8 @@ var mor = {};  //Top level function closure container
 
 
     fullContentHeight = function () {
-        var ch = mor.byId("content").offsetHeight,
-            wh = window.innerHeight - 110,
+        var ch = mor.byId("contentdiv").offsetHeight,
+            wh = window.innerHeight - 120,
             ww = window.innerWidth - 280,
             filldiv = mor.byId("contentfill"),
             topdiv = mor.byId("topdiv");
@@ -245,7 +288,7 @@ var mor = {};  //Top level function closure container
 
 
     authparams = function () {
-        var params = "&am=" + authmethod + "&at=" + authtoken + 
+        var params = "am=" + authmethod + "&at=" + authtoken + 
                      "&an=" + mor.enc(authname);
         return params;
     },
@@ -290,12 +333,12 @@ var mor = {};  //Top level function closure container
         if(!pwd || !pwd.trim()) {
             changepwdprompt = "New password must have a value";
             return mor.login.displayChangePassForm(); }
-        data = "pass=" + mor.enc(pwd) + mor.login.authparams();
+        data = "pass=" + mor.enc(pwd) + "&" + mor.login.authparams();
         mor.call("chgpwd", 'POST', data,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, authname);
                      mor.activity.init(); },
-                 function (errtxt) {
+                 function (code, errtxt) {
                      changepwdprompt = errtxt;
                      mor.login.displayChangePassForm(); });
     },
@@ -323,7 +366,7 @@ var mor = {};  //Top level function closure container
             "</td>" +
           "</tr>" +
         "</table>";
-        mor.out(html, 'content');
+        mor.out('contentdiv', html);
         mor.onclick('cancelbutton', mor.activity.init);
         mor.onclick('changebutton', changePassword);
         mor.onchange('opin', function () { mor.byId('npin').focus(); });
@@ -335,7 +378,7 @@ var mor = {};  //Top level function closure container
 
     updateAuthentDisplay = function () {
         var html = "";
-        mor.out(html, 'topdiv');
+        mor.out('topdiv', html);
         if(authtoken) {
             //html += "Logged in ";
             //add "via facebook" or whoever based on authmethod
@@ -345,7 +388,7 @@ var mor = {};  //Top level function closure container
             if(authmethod === "mid") {
                 html += " &nbsp; <a id=\"cpwd\" href=\"changepwd\">" + 
                     "change password</a>"; }
-            mor.out(html, 'topdiv');
+            mor.out('topdiv', html);
             mor.onclick('logout', logout);
             if(authmethod === "mid") {
                 mor.onclick('cpwd', displayChangePassForm); } }
@@ -358,7 +401,7 @@ var mor = {};  //Top level function closure container
             email = mor.byId('emailin').value || "",
             data = "";
         if(!username || !password || !username.trim() || !password.trim()) {
-            mor.out("Please specify a username and password", 'maccstatdiv');
+            mor.out('maccstatdiv', "Please specify a username and password");
             return; }
         data = "user=" + mor.enc(username) +
                "&pass=" + mor.enc(password) +
@@ -367,8 +410,8 @@ var mor = {};  //Top level function closure container
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
                      mor.login.init(); },
-                 function (errtxt) {
-                     mor.out(errtxt, 'maccstatdiv'); });
+                 function (code, errtxt) {
+                     mor.out('maccstatdiv', errtxt); });
     },
 
 
@@ -412,7 +455,7 @@ var mor = {};  //Top level function closure container
             "</td>" +
           "</tr>" +
         "</table>";
-        mor.out(html, 'logindiv');
+        mor.out('logindiv', html);
         mor.onclick('cancelbutton', mor.login.init);
         mor.onclick('createbutton', createAccount);
         mor.onchange('userin', usernamechange);
@@ -439,7 +482,7 @@ var mor = {};  //Top level function closure container
         "account, then your login information cannot be retrieved. </p>" +
         "<p><a id=\"retlogin\" href=\"return to login\">" +
         "return to login</a></p>";
-        mor.out(html, 'logindiv');
+        mor.out('logindiv', html);
         mor.onclick('retlogin', mor.login.init);
         mor.layout.adjust();
     },
@@ -449,15 +492,15 @@ var mor = {};  //Top level function closure container
         var eaddr = mor.byId('emailin').value,
             data = "";
         if(!eaddr || !eaddr.trim() || !mor.isProbablyEmail(eaddr)) {
-            mor.out("Please enter your email address", 'emcrediv');
+            mor.out('emcrediv', "Please enter your email address");
             return; }  //nothing to send to
-        mor.out("Sending...", 'sendbuttons');
+        mor.out('sendbuttons', "Sending...");
         data = "email=" + mor.enc(eaddr);
         mor.call("mailcred", 'POST', data,
                  function (objs) {
                      dispEmailSent(); },
-                 function (errtxt) {
-                     mor.out(errtxt, 'emcrediv'); });
+                 function (code, errtxt) {
+                     mor.out('emcrediv', errtxt); });
     },
 
 
@@ -480,7 +523,7 @@ var mor = {};  //Top level function closure container
             "</td>" +
           "</tr>" +
         "</table>";
-        mor.out(html, 'logindiv');
+        mor.out('logindiv', html);
         mor.onclick('cancelbutton', mor.login.init);
         mor.onclick('sendbutton', emailCredentials);
         mor.onchange('emailin', emailCredentials);
@@ -494,21 +537,22 @@ var mor = {};  //Top level function closure container
             password = mor.byId('passin').value,
             url="login";
         if(!username || !password || !username.trim() || !password.trim()) {
-            mor.out("Please specify a username and password", 'loginstatdiv');
+            mor.out('loginstatdiv', "Please specify a username and password");
             return; }
         url += "?user=" + mor.enc(username) + "&pass=" + mor.enc(password);
         mor.call(url, 'GET', null,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
                      mor.login.init(); },
-                 function (errtxt) {
-                     mor.out("Login failed: " + errtxt, 'loginstatdiv'); });
+                 function (code, errtxt) {
+                     mor.out('loginstatdiv', "Login failed: " + errtxt); },
+                 [401]);
     },
 
 
     displayForm = function () {
         var cdiv, ldiv, html = "";
-        cdiv = mor.byId('content');
+        cdiv = mor.byId('contentdiv');
         ldiv = document.createElement('div');
         ldiv.setAttribute('id','logindiv');
         cdiv.appendChild(ldiv);
@@ -542,7 +586,7 @@ var mor = {};  //Top level function closure container
             "</td>" +
           "</tr>" +
         "</table>";
-        mor.out(html, 'logindiv');
+        mor.out('logindiv', html);
         mor.onclick('macc', displayNewAccountForm);
         mor.byId('forgot').style.fontSize = "x-small";
         mor.onclick('forgot', displayEmailCredForm);
@@ -553,7 +597,7 @@ var mor = {};  //Top level function closure container
         if(authname) {
             mor.byId('userin').value = authname; }
         mor.byId('userin').focus();
-        mor.out(loginprompt, 'loginstatdiv');
+        mor.out('loginstatdiv', loginprompt);
     };
 
 
@@ -568,7 +612,9 @@ var mor = {};  //Top level function closure container
         displayChangePassForm: function () {
             displayChangePassForm(); },
         authparams: function () {
-            return authparams(); }
+            return authparams(); },
+        logout: function () {
+            logout(); }
     };
 
 } () );
@@ -585,7 +631,7 @@ var mor = {};  //Top level function closure container
 
     initDisplay = function (penName) {
         var msg = "<p>Activity display not implemented yet</p>";
-        mor.out(msg, 'content');
+        mor.out('contentdiv', msg);
         mor.layout.adjust();
     };
 
@@ -609,7 +655,7 @@ var mor = {};  //Top level function closure container
 
     initDisplay = function (penName) {
         var msg = "<p>Profile display not implemented yet</p>";
-        mor.out(msg, 'content');
+        mor.out('contentdiv', msg);
         mor.layout.adjust();
     };
 
@@ -629,32 +675,107 @@ var mor = {};  //Top level function closure container
     "use strict";
 
     var penNames,
-        pidx = 0,
+        currpen,
         returnFunc,
 
 
-//     fetchPenNames = function () {
-//         var url, msg = "<p>Retrieving your pen name(s)...</p>"
-//         mor.out(msg, 'content');
-//         mor.layout.adjust();
-//         url = 
-//         mor.call
-//     },
+    serializeSettings = function (penName) {
+        penName.settings = mor.y.JSON.stringify(penName.settings);
+    },
+
+
+    deserializeSettings = function (penName) {
+        if(!penName.settings) {
+            penName.settings = {}; }
+        else if(typeof penName.settings !== 'object') {
+            try {
+                penName.settings = mor.y.JSON.parse(penName.settings);
+            } catch (e) {
+                mor.log("deserializeSettings " + penName.name + ": " + e);
+                penName.settings = {};
+            } }
+    },
+
+
+    createPenName = function () {
+        var buttonhtml, newpen, data, name;
+        name = mor.byId('pnamein').value;
+        buttonhtml = mor.byId('formbuttons').innerHTML;
+        mor.out('formbuttons', "Creating Pen Name...");
+        newpen = {};
+        newpen.name = name;
+        if(currpen && currpen.settings) {
+            newpen.settings = currpen.settings;
+            serializeSettings(newpen); }
+        data = mor.objdata(newpen);
+        mor.call("newpen?" + mor.login.authparams(), 'POST', data,
+                 function (newpens) {
+                     currpen = newpens[0];
+                     returnFunc(); },
+                 function (code, errtxt) {
+                     mor.out('penformstat', errtxt);
+                     mor.out('formbuttons', buttonhtml); });
+    },
+
+
+    newPenNameDisplay = function () {
+        var html;
+        html = "<p>Your pen name is a unique expression of style when presenting your views to the world. You can have separate pen names for each of your personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
+        "<div id=\"penformstat\">&nbsp;</div>" +
+        "<table>" +
+          "<tr>" +
+            "<td class=\"formattr\">Pen Name</td>" +
+            "<td class=\"formval\">" +
+              "<input type=\"text\" id=\"pnamein\" size=\"34\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"formbuttons\"align=\"center\">" +
+              "<button type=\"button\" id=\"createbutton\">Create</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out('contentdiv', html);
+        mor.onchange('pnamein', createPenName);
+        mor.onclick('createbutton', createPenName);
+        mor.layout.adjust();
+        mor.byId('pnamein').focus();
+    },
+
+
+    chooseOrCreatePenName = function () {
+        var i, lastChosen = "0000-00-00T00:00:00Z";
+        if(penNames.length === 0) {
+            return newPenNameDisplay(); }
+        for(i = 0; i < penNames.length; i += 1) {
+            deserializeSettings(penNames[i]);
+            if(penNames[i].accessed > lastChosen) {
+                lastChosen = penNames[i].accessed;
+                currpen = penNames[i]; } }
+        returnFunc();
+    },
 
 
     getPenName = function () {
-        var msg = "<p>Pen Names are not ready yet.  Should have something by the end of the week.  Try back Friday. </p>";
-        mor.out(msg, 'content');
+        var url;
+        if(penNames) {
+            chooseOrCreatePenName(); }
+        mor.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         mor.layout.adjust();
-        //if(!penNames) {
-        //    return fetchPenNames(); }
+        url = "mypens?" + mor.login.authparams();
+        mor.call(url, 'GET', null,
+                 function (pens) {
+                     penNames = pens;
+                     chooseOrCreatePenName(); },
+                 function (code, errtxt) {
+                     mor.out('contentdiv', 
+                             "Pen name retrieval failed: " + errtxt); });
     };
 
 
     mor.pen = {
         name: function (callback) {
-            if(penNames && penNames.length > 0) {
-                callback(penNames[pidx]); }
+            if(currpen) {
+                callback(currpen); }
             returnFunc = callback;
             getPenName(); }
     };
@@ -910,7 +1031,7 @@ var mor = {};  //Top level function closure container
         oldcolors = copycolors(mor.colors);
         colorcontrols = [];
         html = presetSelectorHTML() + colorControlsHTML();
-        mor.out(html, 'dlgdiv');
+        mor.out('dlgdiv', html);
         div = mor.byId('dlgdiv');
         div.style.visibility = "visible";
         mor.onclick('skincancel', dialogCancel);
@@ -930,7 +1051,7 @@ var mor = {};  //Top level function closure container
     createSkinnerLink = function () {
         var html;
         html = "<a href=\"skinit.html\" id=\"skinit\">skin it</a>";
-        mor.out(html, 'topdiv');
+        mor.out('topdiv', html);
         mor.onclick('skinit', displayDialog);
     };
 

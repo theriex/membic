@@ -10,10 +10,18 @@ libraries:
 
 handlers:
 ######################################################################
-#                  API
+##                  API
+## authparams:
+##   am: authentication method: "mid", "gid", "fbid", "twid"
+##   at: authentication token from native or external source
+##   an: authentication name (username if native auth, whatever otherwise)
+##
 ######################################################################
 
-## Get an access token from MyOpenReviews credentials
+######################################################################
+##        MyOpenReviews local site authentication 
+
+## Get an access token from native MyOpenReviews credentials
 ## params: user, pass 
 - url: /login.*
   script: src.py.moracct.app
@@ -29,9 +37,22 @@ handlers:
   script: src.py.moracct.app
 
 ## Change native account password
-## params: password, am, at
+## params: password, authparams
 - url: /chgpwd.*
   script: src.py.moracct.app
+
+######################################################################
+##        Pen Names
+
+## Fetch pen names for current authentication
+## params: authparams
+- url: /mypens.*
+  script: src.py.pen.app
+
+## Create new pen name for current authentication
+## params: pen, authparams
+- url: /newpen.*
+  script: src.py.pen.app
 
 
 ######################################################################

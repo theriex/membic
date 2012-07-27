@@ -7,6 +7,8 @@ from Crypto.Cipher import AES
 import base64
 import urllib
 import time
+import re
+import json
 
 def pwd2key(password):
     """ make a password into an encryption key """
@@ -17,7 +19,7 @@ def pwd2key(password):
 
 
 def authenticated(request):
-    """ Return a true value if the token is valid """
+    """ Return an account for the given auth type if the token is valid """
     type = request.get('am')
     username = request.get('an')
     token = request.get('at')
@@ -36,6 +38,7 @@ def authenticated(request):
             now = int(round(time.time()))
             if now - secs > 3600:
                 return False
+            account._id = account.key().id() # normalized id access
             return account  # True
 
 
@@ -50,12 +53,43 @@ def newtoken(username, password):
     return token
 
 
+def nowISO():
+    """ Return the current time as an ISO string """
+    now = datetime.datetime.utcnow()
+    iso = str(now.year) + "-" + str(now.month).ljust(2, '0') + "-"
+    iso += str(now.day).ljust(2, '0') + "T" + str(now.hour).ljust(2, '0')
+    iso += ":" + str(now.minute).ljust(2, '0') + ":"
+    iso += str(now.second).ljust(2, '0') + "Z"
+    return iso
+
+
+def canonize(strval):
+    """ Convert to lower case and remove all whitespace """
+    strval = re.sub(r"\s+", "", strval)
+    strval = strval.lower();
+    return strval
+
+
+def returnJSON(queryResults, response):
+    """ Factored method to return query results as JSON """
+    result = ""
+    for obj in queryResults:
+        if result:
+            result += ",\n "
+        props = db.to_dict(obj)
+        # logging.info("props: " + str(props))
+        result += json.dumps(props, True)
+    result = "[" + result + "]"
+    response.headers['Content-Type'] = 'application/json'
+    response.out.write(result)
+
+
 class MORAccount(db.Model):
     """ An account used for local (as opposed to 3rd party) authentication """
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
     email = db.EmailProperty()
-    modified = db.DateProperty()
+    modified = db.StringProperty()  # iso date
 
 
 class WriteAccount(webapp2.RequestHandler):
@@ -78,7 +112,7 @@ class WriteAccount(webapp2.RequestHandler):
         email = self.request.get('email')
         if email:
             acct.email = email
-        acct.modified = datetime.datetime.now().date()
+        acct.modified = nowISO()
         acct.put()
         token = newtoken(user, pwd)
         self.response.headers['Content-Type'] = 'application/json'
@@ -130,7 +164,7 @@ class ChangePassword(webapp2.RequestHandler):
         pwd = self.request.get('pass')
         account = authenticated(self.request)
         if pwd and account:
-            account.modified = datetime.datetime.now().date()
+            account.modified = nowISO()
             account.password = pwd
             account.put()
             token = newtoken(account.username, account.password)
