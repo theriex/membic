@@ -56,10 +56,10 @@ def newtoken(username, password):
 def nowISO():
     """ Return the current time as an ISO string """
     now = datetime.datetime.utcnow()
-    iso = str(now.year) + "-" + str(now.month).ljust(2, '0') + "-"
-    iso += str(now.day).ljust(2, '0') + "T" + str(now.hour).ljust(2, '0')
-    iso += ":" + str(now.minute).ljust(2, '0') + ":"
-    iso += str(now.second).ljust(2, '0') + "Z"
+    iso = str(now.year) + "-" + str(now.month).rjust(2, '0') + "-"
+    iso += str(now.day).rjust(2, '0') + "T" + str(now.hour).rjust(2, '0')
+    iso += ":" + str(now.minute).rjust(2, '0') + ":"
+    iso += str(now.second).rjust(2, '0') + "Z"
     return iso
 
 

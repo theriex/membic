@@ -21,6 +21,20 @@ var mor = {};  //Top level function closure container
                    text: "#111111",
                    link: "#3150b2",
                    hover: "#3399cc" };
+    mor.winw = 0;  //adjusted in mor.layout
+    mor.winh = 0;
+    mor.introtext = "";
+
+    ////////////////////////////////////////
+    //prototype mods and globals
+    /////////////////////////////////////////
+
+    if(!String.prototype.trim) {  //thanks to Douglas Crockford
+        String.prototype.trim = function () {
+            return this.replace(/^\s*(\S*(?:\s+\S+)*)\s*$/, "$1");
+        };
+    }
+
 
     ////////////////////////////////////////
     // general utility functions
@@ -95,6 +109,9 @@ var mor = {};  //Top level function closure container
 
     //top level kickoff function called from index.html
     mor.init = function (Y) {
+        var cdiv = mor.byId('contentdiv');
+        if(!mor.introtext) {
+            mor.introtext = cdiv.innerHTML; }
         mor.y = Y;
         mor.layout.init();
         mor.y.on("keypress", mor.globkey);
@@ -176,6 +193,22 @@ var mor = {};  //Top level function closure container
     };
 
 
+    //factored method to create an image link.  Some older browsers put
+    //borders around these...
+    mor.imglink = function (href, title, funcstr, imgfile) {
+        var html;
+        if(funcstr.indexOf(";") < 0) {
+            funcstr += ";"; }
+        if(imgfile.indexOf("/") < 0) {
+            imgfile = "img/" + imgfile; }
+        html = "<a href=\"" + href + "\" title=\"" + title + "\"" +
+                 " onclick=\"" + funcstr + "return false;\"" +
+               "><img class=\"navico\" src=\"" + imgfile + "\"" +
+                    " border=\"0\"/></a>";
+        return html;
+    };
+
+
 } () );
 
 
@@ -247,18 +280,55 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //initialize the standard content display div areas.
+    initContent = function () {
+        var html, div;
+        div = mor.byId('chead');
+        if(!div) {
+            html = "<div id=\"chead\">" +
+              "<span id=\"penhnamespan\"> </span>" +
+              "<span id=\"penhbuttonspan\"> </span>" +
+              "<div id=\"acthdiv\"> </div>" +
+              "<div id=\"revhdiv\"> </div>" +
+            "</div>" +
+            "<div id=\"cmain\"> </div>";
+            mor.out('contentdiv', html);
+            mor.profile.updateHeading();
+            mor.activity.updateHeading();
+            mor.review.updateHeading(); }
+    },
+
+
     fullContentHeight = function () {
-        var ch = mor.byId("contentdiv").offsetHeight,
-            wh = window.innerHeight - 120,
-            ww = window.innerWidth - 280,
-            filldiv = mor.byId("contentfill"),
-            topdiv = mor.byId("topdiv");
-        if(ch < wh) {
-            filldiv.style.height = (wh - ch) + "px"; }
+        var ch, filldiv, topdiv, chdiv, target;
+        if(window.innerWidth && window.innerHeight) {
+            mor.winw = window.innerWidth;
+            mor.winh = window.innerHeight; }
+        else if(document.compatMode === 'CSS1Compat' &&
+                document.documentElement && 
+                document.documentElement.offsetWidth) {
+            mor.winw = document.documentElement.offsetWidth;
+            mor.winh = document.documentElement.offsetHeight; }
+        else if(document.body && document.body.offsetWidth) {
+            mor.winw = document.body.offsetWidth;
+            mor.winh = document.body.offsetHeight; }
+        else {  //WTF, just guess.
+            mor.winw = 240;
+            mor.winh = 320; }
+        filldiv = mor.byId("contentfill");
+        ch = mor.byId("contentdiv").offsetHeight;
+        target = mor.winh - 100;  //top padding and scroll
+        if(ch < target) {
+            filldiv.style.height = (target - ch) + "px"; }
         else {  //not filling, just leave a little separator space
             filldiv.style.height = "16px"; }
-        if(topdiv.offsetHeight < ww) {
-            topdiv.style.width = ww + "px"; }
+        topdiv = mor.byId("topdiv");
+        target = mor.winw - 50;  //element width padding
+        topdiv.style.width = target + "px";
+        chdiv = mor.byId("chead");
+        target = mor.winw - 120;  //Remo is 72px, 20px padding
+        if(chdiv) {
+            chdiv.style.width = target + "px"; }
     };
 
 
@@ -267,6 +337,8 @@ var mor = {};  //Top level function closure container
             mor.y.on('windowresize', fullContentHeight);
             localDocLinks();
             fullContentHeight(); },
+        initContent: function () {
+            initContent(); },
         adjust: function () {
             fullContentHeight(); }
     };
@@ -337,7 +409,7 @@ var mor = {};  //Top level function closure container
         mor.call("chgpwd", 'POST', data,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, authname);
-                     mor.activity.init(); },
+                     mor.activity.display(); },
                  function (code, errtxt) {
                      changepwdprompt = errtxt;
                      mor.login.displayChangePassForm(); });
@@ -367,7 +439,7 @@ var mor = {};  //Top level function closure container
           "</tr>" +
         "</table>";
         mor.out('contentdiv', html);
-        mor.onclick('cancelbutton', mor.activity.init);
+        mor.onclick('cancelbutton', mor.activity.display);
         mor.onclick('changebutton', changePassword);
         mor.onchange('opin', function () { mor.byId('npin').focus(); });
         mor.onchange('npin', changePassword);
@@ -543,7 +615,7 @@ var mor = {};  //Top level function closure container
         mor.call(url, 'GET', null,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
-                     mor.login.init(); },
+                     mor.activity.display(); },
                  function (code, errtxt) {
                      mor.out('loginstatdiv', "Login failed: " + errtxt); },
                  [401]);
@@ -553,6 +625,7 @@ var mor = {};  //Top level function closure container
     displayForm = function () {
         var cdiv, ldiv, html = "";
         cdiv = mor.byId('contentdiv');
+        mor.out('contentdiv', mor.introtext);
         ldiv = document.createElement('div');
         ldiv.setAttribute('id','logindiv');
         cdiv.appendChild(ldiv);
@@ -604,7 +677,7 @@ var mor = {};  //Top level function closure container
     mor.login = {
         init: function () {
             if(authtoken || readAuthCookie()) {
-                mor.activity.init(); }
+                mor.activity.display(); }
             else {
                 displayForm(); } },
         updateAuthentDisplay: function () {
@@ -622,6 +695,40 @@ var mor = {};  //Top level function closure container
 
 
 ////////////////////////////////////////
+// m o r . r e v i e w
+//
+(function () {
+    "use strict";
+
+    var
+
+    writeNavDisplay = function () {
+        var html = "<a href=\"#Write a Review\"" +
+                     " title=\"Review something\"" +
+                     " onclick=\"mor.review.display();return false;\"" +
+            ">Write a Review</a>";
+        mor.out('revhdiv', html);
+    },
+
+
+    mainDisplay = function (penName) {
+        var html = "<p>Writing a review is not implemented yet</p>";
+        mor.out('cmain', html);
+        mor.layout.adjust();
+    };
+
+
+    mor.review = {
+        display: function () {
+            mor.pen.getPen(mainDisplay); },
+        updateHeading: function () {
+            writeNavDisplay(); }
+    };
+
+} () );
+
+
+////////////////////////////////////////
 // m o r . a c t i v i t y
 //
 (function () {
@@ -629,16 +736,27 @@ var mor = {};  //Top level function closure container
 
     var
 
-    initDisplay = function (penName) {
-        var msg = "<p>Activity display not implemented yet</p>";
-        mor.out('contentdiv', msg);
+    writeNavDisplay = function () {
+        var html = "<a href=\"#Activity\"" +
+                     " title=\"See what's been posted recently\"" + 
+                     " onclick=\"mor.activity.display();return false;\"" +
+            ">Activity</a>";
+        mor.out('acthdiv', html);
+    },
+
+
+    mainDisplay = function (penName) {
+        var html = "<p>Activity display not implemented yet</p>";
+        mor.out('cmain', html);
         mor.layout.adjust();
     };
 
     
     mor.activity = {
-        init: function () {
-            mor.pen.name(initDisplay); }
+        display: function () {
+            mor.pen.getPen(mainDisplay); },
+        updateHeading: function () {
+            writeNavDisplay(); }
     };
 
 } () );
@@ -653,15 +771,41 @@ var mor = {};  //Top level function closure container
 
     var
 
-    initDisplay = function (penName) {
-        var msg = "<p>Profile display not implemented yet</p>";
-        mor.out('contentdiv', msg);
+    writeNavDisplay = function (pen) {
+        var html;
+        html = "<a href=\"#Profile\"" +
+                 " title=\"Show profile for " + pen.name + "\"" +
+                 " onclick=\"mor.profile.display();return false;\"" +
+            ">" + pen.name + "</a>";
+        mor.out('penhnamespan', html);
+        html = mor.imglink("#Settings","Adjust settings for " + pen.name,
+                           "mor.profile.settings()", "settings.png");
+        mor.out('penhbuttonspan', html);
+    },
+
+
+    changeSettings = function (pen) {
+        var html = "<p>Change settings not implemented yet</p>";
+        mor.out('cmain', html);
+        mor.layout.adjust();
+        mor.skinner.init();
+    },
+
+
+    mainDisplay = function (penName) {
+        var html = "<p>Profile display not implemented yet</p>";
+        mor.out('cmain', html);
         mor.layout.adjust();
     };
 
+
     mor.profile = {
-        init: function () {
-            mor.pen.name(initDisplay); }
+        display: function () {
+            mor.pen.getPen(mainDisplay); },
+        updateHeading: function () {
+            mor.pen.getPen(writeNavDisplay); },
+        settings: function () {
+            mor.pen.getPen(changeSettings); }
     };
 
 } () );
@@ -697,6 +841,13 @@ var mor = {};  //Top level function closure container
     },
 
 
+    returnCall = function () {
+        var callback = returnFunc;
+        mor.layout.initContent();  //may call for pen name retrieval...
+        callback(currpen);
+    },
+
+
     createPenName = function () {
         var buttonhtml, newpen, data, name;
         name = mor.byId('pnamein').value;
@@ -711,7 +862,7 @@ var mor = {};  //Top level function closure container
         mor.call("newpen?" + mor.login.authparams(), 'POST', data,
                  function (newpens) {
                      currpen = newpens[0];
-                     returnFunc(); },
+                     returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
                      mor.out('formbuttons', buttonhtml); });
@@ -751,7 +902,7 @@ var mor = {};  //Top level function closure container
             if(penNames[i].accessed > lastChosen) {
                 lastChosen = penNames[i].accessed;
                 currpen = penNames[i]; } }
-        returnFunc();
+        returnCall(currpen);
     },
 
 
@@ -773,10 +924,10 @@ var mor = {};  //Top level function closure container
 
 
     mor.pen = {
-        name: function (callback) {
-            if(currpen) {
-                callback(currpen); }
+        getPen: function (callback) {
             returnFunc = callback;
+            if(currpen) {
+                return returnCall(); }
             getPenName(); }
     };
 

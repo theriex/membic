@@ -27,22 +27,40 @@ body {
 
 #logodiv { position:absolute; left:0px; top:25px; }
 #titlediv { position:absolute; left:0px; top:0px; padding:0px 10px; }
-#topdiv { position:absolute; left:230px; top:0px; padding:5px 10px;
+#topdiv { position:absolute; left:0px; top:12px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #appspacediv { position:absolute; left:0px; top:0px; 
-  padding:30px 40px 40px 72px; }
-#bottomnav { font-size:x-small; word-spacing:20px; padding:0px 20px; }
+  padding:15px 40px 40px 72px; }
+#bottomnav { font-size:x-small; text-align:center; 
+  word-spacing:20px; padding:0px 20px; }
 #logotitle { 
   font-size:x-large;
+  font-weight:bold;
+  letter-spacing:1px;
   color:#2f478e;
   text-shadow:
-   -1px -1px 0 #000,  
+   -1px -1px 0 #000,
     1px -1px 0 #000,
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
+/* padding in chead compensates for relative offset of acthdiv, revhdiv */
+#chead { text-align:center; font-size:large; text-shadow: -1px -1px 1px #fff; 
+  padding:0px 0px 20px 0px; }
+#penhnamespan { font-style:italic; font-size:x-large;
+  font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
+ }
+#acthdiv, #revhdiv {
+  background:#ddd url('../img/navlinkback.png') repeat; 
+  border: 1px solid #ddd; border-radius:5px; 
+  box-shadow: 2px 2px 2px #888;
+  padding:0px 5px; position:relative; top:20px; }
+#acthdiv { float:left; }
+#revhdiv { float:right; }
+#cmain { clear:both; }
 #dlgdiv { position:absolute; left:70px; top:30px; padding:10px 20px;
   background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #closeline { text-align:right; font-size:x-small; }
+.navico { height:20px; width:20px; margin:0px 10px; border=none; }
