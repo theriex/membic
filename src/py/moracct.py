@@ -162,6 +162,10 @@ class MailCredentials(webapp2.RequestHandler):
 class ChangePassword(webapp2.RequestHandler):
     def post(self):
         pwd = self.request.get('pass')
+        if not pwd or len(pwd) < 6:
+            self.error(412)
+            self.response.out.write("Password must be at least 6 characters")
+            return
         account = authenticated(self.request)
         if pwd and account:
             account.modified = nowISO()

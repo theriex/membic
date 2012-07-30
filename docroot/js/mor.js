@@ -418,13 +418,9 @@ var mor = {};  //Top level function closure container
 
     displayChangePassForm = function () {
         var html = "";
-        html += "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
+        html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
+        "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
         "<table>" +
-          "<tr>" +
-            "<td align=\"right\">old password</td>" +
-            "<td align=\"left\">" +
-              "<input type=\"password\" id=\"opin\" size=\"20\"/></td>" +
-          "</tr>" +
           "<tr>" +
             "<td align=\"right\">new password</td>" +
             "<td align=\"left\">" +
@@ -441,10 +437,9 @@ var mor = {};  //Top level function closure container
         mor.out('contentdiv', html);
         mor.onclick('cancelbutton', mor.activity.display);
         mor.onclick('changebutton', changePassword);
-        mor.onchange('opin', function () { mor.byId('npin').focus(); });
         mor.onchange('npin', changePassword);
         mor.layout.adjust();
-        mor.byId('opin').focus();
+        mor.byId('npin').focus();
     },
 
 
