@@ -121,9 +121,11 @@ var mor = {};  //Top level function closure container
 
 
     //shorthand to save typing and improve readability
-    mor.enc = function (text) {
-        text = text || "";
-        return encodeURIComponent(text.trim());
+    mor.enc = function (val) {
+        val = val || "";
+        if(typeof val === "string") {
+            val = val.trim(); }
+        return encodeURIComponent(val);
     };
 
 
@@ -367,7 +369,7 @@ var mor = {};  //Top level function closure container
 
 
     logout = function () {
-        mor.y.Cookie.remove("authentication");
+        mor.y.Cookie.remove("myopenreviewsauth");
         authmethod = "";
         authtoken = "";
         authname = "";
@@ -376,21 +378,26 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //On FF14 with noscript installed the cookie gets written as a
+    //session cookie regardless of the expiration set here.  Same
+    //result using Cookie.set, or just setting document.cookie
+    //directly.  On FF14 without noscript, this works.  Just something
+    //to be aware of...
     setAuthentication = function (method, token, name) {
         var expiration = new Date();
         expiration.setFullYear(expiration.getFullYear() + 1);
         authmethod = method;
         authtoken = token;
         authname = name;
-        mor.y.Cookie.setSubs("authentication", 
-            { method: method, token: token, name: name },
+        mor.y.Cookie.setSubs("myopenreviewsauth", 
+            { method: authmethod, token: authtoken, name: authname },
             { expires: expiration });
         mor.login.updateAuthentDisplay();
     },
 
 
     readAuthCookie = function () {
-        var authentication = mor.y.Cookie.getSubs("authentication");
+        var authentication = mor.y.Cookie.getSubs("myopenreviewsauth");
         if(authentication) {
             authmethod = authentication.method;
             authtoken = authentication.token;
@@ -672,7 +679,8 @@ var mor = {};  //Top level function closure container
     mor.login = {
         init: function () {
             if(authtoken || readAuthCookie()) {
-                mor.activity.display(); }
+                //this should be mor.activity.display()
+                mor.profile.display(); } 
             else {
                 displayForm(); } },
         updateAuthentDisplay: function () {
@@ -764,7 +772,8 @@ var mor = {};  //Top level function closure container
 (function () {
     "use strict";
 
-    var
+    var unspecifiedCityText = "City not specified",
+
 
     writeNavDisplay = function (pen) {
         var html;
@@ -787,9 +796,206 @@ var mor = {};  //Top level function closure container
     },
 
 
-    mainDisplay = function (penName) {
-        var html = "<p>Profile display not implemented yet</p>";
+    tablink = function (text, funcstr) {
+        var html;
+        if(funcstr.indexOf(";") < 0) {
+            funcstr += ";"; }
+        html = "<a href=\"#" + text + "\"" +
+                 " title=\"Click to see " + text + "\"" +
+                 " onclick=\"" + funcstr + "return false;\">" + 
+               text + "</a>";
+        return html;
+    },
+
+
+    selectTab = function (tabid) {
+        var i, ul, li;
+        ul = mor.byId('proftabsul');
+        for(i = 0; i < ul.childNodes.length; i += 1) {
+            li = ul.childNodes[i];
+            li.className = "unselectedTab";
+            li.style.backgroundColor = mor.skinner.darkbg(); }
+        li = mor.byId(tabid);
+        li.className = "selectedTab";
+        li.style.backgroundColor = mor.colors.bodybg;
+    },
+
+
+    recent = function () {
+        var html = "Recent activity display not implemented yet";
+        selectTab("recentli");
+        mor.out('profcontdiv', html);
+    },
+
+
+    best = function () {
+        var html = "Top rated display not implemented yet";
+        selectTab("bestli");
+        mor.out('profcontdiv', html);
+    },
+
+
+    following = function () {
+        var html = "Following display not implemented yet";
+        selectTab("followingli");
+        mor.out('profcontdiv', html);
+    },
+
+
+    followers = function () {
+        var html = "Followers display not implemented yet";
+        selectTab("followersli");
+        mor.out('profcontdiv', html);
+    },
+
+
+    displayTabs = function (pen) {
+        var html;
+        html = "<ul id=\"proftabsul\">" +
+          "<li id=\"recentli\" class=\"selectedTab\">" + 
+            tablink("Recent Activity", "mor.profile.recent()") + 
+          "</li>" +
+          "<li id=\"bestli\" class=\"unselectedTab\">" +
+            tablink("Top Rated", "mor.profile.best()") + 
+          "</li>" +
+          "<li id=\"followingli\" class=\"unselectedTab\">" +
+            tablink("Following", "mor.profile.following()") + 
+          "</li>" +
+          "<li id=\"followersli\" class=\"unselectedTab\">" +
+            tablink("Followers", "mor.profile.followers()") + 
+          "</li>" +
+        "</ul>";
+        mor.out('proftabsdiv', html);
+        recent();
+    },
+
+
+    cancelProfileEdit = function () {
+        mor.profile.updateHeading();
+        mor.profile.display();
+    },
+
+
+    profEditFail = function (code, errtxt) {
+        mor.out('sysnotice', errtxt);
+    },
+
+
+    saveEditedProfile = function (pen) {
+        var elem, text;
+        elem = mor.byId('profcityin');
+        if(elem) {
+            pen.city = elem.value; }
+        elem = mor.byId('shoutout');
+        if(elem) {
+            pen.shoutout = elem.value; }
+        mor.pen.updatePen(pen, mor.profile.display, profEditFail);
+    },
+
+
+    displayProfEditButtons = function () {
+        var html;
+        if(mor.byId('profcancelb')) {
+            return; }  //already have buttons
+        html = "&nbsp;" +
+            "<button type=\"button\" id=\"profcancelb\">Cancel</button>" +
+            "&nbsp;" +
+            "<button type=\"button\" id=\"profsaveb\">Save</button>";
+        mor.out('profeditbspan', html);
+        mor.onclick('profcancelb', cancelProfileEdit);
+        mor.onclick('profsaveb', mor.profile.save);
+    },
+
+
+    editShout = function () {
+        mor.byId('shoutout').readOnly = false;
+        displayProfEditButtons();
+    },
+
+
+    displayShout = function (pen) {
+        var target, shout = mor.byId('shoutout');
+        shout.readOnly = true;
+        shout.value = pen.shoutout;
+        shout.style.backgroundColor = mor.skinner.lightbg();
+        shout.style.color = mor.colors.text;
+        target = mor.winw - 350;
+        shout.style.width = target + "px";
+        if(mor.profile.authorized(pen)) {
+            mor.onclick('shoutout', editShout); }
+    },
+
+
+    saveUnlessShoutEdit = function () {
+        if(mor.byId('shoutout').readOnly) {
+            mor.profile.save(); }
+    },
+
+
+    editCity = function () {
+        var val, html, elem;
+        elem = mor.byId('profcityin');
+        if(elem) {
+            return; }  //already editing
+        val = mor.byId('profcityspan').innerHTML;
+        if(val === unspecifiedCityText) {
+            val = ""; }
+        html = "<input type=\"text\" id=\"profcityin\" size=\"25\"" +
+                     " placeholder=\"City or Region\"" +
+                     " value=\"" + val + "\"/>";
+        mor.out('profcityspan', html);
+        displayProfEditButtons();
+        mor.onchange('profcityin', saveUnlessShoutEdit);
+        mor.byId('profcityin').focus();
+    },
+
+
+    displayCity = function (pen) {
+        var html = pen.city || unspecifiedCityText;
+        mor.out('profcityspan', html);
+        if(!pen.city) {
+            mor.byId('profcityspan').style.color = "#CCCCCC"; }
+        if(mor.profile.authorized(pen)) {
+            mor.onclick('profcityspan', editCity); }
+    },
+
+
+    mainDisplay = function (pen) {
+        var html;
+        html = "<div id=\"proftopdiv\">" +
+        "<table>" +
+          "<tr>" +
+            "<td id=\"sysnotice\" colspan=\"2\">" +
+          "</tr>" +
+          "<tr>" +
+            "<td id=\"profpictd\" rowspan=\"2\">" +
+              "<img class=\"profpic\" src=\"img/emptyprofpic.png\"/>" +
+            "</td>" +
+            "<td id=\"profshouttd\">" +
+              "<textarea id=\"shoutout\"></textarea>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td id=\"profcitytd\">" +
+              "<span id=\"profcityspan\"> </span>" +
+              "<span id=\"profeditbspan\"> </span>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\">" +
+              "<div id=\"proftabsdiv\"> </div>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\">" +
+              "<div id=\"profcontdiv\"> </div>" +
+            "</td>" +
+          "</tr>" +
+        "</table></div>";
         mor.out('cmain', html);
+        displayShout(pen);
+        displayCity(pen);
+        displayTabs(pen);
         mor.layout.adjust();
     };
 
@@ -800,7 +1006,21 @@ var mor = {};  //Top level function closure container
         updateHeading: function () {
             mor.pen.getPen(writeNavDisplay); },
         settings: function () {
-            mor.pen.getPen(changeSettings); }
+            mor.pen.getPen(changeSettings); },
+        recent: function () {
+            recent(); },
+        best: function () {
+            best(); },
+        following: function () {
+            following(); },
+        followers: function () {
+            followers(); },
+        authorized: function (pen) {
+            if(pen.mid || pen.gid || pen.fbid || pen.twid) {
+                return true; }
+            return false; },
+        save: function () {
+            mor.pen.getPen(saveEditedProfile); }
     };
 
 } () );
@@ -840,6 +1060,17 @@ var mor = {};  //Top level function closure container
         var callback = returnFunc;
         mor.layout.initContent();  //may call for pen name retrieval...
         callback(currpen);
+    },
+
+
+    updatePenName = function (pen, callok, callfail) {
+        var data = mor.objdata(pen);
+        mor.call("updpen?" + mor.login.authparams(), 'POST', data,
+                 function (updpens) {
+                     currpen = updpens[0];
+                     callok(currpen); },
+                 function (code, errtxt) {
+                     callfail(code, errtxt); });
     },
 
 
@@ -923,7 +1154,9 @@ var mor = {};  //Top level function closure container
             returnFunc = callback;
             if(currpen) {
                 return returnCall(); }
-            getPenName(); }
+            getPenName(); },
+        updatePen: function (pen, callbackok, callbackfail) {
+            updatePenName(pen, callbackok, callbackfail); }
     };
 
 } () );
@@ -999,11 +1232,14 @@ var mor = {};  //Top level function closure container
     dialogOk = function () {
         var div = mor.byId('dlgdiv');
         div.style.visibility = "hidden";
+        mor.profile.display();
     },
 
 
     colorToColorArray = function (color) {
         var cvals;
+        if(color.indexOf("#") >= 0) {
+            color = color.slice(1); }
         color = color.toUpperCase();
         cvals = [ parseInt(color.slice(0,2), 16),
                   parseInt(color.slice(2,4), 16),
@@ -1023,15 +1259,44 @@ var mor = {};  //Top level function closure container
     },
 
 
-    colorAdjust = function (colorfield, index, bump) {
-        var color = mor.colors[colorfield], cvals;
-        color = color.slice(1);   //remove leading "#"
-        cvals = colorToColorArray(color);
+    cvalAdjust = function (cvals, index, bump) {
         cvals[index] += bump;
         if(cvals[index] > 255) { cvals[index] = 255; }
         if(cvals[index] < 0) { cvals[index] = 0; }
+    },
+
+
+    colorBump = function (colorfield, index, bump) {
+        var color = mor.colors[colorfield], cvals;
+        cvals = colorToColorArray(color);
+        cvalAdjust(cvals, index, bump);
         color = colorArrayToColor(cvals);
         return color;
+    },
+
+
+    adjustColor = function (color, adj) {
+        var cvals;
+        cvals = colorToColorArray(color);
+        cvalAdjust(cvals, 0, adj);
+        cvalAdjust(cvals, 1, adj);
+        cvalAdjust(cvals, 2, adj);
+        color = colorArrayToColor(cvals);
+        return color;
+    },
+
+
+    getLightBackground = function () {
+        if(!mor.colors.lightbg) {
+            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 4); }
+        return mor.colors.lightbg;
+    },
+
+
+    getDarkBackground = function () {
+        if(!mor.colors.darkbg) {
+            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -6); }
+        return mor.colors.darkbg;
     },
 
 
@@ -1071,17 +1336,17 @@ var mor = {};  //Top level function closure container
                 var outval = e.keyCode;
                 switch(e.keyCode) {
                 case 82:  //R - increase Red
-                    outval = colorAdjust(colorfield, 0, 1); break;
+                    outval = colorBump(colorfield, 0, 1); break;
                 case 114: //r - decrease Red
-                    outval = colorAdjust(colorfield, 0, -1); break;
+                    outval = colorBump(colorfield, 0, -1); break;
                 case 71:  //G - increase Green
-                    outval = colorAdjust(colorfield, 1, 1); break;
+                    outval = colorBump(colorfield, 1, 1); break;
                 case 103: //g - decrease Green
-                    outval = colorAdjust(colorfield, 1, -1); break;
+                    outval = colorBump(colorfield, 1, -1); break;
                 case 85:  //U - increase Blue
-                    outval = colorAdjust(colorfield, 2, 1); break;
+                    outval = colorBump(colorfield, 2, 1); break;
                 case 117: //u - decrease Blue
-                    outval = colorAdjust(colorfield, 2, -1); break;
+                    outval = colorBump(colorfield, 2, -1); break;
                 }
                 if(typeof outval === "string") {
                     e.preventDefault();
@@ -1204,7 +1469,11 @@ var mor = {};  //Top level function closure container
 
     mor.skinner = {
         init: function () {
-            createSkinnerLink(); }
+            createSkinnerLink(); },
+        lightbg: function () {
+            return getLightBackground(); },
+        darkbg: function () {
+            return getDarkBackground(); }
     };
 
 } () );

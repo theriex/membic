@@ -20,7 +20,7 @@ body {
 
 /*
  ************************************************************
- * class and id formatting
+ * general class and id formatting
  * padding: top right bottom left, or topbottom leftright
  ************************************************************
  */
@@ -57,10 +57,28 @@ body {
   padding:0px 5px; position:relative; top:20px; }
 #acthdiv { float:left; }
 #revhdiv { float:right; }
-#cmain { clear:both; }
+#cmain { clear:both; padding: 8px 0px 0px 0px; }
 #dlgdiv { position:absolute; left:70px; top:30px; padding:10px 20px;
   background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #closeline { text-align:right; font-size:x-small; }
 .navico { height:20px; width:20px; margin:0px 10px; border=none; }
+
+/* profile layout */
+#proftopdiv { }
+#profshouttd { padding: 0px 10px; }
+#profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
+.profpic { width:125px; height:125px; }
+#shoutout { width:200px; height:80px; border: 1px solid #666666; }
+#proftabsdiv ul { list-style:none; padding:0; margin:0; }
+#proftabsdiv ul li { display:inline; 
+  border-top-left-radius:5px; border-top-right-radius:5px;
+  border-top:  1px solid #666;
+  border-left: 1px solid #666;
+  border-right: 1px solid #666;
+ }
+#proftabsdiv a { padding: 0 1em; }
+.unselectedTab { border-bottom: 1px solid #666; }
+
+

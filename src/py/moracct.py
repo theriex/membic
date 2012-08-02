@@ -78,10 +78,19 @@ def returnJSON(queryResults, response):
             result += ",\n "
         props = db.to_dict(obj)
         # logging.info("props: " + str(props))
-        result += json.dumps(props, True)
+        jsontxt = json.dumps(props, True)
+        jsontxt = "{\"_id\":" + str(obj.key().id()) + ", " + jsontxt[1:]
+        # logging.info(jsontxt)
+        result += jsontxt
     result = "[" + result + "]"
     response.headers['Content-Type'] = 'application/json'
     response.out.write(result)
+
+
+def intz(val):
+    if not val:
+        return 0
+    return int(val)
 
 
 class MORAccount(db.Model):

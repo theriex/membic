@@ -54,6 +54,11 @@ handlers:
 - url: /newpen.*
   script: src.py.pen.app
 
+## Update a pen name if authorized
+## params: pen, authparams
+- url: /updpen.*
+  script: src.py.pen.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API
