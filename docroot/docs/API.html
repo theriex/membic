@@ -12,22 +12,25 @@
 <p>All the server calls used by the MyOpenReviews site are available
 for general use. </p>
 
-<p>The API consists of HTTP GET or POST calls, with results formatted
-as JSON, XML, or CSV.  Rather than maintain separate documentation to
-describe each of the possible server endpoints and how they are used,
-the mappings are described directly in the actual source.  To see the
-API, check out 
+<p>The API consists of HTTP GET or POST calls that return results
+formatted as JSON (XML and CSV options coming later).  To make sure
+the API documentation stays in sync with what is actually available,
+the docs are maintained in source code, specifically
 <a href="https://github.com/theriex/myopenreviews/blob/master/app.yaml"
-   onclick="window.open('https://github.com/theriex/myopenreviews/blob/master/app.yaml');return false">app.yaml</a> </p>
+   onclick="window.open('https://github.com/theriex/myopenreviews/blob/master/app.yaml');return false">app.yaml</a>, 
+where the server endpoints are defined. Take a look there to see
+descriptions of what is available. </p>
 
-<p>If you want to delve deeper into the processing for any url/script
-pairing, you can substitute the dots in the associated script to read
-the source.  For example if you want to read the <code>/login</code>
-script <code>src.py.moracct.app</code>, check
-out <code>myopenreviews/src/py/moracct.py</code>. </p>
+<p>For details on processing, including data structures, reference the
+python source for the defined script module.  For example if you want
+to read the <code>/login</code>
+script <code>src.py.moracct.app</code>, you would look at
+<code>myopenreviews/src/py/moracct.py</code> for details. </p>
 
-<p>Questions, suggestions, corrections, pull requests etc. are very
-welcome. </p>
+<p>Questions, suggestions, corrections, any and all feedback on
+<a href="https://github.com/theriex/myopenreviews/issues"
+ onclick="window.open('https://github.com/theriex/myopenreviews/issues');return false">GitHub</a>.
+</p>
 
 
 </body>

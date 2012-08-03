@@ -342,7 +342,9 @@ var mor = {};  //Top level function closure container
         initContent: function () {
             initContent(); },
         adjust: function () {
-            fullContentHeight(); }
+            fullContentHeight(); },
+        closeDialog: function () {
+            closeDialog(); }
     };
 
 } () );
@@ -788,11 +790,89 @@ var mor = {};  //Top level function closure container
     },
 
 
+    setPenNameFromInput = function (pen) {
+        var pennamein = mor.byId('pennamein');
+        if(pennamein) {
+            pen.name = pennamein.value; }
+    },
+
+
+    savePenNameSettings = function (pen) {
+        setPenNameFromInput(pen);
+        mor.skinner.save(pen);
+        mor.pen.updatePen(pen,
+                          function () {
+                              mor.layout.closeDialog();
+                              mor.profile.display(); },
+                          function (code, errtxt) {
+                              mor.out('settingsmsgtd', errtxt); });
+    },
+
+
+    cancelPenNameSettings = function () {
+        mor.skinner.cancel();
+        mor.layout.closeDialog();
+    },
+
+
+    displayPenSelect = function (domid, pen) {
+        //if you have multiple pen names available, then display a
+        //"selected pen name" with a dropdown to select an alternate.
+        //If they switch, then reload the entire display accordingly,
+        //returning to the profile display without the settings dialog
+        //open.  Need to show they have switched names, rather than
+        //edited something...
+    },
+
+
+    displayAuthSettings = function (domid, pen) {
+        //dump checkboxes for authorizing access to this pen name via
+        //alternate authentication methods
+    },
+
+
     changeSettings = function (pen) {
-        var html = "<p>Change settings not implemented yet</p>";
-        mor.out('cmain', html);
-        mor.layout.adjust();
-        mor.skinner.init();
+        var html = "<table>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\">" +
+              "<h2>Pen Name Profile Settings</h2>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"pennameselecttd\"></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">Pen Name</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
+                    " value=\"" + pen.name + "\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"settingsauthtd\"></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
+              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "&nbsp;" +
+              "<button type=\"button\" id=\"savebutton\">Save</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out('dlgdiv', html);
+        mor.onchange('pennamein', mor.profile.setPenName);
+        mor.onclick('cancelbutton', cancelPenNameSettings);
+        mor.onclick('savebutton', mor.profile.saveSettings);
+        displayPenSelect('pennameselecttd', pen);
+        displayAuthSettings('settingssauthtd', pen);
+        mor.skinner.init('settingsskintd', pen);
+        mor.byId('dlgdiv').style.visibility = "visible";
+        mor.onescapefunc = cancelPenNameSettings;
     },
 
 
@@ -882,7 +962,7 @@ var mor = {};  //Top level function closure container
 
 
     saveEditedProfile = function (pen) {
-        var elem, text;
+        var elem;
         elem = mor.byId('profcityin');
         if(elem) {
             pen.city = elem.value; }
@@ -1020,7 +1100,11 @@ var mor = {};  //Top level function closure container
                 return true; }
             return false; },
         save: function () {
-            mor.pen.getPen(saveEditedProfile); }
+            mor.pen.getPen(saveEditedProfile); },
+        setPenName: function () {
+            mor.pen.getPen(setPenNameFromInput); },
+        saveSettings: function () {
+            mor.pen.getPen(savePenNameSettings); }
     };
 
 } () );
@@ -1039,20 +1123,28 @@ var mor = {};  //Top level function closure container
 
 
     serializeSettings = function (penName) {
-        penName.settings = mor.y.JSON.stringify(penName.settings);
+        if(typeof penName.settings === 'object') {
+            penName.settings = mor.y.JSON.stringify(penName.settings); }
     },
 
 
     deserializeSettings = function (penName) {
+        var text, obj;
         if(!penName.settings) {
             penName.settings = {}; }
         else if(typeof penName.settings !== 'object') {
-            try {
-                penName.settings = mor.y.JSON.parse(penName.settings);
+            try {  //extra vars help debug things like double encoding..
+                text = penName.settings;
+                obj = mor.y.JSON.parse(text);
+                penName.settings = obj;
             } catch (e) {
                 mor.log("deserializeSettings " + penName.name + ": " + e);
                 penName.settings = {};
             } }
+        if(typeof penName.settings !== 'object') {
+            mor.log("Re-initializing penName settings.  Deserialized value " +
+                    "was not an object: " + penName.settings);
+            penName.settings = {}; }
     },
 
 
@@ -1064,10 +1156,13 @@ var mor = {};  //Top level function closure container
 
 
     updatePenName = function (pen, callok, callfail) {
-        var data = mor.objdata(pen);
+        var data;
+        serializeSettings(pen);
+        data = mor.objdata(pen);
         mor.call("updpen?" + mor.login.authparams(), 'POST', data,
                  function (updpens) {
                      currpen = updpens[0];
+                     deserializeSettings(currpen);
                      callok(currpen); },
                  function (code, errtxt) {
                      callfail(code, errtxt); });
@@ -1088,6 +1183,7 @@ var mor = {};  //Top level function closure container
         mor.call("newpen?" + mor.login.authparams(), 'POST', data,
                  function (newpens) {
                      currpen = newpens[0];
+                     deserializeSettings(currpen);
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
@@ -1128,6 +1224,7 @@ var mor = {};  //Top level function closure container
             if(penNames[i].accessed > lastChosen) {
                 lastChosen = penNames[i].accessed;
                 currpen = penNames[i]; } }
+        mor.skinner.setColorsFromPen(currpen);
         returnCall(currpen);
     },
 
@@ -1221,18 +1318,21 @@ var mor = {};  //Top level function closure container
     },
 
 
-    dialogCancel = function () {
-        var div = mor.byId('dlgdiv');
+    cancelSkinChange = function () {
         mor.colors = oldcolors;
         updateColors();
-        div.style.visibility = "hidden";
     },
 
 
-    dialogOk = function () {
-        var div = mor.byId('dlgdiv');
-        div.style.visibility = "hidden";
-        mor.profile.display();
+    saveSkinChangeSettings = function (pen) {
+        pen.settings.colors = copycolors(mor.colors);
+    },
+
+
+    setColorsFromPen = function (pen) {
+        if(pen && pen.settings.colors) {
+            mor.colors = copycolors(pen.settings.colors);
+            updateColors(); }
     },
 
 
@@ -1368,16 +1468,17 @@ var mor = {};  //Top level function closure container
    },
 
 
-    setColorsFromPreset = function () {
+    setColorsFromPreset = function (pen) {
         var i, sel = mor.byId('presetsel');
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
+                pen.settings.colorPresetId = presets[i].id;
                 setControlValuesAndUpdate(presets[i]);
                 break; } }
     },
 
 
-    presetSelectorHTML = function () {
+    presetSelectorHTML = function (pen) {
         var html, i;
         html = "<table>" +
           "<tr>" + 
@@ -1385,7 +1486,10 @@ var mor = {};  //Top level function closure container
             "<td align=\"left\">" +
                 "<select id=\"presetsel\">";
         for(i = 0; i < presets.length; i += 1) {
-            html += "<option id=\"" + presets[i].id + "\">" + 
+            html += "<option id=\"" + presets[i].id + "\"";
+            if(pen && pen.settings.colorPresetId === presets[i].id) {
+                html += " selected=\"selected\""; }
+            html += ">" + 
                 presets[i].name + "</option>"; }
         html += "</select>" +
           "</tr>" +
@@ -1425,28 +1529,17 @@ var mor = {};  //Top level function closure container
                     " value=\"" + mor.colors.text + "\"/></td>" + 
             hover +
           "</tr>" +
-          "<tr>" +
-            "<td colspan=\"4\" align=\"center\">" + 
-              "<button type=\"button\" id=\"skincancel\">Cancel</button>" +
-              "&nbsp;" +
-              "<button type=\"button\" id=\"skinok\">Ok</button>" +
-            "</td>" +
-          "</tr>" +
         "</table>";
         return html;
     },
 
 
-    displayDialog = function () {
-        var html, div;
+    displayDialog = function (domid, pen) {
+        var html;
         oldcolors = copycolors(mor.colors);
         colorcontrols = [];
-        html = presetSelectorHTML() + colorControlsHTML();
-        mor.out('dlgdiv', html);
-        div = mor.byId('dlgdiv');
-        div.style.visibility = "visible";
-        mor.onclick('skincancel', dialogCancel);
-        mor.onclick('skinok', dialogOk);
+        html = presetSelectorHTML(pen) + colorControlsHTML();
+        mor.out(domid, html);
         colorControl("bgbodyin", "bodybg");
         colorControl("textcolin", "text");
         if(document.styleSheets[0].cssRules[0].style.setProperty) {
@@ -1455,21 +1548,19 @@ var mor = {};  //Top level function closure container
         mor.y.one("#presetsel").on("change", function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                setColorsFromPreset(); });
-    },
-
-
-    createSkinnerLink = function () {
-        var html;
-        html = "<a href=\"skinit.html\" id=\"skinit\">skin it</a>";
-        mor.out('topdiv', html);
-        mor.onclick('skinit', displayDialog);
+                mor.pen.getPen(setColorsFromPreset); });
     };
 
 
     mor.skinner = {
-        init: function () {
-            createSkinnerLink(); },
+        init: function (domid, pen) {
+            displayDialog(domid, pen); },
+        cancel: function () {
+            cancelSkinChange(); },
+        save: function (pen) {
+            saveSkinChangeSettings(pen); },
+        setColorsFromPen: function (pen) {
+            setColorsFromPen(pen); },
         lightbg: function () {
             return getLightBackground(); },
         darkbg: function () {
