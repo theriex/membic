@@ -5,7 +5,7 @@ import logging
 from google.appengine.api import mail
 from Crypto.Cipher import AES
 import base64
-import urllib
+# import urllib
 import time
 import re
 import json
@@ -18,6 +18,36 @@ def pwd2key(password):
     return key
 
 
+def newtoken(username, password):
+    """ Make a new token value and return it """
+    key = pwd2key(password)
+    token = ":" + str(int(round(time.time()))) + ":" + username
+    token = token.rjust(32, 'X')
+    token = AES.new(key, AES.MODE_CBC).encrypt(token)
+    token = base64.b64encode(token)
+    logging.info("newtoken post base64encode: " + token)
+    # token = urllib.quote(token)
+    # logging.info("newtoken post urllib quote: " + token)
+    token = token.replace("+", "-")
+    token = token.replace("/", "_")
+    token = token.replace("=", ".")
+    logging.info("   newtoken url safe value: " + token)
+    return token
+
+
+def decodeToken(key, token):
+    logging.info("decodeToken initial token: " + token)
+    token = token.replace("-", "+")
+    token = token.replace("_", "/")
+    token = token.replace(".", "=")
+    logging.info(" decodeToken base64 value: " + token)
+    # unquote1 = urllib.unquote(token)
+    # logging.info("decodeToken urllib unquote: " + token)
+    token = base64.b64decode(token)
+    token = AES.new(key, AES.MODE_CBC).decrypt(token)
+    return token
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     type = request.get('am')
@@ -28,9 +58,7 @@ def authenticated(request):
         accounts = MORAccount.gql(where, username)
         for account in accounts:
             key = pwd2key(account.password)
-            token = urllib.unquote(token)
-            token = base64.b64decode(token)
-            token = AES.new(key, AES.MODE_CBC).decrypt(token)
+            token = decodeToken(key, token)
             unidx = token.index(username)
             if not token or unidx <= 2:
                 return False
@@ -40,17 +68,6 @@ def authenticated(request):
                 return False
             account._id = account.key().id() # normalized id access
             return account  # True
-
-
-def newtoken(username, password):
-    """ Make a new token value and return it """
-    key = pwd2key(password)
-    token = ":" + str(int(round(time.time()))) + ":" + username
-    token = token.rjust(32, 'X')
-    token = AES.new(key, AES.MODE_CBC).encrypt(token)
-    token = base64.b64encode(token)
-    token = urllib.quote(token)
-    return token
 
 
 def nowISO():
@@ -70,6 +87,13 @@ def canonize(strval):
     return strval
 
 
+def writeJSONResponse(jsontxt, response):
+    """ Factored method to write headers for JSON result """
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Content-Type'] = 'application/json'
+    response.out.write(jsontxt)
+
+
 def returnJSON(queryResults, response):
     """ Factored method to return query results as JSON """
     result = ""
@@ -83,8 +107,7 @@ def returnJSON(queryResults, response):
         # logging.info(jsontxt)
         result += jsontxt
     result = "[" + result + "]"
-    response.headers['Content-Type'] = 'application/json'
-    response.out.write(result)
+    writeJSONResponse(result, response)
 
 
 def intz(val):
@@ -103,6 +126,11 @@ class MORAccount(db.Model):
 
 class WriteAccount(webapp2.RequestHandler):
     def post(self):
+        url = self.request.url;
+        if not (url.startswith('https') or url.startswith('http://localhost')):
+            self.error(405)
+            self.response.out.write("request must be over https")
+            return
         user = self.request.get('user')
         where = "WHERE username=:1 LIMIT 1"
         accounts = MORAccount.gql(where, user)
@@ -124,12 +152,16 @@ class WriteAccount(webapp2.RequestHandler):
         acct.modified = nowISO()
         acct.put()
         token = newtoken(user, pwd)
-        self.response.headers['Content-Type'] = 'application/json'
-        self.response.out.write("[{\"token\":\"" + token + "\"}]")
+        writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
 
 
 class GetToken(webapp2.RequestHandler):
-    def get(self):
+    def post(self):
+        url = self.request.url;
+        if not (url.startswith('https') or url.startswith('http://localhost')):
+            self.error(405)
+            self.response.out.write("request must be over https")
+            return
         username = self.request.get('user')
         password = self.request.get('pass')
         where = "WHERE username=:1 AND password=:2 LIMIT 1"
@@ -138,8 +170,7 @@ class GetToken(webapp2.RequestHandler):
         logging.info("found " + str(found) + " for " + username)
         if found:
             token = newtoken(username, password)
-            self.response.headers['Content-Type'] = 'application/json'
-            self.response.out.write("[{\"token\":\"" + token + "\"}]")
+            writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:
             self.error(401)
             self.response.out.write("No match for those credentials")
@@ -158,18 +189,22 @@ class MailCredentials(webapp2.RequestHandler):
                 content += "\nPassword: " + account.password + "\n"
                 # sender needs to be a valid email address.  This should
                 # change to noreply@myopenreviews.com if traffic gets bad
-                if not self.request.url.startswith('localhost'):
+                if not self.request.url.startswith('http://localhost'):
                     mail.send_mail(
                         sender="MyOpenReviews support <theriex@gmail.com>",
                         to=account.email,
                         subject="MyOpenReviews account login",
                         body=content)
-        self.response.headers['Content-Type'] = 'application/json'
-        self.response.out.write("[]")
+        writeJSONResponse("[]", self.response)
 
 
 class ChangePassword(webapp2.RequestHandler):
     def post(self):
+        url = self.request.url;
+        if not (url.startswith('https') or url.startswith('http://localhost')):
+            self.error(405)
+            self.response.out.write("request must be over https")
+            return
         pwd = self.request.get('pass')
         if not pwd or len(pwd) < 6:
             self.error(412)
@@ -181,8 +216,7 @@ class ChangePassword(webapp2.RequestHandler):
             account.password = pwd
             account.put()
             token = newtoken(account.username, account.password)
-            self.response.headers['Content-Type'] = 'application/json'
-            self.response.out.write("[{\"token\":\"" + token + "\"}]")
+            writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:
             self.error(401)
             self.response.out.write("Authentication failed")

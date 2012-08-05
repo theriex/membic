@@ -40,8 +40,15 @@ var mor = {};  //Top level function closure container
     // general utility functions
     ////////////////////////////////////////
 
-    //ATTENTION: need history push/pop
-    //ATTENTION: need window resize adjustment
+    //ATTENTION: need history pop
+
+    //IE7 has no history.pushState, so route all stack pushes here
+    mor.historyPush = function (data, title, url) {
+        if(history && history.pushState &&
+                                typeof history.pushState === 'function') {
+            history.pushState(data, title, url); }
+    };
+
 
     //shorthand to log text to the console
     mor.log = function (text) {
@@ -142,7 +149,7 @@ var mor = {};  //Top level function closure container
         "post it to " +
         "<a href=\"https://github.com/theriex/myopenreviews/issues\" " +
         "onclick=\"window.open('https://github.com/theriex/myopenreviews/" +
-        "issues');return false\">open issues</a>.  Otherwise reload the" +
+        "issues');return false\">open issues</a>.  Otherwise reload the " +
         "page in your browser and see if it happens again...</p>" +
         "<ul>" +
         "<li>method: " + method +
@@ -170,8 +177,7 @@ var mor = {};  //Top level function closure container
                         var code = resp.status, errtxt = resp.responseText;
                         if(!errs) {
                             errs = []; }
-                        errs = mor.y.Array(errs);
-                        if(errs.indexOf(code) < 0) {
+                        if(mor.y.Array.indexOf(errs, code) < 0) {
                             switch(code) {
                             case 401: return mor.login.logout();
                             case 500: return mor.crash(url, method, data,
@@ -343,6 +349,8 @@ var mor = {};  //Top level function closure container
             initContent(); },
         adjust: function () {
             fullContentHeight(); },
+        displayDoc: function (url) {
+            displayDoc(url); },
         closeDialog: function () {
             closeDialog(); }
     };
@@ -361,11 +369,33 @@ var mor = {};  //Top level function closure container
         authtoken = "",
         authname = "",
         changepwdprompt = "Changing your login password",
+        secsvr = "https://myopenreviews.appspot.com",
+        mainsvr = "http://www.myopenreviews.com",
+
+
+    secureURL = function (endpoint) {
+        var url = window.location.href;
+        if(url.indexOf("http://localhost:8080") === 0 ||   //local dev or
+           url.indexOf("https://") === 0) {                //secure server
+            url = endpoint; }  //relative path url ok, data is encrypted
+        else {  //not secured, try via XDR although it may not work
+            url = "https://myopenreviews.appspot.com/" + endpoint; }
+        return url;
+    },
 
 
     authparams = function () {
         var params = "am=" + authmethod + "&at=" + authtoken + 
                      "&an=" + mor.enc(authname);
+        return params;
+    },
+
+
+    //Produces less cryptic params to read
+    authparamsfull = function () {
+        var params = "authmethod=" + authmethod + 
+                     "&authtoken=" + authtoken + 
+                     "&authname=" + mor.enc(authname);
         return params;
     },
 
@@ -380,6 +410,32 @@ var mor = {};  //Top level function closure container
     },
 
 
+    findReturnToInHash = function () {
+        var hash = window.location.hash, params, av, i, attr, val;
+        if(hash) {
+            if(hash.indexOf("#") === 0) {
+                hash = hash.slice(1); }
+            params = hash.split('&');
+            for(i = 0; i < params.length; i += 1) {
+                av = params[i].split('=');
+                attr = av[0].toLowerCase();
+                val = decodeURIComponent(av[1]);
+                if(attr === "returnto") {
+                    return val; } } }
+    },
+
+
+    doneWorkingWithAccount = function () {
+        var redirect = findReturnToInHash();
+        if(redirect) {
+            redirect += "#" + authparamsfull();
+            window.location.href = redirect; }
+        //ATTENTION this should be going to mor.activity.display() but
+        //currently testing profile...
+        mor.profile.display();
+    },
+
+
     //On FF14 with noscript installed the cookie gets written as a
     //session cookie regardless of the expiration set here.  Same
     //result using Cookie.set, or just setting document.cookie
@@ -391,9 +447,10 @@ var mor = {};  //Top level function closure container
         authmethod = method;
         authtoken = token;
         authname = name;
-        mor.y.Cookie.setSubs("myopenreviewsauth", 
-            { method: authmethod, token: authtoken, name: authname },
-            { expires: expiration });
+        if(!findReturnToInHash()) {
+            mor.y.Cookie.setSubs("myopenreviewsauth", 
+                { method: authmethod, token: authtoken, name: authname },
+                { expires: expiration }); }
         mor.login.updateAuthentDisplay();
     },
 
@@ -405,20 +462,57 @@ var mor = {};  //Top level function closure container
             authtoken = authentication.token;
             authname = authentication.name; }
         mor.login.updateAuthentDisplay();
-        return authtoken;
+        return authtoken;  //true if set earlier
+    },
+
+
+    readURLHash = function () {
+        var hash = window.location.hash, params, av, i, attr, val,
+            token, method, name, returi, command, url, retval;
+        if(hash) {
+            if(hash.indexOf("#") === 0) {
+                hash = hash.slice(1); }
+            params = hash.split('&');
+            for(i = 0; i < params.length; i += 1) {
+                av = params[i].split('=');
+                attr = av[0].toLowerCase();
+                val = decodeURIComponent(av[1]);
+                switch(attr) {
+                case "authtoken":
+                case "at":  //lost encoding reading it out of URL, replace
+                    token = mor.enc(val); break;
+                case "authmethod":
+                case "am":
+                    method = val; break;
+                case "authname":
+                case "an":
+                    name = val; break; 
+                case "returnto":
+                    returi = val; break;
+                case "command":
+                    command = val; break;
+                } }  //end hash walk
+            if(method && token && name) {
+                setAuthentication(method, token, name);
+                if(!returi) {  //back home so clean up the location bar
+                    url = window.location.pathname + window.location.search;
+                    mor.historyPush("", document.title, url); }
+                retval = command || "done"; } }
+        return retval;
     },
 
 
     changePassword = function () {
-        var pwd = mor.byId('npin').value, data;
+        var pwd = mor.byId('npin').value, data, url;
         if(!pwd || !pwd.trim()) {
             changepwdprompt = "New password must have a value";
             return mor.login.displayChangePassForm(); }
+        url = secureURL("chgpwd");
         data = "pass=" + mor.enc(pwd) + "&" + mor.login.authparams();
-        mor.call("chgpwd", 'POST', data,
+        mor.call(url, 'POST', data,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, authname);
-                     mor.activity.display(); },
+                     doneWorkingWithAccount(); },
                  function (code, errtxt) {
                      changepwdprompt = errtxt;
                      mor.login.displayChangePassForm(); });
@@ -427,6 +521,9 @@ var mor = {};  //Top level function closure container
 
     displayChangePassForm = function () {
         var html = "";
+        if(secureURL("chgpwd") !== "chgpwd") {
+            window.location.href = secsvr + "#returnto=" + mor.enc(mainsvr) +
+                "&command=chgpwd&" + authparams(); }
         html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
         "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
         "<table>" +
@@ -444,7 +541,7 @@ var mor = {};  //Top level function closure container
           "</tr>" +
         "</table>";
         mor.out('contentdiv', html);
-        mor.onclick('cancelbutton', mor.activity.display);
+        mor.onclick('cancelbutton', doneWorkingWithAccount);
         mor.onclick('changebutton', changePassword);
         mor.onchange('npin', changePassword);
         mor.layout.adjust();
@@ -474,15 +571,14 @@ var mor = {};  //Top level function closure container
     createAccount = function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
-            email = mor.byId('emailin').value || "",
-            data = "";
+            maddr = mor.byId('emailin').value || "",
+            data = "", url;
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('maccstatdiv', "Please specify a username and password");
             return; }
-        data = "user=" + mor.enc(username) +
-               "&pass=" + mor.enc(password) +
-               "&email=" + mor.enc(email);
-        mor.call("newacct", 'POST', data, 
+        url = secureURL("newacct");
+        data = mor.objdata({ user: username, pass: password, email: maddr });
+        mor.call(url, 'POST', data, 
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
                      mor.login.init(); },
@@ -611,22 +707,23 @@ var mor = {};  //Top level function closure container
     userpassLogin = function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
-            url="login";
+            url, data;
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('loginstatdiv', "Please specify a username and password");
             return; }
-        url += "?user=" + mor.enc(username) + "&pass=" + mor.enc(password);
-        mor.call(url, 'GET', null,
+        url = secureURL("login");
+        data = mor.objdata({ user: username, pass: password });
+        mor.call(url, 'POST', data,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
-                     mor.activity.display(); },
+                     doneWorkingWithAccount(); },
                  function (code, errtxt) {
                      mor.out('loginstatdiv', "Login failed: " + errtxt); },
                  [401]);
     },
 
 
-    displayForm = function () {
+    displayLoginForm = function () {
         var cdiv, ldiv, html = "";
         cdiv = mor.byId('contentdiv');
         mor.out('contentdiv', mor.introtext);
@@ -647,24 +744,32 @@ var mor = {};  //Top level function closure container
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\">" +
-              "<button type=\"button\" id=\"loginbutton\">Login</button>" +
+              "<a id=\"seclogin\" href=\"#secure login\"" +
+                " title=\"How login credentials are handled securely\"" +
+                " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
+                "return false;\">(secured)</a>" +
+              "&nbsp;&nbsp;&nbsp;" +
+              "<button type=\"button\" id=\"loginbutton\">Log in</button>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"left\">" +
               "<a id=\"macc\" href=\"create new account...\"" + 
+                " title=\"Set up a new local login\"" +
               ">" + "Create a new account</a>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"left\">" +
               "<a id=\"forgot\" href=\"forgot credentials...\"" + 
+                " title=\"Retrieve your credentials using the email you set\"" +
               ">" + "forgot my password</a>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out('logindiv', html);
         mor.onclick('macc', displayNewAccountForm);
+        mor.byId('seclogin').style.fontSize = "x-small";
         mor.byId('forgot').style.fontSize = "x-small";
         mor.onclick('forgot', displayEmailCredForm);
         mor.onclick('loginbutton', userpassLogin);
@@ -680,11 +785,17 @@ var mor = {};  //Top level function closure container
 
     mor.login = {
         init: function () {
+            var command = readURLHash();
             if(authtoken || readAuthCookie()) {
-                //this should be mor.activity.display()
-                mor.profile.display(); } 
-            else {
-                displayForm(); } },
+                if(command === "chgpwd") {
+                    displayChangePassForm(); }
+                else {
+                    doneWorkingWithAccount(); } }
+            else if(secureURL("login") === "login") {
+                displayLoginForm(); }
+            else {  //redirect to https server to start
+                window.location.href = secsvr + "#returnto=" + 
+                    mor.enc(mainsvr); } },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },
         displayChangePassForm: function () {
@@ -1306,7 +1417,7 @@ var mor = {};  //Top level function closure container
         mor.byId('bodyid').style.backgroundColor = mor.colors.bodybg;
         mor.byId('bodyid').style.color = mor.colors.text;
         rules = document.styleSheets[0].cssRules;
-        for(i = 0; i < rules.length; i += 1) {
+        for(i = 0; rules && i < rules.length; i += 1) {
             if(mor.prefixed(rules[i].cssText, "A:link")) {
                 safeSetColorProp(rules[i], mor.colors.link); }
             else if(mor.prefixed(rules[i].cssText, "A:visited")) {
