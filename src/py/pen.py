@@ -1,8 +1,10 @@
 import webapp2
 import datetime
 from google.appengine.ext import db
+from google.appengine.api import images
 import logging
 from moracct import *
+import urllib
 
 
 def authorized(acc, pen):
@@ -86,7 +88,7 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Invalid value for name")
             return
         id = self.request.get('_id')
-        logging.info("UpdatePenName id: " + id);
+        logging.info("UpdatePenName id: " + id)
         pen = PenName.get_by_id(int(id))
         if not pen:
             self.error(404)
@@ -104,8 +106,7 @@ class UpdatePenName(webapp2.RequestHandler):
         pen.fbid = intz(self.request.get('fbid'))
         pen.twid = intz(self.request.get('twid'))
         pen.shoutout = self.request.get('shoutout')
-        #figure out how to do this
-        #pen.profpic = self.request.get('profpic')
+        #pen.profpic is uploaded separately
         pen.city = self.request.get('city')
         pen.settings = self.request.get('settings')
         pen.accessed = nowISO()
@@ -119,7 +120,56 @@ class UpdatePenName(webapp2.RequestHandler):
         returnJSON([ pen ], self.response)
         
 
+class UploadProfPic(webapp2.RequestHandler):
+    def post(self):
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        profid = self.request.get('_id')
+        logging.info("UploadProfPic id: " + profid)
+        pen = PenName.get_by_id(int(profid))
+        if not pen:
+            self.error(404)
+            self.response.write("PenName: " + str(profid) + " not found.")
+            return
+        authok = authorized(acc, pen)
+        if not authok:
+            self.error(401)
+            self.response.write("You may only update your own pen name.")
+            return
+        pen.profpic = db.Blob(self.request.get("picfilein"))
+        pen.profpic = images.resize(pen.profpic, 160, 160)
+        # change profpic to a 160x160 png...
+        pen.put()
+        redurl = self.request.get('returnto')
+        if not redurl:
+            redurl = "http://www.myopenreviews.com#profile"
+        redurl = urllib.unquote(redurl)
+        redurl = str(redurl)
+        logging.info("UploadProfPic redirecting to " + redurl);
+        self.redirect(redurl)
+
+
+class GetProfPic(webapp2.RequestHandler):
+    def get(self):
+        profid = self.request.get('profileid');
+        pen = PenName.get_by_id(int(profid))
+        havepic = pen and pen.profpic
+        if not havepic:
+            self.error(404)
+            self.response.write("Profile pic for PenName: " + str(profid) + 
+                                " not found.")
+            return
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.out.write(pen.profpic)
+
+
+
 app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/newpen', NewPenName),
-                               ('/updpen', UpdatePenName)], debug=True)
+                               ('/updpen', UpdatePenName),
+                               ('/profpicupload', UploadProfPic),
+                               ('/profpic', GetProfPic)], debug=True)
 

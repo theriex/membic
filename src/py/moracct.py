@@ -9,6 +9,7 @@ import base64
 import time
 import re
 import json
+from google.appengine.api.datastore_types import Blob
 
 def pwd2key(password):
     """ make a password into an encryption key """
@@ -102,6 +103,10 @@ def returnJSON(queryResults, response):
             result += ",\n "
         props = db.to_dict(obj)
         # logging.info("props: " + str(props))
+        for prop, val in props.iteritems():
+            if(isinstance(val, Blob)):
+                props[prop] = str(obj.key().id())
+            logging.info(prop + ": " + str(props[prop]))
         jsontxt = json.dumps(props, True)
         jsontxt = "{\"_id\":" + str(obj.key().id()) + ", " + jsontxt[1:]
         # logging.info(jsontxt)

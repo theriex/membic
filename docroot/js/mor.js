@@ -217,6 +217,18 @@ var mor = {};  //Top level function closure container
     };
 
 
+    //Referencing variables starting with an underscore causes jslint
+    //complaints, but it still seems the clearest and safest way to
+    //handle an ID value in the server side Python JSON serialization.
+    //This utility method encapsulates the access, and provides a
+    //single point of adjustment if the server side logic changes.
+    mor.instId = function (obj) {
+        var idfield = "_id";
+        if(obj && obj.hasOwnProperty(idfield)) {
+            return obj[idfield]; }
+    };
+
+
 } () );
 
 
@@ -1151,6 +1163,57 @@ var mor = {};  //Top level function closure container
     },
 
 
+    cancelPicUpload = function () {
+        mor.out('overlaydiv', "");
+        mor.byId('overlaydiv').style.visibility = "hidden";
+        mor.onescapefunc = null;
+    },
+
+
+    //actual submitted form, so triggers full reload
+    displayUploadPicForm = function (pen) {
+        var odiv, html = "", authfields, i, attval;
+        authfields = mor.login.authparams().split("&");
+        for(i = 0; i < authfields.length; i += 1) {
+            attval = authfields[i].split("=");
+            html += "<input type=\"hidden\" name=\"" + attval[0] + "\"" +
+                                          " value=\"" + attval[1] + "\"/>"; }
+        html += "<input type=\"hidden\" name=\"_id\" value=\"" + 
+            mor.instId(pen) + "\"/>";
+        html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
+            mor.enc(window.location.href + "#profile") + "\"/>";
+        html = "<form action=\"/profpicupload\"" +
+                    " enctype=\"multipart/form-data\" method=\"post\">" +
+            html +
+            "<table>" +
+              "<tr><td>Upload New Profile Pic</td></tr>" +
+              "<tr><td><input type=\"file\" name=\"picfilein\"/></td></tr>" +
+              "<tr><td align=\"center\">" +
+                    "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
+            "</form>";
+        mor.out('overlaydiv', html);
+        odiv = mor.byId('overlaydiv');
+        odiv.style.visibility = "visible";
+        odiv.style.backgroundColor = mor.skinner.lightbg();
+        mor.onescapefunc = cancelPicUpload;
+        mor.byId('picfilein').focus();
+    },
+
+
+    displayPic = function (pen) {
+        var html = "img/emptyprofpic.png";
+        if(pen.profpic) {
+            html = "profpic?profileid=" + mor.instId(pen); }
+        html = "<img class=\"profpic\" src=\"" + html + "\"/>";
+        mor.out('profpictd', html);
+        if(mor.profile.authorized(pen)) {
+            mor.onclick('profpictd', function () {
+                if(mor.byId('profcancelb')) {  //save other field edits so
+                    saveEditedProfile(pen); }  //they aren't lost on reload
+                displayUploadPicForm(pen); }); }
+    },
+
+
     mainDisplay = function (pen) {
         var html;
         html = "<div id=\"proftopdiv\">" +
@@ -1186,6 +1249,7 @@ var mor = {};  //Top level function closure container
         mor.out('cmain', html);
         displayShout(pen);
         displayCity(pen);
+        displayPic(pen);
         displayTabs(pen);
         mor.layout.adjust();
     };

@@ -59,6 +59,16 @@ handlers:
 - url: /updpen.*
   script: src.py.pen.app
 
+## Upload a profile pic
+## params: picfilein, _id (PenName instance id), authparams
+- url: /profpicupload.*
+  script: src.py.pen.app
+
+## Retrieve a profile pic
+## params: profileid
+- url: /profpic.*
+  script: src.py.pen.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API
