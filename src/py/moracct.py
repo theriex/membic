@@ -26,22 +26,22 @@ def newtoken(username, password):
     token = token.rjust(32, 'X')
     token = AES.new(key, AES.MODE_CBC).encrypt(token)
     token = base64.b64encode(token)
-    logging.info("newtoken post base64encode: " + token)
+    # logging.info("newtoken post base64encode: " + token)
     # token = urllib.quote(token)
     # logging.info("newtoken post urllib quote: " + token)
     token = token.replace("+", "-")
     token = token.replace("/", "_")
     token = token.replace("=", ".")
-    logging.info("   newtoken url safe value: " + token)
+    # logging.info("   newtoken url safe value: " + token)
     return token
 
 
 def decodeToken(key, token):
-    logging.info("decodeToken initial token: " + token)
+    # logging.info("decodeToken initial token: " + token)
     token = token.replace("-", "+")
     token = token.replace("_", "/")
     token = token.replace(".", "=")
-    logging.info(" decodeToken base64 value: " + token)
+    # logging.info(" decodeToken base64 value: " + token)
     # unquote1 = urllib.unquote(token)
     # logging.info("decodeToken urllib unquote: " + token)
     token = base64.b64decode(token)
@@ -106,7 +106,7 @@ def returnJSON(queryResults, response):
         for prop, val in props.iteritems():
             if(isinstance(val, Blob)):
                 props[prop] = str(obj.key().id())
-            logging.info(prop + ": " + str(props[prop]))
+            # logging.info(prop + ": " + str(props[prop]))
         jsontxt = json.dumps(props, True)
         jsontxt = "{\"_id\":" + str(obj.key().id()) + ", " + jsontxt[1:]
         # logging.info(jsontxt)
@@ -172,7 +172,7 @@ class GetToken(webapp2.RequestHandler):
         where = "WHERE username=:1 AND password=:2 LIMIT 1"
         accounts = MORAccount.gql(where, username, password)
         found = accounts.count()
-        logging.info("found " + str(found) + " for " + username)
+        # logging.info("found " + str(found) + " for " + username)
         if found:
             token = newtoken(username, password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)

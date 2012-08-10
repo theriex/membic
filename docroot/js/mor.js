@@ -229,6 +229,33 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.makelink = function (url) {
+        var html, suffix = "";
+        if(!url) {
+            return ""; }
+        //strip any common trailing punctuation on the url if found
+        if(/[\.\,\)]$/.test(url)) {
+            suffix = url.slice(-1);
+            url = url.slice(0, -1); }
+        html = "<a href=\"" + url + "\" onclick=\"window.open('" + url +
+            "');return false;\">" + url + "</a>" + suffix;
+        return html;
+    };
+
+
+    //Make the text into display html.  Newlines become <br/>s and
+    //urls become hrefs that open in a new window/tab.  Trying to
+    //avoid complex regex since those are annoying to maintain.  Ok
+    //with not automatically picking up on things that don't start
+    //with "http".  Links other than web not desired.
+    mor.linkify = function (txt) {
+        txt = txt.replace(/\n/g, "<br/>");
+        txt = txt.replace(/https?:\S+/g, function(url) {
+            return mor.makelink(url); });
+        return txt;
+    };
+
+
 } () );
 
 
@@ -437,14 +464,27 @@ var mor = {};  //Top level function closure container
     },
 
 
+    clearHash = function () {
+        var url = window.location.pathname + window.location.search;
+        mor.historyPush("", document.title, url); 
+    },
+
+
     doneWorkingWithAccount = function () {
-        var redirect = findReturnToInHash();
+        var tag, redirect = findReturnToInHash();
         if(redirect) {
             redirect += "#" + authparamsfull();
             window.location.href = redirect; }
-        //ATTENTION this should be going to mor.activity.display() but
-        //currently testing profile...
-        mor.profile.display();
+        tag = window.location.hash;
+        if(tag.indexOf("#") === 0) {
+            tag = tag.slice(1); }
+        if(tag === "profile") {
+            clearHash();
+            mor.profile.display(); }
+        else {
+            //ATTENTION this should be going to mor.activity.display() but
+            //currently testing profile so making that the default.
+            mor.profile.display(); }
     },
 
 
@@ -507,8 +547,7 @@ var mor = {};  //Top level function closure container
             if(method && token && name) {
                 setAuthentication(method, token, name);
                 if(!returi) {  //back home so clean up the location bar
-                    url = window.location.pathname + window.location.search;
-                    mor.historyPush("", document.title, url); }
+                    clearHash(); }
                 retval = command || "done"; } }
         return retval;
     },
@@ -1089,7 +1128,7 @@ var mor = {};  //Top level function closure container
         elem = mor.byId('profcityin');
         if(elem) {
             pen.city = elem.value; }
-        elem = mor.byId('shoutout');
+        elem = mor.byId('shouttxt');
         if(elem) {
             pen.shoutout = elem.value; }
         mor.pen.updatePen(pen, mor.profile.display, profEditFail);
@@ -1110,27 +1149,48 @@ var mor = {};  //Top level function closure container
     },
 
 
-    editShout = function () {
-        mor.byId('shoutout').readOnly = false;
+    styleShout = function (shout) {
+        var target;
+        shout.style.color = mor.colors.text;
+        shout.style.backgroundColor = mor.skinner.lightbg();
+        target = mor.winw - 350;
+        shout.style.width = target + "px";
+    },
+
+
+    editShout = function (pen) {
+        var html, shout;
+        html = "<textarea id=\"shouttxt\" class=\"shoutout\"></textarea>";
+        mor.out('profshouttd', html);
+        shout = mor.byId('shouttxt');
+        styleShout(shout);
+        shout.readOnly = false;
+        shout.value = pen.shoutout;
+        shout.focus();
         displayProfEditButtons();
     },
 
 
     displayShout = function (pen) {
-        var target, shout = mor.byId('shoutout');
-        shout.readOnly = true;
-        shout.value = pen.shoutout;
-        shout.style.backgroundColor = mor.skinner.lightbg();
-        shout.style.color = mor.colors.text;
-        target = mor.winw - 350;
-        shout.style.width = target + "px";
+        var html, shout;
+        html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
+        mor.out('profshouttd', html);
+        shout = mor.byId('shoutdiv');
+        styleShout(shout);
+        shout.style.overflow = "auto";
+        //the textarea has a default border, so adding an invisible
+        //border here to keep things from jumping around.
+        shout.style.border = "1px solid " + mor.colors.bodybg;
+        mor.out('shoutdiv', mor.linkify(pen.shoutout));
         if(mor.profile.authorized(pen)) {
-            mor.onclick('shoutout', editShout); }
+            mor.onclick('shoutdiv', function () {
+                editShout(pen); }); }
     },
 
 
+
     saveUnlessShoutEdit = function () {
-        if(mor.byId('shoutout').readOnly) {
+        if(mor.byId('shoutdiv')) {
             mor.profile.save(); }
     },
 
@@ -1226,7 +1286,7 @@ var mor = {};  //Top level function closure container
               "<img class=\"profpic\" src=\"img/emptyprofpic.png\"/>" +
             "</td>" +
             "<td id=\"profshouttd\">" +
-              "<textarea id=\"shoutout\"></textarea>" +
+              "<div id=\"shoutdiv\" class=\"shoutout\"></div>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
