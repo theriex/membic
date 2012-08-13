@@ -249,9 +249,11 @@ var mor = {};  //Top level function closure container
     //with not automatically picking up on things that don't start
     //with "http".  Links other than web not desired.
     mor.linkify = function (txt) {
-        txt = txt.replace(/\n/g, "<br/>");
+        if(!txt) {
+            return ""; }
         txt = txt.replace(/https?:\S+/g, function(url) {
             return mor.makelink(url); });
+        txt = txt.replace(/\n/g, "<br/>");
         return txt;
     };
 
@@ -520,7 +522,7 @@ var mor = {};  //Top level function closure container
 
     readURLHash = function () {
         var hash = window.location.hash, params, av, i, attr, val,
-            token, method, name, returi, command, url, retval;
+            token, method, name, returi, command, retval;
         if(hash) {
             if(hash.indexOf("#") === 0) {
                 hash = hash.slice(1); }
@@ -947,7 +949,9 @@ var mor = {};  //Top level function closure container
             ">" + pen.name + "</a>";
         mor.out('penhnamespan', html);
         html = mor.imglink("#Settings","Adjust settings for " + pen.name,
-                           "mor.profile.settings()", "settings.png");
+                           "mor.profile.settings()", "settings.png") +
+            mor.imglink("#PenNames","Switch Pen Names",
+                        "mor.profile.penswitch()", "pen.png");
         mor.out('penhbuttonspan', html);
     },
 
@@ -977,16 +981,6 @@ var mor = {};  //Top level function closure container
     },
 
 
-    displayPenSelect = function (domid, pen) {
-        //if you have multiple pen names available, then display a
-        //"selected pen name" with a dropdown to select an alternate.
-        //If they switch, then reload the entire display accordingly,
-        //returning to the profile display without the settings dialog
-        //open.  Need to show they have switched names, rather than
-        //edited something...
-    },
-
-
     displayAuthSettings = function (domid, pen) {
         //dump checkboxes for authorizing access to this pen name via
         //alternate authentication methods
@@ -996,15 +990,12 @@ var mor = {};  //Top level function closure container
     changeSettings = function (pen) {
         var html = "<table>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\">" +
-              "<h2>Pen Name Profile Settings</h2>" +
+            "<td colspan=\"2\" align=\"center\" id=\"pensettitletd\">" +
+              "<h2>Settings for " + pen.name + "</h2>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" id=\"pennameselecttd\"></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">Pen Name</td>" +
@@ -1030,11 +1021,44 @@ var mor = {};  //Top level function closure container
         mor.onchange('pennamein', mor.profile.setPenName);
         mor.onclick('cancelbutton', cancelPenNameSettings);
         mor.onclick('savebutton', mor.profile.saveSettings);
-        displayPenSelect('pennameselecttd', pen);
         displayAuthSettings('settingssauthtd', pen);
         mor.skinner.init('settingsskintd', pen);
         mor.byId('dlgdiv').style.visibility = "visible";
         mor.onescapefunc = cancelPenNameSettings;
+    },
+
+
+    changeToSelectedPen = function () {
+        var i, sel = mor.byId('penselect');
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                if(sel.options[i].id === 'newpenopt') {
+                    mor.pen.newPenName(mor.profile.display); }
+                else {
+                    mor.pen.selectPenByName(sel.options[i].value); }
+                break; } }
+    },
+
+
+    changePens = function (pen) {
+        var html = "", pens = mor.pen.getPenNames(), i;
+        html += "<div id=\"proftoptive\">";  //re-use to keep same display
+        html += "<span class=\"headingtxt\">Select Pen Name: </span>";
+        html += "<select id=\"penselect\">";
+        for(i = 0; i < pens.length; i += 1) {
+            html += "<option id=\"" + mor.instId(pens[i]) + "\"";
+            if(pens[i].name === pen.name) {
+                html += " selected=\"selected\""; }
+            html += ">" + pens[i].name + "</option>"; }
+        html += "<option id=\"newpenopt\">New Pen Name</option>" +
+            "</select>" +
+            "&nbsp;" + 
+            "<button type=\"button\" id=\"penselectok\">Ok</button>" +
+            "</div>";
+        mor.out('cmain', html);
+        mor.layout.adjust();
+        mor.onchange('penselect', changeToSelectedPen);
+        mor.onclick('penselectok', changeToSelectedPen);
     },
 
 
@@ -1276,6 +1300,13 @@ var mor = {};  //Top level function closure container
 
     mainDisplay = function (pen) {
         var html;
+        //redisplay the heading in case we just switched pen names
+        //and this method is being called directly, rather than from
+        //general nav clicks.
+        writeNavDisplay(pen);
+        //reset the colors in case that work got dropped in the
+        //process of updating the persistent state
+        mor.skinner.setColorsFromPen(pen);
         html = "<div id=\"proftopdiv\">" +
         "<table>" +
           "<tr>" +
@@ -1322,6 +1353,8 @@ var mor = {};  //Top level function closure container
             mor.pen.getPen(writeNavDisplay); },
         settings: function () {
             mor.pen.getPen(changeSettings); },
+        penswitch: function () {
+            mor.pen.getPen(changePens); },
         recent: function () {
             recent(); },
         best: function () {
@@ -1418,6 +1451,9 @@ var mor = {};  //Top level function closure container
         mor.call("newpen?" + mor.login.authparams(), 'POST', data,
                  function (newpens) {
                      currpen = newpens[0];
+                     if(!penNames) {
+                         penNames = []; }
+                     penNames.push(currpen);
                      deserializeSettings(currpen);
                      returnCall(); },
                  function (code, errtxt) {
@@ -1447,6 +1483,20 @@ var mor = {};  //Top level function closure container
         mor.onclick('createbutton', createPenName);
         mor.layout.adjust();
         mor.byId('pnamein').focus();
+    },
+
+
+    selectPenByName = function (name) {
+        var i;
+        for(i = 0; i < penNames.length; i += 1) {
+            if(penNames[i].name === name) {
+                currpen = penNames[i];
+                mor.skinner.setColorsFromPen(currpen);
+                //update the accessed time so that the latest pen name is
+                //chosen by default next time. 
+                updatePenName(penNames[i], 
+                              mor.profile.display, mor.profile.display);
+                break; } }
     },
 
 
@@ -1488,7 +1538,14 @@ var mor = {};  //Top level function closure container
                 return returnCall(); }
             getPenName(); },
         updatePen: function (pen, callbackok, callbackfail) {
-            updatePenName(pen, callbackok, callbackfail); }
+            updatePenName(pen, callbackok, callbackfail); },
+        getPenNames: function () { 
+            return penNames; },
+        newPenName: function (callback) {
+            returnFunc = callback;
+            newPenNameDisplay(); },
+        selectPenByName: function (name) {
+            selectPenByName(name); }
     };
 
 } () );

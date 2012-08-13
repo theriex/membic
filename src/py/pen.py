@@ -6,7 +6,6 @@ import logging
 from moracct import *
 import urllib
 
-
 def authorized(acc, pen):
     matched = False
     if acc._id == pen.mid or acc._id == pen.gid or \

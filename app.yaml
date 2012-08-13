@@ -8,6 +8,9 @@ libraries:
 - name: pycrypto
   version: "2.3"
 
+builtins:
+- remote_api: on
+
 handlers:
 ######################################################################
 ##                  API
