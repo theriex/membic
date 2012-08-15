@@ -36,6 +36,13 @@ var mor = {};  //Top level function closure container
     }
 
 
+    if(!String.prototype.capitalize) { 
+        String.prototype.capitalize = function () {
+            return this.charAt(0).toUpperCase() + this.slice(1);
+        };
+    }
+
+
     ////////////////////////////////////////
     // general utility functions
     ////////////////////////////////////////
@@ -213,6 +220,18 @@ var mor = {};  //Top level function closure container
                  " onclick=\"" + funcstr + "return false;\"" +
                "><img class=\"navico\" src=\"" + imgfile + "\"" +
                     " border=\"0\"/></a>";
+        return html;
+    };
+
+
+    //factored method to create a checkbox with a label.
+    mor.checkbox = function (name, value, label) {
+        var html;
+        if(!label) {
+            label = value.capitalize(); }
+        html = "<input type=\"checkbox\" name=\"" + name + "\" value=\"" +
+            value + "\" id=\"" + value + "\"/>" + 
+            "<label for=\"" + value + "\">" + label + "</label>";
         return html;
     };
 
@@ -869,7 +888,16 @@ var mor = {};  //Top level function closure container
 (function () {
     "use strict";
 
-    var
+    var reviewTypes = [
+        { type: "book", plural: "books", img: "TypeBook50.png" },
+        { type: "movie", plural: "movies", img: "TypeMovie50.png" },
+        { type: "video", plural: "videos", img: "TypeVideo50.png" },
+        { type: "music", plural: "songs", img: "TypeSong50.png" },
+        { type: "spot", plural: "places" },
+        { type: "wine", plural: "wines" },
+        { type: "beer", plural: "beers" },
+        { type: "food", plural: "foods" }
+        ],
 
     writeNavDisplay = function () {
         var html = "<a href=\"#Write a Review\"" +
@@ -891,7 +919,9 @@ var mor = {};  //Top level function closure container
         display: function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
-            writeNavDisplay(); }
+            writeNavDisplay(); },
+        getReviewTypes: function () {
+            return reviewTypes; }
     };
 
 } () );
@@ -939,6 +969,7 @@ var mor = {};  //Top level function closure container
     "use strict";
 
     var unspecifiedCityText = "City not specified",
+        searchparams = {},
 
 
     writeNavDisplay = function (pen) {
@@ -1115,6 +1146,141 @@ var mor = {};  //Top level function closure container
     },
 
 
+    readSearchParamsFromForm = function () {
+        var checkboxes, options, i, since;
+        searchparams.reqmin = [];
+        checkboxes = document.getElementsByName("reqmin");
+        for(i = 0; i < checkboxes.length; i += 1) {
+            if(checkboxes[i].checked) {
+                searchparams.reqmin.push(checkboxes[i].value); } }
+        options = mor.byId('srchactivesel').options;
+        for(i = 0; i < options.length; i += 1) {
+            if(options[i].selected) {
+                switch(options[i].id) {
+                case 'pastweek':
+                    since = 7; break;
+                case 'pastmonth':
+                    since = 30; break;
+                case 'pastyear':
+                    since = 365; break;
+                case 'whenever':
+                    since = -1; break; }
+                break; } }
+        searchparams.activeDaysAgo = since;
+        searchparams.includeFollowing = false;
+        searchparams.includeBlocked = false;
+        checkboxes = document.getElementsByName("srchinc");
+        for(i = 0; i < checkboxes.length; i += 1) {
+            if(checkboxes[i].checked) {
+                if(checkboxes[i].value === 'following') {
+                    searchparams.includeFollowing = true; }
+                if(checkboxes[i].value === 'blocked') {
+                    searchparams.includeBlocked = true; } } }
+    },
+
+
+    setFormValuesFromSearchParams = function () {
+        var i, options, since;
+        if(searchparams.reqmin) {
+            for(i = 0; i < searchparams.reqmin.length; i += 1) {
+                mor.byId(searchparams.reqmin[i]).checked = true; } }
+        if(searchparams.activeDaysAgo) {
+            since = searchparams.activeDaysAgo;
+            options = mor.byId('srchactivesel').options;
+            for(i = 0; i < options.length; i += 1) {
+                switch(options[i].id) {
+                case 'pastweek':
+                    options[i].selected = (since === 7); break;
+                case 'pastmonth':
+                    options[i].selected = (since === 30); break;
+                case 'pastyear':
+                    options[i].selected = (since === 365); break;
+                case 'whenever':
+                    options[i].selected = (since <= 0); break; } } }
+        mor.byId('following').checked = searchparams.includeFollowing;
+        mor.byId('blocked').checked = searchparams.includeBlocked;
+    },
+
+
+    startPenSearch = function () {
+        var params, qstr = mor.byId('searchtxt').value;
+        readSearchParamsFromForm();
+        mor.byId('searchoptionsdiv').style.display = "none";
+        params = mor.login.authparams() + "&qstr=" + mor.enc(qstr);
+        mor.call("srchpens?" + params, 'GET', null,
+                 function (result) {
+                     mor.out('searchresults', "not implemented yet"); },
+                 function (code, errtxt) {
+                     mor.out('searchresults', 
+                             "error code: " + code + " " + errtxt); });
+    },
+
+
+    displaySearchForm = function () {
+        var html = "", types = mor.review.getReviewTypes(), i, tdc = 0;
+        selectTab("searchli");
+        html += "<p>" +
+            "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
+                  " placeholder=\"name, city or shoutout partial text\"" +
+                  " value=\"\"/>" +
+            "&nbsp;" +
+            "<button type=\"button\" id=\"searchbutton\">Search</button>" +
+            "&nbsp;" +
+            "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
+              "<a href=\"#options\"" +
+                " title=\"advanced search options\"" +
+                " onclick=\"mor.profile.togglesrchopts();return false;\"" +
+              ">options</a>";
+            "</span>" +
+            "</p>";
+        html += "<div id=\"searchoptionsdiv\" class=\"formstyle\">";
+        //require at least top 20 reviews 
+        html += "<b>Must have reviewed at least top 20</b><table>";
+        for(i = 0; i < types.length; i += 1) {
+            if(tdc === 0) {
+                html += "<tr>"; }
+            html += "<td>" + mor.checkbox("reqmin", types[i].plural) + "</td>";
+            tdc += 1;
+            if(tdc === 4 || i === types.length - 1) {
+                html += "</tr>";
+                tdc = 0; } }
+        html += "</table>";
+        //require activity
+        html += "<b>Must have been active within the past</b>&nbsp;" + 
+            "<select id=\"srchactivesel\">" +
+              "<option id=\"whenever\">Whenever</option>" +
+              "<option id=\"pastyear\" selected=\"selected\">Year</option>" +
+              "<option id=\"pastmonth\">Month</option>" +
+              "<option id=\"pastweek\">Week</option>" +
+            "</select>" +
+            "<br/>";
+        //include pen names that are already being followed or blocked
+        html += "<b>Include</b>&nbsp;" + 
+            mor.checkbox("srchinc", "following") +
+            mor.checkbox("srchinc", "blocked") +
+            " <b> in the search results</b>" +
+            "<br/>";
+        html += "</div>";
+        html += "<div id=\"searchresults\"></div>";
+        mor.out('profcontdiv', html);
+        setFormValuesFromSearchParams();
+        mor.byId('searchoptionsdiv').style.display = "none";
+        mor.onclick('searchbutton', startPenSearch);
+        mor.layout.adjust();
+    },
+
+
+    toggleSearchOptions = function () {
+        var sod = mor.byId('searchoptionsdiv');
+        if(sod) {
+            if(sod.style.display === "none") {
+                sod.style.display = "block"; }
+            else {
+                sod.style.display = "none"; } }
+        mor.layout.adjust();
+    },
+
+
     displayTabs = function (pen) {
         var html;
         html = "<ul id=\"proftabsul\">" +
@@ -1129,6 +1295,9 @@ var mor = {};  //Top level function closure container
           "</li>" +
           "<li id=\"followersli\" class=\"unselectedTab\">" +
             tablink("Followers", "mor.profile.followers()") + 
+          "</li>" +
+          "<li id=\"searchli\" class=\"unselectedTab\">" +
+            tablink("Search", "mor.profile.search()") + 
           "</li>" +
         "</ul>";
         mor.out('proftabsdiv', html);
@@ -1363,6 +1532,10 @@ var mor = {};  //Top level function closure container
             following(); },
         followers: function () {
             followers(); },
+        search: function () {
+            displaySearchForm(); },
+        togglesrchopts: function () {
+            toggleSearchOptions(); },
         authorized: function (pen) {
             if(pen.mid || pen.gid || pen.fbid || pen.twid) {
                 return true; }

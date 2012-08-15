@@ -86,3 +86,4 @@ body {
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
+.formstyle { font-size:small; }

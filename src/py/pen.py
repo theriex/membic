@@ -67,6 +67,7 @@ class NewPenName(webapp2.RequestHandler):
             return
         pen = PenName(name=name, name_c=name_c)
         setattr(pen, self.request.get('am'), acc._id)
+        pen.settings = self.request.get('settings')
         pen.accessed = nowISO()
         pen.modified = nowISO()
         pen.put()
