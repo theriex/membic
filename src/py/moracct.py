@@ -95,7 +95,7 @@ def writeJSONResponse(jsontxt, response):
     response.out.write(jsontxt)
 
 
-def returnJSON(queryResults, response):
+def returnJSON(response, queryResults, cursor="", checked=-1):
     """ Factored method to return query results as JSON """
     result = ""
     for obj in queryResults:
@@ -111,6 +111,11 @@ def returnJSON(queryResults, response):
         jsontxt = "{\"_id\":" + str(obj.key().id()) + ", " + jsontxt[1:]
         # logging.info(jsontxt)
         result += jsontxt
+    if cursor or checked > 0:
+        if result:
+            result += ",\n "
+        result += "{\"checked\":" + str(checked) + \
+            ", \"cursor\":\"" + cursor + "\"}"
     result = "[" + result + "]"
     writeJSONResponse(result, response)
 

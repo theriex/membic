@@ -43,7 +43,7 @@ class AuthPenNames(webapp2.RequestHandler):
             return
         where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
         pens = PenName.gql(where, acc._id)
-        returnJSON(pens, self.response)
+        returnJSON(self.response, pens)
 
 
 class NewPenName(webapp2.RequestHandler):
@@ -71,7 +71,7 @@ class NewPenName(webapp2.RequestHandler):
         pen.accessed = nowISO()
         pen.modified = nowISO()
         pen.put()
-        returnJSON([ pen ], self.response)
+        returnJSON(self.response, [ pen ])
 
 
 class UpdatePenName(webapp2.RequestHandler):
@@ -117,7 +117,7 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Authorized access reference required.")
             return
         pen.put()
-        returnJSON([ pen ], self.response)
+        returnJSON(self.response, [ pen ])
         
 
 class UploadProfPic(webapp2.RequestHandler):
@@ -166,10 +166,65 @@ class GetProfPic(webapp2.RequestHandler):
         self.response.out.write(pen.profpic)
 
 
+class SearchPenNames(webapp2.RequestHandler):
+    def get(self):
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        qstr = self.request.get('qstr')
+        qstr_c = canonize(qstr)
+        cursor = self.request.get('cursor')
+        # logging.info("SearchPenNames qstr: " + qstr)
+        # logging.info("SearchPenNames qstr_c: " + qstr_c)
+        # logging.info("SearchPenNames cursor: " + cursor)
+        results = []
+        pens = PenName.all()
+        if cursor:
+            pens.with_cursor(start_cursor = cursor)
+        maxcheck = 1000
+        checked = 0
+        cursor = ""
+        for pen in pens:
+            checked += 1
+            # logging.info("pen.name_c: " + pen.name_c);
+            if not qstr or not qstr_c or \
+                    qstr_c in pen.name_c or \
+                    (pen.shoutout and qstr in pen.shoutout) or \
+                    (pen.city and qstr_c in pen.city.lower()):
+                results.append(pen)
+            if checked >= maxcheck or len(results) >= 20:
+                # hit the max, get return cursor for next fetch
+                cursor = pens.cursor()
+                break
+        returnJSON(self.response, results, cursor, checked)
+
+
+class MakeTestPens(webapp2.RequestHandler):
+    def get(self):
+        if not self.request.url.startswith('http://localhost'):
+            self.error(405)
+            self.response.out.write("Test pens are only for local testing")
+            return
+        count = 0
+        while count < 1600:
+            count += 1
+            name = "Test Pen Name " + str(count)
+            logging.info("Creating " + name)
+            pen = PenName(name=name, name_c=canonize(name))
+            pen.shoutout = "Batch created dummy pen name"
+            pen.accessed = nowISO()
+            pen.modified = nowISO()
+            pen.put()
+        self.response.out.write("Test pen names created")
+
 
 app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/newpen', NewPenName),
                                ('/updpen', UpdatePenName),
                                ('/profpicupload', UploadProfPic),
-                               ('/profpic', GetProfPic)], debug=True)
+                               ('/profpic', GetProfPic),
+                               ('/srchpens', SearchPenNames),
+                               ('/testpens', MakeTestPens)], debug=True)
 

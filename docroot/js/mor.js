@@ -970,6 +970,9 @@ var mor = {};  //Top level function closure container
 
     var unspecifiedCityText = "City not specified",
         searchparams = {},
+        searchresults = [],
+        searchcursor = "",
+        searchtotal = 0,
 
 
     writeNavDisplay = function (pen) {
@@ -1202,17 +1205,77 @@ var mor = {};  //Top level function closure container
     },
 
 
-    startPenSearch = function () {
+    makeSearchResultItem = function (pen) {
+        var penid = mor.instId(pen), picuri, html;
+        html = "<li>" +
+            "<a href=\"#" + penid + "\"" +
+            " onclick=\"mor.profile.byprofid('" + penid + "');return false;\"" +
+            " title=\"View profile for " + pen.name + "\">";
+        picuri = "img/emptyprofpic.png";
+        if(pen.profpic) {
+            picuri = "profpic?profileid=" + penid; }
+        html += "<img class=\"srchpic\" src=\"" + picuri + "\"/>" +
+            "&nbsp;" + "<span class=\"penfont\">" + pen.name + 
+            "</span>" + "</a>";
+        if(pen.city) {
+            html += " (" + pen.city + ")"; }
+        html += "</li>";
+        return html;
+    },
+
+
+    displaySearchResults = function (results) {
+        var i, html = "<ul class=\"srchlist\">";
+        for(i = 0; i < searchresults.length; i += 1) {
+            html += makeSearchResultItem(searchresults[i]); }
+        searchcursor = "";
+        for(i = 0; i < results.length; i += 1) {
+            if(results[i].checked) {
+                searchtotal += results[i].checked;
+                html += "<div class=\"sumtotal\">" + 
+                    searchtotal + " pen names searched</div>";
+                if(results[i].cursor) {
+                    searchcursor = results[i].cursor; }
+                break; }  //if no pen names, i will be left at zero
+            searchresults.push(results[i]);
+            html += makeSearchResultItem(results[i]); }
+        html += "</ul>"
+        if(searchcursor) {
+            if(i > 0) {  //have more than just an empty result cursor..
+                html += "<a href=\"#continuesearch\"" +
+                          " onclick=\"mor.profile.srchmore();return false;\"" +
+                  " title=\"Continue searching for more matching pen names\"" +
+                    ">continue search...</a>"; }
+            else { //auto-repeat search without creating a recursion stack
+                setTimeout(mor.profile.srchmore, 10); } }
+        mor.out('searchresults', html);
+        mor.out('srchbuttonspan',
+                "<button type=\"button\" id=\"searchbutton\">Search</button>");
+    },
+
+
+
+    doPenSearch = function () {
         var params, qstr = mor.byId('searchtxt').value;
         readSearchParamsFromForm();
         mor.byId('searchoptionsdiv').style.display = "none";
-        params = mor.login.authparams() + "&qstr=" + mor.enc(qstr);
+        mor.out('srchbuttonspan', "Searching...");
+        params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
+            "&cursor=" + mor.enc(searchcursor);
         mor.call("srchpens?" + params, 'GET', null,
-                 function (result) {
-                     mor.out('searchresults', "not implemented yet"); },
+                 function (results) {
+                     displaySearchResults(results); },
                  function (code, errtxt) {
                      mor.out('searchresults', 
                              "error code: " + code + " " + errtxt); });
+    },
+
+
+    startPenSearch = function () {
+        searchresults = [];
+        searchcursor = "";
+        searchtotal = 0;
+        doPenSearch();
     },
 
 
@@ -1224,7 +1287,9 @@ var mor = {};  //Top level function closure container
                   " placeholder=\"name, city or shoutout partial text\"" +
                   " value=\"\"/>" +
             "&nbsp;" +
-            "<button type=\"button\" id=\"searchbutton\">Search</button>" +
+            "<span id=\"srchbuttonspan\">" +
+              "<button type=\"button\" id=\"searchbutton\">Search</button>" +
+            "</span>" +
             "&nbsp;" +
             "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
               "<a href=\"#options\"" +
@@ -1265,7 +1330,9 @@ var mor = {};  //Top level function closure container
         mor.out('profcontdiv', html);
         setFormValuesFromSearchParams();
         mor.byId('searchoptionsdiv').style.display = "none";
+        mor.onchange('searchtxt', startPenSearch);
         mor.onclick('searchbutton', startPenSearch);
+        mor.byId('searchtxt').focus();
         mor.layout.adjust();
     },
 
@@ -1545,7 +1612,11 @@ var mor = {};  //Top level function closure container
         setPenName: function () {
             mor.pen.getPen(setPenNameFromInput); },
         saveSettings: function () {
-            mor.pen.getPen(savePenNameSettings); }
+            mor.pen.getPen(savePenNameSettings); },
+        byprofid: function () {
+            alert("not implemented yet"); },
+        srchmore: function () {
+            doPenSearch(); }
     };
 
 } () );

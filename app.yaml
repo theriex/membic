@@ -16,8 +16,10 @@ handlers:
 ##                  API
 ## authparams:
 ##   am: authentication method: "mid", "gid", "fbid", "twid"
-##   at: authentication token from native or external source
+##   at: authentication token (from local or supported external source)
 ##   an: authentication name (username if native auth, whatever otherwise)
+##
+## Queries may return a base64 cursor value as the last element.
 ##
 ######################################################################
 
@@ -72,6 +74,11 @@ handlers:
 - url: /profpic.*
   script: src.py.pen.app
 
+## Return pen names containing the qstr text.
+## params: qstr, cursor, authparams
+- url: /srchpens.*
+  script: src.py.pen.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API
@@ -80,6 +87,8 @@ handlers:
   script: src.py.cluck2.app
 - url: /cluck.*
   script: src.py.cluck.app
+- url: /testpens
+  script: src.py.pen.app
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/

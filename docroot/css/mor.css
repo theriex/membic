@@ -47,9 +47,10 @@ body {
 /* padding in chead compensates for relative offset of acthdiv, revhdiv */
 #chead { text-align:center; font-size:large; text-shadow: -1px -1px 1px #fff; 
   padding:0px 0px 20px 0px; }
-#penhnamespan { font-style:italic; font-size:x-large;
+.penfont, #penhnamespan { font-style:italic; 
   font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
  }
+#penhnamespan { font-size:x-large; }
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
@@ -73,6 +74,7 @@ body {
 #profshouttd { padding: 0px 10px; }
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
 .profpic { width:125px; height:125px; }
+.srchpic { width:30px; height:30px; vertical-align:middle; }
 .shoutout { width:200px; height:80px; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
@@ -87,3 +89,7 @@ body {
 .unselectedTab { border-bottom: 1px solid #666; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
+.textright { text-align:right; }
+.srchlist { list-style:none; padding:0; margin:0; }
+.sumtotal { font-size:small; }
+#srchbuttonspan { font-size:small; }
