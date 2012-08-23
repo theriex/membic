@@ -75,6 +75,7 @@ body {
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
 .profpic { width:125px; height:125px; }
 .srchpic { width:30px; height:30px; vertical-align:middle; }
+.reviewbadge { width:30px; height:30px; vertical-align:middle; }
 .shoutout { width:200px; height:80px; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
@@ -88,8 +89,9 @@ body {
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
-.formstyle { font-size:small; }
+.formstyle { font-size:small; line-height:2.5; }
 .textright { text-align:right; }
 .srchlist { list-style:none; padding:0; margin:0; }
 .sumtotal { font-size:small; }
-#srchbuttonspan { font-size:small; }
+#srchmessagespan { font-size:small; }
+.smalltext { font-size:small; }

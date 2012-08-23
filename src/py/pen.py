@@ -18,18 +18,20 @@ class PenName(db.Model):
     """ A review author """
     name = db.StringProperty(required=True)
     name_c = db.StringProperty(required=True)
-    # one or more id values must be specified
+    # one or more id values must be specified for authorized access
     mid = db.IntegerProperty()
     gid = db.IntegerProperty()
     fbid = db.IntegerProperty()
     twid = db.IntegerProperty()
-    # bling field values are nice but not required
+    # these bling field values are nice but not required
     shoutout = db.TextProperty()
     profpic = db.BlobProperty()
     city = db.StringProperty()
     # track last used pen name chosen to select it by default next time
     accessed = db.StringProperty()  # iso date
     modified = db.StringProperty()  # iso date
+    # track a CSV of review types they have at least 20 of
+    hastop = db.TextProperty()
     # client settings like skin, keyword overrides etc stored as JSON
     settings = db.TextProperty()
 
@@ -108,9 +110,10 @@ class UpdatePenName(webapp2.RequestHandler):
         pen.shoutout = self.request.get('shoutout')
         #pen.profpic is uploaded separately
         pen.city = self.request.get('city')
-        pen.settings = self.request.get('settings')
         pen.accessed = nowISO()
         pen.modified = nowISO()
+        pen.hastop = self.request.get('hastop')
+        pen.settings = self.request.get('settings')
         authok = authorized(acc, pen)
         if not authok:
             self.error(401)
@@ -175,10 +178,9 @@ class SearchPenNames(webapp2.RequestHandler):
             return
         qstr = self.request.get('qstr')
         qstr_c = canonize(qstr)
+        time = self.request.get('time')
+        t20 = self.request.get('t20')
         cursor = self.request.get('cursor')
-        # logging.info("SearchPenNames qstr: " + qstr)
-        # logging.info("SearchPenNames qstr_c: " + qstr_c)
-        # logging.info("SearchPenNames cursor: " + cursor)
         results = []
         pens = PenName.all()
         if cursor:
@@ -188,11 +190,37 @@ class SearchPenNames(webapp2.RequestHandler):
         cursor = ""
         for pen in pens:
             checked += 1
-            # logging.info("pen.name_c: " + pen.name_c);
+            matched = False
+            # test string match
             if not qstr or not qstr_c or \
                     qstr_c in pen.name_c or \
                     (pen.shoutout and qstr in pen.shoutout) or \
                     (pen.city and qstr_c in pen.city.lower()):
+                matched = True
+            # test recent access constraint
+            if matched and time and pen.accessed < time:
+                matched = False
+            # test required top 20 review types
+            if matched and t20 and not pen.hastop:
+                matched = False
+            if matched and t20:
+                t20s = t20.split(',')
+                for value in t20s:
+                    if not value in pen.hastop:
+                        matched = False
+                        break
+            # test not self
+            if matched and (acc._id == pen.mid or
+                            acc._id == pen.fbid or
+                            acc._id == pen.twid or
+                            acc._id == pen.gid):
+                matched = False
+            if matched:
+                # filter sensitive fields
+                pen.mid = 0;
+                pen.gid = 0;
+                pen.fbid = 0;
+                pen.twid = 0;
                 results.append(pen)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch

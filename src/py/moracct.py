@@ -69,6 +69,12 @@ def authenticated(request):
                 return False
             account._id = account.key().id() # normalized id access
             return account  # True
+    # elif type == "fbid":
+    #     # call to verify token, return a stub account if successful
+    # elif type == "twid":
+    #     # call to verify token, return a stub account if successful
+    # elif type == "gid":
+    #     # call to verify token, return a stub account if successful
 
 
 def nowISO():

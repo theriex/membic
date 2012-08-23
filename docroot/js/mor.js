@@ -892,12 +892,23 @@ var mor = {};  //Top level function closure container
         { type: "book", plural: "books", img: "TypeBook50.png" },
         { type: "movie", plural: "movies", img: "TypeMovie50.png" },
         { type: "video", plural: "videos", img: "TypeVideo50.png" },
-        { type: "music", plural: "songs", img: "TypeSong50.png" },
-        { type: "spot", plural: "places" },
-        { type: "wine", plural: "wines" },
-        { type: "beer", plural: "beers" },
-        { type: "food", plural: "foods" }
+        { type: "music", plural: "music", img: "TypeSong50.png" },
+        { type: "wine", plural: "wines", img: "TypeWine50.png" },
+        { type: "beer", plural: "beers", img: "TypeBeer50.png" },
+        { type: "food", plural: "food", img: "TypeFood50.png" },
+        { type: "to do", plural: "things to do", img: "TypeBucket50.png" }
         ],
+
+
+    findReviewType = function (type) {
+        var i;
+        type = type.toLowerCase();
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            if(reviewTypes[i].type === type ||
+               reviewTypes[i].plural === type) {
+                return reviewTypes[i]; } }
+    },
+
 
     writeNavDisplay = function () {
         var html = "<a href=\"#Write a Review\"" +
@@ -921,7 +932,9 @@ var mor = {};  //Top level function closure container
         updateHeading: function () {
             writeNavDisplay(); },
         getReviewTypes: function () {
-            return reviewTypes; }
+            return reviewTypes; },
+        getReviewTypeByValue: function (val) {
+            return findReviewType(val); }
     };
 
 } () );
@@ -1205,6 +1218,31 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //returns empty string if no image
+    badgeImageHTML = function (type, withtext) {
+        var label = type.plural.capitalize(), html = "";
+        if(type.img) {
+            html = "<img class=\"reviewbadge\"" +
+                       " src=\"img/" + type.img + "\"" + 
+                       " title=\"" + label + "\"" +
+                       " alt=\"" + label + "\"" +
+                "/>";
+            if(withtext) {
+                html += label; } }
+        return html;
+    },
+
+
+    badgeDispHTML = function (hastop) {
+        var html = "", i, values, type;
+        values = hastop.split(",");
+        for(i = 0; i < values.length; i += 1) {
+            type = mor.review.getReviewTypeByValue(values[i]);
+            html += badgeImageHTML(type); }
+        return html;
+    },
+
+
     makeSearchResultItem = function (pen) {
         var penid = mor.instId(pen), picuri, html;
         html = "<li>" +
@@ -1218,9 +1256,29 @@ var mor = {};  //Top level function closure container
             "&nbsp;" + "<span class=\"penfont\">" + pen.name + 
             "</span>" + "</a>";
         if(pen.city) {
-            html += " (" + pen.city + ")"; }
+            html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
+        if(pen.hastop) {
+            html += badgeDispHTML(pen.hastop); }
         html += "</li>";
         return html;
+    },
+
+
+    //Joins across relationships require significant indexing overhead
+    //which just doesn't seem worth it, at least for now, so that's
+    //done here.  The server handles the "active since" restriction by
+    //checking the "accessed" field, and the "top 20" restriction by
+    //testing the "hastop" field.
+    filtered = function (pen) {
+        //ATTENTION: this needs to be done after data structures available
+
+        //if pen id is in our "following" relationships, and the 
+        //"Include Following" box is NOT checked, then return true.
+
+        //if pen id is in our "blocked" relationships, and the 
+        //"Include Blocked" box is NOT checked then return true.
+
+        return false;
     },
 
 
@@ -1237,9 +1295,10 @@ var mor = {};  //Top level function closure container
                 if(results[i].cursor) {
                     searchcursor = results[i].cursor; }
                 break; }  //if no pen names, i will be left at zero
-            searchresults.push(results[i]);
+            if(!filtered(results[i])) {
+                searchresults.push(results[i]); }
             html += makeSearchResultItem(results[i]); }
-        html += "</ul>"
+        html += "</ul>";
         if(searchcursor) {
             if(i > 0) {  //have more than just an empty result cursor..
                 html += "<a href=\"#continuesearch\"" +
@@ -1249,19 +1308,34 @@ var mor = {};  //Top level function closure container
             else { //auto-repeat search without creating a recursion stack
                 setTimeout(mor.profile.srchmore, 10); } }
         mor.out('searchresults', html);
-        mor.out('srchbuttonspan',
-                "<button type=\"button\" id=\"searchbutton\">Search</button>");
+        mor.byId('srchbuttonspan').style.display = "inline";
+        mor.out('srchmessagespan', "");
     },
 
 
 
     doPenSearch = function () {
-        var params, qstr = mor.byId('searchtxt').value;
+        var params, qstr, time, t20, i;
+        qstr = mor.byId('searchtxt').value;
         readSearchParamsFromForm();
         mor.byId('searchoptionsdiv').style.display = "none";
-        mor.out('srchbuttonspan', "Searching...");
+        mor.byId('srchbuttonspan').style.display = "none";
+        mor.out('srchmessagespan', "Searching...");
         params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
             "&cursor=" + mor.enc(searchcursor);
+        if(searchparams.activeDaysAgo > 0) {
+            time = (new Date()).getTime();
+            time -= searchparams.activeDaysAgo * 24 * 60 * 60 * 1000;
+            time = new Date(time);
+            time = time.toISOString();
+            params += "&time=" + mor.enc(time); }
+        if(searchparams.reqmin.length > 0) {
+            t20 = "";
+            for(i = 0; i < searchparams.reqmin.length; i += 1) {
+                if(i > 0) {
+                    t20 += ","; }
+                t20 += searchparams.reqmin[i]; }
+            params += "&t20=" + mor.enc(t20); }
         mor.call("srchpens?" + params, 'GET', null,
                  function (results) {
                      displaySearchResults(results); },
@@ -1275,6 +1349,7 @@ var mor = {};  //Top level function closure container
         searchresults = [];
         searchcursor = "";
         searchtotal = 0;
+        mor.out('searchresults', "");
         doPenSearch();
     },
 
@@ -1287,6 +1362,7 @@ var mor = {};  //Top level function closure container
                   " placeholder=\"name, city or shoutout partial text\"" +
                   " value=\"\"/>" +
             "&nbsp;" +
+            "<span id=\"srchmessagespan\"> </span>" +
             "<span id=\"srchbuttonspan\">" +
               "<button type=\"button\" id=\"searchbutton\">Search</button>" +
             "</span>" +
@@ -1295,16 +1371,18 @@ var mor = {};  //Top level function closure container
               "<a href=\"#options\"" +
                 " title=\"advanced search options\"" +
                 " onclick=\"mor.profile.togglesrchopts();return false;\"" +
-              ">options</a>";
+              ">options</a>" +
             "</span>" +
             "</p>";
         html += "<div id=\"searchoptionsdiv\" class=\"formstyle\">";
         //require at least top 20 reviews 
-        html += "<b>Must have reviewed at least top 20</b><table>";
+        html += "<b>Must have reviewed their top 20</b><table>";
         for(i = 0; i < types.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
-            html += "<td>" + mor.checkbox("reqmin", types[i].plural) + "</td>";
+            html += "<td>" + mor.checkbox("reqmin", types[i].plural, 
+                                          badgeImageHTML(types[i], true)) + 
+                "</td>";
             tdc += 1;
             if(tdc === 4 || i === types.length - 1) {
                 html += "</tr>";
@@ -1325,7 +1403,7 @@ var mor = {};  //Top level function closure container
             mor.checkbox("srchinc", "blocked") +
             " <b> in the search results</b>" +
             "<br/>";
-        html += "</div>";
+        html += "&nbsp;<br/></div>";
         html += "<div id=\"searchresults\"></div>";
         mor.out('profcontdiv', html);
         setFormValuesFromSearchParams();
