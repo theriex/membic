@@ -30,10 +30,14 @@ class PenName(db.Model):
     # track last used pen name chosen to select it by default next time
     accessed = db.StringProperty()  # iso date
     modified = db.StringProperty()  # iso date
-    # track a CSV of review types they have at least 20 of
+    # a CSV of review types this pen name has at least 20 of
     hastop = db.TextProperty()
     # client settings like skin, keyword overrides etc stored as JSON
     settings = db.TextProperty()
+    # counts of inbound and outbound relationships are maintained within
+    # the relationship transaction processing
+    following = db.IntegerProperty()
+    followers = db.IntegerProperty()
 
 
 class AuthPenNames(webapp2.RequestHandler):
@@ -69,9 +73,15 @@ class NewPenName(webapp2.RequestHandler):
             return
         pen = PenName(name=name, name_c=name_c)
         setattr(pen, self.request.get('am'), acc._id)
-        pen.settings = self.request.get('settings')
+        pen.shoutout = ""
+        # pen.profpic is uploaded separately during edit
+        pen.city = ""
         pen.accessed = nowISO()
         pen.modified = nowISO()
+        pen.hastop = ""
+        pen.settings = self.request.get('settings')
+        pen.following = 0
+        pen.followers = 0
         pen.put()
         returnJSON(self.response, [ pen ])
 
@@ -108,12 +118,14 @@ class UpdatePenName(webapp2.RequestHandler):
         pen.fbid = intz(self.request.get('fbid'))
         pen.twid = intz(self.request.get('twid'))
         pen.shoutout = self.request.get('shoutout')
-        #pen.profpic is uploaded separately
+        # pen.profpic is uploaded separately
         pen.city = self.request.get('city')
         pen.accessed = nowISO()
         pen.modified = nowISO()
         pen.hastop = self.request.get('hastop')
         pen.settings = self.request.get('settings')
+        # pen.following is NOT modified here.  Don't collide with rel trans
+        # pen.followers ditto
         authok = authorized(acc, pen)
         if not authok:
             self.error(401)
@@ -229,6 +241,17 @@ class SearchPenNames(webapp2.RequestHandler):
         returnJSON(self.response, results, cursor, checked)
 
 
+class GetPenById(webapp2.RequestHandler):
+    def get(self):
+        penid = self.request.get('penid')
+        pen = PenName.get_by_id(int(penid))
+        if not pen:
+            self.error(404)
+            self.response.write("No Pen Name found for id " + penid)
+            return
+        returnJSON(self.response, [ pen ])
+
+
 class MakeTestPens(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
@@ -241,9 +264,14 @@ class MakeTestPens(webapp2.RequestHandler):
             name = "Test Pen Name " + str(count)
             logging.info("Creating " + name)
             pen = PenName(name=name, name_c=canonize(name))
-            pen.shoutout = "Batch created dummy pen name"
+            pen.shoutout = "Batch created dummy pen name " + str(count)
+            pen.city = "fake city " + str(count)
             pen.accessed = nowISO()
             pen.modified = nowISO()
+            pen.hastop = ""
+            pen.settings = ""
+            pen.following = 0
+            pen.followers = 0
             pen.put()
         self.response.out.write("Test pen names created")
 
@@ -254,5 +282,6 @@ app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/profpicupload', UploadProfPic),
                                ('/profpic', GetProfPic),
                                ('/srchpens', SearchPenNames),
+                               ('/penbyid', GetPenById),
                                ('/testpens', MakeTestPens)], debug=True)
 

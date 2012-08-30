@@ -17,6 +17,7 @@ var mor = {};  //Top level function closure container
     mor.sessiontoken = "";
     mor.sesscook = "morsession=";
     mor.y = null;
+    mor.historyObj = null;
     mor.colors = { bodybg: "#fffff6",
                    text: "#111111",
                    link: "#3150b2",
@@ -25,8 +26,9 @@ var mor = {};  //Top level function closure container
     mor.winh = 0;
     mor.introtext = "";
 
+
     ////////////////////////////////////////
-    //prototype mods and globals
+    //prototype mods and global overrides
     /////////////////////////////////////////
 
     if(!String.prototype.trim) {  //thanks to Douglas Crockford
@@ -47,13 +49,22 @@ var mor = {};  //Top level function closure container
     // general utility functions
     ////////////////////////////////////////
 
-    //ATTENTION: need history pop
+    mor.historyPush = function (state) {
+        mor.historyObj.add(state);
+        mor.log("historyPush: " + mor.y.JSON.stringify(state));
+    };
 
-    //IE7 has no history.pushState, so route all stack pushes here
-    mor.historyPush = function (data, title, url) {
-        if(history && history.pushState &&
-                                typeof history.pushState === 'function') {
-            history.pushState(data, title, url); }
+
+    mor.historyPop = function (eventFacade) {
+        var state = eventFacade.prevVal;
+        mor.log("historyPop: " + mor.y.JSON.stringify(state));
+        if(state) {
+            switch(state.view) {
+            case "profile":
+                mor.profile.setTab(state.tab);
+                mor.profile.byprofid(state.profid, true);
+                break; 
+            } }
     };
 
 
@@ -64,6 +75,12 @@ var mor = {};  //Top level function closure container
                 console.log(text); }
         } catch(problem) {  //most likely a bad IE console def, just skip it
         }
+    };
+
+
+    //factored method for error output.
+    mor.err = function (text) {
+        alert(text);
     };
 
 
@@ -127,6 +144,10 @@ var mor = {};  //Top level function closure container
         if(!mor.introtext) {
             mor.introtext = cdiv.innerHTML; }
         mor.y = Y;
+        mor.historyObj = new Y.HistoryHTML5();
+        mor.y.on('history:change', function (eventFacade) {
+            if(eventFacade.src === mor.y.HistoryHTML5.SRC_POPSTATE) {
+                mor.historyPop(eventFacade); } });
         mor.layout.init();
         mor.y.on("keypress", mor.globkey);
         mor.login.init();
@@ -169,7 +190,10 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //factored method to deal with JSON parsing in success call. 
+    //factored method to deal with JSON parsing in success call.
+    //ATTENTION Might be good to note if the last call was over a N
+    //hours ago and just reload everything in that case.  Stale local
+    //data sucks.
     mor.call = function (url, method, data, success, failure, errs) {
         mor.y.io(url, { method: method, data: data,
             on: { success: function (transid, resp) {
@@ -224,15 +248,25 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //factored method to create a checkbox with a label.
-    mor.checkbox = function (name, value, label) {
+    mor.checkrad = function (type, name, value, label) {
         var html;
         if(!label) {
             label = value.capitalize(); }
-        html = "<input type=\"checkbox\" name=\"" + name + "\" value=\"" +
+        html = "<input type=\"" + type + "\" name=\"" + name + "\" value=\"" +
             value + "\" id=\"" + value + "\"/>" + 
             "<label for=\"" + value + "\">" + label + "</label>";
         return html;
+    };
+
+
+    //factored method to create a checkbox with a label.
+    mor.checkbox = function (name, value, label) {
+        return mor.checkrad("checkbox", name, value, label);
+    };
+
+
+    mor.radiobutton = function (name, value, label) {
+        return mor.checkrad("radio", name, value, label);
     };
 
 
@@ -274,6 +308,16 @@ var mor = {};  //Top level function closure container
             return mor.makelink(url); });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;
+    };
+
+
+    mor.authorized = function (pen) {
+        if(pen && (pen.mid > 0 ||
+                   pen.gid > 0 ||
+                   pen.fbid > 0 ||
+                   pen.twid > 0)) {
+            return true; }
+        return false;
     };
 
 
@@ -487,7 +531,12 @@ var mor = {};  //Top level function closure container
 
     clearHash = function () {
         var url = window.location.pathname + window.location.search;
-        mor.historyPush("", document.title, url); 
+        //note this is using the standard html5 history directly.  That's
+        //a way to to clear the URL noise without a redirect triggering
+        //a page refresh. 
+        if(history && history.pushState && 
+                      typeof history.pushState === 'function') {
+            history.pushState("", document.title, url); }
     },
 
 
@@ -900,6 +949,40 @@ var mor = {};  //Top level function closure container
         ],
 
 
+    //returns empty string if no image
+    badgeImageHTML = function (type, withtext) {
+        var label = type.plural.capitalize(), html = "";
+        if(type.img) {
+            html = "<img class=\"reviewbadge\"" +
+                       " src=\"img/" + type.img + "\"" + 
+                       " title=\"" + label + "\"" +
+                       " alt=\"" + label + "\"" +
+                "/>";
+            if(withtext) {
+                html += label; } }
+        return html;
+    },
+
+
+    reviewTypeCheckboxesHTML = function (cboxgroup) {
+        var i, tdc = 0, html = "<table>";
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            if(tdc === 0) {
+                html += "<tr>"; }
+            html += "<td>" + mor.checkbox(cboxgroup, 
+                                          reviewTypes[i].plural, 
+                                          badgeImageHTML(reviewTypes[i], 
+                                                         true)) + 
+                "</td>";
+            tdc += 1;
+            if(tdc === 4 || i === reviewTypes.length - 1) {
+                html += "</tr>";
+                tdc = 0; } }
+        html += "</table>";
+        return html;
+    },
+
+
     findReviewType = function (type) {
         var i;
         type = type.toLowerCase();
@@ -934,7 +1017,11 @@ var mor = {};  //Top level function closure container
         getReviewTypes: function () {
             return reviewTypes; },
         getReviewTypeByValue: function (val) {
-            return findReviewType(val); }
+            return findReviewType(val); },
+        reviewTypeCheckboxesHTML: function (cboxgroup) {
+            return reviewTypeCheckboxesHTML(cboxgroup); },
+        badgeImageHTML: function (type) {
+            return badgeImageHTML(type); }
     };
 
 } () );
@@ -986,19 +1073,48 @@ var mor = {};  //Top level function closure container
         searchresults = [],
         searchcursor = "",
         searchtotal = 0,
+        currtab,
+        profpen,
+        cachepens = [],
+        followingDisp,
+        followerDisp,
+
+
+    createOrEditRelationship = function () {
+        mor.pen.getPen(function (pen) {
+            mor.rel.reledit(pen, profpen); });
+    },
 
 
     writeNavDisplay = function (pen) {
-        var html;
+        var html, relationship, penid = mor.instId(pen),
+            profdfunc = "mor.profile.display()";
+        if(!mor.pen.getHomePen(penid)) {
+            profdfunc = "mor.profile.byprofid(" + penid + ")"; }
         html = "<a href=\"#Profile\"" +
                  " title=\"Show profile for " + pen.name + "\"" +
-                 " onclick=\"mor.profile.display();return false;\"" +
+                 " onclick=\"" + profdfunc + ";return false;\"" +
             ">" + pen.name + "</a>";
         mor.out('penhnamespan', html);
-        html = mor.imglink("#Settings","Adjust settings for " + pen.name,
-                           "mor.profile.settings()", "settings.png") +
-            mor.imglink("#PenNames","Switch Pen Names",
-                        "mor.profile.penswitch()", "pen.png");
+        if(mor.authorized(pen)) {
+            html = mor.imglink("#Settings","Adjust settings for " + pen.name,
+                               "mor.profile.settings()", "settings.png") +
+                   mor.imglink("#PenNames","Switch Pen Names",
+                               "mor.profile.penswitch()", "pen.png"); }
+        else {
+            relationship = mor.rel.outbound(mor.instId(pen));
+            if(relationship) {
+                html = mor.imglink("#Settings",
+                                   "Adjust follow settings for " + pen.name,
+                                   "mor.profile.relationship()", 
+                                   "settings.png"); }
+            else {
+                html = mor.imglink("#Follow",
+                                   "Follow " + pen.name,
+                                   "mor.profile.relationship()",
+                                   "plus.png"); }
+            html += mor.imglink("#Home","Return to home profile",
+                                "mor.profile.display()", "home.png"); }
         mor.out('penhbuttonspan', html);
     },
 
@@ -1109,6 +1225,93 @@ var mor = {};  //Top level function closure container
     },
 
 
+    badgeDispHTML = function (hastop) {
+        var html = "", i, values, type;
+        values = hastop.split(",");
+        for(i = 0; i < values.length; i += 1) {
+            type = mor.review.getReviewTypeByValue(values[i]);
+            html += mor.review.badgeImageHTML(type); }
+        return html;
+    },
+
+
+    penListItemHTML = function (pen) {
+        var penid = mor.instId(pen), picuri, html;
+        html = "<li>" +
+            "<a href=\"#" + penid + "\"" +
+            " onclick=\"mor.profile.byprofid('" + penid + "');return false;\"" +
+            " title=\"View profile for " + pen.name + "\">";
+        picuri = "img/emptyprofpic.png";
+        if(pen.profpic) {
+            picuri = "profpic?profileid=" + penid; }
+        html += "<img class=\"srchpic\" src=\"" + picuri + "\"/>" +
+            "&nbsp;" + "<span class=\"penfont\">" + pen.name + 
+            "</span>" + "</a>";
+        if(pen.city) {
+            html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
+        if(pen.hastop) {
+            html += badgeDispHTML(pen.hastop); }
+        html += "</li>";
+        return html;
+    },
+
+
+    findPenInArray = function (id, pens) {
+        var i;
+        for(i = 0; pens && i < pens.length; i += 1) {
+            if(mor.instId(pens[i]) === id) {
+                return pens[i]; } }
+    },
+
+
+    cachedPen = function (id) {
+        var pen;
+        //check our own pens first, usually fewer of those
+        if(!pen) {
+            pen = findPenInArray(id, mor.pen.getPenNames()); }
+        //check the current search results
+        if(!pen) {
+            pen = findPenInArray(id, searchresults); }
+        //check the cached pens
+        if(!pen) {
+            pen = findPenInArray(id, cachepens); }
+        return pen;
+    },
+
+
+    updateCache = function (pen) {
+        var i, penid = mor.instId(pen);
+        for(i = 0; i < searchresults.length; i += 1) {
+            if(mor.instId(searchresults[i]) === penid) {
+                searchresults[i] = pen;
+                break; } }
+        for(i = 0; i < cachepens.length; i += 1) {
+            if(mor.instId(cachepens[i]) === penid) {
+                cachepens[i] = pen;
+                break; } }
+    },
+
+
+    findOrLoadPen = function (id, callback) {
+        var pen, params;
+        pen = cachedPen(id);
+        if(pen) {
+            return callback(pen); }
+        params = "penid=" + id;
+        mor.call("penbyid?" + params, 'GET', null,
+                 function (pens) {
+                     if(pens.length > 0) {
+                         cachepens.push(pens[0]);
+                         callback(pens[0]); }
+                     else {
+                         mor.err("findOrLoadPen found no pen id: " + id); } },
+                 function (code, errtxt) {
+                     mor.err("findOrLoadPen failed code " + code + ": " + 
+                             errtxt); });
+    },
+
+
+
     tablink = function (text, funcstr) {
         var html;
         if(funcstr.indexOf(";") < 0) {
@@ -1137,6 +1340,7 @@ var mor = {};  //Top level function closure container
     recent = function () {
         var html = "Recent activity display not implemented yet";
         selectTab("recentli");
+        currtab = recent;
         mor.out('profcontdiv', html);
     },
 
@@ -1144,21 +1348,28 @@ var mor = {};  //Top level function closure container
     best = function () {
         var html = "Top rated display not implemented yet";
         selectTab("bestli");
+        currtab = best;
         mor.out('profcontdiv', html);
     },
 
 
     following = function () {
-        var html = "Following display not implemented yet";
         selectTab("followingli");
-        mor.out('profcontdiv', html);
+        currtab = following;
+        if(!followingDisp) {  //different profile than last call..
+            followingDisp = { profpen: profpen, direction: "outbound", 
+                              divid: 'profcontdiv' }; }
+        mor.rel.displayRelations(followingDisp);
     },
 
 
     followers = function () {
-        var html = "Followers display not implemented yet";
         selectTab("followersli");
-        mor.out('profcontdiv', html);
+        currtab = followers;
+        if(!followerDisp) {  //different profile than last call..
+            followerDisp = { profpen: profpen, direction: "inbound", 
+                             divid: 'profcontdiv' }; }
+        mor.rel.displayRelations(followerDisp);
     },
 
 
@@ -1218,74 +1429,27 @@ var mor = {};  //Top level function closure container
     },
 
 
-    //returns empty string if no image
-    badgeImageHTML = function (type, withtext) {
-        var label = type.plural.capitalize(), html = "";
-        if(type.img) {
-            html = "<img class=\"reviewbadge\"" +
-                       " src=\"img/" + type.img + "\"" + 
-                       " title=\"" + label + "\"" +
-                       " alt=\"" + label + "\"" +
-                "/>";
-            if(withtext) {
-                html += label; } }
-        return html;
-    },
-
-
-    badgeDispHTML = function (hastop) {
-        var html = "", i, values, type;
-        values = hastop.split(",");
-        for(i = 0; i < values.length; i += 1) {
-            type = mor.review.getReviewTypeByValue(values[i]);
-            html += badgeImageHTML(type); }
-        return html;
-    },
-
-
-    makeSearchResultItem = function (pen) {
-        var penid = mor.instId(pen), picuri, html;
-        html = "<li>" +
-            "<a href=\"#" + penid + "\"" +
-            " onclick=\"mor.profile.byprofid('" + penid + "');return false;\"" +
-            " title=\"View profile for " + pen.name + "\">";
-        picuri = "img/emptyprofpic.png";
-        if(pen.profpic) {
-            picuri = "profpic?profileid=" + penid; }
-        html += "<img class=\"srchpic\" src=\"" + picuri + "\"/>" +
-            "&nbsp;" + "<span class=\"penfont\">" + pen.name + 
-            "</span>" + "</a>";
-        if(pen.city) {
-            html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
-        if(pen.hastop) {
-            html += badgeDispHTML(pen.hastop); }
-        html += "</li>";
-        return html;
-    },
-
-
-    //Joins across relationships require significant indexing overhead
-    //which just doesn't seem worth it, at least for now, so that's
-    //done here.  The server handles the "active since" restriction by
-    //checking the "accessed" field, and the "top 20" restriction by
-    //testing the "hastop" field.
+    //The server handles the "active since" restriction by checking
+    //the "accessed" field, and the "top 20" restriction by testing
+    //the "hastop" field.  However it does not handle joins across
+    //relationships due to indexing overhead, so these are filtered
+    //out here.
     filtered = function (pen) {
-        //ATTENTION: this needs to be done after data structures available
-
-        //if pen id is in our "following" relationships, and the 
-        //"Include Following" box is NOT checked, then return true.
-
-        //if pen id is in our "blocked" relationships, and the 
-        //"Include Blocked" box is NOT checked then return true.
-
+        var rel = mor.rel.outbound(mor.instId(pen));
+        if(rel) {
+            if(searchparams.includeFollowing && rel.status === "following") {
+                return false; }
+            if(searchparams.includeBlocked && rel.status === "blocked") {
+                return false; }
+            return true; }
         return false;
     },
 
 
     displaySearchResults = function (results) {
-        var i, html = "<ul class=\"srchlist\">";
+        var i, html = "<ul class=\"penlist\">";
         for(i = 0; i < searchresults.length; i += 1) {
-            html += makeSearchResultItem(searchresults[i]); }
+            html += penListItemHTML(searchresults[i]); }
         searchcursor = "";
         for(i = 0; i < results.length; i += 1) {
             if(results[i].checked) {
@@ -1296,8 +1460,8 @@ var mor = {};  //Top level function closure container
                     searchcursor = results[i].cursor; }
                 break; }  //if no pen names, i will be left at zero
             if(!filtered(results[i])) {
-                searchresults.push(results[i]); }
-            html += makeSearchResultItem(results[i]); }
+                searchresults.push(results[i]);
+                html += penListItemHTML(results[i]); } }
         html += "</ul>";
         if(searchcursor) {
             if(i > 0) {  //have more than just an empty result cursor..
@@ -1355,8 +1519,9 @@ var mor = {};  //Top level function closure container
 
 
     displaySearchForm = function () {
-        var html = "", types = mor.review.getReviewTypes(), i, tdc = 0;
+        var html = "";
         selectTab("searchli");
+        currtab = mor.profile.search;
         html += "<p>" +
             "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
                   " placeholder=\"name, city or shoutout partial text\"" +
@@ -1373,32 +1538,19 @@ var mor = {};  //Top level function closure container
                 " onclick=\"mor.profile.togglesrchopts();return false;\"" +
               ">options</a>" +
             "</span>" +
-            "</p>";
-        html += "<div id=\"searchoptionsdiv\" class=\"formstyle\">";
-        //require at least top 20 reviews 
-        html += "<b>Must have reviewed their top 20</b><table>";
-        for(i = 0; i < types.length; i += 1) {
-            if(tdc === 0) {
-                html += "<tr>"; }
-            html += "<td>" + mor.checkbox("reqmin", types[i].plural, 
-                                          badgeImageHTML(types[i], true)) + 
-                "</td>";
-            tdc += 1;
-            if(tdc === 4 || i === types.length - 1) {
-                html += "</tr>";
-                tdc = 0; } }
-        html += "</table>";
-        //require activity
-        html += "<b>Must have been active within the past</b>&nbsp;" + 
+            "</p>" +
+            "<div id=\"searchoptionsdiv\" class=\"formstyle\">" +
+            "<b>Must have reviewed their top 20</b>" +
+            mor.review.reviewTypeCheckboxesHTML("reqmin") +
+            "<b>Must have been active within the past</b>&nbsp;" + 
             "<select id=\"srchactivesel\">" +
               "<option id=\"whenever\">Whenever</option>" +
               "<option id=\"pastyear\" selected=\"selected\">Year</option>" +
               "<option id=\"pastmonth\">Month</option>" +
               "<option id=\"pastweek\">Week</option>" +
             "</select>" +
-            "<br/>";
-        //include pen names that are already being followed or blocked
-        html += "<b>Include</b>&nbsp;" + 
+            "<br/>" +
+            "<b>Include</b>&nbsp;" + 
             mor.checkbox("srchinc", "following") +
             mor.checkbox("srchinc", "blocked") +
             " <b> in the search results</b>" +
@@ -1407,6 +1559,7 @@ var mor = {};  //Top level function closure container
         html += "<div id=\"searchresults\"></div>";
         mor.out('profcontdiv', html);
         setFormValuesFromSearchParams();
+        displaySearchResults([]);  //show previous results, if any
         mor.byId('searchoptionsdiv').style.display = "none";
         mor.onchange('searchtxt', startPenSearch);
         mor.onclick('searchbutton', startPenSearch);
@@ -1436,17 +1589,42 @@ var mor = {};  //Top level function closure container
             tablink("Top Rated", "mor.profile.best()") + 
           "</li>" +
           "<li id=\"followingli\" class=\"unselectedTab\">" +
-            tablink("Following", "mor.profile.following()") + 
+            tablink("Following (" + pen.following + ")", 
+                    "mor.profile.following()") + 
           "</li>" +
           "<li id=\"followersli\" class=\"unselectedTab\">" +
-            tablink("Followers", "mor.profile.followers()") + 
+            tablink("Followers (" + pen.followers + ")", 
+                    "mor.profile.followers()") + 
           "</li>" +
           "<li id=\"searchli\" class=\"unselectedTab\">" +
             tablink("Search", "mor.profile.search()") + 
           "</li>" +
         "</ul>";
         mor.out('proftabsdiv', html);
-        recent();
+        if(!currtab) {
+            currtab = recent; }
+        currtab();
+    },
+
+
+    getCurrTabAsString = function () {
+        if(currtab === recent) { return "recent"; }
+        if(currtab === best) { return "best"; }
+        if(currtab === following) { return "following"; }
+        if(currtab === followers) { return "followers"; }
+        if(currtab === mor.profile.search) { return "search"; }
+        return "recent"; //default
+    },
+
+
+    setCurrTabFromString = function (tabstr) {
+        switch(tabstr) {
+        case "recent": currtab = recent; break;
+        case "best": currtab = best; break;
+        case "following": currtab = following; break;
+        case "followers": currtab = followers; break;
+        case "search": currtab = mor.profile.search; break;
+        }
     },
 
 
@@ -1614,9 +1792,11 @@ var mor = {};  //Top level function closure container
 
     mainDisplay = function (pen) {
         var html;
+        if(profpen !== pen) {
+            profpen = pen;
+            followingDisp = null;
+            followerDisp = null; }
         //redisplay the heading in case we just switched pen names
-        //and this method is being called directly, rather than from
-        //general nav clicks.
         writeNavDisplay(pen);
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
@@ -1657,6 +1837,27 @@ var mor = {};  //Top level function closure container
         displayPic(pen);
         displayTabs(pen);
         mor.layout.adjust();
+    },
+
+
+    displayProfileForId = function (id, nohistory) {
+        var pen;
+        if(typeof id !== "number") {
+            id = parseInt(id, 10); }
+        pen = cachedPen(id);
+        if(pen) {
+            if(pen !== profpen && !nohistory) {
+                mor.historyPush({ view: "profile", profid: mor.instId(profpen),
+                                  tab: getCurrTabAsString() }); }
+            mainDisplay(pen); }
+        else {
+            //ATTENTION: eventually this should probably be a log
+            //message and a db fetch, but for now it's better to keep
+            //any missed IDs obvious, since it generally should not
+            //happen.  Possibly will be needed if visiting a profile
+            //via direct url and not authenticated, but wait until
+            //that settles out first....
+            mor.err("Pen Name " + id + " not found"); }
     };
 
 
@@ -1691,10 +1892,20 @@ var mor = {};  //Top level function closure container
             mor.pen.getPen(setPenNameFromInput); },
         saveSettings: function () {
             mor.pen.getPen(savePenNameSettings); },
-        byprofid: function () {
-            alert("not implemented yet"); },
+        byprofid: function (id, nohistory) {
+            displayProfileForId(id, nohistory); },
+        setTab: function (tabstr) {
+            setCurrTabFromString(tabstr); },
         srchmore: function () {
-            doPenSearch(); }
+            doPenSearch(); },
+        relationship: function () {
+            createOrEditRelationship(); },
+        retrievePen: function (id, callback) {
+            return findOrLoadPen(id, callback); },
+        penListItemHTML: function (pen) {
+            return penListItemHTML(pen); },
+        updateCache: function (pen) {
+            updateCache(pen); }
     };
 
 } () );
@@ -1710,6 +1921,27 @@ var mor = {};  //Top level function closure container
     var penNames,
         currpen,
         returnFunc,
+
+
+    //update the currently stored version of the pen.
+    noteUpdatedPen = function (pen) {
+        var i, penid = mor.instId(pen);
+        for(i = 0; penNames && i < penNames.length; i += 1) {
+            if(mor.instId(penNames[i]) === penid) {
+                penNames[i] = pen;
+                break; } }
+        if(mor.instId(currpen) === penid) {
+            currpen = pen; }
+    },
+
+
+    //returns the referenced pen if it is owned by the current user
+    getHomePen = function (penid) {
+        var i;
+        for(i = 0; penNames && i < penNames.length; i += 1) {
+            if(mor.instId(penNames[i]) === penid) {
+                return penNames[i]; } }
+    },
 
 
     serializeSettings = function (penName) {
@@ -1741,6 +1973,7 @@ var mor = {};  //Top level function closure container
     returnCall = function () {
         var callback = returnFunc;
         mor.layout.initContent();  //may call for pen name retrieval...
+        mor.rel.loadoutbound(currpen);
         callback(currpen);
     },
 
@@ -1861,13 +2094,319 @@ var mor = {};  //Top level function closure container
             getPenName(); },
         updatePen: function (pen, callbackok, callbackfail) {
             updatePenName(pen, callbackok, callbackfail); },
+        noteUpdatedPen: function (pen) {
+            noteUpdatedPen(pen); },
         getPenNames: function () { 
             return penNames; },
         newPenName: function (callback) {
             returnFunc = callback;
             newPenNameDisplay(); },
         selectPenByName: function (name) {
-            selectPenByName(name); }
+            selectPenByName(name); },
+        getHomePen: function (penid) {
+            return getHomePen(penid); }
+    };
+
+} () );
+
+
+
+////////////////////////////////////////
+// m o r . r e l
+//
+(function () {
+    "use strict";
+
+    var outboundRels,
+        loadoutcursor,
+        asyncLoadStarted,
+
+
+    loadDisplayRels = function (dispobj) {
+        var params, field;
+        if(dispobj.direction === "outbound") {
+            field = "originid"; }
+        else { //inbound
+            field = "relatedid"; }
+        params = mor.login.authparams() + "&" + field + "=" +
+            mor.instId(dispobj.profpen);
+        if(dispobj.cursor) {
+            params += "&cursor=" + dispobj.cursor; }
+        else if(dispobj.offset) {
+            params += "&offset=" + dispobj.offset; }
+        mor.call("findrels?" + params, 'GET', null,
+                 function (relationships) {
+                     var i;
+                     dispobj.rels = [];
+                     for(i = 0; i < relationships.length; i += 1) {
+                         if(relationships[i].checked) {
+                             if(relationships[i].cursor) {
+                                 dispobj.cursor = relationships[i].cursor; }
+                             break; }
+                         dispobj.rels.push(relationships[i]); }
+                     mor.rel.displayRelations(dispobj); },
+                 function (code, errtxt) {
+                     var msg = "loadDisplayRels error code " + code + 
+                         ": " + errtxt;
+                     mor.log(msg);
+                     mor.err(msg); });
+    },
+
+
+    loadDisplayRelPens = function (dispobj) {
+        var rel = dispobj.rels[dispobj.pens.length], id;
+        if(dispobj.direction === "outbound") {
+            id = rel.relatedid; }
+        else { //inbound
+            id = rel.originid; }
+        mor.profile.retrievePen(id, function (pen) {
+            dispobj.pens.push(pen);
+            mor.rel.displayRelations(dispobj); });
+    },
+
+
+    //factored method to avoid a firebug stepping bug
+    dumpPenItems = function (dispobj) {
+        var i, html = "";
+        for(i = 0; i < dispobj.pens.length; i += 1) {
+            html += mor.profile.penListItemHTML(dispobj.pens[i]); }
+        return html;
+    },
+
+
+    //offset, cursor, rels and pens stored in dispobj to preserve state
+    displayRelatedPens = function (dispobj) {
+        var html;
+        if(!dispobj) {
+            mor.err("displayRelatedPens called without display object");
+            return; }
+        html = "<ul class=\"penlist\">";
+        //display whatever pens have been retrieved so far
+        if(dispobj.rels) {
+            if(dispobj.pens && dispobj.pens.length > 0) {
+                html += dumpPenItems(dispobj); }
+            else if(dispobj.rels.length === 0) {
+                if(dispobj.direction === "outbound") {
+                    html += "<li>Not following anyone</li>"; }
+                else { //inbound
+                    html += "<li>No followers</li>"; } }
+            else {
+                html += "<li>fetching pen names...</li>"; } }
+        else {  //dump an interim placeholder while retrieving rels
+            html += "<li>fetching relationships...</li>"; }
+        html += "</ul>";
+        //ATTENTION: need prev/next buttons for paging
+        mor.out(dispobj.divid, html);
+        //if any info needs to be filled in, then go get it...
+        if(!dispobj.rels) { 
+            return loadDisplayRels(dispobj); }
+        if(!dispobj.pens) {
+            dispobj.pens = []; }
+        if(dispobj.rels.length !== dispobj.pens.length) {
+            return loadDisplayRelPens(dispobj); }
+    },
+
+
+    setFormValuesFromRel = function (rel) {
+        var mutes, i;
+        if(rel.status === "blocked") {
+            mor.byId('block').checked = true; }
+        else {
+            mor.byId('follow').checked = true; }
+        if(rel.mute) {
+            mutes = rel.mute.split(',');
+            for(i = 0; i < mutes.length; i += 1) {
+                mor.byId(mutes[i]).checked = true; } }
+    },
+
+
+    setRelFieldsFromFormValues = function (rel) {
+        var checkboxes, i;
+        if(mor.byId('follow').checked) {
+            rel.status = "following"; }
+        else if(mor.byId('block').checked) {
+            rel.status = "blocked"; }
+        else if(mor.byId('nofollow').checked) {
+            rel.status = "nofollow"; }
+        rel.mute = ""
+        checkboxes = document.getElementsByName("mtype");
+        for(i = 0; i < checkboxes.length; i += 1) {
+            if(checkboxes[i].checked) {
+                if(rel.mute) {
+                    rel.mute += ","; }
+                rel.mute += checkboxes[i].value; } }
+    },
+
+
+    removeOutboundRel = function (rel) {
+        var i, relid = mor.instId(rel);
+        for(i = 0; i < outboundRels.length; i += 1) {
+            if(mor.instId(outboundRels[i]) === relid) {
+                break; } }
+        if(i < outboundRels.length) {  //found it
+            outboundRels.splice(i, 1); }
+    },
+
+
+    updateOutboundRel = function (rel) {
+        var i, relid = mor.instId(rel);
+        for(i = 0; i < outboundRels.length; i += 1) {
+            if(mor.instId(outboundRels[i]) === relid) {
+                outboundRels[i] = rel;
+                break; } }
+    },
+
+
+    updateRelationship = function (rel) {
+        var data = mor.objdata(rel);
+        if(rel.status === "nofollow") {  //delete
+            mor.call("delrel?" + mor.login.authparams(), 'POST', data,
+                     function (updates) {
+                         mor.pen.noteUpdatedPen(updates[0]);  //originator
+                         mor.profile.updateCache(updates[1]); //related
+                         removeOutboundRel(rel);              //relationship
+                         mor.layout.closeDialog();
+                         mor.profile.byprofid(mor.instId(updates[1])); },
+                     function (code, errtxt) {
+                         mor.err("Relationship deletion failed code " + code +
+                                 ": " + errtxt); }); }
+        else { //update
+            mor.call("updrel?" + mor.login.authparams(), 'POST', data,
+                     function (updates) {
+                         updateOutboundRel(updates[0]);       //relationship
+                         mor.layout.closeDialog();
+                         mor.profile.byprofid(updates[0].relatedid); },
+                     function (code, errtxt) {
+                         mor.err("Relationship update failed code " + code +
+                                 ": " + errtxt); }); }
+    },
+
+
+    //The data model supports a minimum rating cutoff, but until this
+    //actually becomes useful in controlling activity noise it's being
+    //ignored in the interest of getting fundamental features in place.
+    displayRelationshipDialog = function (rel, related) {
+        var html = "<table class=\"formstyle\">" +
+          "<tr>" +
+            "<td>" +
+              "<b>Status</b> " + 
+              mor.radiobutton("fstat", "follow") + "&nbsp;" +
+              mor.radiobutton("fstat", "block") + "&nbsp;" +
+              mor.radiobutton("fstat", "nofollow", "Stop Following") +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td>" +
+              "<b>Ignore all reviews from " + related.name + " about</b>" +
+              mor.review.reviewTypeCheckboxesHTML("mtype") +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
+              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "&nbsp;" +
+              "<button type=\"button\" id=\"savebutton\">Save</button>" +
+            "</td>" +
+          "</tr>" +
+        "</table>";
+        mor.out('dlgdiv', html);
+        setFormValuesFromRel(rel);
+        mor.onclick('cancelbutton', mor.layout.closeDialog);
+        mor.onclick('savebutton', function () {
+            mor.out('settingsbuttons', "Saving...");
+            setRelFieldsFromFormValues(rel);
+            updateRelationship(rel); });
+        mor.byId('dlgdiv').style.visibility = "visible";
+        mor.onescapefunc = mor.layout.closeDialog;
+    },
+
+
+    findOutboundRelationship = function (relatedid) {
+        var i;
+        for(i = 0; i < outboundRels.length; i += 1) {
+            if(outboundRels[i].relatedid === relatedid) {
+                return outboundRels[i]; } }
+    },
+
+
+    createOrEditRelationship = function (originator, related) {
+        var rel, newrel, data;
+        rel = findOutboundRelationship(mor.instId(related));
+        if(rel) {
+            displayRelationshipDialog(rel, related); }
+        else if(loadoutcursor) {
+            alert("Still loading relationships, try again in a few seconds"); }
+        else {
+            newrel = {};
+            newrel.originid = mor.instId(originator);
+            newrel.relatedid = mor.instId(related);
+            newrel.status = "following";
+            newrel.mute = "";
+            newrel.cutoff = 0;
+            data = mor.objdata(newrel);
+            mor.call("newrel?" + mor.login.authparams(), 'POST', data,
+                     function (newrels) {
+                         mor.pen.noteUpdatedPen(newrels[0]);  //originator
+                         mor.profile.updateCache(newrels[1]); //related
+                         outboundRels.push(newrels[2]);       //relationship
+                         mor.profile.byprofid(mor.instId(newrels[1])); },
+                     function (code, errtxt) {
+                         mor.err("Relationship creation failed code " + code +
+                                 ": " + errtxt); }); }
+    },
+
+
+    loadOutboundRelationships = function (pen) {
+        var params;
+        params = mor.login.authparams() + "&originid=" + mor.instId(pen);
+        if(loadoutcursor && loadoutcursor !== "starting") {
+            params += "&cursor=" + mor.enc(loadoutcursor); }
+        mor.call("findrels?" + params, 'GET', null,
+                 function (relationships) {
+                     var i;
+                     loadoutcursor = "";
+                     for(i = 0; i < relationships.length; i += 1) {
+                         if(relationships[i].checked) {
+                             if(relationships[i].cursor) {
+                                 loadoutcursor = relationships[i].cursor; }
+                             break; }
+                         outboundRels.push(relationships[i]); }
+                     if(loadoutcursor) {
+                         setTimeout(function () {
+                             loadOutboundRelationships(pen); }, 50); } },
+                 function (code, errtxt) {
+                     mor.log("loadOutboundRelationships errcode " + code +
+                             ": " + errtxt);
+                     alert("Sorry. Data error. Please reload the page"); });
+    },
+
+
+    //kick off loading all the outbound relationships, but do not
+    //block since nobody wants to sit and wait for it.  Protect
+    //against duplicate calls, since that can happen as closures
+    //are establishing their state at startup.
+    asyncLoadOutboundRelationships = function (pen) {
+        if(asyncLoadStarted) {
+            return; }
+        asyncLoadStarted = true;
+        setTimeout(function () {
+            outboundRels = [];
+            loadoutcursor = "starting";
+            loadOutboundRelationships(pen); }, 500);
+    };
+
+
+    mor.rel = {
+        reledit: function (from, to) {
+            createOrEditRelationship(from, to); },
+        outbound: function (relatedid) {
+            return findOutboundRelationship(relatedid); },
+        loadoutbound: function (pen) {
+            asyncLoadOutboundRelationships(pen); },
+        alloutbound: function () {
+            return outboundRels; },
+        displayRelations: function (dispobj) {
+            return displayRelatedPens(dispobj); }
     };
 
 } () );
@@ -1944,7 +2483,7 @@ var mor = {};  //Top level function closure container
 
 
     setColorsFromPen = function (pen) {
-        if(pen && pen.settings.colors) {
+        if(pen && pen.settings && pen.settings.colors) {
             mor.colors = copycolors(pen.settings.colors);
             updateColors(); }
     },

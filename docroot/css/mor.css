@@ -51,6 +51,7 @@ body {
   font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
  }
 #penhnamespan { font-size:x-large; }
+#penhbuttonspan { padding:0px 0px 0px 20px; }
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
@@ -91,7 +92,8 @@ body {
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; line-height:2.5; }
 .textright { text-align:right; }
-.srchlist { list-style:none; padding:0; margin:0; }
+.penlist { list-style:none; padding:0; margin:0; }
 .sumtotal { font-size:small; }
 #srchmessagespan { font-size:small; }
 .smalltext { font-size:small; }
+#relbutton { vertical-align:middle; }

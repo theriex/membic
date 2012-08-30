@@ -27,57 +27,87 @@ handlers:
 ##        MyOpenReviews local site authentication 
 
 ## Get an access token from native MyOpenReviews credentials
-## params: user, pass 
+## POST params: user, pass 
 - url: /login.*
   script: src.py.moracct.app
 
 ## Create a new native account on MyOpenReviews
-## params: user, pass, email
+## POST params: user, pass, email
 - url: /newacct.*
   script: src.py.moracct.app
 
 ## Email forgotten native account credentials
-## params: email
+## POST params: email
 - url: /mailcred.*
   script: src.py.moracct.app
 
 ## Change native account password
-## params: password, authparams
+## POST params: password, authparams
 - url: /chgpwd.*
   script: src.py.moracct.app
+
 
 ######################################################################
 ##        Pen Names
 
 ## Fetch pen names for current authentication
-## params: authparams
+## GET params: authparams
 - url: /mypens.*
   script: src.py.pen.app
 
 ## Create new pen name for current authentication
-## params: pen, authparams
+## POST params: pen, authparams
 - url: /newpen.*
   script: src.py.pen.app
 
 ## Update a pen name if authorized
-## params: pen, authparams
+## POST params: pen, authparams
 - url: /updpen.*
   script: src.py.pen.app
 
 ## Upload a profile pic
-## params: picfilein, _id (PenName instance id), authparams
+## POST params: picfilein, _id (PenName instance id), authparams
 - url: /profpicupload.*
   script: src.py.pen.app
 
 ## Retrieve a profile pic
-## params: profileid
+## GET params: profileid
 - url: /profpic.*
   script: src.py.pen.app
 
 ## Return pen names containing the qstr text.
-## params: qstr, cursor, authparams
+## GET params: qstr, cursor, authparams
 - url: /srchpens.*
   script: src.py.pen.app
+
+## Retun the pen name for the given id.
+## GET params: penid
+- url: /penbyid.*
+  script: src.py.pen.app
+
+
+######################################################################
+##        Relationships
+
+## Find relationships matching the source or target pen id
+## GET params: originid, relatedid, offset, cursor, authparams
+- url: /findrels.*
+  script: src.py.rel.app
+
+## Create new relationship
+## POST params: rel, authparams
+- url: /newrel.*
+  script: src.py.rel.app
+
+## Delete relationship
+## POST params: rel, authparams
+- url: /delrel.*
+  script: src.py.rel.app
+
+## Update relationship
+## POST params: rel, authparams
+- url: /updrel.*
+  script: src.py.rel.app
 
 
 ######################################################################
