@@ -16,7 +16,7 @@ var mor = {};  //Top level function closure container
 
     mor.sessiontoken = "";
     mor.sesscook = "morsession=";
-    mor.y = null;
+    mor.dojo = null;  //library module holder
     mor.historyObj = null;
     mor.colors = { bodybg: "#fffff6",
                    text: "#111111",
@@ -45,24 +45,75 @@ var mor = {};  //Top level function closure container
     }
 
 
+    if(!Array.prototype.indexOf) { 
+        Array.prototype.indexOf = function (searchElement) {
+            var i;
+            if(this === null) {
+                throw new TypeError(); }
+            for(i = 0; i < this.length; i += 1) {
+                if(this[i] === searchElement) {
+                    return i; } }
+            return -1;
+        };
+    }
+
+
     ////////////////////////////////////////
     // general utility functions
     ////////////////////////////////////////
 
-    mor.historyPush = function (state) {
-        mor.historyObj.add(state);
-        mor.log("historyPush: " + mor.y.JSON.stringify(state));
+    mor.historyTitle = function (state) {
+        var title = document.title;
+        return title;
     };
 
 
-    mor.historyPop = function (eventFacade) {
-        var state = eventFacade.prevVal;
-        mor.log("historyPop: " + mor.y.JSON.stringify(state));
+    mor.historyURL = function (state) {
+        var url = window.location.href;
+        return url;
+    };
+
+
+    //if the view or profid has changed, then push a history record.
+    //if anything else has changed, replace the current history record.
+    //otherwise no effect.
+    mor.historyCheckpoint = function (pstate) {
+        var hstate, title, url;
+        if(history) {  //verify history object defined, otherwise skip
+            hstate = history.state;
+            if(!hstate || 
+               hstate.view !== pstate.view || 
+               hstate.profid !== pstate.profid) {
+                if(history.pushState && 
+                   typeof history.pushState === 'function') {
+                    title = mor.historyTitle(pstate);
+                    url = mor.historyURL(pstate);
+                    history.pushState(pstate, title, url);
+                    mor.log("history.pushState: " + 
+                            mor.dojo.json.stringify(pstate) +
+                            ", title: " + title + ", url: " + url); 
+                } }
+            else if(hstate.tab !== pstate.tab) {
+                if(history.replaceState &&
+                   typeof history.replaceState === 'function') {
+                    title = mor.historyTitle(pstate);
+                    url = mor.historyURL(pstate);
+                    history.replaceState(pstate, title, url);
+                    mor.log("history.replaceState: " + 
+                            mor.dojo.json.stringify(pstate) +
+                            ", title: " + title + ", url: " + url); 
+                } } }
+    };
+
+
+    mor.historyPop = function (event) {
+        var state = event.state;
+        mor.log("historyPop: " + mor.dojo.json.stringify(state));
         if(state) {
             switch(state.view) {
             case "profile":
                 mor.profile.setTab(state.tab);
-                mor.profile.byprofid(state.profid, true);
+                mor.profile.byprofid(state.profid);
                 break; 
             } }
     };
@@ -84,39 +135,45 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //when you really want the DOM element, not the library node wrapper
     mor.byId = function (elemid) {
         return document.getElementById(elemid);
     };
 
 
-    //output via the library so it can do housekeeping if it needs to
     mor.out = function (domid, html) {
-        var node = mor.y.one("#" + domid);
+        var node = mor.byId(domid);
         if(node) {
-            node.setHTML(html); }
+            node.innerHTML = html; }
         else {
             mor.log("DOM id " + domid + " not available for output"); }
     };
 
 
+    //library support for factored event connection methods
+    mor.onxnode = function (ename, node, func) {
+        mor.dojo.on(node, ename, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            func(); });
+    };
+
+
+    //library support for factored event connection methods
+    mor.onx = function (ename, divid, func) {
+        var node = mor.dojo.dom.byId(divid);
+        mor.onxnode(ename, node, func);
+    };
+
+
     //factored method to handle a click with no propagation
     mor.onclick = function (divid, func) {
-        var node = mor.y.one("#" + divid);
-        node.on("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                func(); });
+        mor.onx("click", divid, func);
     };
 
 
     //factored method to handle a change with no propagation
     mor.onchange = function (divid, func) {
-        var node = mor.y.one("#" + divid);
-        node.on("change", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                func(); });
+        mor.onx("change", divid, func);
     };
 
 
@@ -139,17 +196,15 @@ var mor = {};  //Top level function closure container
 
 
     //top level kickoff function called from index.html
-    mor.init = function (Y) {
+    mor.init = function (dom, json, on, request, query, cookie) {
         var cdiv = mor.byId('contentdiv');
-        if(!mor.introtext) {
+        if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
-        mor.y = Y;
-        mor.historyObj = new Y.HistoryHTML5();
-        mor.y.on('history:change', function (eventFacade) {
-            if(eventFacade.src === mor.y.HistoryHTML5.SRC_POPSTATE) {
-                mor.historyPop(eventFacade); } });
+        mor.dojo = { dom: dom, json: json, on: on, ajax: request,
+                     query: query, cookie: cookie };
         mor.layout.init();
-        mor.y.on("keypress", mor.globkey);
+        mor.dojo.on(document, 'keypress', mor.globkey);
+        mor.dojo.on(window, 'popstate', mor.historyPop);
         mor.login.init();
         //mor.skinner.init();
     };
@@ -195,26 +250,34 @@ var mor = {};  //Top level function closure container
     //hours ago and just reload everything in that case.  Stale local
     //data sucks.
     mor.call = function (url, method, data, success, failure, errs) {
-        mor.y.io(url, { method: method, data: data,
-            on: { success: function (transid, resp) {
-                        try {
-                            resp = mor.y.JSON.parse(resp.responseText);
-                        } catch (e) {
-                            mor.log("JSON parse failure: " + e);
-                            return failure("Bad data returned");
-                        }
-                        success(resp); },
-                  failure: function (transid, resp) {
-                        var code = resp.status, errtxt = resp.responseText;
-                        if(!errs) {
-                            errs = []; }
-                        if(mor.y.Array.indexOf(errs, code) < 0) {
-                            switch(code) {
-                            case 401: return mor.login.logout();
-                            case 500: return mor.crash(url, method, data,
-                                                       code, errtxt);
-                            } }
-                        failure(code, errtxt); } } });
+        var statcode, errtxt;
+        mor.dojo.ajax(url, { method: method, data: data }).then(
+            //successful call result processing function
+            function (resp) {
+                try {
+                    resp = mor.dojo.json.parse(resp);
+                } catch (e) {
+                    mor.log("JSON parse failure: " + e);
+                    return failure(415, resp);
+                }
+                success(resp); },
+            //failed call result processing function
+            function (resp) {
+                if(!errs) {
+                    errs = []; }
+                if(errs.indexOf(statcode) < 0) {
+                    switch(statcode) {
+                    case 401: return mor.login.logout();
+                    case 500: return mor.crash(url, method, data,
+                                               statcode, errtxt);
+                    } }
+                failure(statcode, errtxt); },
+            //interim progress status update function
+            function (evt) {
+                if(evt && evt.xhr) {
+                    statcode = evt.xhr.status;
+                    errtxt = evt.xhr.responseText; }
+                });
     };
 
 
@@ -351,10 +414,11 @@ var mor = {};  //Top level function closure container
             html = html.slice(bodyidx + "<body>".length,
                               html.indexOf("</body")); }
         html = "<div id=\"closeline\">" +
-          "<a id=\"closedlg\" href=\"#close\">&lt;close&nbsp;&nbsp;X&gt;</a>" +
+          "<a id=\"closedlg\" href=\"#close\"" +
+            " onclick=\"mor.layout.closeDialog();return false\">" + 
+                 "&lt;close&nbsp;&nbsp;X&gt;</a>" +
           "</div>" + html;
         mor.out('dlgdiv', html);
-        mor.onclick('closedlg', closeDialog);
         mor.onescapefunc = closeDialog;
     },
 
@@ -373,22 +437,28 @@ var mor = {};  //Top level function closure container
         mor.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
-        mor.y.io(url, { method: 'GET',
-            on: { complete: function (transid, resp) {
-                        displayDocContent(url, resp.responseText); } } });
+        mor.call(url, 'GET', null,
+                 function (resp) {
+                     displayDocContent(url, resp); },
+                 function (code, errtxt) {
+                     displayDocContent(url, errtxt); });
+    },
+
+
+    attachDocLinkClick = function (node, link) {
+        mor.onxnode("click", node, function (e) {
+            displayDoc(link); });
     },
 
 
     localDocLinks = function () {
-        var nodelist = mor.y.all('a');
-        nodelist.each(function (node) {
-                var href = node.getAttribute("href");
-                if(href && href.indexOf("docs/") === 0) {
-                    node.on("click", function (e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            displayDoc(this.getAttribute("href")); }); 
-                } });
+        var i, nodes = mor.dojo.query('a'), node, href;
+        for(i = 0; nodes && i < nodes.length; i += 1) {
+            node = nodes[i];
+            href = node.href;
+            //href may have been resolved from relative to absolute...
+            if(href && href.indexOf("docs/") >= 0) {
+                attachDocLinkClick(node, href); } }
     },
 
 
@@ -446,7 +516,7 @@ var mor = {};  //Top level function closure container
 
     mor.layout = {
         init: function () {
-            mor.y.on('windowresize', fullContentHeight);
+            mor.dojo.on(window, 'resize', fullContentHeight);
             localDocLinks();
             fullContentHeight(); },
         initContent: function () {
@@ -472,6 +542,8 @@ var mor = {};  //Top level function closure container
         authmethod = "",
         authtoken = "",
         authname = "",
+        cookname = "myopenreviewsauth",
+        cookdelim = "..morauth..",
         changepwdprompt = "Changing your login password",
         secsvr = "https://myopenreviews.appspot.com",
         mainsvr = "http://www.myopenreviews.com",
@@ -505,7 +577,8 @@ var mor = {};  //Top level function closure container
 
 
     logout = function () {
-        mor.y.Cookie.remove("myopenreviewsauth");
+        //remove the cookie
+        mor.dojo.cookie(cookname, "", { expires: 0 });
         authmethod = "";
         authtoken = "";
         authname = "";
@@ -564,25 +637,23 @@ var mor = {};  //Top level function closure container
     //directly.  On FF14 without noscript, this works.  Just something
     //to be aware of...
     setAuthentication = function (method, token, name) {
-        var expiration = new Date();
-        expiration.setFullYear(expiration.getFullYear() + 1);
+        var cval = method + cookdelim + token + cookdelim + name;
+        mor.dojo.cookie(cookname, cval, { expires: 60*60*24*365 });
         authmethod = method;
         authtoken = token;
         authname = name;
-        if(!findReturnToInHash()) {
-            mor.y.Cookie.setSubs("myopenreviewsauth", 
-                { method: authmethod, token: authtoken, name: authname },
-                { expires: expiration }); }
         mor.login.updateAuthentDisplay();
     },
 
 
     readAuthCookie = function () {
-        var authentication = mor.y.Cookie.getSubs("myopenreviewsauth");
-        if(authentication) {
-            authmethod = authentication.method;
-            authtoken = authentication.token;
-            authname = authentication.name; }
+        var cval, mtn;
+        cval = mor.dojo.cookie(cookname);
+        if(cval) {
+            mtn = cval.split(cookdelim);
+            authmethod = mtn[0];
+            authtoken = mtn[1];
+            authname = mtn[2]; }
         mor.login.updateAuthentDisplay();
         return authtoken;  //true if set earlier
     },
@@ -1311,7 +1382,6 @@ var mor = {};  //Top level function closure container
     },
 
 
-
     tablink = function (text, funcstr) {
         var html;
         if(funcstr.indexOf(";") < 0) {
@@ -1324,7 +1394,7 @@ var mor = {};  //Top level function closure container
     },
 
 
-    selectTab = function (tabid) {
+    selectTab = function (tabid, tabfunc) {
         var i, ul, li;
         ul = mor.byId('proftabsul');
         for(i = 0; i < ul.childNodes.length; i += 1) {
@@ -1334,28 +1404,29 @@ var mor = {};  //Top level function closure container
         li = mor.byId(tabid);
         li.className = "selectedTab";
         li.style.backgroundColor = mor.colors.bodybg;
+        currtab = tabfunc;
+        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
+                                tab: mor.profile.currentTabAsString() });
+
     },
 
 
     recent = function () {
         var html = "Recent activity display not implemented yet";
-        selectTab("recentli");
-        currtab = recent;
+        selectTab("recentli", recent);
         mor.out('profcontdiv', html);
     },
 
 
     best = function () {
         var html = "Top rated display not implemented yet";
-        selectTab("bestli");
-        currtab = best;
+        selectTab("bestli", best);
         mor.out('profcontdiv', html);
     },
 
 
     following = function () {
-        selectTab("followingli");
-        currtab = following;
+        selectTab("followingli", following);
         if(!followingDisp) {  //different profile than last call..
             followingDisp = { profpen: profpen, direction: "outbound", 
                               divid: 'profcontdiv' }; }
@@ -1364,8 +1435,7 @@ var mor = {};  //Top level function closure container
 
 
     followers = function () {
-        selectTab("followersli");
-        currtab = followers;
+        selectTab("followersli", followers);
         if(!followerDisp) {  //different profile than last call..
             followerDisp = { profpen: profpen, direction: "inbound", 
                              divid: 'profcontdiv' }; }
@@ -1520,8 +1590,7 @@ var mor = {};  //Top level function closure container
 
     displaySearchForm = function () {
         var html = "";
-        selectTab("searchli");
-        currtab = mor.profile.search;
+        selectTab("searchli", mor.profile.search);
         html += "<p>" +
             "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
                   " placeholder=\"name, city or shoutout partial text\"" +
@@ -1790,12 +1859,19 @@ var mor = {};  //Top level function closure container
     },
 
 
-    mainDisplay = function (pen) {
-        var html;
+    verifyStateVariableValues = function (pen) {
         if(profpen !== pen) {
             profpen = pen;
             followingDisp = null;
             followerDisp = null; }
+        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
+                                tab: getCurrTabAsString() });
+    },
+
+
+    mainDisplay = function (pen) {
+        var html;
+        verifyStateVariableValues(pen);
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(pen);
         //reset the colors in case that work got dropped in the
@@ -1840,15 +1916,12 @@ var mor = {};  //Top level function closure container
     },
 
 
-    displayProfileForId = function (id, nohistory) {
+    displayProfileForId = function (id) {
         var pen;
         if(typeof id !== "number") {
             id = parseInt(id, 10); }
         pen = cachedPen(id);
         if(pen) {
-            if(pen !== profpen && !nohistory) {
-                mor.historyPush({ view: "profile", profid: mor.instId(profpen),
-                                  tab: getCurrTabAsString() }); }
             mainDisplay(pen); }
         else {
             //ATTENTION: eventually this should probably be a log
@@ -1892,8 +1965,8 @@ var mor = {};  //Top level function closure container
             mor.pen.getPen(setPenNameFromInput); },
         saveSettings: function () {
             mor.pen.getPen(savePenNameSettings); },
-        byprofid: function (id, nohistory) {
-            displayProfileForId(id, nohistory); },
+        byprofid: function (id) {
+            displayProfileForId(id); },
         setTab: function (tabstr) {
             setCurrTabFromString(tabstr); },
         srchmore: function () {
@@ -1905,7 +1978,9 @@ var mor = {};  //Top level function closure container
         penListItemHTML: function (pen) {
             return penListItemHTML(pen); },
         updateCache: function (pen) {
-            updateCache(pen); }
+            updateCache(pen); },
+        currentTabAsString: function () {
+            return getCurrTabAsString(); }
     };
 
 } () );
@@ -1946,7 +2021,7 @@ var mor = {};  //Top level function closure container
 
     serializeSettings = function (penName) {
         if(typeof penName.settings === 'object') {
-            penName.settings = mor.y.JSON.stringify(penName.settings); }
+            penName.settings = mor.dojo.json.stringify(penName.settings); }
     },
 
 
@@ -1957,7 +2032,7 @@ var mor = {};  //Top level function closure container
         else if(typeof penName.settings !== 'object') {
             try {  //extra vars help debug things like double encoding..
                 text = penName.settings;
-                obj = mor.y.JSON.parse(text);
+                obj = mor.dojo.json.parse(text);
                 penName.settings = obj;
             } catch (e) {
                 mor.log("deserializeSettings " + penName.name + ": " + e);
@@ -2228,7 +2303,7 @@ var mor = {};  //Top level function closure container
             rel.status = "blocked"; }
         else if(mor.byId('nofollow').checked) {
             rel.status = "nofollow"; }
-        rel.mute = ""
+        rel.mute = "";
         checkboxes = document.getElementsByName("mtype");
         for(i = 0; i < checkboxes.length; i += 1) {
             if(checkboxes[i].checked) {
@@ -2578,35 +2653,34 @@ var mor = {};  //Top level function closure container
 
 
     colorControl = function (domid, colorfield) {
-        var node = mor.y.one("#" + domid);
-        node.on("change", function (e) {
-                var color = mor.byId(domid).value;
+        mor.onx("change", domid, function (e) {
+            var color = mor.byId(domid).value;
+            e.preventDefault();
+            e.stopPropagation();
+            safeSetColor(colorfield, domid, color);
+            updateColors(); });
+        mor.onx("keypress", domid, function (e) {
+            var outval = e.keyCode;
+            switch(e.keyCode) {
+            case 82:  //R - increase Red
+                outval = colorBump(colorfield, 0, 1); break;
+            case 114: //r - decrease Red
+                outval = colorBump(colorfield, 0, -1); break;
+            case 71:  //G - increase Green
+                outval = colorBump(colorfield, 1, 1); break;
+            case 103: //g - decrease Green
+                outval = colorBump(colorfield, 1, -1); break;
+            case 85:  //U - increase Blue
+                outval = colorBump(colorfield, 2, 1); break;
+            case 117: //u - decrease Blue
+                outval = colorBump(colorfield, 2, -1); break;
+            }
+            if(typeof outval === "string") {
                 e.preventDefault();
                 e.stopPropagation();
-                safeSetColor(colorfield, domid, color);
-                updateColors(); });
-        node.on("keypress", function (e) {
-                var outval = e.keyCode;
-                switch(e.keyCode) {
-                case 82:  //R - increase Red
-                    outval = colorBump(colorfield, 0, 1); break;
-                case 114: //r - decrease Red
-                    outval = colorBump(colorfield, 0, -1); break;
-                case 71:  //G - increase Green
-                    outval = colorBump(colorfield, 1, 1); break;
-                case 103: //g - decrease Green
-                    outval = colorBump(colorfield, 1, -1); break;
-                case 85:  //U - increase Blue
-                    outval = colorBump(colorfield, 2, 1); break;
-                case 117: //u - decrease Blue
-                    outval = colorBump(colorfield, 2, -1); break;
-                }
-                if(typeof outval === "string") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    mor.colors[colorfield] = outval;
-                    mor.byId(domid).value = outval;
-                    updateColors(); } });
+                mor.colors[colorfield] = outval;
+                mor.byId(domid).value = outval;
+                updateColors(); } });
         colorcontrols.push([domid, colorfield]);
     },
 
@@ -2698,10 +2772,10 @@ var mor = {};  //Top level function closure container
         if(document.styleSheets[0].cssRules[0].style.setProperty) {
             colorControl("linkin", "link");
             colorControl("hoverin", "hover"); }
-        mor.y.one("#presetsel").on("change", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                mor.pen.getPen(setColorsFromPreset); });
+        mor.onx('change', 'presetsel', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            mor.pen.getPen(setColorsFromPreset); });
     };
 
 

@@ -57,17 +57,16 @@
 <div id="dlgdiv"></div>  <!-- dialogs -->
 
 
-<script src="http://yui.yahooapis.com/3.5.1/build/yui/yui-min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.8.0/dojo/dojo.js"
+	data-dojo-config="async: true"></script>
 <script src="js/mor.js"></script>
 
 <script>
-YUI().use('node', 'event', 'io', 'json-parse', 'json-stringify', 'cookie',
-          'history',
-function (Y) {
-    mor.init(Y);
-});
+require([ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
+          "dojo/query", "dojo/cookie", "dojo/domReady!" ],
+        function (dom, json, on, request, query, cookie) {
+            mor.init(dom, json, on, request, query, cookie); });
 </script>
-
 
 </body>
 </html>
