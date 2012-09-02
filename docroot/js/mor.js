@@ -17,7 +17,6 @@ var mor = {};  //Top level function closure container
     mor.sessiontoken = "";
     mor.sesscook = "morsession=";
     mor.dojo = null;  //library module holder
-    mor.historyObj = null;
     mor.colors = { bodybg: "#fffff6",
                    text: "#111111",
                    link: "#3150b2",
@@ -93,7 +92,7 @@ var mor = {};  //Top level function closure container
                             mor.dojo.json.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } }
-            else if(hstate.tab !== pstate.tab) {
+            else if(pstate.tab && hstate.tab !== pstate.tab) {
                 if(history.replaceState &&
                    typeof history.replaceState === 'function') {
                     title = mor.historyTitle(pstate);
@@ -116,6 +115,14 @@ var mor = {};  //Top level function closure container
                 mor.profile.byprofid(state.profid);
                 break; 
             } }
+    };
+
+
+    mor.currState = function () {
+        var state = {};
+        if(history && history.state) {
+            state = history.state; }
+        return state;
     };
 
 
@@ -192,6 +199,17 @@ var mor = {};  //Top level function closure container
         if(string && string.indexOf(prefix) === 0) {
             return true; }
         return false;
+    };
+
+
+    mor.ellipsis = function (string, length) {
+        if(!string || typeof string !== "string") {
+            return ""; }
+        string = string.trim();
+        if(string.length <= length) {
+            return string; }
+        string = string.slice(0, length - 3) + "...";
+        return string;
     };
 
 
@@ -614,20 +632,30 @@ var mor = {};  //Top level function closure container
 
 
     doneWorkingWithAccount = function () {
-        var tag, redirect = findReturnToInHash();
+        var tag, state, redirect = findReturnToInHash();
         if(redirect) {
             redirect += "#" + authparamsfull();
             window.location.href = redirect; }
+        //no explicit redirect so check if directed by tag
         tag = window.location.hash;
         if(tag.indexOf("#") === 0) {
             tag = tag.slice(1); }
         if(tag === "profile") {
             clearHash();
-            mor.profile.display(); }
-        else {
-            //ATTENTION this should be going to mor.activity.display() but
-            //currently testing profile so making that the default.
-            mor.profile.display(); }
+            return mor.profile.display(); }
+        //no tag redirect so check current state
+        state = mor.currState();
+        if(state) {
+            if(state.view === "profile") {
+                if(state.profid) {
+                    return mor.profile.initWithId(state.profid); }
+                return mor.profile.display(); }
+            if(state.view === "activity") {
+                return mor.activity.display(); } }
+        //do default display
+        //ATTENTION this should be going to mor.activity.display() but
+        //currently testing profile so making that the default.
+        mor.profile.display();
     },
 
 
@@ -661,7 +689,7 @@ var mor = {};  //Top level function closure container
 
     readURLHash = function () {
         var hash = window.location.hash, params, av, i, attr, val,
-            token, method, name, returi, command, retval;
+            token, method, name, returi, command, view, profid, retval;
         if(hash) {
             if(hash.indexOf("#") === 0) {
                 hash = hash.slice(1); }
@@ -684,12 +712,18 @@ var mor = {};  //Top level function closure container
                     returi = val; break;
                 case "command":
                     command = val; break;
+                case "view":
+                    view = val; break;
+                case "profid":
+                    profid = parseInt(val, 10); break;
                 } }  //end hash walk
             if(method && token && name) {
                 setAuthentication(method, token, name);
-                if(!returi) {  //back home so clean up the location bar
-                    clearHash(); }
-                retval = command || "done"; } }
+                retval = command || "done"; }
+            if(!returi) {  //back home so clean up the location bar
+                clearHash(); }
+            if(view && profid) {
+                mor.historyCheckpoint({ view: view, profid: profid }); } }
         return retval;
     },
 
@@ -1307,11 +1341,15 @@ var mor = {};  //Top level function closure container
 
 
     penListItemHTML = function (pen) {
-        var penid = mor.instId(pen), picuri, html;
+        var penid = mor.instId(pen), picuri, hash, linktitle, html;
+        hash = mor.objdata({ view: "profile", profid: penid });
+        linktitle = mor.ellipsis(pen.shoutout, 75);
+        if(!linktitle) {
+            linktitle = "View profile for " + pen.name; }
         html = "<li>" +
-            "<a href=\"#" + penid + "\"" +
-            " onclick=\"mor.profile.byprofid('" + penid + "');return false;\"" +
-            " title=\"View profile for " + pen.name + "\">";
+            "<a href=\"#" + hash + "\"" +
+            " onclick=\"mor.profile.changeid('" + penid + "');return false;\"" +
+            " title=\"" + linktitle + "\">";
         picuri = "img/emptyprofpic.png";
         if(pen.profpic) {
             picuri = "profpic?profileid=" + penid; }
@@ -1917,20 +1955,9 @@ var mor = {};  //Top level function closure container
 
 
     displayProfileForId = function (id) {
-        var pen;
         if(typeof id !== "number") {
             id = parseInt(id, 10); }
-        pen = cachedPen(id);
-        if(pen) {
-            mainDisplay(pen); }
-        else {
-            //ATTENTION: eventually this should probably be a log
-            //message and a db fetch, but for now it's better to keep
-            //any missed IDs obvious, since it generally should not
-            //happen.  Possibly will be needed if visiting a profile
-            //via direct url and not authenticated, but wait until
-            //that settles out first....
-            mor.err("Pen Name " + id + " not found"); }
+        findOrLoadPen(id, mainDisplay);
     };
 
 
@@ -1938,7 +1965,10 @@ var mor = {};  //Top level function closure container
         display: function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
-            mor.pen.getPen(writeNavDisplay); },
+            if(profpen) {
+                writeNavDisplay(profpen); }
+            else {
+                mor.pen.getPen(writeNavDisplay); } },
         settings: function () {
             mor.pen.getPen(changeSettings); },
         penswitch: function () {
@@ -1967,6 +1997,11 @@ var mor = {};  //Top level function closure container
             mor.pen.getPen(savePenNameSettings); },
         byprofid: function (id) {
             displayProfileForId(id); },
+        changeid: function (id) {
+            currtab = recent;
+            displayProfileForId(id); },
+        initWithId: function (id) {
+            mor.pen.getPen(function (pen) { displayProfileForId(id); }); },
         setTab: function (tabstr) {
             setCurrTabFromString(tabstr); },
         srchmore: function () {
@@ -1995,7 +2030,7 @@ var mor = {};  //Top level function closure container
 
     var penNames,
         currpen,
-        returnFunc,
+        returnFuncMemo,  //if a form display is needed
 
 
     //update the currently stored version of the pen.
@@ -2045,8 +2080,9 @@ var mor = {};  //Top level function closure container
     },
 
 
-    returnCall = function () {
-        var callback = returnFunc;
+    returnCall = function (callback) {
+        if(!callback) {
+            callback = returnFuncMemo; }
         mor.layout.initContent();  //may call for pen name retrieval...
         mor.rel.loadoutbound(currpen);
         callback(currpen);
@@ -2092,8 +2128,9 @@ var mor = {};  //Top level function closure container
     },
 
 
-    newPenNameDisplay = function () {
+    newPenNameDisplay = function (callback) {
         var html;
+        returnFuncMemo = callback;
         html = "<p>Your pen name is a unique expression of style when presenting your views to the world. You can have separate pen names for each of your personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
         "<div id=\"penformstat\">&nbsp;</div>" +
         "<table>" +
@@ -2130,31 +2167,31 @@ var mor = {};  //Top level function closure container
     },
 
 
-    chooseOrCreatePenName = function () {
+    chooseOrCreatePenName = function (callback) {
         var i, lastChosen = "0000-00-00T00:00:00Z";
         if(penNames.length === 0) {
-            return newPenNameDisplay(); }
+            return newPenNameDisplay(callback); }
         for(i = 0; i < penNames.length; i += 1) {
             deserializeSettings(penNames[i]);
             if(penNames[i].accessed > lastChosen) {
                 lastChosen = penNames[i].accessed;
                 currpen = penNames[i]; } }
         mor.skinner.setColorsFromPen(currpen);
-        returnCall(currpen);
+        returnCall(callback);
     },
 
 
-    getPenName = function () {
+    getPenName = function (callback) {
         var url;
         if(penNames) {
-            chooseOrCreatePenName(); }
+            chooseOrCreatePenName(callback); }
         mor.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         mor.layout.adjust();
         url = "mypens?" + mor.login.authparams();
         mor.call(url, 'GET', null,
                  function (pens) {
                      penNames = pens;
-                     chooseOrCreatePenName(); },
+                     chooseOrCreatePenName(callback); },
                  function (code, errtxt) {
                      mor.out('contentdiv', 
                              "Pen name retrieval failed: " + errtxt); });
@@ -2163,10 +2200,9 @@ var mor = {};  //Top level function closure container
 
     mor.pen = {
         getPen: function (callback) {
-            returnFunc = callback;
             if(currpen) {
-                return returnCall(); }
-            getPenName(); },
+                return returnCall(callback); }
+            getPenName(callback); },
         updatePen: function (pen, callbackok, callbackfail) {
             updatePenName(pen, callbackok, callbackfail); },
         noteUpdatedPen: function (pen) {
@@ -2174,8 +2210,7 @@ var mor = {};  //Top level function closure container
         getPenNames: function () { 
             return penNames; },
         newPenName: function (callback) {
-            returnFunc = callback;
-            newPenNameDisplay(); },
+            newPenNameDisplay(callback); },
         selectPenByName: function (name) {
             selectPenByName(name); },
         getHomePen: function (penid) {
@@ -2398,7 +2433,7 @@ var mor = {};  //Top level function closure container
 
     findOutboundRelationship = function (relatedid) {
         var i;
-        for(i = 0; i < outboundRels.length; i += 1) {
+        for(i = 0; outboundRels && i < outboundRels.length; i += 1) {
             if(outboundRels[i].relatedid === relatedid) {
                 return outboundRels[i]; } }
     },
@@ -2431,6 +2466,11 @@ var mor = {};  //Top level function closure container
     },
 
 
+    relationshipsLoadFinished = function (pen) {
+        mor.profile.updateHeading();
+    },
+
+
     loadOutboundRelationships = function (pen) {
         var params;
         params = mor.login.authparams() + "&originid=" + mor.instId(pen);
@@ -2448,7 +2488,9 @@ var mor = {};  //Top level function closure container
                          outboundRels.push(relationships[i]); }
                      if(loadoutcursor) {
                          setTimeout(function () {
-                             loadOutboundRelationships(pen); }, 50); } },
+                             loadOutboundRelationships(pen); }, 50); }
+                     else {
+                         relationshipsLoadFinished(pen); } },
                  function (code, errtxt) {
                      mor.log("loadOutboundRelationships errcode " + code +
                              ": " + errtxt);
