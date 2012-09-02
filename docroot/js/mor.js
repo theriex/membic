@@ -1560,8 +1560,8 @@ var mor = {};  //Top level function closure container
             html += penListItemHTML(searchresults[i]); }
         searchcursor = "";
         for(i = 0; i < results.length; i += 1) {
-            if(results[i].checked) {
-                searchtotal += results[i].checked;
+            if(results[i].fetched) {
+                searchtotal += results[i].fetched;
                 html += "<div class=\"sumtotal\">" + 
                     searchtotal + " pen names searched</div>";
                 if(results[i].cursor) {
@@ -2249,7 +2249,7 @@ var mor = {};  //Top level function closure container
                      var i;
                      dispobj.rels = [];
                      for(i = 0; i < relationships.length; i += 1) {
-                         if(relationships[i].checked) {
+                         if(relationships[i].fetched) {
                              if(relationships[i].cursor) {
                                  dispobj.cursor = relationships[i].cursor; }
                              break; }
@@ -2481,7 +2481,7 @@ var mor = {};  //Top level function closure container
                      var i;
                      loadoutcursor = "";
                      for(i = 0; i < relationships.length; i += 1) {
-                         if(relationships[i].checked) {
+                         if(relationships[i].fetched) {
                              if(relationships[i].cursor) {
                                  loadoutcursor = relationships[i].cursor; }
                              break; }
