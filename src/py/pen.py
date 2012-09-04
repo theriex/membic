@@ -44,8 +44,11 @@ class AuthPenNames(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
         if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
+            # The most common case here is that they just created an
+            # account but it hasn't finished writing by the time pen
+            # names are being requested.  Best to just return and
+            # empty result.
+            returnJSON(self.response, [])
             return
         where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
         pens = PenName.gql(where, acc._id)
