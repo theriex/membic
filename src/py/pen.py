@@ -157,10 +157,12 @@ class UploadProfPic(webapp2.RequestHandler):
             self.error(401)
             self.response.write("You may only update your own pen name.")
             return
-        pen.profpic = db.Blob(self.request.get("picfilein"))
-        pen.profpic = images.resize(pen.profpic, 160, 160)
-        # change profpic to a 160x160 png...
-        pen.put()
+        upfile = self.request.get("picfilein");
+        if upfile:
+            pen.profpic = db.Blob(upfile)
+            pen.profpic = images.resize(pen.profpic, 160, 160)
+            # change profpic to a 160x160 png...
+            pen.put()
         redurl = self.request.get('returnto')
         if not redurl:
             redurl = "http://www.myopenreviews.com#profile"
