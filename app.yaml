@@ -80,7 +80,7 @@ handlers:
 - url: /srchpens.*
   script: src.py.pen.app
 
-## Retun the pen name for the given id.
+## Return the pen name for the given id.
 ## GET params: penid
 - url: /penbyid.*
   script: src.py.pen.app
@@ -108,6 +108,40 @@ handlers:
 ## POST params: rel, authparams
 - url: /updrel.*
   script: src.py.rel.app
+
+
+######################################################################
+##        Reviews
+
+## Create a new review for authorized pen name
+## POST params: rev, authparams
+- url: /newrev.*
+  script: src.py.rev.app
+
+## Update review for authorized pen name
+## POST params: rev, authparams
+- url: /updrev.*
+  script: src.py.rev.app
+  
+## Upload a review pic
+## POST params: picfilein, _id (Review instance id), authparams
+- url: /revpicupload.*
+  script: src.py.rev.app
+
+## Retrieve a review pic
+## GET params: revid
+- url: /revpic.*
+  script: src.py.rev.app
+
+## Return reviews for a given pen within the given date range
+## GET params: penid, mindate, maxdate, authparams
+- url: /srchrevs.*
+  script: src.py.rev.app
+
+## Return the review for the given id.
+## GET params: revid
+- url: /revbyid.*
+  script: src.py.rev.app
 
 
 ######################################################################

@@ -44,11 +44,12 @@ class AuthPenNames(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
         if not acc:
-            # The most common case here is that they just created an
-            # account but it hasn't finished writing by the time pen
-            # names are being requested.  Best to just return and
-            # empty result.
-            returnJSON(self.response, [])
+            # Eventual consistency means it is possible to create a new
+            # account but not have it available for authorization yet.
+            # Other than that, the most common case is that a token has
+            # expired, in which case a 401 error is exactly appropriate.
+            self.error(401)
+            self.response.out.write("Authentication failed")
             return
         where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
         pens = PenName.gql(where, acc._id)
@@ -157,11 +158,11 @@ class UploadProfPic(webapp2.RequestHandler):
             self.error(401)
             self.response.write("You may only update your own pen name.")
             return
-        upfile = self.request.get("picfilein");
+        upfile = self.request.get("picfilein")
         if upfile:
             pen.profpic = db.Blob(upfile)
-            pen.profpic = images.resize(pen.profpic, 160, 160)
             # change profpic to a 160x160 png...
+            pen.profpic = images.resize(pen.profpic, 160, 160)
             pen.put()
         redurl = self.request.get('returnto')
         if not redurl:
@@ -182,8 +183,11 @@ class GetProfPic(webapp2.RequestHandler):
             self.response.write("Profile pic for PenName: " + str(profid) + 
                                 " not found.")
             return
+        img = images.Image(pen.profpic)
+        img.resize(width=160, height=160)
+        img = img.execute_transforms(output_encoding=images.PNG)
         self.response.headers['Content-Type'] = "image/png"
-        self.response.out.write(pen.profpic)
+        self.response.out.write(img)
 
 
 class SearchPenNames(webapp2.RequestHandler):

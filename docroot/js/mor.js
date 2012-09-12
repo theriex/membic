@@ -195,6 +195,13 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.cancelPicUpload = function () {
+        mor.out('overlaydiv', "");
+        mor.byId('overlaydiv').style.visibility = "hidden";
+        mor.onescapefunc = null;
+    },
+
+
     mor.prefixed = function (string, prefix) {
         if(string && string.indexOf(prefix) === 0) {
             return true; }
@@ -214,12 +221,14 @@ var mor = {};  //Top level function closure container
 
 
     //top level kickoff function called from index.html
-    mor.init = function (dom, json, on, request, query, cookie) {
+    mor.init = function (dom, json, on, request, query, cookie, 
+                         dijitreg, slider) {
         var cdiv = mor.byId('contentdiv');
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
         mor.dojo = { dom: dom, json: json, on: on, ajax: request,
-                     query: query, cookie: cookie };
+                     query: query, cookie: cookie, dijitreg: dijitreg, 
+                     slider: slider };
         mor.layout.init();
         mor.dojo.on(document, 'keypress', mor.globkey);
         mor.dojo.on(window, 'popstate', mor.historyPop);
@@ -399,6 +408,19 @@ var mor = {};  //Top level function closure container
                    pen.twid > 0)) {
             return true; }
         return false;
+    };
+
+
+    mor.paramsToFormInputs = function (paramstr) {
+        var html = "", fields, i, attval;
+        if(!paramstr) {
+            return ""; }
+        fields = paramstr.split("&");
+        for(i = 0; i < fields.length; i += 1) {
+            attval = fields[i].split("=");
+            html += "<input type=\"hidden\" name=\"" + attval[0] + "\"" +
+                                          " value=\"" + attval[1] + "\"/>"; }
+        return html;
     };
 
 
@@ -651,7 +673,9 @@ var mor = {};  //Top level function closure container
                     return mor.profile.initWithId(state.profid); }
                 return mor.profile.display(); }
             if(state.view === "activity") {
-                return mor.activity.display(); } }
+                return mor.activity.display(); }
+            if(state.view === "review" && state.revid) {
+                mor.review.initWithId(state.revid, state.mode); } }
         //do default display
         //ATTENTION this should be going to mor.activity.display() but
         //currently testing profile so making that the default.
@@ -689,7 +713,8 @@ var mor = {};  //Top level function closure container
 
     readURLHash = function () {
         var hash = window.location.hash, params, av, i, attr, val,
-            token, method, name, returi, command, view, profid, retval;
+            token, method, name, returi, command, view, profid, 
+            revedit, retval;
         if(hash) {
             if(hash.indexOf("#") === 0) {
                 hash = hash.slice(1); }
@@ -716,6 +741,8 @@ var mor = {};  //Top level function closure container
                     view = val; break;
                 case "profid":
                     profid = parseInt(val, 10); break;
+                case "revedit":
+                    revedit = parseInt(val, 10); break;
                 } }  //end hash walk
             if(method && token && name) {
                 setAuthentication(method, token, name);
@@ -723,7 +750,10 @@ var mor = {};  //Top level function closure container
             if(!returi) {  //back home so clean up the location bar
                 clearHash(); }
             if(view && profid) {
-                mor.historyCheckpoint({ view: view, profid: profid }); } }
+                mor.historyCheckpoint({ view: view, profid: profid }); }
+            if(revedit) {
+                mor.historyCheckpoint({ view: "review", mode: "edit", 
+                                        revid: revedit }); } }
         return retval;
     },
 
@@ -803,11 +833,13 @@ var mor = {};  //Top level function closure container
             mor.out('maccstatdiv', "Please specify a username and password");
             return; }
         url = secureURL("newacct");
+        mor.out('newaccbuttonstd', "Creating new account...");
         data = mor.objdata({ user: username, pass: password, email: maddr });
         mor.call(url, 'POST', data, 
                  function (objs) {
                      setAuthentication("mid", objs[0].token, username);
-                     mor.login.init(); },
+                     //give new account save a chance to stabilize
+                     setTimeout(mor.login.init, 700); },
                  function (code, errtxt) {
                      mor.out('maccstatdiv', errtxt); });
     },
@@ -846,7 +878,7 @@ var mor = {};  //Top level function closure container
               "(optional - used if you forget your login)</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\">" +
+            "<td id=\"newaccbuttonstd\" colspan=\"2\" align=\"center\">" +
               "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
               "&nbsp;" +
               "<button type=\"button\" id=\"createbutton\">Create</button>" +
@@ -1042,16 +1074,125 @@ var mor = {};  //Top level function closure container
 (function () {
     "use strict";
 
-    var reviewTypes = [
-        { type: "book", plural: "books", img: "TypeBook50.png" },
-        { type: "movie", plural: "movies", img: "TypeMovie50.png" },
-        { type: "video", plural: "videos", img: "TypeVideo50.png" },
-        { type: "music", plural: "music", img: "TypeSong50.png" },
-        { type: "wine", plural: "wines", img: "TypeWine50.png" },
-        { type: "beer", plural: "beers", img: "TypeBeer50.png" },
-        { type: "food", plural: "food", img: "TypeFood50.png" },
-        { type: "to do", plural: "things to do", img: "TypeBucket50.png" }
-        ],
+    var //The pen name the user is currently logged in with.
+        userpen = null,
+        //The review currently being displayed or edited.  The pic field
+        //is handled as a special case since it requires a form upload.
+        review = {},
+        //The error message from the previous server save call, if any.
+        asyncSaveErrTxt = "",
+        //Review type definitions always include the url field, it is
+        //appended automatically if not explicitely listed elsewhere
+        //in the type definition.  Field names are converted to lower
+        //case with all spaces removed for use in storage, and
+        //capitalized for use as labels.  Fields defined here also
+        //need to be supported server side in the object model (rev.py)
+        //
+        //Definition guidelines:
+        // 1. Too many fields makes it tedious to enter a review.  The
+        //    goal here is to provide adequate identification for
+        //    someone reading a review, not to be an item database.
+        //    Links to item database entries can go in the url field.
+        // 2. Default keywords should be widely applicable across the
+        //    possible universe of reviews.  When practical, a keyword
+        //    should describe your perception rather than being
+        //    classificational (e.g. "Funny" rather than "Comedy").
+        reviewTypes = [
+          { type: "book", plural: "books", img: "TypeBook50.png",
+            keyprompt: "Title of book being reviewed",
+            key: "title", subkey: "author",
+            fields: [ "publisher", "year" ],
+            dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
+                       "Educational", "Beach", "Travel", "Engaging" ] },
+          { type: "movie", plural: "movies", img: "TypeMovie50.png",
+            keyprompt: "Movie name",
+            key: "title", //subkey
+            fields: [ "year", "starring" ],
+            dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
+                       "Educational", "Cult", "Classic", "Funny", 
+                       "Suspenseful" ] },
+          { type: "video", plural: "videos", img: "TypeVideo50.png",
+            keyprompt: "Link to video",
+            key: "url", //subkey
+            fields: [ "title", "artist" ],
+            dkwords: [ "Light", "Heavy", "Kid Ok", "Educational", 
+                       "Cult", "Funny", "Disturbing", "Trippy" ] },
+          { type: "music", plural: "music", img: "TypeSong50.png",
+            keyprompt: "Title of song, album, video, show or other release",
+            key: "title", subkey: "artist",
+            fields: [ "album", "year" ],
+            dkwords: [ "Light", "Heavy", "Wakeup", "Travel", "Office", 
+                       "Workout", "Dance", "Social", "Sex" ] },
+          { type: "wine", plural: "wines", img: "TypeWine50.png",
+            keyprompt: "Vineyard and type, and/or wine name",
+            key: "name", //subkey
+            fields: [ "year" ],
+            dkwords: [ "Red", "White", "Light", "Robust", "Dry", "Fruity",
+                       "Cheap", "Expensive" ] },
+          { type: "beer", plural: "beers", img: "TypeBeer50.png",
+            keyprompt: "Brewery and type or name of beer",
+            key: "name", //subkey
+            fields: [],
+            dkwords: [ "Light", "Strong", "Traditional", "Experimental",
+                       "Hoppy", "Fruity", "Sweet", "Cheap", "Expensive" ] },
+          { type: "food", plural: "food", img: "TypeFood50.png",
+            keyprompt: "Name of restaurant or dish",
+            key: "name", //subkey
+            fields: [ "address" ],
+            dkwords: [ "Breakfast", "Lunch", "Dinner", "Snack", 
+                       "Cheap", "Expensive", "Fast", "Slow", "Outdoor",
+                       "Quiet", "Loud" ] },
+          { type: "to do", plural: "things to do", img: "TypeBucket50.png",
+            keyprompt: "Name of place, activity, or event",
+            key: "name", //subkey
+            fields: [ "address" ],
+            dkwords: [ "Easy", "Advanced", "Kid Ok", "Cheap", "Expensive",
+                       "Spring", "Summer", "Autumn", "Winter", "Anytime" ] }
+          ],
+
+
+    //rating is a value from 0 - 100.  Display is rounded to nearest value.
+    starsImageHTML = function (rating) {
+        var img, title, html;
+        if(typeof rating === "string") {
+            rating = parseInt(rating, 10); }
+        if(!rating || typeof rating !== 'number' || rating < 5) {
+            img = "ratstar0.png";
+            title = "No stars"; }
+        else if(rating < 15) {
+            img = "ratstar05.png";
+            title = "Half a star"; }
+        else if(rating < 25) {
+            img = "ratstar1.png";
+            title = "One star"; }
+        else if(rating < 35) {
+            img = "ratstar15.png";
+            title = "One and a half stars"; }
+        else if(rating < 45) {
+            img = "ratstar2.png";
+            title = "Two stars"; }
+        else if(rating < 55) {
+            img = "ratstar25.png";
+            title = "Two and a half stars"; }
+        else if(rating < 65) {
+            img = "ratstar3.png";
+            title = "Three stars"; }
+        else if(rating < 75) {
+            img = "ratstar35.png";
+            title = "Three and a half stars"; }
+        else if(rating < 85) {
+            img = "ratstar4.png";
+            title = "Four stars"; }
+        else if(rating < 95) {
+            img = "ratstar45.png";
+            title = "Four and a half stars"; }
+        else {
+            img = "ratstar5.png";
+            title = "Five stars"; }
+        html = "<img class=\"starsimg\" src=\"img/" + img + "\"" +
+                   " title=\"" + title + "\" alt=\"" + title + "\"/>";
+        return html;
+    },
 
 
     //returns empty string if no image
@@ -1101,22 +1242,569 @@ var mor = {};  //Top level function closure container
     writeNavDisplay = function () {
         var html = "<a href=\"#Write a Review\"" +
                      " title=\"Review something\"" +
-                     " onclick=\"mor.review.display();return false;\"" +
+                     " onclick=\"mor.review.reset();return false;\"" +
             ">Write a Review</a>";
         mor.out('revhdiv', html);
     },
 
 
-    mainDisplay = function (penName) {
-        var html = "<p>Writing a review is not implemented yet</p>";
+    readURL = function (url) {
+        var input;
+        if(!url) {
+            input = mor.byId('urlin');
+            if(input) {
+                url = input.value; } }
+        if(url) {
+            //ATTENTION: Check configured connection services to see if
+            //any of them know how to pull info from this url.
+            alert("There is no registered connection service available yet " +
+                  "that knows how to read " + url + ". Feel free to " +
+                  "raise this as an issue if you think there should be one."); }
+    },
+
+
+    setType = function (type) {
+        review.revtype = type;
+        mor.review.display();
+    },
+
+
+    displayTypeSelect = function () {
+        var i, tdc = 0, html;
+        html = "<div id=\"revfdiv\" class=\"formstyle\" align=\"center\">" +
+        "<ul class=\"reviewformul\">" +
+            "<li>Paste a web address for what you are reviewing " + 
+            "(if available)" + "<table><tr>" +
+              "<td align=\"right\">URL</td>" +
+              "<td align=\"left\">" +
+                "<input type=\"text\" id=\"urlin\" size=\"40\"/></td>" +
+              "<td>" +
+                "<button type=\"button\" id=\"readurlbutton\"" +
+                       " onclick=\"mor.review.readURL();return false;\"" +
+                       " title=\"Read review form fields from pasted URL\"" +
+                    ">Read</button>" +
+                "</td>" +
+            "</tr></table>" +
+            "<li>Choose a review type</li>";
+        html += "<table class=\"typebuttonstable\">";
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            if(tdc === 0) {
+                html += "<tr>"; }
+            html += "<td><button type=\"button\" id=\"type" + i + "\"" +
+                               " onclick=\"mor.review.setType('" +
+                                             reviewTypes[i].type + "');" +
+                                            "return false;\"" +
+                               " title=\"Create a " + reviewTypes[i].type + 
+                                        " review\"" +
+                         "><img class=\"reviewbadge\"" +
+                              " src=\"img/" + reviewTypes[i].img + "\">" +
+                reviewTypes[i].type + "</button></td>";
+            tdc += 1;
+            if(tdc === 4 || i === reviewTypes.length -1) {
+                html += "</tr>";
+                tdc = 0; } }
+        html += "</table></ul></div>";
         mor.out('cmain', html);
+        mor.byId('urlin').focus();
         mor.layout.adjust();
+    },
+
+
+    picUploadForm = function () {
+        var odiv, html = "", revid = mor.instId(review);
+        mor.review.save();  //save any outstanding edits
+        html += mor.paramsToFormInputs(mor.login.authparams());
+        html += "<input type=\"hidden\" name=\"_id\" value=\"" + revid + "\"/>";
+        html += "<input type=\"hidden\" name=\"penid\" value=\"" +
+            review.penid + "\"/>";
+        html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
+            mor.enc(window.location.href + "#revedit=" + revid) + "\"/>";
+        //build the rest of the form around that
+        html = "<form action=\"/revpicupload\"" +
+                    " enctype=\"multipart/form-data\" method=\"post\">" +
+            html +
+            "<table>" +
+              "<tr><td>Upload Review Pic</td></tr>" +
+              "<tr><td><input type=\"file\" name=\"picfilein\"" + 
+                                          " id=\"picfilein\"/></td></tr>" +
+              "<tr><td align=\"center\">" +
+                    "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
+            "</form>";
+        mor.out('overlaydiv', html);
+        odiv = mor.byId('overlaydiv');
+        odiv.style.top = "300px";
+        odiv.style.visibility = "visible";
+        odiv.style.backgroundColor = mor.skinner.lightbg();
+        mor.onescapefunc = mor.cancelPicUpload;
+        mor.byId('picfilein').focus();
+    },
+
+
+    picHTML = function (review, type, keyval, mode) {
+        var html;
+        if(!keyval) {
+            return ""; }
+        //if just viewing, the default is no pic, just space.  But
+        //the layout should stay consistent, so use a placeholder image
+        html = "img/emptyblankpic.png";
+        if(mode === "edit") {
+            //show placeholder outline pic they can click to upload
+            html = "img/emptyprofpic.png"; }
+        if(review.revpic) {
+            //if a pic has been uploaded, use that
+            html = "revpic?revid=" + mor.instId(review); }
+        html = "<img class=\"revpic\" src=\"" + html + "\"";
+        if(mode === "edit") {
+            html += " onclick=mor.review.picUploadForm();return false;"; }
+        html += "/>";
+        return html;
+    },
+
+
+    errlabel = function (domid) {
+        var elem = mor.byId(domid);
+        elem.style.color = "red";
+        if(elem.innerHTML.indexOf("*") < 0) {
+            elem.innerHTML += "*"; }
+    },
+
+
+    formFieldLabelContents = function (fieldname) {
+        var html = fieldname.capitalize();
+        if(fieldname === "url") {
+            html = "<img class=\"webjump\" src=\"img/wwwico.png\"/>URL"; }
+        return html;
+    },
+
+
+    siteAbbrev = function (url) {
+        var html, dotindex;
+        if(!url) {
+            return "?"; }
+        dotindex = url.lastIndexOf(".");
+        if(dotindex >= 0) {
+            html = url.slice(dotindex, dotindex + 4); }
+        else {
+            html = url.slice(0, 4); }
+        html = "<span class=\"webabbrev\">" + html + "</span>";
+        return html;
+    },
+
+
+    graphicAbbrevSiteLink = function (url) {
+        var html;
+        if(!url) {
+            return ""; }
+        html = "<a href=\"" + url + "\"" + 
+            " onclick=\"window.open('" + url + "');return false;\"" +
+            " title=\"" + url + "\">" +
+            "<img class=\"webjump\" src=\"img/wwwico.png\"/>" +
+                siteAbbrev(url) + "</a>";
+        return html;
+    },
+
+
+    keyFieldsValid = function (type, errors) {
+        var input = mor.byId('keyin');
+        if(!input || !input.value) {
+            errlabel('keyinlabeltd');
+            errors.push("Please specify a value for " + type.key); }
+        else {
+            review[type.key] = input.value; }
+        if(type.subkey) {
+            input = mor.byId('subkeyin');
+            if(!input || !input.value) {
+                errlabel('subkeyinlabeltd');
+                errors.push("Please specify a value for " + type.subkey); }
+            else {
+                review[type.subkey] = input.value; } }
+    },
+
+
+    secondaryFieldsHTML = function (review, type, keyval, mode) {
+        var html = "", i, field, fval;
+        if(!keyval) {
+            return html; }
+        html += "<table>";
+        for(i = 0; i < type.fields.length; i += 1) {
+            field = type.fields[i];
+            fval = review[field] || "";
+            if(field !== "url") {
+                html += "<tr>";
+                if(mode === "edit") {
+                    html += "<td align=\"right\">" + 
+                        field.capitalize() + "</td>" +
+                        "<td align=\"left\">" +
+                            "<input type=\"text\" id=\"field" + i + "\"" + 
+                                  " size=\"25\"" +
+                                  " value=\"" + fval + "\"/></td>"; }
+                else if(fval) {  //not editing and have value to display
+                    html += "<td>" + fval + "</td>"; }
+                html += "</tr>"; } }
+        html += "</table>";
+        return html;
+    },
+
+
+    secondaryFieldsValid = function (type, errors) {
+        var input, i;
+        //none of the secondary fields are required, so just note the values
+        for(i = 0; i < type.fields.length; i += 1) {
+            input = mor.byId("field" + i);
+            if(input) {  //input field was displayed
+                review[type.fields[i]] = input.value; } }
+    },
+
+
+    toggleKeyword = function (kwid) {
+        var cbox, text, keyin, keywords, i, kw;
+        cbox = mor.byId(kwid);
+        text = "";
+        keyin = mor.byId('keywordin');
+        keywords = keyin.value.split(",");
+        for(i = 0; i < keywords.length; i += 1) {
+            kw = keywords[i].trim();
+            if(kw === cbox.value) {
+                kw = ""; }
+            if(text) {  //have a keyword already
+                text += ", "; }
+            text += kw; }
+        if(cbox.checked) {
+            if(text) {
+                text += ", "; }
+            text += cbox.value; }
+        keyin.value = text;
+    },
+
+
+    keywordCheckboxesHTML = function (type) {
+        var i, tdc = 0, html = "";
+        html += "<table>";
+        for(i = 0; i < type.dkwords.length; i += 1) {
+            if(tdc === 0) {
+                html += "<tr>"; }
+            html += "<td><input type=\"checkbox\"" +
+                " name=\"dkw" + i + "\"" +
+                " value=\"" + type.dkwords[i] + "\"" +
+                " id=\"dkw" + i + "\"" + 
+                " onchange=\"mor.review.toggleKeyword('dkw" + i + "');" +
+                            "return false;\"";
+            if(review.keywords.indexOf(type.dkwords[i]) >= 0) {
+                html += " checked=\"checked\""; }
+            html += "/>" +
+                "<label for=\"dkw" + i + "\">" + 
+                  type.dkwords[i] + "</label>" +
+                "</td>";
+            tdc += 1;
+            if(tdc === 4 || i === type.dkwords.length - 1) {
+                html += "</tr>";
+                tdc = 0; } }
+        html += "</table>";
+        return html;
+    },
+
+
+    keywordsHTML = function (review, type, keyval, mode) {
+        var html = "";
+        if(!keyval) {
+            return html; }
+        if(mode === "edit") {
+            html += keywordCheckboxesHTML(type) + 
+                "Keywords: " +
+                  "<input type=\"text\" id=\"keywordin\"" + 
+                        " size=\"30\"" + 
+                        " value=\"" + review.keywords + "\"/>"; }
+        else { //not editing
+            html += "<div class=\"csvstrdiv\">" + review.keywords + "</div>"; }
+        return html;
+    },
+
+
+    keywordsValid = function (type, errors) {
+        var input = mor.byId('keywordin');
+        if(input) {
+            review.keywords = input.value; }
+    },
+
+
+    //This should have a similar look and feel to the shoutout display
+    reviewTextHTML = function (review, type, keyval, mode) {
+        var html = "", fval, style, targetwidth;
+        if(!keyval) {
+            return html; }
+        fval = review.text || "";
+        targetwidth = Math.max((mor.winw - 350), 200);
+        style = "color:" + mor.colors.text + ";" +
+            "background-color:" + mor.skinner.lightbg() + ";" +
+            "width:" + targetwidth + "px;";
+        if(mode === "edit") {
+            style += "height:120px;";
+            html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
+                             " style=\"" + style + "\">" +
+                fval + "</textarea>"; }
+        else {
+            style += "height:140px;overflow:auto;" + 
+                "border:1px solid " + mor.skinner.darkbg() + ";";
+            html += "<div id=\"reviewtext\" class=\"shoutout\"" +
+                        " style=\"" + style + "\">" + 
+                mor.linkify(fval) + "</div>"; }
+        return html;
+    },
+
+
+    reviewTextValid = function (type, errors) {
+        var input = mor.byId('reviewtext');
+        if(input) {
+            review.text = input.value; }
+    },
+
+
+    reviewFormButtonsHTML = function (review, type, keyval, mode) {
+        var html = "";
+        //user just chose type for editing
+        if(!keyval) {
+            mor.onescapefunc = mor.review.reset;
+            html += "<button type=\"button\" id=\"cancelbutton\"" +
+                " onclick=\"mor.review.reset();return false;\"" +
+                ">Cancel</button>" + 
+                "&nbsp;" +
+                "<button type=\"button\" id=\"savebutton\"" +
+                " onclick=\"mor.review.save();return false;\"" +
+                ">Create Review</button>"; }
+        //have key fields and editing full review
+        else if(mode === "edit") {
+            html += "<button type=\"button\" id=\"savebutton\"" +
+                " onclick=\"mor.review.save();return false;\"" +
+                ">Save</button>&nbsp;";
+            if(keyval) {  //have at least minimally complete review..
+                html += "<button type=\"button\" id=\"donebutton\"" +
+                    " onclick=\"mor.review.save(true);return false;\"" +
+                    ">Done</button>"; } }
+        //reading a previously written review
+        else if(review.penid === mor.instId(userpen)) {  //is review owner
+            html += "<button type=\"button\" id=\"editbutton\"" +
+                " onclick=\"mor.review.display();return false;\"" +
+                ">Edit</button>"; }
+        //reading a review written by someone else
+        else {
+            html += "<button type=\"button\" id=\"respondbutton\"" +
+                " onclick=\"mor.review.respond();return false;\"" +
+                ">Edit Your Review</button>"; }
+        //space for save status messages underneath buttons
+        html += "<br/><div id=\"revsavemsg\"></div>";
+        return html;
+    },
+
+
+    sliderChange = function (value) {
+        var html;
+        //mor.log("sliderChange: " + value);
+        review.rating = Math.round(value);
+        html = starsImageHTML(review.rating);
+        mor.out('stardisp', html);
+    },
+
+
+    makeRatingSlider = function (keyval) {
+        //The dojo dijit/form/HorizontalSlider rating control
+        var ratingSlider = mor.dojo.dijitreg.byId("ratslide");
+        if(ratingSlider) {
+            //kill the widget and any contained widgets, preserving DOM node
+            ratingSlider.destroyRecursive(true); }
+        if(!keyval) {  //no star value input yet
+            return; }
+        ratingSlider = new mor.dojo.slider({
+            name: "ratslide",
+            value: 80,
+            minimum: 0,
+            maximum: 100,
+            intermediateChanges: true,
+            style: "width:150px;",
+            onChange: function (value) {
+                sliderChange(value); } }, "ratslide");
+        if(review.rating === null || review.rating < 0) { 
+            review.rating = 80; }  //have to start somewhere...
+        ratingSlider.set("value", review.rating);
+        sliderChange(review.rating);
+        return ratingSlider;
+    },
+
+
+    displayReviewForm = function (review, mode) {
+        var html, type, keyval, fval, onchange;
+        type = findReviewType(review.revtype);
+        keyval = review[type.key];
+        html = "<div class=\"formstyle\">" + 
+            "<table class=\"revdisptable\" border=\"0\">";
+        //labels for first line if editing
+        if(mode === "edit") {
+            html += "<tr>" +
+                "<td></td>" +
+                "<td id=\"keyinlabeltd\">" + 
+                    formFieldLabelContents(type.key) + "</td>";
+            if(type.subkey) {
+                html += "<td id=\"subkeyinlabeltd\">" +
+                    formFieldLabelContents(type.subkey) + "</td>"; }
+            html += "</tr>"; }
+        //first line of actual content
+        html += "<tr><td><span id=\"stardisp\">" + 
+            starsImageHTML(review.rating) + "</span>" + "&nbsp;" +
+            badgeImageHTML(type) + "</td>";
+        if(mode === "edit") {
+            onchange = "mor.review.save();return false;";
+            if(type.subkey) {
+                onchange = "mor.byId('subkeyin').focus();return false;"; }
+            fval = review[type.key] || "";
+            html += "<td><input type=\"text\" id=\"keyin\" size=\"30\"" +
+                              " onchange=\"" + onchange + "\"" + 
+                              " value=\"" + fval + "\"></td>";
+            if(type.subkey) {
+                onchange = "mor.review.save();return false;";
+                fval = review[type.subkey] || "";
+                html += "<td><input type=\"text\" id=\"subkeyin\" size=\"30\"" +
+                                  " onchange=\"" + onchange + "\"" +
+                                  " value=\"" + fval + "\"/></td>"; } }
+        else {  //not editing, read only display
+            fval = review[type.key] || "";
+            html += "<td align=\"middle\"><b>" + fval + "</b></td>";
+            if(type.subkey) {
+                fval = review[type.subkey] || "";
+                html += "<td><i>" + fval + "</i></td>"; }
+            if("url" !== type.key && "url" !== type.subkey) {
+                fval = review.url || "";
+                html += "<td>" + graphicAbbrevSiteLink(fval) + "</td>"; } }
+        html += "</tr>";
+        //slider rating control and url input if editing
+        if(mode === "edit" && keyval) {
+            fval = review.url || "";
+            html += "<tr>" + 
+                "<td colspan=\"2\" class=\"claro\">" +
+                  "<div id=\"ratslide\"></div>" +
+                "</td>" + 
+                "<td>" +
+                  formFieldLabelContents("url") + "<br/>" +
+                  "<input type=\"text\" id=\"urlin\" size=\"30\"" +
+                        " value=\"" + fval + "\"/>" +
+                "</td>" +
+                "</tr>"; }
+        //text description line
+        html += "<tr><td colspan=\"4\">" + 
+            reviewTextHTML(review, type, keyval, mode) + "</td></tr>" +
+            "</table><table class=\"revdisptable\" border=\"0\">";
+        //pic, keywords, secondary fields, pic
+        html += "<tr>" +
+            "<td>" + picHTML(review, type, keyval, mode) + "</td>" +
+            "<td valign=\"top\">" + 
+                keywordsHTML(review, type, keyval, mode) + "</td>" +
+            "<td valign=\"top\">" + 
+                secondaryFieldsHTML(review, type, keyval, mode) + "</td>" +
+            "</tr>";
+        //buttons
+        html += "<tr>" +
+          "<td colspan=\"4\" align=\"center\" id=\"formbuttonstd\">" + 
+            reviewFormButtonsHTML(review, type, keyval, mode) + "</td>" +
+        "</tr>" +
+        "</table></div>";
+        mor.out('cmain', html);
+        if(mode === "edit") {
+            makeRatingSlider(keyval);
+            if(!keyval) {
+                mor.byId('keyin').focus(); }
+            else if(mor.byId('subkeyin')) {
+                mor.byId('subkeyin').focus(); }
+            else {
+                mor.byId('reviewtext').focus(); } }
+        mor.layout.adjust();
+    },
+
+
+    cancelReview = function () {
+        review = {};
+        mor.onescapefunc = null; 
+        mor.review.display();
+    },
+
+
+    saveReview = function (doneEditing) {
+        var errors = [], i, errtxt = "", type, url, data;
+        type = findReviewType(review.revtype);
+        if(!type) {
+            mor.out('revsavemsg', "Unknown review type");
+            return; }
+        keyFieldsValid(type, errors);
+        secondaryFieldsValid(type, errors);
+        keywordsValid(type, errors);
+        reviewTextValid(type, errors);
+        if(errors.length > 0) {
+            for(i = 0; i < errors.length; i += 1) {
+                errtxt += errors[i] + "<br/>"; }
+            mor.out('revsavemsg', errtxt);
+            return; }
+        mor.out('formbuttonstd', "Saving...");
+        mor.onescapefunc = null;
+        url = "updrev?";
+        if(!mor.instId(review)) {
+            url = "newrev?";
+            review.svcdata = ""; }
+        data = mor.objdata(review);
+        mor.call(url + mor.login.authparams(), 'POST', data,
+                 function (reviews) {
+                     mor.profile.resetReviews();
+                     review = reviews[0];
+                     if(doneEditing) {
+                         mor.review.displayRead(); }
+                     else {
+                         mor.review.display(); } },
+                 function (code, errtxt) {
+                     asyncSaveErrTxt = "Save failed code: " + code + " " +
+                         errtxt;
+                     mor.review.display(); });
+    },
+
+
+    initWithId = function (revid, mode) {
+        var params = "revid=" + revid;
+        mor.call("revbyid?" + params, 'GET', null,
+                 function (revs) {
+                     if(revs.length > 0) {
+                         review = revs[0];
+                         if(mode === "edit") {
+                             mor.review.display(); }
+                         else {
+                             mor.review.displayRead(); } }
+                     else {
+                         mor.err("initWithId found no review id " + revid); } },
+                 function (code, errtxt) {
+                     mor.err("initWithId failed code " + code + ": " +
+                             errtxt); });
+    },
+
+
+    mainDisplay = function (pen, read) {
+        userpen = pen;
+        if(!review) {
+            review = {}; }
+        if(!review.penid) {
+            review.penid = mor.instId(userpen); }
+        //if reading or updating an existing review, that review is
+        //assumed to be minimally complete, which means it must
+        //already have values for penid, svcdata, revtype, the defined
+        //key field, and the subkey field (if defined for the type).
+        if(read) { 
+            displayReviewForm(review); }
+        else if(!review.revtype) {
+            displayTypeSelect(); }
+        else {
+            displayReviewForm(review, "edit"); }
     };
 
 
     mor.review = {
         display: function () {
             mor.pen.getPen(mainDisplay); },
+        displayRead: function () {
+            mor.pen.getPen(function (pen) {
+                mainDisplay(pen, true); }); },
         updateHeading: function () {
             writeNavDisplay(); },
         getReviewTypes: function () {
@@ -1126,7 +1814,29 @@ var mor = {};  //Top level function closure container
         reviewTypeCheckboxesHTML: function (cboxgroup) {
             return reviewTypeCheckboxesHTML(cboxgroup); },
         badgeImageHTML: function (type) {
-            return badgeImageHTML(type); }
+            return badgeImageHTML(type); },
+        starsImageHTML: function (rating) {
+            return starsImageHTML(rating); },
+        readURL: function (url) {
+            return readURL(url); },
+        setType: function (type) {
+            return setType(type); },
+        picUploadForm: function () {
+            picUploadForm(); },
+        toggleKeyword: function (kwid) {
+            toggleKeyword(kwid); },
+        reset: function () {
+            cancelReview(); },
+        save: function (doneEditing) {
+            saveReview(doneEditing); },
+        setCurrentReview: function (revobj) {
+            review = revobj; },
+        initWithId: function (revid, mode) {
+            initWithId(revid, mode); },
+        respond: function () {
+            mor.err("Not implemented yet"); },
+        graphicAbbrevSiteLink: function (url) {
+            return graphicAbbrevSiteLink(url); }
     };
 
 } () );
@@ -1174,15 +1884,19 @@ var mor = {};  //Top level function closure container
     "use strict";
 
     var unspecifiedCityText = "City not specified",
+        currtab,
+        profpen,
+        cachepens = [],
+        //tab displays
+        recRevState = {},
+        topRevState = {},
+        followingDisp,
+        followerDisp,
+        //search tab display
         searchparams = {},
         searchresults = [],
         searchcursor = "",
         searchtotal = 0,
-        currtab,
-        profpen,
-        cachepens = [],
-        followingDisp,
-        followerDisp,
 
 
     createOrEditRelationship = function () {
@@ -1345,7 +2059,7 @@ var mor = {};  //Top level function closure container
         hash = mor.objdata({ view: "profile", profid: penid });
         linktitle = mor.ellipsis(pen.shoutout, 75);
         if(!linktitle) {
-            linktitle = "View profile for " + pen.name; }
+            linktitle = "View profile for " + mor.enc(pen.name); }
         html = "<li>" +
             "<a href=\"#" + hash + "\"" +
             " onclick=\"mor.profile.changeid('" + penid + "');return false;\"" +
@@ -1449,10 +2163,141 @@ var mor = {};  //Top level function closure container
     },
 
 
-    recent = function () {
-        var html = "Recent activity display not implemented yet";
-        selectTab("recentli", recent);
+    clearReviewDispState = function (dispState) {
+        dispState.params = {};
+        dispState.results = [];
+        dispState.cursor = "";
+        dispState.total = 0;
+        dispState.initialized = false;
+    },
+
+
+    resetReviewDisplays = function () {
+        clearReviewDispState(recRevState);
+        recRevState.tab = "recent";
+        clearReviewDispState(topRevState);
+        topRevState.tab = "top";
+    },
+
+
+    readReview = function (revid) {
+        var i, revobj;
+        if(typeof revid !== "number") {
+            revid = parseInt(revid, 10); }
+        for(i = 0; !revobj && i < recRevState.results.length; i += 1) {
+            if(mor.instId(recRevState.results[i]) === revid) {
+                revobj = recRevState.results[i]; } }
+        for(i = 0; !revobj && i < topRevState.results.length; i += 1) {
+            if(mor.instId(topRevState.results[i]) === revid) {
+                revobj = topRevState.results[i]; } }
+        if(!revobj) {
+            mor.log("readReview " + revid + " not found");
+            return; }
+        mor.review.setCurrentReview(revobj);
+        mor.review.displayRead();
+    },
+
+
+    reviewItemHTML = function (revobj, penNameStr) {
+        var revid, type, hash, html;
+        revid = mor.instId(revobj);
+        type = mor.review.getReviewTypeByValue(revobj.revtype);
+        hash = mor.objdata({ view: "review", revid: revid });
+        html = "<li>" + mor.review.starsImageHTML(revobj.rating) + 
+            mor.review.badgeImageHTML(type) + "&nbsp;" +
+            "<a href=\"#" + hash + "\"" +
+              " onclick=\"mor.profile.readReview('" + revid + "');" + 
+                         "return false;\"" +
+              " title=\"See full review\">" + 
+            revobj[type.key];
+        if(type.subkey) {
+            html += " <i>" + revobj[type.subkey] + "</i>"; }
+        html += "</a>";
+        if(revobj.url) {
+            html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
+        html += "<br/><span class=\"revtextsummary\">" + 
+            mor.ellipsis(revobj.text, 255) + "</span><br/>";
+        if(penNameStr) {
+            hash = mor.objdata({ view: "profile", profid: revobj.penid });
+            html += "<a href=\"#" + hash + "\"" +
+                " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
+                           "return false;\"" +
+                " title=\"Show profile for" + mor.enc(penNameStr) + "\">" +
+                penNameStr + "</a>"; }
+        html += "</li>";
+        return html;
+    },
+
+
+    displayReviews = function (dispState, reviews) {
+        var i, html = "<ul class=\"revlist\">";
+        for(i = 0; i < dispState.results.length; i += 1) {
+            html += reviewItemHTML(dispState.results[i]); }
+        if(reviews) {  //have fresh search results
+            dispState.cursor = "";
+            for(i = 0; i < reviews.length; i += 1) {
+                if(reviews[i].fetched) {
+                    dispState.total += reviews[i].fetched;
+                    html += "<div class=\"sumtotal\">" +
+                        dispState.total + " reviews searched</div>";
+                    if(reviews[i].cursor) {
+                        dispState.cursor = reviews[i].cursor; }
+                    break; }  //if no reviews, i will be left at zero
+                dispState.results.push(reviews[i]);
+                html += reviewItemHTML(reviews[i]); } }
+        dispState.total = Math.max(dispState.total, dispState.results.length);
+        if(dispState.total === 0) {
+            html += "<li>No reviews</li>"; }
+        html += "</ul>";
+        if(dispState.cursor && i > 0) {
+            html += "<a href=\"#continuesearch\"" +
+                " onclick=\"mor.profile.revsmore('" + dispState.tab + "');" +
+                           "return false;\"" +
+                " title=\"More reviews\"" + ">more reviews...</a>"; }
         mor.out('profcontdiv', html);
+        mor.layout.adjust();
+    },
+
+
+    findReviews = function (dispState) {
+        var params;
+        if(!dispState.params.penid) {
+            dispState.params.penid = mor.instId(profpen); }
+        params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
+        mor.call("srchrevs?" + params, 'GET', null,
+                 function (revs) {
+                     displayReviews(dispState, revs); },
+                 function (code, errtxt) {
+                     mor.out('profcontdiv', "findReviews failed code " + code +
+                             " " + errtxt); });
+    },
+
+
+    fetchMoreReviews = function (tabname) {
+        if(tabname === "recent") {
+            findReviews(recRevState); }
+        else if(tabname === "best") {
+            findReviews(topRevState); }
+        mor.err("fetchMoreReviews unknown tabname: " + tabname);
+    },
+
+        
+    recent = function () {
+        var html, temp, maxdate, mindate;
+        selectTab("recentli", recent);
+        if(recRevState && recRevState.initialized) {
+            displayReviews(recRevState); }
+        html = "Retrieving recent activity for " + profpen.name + "...";
+        mor.out('profcontdiv', html);
+        mor.layout.adjust();
+        clearReviewDispState(recRevState);
+        temp = recRevState;
+        maxdate = new Date();
+        mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
+        recRevState.params.maxdate = maxdate.toISOString();
+        recRevState.params.mindate = mindate.toISOString();
+        recRevState.initialized = true; 
+        findReviews(recRevState);
     },
 
 
@@ -1460,6 +2305,7 @@ var mor = {};  //Top level function closure container
         var html = "Top rated display not implemented yet";
         selectTab("bestli", best);
         mor.out('profcontdiv', html);
+        mor.layout.adjust();
     },
 
 
@@ -1776,7 +2622,11 @@ var mor = {};  //Top level function closure container
         var target;
         shout.style.color = mor.colors.text;
         shout.style.backgroundColor = mor.skinner.lightbg();
-        target = mor.winw - 350;
+        //80px left margin + 160px image + padding
+        //+ balancing right margin space (preferable)
+        //but going much smaller than the image is stupid regardless of
+        //screen size
+        target = Math.max((mor.winw - 350), 200);
         shout.style.width = target + "px";
     },
 
@@ -1846,21 +2696,10 @@ var mor = {};  //Top level function closure container
     },
 
 
-    cancelPicUpload = function () {
-        mor.out('overlaydiv', "");
-        mor.byId('overlaydiv').style.visibility = "hidden";
-        mor.onescapefunc = null;
-    },
-
-
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
-        var odiv, html = "", authfields, i, attval;
-        authfields = mor.login.authparams().split("&");
-        for(i = 0; i < authfields.length; i += 1) {
-            attval = authfields[i].split("=");
-            html += "<input type=\"hidden\" name=\"" + attval[0] + "\"" +
-                                          " value=\"" + attval[1] + "\"/>"; }
+        var odiv, html = "";
+        html += mor.paramsToFormInputs(mor.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + 
             mor.instId(pen) + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
@@ -1870,15 +2709,17 @@ var mor = {};  //Top level function closure container
             html +
             "<table>" +
               "<tr><td>Upload New Profile Pic</td></tr>" +
-              "<tr><td><input type=\"file\" name=\"picfilein\"/></td></tr>" +
+              "<tr><td><input type=\"file\" name=\"picfilein\"" + 
+                                          " id=\"picfilein\"/></td></tr>" +
               "<tr><td align=\"center\">" +
                     "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
             "</form>";
         mor.out('overlaydiv', html);
         odiv = mor.byId('overlaydiv');
+        odiv.style.top = "80px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = mor.skinner.lightbg();
-        mor.onescapefunc = cancelPicUpload;
+        mor.onescapefunc = mor.cancelPicUpload;
         mor.byId('picfilein').focus();
     },
 
@@ -1957,6 +2798,7 @@ var mor = {};  //Top level function closure container
     displayProfileForId = function (id) {
         if(typeof id !== "number") {
             id = parseInt(id, 10); }
+        resetReviewDisplays();
         findOrLoadPen(id, mainDisplay);
     };
 
@@ -1985,6 +2827,8 @@ var mor = {};  //Top level function closure container
             displaySearchForm(); },
         togglesrchopts: function () {
             toggleSearchOptions(); },
+        resetReviews: function () {
+            resetReviewDisplays(); },
         authorized: function (pen) {
             if(pen.mid || pen.gid || pen.fbid || pen.twid) {
                 return true; }
@@ -2015,7 +2859,11 @@ var mor = {};  //Top level function closure container
         updateCache: function (pen) {
             updateCache(pen); },
         currentTabAsString: function () {
-            return getCurrTabAsString(); }
+            return getCurrTabAsString(); },
+        revsmore: function (tab) {
+            return fetchMoreReviews(tab); },
+        readReview: function (revid) {
+            return readReview(revid); }
     };
 
 } () );

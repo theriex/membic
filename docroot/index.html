@@ -6,6 +6,7 @@
   <meta name="description" 
         content="An open place for personal media reviews." />
   <title>My Open Reviews</title>
+  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.8.0/dijit/themes/claro/claro.css" rel="stylesheet" />
   <link href="css/mor.css" rel="stylesheet" type="text/css" />
 </head>
 <body id="bodyid">
@@ -46,7 +47,7 @@
     <a href="docs/privacy.html">privacy</a> 
     <a href="docs/FOSS.html">FOSS</a> 
     <a href="docs/API.html">API</a>
-    <a href="docs/issues.html">issues</a>
+    <a href="docs/issues.html">contact</a>
   </div>
 </div>
 
@@ -57,15 +58,17 @@
 <div id="dlgdiv"></div>  <!-- dialogs -->
 
 
+<!-- This lib version should match the css theme -->
 <script src="https://ajax.googleapis.com/ajax/libs/dojo/1.8.0/dojo/dojo.js"
 	data-dojo-config="async: true"></script>
 <script src="js/mor.js"></script>
 
 <script>
 require([ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
-          "dojo/query", "dojo/cookie", "dojo/domReady!" ],
-        function (dom, json, on, request, query, cookie) {
-            mor.init(dom, json, on, request, query, cookie); });
+          "dojo/query", "dojo/cookie", "dijit/registry",
+          "dijit/form/HorizontalSlider", "dojo/domReady!" ],
+    function (dom, json, on, request, query, cookie, dijitreg, slider) {
+        mor.init(dom, json, on, request, query, cookie, dijitreg, slider); });
 </script>
 
 </body>
