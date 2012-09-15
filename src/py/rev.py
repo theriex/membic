@@ -31,8 +31,13 @@ class Review(db.Model):
     address = db.StringProperty()
     # storing year as a string to allow values like "80's"
     year = db.StringProperty()
-    # The id of the source review (if any) that triggered this review
-    srevid = db.IntegerProperty()
+    # The canonized key/subkey field value for search match
+    cankey = db.StringProperty()
+    # CSV of penid:revid pairs for tracking review responses
+    sourcerevs = db.TextProperty()
+    responserevs = db.TextProperty()
+    # CSV of penid:feedid pairs for tracking remembered reviews
+    memos = db.TextProperty()
     # Blackboard of service agent processing values in url parameter
     # format (e.g. attr1=val1&attr2=val2...) used for tracking import
     # and export status, suggestion frequency and whatever
@@ -97,10 +102,14 @@ def read_review_values(handler, review):
     review.starring = handler.request.get('starring')
     review.address = handler.request.get('address')
     review.year = handler.request.get('year')
+    review.cankey = handler.request.get('cankey')
+    # review.sourcrevs is updated through a specialized call
+    # review.responserevs is updated through a specialized call
+    # review.memos is updated through a specialized call
     srevidstr = handler.request.get('srevid')
     if srevidstr:
         review.srevid = int(srevidstr)
-    review.svcdata = handler.request.get('svcdata')
+    # review.svcdata is updated through a specialized call
 
 
 class NewReview(webapp2.RequestHandler):

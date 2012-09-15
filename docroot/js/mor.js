@@ -199,7 +199,7 @@ var mor = {};  //Top level function closure container
         mor.out('overlaydiv', "");
         mor.byId('overlaydiv').style.visibility = "hidden";
         mor.onescapefunc = null;
-    },
+    };
 
 
     mor.prefixed = function (string, prefix) {
@@ -398,6 +398,14 @@ var mor = {};  //Top level function closure container
             return mor.makelink(url); });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;
+    };
+
+
+    mor.canonize = function (txt) {
+        var strval = txt || "";
+        strval = strval.replace(/\s/g, "");
+        strval = strval.toLowerCase();
+        return strval;
     };
 
 
@@ -1076,6 +1084,8 @@ var mor = {};  //Top level function closure container
 
     var //The pen name the user is currently logged in with.
         userpen = null,
+        //The initial review url that was given for review creation
+        readurl = "",
         //The review currently being displayed or edited.  The pic field
         //is handled as a special case since it requires a form upload.
         review = {},
@@ -1255,11 +1265,13 @@ var mor = {};  //Top level function closure container
             if(input) {
                 url = input.value; } }
         if(url) {
+            readurl = url;
             //ATTENTION: Check configured connection services to see if
             //any of them know how to pull info from this url.
-            alert("There is no registered connection service available yet " +
-                  "that knows how to read " + url + ". Feel free to " +
-                  "raise this as an issue if you think there should be one."); }
+            alert("Unfortunately there is no registered connection service " +
+                  "available yet that knows how to read " + url + " so you " +
+                  "will have to choose a type manually.  For general " + 
+                  "progress status on features see the contact page." ); }
     },
 
 
@@ -1277,7 +1289,9 @@ var mor = {};  //Top level function closure container
             "(if available)" + "<table><tr>" +
               "<td align=\"right\">URL</td>" +
               "<td align=\"left\">" +
-                "<input type=\"text\" id=\"urlin\" size=\"40\"/></td>" +
+                "<input type=\"text\" id=\"urlin\" size=\"40\"" +
+                      " onchange=\"mor.review.readURL();return false;\"" + 
+                "/></td>" +
               "<td>" +
                 "<button type=\"button\" id=\"readurlbutton\"" +
                        " onclick=\"mor.review.readURL();return false;\"" +
@@ -1405,19 +1419,23 @@ var mor = {};  //Top level function closure container
 
 
     keyFieldsValid = function (type, errors) {
-        var input = mor.byId('keyin');
+        var cankey, input = mor.byId('keyin');
         if(!input || !input.value) {
             errlabel('keyinlabeltd');
             errors.push("Please specify a value for " + type.key); }
         else {
-            review[type.key] = input.value; }
+            review[type.key] = input.value;
+            cankey = review[type.key]; }
         if(type.subkey) {
             input = mor.byId('subkeyin');
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
                 errors.push("Please specify a value for " + type.subkey); }
             else {
-                review[type.subkey] = input.value; } }
+                review[type.subkey] = input.value;
+                cankey += review[type.subkey]; } }
+        if(cankey) {
+            review.cankey = mor.canonize(cankey); }
     },
 
 
@@ -1559,6 +1577,23 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //Return true if the current user has remembered the given review,
+    //false otherwise.
+    isRemembered = function (review) {
+        var penid = mor.instId(userpen);
+        if(penid && review && review.memos && 
+           review.memos.indexOf(penid + ":") >= 0) {
+            return true; }
+    },
+
+
+    //ATTENTION: Once review responses are available, there needs to
+    //be a way to view those responses as a list so you can see what
+    //other people thought of the same thing or what kind of an impact
+    //you are having.  This is a good way to find other pen names to
+    //follow, and a response review is how you communicate about
+    //things on MyOpenReviews.  "Like", "+1" and general chatter
+    //is best handled via integration with general social networks.
     reviewFormButtonsHTML = function (review, type, keyval, mode) {
         var html = "";
         //user just chose type for editing
@@ -1582,6 +1617,7 @@ var mor = {};  //Top level function closure container
                     ">Done</button>"; } }
         //reading a previously written review
         else if(review.penid === mor.instId(userpen)) {  //is review owner
+            //ATTENTION: Probably want to be able to delete a review also.
             html += "<button type=\"button\" id=\"editbutton\"" +
                 " onclick=\"mor.review.display();return false;\"" +
                 ">Edit</button>"; }
@@ -1589,7 +1625,16 @@ var mor = {};  //Top level function closure container
         else {
             html += "<button type=\"button\" id=\"respondbutton\"" +
                 " onclick=\"mor.review.respond();return false;\"" +
-                ">Edit Your Review</button>"; }
+                ">Edit Your Review</button>" +
+                "&nbsp;";
+            if(isRemembered(review)) {
+                html += "<button type=\"button\" id=\"memobutton\"" +
+                    " onclick=\"mor.review.memo(true);return false;]\"" +
+                    ">Stop Remembering</a>"; }
+            else {
+                html += "<button type=\"button\" id=\"memobutton\"" +
+                    " onclick=\"mor.review.memo();return false;]\"" +
+                    ">Remember</a>"; } }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
         return html;
@@ -1630,6 +1675,9 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //ATTENTION: Somewhere in the read display, show a count of how
+    //many response reviews have been written, and how many people
+    //have remembered the review.  Provided there's more than zero.
     displayReviewForm = function (review, mode) {
         var html, type, keyval, fval, onchange;
         type = findReviewType(review.revtype);
@@ -1731,6 +1779,9 @@ var mor = {};  //Top level function closure container
         if(!type) {
             mor.out('revsavemsg', "Unknown review type");
             return; }
+        if(readurl) {
+            review.url = readurl;
+            readurl = ""; }
         keyFieldsValid(type, errors);
         secondaryFieldsValid(type, errors);
         keywordsValid(type, errors);
@@ -1777,6 +1828,47 @@ var mor = {};  //Top level function closure container
                  function (code, errtxt) {
                      mor.err("initWithId failed code " + code + ": " +
                              errtxt); });
+    },
+
+
+    //If the current user has a corresponding review for the current
+    //review, then edit it, otherwise create a new review using the
+    //existing review fields (except the text).  Verify penid:revid
+    //for the original review exists in the sourcerevs of the edited
+    //response review.  After saving the modified response review,
+    //call the server to verify the penid:revid of the response review
+    //exists in the responserevs field of the original review. [This
+    //could be done via a separate task on the server, but the client
+    //has all the context already, and it's not a critical referential
+    //integrity relationship].
+    //
+    //If the current review.responserevs has a penid:revid value, then
+    //edit that identified review.  Otherwise look up the review by
+    //the type and canonical key/subkey value (cankey).  If no match
+    //was found, then provide a message saying "no existing review
+    //found, creating a new one <search>".  Clicking search bring up a
+    //dialog that walks the users reviews for the given type and
+    //displays anything that might be a match.  Sort of like how you
+    //search for pen names.
+    //
+    //Editing a response review should show up in the feeds for the
+    //source pen name.
+    createEditResponseReview = function () {
+        //ATTENTION: This needs to get built
+        mor.err("Sorry, editing a response review is not implemented yet");
+    },
+
+
+    //Add the review to the remembered (permanent) feed items.  If
+    //remove is true then delete it from the remembered feed items.
+    //This would be called "bookmark", except then it gets confused
+    //with the browser bookmarks.
+    //
+    //After the feed item has been created, call the server to verify
+    //the penid:feedid exists in the source review.
+    addReviewToMemos = function (remove) {
+        //ATTENTION: This needs to get built
+        mor.err("Sorry, remembering a review is not implemented yet");
     },
 
 
@@ -1834,7 +1926,9 @@ var mor = {};  //Top level function closure container
         initWithId: function (revid, mode) {
             initWithId(revid, mode); },
         respond: function () {
-            mor.err("Not implemented yet"); },
+            createEditResponseReview(); },
+        memo: function (remove) {
+            addReviewToMemos(remove); },
         graphicAbbrevSiteLink: function (url) {
             return graphicAbbrevSiteLink(url); }
     };
