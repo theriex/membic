@@ -158,10 +158,7 @@ var mor = {};  //Top level function closure container
 
     //library support for factored event connection methods
     mor.onxnode = function (ename, node, func) {
-        mor.dojo.on(node, ename, function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            func(); });
+        mor.dojo.on(node, ename, func);
     };
 
 
@@ -174,13 +171,19 @@ var mor = {};  //Top level function closure container
 
     //factored method to handle a click with no propagation
     mor.onclick = function (divid, func) {
-        mor.onx("click", divid, func);
+        mor.onx("click", divid, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            func(e); });
     };
 
 
     //factored method to handle a change with no propagation
     mor.onchange = function (divid, func) {
-        mor.onx("change", divid, func);
+        mor.onx("change", divid, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            func(e); });
     };
 
 
@@ -338,13 +341,20 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.checkrad = function (type, name, value, label) {
+    mor.checkrad = function (type, name, value, label, checked, chgfstr) {
         var html;
         if(!label) {
             label = value.capitalize(); }
         html = "<input type=\"" + type + "\" name=\"" + name + "\" value=\"" +
-            value + "\" id=\"" + value + "\"/>" + 
-            "<label for=\"" + value + "\">" + label + "</label>";
+            value + "\" id=\"" + value + "\"";
+        if(checked) {
+            html += " checked=\"checked\""; }
+        //the source element for the change event is unreliable if 
+        //you click on a label so not passing back any value.  
+        //Change listener will need to check what is selected.
+        if(chgfstr) {
+            html += " onchange=\"" + chgfstr + "();return false;\""; }
+        html += "/>" + "<label for=\"" + value + "\">" + label + "</label>";
         return html;
     };
 
@@ -495,6 +505,8 @@ var mor = {};  //Top level function closure container
 
     attachDocLinkClick = function (node, link) {
         mor.onxnode("click", node, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
             displayDoc(link); });
     },
 
@@ -1206,7 +1218,7 @@ var mor = {};  //Top level function closure container
 
 
     //returns empty string if no image
-    badgeImageHTML = function (type, withtext) {
+    badgeImageHTML = function (type, withtext, greyed) {
         var label = type.plural.capitalize(), html = "";
         if(type.img) {
             html = "<img class=\"reviewbadge\"" +
@@ -1215,20 +1227,30 @@ var mor = {};  //Top level function closure container
                        " alt=\"" + label + "\"" +
                 "/>";
             if(withtext) {
+                if(greyed) {
+                    label = "<span style=\"color:#CCCCCC;\">" + label + 
+                        "</span>"; }
                 html += label; } }
         return html;
     },
 
 
-    reviewTypeCheckboxesHTML = function (cboxgroup) {
-        var i, tdc = 0, html = "<table>";
+    revTypeChoiceHTML = function (intype, gname, selt, chgfstr, revrefs) {
+        var i, tdc = 0, greyed, typename, label, value, checked, 
+            html = "<table>";
         for(i = 0; i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            greyed = false;
+            if(revrefs) {
+                if(!revrefs[typename] || revrefs[typename].length === 0) {
+                    greyed = true; } }
+            label = badgeImageHTML(reviewTypes[i], true, greyed);
+            value = reviewTypes[i].plural;
+            checked = (typename === selt);
             if(tdc === 0) {
                 html += "<tr>"; }
-            html += "<td>" + mor.checkbox(cboxgroup, 
-                                          reviewTypes[i].plural, 
-                                          badgeImageHTML(reviewTypes[i], 
-                                                         true)) + 
+            html += "<td>" + 
+                mor.checkrad(intype, gname, value, label, checked, chgfstr) + 
                 "</td>";
             tdc += 1;
             if(tdc === 4 || i === reviewTypes.length - 1) {
@@ -1236,6 +1258,16 @@ var mor = {};  //Top level function closure container
                 tdc = 0; } }
         html += "</table>";
         return html;
+    },
+
+
+    reviewTypeCheckboxesHTML = function (cboxgroup) {
+        return revTypeChoiceHTML("checkbox", cboxgroup);
+    },
+
+
+    reviewTypeRadiosHTML = function (rgname, chgfstr, revrefs, selt) {
+        return revTypeChoiceHTML("radio", rgname, selt, chgfstr, revrefs);
     },
 
 
@@ -1802,6 +1834,8 @@ var mor = {};  //Top level function closure container
                  function (reviews) {
                      mor.profile.resetReviews();
                      review = reviews[0];
+                     //fetch the updated top 20 lists
+                     setTimeout(mor.pen.refreshCurrent, 200);
                      if(doneEditing) {
                          mor.review.displayRead(); }
                      else {
@@ -1905,6 +1939,8 @@ var mor = {};  //Top level function closure container
             return findReviewType(val); },
         reviewTypeCheckboxesHTML: function (cboxgroup) {
             return reviewTypeCheckboxesHTML(cboxgroup); },
+        reviewTypeRadiosHTML: function (rgname, chgfuncstr, revrefs, selt) {
+            return reviewTypeRadiosHTML(rgname, chgfuncstr, revrefs, selt); },
         badgeImageHTML: function (type) {
             return badgeImageHTML(type); },
         starsImageHTML: function (rating) {
@@ -1982,7 +2018,7 @@ var mor = {};  //Top level function closure container
         profpen,
         cachepens = [],
         //tab displays
-        recRevState = {},
+        recentRevState = {},
         topRevState = {},
         followingDisp,
         followerDisp,
@@ -2257,7 +2293,7 @@ var mor = {};  //Top level function closure container
     },
 
 
-    clearReviewDispState = function (dispState) {
+    clearReviewSearchState = function (dispState) {
         dispState.params = {};
         dispState.results = [];
         dispState.cursor = "";
@@ -2267,23 +2303,26 @@ var mor = {};  //Top level function closure container
 
 
     resetReviewDisplays = function () {
-        clearReviewDispState(recRevState);
-        recRevState.tab = "recent";
-        clearReviewDispState(topRevState);
-        topRevState.tab = "top";
+        clearReviewSearchState(recentRevState);
+        recentRevState.tab = "recent";
     },
 
 
     readReview = function (revid) {
-        var i, revobj;
+        var i, revobj, revtype, tops;
         if(typeof revid !== "number") {
             revid = parseInt(revid, 10); }
-        for(i = 0; !revobj && i < recRevState.results.length; i += 1) {
-            if(mor.instId(recRevState.results[i]) === revid) {
-                revobj = recRevState.results[i]; } }
-        for(i = 0; !revobj && i < topRevState.results.length; i += 1) {
-            if(mor.instId(topRevState.results[i]) === revid) {
-                revobj = topRevState.results[i]; } }
+        for(i = 0; !revobj && i < recentRevState.results.length; i += 1) {
+            if(mor.instId(recentRevState.results[i]) === revid) {
+                revobj = recentRevState.results[i]; } }
+        if(profpen.top20s && typeof profpen.top20s === 'object') {
+            for(revtype in profpen.top20s) {
+                if(profpen.top20s.hasOwnProperty(revtype)) {
+                    tops = profpen.top20s[revtype];
+                    for(i = 0; !revobj && i < tops.length; i += 1) {
+                        if(typeof tops[i] === 'object' &&
+                           mor.instId(tops[i]) === 'object') {
+                            revobj = tops[i]; } } } } }
         if(!revobj) {
             mor.log("readReview " + revid + " not found");
             return; }
@@ -2369,37 +2408,103 @@ var mor = {};  //Top level function closure container
 
     fetchMoreReviews = function (tabname) {
         if(tabname === "recent") {
-            findReviews(recRevState); }
-        else if(tabname === "best") {
-            findReviews(topRevState); }
-        mor.err("fetchMoreReviews unknown tabname: " + tabname);
+            findReviews(recentRevState); }
+        else {
+            mor.err("fetchMoreReviews unknown tabname: " + tabname); }
     },
 
         
     recent = function () {
         var html, temp, maxdate, mindate;
         selectTab("recentli", recent);
-        if(recRevState && recRevState.initialized) {
-            displayReviews(recRevState); }
+        if(recentRevState && recentRevState.initialized) {
+            displayReviews(recentRevState); }
         html = "Retrieving recent activity for " + profpen.name + "...";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
-        clearReviewDispState(recRevState);
-        temp = recRevState;
+        clearReviewSearchState(recentRevState);
+        temp = recentRevState;
         maxdate = new Date();
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
-        recRevState.params.maxdate = maxdate.toISOString();
-        recRevState.params.mindate = mindate.toISOString();
-        recRevState.initialized = true; 
-        findReviews(recRevState);
+        recentRevState.params.maxdate = maxdate.toISOString();
+        recentRevState.params.mindate = mindate.toISOString();
+        recentRevState.initialized = true; 
+        findReviews(recentRevState);
+    },
+
+
+    dispTypeSelectionHTML = function () {
+        var html;
+        //verify a display type is selected
+        if(!topRevState.dispType) {
+            topRevState.dispType = "book";  //arbitrary default
+            if(profpen.top20s.latestrevtype) {
+                topRevState.dispType = profpen.top20s.latestrevtype; } }
+        //get the html for the radio buttons
+        html = mor.review.reviewTypeRadiosHTML("trbchoice",
+                                               "mor.profile.topTypeChange",
+                                               profpen.top20s,
+                                               topRevState.dispType);
+        return html;
+    },
+
+
+    topTypeChange = function () {
+        var radios, i, revtype;
+        radios = document.getElementsByName("trbchoice");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                revtype = mor.review.getReviewTypeByValue(radios[i].value);
+                if(revtype && revtype.type !== topRevState.dispType) {
+                    topRevState.dispType = revtype.type; }
+                break; } }
+        mor.profile.best();  //redisplay
     },
 
 
     best = function () {
-        var html = "Top rated display not implemented yet";
+        var html, revs, i, temp;
         selectTab("bestli", best);
+        if(typeof profpen.top20s === "string") {
+            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
+        html = dispTypeSelectionHTML();
+        revs = profpen.top20s[topRevState.dispType] || [];
+        html += "<ul class=\"revlist\">";
+        if(revs.length === 0) {
+            html += "<li>No reviews</li>"; }
+        for(i = 0; i < revs.length; i += 1) {
+            if(typeof revs[i] === 'number') {  //need to resolve id
+                if(topRevState.review) {       //have a resolution
+                    if(typeof topRevState.review === 'object') {
+                        if(mor.instId(topRevState.review) === revs[i]) {
+                            revs[i] = topRevState.review; } }
+                    else if(typeof topRevState.review === 'string') {
+                        temp = revs[i].toString + ":";
+                        if(topRevState.review.startsWith(temp)) {
+                            revs[i] = topRevState.review; } } } }
+            //have resolved object, error text, or unresolved id
+            if(typeof revs[i] === 'object') {  //resolved
+                html += reviewItemHTML(revs[i]); }
+            else if(typeof revs[i] === 'string') {  //resolution error
+                html += "<li>" + revs[i] + "</li>"; }
+            else {  //not resolved
+                html += "<li>Fetching review " + revs[i] + "...</li>";
+                break; } }  //didn't make it through, stop at index
+        html += "</ul>";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
+        if(i < revs.length) {  //didn't make it through, go fetch
+            mor.call("revbyid?revid=" + revs[i], 'GET', null,
+                     function (revs) {
+                         if(revs.length > 0) {
+                             topRevState.review = revs[0]; }
+                         else {
+                             topRevState.review = revs[i] + ": not found"; }
+                         mor.profile.best(); },
+                     function (code, errtxt) {
+                         topRevState.review = revs[i] + ": " + code + " " +
+                             errtxt;
+                         mor.profile.best(); }); }
     },
 
 
@@ -2957,7 +3062,9 @@ var mor = {};  //Top level function closure container
         revsmore: function (tab) {
             return fetchMoreReviews(tab); },
         readReview: function (revid) {
-            return readReview(revid); }
+            return readReview(revid); },
+        topTypeChange: function () {
+            topTypeChange(); }
     };
 
 } () );
@@ -3019,6 +3126,30 @@ var mor = {};  //Top level function closure container
             mor.log("Re-initializing penName settings.  Deserialized value " +
                     "was not an object: " + penName.settings);
             penName.settings = {}; }
+    },
+
+
+    //Update changed fields for currpen so anything referencing it gets
+    //the latest field values from the db.  Only updates public fields.
+    refreshCurrentPenFields = function () {
+        var params;
+        if(currpen) {
+            params = "penid=" + mor.instId(currpen);
+            mor.call("penbyid?" + params, 'GET', null,
+                     function (pens) {
+                         if(pens.length > 0) {
+                             currpen.name = pens[0].name;
+                             currpen.shoutout = pens[0].shoutout;
+                             currpen.city = pens[0].city;
+                             currpen.accessed = pens[0].accessed;
+                             currpen.modified = pens[0].modified;
+                             currpen.top20s = pens[0].top20s;
+                             currpen.settings = pens[0].settings;
+                             currpen.following = pens[0].following;
+                             currpen.followers = pens[0].followers; } },
+                     function (code, errtxt) {
+                         mor.log("refreshCurrentPenFields " + code + " " +
+                                 errtxt); }); }
     },
 
 
@@ -3156,7 +3287,9 @@ var mor = {};  //Top level function closure container
         selectPenByName: function (name) {
             selectPenByName(name); },
         getHomePen: function (penid) {
-            return getHomePen(penid); }
+            return getHomePen(penid); },
+        refreshCurrent: function () {
+            refreshCurrentPenFields(); }
     };
 
 } () );
@@ -3644,8 +3777,8 @@ var mor = {};  //Top level function closure container
             safeSetColor(colorfield, domid, color);
             updateColors(); });
         mor.onx("keypress", domid, function (e) {
-            var outval = e.keyCode;
-            switch(e.keyCode) {
+            var outval = e.charCode;
+            switch(e.charCode) {
             case 82:  //R - increase Red
                 outval = colorBump(colorfield, 0, 1); break;
             case 114: //r - decrease Red

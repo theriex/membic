@@ -6,6 +6,8 @@ import logging
 import urllib
 from moracct import *
 from pen import PenName, authorized
+import json
+from operator import attrgetter
 
 
 class Review(db.Model):
@@ -45,8 +47,8 @@ class Review(db.Model):
 
 
 def review_modification_authorized(handler):
-    """ Return true if the penid matches a pen name the caller is 
-        authorized to modify. """
+    """ Return the PenName if the penid matches a pen name the caller is 
+        authorized to modify, otherwise return False """
     acc = authenticated(handler.request)
     if not acc:
         handler.error(401)
@@ -56,14 +58,14 @@ def review_modification_authorized(handler):
     pen = PenName.get_by_id(penid)
     if not pen:
         handler.error(404)
-        hanlder.response.out.write("Pen " + str(penid) + " not found.")
+        handler.response.out.write("Pen " + str(penid) + " not found.")
         return False
     authok = authorized(acc, pen)
     if not authok:
         handler.error(401)
         handler.response.out.write("Pen name not authorized.")
         return False
-    return True
+    return pen
 
 
 def safe_get_review_for_update(handler):
@@ -112,27 +114,61 @@ def read_review_values(handler, review):
     # review.svcdata is updated through a specialized call
 
 
+def update_top20_reviews(pen, review):
+    t20dict = {}
+    if pen.top20s:
+        t20dict = json.loads(pen.top20s)
+    t20ids = []
+    if review.revtype in t20dict:
+        t20ids = t20dict[review.revtype]
+    t20revs = [ review ]
+    for revid in t20ids:
+        resolved = Review.get_by_id(revid)
+        # if unresolved reference then just skip it
+        if resolved:
+            t20revs.append(resolved)
+    t20revs = sorted(t20revs, key=attrgetter('rating', 'modified'), 
+                     reverse=True)
+    if len(t20revs) > 20:
+        t20revs = t20revs[0:20]
+    t20ids = []
+    lastid = -1     # trap any dupes just in case
+    for rev in t20revs:
+        currid = rev.key().id()
+        if currid != lastid:
+            t20ids.append(currid)
+        lastid = currid
+    t20dict[review.revtype] = t20ids
+    t20dict["latestrevtype"] = review.revtype
+    pen.top20s = json.dumps(t20dict)
+    pen.put()
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
-        if not review_modification_authorized(self):
+        pen = review_modification_authorized(self)
+        if not pen:
             return
         penid = int(self.request.get('penid'))
         revtype = self.request.get('revtype')
         review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
         review.put()
+        update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
 
 class UpdateReview(webapp2.RequestHandler):
     def post(self):
-        if not review_modification_authorized(self):
+        pen = review_modification_authorized(self)
+        if not pen:
             return
         review = safe_get_review_for_update(self)
         if not review:
             return
         read_review_values(self, review)
         review.put()
+        update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
 

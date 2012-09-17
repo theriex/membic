@@ -5,6 +5,8 @@ from google.appengine.api import images
 import logging
 from moracct import *
 import urllib
+import json
+
 
 def authorized(acc, pen):
     matched = False
@@ -30,8 +32,8 @@ class PenName(db.Model):
     # track last used pen name chosen to select it by default next time
     accessed = db.StringProperty()  # iso date
     modified = db.StringProperty()  # iso date
-    # a CSV of review types this pen name has at least 20 of
-    hastop = db.TextProperty()
+    # accumulated top 20 reviews of each type stored as JSON
+    top20s = db.TextProperty()
     # client settings like skin, keyword overrides etc stored as JSON
     settings = db.TextProperty()
     # counts of inbound and outbound relationships are maintained within
@@ -39,6 +41,17 @@ class PenName(db.Model):
     following = db.IntegerProperty()
     followers = db.IntegerProperty()
 
+
+def has_top_twenty(pen, revtype):
+    """ Return true if the given pen has 20 reviews of the given type """
+    if not revtype or not pen or not pen.top20s:
+        return False
+    t20s = json.loads(pen.top20s)
+    for t20list in t20s:
+        if t20list.revtype and len(t20list.revtype) >= 20:
+            return True
+    return False
+            
 
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
@@ -82,7 +95,7 @@ class NewPenName(webapp2.RequestHandler):
         pen.city = ""
         pen.accessed = nowISO()
         pen.modified = nowISO()
-        pen.hastop = ""
+        # pen.top20s is maintained separately as part of reviews
         pen.settings = self.request.get('settings')
         pen.following = 0
         pen.followers = 0
@@ -126,7 +139,7 @@ class UpdatePenName(webapp2.RequestHandler):
         pen.city = self.request.get('city')
         pen.accessed = nowISO()
         pen.modified = nowISO()
-        pen.hastop = self.request.get('hastop')
+        # pen.top20s is maintained separately as part of reviews
         pen.settings = self.request.get('settings')
         # pen.following is NOT modified here.  Don't collide with rel trans
         # pen.followers ditto
@@ -222,12 +235,12 @@ class SearchPenNames(webapp2.RequestHandler):
             if matched and time and pen.accessed < time:
                 matched = False
             # test required top 20 review types
-            if matched and t20 and not pen.hastop:
+            if matched and t20 and not pen.top20s:
                 matched = False
             if matched and t20:
                 t20s = t20.split(',')
                 for value in t20s:
-                    if not value in pen.hastop:
+                    if not has_top_twenty(pen, value):
                         matched = False
                         break
             # test not self
@@ -277,7 +290,6 @@ class MakeTestPens(webapp2.RequestHandler):
             pen.city = "fake city " + str(count)
             pen.accessed = nowISO()
             pen.modified = nowISO()
-            pen.hastop = ""
             pen.settings = ""
             pen.following = 0
             pen.followers = 0
