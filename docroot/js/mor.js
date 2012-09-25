@@ -14,8 +14,6 @@ var mor = {};  //Top level function closure container
     // app variables
     ////////////////////////////////////////
 
-    mor.sessiontoken = "";
-    mor.sesscook = "morsession=";
     mor.dojo = null;  //library module holder
     mor.colors = { bodybg: "#fffff6",
                    text: "#111111",
@@ -111,9 +109,13 @@ var mor = {};  //Top level function closure container
         if(state) {
             switch(state.view) {
             case "profile":
-                mor.profile.setTab(state.tab);
-                mor.profile.byprofid(state.profid);
+                if(state.profid > 0) {
+                    mor.profile.setTab(state.tab);
+                    mor.profile.byprofid(state.profid); }
                 break; 
+            case "activity":
+                mor.activity.display();
+                break;
             } }
     };
 
@@ -419,16 +421,6 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.authorized = function (pen) {
-        if(pen && (pen.mid > 0 ||
-                   pen.gid > 0 ||
-                   pen.fbid > 0 ||
-                   pen.twid > 0)) {
-            return true; }
-        return false;
-    };
-
-
     mor.paramsToFormInputs = function (paramstr) {
         var html = "", fields, i, attval;
         if(!paramstr) {
@@ -642,6 +634,12 @@ var mor = {};  //Top level function closure container
         authmethod = "";
         authtoken = "";
         authname = "";
+        mor.review.resetStateVars();
+        mor.activity.resetStateVars();
+        mor.profile.resetStateVars();
+        mor.pen.resetStateVars();
+        mor.rel.resetStateVars();
+        mor.historyCheckpoint({ view: "profile", profid: 0 });
         mor.login.updateAuthentDisplay();
         mor.login.init();
     },
@@ -696,10 +694,8 @@ var mor = {};  //Top level function closure container
                 return mor.activity.display(); }
             if(state.view === "review" && state.revid) {
                 mor.review.initWithId(state.revid, state.mode); } }
-        //do default display
-        //ATTENTION this should be going to mor.activity.display() but
-        //currently testing profile so making that the default.
-        mor.profile.display();
+        //go with default display
+        mor.activity.display();
     },
 
 
@@ -1171,6 +1167,14 @@ var mor = {};  //Top level function closure container
             dkwords: [ "Easy", "Advanced", "Kid Ok", "Cheap", "Expensive",
                        "Spring", "Summer", "Autumn", "Winter", "Anytime" ] }
           ],
+
+
+    resetStateVars = function () {
+        userpen = null;
+        readurl = "";
+        review = {};
+        asyncSaveErrTxt = "";
+    },
 
 
     //rating is a value from 0 - 100.  Display is rounded to nearest value.
@@ -1661,11 +1665,11 @@ var mor = {};  //Top level function closure container
                 "&nbsp;";
             if(isRemembered(review)) {
                 html += "<button type=\"button\" id=\"memobutton\"" +
-                    " onclick=\"mor.review.memo(true);return false;]\"" +
+                    " onclick=\"mor.review.memo(true);return false;\"" +
                     ">Stop Remembering</a>"; }
             else {
                 html += "<button type=\"button\" id=\"memobutton\"" +
-                    " onclick=\"mor.review.memo();return false;]\"" +
+                    " onclick=\"mor.review.memo();return false;\"" +
                     ">Remember</a>"; } }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
@@ -1926,6 +1930,8 @@ var mor = {};  //Top level function closure container
 
 
     mor.review = {
+        resetStateVars: function () {
+            resetStateVars(); },
         display: function () {
             mor.pen.getPen(mainDisplay); },
         displayRead: function () {
@@ -1978,7 +1984,21 @@ var mor = {};  //Top level function closure container
 (function () {
     "use strict";
 
-    var
+    var penids, 
+        revs, 
+        lastChecked, 
+        actcursor = "",
+        actsrchtotal = 0,
+
+
+    resetStateVars = function () {
+        penids = null;
+        revs = null;
+        lastChecked = null;
+        actcursor = "";
+        actsrchtotal = 0;
+    },
+
 
     writeNavDisplay = function () {
         var html = "<a href=\"#Activity\"" +
@@ -1989,18 +2009,163 @@ var mor = {};  //Top level function closure container
     },
 
 
-    mainDisplay = function (penName) {
-        var html = "<p>Activity display not implemented yet</p>";
-        mor.out('cmain', html);
+    penNameSearch = function () {
+        mor.profile.setTab("search");
+        mor.profile.display();
+    },
+
+
+    findReview = function (revid) {
+        var i;
+        for(i = 0; revid && revs && i < revs.length; i += 1) {
+            if(mor.instId(revs[i]) === revid) {
+                return revs[i]; } }
+    },
+
+
+    displayReviewActivity = function () {
+        var i, breakid, html = "<ul class=\"revlist\">";
+        if(revs.length === 0) {
+            html += "<li>No review activity</li>"; }
+        for(i = 0; i < revs.length; i += 1) {
+            html += mor.profile.reviewItemHTML(revs[i], revs[i].penNameStr);
+            if(!revs[i].penNameStr) {
+                breakid = revs[i].penid;
+                break; } }
+        if(breakid) {
+            setTimeout(function () {
+                mor.profile.retrievePen(breakid, 
+                                        mor.activity.notePenNameStr); },
+                       50); }
+        html += "</ul>";
+        if(actcursor) {
+            html += "<a href=\"#moreact\"" +
+                " onclick=\"mor.activity.moreact();return false;\"" +
+                " title=\"More activity\"" + ">more activity...</a>"; }
+        mor.out('revactdiv', html);
         mor.layout.adjust();
+    },
+
+
+    notePenNameStr = function (pen) {
+        var i, pid = mor.instId(pen);
+        for(i = 0; i < revs.length; i += 1) {
+            if(revs[i].penid === pid) {
+                revs[i].penNameStr = pen.name; } }
+        displayReviewActivity();
+    },
+
+
+    //The outbound relationships are loaded at this point, otherwise
+    //the pen ids would not have been available for the query.  If
+    //saving review activity to local storage, the relationships will
+    //also have to be saved.
+    filtered = function (rev) {
+        var rel = mor.rel.outbound(rev.penid);
+        if(rev.rating < rel.cutoff) {
+            return true; }
+        if(rel.mute && rel.mute.indexOf(rev.revtype >= 0)) {
+            return true; }
+        return false;
+    },
+
+
+    collectAndDisplayReviewActivity = function (results, continued) {
+        var i;
+        if(!continued) { //prepend latest results
+            for(i = 0; i < results.length; i += 1) {
+                if(!results[i].fetched && !filtered(results[i])) {
+                    revs.unshift(results[i]); } } }
+        else { //append results and track cursor (if any)
+            actcursor = "";
+            for(i = 0; i < results.length; i += 1) {
+                if(results[i].fetched) {
+                    actsrchtotal += results[i].fetched;
+                    if(results[i].cursor) {
+                        actcursor = results[i].cursor;  } }
+                else if(!filtered(results[i])) {
+                    revs.push(results[i]); } } }
+        if(actcursor && revs.length === 0) {
+            //auto find more activity without creating a recursion stack
+            setTimeout(mor.activity.moreact, 10); }
+        displayReviewActivity();
+    },
+
+
+    doActivitySearch = function (continued) {
+        var params = "penids=" + penids.join(',');
+        if(!continued && lastChecked) {
+            params += "&since=" + lastChecked.toISOString(); }
+        if(continued) {
+            params += "&cursor=" + actcursor; }
+        mor.call("revact?" + params, 'GET', null,
+                 function (results) {
+                     lastChecked = new Date();
+                     collectAndDisplayReviewActivity(results, continued); },
+                 function (code, errtxt) {
+                     mor.out('revactdiv', "error code: " + code + " " + 
+                             errtxt); });
+    },
+
+
+    bootActivityDisplay = function () {
+        var html;
+        revs = null;
+        penids = mor.rel.outboundids();
+        if(penids.length === 0) {
+            html = "You are not following anyone." + 
+                " <a href=\"#searchpens\"" +
+                " onclick=\"mor.activity.searchpens();return false;\"" +
+                ">Search pen names</a>"; }
+        else if(typeof penids[penids.length - 1] !== 'number') {
+            html = "Loading relationships..."; }
+        else {
+            revs = [];
+            html = "Loading activity..."; }
+        mor.out('revactdiv', html);
+        mor.layout.adjust();
+        if(revs) {
+            doActivitySearch(true); }
+        else {
+            setTimeout(bootActivityDisplay, 500); }
+    },
+
+
+    verifyCoreDisplayElements = function () {
+        var html, domelem = mor.byId('revactdiv');
+        if(!domelem) {
+            html = "<div id=\"revactdiv\"></div>";
+            mor.out('cmain', html); }
+    },
+
+
+    mainDisplay = function (pen) {
+        //ATTENTION: read revs from local storage..
+        mor.historyCheckpoint({ view: "activity" });
+        verifyCoreDisplayElements();
+        if(revs) {
+            displayReviewActivity();
+            doActivitySearch(); }
+        else {
+            bootActivityDisplay(); }
     };
 
     
     mor.activity = {
+        resetStateVars: function () {
+            resetStateVars(); },
         display: function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
-            writeNavDisplay(); }
+            writeNavDisplay(); },
+        searchpens: function () {
+            penNameSearch(); },
+        moreact: function () {
+            doActivitySearch(); },
+        notePenNameStr: function (pen) {
+            notePenNameStr(pen); },
+        findReview: function (revid) {
+            return findReview(revid); }
     };
 
 } () );
@@ -2018,7 +2183,7 @@ var mor = {};  //Top level function closure container
         profpen,
         cachepens = [],
         //tab displays
-        recentRevState = {},
+        recentRevState = { results: [] },
         topRevState = {},
         followingDisp,
         followerDisp,
@@ -2027,6 +2192,30 @@ var mor = {};  //Top level function closure container
         searchresults = [],
         searchcursor = "",
         searchtotal = 0,
+
+
+    clearReviewSearchState = function (dispState) {
+        dispState.params = {};
+        dispState.results = [];
+        dispState.cursor = "";
+        dispState.total = 0;
+        dispState.initialized = false;
+    },
+
+
+    resetStateVars = function () {
+        currtab = null;
+        profpen = null;
+        cachepens = [];
+        clearReviewSearchState(recentRevState);
+        topRevState = {};
+        followingDisp = null;
+        followerDisp = null;
+        searchparams = {};
+        searchresults = [];
+        searchcursor = "";
+        searchtotal = 0;
+    },
 
 
     createOrEditRelationship = function () {
@@ -2045,12 +2234,12 @@ var mor = {};  //Top level function closure container
                  " onclick=\"" + profdfunc + ";return false;\"" +
             ">" + pen.name + "</a>";
         mor.out('penhnamespan', html);
-        if(mor.authorized(pen)) {
+        if(mor.pen.getHomePen(mor.instId(pen))) {  //self
             html = mor.imglink("#Settings","Adjust settings for " + pen.name,
                                "mor.profile.settings()", "settings.png") +
                    mor.imglink("#PenNames","Switch Pen Names",
                                "mor.profile.penswitch()", "pen.png"); }
-        else {
+        else {  //someone else's pen name
             relationship = mor.rel.outbound(mor.instId(pen));
             if(relationship) {
                 html = mor.imglink("#Settings",
@@ -2293,15 +2482,6 @@ var mor = {};  //Top level function closure container
     },
 
 
-    clearReviewSearchState = function (dispState) {
-        dispState.params = {};
-        dispState.results = [];
-        dispState.cursor = "";
-        dispState.total = 0;
-        dispState.initialized = false;
-    },
-
-
     resetReviewDisplays = function () {
         clearReviewSearchState(recentRevState);
         recentRevState.tab = "recent";
@@ -2315,7 +2495,8 @@ var mor = {};  //Top level function closure container
         for(i = 0; !revobj && i < recentRevState.results.length; i += 1) {
             if(mor.instId(recentRevState.results[i]) === revid) {
                 revobj = recentRevState.results[i]; } }
-        if(profpen.top20s && typeof profpen.top20s === 'object') {
+        if(!revobj && profpen && profpen.top20s && 
+           typeof profpen.top20s === 'object') {
             for(revtype in profpen.top20s) {
                 if(profpen.top20s.hasOwnProperty(revtype)) {
                     tops = profpen.top20s[revtype];
@@ -2324,8 +2505,12 @@ var mor = {};  //Top level function closure container
                            mor.instId(tops[i]) === 'object') {
                             revobj = tops[i]; } } } } }
         if(!revobj) {
+            revobj = mor.activity.findReview(revid); }
+        if(!revobj) {
             mor.log("readReview " + revid + " not found");
             return; }
+        mor.historyCheckpoint({ view: "review", mode: "display",
+                                revid: revid });
         mor.review.setCurrentReview(revobj);
         mor.review.displayRead();
     },
@@ -2348,15 +2533,16 @@ var mor = {};  //Top level function closure container
         html += "</a>";
         if(revobj.url) {
             html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
-        html += "<br/><span class=\"revtextsummary\">" + 
-            mor.ellipsis(revobj.text, 255) + "</span><br/>";
         if(penNameStr) {
             hash = mor.objdata({ view: "profile", profid: revobj.penid });
-            html += "<a href=\"#" + hash + "\"" +
-                " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
-                           "return false;\"" +
-                " title=\"Show profile for" + mor.enc(penNameStr) + "\">" +
-                penNameStr + "</a>"; }
+            html += "<br/><span class=\"revtextsummary\">" + 
+                "<a href=\"#" + hash + "\"" +
+                 " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
+                            "return false;\"" +
+                 " title=\"Show profile for " + mor.enc(penNameStr) + "\">" +
+                "review by " + penNameStr + "</a></span>"; }
+        html += "<br/><span class=\"revtextsummary\">" + 
+            mor.ellipsis(revobj.text, 255) + "</span>";
         html += "</li>";
         return html;
     },
@@ -3003,6 +3189,8 @@ var mor = {};  //Top level function closure container
 
 
     mor.profile = {
+        resetStateVars: function () {
+            resetStateVars(); },
         display: function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
@@ -3053,6 +3241,8 @@ var mor = {};  //Top level function closure container
             createOrEditRelationship(); },
         retrievePen: function (id, callback) {
             return findOrLoadPen(id, callback); },
+        getCachedPen: function (id) {
+            return cachedPen(id); },
         penListItemHTML: function (pen) {
             return penListItemHTML(pen); },
         updateCache: function (pen) {
@@ -3064,7 +3254,9 @@ var mor = {};  //Top level function closure container
         readReview: function (revid) {
             return readReview(revid); },
         topTypeChange: function () {
-            topTypeChange(); }
+            topTypeChange(); },
+        reviewItemHTML: function (revobj, penNameStr) {
+            return reviewItemHTML(revobj, penNameStr); }
     };
 
 } () );
@@ -3080,6 +3272,13 @@ var mor = {};  //Top level function closure container
     var penNames,
         currpen,
         returnFuncMemo,  //if a form display is needed
+
+
+    resetStateVars = function () {
+        penNames = null;
+        currpen = null;
+        returnFuncMemo = null;
+    },
 
 
     //update the currently stored version of the pen.
@@ -3272,6 +3471,8 @@ var mor = {};  //Top level function closure container
 
 
     mor.pen = {
+        resetStateVars: function () {
+            resetStateVars(); },
         getPen: function (callback) {
             if(currpen) {
                 return returnCall(callback); }
@@ -3305,6 +3506,13 @@ var mor = {};  //Top level function closure container
     var outboundRels,
         loadoutcursor,
         asyncLoadStarted,
+
+
+    resetStateVars = function () {
+        outboundRels = null;
+        loadoutcursor = null;
+        asyncLoadStarted = false;
+    },
 
 
     loadDisplayRels = function (dispobj) {
@@ -3482,7 +3690,7 @@ var mor = {};  //Top level function closure container
           "</tr>" +
           "<tr>" +
             "<td>" +
-              "<b>Ignore all reviews from " + related.name + " about</b>" +
+              "<b>Ignore reviews from " + related.name + " about</b>" +
               mor.review.reviewTypeCheckboxesHTML("mtype") +
             "</td>" +
           "</tr>" +
@@ -3511,6 +3719,21 @@ var mor = {};  //Top level function closure container
         for(i = 0; outboundRels && i < outboundRels.length; i += 1) {
             if(outboundRels[i].relatedid === relatedid) {
                 return outboundRels[i]; } }
+    },
+
+
+    //last array entry is non-numeric if still loading
+    getOutboundRelationshipIds = function () {
+        var i, relids = [];
+        for(i = 0; outboundRels && i < outboundRels.length; i += 1) {
+            //do not include blocked relationships in result ids
+            if(outboundRels[i].status === "following") {
+                relids.push(outboundRels[i].relatedid); } }
+        if(!asyncLoadStarted) {
+            relids.push("waiting"); }
+        else if(loadoutcursor) {
+            relids.push("loading"); }
+        return relids;
     },
 
 
@@ -3581,20 +3804,24 @@ var mor = {};  //Top level function closure container
         if(asyncLoadStarted) {
             return; }
         asyncLoadStarted = true;
+        loadoutcursor = "starting";
         setTimeout(function () {
             outboundRels = [];
-            loadoutcursor = "starting";
             loadOutboundRelationships(pen); }, 500);
     };
 
 
     mor.rel = {
+        resetStateVars: function () {
+            resetStateVars(); },
         reledit: function (from, to) {
             createOrEditRelationship(from, to); },
         outbound: function (relatedid) {
             return findOutboundRelationship(relatedid); },
         loadoutbound: function (pen) {
             asyncLoadOutboundRelationships(pen); },
+        outboundids: function () {
+            return getOutboundRelationshipIds(); },
         alloutbound: function () {
             return outboundRels; },
         displayRelations: function (dispobj) {

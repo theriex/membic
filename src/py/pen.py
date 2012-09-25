@@ -265,7 +265,12 @@ class SearchPenNames(webapp2.RequestHandler):
 
 class GetPenById(webapp2.RequestHandler):
     def get(self):
-        penid = self.request.get('penid')
+        penidstr = self.request.get('penid')
+        penid = int(penidstr)
+        if penid <= 0:
+            self.error(400)
+            self.response.write("Invalid ID for Pen Name: " + penidstr)
+            return
         pen = PenName.get_by_id(int(penid))
         if not pen:
             self.error(404)

@@ -143,6 +143,11 @@ handlers:
 - url: /revbyid.*
   script: src.py.rev.app
 
+## Return reviews from any pen name ids in the given csv
+## GET params: penids, since, cursor
+- url: /revact.*
+  script: src.py.rev.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API

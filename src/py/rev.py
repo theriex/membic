@@ -245,10 +245,38 @@ class GetReviewById(webapp2.RequestHandler):
         returnJSON(self.response, [ review ])
 
 
+class ReviewActivity(webapp2.RequestHandler):
+    def get(self):
+        since = self.request.get('since')
+        cursor = self.request.get('cursor')
+        penidstr = self.request.get('penids')
+        penids = penidstr.split(',')
+        logging.info("penids: " + str(penids))
+        results = []
+        revs = Review.all()
+        revs.order('-modified')
+        if since:
+            revs.filter('modified >', since)
+        if cursor:
+            revs.with_cursor(start_cursor = cursor)
+        maxcheck = 1000
+        checked = 0
+        cursor = ""
+        for rev in revs:
+            checked += 1
+            if str(rev.penid) in penids:
+                results.append(rev)
+            if checked >= maxcheck or len(results) >= 20:
+                cursor = revs.cursor()
+                break
+        returnJSON(self.response, results, cursor, checked)
+
+
 app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/updrev', UpdateReview),
                                ('/revpicupload', UploadReviewPic),
                                ('/revpic', GetReviewPic),
                                ('/srchrevs', SearchReviews),
-                               ('/revbyid', GetReviewById)], debug=True)
+                               ('/revbyid', GetReviewById), 
+                               ('/revact', ReviewActivity)], debug=True)
 
