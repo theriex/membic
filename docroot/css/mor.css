@@ -104,7 +104,7 @@ body {
 .revdisptable { margin-left:auto; margin-right:auto; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revpic { width:125px; height:125px; }
-.revtextsummary { font-size:small; }
+.revtextsummary { font-size:small; padding: 0px 0px 0px 60px; }
 .webjump { width:20px; height:20px; vertical-align:middle; }
 .webabbrev { font-size:x-small; }
 .csvstrdiv { padding:5px; }

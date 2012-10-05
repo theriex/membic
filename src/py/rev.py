@@ -8,6 +8,7 @@ from moracct import *
 from pen import PenName, authorized
 import json
 from operator import attrgetter
+import re
 
 
 class Review(db.Model):
@@ -83,6 +84,29 @@ def safe_get_review_for_update(handler):
     return review
 
 
+def create_cankey_from_request(handler):
+    cankey = ""
+    revtype = handler.request.get('revtype')
+    if revtype == 'book':
+        cankey = handler.request.get('title') + handler.request.get('author')
+    elif revtype == 'movie':
+        cankey = handler.request.get('title')
+    elif revtype == 'video':
+        cankey = handler.request.get('url')
+    elif revtype == 'music':
+        cankey = handler.request.get('title') + handler.request.get('artist')
+    else:
+        cankey = handler.request.get('name')
+    cankey = re.sub(r'\s', '', cankey)
+    cankey = re.sub(r'\'', '', cankey)
+    cankey = re.sub(r'\"', '', cankey)
+    cankey = re.sub(r'\,', '', cankey)
+    cankey = re.sub(r'\.', '', cankey)
+    cankey = re.sub(r'\!', '', cankey)
+    cankey = cankey.lower()
+    return cankey
+
+
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
     review.penid = int(handler.request.get('penid'))
@@ -105,6 +129,8 @@ def read_review_values(handler, review):
     review.address = handler.request.get('address')
     review.year = handler.request.get('year')
     review.cankey = handler.request.get('cankey')
+    if not review.cankey:
+        review.cankey = create_cankey_from_request(handler)
     # review.sourcrevs is updated through a specialized call
     # review.responserevs is updated through a specialized call
     # review.memos is updated through a specialized call
@@ -144,14 +170,30 @@ def update_top20_reviews(pen, review):
     pen.put()
 
 
+def fetch_review_by_cankey(handler):
+    penid = int(handler.request.get('penid'))
+    revtype = handler.request.get('revtype')
+    cankey = handler.request.get('cankey')
+    if not cankey:
+        cankey = create_cankey_from_request(handler)
+    where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"
+    revquery = Review.gql(where, penid, revtype, cankey)
+    reviews = revquery.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, 
+                             deadline = 10)
+    if len(reviews) > 0:
+        return reviews[0]
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
         if not pen:
             return
-        penid = int(self.request.get('penid'))
-        revtype = self.request.get('revtype')
-        review = Review(penid=penid, revtype=revtype)
+        review = fetch_review_by_cankey(self)
+        if not review:
+            penid = int(self.request.get('penid'))
+            revtype = self.request.get('revtype')
+            review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
         review.put()
         update_top20_reviews(pen, review)
@@ -230,7 +272,7 @@ class SearchReviews(webapp2.RequestHandler):
         reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
                                  deadline=10)
         if len(reviews) >= fetchmax:
-            cursor = reviews.cursor()
+            cursor = revquery.cursor()
         returnJSON(self.response, reviews, cursor)
 
 

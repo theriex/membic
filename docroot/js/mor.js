@@ -413,9 +413,15 @@ var mor = {};  //Top level function closure container
     };
 
 
+    //Server creates a canonical key for a review if not sent.
     mor.canonize = function (txt) {
         var strval = txt || "";
         strval = strval.replace(/\s/g, "");
+        strval = strval.replace(/\'/g, "");
+        strval = strval.replace(/\"/g, "");
+        strval = strval.replace(/\,/g, "");
+        strval = strval.replace(/\./g, "");
+        strval = strval.replace(/\!/g, "");
         strval = strval.toLowerCase();
         return strval;
     };
@@ -2489,21 +2495,26 @@ var mor = {};  //Top level function closure container
 
 
     readReview = function (revid) {
-        var i, revobj, revtype, tops;
+        var i, revobj, t20s, revtype, tops;
         if(typeof revid !== "number") {
             revid = parseInt(revid, 10); }
+        //Try find source review in the recent reviews
         for(i = 0; !revobj && i < recentRevState.results.length; i += 1) {
             if(mor.instId(recentRevState.results[i]) === revid) {
                 revobj = recentRevState.results[i]; } }
+        //Try find source review in the top 20 reviews
         if(!revobj && profpen && profpen.top20s && 
-           typeof profpen.top20s === 'object') {
-            for(revtype in profpen.top20s) {
-                if(profpen.top20s.hasOwnProperty(revtype)) {
-                    tops = profpen.top20s[revtype];
-                    for(i = 0; !revobj && i < tops.length; i += 1) {
-                        if(typeof tops[i] === 'object' &&
-                           mor.instId(tops[i]) === 'object') {
-                            revobj = tops[i]; } } } } }
+                      typeof profpen.top20s === 'object') {
+            t20s = profpen.top20s;
+            for(revtype in t20s) {
+                if(revtype && t20s.hasOwnProperty(revtype)) {
+                    tops = t20s[revtype];
+                    if(tops && tops.length && typeof tops !== "string") {
+                        for(i = 0; !revobj && i < tops.length; i += 1) {
+                            if(typeof tops[i] === 'object' &&
+                               mor.instId(tops[i]) === revid) {
+                                revobj = tops[i]; } } } } } }
+        //Try find the source review in the activity display
         if(!revobj) {
             revobj = mor.activity.findReview(revid); }
         if(!revobj) {
@@ -2535,30 +2546,32 @@ var mor = {};  //Top level function closure container
             html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
         if(penNameStr) {
             hash = mor.objdata({ view: "profile", profid: revobj.penid });
-            html += "<br/><span class=\"revtextsummary\">" + 
+            html += "<div class=\"revtextsummary\">" + 
                 "<a href=\"#" + hash + "\"" +
                  " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
                             "return false;\"" +
                  " title=\"Show profile for " + mor.enc(penNameStr) + "\">" +
-                "review by " + penNameStr + "</a></span>"; }
-        html += "<br/><span class=\"revtextsummary\">" + 
-            mor.ellipsis(revobj.text, 255) + "</span>";
+                "review by " + penNameStr + "</a></div>"; }
+        html += "<div class=\"revtextsummary\">" + 
+            mor.ellipsis(revobj.text, 255) + "</div>";
         html += "</li>";
         return html;
     },
 
 
     displayReviews = function (dispState, reviews) {
-        var i, html = "<ul class=\"revlist\">";
+        var i, html = "<ul class=\"revlist\">", fetched;
         for(i = 0; i < dispState.results.length; i += 1) {
             html += reviewItemHTML(dispState.results[i]); }
         if(reviews) {  //have fresh search results
             dispState.cursor = "";
             for(i = 0; i < reviews.length; i += 1) {
                 if(reviews[i].fetched) {
-                    dispState.total += reviews[i].fetched;
-                    html += "<div class=\"sumtotal\">" +
-                        dispState.total + " reviews searched</div>";
+                    fetched = reviews[i].fetched;
+                    if(typeof fetched === "number" && fetched >= 0) {
+                        dispState.total += reviews[i].fetched;
+                        html += "<div class=\"sumtotal\">" +
+                            dispState.total + " reviews searched</div>"; }
                     if(reviews[i].cursor) {
                         dispState.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
@@ -2679,6 +2692,7 @@ var mor = {};  //Top level function closure container
         html += "</ul>";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
+        temp = profpen.top20s[topRevState.dispType];
         if(i < revs.length) {  //didn't make it through, go fetch
             mor.call("revbyid?revid=" + revs[i], 'GET', null,
                      function (revs) {

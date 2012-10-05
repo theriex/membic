@@ -13,8 +13,9 @@ from google.appengine.api.datastore_types import Blob
 
 def pwd2key(password):
     """ make a password into an encryption key """
+    pwd = str(password)
     # passwords have a min length of 6 so get at least 32 by repeating it
-    key = password * 6
+    key = str(pwd) * 6
     key = key[:32]
     return key
 
@@ -148,6 +149,10 @@ class WriteAccount(webapp2.RequestHandler):
             self.response.out.write("request must be over https")
             return
         user = self.request.get('user')
+        if len(user) > 18:
+            self.error(412)
+            self.response.out.write("username must be 18 characters or less")
+            return
         where = "WHERE username=:1 LIMIT 1"
         accounts = MORAccount.gql(where, user)
         found = accounts.count()
@@ -183,7 +188,7 @@ class GetToken(webapp2.RequestHandler):
         where = "WHERE username=:1 AND password=:2 LIMIT 1"
         accounts = MORAccount.gql(where, username, password)
         found = accounts.count()
-        # logging.info("found " + str(found) + " for " + username)
+        # logging.info("GetToken found " + str(found) + " for " + username)
         if found:
             token = newtoken(username, password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
