@@ -214,6 +214,19 @@ class UpdateReview(webapp2.RequestHandler):
         returnJSON(self.response, [ review ])
 
 
+class DeleteReview(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:
+            return
+        review = safe_get_review_for_update(self)
+        if not review:
+            return
+        review.delete()
+        ## there may be a tombstone reference in the top20s.  That's ok.
+        returnJSON(self.response, [])
+
+
 class UploadReviewPic(webapp2.RequestHandler):
     def post(self):
         if not review_modification_authorized(self):
@@ -316,6 +329,7 @@ class ReviewActivity(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/updrev', UpdateReview),
+                               ('/delrev', DeleteReview),
                                ('/revpicupload', UploadReviewPic),
                                ('/revpic', GetReviewPic),
                                ('/srchrevs', SearchReviews),

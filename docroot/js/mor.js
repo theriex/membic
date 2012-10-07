@@ -1662,7 +1662,10 @@ var mor = {};  //Top level function closure container
             //ATTENTION: Probably want to be able to delete a review also.
             html += "<button type=\"button\" id=\"editbutton\"" +
                 " onclick=\"mor.review.display();return false;\"" +
-                ">Edit</button>"; }
+                ">Edit</button>" + "&nbsp;" + 
+                "<button type=\"button\" id=\"deletebutton\"" +
+                " onclick=\"mor.review.delrev();return false;\"" +
+                ">Delete</button>"; }
         //reading a review written by someone else
         else {
             html += "<button type=\"button\" id=\"respondbutton\"" +
@@ -1916,6 +1919,23 @@ var mor = {};  //Top level function closure container
     },
 
 
+    deleteReview = function () {
+        var url, data;
+        if(!review || 
+           !confirm("Are you sure you want to delete this review?")) {
+            return; }
+        url = "delrev?";
+        data = mor.objdata(review);
+        mor.call("delrev?" + mor.login.authparams(), 'POST', data,
+                 function (reviews) {
+                     mor.profile.resetReviews();
+                     mor.profile.display(); },
+                 function (code, errtxt) {
+                     mor.err("Delete failed code: " + code + " " + errtxt);
+                     mor.profile.display(); });
+    },
+
+
     mainDisplay = function (pen, read) {
         userpen = pen;
         if(!review) {
@@ -1943,6 +1963,8 @@ var mor = {};  //Top level function closure container
         displayRead: function () {
             mor.pen.getPen(function (pen) {
                 mainDisplay(pen, true); }); },
+        delrev: function () {
+            deleteReview(); },
         updateHeading: function () {
             writeNavDisplay(); },
         getReviewTypes: function () {
@@ -2015,9 +2037,12 @@ var mor = {};  //Top level function closure container
     },
 
 
+    //Do async since setting up the display involves async processing and
+    //the browser has a tendency to skip the call.
     penNameSearch = function () {
-        mor.profile.setTab("search");
-        mor.profile.display();
+        setTimeout(function () {
+            mor.profile.setTab("search");
+            mor.profile.display(); }, 50);
     },
 
 
@@ -2678,8 +2703,8 @@ var mor = {};  //Top level function closure container
                         if(mor.instId(topRevState.review) === revs[i]) {
                             revs[i] = topRevState.review; } }
                     else if(typeof topRevState.review === 'string') {
-                        temp = revs[i].toString + ":";
-                        if(topRevState.review.startsWith(temp)) {
+                        temp = revs[i].toString() + ":";
+                        if(topRevState.review.indexOf(temp) === 0) {
                             revs[i] = topRevState.review; } } } }
             //have resolved object, error text, or unresolved id
             if(typeof revs[i] === 'object') {  //resolved

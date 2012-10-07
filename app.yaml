@@ -122,6 +122,11 @@ handlers:
 ## POST params: rev, authparams
 - url: /updrev.*
   script: src.py.rev.app
+
+## Delete review for authorized pen name
+## POST params: rev, authparams
+- url: /delrev.*
+  script: src.py.rev.app
   
 ## Upload a review pic
 ## POST params: picfilein, _id (Review instance id), authparams
