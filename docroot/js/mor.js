@@ -1,4 +1,4 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -634,7 +634,7 @@ var mor = {};  //Top level function closure container
     },
 
 
-    logout = function () {
+    logoutWithNoDisplayUpdate = function () {
         //remove the cookie
         mor.dojo.cookie(cookname, "", { expires: 0 });
         authmethod = "";
@@ -645,6 +645,11 @@ var mor = {};  //Top level function closure container
         mor.profile.resetStateVars();
         mor.pen.resetStateVars();
         mor.rel.resetStateVars();
+    },
+
+
+    logout = function () {
+        logoutWithNoDisplayUpdate();
         mor.historyCheckpoint({ view: "profile", profid: 0 });
         mor.login.updateAuthentDisplay();
         mor.login.init();
@@ -747,7 +752,7 @@ var mor = {};  //Top level function closure container
                 val = decodeURIComponent(av[1]);
                 switch(attr) {
                 case "authtoken":
-                case "at":  //lost encoding reading it out of URL, replace
+                case "at":  //lost encoding reading it out of URL, re-encode
                     token = mor.enc(val); break;
                 case "authmethod":
                 case "am":
@@ -757,6 +762,8 @@ var mor = {};  //Top level function closure container
                     name = val; break; 
                 case "returnto":
                     returi = val; break;
+                case "logout":
+                    logoutWithNoDisplayUpdate(); break;
                 case "command":
                     command = val; break;
                 case "view":
@@ -769,6 +776,8 @@ var mor = {};  //Top level function closure container
             if(method && token && name) {
                 setAuthentication(method, token, name);
                 retval = command || "done"; }
+            if(command === "FBlogin") {
+                retval = command; }
             if(!returi) {  //back home so clean up the location bar
                 clearHash(); }
             if(view && profid) {
@@ -1003,6 +1012,76 @@ var mor = {};  //Top level function closure container
     },
 
 
+    facebookWelcome = function (loginResponse) {
+        var html = "<p>&nbsp;</p>" + 
+            "<p>Facebook login success! Fetching your info...</p>";
+        mor.out('contentdiv', html);
+        FB.api('/me', function (infoResponse) {
+            html = "<p>&nbsp;</p><p>Welcome " + infoResponse.name + "</p>";
+            mor.out('contentdiv', html);
+            setAuthentication("fbid", loginResponse.authResponse.accessToken,
+                              infoResponse.id + " " + infoResponse.name);
+            //not using the name as a default pen name since it is not
+            //likely to be unique.  Also want to encourage creativity.
+            doneWorkingWithAccount(); });
+    },
+
+
+    facebookLoginFormDisplay = function (loginResponse) {
+        var msg, html;
+        if(loginResponse.status === "not_authorized") {
+            msg = "You have not yet authorized MyOpenReviews," +
+                " click to authorize."; }
+        else {
+            msg = "You are not currently logged into Facebook," +
+                " click to log in."; }
+        html = "<p>&nbsp;</p><p>" + msg + "</p><table><tr>" + 
+            "<td><a href=\"http://www.facebook.com\"" +
+                  " title=\"Log in via Facebook\"" +
+                  " onclick=\"mor.login.loginFB();return false;\"" +
+                "><img class=\"loginico\" src=\"img/f_logo.png\"" +
+                     " border=\"0\"/> Log in via Facebook</a></td>" +
+            "<td>&nbsp;" + 
+              "<button type=\"button\" id=\"cancelbutton\"" +
+                     " onclick=\"mor.login.init();return false;\"" +
+              ">Cancel</button></td>" +
+            "</tr></table>";
+        mor.out('contentdiv', html);
+        mor.layout.adjust();
+    },
+
+
+    enableFacebookLogin = function () {
+        var js, id = 'facebook-jssdk', firstscript, html;
+        if(window.location.href.indexOf(mainsvr) !== 0) {
+            window.location.href = mainsvr + "#command=FBlogin"; }
+        //if the above didn't redirect, then we are on mainsvr at this point
+        window.fbAsyncInit = function() {
+            FB.init({ appId: 265001633620583, 
+                      status: true, //check login status
+                      cookie: true, //enable server to access the session
+                      xfbml: true });
+            FB.getLoginStatus(function (loginResponse) {
+                if(loginResponse.status === "connected") {
+                    facebookWelcome(loginResponse); }
+                else {
+                    facebookLoginFormDisplay(loginResponse); } });
+        };
+        //Load the FB SDK asynchronously if not already loaded
+        if(mor.byId(id)) {
+            return; }
+        js = document.createElement('script');
+        js.id = id;
+        js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        firstscript = document.getElementsByTagName('script')[0];
+        firstscript.parentNode.insertBefore(js, firstscript);
+        html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
+        mor.out('contentdiv', html);
+        mor.layout.adjust();
+    },
+
+
     displayLoginForm = function () {
         var cdiv, ldiv, html = "";
         cdiv = mor.byId('contentdiv');
@@ -1016,6 +1095,12 @@ var mor = {};  //Top level function closure container
             "<td align=\"right\">username</td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
+            "<td>" +
+              "<a href=\"https://www.facebook.com\"" +
+                " title=\"Log in via Facebook\"" +
+                " onclick=\"mor.login.enableFB();return false;\"" +
+                "><img class=\"loginico\" src=\"img/f_logo.png\"" +
+                     " border=\"0\"/> Log in via Facebook</a></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">password</td>" +
@@ -1066,7 +1151,9 @@ var mor = {};  //Top level function closure container
     mor.login = {
         init: function () {
             var command = readURLHash();
-            if(authtoken || readAuthCookie()) {
+            if(command === "FBlogin") {
+                enableFacebookLogin(); }
+            else if(authtoken || readAuthCookie()) {
                 if(command === "chgpwd") {
                     displayChangePassForm(); }
                 else {
@@ -1075,7 +1162,7 @@ var mor = {};  //Top level function closure container
                 displayLoginForm(); }
             else {  //redirect to https server to start
                 window.location.href = secsvr + "#returnto=" + 
-                    mor.enc(mainsvr); } },
+                    mor.enc(mainsvr) + "&logout=true"; } },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },
         displayChangePassForm: function () {
@@ -1083,7 +1170,15 @@ var mor = {};  //Top level function closure container
         authparams: function () {
             return authparams(); },
         logout: function () {
-            logout(); }
+            logout(); },
+        enableFB: function () {
+            enableFacebookLogin(); },
+        loginFB: function () {
+            FB.login(function (loginResponse) {
+                if(loginResponse.status === "connected") {
+                    facebookWelcome(loginResponse); }
+                else {
+                    facebookLoginFormDisplay(loginResponse); } }); }
     };
 
 } () );
@@ -2532,7 +2627,8 @@ var mor = {};  //Top level function closure container
                       typeof profpen.top20s === 'object') {
             t20s = profpen.top20s;
             for(revtype in t20s) {
-                if(revtype && t20s.hasOwnProperty(revtype)) {
+                //revtype may be null, but jslint wants this condition order..
+                if(t20s.hasOwnProperty(revtype) && revtype) {
                     tops = t20s[revtype];
                     if(tops && tops.length && typeof tops !== "string") {
                         for(i = 0; !revobj && i < tops.length; i += 1) {

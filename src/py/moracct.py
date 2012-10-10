@@ -5,7 +5,8 @@ import logging
 from google.appengine.api import mail
 from Crypto.Cipher import AES
 import base64
-# import urllib
+import httplib
+import urllib
 import time
 import re
 import json
@@ -50,12 +51,37 @@ def decodeToken(key, token):
     return token
 
 
+def call_server(url, meth, params):
+    headers = {"Content-type": "application/x-www-form-urlencoded",
+               "Accept": "text/plain"}
+    sidx = url.find("/", 9)
+    site = url[0:sidx]
+    if site.startswith('https'):
+        server = site[8:]
+        conn = httplib.HTTPSConnection(server)
+    else:
+        server = site[7:]
+        conn = httplib.HTTPConnection(server)
+    url = url[sidx:]
+    conn.request(meth, url, params, headers)
+    response = conn.getresponse()
+    data = response.read()
+    logging.info(site + url + " " + meth + " " + str(response.status) + 
+                 "\n" + data)
+    if response.status == 200:
+        data = json.loads(data)
+    else:
+        data = None
+    conn.close()
+    return data
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
-    type = request.get('am')
+    acctype = request.get('am')
     username = request.get('an')
     token = request.get('at')
-    if type == "mid":
+    if acctype == "mid":
         where = "WHERE username=:1 LIMIT 1"
         accounts = MORAccount.gql(where, username)
         for account in accounts:
@@ -70,11 +96,18 @@ def authenticated(request):
                 return False
             account._id = account.key().id() # normalized id access
             return account  # True
-    # elif type == "fbid":
+    elif acctype == "fbid":
+        fbusertoks = username.split(' ')
+        useridstr = str(fbusertoks[0])
+        data = call_server("https://graph.facebook.com/me?access_token=" +
+                           token, 'GET', None)
+        if data and str(data["id"]) == useridstr:
+            account = MORAccount(username=useridstr, password=token)
+            account._id = int(useridstr)
+            return account 
+    # elif acctype == "twid":
     #     # call to verify token, return a stub account if successful
-    # elif type == "twid":
-    #     # call to verify token, return a stub account if successful
-    # elif type == "gid":
+    # elif acctype == "gid":
     #     # call to verify token, return a stub account if successful
 
 

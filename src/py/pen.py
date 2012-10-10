@@ -11,7 +11,7 @@ import json
 def authorized(acc, pen):
     matched = False
     if acc._id == pen.mid or acc._id == pen.gid or \
-            acc.id == pen.fbid or acc.id == pen.twid:
+            acc._id == pen.fbid or acc._id == pen.twid:
         matched = True
     return matched
 
