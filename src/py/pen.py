@@ -251,10 +251,10 @@ class SearchPenNames(webapp2.RequestHandler):
                 matched = False
             if matched:
                 # filter sensitive fields
-                pen.mid = 0;
-                pen.gid = 0;
-                pen.fbid = 0;
-                pen.twid = 0;
+                pen.mid = 0
+                pen.gid = 0
+                pen.fbid = 0
+                pen.twid = 0
                 results.append(pen)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch

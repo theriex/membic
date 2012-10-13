@@ -41,9 +41,7 @@ class Review(db.Model):
     responserevs = db.TextProperty()
     # CSV of penid:feedid pairs for tracking remembered reviews
     memos = db.TextProperty()
-    # Blackboard of service agent processing values in url parameter
-    # format (e.g. attr1=val1&attr2=val2...) used for tracking import
-    # and export status, suggestion frequency and whatever
+    # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
 
 

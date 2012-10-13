@@ -155,6 +155,15 @@ handlers:
 
 
 ######################################################################
+##        Connection Services
+
+## Fetch the currently configured connection services
+## GET params: none
+- url: /consvcs.*
+  script: src.py.consvc.app
+
+
+######################################################################
 # Static files and other stuff not really part of the API
 #
 - url: /cluck2.*
