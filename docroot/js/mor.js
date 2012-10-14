@@ -604,6 +604,7 @@ var mor = {};  //Top level function closure container
         authmethod = "",
         authtoken = "",
         authname = "",
+        morAccountId = 0,
         cookname = "myopenreviewsauth",
         cookdelim = "..morauth..",
         changepwdprompt = "Changing your login password",
@@ -644,6 +645,7 @@ var mor = {};  //Top level function closure container
         authmethod = "";
         authtoken = "";
         authname = "";
+        morAccountId = 0;
         mor.review.resetStateVars();
         mor.activity.resetStateVars();
         mor.profile.resetStateVars();
@@ -813,11 +815,12 @@ var mor = {};  //Top level function closure container
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
             maddr = mor.byId('emailin').value || "",
-            data = "", url;
+            data = "", url, buttonhtml;
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('maccstatdiv', "Please specify a username and password");
             return; }
         url = secureURL("newacct");
+        buttonhtml = mor.byId('newaccbuttonstd').innerHTML;
         mor.out('newaccbuttonstd', "Creating new account...");
         data = mor.objdata({ user: username, pass: password, email: maddr });
         mor.call(url, 'POST', data, 
@@ -826,7 +829,8 @@ var mor = {};  //Top level function closure container
                      //give new account save a chance to stabilize
                      setTimeout(mor.login.init, 700); },
                  function (code, errtxt) {
-                     mor.out('maccstatdiv', errtxt); });
+                     mor.out('maccstatdiv', errtxt);
+                     mor.out('newaccbuttonstd', buttonhtml);  });
     },
 
 
@@ -864,15 +868,17 @@ var mor = {};  //Top level function closure container
           "</tr>" +
           "<tr>" +
             "<td id=\"newaccbuttonstd\" colspan=\"2\" align=\"center\">" +
-              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "<button type=\"button\" id=\"cancelbutton\"" + 
+                     " onclick=\"mor.login.init();return false;\"" +
+                ">Cancel</button>" +
               "&nbsp;" +
-              "<button type=\"button\" id=\"createbutton\">Create</button>" +
+              "<button type=\"button\" id=\"createbutton\"" + 
+                     " onclick=\"mor.login.createAccount();return false;\"" +
+                ">Create</button>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out('logindiv', html);
-        mor.onclick('cancelbutton', mor.login.init);
-        mor.onclick('createbutton', createAccount);
         mor.onchange('userin', usernamechange);
         mor.onchange('passin', function () { mor.byId('emailin').focus(); });
         mor.onchange('emailin', createAccount);
@@ -958,6 +964,7 @@ var mor = {};  //Top level function closure container
         data = mor.objdata({ user: username, pass: password });
         mor.call(url, 'POST', data,
                  function (objs) {
+                     morAccountId = mor.instId(objs[0]);
                      setAuthentication("mid", objs[0].token, username);
                      doneWorkingWithAccount(); },
                  function (code, errtxt) {
@@ -1166,7 +1173,11 @@ var mor = {};  //Top level function closure container
                 if(loginResponse.status === "connected") {
                     facebookWelcome(loginResponse); }
                 else {
-                    facebookLoginFormDisplay(loginResponse); } }); }
+                    facebookLoginFormDisplay(loginResponse); } }); },
+        createAccount: function () {
+            createAccount(); },
+        getAuthMethod: function () { return authmethod; },
+        getMORAccountId: function () { return morAccountId; }
     };
 
 } () );
@@ -2410,13 +2421,161 @@ var mor = {};  //Top level function closure container
     },
 
 
+    nameForAuthType = function (authtype) {
+        switch(authtype) {
+        case "mid": return "MyOpenReviews";
+        case "gid": return "Google+";
+        case "fbid": return "Facebook";
+        case "twid": return "Twitter"; }
+    },
+
+
     displayAuthSettings = function (domid, pen) {
-        //ATTENTION: dump checkboxes for authorizing access to this
-        //pen name via alternate authentication methods.  So you can
-        //log in via native user/pass and then later authorize the
-        //same pen name for access via Facebook or whatever.  Checking
-        //off a box may trigger some extra login processing for each
-        //authentication method...
+        var atname, html = "Authenticated access: <table>";
+        atname = nameForAuthType("mid");
+        html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
+            " value=\"" + atname + "\" id=\"aamid\"" +
+            " onchange=\"mor.profile.toggleAuthChange('mid','" + 
+                             domid + "');return false;\"";
+        if(pen.mid > 0) {
+            html += " checked=\"checked\""; }
+        html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
+        atname = nameForAuthType("fbid");
+        html += "<tr><td><input type=\"checkbox\" name=\"aafbid\"" +
+            " value=\"" + atname + "\" id=\"aafbid\"" +
+            " onchange=\"mor.profile.toggleAuthChange('fbid','" + 
+                             domid + "');return false;\"";
+        if(pen.fbid > 0) {
+            html += " checked=\"checked\""; }
+        html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>" +
+            "</table>";
+        mor.out(domid, html);
+    },
+
+
+    addMyOpenReviewsAuth = function (domid, pen) {
+        var authmethod = mor.login.getAuthMethod();
+        if(authmethod !== "mid") {
+            alert("To add MyOpenReviews authorization, you first need to " +
+                  "log out and then log back in with a username and " +
+                  "password.  After you have logged in directly, click " +
+                  "the pen name selection on your profile page.");
+            displayAuthSettings(domid, pen); }
+        else {
+            mor.out(domid, "Recording MyOpenReviews authorization");
+            pen.mid = mor.login.getMORAccountId();
+            mor.pen.updatePen(pen,
+                              function (updpen) {
+                                  displayAuthSettings(domid, updpen); },
+                              function (code, errtxt) {
+                                  mor.err("addMyOpenReviewsAuth error " +
+                                          code + ": " + errtxt);
+                                  pen.mid = 0;
+                                  displayAuthSettings(domid, pen); }); }
+    },
+
+
+    addFacebookAuthUserID = function (domid, pen, fbUserID) {
+        var fbid;
+        if(!fbUserID) {
+            mor.err("No userID received from Facebook");
+            return displayAuthSettings(domid, pen); }
+        fbid = parseInt(fbUserID, 10);
+        if(!fbid || fbid <= 0) {
+            mor.err("Invalid userID received from Facebook");
+            return displayAuthSettings(domid, pen); }
+        mor.out(domid, "Recording Facebook authorization...");
+        pen.fbid = fbid;
+        mor.pen.updatePen(pen,
+                          function (updpen) {
+                              displayAuthSettings(domid, updpen); },
+                          function (code, errtxt) {
+                              mor.err("addFacebookAuthUserID error " +
+                                      code + ": " + errtxt);
+                              pen.fbid = 0;
+                              displayAuthSettings(domid, pen); });
+    },
+
+
+    addFacebookAuthSDKLoaded = function (domid, pen) {
+        FB.getLoginStatus(function (loginResponse) {
+            var msg, html;
+            if(loginResponse.status === "connected") {
+                return addFacebookAuthUserID(domid, pen, 
+                             loginResponse.authResponse.userID); }
+            if(loginResponse.status === "not_authorized") {
+                msg = "You have not yet authorized MyOpenReviews, " +
+                    " click to authorize."; }
+            else {
+                msg = "You are not currently logged into Facebook," +
+                    " click to log in."; }
+            html = "<p>" + msg + "</p>" +
+                "<p><a href=\"http://www.facebook.com\"" +
+                      " title=\"Log in to Facebook\"" +
+                      " onclick=\"mor.profile.loginFB('" + domid + "');" + 
+                                 "return false;\"" +
+                    "><img class=\"loginico\" src=\"img/f_logo.png\"" +
+                         " border=\"0\"/> Log in to Facebook</a></p>";
+            mor.out(domid, html); });
+    },
+
+
+    addFacebookAuth = function (domid, pen) {
+        var js, id = 'facebook-jssdk', firstscript, 
+            mainsvr = "http://www.myopenreviews.com";
+        if(window.location.href.indexOf(mainsvr) !== 0) {
+            alert("Facebook authentication is only supported from " + mainsvr);
+            return displayAuthSettings(domid, pen); }
+        if(mor.byId(id)) {  //if facebook script is already loaded, then go
+            return addFacebookAuthSDKLoaded(domid, pen); }
+        window.fbAsyncInit = function () {
+            FB.init({ appId: 265001633620583, 
+                      status: true, //check login status
+                      cookie: true, //enable server to access the session
+                      xfbml: true });
+            addFacebookAuthSDKLoaded(domid, pen); };
+        js = document.createElement('script');
+        js.id = id;
+        js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        firstscript = document.getElementsByTagName('script')[0];
+        firstscript.parentNode.insertBefore(js, firstscript);
+    },
+
+
+    handleAuthChangeToggle = function (pen, authtype, domid) {
+        var action = "remove", methcount, previd;
+        if(mor.byId("aa" + authtype).checked) {
+            action = "add"; }
+        if(action === "remove") {
+            methcount = (pen.mid? 1 : 0) +
+                (pen.gid? 1 : 0) +
+                (pen.fbid? 1 : 0) +
+                (pen.twid? 1 : 0);
+            if(methcount < 2) {
+                alert("You must have at least one authentication type");
+                mor.byId("aa" + authtype).checked = true;
+                return;  } 
+            if(confirm("Are you sure you want to remove access to this" +
+                       "Pen Name from " + nameForAuthType(authtype) + "?")) {
+                mor.out(domid, "Updating...");
+                previd = pen[authtype];
+                pen[authtype] = 0;
+                mor.pen.updatePen(pen,
+                                  function (updpen) {
+                                      displayAuthSettings(domid, updpen); },
+                                  function (code, errtxt) {
+                                      mor.err("handleAuthChangeToggle error " +
+                                              code + ": " + errtxt);
+                                      pen[authtype] = previd;
+                                      displayAuthSettings(domid, pen); }); }
+            else {
+                mor.byId("aa" + authtype).checked = true; } }
+        else if(action === "add") {
+            switch(authtype) {
+            case "mid": addMyOpenReviewsAuth(domid, pen); break;
+            case "fbid": addFacebookAuth(domid, pen); break;
+                } }
     },
 
 
@@ -3401,7 +3560,20 @@ var mor = {};  //Top level function closure container
         topTypeChange: function () {
             topTypeChange(); },
         reviewItemHTML: function (revobj, penNameStr) {
-            return reviewItemHTML(revobj, penNameStr); }
+            return reviewItemHTML(revobj, penNameStr); },
+        toggleAuthChange: function (authtype, domid) {
+            mor.pen.getPen(function (pen) { 
+                handleAuthChangeToggle(pen, authtype, domid); }); },
+        loginFB: function (domid) {
+            FB.login(function (loginResponse) {
+                if(loginResponse.status === "connected") {
+                    mor.pen.getPen(function (pen) {
+                        addFacebookAuthUserID(domid, pen,
+                                loginResponse.authResponse.userID); }); }
+                else {
+                    mor.pen.getPen(function (pen) {
+                        displayAuthSettings(domid, pen); }); } 
+            }); }
     };
 
 } () );
