@@ -66,11 +66,30 @@
 <script src="js/mor.js"></script>
 
 <script>
-require([ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
+require({ baseUrl: "/js/",
+          packages: [
+            { name: "dojo", 
+              location: "//ajax.googleapis.com/ajax/libs/dojo/1.8.0/dojo/" },
+            { name: "amd", location: "amd" } ]},
+        [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
           "dojo/query", "dojo/cookie", "dijit/registry",
-          "dijit/form/HorizontalSlider", "dojo/domReady!" ],
-    function (dom, json, on, request, query, cookie, dijitreg, slider) {
-        mor.init(dom, json, on, request, query, cookie, dijitreg, slider); });
+          "dijit/form/HorizontalSlider", 
+          "amd/layout", "amd/login", "amd/review", "amd/profile",
+          "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
+          "amd/services", "amd/basicmod", "dojo/domReady!" ],
+        function (dom, json, on, request, 
+                  query, cookie, dijitreg, 
+                  slider, 
+                  layout, login, review, profile, 
+                  activity, pen, rel, skinner,
+                  services, basicmod) {
+            mor.init(dom, json, on, request, 
+                     query, cookie, dijitreg, 
+                     slider, 
+                     layout, login, review, profile, 
+                     activity, pen, rel, skinner,
+                     services, basicmod); }
+        );
 </script>
 
 </body>
