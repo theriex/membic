@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -18,6 +18,7 @@ define([], function () {
         changepwdprompt = "Changing your login password",
         secsvr = "https://myopenreviews.appspot.com",
         mainsvr = "http://www.myopenreviews.com",
+        altauths = [],
 
 
     secureURL = function (endpoint) {
@@ -368,6 +369,7 @@ define([], function () {
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('loginstatdiv', "Please specify a username and password");
             return; }
+        mor.out('loginbspan', "Logging in...");
         url = secureURL("login");
         data = mor.objdata({ user: username, pass: password });
         mor.call(url, 'POST', data,
@@ -381,77 +383,21 @@ define([], function () {
     },
 
 
-    facebookWelcome = function (loginResponse) {
-        var html = "<p>&nbsp;</p>" + 
-            "<p>Facebook login success! Fetching your info...</p>";
-        mor.out('contentdiv', html);
-        FB.api('/me', function (infoResponse) {
-            html = "<p>&nbsp;</p><p>Welcome " + infoResponse.name + "</p>";
-            mor.out('contentdiv', html);
-            setAuthentication("fbid", loginResponse.authResponse.accessToken,
-                              infoResponse.id + " " + infoResponse.name);
-            //not using the name as a default pen name since it is not
-            //likely to be unique.  Also want to encourage creativity.
-            doneWorkingWithAccount(); });
-    },
-
-
-    facebookLoginFormDisplay = function (loginResponse) {
-        var msg, html;
-        if(loginResponse.status === "not_authorized") {
-            msg = "You have not yet authorized MyOpenReviews," +
-                " click to authorize."; }
-        else {
-            msg = "You are not currently logged into Facebook," +
-                " click to log in."; }
-        html = "<p>&nbsp;</p><p>" + msg + "</p><table><tr>" + 
-            "<td><a href=\"http://www.facebook.com\"" +
-                  " title=\"Log in via Facebook\"" +
-                  " onclick=\"mor.login.loginFB();return false;\"" +
-                "><img class=\"loginico\" src=\"img/f_logo.png\"" +
-                     " border=\"0\"/> Log in via Facebook</a></td>" +
-            "<td>&nbsp;" + 
-              "<button type=\"button\" id=\"cancelbutton\"" +
-                     " onclick=\"mor.login.init();return false;\"" +
-              ">Cancel</button></td>" +
-            "</tr></table>";
-        mor.out('contentdiv', html);
-        mor.layout.adjust();
-    },
-
-
-    enableFacebookLogin = function () {
-        var js, id = 'facebook-jssdk', firstscript, html, 
-            params = parseHashParams(), redurl;
+    //all alternate login is done from the main server
+    handleAlternateAuthentication = function (idx) {
+        var redurl, params = parseHashParams();
+        if(window.location.href.indexOf("localhost") >= 0) {
+            mor.err("Not redirecting to main server off localhost. Confusing.");
+            return; }
         if(window.location.href.indexOf(mainsvr) !== 0) {
-            redurl = mainsvr + "#command=FBlogin";
+            redurl = mainsvr + "#command=AltAuth" + (+idx);
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
-            window.location.href = redurl; }
-        //if the above didn't redirect, then we are on mainsvr at this point
-        window.fbAsyncInit = function () {
-            FB.init({ appId: 265001633620583, 
-                      status: true, //check login status
-                      cookie: true, //enable server to access the session
-                      xfbml: true });
-            FB.getLoginStatus(function (loginResponse) {
-                if(loginResponse.status === "connected") {
-                    facebookWelcome(loginResponse); }
-                else {
-                    facebookLoginFormDisplay(loginResponse); } });
-        };
-        //Load the FB SDK asynchronously if not already loaded
-        if(mor.byId(id)) {
-            return; }
-        js = document.createElement('script');
-        js.id = id;
-        js.async = true;
-        js.src = "//connect.facebook.net/en_US/all.js";
-        firstscript = document.getElementsByTagName('script')[0];
-        firstscript.parentNode.insertBefore(js, firstscript);
-        html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
-        mor.out('contentdiv', html);
-        mor.layout.adjust();
+            setTimeout(function () {
+                window.location.href = redurl; 
+            }, 20); }
+        else {  //we are on mainsvr at this point
+            altauths[idx].authenticate(); }
     },
 
 
@@ -461,6 +407,23 @@ define([], function () {
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
         window.location.href = href;
+    },
+
+
+    displayAltAuthMethods = function () {
+        var i, html;
+        html = "<table>";
+        for(i = 0; i < altauths.length; i += 1) {
+            html += "<tr></td><a href=\"" + 
+                altauths[i].loginurl + "\"" +
+                " title=\"Log in via " + altauths[i].name + "\"" +
+                " onclick=\"mor.login.altLogin(" + i + ");return false;\"" +
+                "><img class=\"loginico\"" +
+                     " src=\"" + altauths[i].iconurl + "\"" +
+                     " border=\"0\"/> Log in via " + altauths[i].name + 
+                "</a></td></tr>"; }
+        html += "</table>";
+        mor.out('altauthdiv', html);
     },
 
 
@@ -477,12 +440,7 @@ define([], function () {
             "<td align=\"right\">username</td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
-            "<td>" +
-              "<a href=\"https://www.facebook.com\"" +
-                " title=\"Log in via Facebook\"" +
-                " onclick=\"mor.login.enableFB();return false;\"" +
-                "><img class=\"loginico\" src=\"img/f_logo.png\"" +
-                     " border=\"0\"/> Log in via Facebook</a></td>" +
+            "<td rowspan=\"2\"><div id=\"altauthdiv\"></div></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">password</td>" +
@@ -496,7 +454,9 @@ define([], function () {
                 " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
                 "return false;\">(secured)</a>" +
               "&nbsp;&nbsp;&nbsp;" +
-              "<button type=\"button\" id=\"loginbutton\">Log in</button>" +
+              "<span id=\"loginbspan\">" +
+                "<button type=\"button\" id=\"loginbutton\">Log in</button>" +
+              "</span>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
@@ -527,11 +487,12 @@ define([], function () {
             mor.byId('userin').value = authname; }
         mor.byId('userin').focus();
         mor.out('loginstatdiv', loginprompt);
+        displayAltAuthMethods();
     },
 
 
     handleRedirectOrStartWork = function () {
-        var params = parseHashParams();
+        var idx, params = parseHashParams();
         //set synonyms
         if(params.authmethod) { params.am = params.authmethod; }
         if(params.authtoken) { params.at = params.authtoken; }
@@ -540,6 +501,8 @@ define([], function () {
         if(params.am && params.at && params.an) {  //have login info
             params.at = mor.enc(params.at);  //restore token encoding 
             setAuthentication(params.am, params.at, params.an); }
+        if(params.logout) {
+            logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //on home server, clean the location display
             clearHash(); }
         if(params.view && params.profid) {
@@ -549,8 +512,10 @@ define([], function () {
             mor.historyCheckpoint({ view: "review", mode: "edit",
                                     revid: parseInt(params.revedit, 10) }); }
         //figure out what to do next
-        if(params.command === "FBlogin") {
-            enableFacebookLogin(); }
+        if(params.command && params.command.indexOf("AltAuth") === 0) {
+            idx = params.command.slice("AltAuth".length);
+            idx = parseInt(idx, 10);
+            handleAlternateAuthentication(idx); }
         else if(authtoken || readAuthCookie()) {
             if(params.command === "chgpwd") {
                 displayChangePassForm(); }
@@ -565,7 +530,11 @@ define([], function () {
 
     return {
         init: function () {
-            handleRedirectOrStartWork(); },
+            require([ "ext/facebook" ],
+                    function (facebook) {
+                        if(!mor.facebook) { mor.facebook = facebook; }
+                        altauths = [ facebook ];
+                        handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },
         displayChangePassForm: function () {
@@ -574,21 +543,18 @@ define([], function () {
             return authparams(); },
         logout: function () {
             logout(); },
-        enableFB: function () {
-            enableFacebookLogin(); },
-        loginFB: function () {
-            FB.login(function (loginResponse) {
-                if(loginResponse.status === "connected") {
-                    facebookWelcome(loginResponse); }
-                else {
-                    facebookLoginFormDisplay(loginResponse); } }); },
+        altLogin: function (idx) {
+            handleAlternateAuthentication(idx); },
+        setAuth: function (method, token, name) {
+            setAuthentication(method, token, name); },
+        authComplete: function () {
+            doneWorkingWithAccount(); },
         createAccount: function () {
             createAccount(); },
         getAuthMethod: function () { return authmethod; },
-        getMORAccountId: function () { return morAccountId; }
+        getMORAccountId: function () { return morAccountId; },
+        mainServer: mainsvr
     };
 
 });
-
-
 

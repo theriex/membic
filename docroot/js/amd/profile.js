@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -166,74 +166,6 @@ define([], function () {
     },
 
 
-    addFacebookAuthUserID = function (domid, pen, fbUserID) {
-        var fbid;
-        if(!fbUserID) {
-            mor.err("No userID received from Facebook");
-            return displayAuthSettings(domid, pen); }
-        fbid = parseInt(fbUserID, 10);
-        if(!fbid || fbid <= 0) {
-            mor.err("Invalid userID received from Facebook");
-            return displayAuthSettings(domid, pen); }
-        mor.out(domid, "Recording Facebook authorization...");
-        pen.fbid = fbid;
-        mor.pen.updatePen(pen,
-                          function (updpen) {
-                              displayAuthSettings(domid, updpen); },
-                          function (code, errtxt) {
-                              mor.err("addFacebookAuthUserID error " +
-                                      code + ": " + errtxt);
-                              pen.fbid = 0;
-                              displayAuthSettings(domid, pen); });
-    },
-
-
-    addFacebookAuthSDKLoaded = function (domid, pen) {
-        FB.getLoginStatus(function (loginResponse) {
-            var msg, html;
-            if(loginResponse.status === "connected") {
-                return addFacebookAuthUserID(domid, pen, 
-                             loginResponse.authResponse.userID); }
-            if(loginResponse.status === "not_authorized") {
-                msg = "You have not yet authorized MyOpenReviews, " +
-                    " click to authorize."; }
-            else {
-                msg = "You are not currently logged into Facebook," +
-                    " click to log in."; }
-            html = "<p>" + msg + "</p>" +
-                "<p><a href=\"http://www.facebook.com\"" +
-                      " title=\"Log in to Facebook\"" +
-                      " onclick=\"mor.profile.loginFB('" + domid + "');" + 
-                                 "return false;\"" +
-                    "><img class=\"loginico\" src=\"img/f_logo.png\"" +
-                         " border=\"0\"/> Log in to Facebook</a></p>";
-            mor.out(domid, html); });
-    },
-
-
-    addFacebookAuth = function (domid, pen) {
-        var js, id = 'facebook-jssdk', firstscript, 
-            mainsvr = "http://www.myopenreviews.com";
-        if(window.location.href.indexOf(mainsvr) !== 0) {
-            alert("Facebook authentication is only supported from " + mainsvr);
-            return displayAuthSettings(domid, pen); }
-        if(mor.byId(id)) {  //if facebook script is already loaded, then go
-            return addFacebookAuthSDKLoaded(domid, pen); }
-        window.fbAsyncInit = function () {
-            FB.init({ appId: 265001633620583, 
-                      status: true, //check login status
-                      cookie: true, //enable server to access the session
-                      xfbml: true });
-            addFacebookAuthSDKLoaded(domid, pen); };
-        js = document.createElement('script');
-        js.id = id;
-        js.async = true;
-        js.src = "//connect.facebook.net/en_US/all.js";
-        firstscript = document.getElementsByTagName('script')[0];
-        firstscript.parentNode.insertBefore(js, firstscript);
-    },
-
-
     handleAuthChangeToggle = function (pen, authtype, domid) {
         var action = "remove", methcount, previd;
         if(mor.byId("aa" + authtype).checked) {
@@ -264,9 +196,15 @@ define([], function () {
                 mor.byId("aa" + authtype).checked = true; } }
         else if(action === "add") {
             switch(authtype) {
-            case "mid": addMyOpenReviewsAuth(domid, pen); break;
-            case "fbid": addFacebookAuth(domid, pen); break;
-                } }
+            case "mid": 
+                addMyOpenReviewsAuth(domid, pen); break;
+            case "fbid": 
+                require([ "ext/facebook" ],
+                        function (facebook) {
+                            if(!mor.facebook) { mor.facebook = facebook; }
+                            facebook.addProfileAuth(domid, pen); });
+                break;
+            } }
     },
 
 
@@ -1255,16 +1193,8 @@ define([], function () {
         toggleAuthChange: function (authtype, domid) {
             mor.pen.getPen(function (pen) { 
                 handleAuthChangeToggle(pen, authtype, domid); }); },
-        loginFB: function (domid) {
-            FB.login(function (loginResponse) {
-                if(loginResponse.status === "connected") {
-                    mor.pen.getPen(function (pen) {
-                        addFacebookAuthUserID(domid, pen,
-                                loginResponse.authResponse.userID); }); }
-                else {
-                    mor.pen.getPen(function (pen) {
-                        displayAuthSettings(domid, pen); }); } 
-            }); }
+        displayAuthSettings: function (domid, pen) {
+            displayAuthSettings(domid, pen); }
     };
 
 });
