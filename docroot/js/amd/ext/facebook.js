@@ -136,7 +136,7 @@ define([], function () {
             alert("Facebook authentication is only supported from ",
                   mor.login.mainServer);
             return mor.profile.displayAuthSettings(domid, pen); }
-        if(FB) {
+        if(typeof FB === 'object' || typeof FB === 'function') {
             return addProfileAuth2(domid, pen); }
         loadFacebook(function () {
             addProfileAuth2(domid, pen); });
@@ -244,7 +244,7 @@ define([], function () {
             alert("Posting to Facebook is only supported from ",
                   mor.login.mainServer);
             return postRevBailout(review); }
-        if(FB) {
+        if(typeof FB === 'object' || typeof FB === 'function') {
             return postReview2(review); }
         loadFacebook(function () {
             postReview2(review); });
@@ -261,8 +261,8 @@ define([], function () {
             handleFBLogin(); },
         authenticate: function () {
             authenticate(); },
-        addProfileAuth: function () {
-            addProfileAuth1(); },
+        addProfileAuth: function (domid, pen) {
+            addProfileAuth1(domid, pen); },
         authFB: function (domid) {
             handleFBProfileAuth(domid); },
         doPost: function (review) {
