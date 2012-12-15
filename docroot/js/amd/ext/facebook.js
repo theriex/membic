@@ -183,7 +183,7 @@ define([], function () {
 
 
     postReview4 = function (review) {
-        var fblinkname, fblinkurl, fbimage, fbprompt;
+        var fblinkname, fblinkurl, fbimage, fbprompt, html;
         fblinkname = mor.services.getRevStarsTxt(review) + " " +
             mor.services.getRevTitleTxt(review);
         fblinkurl = "http://www.myopenreviews.com/#view=profile" + 
@@ -201,9 +201,14 @@ define([], function () {
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {
-                      review.svcdata[svcName] = response.post_id; }
+                      review.svcdata[svcName] = response.post_id;
+                      html = "<p>&nbsp;</p><p>Review posted to Facebook</p>";
+                      mor.out('contentdiv', html); }
                   else {
-                      review.svcdata[svcName] = 'nopost'; } });
+                      mor.err("Posting to Facebook did not happen.");
+                      review.svcdata[svcName] = 'nopost'; } 
+                  mor.services.continueServices(review);
+              });
     },
 
 

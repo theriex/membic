@@ -583,12 +583,12 @@ define([], function () {
                     ">Done</button>"; } }
         //reading a previously written review
         else if(review.penid === mor.instId(userpen)) {  //is review owner
-            html += "<button type=\"button\" id=\"editbutton\"" +
-                " onclick=\"mor.review.display();return false;\"" +
-                ">Edit</button>" + "&nbsp;" + 
-                "<button type=\"button\" id=\"deletebutton\"" +
+            html += "<button type=\"button\" id=\"deletebutton\"" +
                 " onclick=\"mor.review.delrev();return false;\"" +
-                ">Delete</button>"; }
+                ">Delete</button>" + "&nbsp;" + 
+                "<button type=\"button\" id=\"editbutton\"" +
+                " onclick=\"mor.review.display();return false;\"" +
+                ">Edit</button>"; }
         //reading a review written by someone else
         else {
             html += "<button type=\"button\" id=\"respondbutton\"" +

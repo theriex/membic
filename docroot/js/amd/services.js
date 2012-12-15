@@ -25,10 +25,10 @@ define([], function () {
     },
 
 
-    findServiceByName = function (svcName) {
+    findServiceByName = function (name) {
         var i;
         for(i = 0; i < connServices.length; i += 1) {
-            if(connServices[i].svcName === svcName) {
+            if(connServices[i].name === name) {
                 return connServices[i]; } }
     },
 
@@ -37,7 +37,7 @@ define([], function () {
     //dialog getting launched at the same time.
     promptForService = function (review, conf, isnew) {
         var odiv, svc, html = "";
-        svc = findServiceByName(conf.svcName);
+        svc = findServiceByName(conf.name);
         if(isnew) {
             html += "<p>A new connection service is available:</p>"; }
         html += "<p>" + serviceIconHTML(svc) + "&nbsp;" + 
@@ -46,11 +46,11 @@ define([], function () {
         html += "<p class=\"headingtxt\">Run it?</p>" +
         "<p class=\"headingtxt\">" +
           "<button type=\"button\"" + 
-                 " onclick=\"mor.services.promptresp('" + svc.Name + "'," + 
+                 " onclick=\"mor.services.promptresp('" + svc.name + "'," + 
                                                     "'No');return false;\"" +
             ">No</button>&nbsp;" +
           "<button type=\"button\"" +
-                 " onclick=\"mor.services.promptresp('" + svc.Name + "'," +
+                 " onclick=\"mor.services.promptresp('" + svc.name + "'," +
                                                     "'Yes');return false;\"" + 
             ">Yes</button></p>" +
         "<p class=\"smalltext\"><i>You can manage connection services through" +
@@ -61,7 +61,7 @@ define([], function () {
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = mor.skinner.lightbg();
         mor.onescapefunc = function () { 
-            mor.services.promptresp(svc.svcName, 'No'); };
+            mor.services.promptresp(svc.name, 'No'); };
     },
 
 
@@ -100,7 +100,7 @@ define([], function () {
 
     callToRunService = function (review, conf) {
         var svc;
-        svc = findServiceByName(conf.svcName);
+        svc = findServiceByName(conf.name);
         //if the service needs a display, it can use overlaydiv
         svc.doPost(review);
     },
@@ -114,10 +114,11 @@ define([], function () {
         if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
             for(i = 0; i < pen.settings.consvcs.length; i += 1) {
                 conf = pen.settings.consvcs[i];
-                bb = conf.svcName;
-                if(!review.svcdata[bb]) {  //not already run
-                    //note processing started by recording the config status
-                    review.svcdata[bb] = conf.status;
+                bb = conf.name;
+                //not already run, or prompted and confirmed
+                if(!review.svcdata[bb] || review.svcdata[bb] === "confirmed") {
+                    if(!review.svcdata[bb]) {  //note processing was triggered
+                        review.svcdata[bb] = conf.status; }
                     //kick off appropriate processing
                     if(review.svcdata[bb] === svcstates[0]) {  //new service
                         return promptForService(review, conf, true); }
@@ -126,17 +127,18 @@ define([], function () {
                     if(review.svcdata[bb] === svcstates[1] ||  //enabled
                        review.svcdata[bb] === "confirmed") {
                         return callToRunService(review, conf); } } } }
+        mor.profile.display();
     },
 
 
-    handleResponseToPrompt = function (svcName, resp) {
+    handleResponseToPrompt = function (name, resp) {
         var review, odiv;
         review = mor.review.getCurrentReview();
         odiv = mor.byId('overlaydiv');
         if(resp === "Yes") {
-            review.svcdata[svcName] = "confirmed"; }
+            review.svcdata[name] = "confirmed"; }
         else {
-            review.svcdata[svcName] = "rejected"; }
+            review.svcdata[name] = "rejected"; }
         odiv.innerHTML = "";
         odiv.style.visibility = "hidden";
         mor.onescapefunc = null;
@@ -158,13 +160,13 @@ define([], function () {
     },
 
 
-    changestate = function (svcName, pen) {
+    changestate = function (name, pen) {
         var sel, conf, i;
         mor.pen.deserializeSettings(pen);
-        sel = mor.byId(svcName + "sel");
+        sel = mor.byId(name + "sel");
         if(sel) {
             for(i = 0; !conf && i < pen.settings.consvcs.length; i += 1) {
-                if(pen.settings.consvcs[i].svcName === svcName) {
+                if(pen.settings.consvcs[i].name === name) {
                     conf = pen.settings.consvcs[i]; } }
             if(conf) {
                 conf.status = svcstates[sel.selectedIndex]; } }
@@ -173,7 +175,7 @@ define([], function () {
 
     getConnSvcRowHTML = function (conf) {
         var i, html, svc;
-        svc = findServiceByName(conf.svcName);
+        svc = findServiceByName(conf.name);
         html = "<tr><td>";
         html += serviceIconHTML(svc);
         html += "</td><td>" + 
@@ -182,7 +184,7 @@ define([], function () {
                        "return false;\"" +
             ">";
         for(i = 0; i < svcstates.length; i += 1) {
-            html += "<option id=\"" + conf.svcName + (+i) + "\"";
+            html += "<option id=\"" + conf.name + (+i) + "\"";
             if(conf.status === svcstates[i]) {
                 html += " selected=\"selected\""; }
             html += ">" + svcstates[i] + "</option>"; }
@@ -190,9 +192,9 @@ define([], function () {
             "<td><a href=\"#" + svc.svcDispName + "\"" +
                   " title=\"" + mor.ellipsis(svc.svcDesc, 65) + "\"" +
                   " onclick=\"mor.services.toggleDesc('svcdescdiv" +
-                             svc.svcName + "');return false;\">" +
+                             svc.name + "');return false;\">" +
                     svc.svcDispName + "</a>" + 
-              "<div id=\"svcdescdiv" + svc.svcName + "\"" +
+              "<div id=\"svcdescdiv" + svc.name + "\"" +
                   " style=\"display:none;\">" + mor.linkify(svc.svcDesc) + 
               "</div>" +
             "</td></tr>";
@@ -213,6 +215,27 @@ define([], function () {
     },
 
 
+    //Could have bad configs due to misconfiguration, versioning etc.
+    //A service must provide:
+    //  name: unique across services, used as a dom id and lookup key
+    //  loginurl: url to login to the service, or get info about it
+    //  svcDesc: short text describing what the service does
+    //Optional fields provided by a service
+    //  iconurl: url for an icon image used to help identify the service
+    //  svcDispName: display name for service, (defaults to name)
+    //A configured service must provide the unique service name, and a
+    //the service state.  If no state, then it is assumed to be new.
+    validServiceConfig = function (confsvc) {
+        //the service name is a unique identifier of what to run.  If that
+        //is not specified then the service can't be found.
+        if(typeof confsvc.name !== 'string') {
+            return false; }
+        if(typeof confsvc.state !== 'string') {
+            confsvc.state = svcstates[0]; }
+        return true;
+    },
+
+
     //helpful to preserve the ordering of any defined service configs
     mergeConnectionServices = function (pen, contfunc) {
         var updconfs, i, j, svc, conf, found;
@@ -223,20 +246,21 @@ define([], function () {
         //add existing configs that are still defined
         for(i = 0; i < pen.settings.consvcs.length; i += 1) {
             conf = pen.settings.consvcs[i];
-            for(j = 0; j < connServices.length; j += 1) {
-                svc = connServices[j];
-                if(conf.svcName === svc.name) {
-                    updconfs.push(conf); } } }
+            if(validServiceConfig(conf)) {
+                for(j = 0; j < connServices.length; j += 1) {
+                    svc = connServices[j];
+                    if(conf.name === svc.name) {
+                        updconfs.push(conf); } } } }
         //add configs for new services not previously configured
         for(i = 0; i < connServices.length; i += 1) {
             svc = connServices[i];
             found = false;
             for(j = 0; j < pen.settings.consvcs.length; j += 1) {
                 conf = pen.settings.consvcs[j];
-                if(conf.svcName === svc.name) {
+                if(conf.name === svc.name) {
                     found = true; } }
             if(!found) {
-                updconfs.push( { svcName: svc.svcName,
+                updconfs.push( { name: svc.name,
                                  status: svcstates[0] } ); } }
         pen.settings.consvcs = updconfs;
         contfunc();
@@ -275,7 +299,10 @@ define([], function () {
         getRevTitleTxt: function (review) {
             return getRevTitleTxt(review); },
         getRevTypeImage: function (review) {
-            return getRevTypeImage(review); }
+            return getRevTypeImage(review); },
+        continueServices: function (review) {
+            mor.pen.getPen(function (pen) {
+                runServices(pen, review); }); }
     };
 
 });
