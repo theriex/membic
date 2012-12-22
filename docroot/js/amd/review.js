@@ -258,6 +258,7 @@ define([], function () {
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
+            //ATTENTION: These buttons could look better.
             html += "<td><button type=\"button\" id=\"type" + i + "\"" +
                                " onclick=\"mor.review.setType('" +
                                              reviewTypes[i].type + "');" +

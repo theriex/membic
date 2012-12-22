@@ -27,8 +27,11 @@ body {
 
 #logodiv { position:absolute; left:0px; top:25px; }
 #titlediv { position:absolute; left:0px; top:0px; padding:0px 10px; }
-#topdiv { position:absolute; left:0px; top:12px; padding:0px 10px;
+#topdiv { position:absolute; left:72px; top:12px; padding:0px 10px;
   text-align:right; font-size:x-small; }
+#chead { height:50px; clear:both; }
+#accountdiv { }
+#navdisplaytable { width:100%; }
 #appspacediv { position:absolute; left:0px; top:0px; 
   padding:15px 40px 40px 72px; }
 #bottomnav { font-size:x-small; text-align:center; 
@@ -44,9 +47,6 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
-/* padding in chead compensates for relative offset of acthdiv, revhdiv */
-#chead { text-align:center; font-size:large; text-shadow: -1px -1px 1px #fff; 
-  padding:0px 0px 20px 0px; }
 .penfont, #penhnamespan { font-style:italic; 
   font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
  }
@@ -55,10 +55,10 @@ body {
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
-  box-shadow: 2px 2px 2px #888;
-  padding:0px 5px; position:relative; top:20px; }
+  box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
+  padding:0px 5px; font-size:large; }
 #acthdiv { float:left; }
-#revhdiv { float:right; }
+#revhdiv { float:right; margin:0px 20px 0px 0px; }
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
@@ -110,4 +110,7 @@ body {
 .webjump { width:20px; height:20px; vertical-align:middle; }
 .webabbrev { font-size:x-small; }
 .csvstrdiv { padding:5px; }
+
+/* review layout */
+#revfdiv { }
 

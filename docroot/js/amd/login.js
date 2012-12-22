@@ -8,7 +8,7 @@
 define([], function () {
     "use strict";
 
-    var loginprompt = "Please log in",
+    var loginprompt = "Please log in, or use an existing social account",
         authmethod = "",
         authtoken = "",
         authname = "",
@@ -205,15 +205,31 @@ define([], function () {
         var html = "";
         mor.out('topdiv', html);
         if(authtoken) {
-            //html += "Logged in ";
-            //add "via facebook" or whoever based on authmethod
-            //html += "as ";
-            html += "<em>" + authname + "</em>";
+            html += "<div id=\"topnav\">" +
+              "<table id=\"navdisplaytable\">" +
+                "<tr>" +
+                  "<td></td>" +
+                  "<td rowspan=\"2\">" +
+                    "<div id=\"profhdiv\">" +
+                      "<span id=\"penhnamespan\"> </span>" +
+                      "<span id=\"penhbuttonspan\"> </span>" +
+                    "</div></td>" +
+                  "<td>" +
+                    "<div id=\"accountdiv\"></div> </td>" +
+                "</tr>" +
+                "<tr>" +
+                  "<td><div id=\"acthdiv\"></div></td>" +
+                  "<td><div id=\"revhdiv\"></div></td>" +
+                "</tr>" +
+              "</table></div>";
+            mor.out('topdiv', html);
+            //ATTENTION: add mini logo if 3rd party auth...
+            html = "<em>" + authname + "</em>";
             html += " &nbsp; <a id=\"logout\" href=\"logout\">logout</a>";
             if(authmethod === "mid") {
                 html += " &nbsp; <a id=\"cpwd\" href=\"changepwd\">" + 
                     "change password</a>"; }
-            mor.out('topdiv', html);
+            mor.out('accountdiv', html);
             mor.onclick('logout', logout);
             if(authmethod === "mid") {
                 mor.onclick('cpwd', displayChangePassForm); } }
@@ -362,6 +378,14 @@ define([], function () {
     },
 
 
+    loginButtonHTML = function () {
+        var html = "<button type=\"button\" id=\"loginbutton\"" + 
+                          " onclick=\"mor.login.upwlogin();return false;\"" +
+            ">Log in</button>";
+        return html;
+    },
+
+
     userpassLogin = function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
@@ -378,7 +402,8 @@ define([], function () {
                      setAuthentication("mid", objs[0].token, username);
                      doneWorkingWithAccount(); },
                  function (code, errtxt) {
-                     mor.out('loginstatdiv', "Login failed: " + errtxt); },
+                     mor.out('loginstatdiv', "Login failed: " + errtxt);
+                     mor.out('loginbspan', loginButtonHTML()); },
                  [401]);
     },
 
@@ -420,7 +445,7 @@ define([], function () {
                 " onclick=\"mor.login.altLogin(" + i + ");return false;\"" +
                 "><img class=\"loginico\"" +
                      " src=\"" + altauths[i].iconurl + "\"" +
-                     " border=\"0\"/> Log in via " + altauths[i].name + 
+                     " border=\"0\"/> " + altauths[i].name + 
                 "</a></td></tr>"; }
         html += "</table>";
         mor.out('altauthdiv', html);
@@ -455,7 +480,7 @@ define([], function () {
                 "return false;\">(secured)</a>" +
               "&nbsp;&nbsp;&nbsp;" +
               "<span id=\"loginbspan\">" +
-                "<button type=\"button\" id=\"loginbutton\">Log in</button>" +
+                loginButtonHTML() + 
               "</span>" +
             "</td>" +
           "</tr>" +
@@ -479,7 +504,6 @@ define([], function () {
         mor.byId('seclogin').style.fontSize = "x-small";
         mor.byId('forgot').style.fontSize = "x-small";
         mor.onclick('forgot', displayEmailCredForm);
-        mor.onclick('loginbutton', userpassLogin);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
         mor.onchange('passin', userpassLogin);
         mor.layout.adjust();
@@ -530,9 +554,11 @@ define([], function () {
 
     return {
         init: function () {
-            require([ "ext/facebook" ],
-                    function (facebook) {
+            require([ "ext/facebook", "ext/twitter" ],
+                    function (facebook, twitter) {
                         if(!mor.facebook) { mor.facebook = facebook; }
+                        if(!mor.twitter) { mor.twitter = twitter; }
+                        //altauths = [ facebook, twitter ];
                         altauths = [ facebook ];
                         handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function () {
@@ -545,6 +571,8 @@ define([], function () {
             logout(); },
         altLogin: function (idx) {
             handleAlternateAuthentication(idx); },
+        upwlogin: function () {
+            userpassLogin(); },
         setAuth: function (method, token, name) {
             setAuthentication(method, token, name); },
         authComplete: function () {

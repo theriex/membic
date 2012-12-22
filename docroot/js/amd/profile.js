@@ -64,6 +64,7 @@ define([], function () {
                  " onclick=\"" + profdfunc + ";return false;\"" +
             ">" + pen.name + "</a>";
         mor.out('penhnamespan', html);
+        //ATTENTION: These selector icons could stand some mouseover action
         if(mor.pen.getHomePen(mor.instId(pen))) {  //self
             html = mor.imglink("#Settings","Adjust settings for " + pen.name,
                                "mor.profile.settings()", "settings.png") +
@@ -203,6 +204,12 @@ define([], function () {
                         function (facebook) {
                             if(!mor.facebook) { mor.facebook = facebook; }
                             facebook.addProfileAuth(domid, pen); });
+                break;
+            case "twid":
+                require([ "ext/twitter" ],
+                        function (twitter) {
+                            if(!mor.twitter) { mor.twitter = twitter; }
+                            twitter.addProfileAuth(domid, pen); });
                 break;
             } }
     },

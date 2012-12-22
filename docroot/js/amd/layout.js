@@ -78,18 +78,14 @@ define([], function () {
     },
 
 
-    //initialize the standard content display div areas.
+    //initialize the logged-in content display div areas.  Basically
+    //contentdiv is subdivided into chead and cmain.
     initContent = function () {
         var html, div;
         div = mor.byId('chead');
         if(!div) {
-            html = "<div id=\"chead\">" +
-              "<span id=\"penhnamespan\"> </span>" +
-              "<span id=\"penhbuttonspan\"> </span>" +
-              "<div id=\"acthdiv\"> </div>" +
-              "<div id=\"revhdiv\"> </div>" +
-            "</div>" +
-            "<div id=\"cmain\"> </div>";
+            html = "<div id=\"chead\"> </div>" +
+                "<div id=\"cmain\"> </div>";
             mor.out('contentdiv', html);
             mor.profile.updateHeading();
             mor.activity.updateHeading();
@@ -97,8 +93,7 @@ define([], function () {
     },
 
 
-    fullContentHeight = function () {
-        var ch, filldiv, topdiv, chdiv, target;
+    findDisplayHeightAndWidth = function () {
         if(window.innerWidth && window.innerHeight) {
             mor.winw = window.innerWidth;
             mor.winh = window.innerHeight; }
@@ -113,6 +108,13 @@ define([], function () {
         else {  //WTF, just guess.
             mor.winw = 240;
             mor.winh = 320; }
+    },
+
+
+    fullContentHeight = function () {
+        var ch, filldiv, topdiv, contentdiv, target;
+        findDisplayHeightAndWidth();
+        //fill the bottom content so the footer text isn't too high up
         filldiv = mor.byId("contentfill");
         ch = mor.byId("contentdiv").offsetHeight;
         target = mor.winh - 100;  //top padding and scroll
@@ -120,13 +122,14 @@ define([], function () {
             filldiv.style.height = (target - ch) + "px"; }
         else {  //not filling, just leave a little separator space
             filldiv.style.height = "16px"; }
-        topdiv = mor.byId("topdiv");
-        target = mor.winw - 50;  //element width padding
-        topdiv.style.width = target + "px";
-        chdiv = mor.byId("chead");
-        target = mor.winw - 120;  //Remo is 72px, 20px padding
-        if(chdiv) {
-            chdiv.style.width = target + "px"; }
+        //adjust the topdiv and content width so it looks reasonable
+        target = mor.winw - 120;  //Remo is 72px, margin padding
+        topdiv = mor.byId('topdiv');
+        if(topdiv) {
+            topdiv.style.width = target + "px"; }
+        contentdiv = mor.byId('contentdiv');
+        if(contentdiv) {
+            contentdiv.style.width = target + "px"; }
     };
 
 
