@@ -11,6 +11,8 @@ import time
 import re
 import json
 from google.appengine.api.datastore_types import Blob
+from consvc import doOAuthGet
+
 
 def pwd2key(password):
     """ make a password into an encryption key """
@@ -81,6 +83,7 @@ def authenticated(request):
     acctype = request.get('am')
     username = request.get('an')
     token = request.get('at')
+    toksec = request.get('as')
     if acctype == "mid":
         where = "WHERE username=:1 LIMIT 1"
         accounts = MORAccount.gql(where, username)
@@ -105,8 +108,15 @@ def authenticated(request):
             account = MORAccount(username=useridstr, password=token)
             account._id = int(useridstr)
             return account 
-    # elif acctype == "twid":
-    #     # call to verify token, return a stub account if successful
+    elif acctype == "twid":
+        svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
+        result = doOAuthGet("Twitter", svc, token, toksec)
+        if result and result.status_code == 200:
+            fbusertoks = username.split(' ')
+            useridstr = str(fbusertoks[0])
+            account = MORAccount(username=useridstr, password=token)
+            account._id = int(useridstr)
+            return account
     # elif acctype == "gid":
     #     # call to verify token, return a stub account if successful
 
@@ -158,6 +168,13 @@ def returnJSON(response, queryResults, cursor="", fetched=-1):
             ", \"cursor\":\"" + cursor + "\"}"
     result = "[" + result + "]"
     writeJSONResponse(result, response)
+
+
+def returnDictAsJSON(response, obj):
+    """ Return a standard dictionary as a JSON encoded object """
+    jsontxt = json.dumps(obj, True)
+    # logging.info(jsontxt)
+    writeJSONResponse("[" + jsontxt + "]", response)
 
 
 def intz(val):

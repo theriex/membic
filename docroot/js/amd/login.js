@@ -33,8 +33,12 @@ define([], function () {
 
 
     authparams = function () {
-        var params = "am=" + authmethod + "&at=" + authtoken + 
-                     "&an=" + mor.enc(authname);
+        var params, sec; 
+        params = "am=" + authmethod + "&at=" + authtoken + 
+                 "&an=" + mor.enc(authname);
+        sec = mor.dojo.cookie(authtoken);
+        if(sec) {
+            params += "&as=" + mor.enc(sec); }
         return params;
     },
 
@@ -72,7 +76,10 @@ define([], function () {
 
 
     clearHash = function () {
-        var url = window.location.pathname + window.location.search;
+        //this also clears any search parameters to leave a clean url.
+        //that way a return call from someplace like twitter doesn't
+        //keep token info and similar parameter stuff hanging around.
+        var url = window.location.pathname;
         //note this is using the standard html5 history directly.  That's
         //a way to to clear the URL noise without a redirect triggering
         //a page refresh. 
@@ -86,6 +93,14 @@ define([], function () {
         var hash = window.location.hash, params = {}, avs, av, i;
         if(hash) {
             if(hash.indexOf("#") === 0) {
+                hash = hash.slice(1); }
+            avs = hash.split('&');
+            for(i = 0; i < avs.length; i += 1) {
+                av = avs[i].split('=');
+                params[av[0]] = av[1]; } }
+        hash = window.location.search;
+        if(hash) {
+            if(hash.indexOf("?") === 0) {
                 hash = hash.slice(1); }
             avs = hash.split('&');
             for(i = 0; i < avs.length; i += 1) {
@@ -408,10 +423,14 @@ define([], function () {
     },
 
 
-    //all alternate login is done from the main server
-    handleAlternateAuthentication = function (idx) {
-        var redurl, params = parseHashParams();
+    //all alternate login is done from the main server. 
+    handleAlternateAuthentication = function (idx, params) {
+        var redurl;
+        if(!params) {
+            params = parseHashParams(); }
         if(window.location.href.indexOf("localhost") >= 0) {
+            if(idx === 1) {  //let twitter through for testing
+                return altauths[idx].authenticate(params); }
             mor.err("Not redirecting to main server off localhost. Confusing.");
             return; }
         if(window.location.href.indexOf(mainsvr) !== 0) {
@@ -422,7 +441,7 @@ define([], function () {
                 window.location.href = redurl; 
             }, 20); }
         else {  //we are on mainsvr at this point
-            altauths[idx].authenticate(); }
+            altauths[idx].authenticate(params); }
     },
 
 
@@ -539,7 +558,7 @@ define([], function () {
         if(params.command && params.command.indexOf("AltAuth") === 0) {
             idx = params.command.slice("AltAuth".length);
             idx = parseInt(idx, 10);
-            handleAlternateAuthentication(idx); }
+            handleAlternateAuthentication(idx, params); }
         else if(authtoken || readAuthCookie()) {
             if(params.command === "chgpwd") {
                 displayChangePassForm(); }
@@ -558,8 +577,7 @@ define([], function () {
                     function (facebook, twitter) {
                         if(!mor.facebook) { mor.facebook = facebook; }
                         if(!mor.twitter) { mor.twitter = twitter; }
-                        //altauths = [ facebook, twitter ];
-                        altauths = [ facebook ];
+                        altauths = [ facebook, twitter ];
                         handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },

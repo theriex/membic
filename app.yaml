@@ -157,9 +157,9 @@ handlers:
 ######################################################################
 ##        Connection Services
 
-## Fetch the currently configured connection services
-## GET params: none
-- url: /consvcs.*
+## Return a signed OAuth request given the specified parameters
+## POST params: name, posturl, headparams, contentparams
+- url: /oa1call.*
   script: src.py.consvc.app
 
 

@@ -235,7 +235,7 @@ var mor = {};  //Top level function closure container
         var cdiv = mor.byId('contentdiv');
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
-        mor.dojo = { dom: dom, json: json, on: on, ajax: request,
+        mor.dojo = { dom: dom, json: json, on: on, request: request,
                      query: query, cookie: cookie, dijitreg: dijitreg, 
                      slider: slider };
         //app module references
@@ -299,7 +299,7 @@ var mor = {};  //Top level function closure container
     //data sucks.
     mor.call = function (url, method, data, success, failure, errs) {
         var statcode, errtxt;
-        mor.dojo.ajax(url, { method: method, data: data }).then(
+        mor.dojo.request(url, { method: method, data: data }).then(
             //successful call result processing function
             function (resp) {
                 try {
@@ -457,6 +457,16 @@ var mor = {};  //Top level function closure container
             html += "<input type=\"hidden\" name=\"" + attval[0] + "\"" +
                                           " value=\"" + attval[1] + "\"/>"; }
         return html;
+    };
+
+
+    mor.paramsToObj = function (paramstr) {
+        var comps, i, attval, obj = {};
+        comps = paramstr.split("&");
+        for(i = 0; i < comps.length; i += 1) {
+            attval = comps[i].split("=");
+            obj[attval[0]] = attval[1]; }
+        return obj;
     };
 
 
