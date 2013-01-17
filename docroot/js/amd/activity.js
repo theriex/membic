@@ -30,6 +30,7 @@ define([], function () {
                      " onclick=\"mor.activity.display();return false;\"" +
             ">Activity</a>";
         mor.out('acthdiv', html);
+        mor.byId('acthdiv').style.visibility = "visible";
     },
 
 

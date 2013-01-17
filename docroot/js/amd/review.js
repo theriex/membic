@@ -59,18 +59,6 @@ define([], function () {
             fields: [ "album", "year" ],
             dkwords: [ "Light", "Heavy", "Wakeup", "Travel", "Office", 
                        "Workout", "Dance", "Social", "Sex" ] },
-          { type: "wine", plural: "wines", img: "TypeWine50.png",
-            keyprompt: "Vineyard and type, and/or wine name",
-            key: "name", //subkey
-            fields: [ "year" ],
-            dkwords: [ "Red", "White", "Light", "Robust", "Dry", "Fruity",
-                       "Cheap", "Expensive" ] },
-          { type: "beer", plural: "beers", img: "TypeBeer50.png",
-            keyprompt: "Brewery and type or name of beer",
-            key: "name", //subkey
-            fields: [],
-            dkwords: [ "Light", "Strong", "Traditional", "Experimental",
-                       "Hoppy", "Fruity", "Sweet", "Cheap", "Expensive" ] },
           { type: "food", plural: "food", img: "TypeFood50.png",
             keyprompt: "Name of restaurant or dish",
             key: "name", //subkey
@@ -78,12 +66,24 @@ define([], function () {
             dkwords: [ "Breakfast", "Lunch", "Dinner", "Snack", 
                        "Cheap", "Expensive", "Fast", "Slow", "Outdoor",
                        "Quiet", "Loud" ] },
+          { type: "drink", plural: "drinks", img: "TypeDrink50.png",
+            keyprompt: "Name and where from",
+            key: "name", //subkey
+            fields: [ "address" ],
+            dkwords: [ "Traditional", "Innovative", "Cheap", "Expensive",
+                       "Essential", "Special", "Quiet", "Loud", "Outdoor" ] },
           { type: "to do", plural: "things to do", img: "TypeBucket50.png",
             keyprompt: "Name of place, activity, or event",
             key: "name", //subkey
             fields: [ "address" ],
             dkwords: [ "Easy", "Advanced", "Kid Ok", "Cheap", "Expensive",
-                       "Spring", "Summer", "Autumn", "Winter", "Anytime" ] }
+                       "Spring", "Summer", "Autumn", "Winter", "Anytime" ] },
+          { type: "other", plural: "other", img: "TypeOther50.png",
+            keyprompt: "Name or title", 
+            key: "name", subkey: "type",
+            fields: [],
+            dkwords: [ "Specialized", "General", "Professional", "Personal",
+                       "Hobby", "Research" ] }
           ],
 
 
@@ -209,6 +209,7 @@ define([], function () {
                      " onclick=\"mor.review.reset();return false;\"" +
             ">Write a Review</a>";
         mor.out('revhdiv', html);
+        mor.byId('revhdiv').style.visibility = "visible";
     },
 
 
@@ -658,7 +659,7 @@ define([], function () {
             html += "<tr>" +
                 "<td></td>" +
                 "<td id=\"keyinlabeltd\">" + 
-                    formFieldLabelContents(type.key) + "</td>";
+                    formFieldLabelContents(type.keyprompt) + "</td>";
             if(type.subkey) {
                 html += "<td id=\"subkeyinlabeltd\">" +
                     formFieldLabelContents(type.subkey) + "</td>"; }

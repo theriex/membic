@@ -33,7 +33,7 @@ body {
 #accountdiv { }
 #navdisplaytable { width:100%; }
 #appspacediv { position:absolute; left:0px; top:0px; 
-  padding:15px 40px 40px 72px; }
+  padding:45px 40px 40px 72px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px; }
 #logotitle { 
@@ -56,7 +56,7 @@ body {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
   box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
-  padding:0px 5px; font-size:large; }
+  padding:0px 5px; font-size:large; visibility:hidden; }
 #acthdiv { float:left; }
 #revhdiv { float:right; margin:0px 20px 0px 0px; }
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
