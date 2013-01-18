@@ -54,7 +54,7 @@ define([], function () {
 
     logoutWithNoDisplayUpdate = function () {
         //remove the cookie
-        mor.dojo.cookie(cookname, "", { expires: 0 });
+        mor.dojo.cookie(cookname, "", { expires: -1 });
         authmethod = "";
         authtoken = "";
         authname = "";
@@ -148,7 +148,7 @@ define([], function () {
     //to be aware of...
     setAuthentication = function (method, token, name) {
         var cval = method + cookdelim + token + cookdelim + name;
-        mor.dojo.cookie(cookname, cval, { expires: 60*60*24*365 });
+        mor.dojo.cookie(cookname, cval, { expires: 365 });
         authmethod = method;
         authtoken = token;
         authname = name;
@@ -170,12 +170,15 @@ define([], function () {
 
 
     changePassword = function () {
-        var pwd = mor.byId('npin').value, data, url;
+        var pwd, email, data, url;;
+        pwd = mor.byId('npin').value;
         if(!pwd || !pwd.trim()) {
             changepwdprompt = "New password must have a value";
             return mor.login.displayChangePassForm(); }
+        email = mor.byId('npemailin').value;
         url = secureURL("chgpwd");
-        data = "pass=" + mor.enc(pwd) + "&" + mor.login.authparams();
+        data = "pass=" + mor.enc(pwd) + "&email=" + mor.enc(email) +
+            "&" + mor.login.authparams();
         mor.call(url, 'POST', data,
                  function (objs) {
                      setAuthentication("mid", objs[0].token, authname);
@@ -200,6 +203,11 @@ define([], function () {
               "<input type=\"password\" id=\"npin\" size=\"20\"/></td>" +
           "</tr>" +
           "<tr>" +
+            "<td align=\"right\">email</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"npemailin\" size=\"30\"/></td>" +
+          "</tr>" +
+          "<tr>" +
             "<td colspan=\"2\" align=\"center\">" +
               "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
               "&nbsp;" +
@@ -210,7 +218,6 @@ define([], function () {
         mor.out('contentdiv', html);
         mor.onclick('cancelbutton', doneWorkingWithAccount);
         mor.onclick('changebutton', changePassword);
-        mor.onchange('npin', changePassword);
         mor.layout.adjust();
         mor.byId('npin').focus();
     },
@@ -585,6 +592,8 @@ define([], function () {
             displayChangePassForm(); },
         authparams: function () {
             return authparams(); },
+        readAuthCookie: function () {
+            return readAuthCookie(); },
         logout: function () {
             logout(); },
         altLogin: function (idx) {

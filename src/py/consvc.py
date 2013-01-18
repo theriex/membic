@@ -152,53 +152,6 @@ class OAuth1Call(webapp2.RequestHandler):
         logging.info("svcname: " + svcname)
         svc = getConnectionService(svcname)
         params = makeParamHash(svc, self.request)
-        #
-        # https://dev.twitter.com/docs/auth/authorizing-request
-        # https://dev.twitter.com/docs/auth/creating-signature
-        # target sig: tnnArxj06cWHq44gCs1OSKk/jLY=
-        # svc.ckey = "xvz1evFS4wEEPTGEFPHBog"
-        # svc.secret = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw"
-        # toksec = "LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
-        # svcurl = "https://api.twitter.com/1/statuses/update.json"
-        # params = {
-        #     "status": "Hello Ladies + Gentlemen, a signed OAuth request!",
-        #     "include_entities": "true",
-        #     "oauth_consumer_key": svc.ckey,
-        #     "oauth_nonce": "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
-        #     "oauth_signature_method": "HMAC-SHA1",
-        #     "oauth_timestamp": "1318622958",
-        #     "oauth_token": "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb",
-        #     "oauth_version": "1.0" }
-        #
-        # https://dev.twitter.com/docs/auth/implementing-sign-twitter
-        # target sig: F1Li3tvehgcraF8DMJ7OyxO4w9Y=
-        # svc.ckey = "cChZNFj6T5R0TigYB9yd1w"
-        # svc.secret = "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
-        # toksec = ""
-        # svcurl = "https://api.twitter.com/oauth/request_token"
-        # params = {
-        #     "oauth_callback": "http://localhost/sign-in-with-twitter/",
-        #     "oauth_consumer_key": svc.ckey,
-        #     "oauth_nonce": "ea9ec8429b68d6b77cd5600adbbb0456",
-        #     "oauth_signature_method": "HMAC-SHA1",
-        #     "oauth_timestamp": "1318467427",
-        #     "oauth_version": "1.0" }
-        #
-        # token conversion call
-        # target sig: 39cipBtIOHEEnybAR4sATQTpl2I=
-        # svc.ckey = "cChZNFj6T5R0TigYB9yd1w"
-        # svc.secret = "L8qq9PZyRg6ieKGEKhZolGC0vJWLw8iEJ88DRdyOg"
-        # toksec = "veNRnAWe6inFuo8o2u8SLLZLjolYDmDP7SzL0YfYI"
-        # svcurl = "https://api.twitter.com/oauth/access_token"
-        # params = {
-        #     "oauth_consumer_key": svc.ckey,
-        #     "oauth_nonce": "a9900fe68e2573b27a37f10fbad6a755",
-        #     "oauth_signature_method": "HMAC-SHA1",
-        #     "oauth_timestamp": "1318467427",
-        #     "oauth_token": "NPcudxy0yU5T3tBzho7iCotZ3cnetKwcTIRlX0iwRl0",
-        #     "oauth_verifier": "uw7NjWHT6OJ1MpJOXsHfNxoAhPKpgI8BlYDhxEjIBY",
-        #     "oauth_version": "1.0" }
-        #
         addOAuthSig("POST", svc, toksec, svcurl, params)
         result = doOAuthPost(svcurl, params)
         if result.status_code == 200:

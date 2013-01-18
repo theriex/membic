@@ -124,6 +124,7 @@ define([], function () {
 
     displayAuthSettings = function (domid, pen) {
         var atname, html = "Authenticated access: <table>";
+        //MyOpenReviews
         atname = nameForAuthType("mid");
         html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
             " value=\"" + atname + "\" id=\"aamid\"" +
@@ -132,6 +133,7 @@ define([], function () {
         if(pen.mid > 0) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
+        //Facebook
         atname = nameForAuthType("fbid");
         html += "<tr><td><input type=\"checkbox\" name=\"aafbid\"" +
             " value=\"" + atname + "\" id=\"aafbid\"" +
@@ -139,8 +141,17 @@ define([], function () {
                              domid + "');return false;\"";
         if(pen.fbid > 0) {
             html += " checked=\"checked\""; }
-        html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>" +
-            "</table>";
+        html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>";
+        //Twitter
+        atname = nameForAuthType("twid");
+        html += "<tr><td><input type=\"checkbox\" name=\"aatwid\"" +
+            " value=\"" + atname + "\" id=\"aatwid\"" +
+            " onchange=\"mor.profile.toggleAuthChange('twid','" + 
+                             domid + "');return false;\"";
+        if(pen.twid > 0) {
+            html += " checked=\"checked\""; }
+        html += "/><label for=\"aatwid\">" + atname + "</label></td></tr>";
+        html += "</table>";
         mor.out(domid, html);
     },
 

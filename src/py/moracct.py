@@ -283,6 +283,9 @@ class ChangePassword(webapp2.RequestHandler):
             return
         account = authenticated(self.request)
         if pwd and account:
+            email = self.request.get('email')
+            if email:
+                account.email = email
             account.modified = nowISO()
             account.password = pwd
             account.put()
