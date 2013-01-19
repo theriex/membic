@@ -270,10 +270,11 @@ define([], function () {
     verifyConnectionServices = function (pen, callback) {
         if(connServices) {
             return mergeConnectionServices(pen, callback); }
-        require([ "ext/facebook" ],
-                function (facebook) {
+        require([ "ext/facebook", "ext/twitter" ],
+                function (facebook, twitter) {
                     if(!mor.facebook) { mor.facebook = facebook; }
-                    connServices = [ facebook ];
+                    if(!mor.twitter) { mor.twitter = twitter; }
+                    connServices = [ facebook, twitter ];
                     mergeConnectionServices(pen, callback); });
     };
 

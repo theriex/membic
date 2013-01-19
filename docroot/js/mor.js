@@ -267,6 +267,16 @@ var mor = {};  //Top level function closure container
     };
 
 
+    //if a string needs to be URL encoded and then stuffed inside of
+    //single quotes, then you need to replace any embedded single
+    //quotes to avoid terminating the string early.
+    mor.embenc = function (val) {
+        val = mor.enc(val);
+        val = val.replace(/'/g,"%27");
+        return val;
+    };
+
+
     //return true if the given text can be reasonably construed to be an
     //email address.
     mor.isProbablyEmail = function (text) {

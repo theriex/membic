@@ -32,11 +32,11 @@ define([], function () {
         var msg, html;
         if(loginResponse.status === "not_authorized") {
             msg = "You have not yet authorized MyOpenReviews," +
-                " click to authorize."; }
+                " click to authorize..."; }
         else {
             msg = "You are not currently logged into Facebook," +
-                " click to log in."; }
-        html = "<p>&nbsp;</p><p>" + msg + "</p><table><tr>" + 
+                " click to log in..."; }
+        html = "<p>" + msg + "</p><table><tr>" + 
             "<td><a href=\"http://www.facebook.com\"" +
                   " title=\"Log in to Facebook\"" +
                   " onclick=\"mor.facebook." + okfstr + ";return false;\"" +
@@ -237,7 +237,7 @@ define([], function () {
                 odiv.style.backgroundColor = mor.skinner.lightbg();
                 mor.onescapefunc = function () {
                     closeOverlay();
-                    postRevBailout(); };
+                    postRevBailout(review); };
                 facebookLoginFormDisplay(loginResponse, 'overlaydiv',
                                          "postTmpRev()", "bailTmpRev()"); }
         });
