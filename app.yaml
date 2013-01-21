@@ -15,7 +15,7 @@ handlers:
 ######################################################################
 ##                  API
 ## authparams:
-##   am: authentication method: "mid", "gid", "fbid", "twid"
+##   am: authentication method: "mid", "gsid", "fbid", "twid"
 ##   at: authentication token (from local or supported external source)
 ##   an: authentication name (username if native auth, whatever otherwise)
 ##
@@ -160,6 +160,11 @@ handlers:
 ## Return a signed OAuth request given the specified parameters
 ## POST params: name, posturl, headparams, contentparams
 - url: /oa1call.*
+  script: src.py.consvc.app
+
+## Return the specified JSON endpoint call results
+## GET params: geturl
+- url: /jsonget.*
   script: src.py.consvc.app
 
 

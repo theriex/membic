@@ -12,6 +12,7 @@ import re
 import json
 from google.appengine.api.datastore_types import Blob
 from consvc import doOAuthGet
+from google.appengine.api import urlfetch
 
 
 def pwd2key(password):
@@ -100,8 +101,8 @@ def authenticated(request):
             account._id = account.key().id() # normalized id access
             return account  # True
     elif acctype == "fbid":
-        fbusertoks = username.split(' ')
-        useridstr = str(fbusertoks[0])
+        usertoks = username.split(' ')
+        useridstr = str(usertoks[0])
         data = call_server("https://graph.facebook.com/me?access_token=" +
                            token, 'GET', None)
         if data and str(data["id"]) == useridstr:
@@ -112,13 +113,33 @@ def authenticated(request):
         svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
         result = doOAuthGet("Twitter", svc, token, toksec)
         if result and result.status_code == 200:
-            fbusertoks = username.split(' ')
-            useridstr = str(fbusertoks[0])
+            usertoks = username.split(' ')
+            useridstr = str(usertoks[0])
             account = MORAccount(username=useridstr, password=token)
             account._id = int(useridstr)
             return account
-    # elif acctype == "gid":
-    #     # call to verify token, return a stub account if successful
+    elif acctype == "gsid":
+        svc = "https://www.googleapis.com/oauth2/v1/tokeninfo"
+        svc += "?access_token=" + token
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+        result = urlfetch.fetch(svc, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        ok = result and result.status_code == 200
+        ok = ok and "1009259210423.apps.googleusercontent.com" in result.content
+        if ok:
+            usertoks = username.split(' ')
+            useridstr = str(usertoks[0])
+            account = MORAccount(username=useridstr, password=token)
+            #Google ID is too big for an int, so use the string value
+            #equality comparison tests should still work consistently
+            account._id = useridstr
+            return account
+    else:
+        logging.info("could not authenticate unknown account type: " + am)
 
 
 def nowISO():

@@ -55,6 +55,19 @@ var mor = {};  //Top level function closure container
     }
 
 
+    if(!Array.prototype.shuffle) {
+        Array.prototype.shuffle = function () {
+            var i, j, tmp;
+            for(i = this.length - 1; i > 0; i -= 1) {
+                j = Math.floor(Math.random() * (i + 1));
+                tmp = this[i];
+                this[i] = this[j];
+                this[j] = tmp; }
+            return this;
+        };
+    }
+
+
     ////////////////////////////////////////
     // general utility functions
     ////////////////////////////////////////

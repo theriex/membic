@@ -163,6 +163,30 @@ class OAuth1Call(webapp2.RequestHandler):
             self.response.out.write(result.content)
 
 
-app = webapp2.WSGIApplication([('/oa1call', OAuth1Call)], 
+class JSONGet(webapp2.RequestHandler):
+    def get(self):
+        geturl = self.request.get('geturl')
+        # verify requested endpoint against known ok urls
+        if not geturl.startswith("https://www.googleapis.com"):
+            self.error(403)
+            self.response.out.write("Not a recognized ok endpoint")
+            return
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+        result = urlfetch.fetch(geturl, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        if result.status_code == 200:
+            self.response.headers['Content-Type'] = 'application/json'
+            self.response.out.write(result.content)
+        else:
+            self.error(result.status_code)
+            self.response.out.write(result.content)
+
+
+app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
+                               ('/jsonget', JSONGet)], 
                               debug=True)
 

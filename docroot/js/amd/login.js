@@ -170,7 +170,7 @@ define([], function () {
 
 
     changePassword = function () {
-        var pwd, email, data, url;;
+        var pwd, email, data, url;
         pwd = mor.byId('npin').value;
         if(!pwd || !pwd.trim()) {
             changepwdprompt = "New password must have a value";
@@ -436,8 +436,6 @@ define([], function () {
         if(!params) {
             params = parseHashParams(); }
         if(window.location.href.indexOf("localhost") >= 0) {
-            if(idx === 1) {  //let twitter through for testing
-                return altauths[idx].authenticate(params); }
             mor.err("Not redirecting to main server off localhost. Confusing.");
             return; }
         if(window.location.href.indexOf(mainsvr) !== 0) {
@@ -462,18 +460,23 @@ define([], function () {
 
 
     displayAltAuthMethods = function () {
-        var i, html;
-        html = "<table>";
+        var i, viadisp, html, hrefs = [];
         for(i = 0; i < altauths.length; i += 1) {
-            html += "<tr></td><a href=\"" + 
-                altauths[i].loginurl + "\"" +
-                " title=\"Log in via " + altauths[i].name + "\"" +
-                " onclick=\"mor.login.altLogin(" + i + ");return false;\"" +
+            viadisp = altauths[i].loginDispName || altauths[i].name;
+            html = "<a href=\"" + altauths[i].loginurl + "\"" +
+                      " title=\"Log in via " + viadisp + "\"" +
+                      " onclick=\"mor.login.altLogin(" + i + ");" + 
+                                 "return false;\"" +
                 "><img class=\"loginico\"" +
                      " src=\"" + altauths[i].iconurl + "\"" +
-                     " border=\"0\"/> " + altauths[i].name + 
-                "</a></td></tr>"; }
-        html += "</table>";
+                     " border=\"0\"/> " + viadisp + 
+                "</a>";
+            hrefs.push(html); }
+        hrefs.shuffle();
+        html = "";
+        for(i = 0; i < hrefs.length; i += 1) {
+            html += hrefs[i];
+            html += ((i > 0) && ((i + 1) % 2 === 0))? "<br/>" : " "; }
         mor.out('altauthdiv', html);
     },
 
@@ -566,6 +569,10 @@ define([], function () {
             idx = params.command.slice("AltAuth".length);
             idx = parseInt(idx, 10);
             handleAlternateAuthentication(idx, params); }
+        else if(params.state && params.state.indexOf("AltAuth") === 0) {
+            idx = params.state.slice("AltAuth".length);
+            idx = parseInt(idx, 10);
+            handleAlternateAuthentication(idx, params); }
         else if(authtoken || readAuthCookie()) {
             if(params.command === "chgpwd") {
                 displayChangePassForm(); }
@@ -580,11 +587,12 @@ define([], function () {
 
     return {
         init: function () {
-            require([ "ext/facebook", "ext/twitter" ],
-                    function (facebook, twitter) {
+            require([ "ext/facebook", "ext/twitter", "ext/googleplus" ],
+                    function (facebook, twitter, googleplus) {
                         if(!mor.facebook) { mor.facebook = facebook; }
                         if(!mor.twitter) { mor.twitter = twitter; }
-                        altauths = [ facebook, twitter ];
+                        if(!mor.googleplus) { mor.googleplus = googleplus; }
+                        altauths = [ facebook, twitter, googleplus ];
                         handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },

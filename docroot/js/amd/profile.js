@@ -116,7 +116,7 @@ define([], function () {
     nameForAuthType = function (authtype) {
         switch(authtype) {
         case "mid": return "MyOpenReviews";
-        case "gid": return "Google+";
+        case "gsid": return "Google+";
         case "fbid": return "Facebook";
         case "twid": return "Twitter"; }
     },
@@ -130,7 +130,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aamid\"" +
             " onchange=\"mor.profile.toggleAuthChange('mid','" + 
                              domid + "');return false;\"";
-        if(pen.mid > 0) {
+        if(pen.mid) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
         //Facebook
@@ -139,7 +139,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aafbid\"" +
             " onchange=\"mor.profile.toggleAuthChange('fbid','" + 
                              domid + "');return false;\"";
-        if(pen.fbid > 0) {
+        if(pen.fbid) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>";
         //Twitter
@@ -148,9 +148,18 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aatwid\"" +
             " onchange=\"mor.profile.toggleAuthChange('twid','" + 
                              domid + "');return false;\"";
-        if(pen.twid > 0) {
+        if(pen.twid) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aatwid\">" + atname + "</label></td></tr>";
+        //Google+
+        atname = nameForAuthType("gsid");
+        html += "<tr><td><input type=\"checkbox\" name=\"aagsid\"" +
+            " value=\"" + atname + "\" id=\"aagsid\"" +
+            " onchange=\"mor.profile.toggleAuthChange('gsid','" + 
+                             domid + "');return false;\"";
+        if(pen.gsid) { 
+            html += " checked=\"checked\""; }
+        html += "/><label for=\"aagsid\">" + atname + "</label></td></tr>";
         html += "</table>";
         mor.out(domid, html);
     },
@@ -184,11 +193,16 @@ define([], function () {
             action = "add"; }
         if(action === "remove") {
             methcount = (pen.mid? 1 : 0) +
-                (pen.gid? 1 : 0) +
+                (pen.gsid? 1 : 0) +
                 (pen.fbid? 1 : 0) +
                 (pen.twid? 1 : 0);
             if(methcount < 2) {
-                alert("You must have at least one authentication type");
+                alert("You must have at least one authentication type.");
+                mor.byId("aa" + authtype).checked = true;
+                return;  } 
+            if(authtype === mor.login.getAuthMethod()) {
+                alert("You can't remove the authentication you are " +
+                      "currently logged in with.");
                 mor.byId("aa" + authtype).checked = true;
                 return;  } 
             if(confirm("Are you sure you want to remove access to this" +
@@ -221,6 +235,12 @@ define([], function () {
                         function (twitter) {
                             if(!mor.twitter) { mor.twitter = twitter; }
                             twitter.addProfileAuth(domid, pen); });
+                break;
+            case "gsid":
+                require([ "ext/googleplus" ],
+                        function (googleplus) {
+                            if(!mor.googleplus) { mor.googleplus = googleplus; }
+                            googleplus.addProfileAuth(domid, pen); });
                 break;
             } }
     },
@@ -1168,7 +1188,7 @@ define([], function () {
         resetReviews: function () {
             resetReviewDisplays(); },
         authorized: function (pen) {
-            if(pen.mid || pen.gid || pen.fbid || pen.twid) {
+            if(pen.mid || pen.gsid || pen.fbid || pen.twid) {
                 return true; }
             return false; },
         save: function () {

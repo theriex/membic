@@ -10,7 +10,7 @@ import json
 
 def authorized(acc, pen):
     matched = False
-    if acc._id == pen.mid or acc._id == pen.gid or \
+    if acc._id == pen.mid or acc._id == pen.gsid or \
             acc._id == pen.fbid or acc._id == pen.twid:
         matched = True
     return matched
@@ -22,7 +22,8 @@ class PenName(db.Model):
     name_c = db.StringProperty(required=True)
     # one or more id values must be specified for authorized access
     mid = db.IntegerProperty()
-    gid = db.IntegerProperty()
+    #Google IDs are too big to fit in an int64
+    gsid = db.StringProperty()
     fbid = db.IntegerProperty()
     twid = db.IntegerProperty()
     # these bling field values are nice but not required
@@ -51,6 +52,21 @@ def has_top_twenty(pen, revtype):
         if t20list.revtype and len(t20list.revtype) >= 20:
             return True
     return False
+
+
+def set_pen_attrs(pen, request):
+    """ Set pen attributes handled the same way for both create and modify """
+    pen.mid = intz(request.get('mid'))
+    pen.gsid = request.get('gsid') or ""
+    pen.fbid = intz(request.get('fbid'))
+    pen.twid = intz(request.get('twid'))
+    pen.shoutout = request.get('shoutout') or ""
+    # pen.profpic is uploaded separately during edit
+    pen.city = request.get('city') or ""
+    pen.accessed = nowISO()
+    pen.modified = nowISO()
+    # pen.top20s is maintained separately as part of reviews
+    pen.settings = request.get('settings') or ""
             
 
 class AuthPenNames(webapp2.RequestHandler):
@@ -89,14 +105,8 @@ class NewPenName(webapp2.RequestHandler):
             self.response.out.write("That pen name is already taken")
             return
         pen = PenName(name=name, name_c=name_c)
+        set_pen_attrs(pen, self.request)
         setattr(pen, self.request.get('am'), acc._id)
-        pen.shoutout = ""
-        # pen.profpic is uploaded separately during edit
-        pen.city = ""
-        pen.accessed = nowISO()
-        pen.modified = nowISO()
-        # pen.top20s is maintained separately as part of reviews
-        pen.settings = self.request.get('settings')
         pen.following = 0
         pen.followers = 0
         pen.put()
@@ -128,19 +138,9 @@ class UpdatePenName(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("You may only update your own pen name.")
             return
+        set_pen_attrs(pen, self.request)
         pen.name = name;
         pen.name_c = name_c;
-        pen.mid = intz(self.request.get('mid'))
-        pen.gid = intz(self.request.get('gid'))
-        pen.fbid = intz(self.request.get('fbid'))
-        pen.twid = intz(self.request.get('twid'))
-        pen.shoutout = self.request.get('shoutout')
-        # pen.profpic is uploaded separately
-        pen.city = self.request.get('city')
-        pen.accessed = nowISO()
-        pen.modified = nowISO()
-        # pen.top20s is maintained separately as part of reviews
-        pen.settings = self.request.get('settings')
         # pen.following is NOT modified here.  Don't collide with rel trans
         # pen.followers ditto
         authok = authorized(acc, pen)
@@ -244,15 +244,15 @@ class SearchPenNames(webapp2.RequestHandler):
                         matched = False
                         break
             # test not self
-            if matched and (acc._id == pen.mid or
-                            acc._id == pen.fbid or
-                            acc._id == pen.twid or
-                            acc._id == pen.gid):
+            if matched and (acc._id == pen.mid or      #int comparison
+                            acc._id == pen.fbid or     #int comparison
+                            acc._id == pen.twid or     #int comparison
+                            acc._id == pen.gsid):      #string comparison
                 matched = False
             if matched:
                 # filter sensitive fields
                 pen.mid = 0
-                pen.gid = 0
+                pen.gsid = "0"
                 pen.fbid = 0
                 pen.twid = 0
                 results.append(pen)
