@@ -33,9 +33,11 @@ define([], function () {
         //    possible universe of reviews.  When practical, a keyword
         //    should describe your perception rather than being
         //    classificational (e.g. "Funny" rather than "Comedy").
+        // 3. If something has a subkey, keep the primary key prompt
+        //    short so it doesn't cause bad formatting.
         reviewTypes = [
           { type: "book", plural: "books", img: "TypeBook50.png",
-            keyprompt: "Title of book being reviewed",
+            keyprompt: "Title",
             key: "title", subkey: "author",
             fields: [ "publisher", "year" ],
             dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
@@ -54,7 +56,7 @@ define([], function () {
             dkwords: [ "Light", "Heavy", "Kid Ok", "Educational", 
                        "Cult", "Funny", "Disturbing", "Trippy" ] },
           { type: "music", plural: "music", img: "TypeSong50.png",
-            keyprompt: "Title of song, album, video, show or other release",
+            keyprompt: "Title",
             key: "title", subkey: "artist",
             fields: [ "album", "year" ],
             dkwords: [ "Light", "Heavy", "Wakeup", "Travel", "Office", 
@@ -314,9 +316,7 @@ define([], function () {
         var html;
         if(!keyval) {
             return ""; }
-        //if just viewing, the default is no pic, just space.  But
-        //the layout should stay consistent, so use a placeholder image
-        html = "img/emptyblankpic.png";
+        html = "";   //if just viewing, the default is no pic. 
         if(mode === "edit") {
             //show placeholder outline pic they can click to upload
             html = "img/emptyprofpic.png"; }
@@ -416,15 +416,15 @@ define([], function () {
             field = type.fields[i];
             fval = review[field] || "";
             if(field !== "url") {
-                html += "<tr>";
+                if(fval || mode === "edit") {
+                    html += "<tr><td><span class=\"secondaryfield\">" +
+                        field.capitalize() + "</span></td>"; }
                 if(mode === "edit") {
-                    html += "<td align=\"right\">" + 
-                        field.capitalize() + "</td>" +
-                        "<td align=\"left\">" +
-                            "<input type=\"text\" id=\"field" + i + "\"" + 
-                                  " size=\"25\"" +
-                                  " value=\"" + fval + "\"/></td>"; }
-                else if(fval) {  //not editing and have value to display
+                    html += "<td align=\"left\">" +
+                        "<input type=\"text\" id=\"field" + i + "\"" + 
+                              " size=\"25\"" +
+                              " value=\"" + fval + "\"/></td>"; }
+                else {  
                     html += "<td>" + fval + "</td>"; }
                 html += "</tr>"; } }
         html += "</table>";
@@ -452,7 +452,7 @@ define([], function () {
             kw = keywords[i].trim();
             if(kw === cbox.value) {
                 kw = ""; }
-            if(text) {  //have a keyword already
+            if(text && kw) {  //have a keyword already and appending another
                 text += ", "; }
             text += kw; }
         if(cbox.checked) {
@@ -506,35 +506,13 @@ define([], function () {
     },
 
 
+    //ATTENTION: This needs to do a quick pass through and get rid of
+    //           any extraneous commas.  For extra credit: Add commas
+    //           when people insert their own space separated keywords.
     keywordsValid = function (type, errors) {
         var input = mor.byId('keywordin');
         if(input) {
             review.keywords = input.value; }
-    },
-
-
-    //This should have a similar look and feel to the shoutout display
-    reviewTextHTML = function (review, type, keyval, mode) {
-        var html = "", fval, style, targetwidth;
-        if(!keyval) {
-            return html; }
-        fval = review.text || "";
-        targetwidth = Math.max((mor.winw - 350), 200);
-        style = "color:" + mor.colors.text + ";" +
-            "background-color:" + mor.skinner.lightbg() + ";" +
-            "width:" + targetwidth + "px;";
-        if(mode === "edit") {
-            style += "height:120px;";
-            html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
-                             " style=\"" + style + "\">" +
-                fval + "</textarea>"; }
-        else {
-            style += "height:140px;overflow:auto;" + 
-                "border:1px solid " + mor.skinner.darkbg() + ";";
-            html += "<div id=\"reviewtext\" class=\"shoutout\"" +
-                        " style=\"" + style + "\">" + 
-                mor.linkify(fval) + "</div>"; }
-        return html;
     },
 
 
@@ -595,7 +573,7 @@ define([], function () {
         else {
             html += "<button type=\"button\" id=\"respondbutton\"" +
                 " onclick=\"mor.review.respond();return false;\"" +
-                ">Edit Your Review</button>" +
+                ">Edit your corresponding review</button>" +
                 "&nbsp;";
             if(isRemembered(review)) {
                 html += "<button type=\"button\" id=\"memobutton\"" +
@@ -604,7 +582,7 @@ define([], function () {
             else {
                 html += "<button type=\"button\" id=\"memobutton\"" +
                     " onclick=\"mor.review.memo();return false;\"" +
-                    ">Remember</a>"; } }
+                    ">Remember this review</a>"; } }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
         return html;
@@ -645,15 +623,8 @@ define([], function () {
     },
 
 
-    //ATTENTION: Somewhere in the read display, show a count of how
-    //many response reviews have been written, and how many people
-    //have remembered the review.  Provided there's more than zero.
-    displayReviewForm = function (review, mode) {
-        var html, type, keyval, fval, onchange;
-        type = findReviewType(review.revtype);
-        keyval = review[type.key];
-        html = "<div class=\"formstyle\">" + 
-            "<table class=\"revdisptable\" border=\"0\">";
+    revFormIdentHTML = function (review, type, keyval, mode) {
+        var html = "", onchange, fval;
         //labels for first line if editing
         if(mode === "edit") {
             html += "<tr>" +
@@ -665,7 +636,7 @@ define([], function () {
                     formFieldLabelContents(type.subkey) + "</td>"; }
             html += "</tr>"; }
         //first line of actual content
-        html += "<tr><td><span id=\"stardisp\">" + 
+        html += "<tr><td style=\"text-align:right\"><span id=\"stardisp\">" + 
             starsImageHTML(review.rating) + "</span>" + "&nbsp;" +
             badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
@@ -684,10 +655,12 @@ define([], function () {
                                   " value=\"" + fval + "\"/></td>"; } }
         else {  //not editing, read only display
             fval = review[type.key] || "";
-            html += "<td align=\"middle\"><b>" + fval + "</b></td>";
+            html += "<td>" + "<span class=\"revtitle\">" + 
+                fval + "</span></td>";
             if(type.subkey) {
                 fval = review[type.subkey] || "";
-                html += "<td><i>" + fval + "</i></td>"; }
+                html += "<td><span class=\"revauthor\">" + 
+                    fval + "</span></td>"; }
             if("url" !== type.key && "url" !== type.subkey) {
                 fval = review.url || "";
                 html += "<td>" + graphicAbbrevSiteLink(fval) + "</td>"; } }
@@ -696,27 +669,77 @@ define([], function () {
         if(mode === "edit" && keyval) {
             fval = review.url || "";
             html += "<tr>" + 
-                "<td colspan=\"2\" class=\"claro\">" +
-                  "<div id=\"ratslide\"></div>" +
+                "<td class=\"claro\" style=\"width:160px;\">" +
+                  "<table class=\"nopadtable\"><tr><td>" +
+                    "<div id=\"ratslide\"></div>" +
+                  "</td></tr></table>" +
                 "</td>" + 
+                "<td></td>" + 
                 "<td>" +
                   formFieldLabelContents("url") + "<br/>" +
                   "<input type=\"text\" id=\"urlin\" size=\"30\"" +
                         " value=\"" + fval + "\"/>" +
                 "</td>" +
                 "</tr>"; }
-        //text description line
-        html += "<tr><td colspan=\"4\">" + 
-            reviewTextHTML(review, type, keyval, mode) + "</td></tr>" +
-            "</table><table class=\"revdisptable\" border=\"0\">";
-        //pic, keywords, secondary fields, pic
-        html += "<tr>" +
+        return html;
+    },
+
+
+    //This should have a similar look and feel to the shoutout display
+    revFormTextHTML = function (review, type, keyval, mode) {
+        var html, fval, style, targetwidth;
+        html = "<tr><td colspan=\"4\">";
+        if(keyval) {  //have the basics so display text area
+            fval = review.text || "";
+            targetwidth = Math.max((mor.winw - 350), 200);
+            style = "color:" + mor.colors.text + ";" +
+                "background-color:" + mor.skinner.lightbg() + ";" +
+                "width:" + targetwidth + "px;";
+            if(mode === "edit") {
+                style += "height:120px;";
+                html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
+                                 " style=\"" + style + "\">" +
+                    fval + "</textarea>"; }
+            else {
+                style += "height:140px;overflow:auto;" + 
+                    "border:1px solid " + mor.skinner.darkbg() + ";";
+                html += "<div id=\"reviewtext\" class=\"shoutout\"" +
+                            " style=\"" + style + "\">" + 
+                    mor.linkify(fval) + "</div>"; } }
+        html += "</td></tr>";
+        return html;
+    },
+
+
+    //pic, keywords, secondary fields
+    revFormDetailHTML = function (review, type, keyval, mode) {
+        var html = "<tr>" +
             "<td>" + picHTML(review, type, keyval, mode) + "</td>" +
             "<td valign=\"top\">" + 
                 keywordsHTML(review, type, keyval, mode) + "</td>" +
             "<td valign=\"top\">" + 
                 secondaryFieldsHTML(review, type, keyval, mode) + "</td>" +
             "</tr>";
+        return html;
+    },
+
+
+    //ATTENTION: Somewhere in the read display, show a count of how
+    //many response reviews have been written, and how many people
+    //have remembered the review.  Provided there's more than zero.
+    displayReviewForm = function (review, mode) {
+        var html, type, keyval;
+        type = findReviewType(review.revtype);
+        keyval = review[type.key];
+        html = "<div class=\"formstyle\">" + 
+            "<table class=\"revdisptable\" border=\"0\">";
+        html += revFormIdentHTML(review, type, keyval, mode);
+        if(mode === "edit") {
+            html += revFormTextHTML(review, type, keyval, mode);
+            html += revFormDetailHTML(review, type, keyval, mode); }
+        else { //read display
+            html += revFormDetailHTML(review, type, keyval, mode);
+            html += revFormTextHTML(review, type, keyval, mode); }
         //buttons
         html += "<tr>" +
           "<td colspan=\"4\" align=\"center\" id=\"formbuttonstd\">" + 
@@ -825,7 +848,7 @@ define([], function () {
     //source pen name.
     createEditResponseReview = function () {
         //ATTENTION: This needs to get built
-        mor.err("Sorry, editing a response review is not implemented yet");
+        mor.err("Editing a response review is not implemented yet");
     },
 
 
@@ -838,7 +861,7 @@ define([], function () {
     //the penid:feedid exists in the source review.
     addReviewToMemos = function (remove) {
         //ATTENTION: This needs to get built
-        mor.err("Sorry, remembering a review is not implemented yet");
+        mor.err("Remembering a review is not implemented yet");
     },
 
 

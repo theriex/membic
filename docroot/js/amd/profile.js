@@ -59,7 +59,7 @@ define([], function () {
             profdfunc = "mor.profile.display()";
         if(!mor.pen.getHomePen(penid)) {
             profdfunc = "mor.profile.byprofid(" + penid + ")"; }
-        html = "<a href=\"#Profile\"" +
+        html = "<a href=\"#view=profile&profid=" + penid + "\"" +
                  " title=\"Show profile for " + pen.name + "\"" +
                  " onclick=\"" + profdfunc + ";return false;\"" +
             ">" + pen.name + "</a>";

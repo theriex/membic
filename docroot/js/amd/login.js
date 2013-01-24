@@ -481,10 +481,19 @@ define([], function () {
     },
 
 
+    appropriateIntroText = function () {
+        var html = mor.introtext;
+        if(window.location.href.indexOf("reqprof=") >= 0) {
+            html = "<p>You need to sign in to see reviews from the " + 
+                "pen name you requested. </p>"; }
+        return html;
+    },
+
+
     displayLoginForm = function () {
         var cdiv, ldiv, html = "";
         cdiv = mor.byId('contentdiv');
-        mor.out('contentdiv', mor.introtext);
+        mor.out('contentdiv', appropriateIntroText());
         ldiv = document.createElement('div');
         ldiv.setAttribute('id','logindiv');
         cdiv.appendChild(ldiv);

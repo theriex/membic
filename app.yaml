@@ -177,6 +177,8 @@ handlers:
   script: src.py.cluck.app
 - url: /testpens
   script: src.py.pen.app
+- url: /statrev/\d+
+  script: src.py.statrev.app
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/

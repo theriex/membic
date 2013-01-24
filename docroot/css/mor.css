@@ -104,6 +104,11 @@ body {
 .typebuttonstable { padding: 0px; }
 .typebuttonstable td { padding: 10px; }
 .revdisptable { margin-left:auto; margin-right:auto; }
+.revdisptable td { padding:2px 5px; }
+.revtitle { font-size:large; font-weight:bold; }
+.revauthor { font-size:large; font-style:italic; }
+.secondaryfield { font-style:italic; }
+.nopadtable td { padding:0px; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revpic { width:125px; height:125px; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 60px; }
