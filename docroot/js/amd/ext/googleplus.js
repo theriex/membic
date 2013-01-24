@@ -10,6 +10,9 @@ define([], function () {
 
     var svcName = "GooglePlus",   //ascii with no spaces, used as an id
         dispName = "Google+",     //what should actually be displayed
+        iconurl = "http://www.google.com/favicon.ico",
+        svcIconURL = "https://www.gstatic.com/images/icons/gplus-32.png",
+        tmprev = null,
 
 
     backToParentDisplay = function () {
@@ -121,8 +124,54 @@ define([], function () {
     },
 
 
+    dismissDialog = function (review, action) {
+        var odiv = mor.byId('overlaydiv');
+        odiv.innerHTML = "";
+        odiv.style.visibility = "hidden";
+        if(!review) {
+            review = tmprev; }
+        if(!action) {
+            action = 'bailout'; }
+        review.svcdata[svcName] = action;
+        mor.pen.getPen(function (pen) {
+            mor.services.runServices(pen, review); });
+    },
+
+
+    getGoogleShareHTML = function (review) {
+        var html, url;
+        url = "http://www.myopenreviews.com/statrev/" + mor.instId(review);
+        html = "<p>Click to share your review on Google+...</p>" +
+          "<table><tr><td>" +
+            "<a href=\"https://plus.google.com/share" + 
+                          "?url=" + mor.enc(url) + "\"" +
+              " onclick=\"javascript:" + 
+                   "mor.googleplus.dismissDialog(null,'clicked');" + 
+                   "window.open(this.href,  ''," + 
+                   " 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes," + 
+                     "height=600,width=600');return false;\">" + 
+              "<img src=\"" + svcIconURL + "\"" +
+                  " alt=\"Share on Google+\"/></a>" +
+          "</td><td>&nbsp;" +
+            "<button type=\"button\" id=\"cancelbutton\"" +
+                   " onclick=\"mor.googleplus.dismissDialog();return false;\"" +
+            ">Cancel</button>" +
+          "</td></tr></table>";
+        return html;
+    },
+
+
     postReview = function (review) {
-        alert("Not yet implemented");
+        var html, odiv;
+        tmprev = review;
+        odiv = mor.byId('overlaydiv');
+        odiv.style.top = "80px";
+        odiv.style.visibility = "visible";
+        odiv.style.backgroundColor = mor.skinner.lightbg();
+        mor.onescapefunc = function () {
+            dismissDialog(review, "bailout"); };
+        html = getGoogleShareHTML(review);
+        odiv.innerHTML = html;
     };
 
 
@@ -133,14 +182,18 @@ define([], function () {
         loginurl: "https://plus.google.com",
         name: svcName,  //ascii with no spaces, used as an id
         loginDispName: dispName,
-        svcDispName: "Posts a review to your Google+ Stream",
-        iconurl: "http://www.google.com/favicon.ico",
+        svcDispName: "Google+ Share",
+        svcDesc: "Posts a review to your Google+ Stream",
+        svcIconURL: svcIconURL,
+        iconurl: iconurl,
         authenticate: function (params) {
             authenticate(params); },
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
         doPost: function (review) {
-            postReview(review); }
+            postReview(review); },
+        dismissDialog: function (review, action) {
+            dismissDialog(review, action); }
     };
 
 });

@@ -3,6 +3,7 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
+import re
 
 
 def starsImageHTML(rating):
@@ -117,7 +118,7 @@ def reviewPicHTML(rev):
     return html;
 
 
-def secondaryFields(rev):
+def secondaryFieldZip(rev):
     fields = []
     vals = []
     if rev.revtype == "book":
@@ -142,6 +143,11 @@ def secondaryFields(rev):
         fields = [ "address" ]
         vals = [ rev.address ]
     assoc = zip(fields, vals)
+    return assoc
+
+
+def secondaryFields(rev):
+    assoc = secondaryFieldZip(rev)
     html = "<table>"
     for av in assoc:
         html += "<tr><td><span class=\"secondaryfield\">"
@@ -159,6 +165,23 @@ def displayText(text):
     return text
     
 
+def descrip(rev):
+    revtext = rev.text or ""
+    if revtext:
+        # strip any newlines or similar annoyances
+        revtext = re.sub('\s+', ' ', revtext)
+    text = getTitle(rev)
+    assoc = secondaryFieldZip(rev)
+    for av in assoc:
+        text += ", " + av[1]
+    text += ". " + revtext
+    text += " " + rev.keywords
+    if len(text) > 150:
+        text = text[:150] + "..."
+    text = re.sub('\"', '&quot;', text)
+    return text
+
+
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
     html = "<!doctype html>"
@@ -168,8 +191,7 @@ def revhtml(rev, pen):
     html += "<head>"
     html +=   "<meta http-equiv=\"Content-Type\""
     html +=        " content=\"text/html; charset=UTF-8\" />"
-    html +=   "<meta name=\"description\" content=\"" + rev.revtype
-    html +=                                         " Review\" />"
+    html +=   "<meta name=\"description\" content=\"" + descrip(rev) + "\" />"
     html +=   "<title>My Open Reviews</title>"
     html +=   "<link href=\"../css/mor.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />"

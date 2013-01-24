@@ -485,13 +485,13 @@ define([], function () {
 
 
     reviewItemHTML = function (revobj, penNameStr) {
-        var revid, type, hash, html;
+        var revid, type, linkref, html;
         revid = mor.instId(revobj);
         type = mor.review.getReviewTypeByValue(revobj.revtype);
-        hash = mor.objdata({ view: "review", revid: revid });
+        linkref = "statrev/" + revid
         html = "<li>" + mor.review.starsImageHTML(revobj.rating) + 
             mor.review.badgeImageHTML(type) + "&nbsp;" +
-            "<a href=\"#" + hash + "\"" +
+            "<a href=\"" + linkref + "\"" +
               " onclick=\"mor.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
               " title=\"See full review\">" + 
@@ -502,9 +502,9 @@ define([], function () {
         if(revobj.url) {
             html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
         if(penNameStr) {
-            hash = mor.objdata({ view: "profile", profid: revobj.penid });
+            linkref = mor.objdata({ view: "profile", profid: revobj.penid });
             html += "<div class=\"revtextsummary\">" + 
-                "<a href=\"#" + hash + "\"" +
+                "<a href=\"#" + linkref + "\"" +
                  " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
                             "return false;\"" +
                  " title=\"Show profile for " + mor.enc(penNameStr) + "\">" +

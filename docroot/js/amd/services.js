@@ -13,11 +13,14 @@ define([], function () {
 
 
     serviceIconHTML = function (svc) {
-        var html = "";
-        if(svc.iconurl) {
+        var iconurl, html = "";
+        iconurl = svc.svcIconURL || svc.iconurl;
+        if(iconurl) {
             html += "<img class=\"svcico\" src=\"";
-            if(svc.iconurl.indexOf("img") === 0) {
-                html += svc.iconurl; }
+            if(iconurl.indexOf("http") === 0) {
+                html += iconurl; }
+            else if(iconurl.indexOf("img") === 0) {
+                html += iconurl; }
             else {
                 html += "svcpic?serviceid=" + svc.name; }
             html += "\"/>"; }
@@ -270,11 +273,12 @@ define([], function () {
     verifyConnectionServices = function (pen, callback) {
         if(connServices) {
             return mergeConnectionServices(pen, callback); }
-        require([ "ext/facebook", "ext/twitter" ],
-                function (facebook, twitter) {
+        require([ "ext/facebook", "ext/twitter", "ext/googleplus" ],
+                function (facebook, twitter, googleplus) {
                     if(!mor.facebook) { mor.facebook = facebook; }
                     if(!mor.twitter) { mor.twitter = twitter; }
-                    connServices = [ facebook, twitter ];
+                    if(!mor.googleplus) { mor.googleplus = googleplus; }
+                    connServices = [ facebook, twitter, googleplus ];
                     mergeConnectionServices(pen, callback); });
     };
 
