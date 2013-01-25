@@ -288,6 +288,11 @@ var mor = {};  //Top level function closure container
         val = val.replace(/'/g,"%27");
         return val;
     };
+    mor.dquotenc = function (val) {
+        val = val.replace(/"/g,"&quot;");
+        val = mor.enc(val);
+        return val;
+    };
 
 
     //return true if the given text can be reasonably construed to be an

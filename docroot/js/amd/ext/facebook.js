@@ -183,10 +183,12 @@ define([], function () {
 
 
     postReview4 = function (review) {
-        var fblinkname, fblinkurl, fbimage, fbprompt, html;
+        var fblinkname, fblinkurl, fbprofurl, fbimage, fbprompt, html;
         fblinkname = mor.services.getRevStarsTxt(review) + " " +
             mor.services.getRevTitleTxt(review);
-        fblinkurl = "http://www.myopenreviews.com/#view=profile" + 
+        fblinkurl = "http://www.myopenreviews.com/statrev/" +
+            mor.instId(review);
+        fbprofurl = "http://www.myopenreviews.com/#view=profile" + 
             "&profid=" + review.penid;
         fbimage = mor.services.getRevTypeImage(review);
         fbprompt = "Check this out if...";
@@ -197,7 +199,7 @@ define([], function () {
                 description: review.text,
                 link: fblinkurl,
                 picture: fbimage,
-                actions: [ { name: 'profile', link: fblinkurl } ],
+                actions: [ { name: 'profile', link: fbprofurl } ],
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {

@@ -157,8 +157,7 @@ define([], function () {
         left = Math.round((mor.winw / 2) - (width / 2));
         if(mor.winh > height) {
             top = Math.round((mor.winh / 2) - (height / 2)); }
-        url = "http://www.myopenreviews.com/#view=profile" + 
-            "&profid=" + review.penid;
+        url = "http://www.myopenreviews.com/statrev/" + mor.instId(review);
         text = "[" + mor.services.getRevStarsTxt(review) + "] " +
             mor.services.getRevTitleTxt(review);
         html = "<p>Click to tweet your review...</p><table><tr>" +

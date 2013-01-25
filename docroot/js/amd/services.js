@@ -29,10 +29,14 @@ define([], function () {
 
 
     findServiceByName = function (name) {
-        var i;
+        var i, svc;
         for(i = 0; i < connServices.length; i += 1) {
             if(connServices[i].name === name) {
-                return connServices[i]; } }
+                svc = connServices[i];
+                break; } }
+        if(svc && ! svc.svcDispName) {
+            svc.svcDispName = svc.name; }
+        return svc;
     },
 
 
@@ -273,12 +277,16 @@ define([], function () {
     verifyConnectionServices = function (pen, callback) {
         if(connServices) {
             return mergeConnectionServices(pen, callback); }
-        require([ "ext/facebook", "ext/twitter", "ext/googleplus" ],
-                function (facebook, twitter, googleplus) {
+        require([ "ext/facebook", "ext/twitter", "ext/googleplus",
+                  "ext/email" ],
+                function (facebook, twitter, googleplus, 
+                          email) {
                     if(!mor.facebook) { mor.facebook = facebook; }
                     if(!mor.twitter) { mor.twitter = twitter; }
                     if(!mor.googleplus) { mor.googleplus = googleplus; }
-                    connServices = [ facebook, twitter, googleplus ];
+                    if(!mor.email) { mor.email = email }
+                    connServices = [ facebook, twitter, googleplus,
+                                     email ];
                     mergeConnectionServices(pen, callback); });
     };
 
