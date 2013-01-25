@@ -166,8 +166,13 @@ class OAuth1Call(webapp2.RequestHandler):
 class JSONGet(webapp2.RequestHandler):
     def get(self):
         geturl = self.request.get('geturl')
-        # verify requested endpoint against known ok urls
-        if not geturl.startswith("https://www.googleapis.com"):
+        whitelist = [ "https://www.googleapis.com",
+                      "https://api.github.com" ]
+        whitelisted = False
+        for url in whitelist:
+            if geturl.startswith(url):
+                whitelisted = True
+        if not whitelisted:
             self.error(403)
             self.response.out.write("Not a recognized ok endpoint")
             return
@@ -186,7 +191,36 @@ class JSONGet(webapp2.RequestHandler):
             self.response.out.write(result.content)
 
 
+class GitHubToken(webapp2.RequestHandler):
+    def get(self):
+        code = self.request.get('code')
+        state = self.request.get('state')
+        svc = getConnectionService("GitHub")
+        url = "https://github.com/login/oauth/access_token"
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json' }
+        payload = "client_id=" + svc.ckey;
+        payload += "&client_secret=" + svc.secret;
+        payload += "&code=" + code
+        payload += "&state=" + state
+        result = urlfetch.fetch(url, payload=payload, method="POST",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        logging.info("doOAuthCall " + str(result.status_code) + ": " +
+                     result.content)
+        if result.status_code == 200:
+            self.response.headers['Content-Type'] = 'application/json'
+            self.response.out.write(result.content)
+        else:
+            self.error(result.status_code)
+            self.response.out.write(result.content)
+
+
 app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
-                               ('/jsonget', JSONGet)], 
+                               ('/jsonget', JSONGet),
+                               ('/githubtok', GitHubToken)], 
                               debug=True)
 

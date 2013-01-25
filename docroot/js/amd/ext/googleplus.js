@@ -175,9 +175,6 @@ define([], function () {
     };
 
 
-    ////////////////////////////////////////
-    //Don't forget to restrict the token use before checking in...
-
     return {
         loginurl: "https://plus.google.com",
         name: svcName,  //ascii with no spaces, used as an id

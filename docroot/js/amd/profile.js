@@ -118,7 +118,8 @@ define([], function () {
         case "mid": return "MyOpenReviews";
         case "gsid": return "Google+";
         case "fbid": return "Facebook";
-        case "twid": return "Twitter"; }
+        case "twid": return "Twitter";
+        case "ghid": return "GitHub"; }
     },
 
 
@@ -160,6 +161,15 @@ define([], function () {
         if(pen.gsid) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aagsid\">" + atname + "</label></td></tr>";
+        //GitHub
+        atname = nameForAuthType("ghid");
+        html += "<tr><td><input type=\"checkbox\" name=\"aaghid\"" +
+            " value=\"" + atname + "\" id=\"aaghid\"" +
+            " onchange=\"mor.profile.toggleAuthChange('ghid','" + 
+                             domid + "');return false;\"";
+        if(pen.ghid) { 
+            html += " checked=\"checked\""; }
+        html += "/><label for=\"aaghid\">" + atname + "</label></td></tr>";
         html += "</table>";
         mor.out(domid, html);
     },
@@ -195,7 +205,8 @@ define([], function () {
             methcount = (pen.mid? 1 : 0) +
                 (pen.gsid? 1 : 0) +
                 (pen.fbid? 1 : 0) +
-                (pen.twid? 1 : 0);
+                (pen.twid? 1 : 0) +
+                (pen.ghid? 1 : 0);
             if(methcount < 2) {
                 alert("You must have at least one authentication type.");
                 mor.byId("aa" + authtype).checked = true;
@@ -241,6 +252,12 @@ define([], function () {
                         function (googleplus) {
                             if(!mor.googleplus) { mor.googleplus = googleplus; }
                             googleplus.addProfileAuth(domid, pen); });
+                break;
+            case "ghid":
+                require([ "ext/github" ],
+                        function (github) {
+                            if(!mor.github) { mor.github = github; }
+                            github.addProfileAuth(domid, pen); });
                 break;
             } }
     },
@@ -488,7 +505,7 @@ define([], function () {
         var revid, type, linkref, html;
         revid = mor.instId(revobj);
         type = mor.review.getReviewTypeByValue(revobj.revtype);
-        linkref = "statrev/" + revid
+        linkref = "statrev/" + revid;
         html = "<li>" + mor.review.starsImageHTML(revobj.rating) + 
             mor.review.badgeImageHTML(type) + "&nbsp;" +
             "<a href=\"" + linkref + "\"" +
@@ -1188,7 +1205,7 @@ define([], function () {
         resetReviews: function () {
             resetReviewDisplays(); },
         authorized: function (pen) {
-            if(pen.mid || pen.gsid || pen.fbid || pen.twid) {
+            if(pen.mid || pen.gsid || pen.fbid || pen.twid || pen.ghid) {
                 return true; }
             return false; },
         save: function () {

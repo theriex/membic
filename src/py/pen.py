@@ -11,7 +11,7 @@ import json
 def authorized(acc, pen):
     matched = False
     if acc._id == pen.mid or acc._id == pen.gsid or \
-            acc._id == pen.fbid or acc._id == pen.twid:
+            acc._id == pen.fbid or acc._id == pen.twid or acc._id == pen.ghid:
         matched = True
     return matched
 
@@ -26,6 +26,7 @@ class PenName(db.Model):
     gsid = db.StringProperty()
     fbid = db.IntegerProperty()
     twid = db.IntegerProperty()
+    ghid = db.IntegerProperty()
     # these bling field values are nice but not required
     shoutout = db.TextProperty()
     profpic = db.BlobProperty()
@@ -60,6 +61,7 @@ def set_pen_attrs(pen, request):
     pen.gsid = request.get('gsid') or ""
     pen.fbid = intz(request.get('fbid'))
     pen.twid = intz(request.get('twid'))
+    pen.ghid = intz(request.get('ghid'))
     pen.shoutout = request.get('shoutout') or ""
     # pen.profpic is uploaded separately during edit
     pen.city = request.get('city') or ""
@@ -247,6 +249,7 @@ class SearchPenNames(webapp2.RequestHandler):
             if matched and (acc._id == pen.mid or      #int comparison
                             acc._id == pen.fbid or     #int comparison
                             acc._id == pen.twid or     #int comparison
+                            acc._id == pen.ghid or     #int comparison
                             acc._id == pen.gsid):      #string comparison
                 matched = False
             if matched:
@@ -255,6 +258,7 @@ class SearchPenNames(webapp2.RequestHandler):
                 pen.gsid = "0"
                 pen.fbid = 0
                 pen.twid = 0
+                pen.ghid = 0
                 results.append(pen)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch

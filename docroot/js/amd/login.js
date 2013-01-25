@@ -579,7 +579,7 @@ define([], function () {
             idx = parseInt(idx, 10);
             handleAlternateAuthentication(idx, params); }
         else if(params.state && params.state.indexOf("AltAuth") === 0) {
-            idx = params.state.slice("AltAuth".length);
+            idx = params.state.slice("AltAuth".length, "AltAuth".length + 1);
             idx = parseInt(idx, 10);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || readAuthCookie()) {
@@ -596,12 +596,16 @@ define([], function () {
 
     return {
         init: function () {
-            require([ "ext/facebook", "ext/twitter", "ext/googleplus" ],
-                    function (facebook, twitter, googleplus) {
+            require([ "ext/facebook", "ext/twitter", "ext/googleplus", 
+                      "ext/github" ],
+                    function (facebook, twitter, googleplus,
+                              github) {
                         if(!mor.facebook) { mor.facebook = facebook; }
                         if(!mor.twitter) { mor.twitter = twitter; }
                         if(!mor.googleplus) { mor.googleplus = googleplus; }
-                        altauths = [ facebook, twitter, googleplus ];
+                        if(!mor.github) { mor.github = github; }
+                        altauths = [ facebook, twitter, googleplus,
+                                     github ];
                         handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function () {
             updateAuthentDisplay(); },

@@ -138,8 +138,24 @@ def authenticated(request):
             #equality comparison tests should still work consistently
             account._id = useridstr
             return account
+    elif acctype == "ghid":
+        svc = "https://api.github.com/user?access_token=" + token
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json' }
+        result = urlfetch.fetch(svc, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        if result and result.status_code == 200:
+            usertoks = username.split(' ')
+            useridstr = str(usertoks[0])
+            account = MORAccount(username=useridstr, password=token)
+            account._id = int(useridstr)
+            return account
     else:
-        logging.info("could not authenticate unknown account type: " + am)
+        logging.info("could not authenticate unknown account type: " + acctype)
 
 
 def nowISO():
