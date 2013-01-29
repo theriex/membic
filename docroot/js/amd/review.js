@@ -258,7 +258,7 @@ define([], function () {
                 require([ "ext/youtube" ],
                         function (youtube) {
                             if(!mor.youtube) { mor.youtube = youtube; }
-                            youtube.initReview(crev, url, params); }); }
+                            youtube.fetchData(crev, url, params); }); }
             else if(interactive) {
                 alert("No reader found for " + url);
                 mor.review.display(); }
@@ -572,6 +572,58 @@ define([], function () {
     },
 
 
+    transformActionsHTML = function (review, type, keyval, mode) {
+        var html = "";
+        if(keyval && mode === "edit") {
+            //video import may confuse the title and artist
+            if(review.revtype === "video" && review.title && review.artist) {
+                html += "<a href=\"#\"" + 
+                          " title=\"Swap the artist and title values\"" +
+                          " onclick=\"mor.review.swapVidTitleAndArtist();" +
+                                     "return false;\"" +
+                    ">Swap title and artist</a>&nbsp;&nbsp;&nbsp;"; }
+            //sometimes videos are really more music and vice versa
+            if(review.revtype === "video") {
+                html += "<a href=\"#\"" +
+                          " title=\"Review this as music\"" +
+                          " onclick=\"mor.review.changeReviewType('music');" +
+                                     "return false;\"" +
+                    ">Review as music</a>&nbsp;&nbsp;&nbsp;"; }
+            if(review.revtype === "music") {
+                html += "<a href=\"#\"" +
+                          " title=\"Review this as video\"" +
+                          " onclick=\"mor.review.changeReviewType('video');" +
+                                     "return false;\"" +
+                    ">Review as video</a>&nbsp;&nbsp;&nbsp;"; }
+            //Might want to refresh the image link or get other info
+            if(review.url && review.url.indexOf(".youtube.") >= 0) {
+                html += "<a href=\"#\"" +
+                          " title=\"Refetch imported data field values\"" +
+                          " onclick=\"mor.review.readURL('" + 
+                                                         review.url + "');" +
+                                     "return false;\"" +
+                    ">Reimport</a>&nbsp;&nbsp;&nbsp;"; }
+        }
+        return html;
+    },
+
+
+    swapVidTitleAndArtist = function () {
+        var titlein = mor.byId('keyin'),
+            title = titlein.value,
+            artistin = mor.byId('field0'),
+            artist = artistin.value;
+        titlein.value = artist;
+        artistin.value = title;
+    },
+
+
+    changeReviewType = function (typeval) {
+        crev.revtype = typeval;
+        mor.review.display();
+    },
+
+
     //ATTENTION: Once review responses are available, there needs to
     //be a way to view those responses as a list so you can see what
     //other people thought of the same thing or what kind of an impact
@@ -779,6 +831,11 @@ define([], function () {
         else { //read display
             html += revFormDetailHTML(review, type, keyval, mode);
             html += revFormTextHTML(review, type, keyval, mode); }
+        //special case additional helper functions
+        html += "<tr>" +
+          "<td colspan=\"4\" align=\"center\" id=\"transformactionstd\">" + 
+            transformActionsHTML(review, type, keyval, mode) + "</td>" +
+        "</tr>";
         //buttons
         html += "<tr>" +
           "<td colspan=\"4\" align=\"center\" id=\"formbuttonstd\">" + 
@@ -988,7 +1045,11 @@ define([], function () {
         memo: function (remove) {
             addReviewToMemos(remove); },
         graphicAbbrevSiteLink: function (url) {
-            return graphicAbbrevSiteLink(url); }
+            return graphicAbbrevSiteLink(url); },
+        swapVidTitleAndArtist: function () {
+            swapVidTitleAndArtist(); },
+        changeReviewType: function (revtype) {
+            changeReviewType(revtype); }
     };
 
 });

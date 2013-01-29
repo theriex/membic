@@ -39,7 +39,7 @@ define([], function () {
     //Use contentdiv for displays, call mor.review.display when done.
     //The review.url and other fields have already been set from the
     //params, so this only needs to fill out additional info.
-    initReview = function (review, url, params) {
+    fetchData = function (review, url, params) {
         var urlobj = mor.paramsToObj(url),
             vid = urlobj.v;
         mor.out('contentdiv', "Reading details from YouTube...");
@@ -60,8 +60,8 @@ define([], function () {
     return {
         name: svcName,
         iconurl: iconurl,
-        initReview: function (review, url, params) {
-            initReview(review, url, params); }
+        fetchData: function (review, url, params) {
+            fetchData(review, url, params); }
     };
 
 });

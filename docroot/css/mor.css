@@ -110,6 +110,7 @@ body {
 .typebuttonstable td { padding: 10px; }
 .revdisptable { margin-left:auto; margin-right:auto; }
 .revdisptable td { padding:2px 5px; }
+#transformactionstd { padding:2px 5px 10px 5px; }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
