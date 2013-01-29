@@ -75,7 +75,7 @@ define([], function () {
     },
 
 
-    clearHash = function () {
+    clearParams = function () {
         //this also clears any search parameters to leave a clean url.
         //that way a return call from someplace like twitter doesn't
         //keep token info and similar parameter stuff hanging around.
@@ -89,20 +89,20 @@ define([], function () {
     },
 
 
-    parseHashParams = function () {
-        var hash = window.location.hash, params = {}, avs, av, i;
-        if(hash) {
-            if(hash.indexOf("#") === 0) {
-                hash = hash.slice(1); }
-            avs = hash.split('&');
+    parseParams = function () {
+        var pstr = window.location.hash, params = {}, avs, av, i;
+        if(pstr) {
+            if(pstr.indexOf("#") === 0) {
+                pstr = pstr.slice(1); }
+            avs = pstr.split('&');
             for(i = 0; i < avs.length; i += 1) {
                 av = avs[i].split('=');
                 params[av[0]] = av[1]; } }
-        hash = window.location.search;
-        if(hash) {
-            if(hash.indexOf("?") === 0) {
-                hash = hash.slice(1); }
-            avs = hash.split('&');
+        pstr = window.location.search;
+        if(pstr) {
+            if(pstr.indexOf("?") === 0) {
+                pstr = pstr.slice(1); }
+            avs = pstr.split('&');
             for(i = 0; i < avs.length; i += 1) {
                 av = avs[i].split('=');
                 params[av[0]] = av[1]; } }
@@ -111,19 +111,22 @@ define([], function () {
 
 
     doneWorkingWithAccount = function () {
-        var tag, state, params = parseHashParams(), redurl;
+        var tag, state, params = parseParams(), redurl, xpara;
         if(params.returnto) {
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
+            xpara = mor.objdata(params, ["logout", "returnto"]);
+            if(xpara) {
+                redurl += "&" + xpara; }
             window.location.href = redurl; }
         //no explicit redirect, so check if directed by tag
         tag = window.location.hash;
         if(tag.indexOf("#") === 0) {
             tag = tag.slice(1); }
         if(tag === "profile") {
-            clearHash();
+            clearParams();
             return mor.profile.display(); }
         //no tag redirect so check current state
         state = mor.currState();
@@ -434,7 +437,7 @@ define([], function () {
     handleAlternateAuthentication = function (idx, params) {
         var redurl;
         if(!params) {
-            params = parseHashParams(); }
+            params = parseParams(); }
         if(window.location.href.indexOf("localhost") >= 0) {
             mor.err("Not redirecting to main server off localhost. Confusing.");
             return; }
@@ -450,11 +453,13 @@ define([], function () {
     },
 
 
-    redirectToSecureServer = function () {
-        var href, state = mor.currState();
+    redirectToSecureServer = function (params) {
+        var href, state;
+        state = mor.currState();
         href = secsvr + "#returnto=" + mor.enc(mainsvr) + "&logout=true";
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
+        href += "&" + mor.objdata(params);
         window.location.href = href;
     },
 
@@ -475,7 +480,7 @@ define([], function () {
         hrefs.shuffle();
         html = "";
         for(i = 0; i < hrefs.length; i += 1) {
-            html += hrefs[i];
+            html += "<span class=\"altauthspan\">" + hrefs[i] + "</span>";
             html += ((i > 0) && ((i + 1) % 2 === 0))? "<br/>" : " "; }
         mor.out('altauthdiv', html);
     },
@@ -554,7 +559,7 @@ define([], function () {
 
 
     handleRedirectOrStartWork = function () {
-        var idx, params = parseHashParams();
+        var idx, params = parseParams();
         //set synonyms
         if(params.authmethod) { params.am = params.authmethod; }
         if(params.authtoken) { params.at = params.authtoken; }
@@ -566,7 +571,7 @@ define([], function () {
         if(params.logout) {
             logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //on home server, clean the location display
-            clearHash(); }
+            clearParams(); }
         if(params.view && params.profid) {
             mor.historyCheckpoint({ view: params.view, 
                                     profid: parseInt(params.profid, 10) }); }
@@ -585,12 +590,14 @@ define([], function () {
         else if(authtoken || readAuthCookie()) {
             if(params.command === "chgpwd") {
                 displayChangePassForm(); }
+            else if(params.url) {
+                mor.review.readURL(mor.dec(params.url), params); }
             else {  //return redirect or default processing
                 doneWorkingWithAccount(); } }
         else if(secureURL("login") === "login") {
             displayLoginForm(); }
         else { 
-            redirectToSecureServer(); }
+            redirectToSecureServer(params); }
     };
 
 

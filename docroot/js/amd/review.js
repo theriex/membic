@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -8,13 +8,12 @@
 define([], function () {
     "use strict";
 
-    var //The pen name the user is currently logged in with.
-        userpen = null,
-        //The initial review url that was given for review creation
-        readurl = "",
-        //The review currently being displayed or edited.  The pic field
-        //is handled as a special case since it requires a form upload.
-        review = {},
+    var //If a url was pasted or passed in as a parameter, then potentially
+        //modified by automation, that "cleaned" value should be kept to
+        //confirm against the potentially edited form field value.
+        autourl = "",
+        //The current review being displayed or edited.
+        crev = {},
         //The error message from the previous server save call, if any.
         asyncSaveErrTxt = "",
         //Review type definitions always include the url field, it is
@@ -50,9 +49,9 @@ define([], function () {
                        "Educational", "Cult", "Classic", "Funny", 
                        "Suspenseful" ] },
           { type: "video", plural: "videos", img: "TypeVideo50.png",
-            keyprompt: "Link to video",
-            key: "url", //subkey
-            fields: [ "title", "artist" ],
+            keyprompt: "Title",
+            key: "title", //subkey
+            fields: [ "artist" ],
             dkwords: [ "Light", "Heavy", "Kid Ok", "Educational", 
                        "Cult", "Funny", "Disturbing", "Trippy" ] },
           { type: "music", plural: "music", img: "TypeSong50.png",
@@ -90,9 +89,8 @@ define([], function () {
 
 
     resetStateVars = function () {
-        userpen = null;
-        readurl = "";
-        review = {};
+        autourl = "";
+        crev = {};
         asyncSaveErrTxt = "";
     },
 
@@ -215,25 +213,62 @@ define([], function () {
     },
 
 
-    readURL = function (url) {
-        var input;
+    readParameters = function (params) {
+        if(params.newrev) { 
+            crev.revtype = mor.dec(params.newrev); }
+        if(params.name) {
+            crev.name = mor.dec(params.name); }
+        if(params.title) {
+            crev.title = mor.dec(params.title); }
+        if(params.artist) {
+            crev.artist = mor.dec(params.artist); }
+        if(params.author) {
+            crev.author = mor.dec(params.author); }
+        if(params.publisher) {
+            crev.publisher = mor.dec(params.publisher); }
+        if(params.album) {
+            crev.album = mor.dec(params.album); }
+        if(params.starring) {
+            crev.starring = mor.dec(params.starring); }
+        if(params.address) {
+            crev.address = mor.dec(params.address); }
+        if(params.year) {
+            crev.year = mor.dec(params.year); }
+        if(params.imguri) {
+            crev.imguri = mor.dec(params.imguri); }
+    },
+
+
+    //This is the main processing entry point from the bookmarklet or
+    //direct links.
+    readURL = function (url, params) {
+        var input, interactive;
+        if(!params && !url) {
+            interactive = true; }
+        if(!params) {
+            params = {}; }
         if(!url) {
             input = mor.byId('urlin');
             if(input) {
                 url = input.value; } }
         if(url) {
-            readurl = url;
-            //ATTENTION: Check configured connection services to see if
-            //any of them know how to pull info from this url.
-            alert("Unfortunately there is no registered connection service " +
-                  "available yet that knows how to read " + url + " so you " +
-                  "will have to choose a type manually.  For general " + 
-                  "progress status on features see the contact page." ); }
+            crev.url = autourl = url;
+            readParameters(params);
+            if(autourl.indexOf(".youtube.") >= 0) {
+                require([ "ext/youtube" ],
+                        function (youtube) {
+                            if(!mor.youtube) { mor.youtube = youtube; }
+                            youtube.initReview(crev, url, params); }); }
+            else if(interactive) {
+                alert("No reader found for " + url);
+                mor.review.display(); }
+            else {
+                mor.review.display(); } }
     },
 
 
     setType = function (type) {
-        review.revtype = type;
+        crev.revtype = type;
         mor.review.display();
     },
 
@@ -283,12 +318,12 @@ define([], function () {
 
 
     picUploadForm = function () {
-        var odiv, html = "", revid = mor.instId(review);
+        var odiv, html = "", revid = mor.instId(crev);
         mor.review.save();  //save any outstanding edits
         html += mor.paramsToFormInputs(mor.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + revid + "\"/>";
         html += "<input type=\"hidden\" name=\"penid\" value=\"" +
-            review.penid + "\"/>";
+            crev.penid + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
             mor.enc(window.location.href + "#revedit=" + revid) + "\"/>";
         //build the rest of the form around that
@@ -316,17 +351,19 @@ define([], function () {
         var html;
         if(!keyval) {
             return ""; }
-        html = "";   //if just viewing, the default is no pic. 
-        if(mode === "edit") {
-            //show placeholder outline pic they can click to upload
-            html = "img/emptyprofpic.png"; }
-        if(review.revpic) {
-            //if a pic has been uploaded, use that
-            html = "revpic?revid=" + mor.instId(review); }
-        html = "<img class=\"revpic\" src=\"" + html + "\"";
-        if(mode === "edit") {
-            html += " onclick=mor.review.picUploadForm();return false;"; }
-        html += "/>";
+        if(review.imguri) {  //use auto-generated link if avail. No direct edit.
+            html = "<img style=\"max-width:125px;height:auto;\"" +
+                " src=\"" + review.imguri + "\"/>"; }
+        else {  //no auto-generated link image, allow personal pic upload
+            html = "";   //if just viewing, the default is no pic. 
+            if(mode === "edit") {  //for editing, default is outline pic
+                html = "img/emptyprofpic.png"; }
+            if(review.revpic) {  //use uploaded pic if available
+                html = "revpic?revid=" + mor.instId(review); }
+            html = "<img class=\"revpic\" src=\"" + html + "\"";
+            if(mode === "edit") {
+                html += " onclick=mor.review.picUploadForm();return false;"; }
+            html += "/>"; }
         return html;
     },
 
@@ -377,12 +414,12 @@ define([], function () {
     noteURLValue = function () {
         var input = mor.byId('urlin');
         //if auto read url from initial form, note it and then reset
-        if(readurl) {
-            review.url = readurl;
-            readurl = ""; }
+        if(autourl) {
+            crev.url = autourl;
+            autourl = ""; }
         //the url may be edited
         if(input) {
-            review.url = input.value; }
+            crev.url = input.value; }
     },
 
 
@@ -392,18 +429,18 @@ define([], function () {
             errlabel('keyinlabeltd');
             errors.push("Please specify a value for " + type.key); }
         else {
-            review[type.key] = input.value;
-            cankey = review[type.key]; }
+            crev[type.key] = input.value;
+            cankey = crev[type.key]; }
         if(type.subkey) {
             input = mor.byId('subkeyin');
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
                 errors.push("Please specify a value for " + type.subkey); }
             else {
-                review[type.subkey] = input.value;
-                cankey += review[type.subkey]; } }
+                crev[type.subkey] = input.value;
+                cankey += crev[type.subkey]; } }
         if(cankey) {
-            review.cankey = mor.canonize(cankey); }
+            crev.cankey = mor.canonize(cankey); }
     },
 
 
@@ -438,7 +475,7 @@ define([], function () {
         for(i = 0; i < type.fields.length; i += 1) {
             input = mor.byId("field" + i);
             if(input) {  //input field was displayed
-                review[type.fields[i]] = input.value; } }
+                crev[type.fields[i]] = input.value; } }
     },
 
 
@@ -465,6 +502,8 @@ define([], function () {
 
     keywordCheckboxesHTML = function (type) {
         var i, tdc = 0, html = "";
+        if(!crev.keywords) {
+            crev.keywords = ""; }
         html += "<table>";
         for(i = 0; i < type.dkwords.length; i += 1) {
             if(tdc === 0) {
@@ -475,7 +514,7 @@ define([], function () {
                 " id=\"dkw" + i + "\"" + 
                 " onchange=\"mor.review.toggleKeyword('dkw" + i + "');" +
                             "return false;\"";
-            if(review.keywords.indexOf(type.dkwords[i]) >= 0) {
+            if(crev.keywords.indexOf(type.dkwords[i]) >= 0) {
                 html += " checked=\"checked\""; }
             html += "/>" +
                 "<label for=\"dkw" + i + "\">" + 
@@ -512,21 +551,21 @@ define([], function () {
     keywordsValid = function (type, errors) {
         var input = mor.byId('keywordin');
         if(input) {
-            review.keywords = input.value; }
+            crev.keywords = input.value; }
     },
 
 
     reviewTextValid = function (type, errors) {
         var input = mor.byId('reviewtext');
         if(input) {
-            review.text = input.value; }
+            crev.text = input.value; }
     },
 
 
     //Return true if the current user has remembered the given review,
     //false otherwise.
     isRemembered = function (review) {
-        var penid = mor.instId(userpen);
+        var penid = mor.pen.currPenId();
         if(penid && review && review.memos && 
            review.memos.indexOf(penid + ":") >= 0) {
             return true; }
@@ -562,7 +601,7 @@ define([], function () {
                     " onclick=\"mor.review.save(true);return false;\"" +
                     ">Done</button>"; } }
         //reading a previously written review
-        else if(review.penid === mor.instId(userpen)) {  //is review owner
+        else if(review.penid === mor.pen.currPenId()) {  //is review owner
             html += "<button type=\"button\" id=\"deletebutton\"" +
                 " onclick=\"mor.review.delrev();return false;\"" +
                 ">Delete</button>" + "&nbsp;" + 
@@ -592,8 +631,8 @@ define([], function () {
     sliderChange = function (value) {
         var html;
         //mor.log("sliderChange: " + value);
-        review.rating = Math.round(value);
-        html = starsImageHTML(review.rating);
+        crev.rating = Math.round(value);
+        html = starsImageHTML(crev.rating);
         mor.out('stardisp', html);
     },
 
@@ -615,10 +654,10 @@ define([], function () {
             style: "width:150px;",
             onChange: function (value) {
                 sliderChange(value); } }, "ratslide");
-        if(review.rating === null || review.rating < 0) { 
-            review.rating = 80; }  //have to start somewhere...
-        ratingSlider.set("value", review.rating);
-        sliderChange(review.rating);
+        if(crev.rating === null || crev.rating < 0) { 
+            crev.rating = 80; }  //have to start somewhere...
+        ratingSlider.set("value", crev.rating);
+        sliderChange(crev.rating);
         return ratingSlider;
     },
 
@@ -760,7 +799,7 @@ define([], function () {
 
 
     cancelReview = function () {
-        review = {};
+        crev = {};
         mor.onescapefunc = null; 
         mor.review.display();
     },
@@ -768,7 +807,7 @@ define([], function () {
 
     saveReview = function (doneEditing) {
         var errors = [], i, errtxt = "", type, url, data;
-        type = findReviewType(review.revtype);
+        type = findReviewType(crev.revtype);
         if(!type) {
             mor.out('revsavemsg', "Unknown review type");
             return; }
@@ -785,14 +824,14 @@ define([], function () {
         mor.out('formbuttonstd', "Saving...");
         mor.onescapefunc = null;
         url = "updrev?";
-        if(!mor.instId(review)) {
+        if(!mor.instId(crev)) {
             url = "newrev?";
-            review.svcdata = ""; }
-        data = mor.objdata(review);
+            crev.svcdata = ""; }
+        data = mor.objdata(crev);
         mor.call(url + mor.login.authparams(), 'POST', data,
                  function (reviews) {
                      mor.profile.resetReviews();
-                     review = reviews[0];
+                     crev = reviews[0];
                      //fetch the updated top 20 lists
                      setTimeout(mor.pen.refreshCurrent, 100);
                      if(doneEditing) {
@@ -811,7 +850,7 @@ define([], function () {
         mor.call("revbyid?" + params, 'GET', null,
                  function (revs) {
                      if(revs.length > 0) {
-                         review = revs[0];
+                         crev = revs[0];
                          if(mode === "edit") {
                              mor.review.display(); }
                          else {
@@ -867,11 +906,11 @@ define([], function () {
 
     deleteReview = function () {
         var url, data;
-        if(!review || 
+        if(!crev || 
            !confirm("Are you sure you want to delete this review?")) {
             return; }
         url = "delrev?";
-        data = mor.objdata(review);
+        data = mor.objdata(crev);
         mor.call("delrev?" + mor.login.authparams(), 'POST', data,
                  function (reviews) {
                      mor.profile.resetReviews();
@@ -883,23 +922,22 @@ define([], function () {
 
 
     mainDisplay = function (pen, read, runServices) {
-        userpen = pen;
-        if(!review) {
-            review = {}; }
-        if(!review.penid) {
-            review.penid = mor.instId(userpen); }
+        if(!crev) {
+            crev = {}; }
+        if(!crev.penid) {
+            crev.penid = mor.pen.currPenId(); }
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must
         //already have values for penid, svcdata, revtype, the defined
         //key field, and the subkey field (if defined for the type).
         if(read) { 
-            displayReviewForm(review);
+            displayReviewForm(crev);
             if(runServices) {
-                mor.services.run(pen, review); } }
-        else if(!review.revtype) {
+                mor.services.run(pen, crev); } }
+        else if(!crev.revtype) {
             displayTypeSelect(); }
         else {
-            displayReviewForm(review, "edit"); }
+            displayReviewForm(crev, "edit"); }
     };
 
 
@@ -927,8 +965,8 @@ define([], function () {
             return badgeImageHTML(type); },
         starsImageHTML: function (rating) {
             return starsImageHTML(rating); },
-        readURL: function (url) {
-            return readURL(url); },
+        readURL: function (url, params) {
+            return readURL(url, params); },
         setType: function (type) {
             return setType(type); },
         picUploadForm: function () {
@@ -940,9 +978,9 @@ define([], function () {
         save: function (doneEditing) {
             saveReview(doneEditing); },
         setCurrentReview: function (revobj) {
-            review = revobj; },
+            crev = revobj; },
         getCurrentReview: function () {
-            return review; },
+            return crev; },
         initWithId: function (revid, mode) {
             initWithId(revid, mode); },
         respond: function () {

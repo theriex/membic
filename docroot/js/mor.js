@@ -278,8 +278,12 @@ var mor = {};  //Top level function closure container
             val = val.trim(); }
         return encodeURIComponent(val);
     };
-
-
+    mor.dec = function (val) {
+        val = val || "";
+        if(typeof val === "string") {
+            val = val.trim(); }
+        return decodeURIComponent(val);
+    };
     //if a string needs to be URL encoded and then stuffed inside of
     //single quotes, then you need to replace any embedded single
     //quotes to avoid terminating the string early.
@@ -358,15 +362,18 @@ var mor = {};  //Top level function closure container
 
 
     //return the given object field and values as html POST data
-    mor.objdata = function (obj) {
+    mor.objdata = function (obj, skips) {
         var str = "", name;
         if(!obj) {
             return ""; }
+        if(!skips) {
+            skips = []; }
         for(name in obj) {
             if(obj.hasOwnProperty(name)) {
-                if(str) {
-                    str += "&"; }
-                str += name + "=" + mor.enc(obj[name]); } }
+                if(skips.indexOf(name) < 0) {
+                    if(str) {
+                        str += "&"; }
+                    str += name + "=" + mor.enc(obj[name]); } } }
         return str;
     };
 
@@ -489,7 +496,9 @@ var mor = {};  //Top level function closure container
 
 
     mor.paramsToObj = function (paramstr) {
-        var comps, i, attval, obj = {};
+        var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
+        if(idx >= 0) {
+            paramstr = paramstr.slice(idx + 1); }
         comps = paramstr.split("&");
         for(i = 0; i < comps.length; i += 1) {
             attval = comps[i].split("=");

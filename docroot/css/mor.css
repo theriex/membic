@@ -72,6 +72,11 @@ body {
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
   border=none; vertical-align:middle; }
 
+/* intro layout */
+#bookmarkletlinkdiv { padding:5px 20px; }
+#bookmarkletdirdiv { padding:0px 0px 20px 0px; }
+.altauthspan { display:inline-block; padding:0px; width:130px; }
+
 /* profile layout */
 #proftopdiv { }
 #profshouttd { padding: 0px 10px; }

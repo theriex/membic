@@ -218,6 +218,8 @@ define([], function () {
             if(currpen) {
                 return returnCall(callback); }
             getPenName(callback); },
+        currPenId: function () {
+            return mor.instId(currpen) || 0; },
         updatePen: function (pen, callbackok, callbackfail) {
             updatePenName(pen, callbackok, callbackfail); },
         noteUpdatedPen: function (pen) {

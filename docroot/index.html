@@ -24,14 +24,22 @@
 <div id="appspacediv"> 
   <div id="contentdiv" class="mtext">
 
-    <p>A place to host your personal reviews, with the freedom to
-      pull, post, upload and download your reviews anytime and anywhere you
-      want.  
-      Easily note your full impression of anything. 
-      Separate profiles for every pen name.  Free,
-      <a href="docs/FOSS.html">open source</a> and 
-      <a href="docs/API.html">open data</a>.
-    </p>
+    <p>Review books, movies, videos, and more, writing as whichever
+    pen name you choose.  Follow any other reviewer by pen name.
+    Automatically track your top 20 lists and more.  This
+    is <a href="docs/FOSS.html">open source</a> software. </p>
+
+    <div id="bookmarkletdirdiv">
+      <p>To get started, create a pen name, and bookmark this link:</p>
+
+      <div id="bookmarkletlinkdiv">
+        <a href="javascript:(function(){var%20morscr=document.createElement('script');morscr.src='https://myopenreviews.appspot.com/js/bookmarklet.js?cb='+(Math.random());document.getElementsByTagName('head')[0].appendChild(morscr);})();"
+           style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">MyOpenReviews Link</a>
+      </div>
+
+      <p>Then anytime you want to review something, select your
+      "MyOpenReviews" bookmark. </p>
+    </div>
 
     <noscript>
       <p>MyOpenReviews needs Javascript to do anything useful, please 

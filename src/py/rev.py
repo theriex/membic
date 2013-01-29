@@ -19,6 +19,7 @@ class Review(db.Model):
     keywords = db.TextProperty()
     text = db.TextProperty()
     revpic = db.BlobProperty()
+    imguri = db.TextProperty()
     # The time any of the above fields was last changed.  Changes to
     # item identification and agent service data is not tracked
     modified = db.StringProperty()  # iso date
@@ -115,6 +116,7 @@ def read_review_values(handler, review):
     review.keywords = handler.request.get('keywords')
     review.text = handler.request.get('text')
     # review.revpic is uploaded separately
+    review.imguri = handler.request.get('imguri')
     review.modified = nowISO()
     review.name = handler.request.get('name')
     review.title = handler.request.get('title')
