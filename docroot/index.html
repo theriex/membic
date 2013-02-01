@@ -33,12 +33,12 @@
       <p>To get started, create a pen name, and bookmark this link:</p>
 
       <div id="bookmarkletlinkdiv">
-        <a href="javascript:(function(){var%20morscr=document.createElement('script');morscr.src='https://myopenreviews.appspot.com/js/bookmarklet.js?cb='+(Math.random());document.getElementsByTagName('head')[0].appendChild(morscr);})();"
+        <a href="javascript:(function(){var%20w=window,wl=w.location,d=document,s;if(/youtube|netflix/.test(wl.hostname)){w.open('http://www.myopenreviews.com?newrev=&url='+encodeURIComponent(window.location.href));}else{s=d.createElement('script');s.src='https://myopenreviews.appspot.com/js/bookmarklet.js?x='+(Math.random());d.getElementsByTagName('head')[0].appendChild(s);}})();"
            style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">MyOpenReviews Link</a>
       </div>
 
       <p>Then anytime you want to review something, select your
-      "MyOpenReviews" bookmark. </p>
+      "MyOpenReviews Link" bookmark. </p>
     </div>
 
     <noscript>
@@ -58,6 +58,7 @@
     <a href="docs/FOSS.html">FOSS</a> 
     <a href="docs/API.html">API</a>
     <a href="docs/issues.html">contact</a>
+    <a href="docs/phase.html">alpha</a>
   </div>
 </div>
 

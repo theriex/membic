@@ -9,11 +9,35 @@ define([], function () {
     "use strict";
 
     var svcName = "YouTube",    //ascii with no spaces, used as an id
-        iconurl = "http://www.youtube.com/favicon.ico",
+        attribution = "<a href=\"http://www.youtube.com\"" +
+            " title=\"The YouTube API was called to try save some typing\"" +
+            ">delivered by YouTube</a>",
+
+
+    //Attempt to parse the title.  Add smarts on case basis.  In
+    //general, guessing artist, title is most likely due to players
+    //organizing music by artist, then album, then title
+    parseTitle = function (review) {
+        var text;
+        if(!review.title) {
+            return; }
+        text = review.title;
+        //case: "artist - title"
+        //e.g. http://www.youtube.com/watch?v=KnIJOO__jVo
+        if(text.indexOf(" - ") > 0) {
+            text = text.split(" - ", 2);
+            review.artist = text[0].trim();
+            review.title = text[1].trim(); }
+        //case: "artist: title"
+        //e.g. http://www.youtube.com/watch?v=tHOn093r-Ak
+        else if(text.indexOf(": ") > 0) {
+            text = text.split(": ", 2);
+            review.artist = text[0].trim();
+            review.title = text[1].trim(); }
+    },
 
 
     setReviewFields = function (review, data) {
-        var text;
         review.revtype = "video";
         if(data && data.entry && data.entry.title) {
             review.title = data.entry.title.$t; }
@@ -23,16 +47,7 @@ define([], function () {
            data.entry.media$group.media$thumbnail.length > 0 &&
            data.entry.media$group.media$thumbnail[0]) {
             review.imguri = data.entry.media$group.media$thumbnail[0].url; }
-        //attempt to parse the title.  Add smarts on case basis.
-        text = review.title;
-        if(text && text.indexOf(" - ") > 0) {
-            text = text.split(" - ");
-            if(text.length === 2) {
-                //guessing artist - title is slightly more popular due
-                //to organizing music by artist, then album, then title
-                //case: http://www.youtube.com/watch?v=KnIJOO__jVo
-                review.artist = text[0].trim();
-                review.title = text[1].trim(); } }
+        parseTitle(review);
     },
 
 
@@ -49,6 +64,7 @@ define([], function () {
         mor.call(url, 'GET', null,
                  function (json) {
                      setReviewFields(review, json);
+                     mor.review.setAttribution(attribution);
                      mor.review.display(); },
                  function (code, errtxt) {
                      mor.err("YouTube data retrieval failed code " + 
@@ -59,7 +75,6 @@ define([], function () {
 
     return {
         name: svcName,
-        iconurl: iconurl,
         fetchData: function (review, url, params) {
             fetchData(review, url, params); }
     };

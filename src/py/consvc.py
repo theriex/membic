@@ -168,7 +168,8 @@ class JSONGet(webapp2.RequestHandler):
         geturl = self.request.get('geturl')
         whitelist = [ "https://www.googleapis.com",
                       "https://api.github.com",
-                      "http://gdata.youtube.com" ]
+                      "http://gdata.youtube.com",
+                      "http://odata.netflix.com" ]
         whitelisted = False
         for url in whitelist:
             if geturl.startswith(url):

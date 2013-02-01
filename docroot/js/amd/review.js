@@ -12,6 +12,10 @@ define([], function () {
         //modified by automation, that "cleaned" value should be kept to
         //confirm against the potentially edited form field value.
         autourl = "",
+        //If form fields were filled out automatically using someone's
+        //API, then this field contains a link back or whatever
+        //attribution is appropriate.
+        attribution = "",
         //The current review being displayed or edited.
         crev = {},
         //The error message from the previous server save call, if any.
@@ -92,6 +96,7 @@ define([], function () {
         autourl = "";
         crev = {};
         asyncSaveErrTxt = "";
+        attribution = "";
     },
 
 
@@ -239,6 +244,18 @@ define([], function () {
     },
 
 
+    extensionForURL = function (url, callfunc) {
+        if(url.indexOf(".youtube.") > 0) {
+            if(!callfunc) {
+                return true; }
+            require([ "ext/youtube" ], callfunc); }
+        if(url.indexOf(".netflix.") > 0) {
+            if(!callfunc) {
+                return true; }
+            require([ "ext/netflix" ], callfunc); }
+    },
+
+
     //This is the main processing entry point from the bookmarklet or
     //direct links.
     readURL = function (url, params) {
@@ -254,11 +271,9 @@ define([], function () {
         if(url) {
             crev.url = autourl = url;
             readParameters(params);
-            if(autourl.indexOf(".youtube.") >= 0) {
-                require([ "ext/youtube" ],
-                        function (youtube) {
-                            if(!mor.youtube) { mor.youtube = youtube; }
-                            youtube.fetchData(crev, url, params); }); }
+            if(extensionForURL(autourl)) {
+                extensionForURL(autourl, function (ext) {
+                    ext.fetchData(crev, url, params); }); }
             else if(interactive) {
                 alert("No reader found for " + url);
                 mor.review.display(); }
@@ -276,23 +291,27 @@ define([], function () {
     displayTypeSelect = function () {
         var i, tdc = 0, html;
         html = "<div id=\"revfdiv\" class=\"formstyle\" align=\"center\">" +
-        "<ul class=\"reviewformul\">" +
-            "<li>Paste a web address for what you are reviewing " + 
-            "(if available)" + "<table><tr>" +
-              "<td align=\"right\">URL</td>" +
-              "<td align=\"left\">" +
-                "<input type=\"text\" id=\"urlin\" size=\"40\"" +
-                      " onchange=\"mor.review.readURL();return false;\"" + 
+            "<ul class=\"reviewformul\">";
+        if(autourl) {
+            html += "<li><a href=\"" + autourl + "\">" + autourl + 
+                "</a></li>"; }
+        else {
+            html += "<li>Paste a web address for what you are reviewing " + 
+                         "(if available)" + "<table><tr>" +
+                "<td align=\"right\">URL</td>" +
+                "<td align=\"left\">" +
+                  "<input type=\"text\" id=\"urlin\" size=\"40\"" +
+                        " onchange=\"mor.review.readURL();return false;\"" + 
                 "/></td>" +
-              "<td>" +
-                "<button type=\"button\" id=\"readurlbutton\"" +
-                       " onclick=\"mor.review.readURL();return false;\"" +
-                       " title=\"Read review form fields from pasted URL\"" +
-                    ">Read</button>" +
+                "<td>" +
+                  "<button type=\"button\" id=\"readurlbutton\"" +
+                         " onclick=\"mor.review.readURL();return false;\"" +
+                         " title=\"Read review form fields from pasted URL\"" +
+                  ">Read</button>" +
                 "</td>" +
-            "</tr></table>" +
-            "<li>Choose a review type</li>";
-        html += "<table class=\"typebuttonstable\">";
+              "</tr></table></li>"; }
+        html += "<li>Choose a review type</li>" + 
+            "<table class=\"typebuttonstable\">";
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
@@ -352,8 +371,17 @@ define([], function () {
         if(!keyval) {
             return ""; }
         if(review.imguri) {  //use auto-generated link if avail. No direct edit.
-            html = "<img style=\"max-width:125px;height:auto;\"" +
-                " src=\"" + review.imguri + "\"/>"; }
+            html = "<a href=\"" + review.url + "\"" + 
+                     " onclick=\"window.open('" + review.url + "');" + 
+                                "return false;\"" +
+                "><img style=\"max-width:125px;height:auto;\"" +
+                     " src=\"" + review.imguri + "\"/></a>";
+            if(mode === "edit") {
+                html += "<br/>" +
+                    "<a href=\"#remove image link\"" +
+                      " onclick=\"mor.review.removeImageLink();" + 
+                                 "return false;\"" +
+                    ">remove image</a>"; } }
         else {  //no auto-generated link image, allow personal pic upload
             html = "";   //if just viewing, the default is no pic. 
             if(mode === "edit") {  //for editing, default is outline pic
@@ -624,6 +652,12 @@ define([], function () {
     },
 
 
+    removeImageLink = function () {
+        crev.imguri = "";
+        mor.review.display();
+    },
+
+
     //ATTENTION: Once review responses are available, there needs to
     //be a way to view those responses as a list so you can see what
     //other people thought of the same thing or what kind of an impact
@@ -824,6 +858,10 @@ define([], function () {
         keyval = review[type.key];
         html = "<div class=\"formstyle\">" + 
             "<table class=\"revdisptable\" border=\"0\">";
+        if(mode === "edit" && attribution) {
+            html += "<tr><td colspan=\"4\">" + 
+                "<div id=\"attributiondiv\">" + attribution + 
+                "</div></td></tr>"; }
         html += revFormIdentHTML(review, type, keyval, mode);
         if(mode === "edit") {
             html += revFormTextHTML(review, type, keyval, mode);
@@ -892,6 +930,7 @@ define([], function () {
                      //fetch the updated top 20 lists
                      setTimeout(mor.pen.refreshCurrent, 100);
                      if(doneEditing) {
+                         attribution = "";
                          mor.review.displayRead(true); }
                      else {
                          mor.review.display(); } },
@@ -1049,7 +1088,11 @@ define([], function () {
         swapVidTitleAndArtist: function () {
             swapVidTitleAndArtist(); },
         changeReviewType: function (revtype) {
-            changeReviewType(revtype); }
+            changeReviewType(revtype); },
+        removeImageLink: function () {
+            removeImageLink(); },
+        setAttribution: function (html) {
+            attribution = html; }
     };
 
 });
