@@ -9,7 +9,7 @@ define([], function () {
     "use strict";
 
     var svcName = "Amazon",    //ascii with no spaces, used as an id
-        attribution = "<a href=\"http://www.netflix.com\"" +
+        attribution = "<a href=\"http://www.amazon.com\"" +
             " title=\"The Amazon API was called to try save some typing\"" +
             ">delivered by Amazon</a>",
 

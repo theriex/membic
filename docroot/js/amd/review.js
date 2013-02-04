@@ -85,7 +85,7 @@ define([], function () {
                        "Spring", "Summer", "Autumn", "Winter", "Anytime" ] },
           { type: "other", plural: "other", img: "TypeOther50.png",
             keyprompt: "Name or title", 
-            key: "name", subkey: "type",
+            key: "name", //subkey
             fields: [],
             dkwords: [ "Specialized", "General", "Professional", "Personal",
                        "Hobby", "Research" ] }
@@ -200,6 +200,8 @@ define([], function () {
 
     findReviewType = function (type) {
         var i;
+        if(!type) {
+            return null; }
         type = type.toLowerCase();
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(reviewTypes[i].type === type ||
@@ -244,45 +246,38 @@ define([], function () {
     },
 
 
-    extensionForURL = function (url, callfunc) {
+    getURLReader = function (url, callfunc) {
         if(url.indexOf(".youtube.") > 0) {
-            if(!callfunc) {
-                return true; }
             require([ "ext/youtube" ], callfunc); }
-        if(url.indexOf(".netflix.") > 0) {
-            if(!callfunc) {
-                return true; }
+        else if(url.indexOf(".netflix.") > 0) {
             require([ "ext/netflix" ], callfunc); }
-        if(url.indexOf(".amazon.") > 0) {
-            if(!callfunc) {
-                return true; }
+        else if(url.indexOf(".amazon.") > 0) {
             require([ "ext/amazon" ], callfunc); }
+        else {
+            require([ "ext/readurl" ], callfunc); }
     },
 
 
     //This is the main processing entry point from the bookmarklet or
     //direct links.
     readURL = function (url, params) {
-        var input, interactive;
-        if(!params && !url) {
-            interactive = true; }
+        var urlin, rbtd;
         if(!params) {
             params = {}; }
         if(!url) {
-            input = mor.byId('urlin');
-            if(input) {
-                url = input.value; } }
+            urlin = mor.byId('urlin');
+            if(urlin) {
+                url = urlin.value; } }
+        rbtd = mor.byId('readurlbuttontd');
+        if(rbtd) {
+            rbtd.innerHTML = "reading..."; }
         if(url) {
             crev.url = autourl = url;
             readParameters(params);
-            if(extensionForURL(autourl)) {
-                extensionForURL(autourl, function (ext) {
-                    ext.fetchData(crev, url, params); }); }
-            else if(interactive) {
-                alert("No reader found for " + url);
-                mor.review.display(); }
-            else {
-                mor.review.display(); } }
+            getURLReader(autourl, function (reader) {
+                reader.fetchData(crev, url, params); }); }
+        else {
+            mor.review.display(); }
     },
 
 
@@ -307,7 +302,7 @@ define([], function () {
                   "<input type=\"text\" id=\"urlin\" size=\"40\"" +
                         " onchange=\"mor.review.readURL();return false;\"" + 
                 "/></td>" +
-                "<td>" +
+                "<td id=readurlbuttontd>" +
                   "<button type=\"button\" id=\"readurlbutton\"" +
                          " onclick=\"mor.review.readURL();return false;\"" +
                          " title=\"Read review form fields from pasted URL\"" +

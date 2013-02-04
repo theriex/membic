@@ -177,6 +177,11 @@ handlers:
 - url: /amazoninfo.*
   script: src.py.consvc.app
 
+## Fetch the contents of the given URL
+## GET params: url, authparams
+- url: /urlcontents.*
+  script: src.py.consvc.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API

@@ -235,8 +235,8 @@ class AmazonInfo(webapp2.RequestHandler):
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
         #     return
-        logging.info("referer: " + self.request.referer)
-        logging.info("request: " + str(self.request))
+        # logging.info("referer: " + self.request.referer)
+        # logging.info("request: " + str(self.request))
         asin = self.request.get('asin')
         svc = getConnectionService("Amazon")
         # Note the parameters must be in sorted order with url encoded vals
@@ -272,9 +272,36 @@ class AmazonInfo(webapp2.RequestHandler):
             self.response.out.write(result.content)
 
 
+class URLContents(webapp2.RequestHandler):
+    def get(self):
+        # acc = authenticated(self.request)
+        # if not acc:
+        #     self.error(401)
+        #     self.response.out.write("Authentication failed")
+        #     return
+        logging.info("referer: " + self.request.referer)
+        logging.info("request: " + str(self.request))
+        url = self.request.get('url')
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+        result = urlfetch.fetch(url, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        if result.status_code == 200:
+            json = "[{\"content\":\"" + enc(result.content) + "\"}]"
+            self.response.headers['Content-Type'] = 'application/json'
+            self.response.out.write(json)
+        else:
+            self.error(result.status_code)
+            self.response.out.write(result.content)
+
+
 app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/jsonget', JSONGet),
                                ('/githubtok', GitHubToken),
-                               ('/amazoninfo', AmazonInfo)], 
+                               ('/amazoninfo', AmazonInfo),
+                               ('/urlcontents', URLContents)], 
                               debug=True)
 
