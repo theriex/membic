@@ -253,6 +253,10 @@ define([], function () {
             if(!callfunc) {
                 return true; }
             require([ "ext/netflix" ], callfunc); }
+        if(url.indexOf(".amazon.") > 0) {
+            if(!callfunc) {
+                return true; }
+            require([ "ext/amazon" ], callfunc); }
     },
 
 

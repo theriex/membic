@@ -172,6 +172,11 @@ handlers:
 - url: /githubtok.*
   script: src.py.consvc.app
 
+## Fetch info from Amazon
+## GET params: asin, authparams
+- url: /amazoninfo.*
+  script: src.py.consvc.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API

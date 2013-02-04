@@ -6,9 +6,12 @@ import logging
 from time import time
 from random import getrandbits
 from hashlib import sha1
+from hashlib import sha256
 import hmac
 from google.appengine.api import urlfetch
 import urllib
+import datetime
+from base64 import b64encode
 
 
 class ConnectionService(db.Model):
@@ -36,6 +39,10 @@ def enc(text):
     # explicitely pass an empty set of safe characters so forward slash
     # gets translated to "%
     return urllib.quote(str(text), "")
+
+
+def zulunowts():
+    return datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
 def makeParamHash(svc, request):
@@ -221,8 +228,53 @@ class GitHubToken(webapp2.RequestHandler):
             self.response.out.write(result.content)
 
 
+class AmazonInfo(webapp2.RequestHandler):
+    def get(self):
+        # acc = authenticated(self.request)
+        # if not acc:
+        #     self.error(401)
+        #     self.response.out.write("Authentication failed")
+        #     return
+        logging.info("referer: " + self.request.referer)
+        logging.info("request: " + str(self.request))
+        asin = self.request.get('asin')
+        svc = getConnectionService("Amazon")
+        # Note the parameters must be in sorted order with url encoded vals
+        params = "AWSAccessKeyId=" + svc.ckey
+        params += "&AssociateTag=myopenreviews-20"
+        params += "&Condition=All"
+        params += "&IdType=ASIN"
+        params += "&ItemId=" + asin
+        params += "&Operation=ItemLookup"
+        params += "&ResponseGroup=Images%2CItemAttributes%2COffers"
+        params += "&Service=AWSECommerceService"
+        params += "&Timestamp=" + enc(zulunowts())
+        params += "&Version=2011-08-01"
+        tosign = "GET\n" + "webservices.amazon.com\n" + "/onca/xml\n" + params
+        # the secret comes out of the db as unicode, force it to string
+        key = "%s" % (enc(svc.secret))
+        sig = b64encode(hmac.new(key, tosign, sha256).digest())
+        url = "http://webservices.amazon.com/onca/xml?" + params
+        url += "&Signature=" + enc(sig)
+        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+        result = urlfetch.fetch(url, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        if result.status_code == 200:
+            json = "[{\"content\":\"" + enc(result.content) + "\"}]"
+            self.response.headers['Content-Type'] = 'application/json'
+            self.response.out.write(json)
+        else:
+            self.error(result.status_code)
+            self.response.out.write(result.content)
+
+
 app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/jsonget', JSONGet),
-                               ('/githubtok', GitHubToken)], 
+                               ('/githubtok', GitHubToken),
+                               ('/amazoninfo', AmazonInfo)], 
                               debug=True)
 
