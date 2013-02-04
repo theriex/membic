@@ -27,14 +27,53 @@ define([], function () {
     },
 
 
+    setIfReturned = function (review, field, val) {
+        if(val) {
+            review[field] = val; }
+    },
+
+
     setReviewFields = function (review, xml) {
         review.revtype = extractField("ProductGroup", xml).toLowerCase();
+        if((review.revtype.indexOf("book") >= 0) ||
+           (review.revtype.indexOf("audible") >= 0) ||
+           (review.revtype.indexOf("text") >= 0) ||
+           (review.revtype.indexOf("kindlestore") >= 0)) {
+            review.revtype = "book"; }
+        else if((review.revtype.indexOf("music") >= 0) ||
+                (review.revtype.indexOf("classical") >= 0)) {
+            review.revtype = "music"; }
+        else if((review.revtype.indexOf("movie") >= 0) || 
+                (review.revtype.indexOf("dvd") >= 0) ||
+                (review.revtype.indexOf("tv series") >= 0) ||
+                (review.revtype.indexOf("video") >= 0)) {
+            review.revtype = "movie"; }
         review.imguri = extractField("URL", extractField("MediumImage", xml));
-        review.title = extractField("Title", xml);
         review.url = extractField("DetailPageURL", xml);
-        review.author = extractField("Author", xml);
-        review.publisher = extractField("Publisher", xml);
-        review.year = extractField("PublicationDate", xml).slice(0, 4);
+        review.title = extractField("Title", xml);
+        ////////////////////////////////////////
+        //additional specialized fields for book:
+        setIfReturned(review, "author", extractField("Author", xml));
+        setIfReturned(review, "publisher", extractField("Publisher", xml));
+        setIfReturned(review, "year", 
+                      extractField("PublicationDate", xml).slice(0, 4));
+        ////////////////////////////////////////
+        //additional specialized fields for music:
+        //artist: not always available.  Usually works for albums but may
+        //not be given for single audio tracks
+        setIfReturned(review, "artist", extractField("Artist", xml));
+        //album: The Amazon page has a "From the Album..." link as
+        //part of their description, but that info doesn't seem to be
+        //available from the API (ep 2013-feb).
+        //year: A song may have both a PublicationDate and a ReleaseDate
+        //but the ReleaseDate takes precedence if specified.
+        setIfReturned(review, "year", 
+                      extractField("ReleaseDate", xml).slice(0, 4));
+        ////////////////////////////////////////
+        //additional specialized fields for movie:
+        //year: ReleaseDate already set from above
+        //starring: multiple Actor entries within ItemAttributes
+        //Punting on this for now, see netflix.js comments
     },
 
 

@@ -1034,7 +1034,7 @@ define([], function () {
             displayReviewForm(crev);
             if(runServices) {
                 mor.services.run(pen, crev); } }
-        else if(!crev.revtype) {
+        else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
         else {
             displayReviewForm(crev, "edit"); }
