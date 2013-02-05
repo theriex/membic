@@ -32,8 +32,8 @@ body {
 #chead { height:50px; clear:both; }
 #accountdiv { }
 #navdisplaytable { width:100%; }
-#appspacediv { position:absolute; left:0px; top:0px; 
-  padding:45px 40px 40px 72px; }
+#appspacediv { position:absolute; left:0px; top:30px; 
+  padding:15px 40px 40px 72px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px; }
 #logotitle { 

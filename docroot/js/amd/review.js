@@ -102,43 +102,45 @@ define([], function () {
 
     //rating is a value from 0 - 100.  Display is rounded to nearest value.
     starsImageHTML = function (rating) {
-        var img, title, html;
+        var width, title, html;
         if(typeof rating === "string") {
             rating = parseInt(rating, 10); }
         if(!rating || typeof rating !== 'number' || rating < 5) {
-            img = "ratstar0.png";
+            width = 0;
             title = "No stars"; }
         else if(rating < 15) {
-            img = "ratstar05.png";
+            width = 6;
             title = "Half a star"; }
         else if(rating < 25) {
-            img = "ratstar1.png";
+            width = 12;
             title = "One star"; }
         else if(rating < 35) {
-            img = "ratstar15.png";
+            width = 18;
             title = "One and a half stars"; }
         else if(rating < 45) {
-            img = "ratstar2.png";
+            width = 24;
             title = "Two stars"; }
         else if(rating < 55) {
-            img = "ratstar25.png";
+            width = 30;
             title = "Two and a half stars"; }
         else if(rating < 65) {
-            img = "ratstar3.png";
+            width = 36;
             title = "Three stars"; }
         else if(rating < 75) {
-            img = "ratstar35.png";
+            width = 42;
             title = "Three and a half stars"; }
         else if(rating < 85) {
-            img = "ratstar4.png";
+            width = 48;
             title = "Four stars"; }
         else if(rating < 95) {
-            img = "ratstar45.png";
+            width = 54;
             title = "Four and a half stars"; }
         else {
-            img = "ratstar5.png";
+            width = 60;
             title = "Five stars"; }
-        html = "<img class=\"starsimg\" src=\"img/" + img + "\"" +
+        html = "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                   " style=\"width:" + width + "px;height:13px;" + 
+                            "background:url('img/ratstar5.png')\"" +
                    " title=\"" + title + "\" alt=\"" + title + "\"/>";
         return html;
     },
@@ -811,7 +813,7 @@ define([], function () {
 
     //This should have a similar look and feel to the shoutout display
     revFormTextHTML = function (review, type, keyval, mode) {
-        var html, fval, style, targetwidth;
+        var html, fval, style, targetwidth, placetext;
         html = "<tr><td colspan=\"4\">";
         if(keyval) {  //have the basics so display text area
             fval = review.text || "";
@@ -821,7 +823,10 @@ define([], function () {
                 "width:" + targetwidth + "px;";
             if(mode === "edit") {
                 style += "height:120px;";
+                placetext = ">>What was the most striking thing" + 
+                    " about this for you?";
                 html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
+                                 " placeholder=\"" + placetext + "\"" +
                                  " style=\"" + style + "\">" +
                     fval + "</textarea>"; }
             else {
