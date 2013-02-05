@@ -17,39 +17,97 @@ define([], function () {
     var svcName = "URLReader",  //ascii with no spaces, used as an id
         //no attribution since no API provided.
 
-    readHREF = function (html) {
-        var idx, href;
-        idx = html.indexOf("href");
+
+    valueForField = function (elem, field) {
+        var idx, val;
+        idx = elem.indexOf(field);
         if(idx >= 0) {
-            href = html.slice(idx + "href".length);
-            idx = href.indexOf("\"");
-            if(idx >= 0) {
-                href = href.slice(idx + 1);
-                idx = href.indexOf("\"");
+            val = elem.slice(idx + field.length);
+            idx = val.indexOf("\"");
+            if(idx >= 0) {  //double quote delimited
+                val = val.slice(idx + 1);
+                idx = val.indexOf("\"");
                 if(idx >= 0) {
-                    href = href.slice(0, idx);
-                    return href; } } }
+                    val = val.slice(0, idx);
+                    return val; } }
+            idx = val.indexOf("'");
+            if(idx >= 0) {  //single quote delimited
+                val = val.slice(idx + 1);
+                idx = val.indexOf("'");
+                if(idx >= 0) {
+                    val = val.slice(0, idx);
+                    return val; } } }
+        return "";
     },
 
 
-    setImageURI = function (review, html, url) {
-        var found = false, start, end, idx, str;
-        idx = html.indexOf("image_src");
+    elementForString = function (html, targetstr, elemtype) {
+        var found = false, start, end, idx, str = "";
+        idx = html.indexOf(targetstr);
         while(!found && idx >= 0) {
             start = html.lastIndexOf("<", idx);
             end = html.indexOf(">", idx);
             str = html.slice(start, end + 1);
-            if(str.indexOf("<link ") === 0) {
-                found = true;
-                review.imguri = readHREF(str); }
+            if(str.indexOf("<" + elemtype) === 0) {
+                found = true; }
             else {
                 found = false;
-                idx = html.indexOf("image_src", idx + 1); } }
+                idx = html.indexOf(targetstr, idx + 1); } }
+        return str;
+    },
+
+
+    verifyFullURL = function (val, url) {
+        var urlbase, idx;
+        if(val.indexOf("http") >= 0) {
+            return val; }
+        urlbase = url.split("?")[0];
+        idx = urlbase.lastIndexOf("/");
+        if(idx > 9) {  //the slashes at the start don't count
+            urlbase = urlbase.slice(0, idx); }
+        idx = urlbase.lastIndexOf("/");
+        if(idx <= 9) {
+            urlbase += "/"; }
+        return urlbase + val;
+    },
+
+
+    setImageURI = function (review, html, url) {
+        var elem, val;
+        elem = elementForString(html, "image_src", "link");
+        if(elem) {
+            val = valueForField(elem, "href");
+            if(val) {
+                review.imguri = verifyFullURL(val, url);
+                return; } }
+        elem = elementForString(html, "og:image", "meta");
+        if(elem) {
+            val = valueForField(elem, "content");
+            if(val) {
+                review.imguri = verifyFullURL(val, url);
+                return; } }
+        elem = elementForString(html, "twitter:image", "meta");
+        if(elem) {
+            val = valueForField(elem, "content");
+            if(val) {
+                review.imguri = verifyFullURL(val, url);
+                return; } }
+    },
+
+
+    setCanonicalURL = function (review, html, url) {
+        var elem, val;
+        elem = elementForString(html, "canonical", "link");
+        if(elem) {
+            val = valueForField(elem, "href");
+            if(val) {
+                review.url = verifyFullURL(val, url); } }
     },
 
 
     setReviewFields = function (review, html, url) {
         setImageURI(review, html, url);
+        setCanonicalURL(review, html, url);
     },
 
 

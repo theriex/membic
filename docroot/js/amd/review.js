@@ -623,7 +623,7 @@ define([], function () {
                                      "return false;\"" +
                     ">Review as video</a>&nbsp;&nbsp;&nbsp;"; }
             //Might want to refresh the image link or get other info
-            if(review.url && review.url.indexOf(".youtube.") >= 0) {
+            if(review.url) {
                 html += "<a href=\"#\"" +
                           " title=\"Refetch imported data field values\"" +
                           " onclick=\"mor.review.readURL('" + 
