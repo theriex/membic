@@ -51,8 +51,8 @@ define([], function () {
 
     findReview = function (revid) {
         var i;
-        if(revcache.revid) {
-            return revcache.revid; }
+        if(revcache[revid]) {
+            return revcache[revid]; }
         for(i = 0; revid && revs && i < revs.length; i += 1) {
             if(mor.instId(revs[i]) === revid) {
                 return revs[i]; } }
