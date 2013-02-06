@@ -121,6 +121,7 @@ body {
 .webjump { width:20px; height:20px; vertical-align:middle; }
 .webabbrev { font-size:x-small; }
 .csvstrdiv { padding:5px; }
+#actmodediv { padding:0px 0px 20px 0px; }
 
 /* review layout */
 #revfdiv { }

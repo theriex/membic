@@ -115,7 +115,7 @@ define([], function () {
 
     runServices = function (pen, review) {
         var i, conf, bb;
-        mor.pen.deserializeSettings(pen);
+        mor.pen.deserializeFields(pen);
         if(!review.svcdata) {
             review.svcdata = {}; }
         if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
@@ -169,7 +169,7 @@ define([], function () {
 
     changestate = function (name, pen) {
         var sel, conf, i;
-        mor.pen.deserializeSettings(pen);
+        mor.pen.deserializeFields(pen);
         sel = mor.byId(name + "sel");
         if(sel) {
             for(i = 0; !conf && i < pen.settings.consvcs.length; i += 1) {
@@ -211,7 +211,7 @@ define([], function () {
 
     displaySettings = function (domid, pen) {
         var i, html = "Posting Services: <table>";
-        mor.pen.deserializeSettings(pen);
+        mor.pen.deserializeFields(pen);
         if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
             for(i = 0; i < pen.settings.consvcs.length; i += 1) {
                 html += getConnSvcRowHTML(pen.settings.consvcs[i]); } }
@@ -247,7 +247,7 @@ define([], function () {
     mergeConnectionServices = function (pen, contfunc) {
         var updconfs, i, j, svc, conf, found;
         updconfs = [];
-        mor.pen.deserializeSettings(pen);
+        mor.pen.deserializeFields(pen);
         if(!pen.settings.consvcs) {
             pen.settings.consvcs = []; }
         //add existing configs that are still defined

@@ -13,6 +13,9 @@ define([], function () {
         lastChecked, 
         actcursor = "",
         actsrchtotal = 0,
+        revcache = {},
+        badrevids = [],
+        dispmode = "activity",
 
 
     resetStateVars = function () {
@@ -21,6 +24,9 @@ define([], function () {
         lastChecked = null;
         actcursor = "";
         actsrchtotal = 0;
+        revcache = {};
+        badrevids = [];
+        dispmode = "activity";
     },
 
 
@@ -45,9 +51,64 @@ define([], function () {
 
     findReview = function (revid) {
         var i;
+        if(revcache.revid) {
+            return revcache.revid; }
         for(i = 0; revid && revs && i < revs.length; i += 1) {
             if(mor.instId(revs[i]) === revid) {
                 return revs[i]; } }
+    },
+
+
+    displayRemembered = function (pen) {
+        var i, html, rev, crid, friend, cfid, maxdisp = 50;
+        mor.pen.deserializeFields(pen);
+        html = "<ul class=\"revlist\">";
+        if(!pen.revmem || !pen.revmem.remembered || 
+           !pen.revmem.remembered.length) {
+            html += "<li>You have not remembered any reviews. If you " +
+                "see a review worth remembering, click the \"Remember\" " +
+                "button for it and it will show up here.</li>"; }
+        else {
+            maxdisp = Math.min(maxdisp, pen.revmem.remembered.length);
+            for(i = 0; i < maxdisp; i += 1) {
+                rev = findReview(pen.revmem.remembered[i]);
+                if(!rev) {
+                    if(badrevids.indexOf(pen.revmem.remembered[i]) >= 0) {
+                        maxdisp += 1; }
+                    else {
+                        crid = pen.revmem.remembered[i];
+                        html += "<li>Fetching Review " + crid + "...</li>";
+                        break; } }
+                else {
+                    if(!rev.penNameStr) {
+                        friend = mor.profile.getCachedPen(rev.penid);
+                        if(friend) {
+                            rev.penNameStr = pen.name; } }
+                    if(!rev.penNameStr) {
+                        cfid = rev.penid;
+                        html += "<li>Fetching Pen Name " + cfid + "...</li>";
+                        break; }
+                    html += mor.profile.reviewItemHTML(rev, 
+                                                       rev.penNameStr); } } }
+        html += "</ul>";
+        mor.out('revactdiv', html);
+        mor.layout.adjust();
+        if(crid) {
+            setTimeout(function () {
+                mor.call("revbyid?revid=" + crid, 'GET', null,
+                         function (revs) {
+                             mor.activity.cacheReview(revs[0]);
+                             mor.activity.display(); },
+                         function (code, errtxt) {
+                             mor.log("displayRemembered revbyid " + crid +
+                                     " " + code + " " + errtxt);
+                             badrevids.push(crid); },
+                         [ 404 ]); },
+                       50); }
+        if(cfid) {
+            setTimeout(function () {
+                mor.profile.retrievePen(cfid, mor.activity.display); },
+                       50); }
     },
 
 
@@ -160,10 +221,30 @@ define([], function () {
     },
 
 
+    modeSelectHTML = function (mode, label) {
+        return mor.checkrad("radio", "actmodesel", mode, label,
+                            (dispmode === mode), "mor.activity.modeChange");
+    },
+
+
+    modeChange = function () {
+        var radios, i;
+        radios = document.getElementsByName("actmodesel");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                dispmode = radios[i].value;
+                break; } }
+        mor.activity.display(); 
+    },
+
+
     verifyCoreDisplayElements = function () {
         var html, domelem = mor.byId('revactdiv');
         if(!domelem) {
-            html = "<div id=\"revactdiv\"></div>";
+            html = "<div id=\"actmodediv\">" +
+                modeSelectHTML("activity", "Recent") + " &nbsp; " +
+                modeSelectHTML("memo", "Remembered") + "</div>" +
+                "<div id=\"revactdiv\"></div>";
             mor.out('cmain', html); }
     },
 
@@ -172,7 +253,9 @@ define([], function () {
         //ATTENTION: read revs from local storage..
         mor.historyCheckpoint({ view: "activity" });
         verifyCoreDisplayElements();
-        if(revs) {
+        if(dispmode === "memo") {
+            displayRemembered(pen); }
+        else if(revs) {
             displayReviewActivity();
             doActivitySearch(); }
         else {
@@ -194,7 +277,11 @@ define([], function () {
         notePenNameStr: function (pen) {
             notePenNameStr(pen); },
         findReview: function (revid) {
-            return findReview(revid); }
+            return findReview(revid); },
+        cacheReview: function (rev) {
+            revcache[mor.instId(rev)] = rev; },
+        modeChange: function () {
+            modeChange(); }
     };
 
 });

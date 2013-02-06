@@ -403,7 +403,7 @@ var mor = {};  //Top level function closure container
         if(checked) {
             html += " checked=\"checked\""; }
         //the source element for the change event is unreliable if 
-        //you click on a label so not passing back any value.  
+        //you click on a label, so not passing back any value.  
         //Change listener will need to check what is selected.
         if(chgfstr) {
             html += " onchange=\"" + chgfstr + "();return false;\""; }

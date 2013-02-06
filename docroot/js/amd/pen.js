@@ -41,23 +41,42 @@ define([], function () {
     },
 
 
-    serializeSettings = function (penName) {
+    serializeFields = function (penName) {
+        if(typeof penName.revmem === 'object') {
+            penName.revmem = mor.dojo.json.stringify(penName.revmem); }
         if(typeof penName.settings === 'object') {
             penName.settings = mor.dojo.json.stringify(penName.settings); }
     },
 
 
-    deserializeSettings = function (penName) {
+    deserializeFields = function (penName) {
         var text, obj;
+        //reconstitute revmem
+        if(!penName.revmem) {
+            penName.revmem = {}; }
+        else if(typeof penName.revmem !== 'object') {
+            try {  //debug vars here help check for double encoding etc
+                text = penName.revmem;
+                obj = mor.dojo.json.parse(text);
+                penName.revmem = obj;
+            } catch (e) {
+                mor.log("pen.deserializeFields " + penName.name + ": " + e);
+                penName.revmem = {};
+            } }
+        if(typeof penName.revmem !== 'object') {
+            mor.log("Re-initializing penName revmem.  Deserialized value " +
+                    "was not an object: " + penName.revmem);
+            penName.revmem = {}; }
+        //reconstitute settings
         if(!penName.settings) {
             penName.settings = {}; }
         else if(typeof penName.settings !== 'object') {
-            try {  //extra vars help debug things like double encoding..
+            try {  //debug vars here help check for double encoding etc
                 text = penName.settings;
                 obj = mor.dojo.json.parse(text);
                 penName.settings = obj;
             } catch (e) {
-                mor.log("deserializeSettings " + penName.name + ": " + e);
+                mor.log("pen.deserializeFields " + penName.name + ": " + e);
                 penName.settings = {};
             } }
         if(typeof penName.settings !== 'object') {
@@ -104,12 +123,12 @@ define([], function () {
 
     updatePenName = function (pen, callok, callfail) {
         var data;
-        serializeSettings(pen);
+        serializeFields(pen);
         data = mor.objdata(pen);
         mor.call("updpen?" + mor.login.authparams(), 'POST', data,
                  function (updpens) {
                      currpen = updpens[0];
-                     deserializeSettings(currpen);
+                     deserializeFields(currpen);
                      callok(currpen); },
                  function (code, errtxt) {
                      callfail(code, errtxt); });
@@ -125,7 +144,7 @@ define([], function () {
         newpen.name = name;
         if(currpen && currpen.settings) {
             newpen.settings = currpen.settings;
-            serializeSettings(newpen); }
+            serializeFields(newpen); }
         data = mor.objdata(newpen);
         mor.call("newpen?" + mor.login.authparams(), 'POST', data,
                  function (newpens) {
@@ -133,7 +152,7 @@ define([], function () {
                      if(!penNames) {
                          penNames = []; }
                      penNames.push(currpen);
-                     deserializeSettings(currpen);
+                     deserializeFields(currpen);
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
@@ -185,7 +204,7 @@ define([], function () {
         if(penNames.length === 0) {
             return newPenNameDisplay(callback); }
         for(i = 0; i < penNames.length; i += 1) {
-            deserializeSettings(penNames[i]);
+            deserializeFields(penNames[i]);
             if(penNames[i].accessed > lastChosen) {
                 lastChosen = penNames[i].accessed;
                 currpen = penNames[i]; } }
@@ -234,8 +253,8 @@ define([], function () {
             return getHomePen(penid); },
         refreshCurrent: function () {
             refreshCurrentPenFields(); },
-        deserializeSettings: function (pen) {
-            deserializeSettings(pen); }
+        deserializeFields: function (pen) {
+            deserializeFields(pen); }
     };
 
 });

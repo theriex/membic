@@ -36,6 +36,8 @@ class PenName(db.Model):
     modified = db.StringProperty()  # iso date
     # accumulated top 20 reviews of each type stored as JSON
     top20s = db.TextProperty()
+    # remembered or marked reviews stored as JSON
+    revmem = db.TextProperty()
     # client settings like skin, keyword overrides etc stored as JSON
     settings = db.TextProperty()
     # counts of inbound and outbound relationships are maintained within
@@ -68,6 +70,7 @@ def set_pen_attrs(pen, request):
     pen.accessed = nowISO()
     pen.modified = nowISO()
     # pen.top20s is maintained separately as part of reviews
+    pen.revmem = request.get('revmem') or ""
     pen.settings = request.get('settings') or ""
             
 
@@ -299,6 +302,7 @@ class MakeTestPens(webapp2.RequestHandler):
             pen.city = "fake city " + str(count)
             pen.accessed = nowISO()
             pen.modified = nowISO()
+            pen.revmem = ""
             pen.settings = ""
             pen.following = 0
             pen.followers = 0

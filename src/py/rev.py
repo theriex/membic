@@ -40,8 +40,6 @@ class Review(db.Model):
     # CSV of penid:revid pairs for tracking review responses
     sourcerevs = db.TextProperty()
     responserevs = db.TextProperty()
-    # CSV of penid:feedid pairs for tracking remembered reviews
-    memos = db.TextProperty()
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
 
@@ -133,7 +131,6 @@ def read_review_values(handler, review):
         review.cankey = create_cankey_from_request(handler)
     # review.sourcrevs is updated through a specialized call
     # review.responserevs is updated through a specialized call
-    # review.memos is updated through a specialized call
     srevidstr = handler.request.get('srevid')
     if srevidstr:
         review.srevid = int(srevidstr)

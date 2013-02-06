@@ -593,11 +593,12 @@ define([], function () {
 
     //Return true if the current user has remembered the given review,
     //false otherwise.
-    isRemembered = function (review) {
-        var penid = mor.pen.currPenId();
-        if(penid && review && review.memos && 
-           review.memos.indexOf(penid + ":") >= 0) {
-            return true; }
+    isRemembered = function (pen, review) {
+        var i, revid = mor.instId(review);
+        if(pen.revmem && pen.revmem.remembered) {
+            for(i = 0; i < pen.revmem.remembered.length; i += 1) {
+                if(revid === pen.revmem.remembered[i]) {
+                    return true; } } }
     },
 
 
@@ -666,7 +667,7 @@ define([], function () {
     //follow, and a response review is how you communicate about
     //things on MyOpenReviews.  "Like", "+1" and general chatter
     //is best handled via integration with general social networks.
-    reviewFormButtonsHTML = function (review, type, keyval, mode) {
+    reviewFormButtonsHTML = function (pen, review, type, keyval, mode) {
         var html = "";
         //user just chose type for editing
         if(!keyval) {
@@ -701,10 +702,10 @@ define([], function () {
                 " onclick=\"mor.review.respond();return false;\"" +
                 ">Edit your corresponding review</button>" +
                 "&nbsp;";
-            if(isRemembered(review)) {
+            if(isRemembered(pen, review)) {
                 html += "<button type=\"button\" id=\"memobutton\"" +
                     " onclick=\"mor.review.memo(true);return false;\"" +
-                    ">Stop Remembering</a>"; }
+                    ">Stop remembering this review</a>"; }
             else {
                 html += "<button type=\"button\" id=\"memobutton\"" +
                     " onclick=\"mor.review.memo();return false;\"" +
@@ -856,7 +857,7 @@ define([], function () {
     //ATTENTION: Somewhere in the read display, show a count of how
     //many response reviews have been written, and how many people
     //have remembered the review.  Provided there's more than zero.
-    displayReviewForm = function (review, mode) {
+    displayReviewForm = function (pen, review, mode) {
         var html, type, keyval;
         type = findReviewType(review.revtype);
         keyval = review[type.key];
@@ -881,7 +882,7 @@ define([], function () {
         //buttons
         html += "<tr>" +
           "<td colspan=\"4\" align=\"center\" id=\"formbuttonstd\">" + 
-            reviewFormButtonsHTML(review, type, keyval, mode) + "</td>" +
+            reviewFormButtonsHTML(pen, review, type, keyval, mode) + "</td>" +
         "</tr>" +
         "</table></div>";
         mor.out('cmain', html);
@@ -998,9 +999,25 @@ define([], function () {
     //
     //After the feed item has been created, call the server to verify
     //the penid:feedid exists in the source review.
-    addReviewToMemos = function (remove) {
-        //ATTENTION: This needs to get built
-        mor.err("Remembering a review is not implemented yet");
+    addReviewToMemos = function (pen, remove) {
+        var idx, revid = mor.instId(crev);
+        if(!pen.revmem) {
+            pen.revmem = {}; }
+        if(!pen.revmem.remembered) {
+            pen.revmem.remembered = []; }
+        if(remove) {
+            idx = pen.revmem.remembered.indexOf(revid);
+            if(idx >= 0) {
+                pen.revmem.remembered.splice(idx, 1); } }
+        else {  //prepend to remembered, most recent first
+            pen.revmem.remembered.unshift(revid);
+            mor.activity.cacheReview(crev); }
+        mor.pen.updatePen(pen, 
+                          function (pen) {
+                              mor.review.displayRead(false); },
+                          function (code, errtxt) {
+                              alert("Remember update failed " + code + 
+                                    " " + errtxt); });
     },
 
 
@@ -1031,13 +1048,13 @@ define([], function () {
         //already have values for penid, svcdata, revtype, the defined
         //key field, and the subkey field (if defined for the type).
         if(read) { 
-            displayReviewForm(crev);
+            displayReviewForm(pen, crev);
             if(runServices) {
                 mor.services.run(pen, crev); } }
         else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
         else {
-            displayReviewForm(crev, "edit"); }
+            displayReviewForm(pen, crev, "edit"); }
     };
 
 
@@ -1086,7 +1103,8 @@ define([], function () {
         respond: function () {
             createEditResponseReview(); },
         memo: function (remove) {
-            addReviewToMemos(remove); },
+            mor.pen.getPen(function (pen) {
+                addReviewToMemos(pen, remove); }); },
         graphicAbbrevSiteLink: function (url) {
             return graphicAbbrevSiteLink(url); },
         swapVidTitleAndArtist: function () {
