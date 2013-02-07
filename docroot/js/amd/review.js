@@ -297,8 +297,9 @@ define([], function () {
             html += "<li><a href=\"" + autourl + "\">" + autourl + 
                 "</a></li>"; }
         else {
-            html += "<li>Paste a web address for what you are reviewing " + 
-                         "(if available)" + "<table><tr>" +
+            html += "<li><div class=\"bigoverlabel\">" + 
+                "Paste a web address for the review (if available)" + 
+                "</div><table><tr>" +
                 "<td align=\"right\">URL</td>" +
                 "<td align=\"left\">" +
                   "<input type=\"text\" id=\"urlin\" size=\"40\"" +
@@ -311,7 +312,8 @@ define([], function () {
                   ">Read</button>" +
                 "</td>" +
               "</tr></table></li>"; }
-        html += "<li>Choose a review type</li>" + 
+        html += "<li><div class=\"bigoverlabel\">" + 
+                "Choose a review type</div></li>" + 
             "<table class=\"typebuttonstable\">";
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(tdc === 0) {

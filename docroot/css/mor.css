@@ -25,9 +25,9 @@ body {
  ************************************************************
  */
 
-#logodiv { position:absolute; left:0px; top:25px; }
+#logodiv { position:absolute; left:0px; top:35px; }
 #titlediv { position:absolute; left:0px; top:0px; padding:0px 10px; }
-#topdiv { position:absolute; left:72px; top:12px; padding:0px 10px;
+#topdiv { position:absolute; left:72px; top:24px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #chead { height:50px; clear:both; }
 #accountdiv { }
@@ -37,7 +37,7 @@ body {
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px; }
 #logotitle { 
-  font-size:x-large;
+  font-size:xx-large;
   font-weight:bold;
   letter-spacing:1px;
   color:#2f478e;
@@ -50,13 +50,13 @@ body {
 .penfont, #penhnamespan { font-style:italic; 
   font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
  }
-#penhnamespan { font-size:x-large; }
+#penhnamespan { font-size:xx-large; }
 #penhbuttonspan { padding:0px 0px 0px 20px; }
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
   box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
-  padding:0px 5px; font-size:large; visibility:hidden; }
+  padding:0px 5px; font-size:x-large; visibility:hidden; }
 #acthdiv { float:left; }
 #revhdiv { float:right; margin:0px 20px 0px 0px; }
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
@@ -122,6 +122,7 @@ body {
 .webabbrev { font-size:x-small; }
 .csvstrdiv { padding:5px; }
 #actmodediv { padding:0px 0px 20px 0px; }
+.bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
 
 /* review layout */
 #revfdiv { }
