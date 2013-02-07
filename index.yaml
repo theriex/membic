@@ -12,6 +12,14 @@ indexes:
 
 - kind: Review
   properties:
+  - name: cankey
+  - name: penid
+  - name: revtype
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
   - name: penid
   - name: modified
     direction: desc

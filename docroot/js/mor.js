@@ -298,6 +298,13 @@ var mor = {};  //Top level function closure container
         return val;
     };
 
+    //if making an html attribute value by escaping double quotes,
+    //then get rid of any double quotes in the contained value
+    mor.ndq = function (val) {
+        val = val.replace(/"/g, "&quot;");
+        return val;
+    };
+
 
     //return true if the given text can be reasonably construed to be an
     //email address.

@@ -75,14 +75,19 @@ define([], function () {
                 text = penName.settings;
                 obj = mor.dojo.json.parse(text);
                 penName.settings = obj;
-            } catch (e) {
-                mor.log("pen.deserializeFields " + penName.name + ": " + e);
+            } catch (e2) {
+                mor.log("pen.deserializeFields " + penName.name + ": " + e2);
                 penName.settings = {};
             } }
         if(typeof penName.settings !== 'object') {
             mor.log("Re-initializing penName settings.  Deserialized value " +
                     "was not an object: " + penName.settings);
             penName.settings = {}; }
+        //reconstitute top20s
+        if(!penName.top20s) {
+            penName.top20s = {}; }
+        else if(typeof penName.top20s === "string") {
+            penName.top20s = mor.dojo.json.parse(penName.top20s); }
     },
 
 
@@ -199,15 +204,22 @@ define([], function () {
     },
 
 
-    chooseOrCreatePenName = function (callback) {
-        var i, lastChosen = "0000-00-00T00:00:00Z";
-        if(penNames.length === 0) {
-            return newPenNameDisplay(callback); }
-        for(i = 0; i < penNames.length; i += 1) {
-            deserializeFields(penNames[i]);
+    findHomePen = function () {
+        var i, lastChosen = "0000-00-00T00:00:00Z", pen;
+        if(penNames && penNames.length) {
+            for(i = 0; i < penNames.length; i += 1) {
+                deserializeFields(penNames[i]);
             if(penNames[i].accessed > lastChosen) {
                 lastChosen = penNames[i].accessed;
-                currpen = penNames[i]; } }
+                pen = penNames[i]; } } }
+        return pen;
+    },
+
+
+    chooseOrCreatePenName = function (callback) {
+        if(!penNames || penNames.length === 0) {
+            return newPenNameDisplay(callback); }
+        currpen = findHomePen();
         mor.skinner.setColorsFromPen(currpen);
         returnCall(callback);
     },
@@ -251,6 +263,8 @@ define([], function () {
             selectPenByName(name); },
         getHomePen: function (penid) {
             return getHomePen(penid); },
+        findHomePen: function () {
+            return findHomePen(); },
         refreshCurrent: function () {
             refreshCurrentPenFields(); },
         deserializeFields: function (pen) {

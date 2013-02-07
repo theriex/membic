@@ -524,7 +524,7 @@ define([], function () {
                 "<a href=\"#" + linkref + "\"" +
                  " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
                             "return false;\"" +
-                 " title=\"Show profile for " + mor.enc(penNameStr) + "\">" +
+                 " title=\"Show profile for " + mor.ndq(penNameStr) + "\">" +
                 "review by " + penNameStr + "</a></div>"; }
         html += "<div class=\"revtextsummary\">" + 
             mor.ellipsis(revobj.text, 255) + "</div>";

@@ -964,31 +964,77 @@ define([], function () {
     },
 
 
-    //If the current user has a corresponding review for the current
-    //review, then edit it, otherwise create a new review using the
-    //existing review fields (except the text).  Verify penid:revid
-    //for the original review exists in the sourcerevs of the edited
-    //response review.  After saving the modified response review,
-    //call the server to verify the penid:revid of the response review
-    //exists in the responserevs field of the original review. [This
-    //could be done via a separate task on the server, but the client
-    //has all the context already, and it's not a critical referential
-    //integrity relationship].
+    //Fill any missing descriptive fields in the given review from the
+    //current review, then edit the given review.
+    copyAndEdit = function (pen, review) {
+        //If instantiating a new review, then copy some base fields over
+        review.penid = mor.instId(pen);
+        review.revtype = crev.revtype;
+        review.cankey = crev.cankey;
+        //Fill in any empty descriptive fields
+        if(crev.imguri && !review.imguri && !review.revpic) {
+            review.imguri = crev.imguri; }
+        if(crev.name && !review.name) {
+            review.name = crev.name; }
+        if(crev.title && !review.title) {
+            review.title = crev.title; }
+        if(crev.url && !review.url) {
+            review.url = crev.url; }
+        if(crev.artist && !review.artist) {
+            review.artist = crev.artist; }
+        if(crev.author && !review.author) {
+            review.author = crev.author; }
+        if(crev.publisher && !review.publisher) {
+            review.publisher = crev.publisher; }
+        if(crev.album && !review.album) {
+            review.album = crev.album; }
+        if(crev.starring && !review.starring) {
+            review.starring = crev.starring; }
+        if(crev.address && !review.address) {
+            review.address = crev.address; }
+        if(crev.year && !review.year) {
+            review.year = crev.year; }
+        crev = review;
+        mor.review.display();
+    },
+
+
+    //Using the cankey, look up this pen's corresponding review and
+    //edit it, filling out any descriptive fields that did not already
+    //have values.  
     //
-    //If the current review.responserevs has a penid:revid value, then
-    //edit that identified review.  Otherwise look up the review by
-    //the type and canonical key/subkey value (cankey).  If no match
-    //was found, then provide a message saying "no existing review
-    //found, creating a new one <search>".  Clicking search bring up a
-    //dialog that walks the users reviews for the given type and
-    //displays anything that might be a match.  Sort of like how you
-    //search for pen names.
+    //Looking up by cankey is not infallible.  If the original review
+    //has typos in the identifying field, and the user corrects these
+    //when editing, then the corrected version might not be found.
+    //The cankey is used so if the user sees multiple reviews from
+    //multiple sources, they can get to their own review of the same
+    //thing fairly reliably.  Seems the best option.
     //
-    //Editing a response review should show up in the feeds for the
-    //source pen name.
-    createEditResponseReview = function () {
-        //ATTENTION: This needs to get built
-        mor.err("Editing a response review is not implemented yet");
+    //Retrieving the response review is pretty much always a server
+    //call, but if the response review is part of the top20s and was
+    //already instantiated, then that instance is used and written
+    //through on save. 
+    createEditResponseReview = function (homepen) {
+        var params, i, t20;
+        if(homepen.top20s) {
+            t20 = homepen.top20s[crev.revtype];
+            if(t20 && t20.length) {
+                for(i = 0; i < t20.length; i += 1) {
+                    if(t20[i].cankey === crev.cankey && 
+                       t20[i].revtype === crev.revtype) {
+                        return copyAndEdit(homepen, t20[i]); } } } }
+        params = "penid=" + mor.instId(homepen) + 
+            "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
+            "&" + mor.login.authparams();
+        mor.call("revbykey?" + params, 'GET', null,
+                 function (revs) {
+                     var rev = {};
+                     if(revs.length > 0) {
+                         rev = revs[0]; }
+                     copyAndEdit(homepen, rev); },
+                 function (code, errtxt) {
+                     mor.err("Edit response review failed " + code + 
+                             " " + errtxt); });
     },
 
 
@@ -1016,8 +1062,8 @@ define([], function () {
                           function (pen) {
                               mor.review.displayRead(false); },
                           function (code, errtxt) {
-                              alert("Remember update failed " + code + 
-                                    " " + errtxt); });
+                              mor.err("Remember update failed " + code + 
+                                      " " + errtxt); });
     },
 
 
@@ -1101,7 +1147,8 @@ define([], function () {
         initWithId: function (revid, mode) {
             initWithId(revid, mode); },
         respond: function () {
-            createEditResponseReview(); },
+            mor.pen.getPen(function (pen) {
+                createEditResponseReview(pen); }); },
         memo: function (remove) {
             mor.pen.getPen(function (pen) {
                 addReviewToMemos(pen, remove); }); },

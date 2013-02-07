@@ -148,6 +148,11 @@ handlers:
 - url: /revbyid.*
   script: src.py.rev.app
 
+## Return the review looking up by revtype and cankey
+## GET params: penid, revtype, cankey, authparams
+- url: /revbykey
+  script: src.py.rev.app
+
 ## Return reviews from any pen name ids in the given csv
 ## GET params: penids, since, cursor
 - url: /revact.*

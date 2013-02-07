@@ -37,9 +37,6 @@ class Review(db.Model):
     year = db.StringProperty()
     # The canonized key/subkey field value for search match
     cankey = db.StringProperty()
-    # CSV of penid:revid pairs for tracking review responses
-    sourcerevs = db.TextProperty()
-    responserevs = db.TextProperty()
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
 
@@ -297,6 +294,25 @@ class GetReviewById(webapp2.RequestHandler):
         returnJSON(self.response, [ review ])
 
 
+class GetReviewByKey(webapp2.RequestHandler):
+    def get(self):
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        penid = int(self.request.get('penid'))
+        revtype = self.request.get('revtype')
+        cankey = self.request.get('cankey')
+        where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"\
+             + " ORDER BY modified DESC"
+        fetchmax = 5
+        revquery = Review.gql(where, penid, revtype, cankey)
+        reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
+                                 deadline=10)
+        returnJSON(self.response, reviews)
+
+
 class ReviewActivity(webapp2.RequestHandler):
     def get(self):
         since = self.request.get('since')
@@ -331,5 +347,6 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/revpic', GetReviewPic),
                                ('/srchrevs', SearchReviews),
                                ('/revbyid', GetReviewById), 
+                               ('/revbykey', GetReviewByKey),
                                ('/revact', ReviewActivity)], debug=True)
 
