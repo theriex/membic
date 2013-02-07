@@ -8,26 +8,13 @@
 </head>
 <body>
 
-<p>MyOpenReviews uses 
-<a href="https://myopenreviews.appspot.com"
-   onclick="window.open('https://myopenreviews.appspot.com');return false;">
-https://myopenreviews.appspot.com</a>
-as a secure server for native login management.  
-If it looks like you are getting switched back and forth between
-servers, that's because you are.  At least it keeps your password
-hidden. </p>
+<p>MyOpenReviews uses <em>https://myopenreviews.appspot.com</em> as a
+secure login server for accepting your username and password.  This is
+exactly the same site as <em>http://www.myopenreviews.com</em>, but
+accessed via the direct Google App Engine address. </p>
 
-<p>Except for native authentication, everything in MyOpenReviews is
-essentially public, so there's not a lot of reason to run https in
-general for the site.  Eventually it will probably all run secured
-anyway, or at least provide the option. </p>
-
-<p>If you get a warning about some parts of the page not being
-secured, that would be the YUI library (Yahoo APIs) which are
-currently only available via http.  If you can think of a scenario
-where that would actually be unsafe, please post it to the issues
-forum. </p>
-
+<p>After logging in, you'll return
+to <em>http://www.myopenreviews.com</em>. </p>
 
 </body>
 </html>
