@@ -52,8 +52,7 @@
 
   </div>
 
-  <div id="contentfill"> &nbsp; 
-  </div>
+  <div id="contentfill">loading...</div>
 
   <div id="bottomnav"> <!-- clicks mapped in layout.localDocLinks -->
     <a href="docs/about.html">about</a> 
@@ -97,6 +96,7 @@ require({ baseUrl: "/js/",
                   layout, login, review, profile, 
                   activity, pen, rel, skinner,
                   services, basicmod) {
+            document.getElementById('contentfill').innerHTML="initializing...";
             mor.init(dom, json, on, request, 
                      query, cookie, dijitreg, 
                      slider, 

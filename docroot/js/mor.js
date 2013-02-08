@@ -246,6 +246,7 @@ var mor = {};  //Top level function closure container
                          activity, pen, rel, skinner,
                          services, basicmod) {
         var cdiv = mor.byId('contentdiv');
+        mor.out('contentfill', " &nbsp; ");
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
         mor.dojo = { dom: dom, json: json, on: on, request: request,

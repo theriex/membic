@@ -47,10 +47,10 @@ Feel free to call the REST API directly from whatever cool interface
 you are working on (whether it is part of MyOpenReviews or not), but
 PLEASE DO NOT BATCH REQUESTS!  This is a fledgling site and after
 writing about a 1000 reviews the whole site will run out of resources
-for the day.  Once normal interactive site starts approaching half the
-current limit, the plan is to open the pipes.  In the meantime please
-help to conserve resources by pulling only what you need and caching
-locally whenever possible.
+for the day.  Once normal interactive site use starts approaching half
+the current limit, that's the time to open the pipes.  In the meantime
+please help to conserve resources by pulling only what you need, and
+caching locally whenever possible.
 
 
 Connectors:
@@ -61,28 +61,27 @@ your content sites and your social sites.  To work smoothly, it makes
 use of APIs for *inbound* and *outbound* connectors.  The connectors
 are organized by API provider in `docroot/js/amd/ext`.  New and
 improved connectors are always welcome.  This site can never be too
-connected or too smooth.  To build a new connector, just model an
-existing one.
+connected or too smooth.  To build a new connector, it's easiest to
+model an existing one.
 
 Note that MyOpenReviews adheres to all terms of use for all APIs, and
-respects API providers, returning value when possible.  When you are
-working with an API please
+respects API providers.  When you are working with an API please
 
 1. Make sure all use is allowed by the API provider
 
 2. Provide attribution when appropriate and respect marks
 
 3. Generally try and give back.  For an inbound connection, link back
-to where the content can be found, and if reasonable post review
-information back.  For an outbound connection, make sure what is being
-posted is compatible and desirable.
+to where the content can be found, and post back review information if
+that's reasonable.  For an outbound connection, send only compatible,
+desirable, and expected content.
 
-Big bonus points for respecting the MyOpenReviews user and making
-their life as easy as possible. 
+Big bonus points for respecting the MyOpenReviews users and making
+their lives as easy as possible. 
 
-Note that MyOpenReviews does not itself provide media for review, nor
-does it support general social conversation, so any API relating to
-either of those things cannot be utilized.
+MyOpenReviews does not provide media for review, nor does it support
+general social conversation, so any API calls relating to either of those
+actions cannot be utilized.
 
 
 Applications:
@@ -98,7 +97,7 @@ Get in touch if you want MyOpenReviews to have a link to your app.
 Other sites:
 -----------
 
-Get in touch.  MyOpenReviews is not the single solution for every
-person's every need, and moving smoothly between communities is good
-for everyone.
+MyOpenReviews is not the single solution for every person's every
+need, and moving smoothly between communities is good for everyone, so
+get in touch.
 
