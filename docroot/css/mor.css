@@ -68,9 +68,12 @@ body {
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #closeline { text-align:right; font-size:x-small; }
-.navico { height:20px; width:20px; margin:0px 10px; border=none; }
+.navico { height:20px; width:20px; margin:0px 0px 0px 14px;
+          border:2px solid #ccc; border-radius:20px;
+          background:white; padding:4px; vertical-align:bottom;
+}
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
-  border=none; vertical-align:middle; }
+  border:none; vertical-align:middle; }
 
 /* intro layout */
 #bookmarkletlinkdiv { padding:5px 20px; }
