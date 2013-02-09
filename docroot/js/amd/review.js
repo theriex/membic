@@ -139,6 +139,8 @@ define([], function () {
             width = 60;
             title = "Five stars"; }
         html = "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                   " style=\"width:" + (60 - width) + "px;height:13px;\"/>" +
+               "<img class=\"starsimg\" src=\"img/blank.png\"" +
                    " style=\"width:" + width + "px;height:13px;" + 
                             "background:url('img/ratstar5.png')\"" +
                    " title=\"" + title + "\" alt=\"" + title + "\"/>";
