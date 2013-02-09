@@ -268,6 +268,7 @@ class SearchReviews(webapp2.RequestHandler):
         penid = int(self.request.get('penid'))
         mindate = self.request.get('mindate')
         maxdate = self.request.get('maxdate')
+        qstr = self.request.get('qstr')
         fetchmax = 100
         where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"\
              + " ORDER BY modified DESC"
@@ -280,7 +281,14 @@ class SearchReviews(webapp2.RequestHandler):
                                  deadline=10)
         if len(reviews) >= fetchmax:
             cursor = revquery.cursor()
-        returnJSON(self.response, reviews, cursor)
+        checked = len(reviews)
+        if qstr:
+            results = []
+            for review in reviews:
+                if qstr in review.cankey:
+                    results.append(review)
+            reviews = results
+        returnJSON(self.response, reviews, cursor, checked)
 
 
 class GetReviewById(webapp2.RequestHandler):

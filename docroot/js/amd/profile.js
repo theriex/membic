@@ -22,6 +22,10 @@ define([], function () {
         searchresults = [],
         searchcursor = "",
         searchtotal = 0,
+        searchmode = "pen",  //other option is "rev"
+        pensrchplace = "Pen name, city or shoutout...",
+        revsrchplace = "Review title or name...",
+        
 
 
     clearReviewSearchState = function (dispState) {
@@ -756,13 +760,17 @@ define([], function () {
     },
 
 
-    //The server handles the "active since" restriction by checking
-    //the "accessed" field, and the "top 20" restriction by testing
-    //the "hastop" field.  However it does not handle joins across
-    //relationships due to indexing overhead, so these are filtered
-    //out here.
-    filtered = function (pen) {
-        var rel = mor.rel.outbound(mor.instId(pen));
+    //When searching pen names, the server handles the "active since"
+    //restriction by checking the "accessed" field, and the "top 20"
+    //restriction by testing the "hastop" field.  However it does not
+    //handle joins across relationships due to indexing overhead, so
+    //these are filtered out here.
+    filtered = function (searchitem) {
+        var pen, rel;
+        if(searchmode === "rev") {
+            return false; }  //no filtering
+        pen = searchitem;
+        rel = mor.rel.outbound(mor.instId(pen));
         if(rel) {
             if(searchparams.includeFollowing && rel.status === "following") {
                 return false; }
@@ -774,27 +782,38 @@ define([], function () {
 
 
     displaySearchResults = function (results) {
-        var i, html = "<ul class=\"penlist\">";
+        var i, html, ts;
+        ts = { "pen": { "ulc": "penlist", "stype": "pen names" },
+               "rev": { "ulc": "revlist", "stype": "reviews" } };
+        ts = ts[searchmode];
+        html = "<ul class=\"" + ts.ulc + "\">";
         for(i = 0; i < searchresults.length; i += 1) {
-            html += penListItemHTML(searchresults[i]); }
+            if(searchmode === "pen") {
+                html += penListItemHTML(searchresults[i]); }
+            else if(searchmode === "rev") {
+                html += reviewItemHTML(searchresults[i]); } }
         searchcursor = "";
         for(i = 0; i < results.length; i += 1) {
             if(results[i].fetched) {
                 searchtotal += results[i].fetched;
                 html += "<div class=\"sumtotal\">" + 
-                    searchtotal + " pen names searched</div>";
+                    searchtotal + " " + ts.stype + " searched</div>";
                 if(results[i].cursor) {
                     searchcursor = results[i].cursor; }
-                break; }  //if no pen names, i will be left at zero
+                break; }  //if no results, i will be left at zero
             if(!filtered(results[i])) {
                 searchresults.push(results[i]);
-                html += penListItemHTML(results[i]); } }
+                if(searchmode === "pen") {
+                    html += penListItemHTML(results[i]); }
+                else if(searchmode === "rev") {
+                    html += reviewItemHTML(results[i]); } } }
         html += "</ul>";
         if(searchcursor) {
             if(i > 0) {  //have more than just an empty result cursor..
                 html += "<a href=\"#continuesearch\"" +
                           " onclick=\"mor.profile.srchmore();return false;\"" +
-                  " title=\"Continue searching for more matching pen names\"" +
+                          " title=\"Continue searching for more matching " + 
+                                    ts.stype + "\"" +
                     ">continue search...</a>"; }
             else { //auto-repeat search without creating a recursion stack
                 setTimeout(mor.profile.srchmore, 10); } }
@@ -804,14 +823,9 @@ define([], function () {
     },
 
 
-
     doPenSearch = function () {
         var params, qstr, time, t20, i;
         qstr = mor.byId('searchtxt').value;
-        readSearchParamsFromForm();
-        mor.byId('searchoptionsdiv').style.display = "none";
-        mor.byId('srchbuttonspan').style.display = "none";
-        mor.out('srchmessagespan', "Searching...");
         params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
             "&cursor=" + mor.enc(searchcursor);
         if(searchparams.activeDaysAgo > 0) {
@@ -836,35 +850,71 @@ define([], function () {
     },
 
 
-    startPenSearch = function () {
+    doRevSearch = function () {
+        var params, maxdate, mindate, qstr;
+        qstr = mor.byId('searchtxt').value;
+        maxdate = (new Date()).toISOString();
+        mindate = (new Date(0)).toISOString();
+        params = mor.login.authparams() + 
+            "&qstr=" + mor.enc(mor.canonize(qstr)) +
+            "&penid=" + mor.pen.currPenId() +
+            "&maxdate=" + maxdate + "&mindate=" + mindate +
+            "&cursor=" + mor.enc(searchcursor);
+        mor.call("srchrevs?" + params, 'GET', null,
+                 function (results) {
+                     displaySearchResults(results); },
+                 function (code, errtxt) {
+                     mor.out('searchresults',
+                             "error code: " + code + " " + errtxt); });
+    },
+
+
+    doSearch = function () {
+        readSearchParamsFromForm();
+        mor.byId('searchoptionsdiv').style.display = "none";
+        mor.byId('srchbuttonspan').style.display = "none";
+        mor.out('srchmessagespan', "Searching...");
+        switch(searchmode) {
+        case "pen": return doPenSearch();
+        case "rev": return doRevSearch(); }
+    },
+
+
+    startSearch = function () {
         searchresults = [];
         searchcursor = "";
         searchtotal = 0;
         mor.out('searchresults', "");
-        doPenSearch();
+        doSearch();
     },
 
 
     displaySearchForm = function () {
         var html = "";
         selectTab("searchli", mor.profile.search);
-        html += "<p>" +
-            "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
-                  " placeholder=\"name, city or shoutout partial text\"" +
-                  " value=\"\"/>" +
-            "&nbsp;" +
-            "<span id=\"srchmessagespan\"> </span>" +
-            "<span id=\"srchbuttonspan\">" +
-              "<button type=\"button\" id=\"searchbutton\">Search</button>" +
-            "</span>" +
-            "&nbsp;" +
-            "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
-              "<a href=\"#options\"" +
-                " title=\"advanced search options\"" +
-                " onclick=\"mor.profile.togglesrchopts();return false;\"" +
-              ">options</a>" +
-            "</span>" +
-            "</p>" +
+        html += "<table><tr>" +
+            "<td><input type=\"text\" id=\"searchtxt\" size=\"40\"" +
+                      " placeholder=\"" + pensrchplace + "\"" +
+                      " value=\"\"/></td>" +
+            "<td>" +
+              "<span id=\"srchmessagespan\"> </span>" +
+              "<span id=\"srchbuttonspan\">" +
+                "<button type=\"button\" id=\"searchbutton\">Search</button>" +
+              "</span></td>" +
+            "<td>" +
+              mor.checkrad("radio", "searchmode", "pen", "Pen Names",
+                           (searchmode === "pen"), "mor.profile.srchmode") +
+              " &nbsp; " +
+              "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
+                "<a href=\"#options\"" +
+                  " title=\"advanced search options\"" +
+                  " onclick=\"mor.profile.togglesrchopts();return false;\"" +
+                ">options</a></span>" +
+              "<br/>" +
+              mor.checkrad("radio", "searchmode", "rev", "My Reviews",
+                           (searchmode === "rev"), "mor.profile.srchmode") +
+            "</td>" +
+            "</tr></table>" +
             "<div id=\"searchoptionsdiv\" class=\"formstyle\">" +
             "<b>Must have reviewed their top 20</b>" +
             mor.review.reviewTypeCheckboxesHTML("reqmin") +
@@ -887,10 +937,27 @@ define([], function () {
         setFormValuesFromSearchParams();
         displaySearchResults([]);  //show previous results, if any
         mor.byId('searchoptionsdiv').style.display = "none";
-        mor.onchange('searchtxt', startPenSearch);
-        mor.onclick('searchbutton', startPenSearch);
+        mor.onchange('searchtxt', startSearch);
+        mor.onclick('searchbutton', startSearch);
         mor.byId('searchtxt').focus();
         mor.layout.adjust();
+    },
+
+
+    changeSearchMode = function () {
+        var i, radios = document.getElementsByName("searchmode");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                if(radios[i].value === "pen") {
+                    mor.byId('srchoptstoggle').style.display = "inline";
+                    mor.byId('searchtxt').placeholder = pensrchplace;
+                    searchmode = "pen";
+                    break; }
+                else if(radios[i].value === "rev") {
+                    mor.byId('srchoptstoggle').style.display = "none";
+                    mor.byId('searchtxt').placeholder = revsrchplace;
+                    searchmode = "rev";
+                    break; } } }
     },
 
 
@@ -1224,7 +1291,7 @@ define([], function () {
         setTab: function (tabstr) {
             setCurrTabFromString(tabstr); },
         srchmore: function () {
-            doPenSearch(); },
+            doSearch(); },
         relationship: function () {
             createOrEditRelationship(); },
         retrievePen: function (id, callback) {
@@ -1249,7 +1316,9 @@ define([], function () {
             mor.pen.getPen(function (pen) { 
                 handleAuthChangeToggle(pen, authtype, domid); }); },
         displayAuthSettings: function (domid, pen) {
-            displayAuthSettings(domid, pen); }
+            displayAuthSettings(domid, pen); },
+        srchmode: function () {
+            changeSearchMode(); }
     };
 
 });
