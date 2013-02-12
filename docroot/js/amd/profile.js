@@ -692,6 +692,7 @@ define([], function () {
             followingDisp = { profpen: profpen, direction: "outbound", 
                               divid: 'profcontdiv' }; }
         mor.rel.displayRelations(followingDisp);
+        mor.layout.adjust();
     },
 
 
@@ -701,6 +702,7 @@ define([], function () {
             followerDisp = { profpen: profpen, direction: "inbound", 
                              divid: 'profcontdiv' }; }
         mor.rel.displayRelations(followerDisp);
+        mor.layout.adjust();
     },
 
 
