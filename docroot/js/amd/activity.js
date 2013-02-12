@@ -182,13 +182,16 @@ define([], function () {
 
 
     doActivitySearch = function (continued) {
-        var params = "penids=" + penids.join(',');
+        var time, params = "penids=" + penids.join(',');
         if(!continued && lastChecked) {
             params += "&since=" + lastChecked.toISOString(); }
         if(continued) {
             params += "&cursor=" + actcursor; }
+        time = new Date().getTime();
         mor.call("revact?" + params, 'GET', null,
                  function (results) {
+                     time = new Date().getTime() - time;
+                     mor.log("revact returned in " + time/1000 + " seconds.");
                      lastChecked = new Date();
                      collectAndDisplayReviewActivity(results, continued); },
                  function (code, errtxt) {

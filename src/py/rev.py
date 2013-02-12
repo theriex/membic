@@ -336,6 +336,7 @@ class ReviewActivity(webapp2.RequestHandler):
         if cursor:
             revs.with_cursor(start_cursor = cursor)
         maxcheck = 1000
+        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
         checked = 0
         cursor = ""
         for rev in revs:
@@ -345,10 +346,10 @@ class ReviewActivity(webapp2.RequestHandler):
             if len(results) >= 20:
                 cursor = revs.cursor()
                 break
+            if rev.modified < dold:
+                break  #rest is too old to display
             if checked >= maxcheck:
-                #that's enough searching.  If nothing found then the pens
-                #you are following are not particularly active
-                break
+                break  #that's enough resources expended
         returnJSON(self.response, results, cursor, checked)
 
 
