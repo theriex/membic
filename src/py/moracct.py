@@ -158,14 +158,17 @@ def authenticated(request):
         logging.info("could not authenticate unknown account type: " + acctype)
 
 
+def dt2ISO(dt):
+    iso = str(dt.year) + "-" + str(dt.month).rjust(2, '0') + "-"
+    iso += str(dt.day).rjust(2, '0') + "T" + str(dt.hour).rjust(2, '0')
+    iso += ":" + str(dt.minute).rjust(2, '0') + ":"
+    iso += str(dt.second).rjust(2, '0') + "Z"
+    return iso
+
+
 def nowISO():
     """ Return the current time as an ISO string """
-    now = datetime.datetime.utcnow()
-    iso = str(now.year) + "-" + str(now.month).rjust(2, '0') + "-"
-    iso += str(now.day).rjust(2, '0') + "T" + str(now.hour).rjust(2, '0')
-    iso += ":" + str(now.minute).rjust(2, '0') + ":"
-    iso += str(now.second).rjust(2, '0') + "Z"
-    return iso
+    return dt2ISO(datetime.datetime.utcnow())
 
 
 def canonize(strval):
