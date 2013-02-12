@@ -238,13 +238,13 @@ class UploadReviewPic(webapp2.RequestHandler):
             redurl = "http://www.myopenreviews.com#review"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
-        logging.info("UploadReviewPic redirecting to " + redurl);
+        logging.info("UploadReviewPic redirecting to " + redurl)
         self.redirect(redurl)
 
 
 class GetReviewPic(webapp2.RequestHandler):
     def get(self):
-        revid = self.request.get('revid');
+        revid = self.request.get('revid')
         review = Review.get_by_id(int(revid))
         havepic = review and review.revpic
         if not havepic:
@@ -342,8 +342,12 @@ class ReviewActivity(webapp2.RequestHandler):
             checked += 1
             if str(rev.penid) in penids:
                 results.append(rev)
-            if checked >= maxcheck or len(results) >= 20:
+            if len(results) >= 20:
                 cursor = revs.cursor()
+                break
+            if checked >= maxcheck:
+                #that's enough searching.  If nothing found then the pens
+                #you are following are not particularly active
                 break
         returnJSON(self.response, results, cursor, checked)
 
