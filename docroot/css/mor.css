@@ -72,6 +72,7 @@ body {
           border:2px solid #ccc; border-radius:20px;
           background:white; padding:4px; vertical-align:bottom;
 }
+.rssico { height:28px; width:28px; vertical-align:middle; padding:0px 5px;}
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
   border:none; vertical-align:middle; }
 

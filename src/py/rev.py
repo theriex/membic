@@ -178,6 +178,32 @@ def fetch_review_by_cankey(handler):
         return reviews[0]
 
 
+def review_activity_search(since, cursor, penids):
+    results = []
+    revs = Review.all()
+    revs.order('-modified')
+    if since:
+        revs.filter('modified >', since)
+    if cursor:
+        revs.with_cursor(start_cursor = cursor)
+    maxcheck = 1000
+    dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
+    checked = 0
+    cursor = ""
+    for rev in revs:
+        checked += 1
+        if str(rev.penid) in penids:
+            results.append(rev)
+        if len(results) >= 20:
+            cursor = revs.cursor()
+            break
+        if rev.modified < dold:
+            break  #rest is too old to display
+        if checked >= maxcheck:
+            break  #that's enough resources expended
+    return checked, results
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -328,29 +354,8 @@ class ReviewActivity(webapp2.RequestHandler):
         penidstr = self.request.get('penids')
         penids = penidstr.split(',')
         logging.info("penids: " + str(penids))
-        results = []
-        revs = Review.all()
-        revs.order('-modified')
-        if since:
-            revs.filter('modified >', since)
-        if cursor:
-            revs.with_cursor(start_cursor = cursor)
-        maxcheck = 1000
-        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
-        checked = 0
-        cursor = ""
-        for rev in revs:
-            checked += 1
-            if str(rev.penid) in penids:
-                results.append(rev)
-            if len(results) >= 20:
-                cursor = revs.cursor()
-                break
-            if rev.modified < dold:
-                break  #rest is too old to display
-            if checked >= maxcheck:
-                break  #that's enough resources expended
-        returnJSON(self.response, results, cursor, checked)
+        checked, reviews = review_activity_search(since, cursor, penids)
+        returnJSON(self.response, reviews, cursor, checked)
 
 
 app = webapp2.WSGIApplication([('/newrev', NewReview),

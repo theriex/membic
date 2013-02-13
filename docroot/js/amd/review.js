@@ -746,6 +746,7 @@ define([], function () {
             style: "width:150px;",
             onChange: function (value) {
                 sliderChange(value); } }, "ratslide");
+        //0 is a valid rating value so can't test for !crev.rating...
         if(crev.rating === null || crev.rating < 0) { 
             crev.rating = 80; }  //have to start somewhere...
         ratingSlider.set("value", crev.rating);
@@ -974,6 +975,7 @@ define([], function () {
         //If instantiating a new review, then copy some base fields over
         review.penid = mor.instId(pen);
         review.revtype = crev.revtype;
+        review.rating = crev.rating;  //initial value required..
         review.cankey = crev.cankey;
         //Fill in any empty descriptive fields
         if(crev.imguri && !review.imguri && !review.revpic) {

@@ -388,15 +388,17 @@ var mor = {};  //Top level function closure container
 
     //factored method to create an image link.  Some older browsers put
     //borders around these...
-    mor.imglink = function (href, title, funcstr, imgfile) {
+    mor.imglink = function (href, title, funcstr, imgfile, cssclass) {
         var html;
+        if(!cssclass) {
+            cssclass = "navico"; }
         if(funcstr.indexOf(";") < 0) {
             funcstr += ";"; }
         if(imgfile.indexOf("/") < 0) {
             imgfile = "img/" + imgfile; }
         html = "<a href=\"" + href + "\" title=\"" + title + "\"" +
                  " onclick=\"" + funcstr + "return false;\"" +
-               "><img class=\"navico\" src=\"" + imgfile + "\"" +
+               "><img class=\"" + cssclass + "\" src=\"" + imgfile + "\"" +
                     " border=\"0\"/></a>";
         return html;
     };

@@ -187,12 +187,6 @@ handlers:
 - url: /urlcontents.*
   script: src.py.consvc.app
 
-
-######################################################################
-##        Stats
-- url: /stats.*
-  script: src.py.statweek.app
-
 ######################################################################
 # Static files and other stuff not really part of the API
 #
@@ -204,6 +198,10 @@ handlers:
   script: src.py.pen.app
 - url: /statrev/\d+
   script: src.py.statrev.app
+- url: /stats.*
+  script: src.py.statweek.app
+- url: /rssact.*
+  script: src.py.rssact.app
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/

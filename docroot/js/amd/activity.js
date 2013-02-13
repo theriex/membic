@@ -230,6 +230,17 @@ define([], function () {
     },
 
 
+    updateRSSImage = function () {
+        var url, html, img = "blank.png"
+        if(dispmode === "activity") {
+            img = "feed-icon-28x28.png"; }
+        url = "rssact?pen=" + mor.pen.currPenId();
+        html = mor.imglink(url, "Activity RSS Feed",
+                           "window.open('" + url + "')", img, "rssico");
+        mor.out('rssactspan', html);
+    },
+
+
     modeChange = function () {
         var radios, i;
         radios = document.getElementsByName("actmodesel");
@@ -237,6 +248,7 @@ define([], function () {
             if(radios[i].checked) {
                 dispmode = radios[i].value;
                 break; } }
+        updateRSSImage();
         mor.activity.display(); 
     },
 
@@ -245,10 +257,12 @@ define([], function () {
         var html, domelem = mor.byId('revactdiv');
         if(!domelem) {
             html = "<div id=\"actmodediv\">" +
+                "<span id=\"rssactspan\"></span>" +
                 modeSelectHTML("activity", "Recent") + " &nbsp; " +
                 modeSelectHTML("memo", "Remembered") + "</div>" +
                 "<div id=\"revactdiv\"></div>";
-            mor.out('cmain', html); }
+            mor.out('cmain', html);
+            updateRSSImage(); }
     },
 
 

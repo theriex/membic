@@ -151,7 +151,7 @@ class GetStats(webapp2.RequestHandler):
     def get(self):
         result = get_stats()
         html = get_stats_html(result)
-        self.response.headers['Content-Type'] = "text/html; charset=UTF-8";
+        self.response.headers['Content-Type'] = "text/html; charset=UTF-8"
         self.response.out.write(html);
 
 

@@ -7,43 +7,47 @@ import re
 
 
 def starsImageHTML(rating):
-    img = ""
+    width = 0
     title = ""
     if rating < 5:
-        img = "ratstar0.png"
+        width = 0
         title = "No stars"
     elif rating < 15:
-        img = "ratstar05.png"
+        width = 6
         title = "Half a star"
     elif rating < 25:
-        img = "ratstar1.png"
+        width = 12
         title = "One star"
     elif rating < 35:
-        img = "ratstar15.png"
+        width = 18
         title = "One and a half stars"
     elif rating < 45:
-        img = "ratstar2.png"
+        width = 24
         title = "Two stars"
     elif rating < 55:
-        img = "ratstar25.png"
+        width = 30
         title = "Two and a half stars"
     elif rating < 65:
-        img = "ratstar3.png"
+        width = 36
         title = "Three stars"
     elif rating < 75:
-        img = "ratstar35.png"
+        width = 42
         title = "Three and a half stars"
     elif rating < 85:
-        img = "ratstar4.png"
+        width = 48
         title = "Four stars"
     elif rating < 95:
-        img = "ratstar45.png"
+        width = 54
         title = "Four and a half stars"
     else:
-        img = "ratstar5.png"
+        width = 60
         title = "Five stars"
-    html = "<img class=\"starsimg\" src=\"../img/" + img + "\""
-    html +=    " title=\"" + title + "\" alt=\"" + title + "\"/>"
+    html = "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
+        " style=\"width:" + str(60 - width) + "px;height:13px;\"/>" +\
+        "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
+        " style=\"width:" + str(width) + "px;height:13px;" +\
+        "background:url('../img/ratstar5.png')\"" +\
+        " title=\"" + title + "\" alt=\"" + title + "\"/>";
     return html
 
 
@@ -75,7 +79,7 @@ def getTitle(rev):
     if rev.revtype == "movie":
         return rev.title
     if rev.revtype == "video":
-        return rev.url
+        return rev.title
     if rev.revtype == "music":
         return rev.title
     if rev.revtype == "food":
@@ -94,13 +98,11 @@ def getSubkey(rev):
         return rev.author
     if rev.revtype == "music":
         return rev.artist
-    if rev.revtype == "other":
-        return rev.type
     return ""
 
 
 def urlImageLink(rev):
-    if not rev.url or rev.revtype == "video":
+    if not rev.url:
         return ""
     html = "<a href=\"" + rev.url + "\""
     html +=  " onclick=\"window.open('" + rev.url + "');return false;\""
@@ -110,11 +112,16 @@ def urlImageLink(rev):
 
 
 def reviewPicHTML(rev):
-    if not rev.revpic:
-        return ""
-    html = "<img class=\"revpic\""
-    html +=    " src=\"revpic?revid=" + rev.key().id()
-    html +=  "\"/>"
+    html = ""
+    if rev.imguri:
+        html = "<img class=\"revpic\""
+        html +=    " style=\"max-width:125px;height:auto;\""
+        html +=    " src=\"" + rev.imguri
+        html +=  "\">"
+    if rev.revpic:
+        html = "<img class=\"revpic\""
+        html +=    " src=\"revpic?revid=" + rev.key().id()
+        html +=  "\"/>"
     return html;
 
 
@@ -204,7 +211,8 @@ def revhtml(rev, pen):
     html +=   "<span id=\"logotitle\">MyOpenReviews</span>"
     html += "</div>"
     html += "<div id=\"appspacediv\">"
-    html +=   "<div id=\"contentdiv\" class=\"mtext\">"
+    html +=   "<div id=\"contentdiv\" class=\"mtext\""
+    html +=       " style=\"padding:20px 0px 0px 0px;\">"
 
     html += "<div id=\"morgoogleads\""
     html +=     " style=\"width:130px;height:610px;float:left;\">"
