@@ -8,7 +8,9 @@
 define([], function () {
     "use strict";
 
-    var
+    var slides = [ "cycleframe.png", "pens.png", "feature.png" ],
+        slideindex = 0,
+        slideslot = 0,
 
 
     closeDialog = function () {
@@ -78,6 +80,23 @@ define([], function () {
     },
 
 
+    //Set the src of the current img to the next slide and change its
+    //opacity to 1.  Then change the opacity of the prev img to 0.
+    slideshow = function () {
+        var sdiv, prevslot, currslot;
+        sdiv = mor.byId('slidesdiv');
+        if(sdiv) {
+            prevslot = mor.byId("introslide" + slideslot);
+            slideslot = (slideslot + 1) % 2;
+            slideindex = (slideindex + 1) % 3;
+            currslot = mor.byId("introslide" + slideslot);
+            currslot.src = "img/slides/" + slides[slideindex];
+            currslot.style.opacity = 1;
+            prevslot.style.opacity = 0;
+            setTimeout(slideshow, 5400); }
+    },
+
+
     //initialize the logged-in content display div areas.  Basically
     //contentdiv is subdivided into chead and cmain.
     initContent = function () {
@@ -136,6 +155,7 @@ define([], function () {
     return {
         init: function () {
             mor.dojo.on(window, 'resize', fullContentHeight);
+            slideshow();
             localDocLinks();
             fullContentHeight(); },
         initContent: function () {

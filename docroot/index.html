@@ -26,30 +26,37 @@
 <div id="appspacediv"> 
   <div id="contentdiv" class="mtext">
 
-    <p>Review books, movies, videos, and more, writing as whichever
-    pen name you choose.  Follow any other reviewer by pen name.
-    Automatically track your top 20 lists and more.  This is
-    <a href="docs/FOSS.html" 
-       onclick="mor.layout.displayDoc('docs/FOSS.html');return false;"
-       >open source</a> software. </p>
+    <p>
+      An 
+      <a href="docs/FOSS.html" 
+         onclick="mor.layout.displayDoc('docs/FOSS.html');return false;"
+         >open source</a>
+      pen name community for reviews of books, movies, videos, and more.
+    </p>
 
-    <div id="bookmarkletdirdiv">
-      <p>To get started, bookmark this link:</p>
+    <div id="bookslidediv">
+      <div id="bookmarkletdirdiv">
+        <p>To get started, bookmark this link:</p>
 
-      <div id="bookmarkletlinkdiv">
-        <a href="javascript:(function(){window.open('http://www.myopenreviews.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
-           style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">MyOpenReviews Link</a>
+        <div id="bookmarkletlinkdiv">
+          <a href="javascript:(function(){window.open('http://www.myopenreviews.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
+             style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">MyOpenReviews Link</a>
+        </div>
+
+        <p>...then go to any page on the internet you want to review and
+          select your "MyOpenReviews Link" bookmark. </p>
       </div>
-
-      <p>Then anytime you want to review something, select your
-      "MyOpenReviews Link" bookmark. </p>
+      <div id="slidesdiv">
+        <img id="introslide0" src="img/slides/cycleframe.png" class="slideimg"/>
+        <img id="introslide1" src="img/slides/cycleframe.png" class="slideimg"/>
+      </div>
     </div>
-
-    <noscript>
-      <p>MyOpenReviews needs Javascript to do anything useful, please 
-        enable.</p>
-    </noscript>
-
+    <div id="closebookslide">
+      <noscript>
+        <p><b>MyOpenReviews needs Javascript to do anything useful, please 
+            enable...</b></p>
+      </noscript>
+    </div>
   </div>
 
   <div id="contentfill">loading...</div>

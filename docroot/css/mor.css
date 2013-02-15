@@ -77,9 +77,17 @@ body {
   border:none; vertical-align:middle; }
 
 /* intro layout */
+#bookmarkletdirdiv { padding:0px 20px 20px 0px; float:left; width:50% }
 #bookmarkletlinkdiv { padding:5px 20px; }
-#bookmarkletdirdiv { padding:0px 0px 20px 0px; }
+#slidesdiv { float:right width:50% height:180px; }
+.slideimg { position:absolute; left:52%; 
+  -webkit-transition: opacity 1s ease-in-out;
+  -moz-transition: opacity 1s ease-in-out;
+  -o-transition: opacity 1s ease-in-out;
+  transition: opacity 1s ease-in-out;
+}
 .altauthspan { display:inline-block; padding:0px; width:130px; }
+#closebookslide { clear:both; }
 
 /* profile layout */
 #proftopdiv { }
