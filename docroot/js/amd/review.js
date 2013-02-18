@@ -765,8 +765,8 @@ define([], function () {
             style: "width:150px;",
             onChange: function (value) {
                 sliderChange(value); } }, "ratslide");
-        //0 is a valid rating value so can't test for !crev.rating...
-        if(crev.rating === null || crev.rating < 0) { 
+        //0 is a valid rating value so can't test for !crev.rating
+        if(typeof crev.rating !== 'number' || crev.rating < 0) {
             crev.rating = 80; }  //have to start somewhere...
         ratingSlider.set("value", crev.rating);
         sliderChange(crev.rating);
