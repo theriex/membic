@@ -20,7 +20,8 @@ define([], function () {
 
 
     getBody = function (review) {
-        return review.text;
+        return review.text + "\n\nhttp://www.myopenreviews.com/statrev/" +
+            mor.instId(review);
     },
 
 
