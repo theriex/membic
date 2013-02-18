@@ -702,12 +702,12 @@ define([], function () {
         //have key fields and editing full review
         else if(mode === "edit") {
             html += "<button type=\"button\" id=\"savebutton\"" +
-                " onclick=\"mor.review.save();return false;\"" +
+                " onclick=\"mor.review.save(true,false);return false;\"" +
                 ">Save</button>&nbsp;";
             if(keyval) {  //have at least minimally complete review..
                 html += "<button type=\"button\" id=\"donebutton\"" +
-                    " onclick=\"mor.review.save(true);return false;\"" +
-                    ">Done</button>"; } }
+                    " onclick=\"mor.review.save(true,true);return false;\"" +
+                    ">Save and Share</button>"; } }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
             html += "<button type=\"button\" id=\"deletebutton\"" +
@@ -715,7 +715,10 @@ define([], function () {
                 ">Delete</button>" + "&nbsp;" + 
                 "<button type=\"button\" id=\"editbutton\"" +
                 " onclick=\"mor.review.display();return false;\"" +
-                ">Edit</button>"; }
+                ">Edit</button>" +  "&nbsp;" + 
+                "<button type=\"button\" id=\"sharebutton\"" +
+                " onclick=\"mor.review.share();return false;\"" +
+                ">Share</button>"; }
         //reading a review written by someone else
         else {
             html += "<button type=\"button\" id=\"respondbutton\"" +
@@ -926,7 +929,7 @@ define([], function () {
     },
 
 
-    saveReview = function (doneEditing) {
+    saveReview = function (doneEditing, runServices) {
         var errors = [], i, errtxt = "", type, url, data;
         type = findReviewType(crev.revtype);
         if(!type) {
@@ -957,7 +960,7 @@ define([], function () {
                      setTimeout(mor.pen.refreshCurrent, 100);
                      if(doneEditing) {
                          attribution = "";
-                         mor.review.displayRead(true); }
+                         mor.review.displayRead(runServices); }
                      else {
                          mor.review.display(); } },
                  function (code, errtxt) {
@@ -1162,8 +1165,11 @@ define([], function () {
             toggleKeyword(kwid); },
         reset: function () {
             cancelReview(); },
-        save: function (doneEditing) {
-            saveReview(doneEditing); },
+        save: function (doneEditing, runServices) {
+            saveReview(doneEditing, runServices); },
+        share: function () {
+            mor.pen.getPen(function (pen) {
+                mainDisplay(pen, true, true); }); },
         setCurrentReview: function (revobj) {
             crev = revobj; },
         getCurrentReview: function () {
