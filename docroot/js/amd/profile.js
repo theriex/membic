@@ -817,7 +817,7 @@ define([], function () {
                           " title=\"Continue searching for more matching " + 
                                     ts.stype + "\"" +
                     ">continue search...</a>"; }
-            else { //auto-repeat search without creating a recursion stack
+            else if(searchtotal < 1000) { //auto-repeat search
                 setTimeout(mor.profile.srchmore, 10); } }
         mor.out('searchresults', html);
         mor.byId('srchbuttonspan').style.display = "inline";
@@ -853,12 +853,15 @@ define([], function () {
 
 
     doRevSearch = function () {
-        var params, maxdate, mindate, qstr;
+        var params, maxdate, mindate, qstr, revtype, typesel;
         qstr = mor.byId('searchtxt').value;
+        typesel = mor.byId('revsearchsel');
+        revtype = typesel.options[typesel.selectedIndex].value;
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
         params = mor.login.authparams() + 
             "&qstr=" + mor.enc(mor.canonize(qstr)) +
+            "&revtype=" + revtype +
             "&penid=" + mor.pen.currPenId() +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
             "&cursor=" + mor.enc(searchcursor);
@@ -891,6 +894,25 @@ define([], function () {
     },
 
 
+    changeSearchMode = function () {
+        var i, radios = document.getElementsByName("searchmode");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                if(radios[i].value === "pen") {
+                    mor.byId('srchoptstoggle').style.display = "inline";
+                    mor.byId('revsearchtype').style.display = "none";
+                    mor.byId('searchtxt').placeholder = pensrchplace;
+                    searchmode = "pen";
+                    break; }
+                else if(radios[i].value === "rev") {
+                    mor.byId('srchoptstoggle').style.display = "none";
+                    mor.byId('revsearchtype').style.display = "inline";
+                    mor.byId('searchtxt').placeholder = revsrchplace;
+                    searchmode = "rev";
+                    break; } } }
+    },
+
+
     displaySearchForm = function () {
         var html = "";
         selectTab("searchli", mor.profile.search);
@@ -915,6 +937,12 @@ define([], function () {
               "<br/>" +
               mor.checkrad("radio", "searchmode", "rev", "My Reviews",
                            (searchmode === "rev"), "mor.profile.srchmode") +
+              " &nbsp; " +
+              "<span id=\"revsearchtype\" class=\"formstyle\">" +
+                "<select id=\"revsearchsel\">" +
+                  mor.review.reviewTypeSelectOptionsHTML(profpen.top20s) +
+                "</select>" +
+              "</span>" +
             "</td>" +
             "</tr></table>" +
             "<div id=\"searchoptionsdiv\" class=\"formstyle\">" +
@@ -941,25 +969,9 @@ define([], function () {
         mor.byId('searchoptionsdiv').style.display = "none";
         mor.onchange('searchtxt', startSearch);
         mor.onclick('searchbutton', startSearch);
+        changeSearchMode();
         mor.byId('searchtxt').focus();
         mor.layout.adjust();
-    },
-
-
-    changeSearchMode = function () {
-        var i, radios = document.getElementsByName("searchmode");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                if(radios[i].value === "pen") {
-                    mor.byId('srchoptstoggle').style.display = "inline";
-                    mor.byId('searchtxt').placeholder = pensrchplace;
-                    searchmode = "pen";
-                    break; }
-                else if(radios[i].value === "rev") {
-                    mor.byId('srchoptstoggle').style.display = "none";
-                    mor.byId('searchtxt').placeholder = revsrchplace;
-                    searchmode = "rev";
-                    break; } } }
     },
 
 

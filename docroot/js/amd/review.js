@@ -202,6 +202,22 @@ define([], function () {
     },
 
 
+    reviewTypeSelectOptionsHTML = function (revrefs) {
+        var i, typename, greyed, html = "";
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            greyed = false;
+            if(revrefs) {
+                if(!revrefs[typename] || revrefs[typename].length === 0) {
+                    greyed = true; } }
+            html += "<option value=\"" + typename + "\"";
+            if(greyed) {
+                html += " disabled=\"disabled\""; }
+            html += ">" + reviewTypes[i].plural.capitalize() + "</option>"; }
+        return html;
+    },
+
+
     findReviewType = function (type) {
         var i;
         if(!type) {
@@ -1130,6 +1146,8 @@ define([], function () {
             return reviewTypeCheckboxesHTML(cboxgroup); },
         reviewTypeRadiosHTML: function (rgname, chgfuncstr, revrefs, selt) {
             return reviewTypeRadiosHTML(rgname, chgfuncstr, revrefs, selt); },
+        reviewTypeSelectOptionsHTML: function (revrefs) {
+            return reviewTypeSelectOptionsHTML(revrefs); },
         badgeImageHTML: function (type) {
             return badgeImageHTML(type); },
         starsImageHTML: function (rating) {

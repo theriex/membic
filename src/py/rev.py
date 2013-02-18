@@ -78,19 +78,7 @@ def safe_get_review_for_update(handler):
     return review
 
 
-def create_cankey_from_request(handler):
-    cankey = ""
-    revtype = handler.request.get('revtype')
-    if revtype == 'book':
-        cankey = handler.request.get('title') + handler.request.get('author')
-    elif revtype == 'movie':
-        cankey = handler.request.get('title')
-    elif revtype == 'video':
-        cankey = handler.request.get('url')
-    elif revtype == 'music':
-        cankey = handler.request.get('title') + handler.request.get('artist')
-    else:
-        cankey = handler.request.get('name')
+def canonize_cankey(cankey):
     cankey = re.sub(r'\s', '', cankey)
     cankey = re.sub(r'\'', '', cankey)
     cankey = re.sub(r'\"', '', cankey)
@@ -99,6 +87,38 @@ def create_cankey_from_request(handler):
     cankey = re.sub(r'\!', '', cankey)
     cankey = cankey.lower()
     return cankey
+
+
+def create_cankey_from_request(handler):
+    cankey = ""
+    revtype = handler.request.get('revtype')
+    if revtype == 'book':
+        cankey = handler.request.get('title') + handler.request.get('author')
+    elif revtype == 'movie':
+        cankey = handler.request.get('title')
+    elif revtype == 'video':
+        cankey = handler.request.get('title')
+    elif revtype == 'music':
+        cankey = handler.request.get('title') + handler.request.get('artist')
+    else:
+        cankey = handler.request.get('name')
+    return canonize_cankey(cankey)
+
+
+def create_cankey_for_review(review):
+    cankey = ""
+    revtype = review.revtype
+    if revtype == 'book':
+        cankey = review.title + review.author
+    elif revtype == 'movie':
+        cankey = review.title
+    elif revtype == 'video':
+        cankey = review.title
+    elif revtype == 'music':
+        cankey = review.title + review.artist
+    else:
+        cankey = review.name
+    return canonize_cankey(cankey)
 
 
 def read_review_values(handler, review):
@@ -295,9 +315,12 @@ class SearchReviews(webapp2.RequestHandler):
         mindate = self.request.get('mindate')
         maxdate = self.request.get('maxdate')
         qstr = self.request.get('qstr')
+        revtype = self.request.get('revtype')
         fetchmax = 100
-        where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"\
-             + " ORDER BY modified DESC"
+        where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"
+        if revtype:
+            where += " AND revtype = '" + revtype + "'"
+        where += " ORDER BY modified DESC"
         revquery = Review.gql(where, penid, mindate, maxdate)
         cursor = self.request.get('cursor')
         if cursor:
@@ -311,6 +334,9 @@ class SearchReviews(webapp2.RequestHandler):
         if qstr:
             results = []
             for review in reviews:
+                if not review.cankey:
+                    review.cankey = create_cankey_for_review(review)
+                    review.put()
                 if qstr in review.cankey:
                     results.append(review)
             reviews = results

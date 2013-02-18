@@ -139,7 +139,7 @@ handlers:
   script: src.py.rev.app
 
 ## Return reviews for a given pen within the given date range
-## GET params: penid, mindate, maxdate, qstr, authparams
+## GET params: penid, mindate, maxdate, qstr, authparams, optional revtype
 - url: /srchrevs.*
   script: src.py.rev.app
 
@@ -196,6 +196,8 @@ handlers:
   script: src.py.cluck.app
 - url: /testpens
   script: src.py.pen.app
+- url: /verifrev
+  script: src.py.rev.app
 - url: /statrev/\d+
   script: src.py.statrev.app
 - url: /stats.*
