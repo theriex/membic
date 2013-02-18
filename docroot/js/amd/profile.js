@@ -495,8 +495,16 @@ define([], function () {
         //Try find the source review in the activity display
         if(!revobj) {
             revobj = mor.activity.findReview(revid); }
+        //Try find the source review in the search results
+        if(!revobj && searchresults && searchresults.length) {
+            for(i = 0; i < searchresults.length; i += 1) {
+                if(!searchresults[i].revtype) {
+                    break; }  //searched something other than reviews
+                if(mor.instId(searchresults[i]) === revid) {
+                    revobj = searchresults[i]; } } }
+        //Make some noise if you can't find it rather than being a dead link
         if(!revobj) {
-            mor.log("readReview " + revid + " not found");
+            mor.err("readReview " + revid + " not found");
             return; }
         mor.historyCheckpoint({ view: "review", mode: "display",
                                 revid: revid });
@@ -915,6 +923,8 @@ define([], function () {
 
     displaySearchForm = function () {
         var html = "";
+        if(typeof profpen.top20s === "string") {
+            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
         selectTab("searchli", mor.profile.search);
         html += "<table><tr>" +
             "<td><input type=\"text\" id=\"searchtxt\" size=\"40\"" +
