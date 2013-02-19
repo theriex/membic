@@ -34,7 +34,7 @@ define([], function () {
         var html = "<a href=\"#Activity\"" +
                      " title=\"See what's been posted recently\"" + 
                      " onclick=\"mor.activity.display();return false;\"" +
-            ">Activity</a>";
+            ">Activity Feed</a>";
         mor.out('acthdiv', html);
         mor.byId('acthdiv').style.visibility = "visible";
     },
@@ -231,7 +231,7 @@ define([], function () {
 
 
     updateRSSImage = function () {
-        var url, html, img = "blank.png"
+        var url, html, img = "blank.png";
         if(dispmode === "activity") {
             img = "feed-icon-28x28.png"; }
         url = "rssact?pen=" + mor.pen.currPenId();

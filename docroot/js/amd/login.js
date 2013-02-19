@@ -226,6 +226,7 @@ define([], function () {
     },
 
 
+    //create the nav area part of the display as appropriate
     updateAuthentDisplay = function () {
         var html = "";
         mor.out('topdiv', html);
@@ -235,20 +236,16 @@ define([], function () {
                 "<tr>" +
                   "<td></td>" +
                   "<td rowspan=\"2\">" +
-                    "<div id=\"profhdiv\">" +
-                      "<span id=\"penhnamespan\"> </span>" +
-                      "<span id=\"penhbuttonspan\"> </span>" +
-                    "</div></td>" +
+                    "<div id=\"centerhdiv\"> </div></td>" +
                   "<td>" +
                     "<div id=\"accountdiv\"></div> </td>" +
                 "</tr>" +
                 "<tr>" +
-                  "<td><div id=\"acthdiv\"></div></td>" +
-                  "<td><div id=\"revhdiv\"></div></td>" +
+                  "<td><div id=\"homepenhdiv\"></div></td>" +
                 "</tr>" +
               "</table></div>";
             mor.out('topdiv', html);
-            //ATTENTION: add mini logo if 3rd party auth...
+            //ATTENTION: add mini logo if 3rd party auth?
             html = "<em>" + authname + "</em>";
             html += " &nbsp; <a id=\"logout\" href=\"logout\">logout</a>";
             if(authmethod === "mid") {

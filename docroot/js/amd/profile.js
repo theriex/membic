@@ -58,37 +58,75 @@ define([], function () {
     },
 
 
-    writeNavDisplay = function (pen) {
-        var html, relationship, penid = mor.instId(pen),
-            profdfunc = "mor.profile.display()";
-        if(!mor.pen.getHomePen(penid)) {
-            profdfunc = "mor.profile.byprofid(" + penid + ")"; }
-        html = "<a href=\"#view=profile&profid=" + penid + "\"" +
-                 " title=\"Show profile for " + pen.name + "\"" +
-                 " onclick=\"" + profdfunc + ";return false;\"" +
+    displayHomeProfileHeading = function (pen) {
+        var html;
+        if(!mor.byId('homepennamespan')) {  //init div contents as needed
+            html = "<span id=\"homepennamespan\"> </span>" +
+                   "<span id=\"homepenbuttonspan\"> </span>";
+            mor.out('homepenhdiv', html); }
+        //refresh the home pen name currently in use
+        html = "<a href=\"#view=profile&profid=" + mor.instId(pen) + "\"" +
+                 " title=\"Show home profile\"" +
+                 " onclick=\"mor.profile.display();return false;\"" +
             ">" + pen.name + "</a>";
-        mor.out('penhnamespan', html);
-        //ATTENTION: These selector icons could stand some mouseover action
-        if(mor.pen.getHomePen(mor.instId(pen))) {  //self
-            html = mor.imglink("#Settings","Adjust settings for " + pen.name,
-                               "mor.profile.settings()", "settings.png") +
-                   mor.imglink("#PenNames","Switch Pen Names",
-                               "mor.profile.penswitch()", "pen.png"); }
-        else {  //someone else's pen name
-            relationship = mor.rel.outbound(mor.instId(pen));
-            if(relationship) {
-                html = mor.imglink("#Settings",
-                                   "Adjust follow settings for " + pen.name,
-                                   "mor.profile.relationship()", 
-                                   "settings.png"); }
-            else {
-                html = mor.imglink("#Follow",
-                                   "Follow " + pen.name,
-                                   "mor.profile.relationship()",
-                                   "plus.png"); }
-            html += mor.imglink("#Home","Return to home profile",
-                                "mor.profile.display()", "home.png"); }
+        mor.out('homepennamespan', html);
+        //refresh the home pen action buttons
+        html = mor.imglink("#Settings","Adjust your application settings",
+                           "mor.profile.settings()", "settings.png") +
+               mor.imglink("#PenNames","Switch Pen Names",
+                           "mor.profile.penswitch()", "pen.png");
+        mor.out('homepenbuttonspan', html);
+    },
+
+
+    displayHomeActionsHeading = function (pen) {
+        var html;
+        html = "<table><tr>" +
+                  "<td><div id=\"acthdiv\"></div></td>" +
+                  "<td><div id=\"revhdiv\"></div></td>" +
+               "</tr></table>";
+        mor.out('centerhdiv', html);
+        mor.activity.updateHeading();
+        mor.review.updateHeading();
+    },
+
+
+    displayVisitProfileHeading = function (homepen, dispen) {
+        var html, id, name, relationship;
+        id = mor.instId(dispen);
+        name = dispen.name;
+        html = "<a href=\"#view=profile&profid=" + id + "\"" +
+                 " title=\"Show profile for " + name + "\"" +
+                 " onclick=\"mor.profile.byprofid(" + id + ");return false;\"" +
+               ">" + name + "</a>";
+        html = "<div id=\"profhdiv\">" +
+                 "<span id=\"penhnamespan\">" + html + "</span>" +
+                 "<span id=\"penhbuttonspan\"> </span>" +
+               "</div>";
+        mor.out('centerhdiv', html);
+        relationship = mor.rel.outbound(id);
+        if(relationship) {
+            html = mor.imglink("#Settings",
+                               "Adjust follow settings for " + name,
+                               "mor.profile.relationship()", 
+                               "settings.png"); }
+        else {
+            html = mor.imglink("#Follow",
+                               "Follow " + name + " (add to activity feed)",
+                               "mor.profile.relationship()",
+                               "plus.png"); }
         mor.out('penhbuttonspan', html);
+    },
+
+
+    writeNavDisplay = function (homepen, dispen) {
+        displayHomeProfileHeading(homepen);
+        if(!dispen) {
+            dispen = homepen; }
+        if(mor.instId(homepen) === mor.instId(dispen)) {
+            displayHomeActionsHeading(homepen); }
+        else {
+            displayVisitProfileHeading(homepen, dispen); }
     },
 
 
@@ -1212,14 +1250,16 @@ define([], function () {
     },
 
 
-    mainDisplay = function (pen) {
+    mainDisplay = function (homepen, dispen) {
         var html;
-        verifyStateVariableValues(pen);
+        if(!dispen) {
+            dispen = homepen; }
+        verifyStateVariableValues(dispen);
         //redisplay the heading in case we just switched pen names
-        writeNavDisplay(pen);
+        writeNavDisplay(homepen, dispen);
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
-        mor.skinner.setColorsFromPen(pen);
+        mor.skinner.setColorsFromPen(homepen);
         html = "<div id=\"proftopdiv\">" +
         "<table>" +
           "<tr>" +
@@ -1251,10 +1291,10 @@ define([], function () {
           "</tr>" +
         "</table></div>";
         mor.out('cmain', html);
-        displayShout(pen);
-        displayCity(pen);
-        displayPic(pen);
-        displayTabs(pen);
+        displayShout(dispen);
+        displayCity(dispen);
+        displayPic(dispen);
+        displayTabs(dispen);
         mor.layout.adjust();
     },
 
@@ -1263,7 +1303,9 @@ define([], function () {
         if(typeof id !== "number") {
             id = parseInt(id, 10); }
         resetReviewDisplays();
-        findOrLoadPen(id, mainDisplay);
+        findOrLoadPen(id, function (dispen) {
+            mor.pen.getPen(function (homepen) {
+                mainDisplay(homepen, dispen); }); });
     };
 
 
@@ -1273,10 +1315,8 @@ define([], function () {
         display: function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
-            if(profpen) {
-                writeNavDisplay(profpen); }
-            else {
-                mor.pen.getPen(writeNavDisplay); } },
+            mor.pen.getPen(function (homepen) {
+                writeNavDisplay(homepen, profpen); }); },
         settings: function () {
             mor.pen.getPen(changeSettings); },
         penswitch: function () {

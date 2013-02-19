@@ -47,18 +47,19 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
-.penfont, #penhnamespan { font-style:italic; 
+.penfont, #homepennamespan, #penhnamespan { 
+  font-style:italic; 
   font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
  }
 #penhnamespan { font-size:xx-large; }
+#homepennamespan { font-size:xx-large; }
 #penhbuttonspan { padding:0px 0px 0px 20px; }
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
   border: 1px solid #ddd; border-radius:5px; 
   box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
   padding:0px 5px; font-size:x-large; visibility:hidden; }
-#acthdiv { float:left; }
-#revhdiv { float:right; margin:0px 20px 0px 0px; }
+#homepenhdiv { float:left; }
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
