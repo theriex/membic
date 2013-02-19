@@ -32,8 +32,9 @@ body {
 #chead { height:50px; clear:both; }
 #accountdiv { }
 #navdisplaytable { width:100%; }
-#appspacediv { position:absolute; left:0px; top:30px; 
-  padding:15px 40px 40px 72px; }
+#appspacediv, #noleftappspacediv { position:absolute; left:0px; top:30px; }
+#appspacediv { padding:15px 40px 40px 72px; }
+#noleftappspacediv { width:90%; padding:15px 40px 40px 15px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px; }
 #logotitle { 
@@ -136,6 +137,9 @@ body {
 .csvstrdiv { padding:5px; }
 #actmodediv { padding:0px 0px 20px 0px; }
 .bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
+#statnoticediv { background:#ccc; padding:5px 10px;
+  border: 1px solid #666666; border-radius:10px; 
+  box-shadow:10px 10px 5px #888888; }
 
 /* review layout */
 #revfdiv { }
