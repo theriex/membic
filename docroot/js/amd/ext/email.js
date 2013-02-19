@@ -13,14 +13,19 @@ define([], function () {
         tmprev = null,
 
 
+    //putting stars in the subject makes it resemble spam so avoid that
     getSubject = function (review) {
-        return "[" + mor.services.getRevStarsTxt(review) + "] " +
-            mor.services.getRevTitleTxt(review);
+        return "My review of " + mor.services.getRevTitleTxt(review);
     },
 
 
     getBody = function (review) {
-        return review.text + "\n\nhttp://www.myopenreviews.com/statrev/" +
+        return "This is my review of " + 
+            mor.services.getRevTitleTxt(review) + "\n\n" +
+            "I rated it " + mor.services.getRevStarsTxt(review) + 
+            " stars!\n\n" + 
+            review.text + 
+            "\n\nhttp://www.myopenreviews.com/statrev/" +
             mor.instId(review);
     },
 
