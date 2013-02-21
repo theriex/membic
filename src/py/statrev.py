@@ -4,6 +4,7 @@ import logging
 from rev import Review
 from pen import PenName
 import re
+import json
 
 
 def starsImageHTML(rating):
@@ -197,6 +198,45 @@ def descrip(rev):
     return text
 
 
+def script_to_set_colors(pen):
+    html = ""
+    if not pen.settings:
+        return html
+    settings = json.loads(pen.settings)
+    if not settings["colors"]:
+        return html
+    colors = settings["colors"]
+    html += "<script>\n"
+    html += "document.getElementById('bodyid').style.backgroundColor = " +\
+        "\"" + colors["bodybg"] + "\"\n"
+    html += "document.getElementById('bodyid').style.color = " +\
+        "\"" + colors["text"] + "\"\n"
+    html += "rules = document.styleSheets[0].cssRules;\n"
+    html += "for(var i = 0; rules && i < rules.length; i += 1) {\n"
+    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+        "A:link\") === 0) {\n"
+    html += "        if(rules[i].style.setProperty) {\n"
+    html += "            rules[i].style.setProperty('color', " +\
+        "\"" + colors["link"] + "\"" + ", null); } }\n"
+    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+        "A:visited\") === 0) {\n"
+    html += "        if(rules[i].style.setProperty) {\n"
+    html += "            rules[i].style.setProperty('color', " +\
+        "\"" + colors["link"] + "\"" + ", null); } }\n"
+    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+        "A:active\") === 0) {\n"
+    html += "        if(rules[i].style.setProperty) {\n"
+    html += "            rules[i].style.setProperty('color', " +\
+        "\"" + colors["link"] + "\"" + ", null); } }\n"
+    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+        "A:hover\") === 0) {\n"
+    html += "        if(rules[i].style.setProperty) {\n"
+    html += "            rules[i].style.setProperty('color', " +\
+        "\"" + colors["hover"] + "\"" + ", null); } } }\n"
+    html += "</script>\n"
+    return html
+
+
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
     html = "<!doctype html>"
@@ -211,7 +251,7 @@ def revhtml(rev, pen):
     html +=   "<link href=\"../css/mor.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />"
     html += "</head>"
-    html += "<body>"
+    html += "<body id=\"bodyid\">"
     html += "<div id=\"logodiv\">"
     html +=   "<img src=\"../img/remo.png\" border=\"0\"/>"
     html += "</div>"
@@ -315,6 +355,7 @@ def revhtml(rev, pen):
     html +=     "</table>"
     html +=   "</div>"
     html += "</div>"
+    html += script_to_set_colors(pen)
     html += "</body>"
     html += "</html>"
     return html;
