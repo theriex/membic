@@ -552,7 +552,7 @@ define([], function () {
 
 
     reviewItemHTML = function (revobj, penNameStr) {
-        var revid, type, linkref, html;
+        var revid, type, linkref, html, text;
         revid = mor.instId(revobj);
         type = mor.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
@@ -576,8 +576,9 @@ define([], function () {
                             "return false;\"" +
                  " title=\"Show profile for " + mor.ndq(penNameStr) + "\">" +
                 "review by " + penNameStr + "</a></div>"; }
+        text = (revobj.text || "") + " " + (revobj.keywords || "");
         html += "<div class=\"revtextsummary\">" + 
-            mor.ellipsis(revobj.text, 255) + "</div>";
+            mor.ellipsis(text, 255) + "</div>";
         html += "</li>";
         return html;
     },
