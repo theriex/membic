@@ -48,9 +48,16 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
+
 .penfont, #homepennamespan, #penhnamespan { 
   font-style:italic; 
-  font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
+  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
+/* font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
+   This was removed because some people have such a strong association
+   of serif fonts with formal docs that it was anti-fun for them. 
+   ATTENTION: find some kind of a flourish quill pen font for download
+   and use that for any browser that can handle it.
+*/
  }
 #penhnamespan { font-size:xx-large; }
 #homepennamespan { font-size:xx-large; }
@@ -143,6 +150,7 @@ body {
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
 .searchtable td { padding:5px 10px; }
+.mainactionstable td { padding:0px 2px; }
 
 /* review layout */
 #revfdiv { }

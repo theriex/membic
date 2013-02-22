@@ -81,7 +81,7 @@ define([], function () {
 
     displayHomeActionsHeading = function (pen) {
         var html;
-        html = "<table><tr>" +
+        html = "<table class=\"mainactionstable\"><tr>" +
                   "<td><div id=\"acthdiv\"></div></td>" +
                   "<td><div id=\"revhdiv\"></div></td>" +
                "</tr></table>";
