@@ -69,19 +69,19 @@ define([], function () {
             key: "name", //subkey
             fields: [ "address" ],
             dkwords: [ "Breakfast", "Lunch", "Dinner", "Snack", 
-                       "Cheap", "Expensive", "Fast", "Slow", "Outdoor",
+                       "Inexpensive", "Expensive", "Fast", "Slow", "Outdoor",
                        "Quiet", "Loud" ] },
           { type: "drink", plural: "drinks", img: "TypeDrink50.png",
             keyprompt: "Name and where from",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Traditional", "Innovative", "Cheap", "Expensive",
+            dkwords: [ "Traditional", "Innovative", "Inexpensive", "Expensive",
                        "Essential", "Special", "Quiet", "Loud", "Outdoor" ] },
           { type: "to do", plural: "things to do", img: "TypeBucket50.png",
             keyprompt: "Name of place, activity, or event",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Easy", "Advanced", "Kid Ok", "Cheap", "Expensive",
+            dkwords: [ "Easy", "Advanced", "Kid Ok", "Inexpensive", "Expensive",
                        "Spring", "Summer", "Autumn", "Winter", "Anytime" ] },
           { type: "other", plural: "other", img: "TypeOther50.png",
             keyprompt: "Name or title", 
