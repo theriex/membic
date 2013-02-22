@@ -101,49 +101,51 @@ define([], function () {
 
 
     //rating is a value from 0 - 100.  Display is rounded to nearest value.
-    starsImageHTML = function (rating) {
-        var width, title, html;
+    starsImageHTML = function (rating, showblank) {
+        var imgwidth = 81, imgheight = 26, step, title, width, offset, html,
+            titles = [ "No stars", "Half a star", 
+                       "One star", "One and a half stars",
+                       "Two stars", "Two and a half stars",
+                       "Three stars", "Three and a half stars",
+                       "Four stars", "Four and a half stars",
+                       "Five stars" ];
         if(typeof rating === "string") {
             rating = parseInt(rating, 10); }
-        if(!rating || typeof rating !== 'number' || rating < 5) {
-            width = 0;
-            title = "No stars"; }
-        else if(rating < 15) {
-            width = 6;
-            title = "Half a star"; }
-        else if(rating < 25) {
-            width = 12;
-            title = "One star"; }
-        else if(rating < 35) {
-            width = 18;
-            title = "One and a half stars"; }
-        else if(rating < 45) {
-            width = 24;
-            title = "Two stars"; }
-        else if(rating < 55) {
-            width = 30;
-            title = "Two and a half stars"; }
-        else if(rating < 65) {
-            width = 36;
-            title = "Three stars"; }
-        else if(rating < 75) {
-            width = 42;
-            title = "Three and a half stars"; }
-        else if(rating < 85) {
-            width = 48;
-            title = "Four stars"; }
-        else if(rating < 95) {
-            width = 54;
-            title = "Four and a half stars"; }
-        else {
-            width = 60;
-            title = "Five stars"; }
-        html = "<img class=\"starsimg\" src=\"img/blank.png\"" +
-                   " style=\"width:" + (60 - width) + "px;height:13px;\"/>" +
-               "<img class=\"starsimg\" src=\"img/blank.png\"" +
-                   " style=\"width:" + width + "px;height:13px;" + 
-                            "background:url('img/ratstar5.png')\"" +
-                   " title=\"" + title + "\" alt=\"" + title + "\"/>";
+        if(!rating || typeof rating !== 'number') {
+            rating = 0; }
+        step = Math.floor((rating * (titles.length - 1)) / 100);
+        width = Math.floor(step * (imgwidth / (titles.length - 1)));
+        title = titles[step];
+        html = "";
+        if(!showblank) {
+            html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                        " style=\"width:" + (imgwidth - width) + "px;" +
+                                 "height:" + imgheight + "px;\"/>"; }
+        html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                    " style=\"width:" + width + "px;" + 
+                             "height:" + imgheight + "px;" +
+                             "background:url('img/starsgold.png');\"" +
+                    " title=\"" + title + "\" alt=\"" + title + "\"/>";
+        if(showblank) {
+            if(step % 2 === 1) {  //odd, use half star display
+                offset = Math.floor(imgwidth / (titles.length - 1));
+                html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                            " style=\"width:" + (imgwidth - width) + "px;" + 
+                                     "height:" + imgheight + "px;" +
+                                     "background:url('img/starsnone.png')" +
+                                                " -" + offset + "px 0;\"" +
+                            " title=\"" + title + "\"" + 
+                            " alt=\"" + title + "\"/>"; }
+            else { //even, use full star display
+                html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                            " style=\"width:" + (imgwidth - width) + "px;" + 
+                                     "height:" + imgheight + "px;" +
+                                     "background:url('img/starsnone.png');\"" +
+                            " title=\"" + title + "\"" + 
+                            " alt=\"" + title + "\"/>"; } }
+        else { //not showing blank stars, leave some horizontal space.
+            html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                        " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
         return html;
     },
 
@@ -743,7 +745,7 @@ define([], function () {
         var html;
         //mor.log("sliderChange: " + value);
         crev.rating = Math.round(value);
-        html = starsImageHTML(crev.rating);
+        html = starsImageHTML(crev.rating, true);
         mor.out('stardisp', html);
     },
 
@@ -788,8 +790,8 @@ define([], function () {
             html += "</tr>"; }
         //first line of actual content
         html += "<tr><td style=\"text-align:right\"><span id=\"stardisp\">" + 
-            starsImageHTML(review.rating) + "</span>" + "&nbsp;" +
-            badgeImageHTML(type) + "</td>";
+            starsImageHTML(review.rating, mode === "edit") + 
+            "</span>" + "&nbsp;" + badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
             onchange = "mor.review.save();return false;";
             if(type.subkey) {
@@ -1153,8 +1155,8 @@ define([], function () {
             return reviewTypeSelectOptionsHTML(revrefs); },
         badgeImageHTML: function (type) {
             return badgeImageHTML(type); },
-        starsImageHTML: function (rating) {
-            return starsImageHTML(rating); },
+        starsImageHTML: function (rating, showblank) {
+            return starsImageHTML(rating, showblank); },
         readURL: function (url, params) {
             return readURL(url, params); },
         setType: function (type) {
