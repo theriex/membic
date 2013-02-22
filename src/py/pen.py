@@ -51,9 +51,10 @@ def has_top_twenty(pen, revtype):
     if not revtype or not pen or not pen.top20s:
         return False
     t20s = json.loads(pen.top20s)
-    for t20list in t20s:
-        if t20list.revtype and len(t20list.revtype) >= 20:
-            return True
+    if not revtype in t20s:
+        return False
+    if t20s[revtype] and len(t20s[revtype]) >= 20:
+        return True
     return False
 
 

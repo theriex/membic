@@ -142,6 +142,7 @@ body {
   font-size:small;
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
+.searchtable td { padding:5px 10px; }
 
 /* review layout */
 #revfdiv { }
