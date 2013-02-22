@@ -44,7 +44,7 @@ define([], function () {
             key: "title", subkey: "author",
             fields: [ "publisher", "year" ],
             dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
-                       "Educational", "Beach", "Travel", "Engaging" ] },
+                       "Educational", "Suspenseful", "Amusing", "Engaging" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
             keyprompt: "Movie name",
             key: "title", //subkey
