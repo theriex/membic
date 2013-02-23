@@ -240,8 +240,7 @@ var mor = {};  //Top level function closure container
 
     //top level kickoff function called from index.html
     mor.init = function (dom, json, on, request, 
-                         query, cookie, dijitreg, 
-                         slider, 
+                         query, cookie, domgeo,
                          layout, login, review, profile, 
                          activity, pen, rel, skinner,
                          services, basicmod) {
@@ -250,8 +249,7 @@ var mor = {};  //Top level function closure container
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
         mor.dojo = { dom: dom, json: json, on: on, request: request,
-                     query: query, cookie: cookie, dijitreg: dijitreg, 
-                     slider: slider };
+                     query: query, cookie: cookie, domgeo: domgeo };
         //app module references
         mor.layout = layout;
         mor.login = login;

@@ -20,6 +20,8 @@ define([], function () {
         crev = {},
         //The error message from the previous server save call, if any.
         asyncSaveErrTxt = "",
+        //Whether the stars are being pointer manipulated now
+        starPointingActive = false,
         //Review type definitions always include the url field, it is
         //appended automatically if not explicitely listed elsewhere
         //in the type definition.  Field names are converted to lower
@@ -100,7 +102,9 @@ define([], function () {
     },
 
 
-    //rating is a value from 0 - 100.  Display is rounded to nearest value.
+    //rating is a value from 0 - 100.  Using Math.round to adjust values
+    //results in 1px graphic hiccups as the rounding switches, so using
+    //Math.floor for consistency.
     starsImageHTML = function (rating, showblank) {
         var imgwidth = 81, imgheight = 26, step, title, width, offset, html,
             titles = [ "No stars", "Half a star", 
@@ -113,6 +117,8 @@ define([], function () {
             rating = parseInt(rating, 10); }
         if(!rating || typeof rating !== 'number') {
             rating = 0; }
+        if(rating > 93) {  //compensate for floored math (number by feel)
+            rating = 100; }
         step = Math.floor((rating * (titles.length - 1)) / 100);
         width = Math.floor(step * (imgwidth / (titles.length - 1)));
         title = titles[step];
@@ -496,10 +502,22 @@ define([], function () {
 
 
     secondaryFieldsHTML = function (review, type, keyval, mode) {
-        var html = "", i, field, fval;
+        var html = "", i, field, fval, fsize = 25;
         if(!keyval) {
             return html; }
         html += "<table>";
+        if(mode === "edit" && type.subkey) {
+            field = type.subkey;
+            fval = review[type.subkey] || "";
+            html += "<tr>" +
+                "<td id=\"subkeyinlabeltd\">" + 
+                  "<span class=\"secondaryfield\">" +
+                    field.capitalize() + "</span></td>" +
+                "<td align=\"left\">" + 
+                  "<input type=\"text\" id=\"subkeyin\"" + 
+                        " size=\"" + fsize + "\"" +
+                        " value=\"" + fval + "\"/></td>" +
+                "</tr>"; }
         for(i = 0; i < type.fields.length; i += 1) {
             field = type.fields[i];
             fval = review[field] || "";
@@ -510,7 +528,7 @@ define([], function () {
                 if(mode === "edit") {
                     html += "<td align=\"left\">" +
                         "<input type=\"text\" id=\"field" + i + "\"" + 
-                              " size=\"25\"" +
+                              " size=\"" + fsize + "\"" +
                               " value=\"" + fval + "\"/></td>"; }
                 else {  
                     html += "<td>" + fval + "</td>"; }
@@ -750,32 +768,6 @@ define([], function () {
     },
 
 
-    makeRatingSlider = function (keyval) {
-        //The dojo dijit/form/HorizontalSlider rating control
-        var ratingSlider = mor.dojo.dijitreg.byId("ratslide");
-        if(ratingSlider) {
-            //kill the widget and any contained widgets, preserving DOM node
-            ratingSlider.destroyRecursive(true); }
-        if(!keyval) {  //no star value input yet
-            return; }
-        ratingSlider = new mor.dojo.slider({
-            name: "ratslide",
-            value: 80,
-            minimum: 0,
-            maximum: 100,
-            intermediateChanges: true,
-            style: "width:150px;",
-            onChange: function (value) {
-                sliderChange(value); } }, "ratslide");
-        //0 is a valid rating value so can't test for !crev.rating
-        if(typeof crev.rating !== 'number' || crev.rating < 0) {
-            crev.rating = 80; }  //have to start somewhere...
-        ratingSlider.set("value", crev.rating);
-        sliderChange(crev.rating);
-        return ratingSlider;
-    },
-
-
     revFormIdentHTML = function (review, type, keyval, mode) {
         var html = "", onchange, fval;
         //labels for first line if editing
@@ -783,14 +775,15 @@ define([], function () {
             html += "<tr>" +
                 "<td></td>" +
                 "<td id=\"keyinlabeltd\">" + 
-                    formFieldLabelContents(type.keyprompt) + "</td>";
-            if(type.subkey) {
-                html += "<td id=\"subkeyinlabeltd\">" +
-                    formFieldLabelContents(type.subkey) + "</td>"; }
-            html += "</tr>"; }
+                    formFieldLabelContents(type.keyprompt) + "</td>" +
+                "<td>" +
+                    formFieldLabelContents("url") +
+                "</td>" +
+              "</tr>"; }
         //first line of actual content
-        html += "<tr><td style=\"text-align:right\"><span id=\"stardisp\">" + 
-            starsImageHTML(review.rating, mode === "edit") + 
+        html += "<tr><td id=\"starstd\" style=\"text-align:right\">" + 
+            "<span id=\"stardisp\">" + 
+              starsImageHTML(review.rating, mode === "edit") + 
             "</span>" + "&nbsp;" + badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
             onchange = "mor.review.save();return false;";
@@ -800,12 +793,10 @@ define([], function () {
             html += "<td><input type=\"text\" id=\"keyin\" size=\"30\"" +
                               " onchange=\"" + onchange + "\"" + 
                               " value=\"" + fval + "\"></td>";
-            if(type.subkey) {
-                onchange = "mor.review.save();return false;";
-                fval = review[type.subkey] || "";
-                html += "<td><input type=\"text\" id=\"subkeyin\" size=\"30\"" +
-                                  " onchange=\"" + onchange + "\"" +
-                                  " value=\"" + fval + "\"/></td>"; } }
+            fval = review.url || "";
+            html += "<td><input type=\"text\" id=\"urlin\" size=\"30\"" +
+                              " onchange=\"" + onchange + "\"" +
+                              " value=\"" + fval + "\"/></td>"; }
         else {  //not editing, read only display
             fval = review[type.key] || "";
             html += "<td>" + "<span class=\"revtitle\">" + 
@@ -818,22 +809,6 @@ define([], function () {
                 fval = review.url || "";
                 html += "<td>" + graphicAbbrevSiteLink(fval) + "</td>"; } }
         html += "</tr>";
-        //slider rating control and url input if editing
-        if(mode === "edit" && keyval) {
-            fval = review.url || "";
-            html += "<tr>" + 
-                "<td class=\"claro\" style=\"width:160px;\">" +
-                  "<table class=\"nopadtable\"><tr><td>" +
-                    "<div id=\"ratslide\"></div>" +
-                  "</td></tr></table>" +
-                "</td>" + 
-                "<td></td>" + 
-                "<td>" +
-                  formFieldLabelContents("url") + "<br/>" +
-                  "<input type=\"text\" id=\"urlin\" size=\"30\"" +
-                        " value=\"" + fval + "\"/>" +
-                "</td>" +
-                "</tr>"; }
         return html;
     },
 
@@ -880,6 +855,56 @@ define([], function () {
     },
 
 
+    starDisplayAdjust = function (event) {
+        var span, spanloc, evtx, relx, sval;
+        span = mor.byId('stardisp');
+        spanloc = mor.dojo.domgeo.position(span);
+        evtx = event.pageX;
+        if(event.changedTouches && event.changedTouches[0]) {
+            //ATTENTION: if the display is zoomed on a phone, then the
+            //coordinates may need to be adjusted here.
+            evtx = event.changedTouches[0].pageX; }
+        relx = evtx - spanloc.x;
+        sval = Math.round((relx / spanloc.w) * 100);
+        //mor.log("starDisplayAdjust sval: " + sval);
+        sliderChange(sval);
+    },
+
+
+    starPointing = function (event) {
+        //mor.log("star pointing");
+        starPointingActive = true;
+    },
+
+
+    starStopPointing = function (event) {
+        //mor.log("star NOT pointing" + event.target + " " +
+        //        event.pageX, event.pageY);
+        starPointingActive = false;
+    },
+
+
+    starStopPointingBoundary = function (event) {
+        if(mor.byId('starstd') === event.target) {
+            //mor.log("star NOT pointing (out of bounds)");
+            starPointingActive = false; }
+        //else {
+        //    mor.log("not out of bounds yet"); }
+    },
+
+
+    starPointAdjust = function (event) {
+        if(starPointingActive) {
+            //mor.log("star point adjust...");
+            starDisplayAdjust(event); }
+    },
+
+
+    starClick = function (event) {
+        starDisplayAdjust(event);
+    },
+
+
     //ATTENTION: Somewhere in the read display, show a count of how
     //many response reviews have been written, and how many people
     //have remembered the review.  Provided there's more than zero.
@@ -913,7 +938,15 @@ define([], function () {
         "</table></div>";
         mor.out('cmain', html);
         if(mode === "edit") {
-            makeRatingSlider(keyval);
+            mor.onx('click',       'stardisp', starClick);
+            mor.onx('mousedown',   'stardisp', starPointing);
+            mor.onx('mouseup',     'stardisp', starStopPointing);
+            mor.onx('mouseout',    'starstd',  starStopPointingBoundary);
+            mor.onx('mousemove',   'stardisp', starPointAdjust);
+            mor.onx('touchstart',  'stardisp', starPointing);
+            mor.onx('touchend',    'stardisp', starStopPointing);
+            mor.onx('touchcancel', 'stardisp', starStopPointing);
+            mor.onx('touchmove',   'stardisp', starPointAdjust);
             if(!keyval) {
                 mor.byId('keyin').focus(); }
             else if(mor.byId('subkeyin')) {
