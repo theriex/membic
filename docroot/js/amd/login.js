@@ -230,17 +230,18 @@ define([], function () {
     updateAuthentDisplay = function () {
         var html = "";
         mor.out('topdiv', html);
+        mor.out('accountinfodisp', html);
         if(authtoken) {
+            html = "<div id=\"accountdiv\"></div>";
+            mor.out('accountinfodisp', html);
             html += "<div id=\"topnav\">" +
-              "<table id=\"navdisplaytable\">" +
+              "<table id=\"navdisplaytable\" border=\"0\">" +
                 "<tr>" +
-                  "<td></td>" +
-                  "<td rowspan=\"2\">" +
+                  "<td style=\"height:14px;\"></td>" +
+                  "<td style=\"width:40px;\"></td>" +
+                  "<td rowspan=\"2\" style=\"vertical-align:top;\">" + 
                     "<div id=\"centerhdiv\"> </div></td>" +
-                  "<td>" +
-                    "<div id=\"accountdiv\"></div> </td>" +
-                "</tr>" +
-                "<tr>" +
+                "<tr>" + 
                   "<td><div id=\"homepenhdiv\"></div></td>" +
                 "</tr>" +
               "</table></div>";
