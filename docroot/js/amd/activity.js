@@ -200,14 +200,20 @@ define([], function () {
     },
 
 
+    searchPensLinkHTML = function () {
+        var html = "<a href=\"#searchpens\"" +
+                     " onclick=\"mor.activity.searchpens();return false;\"" +
+            ">Search pen names</a>";
+        return html;
+    },
+
+
     bootActivityDisplay = function () {
         var html, retry = false;
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
-            html = "You are not following anyone." + 
-                " <a href=\"#searchpens\"" +
-                " onclick=\"mor.activity.searchpens();return false;\"" +
-                ">Search pen names</a>"; }
+            html = "You are not following anyone. " + 
+                searchPensLinkHTML(); }
         else if(typeof penids[penids.length - 1] !== 'number') {
             //most likely penids === ["loading"]...
             retry = true;
@@ -298,7 +304,9 @@ define([], function () {
         cacheReview: function (rev) {
             revcache[mor.instId(rev)] = rev; },
         modeChange: function () {
-            modeChange(); }
+            modeChange(); },
+        searchPensLinkHTML: function () {
+            return searchPensLinkHTML(); }
     };
 
 });

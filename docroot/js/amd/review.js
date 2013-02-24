@@ -238,11 +238,17 @@ define([], function () {
     },
 
 
-    writeNavDisplay = function () {
+    reviewLinkHTML = function () {
         var html = "<a href=\"#Write a Review\"" +
                      " title=\"Review something\"" +
                      " onclick=\"mor.review.reset();return false;\"" +
             ">Write a Review</a>";
+        return html;
+    },
+
+
+    writeNavDisplay = function () {
+        var html = reviewLinkHTML();
         mor.out('revhdiv', html);
         mor.byId('revhdiv').style.visibility = "visible";
     },
@@ -1174,6 +1180,8 @@ define([], function () {
                 mainDisplay(pen, true, runServices); }); },
         delrev: function () {
             deleteReview(); },
+        reviewLinkHTML: function () {
+            return reviewLinkHTML(); },
         updateHeading: function () {
             writeNavDisplay(); },
         getReviewTypes: function () {

@@ -584,7 +584,7 @@ define([], function () {
     },
 
 
-    displayReviews = function (dispState, reviews) {
+    displayRecentReviews = function (dispState, reviews) {
         var i, html = "<ul class=\"revlist\">", fetched;
         for(i = 0; i < dispState.results.length; i += 1) {
             html += reviewItemHTML(dispState.results[i]); }
@@ -604,7 +604,10 @@ define([], function () {
                 html += reviewItemHTML(reviews[i]); } }
         dispState.total = Math.max(dispState.total, dispState.results.length);
         if(dispState.total === 0) {
-            html += "<li>No reviews</li>"; }
+            html += "<li>No recent reviews.";
+            if(mor.instId(profpen) === mor.pen.currPenId()) {
+                html += " " + mor.review.reviewLinkHTML(); }
+            html += "</li>"; }
         html += "</ul>";
         if(dispState.cursor && i > 0) {
             html += "<a href=\"#continuesearch\"" +
@@ -616,23 +619,23 @@ define([], function () {
     },
 
 
-    findReviews = function (dispState) {
+    findRecentReviews = function (dispState) {
         var params;
         if(!dispState.params.penid) {
             dispState.params.penid = mor.instId(profpen); }
         params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
         mor.call("srchrevs?" + params, 'GET', null,
                  function (revs) {
-                     displayReviews(dispState, revs); },
+                     displayRecentReviews(dispState, revs); },
                  function (code, errtxt) {
-                     mor.out('profcontdiv', "findReviews failed code " + code +
-                             " " + errtxt); });
+                     mor.out('profcontdiv', "findRecentReviews failed code " + 
+                             code + " " + errtxt); });
     },
 
 
     fetchMoreReviews = function (tabname) {
         if(tabname === "recent") {
-            findReviews(recentRevState); }
+            findRecentReviews(recentRevState); }
         else {
             mor.err("fetchMoreReviews unknown tabname: " + tabname); }
     },
@@ -642,7 +645,7 @@ define([], function () {
         var html, temp, maxdate, mindate;
         selectTab("recentli", recent);
         if(recentRevState && recentRevState.initialized) {
-            displayReviews(recentRevState); }
+            displayRecentReviews(recentRevState); }
         html = "Retrieving recent activity for " + profpen.name + "...";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
@@ -653,7 +656,7 @@ define([], function () {
         recentRevState.params.maxdate = maxdate.toISOString();
         recentRevState.params.mindate = mindate.toISOString();
         recentRevState.initialized = true; 
-        findReviews(recentRevState);
+        findRecentReviews(recentRevState);
     },
 
 
@@ -662,7 +665,7 @@ define([], function () {
         //verify a display type is selected
         if(!topRevState.dispType) {
             topRevState.dispType = "book";  //arbitrary default
-            if(profpen.top20s.latestrevtype) {
+            if(profpen.top20s && profpen.top20s.latestrevtype) {
                 topRevState.dispType = profpen.top20s.latestrevtype; } }
         //get the html for the radio buttons
         html = mor.review.reviewTypeRadiosHTML("trbchoice",
@@ -692,10 +695,15 @@ define([], function () {
         if(typeof profpen.top20s === "string") {
             profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
         html = dispTypeSelectionHTML();
-        revs = profpen.top20s[topRevState.dispType] || [];
+        revs = [];
+        if(profpen.top20s) {
+            revs = profpen.top20s[topRevState.dispType] || []; }
         html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
-            html += "<li>No reviews</li>"; }
+            html += "<li>No top rated reviews.";
+            if(mor.instId(profpen) === mor.pen.currPenId()) {
+                html += " " + mor.review.reviewLinkHTML(); }
+            html += "</li>"; }
         for(i = 0; i < revs.length; i += 1) {
             if(typeof revs[i] === 'number') {  //need to resolve id
                 if(topRevState.review) {       //have a resolution
@@ -717,7 +725,6 @@ define([], function () {
         html += "</ul>";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
-        temp = profpen.top20s[topRevState.dispType];
         if(i < revs.length) {  //didn't make it through, go fetch
             mor.call("revbyid?revid=" + revs[i], 'GET', null,
                      function (revs) {
@@ -1026,7 +1033,7 @@ define([], function () {
     revSearchOptionsHTML = function () {
         var selectedType, html;
         selectedType = "book";  //arbitrary defualt
-        if(profpen.top20s.latestrevtype) {
+        if(profpen.top20s && profpen.top20s.latestrevtype) {
             selectedType = profpen.top20s.latestrevtype; }
         html = "<div id=\"revsearchoptionsdiv\" class=\"formstyle\">" +
             mor.review.reviewTypeRadiosHTML("srchrevtype", "", 

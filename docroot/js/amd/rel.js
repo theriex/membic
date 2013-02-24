@@ -85,9 +85,12 @@ define([], function () {
                 html += dumpPenItems(dispobj); }
             else if(dispobj.rels.length === 0) {
                 if(dispobj.direction === "outbound") {
-                    html += "<li>Not following anyone</li>"; }
+                    html += "<li>Not following anyone.";
+                    if(mor.instId(dispobj.profpen) === mor.pen.currPenId()) {
+                        html += " " + mor.activity.searchPensLinkHTML(); }
+                    html += "</li>"; }
                 else { //inbound
-                    html += "<li>No followers</li>"; } }
+                    html += "<li>No followers.</li>"; } }
             else {
                 html += "<li>fetching pen names...</li>"; } }
         else {  //dump an interim placeholder while retrieving rels
