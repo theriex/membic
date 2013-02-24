@@ -96,7 +96,7 @@ def authenticated(request):
                 return False
             secs = int(token[(token.index(":") + 1) : (unidx - 1)])
             now = int(round(time.time()))
-            if now - secs > 3600:
+            if now - secs > 12 * 60 * 60:
                 return False
             account._id = account.key().id() # normalized id access
             return account  # True

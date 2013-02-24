@@ -11,7 +11,7 @@ define([], function () {
     var oldcolors,
         colorcontrols,
         presets = [ { name: "paper (warm)", id: "paperw", 
-                      bodybg: "#fffff6", text: "#111111",
+                      bodybg: "#fffff9", text: "#111111",
                       link: "#3150b2", hover: "#3399cc" },
                     { name: "paper (cool)", id: "paperc",
                       bodybg: "#f8f8f8", text: "#000000",
