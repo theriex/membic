@@ -53,7 +53,7 @@ define([], function () {
           "</td><td>&nbsp;&nbsp;&nbsp;&nbsp;" +
             "<button type=\"button\" id=\"donebutton\"" +
                    " onclick=\"mor.email.dismissDialog();return false;\"" +
-            ">Done</button>" +
+            ">Close</button>" +
           "</td></tr></table>";
         return html;
     },
