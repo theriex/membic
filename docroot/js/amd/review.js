@@ -103,9 +103,9 @@ define([], function () {
 
 
     //rating is a value from 0 - 100.  Using Math.round to adjust values
-    //results in 1px graphic hiccups as the rounding switches, so using
-    //Math.floor for consistency.
-    starsImageHTML = function (rating, showblank) {
+    //results in 1px graphic hiccups as the rounding switches, and ceil
+    //has similar issues coming off zero, so use floor.
+    starsImageHTML = function (rating, showblank, roundup) {
         var imgwidth = 81, imgheight = 26, step, title, width, offset, html,
             titles = [ "No stars", "Half a star", 
                        "One star", "One and a half stars",
@@ -113,13 +113,15 @@ define([], function () {
                        "Three stars", "Three and a half stars",
                        "Four stars", "Four and a half stars",
                        "Five stars" ];
-        if(typeof rating === "string") {
+        if(typeof rating === "string") { 
             rating = parseInt(rating, 10); }
-        if(!rating || typeof rating !== 'number') {
+        if(!rating || typeof rating !== 'number' || rating < 0) {  
             rating = 0; }
         if(rating > 93) {  //compensate for floored math (number by feel)
             rating = 100; }
         step = Math.floor((rating * (titles.length - 1)) / 100);
+        if(roundup) {
+            step = Math.min(step + 1, titles.length - 1); }
         width = Math.floor(step * (imgwidth / (titles.length - 1)));
         title = titles[step];
         html = "";
@@ -765,21 +767,12 @@ define([], function () {
     },
 
 
-    sliderChange = function (value) {
-        var html;
-        //mor.log("sliderChange: " + value);
-        crev.rating = Math.round(value);
-        html = starsImageHTML(crev.rating, true);
-        mor.out('stardisp', html);
-    },
-
-
     revFormIdentHTML = function (review, type, keyval, mode) {
         var html = "", onchange, fval;
         //labels for first line if editing
         if(mode === "edit") {
             html += "<tr>" +
-                "<td></td>" +
+                "<td id=\"starslabeltd\"></td>" +
                 "<td id=\"keyinlabeltd\">" + 
                     formFieldLabelContents(type.keyprompt) + "</td>" +
                 "<td>" +
@@ -787,7 +780,7 @@ define([], function () {
                 "</td>" +
               "</tr>"; }
         //first line of actual content
-        html += "<tr><td id=\"starstd\" style=\"text-align:right\">" + 
+        html += "<tr><td id=\"starstd\" style=\"text-align:right;\">" + 
             "<span id=\"stardisp\">" + 
               starsImageHTML(review.rating, mode === "edit") + 
             "</span>" + "&nbsp;" + badgeImageHTML(type) + "</td>";
@@ -861,8 +854,8 @@ define([], function () {
     },
 
 
-    starDisplayAdjust = function (event) {
-        var span, spanloc, evtx, relx, sval;
+    starDisplayAdjust = function (event, roundup) {
+        var span, spanloc, evtx, relx, sval, html;
         span = mor.byId('stardisp');
         spanloc = mor.dojo.domgeo.position(span);
         evtx = event.pageX;
@@ -870,44 +863,55 @@ define([], function () {
             //ATTENTION: if the display is zoomed on a phone, then the
             //coordinates may need to be adjusted here.
             evtx = event.changedTouches[0].pageX; }
-        relx = evtx - spanloc.x;
-        sval = Math.round((relx / spanloc.w) * 100);
-        //mor.log("starDisplayAdjust sval: " + sval);
-        sliderChange(sval);
+        relx = Math.max(evtx - spanloc.x, 0);
+        sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
+        //mor.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
+        crev.rating = sval;
+        html = starsImageHTML(crev.rating, true, roundup);
+        mor.out('stardisp', html);
     },
 
 
     starPointing = function (event) {
-        //mor.log("star pointing");
+        //mor.out('keyinlabeltd', "star pointing");  //debug
         starPointingActive = true;
+        starDisplayAdjust(event, true);
     },
 
 
     starStopPointing = function (event) {
-        //mor.log("star NOT pointing" + event.target + " " +
-        //        event.pageX, event.pageY);
+        //mor.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
+        //mor.out('starslabeltd', " " + event.pageX + ", " + event.pageY); //"
         starPointingActive = false;
     },
 
 
     starStopPointingBoundary = function (event) {
-        if(mor.byId('starstd') === event.target) {
-            //mor.log("star NOT pointing (out of bounds)");
+        var td, tdpos, evtx, evty;
+        td = mor.byId('starstd');
+        tdpos = mor.dojo.domgeo.position(td);
+        evtx = event.pageX;
+        evty = event.pageY;
+        if(event.changedTouches && event.changedTouches[0]) {
+            evtx = event.changedTouches[0].pageX;
+            evty = event.changedTouches[0].pageY; }
+        //mor.out('starslabeltd', " " + evtx + ", " + evty);  //debug
+        if(evtx < tdpos.x || evtx > tdpos.x + tdpos.w ||
+           evty < tdpos.y || evty > tdpos.y + tdpos.h) {
+            //mor.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
             starPointingActive = false; }
-        //else {
-        //    mor.log("not out of bounds yet"); }
     },
 
 
     starPointAdjust = function (event) {
         if(starPointingActive) {
-            //mor.log("star point adjust...");
+            //mor.out('keyinlabeltd', "star point adjust...");  //debug
             starDisplayAdjust(event); }
     },
 
 
     starClick = function (event) {
-        starDisplayAdjust(event);
+        starDisplayAdjust(event, true);
     },
 
 
@@ -944,15 +948,15 @@ define([], function () {
         "</table></div>";
         mor.out('cmain', html);
         if(mode === "edit") {
-            mor.onx('click',       'stardisp', starClick);
-            mor.onx('mousedown',   'stardisp', starPointing);
-            mor.onx('mouseup',     'stardisp', starStopPointing);
-            mor.onx('mouseout',    'starstd',  starStopPointingBoundary);
-            mor.onx('mousemove',   'stardisp', starPointAdjust);
-            mor.onx('touchstart',  'stardisp', starPointing);
-            mor.onx('touchend',    'stardisp', starStopPointing);
-            mor.onx('touchcancel', 'stardisp', starStopPointing);
-            mor.onx('touchmove',   'stardisp', starPointAdjust);
+            mor.onx('mousedown',   'starstd', starPointing);
+            mor.onx('mouseup',     'starstd', starStopPointing);
+            mor.onx('mouseout',    'starstd', starStopPointingBoundary);
+            mor.onx('mousemove',   'starstd', starPointAdjust);
+            mor.onx('click',       'starstd', starClick);
+            mor.onx('touchstart',  'starstd', starPointing);
+            mor.onx('touchend',    'starstd', starStopPointing);
+            mor.onx('touchcancel', 'starstd', starStopPointing);
+            mor.onx('touchmove',   'starstd', starPointAdjust);
             if(!keyval) {
                 mor.byId('keyin').focus(); }
             else if(mor.byId('subkeyin')) {
