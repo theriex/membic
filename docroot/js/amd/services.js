@@ -9,7 +9,8 @@ define([], function () {
     "use strict";
 
     var connServices,
-        svcstates = [ "new service", "enabled", "ask", "disabled" ],
+        //the first state here is the default for any newly loaded service.
+        svcstates = [ "always ask", "auto post", "disabled" ],
 
 
     serviceIconHTML = function (svc) {
@@ -42,11 +43,9 @@ define([], function () {
 
     //using the overlay div to avoid confusion from the settings
     //dialog getting launched at the same time.
-    promptForService = function (review, conf, isnew) {
+    promptForService = function (review, conf) {
         var odiv, svc, html = "";
         svc = findServiceByName(conf.name);
-        if(isnew) {
-            html += "<p>A new connection service is available:</p>"; }
         html += "<p>" + serviceIconHTML(svc) + "&nbsp;" + 
             svc.svcDispName + "</p>";
         html += mor.linkify(svc.svcDesc);
@@ -125,13 +124,11 @@ define([], function () {
                 //not already run, or prompted and confirmed
                 if(!review.svcdata[bb] || review.svcdata[bb] === "confirmed") {
                     if(!review.svcdata[bb]) {  //note processing was triggered
-                        review.svcdata[bb] = conf.status; }
+                        review.svcdata[bb] = conf.state; }
                     //kick off appropriate processing
-                    if(review.svcdata[bb] === svcstates[0]) {  //new service
-                        return promptForService(review, conf, true); }
-                    if(review.svcdata[bb] === svcstates[2]) {  //ask
+                    if(review.svcdata[bb] === svcstates[0]) {  //always ask
                         return promptForService(review, conf); }
-                    if(review.svcdata[bb] === svcstates[1] ||  //enabled
+                    if(review.svcdata[bb] === svcstates[1] ||  //auto post
                        review.svcdata[bb] === "confirmed") {
                         return callToRunService(review, conf); } } } }
         mor.profile.display();
@@ -176,7 +173,7 @@ define([], function () {
                 if(pen.settings.consvcs[i].name === name) {
                     conf = pen.settings.consvcs[i]; } }
             if(conf) {
-                conf.status = svcstates[sel.selectedIndex]; } }
+                conf.state = svcstates[sel.selectedIndex]; } }
     },
 
 
@@ -192,7 +189,7 @@ define([], function () {
             ">";
         for(i = 0; i < svcstates.length; i += 1) {
             html += "<option id=\"" + conf.name + (+i) + "\"";
-            if(conf.status === svcstates[i]) {
+            if(conf.state === svcstates[i]) {
                 html += " selected=\"selected\""; }
             html += ">" + svcstates[i] + "</option>"; }
         html += "</select></td>" +
@@ -233,11 +230,22 @@ define([], function () {
     //A configured service must provide the unique service name, and a
     //the service state.  If no state, then it is assumed to be new.
     validServiceConfig = function (confsvc) {
+        var i, knownstate = false;
         //the service name is a unique identifier of what to run.  If that
         //is not specified then the service can't be found.
         if(typeof confsvc.name !== 'string') {
             return false; }
+        //earlier bad data has "status" instead of "state".  Clear that.
+        if(confsvc.status) {
+            return false; }
+        //correct and default any bad state values
         if(typeof confsvc.state !== 'string') {
+            confsvc.state = svcstates[0]; }
+        for(i = 0; i < svcstates.length; i += 1) {
+            if(confsvc.state === svcstates[i]) {
+                knownstate = true; 
+                break; } }
+        if(!knownstate) {
             confsvc.state = svcstates[0]; }
         return true;
     },
@@ -262,13 +270,13 @@ define([], function () {
         for(i = 0; i < connServices.length; i += 1) {
             svc = connServices[i];
             found = false;
-            for(j = 0; j < pen.settings.consvcs.length; j += 1) {
+            for(j = 0; !found && j < pen.settings.consvcs.length; j += 1) {
                 conf = pen.settings.consvcs[j];
-                if(conf.name === svc.name) {
+                if(conf.name === svc.name && validServiceConfig(conf)) {
                     found = true; } }
             if(!found) {
-                updconfs.push( { name: svc.name,
-                                 status: svcstates[0] } ); } }
+                conf = { name: svc.name, state: svcstates[0] };
+                updconfs.push(conf); } }
         pen.settings.consvcs = updconfs;
         contfunc();
     },
