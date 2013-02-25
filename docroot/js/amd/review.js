@@ -453,7 +453,10 @@ define([], function () {
 
 
     formFieldLabelContents = function (fieldname) {
-        var html = fieldname.capitalize();
+        var html;
+        if(!fieldname) {
+            fieldname = ""; }
+        html = fieldname.capitalize();
         if(fieldname === "url") {
             html = "<img class=\"webjump\" src=\"img/wwwico.png\"/>URL"; }
         return html;
@@ -787,14 +790,16 @@ define([], function () {
                 "<td id=\"keyinlabeltd\">" + 
                     formFieldLabelContents(type.keyprompt) + "</td>" +
                 "<td>" +
-                    formFieldLabelContents("url") +
+                    formFieldLabelContents(keyval? "url" : type.subkey) +
                 "</td>" +
               "</tr>"; }
         //first line of actual content
-        html += "<tr><td id=\"starstd\" style=\"text-align:right;\">" + 
-            "<span id=\"stardisp\">" + 
-              starsImageHTML(review.rating, mode === "edit") + 
-            "</span>" + "&nbsp;" + badgeImageHTML(type) + "</td>";
+        html += "<tr><td id=\"starstd\" style=\"text-align:right;\">";
+        if(keyval) {
+            html += "<span id=\"stardisp\">" + 
+                  starsImageHTML(review.rating, mode === "edit") + 
+                "</span>"; }
+        html += "&nbsp;" + badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
             onchange = "mor.review.save();return false;";
             if(type.subkey) {
@@ -803,10 +808,19 @@ define([], function () {
             html += "<td><input type=\"text\" id=\"keyin\" size=\"30\"" +
                               " onchange=\"" + onchange + "\"" + 
                               " value=\"" + fval + "\"></td>";
-            fval = review.url || "";
-            html += "<td><input type=\"text\" id=\"urlin\" size=\"30\"" +
-                              " onchange=\"" + onchange + "\"" +
-                              " value=\"" + fval + "\"/></td>"; }
+            if(keyval) {  //key fields have been specified
+                fval = review.url || "";
+                html += "<td><input type=\"text\" id=\"urlin\"" + 
+                                  " size=\"30\"" +
+                                  " value=\"" + fval + "\"/></td>"; }
+            else if(type.subkey) {
+                onchange = "mor.review.save();return false;";
+                fval = review[type.subkey] || "";
+                html += "<td id=\"subkeyinlabeltd\">" + 
+                    "<input type=\"text\" id=\"subkeyin\"" + 
+                                 " size=\"30\"" + 
+                                 " onchange=\"" + onchange + "\"" +
+                                 " value=\"" + fval + "\"/></td>"; } }
         else {  //not editing, read only display
             fval = review[type.key] || "";
             html += "<td>" + "<span class=\"revtitle\">" + 
