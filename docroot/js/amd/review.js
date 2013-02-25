@@ -102,28 +102,39 @@ define([], function () {
     },
 
 
-    //rating is a value from 0 - 100.  Using Math.round to adjust values
-    //results in 1px graphic hiccups as the rounding switches, and ceil
-    //has similar issues coming off zero, so use floor.
-    starsImageHTML = function (rating, showblank, roundup) {
-        var imgwidth = 81, imgheight = 26, step, title, width, offset, html,
-            titles = [ "No stars", "Half a star", 
-                       "One star", "One and a half stars",
-                       "Two stars", "Two and a half stars",
-                       "Three stars", "Three and a half stars",
-                       "Four stars", "Four and a half stars",
-                       "Five stars" ];
+    starRating = function (rating, roundup) {
+        var starsobj = {}, step,
+            starTitles = [ "No stars", "Half a star", 
+                           "One star", "One and a half stars",
+                           "Two stars", "Two and a half stars",
+                           "Three stars", "Three and a half stars",
+                           "Four stars", "Four and a half stars",
+                           "Five stars" ];
         if(typeof rating === "string") { 
             rating = parseInt(rating, 10); }
-        if(!rating || typeof rating !== 'number' || rating < 0) {  
+        if(!rating || typeof rating !== 'number' || rating < 0) { 
             rating = 0; }
         if(rating > 93) {  //compensate for floored math (number by feel)
             rating = 100; }
-        step = Math.floor((rating * (titles.length - 1)) / 100);
+        step = Math.floor((rating * (starTitles.length - 1)) / 100);
         if(roundup) {
-            step = Math.min(step + 1, titles.length - 1); }
-        width = Math.floor(step * (imgwidth / (titles.length - 1)));
-        title = titles[step];
+            step = Math.min(step + 1, starTitles.length - 1);
+            rating = Math.floor((step / (starTitles.length - 1)) * 100); }
+        starsobj.value = rating;
+        starsobj.step = step;
+        starsobj.maxstep = starTitles.length - 1;
+        starsobj.title = starTitles[step];
+        return starsobj;
+    },
+
+
+    //rating is a value from 0 - 100.  Using Math.round to adjust values
+    //results in 1px graphic hiccups as the rounding switches, and ceil
+    //has similar issues coming off zero, so use floor.
+    starsImageHTML = function (rating, showblank) {
+        var imgwidth = 81, imgheight = 26, width, offset, rat, html;
+        rat = starRating(rating);
+        width = Math.floor(rat.step * (imgwidth / rat.maxstep));
         html = "";
         if(!showblank) {
             html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
@@ -133,24 +144,24 @@ define([], function () {
                     " style=\"width:" + width + "px;" + 
                              "height:" + imgheight + "px;" +
                              "background:url('img/starsgold.png');\"" +
-                    " title=\"" + title + "\" alt=\"" + title + "\"/>";
+                    " title=\"" + rat.title + "\" alt=\"" + rat.title + "\"/>";
         if(showblank) {
-            if(step % 2 === 1) {  //odd, use half star display
-                offset = Math.floor(imgwidth / (titles.length - 1));
+            if(rat.step % 2 === 1) {  //odd, use half star display
+                offset = Math.floor(imgwidth / rat.maxstep);
                 html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
                                      "background:url('img/starsnone.png')" +
                                                 " -" + offset + "px 0;\"" +
-                            " title=\"" + title + "\"" + 
-                            " alt=\"" + title + "\"/>"; }
+                            " title=\"" + rat.title + "\"" + 
+                            " alt=\"" + rat.title + "\"/>"; }
             else { //even, use full star display
                 html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
                                      "background:url('img/starsnone.png');\"" +
-                            " title=\"" + title + "\"" + 
-                            " alt=\"" + title + "\"/>"; } }
+                            " title=\"" + rat.title + "\"" + 
+                            " alt=\"" + rat.title + "\"/>"; } }
         else { //not showing blank stars, leave some horizontal space.
             html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
                         " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
@@ -866,8 +877,10 @@ define([], function () {
         relx = Math.max(evtx - spanloc.x, 0);
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
         //mor.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
+        if(roundup) {
+            sval = starRating(sval, true).value; }
         crev.rating = sval;
-        html = starsImageHTML(crev.rating, true, roundup);
+        html = starsImageHTML(crev.rating, true);
         mor.out('stardisp', html);
     },
 
