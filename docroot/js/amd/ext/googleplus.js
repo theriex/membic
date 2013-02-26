@@ -10,7 +10,7 @@ define([], function () {
 
     var svcName = "GooglePlus",   //ascii with no spaces, used as an id
         dispName = "Google+",     //what should actually be displayed
-        iconurl = "http://www.google.com/favicon.ico",
+        iconurl = "https://www.google.com/favicon.ico",
         svcIconURL = "https://www.gstatic.com/images/icons/gplus-32.png",
         tmprev = null,
 
