@@ -1380,7 +1380,8 @@ define([], function () {
         resetReviews: function () {
             resetReviewDisplays(); },
         authorized: function (pen) {
-            if(pen.mid || pen.gsid || pen.fbid || pen.twid || pen.ghid) {
+            if(pen.mid || (pen.gsid && pen.gsid !== "0") || 
+               pen.fbid || pen.twid || pen.ghid) {
                 return true; }
             return false; },
         save: function () {

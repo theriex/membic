@@ -284,6 +284,12 @@ class GetPenById(webapp2.RequestHandler):
             self.error(404)
             self.response.write("No Pen Name found for id " + penid)
             return
+        # filter sensitive fields
+        pen.mid = 0
+        pen.gsid = "0"
+        pen.fbid = 0
+        pen.twid = 0
+        pen.ghid = 0
         returnJSON(self.response, [ pen ])
 
 
