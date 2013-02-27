@@ -152,6 +152,7 @@ body {
   box-shadow:10px 10px 5px #888888; }
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
+#userin, #passin { width:152px; }
 
 /* review layout */
 #revfdiv { }

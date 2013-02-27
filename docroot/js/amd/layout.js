@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, navigator: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -86,13 +86,20 @@ define([], function () {
         var sdiv, prevslot, currslot;
         sdiv = mor.byId('slidesdiv');
         if(sdiv) {
-            prevslot = mor.byId("introslide" + slideslot);
-            slideslot = (slideslot + 1) % 2;
-            slideindex = (slideindex + 1) % 3;
-            currslot = mor.byId("introslide" + slideslot);
-            currslot.src = "img/slides/" + slides[slideindex];
-            currslot.style.opacity = 1;
-            prevslot.style.opacity = 0;
+            if(navigator && 
+               navigator.appName === "Microsoft Internet Explorer") {
+                currslot = "<img src=\"img/slides/" + slides[slideindex] +
+                    "\" class=\"slideimg\"/>";
+                mor.out('slidesdiv', currslot);
+                slideindex = (slideindex + 1) % 3; }
+            else {  //use nice opacity transitions
+                prevslot = mor.byId("introslide" + slideslot);
+                slideslot = (slideslot + 1) % 2;
+                slideindex = (slideindex + 1) % 3;
+                currslot = mor.byId("introslide" + slideslot);
+                currslot.src = "img/slides/" + slides[slideindex];
+                currslot.style.opacity = 1;
+                prevslot.style.opacity = 0; }
             setTimeout(slideshow, 5400); }
     },
 
