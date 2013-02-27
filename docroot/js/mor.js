@@ -1,4 +1,4 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false, navigator: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -364,6 +364,13 @@ var mor = {};  //Top level function closure container
             function (resp) {
                 if(!errs) {
                     errs = []; }
+                if(!statcode) {
+                    //there is supposed to always be a code, but if there
+                    //isn't, then unauthorized is probably the best reset
+                    statcode = 401; 
+                    //recover the status (at least on IE8)
+                    if(resp.response && resp.response.status) {
+                        statcode = resp.response.status; } }
                 if(errs.indexOf(statcode) < 0) {
                     switch(statcode) {
                     case 401: return mor.login.logout();
@@ -525,6 +532,16 @@ var mor = {};  //Top level function closure container
             attval = comps[i].split("=");
             obj[attval[0]] = attval[1]; }
         return obj;
+    };
+
+
+    //Some things don't work in older browsers and need code workaround
+    //to degrade gracefully.
+    mor.isLowFuncBrowser = function () {
+        if(navigator && 
+           navigator.appName === "Microsoft Internet Explorer") {
+            return true; }
+        return false;
     };
 
 

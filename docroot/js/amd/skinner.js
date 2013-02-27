@@ -249,8 +249,9 @@ define([], function () {
 
 
     colorControlsHTML = function () {
-        var link = "", hover = "", html;
-        if(document.styleSheets[0].cssRules[0].style.setProperty) {
+        var link = "", hover = "", html, rules;
+        rules = document.styleSheets[0].cssRules;
+        if(rules && rules[0].style.setProperty) {
             link = "</td>" +
             "<td align=\"right\">link</td>" +
             "<td align=\"left\">" + 
@@ -285,14 +286,15 @@ define([], function () {
 
 
     displayDialog = function (domid, pen) {
-        var html;
+        var html, rules;
         oldcolors = copycolors(mor.colors);
         colorcontrols = [];
         html = presetSelectorHTML(pen) + colorControlsHTML();
         mor.out(domid, html);
         colorControl("bgbodyin", "bodybg");
         colorControl("textcolin", "text");
-        if(document.styleSheets[0].cssRules[0].style.setProperty) {
+        rules = document.styleSheets[0].cssRules;
+        if(rules && rules[0].style.setProperty) {
             colorControl("linkin", "link");
             colorControl("hoverin", "hover"); }
         mor.onx('change', 'presetsel', function (e) {

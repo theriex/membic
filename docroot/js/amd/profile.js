@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false, navigator: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -346,6 +346,8 @@ define([], function () {
         mor.services.display('consvcstd', pen);
         mor.skinner.init('settingsskintd', pen);
         mor.byId('dlgdiv').style.visibility = "visible";
+        if(mor.isLowFuncBrowser()) {
+            mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         mor.onescapefunc = cancelPenNameSettings;
     },
 

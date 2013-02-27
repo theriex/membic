@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, navigator: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -86,8 +86,7 @@ define([], function () {
         var sdiv, prevslot, currslot;
         sdiv = mor.byId('slidesdiv');
         if(sdiv) {
-            if(navigator && 
-               navigator.appName === "Microsoft Internet Explorer") {
+            if(mor.isLowFuncBrowser()) {
                 currslot = "<img src=\"img/slides/" + slides[slideindex] +
                     "\" class=\"slideimg\"/>";
                 mor.out('slidesdiv', currslot);

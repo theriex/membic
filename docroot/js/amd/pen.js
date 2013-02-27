@@ -237,8 +237,8 @@ define([], function () {
                      penNames = pens;
                      chooseOrCreatePenName(callback); },
                  function (code, errtxt) {
-                     mor.out('contentdiv', 
-                             "Pen name retrieval failed: " + errtxt); });
+                     mor.out('contentdiv', "Pen name retrieval failed: " + 
+                             code + " " + errtxt); });
     };
 
 
