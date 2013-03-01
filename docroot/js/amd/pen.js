@@ -168,7 +168,9 @@ define([], function () {
     newPenNameDisplay = function (callback) {
         var html;
         returnFuncMemo = callback;
-        html = "<p>Your pen name is a unique expression of style when presenting your views to the world. You can have separate pen names for each of your personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
+        //need to mimic layout initContent divs here so they are available
+        //as needed for continuation processing.
+        html = "<div id=\"chead\"> </div><div id=\"cmain\"><p>Your pen name is a unique expression of style when presenting your views to the world. You can have separate pen names for each of your personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
         "<div id=\"penformstat\">&nbsp;</div>" +
         "<table>" +
           "<tr>" +
@@ -181,7 +183,7 @@ define([], function () {
               "<button type=\"button\" id=\"createbutton\">Create</button>" +
             "</td>" +
           "</tr>" +
-        "</table>";
+        "</table></div>";
         mor.out('contentdiv', html);
         mor.onchange('pnamein', createPenName);
         mor.onclick('createbutton', createPenName);
