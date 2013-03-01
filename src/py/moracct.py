@@ -288,7 +288,7 @@ class GetToken(webapp2.RequestHandler):
         if found:
             token = newtoken(username, password)
             if self.request.get('format') == "record":
-                writeTextResponse("token: " + token, 
+                writeTextResponse("token: " + token + "\n", 
                                   self.response)
             else:
                 writeJSONResponse("[{\"token\":\"" + token + "\"}]", 

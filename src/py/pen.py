@@ -88,7 +88,14 @@ class AuthPenNames(webapp2.RequestHandler):
             return
         where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
         pens = PenName.gql(where, acc._id)
-        returnJSON(self.response, pens)
+        if self.request.get('format') == "record":
+            result = ""
+            for pen in pens:
+                result += "penid: " + str(pen.key().id()) +\
+                        ", name: " + pen.name + "\n"
+            writeTextResponse(result, self.response)
+        else:
+            returnJSON(self.response, pens)
 
 
 class NewPenName(webapp2.RequestHandler):
