@@ -178,6 +178,12 @@ def canonize(strval):
     return strval
 
 
+def writeTextResponse(text, response):
+    """ Factored method to write headers for plain text result """
+    response.headers['Content-Type'] = 'text/plain'
+    response.out.write(text)
+
+
 def writeJSONResponse(jsontxt, response):
     """ Factored method to write headers for JSON result """
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -281,7 +287,12 @@ class GetToken(webapp2.RequestHandler):
         # logging.info("GetToken found " + str(found) + " for " + username)
         if found:
             token = newtoken(username, password)
-            writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
+            if self.request.get('format') == "record":
+                writeTextResponse("token: " + token, 
+                                  self.response)
+            else:
+                writeJSONResponse("[{\"token\":\"" + token + "\"}]", 
+                                  self.response)
         else:
             self.error(401)
             self.response.out.write("No match for those credentials")

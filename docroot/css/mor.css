@@ -87,9 +87,10 @@ body {
   border:none; vertical-align:middle; }
 
 /* intro layout */
-#bookmarkletdirdiv { padding:0px 20px 20px 0px; float:left; width:50% }
+#bookslidediv { }
+#bookmarkletdirdiv { padding:0px 20px 20px 0px; float:left; width:45%; }
 #bookmarkletlinkdiv { padding:5px 20px; }
-#slidesdiv { float:right width:50% height:180px; }
+#slidesdiv { float:right width:45% height:180px; }
 .slideimg { position:absolute; left:52%; 
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
