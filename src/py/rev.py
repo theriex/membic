@@ -348,14 +348,14 @@ class SearchReviews(webapp2.RequestHandler):
             result = ""
             for review in reviews:
                 record = "revid: " + str(review.key().id()) +\
-                    ", title: " + review.title +\
-                    ", artist: " + review.artist +\
-                    ", album: " + review.album +\
-                    ", year: " + review.year +\
+                    ", title: " + urllib.quote(review.title) +\
+                    ", artist: " + urllib.quote(review.artist) +\
+                    ", album: " + urllib.quote(review.album) +\
+                    ", year: " + urllib.quote(review.year) +\
                     ", rating: " + str(review.rating) +\
                     ", modified: " + review.modified +\
-                    ", keywords: " + review.keywords +\
-                    ", text: " + review.text
+                    ", keywords: " + urllib.quote(review.keywords) +\
+                    ", text: " + urllib.quote(review.text)
                 record = ''.join(record.splitlines())
                 result += record + "\n"
             result += "fetched: " + str(checked)
