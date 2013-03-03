@@ -316,11 +316,15 @@ class SearchReviews(webapp2.RequestHandler):
         maxdate = self.request.get('maxdate')
         qstr = self.request.get('qstr')
         revtype = self.request.get('revtype')
+        oldfirst = self.request.get('oldfirst')
         fetchmax = 100
         where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"
         if revtype:
             where += " AND revtype = '" + revtype + "'"
-        where += " ORDER BY modified DESC"
+        if oldfirst:
+            where += " ORDER BY modified ASC"
+        else:
+            where += " ORDER BY modified DESC"
         revquery = Review.gql(where, penid, mindate, maxdate)
         cursor = self.request.get('cursor')
         if cursor:
@@ -340,7 +344,27 @@ class SearchReviews(webapp2.RequestHandler):
                 if qstr in review.cankey:
                     results.append(review)
             reviews = results
-        returnJSON(self.response, reviews, cursor, checked)
+        if self.request.get('format') == "record":
+            result = ""
+            for review in reviews:
+                record = "revid: " + str(review.key().id()) +\
+                    ", title: " + review.title +\
+                    ", artist: " + review.artist +\
+                    ", album: " + review.album +\
+                    ", year: " + review.year +\
+                    ", rating: " + str(review.rating) +\
+                    ", modified: " + review.modified +\
+                    ", keywords: " + review.keywords +\
+                    ", text: " + review.text
+                record = ''.join(record.splitlines())
+                result += record + "\n"
+            result += "fetched: " + str(checked)
+            if cursor:
+                result += ", cursor: " + cursor
+            result += "\n"
+            writeTextResponse(result, self.response)
+        else:
+            returnJSON(self.response, reviews, cursor, checked)
 
 
 class GetReviewById(webapp2.RequestHandler):

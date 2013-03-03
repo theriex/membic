@@ -29,4 +29,10 @@ indexes:
   - name: penid
   - name: revtype
   - name: modified
+
+- kind: Review
+  properties:
+  - name: penid
+  - name: revtype
+  - name: modified
     direction: desc
