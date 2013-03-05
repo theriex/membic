@@ -229,6 +229,14 @@ def intz(val):
     return int(val)
 
 
+def safeURIEncode(stringval, stripnewlines = False):
+    if not stringval:
+        stringval = ""
+    if stripnewlines:
+        stringval = ''.join(stringval.splitlines())
+    return urllib.quote(stringval.encode("utf-8"))
+
+
 class MORAccount(db.Model):
     """ An account used for local (as opposed to 3rd party) authentication """
     username = db.StringProperty(required=True)
