@@ -20,6 +20,7 @@ handlers:
 ##   an: authentication name (username if native auth, whatever otherwise)
 ##
 ## Queries may return a base64 cursor value as the last element.
+## Optional parameters are listed parentheses
 ##
 ######################################################################
 
@@ -66,7 +67,8 @@ handlers:
   script: src.py.pen.app
 
 ## Upload a profile pic
-## POST params: picfilein, _id (PenName instance id), authparams
+## POST params: picfilein, _id, authparams
+##   _id: The PenName instance id
 - url: /profpicupload.*
   script: src.py.pen.app
 
@@ -114,12 +116,14 @@ handlers:
 ##        Reviews
 
 ## Create a new review for authorized pen name
-## POST params: rev, authparams
+## POST params: rev, authparams (, mode)
+##   mode=batch leaves a processing note to avoid flooding the activity feed
 - url: /newrev.*
   script: src.py.rev.app
 
 ## Update review for authorized pen name
 ## POST params: rev, authparams
+##   _id of rev required
 - url: /updrev.*
   script: src.py.rev.app
 
@@ -129,7 +133,8 @@ handlers:
   script: src.py.rev.app
   
 ## Upload a review pic
-## POST params: picfilein, _id (Review instance id), authparams
+## POST params: picfilein, _id, authparams
+##   _id: The Review instance id
 - url: /revpicupload.*
   script: src.py.rev.app
 
@@ -139,7 +144,7 @@ handlers:
   script: src.py.rev.app
 
 ## Return reviews for a given pen within the given date range
-## GET params: penid, mindate, maxdate, qstr, authparams, (revtype, oldfirst)
+## GET params: penid, mindate, maxdate, qstr, authparams (,revtype, oldfirst)
 - url: /srchrevs.*
   script: src.py.rev.app
 
@@ -186,6 +191,7 @@ handlers:
 ## GET params: url, authparams
 - url: /urlcontents.*
   script: src.py.consvc.app
+
 
 ######################################################################
 # Static files and other stuff not really part of the API

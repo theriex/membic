@@ -326,7 +326,8 @@ var mor = {};  //Top level function closure container
 
 
     mor.crash = function (url, method, data, code, errtxt) {
-        var html = "<p>The server crashed.</p>" +
+        var html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
+        "<p>The server crashed.</p>" +
         "<p>If you want to help out, copy the contents of this page and " +
         "post it to " +
         "<a href=\"https://github.com/theriex/myopenreviews/issues\" " +
@@ -338,7 +339,7 @@ var mor = {};  //Top level function closure container
         "<li>url: " + url +
         "<li>data: " + data +
         "<li>code: " + code +
-        "</ul>" +
+        "</ul></div>" +
         errtxt;
         mor.out('contentdiv', html);
     };

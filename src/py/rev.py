@@ -121,6 +121,12 @@ def create_cankey_for_review(review):
     return canonize_cankey(cankey)
 
 
+def set_if_param_given(review, fieldname, handler, paramname):
+    val = handler.request.get(paramname)
+    if val:
+        setattr(review, fieldname, val)
+
+
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
     review.penid = int(handler.request.get('penid'))
@@ -128,30 +134,28 @@ def read_review_values(handler, review):
     ratingstr = handler.request.get('rating')
     if ratingstr:
         review.rating = int(ratingstr)
-    review.keywords = handler.request.get('keywords')
-    review.text = handler.request.get('text')
+    set_if_param_given(review, "keywords", handler, "keywords")
+    set_if_param_given(review, "text", handler, "text")
     # review.revpic is uploaded separately
-    review.imguri = handler.request.get('imguri')
+    set_if_param_given(review, "imguri", handler, "imguri")
     review.modified = nowISO()
     review.name = handler.request.get('name')
     review.title = handler.request.get('title')
-    review.url = handler.request.get('url')
+    set_if_param_given(review, "url", handler, "url")
     review.artist = handler.request.get('artist')
     review.author = handler.request.get('author')
-    review.publisher = handler.request.get('publisher')
-    review.album = handler.request.get('album')
-    review.starring = handler.request.get('starring')
-    review.address = handler.request.get('address')
-    review.year = handler.request.get('year')
+    set_if_param_given(review, "publisher", handler, "publisher")
+    set_if_param_given(review, "album", handler, "album")
+    set_if_param_given(review, "starring", handler, "starring")
+    set_if_param_given(review, "address", handler, "address")
+    set_if_param_given(review, "year", handler, "year")
     review.cankey = handler.request.get('cankey')
     if not review.cankey:
         review.cankey = create_cankey_from_request(handler)
-    # review.sourcrevs is updated through a specialized call
-    # review.responserevs is updated through a specialized call
     srevidstr = handler.request.get('srevid')
     if srevidstr:
         review.srevid = int(srevidstr)
-    # review.svcdata is updated through a specialized call
+    set_if_param_given(review, "svcdata", handler, "svcdata")
 
 
 def update_top20_reviews(pen, review):
@@ -224,6 +228,26 @@ def review_activity_search(since, cursor, penids):
     return checked, results
 
 
+def batch_flag_attrval(review):
+    return "\"batchUpdated\":\"" + review.modified + "\""
+
+
+def filter_reviews(reviews, qstr):
+    results = [] 
+    for review in reviews:
+        filtered = False
+        if not review.cankey:
+            review.cankey = create_cankey_for_review(review)
+            review.put()
+        if qstr and not qstr in review.cankey:
+            filtered = True
+        elif review.svcdata and batch_flag_attrval(review) in review.svcdata:
+            filtered = True
+        if not filtered:
+            results.append(review)
+    return results
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -235,6 +259,10 @@ class NewReview(webapp2.RequestHandler):
             revtype = self.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
+        if self.request.get('mode') == "batch":
+            # Might be better to unpack the existing svcdata value and 
+            # update rather than rewriting, but maybe not. Change if needed
+            review.svcdata = "{" + batch_flag_attrval(review) + "}"
         review.put()
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
@@ -335,15 +363,7 @@ class SearchReviews(webapp2.RequestHandler):
         if len(reviews) >= fetchmax:
             cursor = revquery.cursor()
         checked = len(reviews)
-        if qstr:
-            results = []
-            for review in reviews:
-                if not review.cankey:
-                    review.cankey = create_cankey_for_review(review)
-                    review.put()
-                if qstr in review.cankey:
-                    results.append(review)
-            reviews = results
+        reviews = filter_reviews(reviews, qstr)
         if self.request.get('format') == "record":
             result = ""
             for review in reviews:
@@ -402,7 +422,7 @@ class ReviewActivity(webapp2.RequestHandler):
         cursor = self.request.get('cursor')
         penidstr = self.request.get('penids')
         penids = penidstr.split(',')
-        logging.info("penids: " + str(penids))
+        # logging.info("penids: " + str(penids))
         checked, reviews = review_activity_search(since, cursor, penids)
         returnJSON(self.response, reviews, cursor, checked)
 
