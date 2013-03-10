@@ -94,7 +94,9 @@ end writeMORUploadScript
 
 
 on uploadPlaylistReviewData(MORUtil)
-	set prompt to "Upload existing review information to MyOpenReviews?"
+	tell application "iTunes"
+		set prompt to "Upload data from " & (name of updplaylist) & " to MyOpenReviews?"
+	end tell
 	set doup to display dialog prompt buttons {"No", "Yes"} default button 2 with title "MORUpdate"
 	if button returned of result is not equal to "Yes" then
 		return true -- nothing to do, return as if completed successfully
@@ -123,6 +125,11 @@ on populatePlaylist()
 	set datezero to current date
 	set year of datezero to 1972
 	tell application "iTunes"
+		set prompt to "Reset contents of " & (name of updplaylist) & "?"
+		set doup to display dialog prompt buttons {"No", "Yes"} default button 2 with title "MORUpdate"
+		if button returned of result is not equal to "Yes" then
+			return true -- nothing to do, return as if completed successfully
+		end if
 		repeat with curtrack in (every track of updplaylist)
 			set played date of curtrack to current date
 		end repeat
@@ -169,6 +176,86 @@ on populatePlaylist()
 	end tell
 end populatePlaylist
 
+
+on makeStandardPlaylistIndex(exportFolder, plname)
+	display dialog "Create standard playlist index file for copied files?" buttons {"No", "Yes"} default button 2 with title "MORUpdate"
+	if button returned of result is not equal to "Yes" then
+		return true
+	end if
+	try
+		set m3ufname to (exportFolder as text) & plname & ".m3u"
+		set m3uf to open for access m3ufname with write permission
+		set eof m3uf to 0
+		write "# This is just a simple m3u list" & newline to m3uf
+		tell application "Finder"
+			set allfilenames to name of every file of entire contents of folder exportFolder
+			repeat with fname in allfilenames
+				write fname & newline to m3uf
+			end repeat
+		end tell
+		close access m3uf
+	on error errStr number errorNumber
+		try
+			close access m3uf
+		end try
+		error errStr number errorNumber
+		return false
+	end try
+end makeStandardPlaylistIndex
+
+
+on copyPlaylistSourceFiles(exportFolder)
+	tell application "iTunes"
+		set plname to (name of updplaylist)
+		display dialog "Exporting source files from " & plname & " to " & (POSIX path of exportFolder) & ". This can take a minute or more. Watch the volume."
+		set userVolume to sound volume
+		set alltracks to every track of updplaylist
+		set curriter to 0
+		set ttliter to (count of alltracks)
+		repeat with currtrack in (every track of updplaylist)
+			set sound volume to ((curriter * 100) div ttliter)
+			set curriter to (curriter + 1)
+			set fsource to (location of currtrack)
+			tell application "Finder"
+				duplicate file fsource to exportFolder with replacing
+			end tell
+		end repeat
+		set sound volume to userVolume
+	end tell
+	makeStandardPlaylistIndex(exportFolder, plname)
+end copyPlaylistSourceFiles
+
+
+on copyPlaylistContents()
+	tell application "iTunes"
+		set plname to (name of updplaylist)
+	end tell
+	set copyprompt to "Copy all the source files for tracks in " & plname & " to a separate folder?"
+	set docopy to display dialog copyprompt buttons {"No", "Yes"} default button 1 with title "MORUpdate"
+	if button returned of result is not equal to "Yes" then
+		return true -- nothing to do, return as if completed successfully
+	end if
+	set selprompt to "Copying all the source files can take a few minutes. What folder should the source files be copied to?"
+	set exportFolder to choose folder with prompt selprompt
+	-- if they cancel the folder selection then we error out, otherwise
+	tell application "Finder"
+		set existFiles to every file of folder exportFolder
+		set ttlfiles to (count of existFiles)
+		if ttlfiles > 0 then
+			set cleanprompt to (POSIX path of exportFolder) & " contains " & ttlfiles & " files. Do you want to hard delete the entire contents so the folder is empty before copying files from " & plname & " over?"
+			set dodel to display dialog cleanprompt buttons {"No", "Yes"} default button 1 with title "MORUpdate"
+			if button returned of result is equal to "Yes" then
+				-- delete all files the quick hard way with no crap left around
+				set command to "rm -rf " & (POSIX path of exportFolder) & "*"
+				-- display dialog command
+				do shell script command
+			end if
+		end if
+	end tell
+	copyPlaylistSourceFiles(exportFolder)
+end copyPlaylistContents
+
+
 -- ///////////////////////////////////////////////////////////////////////////
 -- // external helper script loader
 -- ///////////////////////////////////////////////////////////////////////////
@@ -188,4 +275,5 @@ end loadScript
 set MORUtil to loadScript("MORUtil.scpt")
 if listChosen(MORUtil) and uploadPlaylistReviewData(MORUtil) then
 	populatePlaylist()
+	copyPlaylistContents()
 end if
