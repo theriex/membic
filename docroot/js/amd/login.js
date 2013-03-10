@@ -230,6 +230,12 @@ define([], function () {
     updateAuthentDisplay = function () {
         var html = "";
         mor.out('topdiv', html);
+        html = "<div id=\"accountdiv\">" +
+            "<a href=\"docs/news.html\"" +
+              " onclick=\"mor.layout.displayDoc('docs/news.html');" + 
+                        "return false\">" +
+                "Now with connection support for iTunes on Mac!" +
+            "</a></div>"
         mor.out('accountinfodisp', html);
         if(authtoken) {
             html = "<div id=\"accountdiv\"></div>";
