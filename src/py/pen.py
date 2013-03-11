@@ -230,6 +230,7 @@ class SearchPenNames(webapp2.RequestHandler):
         cursor = self.request.get('cursor')
         results = []
         pens = PenName.all()
+        pens.order('-modified')
         if cursor:
             pens.with_cursor(start_cursor = cursor)
         maxcheck = 1000
