@@ -1019,9 +1019,9 @@ define([], function () {
 
     penSearchOptionsHTML = function () {
         var html = "<div id=\"pensearchoptionsdiv\" class=\"formstyle\">" +
-            "<b>Must have reviewed their top 20</b>" +
+            "<i>Must have reviewed their top 20</i>" +
             mor.review.reviewTypeCheckboxesHTML("reqmin") +
-            "<b>Must have been active within the past</b>&nbsp;" + 
+            "<i>Must have been active within the past</i>&nbsp;" + 
             "<select id=\"srchactivesel\">" +
               "<option id=\"whenever\">Whenever</option>" +
               "<option id=\"pastyear\" selected=\"selected\">Year</option>" +
@@ -1029,10 +1029,10 @@ define([], function () {
               "<option id=\"pastweek\">Week</option>" +
             "</select>" +
             "<br/>" +
-            "<b>Include</b>&nbsp;" + 
+            "<i>Include</i>&nbsp;" + 
             mor.checkbox("srchinc", "following") +
             mor.checkbox("srchinc", "blocked") +
-            " <b> in the search results</b>" +
+            " <i> in the search results</i>" +
             "<br/>&nbsp;<br/></div>";
         return html;
     },
