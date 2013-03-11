@@ -21,7 +21,9 @@ define([], function () {
         searchparams = {},
         searchresults = [],
         searchcursor = "",
-        searchtotal = 0,
+        searchmax = 1000,  //max records to go through automatically
+        searchtotal = 0,  //count of records searched so far
+        searchrequests = 1,  //count of times the search was manually requested
         searchmode = "pen",  //other option is "rev"
         pensrchplace = "Pen name, city or shoutout...",
         revsrchplace = "Review title or name...",
@@ -49,6 +51,7 @@ define([], function () {
         searchresults = [];
         searchcursor = "";
         searchtotal = 0;
+        searchrequests = 1;
     },
 
 
@@ -870,14 +873,16 @@ define([], function () {
                     html += reviewItemHTML(results[i]); } } }
         html += "</ul>";
         if(searchcursor) {
-            if(i > 0) {  //have more than just an empty result cursor..
+            if(i === 0 && searchtotal < (searchmax * searchrequests)) {
+                setTimeout(mor.profile.srchmore, 10); }  //auto-repeat search
+            else {
+                if(searchtotal >= (searchmax * searchrequests)) {
+                    searchrequests += 1; } 
                 html += "<a href=\"#continuesearch\"" +
                           " onclick=\"mor.profile.srchmore();return false;\"" +
                           " title=\"Continue searching for more matching " + 
                                     ts.stype + "\"" +
-                    ">continue search...</a>"; }
-            else if(searchtotal < 1000) { //auto-repeat search
-                setTimeout(mor.profile.srchmore, 10); } }
+                    ">continue search...</a>"; } }
         mor.out('searchresults', html);
         mor.byId('srchbuttonspan').style.display = "inline";
         mor.out('srchmessagespan', "");
@@ -953,6 +958,7 @@ define([], function () {
         searchresults = [];
         searchcursor = "";
         searchtotal = 0;
+        searchrequests = 1;
         mor.out('searchresults', "");
         doSearch();
     },
