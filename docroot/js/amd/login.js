@@ -8,7 +8,7 @@
 define([], function () {
     "use strict";
 
-    var loginprompt = "Please log in, or use an existing social account",
+    var loginprompt = "Log in directly, or with a social account...",
         authmethod = "",
         authtoken = "",
         authname = "",
