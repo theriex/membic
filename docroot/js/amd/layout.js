@@ -8,7 +8,10 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "cycleframe.png", "pens.png", "feature.png" ],
+    var slides = [ "cycleframe.png", "pens.png", "feature.png",
+                   "mor01.png", "mor02.png", "mor03.png", "mor04.png", 
+                   "mor05.png", "mor06.png", "mor07.png", "mor08.png", 
+                   "mor09.png", "mor10.png", "mor11.png", "mor12.png" ],
         slideindex = 0,
         slideslot = 0,
 
@@ -90,16 +93,19 @@ define([], function () {
                 currslot = "<img src=\"img/slides/" + slides[slideindex] +
                     "\" class=\"slideimg\"/>";
                 mor.out('slidesdiv', currslot);
-                slideindex = (slideindex + 1) % 3; }
+                slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 prevslot = mor.byId("introslide" + slideslot);
                 slideslot = (slideslot + 1) % 2;
-                slideindex = (slideindex + 1) % 3;
+                slideindex = (slideindex + 1) % slides.length;
                 currslot = mor.byId("introslide" + slideslot);
                 currslot.src = "img/slides/" + slides[slideindex];
                 currslot.style.opacity = 1;
                 prevslot.style.opacity = 0; }
-            setTimeout(slideshow, 5400); }
+            if(slides[slideindex].indexOf("mor") === 0) {
+                setTimeout(slideshow, 1200); }
+            else {
+                setTimeout(slideshow, 5400); } }
     },
 
 
