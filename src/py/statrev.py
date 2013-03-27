@@ -363,7 +363,7 @@ def revhtml(rev, pen):
 
 class StaticReviewDisplay(webapp2.RequestHandler):
     def get(self, revid):
-        review = Review.get_by_id(int(revid))
+        review = Review.get_by_id(intz(revid))
         if not review:
             self.error(404)
             self.response.out.write("Review " + revid + " not found")

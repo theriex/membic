@@ -283,12 +283,17 @@ class URLContents(webapp2.RequestHandler):
         logging.info("request: " + str(self.request))
         url = self.request.get('url')
         headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        result = urlfetch.fetch(url, payload=None, method="GET",
-                                headers=headers,
-                                allow_truncated=False, 
-                                follow_redirects=True, 
-                                deadline=10, 
-                                validate_certificate=False)
+        try:
+            result = urlfetch.fetch(url, payload=None, method="GET",
+                                    headers=headers,
+                                    allow_truncated=False, 
+                                    follow_redirects=True, 
+                                    deadline=10, 
+                                    validate_certificate=False)
+        except:
+            self.error(400)
+            self.response.out.write("URL fetch failure")
+            return
         if result.status_code == 200:
             json = "[{\"content\":\"" + enc(result.content) + "\"}]"
             self.response.headers['Content-Type'] = 'application/json'

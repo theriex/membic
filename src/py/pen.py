@@ -141,7 +141,7 @@ class UpdatePenName(webapp2.RequestHandler):
             return
         id = self.request.get('_id')
         logging.info("UpdatePenName id: " + id)
-        pen = PenName.get_by_id(int(id))
+        pen = PenName.get_by_id(intz(id))
         if not pen:
             self.error(404)
             self.response.out.write("PenName id: " + str(id) + " not found.")
@@ -174,7 +174,7 @@ class UploadProfPic(webapp2.RequestHandler):
             return
         profid = self.request.get('_id')
         logging.info("UploadProfPic id: " + profid)
-        pen = PenName.get_by_id(int(profid))
+        pen = PenName.get_by_id(intz(profid))
         if not pen:
             self.error(404)
             self.response.write("PenName: " + str(profid) + " not found.")
@@ -202,7 +202,7 @@ class UploadProfPic(webapp2.RequestHandler):
 class GetProfPic(webapp2.RequestHandler):
     def get(self):
         profid = self.request.get('profileid');
-        pen = PenName.get_by_id(int(profid))
+        pen = PenName.get_by_id(intz(profid))
         havepic = pen and pen.profpic
         if not havepic:
             self.error(404)
@@ -282,15 +282,15 @@ class SearchPenNames(webapp2.RequestHandler):
 class GetPenById(webapp2.RequestHandler):
     def get(self):
         penidstr = self.request.get('penid')
-        penid = int(penidstr)
+        penid = intz(penidstr)
         if penid <= 0:
             self.error(400)
             self.response.write("Invalid ID for Pen Name: " + penidstr)
             return
-        pen = PenName.get_by_id(int(penid))
+        pen = PenName.get_by_id(intz(penid))
         if not pen:
             self.error(404)
-            self.response.write("No Pen Name found for id " + penid)
+            self.response.write("No Pen Name found for id " + str(penid))
             return
         # filter sensitive fields
         pen.mid = 0

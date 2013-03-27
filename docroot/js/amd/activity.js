@@ -214,8 +214,8 @@ define([], function () {
         if(penids.length === 0) {
             html = "You are not following anyone. " + 
                 searchPensLinkHTML(); }
-        else if(typeof penids[penids.length - 1] !== 'number') {
-            //most likely penids === ["loading"]...
+        else if((penids[penids.length - 1] === "waiting") ||
+                (penids[penids.length - 1] === "loading")) {
             retry = true;
             html = "Loading relationships..."; }
         else {

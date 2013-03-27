@@ -54,7 +54,7 @@ def relationship_modification_authorized(handler):
         handler.error(401)
         handler.response.out.write("Authentication failed")
         return False
-    originid = int(handler.request.get('originid'))
+    originid = intz(handler.request.get('originid'))
     pen = PenName.get_by_id(originid)
     if not pen:
         handler.error(404)
@@ -77,7 +77,7 @@ def valid_relationship_modification(handler, rel):
     # They own the pen name specified in the originid, but the originid of
     # the relationship to be modified belongs to someone else.  The 
     # originid and relatedid don't change.
-    originid = int(handler.request.get('originid'))
+    originid = intz(handler.request.get('originid'))
     if rel.originid != originid:
         handler.error(401)
         handler.response.out.write("Relationship not authorized.")
@@ -89,15 +89,15 @@ class CreateRelationship(webapp2.RequestHandler):
     def post(self):
         if not relationship_modification_authorized(self):
             return
-        originid = int(self.request.get('originid'))
-        relatedid = int(self.request.get('relatedid'))
+        originid = intz(self.request.get('originid'))
+        relatedid = intz(self.request.get('relatedid'))
         rel = Relationship(originid=originid, relatedid=relatedid)
         rel.status = self.request.get('status')
         rel.mute = self.request.get('mute')
         rel.cutoff = 0
         cutoffstr = self.request.get('cutoff')
         if cutoffstr:
-            rel.cutoff = int(cutoffstr)
+            rel.cutoff = intz(cutoffstr)
         elements = add_relationship(rel)
         returnJSON(self.response, elements)
 
@@ -107,7 +107,7 @@ class DeleteRelationship(webapp2.RequestHandler):
         if not relationship_modification_authorized(self):
             return
         relid = self.request.get('_id')
-        rel = Relationship.get_by_id(int(relid))
+        rel = Relationship.get_by_id(intz(relid))
         if not valid_relationship_modification(self, rel):
             return
         elements = delete_relationship(rel)
@@ -119,7 +119,7 @@ class UpdateRelationship(webapp2.RequestHandler):
         if not relationship_modification_authorized(self):
             return
         relid = self.request.get('_id')
-        rel = Relationship.get_by_id(int(relid))
+        rel = Relationship.get_by_id(intz(relid))
         if not valid_relationship_modification(self, rel):
             return
         # originid is never modified
@@ -129,7 +129,7 @@ class UpdateRelationship(webapp2.RequestHandler):
         rel.cutoff = 0
         cutoffstr = self.request.get('cutoff')
         if cutoffstr:
-            rel.cutoff = int(cutoffstr)
+            rel.cutoff = intz(cutoffstr)
         rel.put()
         returnJSON(self.response, [ rel ])
 
@@ -147,10 +147,10 @@ class FindRelationships(webapp2.RequestHandler):
         relatedid = self.request.get('relatedid')
         if originid:
             field = "originid"
-            value = int(originid)
+            value = intz(originid)
         elif relatedid:
             field = "relatedid"
-            value = int(relatedid)
+            value = intz(relatedid)
         where = "WHERE " + field + "=:1 LIMIT 20"
         offset = self.request.get('offset')
         if offset:

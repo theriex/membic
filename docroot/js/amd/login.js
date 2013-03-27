@@ -578,18 +578,16 @@ define([], function () {
             clearParams(); }
         if(params.view && params.profid) {
             mor.historyCheckpoint({ view: params.view, 
-                                    profid: parseInt(params.profid, 10) }); }
+                                    profid: params.profid }); }
         else if(params.revedit) {
             mor.historyCheckpoint({ view: "review", mode: "edit",
-                                    revid: parseInt(params.revedit, 10) }); }
+                                    revid: params.revedit }); }
         //figure out what to do next
         if(params.command && params.command.indexOf("AltAuth") === 0) {
             idx = params.command.slice("AltAuth".length);
-            idx = parseInt(idx, 10);
             handleAlternateAuthentication(idx, params); }
         else if(params.state && params.state.indexOf("AltAuth") === 0) {
             idx = params.state.slice("AltAuth".length, "AltAuth".length + 1);
-            idx = parseInt(idx, 10);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || readAuthCookie()) {
             if(params.command === "chgpwd") {

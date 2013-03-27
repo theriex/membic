@@ -107,7 +107,7 @@ def authenticated(request):
                            token, 'GET', None)
         if data and str(data["id"]) == useridstr:
             account = MORAccount(username=useridstr, password=token)
-            account._id = int(useridstr)
+            account._id = intz(useridstr)
             return account 
     elif acctype == "twid":
         svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
@@ -116,7 +116,7 @@ def authenticated(request):
             usertoks = username.split(' ')
             useridstr = str(usertoks[0])
             account = MORAccount(username=useridstr, password=token)
-            account._id = int(useridstr)
+            account._id = intz(useridstr)
             return account
     elif acctype == "gsid":
         svc = "https://www.googleapis.com/oauth2/v1/tokeninfo"
@@ -152,7 +152,7 @@ def authenticated(request):
             usertoks = username.split(' ')
             useridstr = str(usertoks[0])
             account = MORAccount(username=useridstr, password=token)
-            account._id = int(useridstr)
+            account._id = intz(useridstr)
             return account
     else:
         logging.info("could not authenticate unknown account type: " + acctype)
@@ -191,6 +191,21 @@ def writeJSONResponse(jsontxt, response):
     response.out.write(jsontxt)
 
 
+def quoteTop20IDs(top20s):
+    """ Quote the numeric ID refs so client gets string ID values """
+    t20dict = {}
+    if top20s:
+        t20dict = json.loads(top20s)
+    for revtype in t20dict:
+        if revtype != "latestrevtype":
+            stringifiedIDs = []
+            t20ids = t20dict[revtype]
+            for t20id in t20ids:
+                stringifiedIDs.append(str(t20id))
+            t20dict[revtype] = stringifiedIDs
+    return json.dumps(t20dict)
+
+
 def returnJSON(response, queryResults, cursor="", fetched=-1):
     """ Factored method to return query results as JSON """
     result = ""
@@ -202,9 +217,14 @@ def returnJSON(response, queryResults, cursor="", fetched=-1):
         for prop, val in props.iteritems():
             if(isinstance(val, Blob)):
                 props[prop] = str(obj.key().id())
+            # javascript integer value cannot hold database integer value..
+            if(isinstance(val, (int, long)) and (prop.endswith("id"))):
+                props[prop] = str(props[prop])
+            if(prop == "top20s"):
+                props[prop] = quoteTop20IDs(props[prop])
             # logging.info(prop + ": " + str(props[prop]))
         jsontxt = json.dumps(props, True)
-        jsontxt = "{\"_id\":" + str(obj.key().id()) + ", " + jsontxt[1:]
+        jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " + jsontxt[1:]
         # logging.info(jsontxt)
         result += jsontxt
     if cursor or fetched > 0:
@@ -226,6 +246,8 @@ def returnDictAsJSON(response, obj):
 def intz(val):
     if not val:
         return 0
+    if isinstance(val, basestring) and val.startswith("\""):
+        val = val[1:len(val) - 1]
     return int(val)
 
 

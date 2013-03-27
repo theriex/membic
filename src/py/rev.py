@@ -49,7 +49,7 @@ def review_modification_authorized(handler):
         handler.error(401)
         handler.response.out.write("Authentication failed")
         return False
-    penid = int(handler.request.get('penid'))
+    penid = intz(handler.request.get('penid'))
     pen = PenName.get_by_id(penid)
     if not pen:
         handler.error(404)
@@ -65,12 +65,12 @@ def review_modification_authorized(handler):
 
 def safe_get_review_for_update(handler):
     id = handler.request.get('_id')
-    review = Review.get_by_id(int(id))
+    review = Review.get_by_id(intz(id))
     if not review:
         handler.error(404)
         handler.response.out.write("Review id: " + str(id) + " not found.")
         return
-    penid = int(handler.request.get('penid'))
+    penid = intz(handler.request.get('penid'))
     if penid != review.penid:
         handler.error(401)
         handler.response.out.write("Review pen does not match")
@@ -129,7 +129,7 @@ def set_if_param_given(review, fieldname, handler, paramname):
 
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
-    review.penid = int(handler.request.get('penid'))
+    review.penid = intz(handler.request.get('penid'))
     review.revtype = handler.request.get('revtype')
     ratingstr = handler.request.get('rating')
     if ratingstr:
@@ -154,7 +154,7 @@ def read_review_values(handler, review):
         review.cankey = create_cankey_from_request(handler)
     srevidstr = handler.request.get('srevid')
     if srevidstr:
-        review.srevid = int(srevidstr)
+        review.srevid = intz(srevidstr)
     set_if_param_given(review, "svcdata", handler, "svcdata")
 
 
@@ -189,7 +189,7 @@ def update_top20_reviews(pen, review):
 
 
 def fetch_review_by_cankey(handler):
-    penid = int(handler.request.get('penid'))
+    penid = intz(handler.request.get('penid'))
     revtype = handler.request.get('revtype')
     cankey = handler.request.get('cankey')
     if not cankey:
@@ -255,7 +255,7 @@ class NewReview(webapp2.RequestHandler):
             return
         review = fetch_review_by_cankey(self)
         if not review:
-            penid = int(self.request.get('penid'))
+            penid = intz(self.request.get('penid'))
             revtype = self.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
@@ -319,7 +319,7 @@ class UploadReviewPic(webapp2.RequestHandler):
 class GetReviewPic(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = Review.get_by_id(int(revid))
+        review = Review.get_by_id(intz(revid))
         havepic = review and review.revpic
         if not havepic:
             self.error(404)
@@ -339,7 +339,7 @@ class SearchReviews(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Authentication failed")
             return
-        penid = int(self.request.get('penid'))
+        penid = intz(self.request.get('penid'))
         mindate = self.request.get('mindate')
         maxdate = self.request.get('maxdate')
         qstr = self.request.get('qstr')
@@ -389,7 +389,7 @@ class SearchReviews(webapp2.RequestHandler):
 class GetReviewById(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = Review.get_by_id(int(revid))
+        review = Review.get_by_id(intz(revid))
         if not review:
             self.error(404)
             self.response.write("No Review found for id " + revid)
@@ -404,7 +404,7 @@ class GetReviewByKey(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Authentication failed")
             return
-        penid = int(self.request.get('penid'))
+        penid = intz(self.request.get('penid'))
         revtype = self.request.get('revtype')
         cankey = self.request.get('cankey')
         where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"\

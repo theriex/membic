@@ -100,7 +100,8 @@ define([], function () {
         name = dispen.name;
         html = "<a href=\"#view=profile&profid=" + id + "\"" +
                  " title=\"Show profile for " + name + "\"" +
-                 " onclick=\"mor.profile.byprofid(" + id + ");return false;\"" +
+                 " onclick=\"mor.profile.byprofid('" + id + "');" + 
+                            "return false;\"" +
                ">" + name + "</a>";
         html = "<div id=\"profhdiv\">" +
                  "<span id=\"penhnamespan\">" + html + "</span>" +
@@ -516,8 +517,6 @@ define([], function () {
 
     readReview = function (revid) {
         var i, revobj, t20s, revtype, tops;
-        if(typeof revid !== "number") {
-            revid = parseInt(revid, 10); }
         //Try find source review in the recent reviews
         for(i = 0; !revobj && i < recentRevState.results.length; i += 1) {
             if(mor.instId(recentRevState.results[i]) === revid) {
@@ -695,7 +694,7 @@ define([], function () {
 
 
     best = function () {
-        var html, revs, i, temp;
+        var html, revs, i;
         selectTab("bestli", best);
         if(typeof profpen.top20s === "string") {
             profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
@@ -710,37 +709,31 @@ define([], function () {
                 html += " " + mor.review.reviewLinkHTML(); }
             html += "</li>"; }
         for(i = 0; i < revs.length; i += 1) {
-            if(typeof revs[i] === 'number') {  //need to resolve id
-                if(topRevState.review) {       //have a resolution
-                    if(typeof topRevState.review === 'object') {
-                        if(mor.instId(topRevState.review) === revs[i]) {
-                            revs[i] = topRevState.review; } }
-                    else if(typeof topRevState.review === 'string') {
-                        temp = revs[i].toString() + ":";
-                        if(topRevState.review.indexOf(temp) === 0) {
-                            revs[i] = topRevState.review; } } } }
-            //have resolved object, error text, or unresolved id
-            if(typeof revs[i] === 'object') {  //resolved
-                html += reviewItemHTML(revs[i]); }
-            else if(typeof revs[i] === 'string') {  //resolution error
-                html += "<li>" + revs[i] + "</li>"; }
-            else {  //not resolved
-                html += "<li>Fetching review " + revs[i] + "...</li>";
-                break; } }  //didn't make it through, stop at index
+            if(typeof revs[i] === 'string') {
+                if(revs[i].indexOf("not found") >= 0) {
+                    html += "</li>Review " + revs[i] + "</li>"; }
+                else if((typeof topRevState.review === 'object') &&
+                        (mor.instId(topRevState.review) === revs[i])) {
+                    revs[i] = topRevState.review;
+                    html += reviewItemHTML(revs[i]); }
+                else {
+                    html += "<li>Fetching review " + revs[i] + "...</li>";
+                    break; } }
+            else if(typeof revs[i] === 'object') {
+                html += reviewItemHTML(revs[i]); } }
         html += "</ul>";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
         if(i < revs.length) {  //didn't make it through, go fetch
             mor.call("revbyid?revid=" + revs[i], 'GET', null,
-                     function (revs) {
-                         if(revs.length > 0) {
-                             topRevState.review = revs[0]; }
+                     function (fetchedrevs) {
+                         if(fetchedrevs.length > 0) {
+                             topRevState.review = fetchedrevs[0]; }
                          else {
-                             topRevState.review = revs[i] + ": not found"; }
+                             revs[i] += ": not found"; }
                          mor.profile.best(); },
                      function (code, errtxt) {
-                         topRevState.review = revs[i] + ": " + code + " " +
-                             errtxt;
+                         revs[i] += ": not found";
                          mor.profile.best(); }); }
     },
 
@@ -1350,8 +1343,6 @@ define([], function () {
 
 
     displayProfileForId = function (id) {
-        if(typeof id !== "number") {
-            id = parseInt(id, 10); }
         resetReviewDisplays();
         findOrLoadPen(id, function (dispen) {
             mor.pen.getPen(function (homepen) {

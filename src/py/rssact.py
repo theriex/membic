@@ -81,7 +81,7 @@ def rss_content(penid, reviews, checked, following):
 
 class ActivityRSS(webapp2.RequestHandler):
     def get(self):
-        penid = int(self.request.get('pen'))
+        penid = intz(self.request.get('pen'))
         where = "WHERE originid = :1 LIMIT 300"
         rels = Relationship.gql(where, penid)
         relids = []

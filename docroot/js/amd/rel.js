@@ -230,7 +230,6 @@ define([], function () {
     },
 
 
-    //last array entry is non-numeric if still loading
     getOutboundRelationshipIds = function () {
         var i, relids = [];
         for(i = 0; outboundRels && i < outboundRels.length; i += 1) {

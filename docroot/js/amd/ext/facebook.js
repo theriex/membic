@@ -107,7 +107,7 @@ define([], function () {
             mor.err("Invalid userID received from Facebook");
             return mor.profile.displayAuthSettings(domid, pen); }
         mor.out(domid, "Recording Facebook authorization...");
-        pen.fbid = fbid;
+        pen.fbid = fbUserID;  //use string to avoid any potential rounding
         mor.pen.updatePen(pen,
                           function (updpen) {
                               mor.profile.displayAuthSettings(domid, updpen); },
