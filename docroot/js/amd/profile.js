@@ -975,6 +975,8 @@ define([], function () {
                     break; } } }
         mor.out('srchoptstogglehref', "");
         mor.out('searchresults', "");
+        if(searchmode === "pen") {  //start with options hidden for pen search
+            toggleSearchOptions(); }
     },
 
 
