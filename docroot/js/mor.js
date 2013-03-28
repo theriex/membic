@@ -135,7 +135,7 @@ var mor = {};  //Top level function closure container
         if(state) {
             switch(state.view) {
             case "profile":
-                if(state.profid > 0) {
+                if(mor.isId(state.profid)) {
                     mor.profile.setTab(state.tab);
                     mor.profile.byprofid(state.profid); }
                 break; 
@@ -465,6 +465,11 @@ var mor = {};  //Top level function closure container
     mor.setInstId = function (obj, idval) {
         var idfield = "_id";
         obj[idfield] = idval;
+    };
+    mor.isId = function (idval) {
+        if(idval && typeof idval === 'string' && idval !== "0") {
+            return true; }
+        return false;
     };
 
 

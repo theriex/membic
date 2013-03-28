@@ -177,7 +177,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aamid\"" +
             " onchange=\"mor.profile.toggleAuthChange('mid','" + 
                              domid + "');return false;\"";
-        if(pen.mid) {
+        if(mor.isId(pen.mid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
         //Facebook
@@ -186,7 +186,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aafbid\"" +
             " onchange=\"mor.profile.toggleAuthChange('fbid','" + 
                              domid + "');return false;\"";
-        if(pen.fbid) {
+        if(mor.isId(pen.fbid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>";
         //Twitter
@@ -195,7 +195,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aatwid\"" +
             " onchange=\"mor.profile.toggleAuthChange('twid','" + 
                              domid + "');return false;\"";
-        if(pen.twid) {
+        if(mor.isId(pen.twid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aatwid\">" + atname + "</label></td></tr>";
         //Google+
@@ -204,7 +204,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aagsid\"" +
             " onchange=\"mor.profile.toggleAuthChange('gsid','" + 
                              domid + "');return false;\"";
-        if(pen.gsid) { 
+        if(mor.isId(pen.gsid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aagsid\">" + atname + "</label></td></tr>";
         //GitHub
@@ -213,7 +213,7 @@ define([], function () {
             " value=\"" + atname + "\" id=\"aaghid\"" +
             " onchange=\"mor.profile.toggleAuthChange('ghid','" + 
                              domid + "');return false;\"";
-        if(pen.ghid) { 
+        if(mor.isId(pen.ghid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aaghid\">" + atname + "</label></td></tr>";
         html += "</table>";
@@ -263,7 +263,7 @@ define([], function () {
                 mor.byId("aa" + authtype).checked = true;
                 return;  } 
             if(confirm("Are you sure you want to remove access to this" +
-                       "Pen Name from " + nameForAuthType(authtype) + "?")) {
+                       " Pen Name from " + nameForAuthType(authtype) + "?")) {
                 mor.out(domid, "Updating...");
                 previd = pen[authtype];
                 pen[authtype] = 0;
@@ -1377,8 +1377,8 @@ define([], function () {
         resetReviews: function () {
             resetReviewDisplays(); },
         authorized: function (pen) {
-            if(pen.mid || (pen.gsid && pen.gsid !== "0") || 
-               pen.fbid || pen.twid || pen.ghid) {
+            if(mor.isId(pen.mid) || mor.isId(pen.gsid) || mor.isId(pen.fbid) || 
+               mor.isId(pen.twid) || mor.isId(pen.ghid)) {
                 return true; }
             return false; },
         save: function () {

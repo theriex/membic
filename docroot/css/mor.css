@@ -154,6 +154,7 @@ body {
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
+.tagline { font-style:italic; color:#555; }
 
 /* review layout */
 #revfdiv { }
