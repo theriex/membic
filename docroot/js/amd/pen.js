@@ -158,6 +158,8 @@ define([], function () {
                          penNames = []; }
                      penNames.push(currpen);
                      deserializeFields(currpen);
+                     mor.rel.resetStateVars();
+                     mor.activity.resetStateVars();
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
@@ -198,6 +200,9 @@ define([], function () {
             if(penNames[i].name === name) {
                 currpen = penNames[i];
                 mor.skinner.setColorsFromPen(currpen);
+                //reload relationships and activity
+                mor.rel.resetStateVars();
+                mor.activity.resetStateVars();
                 //update the accessed time so that the latest pen name is
                 //chosen by default next time. 
                 updatePenName(penNames[i], 

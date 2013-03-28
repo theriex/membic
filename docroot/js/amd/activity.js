@@ -8,7 +8,7 @@
 define([], function () {
     "use strict";
 
-    var penids, 
+    var penids, //outbound relationships for the current pen
         revs, 
         lastChecked, 
         actcursor = "",

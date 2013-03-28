@@ -251,6 +251,12 @@ def intz(val):
     return int(val)
 
 
+def safestr(val):
+    if not val:
+        return ""
+    return str(val)
+
+
 def safeURIEncode(stringval, stripnewlines = False):
     if not stringval:
         stringval = ""

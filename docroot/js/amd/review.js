@@ -629,9 +629,10 @@ define([], function () {
                 "Keywords: " +
                   "<input type=\"text\" id=\"keywordin\"" + 
                         " size=\"30\"" + 
-                        " value=\"" + review.keywords + "\"/>"; }
+                        " value=\"" + mor.safestr(review.keywords) + "\"/>"; }
         else { //not editing
-            html += "<div class=\"csvstrdiv\">" + review.keywords + "</div>"; }
+            html += "<div class=\"csvstrdiv\">" + 
+                mor.safestr(review.keywords) + "</div>"; }
         return html;
     },
 

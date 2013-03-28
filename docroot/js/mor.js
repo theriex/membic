@@ -251,6 +251,13 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.safestr = function (string) {
+        if(!string) {
+            return ""; }
+        return String(string);
+    };
+
+
     //top level kickoff function called from index.html
     mor.init = function (dom, json, on, request, 
                          query, cookie, domgeo,

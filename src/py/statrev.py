@@ -3,6 +3,7 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
+from moracct import safestr
 import re
 import json
 
@@ -191,7 +192,7 @@ def descrip(rev):
     for av in assoc:
         text += ", " + av[1]
     text += ". " + revtext
-    text += " " + rev.keywords
+    text += " " + safestr(rev.keywords)
     if len(text) > 150:
         text = text[:150] + "..."
     text = re.sub('\"', '&quot;', text)
@@ -296,7 +297,7 @@ def revhtml(rev, pen):
     html +=         "<tr>"
     html +=           "<td>" + reviewPicHTML(rev) + "</td>"
     html +=           "<td valign=\"top\">"
-    html +=             "<div class=\"scvstrdiv\">" + rev.keywords
+    html +=             "<div class=\"scvstrdiv\">" + safestr(rev.keywords)
     html +=             "</div></td>"
     html +=           "<td valign=\"top\">" + secondaryFields(rev) + "</td>"
     html +=         "</tr>"

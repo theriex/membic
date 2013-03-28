@@ -2,7 +2,7 @@ import webapp2
 import logging
 from rev import Review, review_activity_search
 from rel import Relationship
-from moracct import nowISO
+from moracct import nowISO, intz, safestr
 from statrev import getTitle, getSubkey
 
 
@@ -66,7 +66,7 @@ def rss_content(penid, reviews, checked, following):
         txt += "<title><![CDATA[" + rss_title(review) + "]]></title>\n"
         txt += "<link>" + item_url(review) + "</link>\n"
         txt += "<description><![CDATA[" + review.text + "\n"
-        txt += review.keywords + "]]></description>\n"
+        txt += safestr(review.keywords) + "]]></description>\n"
         txt += "<dc:date>" + review.modified + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
         txt += "<dc:rights>" + copy + "</dc:rights>\n"

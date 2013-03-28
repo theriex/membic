@@ -202,6 +202,8 @@ handlers:
   script: src.py.cluck.app
 - url: /testpens
   script: src.py.pen.app
+- url: /testrevs
+  script: src.py.rev.app
 - url: /verifrev
   script: src.py.rev.app
 - url: /statrev/\d+

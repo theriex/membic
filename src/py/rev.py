@@ -427,6 +427,39 @@ class ReviewActivity(webapp2.RequestHandler):
         returnJSON(self.response, reviews, cursor, checked)
 
 
+class MakeTestReviews(webapp2.RequestHandler):
+    def get(self):
+        if not self.request.url.startswith('http://localhost'):
+            self.error(405)
+            self.response.out.write("Test pens are only for local testing")
+            return
+        count = 0
+        while count < 10:
+            count += 1
+            name = "RevTestPen " + str(count)
+            pen = PenName(name=name, name_c=canonize(name))
+            pen.shoutout = "MakeTestReviews dummy pen name " + str(count)
+            pen.city = "fake city " + str(count)
+            pen.accessed = nowISO()
+            pen.modified = nowISO()
+            pen.revmem = ""
+            pen.settings = ""
+            pen.following = 0
+            pen.followers = 0
+            pen.put()
+            moviecount = 0
+            while moviecount < 4:
+                moviecount += 1
+                rev = Review(penid=pen.key().id(), revtype="movie")
+                rev.rating = 50
+                rev.text = "dummy movie review " + str(count) + str(moviecount)
+                rev.modified = nowISO()
+                rev.title = "movie " + str(count) + str(moviecount)
+                rev.cankey = canonize(rev.title)
+                rev.put()
+        self.response.out.write("Test reviews created")
+
+
 app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/updrev', UpdateReview),
                                ('/delrev', DeleteReview),
@@ -435,5 +468,6 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/srchrevs', SearchReviews),
                                ('/revbyid', GetReviewById), 
                                ('/revbykey', GetReviewByKey),
-                               ('/revact', ReviewActivity)], debug=True)
+                               ('/revact', ReviewActivity),
+                               ('/testrevs', MakeTestReviews)], debug=True)
 
