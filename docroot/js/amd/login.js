@@ -91,13 +91,16 @@ define([], function () {
 
     parseParams = function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
-        if(pstr) {
+        if(pstr) {  //parse the hash params
             if(pstr.indexOf("#") === 0) {
                 pstr = pstr.slice(1); }
             avs = pstr.split('&');
             for(i = 0; i < avs.length; i += 1) {
                 av = avs[i].split('=');
-                params[av[0]] = av[1]; } }
+                if(av.length > 1) {
+                    params[av[0]] = av[1]; }
+                else {
+                    params.anchor = av[0]; } } }
         pstr = window.location.search;
         if(pstr) {
             if(pstr.indexOf("?") === 0) {
@@ -110,8 +113,10 @@ define([], function () {
     },
 
 
-    doneWorkingWithAccount = function () {
-        var tag, state, params = parseParams(), redurl, xpara;
+    doneWorkingWithAccount = function (params) {
+        var state, redurl, xpara;
+        if(!params) {
+            params = parseParams(); }
         if(params.returnto) {
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
@@ -121,11 +126,8 @@ define([], function () {
             if(xpara) {
                 redurl += "&" + xpara; }
             window.location.href = redurl; }
-        //no explicit redirect, so check if directed by tag
-        tag = window.location.hash;
-        if(tag.indexOf("#") === 0) {
-            tag = tag.slice(1); }
-        if(tag === "profile") {
+        //no explicit redirect, so check if directed by anchor tag
+        if(params.anchor === "profile") {
             clearParams();
             return mor.profile.display(); }
         //no tag redirect so check current state
@@ -235,7 +237,7 @@ define([], function () {
               " onclick=\"mor.layout.displayDoc('docs/news.html');" + 
                         "return false\">" +
                 "Now with connection support for iTunes on Mac!" +
-            "</a></div>"
+            "</a></div>";
         mor.out('accountinfodisp', html);
         if(authtoken) {
             html = "<div id=\"accountdiv\"></div>";
@@ -589,13 +591,13 @@ define([], function () {
         else if(params.state && params.state.indexOf("AltAuth") === 0) {
             idx = params.state.slice("AltAuth".length, "AltAuth".length + 1);
             handleAlternateAuthentication(idx, params); }
-        else if(authtoken || readAuthCookie()) {
+        else if(authtoken || readAuthCookie()) {  //already logged in...
             if(params.command === "chgpwd") {
                 displayChangePassForm(); }
             else if(params.url) {
                 mor.review.readURL(mor.dec(params.url), params); }
-            else {  //return redirect or default processing
-                doneWorkingWithAccount(); } }
+            else {  //pass parameters along to the general processing next step
+                doneWorkingWithAccount(params); } }
         else if(secureURL("login") === "login") {
             displayLoginForm(); }
         else { 
