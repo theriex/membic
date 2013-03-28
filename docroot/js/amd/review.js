@@ -1174,8 +1174,15 @@ define([], function () {
         data = mor.objdata(crev);
         mor.call("delrev?" + mor.login.authparams(), 'POST', data,
                  function (reviews) {
-                     mor.profile.resetReviews();
-                     mor.profile.display(); },
+                     var html = "<p>Review deleted.  If this review was one" +
+                         " of your top 20 best, then you may see an id" +
+                         " reference message until the next time you review" +
+                         " something.  Recalculating your recent reviews..." +
+                         "</p>";
+                     mor.out('cmain', html);
+                     setTimeout(function () {
+                         mor.profile.resetReviews();
+                         mor.profile.display(); }, 12000) },
                  function (code, errtxt) {
                      mor.err("Delete failed code: " + code + " " + errtxt);
                      mor.profile.display(); });
