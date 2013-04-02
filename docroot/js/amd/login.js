@@ -12,7 +12,6 @@ define([], function () {
         authmethod = "",
         authtoken = "",
         authname = "",
-        morAccountId = 0,
         cookname = "myopenreviewsauth",
         cookdelim = "..morauth..",
         changepwdprompt = "Changing your login password",
@@ -58,7 +57,6 @@ define([], function () {
         authmethod = "";
         authtoken = "";
         authname = "";
-        morAccountId = 0;
         mor.review.resetStateVars();
         mor.activity.resetStateVars();
         mor.profile.resetStateVars();
@@ -600,6 +598,8 @@ define([], function () {
                 displayChangePassForm(); }
             else if(params.url) {
                 mor.review.readURL(mor.dec(params.url), params); }
+            else if(typeof params.mid === "string") {  //empty string on failure
+                mor.profile.addMyOpenReviewsAuthId(params.mid); }
             else {  //pass parameters along to the general processing next step
                 doneWorkingWithAccount(params); } }
         else if(secureURL("login") === "login") {
@@ -619,6 +619,8 @@ define([], function () {
                         if(!mor.twitter) { mor.twitter = twitter; }
                         if(!mor.googleplus) { mor.googleplus = googleplus; }
                         if(!mor.github) { mor.github = github; }
+                        //do not change this ordering. Some auths need to
+                        //know their index param values.
                         altauths = [ facebook, twitter, googleplus,
                                      github ];
                         handleRedirectOrStartWork(); }); },
@@ -643,8 +645,8 @@ define([], function () {
         createAccount: function () {
             createAccount(); },
         getAuthMethod: function () { return authmethod; },
-        getMORAccountId: function () { return morAccountId; },
-        mainServer: mainsvr
+        mainServer: mainsvr,
+        secServer: secsvr
     };
 
 });

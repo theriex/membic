@@ -334,6 +334,18 @@ class GetToken(webapp2.RequestHandler):
             self.response.out.write("No match for those credentials")
 
 
+class GetLoginID(webapp2.RequestHandler):
+    def post(self):
+        username = self.request.get('userin')
+        password = self.request.get('passin')
+        where = "WHERE username=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, username, password)
+        redurl = "http://www.myopenreviews.com?mid="
+        for account in accounts:
+            redurl += str(account.key().id())
+        self.redirect(redurl)
+            
+
 class MailCredentials(webapp2.RequestHandler):
     def post(self):
         eaddr = self.request.get('email')
@@ -387,5 +399,6 @@ class ChangePassword(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
                                ('/login', GetToken),
                                ('/mailcred', MailCredentials),
-                               ('/chgpwd', ChangePassword)], debug=True)
+                               ('/chgpwd', ChangePassword),
+                               ('/loginid', GetLoginID)], debug=True)
 

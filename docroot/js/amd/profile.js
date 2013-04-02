@@ -222,24 +222,32 @@ define([], function () {
 
 
     addMyOpenReviewsAuth = function (domid, pen) {
-        var authmethod = mor.login.getAuthMethod();
-        if(authmethod !== "mid") {
-            alert("To add MyOpenReviews authorization, you first need to " +
-                  "log out and then log back in with a username and " +
-                  "password.  After you have logged in directly, click " +
-                  "the pen name selection on your profile page.");
-            displayAuthSettings(domid, pen); }
-        else {
-            mor.out(domid, "Recording MyOpenReviews authorization");
-            pen.mid = mor.login.getMORAccountId();
-            mor.pen.updatePen(pen,
-                              function (updpen) {
-                                  displayAuthSettings(domid, updpen); },
-                              function (code, errtxt) {
-                                  mor.err("addMyOpenReviewsAuth error " +
-                                          code + ": " + errtxt);
-                                  pen.mid = 0;
-                                  displayAuthSettings(domid, pen); }); }
+        var html = "<form action=\"" + mor.login.secServer + "/loginid\"" +
+                        " enctype=\"multipart/form-data\" method=\"post\">" +
+        "<table>" +
+          "<tr>" + 
+            "<td colspan=\"2\">Adding native authorization to " + pen.name + 
+            ":</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">username</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"userin\" name=\"userin\"" + 
+                    " size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td align=\"right\">password</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"password\" id=\"passin\" name=\"passin\"" + 
+                    " size=\"20\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
+              "<input type=\"submit\" value=\"Log in\">" +
+            "</td>" +
+          "</tr>" +
+        "</table></form>";
+        mor.out(domid, html);
     },
 
 
@@ -353,6 +361,25 @@ define([], function () {
         if(mor.isLowFuncBrowser()) {
             mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         mor.onescapefunc = cancelPenNameSettings;
+    },
+
+
+    addMyOpenReviewsAuthId = function (pen, mid) {
+        var previd;
+        if(!mid) {
+            mor.err("No account ID received.");
+            mor.profile.display(); }
+        else {
+            previd = pen.mid;
+            pen.mid = mid;
+            mor.pen.updatePen(pen,
+                              function (updpen) {
+                                  changeSettings(updpen); },
+                              function (code, errtxt) {
+                                  mor.err("addMyOpenReviewsAuthId error " +
+                                          code + ": " + errtxt);
+                                  pen.mid = previd;
+                                  mor.profile.display(); }); }
     },
 
 
@@ -957,29 +984,6 @@ define([], function () {
     },
 
 
-    changeSearchMode = function () {
-        var i, radios = document.getElementsByName("searchmode");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                if(radios[i].value === "pen") {
-                    mor.byId('revsearchoptionsdiv').style.display = "none";
-                    mor.byId('pensearchoptionsdiv').style.display = "block";
-                    mor.byId('searchtxt').placeholder = pensrchplace;
-                    searchmode = "pen";
-                    break; }
-                else if(radios[i].value === "rev") {
-                    mor.byId('revsearchoptionsdiv').style.display = "block";
-                    mor.byId('pensearchoptionsdiv').style.display = "none";
-                    mor.byId('searchtxt').placeholder = revsrchplace;
-                    searchmode = "rev";
-                    break; } } }
-        mor.out('srchoptstogglehref', "");
-        mor.out('searchresults', "");
-        if(searchmode === "pen") {  //start with options hidden for pen search
-            toggleSearchOptions(); }
-    },
-
-
     searchBarHTML = function () {
         var html = "<table class=\"searchtable\">" + 
           "<tr>" +
@@ -1047,6 +1051,42 @@ define([], function () {
     },
 
 
+    toggleSearchOptions = function () {
+        var sod = mor.byId(searchmode + 'searchoptionsdiv');
+        if(sod) {
+            if(sod.style.display === "none") {
+                mor.out('srchoptstogglehref', "- search options");
+                sod.style.display = "block"; }
+            else {
+                mor.out('srchoptstogglehref', "+ search options");
+                sod.style.display = "none"; } }
+        mor.layout.adjust();
+    },
+
+
+    changeSearchMode = function () {
+        var i, radios = document.getElementsByName("searchmode");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                if(radios[i].value === "pen") {
+                    mor.byId('revsearchoptionsdiv').style.display = "none";
+                    mor.byId('pensearchoptionsdiv').style.display = "block";
+                    mor.byId('searchtxt').placeholder = pensrchplace;
+                    searchmode = "pen";
+                    break; }
+                else if(radios[i].value === "rev") {
+                    mor.byId('revsearchoptionsdiv').style.display = "block";
+                    mor.byId('pensearchoptionsdiv').style.display = "none";
+                    mor.byId('searchtxt').placeholder = revsrchplace;
+                    searchmode = "rev";
+                    break; } } }
+        mor.out('srchoptstogglehref', "");
+        mor.out('searchresults', "");
+        if(searchmode === "pen") {  //start with options hidden for pen search
+            toggleSearchOptions(); }
+    },
+
+
     displaySearchForm = function () {
         var html;
         if(typeof profpen.top20s === "string") {
@@ -1062,19 +1102,6 @@ define([], function () {
         mor.onclick('searchbutton', startSearch);
         changeSearchMode();
         mor.byId('searchtxt').focus();
-        mor.layout.adjust();
-    },
-
-
-    toggleSearchOptions = function () {
-        var sod = mor.byId(searchmode + 'searchoptionsdiv');
-        if(sod) {
-            if(sod.style.display === "none") {
-                mor.out('srchoptstogglehref', "- search options");
-                sod.style.display = "block"; }
-            else {
-                mor.out('srchoptstogglehref', "+ search options");
-                sod.style.display = "none"; } }
         mor.layout.adjust();
     },
 
@@ -1426,7 +1453,10 @@ define([], function () {
         displayAuthSettings: function (domid, pen) {
             displayAuthSettings(domid, pen); },
         srchmode: function () {
-            changeSearchMode(); }
+            changeSearchMode(); },
+        addMyOpenReviewsAuthId: function(mid) {
+            mor.pen.getPen(function (pen) {
+                addMyOpenReviewsAuthId(pen, mid); }); }
     };
 
 });

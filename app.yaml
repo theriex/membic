@@ -212,6 +212,8 @@ handlers:
   script: src.py.statweek.app
 - url: /rssact.*
   script: src.py.rssact.app
+- url: /loginid.*
+  script: src.py.moracct.app
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/
