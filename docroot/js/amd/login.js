@@ -281,9 +281,13 @@ define([], function () {
         data = mor.objdata({ user: username, pass: password, email: maddr });
         mor.call(url, 'POST', data, 
                  function (objs) {
+                     var html = "<p>Welcome " + username + "! Your account " +
+                         "has been created. </p>" +
+                         "<p>Logging in...</p>";
+                     mor.out('logindiv', html);
+                     //same flow here as userpassLogin, but db stable wait..
                      setAuthentication("mid", objs[0].token, username);
-                     //give new account save a chance to stabilize
-                     setTimeout(mor.login.init, 700); },
+                     setTimeout(doneWorkingWithAccount, 3000); },
                  function (code, errtxt) {
                      mor.out('maccstatdiv', errtxt);
                      mor.out('newaccbuttonstd', buttonhtml);  });
@@ -429,7 +433,7 @@ define([], function () {
         data = mor.objdata({ user: username, pass: password });
         mor.call(url, 'POST', data,
                  function (objs) {
-                     morAccountId = mor.instId(objs[0]);
+                     //same flow here as createAccount
                      setAuthentication("mid", objs[0].token, username);
                      doneWorkingWithAccount(); },
                  function (code, errtxt) {
