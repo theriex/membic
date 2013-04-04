@@ -29,7 +29,7 @@ body {
 #accountinfodisp { float:right; padding:5px 30px; }
 #titlediv { position:absolute; left:0px; top:0px; width:90%; 
   padding:0px 10px; }
-#topdiv { position:absolute; left:72px; top:20px; padding:0px 10px;
+#topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #chead { height:50px; clear:both; }
 #accountdiv { font-size:x-small; }
@@ -155,6 +155,7 @@ body {
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#555; }
+#statrevactdiv { text-align:center; padding:10px; }
 
 /* review layout */
 #revfdiv { }

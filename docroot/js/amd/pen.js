@@ -253,9 +253,9 @@ define([], function () {
         resetStateVars: function () {
             resetStateVars(); },
         getPen: function (callback) {
-            if(currpen) {
-                return returnCall(callback); }
-            getPenName(callback); },
+            if(currpen) {  //initialization done, no side effects..
+                return callback(currpen); }
+            getPenName(callback); },  //triggers setup processing.
         currPenId: function () {
             return mor.instId(currpen) || 0; },
         updatePen: function (pen, callbackok, callbackfail) {

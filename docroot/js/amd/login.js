@@ -247,6 +247,7 @@ define([], function () {
                   "<td style=\"width:40px;\"></td>" +
                   "<td rowspan=\"2\" style=\"vertical-align:top;\">" + 
                     "<div id=\"centerhdiv\"> </div></td>" +
+                "</tr>" + 
                 "<tr>" + 
                   "<td><div id=\"homepenhdiv\"></div></td>" +
                 "</tr>" +
@@ -566,6 +567,27 @@ define([], function () {
     },
 
 
+    //On localhost, params are lost when the login form is displayed.
+    //On the server, they are passed to the secure host and returned
+    //post-login.  These are separate flows.  Not supporting a
+    //separate param processing path just for local development.
+    loggedInDoNextStep = function (params) {
+        if(params.command === "chgpwd") {
+            displayChangePassForm(); }
+        else if(params.command === "remember" || params.command === "respond") {
+            mor.profile.retrievePen(params.penid, function (pen) {
+                mor.profile.verifyStateVariableValues(pen);
+                mor.review.initWithId(params.revid, "read", params.command); 
+            }); }
+        else if(params.url) {
+            mor.review.readURL(mor.dec(params.url), params); }
+        else if(typeof params.mid === "string") {  //empty string on failure
+            mor.profile.addMyOpenReviewsAuthId(params.mid); }
+        else {  //pass parameters along to the general processing next step
+            doneWorkingWithAccount(params); }
+    },
+
+
     handleRedirectOrStartWork = function () {
         var idx, params = parseParams();
         //set synonyms
@@ -594,14 +616,7 @@ define([], function () {
             idx = params.state.slice("AltAuth".length, "AltAuth".length + 1);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || readAuthCookie()) {  //already logged in...
-            if(params.command === "chgpwd") {
-                displayChangePassForm(); }
-            else if(params.url) {
-                mor.review.readURL(mor.dec(params.url), params); }
-            else if(typeof params.mid === "string") {  //empty string on failure
-                mor.profile.addMyOpenReviewsAuthId(params.mid); }
-            else {  //pass parameters along to the general processing next step
-                doneWorkingWithAccount(params); } }
+            loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
             displayLoginForm(); }
         else { 

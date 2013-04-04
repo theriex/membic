@@ -3,7 +3,7 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
-from moracct import safestr
+from moracct import safestr, intz, safestr
 import re
 import json
 
@@ -129,7 +129,7 @@ def reviewPicHTML(rev):
         html +=  "\"></a>"
     if rev.revpic:
         html = "<img class=\"revpic\""
-        html +=    " src=\"revpic?revid=" + rev.key().id()
+        html +=    " src=\"revpic?revid=" + str(rev.key().id())
         html +=  "\"/>"
     return html;
 
@@ -170,7 +170,7 @@ def secondaryFields(rev):
             html += "<tr><td><span class=\"secondaryfield\">"
             html +=   av[0][:1].upper() + av[0][1:]
             html +=   "</span></td>"
-            html += "<td>" + av[1] + "</td></tr>"
+            html += "<td>" + safestr(av[1]) + "</td></tr>"
     html += "</table>"
     return html
 
@@ -190,7 +190,8 @@ def descrip(rev):
     text = getTitle(rev)
     assoc = secondaryFieldZip(rev)
     for av in assoc:
-        text += ", " + av[1]
+        if av[1]:
+            text += ", " + safestr(av[1])
     text += ". " + revtext
     text += " " + safestr(rev.keywords)
     if len(text) > 150:
@@ -240,6 +241,8 @@ def script_to_set_colors(pen):
 
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
+    penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
+    # HTML copied from index.html...
     html = "<!doctype html>"
     html += "<html itemscope=\"itemscope\""
     html +=      " itemtype=\"http://schema.org/WebPage\""
@@ -259,15 +262,19 @@ def revhtml(rev, pen):
     html += "<div id=\"titlediv\"> "
     html +=   "<span id=\"logotitle\">MyOpenReviews</span>"
     html += "</div>"
+    # Specialized class for content area, left spacing used by ads..
     html += "<div id=\"noleftappspacediv\">"
     html +=   "<div id=\"contentdiv\" class=\"mtext\""
     html +=       " style=\"padding:30px 0px 0px 0px;\">"
-
+    
+    # This is a public facing page, not a logged in page, so show some
+    # ads to help pay for hosting service. Yeah right. Try anyway.
     html += "<div id=\"morgoogleads\""
     html +=     " style=\"width:165px;height:610px;float:left;\">"
-    # start of code copied from adsense.  Despite being verbatim, and
-    # an explicit size, the iframe that gets inserted partially overlaps
-    # the image content.  ATTENTION: Figure out how to fix this..
+    # start of code copied from adsense.  Despite setting an explicit
+    # size and copying the settings exactly from the ad generator, the
+    # iframe that gets inserted partially overlaps the review image.
+    # ATTENTION: Figure out a way to mitigate this effect.
     html += "<script type=\"text/javascript\"><!--"
     html += "google_ad_client = \"ca-pub-3945939102920673\";"
     html += "/* staticrev */"
@@ -282,6 +289,7 @@ def revhtml(rev, pen):
     # end of code copied from adsense
     html += "</div>"
 
+    # HTML copied from review.js displayReviewForm
     html +=     "<div class=\"formstyle\">"
     html +=       "<table class=\"revdisptable\" border=\"0\">";
     html +=         "<tr>"
@@ -314,46 +322,45 @@ def revhtml(rev, pen):
     html +=       " style=\"width:85%;\">"
     html +=     "<table class=\"revdisptable\"><tr><td>"
     html +=     "<div id=\"statnoticediv\">"
-
-    html += "This open review was shared by " + pen.name + ". To see more reviews, click the name at the top of the page. "
-
-    html +=     "MyOpenReviews is an open source pen name community for "
-    html +=     "reviews of books, movies, videos, and more.  "
-    html +=     "<a href=\"http://www.myopenreviews.com\">"
-    html +=     "Visit the main page to join</a>."
+    html += "This open review was shared by "
+    html += "<a href=\"http://www.myopenreviews.com/#view=profile&profid="
+    html += str(rev.penid) + "\">" + pen.name + "</a>"
+    html += ", click their pen name to see more reviews. <br/>"
+    html += "<div id=\"statrevactdiv\">"
+    html += "<a href=\"../#command=respond&" + penrevparms
+    html +=     "\">Edit your corresponding review</a>"
+    html += " &nbsp; &nbsp; &nbsp; "
+    html += "<a href=\"../#command=remember&" + penrevparms
+    html +=     "\">Remember this review</a>"
+    html += "</div>"
     html +=     "</div></td></tr></table>"
     html +=   "</div>"
     html += "</div>"  #noleftappspacediv
+    # HTML copied from login.js updateAuthentDisplay
     # No dynamic resizing via script, so just pick a reasonable top width
     html += "<div id=\"topdiv\" style=\"width:90%;\">"
     html +=   "<div id=\"topnav\">"
     html +=     "<table id=\"navdisplaytable\" border=\"0\">"
     html +=       "<tr>"
-    html +=         "<td></td>"
-    html +=         "<td rowspan=\"2\">"
-    # The height of the pen name may appear different because the content
-    # of the table is not as tall.  Not worth worrying about.
-    html +=           "<div id=\"profhdiv\">"
-    html +=             "<span id=\"penhnamespan\">"
+    html +=         "<td style=\"height:14px;\"></td>"
+    html +=         "<td style=\"width:40px;\"></td>"
+    html +=         "<td rowspan=\"2\" style=\"vertical-align:top;\">"
+    html +=           "<div id=\"centerhdiv\">"
+    # HTML copied from profile.js displayVisitProfileHeading
+    html +=             "<div id=\"profhdiv\">"
+    html +=               "<span id=\"penhnamespan\">"
     html +=               "<a href=\"../#view=profile&profid=" + str(rev.penid)
     html +=                        "\" title=\"Show profile for " + pen.name
     html +=                        "\">" + pen.name + "</a>"
-    html +=             "</span>"
-    html +=             "<span id=\"penhbuttonspan\"> </span>"
+    html +=               "</span>"
+    html +=               "<span id=\"penhbuttonspan\"> </span>"
+    html +=             "</div>"
     html +=           "</div></td>"
-    html +=         "<td>"
-    html +=           "<div id=\"accountdiv\">"
-    # ATTENTION: change this href to actually take you to the review, not
-    # just the profile recent activity
-    html +=             "<a href=\"../#view=profile&profid=" + str(rev.penid)
-    html +=                     "\">Show this review from my account</a>"
-    html +=           "</div> </td>"
     html +=       "</tr>"
     html +=       "<tr>"
-    html +=         "<td><div id=\"acthdiv\"></div></td>"
-    html +=         "<td><div id=\"revhdiv\"></div></td>"
+    html +=         "<td><div id=\"homepenhdiv\"></div></td>"
     html +=       "</tr>"
-    html +=     "</table>"
+    html +=       "</table></div>"
     html +=   "</div>"
     html += "</div>"
     html += script_to_set_colors(pen)

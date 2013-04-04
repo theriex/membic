@@ -578,7 +578,7 @@ define([], function () {
         mor.historyCheckpoint({ view: "review", mode: "display",
                                 revid: revid });
         mor.review.setCurrentReview(revobj);
-        mor.review.displayRead();
+        mor.review.displayRead();  //no runServices
     },
 
 
@@ -1317,8 +1317,6 @@ define([], function () {
             profpen = pen;
             followingDisp = null;
             followerDisp = null; }
-        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
-                                tab: getCurrTabAsString() });
     },
 
 
@@ -1327,6 +1325,8 @@ define([], function () {
         if(!dispen) {
             dispen = homepen; }
         verifyStateVariableValues(dispen);
+        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
+                                tab: getCurrTabAsString() });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
         //reset the colors in case that work got dropped in the
@@ -1456,7 +1456,11 @@ define([], function () {
             changeSearchMode(); },
         addMyOpenReviewsAuthId: function(mid) {
             mor.pen.getPen(function (pen) {
-                addMyOpenReviewsAuthId(pen, mid); }); }
+                addMyOpenReviewsAuthId(pen, mid); }); },
+        writeNavDisplay: function (homepen, dispen) {
+            writeNavDisplay(homepen, dispen); },
+        verifyStateVariableValues: function (pen) {
+            verifyStateVariableValues(pen); }
     };
 
 });

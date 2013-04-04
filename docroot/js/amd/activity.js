@@ -35,8 +35,9 @@ define([], function () {
                      " title=\"See what's been posted recently\"" + 
                      " onclick=\"mor.activity.display();return false;\"" +
             ">Activity Feed</a>";
-        mor.out('acthdiv', html);
-        mor.byId('acthdiv').style.visibility = "visible";
+        if(mor.byId('acthdiv')) {
+            mor.out('acthdiv', html);
+            mor.byId('acthdiv').style.visibility = "visible"; }
     },
 
 
@@ -83,7 +84,7 @@ define([], function () {
                     if(!rev.penNameStr) {
                         friend = mor.profile.getCachedPen(rev.penid);
                         if(friend) {
-                            rev.penNameStr = pen.name; } }
+                            rev.penNameStr = friend.name; } }
                     if(!rev.penNameStr) {
                         cfid = rev.penid;
                         html += "<li>Fetching Pen Name " + cfid + "...</li>";

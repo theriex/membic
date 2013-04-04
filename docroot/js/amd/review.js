@@ -262,8 +262,9 @@ define([], function () {
 
     writeNavDisplay = function () {
         var html = reviewLinkHTML();
-        mor.out('revhdiv', html);
-        mor.byId('revhdiv').style.visibility = "visible";
+        if(mor.byId('revhdiv')) {
+            mor.out('revhdiv', html);
+            mor.byId('revhdiv').style.visibility = "visible"; }
     },
 
 
@@ -1003,7 +1004,7 @@ define([], function () {
 
 
     saveReview = function (doneEditing, runServices) {
-        var errors = [], i, errtxt = "", type, url, data;
+        var errors = [], i, errtxt = "", type, url, data, action;
         type = findReviewType(crev.revtype);
         if(!type) {
             mor.out('revsavemsg', "Unknown review type");
@@ -1033,7 +1034,8 @@ define([], function () {
                      setTimeout(mor.pen.refreshCurrent, 100);
                      if(doneEditing) {
                          attribution = "";
-                         mor.review.displayRead(runServices); }
+                         action = runServices? "runServices" : "";
+                         mor.review.displayRead(action); }
                      else {
                          mor.review.display(); } },
                  function (code, errtxt) {
@@ -1043,7 +1045,7 @@ define([], function () {
     },
 
 
-    initWithId = function (revid, mode) {
+    initWithId = function (revid, mode, action) {
         var params = "revid=" + revid;
         mor.call("revbyid?" + params, 'GET', null,
                  function (revs) {
@@ -1052,7 +1054,7 @@ define([], function () {
                          if(mode === "edit") {
                              mor.review.display(); }
                          else {
-                             mor.review.displayRead(); } }
+                             mor.review.displayRead(action); } }
                      else {
                          mor.err("initWithId found no review id " + revid); } },
                  function (code, errtxt) {
@@ -1149,16 +1151,17 @@ define([], function () {
             pen.revmem = {}; }
         if(!pen.revmem.remembered) {
             pen.revmem.remembered = []; }
-        if(remove) {
-            idx = pen.revmem.remembered.indexOf(revid);
-            if(idx >= 0) {
-                pen.revmem.remembered.splice(idx, 1); } }
-        else {  //prepend to remembered, most recent first
+        //always remove.  When adding this will prevent duplicates
+        idx = pen.revmem.remembered.indexOf(revid);
+        while(idx >= 0) {
+            pen.revmem.remembered.splice(idx, 1);
+            idx = pen.revmem.remembered.indexOf(revid); }
+        if(!remove) { //prepend to remembered, most recent first
             pen.revmem.remembered.unshift(revid);
             mor.activity.cacheReview(crev); }
         mor.pen.updatePen(pen, 
                           function (pen) {
-                              mor.review.displayRead(false); },
+                              mor.review.displayRead(); },  //no runServices
                           function (code, errtxt) {
                               mor.err("Remember update failed " + code + 
                                       " " + errtxt); });
@@ -1182,14 +1185,14 @@ define([], function () {
                      mor.out('cmain', html);
                      setTimeout(function () {
                          mor.profile.resetReviews();
-                         mor.profile.display(); }, 12000) },
+                         mor.profile.display(); }, 12000); },
                  function (code, errtxt) {
                      mor.err("Delete failed code: " + code + " " + errtxt);
                      mor.profile.display(); });
     },
 
 
-    mainDisplay = function (pen, read, runServices) {
+    mainDisplay = function (pen, read, action) {
         if(!crev) {
             crev = {}; }
         if(!crev.penid) {
@@ -1199,9 +1202,18 @@ define([], function () {
         //already have values for penid, svcdata, revtype, the defined
         //key field, and the subkey field (if defined for the type).
         if(read) { 
+            if(crev.penid !== mor.instId(pen)) {  //refresh headings
+                setTimeout(function () {
+                    mor.profile.retrievePen(crev.penid, function(revpen) {
+                        mor.profile.writeNavDisplay(pen, revpen);
+                    }); }, 50); }
             displayReviewForm(pen, crev);
-            if(runServices) {
-                mor.services.run(pen, crev); } }
+            if(action === "runServices") {
+                mor.services.run(pen, crev); }
+            else if(action === "remember") {
+                mor.review.memo(); }
+            else if(action === "respond") {
+                mor.review.respond(); } }
         else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
         else {
@@ -1214,9 +1226,10 @@ define([], function () {
             resetStateVars(); },
         display: function () {
             mor.pen.getPen(mainDisplay); },
-        displayRead: function (runServices) {
+        displayRead: function (action) {
             mor.pen.getPen(function (pen) {
-                mainDisplay(pen, true, runServices); }); },
+                mainDisplay(pen, true, action); 
+            }); },
         delrev: function () {
             deleteReview(); },
         reviewLinkHTML: function () {
@@ -1251,13 +1264,13 @@ define([], function () {
             saveReview(doneEditing, runServices); },
         share: function () {
             mor.pen.getPen(function (pen) {
-                mainDisplay(pen, true, true); }); },
+                mainDisplay(pen, true, "runServices"); }); },
         setCurrentReview: function (revobj) {
             crev = revobj; },
         getCurrentReview: function () {
             return crev; },
-        initWithId: function (revid, mode) {
-            initWithId(revid, mode); },
+        initWithId: function (revid, mode, action) {
+            initWithId(revid, mode, action); },
         respond: function () {
             mor.pen.getPen(function (pen) {
                 createEditResponseReview(pen); }); },
