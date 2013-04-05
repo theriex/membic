@@ -81,12 +81,14 @@
 <script src="js/mor.js"></script>
 
 <script>
-require({ baseUrl: "/js/",
-          packages: [
-            { name: "dojo", 
-              location: "//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/" },
-            { name: "amd", location: "amd" },
-            { name: "ext", location: "amd/ext" } ]},
+mor.cdnconf = {};
+mor.cdnconf.baseUrl = "/js/";
+mor.cdnconf.packages = [
+  { name: "dojo", 
+    location: "https://ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/" },
+  { name: "amd", location: "amd" },
+  { name: "ext", location: "amd/ext" } ];
+require(mor.cdnconf,
         [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
           "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
           "amd/layout", "amd/login", "amd/review", "amd/profile",
