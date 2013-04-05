@@ -248,6 +248,7 @@ define([], function () {
             if(reviewTypes[i].type === type ||
                reviewTypes[i].plural === type) {
                 return reviewTypes[i]; } }
+        return reviewTypes[reviewTypes.length - 1];  //last is "other"...
     },
 
 
