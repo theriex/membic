@@ -976,6 +976,8 @@ define([], function () {
             reviewFormButtonsHTML(pen, review, type, keyval, mode) + "</td>" +
         "</tr>" +
         "</table></div>";
+        if(!mor.byId('cmain')) {
+            mor.layout.initContent(); }
         mor.out('cmain', html);
         if(mode === "edit") {
             mor.onx('mousedown',   'starstd', starPointing);
