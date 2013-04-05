@@ -301,7 +301,12 @@ var mor = {};  //Top level function closure container
         val = val || "";
         if(typeof val === "string") {
             val = val.trim(); }
-        return decodeURIComponent(val);
+        try {
+            val = decodeURIComponent(val);
+        } catch (e) {
+            mor.log("decodeURIComponent failure: " + e);
+        }
+        return val;
     };
     //if a string needs to be URL encoded and then stuffed inside of
     //single quotes, then you need to replace any embedded single
