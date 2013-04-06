@@ -400,6 +400,11 @@ define([], function () {
         //build the rest of the form around that
         html = "<form action=\"/revpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
+            "<div id=\"closeline\">" +
+              "<a id=\"closedlg\" href=\"#close\"" +
+                " onclick=\"mor.cancelPicUpload();return false\">" + 
+                  "&lt;close&nbsp;&nbsp;X&gt;</a>" +
+            "</div>" + 
             html +
             "<table>" +
               "<tr><td>Upload Review Pic</td></tr>" +

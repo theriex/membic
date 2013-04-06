@@ -1280,6 +1280,11 @@ define([], function () {
             mor.enc(window.location.href + "#profile") + "\"/>";
         html = "<form action=\"/profpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
+            "<div id=\"closeline\">" +
+              "<a id=\"closedlg\" href=\"#close\"" +
+                " onclick=\"mor.cancelPicUpload();return false\">" + 
+                  "&lt;close&nbsp;&nbsp;X&gt;</a>" +
+            "</div>" + 
             html +
             "<table>" +
               "<tr><td>Upload New Profile Pic</td></tr>" +
