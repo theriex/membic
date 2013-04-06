@@ -380,6 +380,8 @@ define([], function () {
                 html += "</tr>";
                 tdc = 0; } }
         html += "</table></ul></div>";
+        if(!mor.byId('cmain')) {
+            mor.layout.initContent(); }
         mor.out('cmain', html);
         mor.byId('urlin').focus();
         mor.layout.adjust();
@@ -797,7 +799,7 @@ define([], function () {
                 "</td>" +
               "</tr>"; }
         //first line of actual content
-        html += "<tr><td id=\"starstd\" style=\"text-align:right;\">";
+        html += "<tr><td id=\"starstd\">";
         if(keyval) {
             html += "<span id=\"stardisp\">" + 
                   starsImageHTML(review.rating, mode === "edit") + 
@@ -851,7 +853,7 @@ define([], function () {
                 "background-color:" + mor.skinner.lightbg() + ";" +
                 "width:" + targetwidth + "px;";
             if(mode === "edit") {
-                style += "height:120px;";
+                style += "height:100px;";
                 placetext = ">>What was the most striking thing" + 
                     " about this for you?";
                 html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
@@ -859,7 +861,7 @@ define([], function () {
                                  " style=\"" + style + "\">" +
                     fval + "</textarea>"; }
             else {
-                style += "height:140px;overflow:auto;" + 
+                style += "height:100px;overflow:auto;" + 
                     "border:1px solid " + mor.skinner.darkbg() + ";";
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
@@ -959,12 +961,8 @@ define([], function () {
                 "<div id=\"attributiondiv\">" + attribution + 
                 "</div></td></tr>"; }
         html += revFormIdentHTML(review, type, keyval, mode);
-        if(mode === "edit") {
-            html += revFormTextHTML(review, type, keyval, mode);
-            html += revFormDetailHTML(review, type, keyval, mode); }
-        else { //read display
-            html += revFormDetailHTML(review, type, keyval, mode);
-            html += revFormTextHTML(review, type, keyval, mode); }
+        html += revFormTextHTML(review, type, keyval, mode);
+        html += revFormDetailHTML(review, type, keyval, mode);
         //special case additional helper functions
         html += "<tr>" +
           "<td colspan=\"4\" align=\"center\" id=\"transformactionstd\">" + 

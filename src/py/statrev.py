@@ -205,7 +205,7 @@ def script_to_set_colors(pen):
     if not pen.settings:
         return html
     settings = json.loads(pen.settings)
-    if not settings["colors"]:
+    if not settings or not settings["colors"]:
         return html
     colors = settings["colors"]
     html += "<script>\n"
@@ -269,8 +269,10 @@ def revhtml(rev, pen):
     
     # This is a public facing page, not a logged in page, so show some
     # ads to help pay for hosting service. Yeah right. Try anyway.
-    html += "<div id=\"morgoogleads\""
-    html +=     " style=\"width:165px;height:610px;float:left;\">"
+    html += "<div id=\"morgoogleads\" style=\""
+    html +=   "width:165px;height:610px;float:left;background:#eeeeff;"
+    html +=   "border: 1px solid #666666; border-radius:10px;"
+    html += "\">"
     # start of code copied from adsense.  Despite setting an explicit
     # size and copying the settings exactly from the ad generator, the
     # iframe that gets inserted partially overlaps the review image.
@@ -293,7 +295,7 @@ def revhtml(rev, pen):
     html +=     "<div class=\"formstyle\">"
     html +=       "<table class=\"revdisptable\" border=\"0\">";
     html +=         "<tr>"
-    html +=           "<td style=\"text-align:right\">"
+    html +=           "<td class=\"starstd\">"
     html +=             "<span id=\"stardisp\">" + starsImageHTML(rev.rating)
     html +=             "</span>&nbsp;" + badgeImageHTML(rev.revtype) + "</td>"
     html +=           "<td><span class=\"revtitle\">" + getTitle(rev)
@@ -302,6 +304,11 @@ def revhtml(rev, pen):
     html +=             "</span></td>"
     html +=           "<td>" + urlImageLink(rev) + "</td>"
     html +=         "</tr>"
+    html +=         "<tr><td colspan=\"4\">"
+    html +=           "<div id=\"reviewtext\" class=\"shoutout\""
+    html +=               " style=\"width:600px;\">"
+    html +=             displayText(rev.text) + "</div>"
+    html +=         "</td></tr>"
     html +=         "<tr>"
     html +=           "<td>" + reviewPicHTML(rev) + "</td>"
     html +=           "<td valign=\"top\">"
@@ -309,23 +316,19 @@ def revhtml(rev, pen):
     html +=             "</div></td>"
     html +=           "<td valign=\"top\">" + secondaryFields(rev) + "</td>"
     html +=         "</tr>"
-    html +=         "<tr><td colspan=\"4\">"
-    html +=           "<div id=\"reviewtext\" class=\"shoutout\""
-    html +=               " style=\"width:600px;\">"
-    html +=             displayText(rev.text) + "</div>"
-    html +=         "</td></tr>"
     html +=       "</table>"
     html +=     "</div>"  #formstyle
     html +=   "</div>"  #contentdiv
     # Static view statement
     html +=   "<div id=\"statnoticecontainerdiv\""
-    html +=       " style=\"width:85%;\">"
+    html +=       " style=\"width:85%;padding:20px 50px;\">"
     html +=     "<table class=\"revdisptable\"><tr><td>"
     html +=     "<div id=\"statnoticediv\">"
-    html += "This open review was shared by "
+    html += "<a href=\"http://www.myopenreviews.com/#view=review&" + penrevparms
+    html += "\">This review</a> was shared by "
     html += "<a href=\"http://www.myopenreviews.com/#view=profile&profid="
     html += str(rev.penid) + "\">" + pen.name + "</a>"
-    html += ", click their pen name to see more reviews. <br/>"
+    html += "<br/>"
     html += "<div id=\"statrevactdiv\">"
     html += "<a href=\"../#command=respond&" + penrevparms
     html +=     "\">Edit your corresponding review</a>"
@@ -340,7 +343,7 @@ def revhtml(rev, pen):
     # No dynamic resizing via script, so just pick a reasonable top width
     html += "<div id=\"topdiv\" style=\"width:90%;\">"
     html +=   "<div id=\"topnav\">"
-    html +=     "<table id=\"navdisplaytable\" border=\"0\">"
+    html +=     "<table id=\"navdisplaytable\" border=\"0\" width=\"50%\">"
     html +=       "<tr>"
     html +=         "<td style=\"height:14px;\"></td>"
     html +=         "<td style=\"width:40px;\"></td>"

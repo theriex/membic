@@ -574,7 +574,9 @@ define([], function () {
     loggedInDoNextStep = function (params) {
         if(params.command === "chgpwd") {
             displayChangePassForm(); }
-        else if(params.command === "remember" || params.command === "respond") {
+        else if(params.command === "remember" || 
+                params.command === "respond" ||
+                (params.view === "review" && params.revid)) {
             mor.profile.retrievePen(params.penid, function (pen) {
                 mor.profile.verifyStateVariableValues(pen);
                 mor.review.initWithId(params.revid, "read", params.command); 

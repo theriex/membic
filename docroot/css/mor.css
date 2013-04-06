@@ -148,7 +148,7 @@ body {
 .bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
 #statnoticediv { background:#eee; padding:5px 10px;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
-  font-size:small;
+  font-size:small; text-align:center;
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
 .searchtable td { padding:5px 10px; }
@@ -156,6 +156,8 @@ body {
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#555; }
 #statrevactdiv { text-align:center; padding:10px; }
+/* width: ratstar: 60, type: 50, nbsp separator and padding */
+#starstd { text-align:right; width:150px; }
 
 /* review layout */
 #revfdiv { }
