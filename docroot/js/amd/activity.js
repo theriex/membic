@@ -268,6 +268,8 @@ define([], function () {
                 modeSelectHTML("activity", "Recent") + " &nbsp; " +
                 modeSelectHTML("memo", "Remembered") + "</div>" +
                 "<div id=\"revactdiv\"></div>";
+            if(!mor.byId('cmain')) {
+                mor.layout.initContent(); }
             mor.out('cmain', html);
             updateRSSImage(); }
     },
