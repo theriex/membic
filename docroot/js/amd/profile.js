@@ -61,23 +61,27 @@ define([], function () {
     },
 
 
-    displayHomeProfileHeading = function (pen) {
-        var html;
+    displayHomeProfileHeading = function (pen, showingSelf) {
+        var html, styleoverride = "";
+        if(!showingSelf) {
+            styleoverride = " style=\"color:#cccccc\""; }
         if(!mor.byId('homepennamespan')) {  //init div contents as needed
             html = "<span id=\"homepennamespan\"> </span>" +
                    "<span id=\"homepenbuttonspan\"> </span>";
             mor.out('homepenhdiv', html); }
         //refresh the home pen name currently in use
         html = "<a href=\"#view=profile&profid=" + mor.instId(pen) + "\"" +
-                 " title=\"Show home profile\"" +
+                 " title=\"Show home profile\"" + styleoverride +
                  " onclick=\"mor.profile.display();return false;\"" +
             ">" + pen.name + "</a>";
         mor.out('homepennamespan', html);
         //refresh the home pen action buttons
-        html = mor.imglink("#Settings","Adjust your application settings",
-                           "mor.profile.settings()", "settings.png") +
-               mor.imglink("#PenNames","Switch Pen Names",
-                           "mor.profile.penswitch()", "pen.png");
+        html = "";
+        if(showingSelf) {
+            html = mor.imglink("#Settings","Adjust your application settings",
+                               "mor.profile.settings()", "settings.png") +
+                   mor.imglink("#PenNames","Switch Pen Names",
+                               "mor.profile.penswitch()", "pen.png"); }
         mor.out('homepenbuttonspan', html);
     },
 
@@ -124,10 +128,12 @@ define([], function () {
 
 
     writeNavDisplay = function (homepen, dispen) {
-        displayHomeProfileHeading(homepen);
+        var showingSelf;
         if(!dispen) {
             dispen = homepen; }
-        if(mor.instId(homepen) === mor.instId(dispen)) {
+        showingSelf = (mor.instId(homepen) === mor.instId(dispen));
+        displayHomeProfileHeading(homepen, showingSelf);
+        if(showingSelf) {
             displayHomeActionsHeading(homepen); }
         else {
             displayVisitProfileHeading(homepen, dispen); }
