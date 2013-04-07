@@ -1,4 +1,4 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false, navigator: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false, navigator: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -258,18 +258,13 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //top level kickoff function called from index.html
-    mor.init = function (dom, json, on, request, 
-                         query, cookie, domgeo,
-                         layout, login, review, profile, 
+    //secondary initialization load since single monolithic is dog slow
+    mor.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
                          services, basicmod) {
         var cdiv = mor.byId('contentdiv');
-        mor.out('contentfill', " &nbsp; ");
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
-        mor.dojo = { dom: dom, json: json, on: on, request: request,
-                     query: query, cookie: cookie, domgeo: domgeo };
         //app module references
         mor.layout = layout;
         mor.login = login;
@@ -287,6 +282,50 @@ var mor = {};  //Top level function closure container
         mor.login.init();
         //mor.skinner.init();
         mor.basicmod = basicmod;
+    };
+
+
+    //faulting in the ext login modules here saves total load time
+    mor.init1 = function (dom, json, on, request, 
+                          query, cookie, domgeo) {
+        mor.dojo = { dom: dom, json: json, on: on, request: request,
+                     query: query, cookie: cookie, domgeo: domgeo };
+        mor.out('contentfill', "loading core application...");
+        mor.amdtimer.mor = { start: new Date() };
+        require(mor.cdnconf,
+                [ "amd/layout", "amd/login", "amd/review", "amd/profile",
+                  "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
+                  "amd/services", "amd/basicmod", 
+                  "ext/facebook", "ext/twitter", "ext/googleplus", 
+                  "ext/github",
+                  "dojo/domReady!" ],
+                function (layout, login, review, profile, 
+                          activity, pen, rel, skinner,
+                          services, basicmod) {
+                    mor.amdtimer.mor.end = new Date();
+                    mor.out('contentfill', " &nbsp; ");
+                    mor.init2(layout, login, review, profile, 
+                              activity, pen, rel, skinner,
+                              services, basicmod); }
+               );
+    };
+
+
+    mor.init = function () {
+        mor.amdtimer = {};
+        mor.amdtimer.dojo = { start: new Date() };
+        mor.out('contentfill', "loading libraries...");
+        require(mor.cdnconf,
+                [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
+                  "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
+                  "dojo/domReady!" ],
+                function (dom, json, on, request, 
+                          query, cookie, domgeo) {
+                    mor.amdtimer.dojo.end = new Date();
+                    mor.out('contentfill', " &nbsp; ");
+                    mor.init1(dom, json, on, request, 
+                              query, cookie, domgeo); }
+               );
     };
 
 

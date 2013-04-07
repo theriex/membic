@@ -469,6 +469,7 @@ define([], function () {
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
         href += "&" + mor.objdata(params);
+        mor.out('contentfill', "Redirecting to secure server...");
         window.location.href = href;
     },
 
@@ -567,6 +568,17 @@ define([], function () {
     },
 
 
+    logLoadTimes = function () {
+        var millis, timer = mor.amdtimer;
+        millis = timer.dojo.end.getTime() - timer.dojo.start.getTime();
+        mor.log("load dojo: " + millis);
+        millis = timer.mor.end.getTime() - timer.mor.start.getTime();
+        mor.log("load mor: " + millis);
+        millis = timer.ext.end.getTime() - timer.ext.start.getTime();
+        mor.log("load ext: " + millis);
+    },
+
+
     //On localhost, params are lost when the login form is displayed.
     //On the server, they are passed to the secure host and returned
     //post-login.  These are separate flows.  Not supporting a
@@ -628,10 +640,15 @@ define([], function () {
 
     return {
         init: function () {
+            mor.out('contentfill', "loading login extensions...");
+            mor.amdtimer.ext = { start: new Date() };
             require([ "ext/facebook", "ext/twitter", "ext/googleplus", 
                       "ext/github" ],
                     function (facebook, twitter, googleplus,
                               github) {
+                        mor.amdtimer.ext.end = new Date();
+                        mor.out('contentfill', " &nbsp; ");
+                        logLoadTimes();
                         if(!mor.facebook) { mor.facebook = facebook; }
                         if(!mor.twitter) { mor.twitter = twitter; }
                         if(!mor.googleplus) { mor.googleplus = googleplus; }

@@ -88,24 +88,7 @@ mor.cdnconf.packages = [
     location: "https://ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/" },
   { name: "amd", location: "amd" },
   { name: "ext", location: "amd/ext" } ];
-require(mor.cdnconf,
-        [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
-          "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
-          "amd/layout", "amd/login", "amd/review", "amd/profile",
-          "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
-          "amd/services", "amd/basicmod", "dojo/domReady!" ],
-        function (dom, json, on, request, 
-                  query, cookie, domgeo,
-                  layout, login, review, profile, 
-                  activity, pen, rel, skinner,
-                  services, basicmod) {
-            document.getElementById('contentfill').innerHTML="initializing...";
-            mor.init(dom, json, on, request, 
-                     query, cookie, domgeo,
-                     layout, login, review, profile, 
-                     activity, pen, rel, skinner,
-                     services, basicmod); }
-        );
+mor.init();
 </script>
 
 </body>
