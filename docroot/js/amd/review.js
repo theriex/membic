@@ -1203,16 +1203,19 @@ define([], function () {
             crev = {}; }
         if(!crev.penid) {
             crev.penid = mor.pen.currPenId(); }
+        setTimeout(function () {  //refresh headings
+            if(crev.penid !== mor.instId(pen)) { 
+                mor.profile.retrievePen(crev.penid, function(revpen) {
+                    mor.profile.writeNavDisplay(pen, revpen);
+                }); }
+            else {
+                mor.profile.writeNavDisplay(pen); }
+            }, 50);
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must
         //already have values for penid, svcdata, revtype, the defined
         //key field, and the subkey field (if defined for the type).
         if(read) { 
-            if(crev.penid !== mor.instId(pen)) {  //refresh headings
-                setTimeout(function () {
-                    mor.profile.retrievePen(crev.penid, function(revpen) {
-                        mor.profile.writeNavDisplay(pen, revpen);
-                    }); }, 50); }
             displayReviewForm(pen, crev);
             if(action === "runServices") {
                 mor.services.run(pen, crev); }

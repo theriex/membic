@@ -142,6 +142,16 @@ define([], function () {
     },
 
 
+    setSoftFocus = function () {
+        var revid, focobj;
+        if(mor.review.getCurrentReview()) {
+            revid = "lihr" + mor.instId(mor.review.getCurrentReview());
+            focobj = mor.byId(revid);
+            if(focobj) {
+                focobj.focus(); } }
+    },
+
+
     fullContentHeight = function () {
         var ch, filldiv, topdiv, contentdiv, target;
         findDisplayHeightAndWidth();
@@ -161,6 +171,7 @@ define([], function () {
         contentdiv = mor.byId('contentdiv');
         if(contentdiv) {
             contentdiv.style.width = target + "px"; }
+        setSoftFocus();
     };
 
 

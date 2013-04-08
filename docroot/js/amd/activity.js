@@ -278,6 +278,7 @@ define([], function () {
     mainDisplay = function (pen) {
         //ATTENTION: read revs from local storage..
         mor.historyCheckpoint({ view: "activity" });
+        mor.profile.writeNavDisplay(pen);
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
             displayRemembered(pen); }

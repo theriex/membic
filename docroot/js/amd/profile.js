@@ -595,7 +595,7 @@ define([], function () {
         linkref = "statrev/" + revid;
         html = "<li>" + mor.review.starsImageHTML(revobj.rating) + 
             mor.review.badgeImageHTML(type) + "&nbsp;" +
-            "<a href=\"" + linkref + "\"" +
+            "<a id=\"lihr" + revid + "\" href=\"" + linkref + "\"" +
               " onclick=\"mor.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
               " title=\"See full review\">" + 
