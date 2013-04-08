@@ -132,9 +132,9 @@ define([], function () {
 
 
     addProfileAuth1 = function (domid, pen) {
-        if(window.location.href.indexOf(mor.login.mainServer) !== 0) {
+        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
             alert("Facebook authentication is only supported from ",
-                  mor.login.mainServer);
+                  mor.mainsvr);
             return mor.profile.displayAuthSettings(domid, pen); }
         if(typeof FB === 'object' || typeof FB === 'function') {
             return addProfileAuth2(domid, pen); }
@@ -247,9 +247,9 @@ define([], function () {
 
 
     postReview1 = function (review) {
-        if(window.location.href.indexOf(mor.login.mainServer) !== 0) {
+        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
             alert("Posting to Facebook is only supported from ",
-                  mor.login.mainServer);
+                  mor.mainsvr);
             return postRevBailout(review); }
         if(typeof FB === 'object' || typeof FB === 'function') {
             return postReview2(review); }

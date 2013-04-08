@@ -115,9 +115,9 @@ define([], function () {
     //a cookie.  Because cookies are domain dependent, this only 
     //works from the main server.
     addProfileAuth = function (domid, pen) {
-        if(window.location.href.indexOf(mor.login.mainServer) !== 0) {
+        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
             alert("Google+ authentication is only supported from ",
-                  mor.login.mainServer);
+                  mor.mainsvr);
             return mor.profile.displayAuthSettings(domid, pen); }
         mor.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
         authenticate( {} );

@@ -228,7 +228,7 @@ define([], function () {
 
 
     addMyOpenReviewsAuth = function (domid, pen) {
-        var html = "<form action=\"" + mor.login.secServer + "/loginid\"" +
+        var html = "<form action=\"" + mor.secsvr + "/loginid\"" +
                         " enctype=\"multipart/form-data\" method=\"post\">" +
         "<table>" +
           "<tr>" + 

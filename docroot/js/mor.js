@@ -22,6 +22,9 @@ var mor = {};  //Top level function closure container
     mor.winw = 0;  //adjusted in mor.layout
     mor.winh = 0;
     mor.introtext = "";
+    mor.authcookname = "myopenreviewsauth";
+    mor.secsvr = "https://myopenreviews.appspot.com";
+    mor.mainsvr = "http://www.myopenreviews.com";
 
 
     ////////////////////////////////////////
@@ -258,6 +261,54 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.parseParams = function () {
+        var pstr = window.location.hash, params = {}, avs, av, i;
+        if(pstr) {  //parse the hash params
+            if(pstr.indexOf("#") === 0) {
+                pstr = pstr.slice(1); }
+            avs = pstr.split('&');
+            for(i = 0; i < avs.length; i += 1) {
+                av = avs[i].split('=');
+                if(av.length > 1) {
+                    params[av[0]] = av[1]; }
+                else {
+                    params.anchor = av[0]; } } }
+        pstr = window.location.search;
+        if(pstr) {
+            if(pstr.indexOf("?") === 0) {
+                pstr = pstr.slice(1); }
+            avs = pstr.split('&');
+            for(i = 0; i < avs.length; i += 1) {
+                av = avs[i].split('=');
+                params[av[0]] = av[1]; } }
+        return params;
+    };
+
+
+    mor.redirectToSecureServer = function (params) {
+        var href, state;
+        state = mor.currState();
+        href = mor.secsvr + "#returnto=" + mor.enc(mor.mainsvr) + 
+            "&logout=true";
+        if(state && state.view === "profile" && state.profid) {
+            href += "&reqprof=" + state.profid; }
+        href += "&" + mor.objdata(params);
+        mor.out('contentfill', "Redirecting to secure server...");
+        window.location.href = href;
+    };
+
+
+    mor.redirectIfNeeded = function () {
+        var href = window.location.href;
+        if(href.indexOf("http://www.myopenreviews.com") >= 0 &&
+           href.indexOf("authtoken=") < 0 &&
+           href.indexOf("at=") < 0 &&
+           href.indexOf("AltAuth") < 0 &&
+           (!mor.dojo.cookie(mor.authcookname))) {
+            mor.redirectToSecureServer(mor.parseParams()); }
+    };
+
+
     //secondary initialization load since single monolithic is dog slow
     mor.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
@@ -290,7 +341,8 @@ var mor = {};  //Top level function closure container
                           query, cookie, domgeo) {
         mor.dojo = { dom: dom, json: json, on: on, request: request,
                      query: query, cookie: cookie, domgeo: domgeo };
-        mor.out('contentfill', "loading core application...");
+        mor.redirectIfNeeded();
+        mor.out('contentfill', "loading MyOpenReviews...");
         mor.amdtimer.mor = { start: new Date() };
         require(mor.cdnconf,
                 [ "amd/layout", "amd/login", "amd/review", "amd/profile",

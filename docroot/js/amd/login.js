@@ -12,11 +12,8 @@ define([], function () {
         authmethod = "",
         authtoken = "",
         authname = "",
-        cookname = "myopenreviewsauth",
         cookdelim = "..morauth..",
         changepwdprompt = "Changing your login password",
-        secsvr = "https://myopenreviews.appspot.com",
-        mainsvr = "http://www.myopenreviews.com",
         altauths = [],
 
 
@@ -53,7 +50,7 @@ define([], function () {
 
     logoutWithNoDisplayUpdate = function () {
         //remove the cookie
-        mor.dojo.cookie(cookname, "", { expires: -1 });
+        mor.dojo.cookie(mor.authcookname, "", { expires: -1 });
         authmethod = "";
         authtoken = "";
         authname = "";
@@ -87,34 +84,10 @@ define([], function () {
     },
 
 
-    parseParams = function () {
-        var pstr = window.location.hash, params = {}, avs, av, i;
-        if(pstr) {  //parse the hash params
-            if(pstr.indexOf("#") === 0) {
-                pstr = pstr.slice(1); }
-            avs = pstr.split('&');
-            for(i = 0; i < avs.length; i += 1) {
-                av = avs[i].split('=');
-                if(av.length > 1) {
-                    params[av[0]] = av[1]; }
-                else {
-                    params.anchor = av[0]; } } }
-        pstr = window.location.search;
-        if(pstr) {
-            if(pstr.indexOf("?") === 0) {
-                pstr = pstr.slice(1); }
-            avs = pstr.split('&');
-            for(i = 0; i < avs.length; i += 1) {
-                av = avs[i].split('=');
-                params[av[0]] = av[1]; } }
-        return params;
-    },
-
-
     doneWorkingWithAccount = function (params) {
         var state, redurl, xpara;
         if(!params) {
-            params = parseParams(); }
+            params = mor.parseParams(); }
         if(params.returnto) {
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
@@ -151,7 +124,7 @@ define([], function () {
     //to be aware of...
     setAuthentication = function (method, token, name) {
         var cval = method + cookdelim + token + cookdelim + name;
-        mor.dojo.cookie(cookname, cval, { expires: 365 });
+        mor.dojo.cookie(mor.authcookname, cval, { expires: 365 });
         authmethod = method;
         authtoken = token;
         authname = name;
@@ -161,7 +134,7 @@ define([], function () {
 
     readAuthCookie = function () {
         var cval, mtn;
-        cval = mor.dojo.cookie(cookname);
+        cval = mor.dojo.cookie(mor.authcookname);
         if(cval) {
             mtn = cval.split(cookdelim);
             authmethod = mtn[0];
@@ -195,7 +168,8 @@ define([], function () {
     displayChangePassForm = function () {
         var html = "";
         if(secureURL("chgpwd") !== "chgpwd") {
-            window.location.href = secsvr + "#returnto=" + mor.enc(mainsvr) +
+            window.location.href = mor.secsvr + 
+                "#returnto=" + mor.enc(mor.mainsvr) +
                 "&command=chgpwd&" + authparams(); }
         html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
         "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
@@ -446,31 +420,19 @@ define([], function () {
     handleAlternateAuthentication = function (idx, params) {
         var redurl;
         if(!params) {
-            params = parseParams(); }
+            params = mor.parseParams(); }
         if(window.location.href.indexOf("localhost") >= 0) {
             mor.err("Not redirecting to main server off localhost. Confusing.");
             return; }
-        if(window.location.href.indexOf(mainsvr) !== 0) {
-            redurl = mainsvr + "#command=AltAuth" + (+idx);
+        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
+            redurl = mor.mainsvr + "#command=AltAuth" + (+idx);
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
             setTimeout(function () {
                 window.location.href = redurl; 
             }, 20); }
-        else {  //we are on mainsvr at this point
+        else {  //we are on mor.mainsvr at this point
             altauths[idx].authenticate(params); }
-    },
-
-
-    redirectToSecureServer = function (params) {
-        var href, state;
-        state = mor.currState();
-        href = secsvr + "#returnto=" + mor.enc(mainsvr) + "&logout=true";
-        if(state && state.view === "profile" && state.profid) {
-            href += "&reqprof=" + state.profid; }
-        href += "&" + mor.objdata(params);
-        mor.out('contentfill', "Redirecting to secure server...");
-        window.location.href = href;
     },
 
 
@@ -603,7 +565,7 @@ define([], function () {
 
 
     handleRedirectOrStartWork = function () {
-        var idx, params = parseParams();
+        var idx, params = mor.parseParams();
         //set synonyms
         if(params.authmethod) { params.am = params.authmethod; }
         if(params.authtoken) { params.at = params.authtoken; }
@@ -634,7 +596,7 @@ define([], function () {
         else if(secureURL("login") === "login") {
             displayLoginForm(); }
         else { 
-            redirectToSecureServer(params); }
+            mor.redirectToSecureServer(params); }
     };
 
 
@@ -678,9 +640,7 @@ define([], function () {
             doneWorkingWithAccount(); },
         createAccount: function () {
             createAccount(); },
-        getAuthMethod: function () { return authmethod; },
-        mainServer: mainsvr,
-        secServer: secsvr
+        getAuthMethod: function () { return authmethod; }
     };
 
 });
