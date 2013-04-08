@@ -305,7 +305,8 @@ var mor = {};  //Top level function closure container
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
            (!mor.dojo.cookie(mor.authcookname))) {
-            mor.redirectToSecureServer(mor.parseParams()); }
+            mor.redirectToSecureServer(mor.parseParams());
+            return true; }
     };
 
 
@@ -341,7 +342,8 @@ var mor = {};  //Top level function closure container
                           query, cookie, domgeo) {
         mor.dojo = { dom: dom, json: json, on: on, request: request,
                      query: query, cookie: cookie, domgeo: domgeo };
-        mor.redirectIfNeeded();
+        if(mor.redirectIfNeeded()) {
+            return; }  //avoid app continue while redirect kicks in
         mor.out('contentfill', "loading MyOpenReviews...");
         mor.amdtimer.mor = { start: new Date() };
         require(mor.cdnconf,
