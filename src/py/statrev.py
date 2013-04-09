@@ -330,17 +330,20 @@ def revhtml(rev, pen):
     html +=       " style=\"width:85%;padding:20px 50px;\">\n"
     html +=     "<table class=\"revdisptable\"><tr><td>\n"
     html +=     "<div id=\"statnoticediv\">\n"
-    html += "<a href=\"http://www.myopenreviews.com/#view=review&" + penrevparms
-    html += "\">This review</a> was shared by "
-    html += "<a href=\"http://www.myopenreviews.com/#view=profile&profid="
-    html += str(rev.penid) + "\">" + pen.name + "</a>"
-    html += "<br/>\n"
+    html += "<p>This review was shared by " + pen.name + "<br/>\n"
+    html += "<a href=\"http://www.myopenreviews.com/#view=review&"
+    html +=       penrevparms + "\">sign in</a> </p>\n"
     html += "<div id=\"statrevactdiv\">\n"
-    html += "<a href=\"../#command=respond&" + penrevparms
+    html += "<table class=\"statnoticeactlinktable\"><tr>\n"
+    html += "<td><div class=\"statnoticeactlinkdiv\">"
+    html +=   "<a href=\"../#command=respond&" + penrevparms
     html +=     "\">Edit your corresponding review</a>\n"
-    html += " &nbsp; &nbsp; &nbsp; "
-    html += "<a href=\"../#command=remember&" + penrevparms
+    html +=   "</div></td>\n"
+    html += "<td><div class=\"statnoticeactlinkdiv\">"
+    html +=   "<a href=\"../#command=remember&" + penrevparms
     html +=     "\">Remember this review</a>\n"
+    html +=   "</div></td>\n"
+    html += "</tr></table>"
     html += "</div> <!-- statrevactdiv -->\n"
     html +=     "</div> <!-- statnoticediv -->\n"
     html +=     "</td></tr></table>\n"

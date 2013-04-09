@@ -151,6 +151,9 @@ body {
   font-size:small; text-align:center;
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
+.statnoticeactlinktable td { padding:0px 10px; }
+.statnoticeactlinkdiv { padding:5px; background:#ccc; border-radius:5px;
+  box-shadow:2px 2px 2px #999; }
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
