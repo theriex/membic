@@ -131,16 +131,17 @@ define([], function () {
     //rating is a value from 0 - 100.  Using Math.round to adjust values
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
-    starsImageHTML = function (rating, showblank) {
-        var imgwidth = 81, imgheight = 26, width, offset, rat, html;
+    starsImageHTML = function (rating, showblank, imgclassname) {
+        var imgwidth = 81, imgheight = 26, width, offset, rat, html,
+            cname = imgclassname || "starsimg";
         rat = starRating(rating);
         width = Math.floor(rat.step * (imgwidth / rat.maxstep));
         html = "";
-        if(!showblank) {
-            html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+        if(!showblank && !imgclassname) {
+            html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                         " style=\"width:" + (imgwidth - width) + "px;" +
                                  "height:" + imgheight + "px;\"/>"; }
-        html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+        html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                     " style=\"width:" + width + "px;" + 
                              "height:" + imgheight + "px;" +
                              "background:url('img/starsgold.png');\"" +
@@ -148,7 +149,7 @@ define([], function () {
         if(showblank) {
             if(rat.step % 2 === 1) {  //odd, use half star display
                 offset = Math.floor(imgwidth / rat.maxstep);
-                html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
                                      "background:url('img/starsnone.png')" +
@@ -156,14 +157,14 @@ define([], function () {
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; }
             else { //even, use full star display
-                html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+                html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
                                      "background:url('img/starsnone.png');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
         else { //not showing blank stars, leave some horizontal space.
-            html += "<img class=\"starsimg\" src=\"img/blank.png\"" +
+            html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                         " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
         return html;
     },
@@ -780,11 +781,12 @@ define([], function () {
             if(isRemembered(pen, review)) {
                 html += "<button type=\"button\" id=\"memobutton\"" +
                     " onclick=\"mor.review.memo(true);return false;\"" +
-                    ">Stop remembering this review</a>"; }
+                    ">Stop remembering this review</button>"; }
             else {
                 html += "<button type=\"button\" id=\"memobutton\"" +
                     " onclick=\"mor.review.memo();return false;\"" +
-                    ">Remember this review</a>"; } }
+                    ">Remember this review</button>"; }
+            html += "<div id=\"correspRevInfoDiv\"></div>"; }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
         return html;
@@ -952,6 +954,54 @@ define([], function () {
     },
 
 
+    displayCorrespondingReviewInfo = function (pen, review) {
+        var html = "Not reviewed by you yet";
+        if(review) {
+            html = "You rated this " + 
+                starsImageHTML(review.rating, false, "inlinestarsimg"); }
+        mor.out('correspRevInfoDiv', html);
+    },
+
+
+    //Using the cankey, look up this pen's corresponding review and
+    //call the continuation function with found instance, or null if
+    //no matching review was found.
+    //
+    //Looking up by cankey is not infallible.  If the original review
+    //has typos in the identifying field, and the user corrects these
+    //when editing, then the corrected version might not be found.
+    //The cankey is used so if the user sees multiple reviews from
+    //multiple sources, they can get to their own review of the same
+    //thing fairly reliably.  Seems the best option.
+    //
+    //Retrieving the response review is pretty much always a server
+    //call, but if the response review is part of the top20s and was
+    //already instantiated, then that instance is used and written
+    //through on save. 
+    findCorrespondingReview = function (homepen, contfunc) {
+        var params, i, t20;
+        if(homepen.top20s) {
+            t20 = homepen.top20s[crev.revtype];
+            if(t20 && t20.length) {
+                for(i = 0; i < t20.length; i += 1) {
+                    if(t20[i].cankey === crev.cankey && 
+                       t20[i].revtype === crev.revtype) {
+                        return contfunc(homepen, t20[i]); } } } }
+        params = "penid=" + mor.instId(homepen) + 
+            "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
+            "&" + mor.login.authparams();
+        mor.call("revbykey?" + params, 'GET', null,
+                 function (revs) {
+                     var rev = null;
+                     if(revs.length > 0) {
+                         rev = revs[0]; }
+                     contfunc(homepen, rev); },
+                 function (code, errtxt) {
+                     mor.err("findCorrespondingReview failed " + code + 
+                             " " + errtxt); });
+    },
+
+
     //ATTENTION: Somewhere in the read display, show a count of how
     //many response reviews have been written, and how many people
     //have remembered the review.  Provided there's more than zero.
@@ -999,6 +1049,10 @@ define([], function () {
             else {
                 mor.byId('reviewtext').focus(); } }
         mor.layout.adjust();
+        if(mor.byId('correspRevInfoDiv')) {
+            mor.pen.getPen(function (pen) {
+                findCorrespondingReview(pen, displayCorrespondingReviewInfo); 
+            }); }
     },
 
 
@@ -1072,6 +1126,8 @@ define([], function () {
     //Fill any missing descriptive fields in the given review from the
     //current review, then edit the given review.
     copyAndEdit = function (pen, review) {
+        if(!review) {
+            review = {}; }
         //If instantiating a new review, then copy some base fields over
         review.penid = mor.instId(pen);
         review.revtype = crev.revtype;
@@ -1102,45 +1158,6 @@ define([], function () {
             review.year = crev.year; }
         crev = review;
         mor.review.display();
-    },
-
-
-    //Using the cankey, look up this pen's corresponding review and
-    //edit it, filling out any descriptive fields that did not already
-    //have values.  
-    //
-    //Looking up by cankey is not infallible.  If the original review
-    //has typos in the identifying field, and the user corrects these
-    //when editing, then the corrected version might not be found.
-    //The cankey is used so if the user sees multiple reviews from
-    //multiple sources, they can get to their own review of the same
-    //thing fairly reliably.  Seems the best option.
-    //
-    //Retrieving the response review is pretty much always a server
-    //call, but if the response review is part of the top20s and was
-    //already instantiated, then that instance is used and written
-    //through on save. 
-    createEditResponseReview = function (homepen) {
-        var params, i, t20;
-        if(homepen.top20s) {
-            t20 = homepen.top20s[crev.revtype];
-            if(t20 && t20.length) {
-                for(i = 0; i < t20.length; i += 1) {
-                    if(t20[i].cankey === crev.cankey && 
-                       t20[i].revtype === crev.revtype) {
-                        return copyAndEdit(homepen, t20[i]); } } } }
-        params = "penid=" + mor.instId(homepen) + 
-            "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
-            "&" + mor.login.authparams();
-        mor.call("revbykey?" + params, 'GET', null,
-                 function (revs) {
-                     var rev = {};
-                     if(revs.length > 0) {
-                         rev = revs[0]; }
-                     copyAndEdit(homepen, rev); },
-                 function (code, errtxt) {
-                     mor.err("Edit response review failed " + code + 
-                             " " + errtxt); });
     },
 
 
@@ -1282,7 +1299,7 @@ define([], function () {
             initWithId(revid, mode, action); },
         respond: function () {
             mor.pen.getPen(function (pen) {
-                createEditResponseReview(pen); }); },
+                findCorrespondingReview(pen, copyAndEdit); }); },
         memo: function (remove) {
             mor.pen.getPen(function (pen) {
                 addReviewToMemos(pen, remove); }); },
