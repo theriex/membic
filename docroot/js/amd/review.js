@@ -838,8 +838,8 @@ define([], function () {
                                  " value=\"" + fval + "\"/></td>"; } }
         else {  //not editing, read only display
             fval = review[type.key] || "";
-            html += "<td>" + "<span class=\"revtitle\">" + 
-                fval + "</span></td>";
+            html += "<td>" + 
+                "<span class=\"revtitle\">" + fval + "</span></td>";
             if(type.subkey) {
                 fval = review[type.subkey] || "";
                 html += "<td><span class=\"revauthor\">" + 
@@ -852,13 +852,21 @@ define([], function () {
     },
 
 
+    //return a good width for a text entry area
+    textTargetWidth = function () {
+        var targetwidth = Math.max((mor.winw - 350), 200);
+        targetwidth = Math.min(targetwidth, 750);
+        return targetwidth;
+    },
+
+
     //This should have a similar look and feel to the shoutout display
     revFormTextHTML = function (review, type, keyval, mode) {
         var html, fval, style, targetwidth, placetext;
         html = "<tr><td colspan=\"4\">";
         if(keyval) {  //have the basics so display text area
             fval = review.text || "";
-            targetwidth = Math.max((mor.winw - 350), 200);
+            targetwidth = textTargetWidth();
             style = "color:" + mor.colors.text + ";" +
                 "background-color:" + mor.skinner.lightbg() + ";" +
                 "width:" + targetwidth + "px;";
@@ -1009,10 +1017,11 @@ define([], function () {
     //many response reviews have been written, and how many people
     //have remembered the review.  Provided there's more than zero.
     displayReviewForm = function (pen, review, mode) {
-        var html, type, keyval;
+        var twidth, html, type, keyval;
         type = findReviewType(review.revtype);
         keyval = review[type.key];
-        html = "<div class=\"formstyle\">" + 
+        twidth = textTargetWidth() + 100;
+        html = "<div class=\"formstyle\" style=\"width:" + twidth + "px;\">" + 
             "<table class=\"revdisptable\" border=\"0\">";
         if(mode === "edit" && attribution) {
             html += "<tr><td colspan=\"4\">" + 
