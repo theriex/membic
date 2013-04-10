@@ -132,7 +132,7 @@ define([], function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
-        var imgwidth = 81, imgheight = 26, width, offset, rat, html,
+        var imgwidth = 81, imgheight = 17, width, offset, rat, html,
             cname = imgclassname || "starsimg";
         rat = starRating(rating);
         width = Math.floor(rat.step * (imgwidth / rat.maxstep));
@@ -163,7 +163,7 @@ define([], function () {
                                      "background:url('img/starsnone.png');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
-        else { //not showing blank stars, leave some horizontal space.
+        else if(!imgclassname) { //some horizontal spacing...
             html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                         " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
         return html;
@@ -772,21 +772,24 @@ define([], function () {
                 "<button type=\"button\" id=\"sharebutton\"" +
                 " onclick=\"mor.review.share();return false;\"" +
                 ">Share</button>"; }
-        //reading a review written by someone else
+        //reading a review written by someone else, matches statrev.py
         else {
-            html += "<button type=\"button\" id=\"respondbutton\"" +
-                " onclick=\"mor.review.respond();return false;\"" +
-                ">Edit your corresponding review</button>" +
-                "&nbsp;";
+            html += "<div id=\"statrevactdiv\">" +
+              "<table class=\"statnoticeactlinktable\"><tr>" +
+                "<td><div class=\"statnoticeactlinkdiv\">" +
+                  "<a href=\"#respond\" id=\"respondbutton\"" +
+                    " onclick=\"mor.review.respond();return false;\"" +
+                  ">Edit your corresponding review</a>" + 
+                  "</div></td>" +
+                "<td><div class=\"statnoticeactlinkdiv\">" +
+                  "<a href=\"#remember\" id=\"memobutton\"";
             if(isRemembered(pen, review)) {
-                html += "<button type=\"button\" id=\"memobutton\"" +
-                    " onclick=\"mor.review.memo(true);return false;\"" +
-                    ">Stop remembering this review</button>"; }
+                html += " onclick=\"mor.review.memo(true);return false;\"" +
+                    ">Stop remembering this review</a>"; }
             else {
-                html += "<button type=\"button\" id=\"memobutton\"" +
-                    " onclick=\"mor.review.memo();return false;\"" +
-                    ">Remember this review</button>"; }
-            html += "<div id=\"correspRevInfoDiv\"></div>"; }
+                html += " onclick=\"mor.review.memo();return false;\"" +
+                    ">Remember this review</a>"; }
+            html += "</div></td></tr></table></div>"; }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
         return html;
@@ -955,11 +958,11 @@ define([], function () {
 
 
     displayCorrespondingReviewInfo = function (pen, review) {
-        var html = "Not reviewed by you yet";
+        var imghtml, html = "Create your corresponding review";
         if(review) {
-            html = "You rated this " + 
-                starsImageHTML(review.rating, false, "inlinestarsimg"); }
-        mor.out('correspRevInfoDiv', html);
+            imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
+            html = "Edit your " + imghtml + " review"; }
+        mor.out('respondbutton', html);
     },
 
 
@@ -1049,7 +1052,7 @@ define([], function () {
             else {
                 mor.byId('reviewtext').focus(); } }
         mor.layout.adjust();
-        if(mor.byId('correspRevInfoDiv')) {
+        if(mor.byId('respondbutton')) {
             mor.pen.getPen(function (pen) {
                 findCorrespondingReview(pen, displayCorrespondingReviewInfo); 
             }); }
