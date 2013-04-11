@@ -57,6 +57,23 @@ define([], function () {
     },
 
 
+    findTagContents = function (html, tagname, url) {
+        var content = "", idx;
+        try {
+            idx = html.indexOf("<" + tagname);
+            if(idx >= 0) {
+                content = html.slice(idx + 1);
+                idx = content.indexOf(">");
+                content = content.slice(idx + 1);
+                idx = content.indexOf("<");
+                content = content.slice(0, idx); }
+            } catch (problem) {
+                mor.log("readurl.js " + url + " findTagContents: " + problem);
+            }
+        return content;
+    },
+
+
     verifyFullURL = function (val, url) {
         var urlbase, idx;
         if(val.indexOf("http") >= 0) {
@@ -97,15 +114,52 @@ define([], function () {
 
     setCanonicalURL = function (review, html, url) {
         var elem, val;
+        //the Facebook url is frequently better than the canonical link
+        elem = elementForString(html, "og:url", "meta");
+        if(elem) {
+            val = valueForField(elem, "content");
+            if(val) {
+                review.url = verifyFullURL(val, url);
+                return; } }
         elem = elementForString(html, "canonical", "link");
         if(elem) {
             val = valueForField(elem, "href");
             if(val) {
-                review.url = verifyFullURL(val, url); } }
+                review.url = verifyFullURL(val, url);
+                return; } }
+    },
+
+
+    //Set the type if it is unambigous, and there is no specific
+    //supporting extension module other than this general reader.
+    setReviewType = function (review, html, url) {
+        if(url.indexOf("vimeo.com") >= 0) {
+            review.revtype = "video"; }
+        else if(url.indexOf("soundcloud.com") >= 0) {
+            review.revtype = "music"; }
+    },
+    
+
+    setTitle = function (review, html, url) {
+        var elem, val;
+        //the Facebook title is frequently better than the default tag title
+        elem = elementForString(html, "og:title", "meta");
+        if(elem) {
+            val = valueForField(elem, "content");
+            if(val) {
+                review.title = val;
+                review.name = val;
+                return; } }
+        val = findTagContents(html, "title", url);
+        if(val) {
+            review.title = val;
+            review.name = val; }
     },
 
 
     setReviewFields = function (review, html, url) {
+        setReviewType(review, html, url);
+        setTitle(review, html, url);
         setImageURI(review, html, url);
         setCanonicalURL(review, html, url);
     },
