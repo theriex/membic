@@ -53,24 +53,27 @@ def starsImageHTML(rating):
     return html
 
 
+def typeImage(revtype):
+    if revtype == "book":
+        return "TypeBook50.png"
+    elif revtype == "movie":
+        return "TypeMovie50.png"
+    elif revtype == "video":
+        return "TypeVideo50.png"
+    elif revtype == "music":
+        return "TypeSong50.png"
+    elif revtype == "food":
+        return "TypeFood50.png"
+    elif revtype == "drink":
+        return "TypeDrink50.png"
+    elif revtype == "to do":
+        return "TypeBucket50.png"
+    return "TypeOther50.png"
+
+
 def badgeImageHTML(revtype):
     html = "<img class=\"reviewbadge\" src=\"../img/"
-    if revtype == "book":
-        html += "TypeBook50.png"
-    elif revtype == "movie":
-        html += "TypeMovie50.png"
-    elif revtype == "video":
-        html += "TypeVideo50.png"
-    elif revtype == "music":
-        html += "TypeSong50.png"
-    elif revtype == "food":
-        html += "TypeFood50.png"
-    elif revtype == "drink":
-        html += "TypeDrink50.png"
-    elif revtype == "to do":
-        html += "TypeBucket50.png"
-    elif revtype == "other":
-        html += "TypeOther50.png"
+    html += typeImage(revtype)
     html += "\" title=\"" + revtype + "\" alt=\"" + revtype + "\"/>"
     return html
 
@@ -254,6 +257,8 @@ def revhtml(rev, pen):
     html +=   "<title>My Open Reviews</title>\n"
     html +=   "<link href=\"../css/mor.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />\n"
+    html +=   "<link rel=\"image_src\""
+    html +=        " href=\"../img/" + typeImage(rev.revtype) + "\" />"
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
     html += "<div id=\"logodiv\">\n"

@@ -165,6 +165,7 @@ body {
 #correspRevInfoDiv { padding:10px 0px; }
 .inlinestarsimg { vertical-align:bottom; }
 .starsimg { vertical-align:middle; }
+.permalink { font-size:xx-small; }
 
 /* review layout */
 #revfdiv { }

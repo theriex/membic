@@ -746,7 +746,7 @@ define([], function () {
     //things on MyOpenReviews.  "Like", "+1" and general chatter
     //is best handled via integration with general social networks.
     reviewFormButtonsHTML = function (pen, review, type, keyval, mode) {
-        var html = "";
+        var staticurl, html = "";
         //user just chose type for editing
         if(!keyval) {
             mor.onescapefunc = mor.review.reset;
@@ -773,6 +773,7 @@ define([], function () {
                     ">Save and Share</button>"; } }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
+            staticurl = "statrev/" + mor.instId(review);
             html += "<button type=\"button\" id=\"deletebutton\"" +
                 " onclick=\"mor.review.delrev();return false;\"" +
                 ">Delete</button>" + "&nbsp;" + 
@@ -781,7 +782,11 @@ define([], function () {
                 ">Edit</button>" +  "&nbsp;" + 
                 "<button type=\"button\" id=\"sharebutton\"" +
                 " onclick=\"mor.review.share();return false;\"" +
-                ">Share</button>"; }
+                ">Share</button>" + "&nbsp;&nbsp;" +
+                "<a href=\"" + staticurl + "\" class=\"permalink\"" +
+                  " onclick=\"window.open('" + staticurl + "');" + 
+                             "return false;\"" +
+                ">permalink</a>"; }
         //reading a review written by someone else, matches statrev.py
         else {
             html += "<div id=\"statrevactdiv\">" +
