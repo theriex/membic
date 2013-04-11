@@ -117,11 +117,12 @@ define([], function () {
     },
 
 
-    //On FF14 with noscript installed the cookie gets written as a
-    //session cookie regardless of the expiration set here.  Same
-    //result using Cookie.set, or just setting document.cookie
-    //directly.  On FF14 without noscript, this works.  Just something
-    //to be aware of...
+    //Cookie timeout is enforced both by the expiration setting here,
+    //and by the server (moracct.py authenticated).  On FF14 with
+    //noscript installed, the cookie gets written as a session cookie
+    //regardless of the expiration set here.  This happens even if
+    //directly using Cookie.set, or setting document.cookie directly.
+    //On FF14 without noscript, all is normal.
     setAuthentication = function (method, token, name) {
         var cval = method + cookdelim + token + cookdelim + name;
         mor.dojo.cookie(mor.authcookname, cval, { expires: 365 });

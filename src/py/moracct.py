@@ -96,7 +96,9 @@ def authenticated(request):
                 return False
             secs = int(token[(token.index(":") + 1) : (unidx - 1)])
             now = int(round(time.time()))
-            if now - secs > 12 * 60 * 60:
+            twelvehours = 12 * 60 * 60     # flip clock hope not active then
+            tokenlife = 90 * 24 * 60 * 60
+            if now - secs > tokenlife + twelvehours:
                 return False
             account._id = account.key().id() # normalized id access
             return account  # True
