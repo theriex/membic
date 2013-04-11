@@ -39,6 +39,7 @@ class Review(db.Model):
     cankey = db.StringProperty()
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
+    srcrev = db.IntegerProperty()
 
 
 def review_modification_authorized(handler):
@@ -156,6 +157,9 @@ def read_review_values(handler, review):
     if srevidstr:
         review.srevid = intz(srevidstr)
     set_if_param_given(review, "svcdata", handler, "svcdata")
+    srcrevstr = handler.request.get('srcrev')
+    if srcrevstr:
+        review.srcrev = intz(srcrevstr)
 
 
 def update_top20_reviews(pen, review):

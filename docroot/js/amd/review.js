@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -256,7 +256,7 @@ define([], function () {
     reviewLinkHTML = function () {
         var html = "<a href=\"#Write a Review\"" +
                      " title=\"Review something\"" +
-                     " onclick=\"mor.review.reset();return false;\"" +
+                     " onclick=\"mor.review.reset(true);return false;\"" +
             ">Write a Review</a>";
         return html;
     },
@@ -389,9 +389,14 @@ define([], function () {
     },
 
 
+    //there must be a review instance ID for the server to find the
+    //associated review for the image.  The review does NOT need to be
+    //up to date with the latest fields, that's handled during the main
+    //save processing.
     picUploadForm = function () {
         var odiv, html = "", revid = mor.instId(crev);
-        mor.review.save();  //save any outstanding edits
+        if(!revid) {
+            return mor.review.save(false, "uploadpic"); }
         html += mor.paramsToFormInputs(mor.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + revid + "\"/>";
         html += "<input type=\"hidden\" name=\"penid\" value=\"" +
@@ -746,20 +751,25 @@ define([], function () {
         if(!keyval) {
             mor.onescapefunc = mor.review.reset;
             html += "<button type=\"button\" id=\"cancelbutton\"" +
+                " onclick=\"mor.review.reset(true);return false;\"" +
+                ">Cancel</button>" + 
+                "&nbsp;" +
+                "<button type=\"button\" id=\"savebutton\"" +
+                " onclick=\"mor.review.validate();return false;\"" +
+                ">Create Review</button>"; }
+        //have key fields and editing full review
+        else if(mode === "edit") {
+            html += "<button type=\"button\" id=\"cancelbutton\"" +
                 " onclick=\"mor.review.reset();return false;\"" +
                 ">Cancel</button>" + 
                 "&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
-                " onclick=\"mor.review.save();return false;\"" +
-                ">Create Review</button>"; }
-        //have key fields and editing full review
-        else if(mode === "edit") {
-            html += "<button type=\"button\" id=\"savebutton\"" +
-                " onclick=\"mor.review.save(true,false);return false;\"" +
+                " onclick=\"mor.review.save(true,'');return false;\"" +
                 ">Save</button>&nbsp;";
             if(keyval) {  //have at least minimally complete review..
                 html += "<button type=\"button\" id=\"donebutton\"" +
-                    " onclick=\"mor.review.save(true,true);return false;\"" +
+                    " onclick=\"mor.review.save(true,'runServices');" + 
+                               "return false;\"" +
                     ">Save and Share</button>"; } }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
@@ -816,7 +826,7 @@ define([], function () {
                 "</span>"; }
         html += "&nbsp;" + badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
-            onchange = "mor.review.save();return false;";
+            onchange = "mor.review.validate();return false;";
             if(type.subkey) {
                 onchange = "mor.byId('subkeyin').focus();return false;"; }
             fval = review[type.key] || "";
@@ -829,7 +839,7 @@ define([], function () {
                                   " size=\"30\"" +
                                   " value=\"" + fval + "\"/></td>"; }
             else if(type.subkey) {
-                onchange = "mor.review.save();return false;";
+                onchange = "mor.review.validate();return false;";
                 fval = review[type.subkey] || "";
                 html += "<td id=\"subkeyinlabeltd\">" + 
                     "<input type=\"text\" id=\"subkeyin\"" + 
@@ -1068,15 +1078,43 @@ define([], function () {
     },
 
 
-    cancelReview = function () {
-        crev = {};
-        mor.onescapefunc = null; 
-        mor.review.display();
+    //The field value onchange and the cancel button battle it out to
+    //see whose event gets processed.  On Mac10.8.3/FF19.0.2 onchange
+    //goes first, and if it hogs processing then cancel never gets
+    //called.  Have to use a timeout so cancel has a shot, and short
+    //timeout values (< 200) won't work consistently.
+    fullEditDisplayTimeout = null,
+    validateAndContinue = function () {
+        fullEditDisplayTimeout = setTimeout(function () {
+            var i, errtxt = "", errors = [], type;
+            fullEditDisplayTimeout = null;
+            type = findReviewType(crev.revtype);
+            if(type) {
+                keyFieldsValid(type, errors);
+                if(errors.length > 0) {
+                    for(i = 0; i < errors.length; i += 1) {
+                        errtxt += errors[i] + "<br/>"; }
+                    mor.out('revsavemsg', errtxt);
+                    return; } }
+            mor.review.display(); }, 400);
     },
 
 
-    saveReview = function (doneEditing, runServices) {
-        var errors = [], i, errtxt = "", type, url, data, action;
+    cancelReview = function (force) {
+        mor.onescapefunc = null; 
+        if(fullEditDisplayTimeout) {
+            clearTimeout(fullEditDisplayTimeout);
+            fullEditDisplayTimeout = null; }
+        if(force || !crev || !mor.instId(crev)) {
+            crev = {};                    //so clear it all out 
+            mor.review.display(); }       //and restart
+        else {
+            mor.review.displayRead(); }
+    },
+
+
+    saveReview = function (doneEditing, actionstr) {
+        var errors = [], i, errtxt = "", type, url, data;
         type = findReviewType(crev.revtype);
         if(!type) {
             mor.out('revsavemsg', "Unknown review type");
@@ -1106,10 +1144,9 @@ define([], function () {
                      setTimeout(mor.pen.refreshCurrent, 100);
                      if(doneEditing) {
                          attribution = "";
-                         action = runServices? "runServices" : "";
-                         mor.review.displayRead(action); }
+                         mor.review.displayRead(actionstr); }
                      else {
-                         mor.review.display(); } },
+                         mor.review.display(actionstr); } },
                  function (code, errtxt) {
                      asyncSaveErrTxt = "Save failed code: " + code + " " +
                          errtxt;
@@ -1139,7 +1176,8 @@ define([], function () {
     //current review, then edit the given review.
     copyAndEdit = function (pen, review) {
         if(!review) {
-            review = {}; }
+            review = {};
+            review.srcrev = mor.instId(crev); }
         //If instantiating a new review, then copy some base fields over
         review.penid = mor.instId(pen);
         review.revtype = crev.revtype;
@@ -1254,6 +1292,9 @@ define([], function () {
                 mor.review.respond(); } }
         else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
+        else if(action === "uploadpic") {
+            displayReviewForm(pen, crev, "edit");
+            picUploadForm(); }
         else {
             displayReviewForm(pen, crev, "edit"); }
     };
@@ -1262,8 +1303,10 @@ define([], function () {
     return {
         resetStateVars: function () {
             resetStateVars(); },
-        display: function () {
-            mor.pen.getPen(mainDisplay); },
+        display: function (action) {
+            mor.pen.getPen(function (pen) {
+                mainDisplay(pen, false, action); 
+            }); },
         displayRead: function (action) {
             mor.pen.getPen(function (pen) {
                 mainDisplay(pen, true, action); 
@@ -1296,10 +1339,12 @@ define([], function () {
             picUploadForm(); },
         toggleKeyword: function (kwid) {
             toggleKeyword(kwid); },
-        reset: function () {
-            cancelReview(); },
-        save: function (doneEditing, runServices) {
-            saveReview(doneEditing, runServices); },
+        reset: function (force) {
+            cancelReview(force); },
+        validate: function () {
+            validateAndContinue(); },
+        save: function (doneEditing, actionstr) {
+            saveReview(doneEditing, actionstr); },
         share: function () {
             mor.pen.getPen(function (pen) {
                 mainDisplay(pen, true, "runServices"); }); },
