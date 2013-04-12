@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, unescape: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -41,7 +41,7 @@ define([], function () {
     },
 
 
-    elementForString = function (html, targetstr, elemtype) {
+    elementForStringSearch = function (html, targetstr, elemtype) {
         var found = false, start, end, idx, str = "";
         idx = html.indexOf(targetstr);
         while(!found && idx >= 0) {
@@ -53,6 +53,16 @@ define([], function () {
             else {
                 found = false;
                 idx = html.indexOf(targetstr, idx + 1); } }
+        return str;
+    },
+
+
+    elementForString = function (html, targetstr, elemtype) {
+        var str = elementForStringSearch(html, targetstr, elemtype);
+        if(!str) {
+            //src for at least rottentomatoes shows up fully escaped
+            html = unescape(html);
+            str = elementForStringSearch(html, targetstr, elemtype); }
         return str;
     },
 
@@ -109,6 +119,15 @@ define([], function () {
             if(val) {
                 review.imguri = verifyFullURL(val, url);
                 return; } }
+        if(url.indexOf("netflix.") >= 0) {
+            elem = elementForString(html, "thumbnailUrl", "img");
+            if(elem) {
+                val = valueForField(elem, "src");
+                if(val) {
+                    review.imguri = val;
+                    val = valueForField(elem, "alt");
+                    review.title = val;
+                    return; } } }
     },
 
 
@@ -133,10 +152,17 @@ define([], function () {
     //Set the type if it is unambigous, and there is no specific
     //supporting extension module other than this general reader.
     setReviewType = function (review, html, url) {
-        if(url.indexOf("vimeo.com") >= 0) {
-            review.revtype = "video"; }
-        else if(url.indexOf("soundcloud.com") >= 0) {
-            review.revtype = "music"; }
+        var i, typemaps = [
+            { urltxt: "imdb.", revtype: "movie" },
+            { urltxt: "netflix.", revtype: "movie" },
+            { urltxt: "rottentomatoes.", revtype: "movie" },
+            { urltxt: "soundcloud.", revtype: "music" },
+            { urltxt: "vimeo.", revtype: "video" } ];
+        url = url.toLowerCase();
+        for(i = 0; i < typemaps.length; i += 1) {
+            if(url.indexOf(typemaps[i].urltxt) >= 0) {
+                review.revtype = typemaps[i].revtype;
+                break; } }
     },
     
 
