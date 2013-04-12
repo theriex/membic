@@ -157,7 +157,8 @@ define([], function () {
             { urltxt: "netflix.", revtype: "movie" },
             { urltxt: "rottentomatoes.", revtype: "movie" },
             { urltxt: "soundcloud.", revtype: "music" },
-            { urltxt: "vimeo.", revtype: "video" } ];
+            { urltxt: "vimeo.", revtype: "video" },
+            { urltxt: "youtube.", revtype: "video" } ];
         url = url.toLowerCase();
         for(i = 0; i < typemaps.length; i += 1) {
             if(url.indexOf(typemaps[i].urltxt) >= 0) {
@@ -183,9 +184,34 @@ define([], function () {
     },
 
 
+    //Attempt to parse the title.  Add smarts on case basis.  In
+    //general, guessing artist, title is most likely due to players
+    //organizing music by artist, then album, then title
+    parseTitle = function (review) {
+        var text;
+        if(!review.title) {
+            return; }
+        text = review.title;
+        //case: "artist - title"
+        //e.g. http://www.youtube.com/watch?v=KnIJOO__jVo
+        if(text.indexOf(" - ") > 0) {
+            text = text.split(" - ", 2);
+            review.artist = text[0].trim();
+            review.title = text[1].trim(); }
+        //case: "artist: title"
+        //e.g. http://www.youtube.com/watch?v=tHOn093r-Ak
+        else if(text.indexOf(": ") > 0) {
+            text = text.split(": ", 2);
+            review.artist = text[0].trim();
+            review.title = text[1].trim(); }
+    },
+
+
     setReviewFields = function (review, html, url) {
         setReviewType(review, html, url);
         setTitle(review, html, url);
+        if(review.revtype === "video") {  //try to be smart about music vids
+            parseTitle(review); }
         setImageURI(review, html, url);
         setCanonicalURL(review, html, url);
     },

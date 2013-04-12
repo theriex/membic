@@ -297,13 +297,14 @@ define([], function () {
 
 
     getURLReader = function (url, callfunc) {
-        if(url.indexOf(".youtube.") > 0) {
-            require([ "ext/youtube" ], callfunc); }
+        if(url.indexOf(".amazon.") > 0) {
+            require([ "ext/amazon" ], callfunc); }
+        //The API calls die all the time, so going with standard tags
+        //else if(url.indexOf(".youtube.") > 0) {
+        //    require([ "ext/youtube" ], callfunc); }
         //netflix odata catalog retired 08apr, all calls return 404
         //else if(url.indexOf(".netflix.") > 0) {
         //    require([ "ext/netflix" ], callfunc); }
-        else if(url.indexOf(".amazon.") > 0) {
-            require([ "ext/amazon" ], callfunc); }
         else {
             require([ "ext/readurl" ], callfunc); }
     },
