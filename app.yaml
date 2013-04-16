@@ -187,6 +187,11 @@ handlers:
 - url: /amazoninfo.*
   script: src.py.consvc.app
 
+## Fetch search results from Amazon
+## GET params: revtype, title, authparams
+- url: /amazonsearch.*
+  script: src.py.consvc.app
+
 ## Fetch the contents of the given URL
 ## GET params: url, authparams
 - url: /urlcontents.*

@@ -80,7 +80,8 @@ define([], function () {
     extractASIN = function (url) {
         var pieces = url.split("?");
         pieces = pieces[0].split("/");
-        return pieces[pieces.length - 1];
+        pieces = pieces[pieces.length - 1].split("%");
+        return pieces[0];
     },
 
 

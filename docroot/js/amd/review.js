@@ -22,6 +22,8 @@ define([], function () {
         asyncSaveErrTxt = "",
         //Whether the stars are being pointer manipulated now
         starPointingActive = false,
+        //The last value used for autocomplete checking
+        autocomptxt = "",
         //Review type definitions always include the url field, it is
         //appended automatically if not explicitely listed elsewhere
         //in the type definition.  Field names are converted to lower
@@ -616,12 +618,13 @@ define([], function () {
         for(i = 0; i < type.dkwords.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
-            html += "<td><input type=\"checkbox\"" +
-                " name=\"dkw" + i + "\"" +
-                " value=\"" + type.dkwords[i] + "\"" +
-                " id=\"dkw" + i + "\"" + 
-                " onchange=\"mor.review.toggleKeyword('dkw" + i + "');" +
-                            "return false;\"";
+            html += "<td style=\"white-space:nowrap;\">" + 
+                "<input type=\"checkbox\"" +
+                      " name=\"dkw" + i + "\"" +
+                      " value=\"" + type.dkwords[i] + "\"" +
+                      " id=\"dkw" + i + "\"" + 
+                      " onchange=\"mor.review.toggleKeyword('dkw" + i + "');" +
+                                  "return false;\"";
             if(crev.keywords.indexOf(type.dkwords[i]) >= 0) {
                 html += " checked=\"checked\""; }
             html += "/>" +
@@ -762,7 +765,7 @@ define([], function () {
         //have key fields and editing full review
         else if(mode === "edit") {
             html += "<button type=\"button\" id=\"cancelbutton\"" +
-                " onclick=\"mor.review.reset();return false;\"" +
+                " onclick=\"mor.review.reset(true);return false;\"" +
                 ">Cancel</button>" + 
                 "&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
@@ -901,6 +904,10 @@ define([], function () {
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
                     mor.linkify(fval) + "</div>"; } }
+        else {  //keyval for review not set yet, provide autocomplete area
+            html += "<div id=\"revautodiv\" class=\"autocomplete\"" + 
+                        " style=\"width:" + targetwidth + "px;\"" +
+                "> </div>"; }
         html += "</td></tr>";
         return html;
     },
@@ -979,6 +986,86 @@ define([], function () {
 
     starClick = function (event) {
         starDisplayAdjust(event, true);
+    },
+
+
+    xmlExtract = function (tagname, xml) {
+        var idx, targetstr, result = null;
+        targetstr = "<" + tagname + ">";
+        idx = xml.indexOf(targetstr);
+        if(idx >= 0) {
+            xml = xml.slice(idx + targetstr.length);
+            targetstr = "</" + tagname + ">";
+            idx = xml.indexOf(targetstr);
+            if(idx >= 0) {
+                result = { content: xml.slice(0, idx),
+                           remainder: xml.slice(idx + targetstr.length) }; } }
+        return result;
+    },
+
+
+    secondaryAttr = function (tagname, xml) {
+        var secondary = xmlExtract(tagname, xml);
+        if(secondary) {
+            secondary = secondary.content.trim(); }
+        if(secondary) {
+            return "&nbsp;<i>" + secondary + "</i>"; }
+        return "";
+    },
+
+
+    writeAutocompLinks = function (xml) {
+        var itemdat, url, attrs, title, html = "<ul>";
+        itemdat = xmlExtract("Item", xml);
+        while(itemdat) {
+            url = xmlExtract("DetailPageURL", itemdat.content);
+            url = url.content || "";
+            attrs = xmlExtract("ItemAttributes", itemdat.content);
+            title = xmlExtract("Title", attrs.content);
+            title = title.content || "";
+            if(title) {
+                if(crev.revtype === 'book') {
+                    title += secondaryAttr("Author", attrs.content); }
+                else if(crev.revtype === 'movie') {
+                    title += secondaryAttr("ProductGroup", attrs.content); }
+                else if(crev.revtype === 'music') {
+                    title += secondaryAttr("Artist", attrs.content) + " " +
+                        secondaryAttr("Manufacturer", attrs.content) +
+                        secondaryAttr("ProductGroup", attrs.content); } }
+            html += "<li><a href=\"" + url + "\"" + 
+                          " onclick=\"mor.review.readURL('" + url + "');" +
+                                     "return false;\"" +
+                ">" + title + "</a></li>";
+            itemdat = xmlExtract("Item", itemdat.remainder); }
+        html += "</ul>";
+        mor.out('revautodiv', html);
+    },
+
+
+    autocompletion = function (event) {
+        var srchtxt, url;
+        if(mor.byId('revautodiv') && mor.byId('keyin')) {
+            srchtxt = mor.byId('keyin').value;
+            if(mor.byId('subkeyin')) {
+                srchtxt += " " + mor.byId('subkeyin').value; }
+            if(srchtxt !== autocomptxt) {
+                autocomptxt = srchtxt;
+                if(crev.revtype === 'book' || crev.revtype === 'movie') {
+                    url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
+                        mor.enc(srchtxt);
+                    mor.call(url, 'GET', null,
+                             function (json) {
+                                 writeAutocompLinks(mor.dec(json[0].content));
+                                 setTimeout(autocompletion, 400);
+                                 mor.layout.adjust(); },
+                             function (code, errtxt) {
+                                 mor.out('revautodiv', "");
+                                 mor.log("Amazon info retrieval failed code " +
+                                         code + ": " + errtxt);
+                                 setTimeout(autocompletion, 400);
+                                 mor.layout.adjust(); }); } }
+            else {
+                setTimeout(autocompletion, 750); } }
     },
 
 
@@ -1082,6 +1169,9 @@ define([], function () {
             mor.pen.getPen(function (pen) {
                 findCorrespondingReview(pen, displayCorrespondingReviewInfo); 
             }); }
+        if(mor.byId('revautodiv')) {
+            autocomptxt = "";
+            autocompletion(); }
     },
 
 
@@ -1114,6 +1204,10 @@ define([], function () {
             fullEditDisplayTimeout = null; }
         if(force || !crev || !mor.instId(crev)) {
             crev = {};                    //so clear it all out 
+            autourl = "";
+            attribution = "";
+            starPointingActive = false;
+            autocomptxt = "";
             mor.review.display(); }       //and restart
         else {
             mor.review.displayRead(); }

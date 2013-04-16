@@ -148,6 +148,29 @@ def doOAuthPost(url, params):
     return doOAuthCall(url, params, "POST")
 
 
+def callAmazon(handler, svc, params):
+    tosign = "GET\n" + "webservices.amazon.com\n" + "/onca/xml\n" + params
+    # the secret comes out of the db as unicode, force it to string
+    key = "%s" % (enc(svc.secret))
+    sig = b64encode(hmac.new(key, tosign, sha256).digest())
+    url = "http://webservices.amazon.com/onca/xml?" + params
+    url += "&Signature=" + enc(sig)
+    headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    result = urlfetch.fetch(url, payload=None, method="GET",
+                            headers=headers,
+                            allow_truncated=False, 
+                            follow_redirects=True, 
+                            deadline=10, 
+                            validate_certificate=False)
+    if result.status_code == 200:
+        json = "[{\"content\":\"" + enc(result.content) + "\"}]"
+        handler.response.headers['Content-Type'] = 'application/json'
+        handler.response.out.write(json)
+    else:
+        handler.error(result.status_code)
+        handler.response.out.write(result.content)
+
+
 # params: name, oauth_callback, oauth_verifier
 class OAuth1Call(webapp2.RequestHandler):
     def post(self):
@@ -250,26 +273,44 @@ class AmazonInfo(webapp2.RequestHandler):
         params += "&Service=AWSECommerceService"
         params += "&Timestamp=" + enc(zulunowts())
         params += "&Version=2011-08-01"
-        tosign = "GET\n" + "webservices.amazon.com\n" + "/onca/xml\n" + params
-        # the secret comes out of the db as unicode, force it to string
-        key = "%s" % (enc(svc.secret))
-        sig = b64encode(hmac.new(key, tosign, sha256).digest())
-        url = "http://webservices.amazon.com/onca/xml?" + params
-        url += "&Signature=" + enc(sig)
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        result = urlfetch.fetch(url, payload=None, method="GET",
-                                headers=headers,
-                                allow_truncated=False, 
-                                follow_redirects=True, 
-                                deadline=10, 
-                                validate_certificate=False)
-        if result.status_code == 200:
-            json = "[{\"content\":\"" + enc(result.content) + "\"}]"
+        callAmazon(self, svc, params)
+
+
+class AmazonSearch(webapp2.RequestHandler):
+    def get(self):
+        # acc = authenticated(self.request)
+        # if not acc:
+        #     self.error(401)
+        #     self.response.out.write("Authentication failed")
+        #     return
+        # logging.info("referer: " + self.request.referer)
+        # logging.info("request: " + str(self.request))
+        revtype = self.request.get('revtype')
+        srchtxt = self.request.get('search')
+        amznidx = ""
+        if revtype == "book":
+            amznidx = "Books"
+        elif revtype == "movie":
+            amznidx = "DVD"
+        # The results from this are worse than not suggesting anything.
+        # elif revtype == "music":
+        #     amznidx = "Music"
+        if not amznidx:
+            json = "[{\"content\":\"\"}]"
             self.response.headers['Content-Type'] = 'application/json'
             self.response.out.write(json)
-        else:
-            self.error(result.status_code)
-            self.response.out.write(result.content)
+            return
+        svc = getConnectionService("Amazon")
+        # Params must be in sorted order with url encoded vals
+        params = "AWSAccessKeyId=" + svc.ckey
+        params += "&AssociateTag=myopenreviews-20"
+        params += "&Keywords=" + enc(srchtxt)
+        params += "&Operation=ItemSearch"
+        params += "&SearchIndex=" + amznidx
+        params += "&Service=AWSECommerceService"
+        params += "&Timestamp=" + enc(zulunowts())
+        params += "&Version=2011-08-01"
+        callAmazon(self, svc, params);
 
 
 class URLContents(webapp2.RequestHandler):
@@ -307,6 +348,7 @@ app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/jsonget', JSONGet),
                                ('/githubtok', GitHubToken),
                                ('/amazoninfo', AmazonInfo),
+                               ('/amazonsearch', AmazonSearch),
                                ('/urlcontents', URLContents)], 
                               debug=True)
 
