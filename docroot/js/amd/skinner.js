@@ -146,7 +146,7 @@ define([], function () {
 
     getDarkBackground = function () {
         if(!mor.colors.darkbg) {
-            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -6); }
+            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -18); }
         return mor.colors.darkbg;
     },
 
