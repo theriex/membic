@@ -154,6 +154,7 @@ define([], function () {
     setReviewType = function (review, html, url) {
         var i, typemaps = [
             { urltxt: "imdb.", revtype: "movie" },
+            { urltxt: "myopenreviews.", revtype: "other" },
             { urltxt: "netflix.", revtype: "movie" },
             { urltxt: "rottentomatoes.", revtype: "movie" },
             { urltxt: "soundcloud.", revtype: "music" },
