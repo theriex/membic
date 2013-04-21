@@ -437,8 +437,8 @@ define([], function () {
         var penid = mor.instId(pen), picuri, hash, linktitle, html;
         hash = mor.objdata({ view: "profile", profid: penid });
         linktitle = mor.ellipsis(pen.shoutout, 75);
-        if(!linktitle) {
-            linktitle = "View profile for " + mor.enc(pen.name); }
+        if(!linktitle) {  //do not encode pen name here.  No First%20Last..
+            linktitle = "View profile for " + pen.name; }
         html = "<li>" +
             "<a href=\"#" + hash + "\"" +
             " onclick=\"mor.profile.changeid('" + penid + "');return false;\"" +
