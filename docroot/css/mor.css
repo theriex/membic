@@ -13,9 +13,17 @@ body {
   font-style:normal;
   font-weight:normal;
   word-spacing:normal;
-  color:#111111;
-  background:#fffff6;
   margin:0px;
+  color:#111111;
+  background-color: #fffff6;
+  background-image: url('../img/texturePaper.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
 }
 
 /*

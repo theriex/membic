@@ -16,25 +16,15 @@ define([], function () {
                     { name: "paper (cool)", id: "paperc",
                       bodybg: "#f8f8f8", text: "#000000",
                       link: "#006666", hover: "#3399cc" },
-                    { name: "slate", id: "slate",
+                    { name: "slate",        id: "slate",
                       bodybg: "#ccdad9", text: "#111111",
                       link: "#003300", hover: "#006600" },
-                    { name: "khaki", id: "slate",
+                    { name: "khaki",        id: "khaki",
                       bodybg: "#e4cfc3", text: "#111111",
                       link: "#333300", hover: "#666633" },
-                    { name: "purple", id: "purple",
+                    { name: "purple",       id: "purple",
                       bodybg: "#cba6d9", text: "#000000",
-                      link: "#660000", hover: "#cc0000" },
-                    { name: "sky", id: "sky",
-                      bodybg: "#caf1f8", text: "#000000",
-                      link: "#3150b2", hover: "#3399cc" },
-                    { name: "pink", id: "pink",
-                      bodybg: "#ffeef3", text: "#000000",
-                      link: "#dd464b", hover: "#ff464b" },
-                    { name: "matrix", id: "matrix",
-                      bodybg: "#000000", text: "#00cc00",
-                      link: "#006666", hover: "#3399cc" }
-                  ],
+                      link: "#660000", hover: "#cc0000" } ],
 
 
     copycolors = function (colors) {
@@ -138,15 +128,19 @@ define([], function () {
 
 
     getLightBackground = function () {
+        //with no texture overlay, +4 is pretty good.  With a 66% opaque
+        //texture overlay that's too much.
         if(!mor.colors.lightbg) {
-            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 4); }
+            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 2); }
         return mor.colors.lightbg;
     },
 
 
     getDarkBackground = function () {
+        //with no texture overlay, -18 is about right, with a 66% opaque 
+        //texture overlay this needs to be pretty significant
         if(!mor.colors.darkbg) {
-            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -18); }
+            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -56); }
         return mor.colors.darkbg;
     },
 
@@ -229,15 +223,16 @@ define([], function () {
 
 
     presetSelectorHTML = function (pen) {
-        var html, i;
+        var html, i, pid;
         html = "<table>" +
           "<tr>" + 
             "<td align=\"right\">Starting preset skin</td>" +
             "<td align=\"left\">" +
                 "<select id=\"presetsel\">";
         for(i = 0; i < presets.length; i += 1) {
-            html += "<option id=\"" + presets[i].id + "\"";
-            if(pen && pen.settings.colorPresetId === presets[i].id) {
+            pid = presets[i].id;
+            html += "<option id=\"" + pid + "\"";
+            if(pen && pen.settings && pen.settings.colorPresetId === pid) {
                 html += " selected=\"selected\""; }
             html += ">" + 
                 presets[i].name + "</option>"; }

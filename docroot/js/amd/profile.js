@@ -534,7 +534,7 @@ define([], function () {
             li.style.backgroundColor = mor.skinner.darkbg(); }
         li = mor.byId(tabid);
         li.className = "selectedTab";
-        li.style.backgroundColor = mor.colors.bodybg;
+        li.style.backgroundColor = "transparent";
         currtab = tabfunc;
         mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
                                 tab: mor.profile.currentTabAsString() });
