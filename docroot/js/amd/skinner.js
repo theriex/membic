@@ -11,7 +11,7 @@ define([], function () {
     var oldcolors,
         colorcontrols,
         presets = [ { name: "paper (warm)", id: "paperw", 
-                      bodybg: "#fffff9", text: "#111111",
+                      bodybg: "#fffffc", text: "#111111",
                       link: "#3150b2", hover: "#3399cc" },
                     { name: "paper (cool)", id: "paperc",
                       bodybg: "#f8f8f8", text: "#000000",
@@ -21,10 +21,7 @@ define([], function () {
                       link: "#003300", hover: "#006600" },
                     { name: "khaki",        id: "khaki",
                       bodybg: "#e4cfc3", text: "#111111",
-                      link: "#333300", hover: "#666633" },
-                    { name: "purple",       id: "purple",
-                      bodybg: "#cba6d9", text: "#000000",
-                      link: "#660000", hover: "#cc0000" } ],
+                      link: "#333300", hover: "#666633" } ],
 
 
     copycolors = function (colors) {
