@@ -219,11 +219,22 @@ define([], function () {
     },
 
 
+    toggleControls = function () {
+        var txt = mor.byId('skinctrltoggle').innerHTML;
+        if(txt === "show color controls") {
+            mor.byId('colorctrlsdiv').style.display = "block";
+            mor.out('skinctrltoggle', "hide color controls"); }
+        else {
+            mor.byId('colorctrlsdiv').style.display = "none";
+            mor.out('skinctrltoggle', "show color controls"); }
+    },
+
+
     presetSelectorHTML = function (pen) {
         var html, i, pid;
         html = "<table>" +
           "<tr>" + 
-            "<td align=\"right\">Starting preset skin</td>" +
+            "<td align=\"right\">Theme</td>" +
             "<td align=\"left\">" +
                 "<select id=\"presetsel\">";
         for(i = 0; i < presets.length; i += 1) {
@@ -233,7 +244,12 @@ define([], function () {
                 html += " selected=\"selected\""; }
             html += ">" + 
                 presets[i].name + "</option>"; }
-        html += "</select>" +
+        html += "</select></td>" +
+            "<td>&nbsp;&nbsp;" + 
+                "<a href=\"#toggleSkinControls\" id=\"skinctrltoggle\"" +
+                  " class=\"permalink\"" + 
+                  " onclick=\"mor.skinner.toggleControls();return false;\"" +
+            ">show color controls</a></td>" +
           "</tr>" +
         "</table>";
         return html;
@@ -256,23 +272,25 @@ define([], function () {
               "<input type=\"text\" id=\"hoverin\" size=\"7\"" + 
                     " value=\"" + mor.colors.hover + "\"/>" + 
                 "</td>"; }
-        html = "R/r, G/g, U/u to adjust Red/Green/Blue..." +
-        "<table>" +
-          "<tr>" +
-            "<td align=\"right\">background</td>" +
-            "<td align=\"left\">" + 
-              "<input type=\"text\" id=\"bgbodyin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.bodybg + "\"/></td>" + 
-            link + 
-          "</tr>" +
-          "<tr>" +
-            "<td align=\"right\">text</td>" +
-            "<td align=\"left\">" + 
-              "<input type=\"text\" id=\"textcolin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.text + "\"/></td>" + 
-            hover +
-          "</tr>" +
-        "</table>";
+        html = "<div id=\"colorctrlsdiv\" style=\"display:none;\">" +
+            "<span class=\"smalltext\">" + 
+              "R/r, G/g, U/u to adjust Red/Green/Blue...</span>" +
+            "<table>" +
+              "<tr>" +
+                "<td align=\"right\">background</td>" +
+                "<td align=\"left\">" + 
+                  "<input type=\"text\" id=\"bgbodyin\" size=\"7\"" + 
+                        " value=\"" + mor.colors.bodybg + "\"/></td>" + 
+                link + 
+              "</tr>" +
+              "<tr>" +
+                "<td align=\"right\">text</td>" +
+                "<td align=\"left\">" + 
+                  "<input type=\"text\" id=\"textcolin\" size=\"7\"" + 
+                        " value=\"" + mor.colors.text + "\"/></td>" + 
+                hover +
+              "</tr>" +
+            "</table></div>";
         return html;
     },
 
@@ -308,7 +326,9 @@ define([], function () {
         lightbg: function () {
             return getLightBackground(); },
         darkbg: function () {
-            return getDarkBackground(); }
+            return getDarkBackground(); },
+        toggleControls: function () {
+            toggleControls(); }
     };
 
 });

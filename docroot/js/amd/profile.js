@@ -79,9 +79,7 @@ define([], function () {
         html = "";
         if(showingSelf) {
             html = mor.imglink("#Settings","Adjust your application settings",
-                               "mor.profile.settings()", "settings.png") +
-                   mor.imglink("#PenNames","Switch Pen Names",
-                               "mor.profile.penswitch()", "pen.png"); }
+                               "mor.profile.settings()", "settings.png"); }
         mor.out('homepenbuttonspan', html);
     },
 
@@ -323,30 +321,63 @@ define([], function () {
     },
 
 
+    changeToSelectedPen = function () {
+        var i, sel = mor.byId('penselect');
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                cancelPenNameSettings();
+                if(sel.options[i].id === 'newpenopt') {
+                    mor.pen.newPenName(mor.profile.display); }
+                else {
+                    mor.pen.selectPenByName(sel.options[i].value); }
+                break; } }
+    },
+
+
+    penSelectHTML = function (pen) {
+        var html, pens = mor.pen.getPenNames(), i;
+        html = "<div id=\"penseldiv\">" +
+            "<span class=\"headingtxt\">Writing as </span>" +
+            "<select id=\"penselect\"" + 
+                   " onchange=\"mor.profile.switchPen();return false;\">";
+        for(i = 0; i < pens.length; i += 1) {
+            html += "<option id=\"" + mor.instId(pens[i]) + "\"";
+            if(pens[i].name === pen.name) {
+                html += " selected=\"selected\""; }
+            html += ">" + pens[i].name + "</option>"; }
+        html += "<option id=\"newpenopt\">New Pen Name</option>" +
+            "</select>" + "&nbsp;" + 
+            "<button type=\"button\" id=\"penselectok\"" + 
+            " onclick=\"mor.profile.switchPen();return false;\"" +
+            ">go</button>" +
+            "</div>";
+        return html;
+    },
+
+
     changeSettings = function (pen) {
         var html = "<table>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\" id=\"pensettitletd\">" +
-              "<h2>Settings for " + pen.name + "</h2>" +
-            "</td>" +
+            "<td colspan=\"2\" align=\"left\" id=\"pensettitletd\">" +
+              penSelectHTML(pen) + "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">Pen Name</td>" +
+            "<td align=\"right\">Pen Name:</td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
                     " value=\"" + pen.name + "\"/></td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" id=\"settingsauthtd\"></td>" +
           "</tr>" +
           "<tr>" + 
             "<td colspan=\"2\" id=\"consvcstd\"></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
@@ -386,40 +417,6 @@ define([], function () {
                                           code + ": " + errtxt);
                                   pen.mid = previd;
                                   mor.profile.display(); }); }
-    },
-
-
-    changeToSelectedPen = function () {
-        var i, sel = mor.byId('penselect');
-        for(i = 0; i < sel.options.length; i += 1) {
-            if(sel.options[i].selected) {
-                if(sel.options[i].id === 'newpenopt') {
-                    mor.pen.newPenName(mor.profile.display); }
-                else {
-                    mor.pen.selectPenByName(sel.options[i].value); }
-                break; } }
-    },
-
-
-    changePens = function (pen) {
-        var html = "", pens = mor.pen.getPenNames(), i;
-        html += "<div id=\"proftoptive\">";  //re-use to keep same display
-        html += "<span class=\"headingtxt\">Select Pen Name: </span>";
-        html += "<select id=\"penselect\">";
-        for(i = 0; i < pens.length; i += 1) {
-            html += "<option id=\"" + mor.instId(pens[i]) + "\"";
-            if(pens[i].name === pen.name) {
-                html += " selected=\"selected\""; }
-            html += ">" + pens[i].name + "</option>"; }
-        html += "<option id=\"newpenopt\">New Pen Name</option>" +
-            "</select>" +
-            "&nbsp;" + 
-            "<button type=\"button\" id=\"penselectok\">Ok</button>" +
-            "</div>";
-        mor.out('cmain', html);
-        mor.layout.adjust();
-        mor.onchange('penselect', changeToSelectedPen);
-        mor.onclick('penselectok', changeToSelectedPen);
     },
 
 
@@ -1400,8 +1397,6 @@ define([], function () {
                 writeNavDisplay(homepen, profpen); }); },
         settings: function () {
             mor.pen.getPen(changeSettings); },
-        penswitch: function () {
-            mor.pen.getPen(changePens); },
         recent: function () {
             recent(); },
         best: function () {
@@ -1444,6 +1439,8 @@ define([], function () {
             return findOrLoadPen(id, callback); },
         getCachedPen: function (id) {
             return cachedPen(id); },
+        switchPen: function () {
+            changeToSelectedPen(); },
         penListItemHTML: function (pen) {
             return penListItemHTML(pen); },
         updateCache: function (pen) {
