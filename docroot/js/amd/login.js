@@ -13,7 +13,7 @@ define([], function () {
         authtoken = "",
         authname = "",
         cookdelim = "..morauth..",
-        changepwdprompt = "Changing your login password",
+        changepwdprompt = "Changing your login credentials",
         altauths = [],
 
 
@@ -93,10 +93,13 @@ define([], function () {
                 authparamsfull();
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
+            if(params.command === "chgpwd") {
+                params.command = ""; }
             xpara = mor.objdata(params, ["logout", "returnto"]);
             if(xpara) {
                 redurl += "&" + xpara; }
-            window.location.href = redurl; }
+            window.location.href = redurl;
+            return; }
         //no explicit redirect, so check if directed by anchor tag
         if(params.anchor === "profile") {
             clearParams();
@@ -146,6 +149,14 @@ define([], function () {
     },
 
 
+    redirectToMainServer = function () {
+        var url = "http://www.myopenreviews.com";
+        if(window.location.href.indexOf("http://localhost:8080") === 0) {
+            url = "http://localhost:8080"; }
+        window.location.href = url;
+    },
+
+
     changePassword = function () {
         var pwd, email, data, url;
         pwd = mor.byId('npin').value;
@@ -172,9 +183,16 @@ define([], function () {
             window.location.href = mor.secsvr + 
                 "#returnto=" + mor.enc(mor.mainsvr) +
                 "&command=chgpwd&" + authparams(); }
+        mor.login.updateAuthentDisplay("hide");
         html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
         "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
         "<table>" +
+          "<tr>" +
+            "<td align=\"right\">username</td>" +
+            "<td align=\"left\">" + 
+              "<input type=\"text\" size=\"20\"" + 
+                    " value=\"" + authname + "\" disabled=\"disabled\"/></td>" +
+          "</tr>" +
           "<tr>" +
             "<td align=\"right\">new password</td>" +
             "<td align=\"left\">" +
@@ -186,7 +204,7 @@ define([], function () {
               "<input type=\"text\" id=\"npemailin\" size=\"30\"/></td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\">" +
+            "<td colspan=\"2\" align=\"center\" class=\"actbuttons\">" +
               "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
               "&nbsp;" +
               "<button type=\"button\" id=\"changebutton\">Change</button>" +
@@ -194,15 +212,38 @@ define([], function () {
           "</tr>" +
         "</table>";
         mor.out('contentdiv', html);
-        mor.onclick('cancelbutton', doneWorkingWithAccount);
+        mor.onclick('cancelbutton', redirectToMainServer);
         mor.onclick('changebutton', changePassword);
         mor.layout.adjust();
         mor.byId('npin').focus();
     },
 
 
-    //create the nav area part of the display as appropriate
-    updateAuthentDisplay = function () {
+    loginInfoHTML = function () {
+        var html, iconurl;
+        switch(authmethod) {
+            case "mid": iconurl = "img/remo.png"; break;
+            case "fbid": iconurl = mor.facebook.iconurl; break;
+            case "twid": iconurl = mor.twitter.iconurl; break;
+            case "gsid": iconurl = mor.googleplus.iconurl; break;
+            case "ghid": iconurl = mor.github.iconurl; break; }
+        html = "<img class=\"loginico\" src=\"" + iconurl + "\" />" +
+            "<em>" + authname + "</em> &nbsp; " +
+            "<a href=\"logout\" id=\"logout\"" + 
+              " onclick=\"mor.login.logout();return false;\"" +
+            ">logout</a>";
+        if(authmethod === "mid") {
+            html += " &nbsp; " + 
+                "<a href=\"changepwd\" id=\"cpwd\"" + 
+                  " onclick=\"mor.login.displayChangePassForm();" + 
+                             "return false;\"" + 
+                ">change password</a>"; }
+        return html;
+    },
+
+
+    //create the logged-in display areas
+    updateAuthentDisplay = function (override) {
         var html = "";
         mor.out('topdiv', html);
         html = "<div id=\"accountdiv\">" +
@@ -212,7 +253,7 @@ define([], function () {
                 "Now with connection support for iTunes on Mac!" +
             "</a></div>";
         mor.out('accountinfodisp', html);
-        if(authtoken) {
+        if(authtoken && override !== "hide") {
             html = "<div id=\"accountdiv\"></div>";
             mor.out('accountinfodisp', html);
             html += "<div id=\"topnav\">" +
@@ -227,17 +268,7 @@ define([], function () {
                   "<td><div id=\"homepenhdiv\"></div></td>" +
                 "</tr>" +
               "</table></div>";
-            mor.out('topdiv', html);
-            //ATTENTION: add mini logo if 3rd party auth?
-            html = "<em>" + authname + "</em>";
-            html += " &nbsp; <a id=\"logout\" href=\"logout\">logout</a>";
-            if(authmethod === "mid") {
-                html += " &nbsp; <a id=\"cpwd\" href=\"changepwd\">" + 
-                    "change password</a>"; }
-            mor.out('accountdiv', html);
-            mor.onclick('logout', logout);
-            if(authmethod === "mid") {
-                mor.onclick('cpwd', displayChangePassForm); } }
+            mor.out('topdiv', html); }
     },
 
 
@@ -621,8 +652,8 @@ define([], function () {
                         altauths = [ facebook, twitter, googleplus,
                                      github ];
                         handleRedirectOrStartWork(); }); },
-        updateAuthentDisplay: function () {
-            updateAuthentDisplay(); },
+        updateAuthentDisplay: function (override) {
+            updateAuthentDisplay(override); },
         displayChangePassForm: function () {
             displayChangePassForm(); },
         authparams: function () {
@@ -641,7 +672,9 @@ define([], function () {
             doneWorkingWithAccount(); },
         createAccount: function () {
             createAccount(); },
-        getAuthMethod: function () { return authmethod; }
+        getAuthMethod: function () { return authmethod; },
+        loginInfoHTML: function () {
+            return loginInfoHTML(); }
     };
 
 });

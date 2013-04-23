@@ -174,7 +174,10 @@ define([], function () {
 
 
     displayAuthSettings = function (domid, pen) {
-        var atname, html = "Authenticated access: <table>";
+        var atname, html;
+        html = "Authenticated access: " +
+            "<div id=\"accountdiv\">" + mor.login.loginInfoHTML() + "</div>" +
+            "<table>";
         //MyOpenReviews
         atname = nameForAuthType("mid");
         html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
@@ -184,43 +187,45 @@ define([], function () {
         if(mor.isId(pen.mid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
+        html += "<tr>";
         //Facebook
         atname = nameForAuthType("fbid");
-        html += "<tr><td><input type=\"checkbox\" name=\"aafbid\"" +
+        html += "<td><input type=\"checkbox\" name=\"aafbid\"" +
             " value=\"" + atname + "\" id=\"aafbid\"" +
             " onchange=\"mor.profile.toggleAuthChange('fbid','" + 
                              domid + "');return false;\"";
         if(mor.isId(pen.fbid)) {
             html += " checked=\"checked\""; }
-        html += "/><label for=\"aafbid\">" + atname + "</label></td></tr>";
+        html += "/><label for=\"aafbid\">" + atname + "</label></td>";
         //Twitter
         atname = nameForAuthType("twid");
-        html += "<tr><td><input type=\"checkbox\" name=\"aatwid\"" +
+        html += "<td><input type=\"checkbox\" name=\"aatwid\"" +
             " value=\"" + atname + "\" id=\"aatwid\"" +
             " onchange=\"mor.profile.toggleAuthChange('twid','" + 
                              domid + "');return false;\"";
         if(mor.isId(pen.twid)) {
             html += " checked=\"checked\""; }
-        html += "/><label for=\"aatwid\">" + atname + "</label></td></tr>";
+        html += "/><label for=\"aatwid\">" + atname + "</label></td>";
+        html += "</tr><tr>";
         //Google+
         atname = nameForAuthType("gsid");
-        html += "<tr><td><input type=\"checkbox\" name=\"aagsid\"" +
+        html += "<td><input type=\"checkbox\" name=\"aagsid\"" +
             " value=\"" + atname + "\" id=\"aagsid\"" +
             " onchange=\"mor.profile.toggleAuthChange('gsid','" + 
                              domid + "');return false;\"";
         if(mor.isId(pen.gsid)) { 
             html += " checked=\"checked\""; }
-        html += "/><label for=\"aagsid\">" + atname + "</label></td></tr>";
+        html += "/><label for=\"aagsid\">" + atname + "</label></td>";
         //GitHub
         atname = nameForAuthType("ghid");
-        html += "<tr><td><input type=\"checkbox\" name=\"aaghid\"" +
+        html += "<td><input type=\"checkbox\" name=\"aaghid\"" +
             " value=\"" + atname + "\" id=\"aaghid\"" +
             " onchange=\"mor.profile.toggleAuthChange('ghid','" + 
                              domid + "');return false;\"";
         if(mor.isId(pen.ghid)) { 
             html += " checked=\"checked\""; }
-        html += "/><label for=\"aaghid\">" + atname + "</label></td></tr>";
-        html += "</table>";
+        html += "/><label for=\"aaghid\">" + atname + "</label></td>";
+        html += "</tr></table>";
         mor.out(domid, html);
     },
 
