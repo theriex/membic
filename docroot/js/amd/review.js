@@ -265,10 +265,7 @@ define([], function () {
 
 
     writeNavDisplay = function () {
-        var html = reviewLinkHTML();
-        if(mor.byId('revhdiv')) {
-            mor.out('revhdiv', html);
-            mor.byId('revhdiv').style.visibility = "visible"; }
+        //hook point to update the main actions display area if needed
     },
 
 

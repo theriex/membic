@@ -61,42 +61,19 @@ define([], function () {
     },
 
 
-    displayHomeProfileHeading = function (pen, showingSelf) {
-        var html, styleoverride = "";
-        if(!showingSelf) {
-            styleoverride = " style=\"color:#cccccc\""; }
-        if(!mor.byId('homepennamespan')) {  //init div contents as needed
-            html = "<span id=\"homepennamespan\"> </span>" +
-                   "<span id=\"homepenbuttonspan\"> </span>";
-            mor.out('homepenhdiv', html); }
-        //refresh the home pen name currently in use
-        html = "<a href=\"#view=profile&profid=" + mor.instId(pen) + "\"" +
-                 " title=\"Show home profile\"" + styleoverride +
-                 " onclick=\"mor.profile.display();return false;\"" +
-            ">" + pen.name + "</a>";
-        mor.out('homepennamespan', html);
-        //refresh the home pen action buttons
-        html = "";
-        if(showingSelf) {
-            html = mor.imglink("#Settings","Adjust your application settings",
-                               "mor.profile.settings()", "settings.png"); }
-        mor.out('homepenbuttonspan', html);
-    },
-
-
-    displayHomeActionsHeading = function (pen) {
+    updateTopActionDisplay = function (pen) {
         var html;
-        html = "<table class=\"mainactionstable\"><tr>" +
-                  "<td><div id=\"acthdiv\"></div></td>" +
-                  "<td><div id=\"revhdiv\"></div></td>" +
-               "</tr></table>";
-        mor.out('centerhdiv', html);
-        mor.activity.updateHeading();
-        mor.review.updateHeading();
+        html = "<span id=\"homepennamespan\">" + 
+              "<a href=\"#view=profile&profid=" + mor.instId(pen) + "\"" +
+                " title=\"Show home profile\"" + 
+                " onclick=\"mor.profile.display();return false;\"" +
+                ">" + pen.name + "</a>" +
+            "</span>";
+        mor.out('homepenhdiv', html);
     },
 
 
-    displayVisitProfileHeading = function (homepen, dispen) {
+    displayProfileHeading = function (homepen, dispen) {
         var html, id, name, relationship;
         id = mor.instId(dispen);
         name = dispen.name;
@@ -110,31 +87,30 @@ define([], function () {
                  "<span id=\"penhbuttonspan\"> </span>" +
                "</div>";
         mor.out('centerhdiv', html);
-        relationship = mor.rel.outbound(id);
-        if(relationship) {
-            html = mor.imglink("#Settings",
-                               "Adjust follow settings for " + name,
-                               "mor.profile.relationship()", 
-                               "settings.png"); }
+        if(mor.instId(homepen) === mor.instId(dispen)) {
+            html = mor.imglink("#Settings","Adjust your application settings",
+                               "mor.profile.settings()", "settings.png"); }
         else {
-            html = mor.imglink("#Follow",
-                               "Follow " + name + " (add to activity feed)",
-                               "mor.profile.relationship()",
-                               "plus.png"); }
+            relationship = mor.rel.outbound(id);
+            if(relationship) {
+                html = mor.imglink("#Settings",
+                                   "Adjust follow settings for " + name,
+                                   "mor.profile.relationship()", 
+                                   "settings.png"); }
+            else {
+                html = mor.imglink("#Follow",
+                                   "Follow " + name + " (add to activity feed)",
+                                   "mor.profile.relationship()",
+                                   "plus.png"); } }
         mor.out('penhbuttonspan', html);
     },
 
 
     writeNavDisplay = function (homepen, dispen) {
-        var showingSelf;
         if(!dispen) {
             dispen = homepen; }
-        showingSelf = (mor.instId(homepen) === mor.instId(dispen));
-        displayHomeProfileHeading(homepen, showingSelf);
-        if(showingSelf) {
-            displayHomeActionsHeading(homepen); }
-        else {
-            displayVisitProfileHeading(homepen, dispen); }
+        updateTopActionDisplay(homepen);
+        displayProfileHeading(homepen, dispen);
     },
 
 

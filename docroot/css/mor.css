@@ -15,7 +15,7 @@ body {
   word-spacing:normal;
   margin:0px;
   color:#111111;
-  background-color: #fffffc;
+  background-color: #fefefd;
   background-image: url('../img/texturePaper.png');
   background-repeat: no-repeat;
   background-position: center center;
@@ -33,19 +33,12 @@ body {
  ************************************************************
  */
 
-#logodiv { position:absolute; left:0px; top:35px; }
-#accountinfodisp { float:right; padding:5px 30px; }
-#titlediv { position:absolute; left:0px; top:0px; width:90%; 
-  padding:0px 10px; }
-#topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
-  text-align:right; font-size:x-small; }
-#chead { height:50px; clear:both; }
-#accountdiv { font-size:x-small; }
-#appspacediv, #noleftappspacediv { position:absolute; left:0px; top:30px; }
-#appspacediv { padding:15px 40px 0px 72px; width:80%;}
-#noleftappspacediv { width:90%; padding:15px 40px 40px 15px; }
-#bottomnav { font-size:x-small; text-align:center; 
-  word-spacing:20px; padding:0px 20px; }
+/* topsectiondiv and contained elements */
+#mascotdiv { position:absolute; left:10px; top:265px; }
+#topsectiondiv { padding:0px 10px; background:#fffffd;
+  box-shadow:8px 8px 4px #cccccc; height:250px; }
+#logodiv {          width:512px; float:left; }
+#topworkdiv { margin-left:525px; }
 #logotitle { 
   font-size:xx-large;
   font-weight:bold;
@@ -57,6 +50,31 @@ body {
     -1px 1px 0 #000,
      1px 1px 0 #000;
 }
+#slidesdiv { height:180px; }
+.slideimg { position:absolute; left:525px; 
+  -webkit-transition: opacity 1s ease-in-out;
+  -moz-transition: opacity 1s ease-in-out;
+  -o-transition: opacity 1s ease-in-out;
+  transition: opacity 1s ease-in-out;
+}
+#topactionstable { }
+#topactionstable td { padding:10px 30px; }
+
+/* main display area and contained elements */
+#centerhdiv { display:table; margin:10px auto; 
+ font-size:x-large; font-weight:bold; }
+.instructional { font-size:large; font-weight:bold; }
+#accountinfodisp { float:right; padding:5px 30px; }
+#titlediv { position:absolute; left:0px; top:0px; width:90%; 
+  padding:0px 10px; }
+#topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
+  text-align:right; font-size:x-small; }
+#accountdiv { font-size:x-small; }
+#appspacediv, #noleftappspacediv { clear:both; }
+#appspacediv { padding:15px 40px 0px 72px; width:80%;}
+#noleftappspacediv { width:90%; padding:15px 40px 40px 15px; }
+#bottomnav { font-size:x-small; text-align:center; 
+  word-spacing:20px; padding:0px 20px; }
 
 .penfont, #homepennamespan, #penhnamespan { 
   font-style:italic; 
@@ -69,7 +87,7 @@ body {
 */
  }
 #penhnamespan { font-size:xx-large; }
-#homepennamespan { font-size:xx-large; }
+#homepennamespan { font-size:large; }
 #penhbuttonspan { padding:0px 0px 0px 20px; }
 #acthdiv, #revhdiv {
   background:#ddd url('../img/navlinkback.png') repeat; 
@@ -77,6 +95,7 @@ body {
   box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
   padding:0px 5px; font-size:x-large; visibility:hidden; }
 #homepenhdiv { float:left; }
+#chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
@@ -95,17 +114,10 @@ body {
   border:none; vertical-align:middle; }
 
 /* intro layout */
-#bookslidediv { }
-#bookmarkletdirdiv { padding:0px 20px 20px 0px; float:left; width:45%; }
+#bookslidediv { text-align:center; }
 #bookmarkletlinkdiv { padding:5px 20px; }
-#slidesdiv { float:right width:45% height:180px; }
-.slideimg { position:absolute; left:52%; 
-  -webkit-transition: opacity 1s ease-in-out;
-  -moz-transition: opacity 1s ease-in-out;
-  -o-transition: opacity 1s ease-in-out;
-  transition: opacity 1s ease-in-out;
-}
-.altauthspan { display:inline-block; padding:0px; width:130px; }
+#logindiv { display:table; margin:0 auto; }
+.altauthspan { display:inline-block; padding:0px; width:60px; }
 #closebookslide { clear:both; }
 
 /* profile layout */
@@ -166,7 +178,7 @@ body {
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
-.tagline { font-style:italic; color:#555; }
+.tagline { font-style:italic; color:#333; }
 #statrevactdiv { text-align:center; padding:10px; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; }

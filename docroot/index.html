@@ -13,39 +13,26 @@
 </head>
 <body id="bodyid">
 
-<div id="logodiv"> 
-  <img src="img/remo.png" border="0"/>
+<div id="mascotdiv">
+  <img src="img/remo.png" class="mascotimg" border="0"/>
 </div>
 
-<div id="titlediv"> 
-  <div id="accountinfodisp"></div>
-  <span id="logotitle" 
-        onclick="mor.profile.display();return false;">MyOpenReviews</span>
+<div id="topsectiondiv">
+  <div id="logodiv">
+    <img src="img/logoMOR.png" id="logoimg" border="0"
+          onclick="mor.profile.display();return false;"/>
+  </div>
+  <div id="topworkdiv">
+    <div id="slidesdiv">
+      <img id="introslide0" src="img/slides/slogan.png" class="slideimg"/>
+      <img id="introslide1" src="img/slides/slogan.png" class="slideimg"/>
+    </div>
+  </div>
 </div>
 
 <div id="appspacediv"> 
+  <div id="centerhdiv"></div>
   <div id="contentdiv" class="mtext">
-
-    <p class="tagline">
-      An open pen name community for unprofessional reviews.
-    </p>
-
-    <div id="bookslidediv">
-      <div id="bookmarkletdirdiv">
-        <p class="tagline">For easy reviewing, bookmark this link:</p>
-
-        <div id="bookmarkletlinkdiv">
-          <a href="javascript:(function(){window.open('http://www.myopenreviews.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
-             style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">MyOpenReviews Link</a>
-        </div>
-
-        <p class="tagline">and use it from any page you want to review. </p>
-      </div>
-      <div id="slidesdiv">
-        <img id="introslide0" src="img/slides/cycleframe.png" class="slideimg"/>
-        <img id="introslide1" src="img/slides/cycleframe.png" class="slideimg"/>
-      </div>
-    </div>
     <div id="closebookslide">
       <noscript>
         <p><b>MyOpenReviews needs Javascript to do anything useful, please 
@@ -57,13 +44,13 @@
   <div id="contentfill">loading...</div>
 
   <div id="bottomnav"> <!-- clicks mapped in layout.localDocLinks -->
-    <a href="docs/about.html">about</a> 
-    <a href="docs/terms.html">terms</a> 
-    <a href="docs/privacy.html">privacy</a> 
+    <a href="docs/about.html">ABOUT</a> 
+    <a href="docs/terms.html">TERMS</a> 
+    <a href="docs/privacy.html">PRIVACY</a> 
     <a href="docs/FOSS.html">FOSS</a> 
     <!-- <a href="docs/API.html">API</a> (redundant) -->
-    <a href="docs/issues.html">contact</a>
-    <a href="docs/news.html">news</a>
+    <a href="docs/issues.html">CONTACT</a>
+    <a href="docs/more.html">MORE</a>
   </div>
 </div>
 

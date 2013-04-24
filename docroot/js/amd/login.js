@@ -8,11 +8,11 @@
 define([], function () {
     "use strict";
 
-    var loginprompt = "Log in directly, or with a social account...",
-        authmethod = "",
+    var authmethod = "",
         authtoken = "",
         authname = "",
         cookdelim = "..morauth..",
+        topworkcontent = "",
         changepwdprompt = "Changing your login credentials",
         altauths = [],
 
@@ -244,31 +244,42 @@ define([], function () {
 
     //create the logged-in display areas
     updateAuthentDisplay = function (override) {
-        var html = "";
-        mor.out('topdiv', html);
-        html = "<div id=\"accountdiv\">" +
-            "<a href=\"docs/news.html\"" +
-              " onclick=\"mor.layout.displayDoc('docs/news.html');" + 
-                        "return false\">" +
-                "Now with connection support for iTunes on Mac!" +
-            "</a></div>";
-        mor.out('accountinfodisp', html);
+        var html;
+        if(!topworkcontent) {
+            topworkcontent = mor.byId('topworkdiv').innerHTML; }
+        html = "";
         if(authtoken && override !== "hide") {
-            html = "<div id=\"accountdiv\"></div>";
-            mor.out('accountinfodisp', html);
-            html += "<div id=\"topnav\">" +
-              "<table id=\"navdisplaytable\" border=\"0\">" +
-                "<tr>" +
-                  "<td style=\"height:14px;\"></td>" +
-                  "<td style=\"width:40px;\"></td>" +
-                  "<td rowspan=\"2\" style=\"vertical-align:top;\">" + 
-                    "<div id=\"centerhdiv\"> </div></td>" +
-                "</tr>" + 
-                "<tr>" + 
-                  "<td><div id=\"homepenhdiv\"></div></td>" +
-                "</tr>" +
-              "</table></div>";
-            mor.out('topdiv', html); }
+            html = "<div id=\"topactionsdiv\">" +
+                  "<table id=\"topactionstable\">" +
+                    "<tr>" +
+                      "<td><div id=\"homepenhdiv\"></div></td>" + 
+                      "<td><div id=\"writerevhdiv\">" + 
+                         mor.review.reviewLinkHTML() +
+                          "</div></td>" + 
+                    "</tr>" +
+                    "<tr>" +
+                      "<td><div id=\"recentacthdiv\">" + 
+                         mor.activity.activityLinkHTML() +
+                          "</div></td>" + 
+                      "<td><div id=\"rememberedhdiv\">" + 
+                         mor.activity.rememberedLinkHTML() +
+                          "</div></td>" + 
+                    "</tr>" +
+                  "</table>" +
+                "</div>";
+            mor.out('topworkdiv', html);
+            mor.byId('logoimg').style.width = "260px";
+            mor.byId('logoimg').style.height = "120px";
+            mor.byId('logodiv').style.width = "260px";
+            mor.byId('topsectiondiv').style.height = "120px";
+            mor.byId('topworkdiv').style.marginLeft = "280px";
+            mor.byId('mascotdiv').style.top = "135px";
+            mor.layout.setTopPaddingAndScroll(240); }
+        else if(mor.byId('topworkdiv').innerHTML !== topworkcontent) {
+            //This shows the first slide, but the slideshow is not running,
+            //so basically it's just the slogan, which is good filler and
+            //doesn't require adjusting the height of the top bar to fit.
+            mor.out('topworkdiv', topworkcontent); }
     },
 
 
@@ -478,15 +489,14 @@ define([], function () {
                                  "return false;\"" +
                 "><img class=\"loginico\"" +
                      " src=\"" + altauths[i].iconurl + "\"" +
-                     " border=\"0\"/> " + viadisp + 
+                     " border=\"0\"/> " +
                 "</a>";
             hrefs.push(html); }
         hrefs.shuffle();
         html = "";
         for(i = 0; i < hrefs.length; i += 1) {
-            html += "<span class=\"altauthspan\">" + hrefs[i] + "</span>";
-            html += ((i > 0) && ((i + 1) % 2 === 0))? "<br/>" : " "; }
-        mor.out('altauthdiv', html);
+            html += "<span class=\"altauthspan\">" + hrefs[i] + "</span>"; }
+        return html;
     },
 
 
@@ -509,18 +519,26 @@ define([], function () {
         html +=  "<div id=\"loginstatdiv\">&nbsp;</div>" +
         "<table>" +
           "<tr>" +
+            "<td colspan=\"2\" align=\"left\" class=\"instructional\">" +
+              "Sign in directly...</td>" +
+            "<td>&nbsp;</td>" +
+          "</tr>" +
+          "<tr>" +
             "<td align=\"right\">username</td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
             "<td rowspan=\"2\"><div id=\"altauthdiv\"></div></td>" +
+            "<td align=\"left\" class=\"instructional\">" +
+              "&nbsp;&nbsp;...or with your social account</td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">password</td>" +
             "<td align=\"left\">" +
               "<input type=\"password\" id=\"passin\" size=\"20\"/></td>" +
+            "<td align=\"center\">" + displayAltAuthMethods() + "</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"center\">" +
+            "<td colspan=\"2\" align=\"right\">" +
               "<a id=\"seclogin\" href=\"#secure login\"" +
                 " title=\"How login credentials are handled securely\"" +
                 " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
@@ -532,17 +550,17 @@ define([], function () {
             "</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"left\">" +
+            "<td colspan=\"2\" align=\"right\">" +
               "<a id=\"macc\" href=\"create new account...\"" + 
                 " title=\"Set up a new local login\"" +
               ">" + "Create a new account</a>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" align=\"left\">" +
+            "<td colspan=\"2\" align=\"right\">" +
               "<a id=\"forgot\" href=\"forgot credentials...\"" + 
                 " title=\"Retrieve your credentials using the email you set\"" +
-              ">" + "forgot my password</a>" +
+              ">" + "forgot your password?</a>" +
             "</td>" +
           "</tr>" +
         "</table>";
@@ -557,8 +575,6 @@ define([], function () {
         if(authname) {
             mor.byId('userin').value = authname; }
         mor.byId('userin').focus();
-        mor.out('loginstatdiv', loginprompt);
-        displayAltAuthMethods();
     },
 
 

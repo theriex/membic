@@ -8,12 +8,16 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "cycleframe.png", "pens.png", "feature2.png",
+    var slides = [ "slogan.png", "slogan.png",
+                   "promo_balloons2.png", 
+                   "promo_list.png",
                    "mor01.png", "mor02.png", "mor03.png", "mor04.png", 
                    "mor05.png", "mor06.png", "mor07.png", "mor08.png", 
-                   "mor09.png", "mor10.png", "mor11.png", "mor12.png" ],
+                   "mor09.png", "mor10.png", "mor11.png", "mor12.png",
+                   "cycleframe.png" ],
         slideindex = 0,
         slideslot = 0,
+        topPaddingAndScroll = 310,
 
 
     closeDialog = function () {
@@ -158,7 +162,7 @@ define([], function () {
         //fill the bottom content so the footer text isn't too high up
         filldiv = mor.byId("contentfill");
         ch = mor.byId("contentdiv").offsetHeight;
-        target = mor.winh - 100;  //top padding and scroll
+        target = mor.winh - topPaddingAndScroll; 
         if(ch < target) {
             filldiv.style.height = (target - ch) + "px"; }
         else {  //not filling, just leave a little separator space
@@ -188,7 +192,9 @@ define([], function () {
         displayDoc: function (url) {
             displayDoc(url); },
         closeDialog: function () {
-            closeDialog(); }
+            closeDialog(); },
+        setTopPaddingAndScroll: function (val) {
+            topPaddingAndScroll = val; }
     };
 
 });

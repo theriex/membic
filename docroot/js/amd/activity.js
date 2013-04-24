@@ -15,7 +15,9 @@ define([], function () {
         actsrchtotal = 0,
         revcache = {},
         badrevids = [],
-        dispmode = "activity",
+        dispmode = "activity",  //other value option is "memo"
+        activityTitleText = "Recent friend activity",
+        rememberedTitleText = "Remembered reviews",
 
 
     resetStateVars = function () {
@@ -30,14 +32,37 @@ define([], function () {
     },
 
 
-    writeNavDisplay = function () {
+    activityLinkHTML = function () {
         var html = "<a href=\"#Activity\"" +
                      " title=\"See what's been posted recently\"" + 
-                     " onclick=\"mor.activity.display();return false;\"" +
-            ">Activity Feed</a>";
-        if(mor.byId('acthdiv')) {
-            mor.out('acthdiv', html);
-            mor.byId('acthdiv').style.visibility = "visible"; }
+                     " onclick=\"mor.activity.displayActive();" + 
+                                "return false;\"" +
+            ">" + activityTitleText + "</a>";
+        return html;
+    },
+
+
+    rememberedLinkHTML = function () {
+        var html = "<a href=\"#Remembered\"" +
+                     " title=\"Show remembered reviews\"" +
+                     " onclick=\"mor.activity.displayRemembered();" + 
+                                "return false;\"" +
+            ">" + rememberedTitleText + "</a>";
+        return html;
+    },
+
+
+    writeNavDisplay = function () {
+        var html, url;
+        if(dispmode === "activity") {
+            url = "rssact?pen=" + mor.pen.currPenId();
+            html = activityTitleText + " " + 
+                mor.imglink(url, "Activity RSS Feed",
+                            "window.open('" + url + "')", 
+                            "feed-icon-28x28.png", "rssico"); }
+        else if(dispmode === "memo") {
+            html = rememberedTitleText; }
+        mor.out('centerhdiv', html);
     },
 
 
@@ -211,6 +236,7 @@ define([], function () {
 
     bootActivityDisplay = function () {
         var html, retry = false;
+        writeNavDisplay();
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
             html = "You are not following anyone. " + 
@@ -231,54 +257,20 @@ define([], function () {
     },
 
 
-    modeSelectHTML = function (mode, label) {
-        return mor.checkrad("radio", "actmodesel", mode, label,
-                            (dispmode === mode), "mor.activity.modeChange");
-    },
-
-
-    updateRSSImage = function () {
-        var url, html, img = "blank.png";
-        if(dispmode === "activity") {
-            img = "feed-icon-28x28.png"; }
-        url = "rssact?pen=" + mor.pen.currPenId();
-        html = mor.imglink(url, "Activity RSS Feed",
-                           "window.open('" + url + "')", img, "rssico");
-        mor.out('rssactspan', html);
-    },
-
-
-    modeChange = function () {
-        var radios, i;
-        radios = document.getElementsByName("actmodesel");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                dispmode = radios[i].value;
-                break; } }
-        updateRSSImage();
-        mor.activity.display(); 
-    },
-
-
     verifyCoreDisplayElements = function () {
         var html, domelem = mor.byId('revactdiv');
         if(!domelem) {
-            html = "<div id=\"actmodediv\">" +
-                "<span id=\"rssactspan\"></span>" +
-                modeSelectHTML("activity", "Recent") + " &nbsp; " +
-                modeSelectHTML("memo", "Remembered") + "</div>" +
-                "<div id=\"revactdiv\"></div>";
+            html = "<div id=\"revactdiv\"></div>";
             if(!mor.byId('cmain')) {
                 mor.layout.initContent(); }
-            mor.out('cmain', html);
-            updateRSSImage(); }
+            mor.out('cmain', html); }
     },
 
 
     mainDisplay = function (pen) {
         //ATTENTION: read revs from local storage..
         mor.historyCheckpoint({ view: "activity" });
-        mor.profile.writeNavDisplay(pen);
+        writeNavDisplay();
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
             displayRemembered(pen); }
@@ -307,10 +299,18 @@ define([], function () {
             return findReview(revid); },
         cacheReview: function (rev) {
             revcache[mor.instId(rev)] = rev; },
-        modeChange: function () {
-            modeChange(); },
         searchPensLinkHTML: function () {
-            return searchPensLinkHTML(); }
+            return searchPensLinkHTML(); },
+        activityLinkHTML: function () {
+            return activityLinkHTML(); },
+        rememberedLinkHTML: function () {
+            return rememberedLinkHTML(); },
+        displayActive: function () {
+            dispmode = "activity";
+            mor.pen.getPen(mainDisplay); },
+        displayRemembered: function () {
+            dispmode = "memo";
+            mor.pen.getPen(mainDisplay); }
     };
 
 });
