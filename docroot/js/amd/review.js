@@ -134,7 +134,7 @@ define([], function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
-        var imgwidth = 81, imgheight = 17, width, offset, rat, html,
+        var imgwidth = 80, imgheight = 14, width, offset, rat, html,
             cname = imgclassname || "starsimg";
         rat = starRating(rating);
         width = Math.floor(rat.step * (imgwidth / rat.maxstep));
@@ -146,7 +146,7 @@ define([], function () {
         html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                     " style=\"width:" + width + "px;" + 
                              "height:" + imgheight + "px;" +
-                             "background:url('img/starsgold.png');\"" +
+                             "background:url('img/starsinv.png');\"" +
                     " title=\"" + rat.title + "\" alt=\"" + rat.title + "\"/>";
         if(showblank) {
             if(rat.step % 2 === 1) {  //odd, use half star display
@@ -154,7 +154,7 @@ define([], function () {
                 html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
-                                     "background:url('img/starsnone.png')" +
+                                     "background:url('img/starsinvg.png')" +
                                                 " -" + offset + "px 0;\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; }
@@ -162,7 +162,7 @@ define([], function () {
                 html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
-                                     "background:url('img/starsnone.png');\"" +
+                                     "background:url('img/starsinvg.png');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
         else if(!imgclassname) { //some horizontal spacing...

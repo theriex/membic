@@ -59,7 +59,7 @@ define([], function () {
             html = activityTitleText + " " + 
                 mor.imglink(url, "Activity RSS Feed",
                             "window.open('" + url + "')", 
-                            "feed-icon-28x28.png", "rssico"); }
+                            "rssicon.png", "rssico"); }
         else if(dispmode === "memo") {
             html = rememberedTitleText; }
         mor.out('centerhdiv', html);

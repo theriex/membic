@@ -577,7 +577,7 @@ define([], function () {
               " onclick=\"mor.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
               " title=\"See full review\">" + 
-            revobj[type.key];
+            mor.ellipsis(revobj[type.key], 60);
         if(type.subkey) {
             html += " <i>" + revobj[type.subkey] + "</i>"; }
         html += "</a>";

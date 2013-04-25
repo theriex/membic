@@ -12,6 +12,7 @@ body {
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-style:normal;
   font-weight:normal;
+  font-size:large;
   word-spacing:normal;
   margin:0px;
   color:#111111;
@@ -63,7 +64,7 @@ body {
 /* main display area and contained elements */
 #centerhdiv { display:table; margin:10px auto; 
  font-size:x-large; font-weight:bold; }
-.instructional { font-size:large; font-weight:bold; }
+.instructional { font-size:x-large; font-weight:bold; }
 #accountinfodisp { float:right; padding:5px 30px; }
 #titlediv { position:absolute; left:0px; top:0px; width:90%; 
   padding:0px 10px; }
