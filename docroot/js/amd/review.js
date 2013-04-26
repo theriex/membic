@@ -256,10 +256,12 @@ define([], function () {
 
 
     reviewLinkHTML = function () {
-        var html = "<a href=\"#Write a Review\"" +
-                     " title=\"Review something\"" +
-                     " onclick=\"mor.review.reset(true);return false;\"" +
-            ">Write a Review</a>";
+        var html = "<div class=\"topnavitemdiv\">" +
+            mor.imgntxt("writereview.png", "Write a Review",
+                        "mor.review.reset(true)",
+                        "#Write", 
+                        "Write a review") +
+            "</div>";
         return html;
     },
 
@@ -793,19 +795,20 @@ define([], function () {
         else {
             html += "<div id=\"statrevactdiv\">" +
               "<table class=\"statnoticeactlinktable\"><tr>" +
-                "<td><div class=\"statnoticeactlinkdiv\">" +
-                  "<a href=\"#respond\" id=\"respondbutton\"" +
-                    " onclick=\"mor.review.respond();return false;\"" +
-                  ">Edit your corresponding review</a>" + 
+                "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
+                  mor.imgntxt("editcorev.png",
+                              "Edit<br/>corresponding review",
+                              "mor.review.respond()", "#respond") +
                   "</div></td>" +
-                "<td><div class=\"statnoticeactlinkdiv\">" +
-                  "<a href=\"#remember\" id=\"memobutton\"";
+                "<td><div id=\"memobutton\" class=\"buttondiv\">";
             if(isRemembered(pen, review)) {
-                html += " onclick=\"mor.review.memo(true);return false;\"" +
-                    ">Stop remembering this review</a>"; }
+                html += mor.imgntxt("remembered.png",
+                                    "Stop remembering<br/>this review",
+                                    "mor.review.memo(true)", "#nomemo"); }
             else {
-                html += " onclick=\"mor.review.memo();return false;\"" +
-                    ">Remember this review</a>"; }
+                html += mor.imgntxt("rememberq.png",
+                                    "Remember this<br/>review",
+                                    "mor.review.memo(false)", "#memo"); }
             html += "</div></td></tr></table></div>"; }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
@@ -1067,10 +1070,12 @@ define([], function () {
 
 
     displayCorrespondingReviewInfo = function (pen, review) {
-        var imghtml, html = "Create your corresponding review";
+        var html, imghtml, msghtml = "Create your<br/>corresponding review";
         if(review) {
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
-            html = "Edit your " + imghtml + " review"; }
+            msghtml = "Edit your<br/>" + imghtml + " review"; }
+        html = mor.imgntxt("editcorev.png", msghtml,
+                           "mor.review.respond()", "#respond");
         mor.out('respondbutton', html);
     },
 

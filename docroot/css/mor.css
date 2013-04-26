@@ -60,7 +60,9 @@ body {
   transition: opacity 1s ease-in-out;
 }
 #topactionstable { }
-#topactionstable td { padding:10px 30px; }
+#topactionstable td { padding:0px; }
+#topactrow2spacetd { width:20px; }
+.topnavitemdiv { }
 
 /* main display area and contained elements */
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }
@@ -109,10 +111,7 @@ body {
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #closeline { text-align:right; font-size:x-small; }
-.navico { height:20px; width:20px; margin:0px 0px 0px 14px;
-          border:2px solid #ccc; border-radius:20px;
-          background:white; padding:4px; vertical-align:bottom;
-}
+.navico { margin:0px 0px 0px 14px; padding:4px; vertical-align:bottom; }
 .rssico { height:28px; width:28px; vertical-align:middle; padding:0px 5px;}
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
   border:none; vertical-align:middle; }
@@ -177,8 +176,9 @@ body {
   box-shadow:10px 10px 5px #888888; }
 .statnoticeactlinktable { margin-left:auto; margin-right:auto; }
 .statnoticeactlinktable td { padding:0px 10px; }
-.statnoticeactlinkdiv { padding:5px; background:#ccc; border-radius:5px;
-  box-shadow:2px 2px 2px #666; }
+.statnoticeactlinkdiv, .buttondiv { padding:5px; background:#ccc; 
+  font-size:large;
+  border-radius:5px; box-shadow:2px 2px 2px #666; }
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
@@ -192,6 +192,9 @@ body {
 .permalink { font-size:xx-small; }
 .actbuttons { padding:10px; }
 #chpstatdiv { padding:10px; }
+.buttontable { cursor:pointer; }
+.buttontable:hover { text-decoration:underline; }
+.buttontable td { padding:0px; }
 
 /* review layout */
 #revfdiv { }

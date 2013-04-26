@@ -250,7 +250,7 @@ define([], function () {
         html = "";
         if(authtoken && override !== "hide") {
             html = "<div id=\"topactionsdiv\">" +
-                  "<table id=\"topactionstable\">" +
+                  "<table id=\"topactionstable\" border=\"0\">" +
                     "<tr>" +
                       "<td><div id=\"homepenhdiv\"></div></td>" + 
                       "<td><div id=\"writerevhdiv\">" + 

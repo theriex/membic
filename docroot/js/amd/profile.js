@@ -62,13 +62,12 @@ define([], function () {
 
 
     updateTopActionDisplay = function (pen) {
-        var html;
-        html = "<span id=\"homepennamespan\">" + 
-              "<a href=\"#view=profile&profid=" + mor.instId(pen) + "\"" +
-                " title=\"Show home profile\"" + 
-                " onclick=\"mor.profile.display();return false;\"" +
-                ">" + pen.name + "</a>" +
-            "</span>";
+        var html = "<div class=\"topnavitemdiv\">" +
+            mor.imgntxt("profile.png", pen.name,
+                        "mor.profile.display()",
+                        "#view=profile&profid=" + mor.instId(pen),
+                        "Show profile for your current pen name") +
+            "</div>";
         mor.out('homepenhdiv', html);
     },
 
@@ -635,7 +634,7 @@ define([], function () {
 
 
     findRecentReviews = function (dispState) {
-        var params;
+        var params, min, max;
         if(!dispState.params.penid) {
             dispState.params.penid = mor.instId(profpen); }
         params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
@@ -657,7 +656,7 @@ define([], function () {
 
         
     recent = function () {
-        var html, temp, maxdate, mindate;
+        var html, debugView, maxdate, mindate;
         selectTab("recentli", recent);
         if(recentRevState && recentRevState.initialized) {
             displayRecentReviews(recentRevState); }
@@ -665,7 +664,7 @@ define([], function () {
         mor.out('profcontdiv', html);
         mor.layout.adjust();
         clearReviewSearchState(recentRevState);
-        temp = recentRevState;
+        debugView = recentRevState;
         maxdate = new Date();
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
         recentRevState.params.maxdate = maxdate.toISOString();

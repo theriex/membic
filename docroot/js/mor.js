@@ -528,6 +528,31 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.imgntxt = function (imgfile, text, funcstr, href, title, cssclass) {
+        var html;
+        if(!cssclass) {
+            cssclass = "navico"; }
+        if(funcstr.indexOf(";") < 0) {
+            funcstr += ";"; }
+        if(imgfile.indexOf("/") < 0) {
+            imgfile = "img/" + imgfile; }
+        if(title) {
+            title = "title=\"" + title + "\""; }
+        else {
+            title = ""; }
+        html = "<table class=\"buttontable\" border=\"0\"" + 
+                     " onclick=\"" + funcstr + "return false;\">" +
+            "<tr>" +
+              "<td>" +
+                "<img class=\"" + cssclass + "\" src=\"" + imgfile + "\"" +
+                    " border=\"0\"/></td>" +
+              "<td>" +
+                  text + "</td>" +
+            "</tr></table>";
+        return html;
+    };
+
+
     mor.checkrad = function (type, name, value, label, checked, chgfstr) {
         var html;
         if(!label) {

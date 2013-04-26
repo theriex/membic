@@ -33,21 +33,23 @@ define([], function () {
 
 
     activityLinkHTML = function () {
-        var html = "<a href=\"#Activity\"" +
-                     " title=\"See what's been posted recently\"" + 
-                     " onclick=\"mor.activity.displayActive();" + 
-                                "return false;\"" +
-            ">" + activityTitleText + "</a>";
+        var html = "<div class=\"topnavitemdiv\">" +
+            mor.imgntxt("friendact.png", "Friend Activity",
+                        "mor.activity.displayActive()",
+                        "#Activity",
+                        "See what's been posted recently") +
+            "</div>";
         return html;
     },
 
 
     rememberedLinkHTML = function () {
-        var html = "<a href=\"#Remembered\"" +
-                     " title=\"Show remembered reviews\"" +
-                     " onclick=\"mor.activity.displayRemembered();" + 
-                                "return false;\"" +
-            ">" + rememberedTitleText + "</a>";
+        var html = "<div class=\"topnavitemdiv\">" +
+            mor.imgntxt("remembered.png", "Remembered Reviews",
+                        "mor.activity.displayRemembered()",
+                        "#Remembered",
+                        "Show remembered reviews") +
+            "</div>";
         return html;
     },
 
