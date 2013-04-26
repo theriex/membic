@@ -30,7 +30,6 @@ def starsImageHTML(rating):
                         "height:" + str(imgheight) + "px;" +\
                         "background:url('../img/starsinv.png');\"" +\
                " title=\"" + title + "\" alt=\"" + title + "\"/>"
-    logging.info("html: " + html)
     return html
 
 
@@ -258,12 +257,16 @@ def revhtml(rev, pen):
     html += "  </div>\n"
     html += "</div>\n"
     # Specialized class for content area, left spacing used by ads..
-    html += "<div id=\"noleftappspacediv\">\n"
+    html += "<div id=\"appspacedivstatic\">\n"
+    # older android browser won't keep divs on same line..
+    html += "<table id=\"forceAdsSameLineTable\">"
+    html += " <tr>"
+    html += "  <td valign=\"top\">"
 
     # This is a public facing page, not a logged in page, so show some
     # ads to help pay for hosting service. Yeah right. 
     html += "<div id=\"adreservespace\" style=\""
-    html +=   "width:170px;height:610px;float:left;"
+    html +=   "width:170px;height:610px;"
     html +=   "background:#eeeeff;"
     html +=   "padding:8px 0px 0px 8px;"
     # html +=   "border:1px solid #666;"
@@ -287,17 +290,18 @@ def revhtml(rev, pen):
     html += "</div>\n"
     html += "</div>\n"
 
-    # HTML adapted from profile.js displayProfileHeading
-    html +=   "<div id=\"centerhdivstatic\">\n"
-    html +=     "<span id=\"penhnamespan\">"
-    html +=     "<a href=\"../#view=profile&profid=" + str(rev.penid)
-    html +=              "\" title=\"Show profile for " + pen.name
-    html +=              "\">" + pen.name + "</a>"
-    html +=     "</span>\n"
-    html +=     "<span id=\"penhbuttonspan\"> </span>\n"
-    html +=   "</div>"
+    html += "  </td><td valign=\"top\">"
     # general content area from index.html
-    html +=   "<div id=\"contentdiv\" class=\"mtext\">\n"    
+    html +=   "<div id=\"contentdiv\" class=\"statrevcontent\">\n"
+    # HTML adapted from profile.js displayProfileHeading
+    html +=     "<div id=\"centerhdivstatic\">\n"
+    html +=       "<span id=\"penhnamespan\">"
+    html +=       "<a href=\"../#view=profile&profid=" + str(rev.penid)
+    html +=                "\" title=\"Show profile for " + pen.name
+    html +=                "\">" + pen.name + "</a>"
+    html +=       "</span>\n"
+    html +=       "<span id=\"penhbuttonspan\"> </span>\n"
+    html +=     "</div>"
 
     # HTML copied from review.js displayReviewForm
     html +=     "<div class=\"formstyle\">\n"
@@ -353,7 +357,8 @@ def revhtml(rev, pen):
     html +=     "</div> <!-- statnoticediv -->\n"
     html +=     "</td></tr></table>\n"
     html +=   "</div> <!-- statnoticecontainerdiv -->\n"
-    html += "</div> <!-- noleftappspacediv -->\n"
+    html += "  </td></tr></table>"
+    html += "</div> <!-- appspacedivstatic -->\n"
     html += script_to_set_colors(pen)
     html += "</body>\n"
     html += "</html>\n"

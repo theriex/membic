@@ -73,9 +73,10 @@ body {
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:x-small; }
-#appspacediv, #noleftappspacediv { clear:both; }
+#appspacediv, #appspacedivstatic { }
 #appspacediv { padding:15px 40px 0px 72px; width:80%;}
-#noleftappspacediv { width:90%; padding:15px 40px 40px 15px; }
+#appspacedivstatic { padding:0px 15px 10px 5px; }
+.statrevcontent { padding-left:15px; padding-top:15px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px; }
 
