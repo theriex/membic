@@ -6,50 +6,31 @@ from pen import PenName
 from moracct import safestr, intz, safestr
 import re
 import json
+import math
 
 
 def starsImageHTML(rating):
-    width = 0
-    title = ""
-    if rating < 5:
-        width = 0
-        title = "No stars"
-    elif rating < 15:
-        width = 6
-        title = "Half a star"
-    elif rating < 25:
-        width = 12
-        title = "One star"
-    elif rating < 35:
-        width = 18
-        title = "One and a half stars"
-    elif rating < 45:
-        width = 24
-        title = "Two stars"
-    elif rating < 55:
-        width = 30
-        title = "Two and a half stars"
-    elif rating < 65:
-        width = 36
-        title = "Three stars"
-    elif rating < 75:
-        width = 42
-        title = "Three and a half stars"
-    elif rating < 85:
-        width = 48
-        title = "Four stars"
-    elif rating < 95:
-        width = 54
-        title = "Four and a half stars"
-    else:
-        width = 60
-        title = "Five stars"
+    imgwidth = 80
+    imgheight = 14
+    starTitles = [ "No stars", "Half a star", "One star", 
+                   "One and a half stars", "Two stars", "Two and a half stars",
+                   "Three stars", "Three and a half stars", "Four stars", 
+                   "Four and a half stars", "Five stars" ]
+    maxstep = len(starTitles) - 1
+    if rating > 93:   # compensate for floored math
+        rating = 100
+    step = int(math.floor((rating * maxstep) / 100))
+    title = starTitles[step]
+    width = int(math.floor(step * (imgwidth / maxstep)))
     html = "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
-        " style=\"width:" + str(60 - width) + "px;height:13px;\"/>" +\
-        "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
-        " style=\"width:" + str(width) + "px;height:13px;" +\
-        "background:url('../img/ratstar5.png')\"" +\
-        " title=\"" + title + "\" alt=\"" + title + "\"/>";
+               " style=\"width:" + str(imgwidth - width) + "px;" +\
+                        "height:" + str(imgheight) + "px;\"/>" +\
+           "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
+               " style=\"width:" + str(width) + "px;" +\
+                        "height:" + str(imgheight) + "px;" +\
+                        "background:url('../img/starsinv.png');\"" +\
+               " title=\"" + title + "\" alt=\"" + title + "\"/>"
+    logging.info("html: " + html)
     return html
 
 
@@ -132,7 +113,7 @@ def reviewPicHTML(rev):
         html +=  "\"></a>"
     if rev.revpic:
         html = "<img class=\"revpic\""
-        html +=    " src=\"revpic?revid=" + str(rev.key().id())
+        html +=    " src=\"../revpic?revid=" + str(rev.key().id())
         html +=  "\"/>"
     return html;
 
@@ -245,7 +226,7 @@ def script_to_set_colors(pen):
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
-    # HTML copied from index.html...
+    # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
     html +=      " itemtype=\"http://schema.org/WebPage\""
@@ -261,19 +242,26 @@ def revhtml(rev, pen):
     html +=        " href=\"../img/" + typeImage(rev.revtype) + "\" />"
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
-    html += "<div id=\"logodiv\">\n"
-    html +=   "<img src=\"../img/remo.png\" border=\"0\"/>\n"
+    # HTML content from index.html...
+    html += "<div id=\"mascotdivstatic\">\n"
+    html += "<img src=\"../img/remo.png\" class=\"mascotimg\" border=\"0\"/>\n"
     html += "</div>\n"
-    html += "<div id=\"titlediv\"> \n"
-    html +=   "<span id=\"logotitle\">MyOpenReviews</span>\n"
+    html += "<div id=\"topsectiondiv\">\n"
+    html += "  <div id=\"logodiv\">\n"
+    html += "    <img src=\"../img/logoMOR.png\" id=\"logoimg\" border=\"0\"\n"
+    html += "         onclick=\"mor.profile.display();return false;\"/>\n"
+    html += "  </div>\n"
+    html += "  <div id=\"topworkdiv\">\n"
+    html += "    <div id=\"slidesdiv\">\n"
+    html += "      <img src=\"../img/slides/slogan.png\" class=\"slideimg\"/>\n"
+    html += "    </div>\n"
+    html += "  </div>\n"
     html += "</div>\n"
     # Specialized class for content area, left spacing used by ads..
     html += "<div id=\"noleftappspacediv\">\n"
-    html +=   "<div id=\"contentdiv\" class=\"mtext\""
-    html +=       " style=\"padding:30px 0px 0px 0px;\">\n"
-    
+
     # This is a public facing page, not a logged in page, so show some
-    # ads to help pay for hosting service. Yeah right. Try anyway.
+    # ads to help pay for hosting service. Yeah right. 
     html += "<div id=\"adreservespace\" style=\""
     html +=   "width:170px;height:610px;float:left;"
     html +=   "background:#eeeeff;"
@@ -298,6 +286,18 @@ def revhtml(rev, pen):
     # end of code copied from adsense
     html += "</div>\n"
     html += "</div>\n"
+
+    # HTML adapted from profile.js displayProfileHeading
+    html +=   "<div id=\"centerhdivstatic\">\n"
+    html +=     "<span id=\"penhnamespan\">"
+    html +=     "<a href=\"../#view=profile&profid=" + str(rev.penid)
+    html +=              "\" title=\"Show profile for " + pen.name
+    html +=              "\">" + pen.name + "</a>"
+    html +=     "</span>\n"
+    html +=     "<span id=\"penhbuttonspan\"> </span>\n"
+    html +=   "</div>"
+    # general content area from index.html
+    html +=   "<div id=\"contentdiv\" class=\"mtext\">\n"    
 
     # HTML copied from review.js displayReviewForm
     html +=     "<div class=\"formstyle\">\n"
@@ -354,33 +354,6 @@ def revhtml(rev, pen):
     html +=     "</td></tr></table>\n"
     html +=   "</div> <!-- statnoticecontainerdiv -->\n"
     html += "</div> <!-- noleftappspacediv -->\n"
-    # HTML copied from login.js updateAuthentDisplay
-    # No dynamic resizing via script, so just pick a reasonable top width
-    html += "<div id=\"topdiv\" style=\"width:90%;\">\n"
-    html +=   "<div id=\"topnav\">\n"
-    html +=     "<table id=\"navdisplaytable\" border=\"0\" width=\"50%\">\n"
-    html +=       "<tr>\n"
-    html +=         "<td style=\"height:14px;\"></td>\n"
-    html +=         "<td style=\"width:40px;\"></td>\n"
-    html +=         "<td rowspan=\"2\" style=\"vertical-align:top;\">\n"
-    html +=           "<div id=\"centerhdiv\">\n"
-    # HTML copied from profile.js displayVisitProfileHeading
-    html +=             "<div id=\"profhdiv\">\n"
-    html +=               "<span id=\"penhnamespan\">"
-    html +=               "<a href=\"../#view=profile&profid=" + str(rev.penid)
-    html +=                        "\" title=\"Show profile for " + pen.name
-    html +=                        "\">" + pen.name + "</a>"
-    html +=               "</span>\n"
-    html +=               "<span id=\"penhbuttonspan\"> </span>\n"
-    html +=             "</div>\n"
-    html +=           "</div></td>\n"
-    html +=       "</tr>\n"
-    html +=       "<tr>\n"
-    html +=         "<td><div id=\"homepenhdiv\"></div></td>\n"
-    html +=       "</tr>\n"
-    html +=     "</table>\n"
-    html +=   "</div> <!-- topnav -->\n"
-    html += "</div> <!-- topdiv -->\n"
     html += script_to_set_colors(pen)
     html += "</body>\n"
     html += "</html>\n"
