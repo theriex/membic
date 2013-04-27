@@ -252,13 +252,13 @@ define([], function () {
                   "<table id=\"topactionstable\" border=\"0\">" +
                     "<tr>" +
                       "<td><div id=\"homepenhdiv\"></div></td>" + 
-                      "<td><div id=\"writerevhdiv\">" + 
-                         mor.review.reviewLinkHTML() +
+                      "<td><div id=\"recentacthdiv\">" + 
+                         mor.activity.activityLinkHTML() +
                           "</div></td>" + 
                     "</tr>" +
                     "<tr>" +
-                      "<td><div id=\"recentacthdiv\">" + 
-                         mor.activity.activityLinkHTML() +
+                      "<td><div id=\"writerevhdiv\">" + 
+                         mor.review.reviewLinkHTML() +
                           "</div></td>" + 
                       "<td><div id=\"rememberedhdiv\">" + 
                          mor.activity.rememberedLinkHTML() +
@@ -276,7 +276,7 @@ define([], function () {
             mor.layout.setTopPaddingAndScroll(250); }
         else if(override === "hide") {  //slogan slide only, others are big
             html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
-            mor.out('slidesdiv', html); }
+            mor.out('topworkdiv', html); }
         else {  //restore whatever was in index.html to begin with
             mor.out('topworkdiv', topworkdivcontents); }
     },
@@ -510,6 +510,7 @@ define([], function () {
 
     displayLoginForm = function () {
         var cdiv, ldiv, html = "";
+        mor.out('centerhdiv', "");
         cdiv = mor.byId('contentdiv');
         mor.out('contentdiv', appropriateIntroText());
         ldiv = document.createElement('div');
