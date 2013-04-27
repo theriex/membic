@@ -120,7 +120,7 @@ body {
 /* intro layout */
 #bookslidediv { text-align:center; }
 #bookmarkletlinkdiv { padding:5px 20px; }
-#logindiv { display:table; margin:0 auto; }
+#logindiv, .centertablediv { display:table; margin:0 auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
 #closebookslide { clear:both; }
 
@@ -131,6 +131,7 @@ body {
 .profpic { width:125px; height:125px; }
 .srchpic { width:30px; height:30px; vertical-align:middle; }
 .reviewbadge { width:30px; height:30px; vertical-align:middle; }
+.revtypeselectiondiv { padding:15px; font-size:x-large; }
 .shoutout { width:200px; height:80px; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
@@ -153,8 +154,6 @@ body {
 .smalltext { font-size:small; }
 #relbutton { vertical-align:middle; }
 .reviewformul { list-style:none; padding:0; margin:0; }
-.typebuttonstable { padding: 0px; }
-.typebuttonstable td { padding: 10px; }
 .revdisptable { margin-left:auto; margin-right:auto; }
 .revdisptable td { padding:2px 5px; }
 #transformactionstd { padding:2px 5px 10px 5px; }

@@ -314,16 +314,16 @@ define([], function () {
     //This is the main processing entry point from the bookmarklet or
     //direct links.
     readURL = function (url, params) {
-        var urlin, rbtd;
+        var urlin, rbc;
         if(!params) {
             params = {}; }
         if(!url) {
             urlin = mor.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
-        rbtd = mor.byId('readurlbuttontd');
-        if(rbtd) {
-            rbtd.innerHTML = "reading..."; }
+        rbc = mor.byId('readurlbuttoncontainer');
+        if(rbc) {
+            rbc.innerHTML = "reading..."; }
         if(url) {
             crev.url = autourl = url;
             readParameters(params);
@@ -341,49 +341,48 @@ define([], function () {
 
 
     displayTypeSelect = function () {
-        var i, tdc = 0, html;
+        var i, tdc = 0, captype, html;
         html = "<div id=\"revfdiv\" class=\"formstyle\" align=\"center\">" +
-            "<ul class=\"reviewformul\">";
+            "<div id=\"formrejustifydiv\" class=\"centertablediv\">" +
+              "<ul class=\"reviewformul\">";
         if(autourl) {
             html += "<li><a href=\"" + autourl + "\">" + autourl + 
                 "</a></li>"; }
         else {
-            html += "<li><div class=\"bigoverlabel\">" + 
-                "Paste a web address for the review (if available)" + 
-                "</div><table><tr>" +
+            html += "<li><table border=\"0\"><tr><td colspan=\"2\">" + 
+                "<div class=\"bigoverlabel\">" + 
+                  "Paste a web address for the review (if available):" + 
+                "</div></td></tr><tr>" +
                 "<td align=\"right\">URL</td>" +
                 "<td align=\"left\">" +
                   "<input type=\"text\" id=\"urlin\" size=\"40\"" +
                         " onchange=\"mor.review.readURL();return false;\"" + 
-                "/></td>" +
-                "<td id=readurlbuttontd>" +
+                    "/>&nbsp;" +
+                "<span id=\"readurlbuttoncontainer\">" +
                   "<button type=\"button\" id=\"readurlbutton\"" +
                          " onclick=\"mor.review.readURL();return false;\"" +
                          " title=\"Read review form fields from pasted URL\"" +
-                  ">Read</button>" +
+                  ">Read</button></span>" +
                 "</td>" +
               "</tr></table></li>"; }
-        html += "<li><div class=\"bigoverlabel\">" + 
-                "Choose a review type</div></li>" + 
-            "<table class=\"typebuttonstable\">";
+        html += "<li><table border=\"0\"><tr><td colspan=\"4\">" + 
+            "<div class=\"bigoverlabel\">" + 
+              "Choose a review type:</div></td></tr>";
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
-            //ATTENTION: These buttons could look better.
-            html += "<td><button type=\"button\" id=\"type" + i + "\"" +
-                               " onclick=\"mor.review.setType('" +
-                                             reviewTypes[i].type + "');" +
-                                            "return false;\"" +
-                               " title=\"Create a " + reviewTypes[i].type + 
-                                        " review\"" +
-                         "><img class=\"reviewbadge\"" +
-                              " src=\"img/" + reviewTypes[i].img + "\">" +
-                reviewTypes[i].type + "</button></td>";
+            captype = reviewTypes[i].type.capitalize();
+            html += "<td><div class=\"revtypeselectiondiv\">" + 
+                mor.imgntxt(reviewTypes[i].img, captype,
+                            "mor.review.setType('" + reviewTypes[i].type + "')",
+                            "#" + captype,
+                            "Create a " + reviewTypes[i].type + " review") + 
+                "</div></td>";
             tdc += 1;
             if(tdc === 4 || i === reviewTypes.length -1) {
                 html += "</tr>";
                 tdc = 0; } }
-        html += "</table></ul></div>";
+        html += "</table></li></ul></div></div>";
         if(!mor.byId('cmain')) {
             mor.layout.initContent(); }
         mor.out('cmain', html);
