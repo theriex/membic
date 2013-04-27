@@ -481,20 +481,6 @@ define([], function () {
     },
 
 
-    siteAbbrev = function (url) {
-        var html, dotindex;
-        if(!url) {
-            return "?"; }
-        dotindex = url.lastIndexOf(".");
-        if(dotindex >= 0) {
-            html = url.slice(dotindex, dotindex + 4); }
-        else {
-            html = url.slice(0, 4); }
-        html = "<span class=\"webabbrev\">" + html + "</span>";
-        return html;
-    },
-
-
     graphicAbbrevSiteLink = function (url) {
         var html;
         if(!url) {

@@ -12,7 +12,7 @@ define([], function () {
         authtoken = "",
         authname = "",
         cookdelim = "..morauth..",
-        topworkcontent = "",
+        topworkdivcontents = "",
         changepwdprompt = "Changing your login credentials",
         altauths = [],
 
@@ -244,11 +244,10 @@ define([], function () {
 
     //create the logged-in display areas
     updateAuthentDisplay = function (override) {
-        var html;
-        if(!topworkcontent) {
-            topworkcontent = mor.byId('topworkdiv').innerHTML; }
-        html = "";
-        if(authtoken && override !== "hide") {
+        var html = "";
+        if(!topworkdivcontents) {
+            topworkdivcontents = mor.byId('topworkdiv').innerHTML; }
+        if(authtoken && override !== "hide") {  //logged in, standard display
             html = "<div id=\"topactionsdiv\">" +
                   "<table id=\"topactionstable\" border=\"0\">" +
                     "<tr>" +
@@ -275,11 +274,11 @@ define([], function () {
             mor.byId('topworkdiv').style.marginLeft = "280px";
             mor.byId('mascotdiv').style.top = "135px";
             mor.layout.setTopPaddingAndScroll(240); }
-        else if(mor.byId('topworkdiv').innerHTML !== topworkcontent) {
-            //This shows the first slide, but the slideshow is not running,
-            //so basically it's just the slogan, which is good filler and
-            //doesn't require adjusting the height of the top bar to fit.
-            mor.out('topworkdiv', topworkcontent); }
+        else if(override === "hide") {  //slogan slide only, others are big
+            html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
+            mor.out('slidesdiv', html); }
+        else {  //restore whatever was in index.html to begin with
+            mor.out('topworkdiv', topworkdivcontents); }
     },
 
 

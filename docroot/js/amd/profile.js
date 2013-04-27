@@ -345,7 +345,8 @@ define([], function () {
             "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">Pen Name:</td>" +
+            "<td align=\"right\">" + 
+              "<img src=\"img/penname.png\" alt=\"Pen Name\"/></td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
                     " value=\"" + pen.name + "\"/></td>" +
@@ -634,7 +635,7 @@ define([], function () {
 
 
     findRecentReviews = function (dispState) {
-        var params, min, max;
+        var params;
         if(!dispState.params.penid) {
             dispState.params.penid = mor.instId(profpen); }
         params = mor.objdata(dispState.params) + "&" + mor.login.authparams();

@@ -160,6 +160,7 @@ define([], function () {
                      deserializeFields(currpen);
                      mor.rel.resetStateVars();
                      mor.activity.resetStateVars();
+                     mor.login.updateAuthentDisplay();
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
@@ -168,20 +169,31 @@ define([], function () {
 
 
     newPenNameDisplay = function (callback) {
-        var html;
+        var html, cancelbutton = "";
         returnFuncMemo = callback;
+        mor.login.updateAuthentDisplay("hide");
+        mor.out('centerhdiv', "");
+        if(currpen) {
+            cancelbutton = "<button type=\"button\" id=\"cancelbutton\"" +
+                                  " onclick=\"mor.profile.display();" + 
+                                            "return false;\"" +
+                ">Cancel</button>"; }
         //need to mimic layout initContent divs here so they are available
         //as needed for continuation processing.
-        html = "<div id=\"chead\"> </div><div id=\"cmain\"><p>Your pen name is a unique expression of style when presenting your views to the world. You can have separate pen names for each of your personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
+        html = "<div id=\"chead\"> </div><div id=\"cmain\"><p>Your pen name is a unique expression of style. You can have separate pen names for different personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
         "<div id=\"penformstat\">&nbsp;</div>" +
-        "<table>" +
+        "<table class=\"pennametable\">" +
           "<tr>" +
-            "<td class=\"formattr\">Pen Name</td>" +
+            "<td rowspan=\"2\"><img src=\"img/penname.png\"/></td>" +
+            "<td class=\"formattr\">Writing as...</td>" +
+          "</tr>" +
+          "<tr>" +
             "<td class=\"formval\">" +
               "<input type=\"text\" id=\"pnamein\" size=\"34\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" id=\"formbuttons\"align=\"center\">" +
+              cancelbutton +
               "<button type=\"button\" id=\"createbutton\">Create</button>" +
             "</td>" +
           "</tr>" +

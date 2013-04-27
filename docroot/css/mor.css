@@ -195,6 +195,7 @@ body {
 .buttontable { cursor:pointer; }
 .buttontable:hover { text-decoration:underline; }
 .buttontable td { padding:0px; }
+.pennametable td { padding:0px 10px; }
 
 /* review layout */
 #revfdiv { }

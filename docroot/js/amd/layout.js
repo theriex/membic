@@ -88,7 +88,9 @@ define([], function () {
 
 
     //Set the src of the current img to the next slide and change its
-    //opacity to 1.  Then change the opacity of the prev img to 0.
+    //opacity to 1.  Then change the opacity of the prev img to 0.  If
+    //someone is logging in automatically (the most common case), then
+    //preloading images is extra overhead so not doing that.
     slideshow = function () {
         var sdiv, prevslot, currslot;
         sdiv = mor.byId('slidesdiv');
@@ -100,9 +102,13 @@ define([], function () {
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 prevslot = mor.byId("introslide" + slideslot);
+                if(!prevslot) {  //we probably logged in and it's gone
+                    return; }
                 slideslot = (slideslot + 1) % 2;
                 slideindex = (slideindex + 1) % slides.length;
                 currslot = mor.byId("introslide" + slideslot);
+                if(!currslot) {  //we probably logged in and it's gone
+                    return; }
                 currslot.src = "img/slides/" + slides[slideindex];
                 currslot.style.opacity = 1;
                 prevslot.style.opacity = 0; }

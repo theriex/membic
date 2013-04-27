@@ -68,9 +68,19 @@ define([], function () {
 
 
     setColorsFromPen = function (pen) {
-        if(pen && pen.settings && pen.settings.colors) {
-            mor.colors = copycolors(pen.settings.colors);
-            updateColors(); }
+        if(!pen) {  //use default colors
+            mor.colors = presets[0]; }
+        else { //have pen
+            if(!pen.settings) {  //use default colors
+                mor.colors = presets[0]; }
+            else { //have settings
+                if(typeof pen.settings === 'string') {
+                    mor.pen.deserializeFields(pen); }
+                if(!pen.settings.colors) {  //use default colors
+                    mor.colors = presets[0]; }
+                else { //have colors
+                    mor.colors = copycolors(pen.settings.colors); } } }
+        updateColors();
     },
 
 
