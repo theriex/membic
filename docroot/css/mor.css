@@ -37,6 +37,7 @@ body {
 /* topsectiondiv and contained elements */
 #mascotdiv { position:absolute; left:10px; top:265px; }
 #mascotdivstatic { position:absolute; left:700px; top:140px; }
+.mascotimg { vertical-align:middle; }
 #topsectiondiv { padding:0px 10px; background:#fffffd;
   box-shadow:8px 8px 4px #cccccc; height:250px; }
 #logodiv {          width:512px; float:left; }
@@ -174,11 +175,10 @@ body {
   font-size:small; text-align:center;
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
-.statnoticeactlinktable { margin-left:auto; margin-right:auto; }
-.statnoticeactlinktable td { padding:0px 10px; }
-.statnoticeactlinkdiv, .buttondiv { padding:5px; background:#ccc; 
-  font-size:large;
-  border-radius:5px; box-shadow:2px 2px 2px #666; }
+.statnoticeactlinktable { margin-left:auto; margin-right:auto; padding:10px; }
+.statnoticeactlinktable td { }
+/* only actual buttons should look like buttons */
+.buttondiv { padding:5px; font-size:large; }
 .searchtable td { padding:5px 10px; }
 .mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
@@ -195,6 +195,7 @@ body {
 .buttontable { cursor:pointer; }
 .buttontable:hover { text-decoration:underline; }
 .buttontable td { padding:0px; }
+.buttontabletexttd { text-align:left; }
 .pennametable td { padding:0px 10px; }
 
 /* review layout */

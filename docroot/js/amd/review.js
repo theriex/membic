@@ -1372,12 +1372,14 @@ define([], function () {
         //key field, and the subkey field (if defined for the type).
         if(read) { 
             displayReviewForm(pen, crev);
-            if(action === "runServices") {
-                mor.services.run(pen, crev); }
-            else if(action === "remember") {
-                mor.review.memo(); }
-            else if(action === "respond") {
-                mor.review.respond(); } }
+            if(crev.penid === mor.pen.currPenId()) {  //our review
+                if(action === "runServices") {
+                    mor.services.run(pen, crev); } }
+            else {  //someone else's review
+                if(action === "remember") {
+                    mor.review.memo(); }
+                else if(action === "respond") {
+                    mor.review.respond(); } } }
         else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
         else if(action === "uploadpic") {

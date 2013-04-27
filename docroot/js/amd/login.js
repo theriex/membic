@@ -273,7 +273,7 @@ define([], function () {
             mor.byId('topsectiondiv').style.height = "120px";
             mor.byId('topworkdiv').style.marginLeft = "280px";
             mor.byId('mascotdiv').style.top = "135px";
-            mor.layout.setTopPaddingAndScroll(240); }
+            mor.layout.setTopPaddingAndScroll(250); }
         else if(override === "hide") {  //slogan slide only, others are big
             html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
             mor.out('slidesdiv', html); }

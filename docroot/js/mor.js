@@ -546,7 +546,7 @@ var mor = {};  //Top level function closure container
               "<td>" +
                 "<img class=\"" + cssclass + "\" src=\"" + imgfile + "\"" +
                     " border=\"0\"/></td>" +
-              "<td>" +
+              "<td class=\"buttontabletexttd\">" +
                   text + "</td>" +
             "</tr></table>";
         return html;
