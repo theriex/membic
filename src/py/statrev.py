@@ -17,6 +17,8 @@ def starsImageHTML(rating):
                    "Three stars", "Three and a half stars", "Four stars", 
                    "Four and a half stars", "Five stars" ]
     maxstep = len(starTitles) - 1
+    if not rating:
+        rating = 0
     if rating > 93:   # compensate for floored math
         rating = 100
     step = int(math.floor((rating * maxstep) / 100))
@@ -94,8 +96,7 @@ def urlImageLink(rev):
     html = "<a href=\"" + rev.url + "\""
     html +=  " onclick=\"window.open('" + rev.url + "');return false;\""
     html +=  " title=\"" + rev.url + "\">"
-    html +=  "<img class=\"webjump\" src=\"../img/wwwico.png\"/>"
-    html +=  "<span class=\"webabbrev\">" + abbrev + "</span>"
+    html +=  "<img class=\"webjump\" src=\"../img/gotolink.png\"/>"
     html += "</a>"
     return html
 
@@ -339,18 +340,43 @@ def revhtml(rev, pen):
     html +=       " style=\"width:85%;padding:20px 50px;\">\n"
     html +=     "<table class=\"revdisptable\"><tr><td>\n"
     html +=     "<div id=\"statnoticediv\">\n"
-    html += "<p>This review was shared by " + pen.name + "<br/>\n"
-    html += "<a href=\"http://www.myopenreviews.com/#view=review&"
-    html +=       penrevparms + "\">sign in</a> </p>\n"
-    html += "<div id=\"statrevactdiv\">\n"
+    # sign in button
+    html += "<table class=\"statnoticeactlinktable\""
+    html +=       " style=\"padding-bottom:20px;\"><tr>\n"
+    html += "<td colspan=\"2\">"
+    html +=   "<div id=\"signinbutton\" class=\"buttondiv\">\n"
+    html +=   "<table class=\"buttontable\""
+    html +=         " onclick=\"javascript:window.location.href="
+    html +=                  "'../#view=review&" + penrevparms
+    html +=                  "';return false;\"><tr>\n"
+    html +=     "<td><img class=\"navico\" src=\"../img/penname.png\""
+    html +=             " border=\"0\"/></td>\n"
+    html +=     "<td>View from your pen name</td>\n"
+    html +=   "</tr></table>\n"
+    html +=  "</div></td>\n"
+    html +=  "</tr></table>\n"
     html += "<table class=\"statnoticeactlinktable\"><tr>\n"
-    html += "<td><div class=\"statnoticeactlinkdiv\">"
-    html +=   "<a href=\"../#command=respond&" + penrevparms
-    html +=     "\">Edit your corresponding review</a>\n"
+    # respond button
+    html += "<td><div id=\"respondbutton\" class=\"buttondiv\">\n"
+    html +=   "<table class=\"buttontable\""
+    html +=         " onclick=\"javascript:window.location.href="
+    html +=                    "'../#command=respond&" + penrevparms
+    html +=                    "';return false;\"><tr>\n"
+    html +=     "<td><img class=\"navico\" src=\"../img/editcorev.png\""
+    html +=             " border=\"0\"/></td>\n"
+    html +=     "<td>Edit your<br/>corresponding review</td>\n"
+    html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
-    html += "<td><div class=\"statnoticeactlinkdiv\">"
-    html +=   "<a href=\"../#command=remember&" + penrevparms
-    html +=     "\">Remember this review</a>\n"
+    # remember button
+    html += "<td><div id=\"rememberbutton\" class=\"buttondiv\">\n"
+    html +=   "<table class=\"buttontable\""
+    html +=         " onclick=\"javascript:window.location.href="
+    html +=                   "'../#command=remember&" + penrevparms
+    html +=                   "';return false;\"><tr>\n"
+    html +=     "<td><img class=\"navico\" src=\"../img/rememberq.png\""
+    html +=             " border=\"0\"/></td>\n"
+    html +=     "<td>Remember this<br/>review</td>\n"
+    html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     html += "</tr></table>"
     html += "</div> <!-- statrevactdiv -->\n"

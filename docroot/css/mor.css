@@ -36,7 +36,7 @@ body {
 
 /* topsectiondiv and contained elements */
 #mascotdiv { position:absolute; left:10px; top:265px; }
-#mascotdivstatic { position:absolute; left:700px; top:210px; }
+#mascotdivstatic { position:absolute; left:700px; top:140px; }
 #topsectiondiv { padding:0px 10px; background:#fffffd;
   box-shadow:8px 8px 4px #cccccc; height:250px; }
 #logodiv {          width:512px; float:left; }
@@ -169,7 +169,7 @@ body {
 .csvstrdiv { padding:5px; }
 #actmodediv { padding:0px 0px 20px 0px; }
 .bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
-#statnoticediv { background:#eee; padding:5px 10px;
+#statnoticediv { background:#eee; padding:15px;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; text-align:center;
   border: 1px solid #666666; border-radius:10px; 

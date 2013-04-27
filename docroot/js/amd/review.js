@@ -476,7 +476,7 @@ define([], function () {
             fieldname = ""; }
         html = fieldname.capitalize();
         if(fieldname === "url") {
-            html = "<img class=\"webjump\" src=\"img/wwwico.png\"/>URL"; }
+            html = "<img class=\"webjump\" src=\"img/gotolink.png\"/>URL"; }
         return html;
     },
 
@@ -502,8 +502,7 @@ define([], function () {
         html = "<a href=\"" + url + "\"" + 
             " onclick=\"window.open('" + url + "');return false;\"" +
             " title=\"" + url + "\">" +
-            "<img class=\"webjump\" src=\"img/wwwico.png\"/>" +
-                siteAbbrev(url) + "</a>";
+            "<img class=\"webjump\" src=\"img/gotolink.png\"/></a>";
         return html;
     },
 
