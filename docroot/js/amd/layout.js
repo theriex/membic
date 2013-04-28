@@ -17,7 +17,7 @@ define([], function () {
                    "cycleframe.png" ],
         slideindex = 0,
         slideslot = 0,
-        topPaddingAndScroll = 310,
+        topPaddingAndScroll = 320,
 
 
     closeDialog = function () {
@@ -56,6 +56,7 @@ define([], function () {
 
     displayDoc = function (url) {
         var html = "Fetching " + url + " ...";
+        window.scrollTo(0,0);
         mor.out('dlgdiv', html);
         mor.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
@@ -76,6 +77,7 @@ define([], function () {
     },
 
 
+    //faster to grab all links rather than iterating through bottomnav
     localDocLinks = function () {
         var i, nodes = mor.dojo.query('a'), node, href;
         for(i = 0; nodes && i < nodes.length; i += 1) {
