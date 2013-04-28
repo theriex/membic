@@ -10,22 +10,29 @@ define([], function () {
 
     var oldcolors,
         colorcontrols,
-        presets = [ { name: "paper (warm)", id: "paperw", 
-                      bodybg: "#fffffc", text: "#111111",
-                      link: "#3150b2", hover: "#3399cc" },
-                    { name: "paper (cool)", id: "paperc",
-                      bodybg: "#f8f8f8", text: "#000000",
-                      link: "#006666", hover: "#3399cc" },
-                    { name: "slate",        id: "slate",
-                      bodybg: "#ccdad9", text: "#111111",
-                      link: "#003300", hover: "#006600" },
-                    { name: "khaki",        id: "khaki",
-                      bodybg: "#e4cfc3", text: "#111111",
-                      link: "#333300", hover: "#666633" } ],
+        //Blue links are the most recognizable, they are not fun.
+        presets = [ { name: "paper (warm)",   id: "paperw", 
+                       bodybg: "#fffffc",   text: "#111111",
+                      lightbg: "#fffffe", darkbg: "#9b9b9a",
+                         link: "#441111",  hover: "#885555" },
+                    { name: "paper (cool)",   id: "paperc",
+                       bodybg: "#f8f8f8",   text: "#111111",
+                      lightbg: "#fcfcfc", darkbg: "#a2a2a2",
+                         link: "#006666",  hover: "#339999" },
+                    { name: "slate",          id: "slate",
+                       bodybg: "#ccdad9",   text: "#111111",
+                      lightbg: "#d0deda", darkbg: "#72817f",
+                         link: "#003300",  hover: "#447744" },
+                    { name: "parchment",      id: "parchment",
+                       bodybg: "#dfb374",   text: "#111111",
+                      lightbg: "#ffefaf", darkbg: "#997335",
+                         link: "#333300",  hover: "#666633" } ],
 
 
     copycolors = function (colors) {
         var cc = { bodybg: colors.bodybg,
+                   lightbg: colors.lightbg,
+                   darkbg: colors.darkbg,
                    text: colors.text,
                    link: colors.link,
                    hover: colors.hover };
@@ -39,10 +46,82 @@ define([], function () {
     },
 
 
+    colorToColorArray = function (color) {
+        var cvals;
+        if(color.indexOf("#") >= 0) {
+            color = color.slice(1); }
+        color = color.toUpperCase();
+        cvals = [ parseInt(color.slice(0,2), 16),
+                  parseInt(color.slice(2,4), 16),
+                  parseInt(color.slice(4,6), 16) ];
+        return cvals;
+    },
+
+
+    colorArrayToColor = function (cvals) {
+        var color = "#", val, i;
+        for(i = 0; i < cvals.length; i += 1) {
+            val = cvals[i].toString(16);
+            if(val.length < 2) {
+                val = "0" + val; }
+            color += val; }
+        return color;
+    },
+
+
+    cvalAdjust = function (cvals, index, bump) {
+        cvals[index] += bump;
+        if(cvals[index] > 255) { cvals[index] = 255; }
+        if(cvals[index] < 0) { cvals[index] = 0; }
+    },
+
+
+    adjustColor = function (color, adj) {
+        var cvals;
+        cvals = colorToColorArray(color);
+        cvalAdjust(cvals, 0, adj);
+        cvalAdjust(cvals, 1, adj);
+        cvalAdjust(cvals, 2, adj);
+        color = colorArrayToColor(cvals);
+        return color;
+    },
+
+
+    getLightBackground = function () {
+        if(!mor.colors.lightbg) {
+            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 4); }
+        return mor.colors.lightbg;
+    },
+
+
+    getDarkBackground = function () {
+        //with no texture overlay, -18 is about right, with a 66% opaque 
+        //texture overlay this needs to be pretty significant
+        if(!mor.colors.darkbg) {
+            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -56); }
+        return mor.colors.darkbg;
+    },
+
+
     updateColors = function () {
-        var rules, i;
-        mor.byId('bodyid').style.backgroundColor = mor.colors.bodybg;
-        mor.byId('bodyid').style.color = mor.colors.text;
+        var rules, i, elem, val, tabs = [ "recentli", "bestli", "followingli", 
+                                          "followersli", "searchli" ];
+        elem = mor.byId('bodyid');
+        if(elem) {
+            elem.style.color = mor.colors.text;
+            elem.style.backgroundColor = mor.colors.bodybg; }
+        elem = mor.byId('topsectiondiv');
+        if(elem) {
+            elem.style.backgroundColor = getLightBackground();
+            val = "8px 8px 4px " + getDarkBackground();
+            elem.style.boxShadow = val; }
+        elem = mor.byId('shoutdiv');
+        if(elem) {
+            elem.style.backgroundColor = getLightBackground(); }
+        for(i = 0; i < tabs.length; i += 1) {
+            elem = mor.byId(tabs[i]);
+            if(elem && elem.className === "unselectedTab") {
+                elem.style.backgroundColor = getDarkBackground(); } }
         rules = document.styleSheets[0].cssRules;
         for(i = 0; rules && i < rules.length; i += 1) {
             if(mor.prefixed(rules[i].cssText, "A:link")) {
@@ -84,71 +163,12 @@ define([], function () {
     },
 
 
-    colorToColorArray = function (color) {
-        var cvals;
-        if(color.indexOf("#") >= 0) {
-            color = color.slice(1); }
-        color = color.toUpperCase();
-        cvals = [ parseInt(color.slice(0,2), 16),
-                  parseInt(color.slice(2,4), 16),
-                  parseInt(color.slice(4,6), 16) ];
-        return cvals;
-    },
-
-
-    colorArrayToColor = function (cvals) {
-        var color = "#", val, i;
-        for(i = 0; i < cvals.length; i += 1) {
-            val = cvals[i].toString(16);
-            if(val.length < 2) {
-                val = "0" + val; }
-            color += val; }
-        return color;
-    },
-
-
-    cvalAdjust = function (cvals, index, bump) {
-        cvals[index] += bump;
-        if(cvals[index] > 255) { cvals[index] = 255; }
-        if(cvals[index] < 0) { cvals[index] = 0; }
-    },
-
-
     colorBump = function (colorfield, index, bump) {
         var color = mor.colors[colorfield], cvals;
         cvals = colorToColorArray(color);
         cvalAdjust(cvals, index, bump);
         color = colorArrayToColor(cvals);
         return color;
-    },
-
-
-    adjustColor = function (color, adj) {
-        var cvals;
-        cvals = colorToColorArray(color);
-        cvalAdjust(cvals, 0, adj);
-        cvalAdjust(cvals, 1, adj);
-        cvalAdjust(cvals, 2, adj);
-        color = colorArrayToColor(cvals);
-        return color;
-    },
-
-
-    getLightBackground = function () {
-        //with no texture overlay, +4 is pretty good.  With a 66% opaque
-        //texture overlay that's too much.
-        if(!mor.colors.lightbg) {
-            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 2); }
-        return mor.colors.lightbg;
-    },
-
-
-    getDarkBackground = function () {
-        //with no texture overlay, -18 is about right, with a 66% opaque 
-        //texture overlay this needs to be pretty significant
-        if(!mor.colors.darkbg) {
-            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -56); }
-        return mor.colors.darkbg;
     },
 
 

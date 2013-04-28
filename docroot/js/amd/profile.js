@@ -1250,7 +1250,7 @@ define([], function () {
         var html = pen.city || unspecifiedCityText;
         mor.out('profcityspan', html);
         if(!pen.city) {
-            mor.byId('profcityspan').style.color = "#CCCCCC"; }
+            mor.byId('profcityspan').style.color = "#999999"; }
         if(mor.profile.authorized(pen)) {
             mor.onclick('profcityspan', editCity); }
     },
