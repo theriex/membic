@@ -791,7 +791,7 @@ define([], function () {
                                     "mor.review.memo(true)", "#nomemo"); }
             else {
                 html += mor.imgntxt("rememberq.png",
-                                    "Remember this<br/>review",
+                                    "Remember this<br/>review?",
                                     "mor.review.memo(false)", "#memo"); }
             html += "</div></td></tr></table></div>"; }
         //space for save status messages underneath buttons

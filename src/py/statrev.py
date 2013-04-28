@@ -363,7 +363,7 @@ def revhtml(rev, pen):
     html +=     "<td><img class=\"navico\" src=\"../img/rememberq.png\""
     html +=             " border=\"0\"/></td>\n"
     html +=     "<td class=\"buttontabletexttd\">"
-    html +=       "Remember this<br/>review</td>\n"
+    html +=       "Remember this<br/>review?</td>\n"
     html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     html += "</tr></table>"
