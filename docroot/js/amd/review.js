@@ -134,6 +134,7 @@ define([], function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
+        //also change revtextsummary if image width changes..
         var imgwidth = 80, imgheight = 14, width, offset, rat, html,
             cname = imgclassname || "starsimg";
         rat = starRating(rating);
