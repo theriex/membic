@@ -216,6 +216,7 @@ define([], function () {
         mor.onclick('savebutton', function () {
             mor.out('settingsbuttons', "Saving...");
             setRelFieldsFromFormValues(rel);
+            mor.activity.resetStateVars();
             updateRelationship(rel); });
         mor.byId('dlgdiv').style.visibility = "visible";
         mor.onescapefunc = mor.layout.closeDialog;
@@ -264,6 +265,7 @@ define([], function () {
                          mor.pen.noteUpdatedPen(newrels[0]);  //originator
                          mor.profile.updateCache(newrels[1]); //related
                          outboundRels.push(newrels[2]);       //relationship
+                         mor.activity.resetStateVars();       //feed display
                          mor.profile.byprofid(mor.instId(newrels[1])); },
                      function (code, errtxt) {
                          mor.err("Relationship creation failed code " + code +
