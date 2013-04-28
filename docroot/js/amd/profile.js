@@ -576,10 +576,12 @@ define([], function () {
             "<a id=\"lihr" + revid + "\" href=\"" + linkref + "\"" +
               " onclick=\"mor.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
-              " title=\"See full review\">" + 
-            mor.ellipsis(revobj[type.key], 60);
+              " title=\"See full review\">";
         if(type.subkey) {
-            html += " <i>" + revobj[type.subkey] + "</i>"; }
+            html += "<i>" + mor.ellipsis(revobj[type.key], 60) + "</i> " +
+                revobj[type.subkey]; }
+        else {
+            html += mor.ellipsis(revobj[type.key], 60); }
         html += "</a>";
         if(revobj.url) {
             html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
