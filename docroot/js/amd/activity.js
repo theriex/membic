@@ -34,7 +34,7 @@ define([], function () {
 
     activityLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            mor.imgntxt("friendact.png", "Friend Activity",
+            mor.imgntxt("friendact.png", "Friend Reviews",
                         "mor.activity.displayActive()",
                         "#Activity",
                         "See what's been posted recently") +
