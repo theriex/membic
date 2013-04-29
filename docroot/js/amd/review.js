@@ -61,7 +61,7 @@ define([], function () {
             key: "title", //subkey
             fields: [ "artist" ],
             dkwords: [ "Light", "Heavy", "Kid Ok", "Educational", 
-                       "Cult", "Funny", "Disturbing", "Trippy" ] },
+                       "Funny", "Cute", "Artistic", "Disturbing" ] },
           { type: "music", plural: "music", img: "TypeSong50.png",
             keyprompt: "Title",
             key: "title", subkey: "artist",
@@ -85,8 +85,8 @@ define([], function () {
             keyprompt: "Name of activity, place, or event",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Easy", "Advanced", "Kid Ok", "Inexpensive", "Expensive",
-                       "Spring", "Summer", "Autumn", "Winter", "Anytime" ] },
+            dkwords: [ "Indoor", "Outdoor", "Educational", "Artistic", 
+                       "Kid Ok", "Inexpensive", "Expensive" ] },
           { type: "other", plural: "other", img: "TypeOther50.png",
             keyprompt: "Name or title", 
             key: "name", //subkey
@@ -312,16 +312,26 @@ define([], function () {
     },
 
 
+    reviewTextValid = function (type, errors) {
+        var input = mor.byId('reviewtext');
+        if(input) {
+            crev.text = input.value; }
+    },
+
+
     //This is the main processing entry point from the bookmarklet or
     //direct links.
     readURL = function (url, params) {
-        var urlin, rbc;
+        var urlin, errs = [], rbc;
         if(!params) {
             params = {}; }
         if(!url) {
             urlin = mor.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
+        reviewTextValid(crev.revtype, errs);
+        if(!url || errs.length > 0) {
+            return; }
         rbc = mor.byId('readurlbuttoncontainer');
         if(rbc) {
             rbc.innerHTML = "reading..."; }
@@ -570,6 +580,9 @@ define([], function () {
             input = mor.byId("field" + i);
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
+        //verify they set the rating to something.
+        if(!crev.rating) {
+            errors.push("Please set a star rating for this review"); }
     },
 
 
@@ -651,13 +664,6 @@ define([], function () {
     },
 
 
-    reviewTextValid = function (type, errors) {
-        var input = mor.byId('reviewtext');
-        if(input) {
-            crev.text = input.value; }
-    },
-
-
     //Return true if the current user has remembered the given review,
     //false otherwise.
     isRemembered = function (pen, review) {
@@ -716,6 +722,8 @@ define([], function () {
 
 
     changeReviewType = function (typeval) {
+        var errs = [];
+        reviewTextValid(crev.revtype, errs);
         crev.revtype = typeval;
         mor.review.display();
     },
