@@ -1187,6 +1187,7 @@ define([], function () {
         //but going much smaller than the image is stupid regardless of
         //screen size
         target = Math.max((mor.winw - 350), 200);
+        target = Math.min(target, 600);
         shout.style.width = target + "px";
     },
 
