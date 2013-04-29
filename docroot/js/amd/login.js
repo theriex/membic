@@ -232,7 +232,7 @@ define([], function () {
             "<em>" + authname + "</em> &nbsp; " +
             "<a href=\"logout\" id=\"logout\"" + 
               " onclick=\"mor.login.logout();return false;\"" +
-            ">logout</a>";
+            ">sign out</a>";
         if(authmethod === "mid") {
             html += " &nbsp; " + 
                 "<a href=\"changepwd\" id=\"cpwd\"" + 
@@ -299,7 +299,7 @@ define([], function () {
                  function (objs) {
                      var html = "<p>Welcome " + username + "! Your account " +
                          "has been created. </p>" +
-                         "<p>Logging in...</p>";
+                         "<p>Signing in...</p>";
                      mor.out('logindiv', html);
                      //same flow here as userpassLogin, but db stable wait..
                      setAuthentication("mid", objs[0].token, username);
@@ -432,7 +432,7 @@ define([], function () {
     loginButtonHTML = function () {
         var html = "<button type=\"button\" id=\"loginbutton\"" + 
                           " onclick=\"mor.login.upwlogin();return false;\"" +
-            ">Log in</button>";
+            ">Sign in</button>";
         return html;
     },
 
@@ -444,7 +444,7 @@ define([], function () {
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('loginstatdiv', "Please specify a username and password");
             return; }
-        mor.out('loginbspan', "Logging in...");
+        mor.out('loginbspan', "Signing in...");
         url = secureURL("login");
         data = mor.objdata({ user: username, pass: password });
         mor.call(url, 'POST', data,
@@ -484,7 +484,7 @@ define([], function () {
         for(i = 0; i < altauths.length; i += 1) {
             viadisp = altauths[i].loginDispName || altauths[i].name;
             html = "<a href=\"" + altauths[i].loginurl + "\"" +
-                      " title=\"Log in via " + viadisp + "\"" +
+                      " title=\"Sign in via " + viadisp + "\"" +
                       " onclick=\"mor.login.altLogin(" + i + ");" + 
                                  "return false;\"" +
                 "><img class=\"loginico\"" +
