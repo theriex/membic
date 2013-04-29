@@ -64,6 +64,7 @@ define([], function () {
 
     logout = function () {
         logoutWithNoDisplayUpdate();
+        mor.profile.cancelPenNameSettings();  //close the dialog if it is up
         mor.historyCheckpoint({ view: "profile", profid: 0 });
         mor.login.updateAuthentDisplay();
         mor.login.init();

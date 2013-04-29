@@ -1451,7 +1451,9 @@ define([], function () {
         writeNavDisplay: function (homepen, dispen) {
             writeNavDisplay(homepen, dispen); },
         verifyStateVariableValues: function (pen) {
-            verifyStateVariableValues(pen); }
+            verifyStateVariableValues(pen); },
+        cancelPenNameSettings: function () {
+            cancelPenNameSettings(); }
     };
 
 });
