@@ -579,7 +579,7 @@ define([], function () {
               " title=\"See full review\">";
         if(type.subkey) {
             html += "<i>" + mor.ellipsis(revobj[type.key], 60) + "</i> " +
-                revobj[type.subkey]; }
+                mor.ellipsis(revobj[type.subkey], 40); }
         else {
             html += mor.ellipsis(revobj[type.key], 60); }
         html += "</a>";

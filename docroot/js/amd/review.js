@@ -140,10 +140,11 @@ define([], function () {
         rat = starRating(rating);
         width = Math.floor(rat.step * (imgwidth / rat.maxstep));
         html = "";
-        if(!showblank && !imgclassname) {
-            html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-                        " style=\"width:" + (imgwidth - width) + "px;" +
-                                 "height:" + imgheight + "px;\"/>"; }
+        //add left padding for right justified star display:
+        //if(!showblank && !imgclassname) {
+        //    html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
+        //                " style=\"width:" + (imgwidth - width) + "px;" +
+        //                         "height:" + imgheight + "px;\"/>"; }
         html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                     " style=\"width:" + width + "px;" + 
                              "height:" + imgheight + "px;" +
@@ -166,7 +167,10 @@ define([], function () {
                                      "background:url('img/starsinvg.png');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
-        else if(!imgclassname) { //some horizontal spacing...
+        else if(!imgclassname) { //add right padding for left justified stars
+            html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
+                        " style=\"width:" + (imgwidth - width) + "px;" +
+                                 "height:" + imgheight + "px;\"/>";
             html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                         " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
         return html;
