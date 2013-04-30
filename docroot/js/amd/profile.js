@@ -1235,6 +1235,8 @@ define([], function () {
         if(elem) {
             return; }  //already editing
         val = mor.byId('profcityspan').innerHTML;
+        if(val.startsWith("<a")) {
+            val = mor.byId('profcitya').innerHTML; }
         if(val === unspecifiedCityText) {
             val = ""; }
         html = "<input type=\"text\" id=\"profcityin\" size=\"25\"" +
@@ -1248,12 +1250,18 @@ define([], function () {
 
 
     displayCity = function (pen) {
-        var html = pen.city || unspecifiedCityText;
-        mor.out('profcityspan', html);
+        var html, style = "", grey="#999999";
+        if(!pen.city) {  //grey if no city specified
+            mor.byId('profcityspan').style.color = grey; }
+        html = pen.city || unspecifiedCityText;            
         if(!pen.city) {
-            mor.byId('profcityspan').style.color = "#999999"; }
+            style = " style=\"color:" + grey + ";\""; }
         if(mor.profile.authorized(pen)) {
-            mor.onclick('profcityspan', editCity); }
+            html = "<a href=\"#edit city\" title=\"Edit city\"" +
+                     " id=\"profcitya\"" + 
+                     " onclick=\"mor.profile.editCity();return false;\"" +
+                       style + ">" + html + "</a>"; }
+        mor.out('profcityspan', html);
     },
 
 
@@ -1454,7 +1462,9 @@ define([], function () {
         verifyStateVariableValues: function (pen) {
             verifyStateVariableValues(pen); },
         cancelPenNameSettings: function () {
-            cancelPenNameSettings(); }
+            cancelPenNameSettings(); },
+        editCity: function () {
+            editCity(); }
     };
 
 });

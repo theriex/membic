@@ -184,7 +184,7 @@ define([], function () {
                 "/>";
             if(withtext) {
                 if(greyed) {
-                    label = "<span style=\"color:#CCCCCC;\">" + label + 
+                    label = "<span style=\"color:#999999;\">" + label + 
                         "</span>"; }
                 html += label; } }
         return html;
