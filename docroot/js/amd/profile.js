@@ -302,14 +302,18 @@ define([], function () {
 
 
     changeToSelectedPen = function () {
-        var i, sel = mor.byId('penselect');
+        var i, sel = mor.byId('penselect'), temp = "";
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
-                cancelPenNameSettings();
+                //do not call cancelPenNameSettings before done accessing
+                //the selection elementobjects or IE8 has issues.
                 if(sel.options[i].id === 'newpenopt') {
+                    cancelPenNameSettings();
                     mor.pen.newPenName(mor.profile.display); }
                 else {
-                    mor.pen.selectPenByName(sel.options[i].value); }
+                    temp = sel.options[i].value;
+                    cancelPenNameSettings();
+                    mor.pen.selectPenByName(temp); }
                 break; } }
     },
 
