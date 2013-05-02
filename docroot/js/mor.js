@@ -162,7 +162,7 @@ var mor = {};  //Top level function closure container
         try {
             if(console && console.log) {
                 console.log(text); }
-        } catch(problem) {  //most likely a bad IE console def, just skip it
+        } catch(ignore) {  //most likely a bad IE console def, just skip it
         }
     };
 

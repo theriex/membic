@@ -663,7 +663,7 @@ define([], function () {
 
         
     recent = function () {
-        var html, debugView, maxdate, mindate;
+        var html, maxdate, mindate;
         selectTab("recentli", recent);
         if(recentRevState && recentRevState.initialized) {
             displayRecentReviews(recentRevState); }
@@ -671,7 +671,6 @@ define([], function () {
         mor.out('profcontdiv', html);
         mor.layout.adjust();
         clearReviewSearchState(recentRevState);
-        debugView = recentRevState;
         maxdate = new Date();
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
         recentRevState.params.maxdate = maxdate.toISOString();

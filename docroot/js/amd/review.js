@@ -72,7 +72,7 @@ define([], function () {
             keyprompt: "Name of restaurant or dish",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Breakfast", "Lunch", "Dinner", "Snack", 
+            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Snack", 
                        "Inexpensive", "Expensive", "Fast", "Slow", "Outdoor",
                        "Quiet", "Loud" ] },
           { type: "drink", plural: "drinks", img: "TypeDrink50.png",
@@ -272,7 +272,7 @@ define([], function () {
 
 
     writeNavDisplay = function () {
-        //hook point to update the main actions display area if needed
+        return true;
     },
 
 
@@ -597,12 +597,14 @@ define([], function () {
         keyin = mor.byId('keywordin');
         keywords = keyin.value.split(",");
         for(i = 0; i < keywords.length; i += 1) {
-            kw = keywords[i].trim();
-            if(kw === cbox.value) {
-                kw = ""; }
-            if(text && kw) {  //have a keyword already and appending another
-                text += ", "; }
-            text += kw; }
+            kw = keywords[i];
+            if(kw) {  //have something not a null value or empty string
+                kw = kw.trim();  //remove any extraneous comma space
+                if(kw === cbox.value) {
+                    kw = ""; }
+                if(text && kw) {  //have a keyword already and appending another
+                    text += ", "; }
+                text += kw; } }
         if(cbox.checked) {
             if(text) {
                 text += ", "; }
@@ -622,10 +624,11 @@ define([], function () {
             html += "<td style=\"white-space:nowrap;\">" + 
                 "<input type=\"checkbox\"" +
                       " name=\"dkw" + i + "\"" +
-                      " value=\"" + type.dkwords[i] + "\"" +
                       " id=\"dkw" + i + "\"" + 
-                      " onchange=\"mor.review.toggleKeyword('dkw" + i + "');" +
-                                  "return false;\"";
+                      " value=\"" + type.dkwords[i] + "\"" +
+                      //<IE8 onchange only fires after onblur
+                      " onclick=\"mor.review.toggleKeyword('dkw" + i + "');\"";
+                      //do not return false or check action is nullified
             if(crev.keywords.indexOf(type.dkwords[i]) >= 0) {
                 html += " checked=\"checked\""; }
             html += "/>" +
@@ -1343,10 +1346,10 @@ define([], function () {
 
     deleteReview = function () {
         var url, data;
+        url = "delrev?";
         if(!crev || 
            !confirm("Are you sure you want to delete this review?")) {
             return; }
-        url = "delrev?";
         data = mor.objdata(crev);
         mor.call("delrev?" + mor.login.authparams(), 'POST', data,
                  function (reviews) {
