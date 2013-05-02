@@ -151,6 +151,21 @@ define([], function () {
     },
 
 
+    //ie8 and below don't support cover so we end up with just a postage
+    //stamp image in the middle of the screen.
+    fixTextureCover = function () {
+        var altimg, rules = document.styleSheets[0].cssRules;
+        if(!rules) { //decent css support is missing, fall back
+            //texturePaper.png is 256x192
+            //setting backgroundSize to a scaled up fixed size has no effect
+            //mor.byId('bodyid').style.backgroundSize = "2048px 1536px;";
+            //scaled up image either too large or too pixelated for use
+            //altimg = "url('../img/texturePaperBig.png')";
+            altimg = "url('../img/blank.png')";
+            mor.byId('bodyid').style.backgroundImage = altimg; }
+    },
+
+
     setSoftFocus = function () {
         var revid, focobj;
         if(mor.review.getCurrentReview()) {
@@ -189,7 +204,8 @@ define([], function () {
             mor.dojo.on(window, 'resize', fullContentHeight);
             slideshow();
             localDocLinks();
-            fullContentHeight(); },
+            fullContentHeight();
+            fixTextureCover(); },
         initContent: function () {
             initContent(); },
         adjust: function () {
