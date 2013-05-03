@@ -54,7 +54,7 @@ body {
      1px 1px 0 #000;
 }
 #slidesdiv { height:180px; }
-.slideimg { position:absolute; left:525px; 
+.slideimg { position:absolute; left:535px; margin:auto; padding:auto;
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
   -o-transition: opacity 1s ease-in-out;

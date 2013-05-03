@@ -796,7 +796,7 @@ define([], function () {
             html += "<div id=\"statrevactdiv\">" +
               "<table class=\"statnoticeactlinktable\"><tr>" +
                 "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
-                  mor.imgntxt("editcorev.png",
+                  mor.imgntxt("writereview.png",
                               "Edit<br/>corresponding review",
                               "mor.review.respond()", "#respond") +
                   "</div></td>" +
@@ -1074,7 +1074,7 @@ define([], function () {
         if(review) {
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
             msghtml = "Edit your<br/>" + imghtml + " review"; }
-        html = mor.imgntxt("editcorev.png", msghtml,
+        html = mor.imgntxt("writereview.png", msghtml,
                            "mor.review.respond()", "#respond");
         mor.out('respondbutton', html);
     },

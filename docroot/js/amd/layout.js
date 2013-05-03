@@ -8,7 +8,7 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "slogan.png", "slogan.png",
+    var slides = [ "sloganPadded.png", "sloganPadded.png",
                    "promo_balloons2.png", 
                    "promo_list.png",
                    "promo_cycle.png" ],

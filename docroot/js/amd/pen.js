@@ -168,6 +168,12 @@ define([], function () {
     },
 
 
+    cancelNewPen = function () {
+        mor.login.updateAuthentDisplay();
+        mor.profile.display();
+    },
+
+
     newPenNameDisplay = function (callback) {
         var html, cancelbutton = "";
         returnFuncMemo = callback;
@@ -175,7 +181,7 @@ define([], function () {
         mor.out('centerhdiv', "");
         if(currpen) {
             cancelbutton = "<button type=\"button\" id=\"cancelbutton\"" +
-                                  " onclick=\"mor.profile.display();" + 
+                                  " onclick=\"mor.pen.cancelNewPen();" + 
                                             "return false;\"" +
                 ">Cancel</button>"; }
         //need to mimic layout initContent divs here so they are available
@@ -287,7 +293,9 @@ define([], function () {
         refreshCurrent: function () {
             refreshCurrentPenFields(); },
         deserializeFields: function (pen) {
-            deserializeFields(pen); }
+            deserializeFields(pen); },
+        cancelNewPen: function () {
+            cancelNewPen(); }
     };
 
 });

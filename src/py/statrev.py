@@ -73,7 +73,7 @@ def getTitle(rev):
         return rev.name
     if rev.revtype == "drink":
         return rev.name
-    if rev.revtype == "to do":
+    if rev.revtype == "activity":
         return rev.name
     if rev.revtype == "other":
         return rev.name
@@ -243,9 +243,9 @@ def revhtml(rev, pen):
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
     # HTML content from index.html...
-    html += "<div id=\"mascotdivstatic\">\n"
-    html += "<img src=\"../img/remo.png\" class=\"mascotimg\" border=\"0\"/>\n"
-    html += "</div>\n"
+    # html += "<div id=\"mascotdivstatic\">\n"
+    # html += "<img src=\"../img/remo.png\" class=\"mascotimg\"/>\n"
+    # html += "</div>\n"
     html += "<div id=\"topsectiondiv\">\n"
     html += "  <div id=\"logodiv\">\n"
     html += "    <img src=\"../img/logoMOR.png\" id=\"logoimg\" border=\"0\"\n"
@@ -253,7 +253,8 @@ def revhtml(rev, pen):
     html += "  </div>\n"
     html += "  <div id=\"topworkdiv\">\n"
     html += "    <div id=\"slidesdiv\">\n"
-    html += "      <img src=\"../img/slides/slogan.png\" class=\"slideimg\"/>\n"
+    html += "      <img src=\"../img/slides/sloganPadded.png\""
+    html +=           " class=\"slideimg\"/>\n"
     html += "    </div>\n"
     html += "  </div>\n"
     html += "</div>\n"
@@ -348,7 +349,7 @@ def revhtml(rev, pen):
     html +=         " onclick=\"javascript:window.location.href="
     html +=                    "'../#command=respond&" + penrevparms
     html +=                    "';return false;\"><tr>\n"
-    html +=     "<td><img class=\"navico\" src=\"../img/editcorev.png\""
+    html +=     "<td><img class=\"navico\" src=\"../img/writereview.png\""
     html +=             " border=\"0\"/></td>\n"
     html +=     "<td class=\"buttontabletexttd\">"
     html +=       "Edit your<br/>corresponding review</td>\n"
