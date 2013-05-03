@@ -98,9 +98,9 @@ define([], function () {
                                    "settings.png"); }
             else {
                 html = mor.imglink("#Follow",
-                                   "Follow " + name + " (add to activity feed)",
+                                   "Follow " + name + " review activity",
                                    "mor.profile.relationship()",
-                                   "plus.png"); } }
+                                   "follow.png"); } }
         mor.out('penhbuttonspan', html);
     },
 
