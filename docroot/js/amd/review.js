@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -18,8 +18,6 @@ define([], function () {
         attribution = "",
         //The current review being displayed or edited.
         crev = {},
-        //The error message from the previous server save call, if any.
-        asyncSaveErrTxt = "",
         //Whether the stars are being pointer manipulated now
         starPointingActive = false,
         //The last value used for autocomplete checking
@@ -99,7 +97,6 @@ define([], function () {
     resetStateVars = function () {
         autourl = "";
         crev = {};
-        asyncSaveErrTxt = "";
         attribution = "";
     },
 
@@ -406,14 +403,21 @@ define([], function () {
     },
 
 
-    //there must be a review instance ID for the server to find the
+    //There must be a review instance ID for the server to find the
     //associated review for the image.  The review does NOT need to be
-    //up to date with the latest fields, that's handled during the main
-    //save processing.
+    //up to date with the latest fields (that's handled during the
+    //main save processing), but it needs to exist.  So if no id, then
+    //save first.  However if the user has clicked the save button,
+    //then clicks to upload while the save is going on, then you could
+    //end up with two save AJAX calls queued up which results in a
+    //duplicate review.
     picUploadForm = function () {
         var odiv, html = "", revid = mor.instId(crev);
         if(!revid) {
-            return mor.review.save(false, "uploadpic"); }
+            html = mor.byId('formbuttonstd').innerHTML;
+            if(html.indexOf("<button") >= 0) { //not already saving
+                return mor.review.save(false, "uploadpic"); }
+            return; }  //already saving, just ignore the pic upload click
         html += mor.paramsToFormInputs(mor.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + revid + "\"/>";
         html += "<input type=\"hidden\" name=\"penid\" value=\"" +
@@ -1217,9 +1221,13 @@ define([], function () {
 
 
     saveReview = function (doneEditing, actionstr) {
-        var errors = [], i, errtxt = "", type, url, data;
+        var errors = [], i, errtxt = "", type, url, data, html;
+        //remove save button immediately to avoid double click dupes...
+        html = mor.byId('formbuttonstd').innerHTML;
+        mor.out('formbuttonstd', "Verifying...");
         type = findReviewType(crev.revtype);
         if(!type) {
+            mor.out('formbuttonstd', html);
             mor.out('revsavemsg', "Unknown review type");
             return; }
         noteURLValue();
@@ -1228,6 +1236,7 @@ define([], function () {
         keywordsValid(type, errors);
         reviewTextValid(type, errors);
         if(errors.length > 0) {
+            mor.out('formbuttonstd', html);
             for(i = 0; i < errors.length; i += 1) {
                 errtxt += errors[i] + "<br/>"; }
             mor.out('revsavemsg', errtxt);
@@ -1251,8 +1260,8 @@ define([], function () {
                      else {
                          mor.review.display(actionstr); } },
                  function (code, errtxt) {
-                     asyncSaveErrTxt = "Save failed code: " + code + " " +
-                         errtxt;
+                     mor.log("saveReview failed code: " + code + " " +
+                             errtxt);
                      mor.review.display(); });
     },
 
@@ -1345,10 +1354,9 @@ define([], function () {
 
 
     deleteReview = function () {
-        var url, data;
-        url = "delrev?";
+        var data;
         if(!crev || 
-           !confirm("Are you sure you want to delete this review?")) {
+           !window.confirm("Are you sure you want to delete this review?")) {
             return; }
         data = mor.objdata(crev);
         mor.call("delrev?" + mor.login.authparams(), 'POST', data,

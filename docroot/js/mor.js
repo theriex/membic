@@ -455,7 +455,14 @@ var mor = {};  //Top level function closure container
     //hours ago and just reload everything in that case.  Stale local
     //data sucks.
     mor.call = function (url, method, data, success, failure, errs) {
-        var statcode, errtxt;
+        var statcode, errtxt, start, now, delayms = 1200, temphtml;
+        if(window.location.href.indexOf("localhost:8080") >= 0) {
+            temphtml = mor.byId('logodiv').innerHTML;
+            now = start = new Date().getTime();
+            while(now - start < delayms) {
+                now = new Date().getTime();
+                mor.out('logodiv', "delay " + (now - start)); }
+            mor.out('logodiv', temphtml); }
         mor.dojo.request(url, { method: method, data: data }).then(
             //successful call result processing function
             function (resp) {
