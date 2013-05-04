@@ -13,10 +13,14 @@ define([], function () {
         asyncLoadStarted,
 
 
-    resetStateVars = function () {
+    resetStateVars = function (relstate, pen) {
         outboundRels = null;
         loadoutcursor = null;
         asyncLoadStarted = false;
+        if(relstate === "new") {
+            outboundRels = []; }
+        else if(relstate === "reload") {
+            mor.rel.loadoutbound(pen); }
     },
 
 
@@ -321,8 +325,8 @@ define([], function () {
 
 
     return {
-        resetStateVars: function () {
-            resetStateVars(); },
+        resetStateVars: function (relstate, pen) {
+            resetStateVars(relstate, pen); },
         reledit: function (from, to) {
             createOrEditRelationship(from, to); },
         outbound: function (relatedid) {

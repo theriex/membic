@@ -158,7 +158,7 @@ define([], function () {
                          penNames = []; }
                      penNames.push(currpen);
                      deserializeFields(currpen);
-                     mor.rel.resetStateVars();
+                     mor.rel.resetStateVars("new");
                      mor.activity.resetStateVars();
                      mor.login.updateAuthentDisplay();
                      returnCall(); },
@@ -219,7 +219,7 @@ define([], function () {
                 currpen = penNames[i];
                 mor.skinner.setColorsFromPen(currpen);
                 //reload relationships and activity
-                mor.rel.resetStateVars();
+                mor.rel.resetStateVars("reload", currpen);
                 mor.activity.resetStateVars();
                 //update the accessed time so that the latest pen name is
                 //chosen by default next time. 
