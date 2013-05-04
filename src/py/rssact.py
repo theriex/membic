@@ -65,7 +65,7 @@ def rss_content(penid, reviews, checked, following):
         txt += "<item rdf:about=\"" + item_url(review) + "\">\n"
         txt += "<title><![CDATA[" + rss_title(review) + "]]></title>\n"
         txt += "<link>" + item_url(review) + "</link>\n"
-        txt += "<description><![CDATA[" + review.text + "\n"
+        txt += "<description><![CDATA[" + safestr(review.text) + "\n"
         txt += safestr(review.keywords) + "]]></description>\n"
         txt += "<dc:date>" + review.modified + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
