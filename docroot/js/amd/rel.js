@@ -260,6 +260,7 @@ define([], function () {
             newrel = {};
             newrel.originid = mor.instId(originator);
             newrel.relatedid = mor.instId(related);
+            mor.assert(newrel.originid && newrel.relatedid);
             newrel.status = "following";
             newrel.mute = "";
             newrel.cutoff = 0;

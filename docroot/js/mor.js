@@ -173,6 +173,13 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.assert = function (testval) {
+        if(!testval) {
+            mor.err("An application integrity check has failed. Don't even bother acknowledging this message, just reload the page in your browser.");
+            mor.init(); }
+    };
+
+
     mor.byId = function (elemid) {
         return document.getElementById(elemid);
     };
