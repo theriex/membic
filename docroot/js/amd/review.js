@@ -131,8 +131,9 @@ define([], function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
-        //also change revtextsummary if image width changes..
-        var imgwidth = 80, imgheight = 14, width, offset, rat, html,
+        //if changing imgwidth/height, also change mor.css .revtextsummary
+        var imgwidth = 85, imgheight = 15, imgfile = "img/stars18ptC.png",
+            width, offset, rat, html,
             cname = imgclassname || "starsimg";
         rat = starRating(rating);
         width = Math.floor(rat.step * (imgwidth / rat.maxstep));
@@ -145,7 +146,7 @@ define([], function () {
         html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                     " style=\"width:" + width + "px;" + 
                              "height:" + imgheight + "px;" +
-                             "background:url('img/starsinv.png');\"" +
+                             "background:url('" + imgfile + "');\"" +
                     " title=\"" + rat.title + "\" alt=\"" + rat.title + "\"/>";
         if(showblank) {
             if(rat.step % 2 === 1) {  //odd, use half star display
@@ -153,7 +154,7 @@ define([], function () {
                 html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
-                                     "background:url('img/starsinvg.png')" +
+                                     "background:url('" + imgfile + "')" +
                                                 " -" + offset + "px 0;\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; }
@@ -161,7 +162,7 @@ define([], function () {
                 html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
                             " style=\"width:" + (imgwidth - width) + "px;" + 
                                      "height:" + imgheight + "px;" +
-                                     "background:url('img/starsinvg.png');\"" +
+                                     "background:url('" + imgfile + "');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
         else if(!imgclassname) { //add right padding for left justified stars
