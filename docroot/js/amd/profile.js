@@ -132,9 +132,13 @@ define([], function () {
     },
 
 
-    cancelPenNameSettings = function () {
+    cancelPenNameSettings = function (actionTxt) {
         mor.skinner.cancel();
         mor.layout.closeDialog();
+        if(actionTxt) {
+            //nuke the main display as we are about to rebuild contents
+            mor.out('centerhdiv', "");
+            mor.out('cmain', actionTxt); }
     },
 
 
@@ -308,11 +312,11 @@ define([], function () {
                 //do not call cancelPenNameSettings before done accessing
                 //the selection elementobjects or IE8 has issues.
                 if(sel.options[i].id === 'newpenopt') {
-                    cancelPenNameSettings();
+                    cancelPenNameSettings("Creating new pen name...");
                     mor.pen.newPenName(mor.profile.display); }
                 else {
                     temp = sel.options[i].value;
-                    cancelPenNameSettings();
+                    cancelPenNameSettings("Switching pen names...");
                     mor.pen.selectPenByName(temp); }
                 break; } }
     },
