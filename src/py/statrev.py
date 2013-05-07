@@ -81,11 +81,14 @@ def getTitle(rev):
 
 
 def getSubkey(rev):
+    subkey = ""
     if rev.revtype == "book":
-        return rev.author
+        subkey = rev.author
     if rev.revtype == "music":
-        return rev.artist
-    return ""
+        subkey = rev.artist
+    if subkey:
+        subkey = "<td><span class=\"revauthor\">" + subkey + "</span></td>"
+    return subkey
 
 
 def urlImageLink(rev):
@@ -317,13 +320,13 @@ def revhtml(rev, pen):
     html +=             "</td>\n"
     html +=           "<td><span class=\"revtitle\">" + getTitle(rev)
     html +=             "</span></td>\n"
-    html +=           "<td><span class=\"revauthor\">" + getSubkey(rev)
-    html +=             "</span></td>\n"
+    html +=           getSubkey(rev) + "\n"
     html +=           "<td>" + urlImageLink(rev) + "</td>\n"
     html +=         "</tr>\n"
     html +=         "<tr><td colspan=\"4\">\n"
-    html +=           "<div id=\"reviewtext\" class=\"shoutout\""
-    html +=               " style=\"width:600px;\">\n"
+    # not specifying class=\"shoutout\" for text, height can vary.
+    html +=           "<div id=\"reviewtext\""
+    html +=               " style=\"width:600px;padding:10px;\">\n"
     html +=             displayText(rev.text) + "</div>\n"
     html +=         "</td></tr>\n"
     html +=         "<tr>\n"
@@ -352,7 +355,7 @@ def revhtml(rev, pen):
     html +=     "<td><img class=\"navico\" src=\"../img/writereview.png\""
     html +=             " border=\"0\"/></td>\n"
     html +=     "<td class=\"buttontabletexttd\">"
-    html +=       "Edit your<br/>corresponding review</td>\n"
+    html +=       "Your review</td>\n"
     html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     # remember button
@@ -364,7 +367,7 @@ def revhtml(rev, pen):
     html +=     "<td><img class=\"navico\" src=\"../img/rememberq.png\""
     html +=             " border=\"0\"/></td>\n"
     html +=     "<td class=\"buttontabletexttd\">"
-    html +=       "Remember this<br/>review?</td>\n"
+    html +=       "Remember</td>\n"
     html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     html += "</tr></table>"

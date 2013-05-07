@@ -802,19 +802,23 @@ define([], function () {
             html += "<div id=\"statrevactdiv\">" +
               "<table class=\"statnoticeactlinktable\"><tr>" +
                 "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
+                  //this contents is rewritten after looking up their review
                   mor.imgntxt("writereview.png",
-                              "Edit<br/>corresponding review",
-                              "mor.review.respond()", "#respond") +
+                              "Your review",
+                              "mor.review.respond()", "#respond",
+                              "Edit your corresponding review", "", "respond") +
                   "</div></td>" +
                 "<td><div id=\"memobutton\" class=\"buttondiv\">";
             if(isRemembered(pen, review)) {
                 html += mor.imgntxt("remembered.png",
-                                    "Stop remembering<br/>this review",
-                                    "mor.review.memo(true)", "#nomemo"); }
+                                    "Remembered",
+                                    "mor.review.memo(true)", "#nomemo",
+                                    "Click to stop remembering", "", "memo"); }
             else {
                 html += mor.imgntxt("rememberq.png",
-                                    "Remember this<br/>review?",
-                                    "mor.review.memo(false)", "#memo"); }
+                                    "Remember",
+                                    "mor.review.memo(false)", "#memo",
+                                    "Click to remember", "", "memo"); }
             html += "</div></td></tr></table></div>"; }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
@@ -1076,12 +1080,13 @@ define([], function () {
 
 
     displayCorrespondingReviewInfo = function (pen, review) {
-        var html, imghtml, msghtml = "Create your<br/>corresponding review";
+        var html, imghtml, msghtml = "Your review";
         if(review) {
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
-            msghtml = "Edit your<br/>" + imghtml + " review"; }
+            msghtml = "Your review: " + imghtml; }
         html = mor.imgntxt("writereview.png", msghtml,
-                           "mor.review.respond()", "#respond");
+                           "mor.review.respond()", "#respond",
+                           "Edit your corresponding review", "", "respond");
         mor.out('respondbutton', html);
     },
 
@@ -1291,12 +1296,11 @@ define([], function () {
     copyAndEdit = function (pen, review) {
         if(!review) {
             review = {};
-            review.srcrev = mor.instId(crev); }
-        //If instantiating a new review, then copy some base fields over
-        review.penid = mor.instId(pen);
-        review.revtype = crev.revtype;
-        review.rating = crev.rating;  //initial value required..
-        review.cankey = crev.cankey;
+            review.srcrev = mor.instId(crev);
+            review.penid = mor.instId(pen);
+            review.revtype = crev.revtype;
+            review.rating = crev.rating;  //initial value required..
+            review.cankey = crev.cankey; }
         //Fill in any empty descriptive fields
         if(crev.imguri && !review.imguri && !review.revpic) {
             review.imguri = crev.imguri; }
@@ -1470,11 +1474,15 @@ define([], function () {
         initWithId: function (revid, mode, action) {
             initWithId(revid, mode, action); },
         respond: function () {
-            mor.pen.getPen(function (pen) {
-                findCorrespondingReview(pen, copyAndEdit); }); },
+            mor.byId('respondtxttd').style.color = "#666666";
+            setTimeout(function () {
+                mor.pen.getPen(function (pen) {
+                    findCorrespondingReview(pen, copyAndEdit); }); }, 50); },
         memo: function (remove) {
-            mor.pen.getPen(function (pen) {
-                addReviewToMemos(pen, remove); }); },
+            mor.byId('memotxttd').style.color = "#666666";
+            setTimeout(function () {
+                mor.pen.getPen(function (pen) {
+                    addReviewToMemos(pen, remove); }); }, 50); },
         graphicAbbrevSiteLink: function (url) {
             return graphicAbbrevSiteLink(url); },
         swapVidTitleAndArtist: function () {
