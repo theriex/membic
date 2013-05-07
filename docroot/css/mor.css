@@ -42,17 +42,6 @@ body {
   box-shadow:8px 8px 4px #cccccc; height:250px; }
 #logodiv {          width:512px; float:left; }
 #topworkdiv { margin-left:525px; }
-#logotitle { 
-  font-size:xx-large;
-  font-weight:bold;
-  letter-spacing:1px;
-  color:#2f478e;
-  text-shadow:
-   -1px -1px 0 #000,
-    1px -1px 0 #000,
-    -1px 1px 0 #000,
-     1px 1px 0 #000;
-}
 #slidesdiv { height:180px; }
 .slideimg { position:absolute; left:535px; margin:auto; padding:auto;
   -webkit-transition: opacity 1s ease-in-out;
@@ -62,7 +51,6 @@ body {
 }
 #topactionstable { }
 #topactionstable td { padding:0px; }
-#topactrow2spacetd { width:20px; }
 .topnavitemdiv { }
 
 /* main display area and contained elements */
@@ -70,9 +58,6 @@ body {
 #centerhdiv { display:table; margin:10px auto; }
 #centerhdivstatic { margin:0px 0px 0px 240px; }
 .instructional { font-size:x-large; font-weight:bold; }
-#accountinfodisp { float:right; padding:5px 30px; }
-#titlediv { position:absolute; left:0px; top:0px; width:90%; 
-  padding:0px 10px; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:x-small; }
@@ -146,15 +131,13 @@ body {
  }
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
-.headingfont, .headingtxt { font-size:large; font-weight:bold; }
-.headingtxt { text-align:center; }
+.headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
 .textright { text-align:right; }
 .penlist { list-style:none; padding:0; margin:0; }
 .sumtotal { font-size:small; }
 #srchmessagespan { font-size:small; }
 .smalltext { font-size:small; }
-#relbutton { vertical-align:middle; }
 .reviewformul { list-style:none; padding:0; margin:0; }
 .revdisptable { margin-left:auto; margin-right:auto; }
 .revdisptable td { padding:2px 5px; }
@@ -162,12 +145,10 @@ body {
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
-.nopadtable td { padding:0px; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revpic { width:125px; height:125px; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
-.webabbrev { font-size:x-small; }
 .csvstrdiv { padding:5px; }
 #actmodediv { padding:0px 0px 20px 0px; }
 .bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
@@ -187,7 +168,6 @@ body {
 #statrevactdiv { text-align:center; padding:10px; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; }
-#correspRevInfoDiv { padding:10px 0px; }
 .inlinestarsimg { vertical-align:bottom; }
 .starsimg { vertical-align:middle; }
 .permalink { font-size:xx-small; }
