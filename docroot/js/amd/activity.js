@@ -16,7 +16,7 @@ define([], function () {
         revcache = {},
         badrevids = [],
         dispmode = "activity",  //other value option is "memo"
-        activityTitleText = "Recent friend activity",
+        activityTitleText = "Recent friend reviews",
         rememberedTitleText = "Remembered reviews",
 
 
@@ -59,7 +59,7 @@ define([], function () {
         if(dispmode === "activity") {
             url = "rssact?pen=" + mor.pen.currPenId();
             html = activityTitleText + " " + 
-                mor.imglink(url, "Activity RSS Feed",
+                mor.imglink(url, "RSS feed for recent friend reviews",
                             "window.open('" + url + "')", 
                             "rssicon.png", "rssico"); }
         else if(dispmode === "memo") {
