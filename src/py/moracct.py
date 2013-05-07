@@ -256,7 +256,11 @@ def intz(val):
 def safestr(val):
     if not val:
         return ""
-    return str(val)
+    try:
+        val = str(val)
+    except:
+        val = val.encode('ascii', 'xmlcharrefreplace')
+    return val
 
 
 def safeURIEncode(stringval, stripnewlines = False):
