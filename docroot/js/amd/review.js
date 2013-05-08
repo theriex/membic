@@ -132,6 +132,7 @@ define([], function () {
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
         //if changing imgwidth/height, also change mor.css .revtextsummary
+        //and corresponding function in statrev.py
         var imgwidth = 85, imgheight = 15, 
             imgfile = "img/stars18ptC.png", greyfile = "img/stars18ptCg.png",
             width, offset, rat, html,
