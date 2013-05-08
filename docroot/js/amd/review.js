@@ -79,7 +79,7 @@ define([], function () {
             fields: [ "address" ],
             dkwords: [ "Traditional", "Innovative", "Inexpensive", "Expensive",
                        "Essential", "Special", "Quiet", "Loud", "Outdoor" ] },
-          { type: "activity", plural: "activities", img: "TypeBucket50.png",
+          { type: "activity", plural: "activities", img: "TypeActivity50.png",
             keyprompt: "Name of activity, place, or event",
             key: "name", //subkey
             fields: [ "address" ],

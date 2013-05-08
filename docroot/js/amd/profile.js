@@ -98,7 +98,7 @@ define([], function () {
                                    "settings.png"); }
             else {
                 html = mor.imglink("#Follow",
-                                   "Follow " + name + " review activity",
+                                   "Follow " + name + " reviews",
                                    "mor.profile.relationship()",
                                    "follow.png"); } }
         mor.out('penhbuttonspan', html);

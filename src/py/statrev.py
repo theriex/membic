@@ -49,7 +49,7 @@ def typeImage(revtype):
     elif revtype == "drink":
         return "TypeDrink50.png"
     elif revtype == "to do":
-        return "TypeBucket50.png"
+        return "TypeActivity50.png"
     return "TypeOther50.png"
 
 
