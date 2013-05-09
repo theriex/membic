@@ -12,7 +12,6 @@ define([], function () {
         revs, 
         lastChecked, 
         actcursor = "",
-        actsrchtotal = 0,
         revcache = {},
         badrevids = [],
         dispmode = "activity",  //other value option is "memo"
@@ -25,7 +24,6 @@ define([], function () {
         revs = null;
         lastChecked = null;
         actcursor = "";
-        actsrchtotal = 0;
         revcache = {};
         badrevids = [];
         dispmode = "activity";
@@ -197,7 +195,6 @@ define([], function () {
             actcursor = "";
             for(i = 0; i < results.length; i += 1) {
                 if(results[i].fetched) {
-                    actsrchtotal += results[i].fetched;
                     if(results[i].cursor) {
                         actcursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
