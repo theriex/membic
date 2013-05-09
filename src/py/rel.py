@@ -11,6 +11,7 @@ class Relationship(db.Model):
     """ A relationship from one Pen Name to another. """
     originid = db.IntegerProperty(required=True)
     relatedid = db.IntegerProperty(required=True)
+    modified = db.StringProperty()  # iso date
     # No relationship means "not following".  The remaining possible 
     # status values are "following" or "blocked".
     status = db.StringProperty()
@@ -98,6 +99,7 @@ class CreateRelationship(webapp2.RequestHandler):
         cutoffstr = self.request.get('cutoff')
         if cutoffstr:
             rel.cutoff = intz(cutoffstr)
+        rel.modified = nowISO()
         elements = add_relationship(rel)
         returnJSON(self.response, elements)
 
@@ -130,6 +132,7 @@ class UpdateRelationship(webapp2.RequestHandler):
         cutoffstr = self.request.get('cutoff')
         if cutoffstr:
             rel.cutoff = intz(cutoffstr)
+        rel.modified = nowISO()
         rel.put()
         returnJSON(self.response, [ rel ])
 
@@ -151,10 +154,13 @@ class FindRelationships(webapp2.RequestHandler):
         elif relatedid:
             field = "relatedid"
             value = intz(relatedid)
-        where = "WHERE " + field + "=:1 LIMIT 20"
+        where = "WHERE " + field + "=:1"
+        where += " ORDER BY modified DESC"  # newest first
+        where += " LIMIT 20"
         offset = self.request.get('offset')
         if offset:
             where += " OFFSET " + offset
+        logging.info("rel query where: " + where)
         rels = Relationship.gql(where, value)
         cursor = self.request.get('cursor')
         if cursor:
@@ -174,8 +180,19 @@ class FindRelationships(webapp2.RequestHandler):
         returnJSON(self.response, results, cursor, pulled)
 
     
+class VerifyRelationships(webapp2.RequestHandler):
+    def get(self):
+        rels = Relationship.all()
+        for rel in rels:
+            if not rel.modified:
+                rel.modified = nowISO();
+                rel.put()
+        writeTextResponse("done verifying relationships", self.response)
+
+
 app = webapp2.WSGIApplication([('/newrel', CreateRelationship),
                                ('/updrel', UpdateRelationship),
                                ('/delrel', DeleteRelationship),
+                               ('/verifrel', VerifyRelationships),
                                ('/findrels', FindRelationships)], debug=True)
 

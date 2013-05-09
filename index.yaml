@@ -10,6 +10,18 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Relationship
+  properties:
+  - name: originid
+  - name: modified
+    direction: desc
+
+- kind: Relationship
+  properties:
+  - name: relatedid
+  - name: modified
+    direction: desc
+
 - kind: Review
   properties:
   - name: cankey
