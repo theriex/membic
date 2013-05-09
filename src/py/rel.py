@@ -180,19 +180,8 @@ class FindRelationships(webapp2.RequestHandler):
         returnJSON(self.response, results, cursor, pulled)
 
     
-class VerifyRelationships(webapp2.RequestHandler):
-    def get(self):
-        rels = Relationship.all()
-        for rel in rels:
-            if not rel.modified:
-                rel.modified = nowISO();
-                rel.put()
-        writeTextResponse("done verifying relationships", self.response)
-
-
 app = webapp2.WSGIApplication([('/newrel', CreateRelationship),
                                ('/updrel', UpdateRelationship),
                                ('/delrel', DeleteRelationship),
-                               ('/verifrel', VerifyRelationships),
                                ('/findrels', FindRelationships)], debug=True)
 
