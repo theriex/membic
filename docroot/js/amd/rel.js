@@ -67,11 +67,31 @@ define([], function () {
     },
 
 
+    followBackLink = function (pen) {
+        var i, outrel, penid, html;
+        penid = mor.instId(pen);
+        for(i = 0; i < outboundRels.length; i += 1) {
+            outrel = outboundRels[i];
+            if(outrel.relatedid === penid) {
+                return ""; } }  //already following
+        html = " <a href=\"#followback\" title=\"follow " + pen.name + "\"" +
+                  " onclick=\"mor.rel.followBack(" + mor.instId(pen) + ");" +
+                             "return false;\"" +
+                  " class=\"smalltext\"" +
+            ">[follow back]</a>";
+        return html;
+    },
+
+
     //factored method to avoid a firebug stepping bug
     dumpPenItems = function (dispobj) {
-        var i, html = "";
+        var i, html = "", temp;
         for(i = 0; i < dispobj.pens.length; i += 1) {
-            html += mor.profile.penListItemHTML(dispobj.pens[i]); }
+            temp = mor.profile.penListItemHTML(dispobj.pens[i]);
+            if(dispobj.direction === "inbound") {  //showing followers
+                temp = temp.slice(0, temp.indexOf("</li>"));
+                temp += followBackLink(dispobj.pens[i]) + "</li>"; }
+            html += temp; }
         return html;
     },
 
@@ -249,7 +269,7 @@ define([], function () {
     },
 
 
-    createOrEditRelationship = function (originator, related) {
+    createOrEditRelationship = function (originator, related, profid) {
         var rel, newrel, data;
         rel = findOutboundRelationship(mor.instId(related));
         if(rel) {
@@ -271,10 +291,20 @@ define([], function () {
                          mor.profile.updateCache(newrels[1]); //related
                          outboundRels.push(newrels[2]);       //relationship
                          mor.activity.resetStateVars();       //feed display
-                         mor.profile.byprofid(mor.instId(newrels[1])); },
+                         if(!profid) {
+                             profid = mor.instId(newrels[1]); }
+                         mor.profile.byprofid(profid); },
                      function (code, errtxt) {
                          mor.err("Relationship creation failed code " + code +
                                  ": " + errtxt); }); }
+    },
+
+
+    addFollowerDisplayHome = function (followerid) {
+        mor.pen.getPen(function (homepen) {
+            mor.profile.retrievePen(followerid, function (followerpen) {
+                createOrEditRelationship(homepen, followerpen,
+                                         mor.instId(homepen)); }); });
     },
 
 
@@ -339,7 +369,9 @@ define([], function () {
         alloutbound: function () {
             return outboundRels; },
         displayRelations: function (dispobj) {
-            return displayRelatedPens(dispobj); }
+            return displayRelatedPens(dispobj); },
+        followBack: function (followerid) {
+            addFollowerDisplayHome(followerid); }
     };
 
 });
