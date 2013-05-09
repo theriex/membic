@@ -264,7 +264,7 @@ define([], function () {
         var html, i, pid;
         html = "<table>" +
           "<tr>" + 
-            "<td align=\"right\">Theme</td>" +
+            "<td align=\"right\">Display</td>" +
             "<td align=\"left\">" +
                 "<select id=\"presetsel\">";
         for(i = 0; i < presets.length; i += 1) {

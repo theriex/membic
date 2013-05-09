@@ -223,12 +223,12 @@ define([], function () {
     loginInfoHTML = function () {
         var html, iconurl;
         switch(authmethod) {
-            case "mid": iconurl = "img/remo.png"; break;
+            case "mid": iconurl = "img/iconMOR.png"; break;
             case "fbid": iconurl = mor.facebook.iconurl; break;
             case "twid": iconurl = mor.twitter.iconurl; break;
             case "gsid": iconurl = mor.googleplus.iconurl; break;
             case "ghid": iconurl = mor.github.iconurl; break; }
-        html = "<img class=\"loginico\" src=\"" + iconurl + "\" />" +
+        html = "<img class=\"loginico\" src=\"" + iconurl + "\" /> " +
             "<em>" + authname + "</em> &nbsp; " +
             "<a href=\"logout\" id=\"logout\"" + 
               " onclick=\"mor.login.logout();return false;\"" +

@@ -154,8 +154,9 @@ define([], function () {
 
     displayAuthSettings = function (domid, pen) {
         var atname, html;
-        html = "Authenticated access: " +
-            "<div id=\"accountdiv\">" + mor.login.loginInfoHTML() + "</div>" +
+        html = "<div id=\"accountdiv\">" + mor.login.loginInfoHTML() + 
+            "</div>" +
+            "Access \"" + pen.name + "\" via: " +
             "<table>";
         //MyOpenReviews
         atname = nameForAuthType("mid");
@@ -353,17 +354,18 @@ define([], function () {
             "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">" + 
+            "<td rowspan=\"2\" align=\"right\" valign=\"top\">" + 
               "<img src=\"img/penname.png\" alt=\"Pen Name\"/></td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
                     " value=\"" + pen.name + "\"/></td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
+            //td from previous row
+            "<td id=\"settingsauthtd\"></td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\" id=\"settingsauthtd\"></td>" +
+            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
           "</tr>" +
           "<tr>" + 
             "<td colspan=\"2\" id=\"consvcstd\"></td>" +

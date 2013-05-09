@@ -60,7 +60,7 @@ body {
 .instructional { font-size:x-large; font-weight:bold; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
-#accountdiv { font-size:x-small; }
+#accountdiv { font-size:small; }
 #appspacediv, #appspacedivstatic { }
 #appspacediv { padding:15px 40px 0px 72px; width:80%;}
 #appspacedivstatic { padding:0px 15px 10px 5px; }
