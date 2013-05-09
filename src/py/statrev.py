@@ -10,8 +10,8 @@ import math
 
 
 def starsImageHTML(rating):
-    imgwidth = 85
-    imgheight = 15
+    imgwidth = 85.0
+    imgheight = 15.0
     imgfile = "../img/stars18ptC.png"
     starTitles = [ "No stars", "Half a star", "One star", 
                    "One and a half stars", "Two stars", "Two and a half stars",
@@ -25,6 +25,8 @@ def starsImageHTML(rating):
     step = int(math.floor((rating * maxstep) / 100))
     title = starTitles[step]
     width = int(math.floor(step * (imgwidth / maxstep)))
+    logging.info("step: " + str(step));
+    logging.info("width: " + str(width));
     html = "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
                " style=\"width:" + str(imgwidth - width) + "px;" +\
                         "height:" + str(imgheight) + "px;\"/>" +\
