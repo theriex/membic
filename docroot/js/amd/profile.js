@@ -409,12 +409,15 @@ define([], function () {
     },
 
 
-    badgeDispHTML = function (hastop) {
-        var html = "", i, values, type;
-        values = hastop.split(",");
-        for(i = 0; i < values.length; i += 1) {
-            type = mor.review.getReviewTypeByValue(values[i]);
-            html += mor.review.badgeImageHTML(type); }
+    badgeDispHTML = function (pen) {
+        var html, i, reviewTypes, typename;
+        html = "";
+        mor.pen.deserializeFields(pen);
+        reviewTypes = mor.review.getReviewTypes();
+        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            if(pen.top20s[typename] && pen.top20s[typename].length >= 20) {
+                html += mor.review.badgeImageHTML(reviewTypes[i]); } }
         return html;
     },
 
@@ -423,7 +426,7 @@ define([], function () {
         var penid = mor.instId(pen), picuri, hash, linktitle, html;
         hash = mor.objdata({ view: "profile", profid: penid });
         linktitle = mor.ellipsis(pen.shoutout, 75);
-        if(!linktitle) {  //do not encode pen name here.  No First%20Last..
+        if(!linktitle) {  //do not encode pen name here.  No "First%20Last"..
             linktitle = "View profile for " + pen.name; }
         html = "<li>" +
             "<a href=\"#" + hash + "\"" +
@@ -437,8 +440,7 @@ define([], function () {
             "</span>" + "</a>";
         if(pen.city) {
             html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
-        if(pen.hastop) {
-            html += badgeDispHTML(pen.hastop); }
+        html += badgeDispHTML(pen);
         html += "</li>";
         return html;
     },
@@ -837,7 +839,7 @@ define([], function () {
 
     //When searching pen names, the server handles the "active since"
     //restriction by checking the "accessed" field, and the "top 20"
-    //restriction by testing the "hastop" field.  However it does not
+    //restriction by looking through those, however it does not
     //handle joins across relationships due to indexing overhead, so
     //these are filtered out here.
     filtered = function (searchitem) {
