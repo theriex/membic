@@ -135,7 +135,7 @@ define([], function () {
     cancelPenNameSettings = function (actionTxt) {
         mor.skinner.cancel();
         mor.layout.closeDialog();
-        if(actionTxt) {
+        if(actionTxt && typeof actionTxt === "string") {
             //nuke the main display as we are about to rebuild contents
             mor.out('centerhdiv', "");
             mor.out('cmain', actionTxt); }
