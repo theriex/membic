@@ -151,7 +151,7 @@ body {
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
 .csvstrdiv { padding:5px; }
 #actmodediv { padding:0px 0px 20px 0px; }
-.bigoverlabel { font-size:large; padding:25px 0px 0px 0px; }
+.bigoverlabel { font-size:large; font-weight:bold; padding:25px 0px 0px 0px; }
 #statnoticediv { background:#eee; padding:15px;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; text-align:center;

@@ -360,29 +360,10 @@ define([], function () {
         html = "<div id=\"revfdiv\" class=\"formstyle\" align=\"center\">" +
             "<div id=\"formrejustifydiv\" class=\"centertablediv\">" +
               "<ul class=\"reviewformul\">";
-        if(autourl) {
-            html += "<li><a href=\"" + autourl + "\">" + autourl + 
-                "</a></li>"; }
-        else {
-            html += "<li><table border=\"0\"><tr><td colspan=\"2\">" + 
-                "<div class=\"bigoverlabel\">" + 
-                  "Paste a web address for the review (if available):" + 
-                "</div></td></tr><tr>" +
-                "<td align=\"right\">URL</td>" +
-                "<td align=\"left\">" +
-                  "<input type=\"text\" id=\"urlin\" size=\"40\"" +
-                        " onchange=\"mor.review.readURL();return false;\"" + 
-                    "/>&nbsp;" +
-                "<span id=\"readurlbuttoncontainer\">" +
-                  "<button type=\"button\" id=\"readurlbutton\"" +
-                         " onclick=\"mor.review.readURL();return false;\"" +
-                         " title=\"Read review form fields from pasted URL\"" +
-                  ">Read</button></span>" +
-                "</td>" +
-              "</tr></table></li>"; }
+        //type selection
         html += "<li><table border=\"0\"><tr><td colspan=\"4\">" + 
             "<div class=\"bigoverlabel\">" + 
-              "Choose a review type:</div></td></tr>";
+              "Choose a review type</div></td></tr>";
         for(i = 0; i < reviewTypes.length; i += 1) {
             if(tdc === 0) {
                 html += "<tr>"; }
@@ -397,7 +378,29 @@ define([], function () {
             if(tdc === 4 || i === reviewTypes.length -1) {
                 html += "</tr>";
                 tdc = 0; } }
-        html += "</table></li></ul></div></div>";
+        html += "</table></li>";
+        //url paste and read
+        if(autourl) {
+            html += "<li><a href=\"" + autourl + "\">" + autourl + 
+                "</a></li>"; }
+        else {
+            html += "<li><table border=\"0\"><tr><td colspan=\"2\">" + 
+                "<div class=\"bigoverlabel\">" + 
+                  "or paste a web address to read information from" + 
+                "</div></td></tr><tr>" +
+                "<td align=\"right\">URL</td>" +
+                "<td align=\"left\">" +
+                  "<input type=\"text\" id=\"urlin\" size=\"40\"" +
+                        " onchange=\"mor.review.readURL();return false;\"" + 
+                    "/>&nbsp;" +
+                "<span id=\"readurlbuttoncontainer\">" +
+                  "<button type=\"button\" id=\"readurlbutton\"" +
+                         " onclick=\"mor.review.readURL();return false;\"" +
+                         " title=\"Read review form fields from pasted URL\"" +
+                  ">Read</button></span>" +
+                "</td>" +
+              "</tr></table></li>"; }
+        html += "</ul></div></div>";
         if(!mor.byId('cmain')) {
             mor.layout.initContent(); }
         mor.out('cmain', html);
