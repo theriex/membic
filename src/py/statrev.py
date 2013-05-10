@@ -252,14 +252,16 @@ def revhtml(rev, pen):
     # html += "<div id=\"mascotdivstatic\">\n"
     # html += "<img src=\"../img/remo.png\" class=\"mascotimg\"/>\n"
     # html += "</div>\n"
-    html += "<div id=\"topsectiondiv\">\n"
-    html += "  <div id=\"logodiv\">\n"
+    # watch the height on this next div, overflow causes major ad placement skew
+    html += "<div id=\"topsectiondiv\" style=\"height:130px;\">\n"
+    html += "  <div id=\"logodiv\" style=\"width:260px;\">\n"
     html += "    <img src=\"../img/logoMOR.png\" id=\"logoimg\" border=\"0\"\n"
-    html += "         onclick=\"mor.profile.display();return false;\"/>\n"
+    html += "         onclick=\"mor.profile.display();return false;\"\n"
+    html += "         style=\"width:260px;height:120px;\"/>\n"
     html += "  </div>\n"
     html += "  <div id=\"topworkdiv\">\n"
-    html += "    <div id=\"slidesdiv\">\n"
-    html += "      <img src=\"../img/slides/sloganPadded.png\""
+    html += "    <div id=\"slidesdiv\" style=\"height:120px;\">\n"
+    html += "      <img src=\"../img/slides/slogan.png\""
     html +=           " class=\"slideimg\"/>\n"
     html += "    </div>\n"
     html += "  </div>\n"
@@ -269,7 +271,7 @@ def revhtml(rev, pen):
     # older android browser won't keep divs on same line..
     html += "<table id=\"forceAdsSameLineTable\">"
     html += " <tr>"
-    html += "  <td valign=\"top\">"
+    html += "  <td valign=\"top\" align=\"left\">"
 
     # This is a public facing page, not a logged in page, so show some
     # ads to help pay for hosting service. Yeah right. 
