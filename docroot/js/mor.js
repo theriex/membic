@@ -462,7 +462,7 @@ var mor = {};  //Top level function closure container
     //hours ago and just reload everything in that case.  Stale local
     //data sucks.
     mor.call = function (url, method, data, success, failure, errs) {
-        var statcode, errtxt, start, now, delayms = 1200, temphtml;
+        var statcode, errtxt, start, now, delayms = 300, temphtml;
         if(window.location.href.indexOf("localhost:8080") >= 0) {
             temphtml = mor.byId('logodiv').innerHTML;
             now = start = new Date().getTime();

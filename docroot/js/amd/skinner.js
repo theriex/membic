@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -9,7 +9,14 @@ define([], function () {
     "use strict";
 
     var oldcolors,
-        colorcontrols,
+        colorwidget,
+        colorctrl,
+        colorctrls = [ { id: "bodybg",  label: "background" },
+                       { id: "darkbg",  label: "shadow" },
+                       { id: "lightbg", label: "text area" },
+                       { id: "text",    label: "text" },
+                       { id: "link",    label: "link" },
+                       { id: "hover",   label: "hover" } ],
         //Blue links are the most recognizable, they are not fun.
         presets = [ { name: "paper (warm)",   id: "paperw", 
                        bodybg: "#fffffc",   text: "#111111",
@@ -163,103 +170,6 @@ define([], function () {
     },
 
 
-    colorBump = function (colorfield, index, bump) {
-        var color = mor.colors[colorfield], cvals;
-        cvals = colorToColorArray(color);
-        cvalAdjust(cvals, index, bump);
-        color = colorArrayToColor(cvals);
-        return color;
-    },
-
-
-    safeSetColor = function (colorfield, domid, color) {
-        var cvals, i;
-        if(color.indexOf("#") === 0) {
-            color = color.slice(1); }
-        if(color.length === 3) {  //e.g. #ccc
-            color = color.slice(0,1) + color.slice(0,1) +
-                    color.slice(1,2) + color.slice(1,2) +
-                    color.slice(2) + color.slice(2); }
-        if(color.length !== 6) {
-            alert("Not a valid html color code.");
-            return; }
-        cvals = colorToColorArray(color);
-        for(i = 0; i < cvals.length; i += 1) {
-            if(typeof cvals[i] !== "number" ||
-               cvals[i] < 0 || cvals[i] > 255) {
-                alert("Not a valid html color code.");
-                return; } }
-        color = colorArrayToColor(cvals);
-        mor.colors[colorfield] = color;
-        mor.byId(domid).value = color;
-        updateColors();
-    },
-
-
-    colorControl = function (domid, colorfield) {
-        mor.onx("change", domid, function (e) {
-            var color = mor.byId(domid).value;
-            e.preventDefault();
-            e.stopPropagation();
-            safeSetColor(colorfield, domid, color);
-            updateColors(); });
-        mor.onx("keypress", domid, function (e) {
-            var outval = e.charCode;
-            switch(e.charCode) {
-            case 82:  //R - increase Red
-                outval = colorBump(colorfield, 0, 1); break;
-            case 114: //r - decrease Red
-                outval = colorBump(colorfield, 0, -1); break;
-            case 71:  //G - increase Green
-                outval = colorBump(colorfield, 1, 1); break;
-            case 103: //g - decrease Green
-                outval = colorBump(colorfield, 1, -1); break;
-            case 85:  //U - increase Blue
-                outval = colorBump(colorfield, 2, 1); break;
-            case 117: //u - decrease Blue
-                outval = colorBump(colorfield, 2, -1); break;
-            }
-            if(typeof outval === "string") {
-                e.preventDefault();
-                e.stopPropagation();
-                mor.colors[colorfield] = outval;
-                mor.byId(domid).value = outval;
-                updateColors(); } });
-        colorcontrols.push([domid, colorfield]);
-    },
-
-
-   setControlValuesAndUpdate = function (colors) {
-       var i, input;
-       for(i = 0; i < colorcontrols.length; i += 1) {
-           input = mor.byId(colorcontrols[i][0]);
-           input.value = colors[colorcontrols[i][1]]; }
-       mor.colors = copycolors(colors);
-       updateColors();
-   },
-
-
-    setColorsFromPreset = function (pen) {
-        var i, sel = mor.byId('presetsel');
-        for(i = 0; i < sel.options.length; i += 1) {
-            if(sel.options[i].selected) {
-                pen.settings.colorPresetId = presets[i].id;
-                setControlValuesAndUpdate(presets[i]);
-                break; } }
-    },
-
-
-    toggleControls = function () {
-        var txt = mor.byId('skinctrltoggle').innerHTML;
-        if(txt === "show color controls") {
-            mor.byId('colorctrlsdiv').style.display = "block";
-            mor.out('skinctrltoggle', "hide color controls"); }
-        else {
-            mor.byId('colorctrlsdiv').style.display = "none";
-            mor.out('skinctrltoggle', "show color controls"); }
-    },
-
-
     presetSelectorHTML = function (pen) {
         var html, i, pid;
         html = "<table>" +
@@ -286,57 +196,109 @@ define([], function () {
     },
 
 
-    colorControlsHTML = function () {
-        var link = "", hover = "", html, rules;
-        rules = document.styleSheets[0].cssRules;
-        if(rules && rules[0].style.setProperty) {
-            link = "</td>" +
-            "<td align=\"right\">link</td>" +
-            "<td align=\"left\">" + 
-              "<input type=\"text\" id=\"linkin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.link + "\"/>" + 
-                "</td>";
-            hover = "</td>" +
-            "<td align=\"right\">hover</td>" +
-            "<td align=\"left\">" + 
-              "<input type=\"text\" id=\"hoverin\" size=\"7\"" + 
-                    " value=\"" + mor.colors.hover + "\"/>" + 
-                "</td>"; }
-        html = "<div id=\"colorctrlsdiv\" style=\"display:none;\">" +
-            "<span class=\"smalltext\">" + 
-              "R/r, G/g, U/u to adjust Red/Green/Blue...</span>" +
-            "<table>" +
-              "<tr>" +
-                "<td align=\"right\">background</td>" +
-                "<td align=\"left\">" + 
-                  "<input type=\"text\" id=\"bgbodyin\" size=\"7\"" + 
-                        " value=\"" + mor.colors.bodybg + "\"/></td>" + 
-                link + 
-              "</tr>" +
-              "<tr>" +
-                "<td align=\"right\">text</td>" +
-                "<td align=\"left\">" + 
-                  "<input type=\"text\" id=\"textcolin\" size=\"7\"" + 
-                        " value=\"" + mor.colors.text + "\"/></td>" + 
-                hover +
-              "</tr>" +
-            "</table></div>";
-        return html;
+    swatchClick = function (index) {
+        var currcolor, subtext;
+        subtext = " <span class=\"smalltext\">" + 
+            "(click only, drag disabled)</span>";
+        if(!index) {
+            index = 0; }
+        if(typeof index === "string") {
+            index = parseInt(index, 10); }
+        colorctrl = colorctrls[index];
+        mor.out('colortitlediv', colorctrl.label + subtext);
+        currcolor = mor.colors[colorctrl.id];
+        //this is how you are "supposed" to set the value but it doesn't work:
+        //colorwidget.set('value', currcolor);
+        //this sets the hex value field but the display doesn't update:
+        //mor.byId('colorwidgetdiv').value = currcolor;
+        //found this and it seems to work:
+        colorwidget.setColor(currcolor, true);
+    },
+
+
+    createColorControls = function (Colorwidget) {
+        var i, clabel, cid, html;
+        html = "<table border=\"0\">";
+        for(i = 0; i < colorctrls.length; i += 1) {
+            clabel = colorctrls[i].label;
+            cid = colorctrls[i].id;
+            html += "<tr>" + 
+                "<td class=\"colorattrtd\">" + clabel + "</td>" +
+                "<td><div id=\"" + cid + "div\"" +
+                        " class=\"colorswatch\"" + 
+                        " onclick=\"mor.skinner.swatchClick('" + i + "');" +
+                                   "return false;\"" +
+                        " style=\"background:" + mor.colors[cid] + ";\"" +
+                "></div>";
+            if(i === 0) {
+                html += "<td rowspan=\"" + colorctrls.length + "\"" + 
+                           " valign=\"top\">" + 
+                    "<div id=\"colortitlediv\"></div>" +
+                    "<div id=\"colorwidgetdiv\"></div></td>"; }
+            html += "</tr>"; }
+        html += "</table>";
+        mor.out('colorctrlsdiv', html);
+        colorwidget = new Colorwidget(
+            { onChange: function (val) {
+                mor.byId(colorctrl.id + "div").style.backgroundColor = val;
+                mor.colors[colorctrl.id] = val;
+                updateColors(); } }, 'colorwidgetdiv');
+        swatchClick(0);
+    },
+
+
+    toggleControls = function () {
+        var txt, rules, html;
+        txt = mor.byId('skinctrltoggle').innerHTML;
+        if(txt === "show color controls") {
+            rules = document.styleSheets[0].cssRules;
+            if(rules && rules[0].style.setProperty) {
+                mor.byId('colorctrlsdiv').style.display = "block";
+                mor.out('skinctrltoggle', "hide color controls");
+                html = mor.byId('colorctrlsdiv').innerHTML;
+                if(!html) {  //not initialized yet
+                    require(mor.cdnconf,
+                            [ "dojox/widget/ColorPicker", "dojo/domReady!" ],
+                            function (colorwidget) {
+                                createColorControls(colorwidget); }); } }
+            else {  //no support, display as disabled
+                mor.byId('skinctrltoggle').style.color = "#666666"; } }
+        else {
+            mor.byId('colorctrlsdiv').style.display = "none";
+            mor.out('skinctrltoggle', "show color controls"); }
+    },
+
+
+   setControlValuesAndUpdate = function (colors) {
+       var html, i, div;
+       mor.colors = copycolors(colors);
+       updateColors();
+       html = mor.byId('colorctrlsdiv').innerHTML;
+       if(html) {  //color controls available
+           for(i = 0; i < colorctrls.length; i += 1) {
+               div = mor.byId(colorctrls[i].id + "div");
+               div.style.backgroundColor = mor.colors[colorctrls[i].id]; }
+           swatchClick(0); }
+   },
+
+
+    setColorsFromPreset = function (pen) {
+        var i, sel = mor.byId('presetsel');
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                pen.settings.colorPresetId = presets[i].id;
+                setControlValuesAndUpdate(presets[i]);
+                break; } }
     },
 
 
     displayDialog = function (domid, pen) {
-        var html, rules;
+        var html;
         oldcolors = copycolors(mor.colors);
-        colorcontrols = [];
-        html = presetSelectorHTML(pen) + colorControlsHTML();
+        html = presetSelectorHTML(pen) + 
+            //color controls are high overhead and initialized only when needed.
+            "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
         mor.out(domid, html);
-        colorControl("bgbodyin", "bodybg");
-        colorControl("textcolin", "text");
-        rules = document.styleSheets[0].cssRules;
-        if(rules && rules[0].style.setProperty) {
-            colorControl("linkin", "link");
-            colorControl("hoverin", "hover"); }
         mor.onx('change', 'presetsel', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -358,7 +320,9 @@ define([], function () {
         darkbg: function () {
             return getDarkBackground(); },
         toggleControls: function () {
-            toggleControls(); }
+            toggleControls(); },
+        swatchClick: function (index) {
+            swatchClick(index); }
     };
 
 });

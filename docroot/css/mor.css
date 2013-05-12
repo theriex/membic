@@ -178,6 +178,9 @@ body {
 .buttontable td { padding:0px; }
 .buttontabletexttd { text-align:left; }
 .pennametable td { padding:0px 10px; }
+.colorattrtd { font-size:small; text-align:right; }
+.colorswatch { height:20px; width:40px; cursor:pointer; }
+#colortitlediv { text-align:center; border-top: 1px solid #666; }
 
 /* review layout */
 #revfdiv { }

@@ -8,7 +8,8 @@
   <meta name="description" content="MyOpenReviews encourages shared experiences between friends." />
   <title>My Open Reviews</title>
   <link href="css/mor.css" rel="stylesheet" type="text/css" />
-  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.8.3/dijit/themes/claro/claro.css" rel="stylesheet" />
+  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dijit/themes/claro/claro.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojox/widget/ColorPicker/ColorPicker.css" />
   <link rel="image_src" href="img/remo.png" />
 </head>
 <body id="bodyid">
@@ -63,7 +64,7 @@
 
 
 <!-- This lib version should match the css theme -->
-<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"
+<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"
 	data-dojo-config="async: true"></script>
 <script src="js/mor.js"></script>
 
@@ -72,7 +73,7 @@ mor.cdnconf = {};
 mor.cdnconf.baseUrl = "/js/";
 mor.cdnconf.packages = [
   { name: "dojo", 
-    location: "https://ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/" },
+    location: "https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/" },
   { name: "amd", location: "amd" },
   { name: "ext", location: "amd/ext" } ];
 mor.init();
