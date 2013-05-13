@@ -114,8 +114,10 @@ define([], function () {
                 prevslot.style.opacity = 0; }
             if(slides[slideindex].indexOf("mor") === 0) {
                 setTimeout(slideshow, 1200); }
+            else if(slides[slideindex].indexOf("slogan") === 0) {
+                setTimeout(slideshow, 2400); }
             else {
-                setTimeout(slideshow, 5400); } }
+                setTimeout(slideshow, 6400); } }
     },
 
 
