@@ -159,7 +159,7 @@ define([], function () {
 
 
     changePassword = function () {
-        var pwd, email, data, url;
+        var pwd, email, data, url, critsec = "";
         pwd = mor.byId('npin').value;
         if(!pwd || !pwd.trim()) {
             changepwdprompt = "New password must have a value";
@@ -174,7 +174,8 @@ define([], function () {
                      doneWorkingWithAccount(); },
                  function (code, errtxt) {
                      changepwdprompt = errtxt;
-                     mor.login.displayChangePassForm(); });
+                     mor.login.displayChangePassForm(); },
+                 critsec);
     },
 
 
@@ -287,7 +288,7 @@ define([], function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
             maddr = mor.byId('emailin').value || "",
-            data = "", url, buttonhtml;
+            data = "", url, buttonhtml, critsec = "";
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('maccstatdiv', "Please specify a username and password");
             return; }
@@ -306,7 +307,8 @@ define([], function () {
                      setTimeout(doneWorkingWithAccount, 3000); },
                  function (code, errtxt) {
                      mor.out('maccstatdiv', errtxt);
-                     mor.out('newaccbuttonstd', buttonhtml);  });
+                     mor.out('newaccbuttonstd', buttonhtml);  },
+                 critsec);
     },
 
 
@@ -387,7 +389,7 @@ define([], function () {
 
     emailCredentials = function () {
         var eaddr = mor.byId('emailin').value,
-            data = "";
+            data = "", critsec = "";
         if(!eaddr || !eaddr.trim() || !mor.isProbablyEmail(eaddr)) {
             mor.out('emcrediv', "Please enter your email address");
             return; }  //nothing to send to
@@ -397,7 +399,8 @@ define([], function () {
                  function (objs) {
                      dispEmailSent(); },
                  function (code, errtxt) {
-                     mor.out('emcrediv', errtxt); });
+                     mor.out('emcrediv', errtxt); },
+                 critsec);
     },
 
 
@@ -440,7 +443,7 @@ define([], function () {
     userpassLogin = function () {
         var username = mor.byId('userin').value,
             password = mor.byId('passin').value,
-            url, data;
+            url, data, critsec = "";
         if(!username || !password || !username.trim() || !password.trim()) {
             mor.out('loginstatdiv', "Please specify a username and password");
             return; }
@@ -455,7 +458,7 @@ define([], function () {
                  function (code, errtxt) {
                      mor.out('loginstatdiv', "Login failed: " + errtxt);
                      mor.out('loginbspan', loginButtonHTML()); },
-                 [401]);
+                 critsec, null, [401]);
     },
 
 

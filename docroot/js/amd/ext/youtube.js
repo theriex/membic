@@ -56,7 +56,7 @@ define([], function () {
     //params, so this only needs to fill out additional info.
     fetchData = function (review, url, params) {
         var urlobj = mor.paramsToObj(url),
-            vid = urlobj.v;
+            vid = urlobj.v, critsec = "";
         mor.out('contentdiv', "Reading details from YouTube...");
         url = "http://gdata.youtube.com/feeds/api/videos/" + vid + 
             "?v=2&alt=json";
@@ -69,7 +69,8 @@ define([], function () {
                  function (code, errtxt) {
                      mor.err("YouTube data retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); });
+                     mor.review.display(); },
+                 critsec);
     };
 
 

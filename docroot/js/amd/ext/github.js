@@ -54,7 +54,7 @@ define([], function () {
 
 
     convertToken = function (token) {
-        var addAuthOutDiv, url;
+        var addAuthOutDiv, url, critsec = "";
         addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
         url = mor.enc(url);
@@ -68,16 +68,15 @@ define([], function () {
                  function (code, errtxt) {
                      mor.log("GitHub authent fetch details failed code " +
                              code + ": " + errtxt);
-                     backToParentDisplay(); });
+                     backToParentDisplay(); },
+                 critsec);
     },
 
 
     //This function gets called when you click "Login via GitHub", and
     //when adding authentication, and on return from GitHub.
     authenticate = function (params) {
-        var outputdiv, addAuthOutDiv, url, state;
-        addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
-        outputdiv = addAuthOutDiv || "contentdiv";
+        var url, state, critsec = "";
         if(params.code) {  //back from github
             mor.out("contentdiv", "Returned from GitHub...");
             state = mor.dojo.cookie("githubAuthState");
@@ -92,7 +91,8 @@ define([], function () {
                      function (code, errtxt) {
                          mor.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
-                         backToParentDisplay(); }); }
+                         backToParentDisplay(); },
+                     critsec); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);
             mor.dojo.cookie("githubAuthState", state, { expires: 2 });

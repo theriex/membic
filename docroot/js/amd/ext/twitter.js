@@ -91,7 +91,7 @@ define([], function () {
     //to this function, which is used for both the "log in via
     //twitter" click, and the callback from twitter.
     authenticate = function (params) {
-        var data, outputdiv, addAuthOutDiv;
+        var data, outputdiv, addAuthOutDiv, critsec = "";
         addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
         if(params.oauth_token && params.oauth_verifier) {  //back from twitter
@@ -107,7 +107,8 @@ define([], function () {
                      function (code, errtxt) {
                          mor.log("twitter token conversion failed code " +
                                  code + ": " + errtxt);
-                         returnToParentDisplay(); }); }
+                         returnToParentDisplay(); },
+                     critsec); }
         else {  //initial login or authorization call
             mor.out(outputdiv, "Setting up call to Twitter...");
             data = "name=Twitter&url=" + mor.enc(twReqTokURL) + 
@@ -119,7 +120,8 @@ define([], function () {
                      function (code, errtxt) {
                          mor.log("twitter initial oauth failed code " + 
                                  code + ": " + errtxt);
-                         returnToParentDisplay(); }); }
+                         returnToParentDisplay(); },
+                     critsec); }
     },
 
 

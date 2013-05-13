@@ -86,7 +86,7 @@ define([], function () {
 
 
     fetchData = function (review, url, params) {
-        var asin = extractASIN(url);
+        var critsec = "", asin = extractASIN(url);
         mor.out('contentdiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
         mor.call(url, 'GET', null,
@@ -97,7 +97,8 @@ define([], function () {
                  function (code, errtxt) {
                      mor.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); });
+                     mor.review.display(); },
+                 critsec);
     };
 
 

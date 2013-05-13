@@ -48,7 +48,7 @@ define([], function () {
 
 
     validateAuthentication = function (json, token) {
-        var addAuthOutDiv, url;
+        var addAuthOutDiv, url, critsec = "";
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
             mor.log("The received token was not intended for this app");
             return backToParentDisplay(); }
@@ -73,7 +73,8 @@ define([], function () {
                      function (code, errtxt) {
                          mor.log("Google authent fetch details failed code " +
                                  code + ": " + errtxt);
-                         backToParentDisplay(); }); }
+                         backToParentDisplay(); },
+                     critsec); }
     },
         
 
@@ -83,9 +84,7 @@ define([], function () {
     //callback with "AltAuth2" returned in the hash fragment, which
     //leads back to this method again.
     authenticate = function (params) {
-        var outputdiv, addAuthOutDiv, url, scope;
-        addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
-        outputdiv = addAuthOutDiv || "contentdiv";
+        var url, scope, critsec = "";
         if(params.access_token) {  //back from google
             mor.out("contentdiv", "Returned from Google...");
             url = "https://www.googleapis.com/oauth2/v1/tokeninfo" +
@@ -98,7 +97,8 @@ define([], function () {
                      function (code, errtxt) {
                          mor.log("Google token retrieval failed code " + 
                                  code + ": " + errtxt);
-                         backToParentDisplay(); }); }
+                         backToParentDisplay(); },
+                     critsec); }
         else { //initial login or authorization call
             scope = "https://www.googleapis.com/auth/userinfo.profile";
             url = "https://accounts.google.com/o/oauth2/auth" +

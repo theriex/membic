@@ -51,7 +51,8 @@ define([], function () {
                      var msg = "loadDisplayRels error code " + code + 
                          ": " + errtxt;
                      mor.log(msg);
-                     mor.err(msg); });
+                     mor.err(msg); },
+                 dispobj.critsec);
     },
 
 
@@ -183,7 +184,7 @@ define([], function () {
 
 
     updateRelationship = function (rel) {
-        var data = mor.objdata(rel);
+        var critsec = "", data = mor.objdata(rel);
         if(rel.status === "nofollow") {  //delete
             mor.call("delrel?" + mor.login.authparams(), 'POST', data,
                      function (updates) {
@@ -194,7 +195,8 @@ define([], function () {
                          mor.profile.byprofid(mor.instId(updates[1])); },
                      function (code, errtxt) {
                          mor.err("Relationship deletion failed code " + code +
-                                 ": " + errtxt); }); }
+                                 ": " + errtxt); },
+                     critsec); }
         else { //update
             mor.call("updrel?" + mor.login.authparams(), 'POST', data,
                      function (updates) {
@@ -203,7 +205,8 @@ define([], function () {
                          mor.profile.byprofid(updates[0].relatedid); },
                      function (code, errtxt) {
                          mor.err("Relationship update failed code " + code +
-                                 ": " + errtxt); }); }
+                                 ": " + errtxt); },
+                     critsec); }
     },
 
 
@@ -270,7 +273,7 @@ define([], function () {
 
 
     createOrEditRelationship = function (originator, related, profid) {
-        var rel, newrel, data;
+        var rel, newrel, data, critsec = "";
         rel = findOutboundRelationship(mor.instId(related));
         if(rel) {
             displayRelationshipDialog(rel, related); }
@@ -296,7 +299,8 @@ define([], function () {
                          mor.profile.byprofid(profid); },
                      function (code, errtxt) {
                          mor.err("Relationship creation failed code " + code +
-                                 ": " + errtxt); }); }
+                                 ": " + errtxt); },
+                     critsec); }
     },
 
 
@@ -314,7 +318,7 @@ define([], function () {
 
 
     loadOutboundRelationships = function (pen) {
-        var params;
+        var params, critsec = "";
         params = mor.login.authparams() + "&originid=" + mor.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
             params += "&cursor=" + mor.enc(loadoutcursor); }
@@ -336,7 +340,8 @@ define([], function () {
                  function (code, errtxt) {
                      mor.log("loadOutboundRelationships errcode " + code +
                              ": " + errtxt);
-                     alert("Sorry. Data error. Please reload the page"); });
+                     alert("Sorry. Data error. Please reload the page"); },
+                 critsec);
     },
 
 

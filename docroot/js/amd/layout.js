@@ -52,7 +52,7 @@ define([], function () {
 
 
     displayDoc = function (url) {
-        var html = "Fetching " + url + " ...";
+        var critsec = "", html = "Fetching " + url + " ...";
         window.scrollTo(0,0);
         mor.out('dlgdiv', html);
         mor.byId('dlgdiv').style.visibility = "visible";
@@ -62,7 +62,8 @@ define([], function () {
                  function (resp) {
                      displayDocContent(url, resp); },
                  function (code, errtxt) {
-                     displayDocContent(url, errtxt); });
+                     displayDocContent(url, errtxt); },
+                 critsec);
     },
 
 

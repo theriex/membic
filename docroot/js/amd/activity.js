@@ -121,6 +121,7 @@ define([], function () {
         mor.layout.adjust();
         if(crid) {
             setTimeout(function () {
+                var critsec = "";
                 mor.call("revbyid?revid=" + crid, 'GET', null,
                          function (revs) {
                              mor.activity.cacheReview(revs[0]);
@@ -129,7 +130,7 @@ define([], function () {
                              mor.log("displayRemembered revbyid " + crid +
                                      " " + code + " " + errtxt);
                              badrevids.push(crid); },
-                         [ 404 ]); },
+                         critsec, null, [ 404 ]); },
                        50); }
         if(cfid) {
             setTimeout(function () {
@@ -207,7 +208,8 @@ define([], function () {
 
 
     doActivitySearch = function (continued) {
-        var time, params = "penids=" + penids.join(',');
+        var time, params, critsec = "";
+        params = "penids=" + penids.join(',');
         if(!continued && lastChecked) {
             params += "&since=" + lastChecked.toISOString(); }
         if(continued) {
@@ -221,7 +223,8 @@ define([], function () {
                      collectAndDisplayReviewActivity(results, continued); },
                  function (code, errtxt) {
                      mor.out('revactdiv', "error code: " + code + " " + 
-                             errtxt); });
+                             errtxt); },
+                 critsec);
     },
 
 

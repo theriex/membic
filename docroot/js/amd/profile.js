@@ -485,7 +485,7 @@ define([], function () {
 
 
     findOrLoadPen = function (id, callback) {
-        var pen, params;
+        var pen, params, critsec = "";
         pen = cachedPen(id);
         if(pen) {
             return callback(pen); }
@@ -499,7 +499,8 @@ define([], function () {
                          mor.err("findOrLoadPen found no pen id: " + id); } },
                  function (code, errtxt) {
                      mor.err("findOrLoadPen failed code " + code + ": " + 
-                             errtxt); });
+                             errtxt); },
+                 critsec);
     },
 
 
@@ -649,7 +650,7 @@ define([], function () {
 
 
     findRecentReviews = function (dispState) {
-        var params;
+        var params, critsec = "";
         if(!dispState.params.penid) {
             dispState.params.penid = mor.instId(profpen); }
         params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
@@ -658,7 +659,8 @@ define([], function () {
                      displayRecentReviews(dispState, revs); },
                  function (code, errtxt) {
                      mor.out('profcontdiv', "findRecentReviews failed code " + 
-                             code + " " + errtxt); });
+                             code + " " + errtxt); },
+                 critsec);
     },
 
 
@@ -718,7 +720,7 @@ define([], function () {
 
 
     best = function () {
-        var html, revs, i;
+        var html, revs, i, critsec = "";
         selectTab("bestli", best);
         if(typeof profpen.top20s === "string") {
             profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
@@ -758,7 +760,8 @@ define([], function () {
                          mor.profile.best(); },
                      function (code, errtxt) {
                          revs[i] += ": not found";
-                         mor.profile.best(); }); }
+                         mor.profile.best(); },
+                     critsec); }
     },
 
 
@@ -907,7 +910,7 @@ define([], function () {
 
 
     doPenSearch = function () {
-        var params, qstr, time, t20, i;
+        var params, qstr, time, t20, i, critsec = "";
         qstr = mor.byId('searchtxt').value;
         params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
             "&cursor=" + mor.enc(searchcursor);
@@ -929,12 +932,13 @@ define([], function () {
                      displaySearchResults(results); },
                  function (code, errtxt) {
                      mor.out('searchresults', 
-                             "error code: " + code + " " + errtxt); });
+                             "error code: " + code + " " + errtxt); },
+                 critsec);
     },
 
 
     doRevSearch = function () {
-        var params, maxdate, mindate, qstr, revtype, radios, i;
+        var params, maxdate, mindate, qstr, revtype, radios, i, critsec = "";
         qstr = mor.byId('searchtxt').value;
         radios = document.getElementsByName("srchrevtype");
         for(i = 0; i < radios.length; i += 1) {
@@ -954,7 +958,8 @@ define([], function () {
                      displaySearchResults(results); },
                  function (code, errtxt) {
                      mor.out('searchresults',
-                             "error code: " + code + " " + errtxt); });
+                             "error code: " + code + " " + errtxt); },
+                 critsec);
     },
 
 

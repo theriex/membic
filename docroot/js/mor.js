@@ -457,12 +457,19 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //factored method to deal with JSON parsing in success call.
-    //ATTENTION Might be good to note if the last call was over a N
-    //hours ago and just reload everything in that case.  Stale local
-    //data sucks.
-    mor.call = function (url, method, data, success, failure, errs) {
+    //General processing of JSON server calls, with fallback error
+    //handling.  Caller caches and manages result data, including
+    //recognizing stale.
+    mor.call = function (url, method, data, success, failure, 
+                         lockvar, setup, errs) {
         var statcode, errtxt, start, now, delayms = 300, temphtml;
+        if(lockvar === "processing") {
+            mor.log(method + " " + url + " already in progress...");
+            return; }
+        lockvar = "processing";
+        if(setup) {
+            setup(); }
+        //local delay to simulate actual site
         if(window.location.href.indexOf("localhost:8080") >= 0) {
             temphtml = mor.byId('logodiv').innerHTML;
             now = start = new Date().getTime();
@@ -473,6 +480,7 @@ var mor = {};  //Top level function closure container
         mor.dojo.request(url, { method: method, data: data }).then(
             //successful call result processing function
             function (resp) {
+                lockvar = "success";
                 try {
                     resp = mor.dojo.json.parse(resp);
                 } catch (e) {
@@ -482,6 +490,7 @@ var mor = {};  //Top level function closure container
                 success(resp); },
             //failed call result processing function
             function (resp) {
+                lockvar = "failure";
                 if(!errs) {
                     errs = []; }
                 if(!statcode) {

@@ -97,7 +97,7 @@ define([], function () {
     //can lead to race conditions if the app is dealing with that in
     //the meantime while the call is going on.
     refreshCurrentPenFields = function () {
-        var params;
+        var params, critsec = "";
         if(currpen) {
             params = "penid=" + mor.instId(currpen);
             mor.call("penbyid?" + params, 'GET', null,
@@ -113,7 +113,8 @@ define([], function () {
                              currpen.followers = pens[0].followers; } },
                      function (code, errtxt) {
                          mor.log("refreshCurrentPenFields " + code + " " +
-                                 errtxt); }); }
+                                 errtxt); },
+                     critsec); }
     },
 
 
@@ -127,7 +128,7 @@ define([], function () {
 
 
     updatePenName = function (pen, callok, callfail) {
-        var data;
+        var data, critsec = "";
         serializeFields(pen);
         data = mor.objdata(pen);
         mor.call("updpen?" + mor.login.authparams(), 'POST', data,
@@ -136,12 +137,13 @@ define([], function () {
                      deserializeFields(currpen);
                      callok(currpen); },
                  function (code, errtxt) {
-                     callfail(code, errtxt); });
+                     callfail(code, errtxt); },
+                 critsec);
     },
 
 
     createPenName = function () {
-        var buttonhtml, newpen, data, name;
+        var buttonhtml, newpen, data, name, critsec = "";
         name = mor.byId('pnamein').value;
         buttonhtml = mor.byId('formbuttons').innerHTML;
         mor.out('formbuttons', "Creating Pen Name...");
@@ -164,7 +166,8 @@ define([], function () {
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);
-                     mor.out('formbuttons', buttonhtml); });
+                     mor.out('formbuttons', buttonhtml); },
+                 critsec);
     },
 
 
@@ -251,7 +254,7 @@ define([], function () {
 
 
     getPenName = function (callback) {
-        var url;
+        var url, critsec = "";
         if(penNames) {
             chooseOrCreatePenName(callback); }
         mor.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
@@ -263,7 +266,8 @@ define([], function () {
                      chooseOrCreatePenName(callback); },
                  function (code, errtxt) {
                      mor.out('contentdiv', "Pen name retrieval failed: " + 
-                             code + " " + errtxt); });
+                             code + " " + errtxt); },
+                 critsec);
     };
 
 

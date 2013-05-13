@@ -1057,7 +1057,7 @@ define([], function () {
 
 
     autocompletion = function (event) {
-        var srchtxt, url;
+        var srchtxt, url, critsec = "";
         if(mor.byId('revautodiv') && mor.byId('keyin')) {
             srchtxt = mor.byId('keyin').value;
             if(mor.byId('subkeyin')) {
@@ -1077,7 +1077,8 @@ define([], function () {
                                  mor.log("Amazon info retrieval failed code " +
                                          code + ": " + errtxt);
                                  setTimeout(autocompletion, 400);
-                                 mor.layout.adjust(); }); } }
+                                 mor.layout.adjust(); },
+                             critsec); } }
             else {
                 setTimeout(autocompletion, 750); } }
     },
@@ -1111,7 +1112,7 @@ define([], function () {
     //already instantiated, then that instance is used and written
     //through on save. 
     findCorrespondingReview = function (homepen, contfunc) {
-        var params, i, t20;
+        var params, i, t20, critsec = "";
         if(homepen.top20s) {
             t20 = homepen.top20s[crev.revtype];
             if(t20 && t20.length) {
@@ -1130,7 +1131,8 @@ define([], function () {
                      contfunc(homepen, rev); },
                  function (code, errtxt) {
                      mor.err("findCorrespondingReview failed " + code + 
-                             " " + errtxt); });
+                             " " + errtxt); },
+                 critsec);
     },
 
 
@@ -1232,7 +1234,7 @@ define([], function () {
 
 
     saveReview = function (doneEditing, actionstr) {
-        var errors = [], i, errtxt = "", type, url, data, html;
+        var errors = [], i, errtxt = "", type, url, data, critsec = "", html;
         //remove save button immediately to avoid double click dupes...
         html = mor.byId('formbuttonstd').innerHTML;
         mor.out('formbuttonstd', "Verifying...");
@@ -1273,12 +1275,13 @@ define([], function () {
                  function (code, errtxt) {
                      mor.log("saveReview failed code: " + code + " " +
                              errtxt);
-                     mor.review.display(); });
+                     mor.review.display(); },
+                 critsec);
     },
 
 
     initWithId = function (revid, mode, action) {
-        var params = "revid=" + revid;
+        var critsec = "", params = "revid=" + revid;
         mor.call("revbyid?" + params, 'GET', null,
                  function (revs) {
                      if(revs.length > 0) {
@@ -1291,7 +1294,8 @@ define([], function () {
                          mor.err("initWithId found no review id " + revid); } },
                  function (code, errtxt) {
                      mor.err("initWithId failed code " + code + ": " +
-                             errtxt); });
+                             errtxt); },
+                 critsec);
     },
 
 
@@ -1364,7 +1368,7 @@ define([], function () {
 
 
     deleteReview = function () {
-        var data;
+        var data, critsec = "";
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
@@ -1382,7 +1386,8 @@ define([], function () {
                          mor.profile.display(); }, 12000); },
                  function (code, errtxt) {
                      mor.err("Delete failed code: " + code + " " + errtxt);
-                     mor.profile.display(); });
+                     mor.profile.display(); },
+                 critsec);
     },
 
 

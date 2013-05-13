@@ -219,7 +219,7 @@ define([], function () {
 
 
     fetchData = function (review, url, params) {
-        var geturl;
+        var geturl, critsec = "";
         mor.out('contentdiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + mor.enc(url);
         mor.call(geturl, 'GET', null,
@@ -229,7 +229,8 @@ define([], function () {
                  function (code, errtxt) {
                      mor.err("General URL retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); });
+                     mor.review.display(); },
+                 critsec);
     };
 
 

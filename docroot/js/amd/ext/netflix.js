@@ -61,7 +61,7 @@ define([], function () {
     //fields have already been set from the params, so this function
     //only needs to fill out additional info.
     fetchData = function (review, url, params) {
-        var movieId = extractMovieId(url);
+        var critsec = "", movieId = extractMovieId(url);
         mor.out('contentdiv', "Reading details from Netflix...");
         url = "http://odata.netflix.com/Catalog/Titles" + 
             "?$filter=NetflixApiId%20eq%20" + 
@@ -76,7 +76,8 @@ define([], function () {
                  function (code, errtxt) {
                      mor.err("Netflix data retrieval failed code " +
                              code + ": " + errtxt);
-                     mor.review.display(); });
+                     mor.review.display(); },
+                 critsec);
     };
 
 
