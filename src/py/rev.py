@@ -299,23 +299,32 @@ class DeleteReview(webapp2.RequestHandler):
         returnJSON(self.response, [])
 
 
+# This is a form submission endpoint, so always redirect back to the app.
 class UploadReviewPic(webapp2.RequestHandler):
     def post(self):
-        if not review_modification_authorized(self):
-            return
-        review = safe_get_review_for_update(self)
-        if not review:
-            return
-        upfile = self.request.get("picfilein")
-        if upfile:
-            review.revpic = db.Blob(upfile)
-            review.revpic = images.resize(review.revpic, 160, 160)
-            review.put()
+        errmsg = "You are not authorized to update this review pic"
+        if review_modification_authorized(self):
+            errmsg = "Could not find review for pic attachment"
+            review = safe_get_review_for_update(self)
+            if review:
+                errmsg = "Picture file not found"
+                upfile = self.request.get("picfilein")
+                if upfile:
+                    errmsg = "Picture upload failure"
+                    try:
+                        review.revpic = db.Blob(upfile)
+                        review.revpic = images.resize(review.revpic, 160, 160)
+                        review.put()
+                        errmsg = ""
+                    except Exception as e:
+                        errmsg = "Picture upload failed: " + str(e)
         redurl = self.request.get('returnto')
         if not redurl:
             redurl = "http://www.myopenreviews.com#review"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
+        if errmsg:
+            redurl += "&action=revpicupload&&errmsg=" + errmsg
         logging.info("UploadReviewPic redirecting to " + redurl)
         self.redirect(redurl)
 

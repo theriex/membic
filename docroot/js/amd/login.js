@@ -115,7 +115,8 @@ define([], function () {
             if(state.view === "activity") {
                 return mor.activity.display(); }
             if(state.view === "review" && state.revid) {
-                mor.review.initWithId(state.revid, state.mode); } }
+                mor.review.initWithId(state.revid, state.mode,
+                                      params.action, params.errmsg); } }
         //go with default display
         mor.activity.display();
     },

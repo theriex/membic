@@ -1139,7 +1139,7 @@ define([], function () {
     //ATTENTION: Somewhere in the read display, show a count of how
     //many response reviews have been written, and how many people
     //have remembered the review.  Provided there's more than zero.
-    displayReviewForm = function (pen, review, mode) {
+    displayReviewForm = function (pen, review, mode, errmsg) {
         var twidth, html, type, keyval;
         type = findReviewType(review.revtype);
         keyval = review[type.key];
@@ -1184,6 +1184,8 @@ define([], function () {
             else {
                 mor.byId('reviewtext').focus(); } }
         mor.layout.adjust();
+        if(errmsg) {
+            mor.out('revsavemsg', errmsg); }
         if(mor.byId('respondbutton')) {
             mor.pen.getPen(function (pen) {
                 findCorrespondingReview(pen, displayCorrespondingReviewInfo); 
@@ -1280,14 +1282,14 @@ define([], function () {
     },
 
 
-    initWithId = function (revid, mode, action) {
+    initWithId = function (revid, mode, action, errmsg) {
         var critsec = "", params = "revid=" + revid;
         mor.call("revbyid?" + params, 'GET', null,
                  function (revs) {
                      if(revs.length > 0) {
                          crev = revs[0];
                          if(mode === "edit") {
-                             mor.review.display(); }
+                             mor.review.display(action, errmsg); }
                          else {
                              mor.review.displayRead(action); } }
                      else {
@@ -1391,7 +1393,7 @@ define([], function () {
     },
 
 
-    mainDisplay = function (pen, read, action) {
+    mainDisplay = function (pen, read, action, errmsg) {
         if(!crev) {
             crev = {}; }
         if(!crev.penid) {
@@ -1424,16 +1426,16 @@ define([], function () {
             displayReviewForm(pen, crev, "edit");
             picUploadForm(); }
         else {
-            displayReviewForm(pen, crev, "edit"); }
+            displayReviewForm(pen, crev, "edit", errmsg); }
     };
 
 
     return {
         resetStateVars: function () {
             resetStateVars(); },
-        display: function (action) {
+        display: function (action, errmsg) {
             mor.pen.getPen(function (pen) {
-                mainDisplay(pen, false, action); 
+                mainDisplay(pen, false, action, errmsg); 
             }); },
         displayRead: function (action) {
             mor.pen.getPen(function (pen) {
@@ -1480,8 +1482,8 @@ define([], function () {
             crev = revobj; },
         getCurrentReview: function () {
             return crev; },
-        initWithId: function (revid, mode, action) {
-            initWithId(revid, mode, action); },
+        initWithId: function (revid, mode, action, errmsg) {
+            initWithId(revid, mode, action, errmsg); },
         respond: function () {
             mor.byId('respondtxttd').style.color = "#666666";
             setTimeout(function () {
