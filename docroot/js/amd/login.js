@@ -329,14 +329,16 @@ define([], function () {
         html += "<div id=\"maccstatdiv\">Creating a new account</div>" +
         "<table>" +
           "<tr>" +
-            "<td align=\"right\">username</td>" +
+            "<td align=\"right\"><label for=\"userin\">username</label></td>" +
             "<td align=\"left\">" +
-              "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
+              "<input type=\"text\" name=\"username\" id=\"userin\"" + 
+                    " size=\"20\"/></td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">password</td>" +
+            "<td align=\"right\"><label for=\"passin\">password</label></td>" +
             "<td align=\"left\">" +
-              "<input type=\"password\" id=\"passin\" size=\"20\"/></td>" +
+              "<input type=\"password\" name=\"password\" id=\"passin\"" + 
+                    " size=\"20\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">email</td>" +
@@ -529,17 +531,19 @@ define([], function () {
             "<td>&nbsp;</td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">username</td>" +
+            "<td align=\"right\"><label for=\"userin\">username</label></td>" +
             "<td align=\"left\">" +
-              "<input type=\"text\" id=\"userin\" size=\"20\"/></td>" +
+              "<input type=\"text\" name=\"username\" id=\"userin\"" + 
+                    " size=\"20\"/></td>" +
             "<td rowspan=\"2\"><div id=\"altauthdiv\"></div></td>" +
             "<td align=\"left\" class=\"instructional\">" +
               "&nbsp;&nbsp;...or with your social account</td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">password</td>" +
+            "<td align=\"right\"><label for=\"passin\">password</label></td>" +
             "<td align=\"left\">" +
-              "<input type=\"password\" id=\"passin\" size=\"20\"/></td>" +
+              "<input type=\"password\" name=\"password\" id=\"passin\"" + 
+                    " size=\"20\"/></td>" +
             "<td align=\"center\">" + displayAltAuthMethods() + "</td>" +
           "</tr>" +
           "<tr>" +
