@@ -324,7 +324,7 @@ class UploadReviewPic(webapp2.RequestHandler):
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
         if errmsg:
-            redurl += "&action=revpicupload&&errmsg=" + errmsg
+            redurl += "&action=revpicupload&errmsg=" + errmsg
         logging.info("UploadReviewPic redirecting to " + redurl)
         self.redirect(redurl)
 

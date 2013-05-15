@@ -167,34 +167,36 @@ class UpdatePenName(webapp2.RequestHandler):
 
 class UploadProfPic(webapp2.RequestHandler):
     def post(self):
+        errmsg = "You are not authorized to update this profile pic"
         acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
-        profid = self.request.get('_id')
-        logging.info("UploadProfPic id: " + profid)
-        pen = PenName.get_by_id(intz(profid))
-        if not pen:
-            self.error(404)
-            self.response.write("PenName: " + str(profid) + " not found.")
-            return
-        authok = authorized(acc, pen)
-        if not authok:
-            self.error(401)
-            self.response.write("You may only update your own pen name.")
-            return
-        upfile = self.request.get("picfilein")
-        if upfile:
-            pen.profpic = db.Blob(upfile)
-            # change profpic to a 160x160 png...
-            pen.profpic = images.resize(pen.profpic, 160, 160)
-            pen.put()
+        if acc:
+            errmsg = "Could not find pen name for pic attachment"
+            profid = self.request.get('_id')
+            logging.info("UploadProfPic profid: " + profid)
+            pen = PenName.get_by_id(intz(profid))
+            if pen:
+                errmsg = "You may only update your own pen name"
+                authok = authorized(acc, pen)
+                if authok:
+                    errmsg = "Profile picture file not found"
+                    upfile = self.request.get("picfilein")
+                    if upfile:
+                        errmsg = "Profile picture upload failure"
+                        try:
+                            pen.profpic = db.Blob(upfile)
+                            # change profpic to max 160x160 png...
+                            pen.profpic = images.resize(pen.profpic, 160, 160)
+                            pen.put()
+                            errmsg = ""
+                        except Exception as e:
+                            errmsg = "Profile picture upload failed: " + str(e)
         redurl = self.request.get('returnto')
         if not redurl:
             redurl = "http://www.myopenreviews.com#profile"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
+        if errmsg:
+            redurl += "&action=profpicupload&errmsg=" + errmsg
         logging.info("UploadProfPic redirecting to " + redurl);
         self.redirect(redurl)
 

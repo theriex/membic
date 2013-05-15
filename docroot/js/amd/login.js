@@ -104,7 +104,7 @@ define([], function () {
         //no explicit redirect, so check if directed by anchor tag
         if(params.anchor === "profile") {
             clearParams();
-            return mor.profile.display(); }
+            return mor.profile.display(params.action, params.errmsg); }
         //no tag redirect so check current state
         state = mor.currState();
         if(state) {

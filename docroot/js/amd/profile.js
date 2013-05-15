@@ -1336,7 +1336,7 @@ define([], function () {
     },
 
 
-    mainDisplay = function (homepen, dispen) {
+    mainDisplay = function (homepen, dispen, action, errmsg) {
         var html;
         if(!dispen) {
             dispen = homepen; }
@@ -1384,6 +1384,8 @@ define([], function () {
         displayPic(dispen);
         displayTabs(dispen);
         mor.layout.adjust();
+        if(errmsg) {
+            mor.err("Previous processing failed: " + errmsg); }
     },
 
 
@@ -1398,8 +1400,9 @@ define([], function () {
     return {
         resetStateVars: function () {
             resetStateVars(); },
-        display: function () {
-            mor.pen.getPen(mainDisplay); },
+        display: function (action, errmsg) {
+            mor.pen.getPen(function (homepen) {
+                mainDisplay(homepen, null, action, errmsg); }); },
         updateHeading: function () {
             mor.pen.getPen(function (homepen) {
                 writeNavDisplay(homepen, profpen); }); },
