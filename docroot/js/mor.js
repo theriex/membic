@@ -373,6 +373,7 @@ var mor = {};  //Top level function closure container
 
 
     mor.init = function () {
+        mor.byId('loginform').style.display = "none";
         mor.amdtimer = {};
         mor.amdtimer.dojo = { start: new Date() };
         mor.out('contentfill', "loading libraries...");
