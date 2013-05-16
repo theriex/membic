@@ -15,6 +15,7 @@ define([], function () {
         topworkdivcontents = "",
         changepwdprompt = "Changing your login credentials",
         altauths = [],
+        loginhtml = "",
 
 
     secureURL = function (endpoint) {
@@ -90,6 +91,7 @@ define([], function () {
         if(!params) {
             params = mor.parseParams(); }
         if(params.returnto) {
+            //if changing here, also check /redirlogin
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
             if(params.reqprof) {
@@ -506,80 +508,51 @@ define([], function () {
     },
 
 
-    appropriateIntroText = function () {
-        var html = mor.introtext;
-        if(window.location.href.indexOf("reqprof=") >= 0) {
-            html = "<p>You need to sign in to see reviews from the " + 
-                "pen name you requested. </p>"; }
-        return html;
-    },
-
-
-    displayLoginForm = function () {
-        var cdiv, ldiv, html = "";
+    displayLoginForm = function (params) {
+        var name, html = "";
         mor.out('centerhdiv', "");
-        cdiv = mor.byId('contentdiv');
-        mor.out('contentdiv', appropriateIntroText());
-        ldiv = document.createElement('div');
-        ldiv.setAttribute('id','logindiv');
-        cdiv.appendChild(ldiv);
-        html +=  "<div id=\"loginstatdiv\">&nbsp;</div>" +
-        "<table>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"left\" class=\"instructional\">" +
-              "Sign in directly...</td>" +
-            "<td>&nbsp;</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td align=\"right\"><label for=\"userin\">username</label></td>" +
-            "<td align=\"left\">" +
-              "<input type=\"text\" name=\"username\" id=\"userin\"" + 
-                    " size=\"20\"/></td>" +
-            "<td rowspan=\"2\"><div id=\"altauthdiv\"></div></td>" +
-            "<td align=\"left\" class=\"instructional\">" +
-              "&nbsp;&nbsp;...or with your social account</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td align=\"right\"><label for=\"passin\">password</label></td>" +
-            "<td align=\"left\">" +
-              "<input type=\"password\" name=\"password\" id=\"passin\"" + 
-                    " size=\"20\"/></td>" +
-            "<td align=\"center\">" + displayAltAuthMethods() + "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"right\">" +
-              "<a id=\"seclogin\" href=\"#secure login\"" +
-                " title=\"How login credentials are handled securely\"" +
-                " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
-                "return false;\">(secured)</a>" +
-              "&nbsp;&nbsp;&nbsp;" +
-              "<span id=\"loginbspan\">" +
-                loginButtonHTML() + 
-              "</span>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"right\">" +
-              "<a id=\"macc\" href=\"create new account...\"" + 
-                " title=\"Set up a new local login\"" +
-              ">" + "Create a new account</a>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"right\">" +
-              "<a id=\"forgot\" href=\"forgot credentials...\"" + 
-                " title=\"Retrieve your credentials using the email you set\"" +
-              ">" + "forgot your password?</a>" +
-            "</td>" +
-          "</tr>" +
-        "</table>";
-        mor.out('logindiv', html);
-        mor.onclick('macc', displayNewAccountForm);
+        if(!loginhtml) {  //save original html in case needed later
+            loginhtml = mor.byId('logindiv').innerHTML; }
+        if(!mor.byId('logindiv')) {
+            html = "<div id=\"logindiv\">" + loginhtml + "</div>";
+            mor.out('contentdiv', html); }
+        //add url parameters to pass through on form submit
+        html = "";
+        for(name in params) {
+            if(params.hasOwnProperty(name)) {
+                html += "<input type=\"hidden\" name=\"" + name + "\"" +
+                              " value=\"" + params[name] + "\"/>"; } }
+        if(!params.returnto) {
+            //window.location.origin is webkit only
+            html += "<input type=\"hidden\" name=\"returnto\"" + 
+                          " value=\"" + window.location.protocol + "//" + 
+                                        window.location.host + "\"/>"; }
+        mor.out('loginparaminputs', html);
+        //decorate contents and connect additional actions
+        if(params.loginerr) {
+            mor.out('loginstatdiv', params.loginerr); }
+        mor.out('sittd', "Sign in directly...");
+        mor.out('osacctd', "&nbsp;&nbsp;...or with your social account");
+        mor.out('altauthmethods', displayAltAuthMethods());
+        html = "<a id=\"seclogin\" href=\"#secure login\"" +
+                 " title=\"How login credentials are handled securely\"" +
+                 " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
+                            "return false;\">(secured)</a>";
+        mor.out('secexp', html);
         mor.byId('seclogin').style.fontSize = "x-small";
-        mor.byId('forgot').style.fontSize = "x-small";
-        mor.onclick('forgot', displayEmailCredForm);
+        html =  "<a id=\"macc\" href=\"create new account...\"" + 
+                  " title=\"Set up a new local login\"" +
+            ">" + "Create a new account</a>";
+        mor.out('macctd', html);
+        mor.onclick('macc', displayNewAccountForm);
+        html = "<a id=\"forgotpw\" href=\"forgot credentials...\"" + 
+                 " title=\"Retrieve your credentials using the email" + 
+                         " address you set for your account\"" +
+            ">" + "forgot your password?</a>";
+        mor.out('forgotpwtd', html);
+        mor.byId('forgotpw').style.fontSize = "x-small";
+        mor.onclick('forgotpw', displayEmailCredForm);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
-        mor.onchange('passin', userpassLogin);
         mor.layout.adjust();
         if(authname) {
             mor.byId('userin').value = authname; }
@@ -651,7 +624,7 @@ define([], function () {
         else if(authtoken || readAuthCookie()) {  //already logged in...
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
-            displayLoginForm(); }
+            displayLoginForm(params); }
         else { 
             mor.redirectToSecureServer(params); }
     };

@@ -32,6 +32,11 @@ handlers:
 - url: /login.*
   script: src.py.moracct.app
 
+## Read native credentials and redirect back
+## POST params: userin, passin (,returnto, command, view, prof/pen/revid)
+- url: /redirlogin.*
+  script: src.py.moracct.app
+
 ## Create a new native account on MyOpenReviews
 ## POST params: user, pass, email
 - url: /newacct.*

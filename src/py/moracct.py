@@ -340,6 +340,51 @@ class GetToken(webapp2.RequestHandler):
             self.response.out.write("No match for those credentials")
 
 
+class TokenAndRedirect(webapp2.RequestHandler):
+    def post(self):
+        url = self.request.url;
+        if not (url.startswith('https') or url.startswith('http://localhost')):
+            self.error(405)
+            self.response.out.write("request must be over https")
+            return
+        redurl = self.request.get('returnto')
+        if not redurl:
+            redurl = "http://www.myopenreviews.com"
+        redurl += "#"
+        username = self.request.get('userin')
+        password = self.request.get('passin')
+        where = "WHERE username=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, username, password)
+        found = accounts.count()
+        if found:
+            token = newtoken(username, password)
+            redurl += "authmethod=mid&authtoken=" + token
+            redurl += "&authname=" + username
+        else:
+            redurl += "loginerr=" + "No match for those credentials"
+        # if changing these params, also check login.doneWorkingWithAccount
+        command = self.request.get('command')
+        if command and command != "chgpwd":
+            redurl += "command=" + command + "&"
+        reqprof = self.request.get('reqprof')
+        if reqprof:
+            redurl += "view=profile&profid=" + reqprof + "&"
+        view = self.request.get('view')
+        if view:
+            redurl += "view=" + view + "&"
+        profid = self.request.get('profid')
+        if profid:
+            redurl += "profid=" + profid + "&"
+        penid = self.request.get('penid')
+        if penid:
+            redurl += "penid=" + penid + "&"
+        revid = self.request.get('revid')
+        if revid:
+            redurl += "revid=" + revid + "&"
+        logging.info("TokenAndRedirect " + redurl);
+        self.redirect(str(redurl))
+
+
 class GetLoginID(webapp2.RequestHandler):
     def post(self):
         username = self.request.get('userin')
@@ -404,6 +449,7 @@ class ChangePassword(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
                                ('/login', GetToken),
+                               ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),
                                ('/chgpwd', ChangePassword),
                                ('/loginid', GetLoginID)], debug=True)

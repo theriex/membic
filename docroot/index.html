@@ -39,6 +39,41 @@
             enable...</b></p>
       </noscript>
     </div>
+    <!-- login has to be an actual form to enable remembered passwords -->
+    <div id="logindiv">
+      <form id="loginform" method="post" action="/redirlogin">
+        <div id="loginstatdiv">&nbsp;</div>
+        <div id="loginparaminputs"></div>
+        <table>
+          <tr>
+            <td colspan="2" align="left" class="instructional" id="sittd"></td>
+            <td>&nbsp;</td>
+          </tr><tr>
+            <td align="right"><label for="userin">username</label></td>
+            <td align="left">
+              <input type="text" name="userin" 
+                     id="userin" size="20"/></td>
+            <td rowspan="2"><div id="altauthdiv"></div></td> <!-- spacer -->
+            <td align="left" class="instructional" id="osacctd"></td>
+          </tr><tr>
+            <td align="right"><label for="passin">password</label></td>
+            <td align="left">
+              <input type="password" name="passin" 
+                     id="passin" size="20"/></td>
+            <td align="center" id="altauthmethods"></td>
+          </tr><tr>
+            <td colspan="2" align="right">
+              <span id="secexp"></span>&nbsp;&nbsp;&nbsp;
+              <span id="loginbspan">
+                <input value="Sign in" type="submit"/></span></td>
+          </tr><tr>
+            <td colspan="2" align="right" id="macctd"></td>
+          </tr><tr>
+            <td colspan="2" align="right" id="forgotpwtd"></td>
+          </tr>
+        </table>
+      </form>
+    </div> <!-- logindiv -->
   </div>
 
   <div id="contentfill">loading...</div>
