@@ -214,13 +214,15 @@ def review_activity_search(since, cursor, penids):
         revs.filter('modified >', since)
     if cursor:
         revs.with_cursor(start_cursor = cursor)
-    maxcheck = 1000
+    maxcheck = 2000
     dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
     checked = 0
     cursor = ""
     for rev in revs:
         checked += 1
-        if str(rev.penid) in penids:
+        if ((str(rev.penid) in penids) and
+            (not (rev.svcdata and 
+                  batch_flag_attrval(rev) in rev.svcdata))):
             results.append(rev)
         if len(results) >= 20:
             cursor = revs.cursor()
