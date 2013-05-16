@@ -639,11 +639,18 @@ define([], function () {
                 html += " " + mor.review.reviewLinkHTML(); }
             html += "</li>"; }
         html += "</ul>";
-        if(dispState.cursor && i > 0) {
-            html += "<a href=\"#continuesearch\"" +
-                " onclick=\"mor.profile.revsmore('" + dispState.tab + "');" +
-                           "return false;\"" +
-                " title=\"More reviews\"" + ">more reviews...</a>"; }
+        if(dispState.cursor) {
+            if(i === 0 && dispState.results.length === 0) {
+                if(dispState.total < 2000) {  //auto-repeat search
+                    setTimeout(mor.profile.revsmore, 10); } 
+                else {
+                    html += "No recent reviews found, only batch updates."; } }
+            else {
+                html += "<a href=\"#continuesearch\"" +
+                          " onclick=\"mor.profile.revsmore();" +
+                                     "return false;\"" +
+                          " title=\"More reviews\"" + 
+                    ">more reviews...</a>"; } }
         mor.out('profcontdiv', html);
         mor.layout.adjust();
     },
@@ -654,6 +661,8 @@ define([], function () {
         if(!dispState.params.penid) {
             dispState.params.penid = mor.instId(profpen); }
         params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
+        if(dispState.cursor) {
+            params += "&cursor=" + mor.enc(dispState.cursor); }
         mor.call("srchrevs?" + params, 'GET', null,
                  function (revs) {
                      displayRecentReviews(dispState, revs); },
@@ -664,14 +673,6 @@ define([], function () {
     },
 
 
-    fetchMoreReviews = function (tabname) {
-        if(tabname === "recent") {
-            findRecentReviews(recentRevState); }
-        else {
-            mor.err("fetchMoreReviews unknown tabname: " + tabname); }
-    },
-
-        
     recent = function () {
         var html, maxdate, mindate;
         selectTab("recentli", recent);
@@ -1458,8 +1459,8 @@ define([], function () {
             updateCache(pen); },
         currentTabAsString: function () {
             return getCurrTabAsString(); },
-        revsmore: function (tab) {
-            return fetchMoreReviews(tab); },
+        revsmore: function () {
+            findRecentReviews(recentRevState); },
         readReview: function (revid) {
             return readReview(revid); },
         topTypeChange: function () {
