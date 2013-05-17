@@ -676,7 +676,8 @@ define([], function () {
     recent = function () {
         var html, maxdate, mindate;
         selectTab("recentli", recent);
-        if(recentRevState && recentRevState.initialized) {
+        if(recentRevState && recentRevState.initialized &&
+           recentRevState.penid === mor.instId(profpen)) {
             displayRecentReviews(recentRevState);
             return; }
         html = "Retrieving recent activity for " + profpen.name + "...";
@@ -687,6 +688,7 @@ define([], function () {
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
         recentRevState.params.maxdate = maxdate.toISOString();
         recentRevState.params.mindate = mindate.toISOString();
+        recentRevState.penid = mor.instId(profpen);
         recentRevState.initialized = true; 
         findRecentReviews(recentRevState);
     },
