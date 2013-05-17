@@ -350,6 +350,8 @@ class TokenAndRedirect(webapp2.RequestHandler):
         redurl = self.request.get('returnto')
         if not redurl:
             redurl = "http://www.myopenreviews.com"
+        if "http%3A" in redurl:
+            redurl = urllib.unquote(redurl)
         redurl += "#"
         username = self.request.get('userin')
         password = self.request.get('passin')
