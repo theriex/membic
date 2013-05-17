@@ -15,6 +15,7 @@ define([], function () {
         slideindex = 0,
         slideslot = 0,
         topPaddingAndScroll = 320,
+        dndState = null,
 
 
     closeDialog = function () {
@@ -169,6 +170,50 @@ define([], function () {
     },
 
 
+    dndStart = function (event) {
+        if(event) {
+            dndState = { domobj: event.target,
+                         screenX: event.screenX,
+                         screenY: event.screenY };
+            mor.log("dndStart " + dndState.domobj + " " + 
+                    dndState.screenX + "," + dndState.screenY);
+            if(event.dataTransfer && event.dataTransfer.setData) {
+                event.dataTransfer.setData("text/plain", "general drag"); } }
+    },
+
+
+    dndEnd = function (event) {
+        if(event && dndState) {
+            mor.log("dndEnd called");
+            dndState.ended = true; }
+    },
+                
+
+    dndOver = function (event) {
+        if(event && dndState && (!dndState.ended || dndState.dropped)) {
+            //mor.log("dndOver preventing default cancel");
+            event.preventDefault(); }
+    },
+
+
+    dndDrop = function (event) {
+        var diffX, diffY, domobj, currX, currY;
+        mor.log("dndDrop called");
+        if(event && dndState) {
+            dndState.dropped = true;
+            diffX = event.screenX - dndState.screenX;
+            diffY = event.screenY - dndState.screenY;
+            domobj = dndState.domobj;
+            mor.log("dropping " + domobj + " moved " + diffX + "," + diffY);
+            currX = domobj.offsetLeft;
+            currY = domobj.offsetTop;
+            domobj.style.left = String(currX + diffX) + "px";
+            domobj.style.top = String(currY + diffY) + "px";
+            event.preventDefault();
+            event.stopPropagation(); }
+    },
+
+
     setSoftFocus = function () {
         var revid, focobj;
         if(mor.review.getCurrentReview()) {
@@ -218,7 +263,15 @@ define([], function () {
         closeDialog: function () {
             closeDialog(); },
         setTopPaddingAndScroll: function (val) {
-            topPaddingAndScroll = val; }
+            topPaddingAndScroll = val; },
+        dragstart: function (event) {
+            dndStart(event); },
+        dragend: function (event) {
+            dndEnd(event); },
+        bodydragover: function (event) {
+            dndOver(event); },
+        bodydrop: function (event) {
+            dndDrop(event); }
     };
 
 });

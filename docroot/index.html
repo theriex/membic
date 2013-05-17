@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojox/widget/ColorPicker/ColorPicker.css" />
   <link rel="image_src" href="img/remo.png" />
 </head>
-<body id="bodyid">
+<body id="bodyid" ondragover="mor.layout.bodydragover(event);" 
+      ondrop="mor.layout.bodydrop(event);">
 
 <div id="mascotdiv">
 </div>
@@ -94,8 +95,11 @@
 <div id="topdiv">  <!-- higher z than content, postioned above -->
 </div>
 
-<div id="overlaydiv"></div>  <!-- overlayed forms, not quite dialogs -->
-<div id="dlgdiv"></div>  <!-- dialogs -->
+<!-- overlayed forms, not quite a dialog -->
+<div id="overlaydiv"></div>  
+<!-- dialog -->
+<div id="dlgdiv" draggable="true" ondragstart="mor.layout.dragstart(event);"
+     ondragend="mor.layout.dragend(event);"></div>
 
 
 <!-- This lib version should match the css theme -->
