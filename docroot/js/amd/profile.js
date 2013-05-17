@@ -677,7 +677,8 @@ define([], function () {
         var html, maxdate, mindate;
         selectTab("recentli", recent);
         if(recentRevState && recentRevState.initialized) {
-            displayRecentReviews(recentRevState); }
+            displayRecentReviews(recentRevState);
+            return; }
         html = "Retrieving recent activity for " + profpen.name + "...";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
