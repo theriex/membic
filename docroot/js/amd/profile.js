@@ -1260,7 +1260,8 @@ define([], function () {
         if(elem) {
             return; }  //already editing
         val = mor.byId('profcityspan').innerHTML;
-        if(val.startsWith("<a")) {
+        //IE8 actually capitalizes the the HTML for you. Sheesh.
+        if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
             val = mor.byId('profcitya').innerHTML; }
         if(val === unspecifiedCityText) {
             val = ""; }
