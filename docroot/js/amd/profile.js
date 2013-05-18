@@ -8,7 +8,10 @@
 define([], function () {
     "use strict";
 
-    var unspecifiedCityText = "City not specified",
+    var greytxt = "#999999",
+        unspecifiedCityText = "City not specified",
+        noShoutTxt = "<span style=\"color:" + greytxt + ";\">" + 
+                         "No shoutout</span>",
         currtab,
         profpen,
         cachepens = [],
@@ -1231,7 +1234,7 @@ define([], function () {
 
 
     displayShout = function (pen) {
-        var html, shout;
+        var html, shout, text;
         html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
         mor.out('profshouttd', html);
         shout = mor.byId('shoutdiv');
@@ -1240,7 +1243,8 @@ define([], function () {
         //the textarea has a default border, so adding an invisible
         //border here to keep things from jumping around.
         shout.style.border = "1px solid " + mor.colors.bodybg;
-        mor.out('shoutdiv', mor.linkify(pen.shoutout));
+        text = mor.linkify(pen.shoutout) || noShoutTxt;
+        mor.out('shoutdiv', text);
         if(mor.profile.authorized(pen)) {
             mor.onclick('shoutdiv', function () {
                 editShout(pen); }); }
@@ -1276,12 +1280,12 @@ define([], function () {
 
 
     displayCity = function (pen) {
-        var html, style = "", grey="#999999";
-        if(!pen.city) {  //grey if no city specified
-            mor.byId('profcityspan').style.color = grey; }
+        var html, style = "";
+        if(!pen.city) { 
+            mor.byId('profcityspan').style.color = greytxt; }
         html = pen.city || unspecifiedCityText;            
         if(!pen.city) {
-            style = " style=\"color:" + grey + ";\""; }
+            style = " style=\"color:" + greytxt + ";\""; }
         if(mor.profile.authorized(pen)) {
             html = "<a href=\"#edit city\" title=\"Edit city\"" +
                      " id=\"profcitya\"" + 
