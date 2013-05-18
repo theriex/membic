@@ -93,7 +93,7 @@ define([], function () {
            !pen.revmem.remembered.length) {
             html += "<li>You have not remembered any reviews. If you " +
                 "see a review worth remembering, click the \"Remember\" " +
-                "button for it and it will show up here.</li>"; }
+                "button for it and it will be kept here.</li>"; }
         else {
             maxdisp = Math.min(maxdisp, pen.revmem.remembered.length);
             for(i = 0; i < maxdisp; i += 1) {
