@@ -189,6 +189,7 @@ def update_top20_reviews(pen, review):
     t20dict[review.revtype] = t20ids
     t20dict["latestrevtype"] = review.revtype
     pen.top20s = json.dumps(t20dict)
+    pen.modified = nowISO();
     pen.put()
 
 
