@@ -343,7 +343,7 @@ class GetToken(webapp2.RequestHandler):
 class TokenAndRedirect(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or url.startswith('http://localhost')):
+        if not (url.startswith('https') or ":8080" in url):
             self.error(405)
             self.response.out.write("request must be over https")
             return

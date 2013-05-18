@@ -1209,6 +1209,11 @@ define([], function () {
         target = Math.max((mor.winw - 350), 200);
         target = Math.min(target, 600);
         shout.style.width = target + "px";
+        //modify profcontdiv so it balances the text area size.  This is
+        //needed so IE8 doesn't widen profpictd unnecessarily.
+        target += mor.byId('profpictd').offsetWidth;
+        target += 50;  //arbitrary extra to cover padding
+        mor.byId('profcontdiv').style.width = String(target) + "px";
     },
 
 
@@ -1353,7 +1358,7 @@ define([], function () {
         //process of updating the persistent state
         mor.skinner.setColorsFromPen(homepen);
         html = "<div id=\"proftopdiv\">" +
-        "<table>" +
+        "<table id=\"profdisptable\">" +
           "<tr>" +
             "<td id=\"sysnotice\" colspan=\"2\">" +
           "</tr>" +

@@ -20,8 +20,8 @@ define([], function () {
 
     secureURL = function (endpoint) {
         var url = window.location.href;
-        if(url.indexOf("http://localhost:8080") === 0 ||   //local dev or
-           url.indexOf("https://") === 0) {                //secure server
+        if(url.indexOf(":8080") > 0 ||           //local dev or
+           url.indexOf("https://") === 0) {      //secure server
             url = endpoint; }  //relative path url ok, data is encrypted
         else {  //not secured, try via XDR although it may not work
             url = "https://myopenreviews.appspot.com/" + endpoint; }
