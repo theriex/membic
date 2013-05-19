@@ -92,7 +92,7 @@ define([], function () {
         if(mor.instId(homepen) === mor.instId(dispen)) {
             html = mor.imglink("#Settings","Adjust your application settings",
                                "mor.profile.settings()", "settings.png"); }
-        else {
+        else if(mor.rel.relsLoaded()) {
             relationship = mor.rel.outbound(id);
             if(relationship) {
                 html = mor.imglink("#Settings",
@@ -104,6 +104,11 @@ define([], function () {
                                    "Follow " + name + " reviews",
                                    "mor.profile.relationship()",
                                    "follow.png"); } }
+        else {  
+            //Happens if you go directly to someone's profile via url
+            //and rels are loading slowly.  Not known if you are following
+            //them yet.  The heading updates after the rels are loaded.
+            html = "..."; }
         mor.out('penhbuttonspan', html);
     },
 

@@ -376,7 +376,9 @@ define([], function () {
         displayRelations: function (dispobj) {
             return displayRelatedPens(dispobj); },
         followBack: function (followerid) {
-            addFollowerDisplayHome(followerid); }
+            addFollowerDisplayHome(followerid); },
+        relsLoaded: function () {
+            return asyncLoadStarted && !loadoutcursor; }
     };
 
 });
