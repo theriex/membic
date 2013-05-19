@@ -68,7 +68,7 @@ body {
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
 
-.penfont, #homepennamespan, #penhnamespan { 
+.penfont, #penhnamespan { 
   font-style:italic; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
 /* font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
@@ -135,7 +135,6 @@ body {
 #profdisptable { margin-left:8%; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
-.textright { text-align:right; }
 .penlist { list-style:none; padding:0; margin:0; }
 .sumtotal { font-size:small; }
 #srchmessagespan { font-size:small; }
@@ -153,7 +152,6 @@ body {
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
 .csvstrdiv { padding:5px; }
-#actmodediv { padding:0px 0px 20px 0px; }
 .bigoverlabel { font-size:large; font-weight:bold; padding:25px 0px 0px 0px; }
 #statnoticediv { background:#eee; padding:15px;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
@@ -165,7 +163,6 @@ body {
 /* only actual buttons should look like buttons */
 .buttondiv { padding:5px; font-size:large; }
 .searchtable td { padding:5px 10px; }
-.mainactionstable td { padding:0px 2px; }
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#333; }
 #statrevactdiv { text-align:center; padding:10px; }
