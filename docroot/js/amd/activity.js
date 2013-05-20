@@ -71,6 +71,7 @@ define([], function () {
     penNameSearch = function () {
         setTimeout(function () {
             mor.profile.setTab("search");
+            mor.profile.setSearchMode("pen");
             mor.profile.display(); }, 50);
     },
 
@@ -241,8 +242,9 @@ define([], function () {
         writeNavDisplay();
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
-            html = "You are not following anyone. " + 
-                searchPensLinkHTML(); }
+            html = "You are not following anyone. To follow someone, go to" + 
+                " their profile and click the follow icon next to their" + 
+                " name. " + searchPensLinkHTML(); }
         else if((penids[penids.length - 1] === "waiting") ||
                 (penids[penids.length - 1] === "loading")) {
             retry = true;

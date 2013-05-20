@@ -351,7 +351,7 @@ define([], function () {
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
             "<td align=\"left\">" + 
-              "(optional - used if you forget your login)</td>" +
+              "&nbsp;(optional - used if you forget your login)</td>" +
           "</tr>" +
           "<tr>" +
             "<td id=\"newaccbuttonstd\" colspan=\"2\" align=\"center\">" +

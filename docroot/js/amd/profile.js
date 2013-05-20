@@ -1086,7 +1086,8 @@ define([], function () {
 
 
     changeSearchMode = function () {
-        var i, radios = document.getElementsByName("searchmode");
+        var i, radios, prevmode = searchmode;
+        radios = document.getElementsByName("searchmode");
         for(i = 0; i < radios.length; i += 1) {
             if(radios[i].checked) {
                 if(radios[i].value === "pen") {
@@ -1102,7 +1103,8 @@ define([], function () {
                     searchmode = "rev";
                     break; } } }
         mor.out('srchoptstogglehref', "");
-        mor.out('searchresults', "");
+        if(prevmode !== searchmode) {
+            mor.out('searchresults', ""); }
         if(searchmode === "pen") {  //start with options hidden for pen search
             toggleSearchOptions(); }
     },
@@ -1118,12 +1120,17 @@ define([], function () {
             "<div id=\"searchresults\"></div>";
         mor.out('profcontdiv', html);
         setFormValuesFromSearchParams();
-        displaySearchResults([]);  //show previous results, if any
+        //show previous results if they browser back button from a profile
+        if(searchresults && searchresults.length > 0) {
+            displaySearchResults([]); }
         mor.onchange('searchtxt', startSearch);
         mor.onclick('searchbutton', startSearch);
         changeSearchMode();
         mor.byId('searchtxt').focus();
         mor.layout.adjust();
+        if(searchmode === "pen" && 
+           (!searchresults || searchresults.length === 0)) {
+            startSearch(); }
     },
 
 
@@ -1509,7 +1516,9 @@ define([], function () {
         cancelPenNameSettings: function () {
             cancelPenNameSettings(); },
         editCity: function () {
-            editCity(); }
+            editCity(); },
+        setSearchMode: function (mode) {
+            searchmode = mode; }
     };
 
 });
