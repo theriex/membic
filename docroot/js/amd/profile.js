@@ -1150,11 +1150,12 @@ define([], function () {
           "<li id=\"followersli\" class=\"unselectedTab\">" +
             tablink("Followers (" + pen.followers + ")", 
                     "mor.profile.followers()") + 
-          "</li>" +
-          "<li id=\"searchli\" class=\"unselectedTab\">" +
-            tablink("Search", "mor.profile.search()") + 
-          "</li>" +
-        "</ul>";
+          "</li>";
+        if(mor.instId(profpen) === mor.pen.currPenId()) {
+            html += "<li id=\"searchli\" class=\"unselectedTab\">" +
+                tablink("Search", "mor.profile.search()") + 
+                "</li>"; }
+        html += "</ul>";
         mor.out('proftabsdiv', html);
         if(!currtab) {
             currtab = recent; }
