@@ -821,13 +821,16 @@ define([], function () {
         searchparams.activeDaysAgo = since;
         searchparams.includeFollowing = false;
         searchparams.includeBlocked = false;
+        searchparams.includeLurkers = false;
         checkboxes = document.getElementsByName("srchinc");
         for(i = 0; i < checkboxes.length; i += 1) {
             if(checkboxes[i].checked) {
                 if(checkboxes[i].value === 'following') {
                     searchparams.includeFollowing = true; }
                 if(checkboxes[i].value === 'blocked') {
-                    searchparams.includeBlocked = true; } } }
+                    searchparams.includeBlocked = true; } 
+                if(checkboxes[i].value === 'lurkers') {
+                    searchparams.includeLurkers = true; } } }
     },
 
 
@@ -851,6 +854,7 @@ define([], function () {
                     options[i].selected = (since <= 0); break; } } }
         mor.byId('following').checked = searchparams.includeFollowing;
         mor.byId('blocked').checked = searchparams.includeBlocked;
+        mor.byId('lurkers').checked = searchparams.includeLurkers;
     },
 
 
@@ -858,7 +862,7 @@ define([], function () {
     //restriction by checking the "accessed" field, and the "top 20"
     //restriction by looking through those, however it does not
     //handle joins across relationships due to indexing overhead, so
-    //these are filtered out here.
+    //those are filtered out here.
     filtered = function (searchitem) {
         var pen, rel;
         if(searchmode === "rev") {
@@ -939,6 +943,8 @@ define([], function () {
                     t20 += ","; }
                 t20 += searchparams.reqmin[i]; }
             params += "&t20=" + mor.enc(t20); }
+        if(searchparams.includeLurkers) {
+            params += "&lurkers=include"; }
         mor.call("srchpens?" + params, 'GET', null,
                  function (results) {
                      displaySearchResults(results); },
@@ -1045,6 +1051,7 @@ define([], function () {
             "<i>Include</i>&nbsp;" + 
             mor.checkbox("srchinc", "following") +
             mor.checkbox("srchinc", "blocked") +
+            mor.checkbox("srchinc", "lurkers") +
             " <i> in the search results</i>" +
             "<br/>&nbsp;<br/></div>";
         return html;

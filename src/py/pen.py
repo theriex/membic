@@ -229,6 +229,7 @@ class SearchPenNames(webapp2.RequestHandler):
         qstr_c = canonize(qstr)
         time = self.request.get('time')
         t20 = self.request.get('t20')
+        lurkers = self.request.get('lurkers')
         cursor = self.request.get('cursor')
         results = []
         pens = PenName.all()
@@ -247,8 +248,18 @@ class SearchPenNames(webapp2.RequestHandler):
                     (pen.shoutout and qstr in pen.shoutout) or \
                     (pen.city and qstr_c in pen.city.lower()):
                 matched = True
+            # test not self
+            if matched and (acc._id == pen.mid or      #int comparison
+                            acc._id == pen.fbid or     #int comparison
+                            acc._id == pen.twid or     #int comparison
+                            acc._id == pen.ghid or     #int comparison
+                            acc._id == pen.gsid):      #string comparison
+                matched = False
             # test recent access constraint
             if matched and time and pen.accessed < time:
+                matched = False
+            # test they have reviewed something if lurkers not desired
+            if matched and not lurkers and not pen.top20s:
                 matched = False
             # test required top 20 review types
             if matched and t20 and not pen.top20s:
@@ -259,15 +270,8 @@ class SearchPenNames(webapp2.RequestHandler):
                     if not has_top_twenty(pen, value):
                         matched = False
                         break
-            # test not self
-            if matched and (acc._id == pen.mid or      #int comparison
-                            acc._id == pen.fbid or     #int comparison
-                            acc._id == pen.twid or     #int comparison
-                            acc._id == pen.ghid or     #int comparison
-                            acc._id == pen.gsid):      #string comparison
-                matched = False
+            # filter sensitive fields
             if matched:
-                # filter sensitive fields
                 pen.mid = 0
                 pen.gsid = "0"
                 pen.fbid = 0

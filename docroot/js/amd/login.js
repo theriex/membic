@@ -64,10 +64,14 @@ define([], function () {
 
 
     logout = function () {
+        var html;
         logoutWithNoDisplayUpdate();
         mor.profile.cancelPenNameSettings();  //close the dialog if it is up
         mor.historyCheckpoint({ view: "profile", profid: 0 });
         mor.login.updateAuthentDisplay();
+        if(!mor.byId('logindiv')) {
+            html = "<div id=\"logindiv\">" + loginhtml + "</div>";
+            mor.out('contentdiv', html); }
         mor.login.init();
     },
 
@@ -511,12 +515,10 @@ define([], function () {
     displayLoginForm = function (params) {
         var name, html = "";
         mor.out('centerhdiv', "");
-        mor.byId('loginform').style.display = "inline";
-        if(!loginhtml) {  //save original html in case needed later
-            loginhtml = mor.byId('logindiv').innerHTML; }
         if(!mor.byId('logindiv')) {
             html = "<div id=\"logindiv\">" + loginhtml + "</div>";
             mor.out('contentdiv', html); }
+        mor.byId('loginform').style.display = "inline";
         //add url parameters to pass through on form submit
         html = "";
         for(name in params) {
@@ -634,6 +636,8 @@ define([], function () {
     return {
         init: function () {
             mor.out('contentfill', "loading login extensions...");
+            if(!loginhtml) {  //save original html in case needed later
+                loginhtml = mor.byId('logindiv').innerHTML; }
             mor.amdtimer.ext = { start: new Date() };
             require([ "ext/facebook", "ext/twitter", "ext/googleplus", 
                       "ext/github" ],
