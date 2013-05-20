@@ -1374,6 +1374,7 @@ define([], function () {
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
+        mor.out('cmain', "Deleting review...");
         data = mor.objdata(crev);
         mor.call("delrev?" + mor.login.authparams(), 'POST', data,
                  function (reviews) {
