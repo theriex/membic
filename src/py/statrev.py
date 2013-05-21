@@ -190,43 +190,48 @@ def descrip(rev):
     return text
 
 
-def script_to_set_colors(pen):
-    html = ""
-    if not pen.settings:
-        return html
-    settings = json.loads(pen.settings)
-    if not settings or not settings["colors"]:
-        return html
-    colors = settings["colors"]
-    html += "<script>\n"
-    html += "document.getElementById('bodyid').style.backgroundColor = " +\
-        "\"" + colors["bodybg"] + "\"\n"
-    html += "document.getElementById('bodyid').style.color = " +\
-        "\"" + colors["text"] + "\"\n"
-    html += "rules = document.styleSheets[0].cssRules;\n"
-    html += "for(var i = 0; rules && i < rules.length; i += 1) {\n"
-    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
-        "A:link\") === 0) {\n"
-    html += "        if(rules[i].style.setProperty) {\n"
-    html += "            rules[i].style.setProperty('color', " +\
-        "\"" + colors["link"] + "\"" + ", null); } }\n"
-    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
-        "A:visited\") === 0) {\n"
-    html += "        if(rules[i].style.setProperty) {\n"
-    html += "            rules[i].style.setProperty('color', " +\
-        "\"" + colors["link"] + "\"" + ", null); } }\n"
-    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
-        "A:active\") === 0) {\n"
-    html += "        if(rules[i].style.setProperty) {\n"
-    html += "            rules[i].style.setProperty('color', " +\
-        "\"" + colors["link"] + "\"" + ", null); } }\n"
-    html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
-        "A:hover\") === 0) {\n"
-    html += "        if(rules[i].style.setProperty) {\n"
-    html += "            rules[i].style.setProperty('color', " +\
-        "\"" + colors["hover"] + "\"" + ", null); } } }\n"
-    html += "</script>\n"
-    return html
+# This was removed because switching the display to the colors every
+# person has set leads to an extremely inconsistent viewing
+# experience.  It would be great to set the palette to whatever the
+# viewer has defined, but they are likely not even logged in.  Going
+# with the default colors for now.
+# def script_to_set_colors(pen):
+#     html = ""
+#     if not pen.settings:
+#         return html
+#     settings = json.loads(pen.settings)
+#     if not settings or not settings["colors"]:
+#         return html
+#     colors = settings["colors"]
+#     html += "<script>\n"
+#     html += "document.getElementById('bodyid').style.backgroundColor = " +\
+#         "\"" + colors["bodybg"] + "\"\n"
+#     html += "document.getElementById('bodyid').style.color = " +\
+#         "\"" + colors["text"] + "\"\n"
+#     html += "rules = document.styleSheets[0].cssRules;\n"
+#     html += "for(var i = 0; rules && i < rules.length; i += 1) {\n"
+#     html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+#         "A:link\") === 0) {\n"
+#     html += "        if(rules[i].style.setProperty) {\n"
+#     html += "            rules[i].style.setProperty('color', " +\
+#         "\"" + colors["link"] + "\"" + ", null); } }\n"
+#     html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+#         "A:visited\") === 0) {\n"
+#     html += "        if(rules[i].style.setProperty) {\n"
+#     html += "            rules[i].style.setProperty('color', " +\
+#         "\"" + colors["link"] + "\"" + ", null); } }\n"
+#     html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+#         "A:active\") === 0) {\n"
+#     html += "        if(rules[i].style.setProperty) {\n"
+#     html += "            rules[i].style.setProperty('color', " +\
+#         "\"" + colors["link"] + "\"" + ", null); } }\n"
+#     html += "    if(rules[i].cssText && rules[i].cssText.indexOf(\"" +\
+#         "A:hover\") === 0) {\n"
+#     html += "        if(rules[i].style.setProperty) {\n"
+#     html += "            rules[i].style.setProperty('color', " +\
+#         "\"" + colors["hover"] + "\"" + ", null); } } }\n"
+#     html += "</script>\n"
+#     return html
 
 
 def revhtml(rev, pen):
@@ -277,7 +282,7 @@ def revhtml(rev, pen):
     # ads to help pay for hosting service. Yeah right. 
     html += "<div id=\"adreservespace\" style=\""
     html +=   "width:170px;height:610px;"
-    html +=   "background:#eeeeff;"
+    html +=   "background:#fffffc;"
     html +=   "padding:8px 0px 0px 8px;"
     # html +=   "border:1px solid #666;"
     html +=   "border-radius:5px;"
@@ -399,7 +404,6 @@ def revhtml(rev, pen):
     html +=   "</div> <!-- statnoticecontainerdiv -->\n"
     html += "  </td></tr></table>"
     html += "</div> <!-- appspacedivstatic -->\n"
-    html += script_to_set_colors(pen)
     html += "</body>\n"
     html += "</html>\n"
     return html;

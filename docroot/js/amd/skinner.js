@@ -17,11 +17,13 @@ define([], function () {
                        { id: "text",    label: "text" },
                        { id: "link",    label: "link" },
                        { id: "hover",   label: "hover" } ],
-        //Blue links are the most recognizable, they are not fun.
+        //Blue links are most recognizable, but they are not at all fun.
+        //If changing the first (default) skin, change mor.css to match,
+        //and verify statrev ads are compatible.
         presets = [ { name: "paper (warm)",   id: "paperw", 
                        bodybg: "#fffffc",   text: "#111111",
                       lightbg: "#fffffe", darkbg: "#9b9b9a",
-                         link: "#441111",  hover: "#885555" },
+                         link: "#521919",  hover: "#885555" },
                     { name: "paper (cool)",   id: "paperc",
                        bodybg: "#f8f8f8",   text: "#111111",
                       lightbg: "#fcfcfc", darkbg: "#a2a2a2",

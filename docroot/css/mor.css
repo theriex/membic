@@ -3,10 +3,10 @@
  * HTML tag level settings
  ************************************************************
  */
-A:link {text-decoration:none; color:#3150b2; }
-A:visited {text-decoration:none; color:#3150b2; }
-A:active {text-decoration:none; color:#3150b2; }
-A:hover {text-decoration:underline; color:#3399CC; }
+A:link {text-decoration:none; color:#521919; }
+A:visited {text-decoration:none; color:#521919; }
+A:active {text-decoration:none; color:#521919; }
+A:hover {text-decoration:underline; color:#885555; }
 
 body {
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
