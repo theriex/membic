@@ -367,22 +367,22 @@ class TokenAndRedirect(webapp2.RequestHandler):
         # if changing these params, also check login.doneWorkingWithAccount
         command = self.request.get('command')
         if command and command != "chgpwd":
-            redurl += "command=" + command + "&"
+            redurl += "&command=" + command
         reqprof = self.request.get('reqprof')
         if reqprof:
-            redurl += "view=profile&profid=" + reqprof + "&"
+            redurl += "&view=profile&profid=" + reqprof
         view = self.request.get('view')
         if view:
-            redurl += "view=" + view + "&"
+            redurl += "&view=" + view
         profid = self.request.get('profid')
         if profid:
-            redurl += "profid=" + profid + "&"
+            redurl += "&profid=" + profid
         penid = self.request.get('penid')
         if penid:
-            redurl += "penid=" + penid + "&"
+            redurl += "&penid=" + penid
         revid = self.request.get('revid')
         if revid:
-            redurl += "revid=" + revid + "&"
+            redurl += "&revid=" + revid
         logging.info("TokenAndRedirect " + redurl);
         self.redirect(str(redurl))
 
