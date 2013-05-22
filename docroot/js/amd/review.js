@@ -784,12 +784,11 @@ define([], function () {
                        " onclick=\"mor.review.save(true,'');return false;\"" +
                 ">Save</button>&nbsp;";
             if(keyval) {  //have at least minimally complete review..
-                html += "" +
-                    "<button type=\"button\" id=\"donebutton\"" +
+                html += "<button type=\"button\" id=\"donebutton\"" +
                            " onclick=\"mor.review.save(true,'runServices');" + 
                                       "return false;\"" +
                     ">Save and Share</button>"; }
-            html += "</div>" }
+            html += "</div>"; }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
             mor.onescapefunc = null;
@@ -948,7 +947,7 @@ define([], function () {
                 "<td valign=\"top\">" + 
                     keywordsHTML(review, type, keyval, mode) + "</td>" +
                 "</tr></table>" +
-              "</td>"
+              "</td>" +
             "</tr>";
         return html;
     },
