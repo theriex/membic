@@ -240,6 +240,8 @@ define([], function () {
             html += "</tr>"; }
         html += "</table>";
         mor.out('colorctrlsdiv', html);
+        if(colorwidget) {
+            colorwidget.destroy(); }
         colorwidget = new Colorwidget(
             { onChange: function (val) {
                 mor.byId(colorctrl.id + "div").style.backgroundColor = val;
