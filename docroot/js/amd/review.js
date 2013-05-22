@@ -420,7 +420,7 @@ define([], function () {
     picUploadForm = function () {
         var odiv, html = "", revid = mor.instId(crev);
         if(!revid) {
-            html = mor.byId('formbuttonstd').innerHTML;
+            html = mor.byId('revformbuttonstd').innerHTML;
             if(html.indexOf("<button") >= 0) { //not already saving
                 return mor.review.save(false, "uploadpic"); }
             return; }  //already saving, just ignore the pic upload click
@@ -646,7 +646,7 @@ define([], function () {
                   type.dkwords[i] + "</label>" +
                 "</td>";
             tdc += 1;
-            if(tdc === 4 || i === type.dkwords.length - 1) {
+            if(tdc === 3 || i === type.dkwords.length - 1) {
                 html += "</tr>";
                 tdc = 0; } }
         html += "</table>";
@@ -760,51 +760,58 @@ define([], function () {
     //things on MyOpenReviews.  "Like", "+1" and general chatter
     //is best handled via integration with general social networks.
     reviewFormButtonsHTML = function (pen, review, type, keyval, mode) {
-        var staticurl, html = "";
+        var staticurl, html;
         //user just chose type for editing
         if(!keyval) {
             mor.onescapefunc = mor.review.reset;
-            html += "<button type=\"button\" id=\"cancelbutton\"" +
-                " onclick=\"mor.review.reset(true);return false;\"" +
-                ">Cancel</button>" + 
-                "&nbsp;" +
+            html = "<div id=\"revbuttonsdiv\">" + 
+                "<button type=\"button\" id=\"cancelbutton\"" +
+                       " onclick=\"mor.review.reset(true);return false;\"" +
+                ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
-                " onclick=\"mor.review.validate();return false;\"" +
-                ">Create Review</button>"; }
+                       " onclick=\"mor.review.validate();return false;\"" +
+                ">Create Review</button></div>"; }
         //have key fields and editing full review
         else if(mode === "edit") {
-            html += "<button type=\"button\" id=\"cancelbutton\"" +
-                " onclick=\"mor.review.reset(true);return false;\"" +
-                ">Cancel</button>" + 
-                "&nbsp;" +
+            mor.onescapefunc = mor.review.reset;
+            html = "<div id=\"revbuttonsdiv\">" + 
+                "<button type=\"button\" id=\"cancelbutton\"" +
+                       " onclick=\"mor.review.reset(" + 
+                               (mor.instId(review)? "false" : "true") +
+                                                  ");return false;\"" +
+                ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
-                " onclick=\"mor.review.save(true,'');return false;\"" +
+                       " onclick=\"mor.review.save(true,'');return false;\"" +
                 ">Save</button>&nbsp;";
             if(keyval) {  //have at least minimally complete review..
-                html += "<button type=\"button\" id=\"donebutton\"" +
-                    " onclick=\"mor.review.save(true,'runServices');" + 
-                               "return false;\"" +
-                    ">Save and Share</button>"; } }
+                html += "" +
+                    "<button type=\"button\" id=\"donebutton\"" +
+                           " onclick=\"mor.review.save(true,'runServices');" + 
+                                      "return false;\"" +
+                    ">Save and Share</button>"; }
+            html += "</div>" }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
+            mor.onescapefunc = null;
             staticurl = "statrev/" + mor.instId(review);
-            html += "<button type=\"button\" id=\"deletebutton\"" +
-                " onclick=\"mor.review.delrev();return false;\"" +
-                ">Delete</button>" + "&nbsp;" + 
+            html = "<div id=\"revbuttonsdiv\">" + 
+                "<button type=\"button\" id=\"deletebutton\"" +
+                       " onclick=\"mor.review.delrev();return false;\"" +
+                ">Delete</button>&nbsp;" + 
                 "<button type=\"button\" id=\"editbutton\"" +
-                " onclick=\"mor.review.display();return false;\"" +
-                ">Edit</button>" +  "&nbsp;" + 
+                       " onclick=\"mor.review.display();return false;\"" +
+                ">Edit</button>&nbsp;" + 
                 "<button type=\"button\" id=\"sharebutton\"" +
-                " onclick=\"mor.review.share();return false;\"" +
-                ">Share</button>" + "&nbsp;&nbsp;" +
+                       " onclick=\"mor.review.share();return false;\"" +
+                ">Share</button>&nbsp;&nbsp;" +
                 "<a href=\"" + staticurl + "\" class=\"permalink\"" +
                   " onclick=\"window.open('" + staticurl + "');" + 
                              "return false;\"" +
-                ">permalink</a>"; }
-        //reading a review written by someone else, matches statrev.py
+                ">permalink</a></div>"; }
+        //reading a review written by someone else, show social actions
         else {
-            html += "<div id=\"statrevactdiv\">" +
-              "<table class=\"statnoticeactlinktable\"><tr>" +
+            html = "<div id=\"socialrevactdiv\">" +
+              "<table class=\"socialrevacttable\" border=\"0\"><tr>" +
                 "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
                   //this contents is rewritten after looking up their review
                   mor.imgntxt("writereview.png",
@@ -897,7 +904,7 @@ define([], function () {
     //This should have a similar look and feel to the shoutout display
     revFormTextHTML = function (review, type, keyval, mode) {
         var html, fval, style, targetwidth, placetext;
-        html = "<tr><td colspan=\"4\">";
+        html = "<tr><td colspan=\"4\" class=\"textareatd\">";
         if(keyval) {  //have the basics so display text area
             fval = review.text || "";
             targetwidth = textTargetWidth();
@@ -913,7 +920,8 @@ define([], function () {
                                  " style=\"" + style + "\">" +
                     fval + "</textarea>"; }
             else {
-                style += "height:100px;overflow:auto;" + 
+                fval = fval || "No comment";
+                style += "height:100px;overflow:auto;padding:2px 5px;" + 
                     "border:1px solid " + mor.skinner.darkbg() + ";";
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
@@ -930,11 +938,17 @@ define([], function () {
     //pic, keywords, secondary fields
     revFormDetailHTML = function (review, type, keyval, mode) {
         var html = "<tr>" +
-            "<td>" + picHTML(review, type, keyval, mode) + "</td>" +
-            "<td valign=\"top\">" + 
-                keywordsHTML(review, type, keyval, mode) + "</td>" +
-            "<td valign=\"top\">" + 
-                secondaryFieldsHTML(review, type, keyval, mode) + "</td>" +
+            "<td align=\"right\" rowspan=\"3\">" + 
+                picHTML(review, type, keyval, mode) + "</td>" +
+            //use a subtable to avoid skew from really long titles
+            "<td colspan=\"2\">" +
+              "<table class=\"subtable\" border=\"0\" width=\"100%\"><tr>" + 
+                "<td valign=\"top\">" + 
+                    secondaryFieldsHTML(review, type, keyval, mode) + "</td>" +
+                "<td valign=\"top\">" + 
+                    keywordsHTML(review, type, keyval, mode) + "</td>" +
+                "</tr></table>" +
+              "</td>"
             "</tr>";
         return html;
     },
@@ -1136,11 +1150,8 @@ define([], function () {
     },
 
 
-    //ATTENTION: Somewhere in the read display, show a count of how
-    //many response reviews have been written, and how many people
-    //have remembered the review.  Provided there's more than zero.
     displayReviewForm = function (pen, review, mode, errmsg) {
-        var twidth, html, type, keyval;
+        var twidth, html, type, keyval, temp;
         type = findReviewType(review.revtype);
         keyval = review[type.key];
         twidth = textTargetWidth() + 100;
@@ -1154,15 +1165,19 @@ define([], function () {
         html += revFormTextHTML(review, type, keyval, mode);
         html += revFormDetailHTML(review, type, keyval, mode);
         //special case additional helper functions
-        html += "<tr>" +
-          "<td colspan=\"4\" align=\"center\" id=\"transformactionstd\">" + 
-            transformActionsHTML(review, type, keyval, mode) + "</td>" +
-        "</tr>";
+        temp = transformActionsHTML(review, type, keyval, mode);
+        if(temp) {
+            html += "<tr>" +
+              //picture extends into this row
+              "<td colspan=\"3\" id=\"transformactionstd\">" + 
+                temp + "</td>" +
+              "</tr>"; }
         //buttons
         html += "<tr>" +
-          "<td colspan=\"4\" align=\"center\" id=\"formbuttonstd\">" + 
+          //picture extends into this row
+          "<td colspan=\"3\" id=\"revformbuttonstd\">" + 
             reviewFormButtonsHTML(pen, review, type, keyval, mode) + "</td>" +
-        "</tr>" +
+          "</tr>" +
         "</table></div>";
         if(!mor.byId('cmain')) {
             mor.layout.initContent(); }
@@ -1179,7 +1194,7 @@ define([], function () {
             mor.onx('touchmove',   'starstd', starPointAdjust);
             if(!keyval) {
                 mor.byId('keyin').focus(); }
-            else if(mor.byId('subkeyin')) {
+            else if(mor.byId('subkeyin') && !review[type.subkey]) {
                 mor.byId('subkeyin').focus(); }
             else {
                 mor.byId('reviewtext').focus(); } }
@@ -1238,11 +1253,11 @@ define([], function () {
     saveReview = function (doneEditing, actionstr) {
         var errors = [], i, errtxt = "", type, url, data, critsec = "", html;
         //remove save button immediately to avoid double click dupes...
-        html = mor.byId('formbuttonstd').innerHTML;
-        mor.out('formbuttonstd', "Verifying...");
+        html = mor.byId('revformbuttonstd').innerHTML;
+        mor.out('revformbuttonstd', "Verifying...");
         type = findReviewType(crev.revtype);
         if(!type) {
-            mor.out('formbuttonstd', html);
+            mor.out('revformbuttonstd', html);
             mor.out('revsavemsg', "Unknown review type");
             return; }
         noteURLValue();
@@ -1251,12 +1266,12 @@ define([], function () {
         keywordsValid(type, errors);
         reviewTextValid(type, errors);
         if(errors.length > 0) {
-            mor.out('formbuttonstd', html);
+            mor.out('revformbuttonstd', html);
             for(i = 0; i < errors.length; i += 1) {
                 errtxt += errors[i] + "<br/>"; }
             mor.out('revsavemsg', errtxt);
             return; }
-        mor.out('formbuttonstd', "Saving...");
+        mor.out('revformbuttonstd', "Saving...");
         mor.onescapefunc = null;
         url = "updrev?";
         if(!mor.instId(crev)) {

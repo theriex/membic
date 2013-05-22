@@ -120,9 +120,13 @@ body {
 .reviewbadge { width:30px; height:30px; vertical-align:middle; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */
-.shoutout { width:200px; height:80px; 
+.textareatd { text-align:center; }
+.shoutout, .shoutoutstatic { text-align:left;
+  margin-left:auto; margin-right:auto;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
+.shoutout { width:200px; height:80px; }
+.shoutoutstatic { width:600px; padding:10px; }
 #proftabsdiv ul { list-style:none; padding:0; margin:0; }
 #proftabsdiv ul li { display:inline; 
   border-top-left-radius:5px; border-top-right-radius:5px;
@@ -142,7 +146,11 @@ body {
 .reviewformul { list-style:none; padding:0; margin:0; }
 .revdisptable { margin-left:auto; margin-right:auto; }
 .revdisptable td { padding:2px 5px; }
-#transformactionstd { padding:2px 5px 10px 5px; }
+#transformactionstd { padding:2px 5px 10px 15px; }
+#revformbuttonstd { }
+#revbuttonsdiv { margin-left:15%; }
+#socialrevactdiv { margin-left:4%; }
+#staticsocialrevactdiv { margin-left:1%; padding:20px; 0px; }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
