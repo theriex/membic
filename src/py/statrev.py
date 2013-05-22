@@ -234,6 +234,16 @@ def descrip(rev):
 #     return html
 
 
+def generalScriptHTML():
+    html = ""
+    html += "<script>\n"
+    html += "if(!(document.styleSheets[0].cssRules)) {\n"
+    html += "    document.getElementById('bodyid').style.backgroundImage = "
+    html +=          "\"url('../img/blank.png')\" }\n"
+    html += "</script>\n"
+    return html
+
+
 def actionButtonsHTML(penrevparms):
     html = ""
     # Static view statement
@@ -414,6 +424,7 @@ def revhtml(rev, pen):
     html += "</div> <!-- statrevactdiv -->\n"
     html += "  </td></tr></table> <!-- forceAdsSameLineTable -->"
     html += "</div> <!-- appspacedivstatic -->\n"
+    html += generalScriptHTML()
     html += "</body>\n"
     html += "</html>\n"
     return html;
