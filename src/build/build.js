@@ -1,3 +1,5 @@
+/*global require: false, console: false, process: false */
+/*jslint white: true */
 //For info, please see readme.txt
 
 var morbuild = (function () {
@@ -64,7 +66,7 @@ var morbuild = (function () {
     },
 
 
-    minifyAndDeploy = function (srcfile) {
+    minifyAndDeploy = function () {
         var command, args;
         command = "java -jar compiler-latest/compiler.jar --js " + outsrc + 
             " --js_output_file " + outcomp;
@@ -87,6 +89,11 @@ var morbuild = (function () {
                 throw err; }
             console.log("cleared out " + outcomp); 
         });
+        fs.writeFile(outsrc, "", writeopt, function (err) {
+            if(err) {
+                throw err; }
+            console.log("cleared out " + outsrc);
+        });
     };
 
 
@@ -104,7 +111,5 @@ if(process.argv[2] === "clean") {
     morbuild.clean(); }
 else {
     morbuild.run(); }
-
-
 
 
