@@ -2,3 +2,5 @@
 .DS_Store
 *.pyc
 docroot/downloads
+src/build/mor-source.js
+src/build/compiler-latest
