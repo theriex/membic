@@ -12,6 +12,7 @@ define([], function () {
         svcstates = [ "enabled",     //normal icon, 3rd party script loaded
                       "disabled",    //share icon greyed, no 3p script loaded
                       "on click" ],  //click to load 3p script and enable
+        svcmsgdiv = "",
 
 
     serviceIconHTML = function (svc) {
@@ -39,36 +40,6 @@ define([], function () {
         if(svc && ! svc.svcDispName) {
             svc.svcDispName = svc.name; }
         return svc;
-    },
-
-
-    //using the overlay div to avoid confusion from the settings
-    //dialog getting launched at the same time.
-    promptForService = function (review, conf) {
-        var odiv, svc, html = "";
-        svc = findServiceByName(conf.name);
-        html += "<p>" + serviceIconHTML(svc) + "&nbsp;" + 
-            svc.svcDispName + "</p>";
-        html += mor.linkify(svc.svcDesc);
-        html += "<p class=\"headingtxt\">Run it?</p>" +
-        "<p class=\"headingtxt\">" +
-          "<button type=\"button\"" + 
-                 " onclick=\"mor.services.promptresp('" + svc.name + "'," + 
-                                                    "'No');return false;\"" +
-            ">No</button>&nbsp;" +
-          "<button type=\"button\"" +
-                 " onclick=\"mor.services.promptresp('" + svc.name + "'," +
-                                                    "'Yes');return false;\"" + 
-            ">Yes</button></p>" +
-        "<p class=\"smalltext\"><i>You can manage connection services through" +
-            " the settings button next to your pen name</i></p>";
-        mor.out('overlaydiv', html);
-        odiv = mor.byId('overlaydiv');
-        odiv.style.top = "80px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = mor.skinner.lightbg();
-        mor.onescapefunc = function () { 
-            mor.services.promptresp(svc.name, 'No'); };
     },
 
 
@@ -104,56 +75,6 @@ define([], function () {
         else {
             txt = starsobj.asterisks; }
         return txt;
-    },
-
-
-    callToRunService = function (review, conf) {
-        var svc;
-        svc = findServiceByName(conf.name);
-        //if the service needs a display, it can use overlaydiv
-        svc.doPost(review);
-    },
-
-
-    runServices = function (pen, review) {
-        var i, conf, bb;
-        mor.pen.deserializeFields(pen);
-        if(!review.svcdata) {
-            review.svcdata = {}; }
-        if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
-            for(i = 0; i < pen.settings.consvcs.length; i += 1) {
-                conf = pen.settings.consvcs[i];
-                bb = conf.name;
-                //not already run, or prompted and confirmed
-                if(!review.svcdata[bb] || review.svcdata[bb] === "confirmed") {
-                    if(!review.svcdata[bb]) {  //note processing was triggered
-                        review.svcdata[bb] = conf.state; }
-                    //kick off appropriate processing
-                    if(review.svcdata[bb] === svcstates[2]) {  //ask first
-                        return promptForService(review, conf); }
-                    if(review.svcdata[bb] === svcstates[0] ||  //enabled
-                       review.svcdata[bb] === "confirmed") {
-                        return callToRunService(review, conf); } } } }
-        mor.profile.display();
-    },
-
-
-    handleResponseToPrompt = function (name, resp) {
-        var review, odiv;
-        review = mor.review.getCurrentReview();
-        odiv = mor.byId('overlaydiv');
-        if(resp === "Yes") {
-            review.svcdata[name] = "confirmed"; }
-        else {
-            review.svcdata[name] = "rejected"; }
-        odiv.innerHTML = "";
-        odiv.style.visibility = "hidden";
-        mor.onescapefunc = null;
-        //run async so the call chain from the dialog can terminate nicely
-        setTimeout(function () {
-            mor.pen.getPen(function (pen) {
-                mor.services.runServices(pen, review); 
-            }); }, 50);
     },
 
 
@@ -369,30 +290,23 @@ define([], function () {
         changestate: function (svcid) {
             mor.pen.getPen(function (pen) {
                 changestate(svcid, pen); }); },
-        run: function (pen, review) {
-            verifyConnectionServices(pen, function () {
-                runServices(pen, review); }); },
-        runServices: function (pen, review) {
-            runServices(pen, review); },
-        promptresp: function (svcid, resp) {
-            handleResponseToPrompt(svcid, resp); },
         getRevStarsTxt: function (review, format) {
             return getRevStarsTxt(review, format); },
         getRevTitleTxt: function (review) {
             return getRevTitleTxt(review); },
         getRevTypeImage: function (review) {
             return getRevTypeImage(review); },
-        continueServices: function (review) {
-            mor.pen.getPen(function (pen) {
-                runServices(pen, review); }); },
         displayShare: function (buttondiv, msgdiv, pen, review) {
+            svcmsgdiv = msgdiv;
             verifyConnectionServices(pen, function () {
                 initShareDisplay(buttondiv, msgdiv, pen, review); }); },
         enable: function (svcname) {
             enablePostingService(svcname); },
         getRevPermalink: function (review) {
             return "http://www.myopenreviews.com/statrev/" + 
-                mor.instId(review); }
+                mor.instId(review); },
+        getPostServiceMsgDiv: function () {
+            return svcmsgdiv; }
     };
 
 });

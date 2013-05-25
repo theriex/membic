@@ -74,7 +74,7 @@ define([], function () {
     },
 
 
-    loadFacebook = function (nextfunc) {
+    loadFacebook = function (nextfunc, msgdivid) {
         var js, id = 'facebook-jssdk', firstscript, html;
         window.fbAsyncInit = function () {
             FB.init({ appId: 265001633620583, 
@@ -91,8 +91,11 @@ define([], function () {
         js.src = "//connect.facebook.net/en_US/all.js";
         firstscript = document.getElementsByTagName('script')[0];
         firstscript.parentNode.insertBefore(js, firstscript);
-        html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
-        mor.out('contentdiv', html);
+        if(!msgdivid) {
+            msgdivid = "contentdiv"; }
+        if(msgdivid !== "quiet") {
+            html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
+            mor.out(msgdivid, html); }
         mor.layout.adjust();
     },
 
@@ -177,8 +180,6 @@ define([], function () {
 
     postRevBailout = function (review) {
         review.svcdata[svcName] = "bailout";
-        mor.pen.getPen(function (pen) {
-            mor.services.runServices(pen, review); });
     },
 
 
@@ -208,7 +209,6 @@ define([], function () {
                   else {  //probably just canceled posting
                       mor.log("Posting to Facebook did not happen.");
                       review.svcdata[svcName] = 'nopost'; } 
-                  mor.services.continueServices(review);
               });
     },
 
@@ -262,7 +262,8 @@ define([], function () {
         if(window.location.href.indexOf(mor.mainsvr) === 0 &&
            !(typeof FB === 'object' || typeof FB === 'function')) {
             loadFacebook(function () {
-                console.log("facebook service initial setup done"); }); }
+                console.log("facebook service initial setup done"); },
+                         "quiet"); }
         else {
             console.log("facebook service initial setup skipped"); }
     },
