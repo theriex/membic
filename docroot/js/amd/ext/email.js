@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, window: false, document: false, history: false, mor: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -10,63 +10,37 @@ define([], function () {
 
     var svcName = "email",  //no spaces in name, used as an id
         iconurl = "img/email.png",
-        tmprev = null,
 
 
-    //putting stars in the subject makes it resemble spam so avoid that
+    //Putting stars in the subject makes it resemble spam, so don't do
+    //that.  Also consider what the text will look like with "re: " or
+    //"fwd: " in front of it.
     getSubject = function (review) {
-        return "My review of " + mor.services.getRevTitleTxt(review);
+        return "Review of " + mor.services.getRevTitleTxt(review);
     },
 
 
+    //Unicode stars look nicer, but they don't make it through on
+    //many clients if reading text only, and the escape characters
+    //look terrible when composing the message.  KISS.
     getBody = function (review) {
-        return "This is my review of " + 
-            mor.services.getRevTitleTxt(review) + "\n\n" +
-            "I rated it " + mor.services.getRevStarsTxt(review) + 
-            " stars!\n\n" + 
-            review.text + 
-            "\n\nhttp://www.myopenreviews.com/statrev/" +
-            mor.instId(review);
+        return "\n\nThis my review from MyOpenReviews:\n\n" + 
+            mor.services.getRevTitleTxt(review) + "\n" +
+            "[" + review.revtype + "] " +
+            mor.services.getRevStarsTxt(review, "txtexp") + "\n" +
+            review.text + "\n\n" +
+            "To see my full review, go to\n" +
+            mor.services.getRevPermalink(review) + "\n";
     },
 
 
-    dismissDialog = function () {
-        var review, odiv = mor.byId('overlaydiv');
-        odiv.innerHTML = "";
-        odiv.style.visibility = "hidden";
-        review = tmprev;
-        review.svcdata[svcName] = "done";
-        mor.pen.getPen(function (pen) {
-            mor.services.runServices(pen, review); });
-    },
-
-
-    getPostHTML = function (review) {
-        var html, subj, body;
-        tmprev = review;
-        subj = getSubject(review);
+    getLinkURL = function (review) {
+        var subject, body, html;
+        subject = getSubject(review);
         body = getBody(review);
-        html = "<p>Click to email your review...</p><table><tr><td>" +
-            "<a href=\"mailto:?subject=" + mor.dquotenc(subj) + 
-                             "&body=" + mor.dquotenc(body) + "\"" + 
-              "><img src=\"" + iconurl + "\" border=\"0\"></a>" +
-          "</td><td>&nbsp;&nbsp;&nbsp;&nbsp;" +
-            "<button type=\"button\" id=\"donebutton\"" +
-                   " onclick=\"mor.email.dismissDialog();return false;\"" +
-            ">Close</button>" +
-          "</td></tr></table>";
-        return html;
-    },
-
-
-    doPost = function (review) {
-        var odiv = mor.byId('overlaydiv');
-        odiv.style.top = "80px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = mor.skinner.lightbg();
-        mor.onescapefunc = function () {
-            dismissDialog(review, "bailout"); };
-        odiv.innerHTML = getPostHTML(review);
+        html = "mailto:?subject=" + mor.dquotenc(subject) +
+            "&body=" + mor.dquotenc(body);
+        return html; 
     };
 
 
@@ -74,10 +48,16 @@ define([], function () {
         name: svcName,
         svcDesc: "Fills out an email for you to send",
         iconurl: iconurl,
-        doPost: function (review) {
-            doPost(review); },
-        dismissDialog: function () {
-            dismissDialog(); }
+        doInitialSetup: function () {
+            mor.log("email service initial setup done"); },
+        getLinkURL: function (review) {
+            return getLinkURL(review); },
+        getOnClickStr: function () {
+            return ""; },
+        getShareImageAlt: function () {
+            return "Send via eMail"; },
+        getShareImageSrc: function () {
+            return iconurl; }
     };
 
 });

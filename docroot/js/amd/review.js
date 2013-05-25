@@ -108,7 +108,17 @@ define([], function () {
                            "Two stars", "Two and a half stars",
                            "Three stars", "Three and a half stars",
                            "Four stars", "Four and a half stars",
-                           "Five stars" ];
+                           "Five stars" ],
+            roundNumeric = [ 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5 ],
+            asterisks = [ "0", "+", "*", "*+", "**", "**+", "***", "***+",
+                          "****", "****+", "*****" ],
+            unicodestr = [ "0", "\u00BD", "\u2605", "\u2605\u00BD", 
+                           "\u2605\u2605", "\u2605\u2605\u00BD",
+                           "\u2605\u2605\u2605", 
+                           "\u2605\u2605\u2605\u00BD",
+                           "\u2605\u2605\u2605\u2605", 
+                           "\u2605\u2605\u2605\u2605\u00BD",
+                           "\u2605\u2605\u2605\u2605\u2605" ];
         if(typeof rating === "string") { 
             rating = parseInt(rating, 10); }
         if(!rating || typeof rating !== 'number' || rating < 0) { 
@@ -123,6 +133,9 @@ define([], function () {
         starsobj.step = step;
         starsobj.maxstep = starTitles.length - 1;
         starsobj.title = starTitles[step];
+        starsobj.roundnum = roundNumeric[step];
+        starsobj.asterisks = asterisks[step];
+        starsobj.unicode = unicodestr[step];
         return starsobj;
     },
 
@@ -779,16 +792,11 @@ define([], function () {
                        " onclick=\"mor.review.reset(" + 
                                (mor.instId(review)? "false" : "true") +
                                                   ");return false;\"" +
-                ">Cancel</button>&nbsp;" +
+                    ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
                        " onclick=\"mor.review.save(true,'');return false;\"" +
-                ">Save</button>&nbsp;";
-            if(keyval) {  //have at least minimally complete review..
-                html += "<button type=\"button\" id=\"donebutton\"" +
-                           " onclick=\"mor.review.save(true,'runServices');" + 
-                                      "return false;\"" +
-                    ">Save and Share</button>"; }
-            html += "</div>"; }
+                    ">Save</button>&nbsp;" +
+                "</div>"; }
         //reading a previously written review
         else if(review.penid === mor.pen.currPenId()) {  //is review owner
             mor.onescapefunc = null;
@@ -799,14 +807,15 @@ define([], function () {
                 ">Delete</button>&nbsp;" + 
                 "<button type=\"button\" id=\"editbutton\"" +
                        " onclick=\"mor.review.display();return false;\"" +
-                ">Edit</button>&nbsp;" + 
-                "<button type=\"button\" id=\"sharebutton\"" +
-                       " onclick=\"mor.review.share();return false;\"" +
-                ">Share</button>&nbsp;&nbsp;" +
+                ">Edit</button>&nbsp;&nbsp;" + 
                 "<a href=\"" + staticurl + "\" class=\"permalink\"" +
                   " onclick=\"window.open('" + staticurl + "');" + 
                              "return false;\"" +
-                ">permalink</a></div>"; }
+                ">permalink</a></div>" + 
+                "<div id=\"sharediv\">" +
+                  "<div id=\"sharebuttonsdiv\"></div>" +
+                  "<div id=\"sharemsgdiv\"></div>" +
+                "</div>"; }
         //reading a review written by someone else, show social actions
         else {
             html = "<div id=\"socialrevactdiv\">" +
@@ -1207,6 +1216,9 @@ define([], function () {
         if(mor.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }
+        if(mor.byId('sharediv')) {
+            mor.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
+                                      pen, review); }
     },
 
 
@@ -1376,7 +1388,7 @@ define([], function () {
             mor.activity.cacheReview(crev); }
         mor.pen.updatePen(pen, 
                           function (pen) {
-                              mor.review.displayRead(); },  //no runServices
+                              mor.review.displayRead(); },
                           function (code, errtxt) {
                               mor.err("Remember update failed " + code + 
                                       " " + errtxt); });
@@ -1427,10 +1439,7 @@ define([], function () {
         //key field, and the subkey field (if defined for the type).
         if(read) { 
             displayReviewForm(pen, crev);
-            if(crev.penid === mor.pen.currPenId()) {  //our review
-                if(action === "runServices") {
-                    mor.services.run(pen, crev); } }
-            else {  //someone else's review
+            if(crev.penid !== mor.pen.currPenId()) {  //not our review
                 if(action === "remember") {
                     mor.review.memo(); }
                 else if(action === "respond") {
@@ -1490,9 +1499,6 @@ define([], function () {
             validateAndContinue(); },
         save: function (doneEditing, actionstr) {
             saveReview(doneEditing, actionstr); },
-        share: function () {
-            mor.pen.getPen(function (pen) {
-                mainDisplay(pen, true, "runServices"); }); },
         setCurrentReview: function (revobj) {
             crev = revobj; },
         getCurrentReview: function () {
@@ -1518,7 +1524,9 @@ define([], function () {
         removeImageLink: function () {
             removeImageLink(); },
         setAttribution: function (html) {
-            attribution = html; }
+            attribution = html; },
+        starRating: function (rating, roundup) {
+            return starRating(rating, roundup); }
     };
 
 });

@@ -133,7 +133,7 @@ define([], function () {
 
     addProfileAuth1 = function (domid, pen) {
         if(window.location.href.indexOf(mor.mainsvr) !== 0) {
-            alert("Facebook authentication is only supported from ",
+            alert("Facebook authentication is only supported from " +
                   mor.mainsvr);
             return mor.profile.displayAuthSettings(domid, pen); }
         if(typeof FB === 'object' || typeof FB === 'function') {
@@ -184,10 +184,9 @@ define([], function () {
 
     postReview4 = function (review) {
         var fblinkname, fblinkurl, fbremurl, fbimage, fbprompt, html;
-        fblinkname = mor.services.getRevStarsTxt(review) + " " +
+        fblinkname = mor.services.getRevStarsTxt(review, "unicode") + " " +
             mor.services.getRevTitleTxt(review);
-        fblinkurl = "http://www.myopenreviews.com/statrev/" +
-            mor.instId(review);
+        fblinkurl = mor.services.getRevPermalink(review);
         fbremurl = "http://www.myopenreviews.com/#command=remember&penid=" + 
             review.penid + "&revid=" + mor.instId(review);
         fbimage = mor.services.getRevTypeImage(review);
@@ -206,8 +205,8 @@ define([], function () {
                       review.svcdata[svcName] = response.post_id;
                       html = "<p>&nbsp;</p><p>Review posted to Facebook</p>";
                       mor.out('contentdiv', html); }
-                  else {
-                      mor.err("Posting to Facebook did not happen.");
+                  else {  //probably just canceled posting
+                      mor.log("Posting to Facebook did not happen.");
                       review.svcdata[svcName] = 'nopost'; } 
                   mor.services.continueServices(review);
               });
@@ -246,9 +245,32 @@ define([], function () {
     },
 
 
+    getShareLinkURL = function (review) {
+        var url = mor.services.getRevPermalink(review);
+        url = "http://www.facebook.com/sharer/sharer.php?u=" + mor.enc(url);
+        return url;
+    },
+
+
+    getShareOnClickStr = function (review) {
+        var str = "mor.facebook.shareCurrentReview();return false;";
+        return str;
+    },
+
+
+    verifyFacebookLoaded = function () {
+        if(window.location.href.indexOf(mor.mainsvr) === 0 &&
+           !(typeof FB === 'object' || typeof FB === 'function')) {
+            loadFacebook(function () {
+                console.log("facebook service initial setup done"); }); }
+        else {
+            console.log("facebook service initial setup skipped"); }
+    },
+
+
     postReview1 = function (review) {
         if(window.location.href.indexOf(mor.mainsvr) !== 0) {
-            alert("Posting to Facebook is only supported from ",
+            alert("Posting to Facebook is only supported from " +
                   mor.mainsvr);
             return postRevBailout(review); }
         if(typeof FB === 'object' || typeof FB === 'function') {
@@ -272,8 +294,18 @@ define([], function () {
             addProfileAuth1(domid, pen); },
         authFB: function (domid) {
             handleFBProfileAuth(domid); },
-        doPost: function (review) {
-            postReview1(review); },
+        doInitialSetup: function () {
+            verifyFacebookLoaded(); },
+        getLinkURL: function (review) {
+            return getShareLinkURL(review); },
+        getOnClickStr: function (review) {
+            return getShareOnClickStr(review); },
+        shareCurrentReview: function () {
+            postReview1(mor.review.getCurrentReview()); },
+        getShareImageAlt: function () {
+            return "Post to your wall"; },
+        getShareImageSrc: function () {
+            return mor.facebook.iconurl; },
         postTmpRev: function () {
             closeOverlay();
             postReview3(tmprev); },

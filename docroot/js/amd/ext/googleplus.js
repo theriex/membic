@@ -12,7 +12,6 @@ define([], function () {
         dispName = "Google+",     //what should actually be displayed
         iconurl = "https://www.google.com/favicon.ico",
         svcIconURL = "https://www.gstatic.com/images/icons/gplus-32.png",
-        tmprev = null,
 
 
     backToParentDisplay = function () {
@@ -124,54 +123,18 @@ define([], function () {
     },
 
 
-    dismissDialog = function (review, action) {
-        var odiv = mor.byId('overlaydiv');
-        odiv.innerHTML = "";
-        odiv.style.visibility = "hidden";
-        if(!review) {
-            review = tmprev; }
-        if(!action) {
-            action = 'bailout'; }
-        review.svcdata[svcName] = action;
-        mor.pen.getPen(function (pen) {
-            mor.services.runServices(pen, review); });
+    getShareLinkURL = function (review) {
+        var url = "http://www.myopenreviews.com/statrev/" + mor.instId(review);
+        url = "https://plus.google.com/share?url=" + mor.enc(url);
+        return url;
     },
 
 
-    getGoogleShareHTML = function (review) {
-        var html, url;
-        url = "http://www.myopenreviews.com/statrev/" + mor.instId(review);
-        html = "<p>Click to share your review on Google+...</p>" +
-          "<table><tr><td>" +
-            "<a href=\"https://plus.google.com/share" + 
-                          "?url=" + mor.enc(url) + "\"" +
-              " onclick=\"javascript:" + 
-                   "mor.googleplus.dismissDialog(null,'clicked');" + 
-                   "window.open(this.href,  ''," + 
-                   " 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes," + 
-                     "height=600,width=600');return false;\">" + 
-              "<img src=\"" + svcIconURL + "\"" +
-                  " alt=\"Share on Google+\"/></a>" +
-          "</td><td>&nbsp;" +
-            "<button type=\"button\" id=\"cancelbutton\"" +
-                   " onclick=\"mor.googleplus.dismissDialog();return false;\"" +
-            ">Cancel</button>" +
-          "</td></tr></table>";
-        return html;
-    },
-
-
-    postReview = function (review) {
-        var html, odiv;
-        tmprev = review;
-        odiv = mor.byId('overlaydiv');
-        odiv.style.top = "80px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = mor.skinner.lightbg();
-        mor.onescapefunc = function () {
-            dismissDialog(review, "bailout"); };
-        html = getGoogleShareHTML(review);
-        odiv.innerHTML = html;
+    getShareOnClickStr = function () {
+        var str = "window.open(this.href,  ''," + 
+            " 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes," + 
+            "height=600,width=600');return false;";
+        return str;
     };
 
 
@@ -187,10 +150,16 @@ define([], function () {
             authenticate(params); },
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
-        doPost: function (review) {
-            postReview(review); },
-        dismissDialog: function (review, action) {
-            dismissDialog(review, action); }
+        doInitialSetup: function () {
+            mor.log("google+ service initial setup done"); },
+        getLinkURL: function (review) {
+            return getShareLinkURL(review); },
+        getOnClickStr: function () {
+            return getShareOnClickStr(); },
+        getShareImageAlt: function () {
+            return "Post to your Google+ stream"; },
+        getShareImageSrc: function () {
+            return svcIconURL; }
     };
 
 });

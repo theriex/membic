@@ -583,7 +583,7 @@ define([], function () {
         mor.historyCheckpoint({ view: "review", mode: "display",
                                 revid: revid });
         mor.review.setCurrentReview(revobj);
-        mor.review.displayRead();  //no runServices
+        mor.review.displayRead();
     },
 
 

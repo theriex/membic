@@ -12,7 +12,6 @@ define([], function () {
         twReqTokURL = "https://api.twitter.com/oauth/request_token",
         twTokCnvURL = "https://api.twitter.com/oauth/access_token",
         twLoginURL = "http://api.twitter.com/oauth/authenticate",
-        tmprev = null,
 
 
     returnToParentDisplay = function () {
@@ -137,75 +136,32 @@ define([], function () {
     },
 
 
-    dismissDialog = function (review, action) {
-        var odiv = mor.byId('overlaydiv');
-        odiv.innerHTML = "";
-        odiv.style.visibility = "hidden";
-        if(!review) {
-            review = tmprev; }
-        if(!action) {
-            action = 'bailout'; }
-        review.svcdata[svcName] = action;
-        mor.pen.getPen(function (pen) {
-            mor.services.runServices(pen, review); });
+    getShareLinkURL = function (review) {
+        var text, url;
+        text = mor.services.getRevStarsTxt(review, "unicode") + " " +
+            mor.services.getRevTitleTxt(review);
+        url = mor.services.getRevPermalink(review);
+        url = "https://twitter.com/intent/tweet" +
+            "?text=" + mor.embenc(text) +
+            "&url=" + mor.enc(url);
+        return url;
     },
 
 
-    getTweetLinkHTML = function (review) {
-        var html, url, text, windowOptions, width, height, left, top = 0;
+    getShareOnClickStr = function (review) {
+        var str, url, windowOptions, width, height, left, top = 0;
+        url = getShareLinkURL(review);
         windowOptions = 'scrollbars=yes,resizable=yes,toolbar=no,location=yes';
         width = 550;
         height = 420;
         left = Math.round((mor.winw / 2) - (width / 2));
         if(mor.winh > height) {
             top = Math.round((mor.winh / 2) - (height / 2)); }
-        url = "http://www.myopenreviews.com/statrev/" + mor.instId(review);
-        text = "[" + mor.services.getRevStarsTxt(review) + "] " +
-            mor.services.getRevTitleTxt(review);
-        html = "<p>Click to tweet your review...</p><table><tr>" +
-            "<td><button type=\"button\" id=\"tweetbutton\"" +
-               " onclick=\"mor.twitter.dismissDialog(null,'clicked');" +
-                          "window.open('https://twitter.com/intent/tweet" +
-                                  "?text=" + mor.embenc(text) +
-                                  "&url=" + mor.enc(url) + 
-                                  "'" +
-                              ", 'intent'" +
-                              ", '" + windowOptions +
-                              ",width=" + width +
-                              ",height=" + height + 
-                              ",left=" + left +
-                              ",top=" + top + "');" +
-                          "return false;\"" +
-                "><img class=\"loginico\"" + 
-                     " src=\"" + mor.twitter.iconurl + "\"" +
-                     " border=\"0\"/>&nbsp;Tweet&nbsp;</button></td>" +
-            "<td>&nbsp;" + 
-              "<button type=\"button\" id=\"cancelbutton\"" +
-                     " onclick=\"mor.twitter.dismissDialog();return false;\"" +
-              ">Cancel</button></td>" +
-            "</tr></table>";
-        return html;
-    },
-
-
-
-    //Tweeting is best done through twitter's web intents, but those
-    //require an explicit click to do a popup window, which is an
-    //extra click.  Including platform.twitter.com/widgets.js is more
-    //hassle than it's worth since you have to do events separately.
-    //This adapts the alternative approach given at the end of
-    //https://dev.twitter.com/docs/intents
-    tweetReview = function (review) {
-        var html, odiv;
-        tmprev = review;
-        odiv = mor.byId('overlaydiv');
-        odiv.style.top = "80px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = mor.skinner.lightbg();
-        mor.onescapefunc = function () {
-            dismissDialog(review, "bailout"); };
-        html = getTweetLinkHTML(review);
-        odiv.innerHTML = html;
+        str = "window.open(" + 
+            "'" + url + "', 'intent', " + 
+            "'" + windowOptions + ",width=" + width + ",height=" + height + 
+                ",left=" + left + ",top=" + top + "');return false;";
+        return str;
     };
 
 
@@ -219,10 +175,16 @@ define([], function () {
             authenticate(params); },
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
-        doPost: function (review) {
-            tweetReview(review); },
-        dismissDialog: function (review, action) {
-            dismissDialog(review, action); }
+        doInitialSetup: function () {
+            mor.log("twitter service initial setup done"); },
+        getLinkURL: function (review) {
+            return getShareLinkURL(review); },
+        getOnClickStr: function (review) {
+            return getShareOnClickStr(review); },
+        getShareImageAlt: function () {
+            return "Tweet condensed review"; },
+        getShareImageSrc: function () {
+            return mor.twitter.iconurl; }
     };
 
 });

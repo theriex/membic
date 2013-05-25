@@ -101,6 +101,10 @@ body {
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
   border:none; vertical-align:middle; }
+.shareico, .shareicodis { height:32px; width:32px; margin:5px 15px;
+  border:none; vertical-align:middle; }
+.shareicodis { opacity:0.3; filter:alpha(opacity=30); }
+
 
 /* intro layout */
 #bookslidediv { text-align:center; }

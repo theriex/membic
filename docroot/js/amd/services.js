@@ -9,8 +9,9 @@ define([], function () {
     "use strict";
 
     var connServices,
-        //the first state here is the default for any newly loaded service.
-        svcstates = [ "always ask", "auto post", "disabled" ],
+        svcstates = [ "enabled",     //normal icon, 3rd party script loaded
+                      "disabled",    //share icon greyed, no 3p script loaded
+                      "on click" ],  //click to load 3p script and enable
 
 
     serviceIconHTML = function (svc) {
@@ -87,19 +88,21 @@ define([], function () {
     },
 
 
-    getRevStarsTxt = function (review) {
-        var txt = "", rat = review.rating;
-        if(rat && typeof rat === 'number' && rat > 5) {
-            if(rat < 15) { txt = "+"; }
-            else if(rat < 25) { txt = "*"; }
-            else if(rat < 35) { txt = "*+"; }
-            else if(rat < 45) { txt = "**"; }
-            else if(rat < 55) { txt = "**+"; }
-            else if(rat < 65) { txt = "***"; }
-            else if(rat < 75) { txt = "***+"; }
-            else if(rat < 85) { txt = "****"; }
-            else if(rat < 95) { txt = "****+"; }
-            else { txt = "*****"; } }
+    getRevStarsTxt = function (review, format) {
+        var txt, starsobj, expl;
+        starsobj = mor.review.starRating(review.rating, false);
+        expl = "(" + starsobj.roundnum + " " + 
+            (starsobj.roundnum === 1? "star" : "stars") + ")";
+        if(format === "combo") {
+            txt = starsobj.unihtml + " " + expl; }
+        else if(format === "txtexp") {
+            txt = starsobj.asterisks + " " + expl; }
+        else if(format === "numeric") {
+            txt = expl; }
+        else if(format === "unicode") {
+            txt = starsobj.unicode; }
+        else {
+            txt = starsobj.asterisks; }
         return txt;
     },
 
@@ -126,9 +129,9 @@ define([], function () {
                     if(!review.svcdata[bb]) {  //note processing was triggered
                         review.svcdata[bb] = conf.state; }
                     //kick off appropriate processing
-                    if(review.svcdata[bb] === svcstates[0]) {  //always ask
+                    if(review.svcdata[bb] === svcstates[2]) {  //ask first
                         return promptForService(review, conf); }
-                    if(review.svcdata[bb] === svcstates[1] ||  //auto post
+                    if(review.svcdata[bb] === svcstates[0] ||  //enabled
                        review.svcdata[bb] === "confirmed") {
                         return callToRunService(review, conf); } } } }
         mor.profile.display();
@@ -219,6 +222,64 @@ define([], function () {
     },
 
 
+    serviceLinkHTML = function (url, clickstr, imgclass, alt, src) {
+        var html = "<a href=\"" + url + "\"" + 
+                     " title=\"" + alt + "\"" +
+                     " onclick=\"" + clickstr + "\">" +
+            "<img class=\"" + imgclass + "\"" +
+                " alt=\"" + alt + "\"" +
+                " src=\"" + src + "\"" +
+                " border=\"0\"" +
+            "/></a>";
+        return html;
+    },
+
+
+    initShareDisplay = function (buttondiv, msgdiv, pen, review) {
+        var i, conf, svc, imgclass, svcact, html = "";
+        mor.pen.deserializeFields(pen);
+        if(!review.svcdata) {
+            review.svcdata = {}; }
+        if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
+            html = "<table id=\"svcbuttontable\"><tr>";
+            for(i = 0; i < pen.settings.consvcs.length; i += 1) {
+                conf = pen.settings.consvcs[i];
+                svc = findServiceByName(conf.name);
+                imgclass = "shareicodis";
+                svcact = { url: "#disabled",
+                           clickstr: "" };
+                if(conf.state === svcstates[0]) {  //enabled
+                    setTimeout(svc.doInitialSetup, 50);
+                    svcact.url = svc.getLinkURL(review);
+                    svcact.clickstr = svc.getOnClickStr(review);
+                    imgclass = "shareico"; }
+                else if(conf.state === svcstates[2]) {  //on click
+                    svcact.url = "#disabled, click to enable";
+                    svcact.clickstr = "mor.services.enable('" + 
+                        conf.name + "');return false;"; }
+                html += "<td id=\"" + svc.name + "td\">" + 
+                    serviceLinkHTML(svcact.url, svcact.clickstr, imgclass,
+                                    svc.getShareImageAlt(), 
+                                    svc.getShareImageSrc()) + "</td>"; }
+            html += "</tr></table>"; }
+        mor.out(buttondiv, html);
+    },
+
+
+    enablePostingService = function (svcname) {
+        var svc, review, link;
+        review = mor.review.getCurrentReview();
+        svc = findServiceByName(svcname);
+        setTimeout(svc.doInitialSetup, 50);
+        link = serviceLinkHTML(svc.getLinkURL(review),
+                               svc.getOnClickStr(review),
+                               "shareico",
+                               svc.getShareImageAlt(),
+                               svc.getShareImageSrc());
+        mor.out(svc.name + "td", link);
+    },
+
+
     //Could have bad configs due to misconfiguration, versioning etc.
     //A service must provide:
     //  name: unique across services, used as a dom id and lookup key
@@ -292,7 +353,7 @@ define([], function () {
                     if(!mor.facebook) { mor.facebook = facebook; }
                     if(!mor.twitter) { mor.twitter = twitter; }
                     if(!mor.googleplus) { mor.googleplus = googleplus; }
-                    if(!mor.email) { mor.email = email }
+                    if(!mor.email) { mor.email = email; }
                     connServices = [ facebook, twitter, googleplus,
                                      email ];
                     mergeConnectionServices(pen, callback); });
@@ -315,15 +376,23 @@ define([], function () {
             runServices(pen, review); },
         promptresp: function (svcid, resp) {
             handleResponseToPrompt(svcid, resp); },
-        getRevStarsTxt: function (review) {
-            return getRevStarsTxt(review); },
+        getRevStarsTxt: function (review, format) {
+            return getRevStarsTxt(review, format); },
         getRevTitleTxt: function (review) {
             return getRevTitleTxt(review); },
         getRevTypeImage: function (review) {
             return getRevTypeImage(review); },
         continueServices: function (review) {
             mor.pen.getPen(function (pen) {
-                runServices(pen, review); }); }
+                runServices(pen, review); }); },
+        displayShare: function (buttondiv, msgdiv, pen, review) {
+            verifyConnectionServices(pen, function () {
+                initShareDisplay(buttondiv, msgdiv, pen, review); }); },
+        enable: function (svcname) {
+            enablePostingService(svcname); },
+        getRevPermalink: function (review) {
+            return "http://www.myopenreviews.com/statrev/" + 
+                mor.instId(review); }
     };
 
 });
