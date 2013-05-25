@@ -184,7 +184,7 @@ define([], function () {
 
 
     postReview4 = function (review) {
-        var fblinkname, fblinkurl, fbremurl, fbimage, fbprompt, html;
+        var fblinkname, fblinkurl, fbremurl, fbimage, fbprompt;
         fblinkname = mor.services.getRevStarsTxt(review, "unicode") + " " +
             mor.services.getRevTitleTxt(review);
         fblinkurl = mor.services.getRevPermalink(review);
@@ -203,9 +203,8 @@ define([], function () {
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {
-                      review.svcdata[svcName] = response.post_id;
-                      html = "<p>&nbsp;</p><p>Review posted to Facebook</p>";
-                      mor.out('contentdiv', html); }
+                      mor.log("Review posted to Facebook");
+                      review.svcdata[svcName] = response.post_id; }
                   else {  //probably just canceled posting
                       mor.log("Posting to Facebook did not happen.");
                       review.svcdata[svcName] = 'nopost'; } 
