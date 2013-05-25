@@ -89,8 +89,6 @@ def getSubkey(rev):
         subkey = rev.author
     if rev.revtype == "music":
         subkey = rev.artist
-    if subkey:
-        subkey = "<td><span class=\"revauthor\">" + subkey + "</span></td>"
     return subkey
 
 
@@ -178,6 +176,9 @@ def descrip(rev):
         # strip any newlines or similar annoyances
         revtext = re.sub('\s+', ' ', revtext)
     text = getTitle(rev)
+    subkey = getSubkey(rev)
+    if subkey:
+        text += " - " + subkey
     assoc = secondaryFieldZip(rev)
     for av in assoc:
         if av[1]:
@@ -302,6 +303,9 @@ def actionButtonsHTML(penrevparms):
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
+    subkey = getSubkey(rev)
+    timg = "../img/" + typeImage(rev.revtype)
+    rdesc = descrip(rev)
     # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
@@ -310,12 +314,19 @@ def revhtml(rev, pen):
     html += "<head>\n"
     html +=   "<meta http-equiv=\"Content-Type\""
     html +=        " content=\"text/html; charset=UTF-8\" />\n"
-    html +=   "<meta name=\"description\" content=\"" + descrip(rev) + "\" />\n"
-    html +=   "<title>My Open Reviews</title>\n"
+    html +=   "<meta name=\"description\" content=\"" + rdesc + "\" />\n"
+    html +=   "<meta property=\"og:image\" content=\"" + timg + "\" />\n"
+    html +=   "<meta property=\"twitter:image\" content=\"" + timg + "\" />\n"
+    html +=   "<meta itemprop=\"image\" content=\"" + timg + "\" />\n"
+    html +=   "<meta itemprop=\"description\" content=\"" + rdesc + "\" />\n"
+    html +=   "<title>" + getTitle(rev)
+    if subkey:
+        html += " - " + subkey
+    html +=   "</title>\n"
     html +=   "<link href=\"../css/mor.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />\n"
     html +=   "<link rel=\"image_src\""
-    html +=        " href=\"../img/" + typeImage(rev.revtype) + "\" />"
+    html +=        " href=\"" + timg + "\" />\n"
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
     # HTML content from index.html...
@@ -395,7 +406,8 @@ def revhtml(rev, pen):
     html +=             "</td>\n"
     html +=           "<td><span class=\"revtitle\">" + getTitle(rev)
     html +=             "</span></td>\n"
-    html +=           getSubkey(rev) + "\n"
+    if subkey:
+        html += "<td><span class=\"revauthor\">" + subkey + "</span></td>\n"
     html +=           "<td>" + urlImageLink(rev) + "</td>\n"
     html +=         "</tr>\n"
     html +=         "<tr><td colspan=\"4\" class=\"textareatd\">\n"
