@@ -515,7 +515,7 @@ define([], function () {
     displayLoginForm = function (params) {
         var name, html = "";
         mor.out('centerhdiv', "");
-        if(!mor.byId('logindiv')) {
+        if(!mor.byId('logindiv') || !mor.byId('loginform')) {
             html = "<div id=\"logindiv\">" + loginhtml + "</div>";
             mor.out('contentdiv', html); }
         mor.byId('loginform').style.display = "inline";
