@@ -470,14 +470,17 @@ define([], function () {
 
 
     picHTML = function (review, type, keyval, mode) {
-        var html;
+        var imgstyle, html;
         if(!keyval) {
             return ""; }
         if(review.imguri) {  //use auto-generated link if avail. No direct edit.
+            imgstyle = "max-width:125px;height:auto;"
+            if(mor.isLowFuncBrowser()) {
+                imgstyle = "width:125px;height:auto;"; }
             html = "<a href=\"" + review.url + "\"" + 
                      " onclick=\"window.open('" + review.url + "');" + 
                                 "return false;\"" +
-                "><img style=\"max-width:125px;height:auto;\"" +
+                "><img style=\"" + imgstyle + "\"" +
                      " src=\"" + review.imguri + "\"/></a>";
             if(mode === "edit") {
                 html += "<br/>" +
