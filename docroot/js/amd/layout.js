@@ -124,13 +124,21 @@ define([], function () {
 
     //initialize the logged-in content display div areas.  Basically
     //contentdiv is subdivided into chead and cmain.
+    haveContentDivAreas = function () {
+        return mor.byId('chead') && mor.byId('cmain');
+    },
+
+
+    initContentDivAreas = function () {
+        var html = "<div id=\"chead\"> </div>" +
+                   "<div id=\"cmain\"> </div>";
+        mor.out('contentdiv', html);
+    },
+
+
     initContent = function () {
-        var html, div;
-        div = mor.byId('chead');
-        if(!div) {
-            html = "<div id=\"chead\"> </div>" +
-                "<div id=\"cmain\"> </div>";
-            mor.out('contentdiv', html);
+        if(!haveContentDivAreas()) {
+            initContentDivAreas();
             mor.profile.updateHeading();
             mor.activity.updateHeading();
             mor.review.updateHeading(); }
@@ -254,6 +262,10 @@ define([], function () {
             localDocLinks();
             fullContentHeight();
             fixTextureCover(); },
+        haveContentDivAreas: function () {
+            return haveContentDivAreas(); },
+        initContentDivAreas: function () {
+            initContentDivAreas(); },
         initContent: function () {
             initContent(); },
         adjust: function () {

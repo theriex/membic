@@ -192,6 +192,7 @@ define([], function () {
             window.location.href = mor.secsvr + 
                 "#returnto=" + mor.enc(mor.mainsvr) +
                 "&command=chgpwd&" + authparams(); }
+        mor.profile.cancelPenNameSettings();  //close the dialog if it is up
         mor.login.updateAuthentDisplay("hide");
         html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
         "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +

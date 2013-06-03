@@ -86,8 +86,9 @@ def authenticated(request):
     token = request.get('at')
     toksec = request.get('as')
     if acctype == "mid":
-        where = "WHERE username=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, username)
+        userlcase = username.lower()
+        where = "WHERE userlcase=:1 LIMIT 1"
+        accounts = MORAccount.gql(where, userlcase)
         for account in accounts:
             key = pwd2key(account.password)
             token = decodeToken(key, token)
@@ -277,6 +278,7 @@ class MORAccount(db.Model):
     password = db.StringProperty(required=True)
     email = db.EmailProperty()
     modified = db.StringProperty()  # iso date
+    userlcase = db.StringProperty()  # lowercase username for case ins login
 
 
 class WriteAccount(webapp2.RequestHandler):
@@ -291,8 +293,9 @@ class WriteAccount(webapp2.RequestHandler):
             self.error(412)
             self.response.out.write("username must be 18 characters or less")
             return
-        where = "WHERE username=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, user)
+        lcase = user.lower()
+        where = "WHERE userlcase=:1 LIMIT 1"
+        accounts = MORAccount.gql(where, lcase)
         found = accounts.count()
         if found:
             self.error(412)
@@ -305,13 +308,30 @@ class WriteAccount(webapp2.RequestHandler):
             self.response.out.write("Password must be at least 6 characters")
             return
         acct = MORAccount(username=user, password=pwd)
+        acct.userlcase = lcase
         email = self.request.get('email')
         if email:
-            acct.email = email
+            acct.email = email.lower()
         acct.modified = nowISO()
         acct.put()
         token = newtoken(user, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
+
+
+class VerifyUserLowerCase(webapp2.RequestHandler):
+    def get(self):
+        accts = MORAccount.all()
+        accts.order('modified')  # keep the modification order just in case
+        for acct in accts:
+            logging.info("lcase: " + str(acct.key().id()) + 
+                         " " + acct.username +
+                         " " + str(acct.userlcase) +
+                         " " + str(acct.email))
+            acct.userlcase = acct.username.lower()
+            if acct.email:
+                acct.email = acct.email.lower()
+            acct.put()
+        self.response.out.write("VerifyUserLowerCase completed")
 
 
 class GetToken(webapp2.RequestHandler):
@@ -323,12 +343,13 @@ class GetToken(webapp2.RequestHandler):
             return
         username = self.request.get('user')
         password = self.request.get('pass')
-        where = "WHERE username=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, username, password)
+        userlcase = username.lower()
+        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, userlcase, password)
         found = accounts.count()
         # logging.info("GetToken found " + str(found) + " for " + username)
         if found:
-            token = newtoken(username, password)
+            token = newtoken(userlcase, password)
             if self.request.get('format') == "record":
                 writeTextResponse("token: " + token + "\n", 
                                   self.response)
@@ -355,8 +376,9 @@ class TokenAndRedirect(webapp2.RequestHandler):
         redurl += "#"
         username = self.request.get('userin')
         password = self.request.get('passin')
-        where = "WHERE username=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, username, password)
+        userlcase = username.lower()
+        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, userlcase, password)
         found = accounts.count()
         if found:
             token = newtoken(username, password)
@@ -394,8 +416,9 @@ class GetLoginID(webapp2.RequestHandler):
     def post(self):
         username = self.request.get('userin')
         password = self.request.get('passin')
-        where = "WHERE username=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, username, password)
+        userlcase = username.lower()
+        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, userlcase, password)
         redurl = "http://www.myopenreviews.com?mid="
         for account in accounts:
             redurl += str(account.key().id())
@@ -406,21 +429,25 @@ class MailCredentials(webapp2.RequestHandler):
     def post(self):
         eaddr = self.request.get('email')
         if eaddr:
-            where = "WHERE email=:1 LIMIT 1"
+            content = ""
+            usernames = ""
+            eaddr = eaddr.lower()
+            where = "WHERE email=:1 LIMIT 9"
             accounts = MORAccount.gql(where, eaddr)
             for account in accounts:
-                logging.info("mailing " + account.username + 
-                             " credentials to " + account.email)
-                content = "Username: " + account.username
+                usernames += " " + account.username
+                content += "\nUsername: " + account.username
                 content += "\nPassword: " + account.password + "\n"
-                # sender needs to be a valid email address.  This should
-                # change to noreply@myopenreviews.com if traffic gets bad
-                if not self.request.url.startswith('http://localhost'):
-                    mail.send_mail(
-                        sender="MyOpenReviews support <theriex@gmail.com>",
-                        to=account.email,
-                        subject="MyOpenReviews account login",
-                        body=content)
+            logging.info("mailing credentials to " + account.email +
+                         " usernames: " + usernames)
+            # sender needs to be a valid email address.  This should
+            # change to noreply@myopenreviews.com if traffic gets bad
+            if not self.request.url.startswith('http://localhost'):
+                mail.send_mail(
+                    sender="MyOpenReviews support <theriex@gmail.com>",
+                    to=account.email,
+                    subject="MyOpenReviews account login",
+                    body=content)
         writeJSONResponse("[]", self.response)
 
 
@@ -440,7 +467,7 @@ class ChangePassword(webapp2.RequestHandler):
         if pwd and account:
             email = self.request.get('email')
             if email:
-                account.email = email
+                account.email = email.lower()
             account.modified = nowISO()
             account.password = pwd
             account.put()
@@ -453,6 +480,7 @@ class ChangePassword(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
+                               ('/verifyuserlcase', VerifyUserLowerCase),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),

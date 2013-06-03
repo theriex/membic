@@ -1412,6 +1412,8 @@ define([], function () {
             "</td>" +
           "</tr>" +
         "</table></div>";
+        if(!mor.layout.haveContentDivAreas()) { //change pw kills it
+            mor.layout.initContentDivAreas(); }
         mor.out('cmain', html);
         displayShout(dispen);
         displayCity(dispen);
