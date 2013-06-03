@@ -318,22 +318,6 @@ class WriteAccount(webapp2.RequestHandler):
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
 
 
-class VerifyUserLowerCase(webapp2.RequestHandler):
-    def get(self):
-        accts = MORAccount.all()
-        accts.order('modified')  # keep the modification order just in case
-        for acct in accts:
-            logging.info("lcase: " + str(acct.key().id()) + 
-                         " " + acct.username +
-                         " " + str(acct.userlcase) +
-                         " " + str(acct.email))
-            acct.userlcase = acct.username.lower()
-            if acct.email:
-                acct.email = acct.email.lower()
-            acct.put()
-        self.response.out.write("VerifyUserLowerCase completed")
-
-
 class GetToken(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
@@ -480,7 +464,6 @@ class ChangePassword(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
-                               ('/verifyuserlcase', VerifyUserLowerCase),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),

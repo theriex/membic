@@ -214,8 +214,6 @@ handlers:
   script: src.py.pen.app
 - url: /testrevs
   script: src.py.rev.app
-- url: /verifyuserlcase
-  script: src.py.moracct.app
 - url: /statrev/\d+
   script: src.py.statrev.app
 - url: /stats.*
