@@ -676,13 +676,15 @@ define([], function () {
             return html; }
         if(mode === "edit") {
             html += keywordCheckboxesHTML(type) + 
-                "Keywords: " +
+                "<span class=\"secondaryfield\">Keywords</span> " +
                   "<input type=\"text\" id=\"keywordin\"" + 
                         " size=\"30\"" + 
                         " value=\"" + mor.safestr(review.keywords) + "\"/>"; }
         else { //not editing
-            html += "<div class=\"csvstrdiv\">" + 
-                mor.safestr(review.keywords) + "</div>"; }
+            if(mor.safestr(review.keywords)) {
+                html += "<div class=\"csvstrdiv\">" +
+                    "<span class=\"secondaryfield\">Keywords</span> " +
+                    mor.safestr(review.keywords) + "</div>"; } }
         return html;
     },
 
