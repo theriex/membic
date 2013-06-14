@@ -9,12 +9,14 @@ var morbuild = (function () {
         cp = require('child_process'),
         readopt = { encoding: 'utf8' },
         writeopt = { encoding: 'utf8' },
+        buildroot = "",
+        docroot = "",
         outsrc = "mor-source.js",
-        outcomp = "../../docroot/js/mor-comp.js",
+        outcomp = "/js/mor-comp.js",
 
 
     getModuleFiles = function (nextfunc) {
-        fs.readFile('../../docroot/js/mor.js', readopt, function (err, text) {
+        fs.readFile(docroot + '/js/mor.js', readopt, function (err, text) {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
                 throw err; }
@@ -27,10 +29,10 @@ var morbuild = (function () {
                 modfile = modules[i].trim();
                 modfile = modfile.slice(1, modfile.length - 1);
                 if(modfile.indexOf("amd/") === 0) {
-                    fpath = "../../docroot/js/" + modfile + ".js";
+                    fpath = docroot + "/js/" + modfile + ".js";
                     modefs.push({ filepath: fpath, module: modfile }); }
                 else if(modfile.indexOf("ext/") === 0) {
-                    fpath = "../../docroot/js/amd/" + modfile + ".js";
+                    fpath = docroot + "/js/amd/" + modfile + ".js";
                     modefs.push({ filepath: fpath, module: modfile }); } }
             nextfunc(modefs);
         });
@@ -68,7 +70,8 @@ var morbuild = (function () {
 
     minifyAndDeploy = function () {
         var command, args;
-        command = "java -jar compiler-latest/compiler.jar --js " + outsrc + 
+        command = "java -jar " + buildroot + 
+            "/compiler-latest/compiler.jar --js " + outsrc + 
             " --js_output_file " + outcomp;
         console.log(command);
         args = command.split(" ");
@@ -94,10 +97,24 @@ var morbuild = (function () {
                 throw err; }
             console.log("cleared out " + outsrc);
         });
+    },
+
+
+    setDocroot = function (buildfile) {
+        var path = buildfile.slice(0, -1 * "build.js".length);
+        //console.log("path: " + path);
+        buildroot = path;
+        outsrc = buildroot + outsrc;
+        docroot = path + "../../docroot";
+        console.log("docroot: " + docroot);
+        outcomp = docroot + outcomp;
+        return docroot;
     };
 
 
     return {
+        setDocroot: function (buildfile) {
+            return setDocroot(buildfile); },
         run: function () {
             runbuild(); },
         clean: function () {
@@ -107,9 +124,13 @@ var morbuild = (function () {
 } () );
 
 
-if(process.argv[2] === "clean") {
-    morbuild.clean(); }
+if(morbuild.setDocroot(process.argv[1])) {
+    if(process.argv[2] === "clean") {
+        morbuild.clean(); }
+    else {
+        morbuild.run(); } }
 else {
-    morbuild.run(); }
+    console.log("Couldn't figure out docroot"); }
+
 
 
