@@ -497,7 +497,8 @@ define([], function () {
                 html = "revpic?revid=" + mor.instId(review); }
             html = "<img class=\"revimg\"" + imgstyle + " src=\"" + html + "\"";
             if(mode === "edit") {
-                html += " onclick=mor.review.picUploadForm();return false;"; }
+                html += " title=\"Click to upload a picture\"" +
+                    " onclick=mor.review.picUploadForm();return false;"; }
             html += "/>"; }
         return html;
     },
@@ -604,8 +605,8 @@ define([], function () {
     },
 
 
-    secondaryFieldsValid = function (type, errors) {
-        var input, i;
+    secondaryFieldsValid = function (type, errors, actionstr) {
+        var input, i, txt;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
             input = mor.byId("field" + i);
@@ -613,7 +614,10 @@ define([], function () {
                 crev[type.fields[i]] = input.value; } }
         //verify they set the rating to something.
         if(!crev.rating) {
-            errors.push("Please set a star rating for this review"); }
+            txt = "Please set a star rating";
+            if(actionstr === "uploadpic") {
+                txt += " before uploading a picture"; }
+            errors.push(txt); }
     },
 
 
@@ -1279,7 +1283,7 @@ define([], function () {
             return; }
         noteURLValue();
         keyFieldsValid(type, errors);
-        secondaryFieldsValid(type, errors);
+        secondaryFieldsValid(type, errors, actionstr);
         keywordsValid(type, errors);
         reviewTextValid(type, errors);
         if(errors.length > 0) {
@@ -1336,7 +1340,6 @@ define([], function () {
     //Fill any missing descriptive fields in the given review from the
     //current review, then edit the given review.
     copyAndEdit = function (pen, review) {
-        var temp = crev;
         if(!review) {
             review = {};
             review.srcrev = mor.instId(crev);
