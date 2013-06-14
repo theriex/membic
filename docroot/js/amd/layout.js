@@ -174,7 +174,8 @@ define([], function () {
             //scaled up image either too large or too pixelated for use
             //altimg = "url('../img/texturePaperBig.png')";
             altimg = "url('../img/blank.png')";
-            mor.byId('bodyid').style.backgroundImage = altimg; }
+            mor.byId('bodyid').style.backgroundImage = altimg;
+            mor.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
     },
 
 

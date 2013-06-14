@@ -81,11 +81,6 @@ body {
 #penhnamespan { font-size:xx-large; }
 #homepennamespan { font-size:large; }
 #penhbuttonspan { padding:0px 0px 0px 20px; }
-#acthdiv, #revhdiv {
-  background:#ddd url('../img/navlinkback.png') repeat; 
-  border: 1px solid #ddd; border-radius:5px; 
-  box-shadow: 2px 2px 2px #888; text-shadow: -1px -1px 1px #fff;
-  padding:0px 5px; font-size:x-large; visibility:hidden; }
 #homepenhdiv { float:left; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
