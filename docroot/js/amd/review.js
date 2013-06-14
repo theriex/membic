@@ -473,15 +473,16 @@ define([], function () {
         var imgstyle, html;
         if(!keyval) {
             return ""; }
+        imgstyle = "";
+        if(mor.isLowFuncBrowser()) {
+            imgstyle = " style=\"width:125px;height:auto;\""; }
         if(review.imguri) {  //use auto-generated link if avail. No direct edit.
-            imgstyle = "max-width:125px;height:auto;"
-            if(mor.isLowFuncBrowser()) {
-                imgstyle = "width:125px;height:auto;"; }
-            html = "<a href=\"" + review.url + "\"" + 
-                     " onclick=\"window.open('" + review.url + "');" + 
-                                "return false;\"" +
-                "><img style=\"" + imgstyle + "\"" +
-                     " src=\"" + review.imguri + "\"/></a>";
+            html = "<img class=\"revimg\"" + imgstyle + 
+                       " src=\"" + review.imguri + "\"/>";
+            if(review.url) {
+                html = "<a href=\"" + review.url + "\"" + 
+                         " onclick=\"window.open('" + review.url + "');" + 
+                                    "return false;\">" + html + "</a>"; }
             if(mode === "edit") {
                 html += "<br/>" +
                     "<a href=\"#remove image link\"" +
@@ -494,7 +495,7 @@ define([], function () {
                 html = "img/emptyprofpic.png"; }
             if(review.revpic) {  //use uploaded pic if available
                 html = "revpic?revid=" + mor.instId(review); }
-            html = "<img class=\"revpic\" src=\"" + html + "\"";
+            html = "<img class=\"revimg\"" + imgstyle + " src=\"" + html + "\"";
             if(mode === "edit") {
                 html += " onclick=mor.review.picUploadForm();return false;"; }
             html += "/>"; }
@@ -1335,6 +1336,7 @@ define([], function () {
     //Fill any missing descriptive fields in the given review from the
     //current review, then edit the given review.
     copyAndEdit = function (pen, review) {
+        var temp = crev;
         if(!review) {
             review = {};
             review.srcrev = mor.instId(crev);
@@ -1345,6 +1347,8 @@ define([], function () {
         //Fill in any empty descriptive fields
         if(crev.imguri && !review.imguri && !review.revpic) {
             review.imguri = crev.imguri; }
+        if(crev.revpic && !review.imguri && !review.revpic) {
+            review.imguri = "revpic?revid=" + mor.instId(crev); }
         if(crev.name && !review.name) {
             review.name = crev.name; }
         if(crev.title && !review.title) {

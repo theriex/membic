@@ -160,7 +160,8 @@ body {
 .secondaryfield { font-style:italic; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revlist li { padding:4px; }
-.revpic { width:125px; height:125px; }
+.revimg { max-width:125px; height:auto; }
+.revimgsafe { width:125px; height:auto; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
 .csvstrdiv { padding:5px; }
