@@ -306,7 +306,9 @@ define([], function () {
             return "http://www.myopenreviews.com/statrev/" + 
                 mor.instId(review); },
         getPostServiceMsgDiv: function () {
-            return svcmsgdiv; }
+            return svcmsgdiv; },
+        serviceLinkHTML: function (url, clickstr, imgclass, alt, src) {
+            return serviceLinkHTML(url, clickstr, imgclass, alt, src); }
     };
 
 });

@@ -234,8 +234,8 @@ define([], function () {
     },
 
 
-    reviewTypeCheckboxesHTML = function (cboxgroup) {
-        return revTypeChoiceHTML("checkbox", cboxgroup);
+    reviewTypeCheckboxesHTML = function (cboxgroup, chgfstr) {
+        return revTypeChoiceHTML("checkbox", cboxgroup, "", chgfstr);
     },
 
 
@@ -1487,8 +1487,8 @@ define([], function () {
             return reviewTypes; },
         getReviewTypeByValue: function (val) {
             return findReviewType(val); },
-        reviewTypeCheckboxesHTML: function (cboxgroup) {
-            return reviewTypeCheckboxesHTML(cboxgroup); },
+        reviewTypeCheckboxesHTML: function (cboxgroup, chgfuncstr) {
+            return reviewTypeCheckboxesHTML(cboxgroup, chgfuncstr); },
         reviewTypeRadiosHTML: function (rgname, chgfuncstr, revrefs, selt) {
             return reviewTypeRadiosHTML(rgname, chgfuncstr, revrefs, selt); },
         reviewTypeSelectOptionsHTML: function (revrefs) {

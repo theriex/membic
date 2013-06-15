@@ -419,6 +419,128 @@ define([], function () {
     },
 
 
+    mailButtonHTML = function () {
+        var html, href, subj, body, temp, revchecks, i, ts;
+        subj = "Invitation to join MyOpenReviews";
+        body = "";
+        temp = mor.byId('invsalin').value || "";
+        if(temp) {
+            temp += "\n\n"; }
+        body += temp;
+        body += "I'm using MyOpenReviews to review things I experience.  I trust your taste, and would be interested in reading reviews from you";
+        revchecks = document.getElementsByName("invrevcb");
+        temp = "";
+        for(i = 0; i < revchecks.length; i += 1) {
+            if(revchecks[i].checked) {
+                if(temp) {
+                    temp += ","; }
+                temp += revchecks[i].value; } }
+        if(temp) {
+            ts = temp.split(",");
+            temp = "";
+            for(i = 0; i < ts.length; i += 1) {
+                if(i > 0) {
+                    if(i === ts.length - 1) {
+                        temp += " and "; }
+                    else {
+                        temp += ", "; } }
+                temp += ts[i]; }
+            body += ", especially about " + temp + "."; }
+        else {
+            body += "."; }
+        body += "\n\nMyOpenReviews is free.  To connect, you create an account, create a pen name, then click the 'follow' icon next to '" + 
+            profpen.name + "' on my profile page.  " +
+            "Here's the link:\n\n" +
+            "http://www.myopenreviews.com/#view=profile&profid=" +
+            mor.instId(profpen) + "\n\n" +
+            "I'll follow you back when I see in my 'Followers' tab.  " +
+            "Looking forward to any reviews you write.\n\n";
+        temp = mor.byId('invclin').value || "";
+        if(temp) {
+            temp += "\n"; }
+        body += temp;
+        temp = mor.byId('invsigin').value || "";
+        if(temp) {
+            temp += "\n\n"; }
+        body += temp;
+        href = "mailto:?subject=" + mor.dquotenc(subj) + 
+            "&body=" + mor.dquotenc(body);
+        html = mor.services.serviceLinkHTML(href, "", "shareico", 
+                                            "Invite via eMail",
+                                            "img/email.png");
+        return html;
+    },
+
+
+    updateInviteInfo = function () {
+        mor.out('mailbspan', mailButtonHTML());
+    },
+
+
+    displayInvitationDialog = function () {
+        var html, sal, close, sig;
+        sal = sal || "Hey,";
+        close = close || "cheers,";
+        sig = sig || profpen.name;
+        html = "<div class=\"headingtxt\">Invitation creation</div>" +
+          "<table class=\"formstyle\" border=\"0\">" +
+            "<tr>" +
+              "<td align=\"right\" class=\"secondaryfield\">" + 
+                "<label for=\"invsalin\">Salutation</label>" +
+              "</td>" +
+              "<td>" + 
+                "<input type=\"text\" id=\"invsalin\" name=\"invsalin\"" +
+                      " onchange=\"mor.profile.chginvite();return false;\"" +
+                      " size=\"20\" value=\"" + sal + "\"/>" +
+              "</td>" + 
+            "</tr>" +
+            "<tr>" +
+              "<td colspan=\"2\">" + 
+                "<span class=\"secondaryfield\">" + 
+                  "Review types you particularly want to read</span>" +
+                mor.review.reviewTypeCheckboxesHTML("invrevcb", 
+                                                    "mor.profile.chginvite") +
+              "</td>" + 
+            "</tr>" +
+            "<tr>" +
+              "<td align=\"right\" class=\"secondaryfield\">" + 
+                "<label for=\"invclin\">Closure</label>" +
+              "</td>" +
+              "<td>" + 
+                "<input type=\"text\" id=\"invclin\" name=\"invclin\"" +
+                      " onchange=\"mor.profile.chginvite();return false;\"" +
+                      " size=\"20\" value=\"" + close + "\"/>" +
+              "</td>" + 
+            "</tr>" +
+            "<tr>" +
+              "<td align=\"right\" class=\"secondaryfield\">" + 
+                "<label for=\"invsigin\">Signature</label>" +
+              "</td>" +
+              "<td>" + 
+                "<input type=\"text\" id=\"invsigin\" name=\"invsigin\"" +
+                      " onchange=\"mor.profile.chginvite();return false;\"" +
+                      " size=\"20\" value=\"" + sig + "\"/>" +
+              "</td>" + 
+            "</tr>" +
+            "<tr>" +
+              "<td colspan=\"2\" align=\"center\" id=\"invbuttons\">" + 
+                "<button type=\"button\" id=\"closebutton\">Close</button>" +
+                "&nbsp;" +
+                "<span id=\"mailbspan\"></span>" +
+              "</td>" + 
+            "</tr>" +
+          "</table>";
+        mor.out('dlgdiv', html);
+        mor.onclick('closebutton', mor.layout.closeDialog);
+        mor.byId('dlgdiv').style.visibility = "visible";
+        if(mor.isLowFuncBrowser()) {
+            mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        mor.onescapefunc = mor.layout.closeDialog;
+        updateInviteInfo();
+        mor.byId('invsalin').focus();
+    },
+
+
     badgeDispHTML = function (pen) {
         var html, i, reviewTypes, typename;
         html = "";
@@ -1096,7 +1218,7 @@ define([], function () {
                     mor.byId('searchtxt').placeholder = pensrchplace;
                     searchmode = "pen";
                     break; }
-                else if(radios[i].value === "rev") {
+                if(radios[i].value === "rev") {
                     mor.byId('revsearchoptionsdiv').style.display = "block";
                     mor.byId('pensearchoptionsdiv').style.display = "none";
                     mor.byId('searchtxt').placeholder = revsrchplace;
@@ -1383,7 +1505,7 @@ define([], function () {
         //process of updating the persistent state
         mor.skinner.setColorsFromPen(homepen);
         html = "<div id=\"proftopdiv\">" +
-        "<table id=\"profdisptable\">" +
+        "<table id=\"profdisptable\" border=\"0\">" +
           "<tr>" +
             "<td id=\"sysnotice\" colspan=\"2\">" +
           "</tr>" +
@@ -1391,7 +1513,7 @@ define([], function () {
             "<td id=\"profpictd\" rowspan=\"2\">" +
               "<img class=\"profpic\" src=\"img/emptyprofpic.png\"/>" +
             "</td>" +
-            "<td id=\"profshouttd\">" +
+            "<td id=\"profshouttd\" colspan=\"2\">" +
               "<div id=\"shoutdiv\" class=\"shoutout\"></div>" +
             "</td>" +
           "</tr>" +
@@ -1400,14 +1522,16 @@ define([], function () {
               "<span id=\"profcityspan\"> </span>" +
               "<span id=\"profeditbspan\"> </span>" +
             "</td>" +
+            "<td id=\"profcommbuildtd\">" +
+            "</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\">" +
+            "<td colspan=\"3\">" +
               "<div id=\"proftabsdiv\"> </div>" +
             "</td>" +
           "</tr>" +
           "<tr>" +
-            "<td colspan=\"2\">" +
+            "<td colspan=\"3\">" +
               "<div id=\"profcontdiv\"> </div>" +
             "</td>" +
           "</tr>" +
@@ -1415,6 +1539,11 @@ define([], function () {
         if(!mor.layout.haveContentDivAreas()) { //change pw kills it
             mor.layout.initContentDivAreas(); }
         mor.out('cmain', html);
+        if(mor.instId(profpen) === mor.pen.currPenId()) {
+            html = "<a id=\"commbuild\" href=\"#invite\"" + 
+                     " onclick=\"mor.profile.invite();return false\">" +
+                "build your community</a>";
+            mor.out('profcommbuildtd', html); }
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
@@ -1521,7 +1650,11 @@ define([], function () {
         editCity: function () {
             editCity(); },
         setSearchMode: function (mode) {
-            searchmode = mode; }
+            searchmode = mode; },
+        invite: function () {
+            displayInvitationDialog(); },
+        chginvite: function () {
+            updateInviteInfo(); }
     };
 
 });
