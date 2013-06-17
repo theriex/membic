@@ -418,49 +418,43 @@ define([], function () {
 
 
     mailButtonHTML = function () {
-        var html, href, subj, body, temp, revchecks, i, ts;
+        var html, href, subj, body, types, revchecks, i, ts;
         subj = "Invitation to join MyOpenReviews";
-        body = "";
-        temp = mor.byId('invsalin').value || "";
-        if(temp) {
-            temp += "\n\n"; }
-        body += temp;
-        body += "I'm using MyOpenReviews to review things I experience.  I trust your taste, and would be interested in reading reviews from you";
+        body = "Hey,\n\n" +
+            "I'm using MyOpenReviews to review things I experience. I trust " + 
+            "your taste, and would be interested in reading reviews from you";
         revchecks = document.getElementsByName("invrevcb");
-        temp = "";
+        types = "";
         for(i = 0; i < revchecks.length; i += 1) {
             if(revchecks[i].checked) {
-                if(temp) {
-                    temp += ","; }
-                temp += revchecks[i].value; } }
-        if(temp) {
-            ts = temp.split(",");
-            temp = "";
+                if(types) {
+                    types += ","; }
+                types += revchecks[i].value; } }
+        if(types) {
+            ts = types.split(",");
+            types = "";
             for(i = 0; i < ts.length; i += 1) {
                 if(i > 0) {
                     if(i === ts.length - 1) {
-                        temp += " and "; }
+                        types += " and "; }
                     else {
-                        temp += ", "; } }
-                temp += ts[i]; }
-            body += ", especially about " + temp + "."; }
+                        types += ", "; } }
+                types += ts[i]; }
+            body += ", especially about " + types + "."; }
         else {
             body += "."; }
-        body += "\n\nMyOpenReviews is free.  To connect, you create an account, create a pen name, then click the 'follow' icon next to '" + 
-            profpen.name + "' on my profile page.  " +
-            "Here's the link:\n\n" +
+        body += " If you sign up, then I'll be able to follow what you like " +
+            "and don't like.\n\n";
+        body += "You can see what I like and don't like if you click the " + 
+            "'follow' icon next to '" + profpen.name + "' on my profile " +
+            "page. Here's the direct link to my profile:\n\n" + 
             "http://www.myopenreviews.com/#view=profile&profid=" +
             mor.instId(profpen) + "\n\n" +
-            "I'll follow you back when I see in my 'Followers' tab.  " +
-            "Looking forward to any reviews you write.\n\n";
-        temp = mor.byId('invclin').value || "";
-        if(temp) {
-            temp += "\n"; }
-        body += temp;
-        temp = mor.byId('invsigin').value || "";
-        if(temp) {
-            temp += "\n\n"; }
-        body += temp;
+            "I'll follow you back when I see in my 'Followers' tab.\n\n" +
+            "Looking forward to hearing about your new finds";
+        if(types) {
+            body += " in " + types; }
+        body += ".\n\ncheers,\n" + profpen.name + "\n\n";
         href = "mailto:?subject=" + mor.dquotenc(subj) + 
             "&body=" + mor.dquotenc(body);
         html = mor.services.serviceLinkHTML(href, "", "shareico", 
@@ -476,57 +470,25 @@ define([], function () {
 
 
     displayInvitationDialog = function () {
-        var html, sal, close, sig;
-        sal = sal || "Hey,";
-        close = close || "cheers,";
-        sig = sig || profpen.name;
-        html = "<div class=\"headingtxt\">Invitation creation</div>" +
-          "<table class=\"formstyle\" border=\"0\">" +
-            "<tr>" +
-              "<td align=\"right\" class=\"secondaryfield\">" + 
-                "<label for=\"invsalin\">Salutation</label>" +
-              "</td>" +
-              "<td>" + 
-                "<input type=\"text\" id=\"invsalin\" name=\"invsalin\"" +
-                      " onchange=\"mor.profile.chginvite();return false;\"" +
-                      " size=\"20\" value=\"" + sal + "\"/>" +
-              "</td>" + 
-            "</tr>" +
-            "<tr>" +
-              "<td colspan=\"2\">" + 
-                "<span class=\"secondaryfield\">" + 
-                  "Review types you particularly want to read</span>" +
-                mor.review.reviewTypeCheckboxesHTML("invrevcb", 
-                                                    "mor.profile.chginvite") +
-              "</td>" + 
-            "</tr>" +
-            "<tr>" +
-              "<td align=\"right\" class=\"secondaryfield\">" + 
-                "<label for=\"invclin\">Closure</label>" +
-              "</td>" +
-              "<td>" + 
-                "<input type=\"text\" id=\"invclin\" name=\"invclin\"" +
-                      " onchange=\"mor.profile.chginvite();return false;\"" +
-                      " size=\"20\" value=\"" + close + "\"/>" +
-              "</td>" + 
-            "</tr>" +
-            "<tr>" +
-              "<td align=\"right\" class=\"secondaryfield\">" + 
-                "<label for=\"invsigin\">Signature</label>" +
-              "</td>" +
-              "<td>" + 
-                "<input type=\"text\" id=\"invsigin\" name=\"invsigin\"" +
-                      " onchange=\"mor.profile.chginvite();return false;\"" +
-                      " size=\"20\" value=\"" + sig + "\"/>" +
-              "</td>" + 
-            "</tr>" +
-            "<tr>" +
-              "<td colspan=\"2\" align=\"center\" id=\"invbuttons\">" + 
-                "<button type=\"button\" id=\"closebutton\">Close</button>" +
-                "&nbsp;" +
-                "<span id=\"mailbspan\"></span>" +
-              "</td>" + 
-            "</tr>" +
+        var html;
+        html = "<div class=\"headingtxt\">Build your community</div>" +
+          "<table class=\"formstyle\">" +
+            "<tr><td id=\"invintrotd\" style=\"width:400px;\">" +
+              "Know someone whose taste you trust?  What types of reviews " +
+              "would you be most interested in seeing from them?" +
+            "</td></tr>" +
+            "<tr><td id=\"invtypestd\">" + 
+              mor.review.reviewTypeCheckboxesHTML("invrevcb", 
+                                                  "mor.profile.chginvite") +
+            "</td></tr>" +
+            "<tr><td>" + 
+              "Invite them to join!" +
+            "</td></tr>" +
+            "<tr><td align=\"center\">" + 
+              "<button type=\"button\" id=\"closebutton\">Close</button>" +
+              "&nbsp;" +
+              "<span id=\"mailbspan\"></span>" +
+            "</td></tr>" +
           "</table>";
         mor.out('dlgdiv', html);
         mor.onclick('closebutton', mor.layout.closeDialog);
@@ -535,7 +497,6 @@ define([], function () {
             mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         mor.onescapefunc = mor.layout.closeDialog;
         updateInviteInfo();
-        mor.byId('invsalin').focus();
     },
 
 
