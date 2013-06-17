@@ -110,7 +110,7 @@ body {
 
 /* profile layout */
 #proftopdiv { }
-#profshouttd { padding: 0px 10px; }
+#profshouttd { padding:0px 10px; }
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
 #profcommbuildtd { font-size:small; padding: 0px 10px 5px 10px; 
   text-align:right; }
@@ -118,15 +118,17 @@ body {
 #profpictd { width:130px; text-align:right; }
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
-.reviewbadge { width:30px; height:30px; vertical-align:middle; }
+.reviewbadge, .reviewbadgedis { 
+  width:30px; height:30px; vertical-align:middle; }
+.reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
+#profbadgestd { padding: 0px 10px 5px 10px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */
 .textareatd { text-align:center; }
 .shoutout, .shoutoutstatic { text-align:left;
-  margin-left:auto; margin-right:auto;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
-.shoutout { width:200px; height:80px; }
+.shoutout { width:200px; height:50px; }
 .shoutoutstatic { width:600px; padding:10px; }
 #proftabsdiv ul { list-style:none; padding:0; margin:0; }
 #proftabsdiv ul li { display:inline; 

@@ -10,8 +10,6 @@ define([], function () {
 
     var greytxt = "#999999",
         unspecifiedCityText = "City not specified",
-        noShoutTxt = "<span style=\"color:" + greytxt + ";\">" + 
-                         "No shoutout</span>",
         currtab,
         profpen,
         cachepens = [],
@@ -564,7 +562,8 @@ define([], function () {
             "<a href=\"#" + hash + "\"" +
             " onclick=\"mor.profile.changeid('" + penid + "');return false;\"" +
             " title=\"" + linktitle + "\">";
-        picuri = "img/emptyprofpic.png";
+        //empytprofpic.png looks like big checkboxes, use blank instead
+        picuri = "img/blank.png";
         if(pen.profpic) {
             picuri = "profpic?profileid=" + penid; }
         html += "<img class=\"srchpic\" src=\"" + picuri + "\"/>" +
@@ -824,41 +823,12 @@ define([], function () {
     },
 
 
-    dispTypeSelectionHTML = function () {
-        var html;
-        //verify a display type is selected
-        if(!topRevState.dispType) {
-            topRevState.dispType = "book";  //arbitrary default
-            if(profpen.top20s && profpen.top20s.latestrevtype) {
-                topRevState.dispType = profpen.top20s.latestrevtype; } }
-        //get the html for the radio buttons
-        html = mor.review.reviewTypeRadiosHTML("trbchoice",
-                                               "mor.profile.topTypeChange",
-                                               profpen.top20s,
-                                               topRevState.dispType);
-        return html;
-    },
-
-
-    topTypeChange = function () {
-        var radios, i, revtype;
-        radios = document.getElementsByName("trbchoice");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                revtype = mor.review.getReviewTypeByValue(radios[i].value);
-                if(revtype && revtype.type !== topRevState.dispType) {
-                    topRevState.dispType = revtype.type; }
-                break; } }
-        mor.profile.best();  //redisplay
-    },
-
-
     best = function () {
         var html, revs, i, critsec = "";
         selectTab("bestli", best);
         if(typeof profpen.top20s === "string") {
             profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
-        html = dispTypeSelectionHTML();
+        html = "";
         revs = [];
         if(profpen.top20s) {
             revs = profpen.top20s[topRevState.dispType] || []; }
@@ -1377,6 +1347,11 @@ define([], function () {
 
     displayShout = function (pen) {
         var html, shout, text;
+        text = "No additional information about " + pen.name;
+        if(mor.instId(profpen) === mor.pen.currPenId()) {
+            text = "About me (anything you would like to say to everyone)." + 
+                " Link to your twitter handle, blog or site if you want."; }
+        text = "<span style=\"color:" + greytxt + ";\">" + text + "</span>";
         html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
         mor.out('profshouttd', html);
         shout = mor.byId('shoutdiv');
@@ -1385,7 +1360,7 @@ define([], function () {
         //the textarea has a default border, so adding an invisible
         //border here to keep things from jumping around.
         shout.style.border = "1px solid " + mor.colors.bodybg;
-        text = mor.linkify(pen.shoutout) || noShoutTxt;
+        text = mor.linkify(pen.shoutout) || text;
         mor.out('shoutdiv', text);
         if(mor.profile.authorized(pen)) {
             mor.onclick('shoutdiv', function () {
@@ -1484,6 +1459,37 @@ define([], function () {
     },
 
 
+    earnedBadgesHTML = function (pen) {
+        var html, i, reviewTypes, typename, label, dispclass;
+        html = "";
+        mor.pen.deserializeFields(pen);
+        reviewTypes = mor.review.getReviewTypes();
+        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            if(pen.top20s[typename] && pen.top20s[typename].length >= 1) {
+                label = String(pen.top20s[typename].length) + " " + 
+                    reviewTypes[i].plural.capitalize();
+                dispclass = "reviewbadge";
+                if(pen.top20s[typename].length < 20) {
+                    dispclass = "reviewbadgedis"; }
+                html += "<img" + 
+                    " class=\"" + dispclass + "\"" +
+                    " src=\"img/" + reviewTypes[i].img + "\"" +
+                    " title=\"" + label + "\"" +
+                    " alt=\"" + label + "\"" +
+                    " onclick=\"mor.profile.showTopRated('" + typename + "');" +
+                               "return false;\"" +
+                    "/>"; } }
+        return html;
+    },
+
+
+    showTopRated = function (typename) {
+        topRevState.dispType = typename;
+        best();
+    },
+
+
     verifyStateVariableValues = function (pen) {
         if(profpen !== pen) {
             profpen = pen;
@@ -1507,23 +1513,25 @@ define([], function () {
         html = "<div id=\"proftopdiv\">" +
         "<table id=\"profdisptable\" border=\"0\">" +
           "<tr>" +
-            "<td id=\"sysnotice\" colspan=\"2\">" +
+            "<td id=\"sysnotice\" colspan=\"3\">" +
           "</tr>" +
           "<tr>" +
-            "<td id=\"profpictd\" rowspan=\"2\">" +
+            "<td id=\"profpictd\" rowspan=\"3\">" +
               "<img class=\"profpic\" src=\"img/emptyprofpic.png\"/>" +
             "</td>" +
-            "<td id=\"profshouttd\" colspan=\"2\">" +
-              "<div id=\"shoutdiv\" class=\"shoutout\"></div>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
             "<td id=\"profcitytd\">" +
               "<span id=\"profcityspan\"> </span>" +
               "<span id=\"profeditbspan\"> </span>" +
             "</td>" +
-            "<td id=\"profcommbuildtd\">" +
+          "</tr>" +
+          "<tr>" +
+            "<td id=\"profshouttd\" colspan=\"2\" valign=\"top\">" +
+              "<div id=\"shoutdiv\" class=\"shoutout\"></div>" +
             "</td>" +
+          "</tr>" +
+          "<tr>" + 
+            "<td id=\"profbadgestd\">" + "</td>" +
+            "<td id=\"profcommbuildtd\">" + "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"3\">" +
@@ -1539,9 +1547,11 @@ define([], function () {
         if(!mor.layout.haveContentDivAreas()) { //change pw kills it
             mor.layout.initContentDivAreas(); }
         mor.out('cmain', html);
+        mor.out('profbadgestd', earnedBadgesHTML(dispen));
         if(mor.instId(profpen) === mor.pen.currPenId()) {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
                      " onclick=\"mor.profile.invite();return false\">" +
+                "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
                 "build your community</a>";
             mor.out('profcommbuildtd', html); }
         displayShout(dispen);
@@ -1627,8 +1637,6 @@ define([], function () {
             findRecentReviews(recentRevState); },
         readReview: function (revid) {
             return readReview(revid); },
-        topTypeChange: function () {
-            topTypeChange(); },
         reviewItemHTML: function (revobj, penNameStr) {
             return reviewItemHTML(revobj, penNameStr); },
         toggleAuthChange: function (authtype, domid) {
@@ -1654,7 +1662,9 @@ define([], function () {
         invite: function () {
             displayInvitationDialog(); },
         chginvite: function () {
-            updateInviteInfo(); }
+            updateInviteInfo(); },
+        showTopRated: function (typename) {
+            showTopRated(typename); }
     };
 
 });
