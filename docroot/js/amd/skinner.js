@@ -9,6 +9,7 @@ define([], function () {
     "use strict";
 
     var oldcolors,
+        cancelpen,
         colorwidget,
         colorctrl,
         colorctrls = [ { id: "bodybg",  label: "background" },
@@ -39,10 +40,12 @@ define([], function () {
 
 
     copycolors = function (colors) {
-        var cc = { bodybg: colors.bodybg,
+        var cc = { name: colors.name,
+                   id: colors.id,
+                   bodybg: colors.bodybg,
+                   text: colors.text,
                    lightbg: colors.lightbg,
                    darkbg: colors.darkbg,
-                   text: colors.text,
                    link: colors.link,
                    hover: colors.hover };
         return cc;
@@ -146,6 +149,9 @@ define([], function () {
 
     cancelSkinChange = function () {
         mor.colors = oldcolors;
+        if(cancelpen && cancelpen.settings && 
+           cancelpen.settings.colorPresetId) {
+            cancelpen.settings.colorPresetId = oldcolors.id; }
         updateColors();
     },
 
@@ -290,6 +296,7 @@ define([], function () {
         var i, sel = mor.byId('presetsel');
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
+                cancelpen = pen;
                 pen.settings.colorPresetId = presets[i].id;
                 setControlValuesAndUpdate(presets[i]);
                 break; } }
