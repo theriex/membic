@@ -112,8 +112,7 @@ body {
 #proftopdiv { }
 #profshouttd { padding:0px 10px; }
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
-#profcommbuildtd { font-size:small; padding: 0px 10px 5px 10px; 
-  text-align:right; }
+#profcommbuildtd { font-size:small; padding: 0px 10px 5px 10px; }
 .profpic { max-width:125px; max-height:125px; }
 #profpictd { width:130px; text-align:right; }
 /* fixed width and height on srchpic so the summary lines line up */
@@ -121,7 +120,7 @@ body {
 .reviewbadge, .reviewbadgedis { 
   width:30px; height:30px; vertical-align:middle; }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
-#profbadgestd { padding: 0px 10px 5px 10px; }
+#profbadgestd { padding: 0px 10px 5px 10px; width:300px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */
 .textareatd { text-align:center; }

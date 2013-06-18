@@ -419,10 +419,11 @@ define([], function () {
 
     mailButtonHTML = function () {
         var html, href, subj, body, types, revchecks, i, ts;
-        subj = "Invitation to join MyOpenReviews";
+        subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
-            "I'm using MyOpenReviews to review things I experience. I trust " + 
-            "your taste, and would be interested in reading reviews from you";
+            "I'm using MyOpenReviews to review things I experience.\n\n" + 
+            "I trust your taste, and would be interested in reading reviews " + 
+            "from you";
         revchecks = document.getElementsByName("invrevcb");
         types = "";
         for(i = 0; i < revchecks.length; i += 1) {
@@ -443,18 +444,18 @@ define([], function () {
             body += ", especially about " + types + "."; }
         else {
             body += "."; }
-        body += " If you sign up, then I'll be able to follow what you like " +
-            "and don't like.\n\n";
-        body += "You can see what I like and don't like if you click the " + 
-            "'follow' icon next to '" + profpen.name + "' on my profile " +
-            "page. Here's the direct link to my profile:\n\n" + 
+        body += "\n\nIf you sign up, then I'll be able to follow what you " +
+            "like and don't like, and you can see what I like and don't like " +
+            "by following me. " + 
+            "To follow me, click the 'follow' icon next to '" + profpen.name + 
+            "' on my profile page. Here's the direct link to my profile:\n\n" +
             "http://www.myopenreviews.com/#view=profile&profid=" +
             mor.instId(profpen) + "\n\n" +
             "I'll follow you back when I see in my 'Followers' tab.\n\n" +
             "Looking forward to hearing about your new finds";
         if(types) {
             body += " in " + types; }
-        body += ".\n\ncheers,\n" + profpen.name + "\n\n";
+        body += "!\n\ncheers,\n" + profpen.name + "\n\n";
         href = "mailto:?subject=" + mor.dquotenc(subj) + 
             "&body=" + mor.dquotenc(body);
         html = mor.services.serviceLinkHTML(href, "", "shareico", 
@@ -471,18 +472,21 @@ define([], function () {
 
     displayInvitationDialog = function () {
         var html;
-        html = "<div class=\"headingtxt\">Build your community</div>" +
+        html = "<div class=\"headingtxt\">Build your community... Invite a friend</div>" +
           "<table class=\"formstyle\">" +
             "<tr><td id=\"invintrotd\" style=\"width:400px;\">" +
-              "Know someone whose taste you trust?  What types of reviews " +
-              "would you be most interested in seeing from them?" +
+              "<p>Know someone whose taste you trust?<br/>" + 
+              "Want to share your reviews?</p>" +
+
+              "<p>What types of reviews " +
+              "would you be most interested in seeing from them?</p>" +
             "</td></tr>" +
             "<tr><td id=\"invtypestd\">" + 
               mor.review.reviewTypeCheckboxesHTML("invrevcb", 
                                                   "mor.profile.chginvite") +
             "</td></tr>" +
             "<tr><td>" + 
-              "Invite them to join!" +
+              "Invite your friend to join:" +
             "</td></tr>" +
             "<tr><td align=\"center\">" + 
               "<button type=\"button\" id=\"closebutton\">Close</button>" +
