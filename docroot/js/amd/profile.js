@@ -1432,10 +1432,11 @@ define([], function () {
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             if(pen.top20s[typename] && pen.top20s[typename].length >= 1) {
-                label = String(pen.top20s[typename].length) + " " + 
-                    reviewTypes[i].plural.capitalize();
+                label = "top 20 " + reviewTypes[i].plural.capitalize();
                 dispclass = "reviewbadge";
                 if(pen.top20s[typename].length < 20) {
+                    label = String(pen.top20s[typename].length) + " " + 
+                        reviewTypes[i].plural.capitalize();
                     dispclass = "reviewbadgedis"; }
                 html += "<img" + 
                     " class=\"" + dispclass + "\"" +
