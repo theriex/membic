@@ -452,7 +452,7 @@ define([], function () {
             "' on my profile page. Here's the direct link to my profile:\n\n" +
             "http://www.myopenreviews.com/#view=profile&profid=" +
             mor.instId(profpen) + "\n\n" +
-            "I'll follow you back when I see in my 'Followers' tab.\n\n" +
+            "I'll follow back when I see you in my 'Followers' tab.\n\n" +
             "Looking forward to hearing about your new finds";
         if(types) {
             body += " in " + types; }
