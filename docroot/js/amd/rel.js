@@ -210,11 +210,16 @@ define([], function () {
     },
 
 
-    //The data model supports a minimum rating cutoff, but until this
-    //actually becomes useful in controlling activity noise it's being
-    //ignored in the interest of getting fundamental features in place.
-    displayRelationshipDialog = function (rel, related) {
-        var html = "<table class=\"formstyle\">" +
+    //The data model supports a minimum rating, but leaving that out
+    //unless and until there is a real need to limit activity noise
+    //beyond the types.
+    displayRelationshipDialog = function (rel, related, isnew) {
+        var html = "<span class=\"headingtxt\">";
+        if(isnew) {
+            html += "You are now following " + related.name; }
+        else {
+            html += "Follow settings for " + related.name; }
+        html += "</span><table class=\"formstyle\">" +
           "<tr>" +
             "<td>" +
               "<b>Status</b> " + 
@@ -290,13 +295,15 @@ define([], function () {
             data = mor.objdata(newrel);
             mor.call("newrel?" + mor.login.authparams(), 'POST', data,
                      function (newrels) {
-                         mor.pen.noteUpdatedPen(newrels[0]);  //originator
-                         mor.profile.updateCache(newrels[1]); //related
+                         mor.pen.noteUpdatedPen(newrels[0]);  //originator pen
+                         mor.profile.updateCache(newrels[1]); //related pen
                          outboundRels.push(newrels[2]);       //relationship
                          mor.activity.resetStateVars();       //feed display
                          if(!profid) {
                              profid = mor.instId(newrels[1]); }
-                         mor.profile.byprofid(profid); },
+                         mor.profile.writeNavDisplay(newrels[0], newrels[1]);
+                         displayRelationshipDialog(newrels[2], newrels[1], 
+                                                   true); },
                      function (code, errtxt) {
                          mor.err("Relationship creation failed code " + code +
                                  ": " + errtxt); },

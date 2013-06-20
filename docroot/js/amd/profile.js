@@ -92,6 +92,7 @@ define([], function () {
                                "mor.profile.settings()", "settings.png"); }
         else if(mor.rel.relsLoaded()) {
             relationship = mor.rel.outbound(id);
+            mor.profile.verifyStateVariableValues(dispen);
             if(relationship) {
                 html = mor.imglink("#Settings",
                                    "Adjust follow settings for " + name,

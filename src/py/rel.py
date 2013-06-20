@@ -25,6 +25,10 @@ class Relationship(db.Model):
 
 @db.transactional(xg=True)
 def add_relationship(rel):
+    # this condition is already tested for, but is so bad if it happens
+    # that there is an extra check here just in case.
+    if rel.originid == rel.relatedid:
+        return [ ]
     origin = PenName.get_by_id(rel.originid)
     origin.following += 1
     related = PenName.get_by_id(rel.relatedid)
@@ -66,6 +70,11 @@ def relationship_modification_authorized(handler):
         handler.error(401)
         handler.response.out.write("Pen name not authorized.")
         return False
+    relatedid = intz(handler.request.get('relatedid'))
+    if originid == relatedid:
+        handler.error(400)
+        handler.response.out.write("Cannot relate to self.")
+        return False
     return True
 
 
@@ -82,6 +91,14 @@ def valid_relationship_modification(handler, rel):
     if rel.originid != originid:
         handler.error(401)
         handler.response.out.write("Relationship not authorized.")
+        return False
+    if rel.originid == rel.relatedid:
+        handler.error(400)
+        handler.response.out.write("Self referential relationship")
+        return False
+    if not rel.relatedid:
+        handler.error(400)
+        handler.response.out.write("No relatedid provided")
         return False
     return True
 
