@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, mor: false, require: false, google: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -22,6 +22,10 @@ define([], function () {
         starPointingActive = false,
         //The last value used for autocomplete checking
         autocomptxt = "",
+        gautosvc = null,
+        geoc = null,
+        gplacesvc = null,
+        //             Review definitions:
         //Review type definitions always include the url field, it is
         //appended automatically if not explicitely listed elsewhere
         //in the type definition.  Field names are converted to lower
@@ -1088,8 +1092,95 @@ define([], function () {
     },
 
 
+    callAmazonForAutocomplete = function (acfunc) {
+        var url, critsec = "";
+        url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
+            mor.enc(autocomptxt);
+        mor.call(url, 'GET', null,
+                 function (json) {
+                     writeAutocompLinks(mor.dec(json[0].content));
+                     setTimeout(acfunc, 400);
+                     mor.layout.adjust(); },
+                 function (code, errtxt) {
+                     mor.out('revautodiv', "");
+                     mor.log("Amazon info retrieval failed code " +
+                             code + ": " + errtxt);
+                     setTimeout(acfunc, 400);
+                     mor.layout.adjust(); },
+                 critsec);
+    },
+
+
+    selectLocLatLng = function (latlng, ref) {
+        var map;
+        if(!gplacesvc && google && google.maps && google.maps.places) {
+            try {
+                map = new google.maps.Map(mor.byId('mapdiv'), {
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    center: latlng,
+                    zoom: 15 });
+                gplacesvc = new google.maps.places.PlacesService(map);
+            } catch (problem) {
+                mor.err("selectLocLatLng svc init failed: " + problem);
+            } }
+        if(gplacesvc && ref) {
+            gplacesvc.getDetails({reference: ref},
+                function (place, status) {
+                    if(status === google.maps.places.PlacesServiceStatus.OK) {
+                        crev.address = place.formatted_address;
+                        crev.name = place.name || mor.byId('keyin').value;
+                        crev.url = crev.url || place.website || "";
+                        readURL(crev.url); }
+                    }); }
+    },
+
+
+    selectLocation = function (addr, ref) {
+        var html;
+        if(!geoc && google && google.maps && google.maps.places) {
+            geoc = new google.maps.Geocoder(); }
+        if(geoc && addr) {
+            try {
+                addr = mor.dec(addr);
+                html = "<p>" + addr + "</p><div id=\"mapdiv\"></div>";
+                mor.out('revautodiv', html);
+                geoc.geocode({address: addr}, function (results, status) {
+                    if(status === google.maps.places.PlacesServiceStatus.OK) {
+                        selectLocLatLng(results[0].geometry.location, ref); }
+                    });
+            } catch (problem) {
+                mor.err("selectLocation failed: " + problem);
+            } }
+    },
+
+
+    callGooglePlacesAutocomplete = function (acfunc) {
+        if(!gautosvc && google && google.maps && google.maps.places) {
+            gautosvc = new google.maps.places.AutocompleteService(); }
+        if(gautosvc && autocomptxt) {
+            gautosvc.getPlacePredictions({input: autocomptxt}, 
+                function (results, status) {
+                    var i, place, html = "<ul>";
+                    if(status === google.maps.places.PlacesServiceStatus.OK) {
+                        for(i = 0; i < results.length; i += 1) {
+                            place = results[i];
+                            html += "<li><a href=\"#selectloc\"" + 
+                                " onclick=\"mor.review.selectloc('" +
+                                    mor.embenc(place.description) + "','" +
+                                    place.reference + "');return false;\"" +
+                                ">" + place.description + "</a>" +
+                                "</li>"; } }
+                    html += "</ul><img src=\"img/poweredbygoogle.png\"/>";
+                    mor.out('revautodiv', html);
+                    setTimeout(acfunc, 400);
+                    mor.layout.adjust(); }); }
+        else {
+            setTimeout(acfunc, 400); }
+    },
+
+
     autocompletion = function (event) {
-        var srchtxt, url, critsec = "";
+        var srchtxt;
         if(mor.byId('revautodiv') && mor.byId('keyin')) {
             srchtxt = mor.byId('keyin').value;
             if(mor.byId('subkeyin')) {
@@ -1097,20 +1188,10 @@ define([], function () {
             if(srchtxt !== autocomptxt) {
                 autocomptxt = srchtxt;
                 if(crev.revtype === 'book' || crev.revtype === 'movie') {
-                    url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
-                        mor.enc(srchtxt);
-                    mor.call(url, 'GET', null,
-                             function (json) {
-                                 writeAutocompLinks(mor.dec(json[0].content));
-                                 setTimeout(autocompletion, 400);
-                                 mor.layout.adjust(); },
-                             function (code, errtxt) {
-                                 mor.out('revautodiv', "");
-                                 mor.log("Amazon info retrieval failed code " +
-                                         code + ": " + errtxt);
-                                 setTimeout(autocompletion, 400);
-                                 mor.layout.adjust(); },
-                             critsec); } }
+                    callAmazonForAutocomplete(autocompletion); }
+                else if(crev.revtype === 'food' || crev.revtype === 'drink' ||
+                        crev.revtype === 'activity') {
+                    callGooglePlacesAutocomplete(autocompletion); } }
             else {
                 setTimeout(autocompletion, 750); } }
     },
@@ -1538,7 +1619,9 @@ define([], function () {
         setAttribution: function (html) {
             attribution = html; },
         starRating: function (rating, roundup) {
-            return starRating(rating, roundup); }
+            return starRating(rating, roundup); },
+        selectloc: function (addr, ref) {
+            selectLocation(addr, ref); }
     };
 
 });
