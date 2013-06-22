@@ -49,8 +49,9 @@ define([], function () {
             keyprompt: "Title",
             key: "title", subkey: "author",
             fields: [ "publisher", "year" ],
-            dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
-                       "Educational", "Suspenseful", "Amusing", "Engaging" ] },
+            dkwords: [ "Fluff", "Heavy", "Kid Ok", "Educational", 
+                       "Funny", "Suspenseful", "Gripping", "Emotional",
+                       "Complex", "Historical" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
             keyprompt: "Movie name",
             key: "title", //subkey
@@ -74,9 +75,9 @@ define([], function () {
             keyprompt: "Name of restaurant or dish",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Snack", 
-                       "Inexpensive", "Expensive", "Fast", "Slow", "Outdoor",
-                       "Quiet", "Loud" ] },
+            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Late Night", 
+                       "Snack", "Inexpensive", "Expensive", "Fast", "Slow", 
+                       "Outdoor", "Quiet", "Loud" ] },
           { type: "drink", plural: "drinks", img: "TypeDrink50.png",
             keyprompt: "Name and where from",
             key: "name", //subkey
@@ -960,7 +961,7 @@ define([], function () {
     //pic, keywords, secondary fields
     revFormDetailHTML = function (review, type, keyval, mode) {
         var html = "<tr>" +
-            "<td align=\"right\" rowspan=\"3\">" + 
+            "<td align=\"right\" rowspan=\"3\" valign=\"top\">" + 
                 picHTML(review, type, keyval, mode) + "</td>" +
             //use a subtable to avoid skew from really long titles
             "<td colspan=\"2\">" +
