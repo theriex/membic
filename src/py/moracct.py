@@ -264,6 +264,14 @@ def safestr(val):
     return val
 
 
+def onelinestr(val):
+    val = safestr(val);
+    val = val.replace("\n", " ")
+    if len(val) > 255:
+        val = val[:255]
+    return val
+
+
 def safeURIEncode(stringval, stripnewlines = False):
     if not stringval:
         stringval = ""

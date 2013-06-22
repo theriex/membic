@@ -127,7 +127,7 @@ def set_if_param_given(review, fieldname, handler, paramname):
     val = handler.request.get(paramname, default_value=defaultval)
     logging.info("set_if_param_given " + paramname + ": " + val)
     if val != defaultval:
-        setattr(review, fieldname, val)
+        setattr(review, fieldname, onelinestr(val))
 
 
 def read_review_values(handler, review):
@@ -142,11 +142,11 @@ def read_review_values(handler, review):
     # review.revpic is uploaded separately
     set_if_param_given(review, "imguri", handler, "imguri")
     review.modified = nowISO()
-    review.name = handler.request.get('name')
-    review.title = handler.request.get('title')
+    review.name = onelinestr(handler.request.get('name'))
+    review.title = onelinestr(handler.request.get('title'))
     set_if_param_given(review, "url", handler, "url")
-    review.artist = handler.request.get('artist')
-    review.author = handler.request.get('author')
+    review.artist = onelinestr(handler.request.get('artist'))
+    review.author = onelinestr(handler.request.get('author'))
     set_if_param_given(review, "publisher", handler, "publisher")
     set_if_param_given(review, "album", handler, "album")
     set_if_param_given(review, "starring", handler, "starring")
