@@ -67,6 +67,7 @@ body {
 .statrevcontent { padding-left:15px; padding-top:15px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
+#introverview { padding:10px 0px; color:#333; width:600px; }
 
 .penfont, #penhnamespan { 
   font-style:italic; 
