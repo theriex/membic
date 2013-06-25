@@ -15,7 +15,7 @@ define([], function () {
         revcache = {},
         badrevids = [],
         dispmode = "activity",  //other value option is "memo"
-        activityTitleText = "Recent friend reviews",
+        activityTitleText = "New reviews from friends",
         rememberedTitleText = "Remembered reviews",
 
 
