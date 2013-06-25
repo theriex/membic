@@ -87,14 +87,15 @@ define([], function () {
 
 
     displayRemembered = function (pen) {
-        var i, html, rev, crid, friend, cfid, maxdisp = 50;
+        var i, html, rev, crid, friend, cfid, maxdisp = 50, hint;
+        hint = "If you see a review worth remembering, click its " + 
+            "\"Remember\" button to keep a reference to it here.";
         mor.pen.deserializeFields(pen);
         html = "<ul class=\"revlist\">";
         if(!pen.revmem || !pen.revmem.remembered || 
            !pen.revmem.remembered.length) {
-            html += "<li>You have not remembered any reviews. If you " +
-                "see a review worth remembering, click the \"Remember\" " +
-                "button for it and it will be kept here.</li>"; }
+            html += "<li>You have not remembered any reviews. " + hint + 
+                "</li>"; }
         else {
             maxdisp = Math.min(maxdisp, pen.revmem.remembered.length);
             for(i = 0; i < maxdisp; i += 1) {
@@ -117,6 +118,8 @@ define([], function () {
                         break; }
                     html += mor.profile.reviewItemHTML(rev, 
                                                        rev.penNameStr); } } }
+        if(i === maxdisp && maxdisp < 3) {  //after 3 times they should get it
+            html += "<li></li><li>" + hint + "</li>"; }
         html += "</ul>";
         mor.out('revactdiv', html);
         mor.layout.adjust();
