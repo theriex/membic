@@ -127,7 +127,7 @@ def set_if_param_given(review, fieldname, handler, paramname):
     val = handler.request.get(paramname, default_value=defaultval)
     logging.info("set_if_param_given " + paramname + ": " + val)
     if val != defaultval:
-        setattr(review, fieldname, onelinestr(val))
+        setattr(review, fieldname, val)
 
 
 def read_review_values(handler, review):
