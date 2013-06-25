@@ -91,7 +91,7 @@ body {
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
-#dlgdiv { position:absolute; left:70px; top:30px; padding:10px 20px;
+#dlgdiv { position:absolute; left:400px; top:20px; padding:10px 20px;
   background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
