@@ -214,7 +214,12 @@ define([], function () {
     //unless and until there is a real need to limit activity noise
     //beyond the types.
     displayRelationshipDialog = function (rel, related, isnew) {
-        var html = "<span class=\"headingtxt\">";
+        var html = "<div class=\"dlgclosex\">" +
+            "<a id=\"closedlg\" href=\"#close\"" +
+              " onclick=\"mor.layout.closeDialog();return false;\"" +
+            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
+            "<div class=\"floatclear\"></div>" +
+            "<span class=\"headingtxt\">";
         if(isnew) {
             html += "You are now following " + related.name; }
         else {
@@ -236,15 +241,12 @@ define([], function () {
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
-              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
-              "&nbsp;" +
               "<button type=\"button\" id=\"savebutton\">Save</button>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out('dlgdiv', html);
         setFormValuesFromRel(rel);
-        mor.onclick('cancelbutton', mor.layout.closeDialog);
         mor.onclick('savebutton', function () {
             mor.out('settingsbuttons', "Saving...");
             setRelFieldsFromFormValues(rel);

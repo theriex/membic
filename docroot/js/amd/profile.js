@@ -356,42 +356,44 @@ define([], function () {
 
 
     changeSettings = function (pen) {
-        var html = "<table>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"left\" id=\"pensettitletd\">" +
-              penSelectHTML(pen) + "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td rowspan=\"2\" align=\"right\" valign=\"top\">" + 
-              "<img src=\"img/penname.png\" alt=\"Pen Name\"/></td>" +
-            "<td align=\"left\">" +
-              "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
-                    " value=\"" + pen.name + "\"/></td>" +
-          "</tr>" +
-          "<tr>" +
-            //td from previous row
-            "<td id=\"settingsauthtd\"></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
-          "</tr>" +
-          "<tr>" + 
-            "<td colspan=\"2\" id=\"consvcstd\"></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
-              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
-              "&nbsp;" +
-              "<button type=\"button\" id=\"savebutton\">Save</button>" +
-            "</td>" +
-          "</tr>" +
-        "</table>";
+        var html = "<div class=\"dlgclosex\">" +
+            "<a id=\"closedlg\" href=\"#close\"" +
+              " onclick=\"mor.profile.cancelPenNameSettings();return false;\"" +
+            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
+            "<div class=\"floatclear\"></div>" +
+          "<table>" +
+            "<tr>" +
+              "<td colspan=\"2\" align=\"left\" id=\"pensettitletd\">" +
+                penSelectHTML(pen) + "</td>" +
+            "</tr>" +
+            "<tr>" +
+              "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
+            "</tr>" +
+            "<tr>" +
+              "<td rowspan=\"2\" align=\"right\" valign=\"top\">" + 
+                "<img src=\"img/penname.png\" alt=\"Pen Name\"/></td>" +
+              "<td align=\"left\">" +
+                "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
+                      " value=\"" + pen.name + "\"/></td>" +
+            "</tr>" +
+            "<tr>" +
+              //td from previous row
+              "<td id=\"settingsauthtd\"></td>" +
+            "</tr>" +
+            "<tr>" +
+              "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
+            "</tr>" +
+            "<tr>" + 
+              "<td colspan=\"2\" id=\"consvcstd\"></td>" +
+            "</tr>" +
+            "<tr>" +
+              "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
+                "<button type=\"button\" id=\"savebutton\">Save</button>" +
+              "</td>" +
+            "</tr>" +
+          "</table>";
         mor.out('dlgdiv', html);
         mor.onchange('pennamein', mor.profile.setPenName);
-        mor.onclick('cancelbutton', cancelPenNameSettings);
         mor.onclick('savebutton', mor.profile.saveSettings);
         displayAuthSettings('settingsauthtd', pen);
         mor.services.display('consvcstd', pen);
