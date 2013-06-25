@@ -1522,10 +1522,10 @@ define([], function () {
         setTimeout(function () {  //refresh headings
             if(crev.penid !== mor.instId(pen)) { 
                 mor.profile.retrievePen(crev.penid, function(revpen) {
-                    mor.profile.writeNavDisplay(pen, revpen);
+                    mor.profile.writeNavDisplay(pen, revpen, "nosettings");
                 }); }
             else {
-                mor.profile.writeNavDisplay(pen); }
+                mor.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must

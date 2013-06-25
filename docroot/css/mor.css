@@ -49,9 +49,12 @@ body {
   -o-transition: opacity 1s ease-in-out;
   transition: opacity 1s ease-in-out;
 }
+#topactionsdiv { }
 #topactionstable { }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { }
+#settingsbuttondiv { float:right; padding:3px 10px 3px 0px; }
+.settingsnavico { width:25px; height:25px; }
 
 /* main display area and contained elements */
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }

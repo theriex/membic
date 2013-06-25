@@ -70,10 +70,14 @@ define([], function () {
                         "Show profile for your current pen name") +
             "</div>";
         mor.out('homepenhdiv', html);
+        html = mor.imglink("#Settings","Adjust your application settings",
+                           "mor.profile.settings()", "settings.png",
+                           "settingsnavico");
+        mor.out('settingsbuttondiv', html);
     },
 
 
-    displayProfileHeading = function (homepen, dispen) {
+    displayProfileHeading = function (homepen, dispen, directive) {
         var html, id, name, relationship;
         id = mor.instId(dispen);
         name = dispen.name;
@@ -87,36 +91,36 @@ define([], function () {
                  "<span id=\"penhbuttonspan\"> </span>" +
                "</div>";
         mor.out('centerhdiv', html);
-        if(mor.instId(homepen) === mor.instId(dispen)) {
-            html = mor.imglink("#Settings","Adjust your application settings",
-                               "mor.profile.settings()", "settings.png"); }
-        else if(mor.rel.relsLoaded()) {
-            relationship = mor.rel.outbound(id);
-            mor.profile.verifyStateVariableValues(dispen);
-            if(relationship) {
-                html = mor.imglink("#Settings",
-                                   "Adjust follow settings for " + name,
-                                   "mor.profile.relationship()", 
-                                   "settings.png"); }
-            else {
-                html = mor.imglink("#Follow",
-                                   "Follow " + name + " reviews",
-                                   "mor.profile.relationship()",
-                                   "follow.png"); } }
-        else {  
-            //Happens if you go directly to someone's profile via url
-            //and rels are loading slowly.  Not known if you are following
-            //them yet.  The heading updates after the rels are loaded.
-            html = "..."; }
+        html = "";
+        if(mor.instId(homepen) !== mor.instId(dispen) &&
+           directive !== "nosettings") {
+            if(mor.rel.relsLoaded()) {
+                relationship = mor.rel.outbound(id);
+                mor.profile.verifyStateVariableValues(dispen);
+                if(relationship) {
+                    html = mor.imglink("#Settings",
+                                       "Adjust follow settings for " + name,
+                                       "mor.profile.relationship()", 
+                                       "settings.png"); }
+                else {
+                    html = mor.imglink("#Follow",
+                                       "Follow " + name + " reviews",
+                                       "mor.profile.relationship()",
+                                       "follow.png"); } }
+            else {  
+                //Happens if you go directly to someone's profile via url
+                //and rels are loading slowly.  Not known if you are following
+                //them yet.  The heading updates after the rels are loaded.
+                html = "..."; } }
         mor.out('penhbuttonspan', html);
     },
 
 
-    writeNavDisplay = function (homepen, dispen) {
+    writeNavDisplay = function (homepen, dispen, directive) {
         if(!dispen) {
             dispen = homepen; }
         updateTopActionDisplay(homepen);
-        displayProfileHeading(homepen, dispen);
+        displayProfileHeading(homepen, dispen, directive);
     },
 
 
@@ -1616,8 +1620,8 @@ define([], function () {
         addMyOpenReviewsAuthId: function(mid) {
             mor.pen.getPen(function (pen) {
                 addMyOpenReviewsAuthId(pen, mid); }); },
-        writeNavDisplay: function (homepen, dispen) {
-            writeNavDisplay(homepen, dispen); },
+        writeNavDisplay: function (homepen, dispen, directive) {
+            writeNavDisplay(homepen, dispen, directive); },
         verifyStateVariableValues: function (pen) {
             verifyStateVariableValues(pen); },
         cancelPenNameSettings: function () {

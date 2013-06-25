@@ -259,6 +259,9 @@ define([], function () {
             topworkdivcontents = mor.byId('topworkdiv').innerHTML; }
         if(authtoken && override !== "hide") {  //logged in, standard display
             html = "<div id=\"topactionsdiv\">" +
+                  "<div id=\"settingsbuttondiv\">" + 
+                    //filled in when pen name profile link filled in
+                  "</div>" +
                   "<table id=\"topactionstable\" border=\"0\">" +
                     "<tr>" +
                       "<td><div id=\"homepenhdiv\"></div></td>" + 
