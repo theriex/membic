@@ -1079,7 +1079,7 @@ define([], function () {
         var html;
         html = "<ul id=\"proftabsul\">" +
           "<li id=\"recentli\" class=\"selectedTab\">" + 
-            tablink("Recent Activity", "mor.profile.recent()") + 
+            tablink("Recent Reviews", "mor.profile.recent()") + 
           "</li>" +
           "<li id=\"bestli\" class=\"unselectedTab\">" +
             tablink("Top Rated", "mor.profile.best()") + 
