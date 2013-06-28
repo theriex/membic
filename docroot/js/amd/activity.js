@@ -17,6 +17,12 @@ define([], function () {
         dispmode = "activity",  //other value option is "memo"
         activityTitleText = "New reviews from friends",
         rememberedTitleText = "Remembered reviews",
+        searchparams = {},
+        searchresults = [],
+        searchcursor = "",
+        searchmax = 1000,  //max records to go through automatically
+        searchtotal = 0,  //count of records searched so far
+        searchrequests = 1,  //count of times the search was manually requested
 
 
     resetStateVars = function () {
@@ -66,13 +72,219 @@ define([], function () {
     },
 
 
-    //Do async since setting up the display involves async processing and
-    //the browser has a tendency to skip the call.
-    penNameSearch = function () {
-        setTimeout(function () {
-            mor.profile.setTab("search");
-            mor.profile.setSearchMode("pen");
-            mor.profile.display(); }, 50);
+    searchOptionsHTML = function () {
+        var html = "<div id=\"searchoptionsdiv\" class=\"formstyle\">" +
+            "<i>Must have reviewed their top 20</i>" +
+            mor.review.reviewTypeCheckboxesHTML("reqmin") +
+            "<i>Must have been active within the past</i>&nbsp;" + 
+            "<select id=\"srchactivesel\">" +
+              "<option id=\"whenever\">Whenever</option>" +
+              "<option id=\"pastyear\" selected=\"selected\">Year</option>" +
+              "<option id=\"pastmonth\">Month</option>" +
+              "<option id=\"pastweek\">Week</option>" +
+            "</select>" +
+            "<br/>" +
+            "<i>Include</i>&nbsp;" + 
+            mor.checkbox("srchinc", "following") +
+            mor.checkbox("srchinc", "blocked") +
+            mor.checkbox("srchinc", "lurkers") +
+            " <i> in the search results</i>" +
+            "<br/>&nbsp;<br/></div>";
+        return html;
+    },
+
+
+    penNameSearchDialog = function () {
+        var html;
+        html = "<div class=\"dlgclosex\">" +
+            "<a id=\"closedlg\" href=\"#close\"" +
+              " onclick=\"mor.layout.closeDialog();return false;\"" +
+            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
+            "<div class=\"floatclear\"></div>" +
+            "<div class=\"headingtxt\">" + 
+            "Find pen names to follow</div>" +
+            "<table class=\"searchtable\">" +
+            "<tr>" +
+              "<td class=\"formstyle\">" + 
+                "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
+                      " placeholder=\"Pen name, city, or profile comment...\"" +
+                      " onchange=\"mor.activity.startPenSearch();" + 
+                                  "return false;\"" +
+                      " value=\"\"/></td>" +
+              "<td class=\"formstyle\">" +
+                "<span id=\"srchbuttonspan\">" +
+                  "<button type=\"button\" id=\"searchbutton\"" + 
+                         " onclick=\"mor.activity.startPenSearch();" + 
+                                    "return false;\"" + 
+                    ">Search</button></span></td></tr>" + 
+            "<tr>" +
+              "<td class=\"formstyle\" colspan=\"2\">" +
+                "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
+                  "<a href=\"#searchoptions\"" +
+                    " id=\"srchoptstogglehref\"" +
+                    " title=\"search options\"" +
+                    " onclick=\"mor.activity.togglesrchopts();return false;\"" +
+                  ">show advanced search options</a></span></td></tr>" +
+            "</table>" + searchOptionsHTML() +
+            "<div id=\"searchresults\"></div>";
+        mor.out('dlgdiv', html);
+        mor.byId('dlgdiv').style.visibility = "visible";
+        if(mor.isLowFuncBrowser()) {
+            mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        mor.onescapefunc = mor.layout.closeDialog;
+        mor.byId('searchoptionsdiv').style.display = "none";
+        mor.byId('searchtxt').focus();
+    },
+
+
+    toggleSearchOptions = function () {
+        var sod = mor.byId('searchoptionsdiv');
+        if(sod) {
+            if(sod.style.display === "none") {
+                mor.out('srchoptstogglehref', "hide advanced search options");
+                sod.style.display = "block"; }
+            else {
+                mor.out('srchoptstogglehref', "show advanced search options");
+                sod.style.display = "none"; } }
+        mor.layout.adjust();
+    },
+
+
+    //When searching pen names, the server handles the "active since"
+    //restriction by checking the "accessed" field, and the "top 20"
+    //restriction by looking through those, however it does not
+    //handle joins across relationships due to indexing overhead, so
+    //those are filtered out here.
+    penSearchFiltered = function (searchitem) {
+        var pen, rel;
+        pen = searchitem;
+        rel = mor.rel.outbound(mor.instId(pen));
+        if(rel) {
+            if(searchparams.includeFollowing && rel.status === "following") {
+                return false; }
+            if(searchparams.includeBlocked && rel.status === "blocked") {
+                return false; }
+            return true; }
+        return false;
+    },
+
+
+    displayPenSearchResults = function (results) {
+        var i, html;
+        html = "<ul class=\"penlist\">";
+        for(i = 0; i < searchresults.length; i += 1) {
+            html += mor.profile.penListItemHTML(searchresults[i]); }
+        if(!results || results.length === 0) {
+            results = [ { "fetched": 0, "cursor": "" } ]; }
+        searchcursor = "";
+        for(i = 0; i < results.length; i += 1) {
+            if(typeof results[i].fetched === "number") {
+                searchtotal += results[i].fetched;
+                html += "<div class=\"sumtotal\">" + 
+                    searchtotal + " pen names searched</div>";
+                if(results[i].cursor) {
+                    searchcursor = results[i].cursor; }
+                break; }  //if no results, i will be left at zero
+            if(!penSearchFiltered(results[i])) {
+                searchresults.push(results[i]);
+                html += mor.profile.penListItemHTML(results[i]); } }
+        if(searchresults.length === 0) {
+            html += "<div class=\"sumtotal\">No pen names found</div>"; }
+        html += "</ul>";
+        if(searchcursor) {
+            if(i === 0 && searchtotal < (searchmax * searchrequests)) {
+                setTimeout(mor.activity.searchPens, 10); }  //auto-repeat search
+            else {
+                if(searchtotal >= (searchmax * searchrequests)) {
+                    searchrequests += 1; } 
+                html += "<a href=\"#continuesearch\"" +
+                          " onclick=\"mor.activity.searchPens();" + 
+                                     "return false;\"" +
+                          " title=\"Continue searching for more pen names\"" +
+                    ">continue search...</a>"; } }
+        mor.out('searchresults', html);
+        mor.byId("searchbutton").disabled = false;
+    },
+
+
+    readSearchParamsFromForm = function () {
+        var checkboxes, options, i, t20type, since;
+        searchparams.reqmin = [];
+        checkboxes = document.getElementsByName("reqmin");
+        for(i = 0; i < checkboxes.length; i += 1) {
+            if(checkboxes[i].checked) {
+                t20type = mor.review.getReviewTypeByValue(checkboxes[i].value);
+                searchparams.reqmin.push(t20type.type); } }
+        options = mor.byId('srchactivesel').options;
+        for(i = 0; i < options.length; i += 1) {
+            if(options[i].selected) {
+                switch(options[i].id) {
+                case 'pastweek':
+                    since = 7; break;
+                case 'pastmonth':
+                    since = 30; break;
+                case 'pastyear':
+                    since = 365; break;
+                case 'whenever':
+                    since = -1; break; }
+                break; } }
+        searchparams.activeDaysAgo = since;
+        searchparams.includeFollowing = false;
+        searchparams.includeBlocked = false;
+        searchparams.includeLurkers = false;
+        checkboxes = document.getElementsByName("srchinc");
+        for(i = 0; i < checkboxes.length; i += 1) {
+            if(checkboxes[i].checked) {
+                if(checkboxes[i].value === 'following') {
+                    searchparams.includeFollowing = true; }
+                if(checkboxes[i].value === 'blocked') {
+                    searchparams.includeBlocked = true; } 
+                if(checkboxes[i].value === 'lurkers') {
+                    searchparams.includeLurkers = true; } } }
+    },
+
+
+    searchPens = function () {
+        var params, qstr, time, t20, i, critsec = "";
+        readSearchParamsFromForm();
+        mor.out('srchoptstogglehref', "show advanced search options");
+        mor.byId('searchoptionsdiv').style.display = "none";
+        mor.byId("searchbutton").disabled = true;
+        qstr = mor.byId('searchtxt').value;
+        params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
+            "&cursor=" + mor.enc(searchcursor);
+        if(searchparams.activeDaysAgo > 0) {
+            time = (new Date()).getTime();
+            time -= searchparams.activeDaysAgo * 24 * 60 * 60 * 1000;
+            time = new Date(time);
+            time = time.toISOString();
+            params += "&time=" + mor.enc(time); }
+        if(searchparams.reqmin.length > 0) {
+            t20 = "";
+            for(i = 0; i < searchparams.reqmin.length; i += 1) {
+                if(i > 0) {
+                    t20 += ","; }
+                t20 += searchparams.reqmin[i]; }
+            params += "&t20=" + mor.enc(t20); }
+        if(searchparams.includeLurkers) {
+            params += "&lurkers=include"; }
+        mor.call("srchpens?" + params, 'GET', null,
+                 function (results) {
+                     displayPenSearchResults(results); },
+                 function (code, errtxt) {
+                     mor.out('searchresults', 
+                             "error code: " + code + " " + errtxt); },
+                 critsec);
+    },
+
+
+    startPenSearch = function () {
+        searchparams = {};
+        searchresults = [];
+        searchcursor = "";
+        searchtotal = 0;
+        searchrequests = 1;
+        searchPens();
     },
 
 
@@ -233,10 +445,10 @@ define([], function () {
 
 
     searchPensLinkHTML = function () {
-        var html = "<a href=\"#searchpens\"" +
-                     " onclick=\"mor.activity.searchpens();return false;\"" +
-            ">Search pen names</a>";
-        return html;
+        return mor.imgntxt("follow.png", "Find Pen Names", 
+                           "mor.activity.pensearchdialog()", 
+                           "#findpens",
+                           "Find pen names to follow");
     },
 
 
@@ -245,9 +457,9 @@ define([], function () {
         writeNavDisplay();
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
-            html = "You are not following anyone. To follow someone, go to" + 
-                " their profile and click the follow icon next to their" + 
-                " name. " + searchPensLinkHTML(); }
+            html = "<p>You are not following anyone.</p>" +
+                "<p>To follow someone, click the follow icon next to their " + 
+                "profile name.</p>" + searchPensLinkHTML(); }
         else if((penids[penids.length - 1] === "waiting") ||
                 (penids[penids.length - 1] === "loading")) {
             retry = true;
@@ -296,8 +508,8 @@ define([], function () {
             mor.pen.getPen(mainDisplay); },
         updateHeading: function () {
             writeNavDisplay(); },
-        searchpens: function () {
-            penNameSearch(); },
+        pensearchdialog: function () {
+            penNameSearchDialog(); },
         moreact: function () {
             doActivitySearch(); },
         notePenNameStr: function (pen) {
@@ -317,7 +529,13 @@ define([], function () {
             mor.pen.getPen(mainDisplay); },
         displayRemembered: function () {
             dispmode = "memo";
-            mor.pen.getPen(mainDisplay); }
+            mor.pen.getPen(mainDisplay); },
+        togglesrchopts: function () {
+            toggleSearchOptions(); },
+        startPenSearch: function () {
+            startPenSearch(); },
+        searchPens: function () {
+            searchPens(); }
     };
 
 });

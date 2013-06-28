@@ -119,6 +119,7 @@ body {
 #profshouttd { padding:0px 10px; }
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
 #profcommbuildtd { font-size:small; padding: 0px 10px 5px 10px; }
+#srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
 #profpictd { width:130px; text-align:right; }
 /* fixed width and height on srchpic so the summary lines line up */

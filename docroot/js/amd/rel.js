@@ -24,14 +24,15 @@ define([], function () {
     },
 
 
-    loadDisplayRels = function (dispobj) {
-        var params, field;
-        if(dispobj.direction === "outbound") {
+    loadDisplayRels = function (pen, direction, divid) {
+        var field, dispobj, params;
+        if(direction === "outbound") {
             field = "originid"; }
         else { //inbound
             field = "relatedid"; }
+        dispobj = pen.profstate[direction];
         params = mor.login.authparams() + "&" + field + "=" +
-            mor.instId(dispobj.profpen);
+            mor.instId(pen);
         if(dispobj.cursor) {
             params += "&cursor=" + dispobj.cursor; }
         else if(dispobj.offset) {
@@ -46,7 +47,7 @@ define([], function () {
                                  dispobj.cursor = relationships[i].cursor; }
                              break; }
                          dispobj.rels.push(relationships[i]); }
-                     mor.rel.displayRelations(dispobj); },
+                     mor.rel.displayRelations(pen, direction, divid); },
                  function (code, errtxt) {
                      var msg = "loadDisplayRels error code " + code + 
                          ": " + errtxt;
@@ -56,15 +57,17 @@ define([], function () {
     },
 
 
-    loadDisplayRelPens = function (dispobj) {
-        var rel = dispobj.rels[dispobj.pens.length], id;
-        if(dispobj.direction === "outbound") {
+    loadDisplayRelPens = function (pen, direction, divid) {
+        var dispobj, rel, id;
+        dispobj = pen.profstate[direction];
+        rel = dispobj.rels[dispobj.pens.length];
+        if(direction === "outbound") {
             id = rel.relatedid; }
         else { //inbound
             id = rel.originid; }
-        mor.profile.retrievePen(id, function (pen) {
-            dispobj.pens.push(pen);
-            mor.rel.displayRelations(dispobj); });
+        mor.profile.retrievePen(id, function (relpen) {
+            dispobj.pens.push(relpen);
+            mor.rel.displayRelations(pen, direction, divid); });
     },
 
 
@@ -85,35 +88,43 @@ define([], function () {
 
 
     //factored method to avoid a firebug stepping bug
-    dumpPenItems = function (dispobj) {
+    dumpPenItems = function (dispobj, direction) {
         var i, html = "", temp;
         for(i = 0; i < dispobj.pens.length; i += 1) {
             temp = mor.profile.penListItemHTML(dispobj.pens[i]);
-            if(dispobj.direction === "inbound") {  //showing followers
+            if(direction === "inbound") {  //showing followers
                 temp = temp.slice(0, temp.indexOf("</li>"));
                 temp += followBackLink(dispobj.pens[i]) + "</li>"; }
             html += temp; }
+        if(direction === "outbound") {
+            html += "<div id=\"srchpenslinkdiv\">" + 
+                  "<a id=\"srchpens\" href=\"#findpens\"" + 
+                    " onclick=\"mor.activity.pensearchdialog();" + 
+                               "return false;\">" +
+                    "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
+                    "Find pen names to follow</a>" +
+                "</div>"; }
         return html;
     },
 
 
-    //offset, cursor, rels and pens stored in dispobj to preserve state
-    displayRelatedPens = function (dispobj) {
-        var html;
-        if(!dispobj) {
-            mor.err("displayRelatedPens called without display object");
-            return; }
+    //pen.profstate is initialized from profile
+    displayRelatedPens = function (pen, direction, divid) {
+        var html, dispobj;
+        if(!pen.profstate[direction]) {
+            pen.profstate[direction] = { }; }
+        dispobj = pen.profstate[direction];
         html = "<ul class=\"penlist\">";
         //display whatever pens have been retrieved so far
         if(dispobj.rels) {
             if(dispobj.pens && dispobj.pens.length > 0) {
-                html += dumpPenItems(dispobj); }
+                html += dumpPenItems(dispobj, direction); }
             else if(dispobj.rels.length === 0) {
-                if(dispobj.direction === "outbound") {
-                    html += "<li>Not following anyone.";
-                    if(mor.instId(dispobj.profpen) === mor.pen.currPenId()) {
-                        html += " " + mor.activity.searchPensLinkHTML(); }
-                    html += "</li>"; }
+                if(direction === "outbound") {
+                    html += "<li>Not following anyone.</li>";
+                    if(mor.instId(pen) === mor.pen.currPenId()) {  //own profile
+                        html += "<li>" + mor.activity.searchPensLinkHTML() +
+                            "</li>"; } }
                 else { //inbound
                     html += "<li>No followers.</li>"; } }
             else {
@@ -122,14 +133,14 @@ define([], function () {
             html += "<li>fetching relationships...</li>"; }
         html += "</ul>";
         //ATTENTION: need prev/next buttons for paging
-        mor.out(dispobj.divid, html);
+        mor.out(divid, html);
         //if any info needs to be filled in, then go get it...
         if(!dispobj.rels) { 
-            return loadDisplayRels(dispobj); }
+            return loadDisplayRels(pen, direction, divid); }
         if(!dispobj.pens) {
             dispobj.pens = []; }
         if(dispobj.rels.length !== dispobj.pens.length) {
-            return loadDisplayRelPens(dispobj); }
+            return loadDisplayRelPens(pen, direction, divid); }
     },
 
 
@@ -188,9 +199,11 @@ define([], function () {
         if(rel.status === "nofollow") {  //delete
             mor.call("delrel?" + mor.login.authparams(), 'POST', data,
                      function (updates) {
-                         mor.pen.noteUpdatedPen(updates[0]);  //originator
-                         mor.profile.updateCache(updates[1]); //related
-                         removeOutboundRel(rel);              //relationship
+                         var orgpen = updates[0],  //originator pen
+                             relpen = updates[1];  //related pen
+                         mor.pen.noteUpdatedPen(orgpen);
+                         mor.profile.updateCached([orgpen, relpen]);
+                         removeOutboundRel(rel);   //relationship
                          mor.layout.closeDialog();
                          mor.profile.byprofid(mor.instId(updates[1])); },
                      function (code, errtxt) {
@@ -279,7 +292,7 @@ define([], function () {
     },
 
 
-    createOrEditRelationship = function (originator, related, profid) {
+    createOrEditRelationship = function (originator, related) {
         var rel, newrel, data, critsec = "";
         rel = findOutboundRelationship(mor.instId(related));
         if(rel) {
@@ -297,13 +310,16 @@ define([], function () {
             data = mor.objdata(newrel);
             mor.call("newrel?" + mor.login.authparams(), 'POST', data,
                      function (newrels) {
-                         mor.pen.noteUpdatedPen(newrels[0]);  //originator pen
-                         mor.profile.updateCache(newrels[1]); //related pen
-                         outboundRels.push(newrels[2]);       //relationship
-                         mor.activity.resetStateVars();       //feed display
-                         if(!profid) {
-                             profid = mor.instId(newrels[1]); }
-                         mor.profile.writeNavDisplay(newrels[0], newrels[1]);
+                         var orgpen = newrels[0],  //originator pen
+                             relpen = newrels[1],  //related pen
+                             newrel = newrels[2];  //new relationship
+                         mor.pen.noteUpdatedPen(orgpen);
+                         mor.profile.updateCached([orgpen, relpen]);
+                         outboundRels.push(newrel);
+                         mor.activity.resetStateVars();
+                         //profile.writeNavDisplay is not enough if followBack,
+                         //have to redraw follow tab counts also.
+                         mor.profile.refresh();
                          displayRelationshipDialog(newrels[2], newrels[1], 
                                                    true); },
                      function (code, errtxt) {
@@ -382,8 +398,8 @@ define([], function () {
             return getOutboundRelationshipIds(); },
         alloutbound: function () {
             return outboundRels; },
-        displayRelations: function (dispobj) {
-            return displayRelatedPens(dispobj); },
+        displayRelations: function (pen, direction, divid) {
+            return displayRelatedPens(pen, direction, divid); },
         followBack: function (followerid) {
             addFollowerDisplayHome(followerid); },
         relsLoaded: function () {

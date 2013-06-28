@@ -15,21 +15,12 @@ define([], function () {
         cachepens = [],
         //tab displays
         recentRevState = { results: [] },
-        topRevState = {},
-        followingDisp,
-        followerDisp,
+        workrev = null,
         //search tab display
-        searchparams = {},
         searchresults = [],
-        searchcursor = "",
-        searchmax = 1000,  //max records to go through automatically
-        searchtotal = 0,  //count of records searched so far
-        searchrequests = 1,  //count of times the search was manually requested
         searchmode = "pen",  //other option is "rev"
         pensrchplace = "Pen name, city or shoutout...",
         revsrchplace = "Review title or name...",
-        
-
 
     clearReviewSearchState = function (dispState) {
         dispState.params = {};
@@ -45,14 +36,8 @@ define([], function () {
         profpen = null;
         cachepens = [];
         clearReviewSearchState(recentRevState);
-        topRevState = {};
-        followingDisp = null;
-        followerDisp = null;
-        searchparams = {};
+        workrev = null;
         searchresults = [];
-        searchcursor = "";
-        searchtotal = 0;
-        searchrequests = 1;
     },
 
 
@@ -479,12 +464,17 @@ define([], function () {
 
     displayInvitationDialog = function () {
         var html;
-        html = "<div class=\"headingtxt\">Build your community... Invite a friend</div>" +
+        html = "<div class=\"dlgclosex\">" +
+            "<a id=\"closedlg\" href=\"#close\"" +
+              " onclick=\"mor.layout.closeDialog();return false;\"" +
+            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
+            "<div class=\"floatclear\"></div>" +
+            "<div class=\"headingtxt\">" + 
+            "Build your community... Invite a friend</div>" +
           "<table class=\"formstyle\">" +
             "<tr><td id=\"invintrotd\" style=\"width:400px;\">" +
               "<p>Know someone whose taste you trust?<br/>" + 
               "Want to share your reviews?</p>" +
-
               "<p>What types of reviews " +
               "would you be most interested in seeing from them?</p>" +
             "</td></tr>" +
@@ -496,13 +486,10 @@ define([], function () {
               "Invite your friend to join:" +
             "</td></tr>" +
             "<tr><td align=\"center\">" + 
-              "<button type=\"button\" id=\"closebutton\">Close</button>" +
-              "&nbsp;" +
               "<span id=\"mailbspan\"></span>" +
             "</td></tr>" +
           "</table>";
         mor.out('dlgdiv', html);
-        mor.onclick('closebutton', mor.layout.closeDialog);
         mor.byId('dlgdiv').style.visibility = "visible";
         if(mor.isLowFuncBrowser()) {
             mor.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
@@ -572,16 +559,46 @@ define([], function () {
     },
 
 
-    updateCache = function (pen) {
-        var i, penid = mor.instId(pen);
-        for(i = 0; i < searchresults.length; i += 1) {
-            if(mor.instId(searchresults[i]) === penid) {
-                searchresults[i] = pen;
-                break; } }
-        for(i = 0; i < cachepens.length; i += 1) {
-            if(mor.instId(cachepens[i]) === penid) {
-                cachepens[i] = pen;
-                break; } }
+    verifyDisplayTypeSelected = function () {
+        if(typeof profpen.top20s === "string") {
+            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
+        if(!profpen.profstate) {  //transient profile display state info
+            profpen.profstate = { seltabname: 'recent',
+                                  revtype: "",
+                                  allrevsrchval: "",
+                                  allrevsrchcursor: "",
+                                  allrevttl: 0,
+                                  allrevcontreqs: 1,
+                                  allrevs: [] }; }
+        if(!profpen.profstate.revtype && profpen.top20s) {
+            profpen.profstate.revtype = profpen.top20s.latestrevtype; }
+        if(!profpen.profstate.revtype) {
+            profpen.profstate.revtype = 'book'; }
+    },
+
+
+    updateCached = function (pens) {
+        var i, j, pen, penid, seltab;
+        if(pens && pens.length) {
+            for(i = 0; i < pens.length; i += 1) {
+                pen = pens[i];
+                penid = mor.instId(pen);
+                if(mor.instId(profpen) === penid) {
+                    //keep currently selected tab, but rebuild rest
+                    if(profpen && profpen.profstate) {
+                        seltab = profpen.profstate.revtype; }
+                    profpen = pen;
+                    verifyDisplayTypeSelected();
+                    if(seltab) {
+                        profpen.profstate.revtype = seltab; } }
+                for(j = 0; j < searchresults.length; j += 1) {
+                    if(mor.instId(searchresults[j]) === penid) {
+                        searchresults[j] = pen;
+                        break; } }
+                for(j = 0; j < cachepens.length; j += 1) {
+                    if(mor.instId(cachepens[j]) === penid) {
+                        cachepens[j] = pen;
+                        break; } } } }
     },
 
 
@@ -795,18 +812,47 @@ define([], function () {
     },
 
 
-    best = function () {
-        var html, revs, i, critsec = "";
-        selectTab("bestli", best);
-        if(typeof profpen.top20s === "string") {
-            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
+    revTypeSelectorHTML = function (clickfuncstr) {
+        var html, i, reviewTypes, typename, label, dispclass, pen = profpen;
         html = "";
+        mor.pen.deserializeFields(pen);
+        reviewTypes = mor.review.getReviewTypes();
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            dispclass = "reviewbadgedis";
+            label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
+            if(pen.top20s[typename]) {
+                if(pen.top20s[typename].length >= 20) {
+                    label = "Top 20 " + reviewTypes[i].plural.capitalize();
+                    dispclass = "reviewbadge"; }
+                else if(pen.top20s[typename].length >= 1) {
+                    label = String(pen.top20s[typename].length) + " " + 
+                        reviewTypes[i].type.capitalize() + " reviews.";
+                    dispclass = "reviewbadge"; } }
+            html += "<img" + 
+                " class=\"" + dispclass + "\"" +
+                " src=\"img/" + reviewTypes[i].img + "\"" +
+                " title=\"" + label + "\"" +
+                " alt=\"" + label + "\"" +
+                " onclick=\"" + clickfuncstr + "('" + typename + "');" +
+                           "return false;\"" +
+                "/>"; }
+        return html;
+    },
+
+
+    best = function () {
+        var html, revs, i, state, critsec = "";
+        selectTab("bestli", best);
+        verifyDisplayTypeSelected();
+        state = profpen.profstate;
+        html = revTypeSelectorHTML("mor.profile.showTopRated");
         revs = [];
         if(profpen.top20s) {
-            revs = profpen.top20s[topRevState.dispType] || []; }
+            revs = profpen.top20s[state.revtype] || []; }
         html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
-            html += "<li>No top rated reviews.";
+            html += "<li>No top rated " + state.revtype + " reviews.";
             if(mor.instId(profpen) === mor.pen.currPenId()) {
                 html += " " + mor.review.reviewLinkHTML(); }
             html += "</li>"; }
@@ -814,9 +860,9 @@ define([], function () {
             if(typeof revs[i] === 'string') {
                 if(revs[i].indexOf("not found") >= 0) {
                     html += "</li>Review " + revs[i] + "</li>"; }
-                else if((typeof topRevState.review === 'object') &&
-                        (mor.instId(topRevState.review) === revs[i])) {
-                    revs[i] = topRevState.review;
+                else if((typeof workrev === 'object') &&
+                        (mor.instId(workrev) === revs[i])) {
+                    revs[i] = workrev;
                     html += reviewItemHTML(revs[i]); }
                 else {
                     html += "<li>Fetching review " + revs[i] + "...</li>";
@@ -830,7 +876,7 @@ define([], function () {
             mor.call("revbyid?revid=" + revs[i], 'GET', null,
                      function (fetchedrevs) {
                          if(fetchedrevs.length > 0) {
-                             topRevState.review = fetchedrevs[0]; }
+                             workrev = fetchedrevs[0]; }
                          else {
                              revs[i] += ": not found"; }
                          mor.profile.best(); },
@@ -841,298 +887,153 @@ define([], function () {
     },
 
 
+    clearAllRevProfWorkState = function () {
+        var state = profpen.profstate;
+        //does not reset allrevsrchval or revtype
+        if(state.allrevauto) {
+            window.clearTimeout(state.allrevauto);
+            state.allrevauto = null; }
+        if(state.allrevqmon) {
+            window.clearTimeout(state.allrevqmon);
+            state.allrevqmon = null; }
+        state.allrevsrchcursor = "";
+        state.allrevttl = 0;
+        state.allrevcontreqs = 1;
+        state.allrevs = [];
+    },
+
+
+    allrevMaxAutoSearch = function () {
+        var maxauto = 1000,
+            ttl = profpen.profstate.allrevttl,
+            contreqs = profpen.profstate.allrevcontreqs;
+        if(ttl >= (maxauto * contreqs)) {
+            return true; }
+        return false;
+    },
+
+
+    displayAllRevs = function (results) {
+        var html, i, state = profpen.profstate;
+        html = "<ul class=\"revlist\">";
+        for(i = 0; i < state.allrevs.length; i += 1) {
+            html += reviewItemHTML(state.allrevs[i]); }
+        if(!results || results.length === 0) {
+            results = [ { "fetched": 0, "cursor": "" } ]; }
+        state.allrevsrchcursor = "";  //used, so reset
+        for(i = 0; i < results.length; i += 1) {
+            if(typeof results[i].fetched === "number") {
+                state.allrevttl += results[i].fetched;
+                html += "<div class=\"sumtotal\">" +
+                    state.allrevttl + " reviews searched</div>";
+                if(results[i].cursor) {
+                    state.allrevsrchcursor = results[i].cursor; }
+                break; }  //leave i at its current value
+            state.allrevs.push(results[i]);
+            html += reviewItemHTML(results[i]); }
+        html += "</ul>";
+        if(state.allrevsrchcursor) {
+            if(i === 0 && !allrevMaxAutoSearch()) {
+                //auto-repeat the search to try get a result to display
+                state.allrevauto = window.setTimeout(mor.profile.searchReviews,
+                                                     10); }
+            else {
+                if(allrevMaxAutoSearch) {  //they continued search manually
+                    state.allrevcontreqs += 1; }
+                html += "<a href=\"#continuesearch\"" +
+                    " onclick=\"mor.profile.searchReviews();return false;\"" +
+                    " title=\"Continue searching for more matching reviews\"" +
+                    ">continue search...</a>"; } }
+        mor.out('allrevdispdiv', html);
+    },
+
+
+    monitorAllRevQuery = function () {
+        var state, srchin, qstr = "";
+        state = profpen.profstate;
+        srchin = mor.byId('allrevsrchin');
+        if(!srchin) {  //probably switched tabs, quit
+            return; }
+        qstr = srchin.value;
+        if(qstr !== state.allrevsrchval) {
+            if(state.allrevqmon) {
+                window.clearTimeout(state.allrevqmon);
+                state.allrevqmon = null; }
+            mor.profile.searchReviews(); }
+        else {
+            state.allrevqmon = setTimeout(monitorAllRevQuery, 400); }
+    },
+
+
+    allrevs = function () {
+        var html;
+        selectTab("allrevsli", allrevs);
+        verifyDisplayTypeSelected();
+        html = revTypeSelectorHTML("mor.profile.searchRevsIfTypeChange");
+        html += "<div id=\"allrevsrchdiv\">" +
+            "<input type=\"text\" id=\"allrevsrchin\" size=\"40\"" +
+                  " placeholder=\"Review title or name\"" + 
+                  " value=\"" + profpen.profstate.allrevsrchval + "\"" +
+            //the onchange here can cause a dupe display???
+                  " onchange=\"mor.profile.allrevs();return false;\"" +
+            "/></div>" +
+            "<div id=\"allrevdispdiv\"></div>";
+        mor.out('profcontdiv', html);
+        mor.byId('allrevsrchin').focus();
+        if(profpen.profstate.allrevs.length > 0) {
+            displayAllRevs([]);  //display previous results
+            monitorAllRevQuery(); }
+        else {
+            clearAllRevProfWorkState();
+            mor.profile.searchReviews(); }
+    },
+
+
+    searchReviews = function (revtype) {
+        var state, qstr, maxdate, mindate, params, critsec = "";
+        state = profpen.profstate;
+        if(revtype) {
+            if(state.revtype !== revtype) {
+                state.revtype = revtype;
+                clearAllRevProfWorkState(); } }
+        else {
+            revtype = state.revtype; }
+        qstr = mor.byId('allrevsrchin').value;
+        if(qstr !== state.allrevsrchval) {
+            state.allrevsrchval = qstr;
+            clearAllRevProfWorkState(); }
+        maxdate = (new Date()).toISOString();
+        mindate = (new Date(0)).toISOString();
+        params = mor.login.authparams() +
+            "&qstr=" + mor.enc(mor.canonize(qstr)) +
+            "&revtype=" + revtype +
+            "&penid=" + mor.pen.currPenId() +
+            "&maxdate=" + maxdate + "&mindate=" + mindate +
+            "&cursor=" + mor.enc(state.allrevsrchcursor);
+        mor.call("srchrevs?" + params, 'GET', null,
+                 function (results) { 
+                     displayAllRevs(results);
+                     monitorAllRevQuery(); },
+                 function (code, errtxt) {
+                     mor.err("searchReviews call died code: " + code + " " +
+                             errtxt); },
+                 critsec);
+    },
+
+
     following = function () {
         selectTab("followingli", following);
-        if(!followingDisp) {  //different profile than last call..
-            followingDisp = { profpen: profpen, direction: "outbound", 
-                              divid: 'profcontdiv' }; }
-        mor.rel.displayRelations(followingDisp);
+        verifyDisplayTypeSelected();
+        mor.rel.displayRelations(profpen, "outbound", "profcontdiv");
         mor.layout.adjust();
     },
 
 
     followers = function () {
         selectTab("followersli", followers);
-        if(!followerDisp) {  //different profile than last call..
-            followerDisp = { profpen: profpen, direction: "inbound", 
-                             divid: 'profcontdiv' }; }
-        mor.rel.displayRelations(followerDisp);
+        verifyDisplayTypeSelected();
+        mor.rel.displayRelations(profpen, "inbound", "profcontdiv");
         mor.layout.adjust();
-    },
-
-
-    readSearchParamsFromForm = function () {
-        var checkboxes, options, i, t20type, since;
-        searchparams.reqmin = [];
-        checkboxes = document.getElementsByName("reqmin");
-        for(i = 0; i < checkboxes.length; i += 1) {
-            if(checkboxes[i].checked) {
-                t20type = mor.review.getReviewTypeByValue(checkboxes[i].value);
-                searchparams.reqmin.push(t20type.type); } }
-        options = mor.byId('srchactivesel').options;
-        for(i = 0; i < options.length; i += 1) {
-            if(options[i].selected) {
-                switch(options[i].id) {
-                case 'pastweek':
-                    since = 7; break;
-                case 'pastmonth':
-                    since = 30; break;
-                case 'pastyear':
-                    since = 365; break;
-                case 'whenever':
-                    since = -1; break; }
-                break; } }
-        searchparams.activeDaysAgo = since;
-        searchparams.includeFollowing = false;
-        searchparams.includeBlocked = false;
-        searchparams.includeLurkers = false;
-        checkboxes = document.getElementsByName("srchinc");
-        for(i = 0; i < checkboxes.length; i += 1) {
-            if(checkboxes[i].checked) {
-                if(checkboxes[i].value === 'following') {
-                    searchparams.includeFollowing = true; }
-                if(checkboxes[i].value === 'blocked') {
-                    searchparams.includeBlocked = true; } 
-                if(checkboxes[i].value === 'lurkers') {
-                    searchparams.includeLurkers = true; } } }
-    },
-
-
-    setFormValuesFromSearchParams = function () {
-        var i, options, since;
-        if(searchparams.reqmin) {
-            for(i = 0; i < searchparams.reqmin.length; i += 1) {
-                mor.byId(searchparams.reqmin[i]).checked = true; } }
-        if(searchparams.activeDaysAgo) {
-            since = searchparams.activeDaysAgo;
-            options = mor.byId('srchactivesel').options;
-            for(i = 0; i < options.length; i += 1) {
-                switch(options[i].id) {
-                case 'pastweek':
-                    options[i].selected = (since === 7); break;
-                case 'pastmonth':
-                    options[i].selected = (since === 30); break;
-                case 'pastyear':
-                    options[i].selected = (since === 365); break;
-                case 'whenever':
-                    options[i].selected = (since <= 0); break; } } }
-        mor.byId('following').checked = searchparams.includeFollowing;
-        mor.byId('blocked').checked = searchparams.includeBlocked;
-        mor.byId('lurkers').checked = searchparams.includeLurkers;
-    },
-
-
-    //When searching pen names, the server handles the "active since"
-    //restriction by checking the "accessed" field, and the "top 20"
-    //restriction by looking through those, however it does not
-    //handle joins across relationships due to indexing overhead, so
-    //those are filtered out here.
-    filtered = function (searchitem) {
-        var pen, rel;
-        if(searchmode === "rev") {
-            return false; }  //no filtering
-        pen = searchitem;
-        rel = mor.rel.outbound(mor.instId(pen));
-        if(rel) {
-            if(searchparams.includeFollowing && rel.status === "following") {
-                return false; }
-            if(searchparams.includeBlocked && rel.status === "blocked") {
-                return false; }
-            return true; }
-        return false;
-    },
-
-
-    displaySearchResults = function (results) {
-        var i, html, ts;
-        ts = { "pen": { "ulc": "penlist", "stype": "pen names" },
-               "rev": { "ulc": "revlist", "stype": "reviews" } };
-        ts = ts[searchmode];
-        html = "<ul class=\"" + ts.ulc + "\">";
-        for(i = 0; i < searchresults.length; i += 1) {
-            if(searchmode === "pen") {
-                html += penListItemHTML(searchresults[i]); }
-            else if(searchmode === "rev") {
-                html += reviewItemHTML(searchresults[i]); } }
-        if(!results || results.length === 0) {
-            results = [ { "fetched": 0, "cursor": "" } ]; }
-        searchcursor = "";
-        for(i = 0; i < results.length; i += 1) {
-            if(typeof results[i].fetched === "number") {
-                searchtotal += results[i].fetched;
-                html += "<div class=\"sumtotal\">" + 
-                    searchtotal + " " + ts.stype + " searched</div>";
-                if(results[i].cursor) {
-                    searchcursor = results[i].cursor; }
-                break; }  //if no results, i will be left at zero
-            if(!filtered(results[i])) {
-                searchresults.push(results[i]);
-                if(searchmode === "pen") {
-                    html += penListItemHTML(results[i]); }
-                else if(searchmode === "rev") {
-                    html += reviewItemHTML(results[i]); } } }
-        html += "</ul>";
-        if(searchcursor) {
-            if(i === 0 && searchtotal < (searchmax * searchrequests)) {
-                setTimeout(mor.profile.srchmore, 10); }  //auto-repeat search
-            else {
-                if(searchtotal >= (searchmax * searchrequests)) {
-                    searchrequests += 1; } 
-                html += "<a href=\"#continuesearch\"" +
-                          " onclick=\"mor.profile.srchmore();return false;\"" +
-                          " title=\"Continue searching for more matching " + 
-                                    ts.stype + "\"" +
-                    ">continue search...</a>"; } }
-        mor.out('searchresults', html);
-        mor.byId('srchbuttonspan').style.display = "inline";
-        mor.out('srchmessagespan', "");
-    },
-
-
-    doPenSearch = function () {
-        var params, qstr, time, t20, i, critsec = "";
-        qstr = mor.byId('searchtxt').value;
-        params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
-            "&cursor=" + mor.enc(searchcursor);
-        if(searchparams.activeDaysAgo > 0) {
-            time = (new Date()).getTime();
-            time -= searchparams.activeDaysAgo * 24 * 60 * 60 * 1000;
-            time = new Date(time);
-            time = time.toISOString();
-            params += "&time=" + mor.enc(time); }
-        if(searchparams.reqmin.length > 0) {
-            t20 = "";
-            for(i = 0; i < searchparams.reqmin.length; i += 1) {
-                if(i > 0) {
-                    t20 += ","; }
-                t20 += searchparams.reqmin[i]; }
-            params += "&t20=" + mor.enc(t20); }
-        if(searchparams.includeLurkers) {
-            params += "&lurkers=include"; }
-        mor.call("srchpens?" + params, 'GET', null,
-                 function (results) {
-                     displaySearchResults(results); },
-                 function (code, errtxt) {
-                     mor.out('searchresults', 
-                             "error code: " + code + " " + errtxt); },
-                 critsec);
-    },
-
-
-    doRevSearch = function () {
-        var params, maxdate, mindate, qstr, revtype, radios, i, critsec = "";
-        qstr = mor.byId('searchtxt').value;
-        radios = document.getElementsByName("srchrevtype");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                revtype = mor.review.getReviewTypeByValue(radios[i].value);
-                break; } }
-        maxdate = (new Date()).toISOString();
-        mindate = (new Date(0)).toISOString();
-        params = mor.login.authparams() + 
-            "&qstr=" + mor.enc(mor.canonize(qstr)) +
-            "&revtype=" + revtype.type +
-            "&penid=" + mor.pen.currPenId() +
-            "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + mor.enc(searchcursor);
-        mor.call("srchrevs?" + params, 'GET', null,
-                 function (results) {
-                     displaySearchResults(results); },
-                 function (code, errtxt) {
-                     mor.out('searchresults',
-                             "error code: " + code + " " + errtxt); },
-                 critsec);
-    },
-
-
-    doSearch = function () {
-        readSearchParamsFromForm();
-        mor.byId('pensearchoptionsdiv').style.display = "none";
-        mor.byId('revsearchoptionsdiv').style.display = "none";
-        mor.out('srchoptstogglehref', "+ search options");
-        mor.byId('srchbuttonspan').style.display = "none";
-        mor.out('srchmessagespan', "Searching...");
-        switch(searchmode) {
-        case "pen": return doPenSearch();
-        case "rev": return doRevSearch(); }
-    },
-
-
-    startSearch = function () {
-        searchresults = [];
-        searchcursor = "";
-        searchtotal = 0;
-        searchrequests = 1;
-        mor.out('searchresults', "");
-        doSearch();
-    },
-
-
-    searchBarHTML = function () {
-        var html = "<table class=\"searchtable\">" + 
-          "<tr>" +
-            "<td class=\"formstyle\" style=\"vertical-align:top;\">" +
-              mor.checkrad("radio", "searchmode", "pen", "Pen Names",
-                           (searchmode === "pen"), "mor.profile.srchmode") +
-              "<br/>" +
-              mor.checkrad("radio", "searchmode", "rev", "My Reviews",
-                           (searchmode === "rev"), "mor.profile.srchmode") +
-            "</td>" +
-            "<td style=\"text-align:center;vertical-align:middle;\">" + 
-              "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
-                    " placeholder=\"" + pensrchplace + "\"" +
-                    " value=\"\"/>" + 
-              " &nbsp; " +
-              "<span id=\"srchbuttonspan\">" +
-                "<button type=\"button\" id=\"searchbutton\">Search</button>" +
-              "</span>" + 
-              "<span id=\"srchmessagespan\"> </span>" +
-              "<br/>" +
-              "<span id=\"srchoptstoggle\" class=\"formstyle\">" + 
-                "<a href=\"#searchoptions\"" +
-                  " id=\"srchoptstogglehref\"" +
-                  " title=\"search options\"" +
-                  " onclick=\"mor.profile.togglesrchopts();return false;\"" +
-                "></a></span>" +  //filled as "search options" toggle later
-          "</tr>" + 
-        "</table>";
-        return html;
-    },
-
-
-    penSearchOptionsHTML = function () {
-        var html = "<div id=\"pensearchoptionsdiv\" class=\"formstyle\">" +
-            "<i>Must have reviewed their top 20</i>" +
-            mor.review.reviewTypeCheckboxesHTML("reqmin") +
-            "<i>Must have been active within the past</i>&nbsp;" + 
-            "<select id=\"srchactivesel\">" +
-              "<option id=\"whenever\">Whenever</option>" +
-              "<option id=\"pastyear\" selected=\"selected\">Year</option>" +
-              "<option id=\"pastmonth\">Month</option>" +
-              "<option id=\"pastweek\">Week</option>" +
-            "</select>" +
-            "<br/>" +
-            "<i>Include</i>&nbsp;" + 
-            mor.checkbox("srchinc", "following") +
-            mor.checkbox("srchinc", "blocked") +
-            mor.checkbox("srchinc", "lurkers") +
-            " <i> in the search results</i>" +
-            "<br/>&nbsp;<br/></div>";
-        return html;
-    },
-
-
-    revSearchOptionsHTML = function () {
-        var selectedType, html;
-        selectedType = "book";  //arbitrary defualt
-        if(profpen.top20s && profpen.top20s.latestrevtype) {
-            selectedType = profpen.top20s.latestrevtype; }
-        html = "<div id=\"revsearchoptionsdiv\" class=\"formstyle\">" +
-            mor.review.reviewTypeRadiosHTML("srchrevtype", "", 
-                                            profpen.top20s,
-                                            selectedType) +
-            "<br/>&nbsp;<br/></div>";
-        return html;
     },
 
 
@@ -1174,30 +1075,6 @@ define([], function () {
     },
 
 
-    displaySearchForm = function () {
-        var html;
-        if(typeof profpen.top20s === "string") {
-            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
-        selectTab("searchli", mor.profile.search);
-        html = searchBarHTML() + penSearchOptionsHTML() + 
-            revSearchOptionsHTML() + 
-            "<div id=\"searchresults\"></div>";
-        mor.out('profcontdiv', html);
-        setFormValuesFromSearchParams();
-        //show previous results if they browser back button from a profile
-        if(searchresults && searchresults.length > 0) {
-            displaySearchResults([]); }
-        mor.onchange('searchtxt', startSearch);
-        mor.onclick('searchbutton', startSearch);
-        changeSearchMode();
-        mor.byId('searchtxt').focus();
-        mor.layout.adjust();
-        if(searchmode === "pen" && 
-           (!searchresults || searchresults.length === 0)) {
-            startSearch(); }
-    },
-
-
     displayTabs = function (pen) {
         var html;
         html = "<ul id=\"proftabsul\">" +
@@ -1207,6 +1084,9 @@ define([], function () {
           "<li id=\"bestli\" class=\"unselectedTab\">" +
             tablink("Top Rated", "mor.profile.best()") + 
           "</li>" +
+          "<li id=\"allrevsli\" class=\"unselectedTab\">" +
+            tablink("All Reviews", "mor.profile.allrevs()") +
+          "</li>" +
           "<li id=\"followingli\" class=\"unselectedTab\">" +
             tablink("Following (" + pen.following + ")", 
                     "mor.profile.following()") + 
@@ -1215,10 +1095,6 @@ define([], function () {
             tablink("Followers (" + pen.followers + ")", 
                     "mor.profile.followers()") + 
           "</li>";
-        if(mor.instId(profpen) === mor.pen.currPenId()) {
-            html += "<li id=\"searchli\" class=\"unselectedTab\">" +
-                tablink("Search", "mor.profile.search()") + 
-                "</li>"; }
         html += "</ul>";
         mor.out('proftabsdiv', html);
         if(!currtab) {
@@ -1230,6 +1106,7 @@ define([], function () {
     getCurrTabAsString = function () {
         if(currtab === recent) { return "recent"; }
         if(currtab === best) { return "best"; }
+        if(currtab === allrevs) { return "allrevs"; }
         if(currtab === following) { return "following"; }
         if(currtab === followers) { return "followers"; }
         if(currtab === mor.profile.search) { return "search"; }
@@ -1241,6 +1118,7 @@ define([], function () {
         switch(tabstr) {
         case "recent": currtab = recent; break;
         case "best": currtab = best; break;
+        case "allrevs": currtab = allrevs; break;
         case "following": currtab = following; break;
         case "followers": currtab = followers; break;
         case "search": currtab = mor.profile.search; break;
@@ -1458,16 +1336,15 @@ define([], function () {
 
 
     showTopRated = function (typename) {
-        topRevState.dispType = typename;
+        verifyDisplayTypeSelected();  //init state variables if needed
+        profpen.profstate.revtype = typename;
         best();
     },
 
 
     verifyStateVariableValues = function (pen) {
         if(profpen !== pen) {
-            profpen = pen;
-            followingDisp = null;
-            followerDisp = null; }
+            profpen = pen; }
     },
 
 
@@ -1525,7 +1402,7 @@ define([], function () {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
                      " onclick=\"mor.profile.invite();return false\">" +
                 "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
-                "build your community</a>";
+                "Build your community</a>";
             mor.out('profcommbuildtd', html); }
         displayShout(dispen);
         displayCity(dispen);
@@ -1554,18 +1431,21 @@ define([], function () {
         updateHeading: function () {
             mor.pen.getPen(function (homepen) {
                 writeNavDisplay(homepen, profpen); }); },
+        refresh: function () {
+            mor.pen.getPen(function (homepen) {
+                mainDisplay(homepen, profpen); }); },
         settings: function () {
             mor.pen.getPen(changeSettings); },
         recent: function () {
             recent(); },
         best: function () {
             best(); },
+        allrevs: function () {
+            allrevs(); },
         following: function () {
             following(); },
         followers: function () {
             followers(); },
-        search: function () {
-            displaySearchForm(); },
         togglesrchopts: function () {
             toggleSearchOptions(); },
         resetReviews: function () {
@@ -1590,8 +1470,6 @@ define([], function () {
             mor.pen.getPen(function (pen) { displayProfileForId(id); }); },
         setTab: function (tabstr) {
             setCurrTabFromString(tabstr); },
-        srchmore: function () {
-            doSearch(); },
         relationship: function () {
             createOrEditRelationship(); },
         retrievePen: function (id, callback) {
@@ -1602,8 +1480,8 @@ define([], function () {
             changeToSelectedPen(); },
         penListItemHTML: function (pen) {
             return penListItemHTML(pen); },
-        updateCache: function (pen) {
-            updateCache(pen); },
+        updateCached: function (pens) {
+            updateCached(pens); },
         currentTabAsString: function () {
             return getCurrTabAsString(); },
         revsmore: function () {
@@ -1637,7 +1515,12 @@ define([], function () {
         chginvite: function () {
             updateInviteInfo(); },
         showTopRated: function (typename) {
-            showTopRated(typename); }
+            showTopRated(typename); },
+        searchReviews: function (revtype) {
+            searchReviews(revtype); },
+        searchRevsIfTypeChange: function (revtype) {
+            if(profpen.profstate.revtype !== revtype) {
+                searchReviews(revtype); } }
     };
 
 });
