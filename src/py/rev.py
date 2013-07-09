@@ -371,6 +371,8 @@ class SearchReviews(webapp2.RequestHandler):
             where += " ORDER BY modified ASC"
         else:
             where += " ORDER BY modified DESC"
+        # logging.info(where + "\n" + str(penid) + 
+        #              ", " + mindate + ", " + maxdate)
         revquery = Review.gql(where, penid, mindate, maxdate)
         cursor = self.request.get('cursor')
         if cursor:

@@ -904,7 +904,7 @@ define([], function () {
         params = mor.login.authparams() +
             "&qstr=" + mor.enc(mor.canonize(qstr)) +
             "&revtype=" + revtype +
-            "&penid=" + mor.pen.currPenId() +
+            "&penid=" + mor.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
             "&cursor=" + mor.enc(state.allRevsState.cursor);
         mor.call("srchrevs?" + params, 'GET', null,
