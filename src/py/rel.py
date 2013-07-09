@@ -171,9 +171,10 @@ class FindRelationships(webapp2.RequestHandler):
         elif relatedid:
             field = "relatedid"
             value = intz(relatedid)
+        maxpull = 100
         where = "WHERE " + field + "=:1"
         where += " ORDER BY modified DESC"  # newest first
-        where += " LIMIT 20"
+        where += " LIMIT " + str(maxpull)
         offset = self.request.get('offset')
         if offset:
             where += " OFFSET " + offset
@@ -183,15 +184,13 @@ class FindRelationships(webapp2.RequestHandler):
         if cursor:
             rels.with_cursor(start_cursor = cursor)
         # logging.info("FindRelationships " + field + " " + str(value))
-        maxpull = 100
         pulled = 0
         cursor = ""
         results = []
         for rel in rels:
             pulled += 1
             results.append(rel)
-            if pulled >= maxpull or len(results) >= 20:
-                # hit the max, get cursor to use for next fetch
+            if pulled >= maxpull:
                 cursor = rels.cursor()
                 break
         returnJSON(self.response, results, cursor, pulled)

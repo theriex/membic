@@ -56,10 +56,9 @@ define([], function () {
         authtoken = "";
         authname = "";
         mor.review.resetStateVars();
-        mor.activity.resetStateVars();
         mor.profile.resetStateVars();
         mor.pen.resetStateVars();
-        mor.rel.resetStateVars();
+        mor.rel.resetStateVars("logout");
     },
 
 
@@ -116,15 +115,15 @@ define([], function () {
         if(state) {
             if(state.view === "profile") {
                 if(state.profid) {
-                    return mor.profile.initWithId(state.profid); }
+                    return mor.profile.byprofid(state.profid); }
                 return mor.profile.display(); }
             if(state.view === "activity") {
-                return mor.activity.display(); }
+                return mor.activity.displayActive(); }
             if(state.view === "review" && state.revid) {
                 mor.review.initWithId(state.revid, state.mode,
                                       params.action, params.errmsg); } }
         //go with default display
-        mor.activity.display();
+        mor.activity.displayActive();
     },
 
 
@@ -588,10 +587,10 @@ define([], function () {
         else if(params.command === "remember" || 
                 params.command === "respond" ||
                 (params.view === "review" && params.revid)) {
-            mor.profile.retrievePen(params.penid, function (pen) {
-                mor.profile.verifyStateVariableValues(pen);
-                mor.review.initWithId(params.revid, "read", params.command); 
-            }); }
+            mor.lcs.getPenFull(params.penid, function (penref) {
+                mor.profile.verifyStateVariableValues(penref.pen);
+                mor.review.initWithId(params.revid, "read", 
+                                      params.command); }); }
         else if(params.url) {
             mor.review.readURL(mor.dec(params.url), params); }
         else if(typeof params.mid === "string") {  //empty string on failure

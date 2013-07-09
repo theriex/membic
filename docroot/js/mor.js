@@ -139,11 +139,10 @@ var mor = {};  //Top level function closure container
             switch(state.view) {
             case "profile":
                 if(mor.isId(state.profid)) {
-                    mor.profile.setTab(state.tab);
-                    mor.profile.byprofid(state.profid); }
+                    mor.profile.byprofid(state.profid, state.tab); }
                 break; 
             case "activity":
-                mor.activity.display();
+                mor.activity.displayActive();
                 break;
             } }
     };
@@ -268,6 +267,13 @@ var mor = {};  //Top level function closure container
     };
 
 
+    mor.safeget = function (domid, field) {
+        var elem = mor.byId(domid);
+        if(elem) {
+            return elem[field]; }
+    };
+
+
     mor.parseParams = function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
         if(pstr) {  //parse the hash params
@@ -320,7 +326,7 @@ var mor = {};  //Top level function closure container
     //secondary initialization load since single monolithic is dog slow
     mor.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
-                         services, basicmod) {
+                         services, lcs, basicmod) {
         var cdiv = mor.byId('contentdiv');
         if(!mor.introtext) {  //capture original so we can revert as needed
             mor.introtext = cdiv.innerHTML; }
@@ -334,6 +340,7 @@ var mor = {};  //Top level function closure container
         mor.rel = rel;
         mor.skinner = skinner;
         mor.services = services;
+        mor.lcs = lcs;
         //app startup
         mor.layout.init();
         mor.dojo.on(document, 'keypress', mor.globkey);
@@ -356,18 +363,18 @@ var mor = {};  //Top level function closure container
         require(mor.cdnconf,
                 [ "amd/layout", "amd/login", "amd/review", "amd/profile",
                   "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
-                  "amd/services", "amd/basicmod", 
+                  "amd/services", "amd/lcs", "amd/basicmod", 
                   "ext/facebook", "ext/twitter", "ext/googleplus", 
                   "ext/github",
                   "dojo/domReady!" ],
                 function (layout, login, review, profile, 
                           activity, pen, rel, skinner,
-                          services, basicmod) {
+                          services, lcs, basicmod) {
                     mor.amdtimer.mor.end = new Date();
                     mor.out('contentfill', " &nbsp; ");
                     mor.init2(layout, login, review, profile, 
                               activity, pen, rel, skinner,
-                              services, basicmod); }
+                              services, lcs, basicmod); }
                );
     };
 
@@ -604,8 +611,8 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.radiobutton = function (name, value, label) {
-        return mor.checkrad("radio", name, value, label);
+    mor.radiobutton = function (name, value, label, checked, chgfstr) {
+        return mor.checkrad("radio", name, value, label, checked, chgfstr);
     };
 
 

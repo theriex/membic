@@ -5,45 +5,77 @@
 ////////////////////////////////////////
 // m o r . p r o f i l e
 //
+// Display a pen name and provide for updating settings.  Cached data
+// off the currently displayed pen name reference:
+//
+//   penref.profstate:
+//     seltabname: name of selected display tab
+//     revtype: name of selected review type (shared by best and allrevs)
+//     allRevsState:
+//       srchval: the search query value
+//       cursor: cursor for continuing to load more matching reviews
+//       total: count of reviews searched
+//       reqs: count of times the search was manually requested
+//       revs: matching fetched reviews
+//       autopage: timeout for auto paging to max when no matches found
+//       querymon: timeout for monitoring the query input string
+//     recentRevState:
+//       params: parameters for search
+//       results: recent reviews found
+//       cursor: cursor for continuing to load more recent reviews
+//       total: count of records searched so far
+//
+
 define([], function () {
     "use strict";
 
     var greytxt = "#999999",
         unspecifiedCityText = "City not specified",
-        currtab,
-        profpen,
-        cachepens = [],
-        //tab displays
-        recentRevState = { results: [] },
-        workrev = null,
-        //search tab display
-        searchresults = [],
-        searchmode = "pen",  //other option is "rev"
-        pensrchplace = "Pen name, city or shoutout...",
-        revsrchplace = "Review title or name...",
+        profpenref,
 
-    clearReviewSearchState = function (dispState) {
-        dispState.params = {};
-        dispState.results = [];
-        dispState.cursor = "";
-        dispState.total = 0;
-        dispState.initialized = false;
+
+    verifyProfileState = function (penref) {
+        if(!penref) {
+            penref = profpenref; }
+        if(penref.pen && typeof penref.pen.top20s === "string") {
+            penref.pen.top20s = mor.dojo.json.parse(penref.pen.top20s); }
+        if(!penref.profstate) {
+            penref.profstate = { seltabname: 'recent',
+                                 revtype: "" }; }
+        if(!penref.profstate.revtype && penref.pen.top20s) {
+            penref.profstate.revtype = penref.pen.top20s.latestrevtype; }
+        if(!penref.profstate.revtype) {
+            penref.profstate.revtype = 'book'; }
+    },
+
+
+    //Drop all cached information from the given penref and rebuild
+    //it.  The state should be dropped if a review was created or
+    //updated.  It does not yet make sense to attempt to recompute
+    //things locally in addition to on the server.  Ultimately saving
+    //a review might insert/replace the newrev from the recent
+    //reviews, insert into allrevs if matched, and reload the top20s
+    //(if the pen wasn't just loaded).  For now this just clears the
+    //local cache to trigger a rebuild.
+    resetReviewDisplays = function (penref) {
+        penref.profstate = null;
+        verifyProfileState(penref);
     },
 
 
     resetStateVars = function () {
-        currtab = null;
-        profpen = null;
-        cachepens = [];
-        clearReviewSearchState(recentRevState);
-        workrev = null;
-        searchresults = [];
+        profpenref = null;
+    },
+
+
+    verifyStateVariableValues = function (pen) {
+        profpenref = mor.lcs.getPenRef(pen);
+        verifyProfileState(profpenref);
     },
 
 
     createOrEditRelationship = function () {
-        mor.pen.getPen(function (pen) {
-            mor.rel.reledit(pen, profpen); });
+        mor.rel.reledit(mor.pen.currPenRef().pen, profpenref.pen);
     },
 
 
@@ -111,12 +143,15 @@ define([], function () {
 
     setPenNameFromInput = function (pen) {
         var pennamein = mor.byId('pennamein');
+        if(!pen) {
+            pen = profpenref.pen; }
         if(pennamein) {
             pen.name = pennamein.value; }
     },
 
 
-    savePenNameSettings = function (pen) {
+    savePenNameSettings = function () {
+        var pen = mor.pen.currPenRef().pen;
         setPenNameFromInput(pen);
         mor.skinner.save(pen);
         mor.pen.updatePen(pen,
@@ -378,8 +413,8 @@ define([], function () {
             "</tr>" +
           "</table>";
         mor.out('dlgdiv', html);
-        mor.onchange('pennamein', mor.profile.setPenName);
-        mor.onclick('savebutton', mor.profile.saveSettings);
+        mor.onchange('pennamein', mor.profile.setPenNameFromInput);
+        mor.onclick('savebutton', savePenNameSettings);
         displayAuthSettings('settingsauthtd', pen);
         mor.services.display('consvcstd', pen);
         mor.skinner.init('settingsskintd', pen);
@@ -410,7 +445,8 @@ define([], function () {
 
 
     mailButtonHTML = function () {
-        var html, href, subj, body, types, revchecks, i, ts;
+        var html, href, subj, body, types, revchecks, i, ts, mepen;
+        mepen = mor.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
             "I'm using MyOpenReviews to review things I experience.\n\n" + 
@@ -439,15 +475,15 @@ define([], function () {
         body += "\n\nIf you sign up, then I'll be able to follow what you " +
             "like and don't like, and you can see what I like and don't like " +
             "by following me. " + 
-            "To follow me, click the 'follow' icon next to '" + profpen.name + 
+            "To follow me, click the 'follow' icon next to '" + mepen.name +
             "' on my profile page. Here's the direct link to my profile:\n\n" +
             "http://www.myopenreviews.com/#view=profile&profid=" +
-            mor.instId(profpen) + "\n\n" +
+            mor.instId(mepen) + "\n\n" +
             "I'll follow back when I see you in my 'Followers' tab.\n\n" +
             "Looking forward to hearing about your new finds";
         if(types) {
             body += " in " + types; }
-        body += "!\n\ncheers,\n" + profpen.name + "\n\n";
+        body += "!\n\ncheers,\n" + mepen.name + "\n\n";
         href = "mailto:?subject=" + mor.dquotenc(subj) + 
             "&body=" + mor.dquotenc(body);
         html = mor.services.serviceLinkHTML(href, "", "shareico", 
@@ -519,7 +555,7 @@ define([], function () {
             linktitle = "View profile for " + pen.name; }
         html = "<li>" +
             "<a href=\"#" + hash + "\"" +
-            " onclick=\"mor.profile.changeid('" + penid + "');return false;\"" +
+            " onclick=\"mor.profile.byprofid('" + penid + "');return false;\"" +
             " title=\"" + linktitle + "\">";
         //empytprofpic.png looks like big checkboxes, use blank instead
         picuri = "img/blank.png";
@@ -536,89 +572,9 @@ define([], function () {
     },
 
 
-    findPenInArray = function (id, pens) {
-        var i;
-        for(i = 0; pens && i < pens.length; i += 1) {
-            if(mor.instId(pens[i]) === id) {
-                return pens[i]; } }
-    },
-
-
-    cachedPen = function (id) {
-        var pen;
-        //check our own pens first, usually fewer of those
-        if(!pen) {
-            pen = findPenInArray(id, mor.pen.getPenNames()); }
-        //check the current search results
-        if(!pen) {
-            pen = findPenInArray(id, searchresults); }
-        //check the cached pens
-        if(!pen) {
-            pen = findPenInArray(id, cachepens); }
-        return pen;
-    },
-
-
-    verifyDisplayTypeSelected = function () {
-        if(typeof profpen.top20s === "string") {
-            profpen.top20s = mor.dojo.json.parse(profpen.top20s); }
-        if(!profpen.profstate) {  //transient profile display state info
-            profpen.profstate = { seltabname: 'recent',
-                                  revtype: "",
-                                  allrevsrchval: "",
-                                  allrevsrchcursor: "",
-                                  allrevttl: 0,
-                                  allrevcontreqs: 1,
-                                  allrevs: [] }; }
-        if(!profpen.profstate.revtype && profpen.top20s) {
-            profpen.profstate.revtype = profpen.top20s.latestrevtype; }
-        if(!profpen.profstate.revtype) {
-            profpen.profstate.revtype = 'book'; }
-    },
-
-
-    updateCached = function (pens) {
-        var i, j, pen, penid, seltab;
-        if(pens && pens.length) {
-            for(i = 0; i < pens.length; i += 1) {
-                pen = pens[i];
-                penid = mor.instId(pen);
-                if(mor.instId(profpen) === penid) {
-                    //keep currently selected tab, but rebuild rest
-                    if(profpen && profpen.profstate) {
-                        seltab = profpen.profstate.revtype; }
-                    profpen = pen;
-                    verifyDisplayTypeSelected();
-                    if(seltab) {
-                        profpen.profstate.revtype = seltab; } }
-                for(j = 0; j < searchresults.length; j += 1) {
-                    if(mor.instId(searchresults[j]) === penid) {
-                        searchresults[j] = pen;
-                        break; } }
-                for(j = 0; j < cachepens.length; j += 1) {
-                    if(mor.instId(cachepens[j]) === penid) {
-                        cachepens[j] = pen;
-                        break; } } } }
-    },
-
-
-    findOrLoadPen = function (id, callback) {
-        var pen, params, critsec = "";
-        pen = cachedPen(id);
-        if(pen) {
-            return callback(pen); }
-        params = "penid=" + id;
-        mor.call("penbyid?" + params, 'GET', null,
-                 function (pens) {
-                     if(pens.length > 0) {
-                         cachepens.push(pens[0]);
-                         callback(pens[0]); }
-                     else {
-                         mor.err("findOrLoadPen found no pen id: " + id); } },
-                 function (code, errtxt) {
-                     mor.err("findOrLoadPen failed code " + code + ": " + 
-                             errtxt); },
-                 critsec);
+    findOrLoadPen = function (penid, callback) {
+        mor.lcs.getPenFull(penid, function (penref) {
+            callback(penref.pen); });
     },
 
 
@@ -634,58 +590,9 @@ define([], function () {
     },
 
 
-    selectTab = function (tabid, tabfunc) {
-        var i, ul, li;
-        ul = mor.byId('proftabsul');
-        for(i = 0; i < ul.childNodes.length; i += 1) {
-            li = ul.childNodes[i];
-            li.className = "unselectedTab";
-            li.style.backgroundColor = mor.skinner.darkbg(); }
-        li = mor.byId(tabid);
-        li.className = "selectedTab";
-        li.style.backgroundColor = "transparent";
-        currtab = tabfunc;
-        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
-                                tab: mor.profile.currentTabAsString() });
-
-    },
-
-
-    resetReviewDisplays = function () {
-        clearReviewSearchState(recentRevState);
-        recentRevState.tab = "recent";
-    },
-
-
     readReview = function (revid) {
-        var i, revobj, t20s, revtype, tops;
-        //Try find source review in the recent reviews
-        for(i = 0; !revobj && i < recentRevState.results.length; i += 1) {
-            if(mor.instId(recentRevState.results[i]) === revid) {
-                revobj = recentRevState.results[i]; } }
-        //Try find source review in the top 20 reviews
-        if(!revobj && profpen && profpen.top20s && 
-                      typeof profpen.top20s === 'object') {
-            t20s = profpen.top20s;
-            for(revtype in t20s) {
-                //revtype may be null, but jslint wants this condition order..
-                if(t20s.hasOwnProperty(revtype) && revtype) {
-                    tops = t20s[revtype];
-                    if(tops && tops.length && typeof tops !== "string") {
-                        for(i = 0; !revobj && i < tops.length; i += 1) {
-                            if(typeof tops[i] === 'object' &&
-                               mor.instId(tops[i]) === revid) {
-                                revobj = tops[i]; } } } } } }
-        //Try find the source review in the activity display
-        if(!revobj) {
-            revobj = mor.activity.findReview(revid); }
-        //Try find the source review in the search results
-        if(!revobj && searchresults && searchresults.length) {
-            for(i = 0; i < searchresults.length; i += 1) {
-                if(!searchresults[i].revtype) {
-                    break; }  //searched something other than reviews
-                if(mor.instId(searchresults[i]) === revid) {
-                    revobj = searchresults[i]; } } }
+        var revobj;
+        revobj = mor.lcs.getRevRef(revid).rev;
         //Make some noise if you can't find it rather than being a dead link
         if(!revobj) {
             mor.err("readReview " + revid + " not found");
@@ -720,7 +627,7 @@ define([], function () {
             linkref = mor.objdata({ view: "profile", profid: revobj.penid });
             html += "<div class=\"revtextsummary\">" + 
                 "<a href=\"#" + linkref + "\"" +
-                 " onclick=\"mor.profile.changeid('" + revobj.penid + "');" +
+                 " onclick=\"mor.profile.byprofid('" + revobj.penid + "');" +
                             "return false;\"" +
                  " title=\"Show profile for " + mor.ndq(penNameStr) + "\">" +
                 "review by " + penNameStr + "</a></div>"; }
@@ -732,34 +639,37 @@ define([], function () {
     },
 
 
-    displayRecentReviews = function (dispState, reviews) {
-        var i, html = "<ul class=\"revlist\">", fetched;
-        for(i = 0; i < dispState.results.length; i += 1) {
-            html += reviewItemHTML(dispState.results[i]); }
+    displayRecentReviews = function (rrs, reviews) {
+        var i, html, fetched;
+        html = "<ul class=\"revlist\">";
+        if(!rrs.results) {
+            rrs.results = []; }
+        for(i = 0; i < rrs.results.length; i += 1) {
+            html += reviewItemHTML(rrs.results[i]); }
         if(reviews) {  //have fresh search results
-            dispState.cursor = "";
+            rrs.cursor = "";
             for(i = 0; i < reviews.length; i += 1) {
                 if(reviews[i].fetched) {
                     fetched = reviews[i].fetched;
                     if(typeof fetched === "number" && fetched >= 0) {
-                        dispState.total += reviews[i].fetched;
+                        rrs.total += reviews[i].fetched;
                         html += "<div class=\"sumtotal\">" +
-                            dispState.total + " reviews searched</div>"; }
+                            rrs.total + " reviews searched</div>"; }
                     if(reviews[i].cursor) {
-                        dispState.cursor = reviews[i].cursor; }
+                        rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
-                dispState.results.push(reviews[i]);
+                rrs.results.push(reviews[i]);
                 html += reviewItemHTML(reviews[i]); } }
-        dispState.total = Math.max(dispState.total, dispState.results.length);
-        if(dispState.total === 0) {
+        rrs.total = Math.max(rrs.total, rrs.results.length);
+        if(rrs.total === 0) {
             html += "<li>No recent reviews.";
-            if(mor.instId(profpen) === mor.pen.currPenId()) {
+            if(mor.instId(profpenref.pen) === mor.pen.currPenId()) {
                 html += " " + mor.review.reviewLinkHTML(); }
             html += "</li>"; }
         html += "</ul>";
-        if(dispState.cursor) {
-            if(i === 0 && dispState.results.length === 0) {
-                if(dispState.total < 2000) {  //auto-repeat search
+        if(rrs.cursor) {
+            if(i === 0 && rrs.results.length === 0) {
+                if(rrs.total < 2000) {  //auto-repeat search
                     setTimeout(mor.profile.revsmore, 10); } 
                 else {
                     html += "No recent reviews found, only batch updates."; } }
@@ -774,16 +684,14 @@ define([], function () {
     },
 
 
-    findRecentReviews = function (dispState) {
+    findRecentReviews = function (rrs) {  //recentRevState
         var params, critsec = "";
-        if(!dispState.params.penid) {
-            dispState.params.penid = mor.instId(profpen); }
-        params = mor.objdata(dispState.params) + "&" + mor.login.authparams();
-        if(dispState.cursor) {
-            params += "&cursor=" + mor.enc(dispState.cursor); }
+        params = mor.objdata(rrs.params) + "&" + mor.login.authparams();
+        if(rrs.cursor) {
+            params += "&cursor=" + mor.enc(rrs.cursor); }
         mor.call("srchrevs?" + params, 'GET', null,
                  function (revs) {
-                     displayRecentReviews(dispState, revs); },
+                     displayRecentReviews(rrs, revs); },
                  function (code, errtxt) {
                      mor.out('profcontdiv', "findRecentReviews failed code " + 
                              code + " " + errtxt); },
@@ -791,29 +699,30 @@ define([], function () {
     },
 
 
-    recent = function () {
-        var html, maxdate, mindate;
-        selectTab("recentli", recent);
-        if(recentRevState && recentRevState.initialized &&
-           recentRevState.penid === mor.instId(profpen)) {
-            displayRecentReviews(recentRevState);
-            return; }
-        html = "Retrieving recent activity for " + profpen.name + "...";
+    displayRecent = function () {
+        var rrs, html, maxdate, mindate;
+        if(profpenref.profstate.recentRevState) {
+            return displayRecentReviews(profpenref.profstate.recentRevState); }
+        html = "Retrieving recent activity for " + profpenref.pen.name + "...";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
-        clearReviewSearchState(recentRevState);
+        profpenref.profstate.recentRevState = rrs = { 
+            params: {},
+            cursor: "",
+            results: [],
+            total: 0 };
         maxdate = new Date();
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
-        recentRevState.params.maxdate = maxdate.toISOString();
-        recentRevState.params.mindate = mindate.toISOString();
-        recentRevState.penid = mor.instId(profpen);
-        recentRevState.initialized = true; 
-        findRecentReviews(recentRevState);
+        rrs.params.maxdate = maxdate.toISOString();
+        rrs.params.mindate = mindate.toISOString();
+        rrs.params.penid = mor.instId(profpenref.pen);
+        findRecentReviews(rrs);
     },
 
 
     revTypeSelectorHTML = function (clickfuncstr) {
-        var html, i, reviewTypes, typename, label, dispclass, pen = profpen;
+        var html, i, reviewTypes, typename, label, dispclass, pen;
+        pen = profpenref.pen;
         html = "";
         mor.pen.deserializeFields(pen);
         reviewTypes = mor.review.getReviewTypes();
@@ -841,107 +750,90 @@ define([], function () {
     },
 
 
-    best = function () {
-        var html, revs, i, state, critsec = "";
-        selectTab("bestli", best);
-        verifyDisplayTypeSelected();
-        state = profpen.profstate;
+    displayBest = function () {
+        var state, html, revs, i, revref;
+        state = profpenref.profstate;
         html = revTypeSelectorHTML("mor.profile.showTopRated");
         revs = [];
-        if(profpen.top20s) {
-            revs = profpen.top20s[state.revtype] || []; }
+        if(profpenref.pen.top20s) {
+            revs = profpenref.pen.top20s[state.revtype] || []; }
         html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
             html += "<li>No top rated " + state.revtype + " reviews.";
-            if(mor.instId(profpen) === mor.pen.currPenId()) {
+            if(mor.instId(profpenref.pen) === mor.pen.currPenId()) {
                 html += " " + mor.review.reviewLinkHTML(); }
             html += "</li>"; }
         for(i = 0; i < revs.length; i += 1) {
-            if(typeof revs[i] === 'string') {
-                if(revs[i].indexOf("not found") >= 0) {
-                    html += "</li>Review " + revs[i] + "</li>"; }
-                else if((typeof workrev === 'object') &&
-                        (mor.instId(workrev) === revs[i])) {
-                    revs[i] = workrev;
-                    html += reviewItemHTML(revs[i]); }
-                else {
-                    html += "<li>Fetching review " + revs[i] + "...</li>";
-                    break; } }
-            else if(typeof revs[i] === 'object') {
-                html += reviewItemHTML(revs[i]); } }
+            revref = mor.lcs.getRevRef(revs[i]);
+            if(revref.rev) {
+                html += reviewItemHTML(revref.rev); }
+            //if revref.status deleted or other error, then just skip it
+            else if(revref.status === "not cached") {
+                html += "<li>Fetching review " + revs[i] + "...</li>";
+                break; } }
         html += "</ul>";
         mor.out('profcontdiv', html);
         mor.layout.adjust();
-        if(i < revs.length) {  //didn't make it through, go fetch
-            mor.call("revbyid?revid=" + revs[i], 'GET', null,
-                     function (fetchedrevs) {
-                         if(fetchedrevs.length > 0) {
-                             workrev = fetchedrevs[0]; }
-                         else {
-                             revs[i] += ": not found"; }
-                         mor.profile.best(); },
-                     function (code, errtxt) {
-                         revs[i] += ": not found";
-                         mor.profile.best(); },
-                     critsec); }
+        if(i < revs.length) { //didn't make it through, fetch and redisplay
+            mor.lcs.getRevFull(revs[i], displayBest); }
     },
 
 
     clearAllRevProfWorkState = function () {
-        var state = profpen.profstate;
-        //does not reset allrevsrchval or revtype
-        if(state.allrevauto) {
-            window.clearTimeout(state.allrevauto);
-            state.allrevauto = null; }
-        if(state.allrevqmon) {
-            window.clearTimeout(state.allrevqmon);
-            state.allrevqmon = null; }
-        state.allrevsrchcursor = "";
-        state.allrevttl = 0;
-        state.allrevcontreqs = 1;
-        state.allrevs = [];
+        var state = profpenref.profstate.allRevsState;
+        //does not reset allRevsState.srchval or revtype
+        if(state && state.autopage) {
+            window.clearTimeout(state.autopage);
+            state.autopage = null; }
+        if(state && state.querymon) {
+            window.clearTimeout(state.querymon);
+            state.querymon = null; }
+        state.cursor = "";
+        state.total = 0;
+        state.reqs = 1;
+        state.revs = [];
     },
 
 
     allrevMaxAutoSearch = function () {
         var maxauto = 1000,
-            ttl = profpen.profstate.allrevttl,
-            contreqs = profpen.profstate.allrevcontreqs;
+            ttl = profpenref.profstate.allRevsState.total,
+            contreqs = profpenref.profstate.allRevsState.reqs;
         if(ttl >= (maxauto * contreqs)) {
             return true; }
         return false;
     },
 
 
-    displayAllRevs = function (results) {
-        var html, i, state = profpen.profstate;
+    listAllRevs = function (results) {
+        var html, i, state = profpenref.profstate.allRevsState;
         html = "<ul class=\"revlist\">";
-        for(i = 0; i < state.allrevs.length; i += 1) {
-            html += reviewItemHTML(state.allrevs[i]); }
+        for(i = 0; i < state.revs.length; i += 1) {
+            html += reviewItemHTML(state.revs[i]); }
         if(!results || results.length === 0) {
             results = [ { "fetched": 0, "cursor": "" } ]; }
-        state.allrevsrchcursor = "";  //used, so reset
+        state.cursor = "";  //used, so reset
         for(i = 0; i < results.length; i += 1) {
             if(typeof results[i].fetched === "number") {
-                state.allrevttl += results[i].fetched;
+                state.total += results[i].fetched;
                 html += "<div class=\"sumtotal\">" +
-                    state.allrevttl + " reviews searched</div>";
+                    state.total + " reviews searched</div>";
                 if(results[i].cursor) {
-                    state.allrevsrchcursor = results[i].cursor; }
+                    state.cursor = results[i].cursor; }
                 break; }  //leave i at its current value
-            state.allrevs.push(results[i]);
+            state.revs.push(results[i]);
             html += reviewItemHTML(results[i]); }
         html += "</ul>";
-        if(state.allrevsrchcursor) {
+        if(state.cursor) {
             if(i === 0 && !allrevMaxAutoSearch()) {
                 //auto-repeat the search to try get a result to display
-                state.allrevauto = window.setTimeout(mor.profile.searchReviews,
-                                                     10); }
+                state.autopage = window.setTimeout(mor.profile.searchAllRevs,
+                                                   10); }
             else {
-                if(allrevMaxAutoSearch) {  //they continued search manually
-                    state.allrevcontreqs += 1; }
+                if(allrevMaxAutoSearch()) {  //they continued search manually
+                    state.reqs += 1; }
                 html += "<a href=\"#continuesearch\"" +
-                    " onclick=\"mor.profile.searchReviews();return false;\"" +
+                    " onclick=\"mor.profile.searchAllRevs();return false;\"" +
                     " title=\"Continue searching for more matching reviews\"" +
                     ">continue search...</a>"; } }
         mor.out('allrevdispdiv', html);
@@ -950,48 +842,53 @@ define([], function () {
 
     monitorAllRevQuery = function () {
         var state, srchin, qstr = "";
-        state = profpen.profstate;
+        state = profpenref.profstate;
         srchin = mor.byId('allrevsrchin');
         if(!srchin) {  //probably switched tabs, quit
             return; }
         qstr = srchin.value;
-        if(qstr !== state.allrevsrchval) {
-            if(state.allrevqmon) {
-                window.clearTimeout(state.allrevqmon);
-                state.allrevqmon = null; }
-            mor.profile.searchReviews(); }
+        if(qstr !== state.allRevsState.srchval) {
+            if(state.allRevsState.querymon) {
+                window.clearTimeout(state.allRevsState.querymon);
+                state.allRevsState.querymon = null; }
+            mor.profile.searchAllRevs(); }
         else {
-            state.allrevqmon = setTimeout(monitorAllRevQuery, 400); }
+            state.allRevsState.querymon = setTimeout(monitorAllRevQuery, 400); }
     },
 
 
-    allrevs = function () {
-        var html;
-        selectTab("allrevsli", allrevs);
-        verifyDisplayTypeSelected();
+    displayAllRevs = function () {
+        var html, state;
+        state = profpenref.profstate.allRevsState;
+        if(!state) {
+            state = profpenref.profstate.allRevsState = {
+                srchval: "",
+                revs: [],
+                cursor: "",
+                total: 0,
+                reqs: 1 }; }
         html = revTypeSelectorHTML("mor.profile.searchRevsIfTypeChange");
         html += "<div id=\"allrevsrchdiv\">" +
             "<input type=\"text\" id=\"allrevsrchin\" size=\"40\"" +
                   " placeholder=\"Review title or name\"" + 
-                  " value=\"" + profpen.profstate.allrevsrchval + "\"" +
-            //the onchange here can cause a dupe display???
+                  " value=\"" + state.srchval + "\"" +
                   " onchange=\"mor.profile.allrevs();return false;\"" +
             "/></div>" +
             "<div id=\"allrevdispdiv\"></div>";
         mor.out('profcontdiv', html);
         mor.byId('allrevsrchin').focus();
-        if(profpen.profstate.allrevs.length > 0) {
-            displayAllRevs([]);  //display previous results
+        if(state.revs.length > 0) {
+            listAllRevs([]);  //display previous results
             monitorAllRevQuery(); }
         else {
             clearAllRevProfWorkState();
-            mor.profile.searchReviews(); }
+            mor.profile.searchAllRevs(); }
     },
 
 
-    searchReviews = function (revtype) {
+    searchAllRevs = function (revtype) {
         var state, qstr, maxdate, mindate, params, critsec = "";
-        state = profpen.profstate;
+        state = profpenref.profstate;
         if(revtype) {
             if(state.revtype !== revtype) {
                 state.revtype = revtype;
@@ -999,8 +896,8 @@ define([], function () {
         else {
             revtype = state.revtype; }
         qstr = mor.byId('allrevsrchin').value;
-        if(qstr !== state.allrevsrchval) {
-            state.allrevsrchval = qstr;
+        if(qstr !== state.allRevsState.srchval) {
+            state.allRevsState.srchval = qstr;
             clearAllRevProfWorkState(); }
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
@@ -1009,120 +906,109 @@ define([], function () {
             "&revtype=" + revtype +
             "&penid=" + mor.pen.currPenId() +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + mor.enc(state.allrevsrchcursor);
+            "&cursor=" + mor.enc(state.allRevsState.cursor);
         mor.call("srchrevs?" + params, 'GET', null,
                  function (results) { 
-                     displayAllRevs(results);
+                     listAllRevs(results);
                      monitorAllRevQuery(); },
                  function (code, errtxt) {
-                     mor.err("searchReviews call died code: " + code + " " +
+                     mor.err("searchAllRevs call died code: " + code + " " +
                              errtxt); },
                  critsec);
     },
 
 
-    following = function () {
-        selectTab("followingli", following);
-        verifyDisplayTypeSelected();
-        mor.rel.displayRelations(profpen, "outbound", "profcontdiv");
+    displayFollowing = function () {
+        mor.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
         mor.layout.adjust();
     },
 
 
-    followers = function () {
-        selectTab("followersli", followers);
-        verifyDisplayTypeSelected();
-        mor.rel.displayRelations(profpen, "inbound", "profcontdiv");
+   displayFollowers = function () {
+        mor.rel.displayRelations(profpenref.pen, "inbound", "profcontdiv");
         mor.layout.adjust();
-    },
-
-
-    toggleSearchOptions = function () {
-        var sod = mor.byId(searchmode + 'searchoptionsdiv');
-        if(sod) {
-            if(sod.style.display === "none") {
-                mor.out('srchoptstogglehref', "- search options");
-                sod.style.display = "block"; }
-            else {
-                mor.out('srchoptstogglehref', "+ search options");
-                sod.style.display = "none"; } }
-        mor.layout.adjust();
-    },
-
-
-    changeSearchMode = function () {
-        var i, radios, prevmode = searchmode;
-        radios = document.getElementsByName("searchmode");
-        for(i = 0; i < radios.length; i += 1) {
-            if(radios[i].checked) {
-                if(radios[i].value === "pen") {
-                    mor.byId('revsearchoptionsdiv').style.display = "none";
-                    mor.byId('pensearchoptionsdiv').style.display = "block";
-                    mor.byId('searchtxt').placeholder = pensrchplace;
-                    searchmode = "pen";
-                    break; }
-                if(radios[i].value === "rev") {
-                    mor.byId('revsearchoptionsdiv').style.display = "block";
-                    mor.byId('pensearchoptionsdiv').style.display = "none";
-                    mor.byId('searchtxt').placeholder = revsrchplace;
-                    searchmode = "rev";
-                    break; } } }
-        mor.out('srchoptstogglehref', "");
-        if(prevmode !== searchmode) {
-            mor.out('searchresults', ""); }
-        if(searchmode === "pen") {  //start with options hidden for pen search
-            toggleSearchOptions(); }
-    },
-
-
-    displayTabs = function (pen) {
-        var html;
-        html = "<ul id=\"proftabsul\">" +
-          "<li id=\"recentli\" class=\"selectedTab\">" + 
-            tablink("Recent Reviews", "mor.profile.recent()") + 
-          "</li>" +
-          "<li id=\"bestli\" class=\"unselectedTab\">" +
-            tablink("Top Rated", "mor.profile.best()") + 
-          "</li>" +
-          "<li id=\"allrevsli\" class=\"unselectedTab\">" +
-            tablink("All Reviews", "mor.profile.allrevs()") +
-          "</li>" +
-          "<li id=\"followingli\" class=\"unselectedTab\">" +
-            tablink("Following (" + pen.following + ")", 
-                    "mor.profile.following()") + 
-          "</li>" +
-          "<li id=\"followersli\" class=\"unselectedTab\">" +
-            tablink("Followers (" + pen.followers + ")", 
-                    "mor.profile.followers()") + 
-          "</li>";
-        html += "</ul>";
-        mor.out('proftabsdiv', html);
-        if(!currtab) {
-            currtab = recent; }
-        currtab();
-    },
-
-
-    getCurrTabAsString = function () {
-        if(currtab === recent) { return "recent"; }
-        if(currtab === best) { return "best"; }
-        if(currtab === allrevs) { return "allrevs"; }
-        if(currtab === following) { return "following"; }
-        if(currtab === followers) { return "followers"; }
-        if(currtab === mor.profile.search) { return "search"; }
-        return "recent"; //default
     },
 
 
     setCurrTabFromString = function (tabstr) {
+        var profstate;
+        verifyProfileState(profpenref);
+        profstate = profpenref.profstate;
         switch(tabstr) {
-        case "recent": currtab = recent; break;
-        case "best": currtab = best; break;
-        case "allrevs": currtab = allrevs; break;
-        case "following": currtab = following; break;
-        case "followers": currtab = followers; break;
-        case "search": currtab = mor.profile.search; break;
+        case "recent": profstate.seltabname = "recent"; break;
+        case "best": profstate.seltabname = "best"; break;
+        case "allrevs": profstate.seltabname = "allrevs"; break;
+        case "following": profstate.seltabname = "following"; break;
+        case "followers": profstate.seltabname = "followers"; break;
         }
+    },
+
+
+    refreshContentDisplay = function () {
+        switch(profpenref.profstate.seltabname) {
+        case "recent": displayRecent(); break;
+        case "best": displayBest(); break;
+        case "allrevs": displayAllRevs(); break;
+        case "following": displayFollowing(); break;
+        case "followers": displayFollowers(); break;
+        }
+    },
+
+
+    tabselect = function (tabname) {
+        var i, ul, li;
+        verifyProfileState(profpenref);
+        if(tabname) {
+            profpenref.profstate.seltabname = tabname; }
+        else {
+            tabname = profpenref.profstate.seltabname; }
+        ul = mor.byId('proftabsul');
+        for(i = 0; i < ul.childNodes.length; i += 1) {
+            li = ul.childNodes[i];
+            li.className = "unselectedTab";
+            li.style.backgroundColor = mor.skinner.darkbg(); }
+        li = mor.byId(tabname + "li");
+        li.className = "selectedTab";
+        li.style.backgroundColor = "transparent";
+        mor.historyCheckpoint({ view: "profile", 
+                                profid: mor.instId(profpenref.pen),
+                                tab: tabname });
+        refreshContentDisplay();
+    },
+
+
+    displayTabs = function (penref) {
+        var html;
+        verifyProfileState(penref);
+        html = "<ul id=\"proftabsul\">" +
+          "<li id=\"recentli\" class=\"selectedTab\">" + 
+            tablink("Recent Reviews", "mor.profile.tabselect('recent')") + 
+          "</li>" +
+          "<li id=\"bestli\" class=\"unselectedTab\">" +
+            tablink("Top Rated", "mor.profile.tabselect('best')") + 
+          "</li>" +
+          "<li id=\"allrevsli\" class=\"unselectedTab\">" +
+            tablink("All Reviews", "mor.profile.tabselect('allrevs')") +
+          "</li>" +
+          "<li id=\"followingli\" class=\"unselectedTab\">" +
+            tablink("Following (" + penref.pen.following + ")", 
+                    "mor.profile.tabselect('following')") + 
+          "</li>" +
+          "<li id=\"followersli\" class=\"unselectedTab\">" +
+            tablink("Followers (" + penref.pen.followers + ")", 
+                    "mor.profile.tabselect('followers')") + 
+          "</li>";
+        html += "</ul>";
+        mor.out('proftabsdiv', html);
+        tabselect();
+    },
+
+
+    profileModAuthorized = function (pen) {
+        if(mor.isId(pen.mid) || mor.isId(pen.gsid) || mor.isId(pen.fbid) || 
+           mor.isId(pen.twid) || mor.isId(pen.ghid)) {
+            return true; }
+        return false;
     },
 
 
@@ -1198,7 +1084,7 @@ define([], function () {
     displayShout = function (pen) {
         var html, shout, text;
         text = "No additional information about " + pen.name;
-        if(mor.instId(profpen) === mor.pen.currPenId()) {
+        if(mor.instId(profpenref.pen) === mor.pen.currPenId()) {
             text = "About me (anything you would like to say to everyone)." + 
                 " Link to your twitter handle, blog or site if you want."; }
         text = "<span style=\"color:" + greytxt + ";\">" + text + "</span>";
@@ -1212,7 +1098,7 @@ define([], function () {
         shout.style.border = "1px solid " + mor.colors.bodybg;
         text = mor.linkify(pen.shoutout) || text;
         mor.out('shoutdiv', text);
-        if(mor.profile.authorized(pen)) {
+        if(profileModAuthorized(pen)) {
             mor.onclick('shoutdiv', function () {
                 editShout(pen); }); }
     },
@@ -1253,7 +1139,7 @@ define([], function () {
         html = pen.city || unspecifiedCityText;            
         if(!pen.city) {
             style = " style=\"color:" + greytxt + ";\""; }
-        if(mor.profile.authorized(pen)) {
+        if(profileModAuthorized(pen)) {
             html = "<a href=\"#edit city\" title=\"Edit city\"" +
                      " id=\"profcitya\"" + 
                      " onclick=\"mor.profile.editCity();return false;\"" +
@@ -1301,7 +1187,7 @@ define([], function () {
             html = "profpic?profileid=" + mor.instId(pen); }
         html = "<img class=\"profpic\" src=\"" + html + "\"/>";
         mor.out('profpictd', html);
-        if(mor.profile.authorized(pen)) {
+        if(profileModAuthorized(pen)) {
             mor.onclick('profpictd', function () {
                 if(mor.byId('profcancelb')) {  //save other field edits so
                     saveEditedProfile(pen); }  //they aren't lost on reload
@@ -1336,31 +1222,14 @@ define([], function () {
 
 
     showTopRated = function (typename) {
-        verifyDisplayTypeSelected();  //init state variables if needed
-        profpen.profstate.revtype = typename;
-        best();
+        verifyProfileState(profpenref);
+        profpenref.profstate.revtype = typename;
+        displayBest();
     },
 
 
-    verifyStateVariableValues = function (pen) {
-        if(profpen !== pen) {
-            profpen = pen; }
-    },
-
-
-    mainDisplay = function (homepen, dispen, action, errmsg) {
-        var html;
-        if(!dispen) {
-            dispen = homepen; }
-        verifyStateVariableValues(dispen);
-        mor.historyCheckpoint({ view: "profile", profid: mor.instId(profpen),
-                                tab: getCurrTabAsString() });
-        //redisplay the heading in case we just switched pen names
-        writeNavDisplay(homepen, dispen);
-        //reset the colors in case that work got dropped in the
-        //process of updating the persistent state
-        mor.skinner.setColorsFromPen(homepen);
-        html = "<div id=\"proftopdiv\">" +
+    proftopdivHTML = function () {
+        var html = "<div id=\"proftopdiv\">" +
         "<table id=\"profdisptable\" border=\"0\">" +
           "<tr>" +
             "<td id=\"sysnotice\" colspan=\"3\">" +
@@ -1394,11 +1263,29 @@ define([], function () {
             "</td>" +
           "</tr>" +
         "</table></div>";
+        return html;
+    },
+
+
+    mainDisplay = function (homepen, dispen, action, errmsg) {
+        var html;
+        if(!dispen) {
+            dispen = homepen; }
+        verifyStateVariableValues(dispen);  //sets profpenref
+        mor.historyCheckpoint({ view: "profile", 
+                                profid: mor.instId(profpenref.pen),
+                                tab: profpenref.profstate.seltabname });
+        //redisplay the heading in case we just switched pen names
+        writeNavDisplay(homepen, dispen);
+        //reset the colors in case that work got dropped in the
+        //process of updating the persistent state
+        mor.skinner.setColorsFromPen(homepen);
+        html = proftopdivHTML();
         if(!mor.layout.haveContentDivAreas()) { //change pw kills it
             mor.layout.initContentDivAreas(); }
         mor.out('cmain', html);
         mor.out('profbadgestd', earnedBadgesHTML(dispen));
-        if(mor.instId(profpen) === mor.pen.currPenId()) {
+        if(mor.instId(profpenref.pen) === mor.pen.currPenId()) {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
                      " onclick=\"mor.profile.invite();return false\">" +
                 "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
@@ -1407,16 +1294,20 @@ define([], function () {
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
-        displayTabs(dispen);
+        displayTabs(profpenref);
         mor.layout.adjust();
         if(errmsg) {
             mor.err("Previous processing failed: " + errmsg); }
     },
 
 
-    displayProfileForId = function (id) {
-        resetReviewDisplays();
+    displayProfileForId = function (id, tabname) {
+        mor.layout.closeDialog(); //close pen name search dialog if open
+        resetStateVars();
         findOrLoadPen(id, function (dispen) {
+            if(tabname) {
+                verifyStateVariableValues(dispen);
+                setCurrTabFromString(tabname); }
             mor.pen.getPen(function (homepen) {
                 mainDisplay(homepen, dispen); }); });
     };
@@ -1428,64 +1319,31 @@ define([], function () {
         display: function (action, errmsg) {
             mor.pen.getPen(function (homepen) {
                 mainDisplay(homepen, null, action, errmsg); }); },
-        updateHeading: function () {
+        updateHeading: function () {  //called during startup
             mor.pen.getPen(function (homepen) {
-                writeNavDisplay(homepen, profpen); }); },
+                writeNavDisplay(homepen,
+                                profpenref && profpenref.pen); }); },
         refresh: function () {
             mor.pen.getPen(function (homepen) {
-                mainDisplay(homepen, profpen); }); },
+                mainDisplay(homepen, profpenref.pen); }); },
         settings: function () {
             mor.pen.getPen(changeSettings); },
-        recent: function () {
-            recent(); },
-        best: function () {
-            best(); },
-        allrevs: function () {
-            allrevs(); },
-        following: function () {
-            following(); },
-        followers: function () {
-            followers(); },
-        togglesrchopts: function () {
-            toggleSearchOptions(); },
+        tabselect: function (tabname) {
+            tabselect(tabname); },
         resetReviews: function () {
-            resetReviewDisplays(); },
-        authorized: function (pen) {
-            if(mor.isId(pen.mid) || mor.isId(pen.gsid) || mor.isId(pen.fbid) || 
-               mor.isId(pen.twid) || mor.isId(pen.ghid)) {
-                return true; }
-            return false; },
+            resetReviewDisplays(mor.pen.currPenRef()); },
         save: function () {
             mor.pen.getPen(saveEditedProfile); },
-        setPenName: function () {
-            mor.pen.getPen(setPenNameFromInput); },
-        saveSettings: function () {
-            mor.pen.getPen(savePenNameSettings); },
-        byprofid: function (id) {
-            displayProfileForId(id); },
-        changeid: function (id) {
-            currtab = recent;
-            displayProfileForId(id); },
-        initWithId: function (id) {
-            mor.pen.getPen(function (pen) { displayProfileForId(id); }); },
-        setTab: function (tabstr) {
-            setCurrTabFromString(tabstr); },
+        byprofid: function (id, tabname) {
+            displayProfileForId(id, tabname); },
         relationship: function () {
             createOrEditRelationship(); },
-        retrievePen: function (id, callback) {
-            return findOrLoadPen(id, callback); },
-        getCachedPen: function (id) {
-            return cachedPen(id); },
         switchPen: function () {
             changeToSelectedPen(); },
         penListItemHTML: function (pen) {
             return penListItemHTML(pen); },
-        updateCached: function (pens) {
-            updateCached(pens); },
-        currentTabAsString: function () {
-            return getCurrTabAsString(); },
         revsmore: function () {
-            findRecentReviews(recentRevState); },
+            findRecentReviews(profpenref.profstate.recentRevState); },
         readReview: function (revid) {
             return readReview(revid); },
         reviewItemHTML: function (revobj, penNameStr) {
@@ -1495,8 +1353,6 @@ define([], function () {
                 handleAuthChangeToggle(pen, authtype, domid); }); },
         displayAuthSettings: function (domid, pen) {
             displayAuthSettings(domid, pen); },
-        srchmode: function () {
-            changeSearchMode(); },
         addMyOpenReviewsAuthId: function(mid) {
             mor.pen.getPen(function (pen) {
                 addMyOpenReviewsAuthId(pen, mid); }); },
@@ -1508,19 +1364,17 @@ define([], function () {
             cancelPenNameSettings(); },
         editCity: function () {
             editCity(); },
-        setSearchMode: function (mode) {
-            searchmode = mode; },
         invite: function () {
             displayInvitationDialog(); },
         chginvite: function () {
             updateInviteInfo(); },
         showTopRated: function (typename) {
             showTopRated(typename); },
-        searchReviews: function (revtype) {
-            searchReviews(revtype); },
+        searchAllRevs: function (revtype) {
+            searchAllRevs(revtype); },
         searchRevsIfTypeChange: function (revtype) {
-            if(profpen.profstate.revtype !== revtype) {
-                searchReviews(revtype); } }
+            if(profpenref.profstate.revtype !== revtype) {
+                searchAllRevs(revtype); } }
     };
 
 });

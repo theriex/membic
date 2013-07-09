@@ -5,35 +5,26 @@
 ////////////////////////////////////////
 // m o r . a c t i v i t y
 //
+// Display of recent reviews from friends, remembered reviews, and
+// searching for pen names to follow.  Cached data off the current pen:
+//
+//   penref.actdisp:
+//     revrefs: array of cached reviews, most recent first
+//     lastChecked: timestamp when recent reviews were last fetched
+//     cursor: cursor for continuing to load more activity
+//
+//   penref.pensearch:
+//     params: parameters for search
+//     pens: found pens 
+//     cursor: cursor for continuing to load more matching pens
+//     total: count of records searched so far
+//     reqs: count of times the search was manually requested
+//
+
 define([], function () {
     "use strict";
 
-    var penids, //outbound relationships for the current pen
-        revs, 
-        lastChecked, 
-        actcursor = "",
-        revcache = {},
-        badrevids = [],
-        dispmode = "activity",  //other value option is "memo"
-        activityTitleText = "New reviews from friends",
-        rememberedTitleText = "Remembered reviews",
-        searchparams = {},
-        searchresults = [],
-        searchcursor = "",
-        searchmax = 1000,  //max records to go through automatically
-        searchtotal = 0,  //count of records searched so far
-        searchrequests = 1,  //count of times the search was manually requested
-
-
-    resetStateVars = function () {
-        penids = null;
-        revs = null;
-        lastChecked = null;
-        actcursor = "";
-        revcache = {};
-        badrevids = [];
-        dispmode = "activity";
-    },
+    var pensearchmax = 1000,  //max records to read through automatically
 
 
     activityLinkHTML = function () {
@@ -58,16 +49,16 @@ define([], function () {
     },
 
 
-    writeNavDisplay = function () {
+    writeNavDisplay = function (dispmode) {
         var html, url;
         if(dispmode === "activity") {
             url = "rssact?pen=" + mor.pen.currPenId();
-            html = activityTitleText + " " + 
+            html = "New reviews from friends " + 
                 mor.imglink(url, "RSS feed for recent friend reviews",
                             "window.open('" + url + "')", 
                             "rssicon.png", "rssico"); }
         else if(dispmode === "memo") {
-            html = rememberedTitleText; }
+            html = "Remembered reviews"; }
         mor.out('centerhdiv', html);
     },
 
@@ -156,13 +147,14 @@ define([], function () {
     //handle joins across relationships due to indexing overhead, so
     //those are filtered out here.
     penSearchFiltered = function (searchitem) {
-        var pen, rel;
+        var params, pen, rel;
+        params = mor.pen.currPenRef().pensearch.params;
         pen = searchitem;
         rel = mor.rel.outbound(mor.instId(pen));
         if(rel) {
-            if(searchparams.includeFollowing && rel.status === "following") {
+            if(params.includeFollowing && rel.status === "following") {
                 return false; }
-            if(searchparams.includeBlocked && rel.status === "blocked") {
+            if(params.includeBlocked && rel.status === "blocked") {
                 return false; }
             return true; }
         return false;
@@ -170,33 +162,35 @@ define([], function () {
 
 
     displayPenSearchResults = function (results) {
-        var i, html;
+        var pensearch, i, html;
+        pensearch = mor.pen.currPenRef().pensearch;
         html = "<ul class=\"penlist\">";
-        for(i = 0; i < searchresults.length; i += 1) {
-            html += mor.profile.penListItemHTML(searchresults[i]); }
+        for(i = 0; i < pensearch.pens.length; i += 1) {
+            html += mor.profile.penListItemHTML(pensearch.pens[i]); }
         if(!results || results.length === 0) {
             results = [ { "fetched": 0, "cursor": "" } ]; }
-        searchcursor = "";
+        pensearch.cursor = "";
         for(i = 0; i < results.length; i += 1) {
             if(typeof results[i].fetched === "number") {
-                searchtotal += results[i].fetched;
+                pensearch.total += results[i].fetched;
                 html += "<div class=\"sumtotal\">" + 
-                    searchtotal + " pen names searched</div>";
+                    pensearch.total + " pen names searched</div>";
                 if(results[i].cursor) {
-                    searchcursor = results[i].cursor; }
+                    pensearch.cursor = results[i].cursor; }
                 break; }  //if no results, i will be left at zero
             if(!penSearchFiltered(results[i])) {
-                searchresults.push(results[i]);
+                mor.lcs.putPen(results[i]);
+                pensearch.pens.push(results[i]);
                 html += mor.profile.penListItemHTML(results[i]); } }
-        if(searchresults.length === 0) {
+        if(pensearch.pens.length === 0) {
             html += "<div class=\"sumtotal\">No pen names found</div>"; }
         html += "</ul>";
-        if(searchcursor) {
-            if(i === 0 && searchtotal < (searchmax * searchrequests)) {
+        if(pensearch.cursor) {
+            if(i === 0 && pensearch.total < (pensearchmax * pensearch.reqs)) {
                 setTimeout(mor.activity.searchPens, 10); }  //auto-repeat search
             else {
-                if(searchtotal >= (searchmax * searchrequests)) {
-                    searchrequests += 1; } 
+                if(pensearch.total >= (pensearchmax * pensearch.reqs)) {
+                    pensearch.reqs += 1; } 
                 html += "<a href=\"#continuesearch\"" +
                           " onclick=\"mor.activity.searchPens();" + 
                                      "return false;\"" +
@@ -208,13 +202,14 @@ define([], function () {
 
 
     readSearchParamsFromForm = function () {
-        var checkboxes, options, i, t20type, since;
-        searchparams.reqmin = [];
+        var pensearch, checkboxes, options, i, t20type, since;
+        pensearch = mor.pen.currPenRef().pensearch;
+        pensearch.params.reqmin = [];
         checkboxes = document.getElementsByName("reqmin");
         for(i = 0; i < checkboxes.length; i += 1) {
             if(checkboxes[i].checked) {
                 t20type = mor.review.getReviewTypeByValue(checkboxes[i].value);
-                searchparams.reqmin.push(t20type.type); } }
+                pensearch.params.reqmin.push(t20type.type); } }
         options = mor.byId('srchactivesel').options;
         for(i = 0; i < options.length; i += 1) {
             if(options[i].selected) {
@@ -228,45 +223,46 @@ define([], function () {
                 case 'whenever':
                     since = -1; break; }
                 break; } }
-        searchparams.activeDaysAgo = since;
-        searchparams.includeFollowing = false;
-        searchparams.includeBlocked = false;
-        searchparams.includeLurkers = false;
+        pensearch.params.activeDaysAgo = since;
+        pensearch.params.includeFollowing = false;
+        pensearch.params.includeBlocked = false;
+        pensearch.params.includeLurkers = false;
         checkboxes = document.getElementsByName("srchinc");
         for(i = 0; i < checkboxes.length; i += 1) {
             if(checkboxes[i].checked) {
                 if(checkboxes[i].value === 'following') {
-                    searchparams.includeFollowing = true; }
+                    pensearch.params.includeFollowing = true; }
                 if(checkboxes[i].value === 'blocked') {
-                    searchparams.includeBlocked = true; } 
+                    pensearch.params.includeBlocked = true; } 
                 if(checkboxes[i].value === 'lurkers') {
-                    searchparams.includeLurkers = true; } } }
+                    pensearch.params.includeLurkers = true; } } }
     },
 
 
     searchPens = function () {
-        var params, qstr, time, t20, i, critsec = "";
+        var pensearch, params, qstr, time, t20, i, critsec = "";
+        pensearch = mor.pen.currPenRef().pensearch;
         readSearchParamsFromForm();
         mor.out('srchoptstogglehref', "show advanced search options");
         mor.byId('searchoptionsdiv').style.display = "none";
         mor.byId("searchbutton").disabled = true;
         qstr = mor.byId('searchtxt').value;
         params = mor.login.authparams() + "&qstr=" + mor.enc(qstr) +
-            "&cursor=" + mor.enc(searchcursor);
-        if(searchparams.activeDaysAgo > 0) {
+            "&cursor=" + mor.enc(pensearch.cursor);
+        if(pensearch.params.activeDaysAgo > 0) {
             time = (new Date()).getTime();
-            time -= searchparams.activeDaysAgo * 24 * 60 * 60 * 1000;
+            time -= pensearch.params.activeDaysAgo * 24 * 60 * 60 * 1000;
             time = new Date(time);
             time = time.toISOString();
             params += "&time=" + mor.enc(time); }
-        if(searchparams.reqmin.length > 0) {
+        if(pensearch.params.reqmin.length > 0) {
             t20 = "";
-            for(i = 0; i < searchparams.reqmin.length; i += 1) {
+            for(i = 0; i < pensearch.params.reqmin.length; i += 1) {
                 if(i > 0) {
                     t20 += ","; }
-                t20 += searchparams.reqmin[i]; }
+                t20 += pensearch.params.reqmin[i]; }
             params += "&t20=" + mor.enc(t20); }
-        if(searchparams.includeLurkers) {
+        if(pensearch.params.includeLurkers) {
             params += "&lurkers=include"; }
         mor.call("srchpens?" + params, 'GET', null,
                  function (results) {
@@ -279,27 +275,18 @@ define([], function () {
 
 
     startPenSearch = function () {
-        searchparams = {};
-        searchresults = [];
-        searchcursor = "";
-        searchtotal = 0;
-        searchrequests = 1;
+        mor.pen.currPenRef().pensearch = {
+            params: {},
+            pens: [],
+            cursor: "",
+            total: 0,
+            requests: 1 };
         searchPens();
     },
 
 
-    findReview = function (revid) {
-        var i;
-        if(revcache[revid]) {
-            return revcache[revid]; }
-        for(i = 0; revid && revs && i < revs.length; i += 1) {
-            if(mor.instId(revs[i]) === revid) {
-                return revs[i]; } }
-    },
-
-
     displayRemembered = function (pen) {
-        var i, html, rev, crid, friend, cfid, maxdisp = 50, hint;
+        var i, html, revref, crid, friend, cfid, maxdisp = 50, hint;
         hint = "If you see a review worth remembering, click its " + 
             "\"Remember\" button to keep a reference to it here.";
         mor.pen.deserializeFields(pen);
@@ -311,66 +298,58 @@ define([], function () {
         else {
             maxdisp = Math.min(maxdisp, pen.revmem.remembered.length);
             for(i = 0; i < maxdisp; i += 1) {
-                rev = findReview(pen.revmem.remembered[i]);
-                if(!rev) {
-                    if(badrevids.indexOf(pen.revmem.remembered[i]) >= 0) {
-                        maxdisp += 1; }
-                    else {
+                revref = mor.lcs.getRevRef(pen.revmem.remembered[i]);
+                if(revref.status !== "ok" && revref.status !== "not cached") {
+                    maxdisp += 1; }  //ignore deleted review
+                else {
+                    if(!revref.rev) {
                         crid = pen.revmem.remembered[i];
                         html += "<li>Fetching Review " + crid + "...</li>";
-                        break; } }
-                else {
-                    if(!rev.penNameStr) {
-                        friend = mor.profile.getCachedPen(rev.penid);
+                        break; }
+                    if(!revref.rev.penNameStr) {
+                        friend = mor.lcs.getPenRef(revref.rev.penid).pen;
                         if(friend) {
-                            rev.penNameStr = friend.name; } }
-                    if(!rev.penNameStr) {
-                        cfid = rev.penid;
+                            revref.rev.penNameStr = friend.name; } }
+                    if(!revref.rev.penNameStr) {
+                        cfid = revref.rev.penid;
                         html += "<li>Fetching Pen Name " + cfid + "...</li>";
                         break; }
-                    html += mor.profile.reviewItemHTML(rev, 
-                                                       rev.penNameStr); } } }
+                    html += mor.profile.reviewItemHTML(revref.rev, 
+                                                revref.rev.penNameStr); } } }
         if(i === maxdisp && maxdisp < 3) {  //after 3 times they should get it
             html += "<li></li><li>" + hint + "</li>"; }
         html += "</ul>";
         mor.out('revactdiv', html);
         mor.layout.adjust();
         if(crid) {
-            setTimeout(function () {
-                var critsec = "";
-                mor.call("revbyid?revid=" + crid, 'GET', null,
-                         function (revs) {
-                             mor.activity.cacheReview(revs[0]);
-                             mor.activity.display(); },
-                         function (code, errtxt) {
-                             mor.log("displayRemembered revbyid " + crid +
-                                     " " + code + " " + errtxt);
-                             badrevids.push(crid); },
-                         critsec, null, [ 404 ]); },
-                       50); }
+            mor.lcs.getRevFull(crid, mor.activity.displayRemembered); }
         if(cfid) {
             setTimeout(function () {
-                mor.profile.retrievePen(cfid, mor.activity.display); },
+                mor.lcs.getPenFull(cfid, function (penref) {
+                    mor.activity.displayRemembered(penref.pen); }); },
                        50); }
     },
 
 
     displayReviewActivity = function () {
-        var i, breakid, html = "<ul class=\"revlist\">";
-        if(revs.length === 0) {
-            html += "<li>No review activity</li>"; }
-        for(i = 0; i < revs.length; i += 1) {
-            html += mor.profile.reviewItemHTML(revs[i], revs[i].penNameStr);
-            if(!revs[i].penNameStr) {
-                breakid = revs[i].penid;
+        var actdisp, revrefs, rev, i, breakid, html = "<ul class=\"revlist\">";
+        actdisp = mor.pen.currPenRef().actdisp;
+        revrefs = actdisp.revrefs;
+        if(revrefs.length === 0) {
+            html += "<li>None of the people you are following have posted any reviews recently.</li>"; }
+        for(i = 0; i < revrefs.length; i += 1) {
+            rev = revrefs[i].rev;
+            html += mor.profile.reviewItemHTML(rev, rev.penNameStr);
+            if(!rev.penNameStr) {
+                breakid = rev.penid;
                 break; } }
         if(breakid) {
             setTimeout(function () {
-                mor.profile.retrievePen(breakid, 
-                                        mor.activity.notePenNameStr); },
+                mor.lcs.getPenFull(breakid, function (penref) {
+                    mor.activity.notePenNameStr(penref.pen); }); },
                        50); }
         html += "</ul>";
-        if(actcursor) {
+        if(actdisp.cursor) {
             html += "<a href=\"#moreact\"" +
                 " onclick=\"mor.activity.moreact();return false;\"" +
                 " title=\"More activity\"" + ">more activity...</a>"; }
@@ -380,10 +359,12 @@ define([], function () {
 
 
     notePenNameStr = function (pen) {
-        var i, pid = mor.instId(pen);
-        for(i = 0; i < revs.length; i += 1) {
-            if(revs[i].penid === pid) {
-                revs[i].penNameStr = pen.name; } }
+        var i, pid, revrefs;
+        revrefs = mor.pen.currPenRef().actdisp.revrefs;
+        pid = mor.instId(pen);
+        for(i = 0; i < revrefs.length; i += 1) {
+            if(revrefs[i].rev.penid === pid) {
+                revrefs[i].rev.penNameStr = pen.name; } }
         displayReviewActivity();
     },
 
@@ -396,27 +377,33 @@ define([], function () {
         var rel = mor.rel.outbound(rev.penid);
         if(rev.rating < rel.cutoff) {
             return true; }
-        if(rel.mute && rel.mute.indexOf(rev.revtype >= 0)) {
+        if(rel.mute && rel.mute.indexOf(rev.revtype) >= 0) {
             return true; }
         return false;
     },
 
 
     collectAndDisplayReviewActivity = function (results, continued) {
-        var i;
+        var i, actdisp, revref;
+        actdisp = mor.pen.currPenRef().actdisp;
         if(!continued) { //prepend latest results
-            for(i = 0; i < results.length; i += 1) {
-                if(!results[i].fetched && !filtered(results[i])) {
-                    revs.unshift(results[i]); } } }
+            for(i = results.length - 1; i >= 0; i -= 1) {
+                if(results[i].fetched) {
+                    if(results[i].cursor) {
+                        actdisp.cursor = results[i].cursor;  } }
+                else if(!filtered(results[i])) {
+                    revref = mor.lcs.putRev(results[i]);
+                    actdisp.revrefs.unshift(revref); } } }
         else { //append results and track cursor (if any)
-            actcursor = "";
+            actdisp.cursor = "";
             for(i = 0; i < results.length; i += 1) {
                 if(results[i].fetched) {
                     if(results[i].cursor) {
-                        actcursor = results[i].cursor;  } }
+                        actdisp.cursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
-                    revs.push(results[i]); } } }
-        if(actcursor && revs.length === 0) {
+                    revref = mor.lcs.putRev(results[i]);
+                    actdisp.revrefs.push(revref); } } }
+        if(actdisp.cursor && actdisp.revrefs.length === 0) {
             //auto find more activity without creating a recursion stack
             setTimeout(mor.activity.moreact, 10); }
         displayReviewActivity();
@@ -424,18 +411,20 @@ define([], function () {
 
 
     doActivitySearch = function (continued) {
-        var time, params, critsec = "";
+        var actdisp, time, penids, params, critsec = "";
+        actdisp = mor.pen.currPenRef().actdisp;
+        penids = mor.rel.outboundids();
         params = "penids=" + penids.join(',');
-        if(!continued && lastChecked) {
-            params += "&since=" + lastChecked.toISOString(); }
-        if(continued) {
-            params += "&cursor=" + actcursor; }
+        if(!continued && actdisp.lastChecked) {
+            params += "&since=" + actdisp.lastChecked.toISOString(); }
+        else if(continued) {
+            params += "&cursor=" + actdisp.cursor; }
         time = new Date().getTime();
         mor.call("revact?" + params, 'GET', null,
                  function (results) {
                      time = new Date().getTime() - time;
                      mor.log("revact returned in " + time/1000 + " seconds.");
-                     lastChecked = new Date();
+                     actdisp.lastChecked = new Date();
                      collectAndDisplayReviewActivity(results, continued); },
                  function (code, errtxt) {
                      mor.out('revactdiv', "error code: " + code + " " + 
@@ -453,8 +442,8 @@ define([], function () {
 
 
     bootActivityDisplay = function () {
-        var html, retry = false;
-        writeNavDisplay();
+        var penids, html, retry = false;
+        writeNavDisplay("activity");
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
             html = "<p>You are not following anyone.</p>" +
@@ -465,14 +454,16 @@ define([], function () {
             retry = true;
             html = "Loading relationships..."; }
         else {
-            revs = [];
+            mor.pen.currPenRef().actdisp = { 
+                revrefs: [], 
+                cursor: "" };
             html = "Loading activity..."; }
         mor.out('revactdiv', html);
         mor.layout.adjust();
-        if(revs) {
-            doActivitySearch(true); }
+        if(mor.pen.currPenRef().actdisp) {
+            doActivitySearch(); }
         if(retry) {
-            setTimeout(bootActivityDisplay, 500); }
+            setTimeout(bootActivityDisplay, 100); }
     },
 
 
@@ -486,56 +477,50 @@ define([], function () {
     },
 
 
-    mainDisplay = function (pen) {
-        //ATTENTION: read revs from local storage..
-        mor.historyCheckpoint({ view: "activity" });
-        writeNavDisplay();
+    mainDisplay = function (pen, dispmode) {
+        mor.historyCheckpoint({ view: dispmode });
+        writeNavDisplay(dispmode);
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
             displayRemembered(pen); }
-        else if(revs) {
-            displayReviewActivity();
-            doActivitySearch(); }
-        else {
-            bootActivityDisplay(); }
+        else {  //dispmode === "activity"
+            if(mor.pen.currPenRef().actdisp) {
+                displayReviewActivity();
+                doActivitySearch(); }
+            else {
+                bootActivityDisplay(); } }
     };
 
     
     return {
-        resetStateVars: function () {
-            resetStateVars(); },
-        display: function () {
-            mor.pen.getPen(mainDisplay); },
-        updateHeading: function () {
-            writeNavDisplay(); },
+        updateHeading: function (mode) {
+            writeNavDisplay(mode || "activity"); },
         pensearchdialog: function () {
             penNameSearchDialog(); },
         moreact: function () {
-            doActivitySearch(); },
+            doActivitySearch(true); },
         notePenNameStr: function (pen) {
             notePenNameStr(pen); },
-        findReview: function (revid) {
-            return findReview(revid); },
-        cacheReview: function (rev) {
-            revcache[mor.instId(rev)] = rev; },
         searchPensLinkHTML: function () {
             return searchPensLinkHTML(); },
+        togglesrchopts: function () {
+            toggleSearchOptions(); },
         activityLinkHTML: function () {
             return activityLinkHTML(); },
         rememberedLinkHTML: function () {
             return rememberedLinkHTML(); },
         displayActive: function () {
-            dispmode = "activity";
-            mor.pen.getPen(mainDisplay); },
+            mor.pen.getPen(function (pen) {
+                mainDisplay(pen, "activity"); }); },
         displayRemembered: function () {
-            dispmode = "memo";
-            mor.pen.getPen(mainDisplay); },
-        togglesrchopts: function () {
-            toggleSearchOptions(); },
+            mor.pen.getPen(function (pen) {
+                mainDisplay(pen, "memo"); }); },
         startPenSearch: function () {
             startPenSearch(); },
         searchPens: function () {
-            searchPens(); }
+            searchPens(); },
+        reset: function () {
+            mor.pen.currPenRef().actdisp = null; }
     };
 
 });

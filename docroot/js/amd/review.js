@@ -511,9 +511,10 @@ define([], function () {
 
     errlabel = function (domid) {
         var elem = mor.byId(domid);
-        elem.style.color = "red";
-        if(elem.innerHTML.indexOf("*") < 0) {
-            elem.innerHTML += "*"; }
+        if(elem) {
+            elem.style.color = "red";
+            if(elem.innerHTML.indexOf("*") < 0) {
+                elem.innerHTML += "*"; } }
     },
 
 
@@ -1383,10 +1384,9 @@ define([], function () {
         data = mor.objdata(crev);
         mor.call(url + mor.login.authparams(), 'POST', data,
                  function (reviews) {
-                     mor.profile.resetReviews();
                      crev = reviews[0];
-                     //fetch the updated top 20 lists
-                     setTimeout(mor.pen.refreshCurrent, 100);
+                     //fetch the updated top 20 lists and refresh cache
+                     setTimeout(mor.pen.refreshCurrent, 50);
                      if(doneEditing) {
                          attribution = "";
                          mor.review.displayRead(actionstr); }
@@ -1479,7 +1479,7 @@ define([], function () {
             idx = pen.revmem.remembered.indexOf(revid); }
         if(!remove) { //prepend to remembered, most recent first
             pen.revmem.remembered.unshift(revid);
-            mor.activity.cacheReview(crev); }
+            mor.lcs.putRev(crev); }
         mor.pen.updatePen(pen, 
                           function (pen) {
                               mor.review.displayRead(); },
@@ -1521,9 +1521,9 @@ define([], function () {
             crev.penid = mor.pen.currPenId(); }
         setTimeout(function () {  //refresh headings
             if(crev.penid !== mor.instId(pen)) { 
-                mor.profile.retrievePen(crev.penid, function(revpen) {
-                    mor.profile.writeNavDisplay(pen, revpen, "nosettings");
-                }); }
+                mor.lcs.getPenFull(crev.penid, function (revpenref) {
+                    mor.profile.writeNavDisplay(pen, revpenref.pen,
+                                                "nosettings"); }); }
             else {
                 mor.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);

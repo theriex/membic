@@ -8,36 +8,15 @@
 define([], function () {
     "use strict";
 
-    var penNames,
-        currpen,
-        returnFuncMemo,  //if a form display is needed
+    var penNameRefs,  //array of authorized PenRefs
+        currpenref,   //the currently selected PenRef
+        returnFuncMemo,  //function to return to after dialog completed
 
 
     resetStateVars = function () {
-        penNames = null;
-        currpen = null;
+        penNameRefs = null;
+        currpenref = null;
         returnFuncMemo = null;
-    },
-
-
-    //update the currently stored version of the pen.
-    noteUpdatedPen = function (pen) {
-        var i, penid = mor.instId(pen);
-        for(i = 0; penNames && i < penNames.length; i += 1) {
-            if(mor.instId(penNames[i]) === penid) {
-                penNames[i] = pen;
-                break; } }
-        if(mor.instId(currpen) === penid) {
-            currpen = pen; }
-    },
-
-
-    //returns the referenced pen if it is owned by the current user
-    getHomePen = function (penid) {
-        var i;
-        for(i = 0; penNames && i < penNames.length; i += 1) {
-            if(mor.instId(penNames[i]) === penid) {
-                return penNames[i]; } }
     },
 
 
@@ -94,23 +73,26 @@ define([], function () {
     //Update changed fields for currpen so anything referencing it
     //gets the latest field values from the db.  Only updates public
     //fields.  Explicitely does not update the settings, since that
-    //can lead to race conditions if the app is dealing with that in
-    //the meantime while the call is going on.
+    //can lead to race conditions if the app is dealing with that
+    //while this call is going on.  The cached pen ref is modified
+    //directly so the updated info is globally available.
     refreshCurrentPenFields = function () {
-        var params, critsec = "";
-        if(currpen) {
-            params = "penid=" + mor.instId(currpen);
+        var pen, params, critsec = "";
+        pen = currpenref && currpenref.pen;
+        if(pen) {
+            params = "penid=" + mor.instId(pen);
             mor.call("penbyid?" + params, 'GET', null,
                      function (pens) {
                          if(pens.length > 0) {
-                             currpen.name = pens[0].name;
-                             currpen.shoutout = pens[0].shoutout;
-                             currpen.city = pens[0].city;
-                             currpen.accessed = pens[0].accessed;
-                             currpen.modified = pens[0].modified;
-                             currpen.top20s = pens[0].top20s;
-                             currpen.following = pens[0].following;
-                             currpen.followers = pens[0].followers; } },
+                             currpenref.pen.name = pens[0].name;
+                             currpenref.pen.shoutout = pens[0].shoutout;
+                             currpenref.pen.city = pens[0].city;
+                             currpenref.pen.accessed = pens[0].accessed;
+                             currpenref.pen.modified = pens[0].modified;
+                             currpenref.pen.top20s = pens[0].top20s;
+                             currpenref.pen.following = pens[0].following;
+                             currpenref.pen.followers = pens[0].followers;
+                             mor.profile.resetReviews(); } },
                      function (code, errtxt) {
                          mor.log("refreshCurrentPenFields " + code + " " +
                                  errtxt); },
@@ -122,8 +104,8 @@ define([], function () {
         if(!callback) {
             callback = returnFuncMemo; }
         mor.layout.initContent();  //may call for pen name retrieval...
-        mor.rel.loadoutbound(currpen);
-        callback(currpen);
+        mor.rel.loadoutbound();
+        callback(currpenref.pen);
     },
 
 
@@ -133,10 +115,10 @@ define([], function () {
         data = mor.objdata(pen);
         mor.call("updpen?" + mor.login.authparams(), 'POST', data,
                  function (updpens) {
-                     currpen = updpens[0];
-                     deserializeFields(currpen);
-                     callok(currpen); },
+                     currpenref = mor.lcs.putPen(updpens[0]);
+                     callok(currpenref); },
                  function (code, errtxt) {
+                     deserializeFields(pen);  //undo pre-call serialization
                      callfail(code, errtxt); },
                  critsec);
     },
@@ -149,19 +131,17 @@ define([], function () {
         mor.out('formbuttons', "Creating Pen Name...");
         newpen = {};
         newpen.name = name;
-        if(currpen && currpen.settings) {
-            newpen.settings = currpen.settings;
+        if(currpenref && currpenref.settings) {
+            newpen.settings = currpenref.settings;
             serializeFields(newpen); }
         data = mor.objdata(newpen);
         mor.call("newpen?" + mor.login.authparams(), 'POST', data,
                  function (newpens) {
-                     currpen = newpens[0];
-                     if(!penNames) {
-                         penNames = []; }
-                     penNames.push(currpen);
-                     deserializeFields(currpen);
+                     currpenref = mor.lcs.putPen(newpens[0]);
+                     if(!penNameRefs) {
+                         penNameRefs = []; }
+                     penNameRefs.push(currpenref);
                      mor.rel.resetStateVars("new");
-                     mor.activity.resetStateVars();
                      mor.login.updateAuthentDisplay();
                      returnCall(); },
                  function (code, errtxt) {
@@ -182,7 +162,7 @@ define([], function () {
         returnFuncMemo = callback;
         mor.login.updateAuthentDisplay("hide");
         mor.out('centerhdiv', "");
-        if(currpen) {
+        if(currpenref && currpenref.pen) {
             cancelbutton = "<button type=\"button\" id=\"cancelbutton\"" +
                                   " onclick=\"mor.pen.cancelNewPen();" + 
                                             "return false;\"" +
@@ -217,52 +197,62 @@ define([], function () {
 
     selectPenByName = function (name) {
         var i;
-        for(i = 0; i < penNames.length; i += 1) {
-            if(penNames[i].name === name) {
-                currpen = penNames[i];
-                mor.skinner.setColorsFromPen(currpen);
+        for(i = 0; i < penNameRefs.length; i += 1) {
+            if(penNameRefs[i].pen.name === name) {
+                currpenref = penNameRefs[i];
+                mor.skinner.setColorsFromPen(currpenref.pen);
                 //reload relationships and activity
-                mor.rel.resetStateVars("reload", currpen);
-                mor.activity.resetStateVars();
+                mor.rel.resetStateVars("reload", currpenref.pen);
                 //update the accessed time so that the latest pen name is
                 //chosen by default next time. 
-                updatePenName(penNames[i], 
+                updatePenName(penNameRefs[i].pen, 
                               mor.profile.display, mor.profile.display);
                 break; } }
     },
 
 
-    findHomePen = function () {
-        var i, lastChosen = "0000-00-00T00:00:00Z", pen;
-        if(penNames && penNames.length) {
-            for(i = 0; i < penNames.length; i += 1) {
-                deserializeFields(penNames[i]);
-            if(penNames[i].accessed > lastChosen) {
-                lastChosen = penNames[i].accessed;
-                pen = penNames[i]; } } }
-        return pen;
+
+    findHomePenRef = function () {
+        var i, lastChosen = "0000-00-00T00:00:00Z", penref;
+        if(penNameRefs && penNameRefs.length) {
+            for(i = 0; i < penNameRefs.length; i += 1) {
+                if(penNameRefs[i].pen.accessed > lastChosen) {
+                    lastChosen = penNameRefs[i].pen.accessed;
+                    penref = penNameRefs[i]; } } }
+        return penref;
     },
 
 
     chooseOrCreatePenName = function (callback) {
-        if(!penNames || penNames.length === 0) {
+        if(!penNameRefs || penNameRefs.length === 0) {
             return newPenNameDisplay(callback); }
-        currpen = findHomePen();
-        mor.skinner.setColorsFromPen(currpen);
+        currpenref = findHomePenRef();
+        mor.skinner.setColorsFromPen(currpenref.pen);
         returnCall(callback);
+    },
+
+
+    getPenNames = function () {
+        var i, pens = [];
+        for(i = 0; penNameRefs && i < penNameRefs.length; i += 1) {
+            pens.push(penNameRefs[i].pen); }
+        return pens;
     },
 
 
     getPenName = function (callback) {
         var url, critsec = "";
-        if(penNames) {
+        if(penNameRefs) {
             chooseOrCreatePenName(callback); }
         mor.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         mor.layout.adjust();
         url = "mypens?" + mor.login.authparams();
         mor.call(url, 'GET', null,
                  function (pens) {
-                     penNames = pens;
+                     var i;
+                     penNameRefs = [];
+                     for(i = 0; i < pens.length; i += 1) {
+                         penNameRefs.push(mor.lcs.putPen(pens[i])); }
                      chooseOrCreatePenName(callback); },
                  function (code, errtxt) {
                      mor.out('contentdiv', "Pen name retrieval failed: " + 
@@ -275,25 +265,23 @@ define([], function () {
         resetStateVars: function () {
             resetStateVars(); },
         getPen: function (callback) {
-            if(currpen) {  //initialization done, no side effects..
-                return callback(currpen); }
+            if(currpenref) {  //initialization done, no side effects..
+                return callback(currpenref.pen); }
             getPenName(callback); },  //triggers setup processing.
         currPenId: function () {
-            return mor.instId(currpen) || 0; },
+            if(currpenref && currpenref.pen) {
+                return mor.instId(currpenref.pen); }
+            return 0; },
+        currPenRef: function () {
+            return currpenref; },
         updatePen: function (pen, callbackok, callbackfail) {
             updatePenName(pen, callbackok, callbackfail); },
-        noteUpdatedPen: function (pen) {
-            noteUpdatedPen(pen); },
         getPenNames: function () { 
-            return penNames; },
+            return getPenNames(); },
         newPenName: function (callback) {
             newPenNameDisplay(callback); },
         selectPenByName: function (name) {
             selectPenByName(name); },
-        getHomePen: function (penid) {
-            return getHomePen(penid); },
-        findHomePen: function () {
-            return findHomePen(); },
         refreshCurrent: function () {
             refreshCurrentPenFields(); },
         deserializeFields: function (pen) {
