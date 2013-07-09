@@ -17,9 +17,16 @@ define([], function () {
     extractField = function (field, xml) {
         var idx, tag = "<" + field + ">";
         idx = xml.indexOf(tag);
-        if(idx < 0) {
-            return ""; }
-        xml = xml.slice(idx + tag.length);
+        if(idx < 0) {  //simple tag not found
+            tag = "<" + field + " ";
+            idx = xml.indexOf(tag);
+            if(idx < 0) {  //tag with attributes not found either
+                return ""; }
+            xml = xml.slice(idx + tag.length);
+            idx = xml.indexOf(">");
+            xml = xml.slice(idx + 1); }
+        else { //simple tag found
+            xml = xml.slice(idx + tag.length); }
         tag = "</" + field + ">";
         idx = xml.indexOf(tag);
         xml = xml.slice(0, idx);
@@ -30,6 +37,31 @@ define([], function () {
     setIfReturned = function (review, field, val) {
         if(val) {
             review[field] = val; }
+    },
+
+
+    setIfFound = function (review, field, vals) {
+        if(vals && vals.length > 0) {
+            review[field] = vals.join(", "); }
+    },
+
+
+    extractElements = function (field, xml) {
+        var fields, i, btag, etag, bidx, eidx, value, results = [];
+        fields = field.split(".");
+        for(i = 0; i < fields.length - 1; i += 1) {
+            xml = extractField(fields[i], xml); }
+        field = fields[fields.length - 1];
+        btag = "<" + field + ">";
+        etag = "</" + field + ">";
+        bidx = xml.indexOf(btag);
+        while(bidx >= 0) {
+            eidx = xml.indexOf(etag);
+            value = xml.slice(bidx + btag.length, eidx);
+            results.push(value);
+            xml = xml.slice(eidx + etag.length);
+            bidx = xml.indexOf(btag); }
+        return results;
     },
 
 
@@ -73,7 +105,9 @@ define([], function () {
         //additional specialized fields for movie:
         //year: ReleaseDate already set from above
         //starring: multiple Actor entries within ItemAttributes
-        //Punting on this for now, see netflix.js comments
+        setIfFound(review, "starring",
+                   extractElements("ItemLookupResponse.Items.Item" + 
+                                   ".ItemAttributes.Actor", xml));
     },
 
 
