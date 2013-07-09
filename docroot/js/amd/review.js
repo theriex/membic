@@ -57,8 +57,8 @@ define([], function () {
             key: "title", //subkey
             fields: [ "year", "starring" ],
             dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
-                       "Educational", "Cult", "Classic", "Funny", 
-                       "Suspenseful" ] },
+                       "Educational", "Cult", "Classic", 
+                       "Drama", "Escapism", "Funny", "Suspenseful" ] },
           { type: "video", plural: "videos", img: "TypeVideo50.png",
             keyprompt: "Title",
             key: "title", //subkey
