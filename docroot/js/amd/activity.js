@@ -317,7 +317,8 @@ define([], function () {
                     html += mor.profile.reviewItemHTML(revref.rev, 
                                                 revref.rev.penNameStr); } } }
         if(i === maxdisp && maxdisp < 3) {  //after 3 times they should get it
-            html += "<li></li><li>" + hint + "</li>"; }
+            html += "<li></li><li><span class=\"hintText\">" + hint + 
+                "</span></li>"; }
         html += "</ul>";
         mor.out('revactdiv', html);
         mor.layout.adjust();

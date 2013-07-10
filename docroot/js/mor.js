@@ -144,6 +144,15 @@ var mor = {};  //Top level function closure container
             case "activity":
                 mor.activity.displayActive();
                 break;
+            case "memo":
+                mor.activity.displayRemembered();
+                break;
+            case "review":
+                //the review was cached when previously viewed..
+                mor.review.setCurrentReview(
+                    mor.lcs.getRevRef(state.revid).rev);
+                mor.review.displayRead();
+                break;
             } }
     };
 
