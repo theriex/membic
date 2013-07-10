@@ -168,6 +168,7 @@ body {
 .revimg { max-width:125px; height:auto; }
 .revimgsafe { width:125px; height:auto; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
+.morerevs { font-size:small; padding: 0px 0px 0px 30px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
 .csvstrdiv { padding:5px; }
 .bigoverlabel { font-size:large; font-weight:bold; padding:25px 0px 0px 0px; }

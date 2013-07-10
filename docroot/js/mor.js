@@ -22,7 +22,7 @@ var mor = {};  //Top level function closure container
     mor.winw = 0;  //adjusted in mor.layout
     mor.winh = 0;
     mor.introtext = "";
-    mor.authcookname = "myopenreviewsauth";
+    mor.authcookname = "myopenreviewauth";
     mor.secsvr = "https://myopenreviews.appspot.com";
     mor.mainsvr = "http://www.myopenreviews.com";
 
@@ -432,6 +432,8 @@ var mor = {};  //Top level function closure container
     //if making an html attribute value by escaping double quotes,
     //then get rid of any double quotes in the contained value
     mor.ndq = function (val) {
+        if(!val) {
+            return ""; }
         val = val.replace(/"/g, "&quot;");
         return val;
     };
@@ -702,6 +704,30 @@ var mor = {};  //Top level function closure container
             attval = comps[i].split("=");
             obj[attval[0]] = attval[1]; }
         return obj;
+    };
+
+
+    mor.ISOString2Day = function (str) {
+        var date, year, month, day;
+        if(!str) {
+            return new Date(); }
+        year = parseInt(str.slice(0, 4), 10);
+        month = parseInt(str.slice(5, 7), 10);
+        day = parseInt(str.slice(8, 10), 10);
+        date = new Date(year, month, day, 0, 0, 0, 0);
+        return date;
+    };
+
+
+    mor.colloquialDate = function (date) {
+        var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+                     'Thursday', 'Friday', 'Saturday', 'Sunday' ],
+            months = [ "January", "February", "March", "April", "May", 
+                       "June", "July", "August", "September", "October", 
+                       "November", "December" ];
+        return String(days[date.getUTCDay()]) + 
+            ", " + String(months[date.getMonth()]) +
+            " " + String(date.getUTCDate());
     };
 
 

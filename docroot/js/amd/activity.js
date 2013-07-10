@@ -331,15 +331,40 @@ define([], function () {
     },
 
 
+    moreRevsFromHTML = function (rev) {
+        var html = "<li>" + "<div class=\"morerevs\">" +
+            "<a href=\"#" + mor.objdata({ view: "profile", 
+                                          profid: rev.penid }) + "\"" +
+              " onclick=\"mor.profile.byprofid('" + rev.penid + 
+                                               "', 'recent');" +
+                         "return false;\"" +
+              " title=\"Show recent reviews from " + 
+                        mor.ndq(rev.penNameStr) + "\"" + 
+            ">" + "more reviews from " +
+                mor.ndq(rev.penNameStr) + " on " + 
+                mor.colloquialDate(mor.ISOString2Day(rev.modified)) +
+            "</a></div></li>";
+        return html;
+    },
+
+
     displayReviewActivity = function () {
-        var actdisp, revrefs, rev, i, breakid, html = "<ul class=\"revlist\">";
+        var actdisp, revrefs, rev, i, breakid, html, key, reps = {};
+        html = "<ul class=\"revlist\">";
         actdisp = mor.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {
             html += "<li>None of the people you are following have posted any reviews recently.</li>"; }
         for(i = 0; i < revrefs.length; i += 1) {
             rev = revrefs[i].rev;
-            html += mor.profile.reviewItemHTML(rev, rev.penNameStr);
+            key = rev.modified.slice(0, 10) + rev.penid;
+            if(!reps[key] || reps[key] < 2) {  //display 2 revs/day/pen
+                reps[key] = (reps[key] || 0) + 1;
+                html += mor.profile.reviewItemHTML(rev, rev.penNameStr); }
+            else {
+                reps[key] += 1;
+                if(reps[key] === 3) {
+                    html += moreRevsFromHTML(rev); } }
             if(!rev.penNameStr) {
                 breakid = rev.penid;
                 break; } }
