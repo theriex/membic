@@ -20,12 +20,12 @@ handlers:
 ##   an: authentication name (username if native auth, whatever otherwise)
 ##
 ## Queries may return a base64 cursor value as the last element.
-## Optional parameters are listed parentheses
+## Optional parameters are listed in parentheses
 ##
 ######################################################################
 
 ######################################################################
-##        MyOpenReviews local site authentication 
+##        MyOpenReviews native site authentication 
 
 ## Get an access token from native MyOpenReviews credentials
 ## POST params: user, pass 
@@ -51,6 +51,7 @@ handlers:
 ## POST params: password, authparams
 - url: /chgpwd.*
   script: src.py.moracct.app
+
 
 
 ######################################################################
@@ -93,6 +94,7 @@ handlers:
   script: src.py.pen.app
 
 
+
 ######################################################################
 ##        Relationships
 
@@ -115,6 +117,7 @@ handlers:
 ## POST params: rel, authparams
 - url: /updrel.*
   script: src.py.rel.app
+
 
 
 ######################################################################
@@ -169,6 +172,35 @@ handlers:
   script: src.py.rev.app
 
 
+
+######################################################################
+##        Review Tags
+
+## Note the specified review was helpful. helpful: "yes" or "no"
+## POST params: penid, revid, helpful, authparams
+- url: /notehelpful.*
+  script: src.py.revtag.app
+
+## Search the review tags for helpful marks, returning most recent first.
+## Specify either penid or revid.  If revid, then penids is a CSV of one
+## or more penid values to match.
+## GET params: penid, revid, penids, authparams
+- url: /srchhelpful.*
+  script: src.py.revtag.app
+
+## Note the specified review should be remembered.  remember: "yes" or "no"
+## POST params: penid, revid, remember, authparams
+- url: /noteremem.*
+  script: src.py.revtag.app
+
+## Search the review tags for remember marks, returning most recent first
+## penids is a CSV of one or more penid values to match.
+## GET params: penid, revid, penids, authparams
+- url: /srchremem.*
+  script: src.py.revtag.app
+
+
+
 ######################################################################
 ##        Connection Services
 
@@ -201,6 +233,7 @@ handlers:
 ## GET params: url, authparams
 - url: /urlcontents.*
   script: src.py.consvc.app
+
 
 
 ######################################################################

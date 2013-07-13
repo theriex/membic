@@ -250,18 +250,18 @@ def actionButtonsHTML(penrevparms):
     html += "<div id=\"staticsocialrevactdiv\">\n"
     html +=   "<table><tr><td>\n"
     html +=     "<div id=\"statnoticediv\">\n"
-    # respond/remember row
+    # helpful, remember row
     html += "<table class=\"statnoticeactlinktable\" border=\"0\"><tr>\n"
-    # respond button
-    html += "<td><div id=\"respondbutton\" class=\"buttondiv\">\n"
+    # helpful button
+    html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">\n"
     html +=   "<table class=\"buttontable\""
     html +=         " onclick=\"javascript:window.location.href="
-    html +=                    "'../#command=respond&" + penrevparms
-    html +=                    "';return false;\"><tr>\n"
-    html +=     "<td><img class=\"navico\" src=\"../img/writereview.png\""
+    html +=                  "'../#command=helpful&" + penrevparms
+    html +=                  "';return false;\"><tr>\n"
+    html +=     "<td><img class=\"navico\" src=\"../img/helpfulq.png\""
     html +=             " border=\"0\"/></td>\n"
     html +=     "<td class=\"buttontabletexttd\">"
-    html +=       "Your review</td>\n"
+    html +=       "Helpful</td>\n"
     html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     # remember button
@@ -277,7 +277,22 @@ def actionButtonsHTML(penrevparms):
     html +=   "</tr></table>\n"
     html +=   "</div></td>\n"
     html += "</tr></table>"
-    # sign in button row
+    # respond row
+    html += "<table class=\"statnoticeactlinktable\" border=\"0\"><tr>\n"
+    # respond button
+    html += "<td><div id=\"respondbutton\" class=\"buttondiv\">\n"
+    html +=   "<table class=\"buttontable\""
+    html +=         " onclick=\"javascript:window.location.href="
+    html +=                    "'../#command=respond&" + penrevparms
+    html +=                    "';return false;\"><tr>\n"
+    html +=     "<td><img class=\"navico\" src=\"../img/writereview.png\""
+    html +=             " border=\"0\"/></td>\n"
+    html +=     "<td class=\"buttontabletexttd\">"
+    html +=       "Your review</td>\n"
+    html +=   "</tr></table>\n"
+    html +=   "</div></td>\n"
+    html += "</tr></table>"
+    # view from your pen name row
     html += "<table class=\"statnoticeactlinktable\" border=\"0\""
     html +=       " style=\"padding-bottom:20px;\"><tr>\n"
     html += "<td colspan=\"2\">"

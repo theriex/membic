@@ -835,25 +835,36 @@ define([], function () {
         //reading a review written by someone else, show social actions
         else {
             html = "<div id=\"socialrevactdiv\">" +
-              "<table class=\"socialrevacttable\" border=\"0\"><tr>" +
-                "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
+              "<table class=\"socialrevacttable\" border=\"0\"><tr>";
+            //helpful checkbox. init unchecked then update after lookup
+            html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">" +
+                mor.imgntxt("helpfulq.png",
+                            "Helpful",
+                            "mor.review.helpful()", "#helpful",
+                            "Mark this review as helpful", "", "helpful") +
+                "</div></td>";
+            //remember button
+            html += "<td><div id=\"memobutton\" class=\"buttondiv\">";
+            if(isRemembered(pen, review)) {
+                html += mor.imgntxt("remembered.png",
+                                    "Remembered",
+                                    "mor.review.memo(true)", "#nomemo",
+                                    "Remove this from remembered reviews", 
+                                    "", "memo"); }
+            else {
+                html += mor.imgntxt("rememberq.png",
+                                    "Remember",
+                                    "mor.review.memo(false)", "#memo",
+                                    "Add this to remembered reviews", 
+                                    "", "memo"); }
+            //respond button
+            html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
                   //this contents is rewritten after looking up their review
                   mor.imgntxt("writereview.png",
                               "Your review",
                               "mor.review.respond()", "#respond",
                               "Edit your corresponding review", "", "respond") +
-                  "</div></td>" +
-                "<td><div id=\"memobutton\" class=\"buttondiv\">";
-            if(isRemembered(pen, review)) {
-                html += mor.imgntxt("remembered.png",
-                                    "Remembered",
-                                    "mor.review.memo(true)", "#nomemo",
-                                    "Click to stop remembering", "", "memo"); }
-            else {
-                html += mor.imgntxt("rememberq.png",
-                                    "Remember",
-                                    "mor.review.memo(false)", "#memo",
-                                    "Click to remember", "", "memo"); }
+                  "</div></td>";
             html += "</div></td></tr></table></div>"; }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
@@ -1251,6 +1262,95 @@ define([], function () {
     },
 
 
+    isHelpful = function (revtag) {
+        if(revtag && revtag.helpful && !revtag.nothelpful) {
+            return true; }
+        return false;
+    },
+
+
+    toggleHelpfulButton = function (value) {
+        var img, data, critsec = "";
+        img = mor.byId('helpfulimg');
+        if(!img) {  //spurious call, button not displayed
+            return; }
+        if(value === "set") {  //just initializing the display
+            img.src = "img/helpful.png";
+            return; }
+        img.className = "navicodis";  //grey out the image
+        value = (img.src.indexOf("helpful.png") > 0)? "no" : "yes";  //toggle
+        data = "penid=" + mor.instId(mor.pen.currPenRef().pen) +
+            "&revid=" + mor.instId(crev) +
+            "&helpful=" + value;
+        mor.call("notehelpful?" + mor.login.authparams(), 'POST', data,
+                 function (updatedrevtags) {
+                     var i, penref, rtid, replaced;
+                     //update the local cached data
+                     rtid = mor.instId(updatedrevtags[0]);
+                     penref = mor.pen.currPenRef();
+                     if(!penref.helpful) {
+                         penref.helpful = updatedrevtags; }
+                     else {
+                         for(i = 0; i < penref.helpful.length; i += 1) {
+                             if(mor.instId(penref.helpful[i]) === rtid) {
+                                 penref.helpful[i] = updatedrevtags[0];
+                                 replaced = true; } }
+                         if(!replaced) {
+                             penref.helpful.push(updatedrevtags[0]); } }
+                     //update the display image
+                     if(isHelpful(updatedrevtags[0])) {
+                         img.src = "img/helpful.png"; }
+                     else {
+                         img.src = "img/helpfulq.png"; }
+                     //ungrey the image
+                     img.className = "navico"; },
+                 function (code, errtxt) {
+                     mor.err("toggleHelpfulButton failed " + code +
+                             " " + errtxt); },
+                 critsec);
+    },
+
+
+    initHelpfulButtonSetting = function (penref, review) {
+        var i, revid, params, critsec = "";
+        if(penref.helpful) {  //local data initialized
+            revid = mor.instId(review);
+            for(i = 0; i < penref.helpful.length; i += 1) {
+                if(penref.helpful[i].revid === revid && 
+                   isHelpful(penref.helpful[i])) {
+                    toggleHelpfulButton("set");
+                    break; } } }
+        else {  //penref.helpful not defined yet. init from db and retry
+            params = "penid=" + mor.instId(penref.pen) + 
+                "&" + mor.login.authparams();
+            mor.call("srchhelpful?" + params, 'GET', null,
+                     function (revtags) {
+                         penref.helpful = revtags;
+                         initHelpfulButtonSetting(penref, review); },
+                     function (code, errtxt) {
+                         mor.err("initHelpfulButtonSetting failed " + code +
+                                 " " + errtxt); },
+                     critsec); }
+    },
+
+
+    startReviewFormDynamicElements = function (revpen, review) {
+        if(mor.byId('helpfulbutton')) {
+            initHelpfulButtonSetting(mor.pen.currPenRef(), review); }
+        if(mor.byId('respondbutton')) {
+            mor.pen.getPen(function (homepen) {
+                findCorrespondingReview(homepen, 
+                                        displayCorrespondingReviewInfo); 
+            }); }
+        if(mor.byId('revautodiv')) {
+            autocomptxt = "";
+            autocompletion(); }
+        if(mor.byId('sharediv')) {
+            mor.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
+                                      revpen, review); }
+    },
+
+
     displayReviewForm = function (pen, review, mode, errmsg) {
         var twidth, html, type, keyval, temp;
         type = findReviewType(review.revtype);
@@ -1302,16 +1402,7 @@ define([], function () {
         mor.layout.adjust();
         if(errmsg) {
             mor.out('revsavemsg', errmsg); }
-        if(mor.byId('respondbutton')) {
-            mor.pen.getPen(function (pen) {
-                findCorrespondingReview(pen, displayCorrespondingReviewInfo); 
-            }); }
-        if(mor.byId('revautodiv')) {
-            autocomptxt = "";
-            autocompletion(); }
-        if(mor.byId('sharediv')) {
-            mor.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
-                                      pen, review); }
+        startReviewFormDynamicElements(pen, review);
     },
 
 
@@ -1534,7 +1625,9 @@ define([], function () {
         if(read) { 
             displayReviewForm(pen, crev);
             if(crev.penid !== mor.pen.currPenId()) {  //not our review
-                if(action === "remember") {
+                if(action === "helpful") {
+                    mor.review.helpful("set"); }
+                else if(action === "remember") {
                     mor.review.memo(); }
                 else if(action === "respond") {
                     mor.review.respond(); } } }
@@ -1609,6 +1702,8 @@ define([], function () {
             setTimeout(function () {
                 mor.pen.getPen(function (pen) {
                     addReviewToMemos(pen, remove); }); }, 50); },
+        helpful: function (value) {
+            toggleHelpfulButton(value); },
         graphicAbbrevSiteLink: function (url) {
             return graphicAbbrevSiteLink(url); },
         swapVidTitleAndArtist: function () {

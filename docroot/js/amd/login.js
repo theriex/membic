@@ -584,7 +584,8 @@ define([], function () {
     loggedInDoNextStep = function (params) {
         if(params.command === "chgpwd") {
             displayChangePassForm(); }
-        else if(params.command === "remember" || 
+        else if(params.command === "helpful" ||
+                params.command === "remember" ||
                 params.command === "respond" ||
                 (params.view === "review" && params.revid)) {
             mor.lcs.getPenFull(params.penid, function (penref) {

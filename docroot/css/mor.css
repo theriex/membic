@@ -98,7 +98,9 @@ body {
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }
-.navico { margin:0px 0px 0px 14px; padding:4px; vertical-align:bottom; }
+.navico, .navicodis { margin:0px 0px 0px 14px; padding:4px; 
+  vertical-align:bottom; }
+.navicodis { opacity:0.3; filter:alpha(opacity=30); }
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 .svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
   border:none; vertical-align:middle; }

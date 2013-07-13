@@ -48,3 +48,10 @@ indexes:
   - name: revtype
   - name: modified
     direction: desc
+
+- kind: ReviewTag
+  properties:
+  - name: nothelpful
+  - name: penid
+  - name: helpful
+    direction: desc
