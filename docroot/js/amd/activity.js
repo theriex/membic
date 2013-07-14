@@ -285,25 +285,22 @@ define([], function () {
     },
 
 
-    displayRemembered = function (pen) {
-        var i, html, revref, crid, friend, cfid, maxdisp = 50, hint;
-        hint = "If you see a review worth remembering, click its " + 
-            "\"Remember\" button to keep a reference to it here.";
-        mor.pen.deserializeFields(pen);
-        html = "<ul class=\"revlist\">";
-        if(!pen.revmem || !pen.revmem.remembered || 
-           !pen.revmem.remembered.length) {
-            html += "<li>You have not remembered any reviews. " + hint + 
-                "</li>"; }
-        else {
-            maxdisp = Math.min(maxdisp, pen.revmem.remembered.length);
-            for(i = 0; i < maxdisp; i += 1) {
-                revref = mor.lcs.getRevRef(pen.revmem.remembered[i]);
-                if(revref.status !== "ok" && revref.status !== "not cached") {
-                    maxdisp += 1; }  //ignore deleted review
-                else {
-                    if(!revref.rev) {
-                        crid = pen.revmem.remembered[i];
+    displayRemembered = function () {
+        var penref, hint, html, i, revref, crid, friend, cfid, 
+            params, critsec = "";
+        penref = mor.pen.currPenRef();
+        if(penref.remembered) {
+            hint = "If you see a review worth remembering, click its " + 
+                "\"Remember\" button to keep a reference to it here.";
+            html = "<ul class=\"revlist\">";
+            if(!penref.remembered.length) {
+                html += "<li>You have not remembered any reviews. " + 
+                    hint + "</li>"; }
+            else { //have remembered reviews for display
+                for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
+                    revref = mor.lcs.getRevRef(penref.remembered[i].revid);
+                    if(revref.status === "not cached") {
+                        crid = penref.remembered[i].revid;
                         html += "<li>Fetching Review " + crid + "...</li>";
                         break; }
                     if(!revref.rev.penNameStr) {
@@ -315,20 +312,30 @@ define([], function () {
                         html += "<li>Fetching Pen Name " + cfid + "...</li>";
                         break; }
                     html += mor.profile.reviewItemHTML(revref.rev, 
-                                                revref.rev.penNameStr); } } }
-        if(i === maxdisp && maxdisp < 3) {  //after 3 times they should get it
-            html += "<li></li><li><span class=\"hintText\">" + hint + 
-                "</span></li>"; }
-        html += "</ul>";
-        mor.out('revactdiv', html);
-        mor.layout.adjust();
-        if(crid) {
-            mor.lcs.getRevFull(crid, mor.activity.displayRemembered); }
-        if(cfid) {
-            setTimeout(function () {
-                mor.lcs.getPenFull(cfid, function (penref) {
-                    mor.activity.displayRemembered(penref.pen); }); },
-                       50); }
+                                                   revref.rev.penNameStr); } }
+            if(i < 3) {  //reinforce how to remember reviews
+                html += "<li></li><li><span class=\"hintText\">" + hint + 
+                    "</span></li>"; }
+            html += "</ul>";
+            mor.out('revactdiv', html);
+            mor.layout.adjust();
+            if(crid) {
+                mor.lcs.getRevFull(crid, displayRemembered); }
+            if(cfid) {
+                mor.lcs.getPenFull(cfid, displayRemembered); } }
+        else { //!penref.remembered
+            mor.out('revactdiv', "Fetching remembered reviews...");
+            mor.layout.adjust();
+            params = "penid=" + mor.instId(penref.pen) +
+                "&" + mor.login.authparams();
+            mor.call("srchremem?" + params, 'GET', null,
+                     function (memos) {
+                         penref.remembered = memos;
+                         displayRemembered(); },
+                     function (code, errtxt) {
+                         mor.err("displayRemembered failed " + code + 
+                                 " " + errtxt); },
+                     critsec); }
     },
 
 
@@ -503,14 +510,20 @@ define([], function () {
     },
 
 
-    mainDisplay = function (pen, dispmode) {
+    mainDisplay = function (dispmode) {
+        var penref = mor.pen.currPenRef();
+        if(!penref) {
+            setTimeout(function () {
+                mor.pen.getPen(function (pen) {
+                    mainDisplay(dispmode); }); }, 100);
+            return; }
         mor.historyCheckpoint({ view: dispmode });
         writeNavDisplay(dispmode);
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
-            displayRemembered(pen); }
+            displayRemembered(); }
         else {  //dispmode === "activity"
-            if(mor.pen.currPenRef().actdisp) {
+            if(penref.actdisp) {
                 displayReviewActivity();
                 doActivitySearch(); }
             else {
@@ -536,11 +549,9 @@ define([], function () {
         rememberedLinkHTML: function () {
             return rememberedLinkHTML(); },
         displayActive: function () {
-            mor.pen.getPen(function (pen) {
-                mainDisplay(pen, "activity"); }); },
+            mainDisplay("activity"); },
         displayRemembered: function () {
-            mor.pen.getPen(function (pen) {
-                mainDisplay(pen, "memo"); }); },
+            mainDisplay("memo"); },
         startPenSearch: function () {
             startPenSearch(); },
         searchPens: function () {

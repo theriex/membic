@@ -710,17 +710,6 @@ define([], function () {
     },
 
 
-    //Return true if the current user has remembered the given review,
-    //false otherwise.
-    isRemembered = function (pen, review) {
-        var i, revid = mor.instId(review);
-        if(pen.revmem && pen.revmem.remembered) {
-            for(i = 0; i < pen.revmem.remembered.length; i += 1) {
-                if(revid === pen.revmem.remembered[i]) {
-                    return true; } } }
-    },
-
-
     transformActionsHTML = function (review, type, keyval, mode) {
         var html = "";
         if(keyval && mode === "edit") {
@@ -843,20 +832,13 @@ define([], function () {
                             "mor.review.helpful()", "#helpful",
                             "Mark this review as helpful", "", "helpful") +
                 "</div></td>";
-            //remember button
-            html += "<td><div id=\"memobutton\" class=\"buttondiv\">";
-            if(isRemembered(pen, review)) {
-                html += mor.imgntxt("remembered.png",
-                                    "Remembered",
-                                    "mor.review.memo(true)", "#nomemo",
-                                    "Remove this from remembered reviews", 
-                                    "", "memo"); }
-            else {
-                html += mor.imgntxt("rememberq.png",
-                                    "Remember",
-                                    "mor.review.memo(false)", "#memo",
-                                    "Add this to remembered reviews", 
-                                    "", "memo"); }
+            //remember button. init unchecked and then update after lookup
+            html += "<td><div id=\"memobutton\" class=\"buttondiv\">" +
+                mor.imgntxt("rememberq.png",
+                            "Remember",
+                            "mor.review.memo()", "#memo",
+                            "Add this to remembered reviews", "", "memo") +
+                "</div></td>";
             //respond button
             html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
                   //this contents is rewritten after looking up their review
@@ -1262,6 +1244,25 @@ define([], function () {
     },
 
 
+    updateCachedReviewTags = function (field, updrevtags) {
+        var i, penref, rtid, replaced;
+        rtid = mor.instId(updrevtags[0]);
+        penref = mor.pen.currPenRef();
+        if(!penref[field]) {
+            penref[field] = updrevtags; }
+        else {
+            for(i = 0; i < penref[field].length; i += 1) {
+                if(mor.instId(penref[field][i]) === rtid) {
+                    penref[field][i] = updrevtags[0];
+                    replaced = true; } }
+            if(!replaced) {  //must prepend if remembered
+                penref[field].unshift(updrevtags[0]); } }
+        if(field === "remembered") {
+            //ensure helpful marks for anything remembered are found
+            updateCachedReviewTags('helpful', updrevtags); }
+    },
+
+
     isHelpful = function (revtag) {
         if(revtag && revtag.helpful && !revtag.nothelpful) {
             return true; }
@@ -1270,12 +1271,14 @@ define([], function () {
 
 
     toggleHelpfulButton = function (value) {
-        var img, data, critsec = "";
+        var img, tbl, data, critsec = "";
         img = mor.byId('helpfulimg');
         if(!img) {  //spurious call, button not displayed
             return; }
+        tbl = mor.byId('helpfultable');
         if(value === "set") {  //just initializing the display
             img.src = "img/helpful.png";
+            tbl.title = "Remove mark as helpful";
             return; }
         img.className = "navicodis";  //grey out the image
         value = (img.src.indexOf("helpful.png") > 0)? "no" : "yes";  //toggle
@@ -1284,26 +1287,14 @@ define([], function () {
             "&helpful=" + value;
         mor.call("notehelpful?" + mor.login.authparams(), 'POST', data,
                  function (updatedrevtags) {
-                     var i, penref, rtid, replaced;
-                     //update the local cached data
-                     rtid = mor.instId(updatedrevtags[0]);
-                     penref = mor.pen.currPenRef();
-                     if(!penref.helpful) {
-                         penref.helpful = updatedrevtags; }
-                     else {
-                         for(i = 0; i < penref.helpful.length; i += 1) {
-                             if(mor.instId(penref.helpful[i]) === rtid) {
-                                 penref.helpful[i] = updatedrevtags[0];
-                                 replaced = true; } }
-                         if(!replaced) {
-                             penref.helpful.push(updatedrevtags[0]); } }
-                     //update the display image
+                     updateCachedReviewTags('helpful', updatedrevtags);
                      if(isHelpful(updatedrevtags[0])) {
-                         img.src = "img/helpful.png"; }
+                         img.src = "img/helpful.png";
+                         tbl.title = "Remove mark as helpful"; }
                      else {
-                         img.src = "img/helpfulq.png"; }
-                     //ungrey the image
-                     img.className = "navico"; },
+                         img.src = "img/helpfulq.png";
+                         tbl.title = "Mark this review as helpful"; }
+                     img.className = "navico"; },  //ungrey the image
                  function (code, errtxt) {
                      mor.err("toggleHelpfulButton failed " + code +
                              " " + errtxt); },
@@ -1334,9 +1325,76 @@ define([], function () {
     },
 
 
+    isRemembered = function (revtag) {
+        if(revtag && revtag.remembered && !revtag.forgotten) {
+            return true; }
+        return false;
+    },
+
+
+    toggleMemoButton = function (value) {
+        var img, tbl, data, critsec = "";
+        img = mor.byId('memoimg');
+        if(!img) {  //spurious call, button not displayed
+            return; }
+        tbl = mor.byId('memotable');
+        if(value === "set") {  //just initializing the display
+            img.src = "img/remembered.png";
+            tbl.title = "Remove from your remembered reviews";
+            mor.out('memotxttd', "Remembered");
+            return; }
+        img.className = "navicodis";  //grey out the image
+        value = (img.src.indexOf("remembered.png") > 0)? "no" : "yes"; //toggle
+        data = "penid=" + mor.instId(mor.pen.currPenRef().pen) +
+            "&revid=" + mor.instId(crev) +
+            "&remember=" + value;
+        mor.call("noteremem?" + mor.login.authparams(), 'POST', data,
+                 function (updatedrevtags) {
+                     updateCachedReviewTags('remembered', updatedrevtags);
+                     if(isRemembered(updatedrevtags[0])) {
+                         img.src = "img/remembered.png";
+                         tbl.title = "Remove from your remembered reviews";
+                         mor.out('memotxttd', "Remembered"); }
+                     else {
+                         img.src = "img/rememberq.png";
+                         tbl.title = "Add to your remembered reviews";
+                         mor.out('memotxttd', "Remember"); }
+                     img.className = "navico"; },  //ungrey the image
+                 function (code, errtxt) {
+                     mor.err("toggleMemoButton failed " + code +
+                             " " + errtxt); },
+                 critsec);
+    },
+
+
+    initMemoButtonSetting = function (penref, review) {
+        var i, revid, params, critsec = "";
+        if(penref.remembered) {  //local data initialized
+            revid = mor.instId(review);
+            for(i = 0; i < penref.remembered.length; i += 1) {
+                if(penref.remembered[i].revid === revid &&
+                   isRemembered(penref.remembered[i])) {
+                    toggleMemoButton("set");
+                    break; } } }
+        else { //penref.remembered not defined yet. init from db and retry
+            params = "penid=" + mor.instId(penref.pen) +
+                "&" + mor.login.authparams();
+            mor.call("srchremem?" + params, 'GET', null,
+                     function (memos) {
+                         penref.remembered = memos;
+                         initMemoButtonSetting(penref, review); },
+                     function (code, errtxt) {
+                         mor.err("initMemoButtonSetting failed " + code +
+                                 " " + errtxt); },
+                     critsec); }
+    },
+
+
     startReviewFormDynamicElements = function (revpen, review) {
         if(mor.byId('helpfulbutton')) {
             initHelpfulButtonSetting(mor.pen.currPenRef(), review); }
+        if(mor.byId('memobutton')) {
+            initMemoButtonSetting(mor.pen.currPenRef(), review); }
         if(mor.byId('respondbutton')) {
             mor.pen.getPen(function (homepen) {
                 findCorrespondingReview(homepen, 
@@ -1550,36 +1608,6 @@ define([], function () {
     },
 
 
-    //Add the review to the remembered (permanent) feed items.  If
-    //remove is true then delete it from the remembered feed items.
-    //This would be called "bookmark", except then it gets confused
-    //with the browser bookmarks.
-    //
-    //After the feed item has been created, call the server to verify
-    //the penid:feedid exists in the source review.
-    addReviewToMemos = function (pen, remove) {
-        var idx, revid = mor.instId(crev);
-        if(!pen.revmem) {
-            pen.revmem = {}; }
-        if(!pen.revmem.remembered) {
-            pen.revmem.remembered = []; }
-        //always remove.  When adding this will prevent duplicates
-        idx = pen.revmem.remembered.indexOf(revid);
-        while(idx >= 0) {
-            pen.revmem.remembered.splice(idx, 1);
-            idx = pen.revmem.remembered.indexOf(revid); }
-        if(!remove) { //prepend to remembered, most recent first
-            pen.revmem.remembered.unshift(revid);
-            mor.lcs.putRev(crev); }
-        mor.pen.updatePen(pen, 
-                          function (pen) {
-                              mor.review.displayRead(); },
-                          function (code, errtxt) {
-                              mor.err("Remember update failed " + code + 
-                                      " " + errtxt); });
-    },
-
-
     deleteReview = function () {
         var data, critsec = "";
         if(!crev || 
@@ -1697,11 +1725,8 @@ define([], function () {
             setTimeout(function () {
                 mor.pen.getPen(function (pen) {
                     findCorrespondingReview(pen, copyAndEdit); }); }, 50); },
-        memo: function (remove) {
-            mor.byId('memotxttd').style.color = "#666666";
-            setTimeout(function () {
-                mor.pen.getPen(function (pen) {
-                    addReviewToMemos(pen, remove); }); }, 50); },
+        memo: function (value) {
+            toggleMemoButton(value); },
         helpful: function (value) {
             toggleHelpfulButton(value); },
         graphicAbbrevSiteLink: function (url) {

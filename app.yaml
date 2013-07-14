@@ -199,6 +199,11 @@ handlers:
 - url: /srchremem.*
   script: src.py.revtag.app
 
+## Convert old pen remember array to revtag entries
+## GET params: 
+- url: /cnvpenrem.*
+  script: src.py.revtag.app
+
 
 
 ######################################################################

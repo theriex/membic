@@ -571,7 +571,7 @@ var mor = {};  //Top level function closure container
 
     mor.imgntxt = function (imgfile, text, funcstr, href, 
                             title, cssclass, idbase) {
-        var html, imgtdid = "", imgid = "", txttdid = "";
+        var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
         if(!cssclass) {
             cssclass = "navico"; }
         if(funcstr.indexOf(";") < 0) {
@@ -583,11 +583,12 @@ var mor = {};  //Top level function closure container
         else {
             title = ""; }
         if(idbase) {
+            tblid = " id=\"" + idbase + "table\"";
             imgtdid = " id=\"" + idbase + "imgtd\"";
             imgid = " id=\"" + idbase + "img\"";
             txttdid = " id=\"" + idbase + "txttd\""; }
-        html = "<table class=\"buttontable\" border=\"0\"" + title +
-                     " onclick=\"" + funcstr + "return false;\">" +
+        html = "<table" + tblid + " class=\"buttontable\" border=\"0\"" + 
+                       title + " onclick=\"" + funcstr + "return false;\">" +
             "<tr>" +
               "<td" + imgtdid + ">" +
                 "<img" + imgid + " class=\"" + cssclass + "\" src=\"" + 

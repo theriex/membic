@@ -51,6 +51,13 @@ indexes:
 
 - kind: ReviewTag
   properties:
+  - name: forgotten
+  - name: penid
+  - name: remembered
+    direction: desc
+
+- kind: ReviewTag
+  properties:
   - name: nothelpful
   - name: penid
   - name: helpful

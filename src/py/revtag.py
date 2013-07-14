@@ -4,6 +4,8 @@ from google.appengine.ext import db
 import logging
 from moracct import *
 from pen import PenName, authorized
+import json
+
 
 class ReviewTag(db.Model):
     """ Markings for a review written by someone else """
@@ -13,6 +15,20 @@ class ReviewTag(db.Model):
     forgotten = db.StringProperty()  # iso date when "remember" toggled off
     helpful = db.StringProperty()  # iso date when "helpful" toggled on
     nothelpful = db.StringProperty()  # iso date when "helpful" toggled off
+
+
+def fetch_or_create_tag_authorized(penid, revid):
+    where = "WHERE penid = :1 AND revid = :2"
+    rtquery = ReviewTag.gql(where, penid, revid)
+    rts = rtquery.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    if len(rts) > 0:
+        return rts[0]
+    rt = ReviewTag(penid=penid, revid=revid)
+    rt.remembered = None
+    rt.forgotten = None
+    rt.helpful = None
+    rt.nothelpful = None
+    return rt
 
 
 def fetch_or_create_tag(handler):
@@ -37,17 +53,7 @@ def fetch_or_create_tag(handler):
     # written by the same penid, but liking or remembering your own review
     # doesn't really do any harm, it just looks stupid.  Not worth the fetch.
     revid = intz(handler.request.get('revid'))
-    where = "WHERE penid = :1 AND revid = :2"
-    rtquery = ReviewTag.gql(where, penid, revid)
-    rts = rtquery.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    if len(rts) > 0:
-        return rts[0]
-    rt = ReviewTag(penid=penid, revid=revid)
-    rt.remembered = None
-    rt.forgotten = None
-    rt.helpful = None
-    rt.nothelpful = None
-    return rt
+    return fetch_or_create_tag_authorized(penid, revid)
 
 
 def tag_search_by_id(handler, posfield, negfield, matchfield, matchval):
@@ -110,10 +116,10 @@ class NoteRemember(webapp2.RequestHandler):
             return
         remember = self.request.get('remember')
         if remember == "yes":
-            revtag.remember = nowISO()
-            revtag.forget = None
+            revtag.remembered = nowISO()
+            revtag.forgotten = None
         else:
-            revtag.forget = nowISO()
+            revtag.forgotten = nowISO()
         revtag.put()
         returnJSON(self.response, [ revtag ])
 
@@ -128,7 +134,30 @@ class SearchRemembered(webapp2.RequestHandler):
         tag_search(self, 'remembered', 'forgotten')
 
 
+class ConvertPenRemember(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("Pen names with remember data:\n")
+        pens = PenName.all()
+        for pen in pens:
+            if pen.revmem:
+                penid = pen.key().id()
+                statline = str(penid) + " " + pen.name + ": " + pen.revmem
+                self.response.out.write(statline)
+                remobj = json.loads(pen.revmem)
+                if "remembered" in remobj:
+                    for revid in remobj["remembered"]:
+                        revid = int(revid)
+                        revtag = fetch_or_create_tag_authorized(penid, revid)
+                        revtag.remembered = nowISO()
+                        revtag.forgotten = None
+                        revtag.put()
+                        self.response.out.write("\n    " + str(revid))
+                    
+
+
 app = webapp2.WSGIApplication([('/notehelpful', NoteHelpful),
                                ('/srchhelpful', SearchHelpful),
                                ('/noteremem', NoteRemember),
+                               ('/cnvpenrem', ConvertPenRemember),
                                ('/srchremem', SearchRemembered)], debug=True)
