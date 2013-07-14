@@ -159,5 +159,4 @@ class ConvertPenRemember(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/notehelpful', NoteHelpful),
                                ('/srchhelpful', SearchHelpful),
                                ('/noteremem', NoteRemember),
-                               ('/cnvpenrem', ConvertPenRemember),
                                ('/srchremem', SearchRemembered)], debug=True)
