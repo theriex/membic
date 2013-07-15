@@ -93,13 +93,13 @@ define([], function () {
     //someone is logging in automatically (the most common case), then
     //preloading images is extra overhead so not doing that.
     slideshow = function (firstrun) {
-        var previmg, img;
+        var html, previmg, img;
         if(mor.byId('slidesdiv')) {
             if(mor.isLowFuncBrowser()) {
                 mor.log("slideshow isLowFuncBrowser so no fades");
-                currslot = "<img src=\"img/slides/" + slides[slideindex] +
-                    "\" class=\"slideimg\"/>";
-                mor.out('slidesdiv', currslot);
+                html = "<img src=\"img/slides/" + slides[slideindex] +
+                         "\" class=\"slideimg\"/>";
+                mor.out('slidesdiv', html);
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 if(!firstrun) {
