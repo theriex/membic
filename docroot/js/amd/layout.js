@@ -8,12 +8,12 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "sloganPadded.png", "sloganPadded.png",
+    var slides = [ "sloganPadded.png", "blank.png",
                    "promo_balloons2.png", 
                    "promo_list.png",
                    "promo_cycle.png" ],
-        slideindex = 0,
-        slideslot = 0,
+        slideindex = -1,
+        slideslot = -1,
         topPaddingAndScroll = 320,
         dndState = null,
 
@@ -92,33 +92,49 @@ define([], function () {
     //opacity to 1.  Then change the opacity of the prev img to 0.  If
     //someone is logging in automatically (the most common case), then
     //preloading images is extra overhead so not doing that.
-    slideshow = function () {
-        var sdiv, prevslot, currslot;
-        sdiv = mor.byId('slidesdiv');
-        if(sdiv) {
+    slideshow = function (firstrun) {
+        var previmg, img;
+        if(mor.byId('slidesdiv')) {
             if(mor.isLowFuncBrowser()) {
+                mor.log("slideshow isLowFuncBrowser so no fades");
                 currslot = "<img src=\"img/slides/" + slides[slideindex] +
                     "\" class=\"slideimg\"/>";
                 mor.out('slidesdiv', currslot);
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
-                prevslot = mor.byId("introslide" + slideslot);
-                if(!prevslot) {  //we probably logged in and it's gone
-                    return; }
+                if(!firstrun) {
+                    mor.log("    fading introslide" + slideslot + ": " + 
+                            "img/slides/" + slides[slideindex]);
+                    previmg = mor.byId("introslide" + slideslot);
+                    if(!previmg) {  //probably logged in in the interim
+                        return; }
+                    setTimeout(function () {
+                        //blank out so if there is a lag on image load when
+                        //faded back for display, old content won't flash.
+                        //wait until fade completes though.
+                        previmg.src = "img/slides/blank.png"; }, 1200);
+                    previmg.style.opacity = 0; }  //fade out
                 slideslot = (slideslot + 1) % 2;
                 slideindex = (slideindex + 1) % slides.length;
-                currslot = mor.byId("introslide" + slideslot);
-                if(!currslot) {  //we probably logged in and it's gone
+                mor.log("displaying introslide" + slideslot + ": " + 
+                        "img/slides/" + slides[slideindex]);
+                img = mor.byId("introslide" + slideslot);
+                if(!img) {  //probably logged in in the interim
                     return; }
-                currslot.src = "img/slides/" + slides[slideindex];
-                currslot.style.opacity = 1;
-                prevslot.style.opacity = 0; }
-            if(slides[slideindex].indexOf("mor") === 0) {
-                setTimeout(slideshow, 1200); }
-            else if(slides[slideindex].indexOf("slogan") === 0) {
-                setTimeout(slideshow, 2400); }
+                img.src = "img/slides/" + slides[slideindex];
+                img.style.opacity = 1; }
+            if(!slides[slideindex] || slides[slideindex] === "blank.png") {
+                setTimeout(slideshow, 2200); }
             else {
                 setTimeout(slideshow, 6400); } }
+    },
+
+
+    initSlideshow = function () {
+        if(!mor.isLowFuncBrowser()) {
+            mor.byId('introslide0').style.opacity = 0;
+            mor.byId('introslide1').style.opacity = 0; }
+        slideshow(true);
     },
 
 
@@ -259,7 +275,7 @@ define([], function () {
     return {
         init: function () {
             mor.dojo.on(window, 'resize', fullContentHeight);
-            slideshow();
+            initSlideshow();
             localDocLinks();
             fullContentHeight();
             fixTextureCover(); },
