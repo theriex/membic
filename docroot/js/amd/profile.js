@@ -605,15 +605,17 @@ define([], function () {
 
 
     reviewItemHTML = function (revobj, penNameStr) {
-        var revid, type, linkref, html, text;
+        var revid, type, linkref, linkclass, html, text;
         revid = mor.instId(revobj);
         type = mor.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
+        linkclass = mor.review.foundHelpful(revid)? "rslcbold" : "rslc";
         html = "<li>" + mor.review.starsImageHTML(revobj.rating) + 
             mor.review.badgeImageHTML(type) + "&nbsp;" +
             "<a id=\"lihr" + revid + "\" href=\"" + linkref + "\"" +
               " onclick=\"mor.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
+              " class=\"" + linkclass + "\"" +
               " title=\"See full review\">";
         if(type.subkey) {
             html += "<i>" + mor.ellipsis(revobj[type.key], 60) + "</i> " +

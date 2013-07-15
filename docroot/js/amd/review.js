@@ -1302,26 +1302,42 @@ define([], function () {
     },
 
 
+    foundHelpful = function (revid, penref) {
+        var i;
+        if(!penref) {
+            penref = mor.pen.currPenRef(); }
+        for(i = 0; penref.helpful && i < penref.helpful.length; i += 1) {
+            if(penref.helpful[i].revid === revid && 
+               isHelpful(penref.helpful[i])) {
+                return true; } }
+        return false;
+    },
+
+
+    loadHelpful = function (callback, penref) {
+        var params, critsec = "";
+        if(!penref) {
+            penref = mor.pen.currPenRef(); }
+        params = "penid=" + mor.instId(penref.pen) + 
+            "&" + mor.login.authparams();
+        mor.call("srchhelpful?" + params, 'GET', null,
+                 function (revtags) {
+                     penref.helpful = revtags;
+                     callback(); },
+                 function (code, errtxt) {
+                     mor.err("initHelpfulButtonSetting failed " + code +
+                             " " + errtxt); },
+                 critsec);
+    },
+
+
     initHelpfulButtonSetting = function (penref, review) {
-        var i, revid, params, critsec = "";
         if(penref.helpful) {  //local data initialized
-            revid = mor.instId(review);
-            for(i = 0; i < penref.helpful.length; i += 1) {
-                if(penref.helpful[i].revid === revid && 
-                   isHelpful(penref.helpful[i])) {
-                    toggleHelpfulButton("set");
-                    break; } } }
+            if(foundHelpful(mor.instId(review), penref)) {
+                toggleHelpfulButton("set"); } }
         else {  //penref.helpful not defined yet. init from db and retry
-            params = "penid=" + mor.instId(penref.pen) + 
-                "&" + mor.login.authparams();
-            mor.call("srchhelpful?" + params, 'GET', null,
-                     function (revtags) {
-                         penref.helpful = revtags;
-                         initHelpfulButtonSetting(penref, review); },
-                     function (code, errtxt) {
-                         mor.err("initHelpfulButtonSetting failed " + code +
-                                 " " + errtxt); },
-                     critsec); }
+            loadHelpful(function () {
+                initHelpfulButtonSetting(penref, review); }, penref); }
     },
 
 
@@ -1742,7 +1758,11 @@ define([], function () {
         starRating: function (rating, roundup) {
             return starRating(rating, roundup); },
         selectloc: function (addr, ref) {
-            selectLocation(addr, ref); }
+            selectLocation(addr, ref); },
+        loadHelpful: function (callback, penref) {
+            loadHelpful(callback, penref); },
+        foundHelpful: function (revid, penref) {
+            return foundHelpful(revid, penref); }
     };
 
 });

@@ -486,6 +486,8 @@ define([], function () {
                 (penids[penids.length - 1] === "loading")) {
             retry = true;
             html = "Loading relationships..."; }
+        else if(!mor.pen.currPenRef().helpful) {
+            html = "Loading helpful..."; }
         else {
             mor.pen.currPenRef().actdisp = { 
                 revrefs: [], 
@@ -495,7 +497,9 @@ define([], function () {
         mor.layout.adjust();
         if(mor.pen.currPenRef().actdisp) {
             doActivitySearch(); }
-        if(retry) {
+        else if(!mor.pen.currPenRef().helpful) {
+            mor.review.loadHelpful(bootActivityDisplay); }
+        else if(retry) {
             setTimeout(bootActivityDisplay, 100); }
     },
 
