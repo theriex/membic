@@ -97,6 +97,8 @@ define([], function () {
         if(mor.byId('slidesdiv')) {
             if(mor.isLowFuncBrowser()) {
                 mor.log("slideshow isLowFuncBrowser so no fades");
+                if(firstrun) {
+                    slideindex = 0; }
                 html = "<img src=\"img/slides/" + slides[slideindex] +
                          "\" class=\"slideimg\"/>";
                 mor.out('slidesdiv', html);
