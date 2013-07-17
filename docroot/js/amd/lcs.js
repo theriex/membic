@@ -154,9 +154,8 @@ define([], function () {
 
 
     putRev = function (revobj) {
-        var oldrevobj, revref;
+        var revref;
         revref = getRevRef(revobj);
-        oldrevobj = revref.rev;
         revs[idify(revobj)] = revref;
         revref.rev = revobj;
         revref.status = "ok";

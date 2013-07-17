@@ -500,6 +500,7 @@ define([], function () {
         else if(!mor.pen.currPenRef().helpful) {
             mor.review.loadHelpful(bootActivityDisplay); }
         else if(retry) {
+            mor.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
             setTimeout(bootActivityDisplay, 100); }
     },
 

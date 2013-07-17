@@ -4,6 +4,7 @@ from google.appengine.ext import db
 import logging
 from moracct import *
 from pen import PenName, authorized
+from revlink import ReviewLink
 import json
 
 
@@ -15,6 +16,40 @@ class ReviewTag(db.Model):
     forgotten = db.StringProperty()  # iso date when "remember" toggled off
     helpful = db.StringProperty()  # iso date when "helpful" toggled on
     nothelpful = db.StringProperty()  # iso date when "helpful" toggled off
+
+
+# https://developers.google.com/appengine/docs/python/datastore/functions
+# says @db.transactional is equivalent to run_in_transaction, which
+# will retry up to 3x on commit failure.  So a failure in this case
+# should be unusual and goes all the way back to the client as an error.
+@db.transactional(xg=True)
+def update_revlink_and_refobj(rlid, add, linkfield, linkvalue, dbobj):
+    linkvalue = str(linkvalue)
+    revlink = ReviewLink.get_by_id(rlid)
+    arr = getattr(revlink, linkfield)
+    if arr:
+        arr = arr.split(',')
+    else:
+        arr = []
+    arr = [x for x in arr if x != linkvalue]     # remove if existing
+    if add == "yes":
+        arr.insert(0, linkvalue)                 # prepend update value
+    arr = ",".join(arr)
+    setattr(revlink, linkfield, arr)
+    revlink.put()
+    dbobj.put()
+
+
+def note_review_feedback(revid, add, linkfield, linkvalue, dbobj):
+    where = "WHERE revid = :1"
+    rlq = ReviewLink.gql(where, revid)
+    rls = rlq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=5)
+    if len(rls) <= 0:
+        revlink = ReviewLink(revid=revid)
+        revlink.put()
+        rls = [ revlink ]
+    update_revlink_and_refobj(rls[0].key().id(), add,
+                              linkfield, linkvalue, dbobj)
 
 
 def fetch_or_create_tag_authorized(penid, revid):
@@ -105,7 +140,8 @@ class NoteHelpful(webapp2.RequestHandler):
             revtag.nothelpful = None
         else:
             revtag.nothelpful = nowISO()
-        revtag.put()
+        note_review_feedback(revtag.revid, helpful, 
+                             "helpful", revtag.penid, revtag)
         returnJSON(self.response, [ revtag ])
 
 
@@ -120,7 +156,8 @@ class NoteRemember(webapp2.RequestHandler):
             revtag.forgotten = None
         else:
             revtag.forgotten = nowISO()
-        revtag.put()
+        note_review_feedback(revtag.revid, remember, 
+                             "remembered", revtag.penid, revtag)
         returnJSON(self.response, [ revtag ])
 
 

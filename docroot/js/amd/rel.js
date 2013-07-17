@@ -19,7 +19,9 @@ define([], function () {
         if(relstate === "new") {
             //a new pen name has no outbound relationships yet.  Just
             //init the outrels in the cache PenRef to an empty array.
-            mor.pen.currPenRef().outrels = []; }
+            mor.pen.currPenRef().outrels = [];
+            asyncLoadStarted = true;  //started and finished..
+            mor.profile.updateHeading(); }
         else if(relstate !== "logout") {
             //start the async load of the outrels.  relstate === "reload" 
             //is ignored since the relationships are cached with each pen

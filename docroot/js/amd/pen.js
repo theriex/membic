@@ -141,8 +141,7 @@ define([], function () {
                      if(!penNameRefs) {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
-                     mor.rel.resetStateVars("new");
-                     mor.login.updateAuthentDisplay();
+                     mor.rel.resetStateVars("new");  //updates header display
                      returnCall(); },
                  function (code, errtxt) {
                      mor.out('penformstat', errtxt);

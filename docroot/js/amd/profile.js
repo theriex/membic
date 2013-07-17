@@ -80,7 +80,10 @@ define([], function () {
 
 
     updateTopActionDisplay = function (pen) {
-        var html = "<div class=\"topnavitemdiv\">" +
+        var html;
+        if(!mor.byId('homepenhdiv')) {
+            mor.login.updateAuthentDisplay(); }
+        html = "<div class=\"topnavitemdiv\">" +
             mor.imgntxt("profile.png", pen.name,
                         "mor.profile.display()",
                         "#view=profile&profid=" + mor.instId(pen),
@@ -660,6 +663,7 @@ define([], function () {
                     if(reviews[i].cursor) {
                         rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
+                mor.lcs.putRev(reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
                 html += reviewItemHTML(reviews[i]); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
