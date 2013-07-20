@@ -92,21 +92,25 @@ define([], function () {
 
 
     getPenFull = function (penid, callback) {
-        var penref, params, critsec = "";
+        var penref, tombstone, params, critsec = "";
         penref = getPenRef(penid);
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
         params = "penid=" + idify(penid);
         mor.call("penbyid?" + params, 'GET', null,
-                 function (pens) {
-                     if(pens.length > 0) {
-                         callback(putPen(pens[0])); }
+                 function (foundpens) {
+                     if(foundpens.length > 0) {
+                         callback(putPen(foundpens[0])); }
                      else {  //should never happen, but treat as deleted
-                         callback({ status: "deleted",
-                                    updtime: new Date() }); } },
+                         tombstone = { status: "deleted",
+                                       updtime: new Date() };
+                         pens[idify(penid)] = tombstone;
+                         callback(tombstone); } },
                  function (code, errtxt) {
-                     callback({ status: String(code) + ": " + errtxt,
-                                updtime: new Date() }); },
+                     tombstone = { status: String(code) + ": " + errtxt,
+                                   updtime: new Date() };
+                     pens[idify(penid)] = tombstone;
+                     callback(tombstone); },
                  critsec, null, [400, 404]);
     },
 
@@ -165,22 +169,149 @@ define([], function () {
 
 
     getRevFull = function (revid, callback) {
-        var revref, params, critsec = "";
+        var revref, tombstone, params, critsec = "";
         revref = getRevRef(revid);
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
         mor.call("revbyid?" + params, 'GET', null,
-                 function (revs) {
-                     if(revs.length > 0) {
-                         callback(putRev(revs[0])); }
+                 function (foundrevs) {
+                     if(foundrevs.length > 0) {
+                         callback(putRev(foundrevs[0])); }
                      else {  //should never happen, but treat as deleted
-                         callback({ status: "deleted",
-                                    updtime: new Date() }); } },
+                         tombstone = { status: "deleted",
+                                       updtime: new Date() };
+                         revs[idify(revid)] = tombstone;
+                         callback(tombstone); } },
                  function (code, errtxt) {
-                     callback({ status: String(code) + ": " + errtxt,
-                                updtime: new Date() }); },
+                     tombstone = { status: String(code) + ": " + errtxt,
+                                   updtime: new Date() };
+                     revs[idify(revid)] = tombstone;
+                     callback(tombstone); },
                  critsec, null, [400, 404]);
+    },
+
+
+    resolveReviewLinks = function (revids, revlinks) {
+        var i, revid;
+        for(i = 0; i < revids.length; i += 1) {
+            revid = String(revids[i]);
+            revs[revid].revlink = { revid: parseInt(revid, 10),
+                                    helpful: "",
+                                    remembered: "",
+                                    corresponding: "" }; }
+        for(i = 0; i < revlinks.length; i += 1) {
+            revid = String(revlinks[i].revid);
+            revs[revid].revlink = revlinks[i]; }
+    },
+
+
+    //Walk the revrefs and verify each has an associated revlink,
+    //retrieving from the server as needed.  Adds an empty placeholder
+    //revlink if no server info exists.  Also verifies markups from
+    //the current pen ref are reflected in the revlinks.  The changed
+    //parameter switches to true if anything was loaded or updated, and
+    //that triggers the callback to onchangefunc.
+    verifyReviewLinks = function (onchangefunc, changed) {
+        var revid, revref, revids = [], maxq = 20, params, critsec = "";
+        for(revid in revs) {
+            if(revs.hasOwnProperty(revid)) {
+                revref = revs[revid];
+                if(revref && !revref.revlink) {
+                    revids.push(revid); }
+                if(revids.length >= maxq) {
+                    break; } } }
+        if(revids.length > 0) {
+            params = "revids=" + revids.join(",") + 
+                "&" + mor.login.authparams();
+            mor.call("revlinks?" + params, 'GET', null,
+                     function (revlinks) {
+                         resolveReviewLinks(revids, revlinks);
+                         verifyReviewLinks(onchangefunc, true); },
+                     function (code, errtxt) {
+                         mor.err("verifyReviewLinks revlinks call failed " +
+                                 code + " " + errtxt); },
+                     critsec); }
+        else if(revids.length === 0 && changed) {
+            onchangefunc(); }
+    },
+
+
+    
+    verifyCorrespondingLink = function (revref, rev) {
+        var revlink, rlidstr, corids, i, data;
+        revlink = revref.revlink;
+        rlidstr = String(mor.instId(rev)) + ":" + rev.penid;
+        if(!revlink.corresponding) {
+            revlink.corresponding = rlidstr; }
+        else {
+            corids = revlink.corresponding.split(",");
+            for(i = 0; i < corids.length; i += 1) {
+                if(corids[i] === rlidstr) {
+                    return; } } //already exists, so done
+            corids.push(rlidstr);
+            revlink.corresponding = corids.join(","); }
+        revlink.critsec = "";
+        data = mor.objdata(revlink);
+        mor.call("updlink?" + mor.login.authparams(), 'POST', data,
+                 function (updrevlinks) {
+                     mor.log("verifyCorrespondingLink updated " +
+                             updrevlinks[0].revid + " corresponding: " +
+                             updrevlinks[0].corresponding); },
+                 function (code, errtxt) {
+                     mor.log("verifyCorrespondingLink failed " + 
+                             code + " " + errtxt); },
+                 revlink.critsec);
+    },
+
+
+    verifyCorrespondingLinks = function (rev1, rev2) {
+        var revref1, revref2;
+        if(rev1.penid === rev2.penid) { 
+            return; }  //avoid corresponding with yourself
+        revref1 = getRevRef(mor.instId(rev1));
+        if(revref1.status === "not cached") {
+            revref1 = putRev(rev1); }
+        revref2 = getRevRef(mor.instId(rev2));
+        if(revref2.status === "not cached") {
+            revref2 = putRev(rev2); }
+        if(!revref1.revlink || !revref2.revlink) {
+            setTimeout(function () {
+                verifyReviewLinks(function () {
+                    verifyCorrespondingLinks(rev1, rev2); }); }, 50);
+            return; }
+        verifyCorrespondingLink(revref1, rev2);
+        verifyCorrespondingLink(revref2, rev1);
+    },
+
+
+    checkCachedCorresponding = function (review) {
+        var revid, revref;
+        for(revid in revs) {
+            if(revs.hasOwnProperty(revid)) {
+                revref = revs[revid];
+                if(revref && revref.rev 
+                   && revref.rev.cankey === review.cankey
+                   && revref.rev.penid !== review.penid) {
+                    verifyCorrespondingLinks(review, revref.rev); } } }
+    },
+
+
+    checkAllCorresponding = function (review) {
+        var params, critsec = "";
+        checkCachedCorresponding(review);
+        params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
+            "&" + mor.login.authparams();
+        mor.call("revbykey?" + params, 'GET', null,
+                 function (revs) {
+                     var i;
+                     for(i = 0; i < revs.length; i += 1) {
+                         putRev(revs[i]); }
+                     checkCachedCorresponding(review); },
+                 function (code, errtxt) {
+                     mor.log("checkAllCorresponding failed " + code + 
+                             ": " + errtxt); },
+                 critsec);
     };
 
 
@@ -204,7 +335,13 @@ define([], function () {
         getRevFull: function (revid, callback) {
             getRevFull(revid, callback); },
         putRev: function (revobj) {
-            return putRev(revobj); }
+            return putRev(revobj); },
+        verifyReviewLinks: function (onchangefunc) {
+            verifyReviewLinks(onchangefunc); },
+        verifyCorrespondingLinks: function (rev1, rev2) {
+            verifyCorrespondingLinks(rev1, rev2); },
+        checkAllCorresponding: function (review) {
+            checkAllCorresponding(review); }
     };
 
 });

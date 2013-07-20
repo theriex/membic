@@ -376,11 +376,14 @@ define([], function () {
             if(!rev.penNameStr) {
                 breakid = rev.penid;
                 break; } }
-        if(breakid) {
+        if(breakid) {  //need to fetch pen
             setTimeout(function () {
                 mor.lcs.getPenFull(breakid, function (penref) {
                     mor.activity.notePenNameStr(penref.pen); }); },
                        50); }
+        else {
+            setTimeout(function () {
+                mor.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
         html += "</ul>";
         if(actdisp.cursor) {
             html += "<a href=\"#moreact\"" +

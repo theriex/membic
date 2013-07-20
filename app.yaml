@@ -202,6 +202,23 @@ handlers:
 
 
 ######################################################################
+##        Review Links
+
+## Search the ReviewLink entries returning any that are in the given
+## csv of review ids.
+## GET params: revids, authparams
+- url: /revlinks.*
+  script: src.py.revlink.app
+
+
+## Update the given ReviewLink
+## POST params: revlink, authparams
+- url: /updlink.*
+  script: src.py.revlink.app
+
+
+
+######################################################################
 ##        Connection Services
 
 ## Return a signed OAuth request given the specified parameters

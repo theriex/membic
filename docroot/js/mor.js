@@ -107,9 +107,10 @@ var mor = {};  //Top level function closure container
         var hstate, title, url;
         if(history) {  //verify history object defined, otherwise skip
             hstate = history.state;
-            if(!hstate || 
-               hstate.view !== pstate.view || 
-               hstate.profid !== pstate.profid) {
+            if(!hstate 
+               || hstate.view !== pstate.view 
+               || hstate.profid !== pstate.profid
+               || hstate.revid !== pstate.revid) {
                 if(history.pushState && 
                    typeof history.pushState === 'function') {
                     title = mor.historyTitle(pstate);

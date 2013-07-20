@@ -100,7 +100,8 @@ def tag_search_by_id(handler, posfield, negfield, matchfield, matchval):
     if matchfield == "revid":
         penids = handler.request.get('penids')
         if not penids:
-            return JSON(handler.response, [])
+            returnJSON(handler.response, [])
+            return
         penids = penids.split(",")
         where += " AND penid IN :2"
     where += " ORDER BY " + posfield + " DESC"

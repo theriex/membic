@@ -608,7 +608,8 @@ define([], function () {
 
 
     reviewItemHTML = function (revobj, penNameStr) {
-        var revid, type, linkref, linkclass, html, text;
+        var revid, type, linkref, linkclass, html;
+        //review item line
         revid = mor.instId(revobj);
         type = mor.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
@@ -628,17 +629,24 @@ define([], function () {
         html += "</a>";
         if(revobj.url) {
             html += " &nbsp;" + mor.review.graphicAbbrevSiteLink(revobj.url); }
+        //review meta line
+        html += "<div class=\"revtextsummary\">";
         if(penNameStr) {
             linkref = mor.objdata({ view: "profile", profid: revobj.penid });
-            html += "<div class=\"revtextsummary\">" + 
+            html += "review by " + 
                 "<a href=\"#" + linkref + "\"" +
                  " onclick=\"mor.profile.byprofid('" + revobj.penid + "');" +
                             "return false;\"" +
-                 " title=\"Show profile for " + mor.ndq(penNameStr) + "\">" +
-                "review by " + penNameStr + "</a></div>"; }
-        text = (revobj.text || "") + " " + (revobj.keywords || "");
-        html += "<div class=\"revtextsummary\">" + 
-            mor.ellipsis(text, 255) + "</div>";
+                 " title=\"Show profile for " + mor.ndq(penNameStr) + "\"" +
+                ">" + penNameStr + "</a>"; }
+        if(revobj.keywords) {
+            html += ": " + mor.ellipsis(revobj.keywords, 100); }
+        html += mor.review.linkCountHTML(revid);
+        html += "</div>";
+        //review description line
+        if(revobj.text) {
+            html += "<div class=\"revtextsummary\">" + 
+                mor.ellipsis(revobj.text, 255) + "</div>"; }
         html += "</li>";
         return html;
     },
@@ -687,6 +695,8 @@ define([], function () {
                     ">more reviews...</a>"; } }
         mor.out('profcontdiv', html);
         mor.layout.adjust();
+        setTimeout(function () {
+            mor.lcs.verifyReviewLinks(mor.profile.refresh); }, 250);
     },
 
 
@@ -782,6 +792,9 @@ define([], function () {
         mor.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
             mor.lcs.getRevFull(revs[i], displayBest); }
+        else {
+            setTimeout(function () {
+                mor.lcs.verifyReviewLinks(mor.profile.refresh); }, 250); }
     },
 
 
@@ -843,6 +856,8 @@ define([], function () {
                     " title=\"Continue searching for more matching reviews\"" +
                     ">continue search...</a>"; } }
         mor.out('allrevdispdiv', html);
+        setTimeout(function () {
+            mor.lcs.verifyReviewLinks(mor.profile.refresh); }, 250);
     },
 
 

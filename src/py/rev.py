@@ -418,6 +418,10 @@ class GetReviewById(webapp2.RequestHandler):
         returnJSON(self.response, [ review ])
 
 
+# If penid is specified, then this returns the first few matching
+# reviews, most recent first (allows for dupe checking).  If penid is
+# NOT specified, then this returns the first 10 matching reviews,
+# oldest first (allows for seniority in corresponding linkage counts).
 class GetReviewByKey(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
@@ -428,10 +432,16 @@ class GetReviewByKey(webapp2.RequestHandler):
         penid = intz(self.request.get('penid'))
         revtype = self.request.get('revtype')
         cankey = self.request.get('cankey')
-        where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"\
-             + " ORDER BY modified DESC"
-        fetchmax = 5
-        revquery = Review.gql(where, penid, revtype, cankey)
+        if penid:
+            fetchmax = 5
+            where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"\
+                 + " ORDER BY modified DESC"
+            revquery = Review.gql(where, penid, revtype, cankey)
+        else:  #penid not specified
+            fetchmax = 10
+            where = "WHERE revtype = :1 AND cankey = :2"\
+                 + " ORDER BY modified ASC"
+            revquery = Review.gql(where, revtype, cankey)
         reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
                                  deadline=10)
         returnJSON(self.response, reviews)

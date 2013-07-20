@@ -289,6 +289,44 @@ define([], function () {
     },
 
 
+    linkCountBadgeHTML = function (revlink, field) {
+        var html, penids, len,
+            fieldimages = { helpful: "cbbh.png",
+                            remembered: "cbbr.png",
+                            corresponding: "cbbw.png" };
+        if(!revlink || !revlink[field]) {
+            return ""; }
+        penids = revlink[field].split(",");
+        len = penids.length;
+        if(!len) {
+            return ""; }
+        if(len > 9) { 
+            len = "+"; }
+        html = "<span style=\"background:url('img/" + fieldimages[field] + 
+                                            "') no-repeat center center;" +
+                            " height:15px; width:22px;" +
+                            " display:inline-block;" + 
+                            " text-align:center;\"" +
+                    " title=\"" + len + " " + field + "\"" +
+            ">" + len + "</span>";
+        return html;
+    },
+
+
+    linkCountHTML = function (revid) {
+        var revref, html;
+        revref = mor.lcs.getRevRef(revid);
+        if(!revref.revlink) {
+            return ""; }
+        html = linkCountBadgeHTML(revref.revlink, 'helpful') +
+            linkCountBadgeHTML(revref.revlink, 'remembered') +
+            linkCountBadgeHTML(revref.revlink, 'corresponding');
+        if(html) {
+            html = "&nbsp;" + html; }
+        return html;
+    },
+
+
     writeNavDisplay = function () {
         return true;
     },
@@ -770,6 +808,51 @@ define([], function () {
     },
 
 
+    reviewLinkActionHTML = function (activebuttons) {
+        var html = "<div id=\"socialrevactdiv\">" +
+            "<table class=\"socialrevacttable\" border=\"0\"><tr>";
+        if(activebuttons) {
+            //helpful button. init unchecked then update after lookup
+            html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">" +
+                mor.imgntxt("helpfulq.png",
+                            "Helpful",
+                            "mor.review.helpful()", "#helpful",
+                            "Mark this review as helpful", "", "helpful") +
+                "</div></td>";
+            //remember button. init unchecked and then update after lookup
+            html += "<td><div id=\"memobutton\" class=\"buttondiv\">" +
+                mor.imgntxt("rememberq.png",
+                            "Remember",
+                            "mor.review.memo()", "#memo",
+                            "Add this to remembered reviews", "", "memo") +
+                "</div></td>";
+            //respond button
+            html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
+                  //this contents is rewritten after looking up their review
+                  mor.imgntxt("writereview.png",
+                              "Your review",
+                              "mor.review.respond()", "#respond",
+                              "Edit your corresponding review", "", "respond") +
+                "</div></td>"; }
+        else {  //just place markers, no link actions if it's your own review
+            html += "<td><img class=\"shareicodis\"" + 
+                            " src=\"img/helpful.png\"" +
+                            " border=\"0\"/></td>" +
+                    "<td><img class=\"shareicodis\"" + 
+                            " src=\"img/remembered.png\"" +
+                            " border=\"0\"/></td>" +
+                    "<td><img class=\"shareicodis\"" + 
+                            " src=\"img/writereview.png\"" +
+                            " border=\"0\"/></td>"; }
+        html += "</tr><tr>" +
+            "<td><div id=\"hlinksdiv\" class=\"linksdiv\"></div></td>" +
+            "<td><div id=\"rlinksdiv\" class=\"linksdiv\"></div></td>" +
+            "<td><div id=\"clinksdiv\" class=\"linksdiv\"></div></td>";
+        html += "</tr></table></div>";
+        return html;
+    },
+
+
     //ATTENTION: Once review responses are available, there needs to
     //be a way to view those responses as a list so you can see what
     //other people thought of the same thing or what kind of an impact
@@ -820,34 +903,11 @@ define([], function () {
                 "<div id=\"sharediv\">" +
                   "<div id=\"sharebuttonsdiv\"></div>" +
                   "<div id=\"sharemsgdiv\"></div>" +
-                "</div>"; }
-        //reading a review written by someone else, show social actions
+                "</div>" +
+                reviewLinkActionHTML(false); }
+        //reading a review written by someone else, show review link actions
         else {
-            html = "<div id=\"socialrevactdiv\">" +
-              "<table class=\"socialrevacttable\" border=\"0\"><tr>";
-            //helpful checkbox. init unchecked then update after lookup
-            html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">" +
-                mor.imgntxt("helpfulq.png",
-                            "Helpful",
-                            "mor.review.helpful()", "#helpful",
-                            "Mark this review as helpful", "", "helpful") +
-                "</div></td>";
-            //remember button. init unchecked and then update after lookup
-            html += "<td><div id=\"memobutton\" class=\"buttondiv\">" +
-                mor.imgntxt("rememberq.png",
-                            "Remember",
-                            "mor.review.memo()", "#memo",
-                            "Add this to remembered reviews", "", "memo") +
-                "</div></td>";
-            //respond button
-            html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
-                  //this contents is rewritten after looking up their review
-                  mor.imgntxt("writereview.png",
-                              "Your review",
-                              "mor.review.respond()", "#respond",
-                              "Edit your corresponding review", "", "respond") +
-                  "</div></td>";
-            html += "</div></td></tr></table></div>"; }
+            html = reviewLinkActionHTML(true); }
         //space for save status messages underneath buttons
         html += "<br/><div id=\"revsavemsg\"></div>";
         return html;
@@ -1195,6 +1255,8 @@ define([], function () {
     displayCorrespondingReviewInfo = function (pen, review) {
         var html, imghtml, msghtml = "Your review";
         if(review) {
+            setTimeout(function () {
+                mor.lcs.verifyCorrespondingLinks(review, crev); }, 100);
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
             msghtml = "Your review: " + imghtml; }
         html = mor.imgntxt("writereview.png", msghtml,
@@ -1260,6 +1322,7 @@ define([], function () {
         if(field === "remembered") {
             //ensure helpful marks for anything remembered are found
             updateCachedReviewTags('helpful', updrevtags); }
+        mor.lcs.getRevRef(updrevtags[0].revid).revlink = null;
     },
 
 
@@ -1406,6 +1469,61 @@ define([], function () {
     },
 
 
+    getReviewLinkHTML = function (field, penref, revref) {
+        var titles = { helpful: "$Name found this review helpful",
+                       remembered: "$Name remembered this review",
+                       corresponding: "$Name also reviewed this" },
+            html, pen, title, funcstr;
+        pen = penref.pen;
+        title = titles[field].replace("$Name", mor.ndq(pen.name));
+        funcstr = "mor.profile.byprofid('" + mor.instId(pen) + "')";
+        if(revref) {
+            funcstr = "mor.profile.readReview('" + 
+                                        mor.instId(revref.rev) + "')"; }
+        html = "<a" + 
+            " href=\"#" + mor.ndq(pen.name) + "\"" +
+            " onclick=\"" + funcstr + ";return false;\"" +
+            " title=\"" + title + "\"" +
+            ">" + pen.name + "</a>";
+        return html;
+    },
+
+
+    displayReviewLinks = function () {
+        var divs = ["hlinksdiv", "rlinksdiv", "clinksdiv"],
+            fields = ["helpful", "remembered", "corresponding"],
+            revref = mor.lcs.getRevRef(crev),  //rev is loaded
+            html, i, pens, j, penrevid, penid, penrevref, penref;
+        if(!revref.revlink) {
+            return mor.lcs.verifyReviewLinks(displayReviewLinks); }
+        html = "";
+        for(i = 0; i < divs.length; i += 1) {
+            pens = revref.revlink[fields[i]];
+            if(pens) {
+                pens = pens.split(",");
+                for(j = 0; j < pens.length; j += 1) {
+                    penrevid = 0; penid = pens[j];
+                    if(penid.indexOf(":") > 0) {
+                        penid = penid.split(":");
+                        penrevid = penid[0]; penid = penid[1]; }
+                    penref = mor.lcs.getPenRef(penid);
+                    if(penref.status === "not cached") {
+                        return mor.lcs.getPenFull(penid, displayReviewLinks); }
+                    if(penrevid) {
+                        penrevref = mor.lcs.getRevRef(penrevid);
+                        if(penrevref.status === "not cached") {
+                            return mor.lcs.getRevFull(penrevid, 
+                                                      displayReviewLinks); } }
+                    if(penref.pen && penref.pen !== mor.pen.currPenRef().pen) {
+                        if(html) {
+                            html += ", "; }
+                        html += getReviewLinkHTML(fields[i], penref, 
+                                                  penrevref); } }
+                mor.out(divs[i], html);
+                html = ""; } }
+    },
+
+
     startReviewFormDynamicElements = function (revpen, review) {
         if(mor.byId('helpfulbutton')) {
             initHelpfulButtonSetting(mor.pen.currPenRef(), review); }
@@ -1416,6 +1534,8 @@ define([], function () {
                 findCorrespondingReview(homepen, 
                                         displayCorrespondingReviewInfo); 
             }); }
+        if(mor.byId('hlinksdiv')) {
+            displayReviewLinks(); }
         if(mor.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }
@@ -1549,9 +1669,10 @@ define([], function () {
         data = mor.objdata(crev);
         mor.call(url + mor.login.authparams(), 'POST', data,
                  function (reviews) {
-                     crev = reviews[0];
-                     //fetch the updated top 20 lists and refresh cache
-                     setTimeout(mor.pen.refreshCurrent, 50);
+                     crev = mor.lcs.putRev(reviews[0]).rev;
+                     setTimeout(mor.pen.refreshCurrent, 50); //refetch top 20
+                     setTimeout(function () {  //update corresponding links
+                         mor.lcs.checkAllCorresponding(crev); }, 200);
                      if(doneEditing) {
                          attribution = "";
                          mor.review.displayRead(actionstr); }
@@ -1716,6 +1837,8 @@ define([], function () {
             return badgeImageHTML(type); },
         starsImageHTML: function (rating, showblank) {
             return starsImageHTML(rating, showblank); },
+        linkCountHTML: function (revid) {
+            return linkCountHTML(revid); },
         readURL: function (url, params) {
             return readURL(url, params); },
         setType: function (type) {
