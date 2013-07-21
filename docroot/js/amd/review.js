@@ -987,9 +987,11 @@ define([], function () {
             targetwidth = textTargetWidth();
             style = "color:" + mor.colors.text + ";" +
                 "background-color:" + mor.skinner.lightbg() + ";" +
-                "width:" + targetwidth + "px;";
+                "width:" + targetwidth + "px;" +
+                "height:100px;padding:2px 5px;";
             if(mode === "edit") {
-                style += "height:100px;";
+                //margin:auto does not work for a textarea
+                style += "margin-left:50px;";   //displayReviewForm 100/2
                 placetext = ">>What was the most striking thing" + 
                     " about this for you?";
                 html += "<textarea id=\"reviewtext\" class=\"shoutout\"" + 
@@ -998,8 +1000,8 @@ define([], function () {
                     fval + "</textarea>"; }
             else {
                 fval = fval || "No comment";
-                style += "height:100px;overflow:auto;padding:2px 5px;" + 
-                    "border:1px solid " + mor.skinner.darkbg() + ";";
+                style += "border:1px solid " + mor.skinner.darkbg() + ";" +
+                    "overflow:auto;margin:auto";
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
                     mor.linkify(fval) + "</div>"; } }

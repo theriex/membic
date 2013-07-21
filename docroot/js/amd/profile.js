@@ -640,7 +640,9 @@ define([], function () {
                  " title=\"Show profile for " + mor.ndq(penNameStr) + "\"" +
                 ">" + penNameStr + "</a>"; }
         if(revobj.keywords) {
-            html += ": " + mor.ellipsis(revobj.keywords, 100); }
+            if(penNameStr) {
+                html += ": "; }
+            html += mor.ellipsis(revobj.keywords, 100); }
         html += mor.review.linkCountHTML(revid);
         html += "</div>";
         //review description line
