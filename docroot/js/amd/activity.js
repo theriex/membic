@@ -125,6 +125,9 @@ define([], function () {
         mor.onescapefunc = mor.layout.closeDialog;
         mor.byId('searchoptionsdiv').style.display = "none";
         mor.byId('searchtxt').focus();
+        //hit the search button for them so they don't have to figure out
+        //pressing the button vs search options or what to type.
+        setTimeout(mor.activity.startPenSearch, 50);
     },
 
 
@@ -174,7 +177,9 @@ define([], function () {
             if(typeof results[i].fetched === "number") {
                 pensearch.total += results[i].fetched;
                 html += "<div class=\"sumtotal\">" + 
-                    pensearch.total + " pen names searched</div>";
+                    pensearch.total + " pen names searched, " + 
+                    (pensearch.total - pensearch.pens.length) +
+                    " filtered.</div>";
                 if(results[i].cursor) {
                     pensearch.cursor = results[i].cursor; }
                 break; }  //if no results, i will be left at zero

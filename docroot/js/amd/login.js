@@ -334,20 +334,22 @@ define([], function () {
 
 
     displayNewAccountForm = function () {
-        var html = "";
-        html += "<div id=\"maccstatdiv\">Creating a new account</div>" +
+        var username, password, html;
+        username = mor.safestr(mor.safeget('userin', "value"));
+        password = mor.safestr(mor.safeget('passin', "value"));
+        html = "<div id=\"maccstatdiv\">Creating a new account</div>" +
         "<table>" +
           "<tr>" +
             "<td align=\"right\"><label for=\"userin\">username</label></td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" name=\"username\" id=\"userin\"" + 
-                    " size=\"20\"/></td>" +
+                    " size=\"20\" value=\"" + username + "\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\"><label for=\"passin\">password</label></td>" +
             "<td align=\"left\">" +
               "<input type=\"password\" name=\"password\" id=\"passin\"" + 
-                    " size=\"20\"/></td>" +
+                    " size=\"20\" value=\"" + password + "\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td align=\"right\">email</td>" +
