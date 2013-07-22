@@ -25,6 +25,9 @@ define([], function () {
     "use strict";
 
     var pensearchmax = 1000,  //max records to read through automatically
+        activityMode = "amnew",  //other option is "amtop"
+        topActivityType = "",  //book or whatever review type is selected
+        topDispMax = 20,  //max top reviews to display
 
 
     activityLinkHTML = function () {
@@ -49,14 +52,47 @@ define([], function () {
     },
 
 
+    topTypeSelectorHTML = function () {
+        var reviewTypes, i, typename, title, html;
+        html = "<div id=\"toptypeseldiv\">";
+        reviewTypes = mor.review.getReviewTypes();
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            title = typename.capitalize() + " reviews";
+            html += "<img class=\"reviewbadge\"" +
+                " src=\"img/" + reviewTypes[i].img + "\"" +
+                " title=\"" + title + "\"" +
+                " alt=\"" + title + "\"" +
+                " onclick=\"mor.activity.toptype('" + typename + "');" +
+                           "return false;\"" +
+                "/>"; }
+        html += "</div>";
+        return html;
+    },
+
+
     writeNavDisplay = function (dispmode) {
         var html, url;
         if(dispmode === "activity") {
-            url = "rssact?pen=" + mor.pen.currPenId();
-            html = "New reviews from friends " + 
-                mor.imglink(url, "RSS feed for recent friend reviews",
-                            "window.open('" + url + "')", 
-                            "rssicon.png", "rssico"); }
+            if(activityMode === "amnew") {
+                url = "rssact?pen=" + mor.pen.currPenId();
+                html = "New reviews from friends " +
+                    mor.imglink(url, "RSS feed for recent friend reviews",
+                                "window.open('" + url + "')", 
+                                "rssicon.png", "rssico") +
+                    "<button type=\"button\" id=\"switchmodebutton\"" +
+                    " onclick=\"mor.activity.switchmode('amtop');" +
+                               "return false;\"" +
+                    " title=\"Show top rated reviews from friends\"" +
+                    ">Show Top</button>"; }
+            else if(activityMode === "amtop") {
+                html = "Top reviews from friends " +
+                    "<button type=\"button\" id=\"switchmodebutton\"" +
+                    " onclick=\"mor.activity.switchmode('amnew');" +
+                               "return false;\"" +
+                    " title=\"Show recent reviews from friends\"" +
+                    ">Show Recent</button>" +
+                    topTypeSelectorHTML(); } }
         else if(dispmode === "memo") {
             html = "Remembered reviews"; }
         mor.out('centerhdiv', html);
@@ -344,6 +380,95 @@ define([], function () {
     },
 
 
+    findUniqueRev = function (revrefs, revids) {
+        var revref, i, j;
+        for(i = 0; !revref && i < revids.length; i += 1) {
+            revref = mor.lcs.getRevRef(revids[i]);
+            if(revref.status !== "ok" && revref.status !== "not cached") { 
+                revref = null; }  //bad ids not valid for consideration
+            else if(revref.rev) { 
+                for(j = 0; j < revrefs.length; j += 1) {
+                    if(revref.rev.cankey === revrefs[j].rev.cankey) {
+                        revref = null;  //dupes not valid
+                        break; } } } }
+        return revref;
+    },
+
+
+    //find the next viable top review to add to the revrefs.  Returns
+    //null if nothing left to find, revref otherwise.  The revref may
+    //need to be resolved if not cached.
+    nextTopRev = function (revrefs, penrefs) {
+        var i, revref, startidx = 0, penidx, pen;
+        if(revrefs.length > 0) {
+            revref = revrefs[revrefs.length - 1];
+            for(i = 0; i < penrefs.length; i += 1) {
+                if(revref.rev.penid === mor.instId(penrefs[i].pen)) {
+                    break; } }
+            startidx = i + 1; } //start after pen who did the last rev
+        revref = null;
+        for(i = 0; i < penrefs.length; i += 1) { 
+            penidx = (i + startidx) % penrefs.length;
+            pen = penrefs[penidx].pen;
+            if(pen.top20s && pen.top20s[topActivityType]) {
+                revref = findUniqueRev(revrefs, pen.top20s[topActivityType]);
+                if(revref) {
+                    break; } } }
+        return revref;
+    },
+
+
+
+    //The outbound relationships are assumed to be loaded at this
+    //point.  Rebuild the pen array every time, since they might have
+    //blocked someone in the meantime and not much overhead if
+    //everything is already cached.
+    displayTopReviews = function () {
+        var pens, i, penid, revs, revref, html;
+        //get an array of friend pens
+        pens = mor.rel.outboundids();
+        for(i = 0; i < pens.length; i += 1) {
+            penid = pens[i];
+            pens[i] = mor.lcs.getPenRef(penid);
+            if(pens[i].status === "not cached") {
+                mor.out('revactdiv', "Loading friends..." + (i+1));
+                return mor.lcs.getPenFull(penid, displayTopReviews); } }
+        //sort them by modified (last login) with most recent first
+        pens.sort(function (a, b) {
+            if(a.pen && b.pen && a.pen.modified < b.pen.modified) {
+                return 1; } //b is more recent, so a belongs to the right
+            if(a.pen && b.pen && a.pen.modified > b.pen.modified) {
+                return -1; }
+            return 0; });
+        //initialize the topActivityType if necessary
+        for(i = 0; !topActivityType && i < pens.length; i += 1) {
+            if(pens[i].pen && pens[i].pen.top20s 
+               && pens[i].pen.top20s.latestrevtype) {
+                topActivityType = pens[i].pen.top20s.latestrevtype; } }
+        if(!topActivityType) {
+            topActivityType = "book"; }
+        //dump the reviews
+        html = "<ul class=\"revlist\">";
+        revs = [];
+        while(revs.length < topDispMax) { 
+            revref = nextTopRev(revs, pens);
+            if(!revref) {  //no more reviews found, so done
+                break; }
+            if(revref.status === "not cached") {
+                html += "<li>Fetching review " + revref.revid + "</li></ul>";
+                mor.out('revactdiv', html);
+                return mor.lcs.getRevFull(revref.revid, displayTopReviews); }
+            if(revref.rev) {
+                revs.push(revref);
+                html += mor.profile.reviewItemHTML(revref.rev, 
+                                                   revref.penNameStr); } }
+        if(revs.length === 0) {
+            html += "<li>No " + topActivityType + " reviews found</li>"; }
+        html += "</ul>";
+        mor.out('revactdiv', html);
+    },
+
+
     moreRevsFromHTML = function (rev) {
         var html = "<li>" + "<div class=\"morerevs\">" +
             "<a href=\"#" + mor.objdata({ view: "profile", 
@@ -363,6 +488,7 @@ define([], function () {
 
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html, key, reps = {};
+        mor.byId('switchmodebutton').disabled = false;
         html = "<ul class=\"revlist\">";
         actdisp = mor.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
@@ -485,6 +611,7 @@ define([], function () {
     bootActivityDisplay = function () {
         var penids, html, retry = false;
         writeNavDisplay("activity");
+        mor.byId('switchmodebutton').disabled = true;
         penids = mor.rel.outboundids();
         if(penids.length === 0) {
             html = "<p>You are not following anyone.</p>" +
@@ -536,11 +663,14 @@ define([], function () {
         if(dispmode === "memo") {
             displayRemembered(); }
         else {  //dispmode === "activity"
-            if(penref.actdisp) {
-                displayReviewActivity();
-                doActivitySearch(); }
-            else {
-                bootActivityDisplay(); } }
+            if(activityMode === "amtop") {
+                displayTopReviews(); }
+            else {  //activityMode === "amnew"
+                if(penref.actdisp) {
+                    displayReviewActivity();
+                    doActivitySearch(); }
+                else {
+                    bootActivityDisplay(); } } }
     };
 
     
@@ -565,6 +695,12 @@ define([], function () {
             mainDisplay("activity"); },
         displayRemembered: function () {
             mainDisplay("memo"); },
+        switchmode: function (modestr) {
+            activityMode = modestr;
+            mainDisplay("activity"); },
+        toptype: function (typestr) {
+            topActivityType = typestr;
+            mainDisplay("activity"); },
         startPenSearch: function () {
             startPenSearch(); },
         searchPens: function () {

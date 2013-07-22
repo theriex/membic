@@ -62,6 +62,7 @@ define([], function () {
         penref = pens[penid];
         if(!penref) {
             penref = { status: "not cached",
+                       penid: penid,
                        updtime: new Date() }; }
         return penref;
     },
@@ -121,6 +122,7 @@ define([], function () {
         relref = rels[relid];
         if(!relref) {
             relref = { status: "not cached",
+                       relid: relid,
                        updtime: new Date() }; }
         return relref;
     },
@@ -152,6 +154,7 @@ define([], function () {
         revref = revs[revid];
         if(!revref) {
             revref = { status: "not cached",
+                       revid: revid,
                        updtime: new Date() }; }
         return revref;
     },

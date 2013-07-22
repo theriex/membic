@@ -212,3 +212,6 @@ body {
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }
 
+/* activity layout */
+#switchmodebutton { vertical-align:middle; margin:10px 20px; }
+#toptypeseldiv { padding-left:60px; }
