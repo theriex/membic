@@ -84,10 +84,18 @@ define([], function () {
     },
 
 
+
+
     verifyFullURL = function (val, url) {
         var urlbase, idx;
         if(val.indexOf("http") >= 0) {
             return val; }
+        if(val.indexOf("/") === 0) {  //hard url off root
+            urlbase = url.split("?")[0];
+            if(urlbase.lastIndexOf("/") > 9) {
+                urlbase = urlbase.slice(0, urlbase.indexOf("/", 9)); }
+            return urlbase + "/" + val; }
+        //relative url
         urlbase = url.split("?")[0];
         idx = urlbase.lastIndexOf("/");
         if(idx > 9) {  //the slashes at the start don't count
@@ -100,7 +108,7 @@ define([], function () {
 
 
     setImageURI = function (review, html, url) {
-        var elem, val;
+        var elem, val, index;
         elem = elementForString(html, "image_src", "link");
         if(elem) {
             val = valueForField(elem, "href");
@@ -128,6 +136,24 @@ define([], function () {
                     val = valueForField(elem, "alt");
                     review.title = val;
                     return; } } }
+        //groping in the dark for some kind of logo
+        index = html.search(/src=.*logo.png/i);
+        if(index < 0) {
+            index = unescape(html).search(/src=.*logo.png/i);
+            if(index >= 0) {
+                html = unescape(html); } }
+        if(index > 0) {
+            val = html.slice(index + 5);
+            val = val.slice(0, val.toLowerCase().indexOf(".png") + 4);
+            review.imguri = verifyFullURL(val, url);
+            return; }
+        //last ditch, try the favicon just to show we saw data and tried
+        elem = elementForString(html, "icon", "link");
+        if(elem) {
+            val = valueForField(elem, "href");
+            if(val) {
+                review.imguri = verifyFullURL(val, url);
+                return; } }
     },
 
 
