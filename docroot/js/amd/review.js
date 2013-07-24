@@ -18,8 +18,11 @@ define([], function () {
         attribution = "",
         //The current review being displayed or edited.
         crev = {},
-        //Whether the stars are being pointer manipulated now
-        starPointingActive = false,
+        //If changing the width or height of the stars img, also change
+        //mor.css .revtextsummary and corresponding function in statrev.py
+        starimgw = 85,
+        starimgh = 15,
+        starPointingActive = false,  //true if star sliding active
         //The last value used for autocomplete checking
         autocomptxt = "",
         gautosvc = null,
@@ -149,48 +152,48 @@ define([], function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     starsImageHTML = function (rating, showblank, imgclassname) {
-        //if changing imgwidth/height, also change mor.css .revtextsummary
-        //and corresponding function in statrev.py
-        var imgwidth = 85, imgheight = 15, 
-            imgfile = "img/stars18ptC.png", greyfile = "img/stars18ptCg.png",
+        var imgfile = "img/stars18ptC.png", greyfile = "img/stars18ptCg.png",
             width, offset, rat, html,
             cname = imgclassname || "starsimg";
         rat = starRating(rating);
-        width = Math.floor(rat.step * (imgwidth / rat.maxstep));
+        width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = "";
         //add left padding for right justified star display:
         //if(!showblank && !imgclassname) {
         //    html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-        //                " style=\"width:" + (imgwidth - width) + "px;" +
-        //                         "height:" + imgheight + "px;\"/>"; }
-        html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
+        //                " style=\"width:" + (starimgw - width) + "px;" +
+        //                         "height:" + starimgh + "px;\"/>"; }
+        html += "<img id=\"fillstarsimg\" class=\"" + cname + "\"" + 
+                    " src=\"img/blank.png\"" +
                     " style=\"width:" + width + "px;" + 
-                             "height:" + imgheight + "px;" +
+                             "height:" + starimgh + "px;" +
                              "background:url('" + imgfile + "');\"" +
                     " title=\"" + rat.title + "\" alt=\"" + rat.title + "\"/>";
         if(showblank) {
             if(rat.step % 2 === 1) {  //odd, use half star display
-                offset = Math.floor(imgwidth / rat.maxstep);
-                html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-                            " style=\"width:" + (imgwidth - width) + "px;" + 
-                                     "height:" + imgheight + "px;" +
+                offset = Math.floor(starimgw / rat.maxstep);
+                html += "<img id=\"greystarsimg\" class=\"" + cname + "\"" + 
+                            " src=\"img/blank.png\"" +
+                            " style=\"width:" + (starimgw - width) + "px;" + 
+                                     "height:" + starimgh + "px;" +
                                      "background:url('" + greyfile + "')" +
                                                 " -" + offset + "px 0;\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; }
             else { //even, use full star display
-                html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-                            " style=\"width:" + (imgwidth - width) + "px;" + 
-                                     "height:" + imgheight + "px;" +
+                html += "<img id=\"greystarsimg\" class=\"" + cname + "\"" + 
+                            " src=\"img/blank.png\"" +
+                            " style=\"width:" + (starimgw - width) + "px;" + 
+                                     "height:" + starimgh + "px;" +
                                      "background:url('" + greyfile + "');\"" +
                             " title=\"" + rat.title + "\"" + 
                             " alt=\"" + rat.title + "\"/>"; } }
         else if(!imgclassname) { //add right padding for left justified stars
             html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-                        " style=\"width:" + (imgwidth - width) + "px;" +
-                                 "height:" + imgheight + "px;\"/>";
+                        " style=\"width:" + (starimgw - width) + "px;" +
+                                 "height:" + starimgh + "px;\"/>";
             html += "<img class=\"" + cname + "\" src=\"img/blank.png\"" +
-                        " style=\"width:10px;height:" + imgheight + "px;\"/>"; }
+                        " style=\"width:10px;height:" + starimgh + "px;\"/>"; }
         return html;
     },
 
@@ -1033,15 +1036,49 @@ define([], function () {
     },
 
 
+    //Return sensible element position info and x,y coordinates
+    //relative to that position for event handling.  Normally
+    //dojo.domgeo.position combined with pageX/Y event coordinates
+    //works just fine, but IE8 has no event.pageX,
+    //clientHeight/Left/Top/Width are always zero, and event.x/y are
+    //the same values as event.clientX/Y.
+    //    pageX: relative to top left of fully rendered content 
+    //    screenX: relative to top left of physical screen 
+    //    clientX: relative to the top left of browser window
+    geoPos = function (event, domelem, pos) {
+        if(!event || event.pageX) {
+            return mor.dojo.domgeo.position(domelem); }
+        if(!pos) {
+            pos = { h: domelem.offsetHeight, 
+                    w: domelem.offsetWidth, 
+                    x: 0, 
+                    y: 0 }; }
+        pos.x += domelem.offsetLeft;
+        pos.y += domelem.offsetTop;
+        if(domelem.offsetParent) {
+            return geoPos(event, domelem.offsetParent, pos); }
+        return pos;
+    },
+    geoXY = function (event) {
+        var pos;
+        if(event.pageX) {
+            return { x: event.pageX, y: event.pageY }; }
+        pos = { h: -1, w: -1, x: event.offsetX, y: event.offsetY };
+        pos = geoPos(event, event.srcElement, pos);
+        if(!pos) {
+            pos = { x: event.offsetX, y: event.offsetY }; }
+        return pos;
+    },
+
+
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
         span = mor.byId('stardisp');
-        spanloc = mor.dojo.domgeo.position(span);
-        evtx = event.pageX;
+        spanloc = geoPos(event, span);
+        evtx = geoXY(event).x;
+        //mor.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
         if(event.changedTouches && event.changedTouches[0]) {
-            //ATTENTION: if the display is zoomed on a phone, then the
-            //coordinates may need to be adjusted here.
-            evtx = event.changedTouches[0].pageX; }
+            evtx = geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
         //mor.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
@@ -1061,21 +1098,24 @@ define([], function () {
 
 
     starStopPointing = function (event) {
+        //var pos = geoXY(event);  //debug
         //mor.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
-        //mor.out('starslabeltd', " " + event.pageX + ", " + event.pageY); //"
+        //mor.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
         starPointingActive = false;
     },
 
 
     starStopPointingBoundary = function (event) {
-        var td, tdpos, evtx, evty;
+        var td, tdpos, xypos, evtx, evty;
         td = mor.byId('starstd');
-        tdpos = mor.dojo.domgeo.position(td);
-        evtx = event.pageX;
-        evty = event.pageY;
+        tdpos = geoPos(event, td);
+        xypos = geoXY(event);
+        evtx = xypos.x;
+        evty = xypos.y;
         if(event.changedTouches && event.changedTouches[0]) {
-            evtx = event.changedTouches[0].pageX;
-            evty = event.changedTouches[0].pageY; }
+            xypos = geoXY(event.changedTouches[0]);
+            evtx = xypos.x;
+            evty = xypos.y; }
         //mor.out('starslabeltd', " " + evtx + ", " + evty);  //debug
         if(evtx < tdpos.x || evtx > tdpos.x + tdpos.w ||
            evty < tdpos.y || evty > tdpos.y + tdpos.h) {
