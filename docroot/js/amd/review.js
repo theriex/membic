@@ -781,7 +781,7 @@ define([], function () {
                           " onclick=\"mor.review.readURL('" + 
                                                          review.url + "');" +
                                      "return false;\"" +
-                    ">Reimport</a>&nbsp;&nbsp;&nbsp;"; }
+                    ">Fetch review data from URL</a>&nbsp;&nbsp;&nbsp;"; }
         }
         return html;
     },
