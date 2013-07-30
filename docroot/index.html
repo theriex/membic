@@ -8,8 +8,8 @@
   <meta name="description" content="MyOpenReviews encourages shared experiences between friends." />
   <title>My Open Reviews</title>
   <link href="css/mor.css" rel="stylesheet" type="text/css" />
-  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dijit/themes/claro/claro.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojox/widget/ColorPicker/ColorPicker.css" />
+  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dijit/themes/claro/claro.css" rel="stylesheet" />
+  <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojox/widget/ColorPicker/ColorPicker.css" rel="stylesheet" />
   <link rel="image_src" href="img/remo.png" />
 </head>
 <body id="bodyid" ondragover="mor.layout.bodydragover(event);" 
@@ -19,10 +19,7 @@
 </div>
 
 <div id="topsectiondiv">
-  <div id="logodiv">
-    <img src="img/logoMOR.png" id="logoimg" border="0"
-         onclick="mor.profile.display();return false;"/>
-  </div>
+  <div id="logodiv"> <!-- filled if enough width --> </div>
   <div id="topworkdiv">
     <div id="slidesdiv">
       <img id="introslide0" src="img/slides/blank.png" class="slideimg"/>
@@ -45,7 +42,7 @@
       <form id="loginform" method="post" action="/redirlogin">
         <div id="loginstatdiv">&nbsp;</div>
         <div id="loginparaminputs"></div>
-        <table>
+        <table id="loginformtable" border="0">
           <tr>
             <td colspan="2" align="left" class="instructional" id="sittd"></td>
             <td>&nbsp;</td>
@@ -60,34 +57,35 @@
             <td align="right"><label for="passin">password</label></td>
             <td align="left">
               <input type="password" name="passin" 
-                     id="passin" size="20"/></td>
+                     id="passin" size="20"
+                     onchange="mor.byId('loginform').submit();"/></td>
             <td align="center" id="altauthmethods"></td>
           </tr><tr>
-            <td colspan="2" align="right">
+            <td colspan="2" align="right" id="loginbtd">
               <span id="secexp"></span>&nbsp;&nbsp;&nbsp;
               <span id="loginbspan">
-                <input value="Sign in" type="submit"/></span></td>
+                <input value="Sign in" type="submit" class=\"loginbutton\"/>
+              </span></td>
           </tr><tr>
             <td colspan="2" align="right" id="macctd"></td>
-          </tr><tr>
-            <td colspan="2" align="right" id="forgotpwtd"></td>
+            <td colspan="2" align="left" id="forgotpwtd"></td>
           </tr>
         </table>
+      </form>
 
-        <div id="introverview">
+      <div id="introverview">
 
-          <p>An independent front end for social reviews. Take a
+        <p>An independent front end for social reviews. Take a
           breath, collect your thoughts, and post a review that your
           friends (and future you) will appreciate. </p>
 
-          <p>Follow people whose tastes you trust, building
-          relationships through shared experience. </p>
+        <p>Follow people whose tastes you trust, building
+          relationships through shared experiences. </p>
 
-        </div>
+      </div>
 
-      </form>
     </div> <!-- logindiv -->
-  </div>
+  </div> <!-- contentdiv -->
 
   <div id="contentfill">loading...</div>
 
@@ -118,7 +116,7 @@
 </script>
 
 <!-- This lib version should match the css theme -->
-<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/dojo.js"
+<script src="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/dojo.js"
 	data-dojo-config="async: true"></script>
 <script src="js/mor.js"></script>
 <script src="js/mor-comp.js"></script>
@@ -128,7 +126,7 @@ mor.cdnconf = {};
 mor.cdnconf.baseUrl = "/js/";
 mor.cdnconf.packages = [
   { name: "dojo", 
-    location: "https://ajax.googleapis.com/ajax/libs/dojo/1.9.0/dojo/" },
+    location: "https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/" },
   { name: "amd", location: "amd" },
   { name: "ext", location: "amd/ext" } ];
 mor.init();

@@ -344,13 +344,11 @@ def revhtml(rev, pen):
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
     # HTML content from index.html...
-    # html += "<div id=\"mascotdivstatic\">\n"
-    # html += "<img src=\"../img/remo.png\" class=\"mascotimg\"/>\n"
-    # html += "</div>\n"
     # watch the height on this next div, overflow causes major ad placement skew
     html += "<div id=\"topsectiondiv\" style=\"height:130px;\">\n"
     html += "  <div id=\"logodiv\" style=\"width:260px;\">\n"
-    html += "    <img src=\"../img/logoMOR.png\" id=\"logoimg\" border=\"0\"\n"
+    html += "    <img src=\"../img/slides/logoMOR.png\" id=\"logoimg\"\n"
+    html += "         border=\"0\"\n"
     html += "         onclick=\"mor.profile.display();return false;\"\n"
     html += "         style=\"width:260px;height:120px;\"/>\n"
     html += "  </div>\n"

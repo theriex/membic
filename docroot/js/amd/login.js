@@ -67,6 +67,7 @@ define([], function () {
         logoutWithNoDisplayUpdate();
         mor.profile.cancelPenNameSettings();  //close the dialog if it is up
         mor.historyCheckpoint({ view: "profile", profid: 0 });
+        topworkdivcontents = "&nbsp;";  //clear out slideshow, won't fit.
         mor.login.updateAuthentDisplay();
         if(!mor.byId('logindiv')) {
             html = "<div id=\"logindiv\">" + loginhtml + "</div>";
@@ -240,13 +241,13 @@ define([], function () {
             "<em>" + authname + "</em> &nbsp; " +
             "<a href=\"logout\" id=\"logout\"" + 
               " onclick=\"mor.login.logout();return false;\"" +
-            ">sign out</a>";
+            ">Sign out</a>";
         if(authmethod === "mid") {
             html += " &nbsp; " + 
                 "<a href=\"changepwd\" id=\"cpwd\"" + 
                   " onclick=\"mor.login.displayChangePassForm();" + 
                              "return false;\"" + 
-                ">change password</a>"; }
+                ">Change password</a>"; }
         return html;
     },
 
@@ -279,6 +280,9 @@ define([], function () {
                   "</table>" +
                 "</div>";
             mor.out('topworkdiv', html);
+            if(!mor.byId('logoimg')) {
+                mor.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
+                        " id=\"logoimg\" border=\"0\"/>"); }
             mor.byId('logoimg').style.width = "260px";
             mor.byId('logoimg').style.height = "120px";
             mor.byId('logodiv').style.width = "260px";
@@ -286,8 +290,9 @@ define([], function () {
             mor.byId('topworkdiv').style.marginLeft = "280px";
             mor.byId('mascotdiv').style.top = "135px";
             mor.layout.setTopPaddingAndScroll(250); }
-        else if(override === "hide") {  //slogan slide only, others are big
-            html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
+        else if(override === "hide") { 
+            //html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
+            html = "";
             mor.out('topworkdiv', html); }
         else {  //restore whatever was in index.html to begin with
             mor.out('topworkdiv', topworkdivcontents); }
@@ -523,7 +528,7 @@ define([], function () {
         if(!mor.byId('logindiv') || !mor.byId('loginform')) {
             html = "<div id=\"logindiv\">" + loginhtml + "</div>";
             mor.out('contentdiv', html); }
-        mor.byId('loginform').style.display = "inline";
+        mor.byId('loginform').style.display = "block";
         //add url parameters to pass through on form submit
         html = "";
         for(name in params) {
@@ -542,12 +547,12 @@ define([], function () {
         mor.out('sittd', "Sign in directly...");
         mor.out('osacctd', "&nbsp;&nbsp;...or with your social account");
         mor.out('altauthmethods', displayAltAuthMethods());
-        html = "<a id=\"seclogin\" href=\"#secure login\"" +
-                 " title=\"How login credentials are handled securely\"" +
-                 " onclick=\"mor.layout.displayDoc('docs/seclogin.html');" +
-                            "return false;\">(secured)</a>";
-        mor.out('secexp', html);
-        mor.byId('seclogin').style.fontSize = "x-small";
+        if(!mor.isLowFuncBrowser()) {
+            html = "<div id=\"signinbuttondiv\"" +
+                       " onclick=\"mor.byId('loginform').submit();\">" +
+                  "<a title=\"Sign in via secure server\">Sign in</a>" +
+                "</div>";
+            mor.out('loginbtd', html); }
         html =  "<a id=\"macc\" href=\"create new account...\"" + 
                   " title=\"Set up a new local login\"" +
             ">" + "Create a new account</a>";
@@ -558,7 +563,6 @@ define([], function () {
                          " address you set for your account\"" +
             ">" + "forgot your password?</a>";
         mor.out('forgotpwtd', html);
-        mor.byId('forgotpw').style.fontSize = "x-small";
         mor.onclick('forgotpw', displayEmailCredForm);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
         mor.layout.adjust();

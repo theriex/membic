@@ -36,25 +36,24 @@ body {
 
 /* topsectiondiv and contained elements */
 #mascotdiv { position:absolute; left:10px; top:265px; }
-#mascotdivstatic { position:absolute; left:700px; top:140px; }
 .mascotimg { vertical-align:middle; width:29px; height:14px; }
 #topsectiondiv { padding:0px 10px; background:#fffffd;
   box-shadow:8px 8px 4px #cccccc; height:250px; }
-#logodiv {          width:512px; float:left; }
-#topworkdiv { margin-left:525px; }
-#slidesdiv { height:180px; }
-.slideimg { position:absolute; left:535px; margin:auto; padding:auto;
+#logodiv { width:512px; float:left; }
+#topworkdiv { }
+#slidesdiv { }
+.slideimg { position:absolute; left:0px; margin:auto; padding:auto;
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
   -o-transition: opacity 1s ease-in-out;
   transition: opacity 1s ease-in-out;
 }
-#topactionsdiv { }
+#topactionsdiv { font-size:x-large; }
 #topactionstable { }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { }
-#settingsbuttondiv { float:right; padding:3px 10px 3px 0px; }
-.settingsnavico { width:25px; height:25px; }
+#settingsbuttondiv { float:right; padding:38px 3px 3px 0px; }
+.settingsnavico { width:32px; height:32px; vertical-align:middle; }
 
 /* main display area and contained elements */
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }
@@ -65,12 +64,14 @@ body {
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
 #appspacediv, #appspacedivstatic { }
-#appspacediv { padding:15px 40px 0px 72px; width:80%;}
+#appspacediv { padding:10px 10px 0px 10px; margin:auto; }
 #appspacedivstatic { padding:0px 15px 10px 5px; }
 .statrevcontent { padding-left:15px; padding-top:15px; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
-#introverview { padding:10px 0px; color:#333; width:600px; }
+#centerhdiv { }
+#contentdiv { margin:auto; }
+#introverview { padding:10px 0px; color:#333; font-size:medium; }
 
 .penfont, #penhnamespan { 
   font-style:italic; 
@@ -102,17 +103,29 @@ body {
   vertical-align:bottom; }
 .navicodis { opacity:0.3; filter:alpha(opacity=30); }
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
-.svcico, .loginico { height:20px; width:20px; margin:0px 0px 0px 20px; 
-  border:none; vertical-align:middle; }
+.svcico, .loginico { margin:0px 0px 0px 20px; border:none; 
+  vertical-align:middle; }
+.svcico { height:20px; width:20px; }
+.loginico { height:32px; width:32px; }
 .shareico, .shareicodis { height:32px; width:32px; margin:5px 15px;
   border:none; vertical-align:middle; }
 .shareicodis { opacity:0.3; filter:alpha(opacity=30); }
-
+#forgotpwtd { padding:3px 10px; }
+#forgotpw { font-size:small; font-style:italic; }
+#loginbtd { padding:10px 30px; }
+#signinbuttondiv { background:cyan;
+ color:#003; font-size:x:large; font-weight:normal;
+ padding:5px 10px; display:table; cursor:pointer; 
+ border: 1px solid #003; border-radius:5px; box-shadow: 5px 5px 2px #888888 }
 
 /* intro layout */
 #bookslidediv { text-align:center; }
 #bookmarkletlinkdiv { padding:5px 20px; }
-#logindiv, .centertablediv { display:table; margin:0 auto; }
+#logindiv { margin:auto; }
+#loginform { margin:auto; }
+#loginformtable { margin:auto; }
+#loginstatdiv { }
+.centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
 #closebookslide { clear:both; }
 

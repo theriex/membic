@@ -8,8 +8,8 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "sloganPadded.png", "blank.png",
-                   "promo_balloons2.png", 
+    var slides = [ "sloganPadded.png",
+                   "promo_balloons2.png",
                    "promo_list.png",
                    "promo_cycle.png" ],
         slideindex = -1,
@@ -132,8 +132,25 @@ define([], function () {
     },
 
 
+    //Even though window.screen.width *might* give you a semi-accurate
+    //value of something like 480px for a phone, using minimum space
+    //here does not cause the browser to use anything other than full
+    //client width in its own layout calculations.  So just go with
+    //what is being reported.
     initSlideshow = function () {
-        if(!mor.isLowFuncBrowser()) {
+        var width, leftx, logow = 515, slidew = 522;
+        width = document.documentElement.clientWidth;
+        if(width > logow + slidew) {  //enough room for logo and slides
+            mor.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
+                    " id=\"logoimg\" border=\"0\"/>");
+            leftx = logow + Math.round(((width - (logow + slidew)) / 2));
+            mor.byId('introslide0').style.left = String(leftx) + "px";
+            mor.byId('introslide1').style.left = String(leftx) + "px"; }
+        else if(width >= slidew) {  //probably a phone. just slides, but center
+            leftx = Math.round((width - slidew) / 2); 
+            mor.byId('introslide0').style.left = String(leftx) + "px";
+            mor.byId('introslide1').style.left = String(leftx) + "px"; }
+        if(!mor.isLowFuncBrowser()) {  //skip nice fade transitions
             mor.byId('introslide0').style.opacity = 0;
             mor.byId('introslide1').style.opacity = 0; }
         slideshow(true);
@@ -176,8 +193,11 @@ define([], function () {
             mor.winw = document.body.offsetWidth;
             mor.winh = document.body.offsetHeight; }
         else {  //WTF, just guess.
-            mor.winw = 240;
-            mor.winh = 320; }
+            mor.winw = 600;
+            mor.winh = 800; }
+        //if we are actually on a small screen, dial the width back a bit
+        if(window.innerWidth <= 768 || window.screen.width <= 768) {
+            mor.winw = 768; }
     },
 
 
