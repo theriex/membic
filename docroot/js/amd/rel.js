@@ -167,7 +167,6 @@ define([], function () {
         html += "</ul>";
         mor.out(divid, html);
         if(!refarray) {  //rels not loaded yet, init and fetch.
-            getRelRefArray(pen, direction, true);
             loadDisplayRels(pen, direction, divid); }
         else if(litemp === placeholder) {
             loadReferencedPens(refarray[i], function () {
