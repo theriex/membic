@@ -360,8 +360,8 @@ define([], function () {
             mor.call("newrel?" + mor.login.authparams(), 'POST', data,
                      function (newrels) {
                          var orgpen = newrels[0],  //originator pen
-                             relpen = newrels[1],  //related pen
-                             newrel = newrels[2];  //new relationship
+                             relpen = newrels[1];  //related pen
+                         newrel = newrels[2];  //new relationship
                          mor.lcs.putPen(orgpen);
                          mor.lcs.putPen(relpen);
                          pushRel(orgpen, "outbound", newrel);
