@@ -463,7 +463,10 @@ define([], function () {
         if(!mor.byId('cmain')) {
             mor.layout.initContent(); }
         mor.out('cmain', html);
-        mor.byId('urlin').focus();
+        //Setting focus on a phone zooms to bring up the keyboard, so the
+        //type buttons don't get displayed.  Entering a URL is not the 
+        //primary path forward so don't set focus here.
+        //mor.byId('urlin').focus();
         mor.layout.adjust();
     },
 
