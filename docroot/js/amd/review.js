@@ -1074,6 +1074,35 @@ define([], function () {
     },
 
 
+    ratingMenuSelect = function (rating) {
+        var html;
+        mor.cancelPicUpload();  //clears overlaydiv and hides it
+        crev.rating = rating;
+        html = starsImageHTML(crev.rating, true);
+        mor.out('stardisp', html);
+    },
+
+
+    selectRatingByMenu = function (evtx) {
+        var i, html = "", odiv;
+        starPointingActive = false;
+        for(i = 0; i <= 100; i += 10) {
+            html += "<div class=\"ratingmenudiv\" id=\"starsel" + i + "\"" +
+                        " onclick=\"mor.review.ratmenusel(" + i + ");" + 
+                                   "return false;\"" + 
+                ">" + starsImageHTML(i) + "</div>"; }
+        mor.out('overlaydiv', html);
+        odiv = mor.byId('overlaydiv');
+        odiv.style.top = "100px";
+        //bring up to the right of where the touch is occurring, otherwise
+        //you can get an instant select as the touch is applied to the div
+        odiv.style.left = String(Math.round(evtx + 50)) + "px";
+        odiv.style.visibility = "visible";
+        odiv.style.backgroundColor = mor.skinner.lightbg();
+        mor.onescapefunc = mor.cancelPicUpload;
+    },
+
+
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
         span = mor.byId('stardisp');
@@ -1083,6 +1112,11 @@ define([], function () {
         if(event.changedTouches && event.changedTouches[0]) {
             evtx = geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
+        if(relx > 100) {  //normal values for relx range from 0 to ~86
+            setTimeout(function () {  //separate event handling
+                selectRatingByMenu(evtx); }, 20);
+            return; }
+        //mor.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
         //mor.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
         if(roundup) {
@@ -1930,7 +1964,9 @@ define([], function () {
         loadHelpful: function (callback, penref) {
             loadHelpful(callback, penref); },
         foundHelpful: function (revid, penref) {
-            return foundHelpful(revid, penref); }
+            return foundHelpful(revid, penref); },
+        ratmenusel: function (rating) {
+            ratingMenuSelect(rating); }
     };
 
 });
