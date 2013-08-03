@@ -780,11 +780,11 @@ define([], function () {
             //Might want to refresh the image link or get other info
             if(review.url) {
                 html += "<a href=\"#\"" +
-                          " title=\"Refetch imported data field values\"" +
+                          " title=\"Read the URL to fill out review fields\"" +
                           " onclick=\"mor.review.readURL('" + 
                                                          review.url + "');" +
                                      "return false;\"" +
-                    ">Fetch review data from URL</a>&nbsp;&nbsp;&nbsp;"; }
+                    ">Read review details from URL</a>&nbsp;&nbsp;&nbsp;"; }
         }
         return html;
     },

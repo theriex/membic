@@ -743,12 +743,19 @@ var mor = {};  //Top level function closure container
     };
 
 
-    //Some things don't work in older browsers and need code workaround
-    //to degrade gracefully.
+    //Some things don't work in older browsers and need code workarounds
+    //to degrade gracefully.  Like the background texture.
     mor.isLowFuncBrowser = function () {
-        if(navigator && 
-           navigator.appName === "Microsoft Internet Explorer") {
-            return true; }
+        var nav;
+        if(navigator) {
+            nav = navigator;
+            // alert("appCodeName: " + nav.appCodeName + "\n" +
+            //       "appName: " + nav.appName + "\n" +
+            //       "appVersion: " + nav.appVersion + "\n" +
+            //       "platform: " + nav.platform + "\n" +
+            //       "userAgent: " + nav.userAgent + "\n");
+            if(nav.appName === "Microsoft Internet Explorer") {
+                return true; } }
         return false;
     };
 
