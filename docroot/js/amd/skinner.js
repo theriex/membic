@@ -148,7 +148,8 @@ define([], function () {
 
 
     cancelSkinChange = function () {
-        mor.colors = oldcolors;
+        if(oldcolors) {  //if spurious cancel call oldcolors may be undefined
+            mor.colors = oldcolors; }
         if(cancelpen && cancelpen.settings && 
            cancelpen.settings.colorPresetId) {
             cancelpen.settings.colorPresetId = oldcolors.id; }

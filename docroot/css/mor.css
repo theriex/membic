@@ -42,7 +42,7 @@ body {
 #logodiv { width:512px; float:left; }
 #topworkdiv { }
 #slidesdiv { }
-.slideimg { position:absolute; left:0px; margin:auto; padding:auto;
+.slideimg { position:absolute; left:0px; margin:auto;
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
   -o-transition: opacity 1s ease-in-out;
@@ -114,7 +114,7 @@ body {
 #forgotpw { font-size:small; font-style:italic; }
 #loginbtd { padding:10px 30px; }
 #signinbuttondiv { background:cyan;
- color:#003; font-size:x:large; font-weight:normal;
+ color:#003; font-size:x-large; font-weight:normal;
  padding:5px 10px; display:table; cursor:pointer; 
  border: 1px solid #003; border-radius:5px; box-shadow: 5px 5px 2px #888888 }
 
@@ -145,7 +145,7 @@ body {
 #profbadgestd { padding: 0px 10px 5px 10px; width:300px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */
-.textareatd { padding:auto; }
+.textareatd { }
 .shoutout, .shoutoutstatic { text-align:left;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
@@ -174,7 +174,7 @@ body {
 #revformbuttonstd { }
 #revbuttonsdiv { margin-left:15%; }
 #socialrevactdiv { margin-left:4%; }
-#staticsocialrevactdiv { margin-left:1%; padding:20px; 0px; }
+#staticsocialrevactdiv { margin-left:1%; padding:20px 0px; }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
@@ -184,7 +184,7 @@ body {
 .revimgsafe { width:125px; height:auto; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
 .rslc { font-size:medium; }
-.rslcbold { fond-size:medium; font-weight:bold; }
+.rslcbold { font-size:medium; font-weight:bold; }
 .morerevs { font-size:small; padding: 0px 0px 0px 30px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
 .csvstrdiv { padding:5px; }

@@ -15,6 +15,19 @@ from consvc import doOAuthGet
 from google.appengine.api import urlfetch
 
 
+class MORAccount(db.Model):
+    """ An account used for local (as opposed to 3rd party) authentication """
+    username = db.StringProperty(required=True)
+    password = db.StringProperty(required=True)
+    email = db.EmailProperty()
+    modified = db.StringProperty()  # iso date
+    userlcase = db.StringProperty()  # lowercase username for case ins login
+    lastsummary = db.StringProperty() # iso date last summary run
+    summaryfreq = db.StringProperty()  # daily, weekly, fortnightly, never
+    summaryflags = db.StringProperty()  # sumiflogin, sumifnoact
+    
+
+
 def pwd2key(password):
     """ make a password into an encryption key """
     pwd = str(password)
@@ -280,15 +293,6 @@ def safeURIEncode(stringval, stripnewlines = False):
     return urllib.quote(stringval.encode("utf-8"))
 
 
-class MORAccount(db.Model):
-    """ An account used for local (as opposed to 3rd party) authentication """
-    username = db.StringProperty(required=True)
-    password = db.StringProperty(required=True)
-    email = db.EmailProperty()
-    modified = db.StringProperty()  # iso date
-    userlcase = db.StringProperty()  # lowercase username for case ins login
-
-
 class WriteAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
@@ -451,17 +455,18 @@ class ChangePassword(webapp2.RequestHandler):
             self.response.out.write("request must be over https")
             return
         pwd = self.request.get('pass')
-        if not pwd or len(pwd) < 6:
+        if pwd and len(pwd) < 6:
             self.error(412)
             self.response.out.write("Password must be at least 6 characters")
             return
         account = authenticated(self.request)
-        if pwd and account:
-            email = self.request.get('email')
-            if email:
-                account.email = email.lower()
+        if account:
+            if pwd:
+                account.password = pwd
+            account.email = (self.request.get('email') or "").lower()
+            account.summaryfreq = self.request.get('sumfreq') or ""
+            account.summaryflags = self.request.get('sumflags') or ""
             account.modified = nowISO()
-            account.password = pwd
             account.put()
             token = newtoken(account.username, account.password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
@@ -470,11 +475,18 @@ class ChangePassword(webapp2.RequestHandler):
             self.response.out.write("Authentication failed")
 
 
+class GetAccount(webapp2.RequestHandler):
+    def get(self):
+        account = authenticated(self.request)
+        account.password = "WriteOnlyFieldCannotBeEmptySoUsePlaceholder"
+        returnJSON(self.response, [ account ])
+
 
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),
                                ('/chgpwd', ChangePassword),
-                               ('/loginid', GetLoginID)], debug=True)
+                               ('/loginid', GetLoginID),
+                               ('/getacct', GetAccount)], debug=True)
 

@@ -13,9 +13,10 @@ define([], function () {
         authname = "",
         cookdelim = "..morauth..",
         topworkdivcontents = "",
-        changepwdprompt = "Changing your login credentials",
         altauths = [],
         loginhtml = "",
+        sumfreqs = [ "daily", "weekly", "fortnightly", "never" ],
+        sumlabels = [ "Daily", "Weekly", "Fortnightly", "Never" ],
 
 
     secureURL = function (endpoint) {
@@ -165,67 +166,136 @@ define([], function () {
     },
 
 
-    changePassword = function () {
-        var pwd, email, data, url, critsec = "";
-        pwd = mor.byId('npin').value;
-        if(!pwd || !pwd.trim()) {
-            changepwdprompt = "New password must have a value";
-            return mor.login.displayChangePassForm(); }
-        email = mor.byId('npemailin').value;
+    updateAccount = function () {
+        var sel, i, cboxes, csv, data, url, critsec = "";
+        data = "email=" + mor.enc(mor.byId('emailin').value || "");
+        if(authmethod === "mid") {
+            data += "&pass=" + mor.enc(mor.byId('npin').value || ""); }
+        sel = mor.byId('offsumsel');
+        for(i = 0; i < sumfreqs.length; i += 1) {
+            if(sel.options[i].selected) {
+                data += "&sumfreq=" + sumfreqs[i];
+                break; } }
+        csv = "";
+        cboxes = document.getElementsByName("summaryflags");
+        for(i = 0; i < cboxes.length; i += 1) {
+            if(cboxes[i].checked) {
+                if(csv) {
+                    csv += ","; }
+                csv += cboxes[i].value; } }
+        data += "&sumflags=" + mor.enc(csv);
+        data += "&" + mor.login.authparams();
         url = secureURL("chgpwd");
-        data = "pass=" + mor.enc(pwd) + "&email=" + mor.enc(email) +
-            "&" + mor.login.authparams();
         mor.call(url, 'POST', data,
                  function (objs) {
-                     setAuthentication("mid", objs[0].token, authname);
+                     if(authmethod === "mid") {
+                         setAuthentication("mid", objs[0].token, authname); }
                      doneWorkingWithAccount(); },
                  function (code, errtxt) {
-                     changepwdprompt = errtxt;
-                     mor.login.displayChangePassForm(); },
-                 critsec);
+                     mor.out('setstatdiv', "Account settings update failed: " +
+                             errtxt); },  //412 code not helpful
+                 critsec, null, [405, 412]);
     },
 
 
-    displayChangePassForm = function () {
-        var html = "";
+    displayUpdateAccountForm = function (account) {
+        var html = "", i, title = "Account settings for $USERNAME";
         if(secureURL("chgpwd") !== "chgpwd") {
             window.location.href = mor.secsvr + 
                 "#returnto=" + mor.enc(mor.mainsvr) +
                 "&command=chgpwd&" + authparams(); }
         mor.profile.cancelPenNameSettings();  //close the dialog if it is up
         mor.login.updateAuthentDisplay("hide");
-        html += "<p>&nbsp;</p>" +  //make sure we are not too tight to top
-        "<div id=\"chpstatdiv\">" + changepwdprompt + "</div>" +
-        "<table>" +
-          "<tr>" +
-            "<td align=\"right\">username</td>" +
-            "<td align=\"left\">" + 
-              "<input type=\"text\" size=\"20\"" + 
-                    " value=\"" + authname + "\" disabled=\"disabled\"/></td>" +
+        title = title.replace("$USERNAME", authname);
+        mor.out('centerhdiv', title);
+        html += "<table id=\"loginform\" class=\"formstyle\">" +
+            "<tr><td colspan=\"3\"><div id=\"setstatdiv\"></div></td></tr>";
+        if(authmethod === "mid") {
+            html += "<tr>" +
+                "<td align=\"right\">New Password</td>" +
+                "<td align=\"left\">" +
+                  "<input type=\"password\" id=\"npin\" size=\"25\"/></td>" +
+                "<td align=\"left\">" +
+                  "<button type=\"button\" id=\"chgpwbutton\"" + 
+                ">Change Password</button>" +
+                "</tr>"; }
+        html += "<tr>" +
+            "<td align=\"right\">E-mail</td>" +
+            "<td align=\"left\">" +
+              "<input type=\"text\" id=\"emailin\" size=\"25\"" + 
+                    " value=\"" + (account.email || "") + "\"" +
+                "/></td>" +
+            "<td align=\"left\">" +
+              "<button type=\"button\" id=\"updembutton\"" +
+                ">Update E-mail</button>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">new password</td>" +
+            "<td align=\"right\">Offline Summary</td>" +
             "<td align=\"left\">" +
-              "<input type=\"password\" id=\"npin\" size=\"20\"/></td>" +
+              "<select id=\"offsumsel\">";
+        for(i = 0; i < sumfreqs.length; i += 1) {
+            html += "<option id=\"" + sumfreqs[i] + "\"";
+            if(!account.summaryfreq) {
+                account.summaryfreq = "weekly"; }
+            if(account.summaryfreq === sumfreqs[i]) {
+                html += " selected=\"selected\""; }
+            html += ">" + sumlabels[i] + "</option>"; }
+        html += "</select></td>" +
           "</tr>" +
           "<tr>" +
-            "<td align=\"right\">email</td>" +
-            "<td align=\"left\">" +
-              "<input type=\"text\" id=\"npemailin\" size=\"30\"/></td>" +
+            "<td></td>" +
+            "<td colspan=\"2\">" +
+              mor.checkrad("checkbox", "summaryflags", "sumiflogin",
+                           "Send summary even if site visited",
+                           (account.summaryflags && 
+                            account.summaryflags.indexOf('sumiflogin') >= 0)) +
+            "</td>" +
+          "</tr>" +
+          "<tr>" +
+            "<td></td>" +
+            "<td colspan=\"2\">" +
+              mor.checkrad("checkbox", "summaryflags", "sumifnoact",
+                           "Send summary even if no reviews from friends",
+                           (account.summaryflags && 
+                            account.summaryflags.indexOf('sumifnoact') >= 0)) +
+            "</td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\" class=\"actbuttons\">" +
               "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
               "&nbsp;" +
-              "<button type=\"button\" id=\"changebutton\">Change</button>" +
+              "<button type=\"button\" id=\"savebutton\">Save</button>" +
+            "</td>" +
+          "</tr>" +
+          "<tr>" + 
+            "<td colspan=\"3\" align=\"center\">" +
+              "<p>MyOpenReviews will not share your email address. </p>" +
+              "<p>MyOpenReviews will respect your inbox. </p>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out('contentdiv', html);
+        mor.onclick('chgpwbutton', updateAccount);
+        mor.onclick('updembutton', updateAccount);
         mor.onclick('cancelbutton', redirectToMainServer);
-        mor.onclick('changebutton', changePassword);
+        mor.onclick('savebutton', updateAccount);
         mor.layout.adjust();
-        mor.byId('npin').focus();
+        mor.byId('emailin').focus();
+    },
+
+
+    fetchAccAndUpdate = function () {
+        var critsec = "";
+        mor.call("getacct?" + authparams(), 'GET', null,
+                 function (accarr) {
+                     if(accarr.length > 0) {
+                         displayUpdateAccountForm(accarr[0]); }
+                     else {
+                         mor.err("No account details available"); } },
+                 function (code, errtxt) {
+                     mor.err("Account details retrieval failed: " + code + 
+                             " " + errtxt); },
+                 critsec, null, [400, 404]);
     },
 
 
@@ -241,13 +311,12 @@ define([], function () {
             "<em>" + authname + "</em> &nbsp; " +
             "<a href=\"logout\" id=\"logout\"" + 
               " onclick=\"mor.login.logout();return false;\"" +
-            ">Sign out</a>";
-        if(authmethod === "mid") {
-            html += " &nbsp; " + 
-                "<a href=\"changepwd\" id=\"cpwd\"" + 
-                  " onclick=\"mor.login.displayChangePassForm();" + 
-                             "return false;\"" + 
-                ">Change password</a>"; }
+            ">Sign out</a>" +
+            "&nbsp;|&nbsp;" + 
+            "<a href=\"#AccountSettings\" id=\"accset\"" + 
+              " onclick=\"mor.login.displayUpdateAccountForm();" + 
+                         "return false;\"" + 
+            ">Account settings</a>";
         return html;
     },
 
@@ -589,7 +658,7 @@ define([], function () {
     //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
         if(params.command === "chgpwd") {
-            displayChangePassForm(); }
+            mor.login.displayUpdateAccountForm(); }
         else if(params.command === "helpful" ||
                 params.command === "remember" ||
                 params.command === "respond" ||
@@ -667,8 +736,8 @@ define([], function () {
                         handleRedirectOrStartWork(); }); },
         updateAuthentDisplay: function (override) {
             updateAuthentDisplay(override); },
-        displayChangePassForm: function () {
-            displayChangePassForm(); },
+        displayUpdateAccountForm: function () {
+            fetchAccAndUpdate(); },
         authparams: function () {
             return authparams(); },
         readAuthCookie: function () {

@@ -52,6 +52,11 @@ handlers:
 - url: /chgpwd.*
   script: src.py.moracct.app
 
+## Get login account details
+## GET params: authparams
+- url: /getacct.*
+  script: src.py.moracct.app
+
 
 
 ######################################################################
