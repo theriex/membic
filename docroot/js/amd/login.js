@@ -444,7 +444,7 @@ define([], function () {
             "<td colspan=\"2\" align=\"center\" class=\"actbuttons\"" + 
                " id=\"newaccbuttonstd\" >" +
               "<button type=\"button\" id=\"cancelbutton\"" + 
-                     " onclick=\"mor.login.init();return false;\"" +
+                     " onclick=\"mor.login.clearinit();return false;\"" +
                 ">Cancel</button>" +
               "&nbsp;" +
               "<button type=\"button\" id=\"createbutton\"" + 
@@ -745,6 +745,10 @@ define([], function () {
                         altauths = [ facebook, twitter, googleplus,
                                      github ];
                         handleRedirectOrStartWork(); }); },
+        clearinit: function () {
+            mor.out('centerhdiv', "");
+            mor.out('logindiv', "");
+            mor.login.init(); },
         updateAuthentDisplay: function (override) {
             updateAuthentDisplay(override); },
         displayUpdateAccountForm: function () {
