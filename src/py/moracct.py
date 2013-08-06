@@ -325,6 +325,9 @@ class WriteAccount(webapp2.RequestHandler):
         if email:
             acct.email = email.lower()
         acct.modified = nowISO()
+        acct.lastsummary = nowISO()
+        acct.summaryfreq = "weekly"
+        acct.summaryflags = ""
         acct.put()
         token = newtoken(user, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
@@ -464,7 +467,9 @@ class ChangePassword(webapp2.RequestHandler):
             if pwd:
                 account.password = pwd
             account.email = (self.request.get('email') or "").lower()
-            account.summaryfreq = self.request.get('sumfreq') or ""
+            if not account.lastsummary:
+                account.lastsummary = nowISO()
+            account.summaryfreq = self.request.get('sumfreq') or "weekly"
             account.summaryflags = self.request.get('sumflags') or ""
             account.modified = nowISO()
             account.put()

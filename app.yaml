@@ -275,6 +275,8 @@ handlers:
   script: src.py.statweek.app
 - url: /rssact.*
   script: src.py.rssact.app
+- url: /mailsum.*
+  script: src.py.mailsum.app
 - url: /loginid.*
   script: src.py.moracct.app
 # Trap anything ending with a slash and send it to index.html since there
