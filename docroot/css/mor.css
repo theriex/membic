@@ -113,7 +113,7 @@ body {
 #forgotpwtd { padding:3px 10px; }
 #forgotpw { font-size:small; font-style:italic; }
 #loginbtd { padding:10px 30px; }
-#signinbuttondiv { background:cyan;
+#signinbuttondiv { background:#70bbe9;
  color:#003; font-size:x-large; font-weight:normal;
  padding:5px 10px; display:table; cursor:pointer; 
  border: 1px solid #003; border-radius:5px; box-shadow: 5px 5px 2px #888888 }
