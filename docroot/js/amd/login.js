@@ -198,6 +198,17 @@ define([], function () {
     },
 
 
+    emailStatementsRow = function () {
+        var html = "<tr>" + 
+            "<td colspan=\"3\" align=\"center\">" +
+              "<p>MyOpenReviews will not share your email address. </p>" +
+              "<p>MyOpenReviews will respect your inbox. </p>" +
+            "</td>" +
+          "</tr>";
+        return html;
+    },
+
+
     displayUpdateAccountForm = function (account) {
         var html = "", i, title = "Account settings for $USERNAME";
         if(secureURL("chgpwd") !== "chgpwd") {
@@ -267,12 +278,7 @@ define([], function () {
               "<button type=\"button\" id=\"savebutton\">Save</button>" +
             "</td>" +
           "</tr>" +
-          "<tr>" + 
-            "<td colspan=\"3\" align=\"center\">" +
-              "<p>MyOpenReviews will not share your email address. </p>" +
-              "<p>MyOpenReviews will respect your inbox. </p>" +
-            "</td>" +
-          "</tr>" +
+          emailStatementsRow() +
         "</table>";
         mor.out('contentdiv', html);
         mor.onclick('chgpwbutton', updateAccount);
@@ -358,7 +364,7 @@ define([], function () {
             mor.byId('topsectiondiv').style.height = "120px";
             mor.byId('topworkdiv').style.marginLeft = "280px";
             mor.byId('mascotdiv').style.top = "135px";
-            mor.layout.setTopPaddingAndScroll(250); }
+            mor.layout.setTopPaddingAndScroll(120); }
         else if(override === "hide") { 
             //html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
             html = "";
@@ -411,8 +417,12 @@ define([], function () {
         var username, password, html;
         username = mor.safestr(mor.safeget('userin', "value"));
         password = mor.safestr(mor.safeget('passin', "value"));
-        html = "<div id=\"maccstatdiv\">Creating a new account</div>" +
-        "<table>" +
+        mor.out('centerhdiv', "Creating New Account");
+        html = "<table id=\"loginform\" class=\"formstyle\">" +
+          "<tr>" +
+            "<td colspan=\"2\" align=\"center\">" + 
+              "<div id=\"maccstatdiv\"></div></td>" +
+          "</tr>" +
           "<tr>" +
             "<td align=\"right\"><label for=\"userin\">username</label></td>" +
             "<td align=\"left\">" +
@@ -429,11 +439,10 @@ define([], function () {
             "<td align=\"right\">email</td>" +
             "<td align=\"left\">" +
               "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
-            "<td align=\"left\">" + 
-              "&nbsp;(optional - used if you forget your login)</td>" +
           "</tr>" +
           "<tr>" +
-            "<td id=\"newaccbuttonstd\" colspan=\"2\" align=\"center\">" +
+            "<td colspan=\"2\" align=\"center\" class=\"actbuttons\"" + 
+               " id=\"newaccbuttonstd\" >" +
               "<button type=\"button\" id=\"cancelbutton\"" + 
                      " onclick=\"mor.login.init();return false;\"" +
                 ">Cancel</button>" +
@@ -443,6 +452,7 @@ define([], function () {
                 ">Create</button>" +
             "</td>" +
           "</tr>" +
+          emailStatementsRow() +
         "</table>";
         mor.out('logindiv', html);
         mor.onchange('userin', usernamechange);
@@ -623,10 +633,11 @@ define([], function () {
                 "</div>";
             mor.out('loginbtd', html); }
         html =  "<a id=\"macc\" href=\"create new account...\"" + 
-                  " title=\"Set up a new local login\"" +
+                  " title=\"Create new native login\"" +
+                  " onclick=\"mor.login.displayNewAccountForm();" + 
+                             "return false;\"" +
             ">" + "Create a new account</a>";
         mor.out('macctd', html);
-        mor.onclick('macc', displayNewAccountForm);
         html = "<a id=\"forgotpw\" href=\"forgot credentials...\"" + 
                  " title=\"Retrieve your credentials using the email" + 
                          " address you set for your account\"" +
@@ -634,9 +645,9 @@ define([], function () {
         mor.out('forgotpwtd', html);
         mor.onclick('forgotpw', displayEmailCredForm);
         mor.onchange('userin', function () { mor.byId('passin').focus(); });
-        mor.layout.adjust();
         if(authname) {
             mor.byId('userin').value = authname; }
+        mor.layout.adjust();
         mor.byId('userin').focus();
     },
 
@@ -738,6 +749,8 @@ define([], function () {
             updateAuthentDisplay(override); },
         displayUpdateAccountForm: function () {
             fetchAccAndUpdate(); },
+        displayNewAccountForm: function () {
+            displayNewAccountForm(); },
         authparams: function () {
             return authparams(); },
         readAuthCookie: function () {

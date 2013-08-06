@@ -14,7 +14,8 @@ define([], function () {
                    "promo_cycle.png" ],
         slideindex = -1,
         slideslot = -1,
-        topPaddingAndScroll = 320,
+        topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
+        topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
         dndState = null,
 
 
@@ -271,12 +272,22 @@ define([], function () {
     },
 
 
+    currentContentHeight = function () {
+        var ch, content, centerh, bottomnav;
+        content = mor.byId("contentdiv").offsetHeight;
+        centerh = mor.byId("centerhdiv").offsetHeight;
+        bottomnav = mor.byId("bottomnav").offsetHeight;
+        ch = content + centerh + bottomnav;
+        return ch;
+    },
+
+
     fullContentHeight = function () {
         var ch, filldiv, topdiv, contentdiv, target;
         findDisplayHeightAndWidth();
         //fill the bottom content so the footer text isn't too high up
         filldiv = mor.byId("contentfill");
-        ch = mor.byId("contentdiv").offsetHeight;
+        ch = currentContentHeight();
         target = mor.winh - topPaddingAndScroll; 
         if(ch < target) {
             filldiv.style.height = (target - ch) + "px"; }
@@ -314,7 +325,7 @@ define([], function () {
         closeDialog: function () {
             closeDialog(); },
         setTopPaddingAndScroll: function (val) {
-            topPaddingAndScroll = val; },
+            topPaddingAndScroll = val + topextra; },
         dragstart: function (event) {
             dndStart(event); },
         dragend: function (event) {
