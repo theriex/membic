@@ -188,7 +188,7 @@ define([], function () {
 
     displayAuthSettings = function (domid, pen) {
         var atname, html;
-        html = "<div id=\"accountdiv\">" + mor.login.loginInfoHTML() + 
+        html = "<div id=\"accountdiv\">" + mor.login.loginInfoHTML(pen) + 
             "</div>" +
             "Access \"" + pen.name + "\" via: " +
             "<table>";

@@ -305,7 +305,7 @@ define([], function () {
     },
 
 
-    loginInfoHTML = function () {
+    loginInfoHTML = function (pen) {
         var html, iconurl;
         switch(authmethod) {
             case "mid": iconurl = "img/iconMOR.png"; break;
@@ -318,11 +318,18 @@ define([], function () {
             "<a href=\"logout\" id=\"logout\"" + 
               " onclick=\"mor.login.logout();return false;\"" +
             ">Sign out</a>" +
-            "&nbsp;|&nbsp;" + 
-            "<a href=\"#AccountSettings\" id=\"accset\"" + 
-              " onclick=\"mor.login.displayUpdateAccountForm();" + 
-                         "return false;\"" + 
-            ">Account settings</a>";
+            "&nbsp;|&nbsp;";
+        if(authmethod === "mid") {
+            html += "<a href=\"#AccountSettings\" id=\"accset\"" + 
+                      " onclick=\"mor.login.displayUpdateAccountForm();" + 
+                                 "return false;\"" + 
+                ">Account settings</a>"; }
+        else {
+            html += "<a class=\"greytxt\" id=\"accset\"" +
+                      " onclick=\"alert('Sign out and login via MyOpenReviews" +
+                                      " to access your account settings');" +
+                                 "return false;\"" +
+                ">Account settings</a>"; }
         return html;
     },
 
@@ -772,8 +779,8 @@ define([], function () {
         createAccount: function () {
             createAccount(); },
         getAuthMethod: function () { return authmethod; },
-        loginInfoHTML: function () {
-            return loginInfoHTML(); }
+        loginInfoHTML: function (pen) {
+            return loginInfoHTML(pen); }
     };
 
 });

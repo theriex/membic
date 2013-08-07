@@ -228,3 +228,6 @@ body {
 /* activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #toptypeseldiv { padding-left:60px; }
+
+/* general classes */
+.greytxt { color:#999999; }

@@ -24,6 +24,11 @@ class ConnectionService(db.Model):
     secret = db.StringProperty(required=True)
 
 
+class GenObj:
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+
 def getConnectionService(svcname):
     where = "WHERE name=:1 LIMIT 1"
     svcs = ConnectionService.gql(where, svcname)
@@ -117,12 +122,16 @@ def doOAuthCall(url, params, httpverb):
     headers = { 'Content-Type': 'application/x-www-form-urlencoded',
                 'Authorization': authstr }
     logging.info("doOAuthCall url: " + url)
-    result = urlfetch.fetch(url, payload=payload, method=httpverb, 
-                            headers=headers,
-                            allow_truncated=False, 
-                            follow_redirects=True, 
-                            deadline=10, 
-                            validate_certificate=False)
+    try:
+        result = urlfetch.fetch(url, payload=payload, method=httpverb, 
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+    except Exception as e:
+        result = GenObj(status_code = 503, 
+                        content = "urlfetch.fetch failed: " + str(e) )
     logging.info("doOAuthCall " + str(result.status_code) + ": " +
                  result.content)
     return result
