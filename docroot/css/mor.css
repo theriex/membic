@@ -71,7 +71,8 @@ body {
   word-spacing:20px; padding:0px 20px 5px 20px; }
 #centerhdiv { }
 #contentdiv { margin:auto; }
-#introverview { padding:10px 0px; color:#333; font-size:medium; }
+#introverview { padding:10px 0px; color:#333; font-size:medium; 
+ width:50%; margin:auto; }
 
 .penfont, #penhnamespan { 
   font-style:italic; 

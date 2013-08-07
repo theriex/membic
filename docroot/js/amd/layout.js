@@ -148,6 +148,7 @@ define([], function () {
             mor.byId('introslide0').style.left = String(leftx) + "px";
             mor.byId('introslide1').style.left = String(leftx) + "px"; }
         else if(width >= slidew) {  //probably a phone. just slides, but center
+            mor.out('logodiv', "");
             leftx = Math.round((width - slidew) / 2); 
             mor.byId('introslide0').style.left = String(leftx) + "px";
             mor.byId('introslide1').style.left = String(leftx) + "px"; }
