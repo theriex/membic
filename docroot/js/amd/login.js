@@ -233,7 +233,7 @@ define([], function () {
         html += "<tr>" +
             "<td align=\"right\">E-mail</td>" +
             "<td align=\"left\">" +
-              "<input type=\"text\" id=\"emailin\" size=\"25\"" + 
+              "<input type=\"email\" id=\"emailin\" size=\"25\"" + 
                     " value=\"" + (account.email || "") + "\"" +
                 "/></td>" +
             "<td align=\"left\">" +
@@ -445,7 +445,7 @@ define([], function () {
           "<tr>" +
             "<td align=\"right\">email</td>" +
             "<td align=\"left\">" +
-              "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
+              "<input type=\"email\" id=\"emailin\" size=\"30\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\" class=\"actbuttons\"" + 
@@ -477,13 +477,13 @@ define([], function () {
         "</code> and should arrive in a few " +
         "minutes.  If it doesn't show up, please </p>" +
         "<ol>" +
-        "<li>Make sure you have entered your email address correctly" +
-        "<li>Check your spam folder to see if the message was filtered out" +
-        "<li>Verify the email address you entered is the same one you used" +
+        "<li>Make sure your email address is spelled correctly" +
+        "<li>Check your spam folder" +
+        "<li>Confirm the email address you entered is the same one you used" +
            " when you created your account." +
         "</ol>" +
-        "<p>If you did not specify an email address when you created your " +
-        "account, then your login information cannot be retrieved. </p>" +
+        "<p>If your account does not have an email address, " +
+        "then your username and password cannot be retrieved. </p>" +
         "<p><a id=\"retlogin\" href=\"return to login\">" +
         "return to login</a></p>";
         mor.out('logindiv', html);
@@ -511,25 +511,31 @@ define([], function () {
 
     displayEmailCredForm = function () {
         var html = "";
-        html += "<div id=\"emcrediv\">If you filled out your email address" +
-        " when you created your account, then your username and password" +
-        " can be mailed to you. </div>" +
-        "<table>" + 
+        mor.out('centerhdiv', "Forgot Password");
+        html += "<table id=\"loginform\" class=\"formstyle\">" + 
+          "<tr>" +
+            "<td colspan=\"2\">" +
+              "<div id=\"emcrediv\">" + 
+                "Enter the email address for you account" +
+                " and your username and password will be mailed to you." + 
+              "</div></td>" +
+          "</tr>" +
           "<tr>" +
             "<td align=\"right\">email</td>" +
             "<td align=\"left\">" +
-              "<input type=\"text\" id=\"emailin\" size=\"30\"/></td>" +
+              "<input type=\"email\" id=\"emailin\" size=\"30\"/></td>" +
           "</tr>" +
           "<tr>" +
             "<td colspan=\"2\" align=\"center\" id=\"sendbuttons\">" +
-              "<button type=\"button\" id=\"cancelbutton\">Cancel</button>" +
+              "<button type=\"button\" id=\"cancelbutton\"" + 
+                     " onclick=\"mor.login.clearinit();return false;\"" +
+                ">Cancel</button>" +
               "&nbsp;" +
               "<button type=\"button\" id=\"sendbutton\">Send</button>" +
             "</td>" +
           "</tr>" +
         "</table>";
         mor.out('logindiv', html);
-        mor.onclick('cancelbutton', mor.login.init);
         mor.onclick('sendbutton', emailCredentials);
         mor.onchange('emailin', emailCredentials);
         mor.layout.adjust();

@@ -302,7 +302,7 @@ def safeURIEncode(stringval, stripnewlines = False):
 class WriteAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or url.startswith('http://localhost')):
+        if not (url.startswith('https') or ":8080" in url):
             self.error(405)
             self.response.out.write("request must be over https")
             return
@@ -342,7 +342,7 @@ class WriteAccount(webapp2.RequestHandler):
 class GetToken(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or url.startswith('http://localhost')):
+        if not (url.startswith('https') or ":8080" in url):
             self.error(405)
             self.response.out.write("request must be over https")
             return
@@ -447,7 +447,7 @@ class MailCredentials(webapp2.RequestHandler):
                          " usernames: " + usernames)
             # sender needs to be a valid email address.  This should
             # change to noreply@myopenreviews.com if traffic gets bad
-            if not self.request.url.startswith('http://localhost'):
+            if not ":8080" in self.request.url:
                 mail.send_mail(
                     sender="MyOpenReviews support <theriex@gmail.com>",
                     to=account.email,
@@ -459,7 +459,7 @@ class MailCredentials(webapp2.RequestHandler):
 class ChangePassword(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or url.startswith('http://localhost')):
+        if not (url.startswith('https') or ":8080" in url):
             self.error(405)
             self.response.out.write("request must be over https")
             return

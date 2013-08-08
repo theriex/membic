@@ -168,9 +168,15 @@ define([], function () {
                 ">Cancel</button>"; }
         //need to mimic layout initContent divs here so they are available
         //as needed for continuation processing.
-        html = "<div id=\"chead\"> </div><div id=\"cmain\"><p>Your pen name is a unique expression of style. You can have separate pen names for different personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</p>" +
+        html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
         "<div id=\"penformstat\">&nbsp;</div>" +
         "<table class=\"pennametable\">" +
+          "<tr>" +
+            "<td colspan=\"3\">" + 
+              "<div id=\"pennamedescrdiv\" class=\"introverview\">" +
+              "Your pen name is a unique expression of style. You can have separate pen names for different personas, revealing as much (or as little) about yourself as you want. Use your real name, or get creative...</div>" +
+            "</td>" +
+          "</tr>" +
           "<tr>" +
             "<td rowspan=\"2\"><img src=\"img/penname.png\"/></td>" +
             "<td class=\"formattr\">Writing as...</td>" +
