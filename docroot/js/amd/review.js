@@ -393,8 +393,10 @@ define([], function () {
             if(urlin) {
                 url = urlin.value; } }
         reviewTextValid(crev.revtype, errs);
-        if(!url || errs.length > 0) {
+        if(errs.length > 0) {
             return; }
+        if(!url) {  //bail out, but reflect any updates so far
+            return mor.review.display(); }
         rbc = mor.byId('readurlbuttoncontainer');
         if(rbc) {
             rbc.innerHTML = "reading..."; }
