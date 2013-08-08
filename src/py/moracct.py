@@ -174,6 +174,12 @@ def authenticated(request):
         logging.info("could not authenticate unknown account type: " + acctype)
 
 
+def ISO2dt(isostr):
+    dt = datetime.datetime.utcnow()
+    dt = dt.strptime(isostr, "%Y-%m-%dT%H:%M:%SZ")
+    return dt
+
+
 def dt2ISO(dt):
     iso = str(dt.year) + "-" + str(dt.month).rjust(2, '0') + "-"
     iso += str(dt.day).rjust(2, '0') + "T" + str(dt.hour).rjust(2, '0')

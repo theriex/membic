@@ -40,6 +40,8 @@ class Review(db.Model):
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
     srcrev = db.IntegerProperty()
+    # Duplicated data to make summary reporting easier
+    penname = db.StringProperty()
 
 
 def review_modification_authorized(handler):
@@ -269,6 +271,7 @@ class NewReview(webapp2.RequestHandler):
             revtype = self.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
+        review.penname = pen.name
         if self.request.get('mode') == "batch":
             # Might be better to unpack the existing svcdata value and 
             # update rather than rewriting, but maybe not. Change if needed
@@ -287,6 +290,7 @@ class UpdateReview(webapp2.RequestHandler):
         if not review:
             return
         read_review_values(self, review)
+        review.penname = pen.name
         review.put()
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])

@@ -103,6 +103,15 @@ def valid_relationship_modification(handler, rel):
     return True
 
 
+def outbound_relids_for_penid(penid):
+    where = "WHERE originid = :1 LIMIT 300"
+    rels = Relationship.gql(where, penid)
+    relids = []
+    for rel in rels:
+        relids.append(str(rel.relatedid))
+    return relids
+
+
 class CreateRelationship(webapp2.RequestHandler):
     def post(self):
         if not relationship_modification_authorized(self):

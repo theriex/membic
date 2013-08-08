@@ -1,14 +1,15 @@
 import webapp2
 import logging
-from rev import Review, review_activity_search
-from rel import Relationship
+from rel import outbound_relids_for_penid
+from rev import review_activity_search
 from moracct import nowISO, intz, safestr
 from statrev import getTitle, getSubkey
 
 
 def rss_title(review):
-    title = "(" + str(review.rating / 20) + " star " + review.revtype + ")"
-    title += " " + getTitle(review) + " " + getSubkey(review)
+    title = str(review.penname) + " reviewed a " +\
+        str(review.rating / 20) + " star " + review.revtype + ": " +\
+        getTitle(review) + " " + getSubkey(review)
     return title
 
 def item_url(review):
@@ -65,8 +66,8 @@ def rss_content(penid, reviews, checked, following):
         txt += "<item rdf:about=\"" + item_url(review) + "\">\n"
         txt += "<title><![CDATA[" + rss_title(review) + "]]></title>\n"
         txt += "<link>" + item_url(review) + "</link>\n"
-        txt += "<description><![CDATA[" + safestr(review.text) + "\n"
-        txt += safestr(review.keywords) + "]]></description>\n"
+        txt += "<description><![CDATA[" + safestr(review.keywords) + " | "
+        txt += safestr(review.text) + "]]></description>\n"
         txt += "<dc:date>" + review.modified + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
         txt += "<dc:rights>" + copy + "</dc:rights>\n"
@@ -82,11 +83,7 @@ def rss_content(penid, reviews, checked, following):
 class ActivityRSS(webapp2.RequestHandler):
     def get(self):
         penid = intz(self.request.get('pen'))
-        where = "WHERE originid = :1 LIMIT 300"
-        rels = Relationship.gql(where, penid)
-        relids = []
-        for rel in rels:
-            relids.append(str(rel.relatedid))
+        relids = outbound_relids_for_penid(penid)
         checked, reviews = review_activity_search("", "", relids)
         content = rss_content(penid, reviews, checked, len(relids))
         #heard there were potential issues with "application/rss+xml"
