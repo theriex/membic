@@ -452,7 +452,7 @@ define([], function () {
         mepen = mor.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
-            "I'm using MyOpenReviews to review things I experience.\n\n" + 
+            "I'm using MyOpenReviews for things I experience. " + 
             "I trust your taste, and would be interested in reading reviews " + 
             "from you";
         revchecks = document.getElementsByName("invrevcb");
@@ -475,18 +475,21 @@ define([], function () {
             body += ", especially about " + types + "."; }
         else {
             body += "."; }
-        body += "\n\nIf you sign up, then I'll be able to follow what you " +
-            "like and don't like, and you can see what I like and don't like " +
-            "by following me. " + 
-            "To follow me, click the 'follow' icon next to '" + mepen.name +
+        body += " If you sign up, then I'll be able to follow reviews " +
+            "from you to learn about things you've experienced." + 
+            "\n\n" +
+            "If you are interested in following reviews from me, " + 
+            "click the 'follow' icon next to '" + mepen.name +
             "' on my profile page. Here's the direct link to my profile:\n\n" +
-            "http://www.myopenreviews.com/#view=profile&profid=" +
+            "    http://www.myopenreviews.com/#view=profile&profid=" +
             mor.instId(mepen) + "\n\n" +
-            "I'll follow back when I see you in my 'Followers' tab.\n\n" +
-            "Looking forward to hearing about your new finds";
-        if(types) {
-            body += " in " + types; }
-        body += "!\n\ncheers,\n" + mepen.name + "\n\n";
+            "When I see you in my 'Followers' tab, I'll follow back. " +
+            "Looking forward to learning about things you've experienced " +
+            "recently!" +
+            "\n\n" +
+            "cheers,\n" + 
+            mepen.name + 
+            "\n\n";
         href = "mailto:?subject=" + mor.dquotenc(subj) + 
             "&body=" + mor.dquotenc(body);
         html = mor.services.serviceLinkHTML(href, "", "shareico", 
