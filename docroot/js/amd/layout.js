@@ -8,10 +8,9 @@
 define([], function () {
     "use strict";
 
-    var slides = [ "sloganPadded.png",
+    var slides = [ "promo_cycle.png",
                    "promo_balloons2.png",
-                   "promo_list.png",
-                   "promo_cycle.png" ],
+                   "promo_list.png" ],
         slideindex = -1,
         slideslot = -1,
         topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
