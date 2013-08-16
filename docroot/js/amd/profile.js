@@ -567,8 +567,9 @@ define([], function () {
         picuri = "img/blank.png";
         if(pen.profpic) {
             picuri = "profpic?profileid=" + penid; }
-        html += "<img class=\"srchpic\" src=\"" + picuri + "\"/>" +
-            "&nbsp;" + "<span class=\"penfont\">" + pen.name + 
+        html += "<img class=\"srchpic\" src=\"" + picuri + "\"" + 
+                    " border=\"0\"/>" + "&nbsp;" + 
+            "<span class=\"penfont\">" + pen.name + 
             "</span>" + "</a>";
         if(pen.city) {
             html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
@@ -1314,7 +1315,8 @@ define([], function () {
         if(mor.instId(profpenref.pen) === mor.pen.currPenId()) {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
                      " onclick=\"mor.profile.invite();return false\">" +
-                "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
+                "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
+                    " border=\"0\">" +
                 "Build your community</a>";
             mor.out('profcommbuildtd', html); }
         displayShout(dispen);

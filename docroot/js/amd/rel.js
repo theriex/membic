@@ -51,6 +51,15 @@ define([], function () {
     },
 
 
+    verifyRelsInitialized = function (pen, direction) {
+        var penref, field;
+        penref = mor.lcs.getPenRef(pen);
+        field = (direction === "outbound")? "outrels" : "inrels";
+        if(!penref[field]) {
+            penref[field] = []; }
+    },
+
+
     loadDisplayRels = function (pen, direction, divid, cursor) {
         var refarray, field, params, critsec = "";
         refarray = getRelRefArray(pen, direction);
@@ -73,6 +82,7 @@ define([], function () {
                      if(resultCursor) {
                          loadDisplayRels(pen, direction, divid, resultCursor); }
                      else {
+                         verifyRelsInitialized(pen, direction);
                          mor.rel.displayRelations(pen, direction, divid); } },
                  function (code, errtxt) {
                      var msg = "loadDisplayRels error code " + code + 
@@ -132,7 +142,8 @@ define([], function () {
               "<a id=\"srchpens\" href=\"#findpens\"" + 
                 " onclick=\"mor.activity.pensearchdialog();" + 
                            "return false;\">" +
-                "<img class=\"reviewbadge\" src=\"img/follow.png\">" +
+                "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
+                    " border=\"0\">" +
                 "Find pen names to follow</a>" +
             "</div>";
         return html;
