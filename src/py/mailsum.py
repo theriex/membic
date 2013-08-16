@@ -84,7 +84,7 @@ def mail_summaries(freq, thresh, request, response):
                     if not request.url.startswith('http://localhost'):
                         mail.send_mail(
                             sender="MyOpenReviews support <theriex@gmail.com>",
-                            to=account.email,
+                            to=acc.email,
                             subject=subj,
                             body=content)
                         logmsg += ", mail sent"
