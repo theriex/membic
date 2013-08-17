@@ -32,7 +32,7 @@ def eligible_pen(acc, thresh):
 
 
 def write_summary_email_body(pen, reviews, tstr, prs):
-    body = "Experienced anything worth reviewing recently?  Your current" +\
+    body = "Experienced anything worth remembering recently? Your current" +\
         " and future followers would be interested in hearing from you!"
     if prs and len(prs) > 0:
         body = "Thanks for reviewing! Your current and future followers" +\
