@@ -215,16 +215,22 @@ define([], function () {
     //general, guessing artist, title is most likely due to players
     //organizing music by artist, then album, then title
     parseTitle = function (review) {
-        var text;
+        var text, i;
         if(!review.title) {
             return; }
         text = review.title;
         //case: "artist - title"
         //e.g. http://www.youtube.com/watch?v=KnIJOO__jVo
         if(text.indexOf(" - ") > 0) {
-            text = text.split(" - ", 2);
+            //text.split(" - ", 2) is supposed to give you the first element
+            //and then the rest of the string as the second, but it doesn't
+            text = text.split(" - ");
             review.artist = text[0].trim();
-            review.title = text[1].trim(); }
+            review.title = "";
+            for(i = 1; i < text.length; i += 1) {
+                if(review.title) {
+                    review.title += " - "; }
+                review.title += text[i].trim(); } }
         //case: "artist: title"
         //e.g. http://www.youtube.com/watch?v=tHOn093r-Ak
         else if(text.indexOf(": ") > 0) {
