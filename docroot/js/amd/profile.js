@@ -743,7 +743,10 @@ define([], function () {
 
 
     revTypeSelectorHTML = function (clickfuncstr) {
-        var html, i, reviewTypes, typename, label, dispclass, pen;
+        var html, i, reviewTypes, typename, label, dispclass, pen, prefixstr;
+        prefixstr = "Top 20 ";
+        if(clickfuncstr && clickfuncstr.indexOf("Top") < 0) {
+            prefixstr = "20+ "; }
         pen = profpenref.pen;
         html = "";
         mor.pen.deserializeFields(pen);
@@ -754,7 +757,8 @@ define([], function () {
             label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
-                    label = "Top 20 " + reviewTypes[i].plural.capitalize();
+                    label = prefixstr + reviewTypes[i].type.capitalize() +
+                        " reviews.";
                     dispclass = "reviewbadge"; }
                 else if(pen.top20s[typename].length >= 1) {
                     label = String(pen.top20s[typename].length) + " " + 
@@ -936,6 +940,7 @@ define([], function () {
             "&cursor=" + mor.enc(state.allRevsState.cursor);
         mor.call("srchrevs?" + params, 'GET', null,
                  function (results) { 
+                     mor.lcs.putRevs(results);
                      listAllRevs(results);
                      monitorAllRevQuery(); },
                  function (code, errtxt) {
@@ -1230,7 +1235,7 @@ define([], function () {
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             if(pen.top20s[typename] && pen.top20s[typename].length >= 1) {
-                label = "top 20 " + reviewTypes[i].plural.capitalize();
+                label = "Top 20 " + reviewTypes[i].plural.capitalize();
                 dispclass = "reviewbadge";
                 if(pen.top20s[typename].length < 20) {
                     label = String(pen.top20s[typename].length) + " " + 

@@ -176,8 +176,8 @@ def update_top20_reviews(pen, review):
     t20revs = [ review ]
     for revid in t20ids:
         resolved = Review.get_by_id(revid)
-        # if unresolved reference then just skip it
-        if resolved:
+        # if unresolved reference, or wrong type, then just skip it
+        if resolved and resolved.revtype == review.revtype:
             t20revs.append(resolved)
     t20revs = sorted(t20revs, key=attrgetter('rating', 'modified'), 
                      reverse=True)

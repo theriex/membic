@@ -171,6 +171,15 @@ define([], function () {
     },
 
 
+    putRevs = function (revobjs) {
+        var i;
+        for(i = 0; revobjs && i < revobjs.length; i += 1) {
+            if(revobjs[i].fetched) {
+                break; }  //skip stats and cursor object
+            putRev(revobjs[i]); }
+    },
+
+
     getRevFull = function (revid, callback) {
         var revref, tombstone, params, critsec = "";
         revref = getRevRef(revid);
@@ -339,6 +348,8 @@ define([], function () {
             getRevFull(revid, callback); },
         putRev: function (revobj) {
             return putRev(revobj); },
+        putRevs: function (revobjs) {
+            putRevs(revobjs); },
         verifyReviewLinks: function (onchangefunc) {
             verifyReviewLinks(onchangefunc); },
         verifyCorrespondingLinks: function (rev1, rev2) {
