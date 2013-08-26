@@ -1248,16 +1248,22 @@ define([], function () {
 
 
     selectLocLatLng = function (latlng, ref) {
-        var map;
+        var mapdiv, map;
         if(!gplacesvc && google && google.maps && google.maps.places) {
+            //this can fail intermittently, restarting the review usually works
             try {
-                map = new google.maps.Map(mor.byId('mapdiv'), {
+                mapdiv = mor.byId('mapdiv');
+                map = new google.maps.Map(mapdiv, {
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
                     center: latlng,
                     zoom: 15 });
                 gplacesvc = new google.maps.places.PlacesService(map);
             } catch (problem) {
-                mor.err("selectLocLatLng svc init failed: " + problem);
+                mor.err("Initializing google maps places failed, so the\n" +
+                        "review url and address were not filled out.\n\n" + 
+                        "mapdiv: " + mapdiv + "\n" +
+                        "problem: " + problem);
+                gplacesvc = null; 
             } }
         if(gplacesvc && ref) {
             gplacesvc.getDetails({reference: ref},
@@ -1273,6 +1279,8 @@ define([], function () {
 
     selectLocation = function (addr, ref) {
         var html;
+        if(addr) {  //even if all other calls fail, use the selected name
+            mor.byId('keyin').value = mor.dec(addr); }
         if(!geoc && google && google.maps && google.maps.places) {
             geoc = new google.maps.Geocoder(); }
         if(geoc && addr) {
@@ -1280,10 +1288,14 @@ define([], function () {
                 addr = mor.dec(addr);
                 html = "<p>" + addr + "</p><div id=\"mapdiv\"></div>";
                 mor.out('revautodiv', html);
-                geoc.geocode({address: addr}, function (results, status) {
-                    if(status === google.maps.places.PlacesServiceStatus.OK) {
-                        selectLocLatLng(results[0].geometry.location, ref); }
-                    });
+                //give mapdiv a chance to be output before this call
+                setTimeout(function () {
+                    geoc.geocode({address: addr}, function (results, status) {
+                        var ok = google.maps.places.PlacesServiceStatus.OK;
+                        if(status === ok) {
+                            selectLocLatLng(results[0].geometry.location, 
+                                            ref); }
+                        }); }, 50);
             } catch (problem) {
                 mor.err("selectLocation failed: " + problem);
             } }
