@@ -84,15 +84,16 @@ define([], function () {
         if(!mor.byId('homepenhdiv')) {
             mor.login.updateAuthentDisplay(); }
         html = "<div class=\"topnavitemdiv\">" +
-            mor.imgntxt("profile.png", pen.name,
+            mor.imgntxt("", pen.name,
                         "mor.profile.display()",
                         "#view=profile&profid=" + mor.instId(pen),
-                        "Show profile for your current pen name") +
+                        "Show profile for " + pen.name + " (you)") +
             "</div>";
         mor.out('homepenhdiv', html);
-        html = mor.imglink("#Settings","Adjust your application settings",
-                           "mor.profile.settings()", "settings.png",
-                           "settingsnavico");
+        html = mor.imgntxt("settings.png", "", 
+                           "mor.profile.settings()",
+                           "#Settings",
+                           "Adjust your application settings");
         mor.out('settingsbuttondiv', html);
     },
 

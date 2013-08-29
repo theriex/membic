@@ -577,7 +577,7 @@ var mor = {};  //Top level function closure container
             cssclass = "navico"; }
         if(funcstr.indexOf(";") < 0) {
             funcstr += ";"; }
-        if(imgfile.indexOf("/") < 0) {
+        if(imgfile && imgfile.indexOf("/") < 0) {
             imgfile = "img/" + imgfile; }
         if(title) {
             title = " title=\"" + title + "\""; }

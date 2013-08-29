@@ -341,22 +341,25 @@ define([], function () {
             topworkdivcontents = mor.byId('topworkdiv').innerHTML; }
         if(authtoken && override !== "hide") {  //logged in, standard display
             html = "<div id=\"topactionsdiv\">" +
-                  "<div id=\"settingsbuttondiv\">" + 
-                    //filled in when pen name profile link filled in
-                  "</div>" +
                   "<table id=\"topactionstable\" border=\"0\">" +
                     "<tr>" +
-                      "<td><div id=\"homepenhdiv\"></div></td>" + 
-                      "<td><div id=\"recentacthdiv\">" + 
-                         mor.activity.activityLinkHTML() +
+                      //"<td></td>" + 
+                      "<td><div id=\"homepenhdiv\">" + 
+                          //content from profile.updateTopActionDisplay
                           "</div></td>" + 
+                      "<td><div id=\"rememberedhdiv\">" + 
+                         mor.activity.rememberedLinkHTML() +
+                          "</div></td>" + 
+                      "<td><div id=\"settingsbuttondiv\">" + 
+                          //content from profile.updateTopActionDisplay
+                          "</div></td>" +
                     "</tr>" +
                     "<tr>" +
                       "<td><div id=\"writerevhdiv\">" + 
                          mor.review.reviewLinkHTML() +
                           "</div></td>" + 
-                      "<td><div id=\"rememberedhdiv\">" + 
-                         mor.activity.rememberedLinkHTML() +
+                      "<td><div id=\"recentacthdiv\">" + 
+                         mor.activity.activityLinkHTML() +
                           "</div></td>" + 
                     "</tr>" +
                   "</table>" +
@@ -368,7 +371,7 @@ define([], function () {
             mor.byId('logoimg').style.width = "260px";
             mor.byId('logoimg').style.height = "120px";
             mor.byId('logodiv').style.width = "260px";
-            mor.byId('topsectiondiv').style.height = "120px";
+            mor.byId('topsectiondiv').style.height = "130px";
             mor.byId('topworkdiv').style.marginLeft = "280px";
             mor.byId('mascotdiv').style.top = "135px";
             mor.layout.setTopPaddingAndScroll(120); }

@@ -283,10 +283,10 @@ define([], function () {
 
     reviewLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            mor.imgntxt("writereview.png", "Write a Review",
+            mor.imgntxt("writereview.png", "Review and Share",
                         "mor.review.reset(true)",
                         "#Write", 
-                        "Write a review") +
+                        "Write a review and share it with your friends") +
             "</div>";
         return html;
     },

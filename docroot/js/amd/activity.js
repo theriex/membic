@@ -32,7 +32,7 @@ define([], function () {
 
     activityLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            mor.imgntxt("friendact.png", "Friend Reviews",
+            mor.imgntxt("friendact.png", "",
                         "mor.activity.displayActive()",
                         "#Activity",
                         "See what's been posted recently") +
@@ -43,10 +43,10 @@ define([], function () {
 
     rememberedLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            mor.imgntxt("remembered.png", "Remembered Reviews",
+            mor.imgntxt("remembered.png", "",
                         "mor.activity.displayRemembered()",
                         "#Remembered",
-                        "Show remembered reviews") +
+                        "Show reviews you have remembered") +
             "</div>";
         return html;
     },
