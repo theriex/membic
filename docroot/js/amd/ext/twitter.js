@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -15,27 +15,27 @@ define([], function () {
 
 
     returnToParentDisplay = function () {
-        var addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
-            return mor.pen.getPen(function (pen) {
-                mor.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
-        return mor.login.init();
+            return glo.pen.getPen(function (pen) {
+                glo.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
+        return glo.login.init();
     },
 
 
     redirectForLogin = function (oaparas) {
         var token, secret, confirmed, url;
-        oaparas = mor.paramsToObj(oaparas.content);
+        oaparas = glo.paramsToObj(oaparas.content);
         token = oaparas.oauth_token;
         secret = oaparas.oauth_token_secret;
         confirmed = oaparas.oauth_callback_confirmed;
         if(confirmed && token && secret) {
             //save secret so it can be accessed on callback
-            mor.dojo.cookie(token, secret, { expires: 2 });
+            glo.dojo.cookie(token, secret, { expires: 2 });
             url = twLoginURL + "?oauth_token=" + token;
             window.location.href = url; }
         else {
-            mor.log("Request token returned from Twitter not valid: " + 
+            glo.log("Request token returned from Twitter not valid: " + 
                     confirmed + " " + token + " " + secret);
             returnToParentDisplay(); }
     },
@@ -43,21 +43,21 @@ define([], function () {
 
     recordTwitterAuthorization = function (twid) {
         var prevLoginToken;
-        mor.out('contentdiv', "Restoring session...");
-        prevLoginToken = mor.login.readAuthCookie();
+        glo.out('contentdiv', "Restoring session...");
+        prevLoginToken = glo.login.readAuthCookie();
         if(!prevLoginToken) {
-            mor.log("no previous login found on return from Twitter");
-            return mor.login.init(); }
-        mor.out('contentdiv', "Recording Twitter authorization...");
+            glo.log("no previous login found on return from Twitter");
+            return glo.login.init(); }
+        glo.out('contentdiv', "Recording Twitter authorization...");
         //the latest used pen name will be selected automatically when
         //pen names are loaded.
-        mor.pen.getPen(function (pen) {
+        glo.pen.getPen(function (pen) {
             pen.twid = twid;
-            mor.pen.updatePen(pen,
+            glo.pen.updatePen(pen,
                               function (updpen) {
                                   returnToParentDisplay(); },
                               function (code, errtxt) {
-                                  mor.err("twitterAuthComplete error " +
+                                  glo.err("twitterAuthComplete error " +
                                           code + ": " + errtxt);
                                   pen.twid = 0;
                                   returnToParentDisplay(); }); });
@@ -67,22 +67,22 @@ define([], function () {
     //After returning from Twitter, use the main contentdiv for all messages.
     twitterAuthComplete = function (oaparas) {
         var token, secret, id, name, addAuthOutDiv;
-        addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
-        oaparas = mor.paramsToObj(oaparas.content);
+        addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
+        oaparas = glo.paramsToObj(oaparas.content);
         token = oaparas.oauth_token;
         secret = oaparas.oauth_token_secret;
-        mor.dojo.cookie(token, secret, { expires: 365 });
-        mor.dojo.cookie("addAuthOutDiv", "", { expires: -1 });
+        glo.dojo.cookie(token, secret, { expires: 365 });
+        glo.dojo.cookie("addAuthOutDiv", "", { expires: -1 });
         id = oaparas.user_id;
         name = oaparas.screen_name;
         if(addAuthOutDiv) {
             recordTwitterAuthorization(id); }
         else {
-            mor.out('contentdiv', "<p>&nbsp;</p><p>Welcome " + name + "</p>");
-            mor.login.setAuth("twid", token, id + " " + name);
+            glo.out('contentdiv', "<p>&nbsp;</p><p>Welcome " + name + "</p>");
+            glo.login.setAuth("twid", token, id + " " + name);
             //The twitter name is probably unique, but it's better to
             //allow for entry of a creative pen name without defaulting it.
-            mor.login.authComplete(); }
+            glo.login.authComplete(); }
     },
 
 
@@ -91,33 +91,33 @@ define([], function () {
     //twitter" click, and the callback from twitter.
     authenticate = function (params) {
         var data, outputdiv, addAuthOutDiv, critsec = "";
-        addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
         if(params.oauth_token && params.oauth_verifier) {  //back from twitter
             //on return there is no auth form displayed so use contentdiv
-            mor.out("contentdiv", "Returned from Twitter...");
-            data = "name=Twitter&url=" + mor.enc(twTokCnvURL) +
-                "&toksec=" + mor.dojo.cookie(params.oauth_token) +
+            glo.out("contentdiv", "Returned from Twitter...");
+            data = "name=Twitter&url=" + glo.enc(twTokCnvURL) +
+                "&toksec=" + glo.dojo.cookie(params.oauth_token) +
                 "&oauth_token=" + params.oauth_token +
                 "&oauth_verifier=" + params.oauth_verifier;
-            mor.call("oa1call", 'POST', data,
+            glo.call("oa1call", 'POST', data,
                      function (callresults) {
                          twitterAuthComplete(callresults[0]); },
                      function (code, errtxt) {
-                         mor.log("twitter token conversion failed code " +
+                         glo.log("twitter token conversion failed code " +
                                  code + ": " + errtxt);
                          returnToParentDisplay(); },
                      critsec); }
         else {  //initial login or authorization call
-            mor.out(outputdiv, "Setting up call to Twitter...");
-            data = "name=Twitter&url=" + mor.enc(twReqTokURL) + 
+            glo.out(outputdiv, "Setting up call to Twitter...");
+            data = "name=Twitter&url=" + glo.enc(twReqTokURL) + 
                 "&oauth_callback=" +
-                mor.enc("http://www.myopenreviews.com#command=AltAuth1");
-            mor.call("oa1call", 'POST', data,
+                glo.enc("http://www.myopenreviews.com#command=AltAuth1");
+            glo.call("oa1call", 'POST', data,
                      function (callresults) {
                          redirectForLogin(callresults[0]); },
                      function (code, errtxt) {
-                         mor.log("twitter initial oauth failed code " + 
+                         glo.log("twitter initial oauth failed code " + 
                                  code + ": " + errtxt);
                          returnToParentDisplay(); },
                      critsec); }
@@ -127,23 +127,23 @@ define([], function () {
     //Twitter always requires a redirect and callback, so have to
     //track context in a cookie.
     addProfileAuth = function (domid, pen) {
-        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
+        if(window.location.href.indexOf(glo.mainsvr) !== 0) {
             alert("Twitter authentication is only supported from ",
-                  mor.mainsvr);
-            return mor.profile.displayAuthSettings(domid, pen); }
-        mor.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+                  glo.mainsvr);
+            return glo.profile.displayAuthSettings(domid, pen); }
+        glo.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
         authenticate( {} );
     },
 
 
     getShareLinkURL = function (review) {
         var text, url;
-        text = mor.services.getRevStarsTxt(review, "unicode") + " " +
-            mor.services.getRevTitleTxt(review);
-        url = mor.services.getRevPermalink(review);
+        text = glo.services.getRevStarsTxt(review, "unicode") + " " +
+            glo.services.getRevTitleTxt(review);
+        url = glo.services.getRevPermalink(review);
         url = "https://twitter.com/intent/tweet" +
-            "?text=" + mor.embenc(text) +
-            "&url=" + mor.enc(url);
+            "?text=" + glo.embenc(text) +
+            "&url=" + glo.enc(url);
         return url;
     },
 
@@ -154,9 +154,9 @@ define([], function () {
         windowOptions = 'scrollbars=yes,resizable=yes,toolbar=no,location=yes';
         width = 550;
         height = 420;
-        left = Math.round((mor.winw / 2) - (width / 2));
-        if(mor.winh > height) {
-            top = Math.round((mor.winh / 2) - (height / 2)); }
+        left = Math.round((glo.winw / 2) - (width / 2));
+        if(glo.winh > height) {
+            top = Math.round((glo.winh / 2) - (height / 2)); }
         str = "window.open(" + 
             "'" + url + "', 'intent', " + 
             "'" + windowOptions + ",width=" + width + ",height=" + height + 
@@ -176,7 +176,7 @@ define([], function () {
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
         doInitialSetup: function () {
-            mor.log("twitter service initial setup done"); },
+            glo.log("twitter service initial setup done"); },
         getLinkURL: function (review) {
             return getShareLinkURL(review); },
         getOnClickStr: function (review) {
@@ -184,7 +184,7 @@ define([], function () {
         getShareImageAlt: function () {
             return "Tweet condensed review"; },
         getShareImageSrc: function () {
-            return mor.twitter.iconurl; }
+            return glo.twitter.iconurl; }
     };
 
 });

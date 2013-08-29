@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -13,31 +13,31 @@ define([], function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
-            return mor.pen.getPen(function (pen) {
-                mor.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
-        return mor.login.init();
+            return glo.pen.getPen(function (pen) {
+                glo.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
+        return glo.login.init();
     },
 
 
     recordGitHubAuthorization = function (token, json) {
         var prevLoginToken;
-        mor.out('contentdiv', "Restoring session...");
-        prevLoginToken = mor.login.readAuthCookie();
+        glo.out('contentdiv', "Restoring session...");
+        prevLoginToken = glo.login.readAuthCookie();
         if(!prevLoginToken) {
-            mor.log("no previous login found on return from GitHub");
-            return mor.login.init(); }
-        mor.out('contentdiv', "Recording GitHub authorization...");
+            glo.log("no previous login found on return from GitHub");
+            return glo.login.init(); }
+        glo.out('contentdiv', "Recording GitHub authorization...");
         //the last used pen name will be selected authomatically when
         //pen names are loaded
-        mor.pen.getPen(function (pen) {
+        glo.pen.getPen(function (pen) {
             pen.ghid = json.id;
-            mor.pen.updatePen(pen,
+            glo.pen.updatePen(pen,
                               function (updpen) {
                                   backToParentDisplay(); },
                               function (code, errtxt) {
-                                  mor.err("record GitHub auth error " + 
+                                  glo.err("record GitHub auth error " + 
                                           code + ": " + errtxt);
                                   pen.ghid = 0;
                                   backToParentDisplay(); }); });
@@ -45,28 +45,28 @@ define([], function () {
 
 
     handleGitHubLogin = function (token, json) {
-        mor.out('contentdiv', "<p>Welcome " + json.login + "</p>");
-        mor.login.setAuth("ghid", token, json.id + " " + json.login);
+        glo.out('contentdiv', "<p>Welcome " + json.login + "</p>");
+        glo.login.setAuth("ghid", token, json.id + " " + json.login);
         //name is not necessarily cool or unique, so not using it as a
         //default pen name value.
-        mor.login.authComplete();
+        glo.login.authComplete();
     },
 
 
     convertToken = function (token) {
         var addAuthOutDiv, url, critsec = "";
-        addAuthOutDiv = mor.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
-        url = mor.enc(url);
+        url = glo.enc(url);
         url = "jsonget?geturl=" + url;
-        mor.call(url, 'GET', null,
+        glo.call(url, 'GET', null,
                  function (json) {
                      if(addAuthOutDiv) {
                          recordGitHubAuthorization(token, json); }
                      else {
                          handleGitHubLogin(token, json); } },
                  function (code, errtxt) {
-                     mor.log("GitHub authent fetch details failed code " +
+                     glo.log("GitHub authent fetch details failed code " +
                              code + ": " + errtxt);
                      backToParentDisplay(); },
                  critsec);
@@ -78,27 +78,27 @@ define([], function () {
     authenticate = function (params) {
         var url, state, critsec = "";
         if(params.code) {  //back from github
-            mor.out("contentdiv", "Returned from GitHub...");
-            state = mor.dojo.cookie("githubAuthState");
+            glo.out("contentdiv", "Returned from GitHub...");
+            state = glo.dojo.cookie("githubAuthState");
             if(state !== params.state) {
-                mor.log("Bad state returned from GitHub. Sent " + state +
+                glo.log("Bad state returned from GitHub. Sent " + state +
                         " got back " + params.state);
                 backToParentDisplay(); }
             url = "githubtok?code=" + params.code + "&state=" + state;
-            mor.call(url, 'GET', null,
+            glo.call(url, 'GET', null,
                      function (json) {
                          convertToken(json.access_token); },
                      function (code, errtxt) {
-                         mor.log("GitHub token retrieval failed code " + 
+                         glo.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); },
                      critsec); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);
-            mor.dojo.cookie("githubAuthState", state, { expires: 2 });
+            glo.dojo.cookie("githubAuthState", state, { expires: 2 });
             url = "https://github.com/login/oauth/authorize" +
                 "?client_id=5ac4b34b8ae0c21465dc" +
-                "&redirect_uri=" + mor.enc("http://www.myopenreviews.com/") +
+                "&redirect_uri=" + glo.enc("http://www.myopenreviews.com/") +
                 //no scope (public read-only access)
                 "&state=" + state;
             window.location.href = url; }
@@ -106,11 +106,11 @@ define([], function () {
 
 
     addProfileAuth = function (domid, pen) {
-        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
+        if(window.location.href.indexOf(glo.mainsvr) !== 0) {
             alert("GitHub authentication is only supported from ",
-                  mor.mainsvr);
-            return mor.profile.displayAuthSettings(domid, pen); }
-        mor.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+                  glo.mainsvr);
+            return glo.profile.displayAuthSettings(domid, pen); }
+        glo.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
         authenticate( {} );
     };
 

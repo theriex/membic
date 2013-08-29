@@ -1,11 +1,11 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false, navigator: false, require: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, FB: false, navigator: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-var mor = {};  //Top level function closure container
+var glo = {};  //Global container for top level funcs and values
 
 ////////////////////////////////////////
-// m o r   top level methods and variables
+// g l o
 //
 (function () {
     "use strict";
@@ -14,17 +14,17 @@ var mor = {};  //Top level function closure container
     // app variables
     ////////////////////////////////////////
 
-    mor.dojo = null;  //library modules holder
-    mor.colors = { bodybg: "#fffff6",
+    glo.dojo = null;  //library modules holder
+    glo.colors = { bodybg: "#fffff6",
                    text: "#111111",
                    link: "#3150b2",
                    hover: "#3399cc" };
-    mor.winw = 0;  //adjusted in mor.layout
-    mor.winh = 0;
-    mor.introtext = "";
-    mor.authcookname = "myopenreviewauth";
-    mor.secsvr = "https://myopenreviews.appspot.com";
-    mor.mainsvr = "http://www.myopenreviews.com";
+    glo.winw = 0;  //adjusted in glo.layout
+    glo.winh = 0;
+    glo.introtext = "";
+    glo.authcookname = "myopenreviewauth";
+    glo.secsvr = "https://myopenreviews.appspot.com";
+    glo.mainsvr = "http://www.myopenreviews.com";
 
 
     ////////////////////////////////////////
@@ -88,13 +88,13 @@ var mor = {};  //Top level function closure container
     // general utility functions
     ////////////////////////////////////////
 
-    mor.historyTitle = function (state) {
+    glo.historyTitle = function (state) {
         var title = document.title;
         return title;
     };
 
 
-    mor.historyURL = function (state) {
+    glo.historyURL = function (state) {
         var url = window.location.href;
         return url;
     };
@@ -103,7 +103,7 @@ var mor = {};  //Top level function closure container
     //if the view or profid has changed, then push a history record.
     //if anything else has changed, replace the current history record.
     //otherwise no effect.
-    mor.historyCheckpoint = function (pstate) {
+    glo.historyCheckpoint = function (pstate) {
         var hstate, title, url;
         if(history) {  //verify history object defined, otherwise skip
             hstate = history.state;
@@ -113,52 +113,52 @@ var mor = {};  //Top level function closure container
                || hstate.revid !== pstate.revid) {
                 if(history.pushState && 
                    typeof history.pushState === 'function') {
-                    title = mor.historyTitle(pstate);
-                    url = mor.historyURL(pstate);
+                    title = glo.historyTitle(pstate);
+                    url = glo.historyURL(pstate);
                     history.pushState(pstate, title, url);
-                    mor.log("history.pushState: " + 
-                            mor.dojo.json.stringify(pstate) +
+                    glo.log("history.pushState: " + 
+                            glo.dojo.json.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } }
             else if(pstate.tab && hstate.tab !== pstate.tab) {
                 if(history.replaceState &&
                    typeof history.replaceState === 'function') {
-                    title = mor.historyTitle(pstate);
-                    url = mor.historyURL(pstate);
+                    title = glo.historyTitle(pstate);
+                    url = glo.historyURL(pstate);
                     history.replaceState(pstate, title, url);
-                    mor.log("history.replaceState: " + 
-                            mor.dojo.json.stringify(pstate) +
+                    glo.log("history.replaceState: " + 
+                            glo.dojo.json.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } } }
     };
 
 
-    mor.historyPop = function (event) {
+    glo.historyPop = function (event) {
         var state = event.state;
-        mor.log("historyPop: " + mor.dojo.json.stringify(state));
+        glo.log("historyPop: " + glo.dojo.json.stringify(state));
         if(state) {
             switch(state.view) {
             case "profile":
-                if(mor.isId(state.profid)) {
-                    mor.profile.byprofid(state.profid, state.tab); }
+                if(glo.isId(state.profid)) {
+                    glo.profile.byprofid(state.profid, state.tab); }
                 break; 
             case "activity":
-                mor.activity.displayActive();
+                glo.activity.displayActive();
                 break;
             case "memo":
-                mor.activity.displayRemembered();
+                glo.activity.displayRemembered();
                 break;
             case "review":
                 //the review was cached when previously viewed..
-                mor.review.setCurrentReview(
-                    mor.lcs.getRevRef(state.revid).rev);
-                mor.review.displayRead();
+                glo.review.setCurrentReview(
+                    glo.lcs.getRevRef(state.revid).rev);
+                glo.review.displayRead();
                 break;
             } }
     };
 
 
-    mor.currState = function () {
+    glo.currState = function () {
         var state = {};
         if(history && history.state) {
             state = history.state; }
@@ -167,7 +167,7 @@ var mor = {};  //Top level function closure container
 
 
     //shorthand to log text to the console
-    mor.log = function (text) {
+    glo.log = function (text) {
         try {
             if(console && console.log) {
                 console.log(text); }
@@ -177,48 +177,48 @@ var mor = {};  //Top level function closure container
 
 
     //factored method for error output.
-    mor.err = function (text) {
+    glo.err = function (text) {
         alert(text);
     };
 
 
-    mor.assert = function (testval) {
+    glo.assert = function (testval) {
         if(!testval) {
-            mor.err("An application integrity check has failed. Please reload the page in your browser.");
-            throw("mor.assert"); }
+            glo.err("An application integrity check has failed. Please reload the page in your browser.");
+            throw("glo.assert"); }
     };
 
 
-    mor.byId = function (elemid) {
+    glo.byId = function (elemid) {
         return document.getElementById(elemid);
     };
 
 
-    mor.out = function (domid, html) {
-        var node = mor.byId(domid);
+    glo.out = function (domid, html) {
+        var node = glo.byId(domid);
         if(node) {
             node.innerHTML = html; }
         else {
-            mor.log("DOM id " + domid + " not available for output"); }
+            glo.log("DOM id " + domid + " not available for output"); }
     };
 
 
     //library support for factored event connection methods
-    mor.onxnode = function (ename, node, func) {
-        mor.dojo.on(node, ename, func);
+    glo.onxnode = function (ename, node, func) {
+        glo.dojo.on(node, ename, func);
     };
 
 
     //library support for factored event connection methods
-    mor.onx = function (ename, divid, func) {
-        var node = mor.dojo.dom.byId(divid);
-        mor.onxnode(ename, node, func);
+    glo.onx = function (ename, divid, func) {
+        var node = glo.dojo.dom.byId(divid);
+        glo.onxnode(ename, node, func);
     };
 
 
     //factored method to handle a click with no propagation
-    mor.onclick = function (divid, func) {
-        mor.onx("click", divid, function (e) {
+    glo.onclick = function (divid, func) {
+        glo.onx("click", divid, function (e) {
             e.preventDefault();
             e.stopPropagation();
             func(e); });
@@ -226,8 +226,8 @@ var mor = {};  //Top level function closure container
 
 
     //factored method to handle a change with no propagation
-    mor.onchange = function (divid, func) {
-        mor.onx("change", divid, function (e) {
+    glo.onchange = function (divid, func) {
+        glo.onx("change", divid, function (e) {
             e.preventDefault();
             e.stopPropagation();
             func(e); });
@@ -235,31 +235,31 @@ var mor = {};  //Top level function closure container
 
 
     //general key handling
-    mor.onescapefunc = null;
-    mor.globkey = function (e) {
+    glo.onescapefunc = null;
+    glo.globkey = function (e) {
         if(e && e.keyCode === 27) {  //ESC
-            if(mor.onescapefunc) {
+            if(glo.onescapefunc) {
                 e.preventDefault();
                 e.stopPropagation();
-                mor.onescapefunc(); } }
+                glo.onescapefunc(); } }
     };
 
 
-    mor.cancelPicUpload = function () {
-        mor.out('overlaydiv', "");
-        mor.byId('overlaydiv').style.visibility = "hidden";
-        mor.onescapefunc = null;
+    glo.cancelPicUpload = function () {
+        glo.out('overlaydiv', "");
+        glo.byId('overlaydiv').style.visibility = "hidden";
+        glo.onescapefunc = null;
     };
 
 
-    mor.prefixed = function (string, prefix) {
+    glo.prefixed = function (string, prefix) {
         if(string && string.indexOf(prefix) === 0) {
             return true; }
         return false;
     };
 
 
-    mor.ellipsis = function (string, length) {
+    glo.ellipsis = function (string, length) {
         if(!string || typeof string !== "string") {
             return ""; }
         string = string.trim();
@@ -270,21 +270,21 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.safestr = function (string) {
+    glo.safestr = function (string) {
         if(!string) {
             return ""; }
         return String(string);
     };
 
 
-    mor.safeget = function (domid, field) {
-        var elem = mor.byId(domid);
+    glo.safeget = function (domid, field) {
+        var elem = glo.byId(domid);
         if(elem) {
             return elem[field]; }
     };
 
 
-    mor.parseParams = function () {
+    glo.parseParams = function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
         if(pstr) {  //parse the hash params
             if(pstr.indexOf("#") === 0) {
@@ -308,69 +308,69 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.redirectToSecureServer = function (params) {
+    glo.redirectToSecureServer = function (params) {
         var href, state;
-        state = mor.currState();
-        href = mor.secsvr + "#returnto=" + mor.enc(mor.mainsvr) + 
+        state = glo.currState();
+        href = glo.secsvr + "#returnto=" + glo.enc(glo.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
-        href += "&" + mor.objdata(params);
-        mor.out('contentfill', "Redirecting to secure server...");
+        href += "&" + glo.objdata(params);
+        glo.out('contentfill', "Redirecting to secure server...");
         window.location.href = href;
     };
 
 
-    mor.redirectIfNeeded = function () {
+    glo.redirectIfNeeded = function () {
         var href = window.location.href;
         if(href.indexOf("http://www.myopenreviews.com") >= 0 &&
            href.indexOf("authtoken=") < 0 &&
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
-           (!mor.dojo.cookie(mor.authcookname))) {
-            mor.redirectToSecureServer(mor.parseParams());
+           (!glo.dojo.cookie(glo.authcookname))) {
+            glo.redirectToSecureServer(glo.parseParams());
             return true; }
     };
 
 
     //secondary initialization load since single monolithic is dog slow
-    mor.init2 = function (layout, login, review, profile, 
+    glo.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
                          services, lcs, basicmod) {
-        var cdiv = mor.byId('contentdiv');
-        if(!mor.introtext) {  //capture original so we can revert as needed
-            mor.introtext = cdiv.innerHTML; }
+        var cdiv = glo.byId('contentdiv');
+        if(!glo.introtext) {  //capture original so we can revert as needed
+            glo.introtext = cdiv.innerHTML; }
         //app module references
-        mor.layout = layout;
-        mor.login = login;
-        mor.review = review;
-        mor.profile = profile;
-        mor.activity = activity;
-        mor.pen = pen;
-        mor.rel = rel;
-        mor.skinner = skinner;
-        mor.services = services;
-        mor.lcs = lcs;
+        glo.layout = layout;
+        glo.login = login;
+        glo.review = review;
+        glo.profile = profile;
+        glo.activity = activity;
+        glo.pen = pen;
+        glo.rel = rel;
+        glo.skinner = skinner;
+        glo.services = services;
+        glo.lcs = lcs;
         //app startup
-        mor.layout.init();
-        mor.dojo.on(document, 'keypress', mor.globkey);
-        mor.dojo.on(window, 'popstate', mor.historyPop);
-        mor.login.init();
-        //mor.skinner.init();
-        mor.basicmod = basicmod;
+        glo.layout.init();
+        glo.dojo.on(document, 'keypress', glo.globkey);
+        glo.dojo.on(window, 'popstate', glo.historyPop);
+        glo.login.init();
+        //glo.skinner.init();
+        glo.basicmod = basicmod;
     };
 
 
     //faulting in the ext login modules here saves total load time
-    mor.init1 = function (dom, json, on, request, 
+    glo.init1 = function (dom, json, on, request, 
                           query, cookie, domgeo) {
-        mor.dojo = { dom: dom, json: json, on: on, request: request,
+        glo.dojo = { dom: dom, json: json, on: on, request: request,
                      query: query, cookie: cookie, domgeo: domgeo };
-        if(mor.redirectIfNeeded()) {
+        if(glo.redirectIfNeeded()) {
             return; }  //avoid app continue while redirect kicks in
-        mor.out('contentfill', "loading MyOpenReviews...");
-        mor.amdtimer.mor = { start: new Date() };
-        require(mor.cdnconf,
+        glo.out('contentfill', "loading MyOpenReviews...");
+        glo.amdtimer.app = { start: new Date() };
+        require(glo.cdnconf,
                 [ "amd/layout", "amd/login", "amd/review", "amd/profile",
                   "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
                   "amd/services", "amd/lcs", "amd/basicmod", 
@@ -380,68 +380,68 @@ var mor = {};  //Top level function closure container
                 function (layout, login, review, profile, 
                           activity, pen, rel, skinner,
                           services, lcs, basicmod) {
-                    mor.amdtimer.mor.end = new Date();
-                    mor.out('contentfill', " &nbsp; ");
-                    mor.init2(layout, login, review, profile, 
+                    glo.amdtimer.app.end = new Date();
+                    glo.out('contentfill', " &nbsp; ");
+                    glo.init2(layout, login, review, profile, 
                               activity, pen, rel, skinner,
                               services, lcs, basicmod); }
                );
     };
 
 
-    mor.init = function () {
-        mor.amdtimer = {};
-        mor.amdtimer.dojo = { start: new Date() };
-        mor.out('contentfill', "loading libraries...");
-        require(mor.cdnconf,
+    glo.init = function () {
+        glo.amdtimer = {};
+        glo.amdtimer.dojo = { start: new Date() };
+        glo.out('contentfill', "loading libraries...");
+        require(glo.cdnconf,
                 [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
                   "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
                   "dojo/domReady!" ],
                 function (dom, json, on, request, 
                           query, cookie, domgeo) {
-                    mor.amdtimer.dojo.end = new Date();
-                    mor.out('contentfill', " &nbsp; ");
-                    mor.init1(dom, json, on, request, 
+                    glo.amdtimer.dojo.end = new Date();
+                    glo.out('contentfill', " &nbsp; ");
+                    glo.init1(dom, json, on, request, 
                               query, cookie, domgeo); }
                );
     };
 
 
     //shorthand to save typing and improve readability
-    mor.enc = function (val) {
+    glo.enc = function (val) {
         val = val || "";
         if(typeof val === "string") {
             val = val.trim(); }
         return encodeURIComponent(val);
     };
-    mor.dec = function (val) {
+    glo.dec = function (val) {
         val = val || "";
         if(typeof val === "string") {
             val = val.trim(); }
         try {
             val = decodeURIComponent(val);
         } catch (e) {
-            mor.log("decodeURIComponent failure: " + e);
+            glo.log("decodeURIComponent failure: " + e);
         }
         return val;
     };
     //if a string needs to be URL encoded and then stuffed inside of
     //single quotes, then you need to replace any embedded single
     //quotes to avoid terminating the string early.
-    mor.embenc = function (val) {
-        val = mor.enc(val);
+    glo.embenc = function (val) {
+        val = glo.enc(val);
         val = val.replace(/'/g,"%27");
         return val;
     };
-    mor.dquotenc = function (val) {
+    glo.dquotenc = function (val) {
         val = val.replace(/"/g,"&quot;");
-        val = mor.enc(val);
+        val = glo.enc(val);
         return val;
     };
 
     //if making an html attribute value by escaping double quotes,
     //then get rid of any double quotes in the contained value
-    mor.ndq = function (val) {
+    glo.ndq = function (val) {
         if(!val) {
             return ""; }
         val = val.replace(/"/g, "&quot;");
@@ -451,12 +451,12 @@ var mor = {};  //Top level function closure container
 
     //return true if the given text can be reasonably construed to be an
     //email address.
-    mor.isProbablyEmail = function (text) {
+    glo.isProbablyEmail = function (text) {
         return text && text.match(/^\S+@\S+\.\S+$/);
     };
 
 
-    mor.crash = function (url, method, data, code, errtxt) {
+    glo.crash = function (url, method, data, code, errtxt) {
         var html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
         "<p>The server crashed.</p>" +
         "<p>If you want to help out, copy the contents of this page and " +
@@ -472,38 +472,38 @@ var mor = {};  //Top level function closure container
         "<li>code: " + code +
         "</ul></div>" +
         errtxt;
-        mor.out('contentdiv', html);
+        glo.out('contentdiv', html);
     };
 
 
     //General processing of JSON server calls, with fallback error
     //handling.  Caller caches and manages result data, including
     //recognizing stale.
-    mor.call = function (url, method, data, success, failure, 
+    glo.call = function (url, method, data, success, failure, 
                          lockvar, setup, errs) {
         var statcode, errtxt, start, now, delayms = 300, temphtml;
         if(lockvar === "processing") {
-            mor.log(method + " " + url + " already in progress...");
+            glo.log(method + " " + url + " already in progress...");
             return; }
         lockvar = "processing";
         if(setup) {
             setup(); }
         //local delay to simulate actual site
         if(window.location.href.indexOf("localhost:8080") >= 0) {
-            temphtml = mor.byId('logodiv').innerHTML;
+            temphtml = glo.byId('logodiv').innerHTML;
             now = start = new Date().getTime();
             while(now - start < delayms) {
                 now = new Date().getTime();
-                mor.out('logodiv', "delay " + (now - start)); }
-            mor.out('logodiv', temphtml); }
-        mor.dojo.request(url, { method: method, data: data }).then(
+                glo.out('logodiv', "delay " + (now - start)); }
+            glo.out('logodiv', temphtml); }
+        glo.dojo.request(url, { method: method, data: data }).then(
             //successful call result processing function
             function (resp) {
                 lockvar = "success";
                 try {
-                    resp = mor.dojo.json.parse(resp);
+                    resp = glo.dojo.json.parse(resp);
                 } catch (e) {
-                    mor.log("JSON parse failure: " + e);
+                    glo.log("JSON parse failure: " + e);
                     return failure(415, resp);
                 }
                 success(resp); },
@@ -521,8 +521,8 @@ var mor = {};  //Top level function closure container
                         statcode = resp.response.status; } }
                 if(errs.indexOf(statcode) < 0) {
                     switch(statcode) {
-                    case 401: return mor.login.logout();
-                    case 500: return mor.crash(url, method, data,
+                    case 401: return glo.login.logout();
+                    case 500: return glo.crash(url, method, data,
                                                statcode, errtxt);
                     } }
                 failure(statcode, errtxt); },
@@ -536,7 +536,7 @@ var mor = {};  //Top level function closure container
 
 
     //return the given object field and values as html POST data
-    mor.objdata = function (obj, skips) {
+    glo.objdata = function (obj, skips) {
         var str = "", name;
         if(!obj) {
             return ""; }
@@ -547,14 +547,14 @@ var mor = {};  //Top level function closure container
                 if(skips.indexOf(name) < 0) {
                     if(str) {
                         str += "&"; }
-                    str += name + "=" + mor.enc(obj[name]); } } }
+                    str += name + "=" + glo.enc(obj[name]); } } }
         return str;
     };
 
 
     //factored method to create an image link.  Some older browsers put
     //borders around these...
-    mor.imglink = function (href, title, funcstr, imgfile, cssclass) {
+    glo.imglink = function (href, title, funcstr, imgfile, cssclass) {
         var html;
         if(!cssclass) {
             cssclass = "navico"; }
@@ -570,7 +570,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.imgntxt = function (imgfile, text, funcstr, href, 
+    glo.imgntxt = function (imgfile, text, funcstr, href, 
                             title, cssclass, idbase) {
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
         if(!cssclass) {
@@ -601,7 +601,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.checkrad = function (type, name, value, label, checked, chgfstr) {
+    glo.checkrad = function (type, name, value, label, checked, chgfstr) {
         var html;
         if(!label) {
             label = value.capitalize(); }
@@ -620,13 +620,13 @@ var mor = {};  //Top level function closure container
 
 
     //factored method to create a checkbox with a label.
-    mor.checkbox = function (name, value, label) {
-        return mor.checkrad("checkbox", name, value, label);
+    glo.checkbox = function (name, value, label) {
+        return glo.checkrad("checkbox", name, value, label);
     };
 
 
-    mor.radiobutton = function (name, value, label, checked, chgfstr) {
-        return mor.checkrad("radio", name, value, label, checked, chgfstr);
+    glo.radiobutton = function (name, value, label, checked, chgfstr) {
+        return glo.checkrad("radio", name, value, label, checked, chgfstr);
     };
 
 
@@ -635,23 +635,23 @@ var mor = {};  //Top level function closure container
     //handle an ID value in the server side Python JSON serialization.
     //This utility method encapsulates the access, and provides a
     //single point of adjustment if the server side logic changes.
-    mor.instId = function (obj) {
+    glo.instId = function (obj) {
         var idfield = "_id";
         if(obj && obj.hasOwnProperty(idfield)) {
             return obj[idfield]; }
     };
-    mor.setInstId = function (obj, idval) {
+    glo.setInstId = function (obj, idval) {
         var idfield = "_id";
         obj[idfield] = idval;
     };
-    mor.isId = function (idval) {
+    glo.isId = function (idval) {
         if(idval && typeof idval === 'string' && idval !== "0") {
             return true; }
         return false;
     };
 
 
-    mor.makelink = function (url) {
+    glo.makelink = function (url) {
         var html, suffix = "";
         if(!url) {
             return ""; }
@@ -670,18 +670,18 @@ var mor = {};  //Top level function closure container
     //avoid complex regex since those are annoying to maintain.  Ok
     //with not automatically picking up on things that don't start
     //with "http".  Links other than web not desired.
-    mor.linkify = function (txt) {
+    glo.linkify = function (txt) {
         if(!txt) {
             return ""; }
         txt = txt.replace(/https?:\S+/g, function(url) {
-            return mor.makelink(url); });
+            return glo.makelink(url); });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;
     };
 
 
     //Server creates a canonical key for a review if not sent.
-    mor.canonize = function (txt) {
+    glo.canonize = function (txt) {
         var strval = txt || "";
         strval = strval.replace(/\s/g, "");
         strval = strval.replace(/\'/g, "");
@@ -694,7 +694,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.paramsToFormInputs = function (paramstr) {
+    glo.paramsToFormInputs = function (paramstr) {
         var html = "", fields, i, attval;
         if(!paramstr) {
             return ""; }
@@ -707,7 +707,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.paramsToObj = function (paramstr) {
+    glo.paramsToObj = function (paramstr) {
         var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
         if(idx >= 0) {
             paramstr = paramstr.slice(idx + 1); }
@@ -719,7 +719,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.ISOString2Day = function (str) {
+    glo.ISOString2Day = function (str) {
         var date, year, month, day;
         if(!str) {
             return new Date(); }
@@ -731,7 +731,7 @@ var mor = {};  //Top level function closure container
     };
 
 
-    mor.colloquialDate = function (date) {
+    glo.colloquialDate = function (date) {
         var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday', 'Sunday' ],
             months = [ "January", "February", "March", "April", "May", 
@@ -745,7 +745,7 @@ var mor = {};  //Top level function closure container
 
     //Some things don't work in older browsers and need code workarounds
     //to degrade gracefully.  Like the background texture.
-    mor.isLowFuncBrowser = function () {
+    glo.isLowFuncBrowser = function () {
         var nav;
         if(navigator) {
             nav = navigator;

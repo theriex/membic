@@ -337,7 +337,7 @@ def revhtml(rev, pen):
     if subkey:
         html += " - " + subkey
     html +=   "</title>\n"
-    html +=   "<link href=\"../css/mor.css\" rel=\"stylesheet\""
+    html +=   "<link href=\"../css/site.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />\n"
     html +=   "<link rel=\"image_src\""
     html +=        " href=\"" + timg + "\" />\n"
@@ -349,7 +349,7 @@ def revhtml(rev, pen):
     html += "  <div id=\"logodiv\" style=\"width:260px;\">\n"
     html += "    <img src=\"../img/slides/logoMOR.png\" id=\"logoimg\"\n"
     html += "         border=\"0\"\n"
-    html += "         onclick=\"mor.profile.display();return false;\"\n"
+    html += "         onclick=\"glo.profile.display();return false;\"\n"
     html += "         style=\"width:260px;height:120px;\"/>\n"
     html += "  </div>\n"
     html += "  <div id=\"topworkdiv\">\n"

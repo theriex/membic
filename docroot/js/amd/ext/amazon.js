@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -121,17 +121,17 @@ define([], function () {
 
     fetchData = function (review, url, params) {
         var critsec = "", asin = extractASIN(url);
-        mor.out('contentdiv', "Reading details from Amazon...");
+        glo.out('contentdiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
-        mor.call(url, 'GET', null,
+        glo.call(url, 'GET', null,
                  function (json) {
-                     setReviewFields(review, mor.dec(json[0].content));
-                     mor.review.setAttribution(attribution);
-                     mor.review.display(); },
+                     setReviewFields(review, glo.dec(json[0].content));
+                     glo.review.setAttribution(attribution);
+                     glo.review.display(); },
                  function (code, errtxt) {
-                     mor.err("Amazon data retrieval failed code " + 
+                     glo.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); },
+                     glo.review.display(); },
                  critsec);
     };
 

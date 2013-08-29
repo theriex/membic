@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -49,7 +49,7 @@ define([], function () {
 
     idify = function (id) {
         if(typeof id === 'object') {
-            id = mor.instId(id); }
+            id = glo.instId(id); }
         if(typeof id === 'number') {
             id = String(id); }
         return id;
@@ -72,7 +72,7 @@ define([], function () {
         var penref;
         //once cached, subsequent accesss shouldn't have to verify the
         //pen object has been deserialized so do it once now.
-        mor.pen.deserializeFields(penobj);
+        glo.pen.deserializeFields(penobj);
         penref = getPenRef(penobj);
         pens[idify(penobj)] = penref;
         penref.pen = penobj;
@@ -98,7 +98,7 @@ define([], function () {
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
         params = "penid=" + idify(penid);
-        mor.call("penbyid?" + params, 'GET', null,
+        glo.call("penbyid?" + params, 'GET', null,
                  function (foundpens) {
                      if(foundpens.length > 0) {
                          callback(putPen(foundpens[0])); }
@@ -186,7 +186,7 @@ define([], function () {
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
-        mor.call("revbyid?" + params, 'GET', null,
+        glo.call("revbyid?" + params, 'GET', null,
                  function (foundrevs) {
                      if(foundrevs.length > 0) {
                          callback(putRev(foundrevs[0])); }
@@ -235,13 +235,13 @@ define([], function () {
                     break; } } }
         if(revids.length > 0) {
             params = "revids=" + revids.join(",") + 
-                "&" + mor.login.authparams();
-            mor.call("revlinks?" + params, 'GET', null,
+                "&" + glo.login.authparams();
+            glo.call("revlinks?" + params, 'GET', null,
                      function (revlinks) {
                          resolveReviewLinks(revids, revlinks);
                          verifyReviewLinks(onchangefunc, true); },
                      function (code, errtxt) {
-                         mor.err("verifyReviewLinks revlinks call failed " +
+                         glo.err("verifyReviewLinks revlinks call failed " +
                                  code + " " + errtxt); },
                      critsec); }
         else if(revids.length === 0 && changed) {
@@ -253,7 +253,7 @@ define([], function () {
     verifyCorrespondingLink = function (revref, rev) {
         var revlink, rlidstr, corids, i, data;
         revlink = revref.revlink;
-        rlidstr = String(mor.instId(rev)) + ":" + rev.penid;
+        rlidstr = String(glo.instId(rev)) + ":" + rev.penid;
         if(!revlink.corresponding) {
             revlink.corresponding = rlidstr; }
         else {
@@ -264,14 +264,14 @@ define([], function () {
             corids.push(rlidstr);
             revlink.corresponding = corids.join(","); }
         revlink.critsec = "";
-        data = mor.objdata(revlink);
-        mor.call("updlink?" + mor.login.authparams(), 'POST', data,
+        data = glo.objdata(revlink);
+        glo.call("updlink?" + glo.login.authparams(), 'POST', data,
                  function (updrevlinks) {
-                     mor.log("verifyCorrespondingLink updated " +
+                     glo.log("verifyCorrespondingLink updated " +
                              updrevlinks[0].revid + " corresponding: " +
                              updrevlinks[0].corresponding); },
                  function (code, errtxt) {
-                     mor.log("verifyCorrespondingLink failed " + 
+                     glo.log("verifyCorrespondingLink failed " + 
                              code + " " + errtxt); },
                  revlink.critsec);
     },
@@ -281,10 +281,10 @@ define([], function () {
         var revref1, revref2;
         if(rev1.penid === rev2.penid) { 
             return; }  //avoid corresponding with yourself
-        revref1 = getRevRef(mor.instId(rev1));
+        revref1 = getRevRef(glo.instId(rev1));
         if(revref1.status === "not cached") {
             revref1 = putRev(rev1); }
-        revref2 = getRevRef(mor.instId(rev2));
+        revref2 = getRevRef(glo.instId(rev2));
         if(revref2.status === "not cached") {
             revref2 = putRev(rev2); }
         if(!revref1.revlink || !revref2.revlink) {
@@ -313,15 +313,15 @@ define([], function () {
         var params, critsec = "";
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
-            "&" + mor.login.authparams();
-        mor.call("revbykey?" + params, 'GET', null,
+            "&" + glo.login.authparams();
+        glo.call("revbykey?" + params, 'GET', null,
                  function (revs) {
                      var i;
                      for(i = 0; i < revs.length; i += 1) {
                          putRev(revs[i]); }
                      checkCachedCorresponding(review); },
                  function (code, errtxt) {
-                     mor.log("checkAllCorresponding failed " + code + 
+                     glo.log("checkAllCorresponding failed " + code + 
                              ": " + errtxt); },
                  critsec);
     };

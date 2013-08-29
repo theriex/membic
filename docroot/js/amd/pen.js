@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -22,9 +22,9 @@ define([], function () {
 
     serializeFields = function (penName) {
         if(typeof penName.revmem === 'object') {
-            penName.revmem = mor.dojo.json.stringify(penName.revmem); }
+            penName.revmem = glo.dojo.json.stringify(penName.revmem); }
         if(typeof penName.settings === 'object') {
-            penName.settings = mor.dojo.json.stringify(penName.settings); }
+            penName.settings = glo.dojo.json.stringify(penName.settings); }
     },
 
 
@@ -36,14 +36,14 @@ define([], function () {
         else if(typeof penName.revmem !== 'object') {
             try {  //debug vars here help check for double encoding etc
                 text = penName.revmem;
-                obj = mor.dojo.json.parse(text);
+                obj = glo.dojo.json.parse(text);
                 penName.revmem = obj;
             } catch (e) {
-                mor.log("pen.deserializeFields " + penName.name + ": " + e);
+                glo.log("pen.deserializeFields " + penName.name + ": " + e);
                 penName.revmem = {};
             } }
         if(typeof penName.revmem !== 'object') {
-            mor.log("Re-initializing penName revmem.  Deserialized value " +
+            glo.log("Re-initializing penName revmem.  Deserialized value " +
                     "was not an object: " + penName.revmem);
             penName.revmem = {}; }
         //reconstitute settings
@@ -52,21 +52,21 @@ define([], function () {
         else if(typeof penName.settings !== 'object') {
             try {  //debug vars here help check for double encoding etc
                 text = penName.settings;
-                obj = mor.dojo.json.parse(text);
+                obj = glo.dojo.json.parse(text);
                 penName.settings = obj;
             } catch (e2) {
-                mor.log("pen.deserializeFields " + penName.name + ": " + e2);
+                glo.log("pen.deserializeFields " + penName.name + ": " + e2);
                 penName.settings = {};
             } }
         if(typeof penName.settings !== 'object') {
-            mor.log("Re-initializing penName settings.  Deserialized value " +
+            glo.log("Re-initializing penName settings.  Deserialized value " +
                     "was not an object: " + penName.settings);
             penName.settings = {}; }
         //reconstitute top20s
         if(!penName.top20s) {
             penName.top20s = {}; }
         else if(typeof penName.top20s === "string") {
-            penName.top20s = mor.dojo.json.parse(penName.top20s); }
+            penName.top20s = glo.dojo.json.parse(penName.top20s); }
     },
 
 
@@ -80,8 +80,8 @@ define([], function () {
         var pen, params, critsec = "";
         pen = currpenref && currpenref.pen;
         if(pen) {
-            params = "penid=" + mor.instId(pen);
-            mor.call("penbyid?" + params, 'GET', null,
+            params = "penid=" + glo.instId(pen);
+            glo.call("penbyid?" + params, 'GET', null,
                      function (pens) {
                          if(pens.length > 0) {
                              currpenref.pen.name = pens[0].name;
@@ -92,9 +92,9 @@ define([], function () {
                              currpenref.pen.top20s = pens[0].top20s;
                              currpenref.pen.following = pens[0].following;
                              currpenref.pen.followers = pens[0].followers;
-                             mor.profile.resetReviews(); } },
+                             glo.profile.resetReviews(); } },
                      function (code, errtxt) {
-                         mor.log("refreshCurrentPenFields " + code + " " +
+                         glo.log("refreshCurrentPenFields " + code + " " +
                                  errtxt); },
                      critsec); }
     },
@@ -103,8 +103,8 @@ define([], function () {
     returnCall = function (callback) {
         if(!callback) {
             callback = returnFuncMemo; }
-        mor.layout.initContent();  //may call for pen name retrieval...
-        mor.rel.loadoutbound();
+        glo.layout.initContent();  //may call for pen name retrieval...
+        glo.rel.loadoutbound();
         callback(currpenref.pen);
     },
 
@@ -112,10 +112,10 @@ define([], function () {
     updatePenName = function (pen, callok, callfail) {
         var data, critsec = "";
         serializeFields(pen);
-        data = mor.objdata(pen);
-        mor.call("updpen?" + mor.login.authparams(), 'POST', data,
+        data = glo.objdata(pen);
+        glo.call("updpen?" + glo.login.authparams(), 'POST', data,
                  function (updpens) {
-                     currpenref = mor.lcs.putPen(updpens[0]);
+                     currpenref = glo.lcs.putPen(updpens[0]);
                      callok(currpenref); },
                  function (code, errtxt) {
                      deserializeFields(pen);  //undo pre-call serialization
@@ -126,44 +126,44 @@ define([], function () {
 
     createPenName = function () {
         var buttonhtml, newpen, data, name, critsec = "";
-        name = mor.byId('pnamein').value;
-        buttonhtml = mor.byId('formbuttons').innerHTML;
-        mor.out('formbuttons', "Creating Pen Name...");
+        name = glo.byId('pnamein').value;
+        buttonhtml = glo.byId('formbuttons').innerHTML;
+        glo.out('formbuttons', "Creating Pen Name...");
         newpen = {};
         newpen.name = name;
         if(currpenref && currpenref.settings) {
             newpen.settings = currpenref.settings;
             serializeFields(newpen); }
-        data = mor.objdata(newpen);
-        mor.call("newpen?" + mor.login.authparams(), 'POST', data,
+        data = glo.objdata(newpen);
+        glo.call("newpen?" + glo.login.authparams(), 'POST', data,
                  function (newpens) {
-                     currpenref = mor.lcs.putPen(newpens[0]);
+                     currpenref = glo.lcs.putPen(newpens[0]);
                      if(!penNameRefs) {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
-                     mor.rel.resetStateVars("new");  //updates header display
+                     glo.rel.resetStateVars("new");  //updates header display
                      returnCall(); },
                  function (code, errtxt) {
-                     mor.out('penformstat', errtxt);
-                     mor.out('formbuttons', buttonhtml); },
+                     glo.out('penformstat', errtxt);
+                     glo.out('formbuttons', buttonhtml); },
                  critsec);
     },
 
 
     cancelNewPen = function () {
-        mor.login.updateAuthentDisplay();
-        mor.profile.display();
+        glo.login.updateAuthentDisplay();
+        glo.profile.display();
     },
 
 
     newPenNameDisplay = function (callback) {
         var html, cancelbutton = "";
         returnFuncMemo = callback;
-        mor.login.updateAuthentDisplay("hide");
-        mor.out('centerhdiv', "");
+        glo.login.updateAuthentDisplay("hide");
+        glo.out('centerhdiv', "");
         if(currpenref && currpenref.pen) {
             cancelbutton = "<button type=\"button\" id=\"cancelbutton\"" +
-                                  " onclick=\"mor.pen.cancelNewPen();" + 
+                                  " onclick=\"glo.pen.cancelNewPen();" + 
                                             "return false;\"" +
                 ">Cancel</button>"; }
         //need to mimic layout initContent divs here so they are available
@@ -192,11 +192,11 @@ define([], function () {
             "</td>" +
           "</tr>" +
         "</table></div>";
-        mor.out('contentdiv', html);
-        mor.onchange('pnamein', createPenName);
-        mor.onclick('createbutton', createPenName);
-        mor.layout.adjust();
-        mor.byId('pnamein').focus();
+        glo.out('contentdiv', html);
+        glo.onchange('pnamein', createPenName);
+        glo.onclick('createbutton', createPenName);
+        glo.layout.adjust();
+        glo.byId('pnamein').focus();
     },
 
 
@@ -205,13 +205,13 @@ define([], function () {
         for(i = 0; i < penNameRefs.length; i += 1) {
             if(penNameRefs[i].pen.name === name) {
                 currpenref = penNameRefs[i];
-                mor.skinner.setColorsFromPen(currpenref.pen);
+                glo.skinner.setColorsFromPen(currpenref.pen);
                 //reload relationships and activity
-                mor.rel.resetStateVars("reload", currpenref.pen);
+                glo.rel.resetStateVars("reload", currpenref.pen);
                 //update the accessed time so that the latest pen name is
                 //chosen by default next time. 
                 updatePenName(penNameRefs[i].pen, 
-                              mor.profile.display, mor.profile.display);
+                              glo.profile.display, glo.profile.display);
                 break; } }
     },
 
@@ -232,7 +232,7 @@ define([], function () {
         if(!penNameRefs || penNameRefs.length === 0) {
             return newPenNameDisplay(callback); }
         currpenref = findHomePenRef();
-        mor.skinner.setColorsFromPen(currpenref.pen);
+        glo.skinner.setColorsFromPen(currpenref.pen);
         returnCall(callback);
     },
 
@@ -249,18 +249,18 @@ define([], function () {
         var url, critsec = "";
         if(penNameRefs) {
             chooseOrCreatePenName(callback); }
-        mor.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
-        mor.layout.adjust();
-        url = "mypens?" + mor.login.authparams();
-        mor.call(url, 'GET', null,
+        glo.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
+        glo.layout.adjust();
+        url = "mypens?" + glo.login.authparams();
+        glo.call(url, 'GET', null,
                  function (pens) {
                      var i;
                      penNameRefs = [];
                      for(i = 0; i < pens.length; i += 1) {
-                         penNameRefs.push(mor.lcs.putPen(pens[i])); }
+                         penNameRefs.push(glo.lcs.putPen(pens[i])); }
                      chooseOrCreatePenName(callback); },
                  function (code, errtxt) {
-                     mor.out('contentdiv', "Pen name retrieval failed: " + 
+                     glo.out('contentdiv', "Pen name retrieval failed: " + 
                              code + " " + errtxt); },
                  critsec);
     };
@@ -275,7 +275,7 @@ define([], function () {
             getPenName(callback); },  //triggers setup processing.
         currPenId: function () {
             if(currpenref && currpenref.pen) {
-                return mor.instId(currpenref.pen); }
+                return glo.instId(currpenref.pen); }
             return 0; },
         currPenRef: function () {
             return currpenref; },

@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -51,25 +51,25 @@ define([], function () {
     },
 
 
-    //Use contentdiv for displays, call mor.review.display when done.
+    //Use contentdiv for displays, call glo.review.display when done.
     //The review.url and other fields have already been set from the
     //params, so this only needs to fill out additional info.
     fetchData = function (review, url, params) {
-        var urlobj = mor.paramsToObj(url),
+        var urlobj = glo.paramsToObj(url),
             vid = urlobj.v, critsec = "";
-        mor.out('contentdiv', "Reading details from YouTube...");
+        glo.out('contentdiv', "Reading details from YouTube...");
         url = "http://gdata.youtube.com/feeds/api/videos/" + vid + 
             "?v=2&alt=json";
-        url = "jsonget?geturl=" + mor.enc(url);
-        mor.call(url, 'GET', null,
+        url = "jsonget?geturl=" + glo.enc(url);
+        glo.call(url, 'GET', null,
                  function (json) {
                      setReviewFields(review, json);
-                     mor.review.setAttribution(attribution);
-                     mor.review.display(); },
+                     glo.review.setAttribution(attribution);
+                     glo.review.display(); },
                  function (code, errtxt) {
-                     mor.err("YouTube data retrieval failed code " + 
+                     glo.err("YouTube data retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); },
+                     glo.review.display(); },
                  critsec);
     };
 

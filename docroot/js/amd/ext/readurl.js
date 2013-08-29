@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, unescape: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, unescape: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -78,7 +78,7 @@ define([], function () {
                 idx = content.indexOf("<");
                 content = content.slice(0, idx); }
             } catch (problem) {
-                mor.log("readurl.js " + url + " findTagContents: " + problem);
+                glo.log("readurl.js " + url + " findTagContents: " + problem);
             }
         return content;
     },
@@ -252,16 +252,16 @@ define([], function () {
 
     fetchData = function (review, url, params) {
         var geturl, critsec = "";
-        mor.out('contentdiv', "Reading details from " + url + " ...");
-        geturl = "urlcontents?url=" + mor.enc(url);
-        mor.call(geturl, 'GET', null,
+        glo.out('contentdiv', "Reading details from " + url + " ...");
+        geturl = "urlcontents?url=" + glo.enc(url);
+        glo.call(geturl, 'GET', null,
                  function (json) {
-                     setReviewFields(review, mor.dec(json[0].content), url);
-                     mor.review.display(); },
+                     setReviewFields(review, glo.dec(json[0].content), url);
+                     glo.review.display(); },
                  function (code, errtxt) {
-                     mor.err("General URL retrieval failed code " + 
+                     glo.err("General URL retrieval failed code " + 
                              code + ": " + errtxt);
-                     mor.review.display(); },
+                     glo.review.display(); },
                  critsec);
     };
 

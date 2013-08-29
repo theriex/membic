@@ -7,13 +7,13 @@
   <meta name="robots" content="noodp" />
   <meta name="description" content="Why listen to strangers when you have friends? Create an independent profile, post reviews to share, inspire your friends, and follow friends' reviews for the best new experiences." />
   <title>My Open Reviews</title>
-  <link href="css/mor.css" rel="stylesheet" type="text/css" />
+  <link href="css/site.css" rel="stylesheet" type="text/css" />
   <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dijit/themes/claro/claro.css" rel="stylesheet" />
   <link href="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojox/widget/ColorPicker/ColorPicker.css" rel="stylesheet" />
   <link rel="image_src" href="img/remo.png" />
 </head>
-<body id="bodyid" ondragover="mor.layout.bodydragover(event);" 
-      ondrop="mor.layout.bodydrop(event);">
+<body id="bodyid" ondragover="glo.layout.bodydragover(event);" 
+      ondrop="glo.layout.bodydrop(event);">
 
 <div id="mascotdiv">
 </div>
@@ -59,7 +59,7 @@
             <td align="left">
               <input type="password" name="passin" 
                      id="passin" size="20"
-                     onchange="mor.byId('loginform').submit();"/></td>
+                     onchange="glo.byId('loginform').submit();"/></td>
             <td align="center" id="altauthmethods"></td>
           </tr><tr>
             <td colspan="2" align="right" id="loginbtd">
@@ -96,7 +96,7 @@
     <!-- <a href="docs/API.html">API</a> (redundant) -->
     <a href="docs/issues.html">CONTACT</a>
     <img src="img/remo.png" class="mascotimg" border="0"
-         onclick="mor.layout.displayDoc('docs/issues.html');return false;"/>
+         onclick="glo.layout.displayDoc('docs/issues.html');return false;"/>
     <a href="docs/more.html">MORE</a>
   </div>
 </div>
@@ -107,8 +107,8 @@
 <!-- overlayed forms, not quite a dialog -->
 <div id="overlaydiv"></div>  
 <!-- dialog -->
-<div id="dlgdiv" draggable="true" ondragstart="mor.layout.dragstart(event);"
-     ondragend="mor.layout.dragend(event);"></div>
+<div id="dlgdiv" draggable="true" ondragstart="glo.layout.dragstart(event);"
+     ondragend="glo.layout.dragend(event);"></div>
 
 <script>
   document.getElementById('loginform').style.display = "none";
@@ -117,18 +117,18 @@
 <!-- This lib version should match the css theme -->
 <script src="https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/dojo.js"
 	data-dojo-config="async: true"></script>
-<script src="js/mor.js"></script>
-<script src="js/mor-comp.js"></script>
+<script src="js/global.js"></script>
+<script src="js/compiled.js"></script>
 
 <script>
-mor.cdnconf = {};
-mor.cdnconf.baseUrl = "/js/";
-mor.cdnconf.packages = [
+glo.cdnconf = {};
+glo.cdnconf.baseUrl = "/js/";
+glo.cdnconf.packages = [
   { name: "dojo", 
     location: "https://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/" },
   { name: "amd", location: "amd" },
   { name: "ext", location: "amd/ext" } ];
-mor.init();
+glo.init();
 </script>
 
 <script id="placesapiscript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAktj-Nnv7dP6MTCisi6QVBWr-sS5iekXc&libraries=places&sensor=true"></script>

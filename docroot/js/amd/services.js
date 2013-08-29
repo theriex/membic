@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -45,7 +45,7 @@ define([], function () {
 
     getRevTitleTxt = function (review) {
         var title, type;
-        type = mor.review.getReviewTypeByValue(review.revtype);
+        type = glo.review.getReviewTypeByValue(review.revtype);
         title = review[type.key];
         if(type.subkey) {
             title += ", " + review[type.subkey]; }
@@ -54,14 +54,14 @@ define([], function () {
 
 
     getRevTypeImage = function (review) {
-        var type = mor.review.getReviewTypeByValue(review.revtype);
+        var type = glo.review.getReviewTypeByValue(review.revtype);
         return "http://www.myopenreviews.com/img/" + type.img;
     },
 
 
     getRevStarsTxt = function (review, format) {
         var txt, starsobj, expl;
-        starsobj = mor.review.starRating(review.rating, false);
+        starsobj = glo.review.starRating(review.rating, false);
         expl = "(" + starsobj.roundnum + " " + 
             (starsobj.roundnum === 1? "star" : "stars") + ")";
         if(format === "combo") {
@@ -79,7 +79,7 @@ define([], function () {
 
 
     toggleDescription = function (divid) {
-        var div = mor.byId(divid);
+        var div = glo.byId(divid);
         if(div) {
             if(div.style.display === "none") {
                 div.style.display = "block"; }
@@ -90,8 +90,8 @@ define([], function () {
 
     changestate = function (name, pen) {
         var sel, conf, i;
-        mor.pen.deserializeFields(pen);
-        sel = mor.byId(name + "sel");
+        glo.pen.deserializeFields(pen);
+        sel = glo.byId(name + "sel");
         if(sel) {
             for(i = 0; !conf && i < pen.settings.consvcs.length; i += 1) {
                 if(pen.settings.consvcs[i].name === name) {
@@ -108,7 +108,7 @@ define([], function () {
         html += serviceIconHTML(svc);
         html += "</td><td>" + 
             "<select id=\"" + svc.name + "sel\"" + 
-            " onchange=\"mor.services.changestate('" + svc.name + "');" +
+            " onchange=\"glo.services.changestate('" + svc.name + "');" +
                        "return false;\"" +
             ">";
         for(i = 0; i < svcstates.length; i += 1) {
@@ -118,12 +118,12 @@ define([], function () {
             html += ">" + svcstates[i] + "</option>"; }
         html += "</select></td>" +
             "<td><a href=\"#" + svc.svcDispName + "\"" +
-                  " title=\"" + mor.ellipsis(svc.svcDesc, 65) + "\"" +
-                  " onclick=\"mor.services.toggleDesc('svcdescdiv" +
+                  " title=\"" + glo.ellipsis(svc.svcDesc, 65) + "\"" +
+                  " onclick=\"glo.services.toggleDesc('svcdescdiv" +
                              svc.name + "');return false;\">" +
                     svc.svcDispName + "</a>" + 
               "<div id=\"svcdescdiv" + svc.name + "\"" +
-                  " style=\"display:none;\">" + mor.linkify(svc.svcDesc) + 
+                  " style=\"display:none;\">" + glo.linkify(svc.svcDesc) + 
               "</div>" +
             "</td></tr>";
         return html;
@@ -132,14 +132,14 @@ define([], function () {
 
     displaySettings = function (domid, pen) {
         var i, html = "Posting Services: <table>";
-        mor.pen.deserializeFields(pen);
+        glo.pen.deserializeFields(pen);
         if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
             for(i = 0; i < pen.settings.consvcs.length; i += 1) {
                 html += getConnSvcRowHTML(pen.settings.consvcs[i]); } }
         else {
             html += "<tr><td>No posting services available</td></tr>"; }
         html += "</table>";
-        mor.out(domid, html);
+        glo.out(domid, html);
     },
 
 
@@ -158,7 +158,7 @@ define([], function () {
 
     initShareDisplay = function (buttondiv, msgdiv, pen, review) {
         var i, conf, svc, imgclass, svcact, html = "";
-        mor.pen.deserializeFields(pen);
+        glo.pen.deserializeFields(pen);
         if(!review.svcdata) {
             review.svcdata = {}; }
         if(pen.settings.consvcs && pen.settings.consvcs.length > 0) {
@@ -176,20 +176,20 @@ define([], function () {
                     imgclass = "shareico"; }
                 else if(conf.state === svcstates[2]) {  //on click
                     svcact.url = "#disabled, click to enable";
-                    svcact.clickstr = "mor.services.enable('" + 
+                    svcact.clickstr = "glo.services.enable('" + 
                         conf.name + "');return false;"; }
                 html += "<td id=\"" + svc.name + "td\">" + 
                     serviceLinkHTML(svcact.url, svcact.clickstr, imgclass,
                                     svc.getShareImageAlt(), 
                                     svc.getShareImageSrc()) + "</td>"; }
             html += "</tr></table>"; }
-        mor.out(buttondiv, html);
+        glo.out(buttondiv, html);
     },
 
 
     enablePostingService = function (svcname) {
         var svc, review, link;
-        review = mor.review.getCurrentReview();
+        review = glo.review.getCurrentReview();
         svc = findServiceByName(svcname);
         setTimeout(svc.doInitialSetup, 50);
         link = serviceLinkHTML(svc.getLinkURL(review),
@@ -197,7 +197,7 @@ define([], function () {
                                "shareico",
                                svc.getShareImageAlt(),
                                svc.getShareImageSrc());
-        mor.out(svc.name + "td", link);
+        glo.out(svc.name + "td", link);
     },
 
 
@@ -237,7 +237,7 @@ define([], function () {
     mergeConnectionServices = function (pen, contfunc) {
         var updconfs, i, j, svc, conf, found;
         updconfs = [];
-        mor.pen.deserializeFields(pen);
+        glo.pen.deserializeFields(pen);
         if(!pen.settings.consvcs) {
             pen.settings.consvcs = []; }
         //add existing configs that are still defined
@@ -271,10 +271,10 @@ define([], function () {
                   "ext/email" ],
                 function (facebook, twitter, googleplus, 
                           email) {
-                    if(!mor.facebook) { mor.facebook = facebook; }
-                    if(!mor.twitter) { mor.twitter = twitter; }
-                    if(!mor.googleplus) { mor.googleplus = googleplus; }
-                    if(!mor.email) { mor.email = email; }
+                    if(!glo.facebook) { glo.facebook = facebook; }
+                    if(!glo.twitter) { glo.twitter = twitter; }
+                    if(!glo.googleplus) { glo.googleplus = googleplus; }
+                    if(!glo.email) { glo.email = email; }
                     connServices = [ facebook, twitter, googleplus,
                                      email ];
                     mergeConnectionServices(pen, callback); });
@@ -288,7 +288,7 @@ define([], function () {
         toggleDesc: function (divid) {
             toggleDescription(divid); },
         changestate: function (svcid) {
-            mor.pen.getPen(function (pen) {
+            glo.pen.getPen(function (pen) {
                 changestate(svcid, pen); }); },
         getRevStarsTxt: function (review, format) {
             return getRevStarsTxt(review, format); },
@@ -304,7 +304,7 @@ define([], function () {
             enablePostingService(svcname); },
         getRevPermalink: function (review) {
             return "http://www.myopenreviews.com/statrev/" + 
-                mor.instId(review); },
+                glo.instId(review); },
         getPostServiceMsgDiv: function () {
             return svcmsgdiv; },
         serviceLinkHTML: function (url, clickstr, imgclass, alt, src) {

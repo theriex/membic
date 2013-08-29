@@ -2,7 +2,7 @@
 /*jslint white: true */
 //For info, please see readme.txt
 
-var morbuild = (function () {
+var build = (function () {
     "use strict";
 
     var fs = require('fs'),
@@ -11,17 +11,17 @@ var morbuild = (function () {
         writeopt = { encoding: 'utf8' },
         buildroot = "",
         docroot = "",
-        outsrc = "mor-source.js",
-        outcomp = "/js/mor-comp.js",
+        outsrc = "amd-source.js",
+        outcomp = "/js/compiled.js",
 
 
     getModuleFiles = function (nextfunc) {
-        fs.readFile(docroot + '/js/mor.js', readopt, function (err, text) {
+        fs.readFile(docroot + '/js/global.js', readopt, function (err, text) {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
                 throw err; }
-            text = text.slice(text.indexOf("mor.init1 = function"));
-            text = text.slice(text.indexOf("require(mor.cdnconf,"));
+            text = text.slice(text.indexOf("glo.init1 = function"));
+            text = text.slice(text.indexOf("require(glo.cdnconf,"));
             text = text.slice(text.indexOf("["));
             text = text.slice(1, text.indexOf("]"));
             modules = text.split(",");
@@ -124,11 +124,11 @@ var morbuild = (function () {
 } () );
 
 
-if(morbuild.setDocroot(process.argv[1])) {
+if(build.setDocroot(process.argv[1])) {
     if(process.argv[2] === "clean") {
-        morbuild.clean(); }
+        build.clean(); }
     else {
-        morbuild.run(); } }
+        build.run(); } }
 else {
     console.log("Couldn't figure out docroot"); }
 

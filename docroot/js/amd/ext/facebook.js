@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, FB: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, FB: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -15,15 +15,15 @@ define([], function () {
     facebookWelcome = function (loginResponse) {
         var html = "<p>&nbsp;</p>" + 
             "<p>Facebook login success! Fetching your info...</p>";
-        mor.out('contentdiv', html);
+        glo.out('contentdiv', html);
         FB.api('/me', function (infoResponse) {
             html = "<p>&nbsp;</p><p>Welcome " + infoResponse.name + "</p>";
-            mor.out('contentdiv', html);
-            mor.login.setAuth("fbid", loginResponse.authResponse.accessToken,
+            glo.out('contentdiv', html);
+            glo.login.setAuth("fbid", loginResponse.authResponse.accessToken,
                               infoResponse.id + " " + infoResponse.name);
             //The facebook name is NOT a good default pen name since it
             //is unlikely to be unique, and creativity on pen names is good.
-            mor.login.authComplete(); });
+            glo.login.authComplete(); });
     },
 
 
@@ -39,7 +39,7 @@ define([], function () {
         html = "<p>" + msg + "</p><table><tr>" + 
             "<td><a href=\"http://www.facebook.com\"" +
                   " title=\"Log in to Facebook\"" +
-                  " onclick=\"mor.facebook." + okfstr + ";return false;\"" +
+                  " onclick=\"glo.facebook." + okfstr + ";return false;\"" +
                 "><img class=\"loginico\" src=\"img/f_logo.png\"" +
                      " border=\"0\"/> Log in to Facebook</a></td>";
         if(cancelfstr) {
@@ -48,9 +48,9 @@ define([], function () {
                      " onclick=\"" + cancelfstr + ";return false;\"" +
               ">Cancel</button></td>"; }
         html += "</tr></table>";
-        mor.out(domid, html);
+        glo.out(domid, html);
         if(cancelfstr) {  //not already in a dialog...
-            mor.layout.adjust(); }
+            glo.layout.adjust(); }
     },
 
 
@@ -59,7 +59,7 @@ define([], function () {
             if(loginResponse.status === "connected") {
                 facebookWelcome(loginResponse); }
             else {
-                mor.login.init(); } });
+                glo.login.init(); } });
     },
 
 
@@ -69,7 +69,7 @@ define([], function () {
                 facebookWelcome(loginResponse); }
             else {
                 facebookLoginFormDisplay(loginResponse, 'contentdiv',
-                                         "loginFB()", "mor.login.init()"); } 
+                                         "loginFB()", "glo.login.init()"); } 
         });
     },
 
@@ -83,7 +83,7 @@ define([], function () {
                       xfbml: true });
             nextfunc(); };
         //Load the FB SDK asynchronously if not already loaded
-        if(mor.byId(id)) {
+        if(glo.byId(id)) {
             return; }
         js = document.createElement('script');
         js.id = id;
@@ -95,30 +95,30 @@ define([], function () {
             msgdivid = "contentdiv"; }
         if(msgdivid !== "quiet") {
             html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
-            mor.out(msgdivid, html); }
-        mor.layout.adjust();
+            glo.out(msgdivid, html); }
+        glo.layout.adjust();
     },
 
 
     addProfileAuth3 = function (domid, pen, fbUserID) {
         var fbid;
         if(!fbUserID) {
-            mor.err("No userID received from Facebook");
-            return mor.profile.displayAuthSettings(domid, pen); }
+            glo.err("No userID received from Facebook");
+            return glo.profile.displayAuthSettings(domid, pen); }
         fbid = parseInt(fbUserID, 10);
         if(!fbid || fbid <= 0) {
-            mor.err("Invalid userID received from Facebook");
-            return mor.profile.displayAuthSettings(domid, pen); }
-        mor.out(domid, "Recording Facebook authorization...");
+            glo.err("Invalid userID received from Facebook");
+            return glo.profile.displayAuthSettings(domid, pen); }
+        glo.out(domid, "Recording Facebook authorization...");
         pen.fbid = fbUserID;  //use string to avoid any potential rounding
-        mor.pen.updatePen(pen,
+        glo.pen.updatePen(pen,
                           function (updpen) {
-                              mor.profile.displayAuthSettings(domid, updpen); },
+                              glo.profile.displayAuthSettings(domid, updpen); },
                           function (code, errtxt) {
-                              mor.err("facebook.addProfileAuth3 error " +
+                              glo.err("facebook.addProfileAuth3 error " +
                                       code + ": " + errtxt);
                               pen.fbid = 0;
-                              mor.profile.displayAuthSettings(domid, pen); });
+                              glo.profile.displayAuthSettings(domid, pen); });
     },
 
 
@@ -135,10 +135,10 @@ define([], function () {
 
 
     addProfileAuth1 = function (domid, pen) {
-        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
+        if(window.location.href.indexOf(glo.mainsvr) !== 0) {
             alert("Facebook authentication is only supported from " +
-                  mor.mainsvr);
-            return mor.profile.displayAuthSettings(domid, pen); }
+                  glo.mainsvr);
+            return glo.profile.displayAuthSettings(domid, pen); }
         if(typeof FB === 'object' || typeof FB === 'function') {
             return addProfileAuth2(domid, pen); }
         loadFacebook(function () {
@@ -149,30 +149,30 @@ define([], function () {
     handleFBProfileAuth = function (domid) {
         FB.login(function (loginResponse) {
             if(loginResponse.status === "connected") {
-                mor.pen.getPen(function (pen) {
+                glo.pen.getPen(function (pen) {
                     addProfileAuth3(domid, pen,
                                     loginResponse.authResponse.userID); 
                 }); }
             else {
-                mor.pen.getPen(function (pen) {
-                    mor.profile.displayAuthSettings(domid, pen); }); }
+                glo.pen.getPen(function (pen) {
+                    glo.profile.displayAuthSettings(domid, pen); }); }
         });
     },
 
 
     authenticate = function () {
         try {
-            if(mor.isDefined(FB)) {
+            if(glo.isDefined(FB)) {
                 return checkFBLogin(); }
         } catch (e) {
-            mor.log("facebook.js authenticate error: " + e);
+            glo.log("facebook.js authenticate error: " + e);
         }
         loadFacebook(checkFBLogin);
     },
 
 
     closeOverlay = function () {
-        var odiv = mor.byId('overlaydiv');
+        var odiv = glo.byId('overlaydiv');
         odiv.innerHTML = "";
         odiv.style.visibility = "hidden";
     },
@@ -185,12 +185,12 @@ define([], function () {
 
     postReview4 = function (review) {
         var fblinkname, fblinkurl, fbremurl, fbimage, fbprompt;
-        fblinkname = mor.services.getRevStarsTxt(review, "unicode") + " " +
-            mor.services.getRevTitleTxt(review);
-        fblinkurl = mor.services.getRevPermalink(review);
+        fblinkname = glo.services.getRevStarsTxt(review, "unicode") + " " +
+            glo.services.getRevTitleTxt(review);
+        fblinkurl = glo.services.getRevPermalink(review);
         fbremurl = "http://www.myopenreviews.com/#command=remember&penid=" + 
-            review.penid + "&revid=" + mor.instId(review);
-        fbimage = mor.services.getRevTypeImage(review);
+            review.penid + "&revid=" + glo.instId(review);
+        fbimage = glo.services.getRevTypeImage(review);
         fbprompt = "Check this out if...";
         FB.ui({ method: 'feed',  //use the feed dialog...
                 message: review.revtype + " review",
@@ -203,10 +203,10 @@ define([], function () {
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {
-                      mor.log("Review posted to Facebook");
+                      glo.log("Review posted to Facebook");
                       review.svcdata[svcName] = response.post_id; }
                   else {  //probably just canceled posting
-                      mor.log("Posting to Facebook did not happen.");
+                      glo.log("Posting to Facebook did not happen.");
                       review.svcdata[svcName] = 'nopost'; } 
               });
     },
@@ -215,7 +215,7 @@ define([], function () {
     postReview3 = function (review) {
         FB.login(function (loginResponse) {
             closeOverlay();
-            mor.onescapefunc = null;
+            glo.onescapefunc = null;
             if(loginResponse.status === "connected") {
                 postReview4(review); }
             else {
@@ -231,11 +231,11 @@ define([], function () {
                             loginResponse.authResponse.userID); }
             else {
                 tmprev = review;
-                odiv = mor.byId('overlaydiv');
+                odiv = glo.byId('overlaydiv');
                 odiv.style.top = "80px";
                 odiv.style.visibility = "visible";
-                odiv.style.backgroundColor = mor.skinner.lightbg();
-                mor.onescapefunc = function () {
+                odiv.style.backgroundColor = glo.skinner.lightbg();
+                glo.onescapefunc = function () {
                     closeOverlay();
                     postRevBailout(review); };
                 facebookLoginFormDisplay(loginResponse, 'overlaydiv',
@@ -245,20 +245,20 @@ define([], function () {
 
 
     getShareLinkURL = function (review) {
-        var url = mor.services.getRevPermalink(review);
-        url = "http://www.facebook.com/sharer/sharer.php?u=" + mor.enc(url);
+        var url = glo.services.getRevPermalink(review);
+        url = "http://www.facebook.com/sharer/sharer.php?u=" + glo.enc(url);
         return url;
     },
 
 
     getShareOnClickStr = function (review) {
-        var str = "mor.facebook.shareCurrentReview();return false;";
+        var str = "glo.facebook.shareCurrentReview();return false;";
         return str;
     },
 
 
     verifyFacebookLoaded = function () {
-        if(window.location.href.indexOf(mor.mainsvr) === 0 &&
+        if(window.location.href.indexOf(glo.mainsvr) === 0 &&
            !(typeof FB === 'object' || typeof FB === 'function')) {
             loadFacebook(function () {
                 console.log("facebook service initial setup done"); },
@@ -269,9 +269,9 @@ define([], function () {
 
 
     postReview1 = function (review) {
-        if(window.location.href.indexOf(mor.mainsvr) !== 0) {
+        if(window.location.href.indexOf(glo.mainsvr) !== 0) {
             alert("Posting to Facebook is only supported from " +
-                  mor.mainsvr);
+                  glo.mainsvr);
             return postRevBailout(review); }
         if(typeof FB === 'object' || typeof FB === 'function') {
             return postReview2(review); }
@@ -301,11 +301,11 @@ define([], function () {
         getOnClickStr: function (review) {
             return getShareOnClickStr(review); },
         shareCurrentReview: function () {
-            postReview1(mor.review.getCurrentReview()); },
+            postReview1(glo.review.getCurrentReview()); },
         getShareImageAlt: function () {
             return "Post to your wall"; },
         getShareImageSrc: function () {
-            return mor.facebook.iconurl; },
+            return glo.facebook.iconurl; },
         postTmpRev: function () {
             closeOverlay();
             postReview3(tmprev); },

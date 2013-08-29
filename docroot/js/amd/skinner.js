@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false, require: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -19,7 +19,7 @@ define([], function () {
                        { id: "link",    label: "link" },
                        { id: "hover",   label: "hover" } ],
         //Blue links are most recognizable, but they are not at all fun.
-        //If changing the first (default) skin, change mor.css to match,
+        //If changing the first (default) skin, change site.css to match,
         //and verify statrev ads are compatible.
         presets = [ { name: "paper (warm)",   id: "paperw", 
                        bodybg: "#fffffc",   text: "#111111",
@@ -100,56 +100,56 @@ define([], function () {
 
 
     getLightBackground = function () {
-        if(!mor.colors.lightbg) {
-            mor.colors.lightbg = adjustColor(mor.colors.bodybg, 4); }
-        return mor.colors.lightbg;
+        if(!glo.colors.lightbg) {
+            glo.colors.lightbg = adjustColor(glo.colors.bodybg, 4); }
+        return glo.colors.lightbg;
     },
 
 
     getDarkBackground = function () {
         //with no texture overlay, -18 is about right, with a 66% opaque 
         //texture overlay this needs to be pretty significant
-        if(!mor.colors.darkbg) {
-            mor.colors.darkbg = adjustColor(mor.colors.bodybg, -56); }
-        return mor.colors.darkbg;
+        if(!glo.colors.darkbg) {
+            glo.colors.darkbg = adjustColor(glo.colors.bodybg, -56); }
+        return glo.colors.darkbg;
     },
 
 
     updateColors = function () {
         var rules, i, elem, val, tabs = [ "recentli", "bestli", "followingli", 
                                           "followersli", "searchli" ];
-        elem = mor.byId('bodyid');
+        elem = glo.byId('bodyid');
         if(elem) {
-            elem.style.color = mor.colors.text;
-            elem.style.backgroundColor = mor.colors.bodybg; }
-        elem = mor.byId('topsectiondiv');
+            elem.style.color = glo.colors.text;
+            elem.style.backgroundColor = glo.colors.bodybg; }
+        elem = glo.byId('topsectiondiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground();
             val = "8px 8px 4px " + getDarkBackground();
             elem.style.boxShadow = val; }
-        elem = mor.byId('shoutdiv');
+        elem = glo.byId('shoutdiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground(); }
         for(i = 0; i < tabs.length; i += 1) {
-            elem = mor.byId(tabs[i]);
+            elem = glo.byId(tabs[i]);
             if(elem && elem.className === "unselectedTab") {
                 elem.style.backgroundColor = getDarkBackground(); } }
         rules = document.styleSheets[0].cssRules;
         for(i = 0; rules && i < rules.length; i += 1) {
-            if(mor.prefixed(rules[i].cssText, "A:link")) {
-                safeSetColorProp(rules[i], mor.colors.link); }
-            else if(mor.prefixed(rules[i].cssText, "A:visited")) {
-                safeSetColorProp(rules[i], mor.colors.link); }
-            else if(mor.prefixed(rules[i].cssText, "A:active")) {
-                safeSetColorProp(rules[i], mor.colors.link); }
-            else if(mor.prefixed(rules[i].cssText, "A:hover")) {
-                safeSetColorProp(rules[i], mor.colors.hover); } }
+            if(glo.prefixed(rules[i].cssText, "A:link")) {
+                safeSetColorProp(rules[i], glo.colors.link); }
+            else if(glo.prefixed(rules[i].cssText, "A:visited")) {
+                safeSetColorProp(rules[i], glo.colors.link); }
+            else if(glo.prefixed(rules[i].cssText, "A:active")) {
+                safeSetColorProp(rules[i], glo.colors.link); }
+            else if(glo.prefixed(rules[i].cssText, "A:hover")) {
+                safeSetColorProp(rules[i], glo.colors.hover); } }
     },
 
 
     cancelSkinChange = function () {
         if(oldcolors) {  //if spurious cancel call oldcolors may be undefined
-            mor.colors = oldcolors; }
+            glo.colors = oldcolors; }
         if(cancelpen && cancelpen.settings && 
            cancelpen.settings.colorPresetId) {
             cancelpen.settings.colorPresetId = oldcolors.id; }
@@ -158,23 +158,23 @@ define([], function () {
 
 
     saveSkinChangeSettings = function (pen) {
-        pen.settings.colors = copycolors(mor.colors);
+        pen.settings.colors = copycolors(glo.colors);
     },
 
 
     setColorsFromPen = function (pen) {
         if(!pen) {  //use default colors
-            mor.colors = presets[0]; }
+            glo.colors = presets[0]; }
         else { //have pen
             if(!pen.settings) {  //use default colors
-                mor.colors = presets[0]; }
+                glo.colors = presets[0]; }
             else { //have settings
                 if(typeof pen.settings === 'string') {
-                    mor.pen.deserializeFields(pen); }
+                    glo.pen.deserializeFields(pen); }
                 if(!pen.settings.colors) {  //use default colors
-                    mor.colors = presets[0]; }
+                    glo.colors = presets[0]; }
                 else { //have colors
-                    mor.colors = copycolors(pen.settings.colors); } } }
+                    glo.colors = copycolors(pen.settings.colors); } } }
         updateColors();
     },
 
@@ -197,7 +197,7 @@ define([], function () {
             "<td>&nbsp;&nbsp;" + 
                 "<a href=\"#toggleSkinControls\" id=\"skinctrltoggle\"" +
                   " class=\"permalink\"" + 
-                  " onclick=\"mor.skinner.toggleControls();return false;\"" +
+                  " onclick=\"glo.skinner.toggleControls();return false;\"" +
             ">show color controls</a></td>" +
           "</tr>" +
         "</table>";
@@ -214,12 +214,12 @@ define([], function () {
         if(typeof index === "string") {
             index = parseInt(index, 10); }
         colorctrl = colorctrls[index];
-        mor.out('colortitlediv', colorctrl.label + subtext);
-        currcolor = mor.colors[colorctrl.id];
+        glo.out('colortitlediv', colorctrl.label + subtext);
+        currcolor = glo.colors[colorctrl.id];
         //this is how you are "supposed" to set the value but it doesn't work:
         //colorwidget.set('value', currcolor);
         //this sets the hex value field but the display doesn't update:
-        //mor.byId('colorwidgetdiv').value = currcolor;
+        //glo.byId('colorwidgetdiv').value = currcolor;
         //found this and it seems to work:
         colorwidget.setColor(currcolor, true);
     },
@@ -235,9 +235,9 @@ define([], function () {
                 "<td class=\"colorattrtd\">" + clabel + "</td>" +
                 "<td><div id=\"" + cid + "div\"" +
                         " class=\"colorswatch\"" + 
-                        " onclick=\"mor.skinner.swatchClick('" + i + "');" +
+                        " onclick=\"glo.skinner.swatchClick('" + i + "');" +
                                    "return false;\"" +
-                        " style=\"background:" + mor.colors[cid] + ";\"" +
+                        " style=\"background:" + glo.colors[cid] + ";\"" +
                 "></div>";
             if(i === 0) {
                 html += "<td rowspan=\"" + colorctrls.length + "\"" + 
@@ -246,13 +246,13 @@ define([], function () {
                     "<div id=\"colorwidgetdiv\"></div></td>"; }
             html += "</tr>"; }
         html += "</table>";
-        mor.out('colorctrlsdiv', html);
+        glo.out('colorctrlsdiv', html);
         if(colorwidget) {
             colorwidget.destroy(); }
         colorwidget = new Colorwidget(
             { onChange: function (val) {
-                mor.byId(colorctrl.id + "div").style.backgroundColor = val;
-                mor.colors[colorctrl.id] = val;
+                glo.byId(colorctrl.id + "div").style.backgroundColor = val;
+                glo.colors[colorctrl.id] = val;
                 updateColors(); } }, 'colorwidgetdiv');
         swatchClick(0);
     },
@@ -260,41 +260,41 @@ define([], function () {
 
     toggleControls = function () {
         var txt, rules, html;
-        txt = mor.byId('skinctrltoggle').innerHTML;
+        txt = glo.byId('skinctrltoggle').innerHTML;
         if(txt === "show color controls") {
             rules = document.styleSheets[0].cssRules;
             if(rules && rules[0].style.setProperty) {
-                mor.byId('colorctrlsdiv').style.display = "block";
-                mor.out('skinctrltoggle', "hide color controls");
-                html = mor.byId('colorctrlsdiv').innerHTML;
+                glo.byId('colorctrlsdiv').style.display = "block";
+                glo.out('skinctrltoggle', "hide color controls");
+                html = glo.byId('colorctrlsdiv').innerHTML;
                 if(!html) {  //not initialized yet
-                    require(mor.cdnconf,
+                    require(glo.cdnconf,
                             [ "dojox/widget/ColorPicker", "dojo/domReady!" ],
                             function (colorwidget) {
                                 createColorControls(colorwidget); }); } }
             else {  //no support, display as disabled
-                mor.byId('skinctrltoggle').style.color = "#666666"; } }
+                glo.byId('skinctrltoggle').style.color = "#666666"; } }
         else {
-            mor.byId('colorctrlsdiv').style.display = "none";
-            mor.out('skinctrltoggle', "show color controls"); }
+            glo.byId('colorctrlsdiv').style.display = "none";
+            glo.out('skinctrltoggle', "show color controls"); }
     },
 
 
    setControlValuesAndUpdate = function (colors) {
        var html, i, div;
-       mor.colors = copycolors(colors);
+       glo.colors = copycolors(colors);
        updateColors();
-       html = mor.byId('colorctrlsdiv').innerHTML;
+       html = glo.byId('colorctrlsdiv').innerHTML;
        if(html) {  //color controls available
            for(i = 0; i < colorctrls.length; i += 1) {
-               div = mor.byId(colorctrls[i].id + "div");
-               div.style.backgroundColor = mor.colors[colorctrls[i].id]; }
+               div = glo.byId(colorctrls[i].id + "div");
+               div.style.backgroundColor = glo.colors[colorctrls[i].id]; }
            swatchClick(0); }
    },
 
 
     setColorsFromPreset = function (pen) {
-        var i, sel = mor.byId('presetsel');
+        var i, sel = glo.byId('presetsel');
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
                 cancelpen = pen;
@@ -306,15 +306,15 @@ define([], function () {
 
     displayDialog = function (domid, pen) {
         var html;
-        oldcolors = copycolors(mor.colors);
+        oldcolors = copycolors(glo.colors);
         html = presetSelectorHTML(pen) + 
             //color controls are high overhead and initialized only when needed.
             "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
-        mor.out(domid, html);
-        mor.onx('change', 'presetsel', function (e) {
+        glo.out(domid, html);
+        glo.onx('change', 'presetsel', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            mor.pen.getPen(setColorsFromPreset); });
+            glo.pen.getPen(setColorsFromPreset); });
     };
 
 

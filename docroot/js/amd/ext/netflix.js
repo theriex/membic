@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, mor: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -20,7 +20,7 @@ define([], function () {
         if(data && data.d && data.d.results && data.d.results.length > 0) {
             elem = data.d.results[0]; }
         if(!elem) {
-            mor.err("Empty data returned from Netflix");
+            glo.err("Empty data returned from Netflix");
             return; }
         //Use the canonical URL as listed in the database.  The raw URL
         //set from the parameters has tracking IDs and other spurious info
@@ -57,26 +57,26 @@ define([], function () {
 
 
     //Uses contentdiv for interim display information, calls
-    //mor.review.display on completion.  The review.url and other
+    //glo.review.display on completion.  The review.url and other
     //fields have already been set from the params, so this function
     //only needs to fill out additional info.
     fetchData = function (review, url, params) {
         var critsec = "", movieId = extractMovieId(url);
-        mor.out('contentdiv', "Reading details from Netflix...");
+        glo.out('contentdiv', "Reading details from Netflix...");
         url = "http://odata.netflix.com/Catalog/Titles" + 
             "?$filter=NetflixApiId%20eq%20" + 
             "'http://api.netflix.com/catalog/titles/movies/" + movieId + "'" +
             "&$format=json";
-        url = "jsonget?geturl=" + mor.enc(url);
-        mor.call(url, 'GET', null,
+        url = "jsonget?geturl=" + glo.enc(url);
+        glo.call(url, 'GET', null,
                  function (json) {
                      setReviewFields(review, json);
-                     mor.review.setAttribution(attribution);
-                     mor.review.display(); },
+                     glo.review.setAttribution(attribution);
+                     glo.review.display(); },
                  function (code, errtxt) {
-                     mor.err("Netflix data retrieval failed code " +
+                     glo.err("Netflix data retrieval failed code " +
                              code + ": " + errtxt);
-                     mor.review.display(); },
+                     glo.review.display(); },
                  critsec);
     };
 
