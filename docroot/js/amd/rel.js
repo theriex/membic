@@ -94,9 +94,10 @@ define([], function () {
 
 
     followBackLink = function (pen) {
-        var i, refarray, penid, html;
+        var i, refarray, penid, html, srcpen;
+        srcpen = glo.pen.currPenRef().pen;
+        refarray = getRelRefArray(srcpen, "outbound");
         penid = glo.instId(pen);
-        refarray = getRelRefArray(pen, "outbound");
         for(i = 0; refarray && i < refarray.length; i += 1) {
             if(refarray[i].rel.relatedid === penid) {
                 return ""; } }  //already following
