@@ -371,10 +371,10 @@ define([], function () {
             glo.byId('logoimg').style.width = "260px";
             glo.byId('logoimg').style.height = "120px";
             glo.byId('logodiv').style.width = "260px";
-            glo.byId('topsectiondiv').style.height = "130px";
+            glo.byId('topsectiondiv').style.height = "130px";  //same val below
             glo.byId('topworkdiv').style.marginLeft = "280px";
             glo.byId('mascotdiv').style.top = "135px";
-            glo.layout.setTopPaddingAndScroll(120); }
+            glo.layout.setTopPaddingAndScroll(130); }  //matches topsectiondiv
         else if(override === "hide") { 
             //html = "<img src=\"img/slides/slogan.png\" class=\"slideimg\"/>";
             html = "";
