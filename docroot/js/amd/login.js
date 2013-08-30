@@ -25,7 +25,7 @@ define([], function () {
            url.indexOf("https://") === 0) {      //secure server
             url = endpoint; }  //relative path url ok, data is encrypted
         else {  //not secured, try via XDR although it may not work
-            url = "https://myopenreviews.appspot.com/" + endpoint; }
+            url = glo.secsvr + "/" + endpoint; }
         return url;
     },
 
@@ -159,7 +159,7 @@ define([], function () {
 
 
     redirectToMainServer = function () {
-        var url = "http://www.myopenreviews.com";
+        var url = glo.mainsvr;
         if(window.location.href.indexOf("http://localhost:8080") === 0) {
             url = "http://localhost:8080"; }
         window.location.href = url;

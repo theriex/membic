@@ -323,7 +323,7 @@ var glo = {};  //Global container for top level funcs and values
 
     glo.redirectIfNeeded = function () {
         var href = window.location.href;
-        if(href.indexOf("http://www.myopenreviews.com") >= 0 &&
+        if(href.indexOf(glo.mainsvr) >= 0 &&
            href.indexOf("authtoken=") < 0 &&
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
@@ -390,6 +390,9 @@ var glo = {};  //Global container for top level funcs and values
 
 
     glo.init = function () {
+        var href = window.location.href;
+        if(href.indexOf("http://www.wdydfun.com") >= 0) {
+            glo.mainsvr = "http://www.wdydfun.com"; }
         glo.amdtimer = {};
         glo.amdtimer.dojo = { start: new Date() };
         glo.out('contentfill', "loading libraries...");

@@ -482,7 +482,7 @@ define([], function () {
             "If you are interested in following reviews from me, " + 
             "click the 'follow' icon next to '" + mepen.name +
             "' on my profile page. Here's the direct link to my profile:\n\n" +
-            "    http://www.myopenreviews.com/#view=profile&profid=" +
+            "    " + glo.mainsvr + "/#view=profile&profid=" +
             glo.instId(mepen) + "\n\n" +
             "When I see you in my 'Followers' tab, I'll follow back. " +
             "Looking forward to learning about things you've experienced " +
