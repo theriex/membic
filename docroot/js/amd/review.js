@@ -657,14 +657,18 @@ define([], function () {
     },
 
 
-    secondaryFieldsValid = function (type, errors, actionstr) {
-        var input, i, txt;
+    secondaryFieldsValid = function (type, errors) {
+        var input, i;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
             input = glo.byId("field" + i);
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
-        //verify they set the rating to something.
+    },
+
+
+    verifyRatingStars = function (type, errors, actionstr) {
+        var txt;
         if(!crev.rating) {
             txt = "Please set a star rating";
             if(actionstr === "uploadpic") {
@@ -750,9 +754,16 @@ define([], function () {
     //           any extraneous commas.  For extra credit: Add commas
     //           when people insert their own space separated keywords.
     keywordsValid = function (type, errors) {
-        var input = glo.byId('keywordin');
+        var input, words, i, csv = "";
+        input = glo.byId('keywordin');
         if(input) {
-            crev.keywords = input.value; }
+            words = input.value || "";
+            words = words.split(",");
+            for(i = 0; i < words.length; i += 1) {
+                if(i > 0) {
+                    csv += ", "; }
+                csv += words[i].trim(); }
+            crev.keywords = csv; }
     },
 
 
@@ -1706,11 +1717,17 @@ define([], function () {
             type = findReviewType(crev.revtype);
             if(type) {
                 keyFieldsValid(type, errors);
+                //need to check all fields to capture their values 
+                //back into the current review so they are not lost.
+                keywordsValid(type, errors);
+                reviewTextValid(type, errors);
+                secondaryFieldsValid(type, errors);
                 if(errors.length > 0) {
                     for(i = 0; i < errors.length; i += 1) {
                         errtxt += errors[i] + "<br/>"; }
                     glo.out('revsavemsg', errtxt);
                     return; } }
+            //if no type, or if all fields valid, then redisplay
             glo.review.display(); }, 400);
     },
 
@@ -1744,9 +1761,10 @@ define([], function () {
             return; }
         noteURLValue();
         keyFieldsValid(type, errors);
-        secondaryFieldsValid(type, errors, actionstr);
+        secondaryFieldsValid(type, errors);
         keywordsValid(type, errors);
         reviewTextValid(type, errors);
+        verifyRatingStars(type, errors, actionstr);
         if(errors.length > 0) {
             glo.out('revformbuttonstd', html);
             for(i = 0; i < errors.length; i += 1) {
