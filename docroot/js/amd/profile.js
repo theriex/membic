@@ -84,7 +84,7 @@ define([], function () {
         if(!glo.byId('homepenhdiv')) {
             glo.login.updateAuthentDisplay(); }
         html = "<div class=\"topnavitemdiv\">" +
-            glo.imgntxt("", pen.name,
+            glo.imgntxt("profile.png", "",
                         "glo.profile.display()",
                         "#view=profile&profid=" + glo.instId(pen),
                         "Show profile for " + pen.name + " (you)") +
