@@ -657,7 +657,7 @@ define([], function () {
                 glo.pen.getPen(function (pen) {
                     mainDisplay(dispmode); }); }, 100);
             return; }
-        glo.historyCheckpoint({ view: dispmode });
+        glo.history.checkpoint({ view: dispmode });
         writeNavDisplay(dispmode);
         verifyCoreDisplayElements();
         if(dispmode === "memo") {

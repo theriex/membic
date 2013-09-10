@@ -28,143 +28,8 @@ var glo = {};  //Global container for top level funcs and values
 
 
     ////////////////////////////////////////
-    //prototype mods and global overrides
-    /////////////////////////////////////////
-
-    if(!String.prototype.trim) {  //thanks to Douglas Crockford
-        String.prototype.trim = function () {
-            return this.replace(/^\s*(\S*(?:\s+\S+)*)\s*$/, "$1");
-        };
-    }
-
-
-    if(!String.prototype.capitalize) { 
-        String.prototype.capitalize = function () {
-            return this.charAt(0).toUpperCase() + this.slice(1);
-        };
-    }
-
-
-    if(!Array.prototype.indexOf) { 
-        Array.prototype.indexOf = function (searchElement) {
-            var i;
-            if(this === null) {
-                throw new TypeError(); }
-            for(i = 0; i < this.length; i += 1) {
-                if(this[i] === searchElement) {
-                    return i; } }
-            return -1;
-        };
-    }
-
-
-    if(!Array.prototype.shuffle) {
-        Array.prototype.shuffle = function () {
-            var i, j, tmp;
-            for(i = this.length - 1; i > 0; i -= 1) {
-                j = Math.floor(Math.random() * (i + 1));
-                tmp = this[i];
-                this[i] = this[j];
-                this[j] = tmp; }
-            return this;
-        };
-    }
-
-
-    if(!Date.prototype.toISOString) {
-        Date.prototype.toISOString = function() {
-            function pad(n) { return n < 10 ? '0' + n : n; }
-            return this.getUTCFullYear() + '-'
-                + pad(this.getUTCMonth() + 1) + '-'
-                + pad(this.getUTCDate()) + 'T'
-                + pad(this.getUTCHours()) + ':'
-                + pad(this.getUTCMinutes()) + ':'
-                + pad(this.getUTCSeconds()) + 'Z';
-        };
-    }
-
-
-    ////////////////////////////////////////
     // general utility functions
     ////////////////////////////////////////
-
-    glo.historyTitle = function (state) {
-        var title = document.title;
-        return title;
-    };
-
-
-    glo.historyURL = function (state) {
-        var url = window.location.href;
-        return url;
-    };
-
-
-    //if the view or profid has changed, then push a history record.
-    //if anything else has changed, replace the current history record.
-    //otherwise no effect.
-    glo.historyCheckpoint = function (pstate) {
-        var hstate, title, url;
-        if(history) {  //verify history object defined, otherwise skip
-            hstate = history.state;
-            if(!hstate 
-               || hstate.view !== pstate.view 
-               || hstate.profid !== pstate.profid
-               || hstate.revid !== pstate.revid) {
-                if(history.pushState && 
-                   typeof history.pushState === 'function') {
-                    title = glo.historyTitle(pstate);
-                    url = glo.historyURL(pstate);
-                    history.pushState(pstate, title, url);
-                    glo.log("history.pushState: " + 
-                            glo.dojo.json.stringify(pstate) +
-                            ", title: " + title + ", url: " + url); 
-                } }
-            else if(pstate.tab && hstate.tab !== pstate.tab) {
-                if(history.replaceState &&
-                   typeof history.replaceState === 'function') {
-                    title = glo.historyTitle(pstate);
-                    url = glo.historyURL(pstate);
-                    history.replaceState(pstate, title, url);
-                    glo.log("history.replaceState: " + 
-                            glo.dojo.json.stringify(pstate) +
-                            ", title: " + title + ", url: " + url); 
-                } } }
-    };
-
-
-    glo.historyPop = function (event) {
-        var state = event.state;
-        glo.log("historyPop: " + glo.dojo.json.stringify(state));
-        if(state) {
-            switch(state.view) {
-            case "profile":
-                if(glo.isId(state.profid)) {
-                    glo.profile.byprofid(state.profid, state.tab); }
-                break; 
-            case "activity":
-                glo.activity.displayActive();
-                break;
-            case "memo":
-                glo.activity.displayRemembered();
-                break;
-            case "review":
-                //the review was cached when previously viewed..
-                glo.review.setCurrentReview(
-                    glo.lcs.getRevRef(state.revid).rev);
-                glo.review.displayRead();
-                break;
-            } }
-    };
-
-
-    glo.currState = function () {
-        var state = {};
-        if(history && history.state) {
-            state = history.state; }
-        return state;
-    };
-
 
     //shorthand to log text to the console
     glo.log = function (text) {
@@ -310,7 +175,7 @@ var glo = {};  //Global container for top level funcs and values
 
     glo.redirectToSecureServer = function (params) {
         var href, state;
-        state = glo.currState();
+        state = glo.history.currState();
         href = glo.secsvr + "#returnto=" + glo.enc(glo.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
@@ -336,7 +201,7 @@ var glo = {};  //Global container for top level funcs and values
     //secondary initialization load since single monolithic is dog slow
     glo.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
-                         services, lcs, basicmod) {
+                         services, lcs, history, basicmod) {
         var cdiv = glo.byId('contentdiv');
         if(!glo.introtext) {  //capture original so we can revert as needed
             glo.introtext = cdiv.innerHTML; }
@@ -351,10 +216,11 @@ var glo = {};  //Global container for top level funcs and values
         glo.skinner = skinner;
         glo.services = services;
         glo.lcs = lcs;
+        glo.history = history;
         //app startup
         glo.layout.init();
         glo.dojo.on(document, 'keypress', glo.globkey);
-        glo.dojo.on(window, 'popstate', glo.historyPop);
+        glo.dojo.on(window, 'popstate', glo.history.pop);
         glo.login.init();
         //glo.skinner.init();
         glo.basicmod = basicmod;
@@ -373,18 +239,18 @@ var glo = {};  //Global container for top level funcs and values
         require(glo.cdnconf,
                 [ "amd/layout", "amd/login", "amd/review", "amd/profile",
                   "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
-                  "amd/services", "amd/lcs", "amd/basicmod", 
+                  "amd/services", "amd/lcs", "amd/history", "amd/basicmod", 
                   "ext/facebook", "ext/twitter", "ext/googleplus", 
                   "ext/github",
                   "dojo/domReady!" ],
                 function (layout, login, review, profile, 
                           activity, pen, rel, skinner,
-                          services, lcs, basicmod) {
+                          services, lcs, history, basicmod) {
                     glo.amdtimer.app.end = new Date();
                     glo.out('contentfill', " &nbsp; ");
                     glo.init2(layout, login, review, profile, 
                               activity, pen, rel, skinner,
-                              services, lcs, basicmod); }
+                              services, lcs, history, basicmod); }
                );
     };
 

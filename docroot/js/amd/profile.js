@@ -605,8 +605,8 @@ define([], function () {
         if(!revobj) {
             glo.err("readReview " + revid + " not found");
             return; }
-        glo.historyCheckpoint({ view: "review", mode: "display",
-                                revid: revid });
+        glo.history.checkpoint({ view: "review", mode: "display",
+                                 revid: revid });
         glo.review.setCurrentReview(revobj);
         glo.review.displayRead();
     },
@@ -1003,9 +1003,9 @@ define([], function () {
         li = glo.byId(tabname + "li");
         li.className = "selectedTab";
         li.style.backgroundColor = "transparent";
-        glo.historyCheckpoint({ view: "profile", 
-                                profid: glo.instId(profpenref.pen),
-                                tab: tabname });
+        glo.history.checkpoint({ view: "profile", 
+                                 profid: glo.instId(profpenref.pen),
+                                 tab: tabname });
         refreshContentDisplay();
     },
 
@@ -1305,9 +1305,9 @@ define([], function () {
         if(!dispen) {
             dispen = homepen; }
         verifyStateVariableValues(dispen);  //sets profpenref
-        glo.historyCheckpoint({ view: "profile", 
-                                profid: glo.instId(profpenref.pen),
-                                tab: profpenref.profstate.seltabname });
+        glo.history.checkpoint({ view: "profile", 
+                                 profid: glo.instId(profpenref.pen),
+                                 tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
         //reset the colors in case that work got dropped in the

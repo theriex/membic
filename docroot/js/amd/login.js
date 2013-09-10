@@ -67,7 +67,7 @@ define([], function () {
         var html;
         logoutWithNoDisplayUpdate();
         glo.profile.cancelPenNameSettings();  //close the dialog if it is up
-        glo.historyCheckpoint({ view: "profile", profid: 0 });
+        glo.history.checkpoint({ view: "profile", profid: 0 });
         topworkdivcontents = "&nbsp;";  //clear out slideshow, won't fit.
         glo.login.updateAuthentDisplay();
         if(!glo.byId('logindiv')) {
@@ -113,7 +113,7 @@ define([], function () {
             clearParams();
             return glo.profile.display(params.action, params.errmsg); }
         //no tag redirect so check current state
-        state = glo.currState();
+        state = glo.history.currState();
         if(state) {
             if(state.view === "profile") {
                 if(state.profid) {
@@ -718,11 +718,11 @@ define([], function () {
         if(!params.returnto) {  //on home server, clean the location display
             clearParams(); }
         if(params.view && params.profid) {
-            glo.historyCheckpoint({ view: params.view, 
-                                    profid: params.profid }); }
+            glo.history.checkpoint({ view: params.view, 
+                                     profid: params.profid }); }
         else if(params.revedit) {
-            glo.historyCheckpoint({ view: "review", mode: "edit",
-                                    revid: params.revedit }); }
+            glo.history.checkpoint({ view: "review", mode: "edit",
+                                     revid: params.revedit }); }
         //figure out what to do next
         if(params.command && params.command.indexOf("AltAuth") === 0) {
             idx = params.command.slice("AltAuth".length);
