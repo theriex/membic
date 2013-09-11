@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, window: false, document: false, history: false, glo: false */
+/*global define: false, alert: false, console: false, window: false, document: false, history: false, app: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -16,7 +16,7 @@ define([], function () {
     //that.  Also consider what the text will look like with "re: " or
     //"fwd: " in front of it.
     getSubject = function (review) {
-        return "Review of " + glo.services.getRevTitleTxt(review);
+        return "Review of " + app.services.getRevTitleTxt(review);
     },
 
 
@@ -25,12 +25,12 @@ define([], function () {
     //look terrible when composing the message.  KISS.
     getBody = function (review) {
         return "\n\nThis my review from MyOpenReviews:\n\n" + 
-            glo.services.getRevTitleTxt(review) + "\n" +
+            app.services.getRevTitleTxt(review) + "\n" +
             "[" + review.revtype + "] " +
-            glo.services.getRevStarsTxt(review, "txtexp") + "\n" +
+            app.services.getRevStarsTxt(review, "txtexp") + "\n" +
             review.text + "\n\n" +
             "To see my full review, go to\n" +
-            glo.services.getRevPermalink(review) + "\n";
+            app.services.getRevPermalink(review) + "\n";
     },
 
 
@@ -38,8 +38,8 @@ define([], function () {
         var subject, body, html;
         subject = getSubject(review);
         body = getBody(review);
-        html = "mailto:?subject=" + glo.dquotenc(subject) +
-            "&body=" + glo.dquotenc(body);
+        html = "mailto:?subject=" + app.dquotenc(subject) +
+            "&body=" + app.dquotenc(body);
         return html; 
     };
 
@@ -49,7 +49,7 @@ define([], function () {
         svcDesc: "Fills out an email for you to send",
         iconurl: iconurl,
         doInitialSetup: function () {
-            glo.log("email service initial setup done"); },
+            app.log("email service initial setup done"); },
         getLinkURL: function (review) {
             return getLinkURL(review); },
         getOnClickStr: function () {

@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, require: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -100,56 +100,56 @@ define([], function () {
 
 
     getLightBackground = function () {
-        if(!glo.colors.lightbg) {
-            glo.colors.lightbg = adjustColor(glo.colors.bodybg, 4); }
-        return glo.colors.lightbg;
+        if(!app.colors.lightbg) {
+            app.colors.lightbg = adjustColor(app.colors.bodybg, 4); }
+        return app.colors.lightbg;
     },
 
 
     getDarkBackground = function () {
         //with no texture overlay, -18 is about right, with a 66% opaque 
         //texture overlay this needs to be pretty significant
-        if(!glo.colors.darkbg) {
-            glo.colors.darkbg = adjustColor(glo.colors.bodybg, -56); }
-        return glo.colors.darkbg;
+        if(!app.colors.darkbg) {
+            app.colors.darkbg = adjustColor(app.colors.bodybg, -56); }
+        return app.colors.darkbg;
     },
 
 
     updateColors = function () {
         var rules, i, elem, val, tabs = [ "recentli", "bestli", "followingli", 
                                           "followersli", "searchli" ];
-        elem = glo.byId('bodyid');
+        elem = app.byId('bodyid');
         if(elem) {
-            elem.style.color = glo.colors.text;
-            elem.style.backgroundColor = glo.colors.bodybg; }
-        elem = glo.byId('topsectiondiv');
+            elem.style.color = app.colors.text;
+            elem.style.backgroundColor = app.colors.bodybg; }
+        elem = app.byId('topsectiondiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground();
             val = "8px 8px 4px " + getDarkBackground();
             elem.style.boxShadow = val; }
-        elem = glo.byId('shoutdiv');
+        elem = app.byId('shoutdiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground(); }
         for(i = 0; i < tabs.length; i += 1) {
-            elem = glo.byId(tabs[i]);
+            elem = app.byId(tabs[i]);
             if(elem && elem.className === "unselectedTab") {
                 elem.style.backgroundColor = getDarkBackground(); } }
         rules = document.styleSheets[0].cssRules;
         for(i = 0; rules && i < rules.length; i += 1) {
-            if(glo.prefixed(rules[i].cssText, "A:link")) {
-                safeSetColorProp(rules[i], glo.colors.link); }
-            else if(glo.prefixed(rules[i].cssText, "A:visited")) {
-                safeSetColorProp(rules[i], glo.colors.link); }
-            else if(glo.prefixed(rules[i].cssText, "A:active")) {
-                safeSetColorProp(rules[i], glo.colors.link); }
-            else if(glo.prefixed(rules[i].cssText, "A:hover")) {
-                safeSetColorProp(rules[i], glo.colors.hover); } }
+            if(app.prefixed(rules[i].cssText, "A:link")) {
+                safeSetColorProp(rules[i], app.colors.link); }
+            else if(app.prefixed(rules[i].cssText, "A:visited")) {
+                safeSetColorProp(rules[i], app.colors.link); }
+            else if(app.prefixed(rules[i].cssText, "A:active")) {
+                safeSetColorProp(rules[i], app.colors.link); }
+            else if(app.prefixed(rules[i].cssText, "A:hover")) {
+                safeSetColorProp(rules[i], app.colors.hover); } }
     },
 
 
     cancelSkinChange = function () {
         if(oldcolors) {  //if spurious cancel call oldcolors may be undefined
-            glo.colors = oldcolors; }
+            app.colors = oldcolors; }
         if(cancelpen && cancelpen.settings && 
            cancelpen.settings.colorPresetId) {
             cancelpen.settings.colorPresetId = oldcolors.id; }
@@ -158,23 +158,23 @@ define([], function () {
 
 
     saveSkinChangeSettings = function (pen) {
-        pen.settings.colors = copycolors(glo.colors);
+        pen.settings.colors = copycolors(app.colors);
     },
 
 
     setColorsFromPen = function (pen) {
         if(!pen) {  //use default colors
-            glo.colors = presets[0]; }
+            app.colors = presets[0]; }
         else { //have pen
             if(!pen.settings) {  //use default colors
-                glo.colors = presets[0]; }
+                app.colors = presets[0]; }
             else { //have settings
                 if(typeof pen.settings === 'string') {
-                    glo.pen.deserializeFields(pen); }
+                    app.pen.deserializeFields(pen); }
                 if(!pen.settings.colors) {  //use default colors
-                    glo.colors = presets[0]; }
+                    app.colors = presets[0]; }
                 else { //have colors
-                    glo.colors = copycolors(pen.settings.colors); } } }
+                    app.colors = copycolors(pen.settings.colors); } } }
         updateColors();
     },
 
@@ -197,7 +197,7 @@ define([], function () {
             "<td>&nbsp;&nbsp;" + 
                 "<a href=\"#toggleSkinControls\" id=\"skinctrltoggle\"" +
                   " class=\"permalink\"" + 
-                  " onclick=\"glo.skinner.toggleControls();return false;\"" +
+                  " onclick=\"app.skinner.toggleControls();return false;\"" +
             ">show color controls</a></td>" +
           "</tr>" +
         "</table>";
@@ -214,12 +214,12 @@ define([], function () {
         if(typeof index === "string") {
             index = parseInt(index, 10); }
         colorctrl = colorctrls[index];
-        glo.out('colortitlediv', colorctrl.label + subtext);
-        currcolor = glo.colors[colorctrl.id];
+        app.out('colortitlediv', colorctrl.label + subtext);
+        currcolor = app.colors[colorctrl.id];
         //this is how you are "supposed" to set the value but it doesn't work:
         //colorwidget.set('value', currcolor);
         //this sets the hex value field but the display doesn't update:
-        //glo.byId('colorwidgetdiv').value = currcolor;
+        //app.byId('colorwidgetdiv').value = currcolor;
         //found this and it seems to work:
         colorwidget.setColor(currcolor, true);
     },
@@ -235,9 +235,9 @@ define([], function () {
                 "<td class=\"colorattrtd\">" + clabel + "</td>" +
                 "<td><div id=\"" + cid + "div\"" +
                         " class=\"colorswatch\"" + 
-                        " onclick=\"glo.skinner.swatchClick('" + i + "');" +
+                        " onclick=\"app.skinner.swatchClick('" + i + "');" +
                                    "return false;\"" +
-                        " style=\"background:" + glo.colors[cid] + ";\"" +
+                        " style=\"background:" + app.colors[cid] + ";\"" +
                 "></div>";
             if(i === 0) {
                 html += "<td rowspan=\"" + colorctrls.length + "\"" + 
@@ -246,13 +246,13 @@ define([], function () {
                     "<div id=\"colorwidgetdiv\"></div></td>"; }
             html += "</tr>"; }
         html += "</table>";
-        glo.out('colorctrlsdiv', html);
+        app.out('colorctrlsdiv', html);
         if(colorwidget) {
             colorwidget.destroy(); }
         colorwidget = new Colorwidget(
             { onChange: function (val) {
-                glo.byId(colorctrl.id + "div").style.backgroundColor = val;
-                glo.colors[colorctrl.id] = val;
+                app.byId(colorctrl.id + "div").style.backgroundColor = val;
+                app.colors[colorctrl.id] = val;
                 updateColors(); } }, 'colorwidgetdiv');
         swatchClick(0);
     },
@@ -260,41 +260,41 @@ define([], function () {
 
     toggleControls = function () {
         var txt, rules, html;
-        txt = glo.byId('skinctrltoggle').innerHTML;
+        txt = app.byId('skinctrltoggle').innerHTML;
         if(txt === "show color controls") {
             rules = document.styleSheets[0].cssRules;
             if(rules && rules[0].style.setProperty) {
-                glo.byId('colorctrlsdiv').style.display = "block";
-                glo.out('skinctrltoggle', "hide color controls");
-                html = glo.byId('colorctrlsdiv').innerHTML;
+                app.byId('colorctrlsdiv').style.display = "block";
+                app.out('skinctrltoggle', "hide color controls");
+                html = app.byId('colorctrlsdiv').innerHTML;
                 if(!html) {  //not initialized yet
-                    require(glo.cdnconf,
+                    require(app.cdnconf,
                             [ "dojox/widget/ColorPicker", "dojo/domReady!" ],
                             function (colorwidget) {
                                 createColorControls(colorwidget); }); } }
             else {  //no support, display as disabled
-                glo.byId('skinctrltoggle').style.color = "#666666"; } }
+                app.byId('skinctrltoggle').style.color = "#666666"; } }
         else {
-            glo.byId('colorctrlsdiv').style.display = "none";
-            glo.out('skinctrltoggle', "show color controls"); }
+            app.byId('colorctrlsdiv').style.display = "none";
+            app.out('skinctrltoggle', "show color controls"); }
     },
 
 
    setControlValuesAndUpdate = function (colors) {
        var html, i, div;
-       glo.colors = copycolors(colors);
+       app.colors = copycolors(colors);
        updateColors();
-       html = glo.byId('colorctrlsdiv').innerHTML;
+       html = app.byId('colorctrlsdiv').innerHTML;
        if(html) {  //color controls available
            for(i = 0; i < colorctrls.length; i += 1) {
-               div = glo.byId(colorctrls[i].id + "div");
-               div.style.backgroundColor = glo.colors[colorctrls[i].id]; }
+               div = app.byId(colorctrls[i].id + "div");
+               div.style.backgroundColor = app.colors[colorctrls[i].id]; }
            swatchClick(0); }
    },
 
 
     setColorsFromPreset = function (pen) {
-        var i, sel = glo.byId('presetsel');
+        var i, sel = app.byId('presetsel');
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
                 cancelpen = pen;
@@ -306,15 +306,15 @@ define([], function () {
 
     displayDialog = function (domid, pen) {
         var html;
-        oldcolors = copycolors(glo.colors);
+        oldcolors = copycolors(app.colors);
         html = presetSelectorHTML(pen) + 
             //color controls are high overhead and initialized only when needed.
             "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
-        glo.out(domid, html);
-        glo.onx('change', 'presetsel', function (e) {
+        app.out(domid, html);
+        app.onx('change', 'presetsel', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            glo.pen.getPen(setColorsFromPreset); });
+            app.pen.getPen(setColorsFromPreset); });
     };
 
 

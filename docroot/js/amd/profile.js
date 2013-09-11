@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, require: false, navigator: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false, navigator: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -38,7 +38,7 @@ define([], function () {
         if(!penref) {
             penref = profpenref; }
         if(penref.pen && typeof penref.pen.top20s === "string") {
-            penref.pen.top20s = glo.dojo.json.parse(penref.pen.top20s); }
+            penref.pen.top20s = app.dojo.json.parse(penref.pen.top20s); }
         if(!penref.profstate) {
             penref.profstate = { seltabname: 'recent',
                                  revtype: "" }; }
@@ -69,71 +69,71 @@ define([], function () {
 
 
     verifyStateVariableValues = function (pen) {
-        profpenref = glo.lcs.getPenRef(pen);
+        profpenref = app.lcs.getPenRef(pen);
         verifyProfileState(profpenref);
     },
 
 
     createOrEditRelationship = function () {
-        glo.rel.reledit(glo.pen.currPenRef().pen, profpenref.pen);
+        app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen);
     },
 
 
     updateTopActionDisplay = function (pen) {
         var html;
-        if(!glo.byId('homepenhdiv')) {
-            glo.login.updateAuthentDisplay(); }
+        if(!app.byId('homepenhdiv')) {
+            app.login.updateAuthentDisplay(); }
         html = "<div class=\"topnavitemdiv\">" +
-            glo.imgntxt("profile.png", "",
-                        "glo.profile.display()",
-                        "#view=profile&profid=" + glo.instId(pen),
+            app.imgntxt("profile.png", "",
+                        "app.profile.display()",
+                        "#view=profile&profid=" + app.instId(pen),
                         "Show profile for " + pen.name + " (you)") +
             "</div>";
-        glo.out('homepenhdiv', html);
-        html = glo.imgntxt("settings.png", "", 
-                           "glo.profile.settings()",
+        app.out('homepenhdiv', html);
+        html = app.imgntxt("settings.png", "", 
+                           "app.profile.settings()",
                            "#Settings",
                            "Adjust your application settings");
-        glo.out('settingsbuttondiv', html);
+        app.out('settingsbuttondiv', html);
     },
 
 
     displayProfileHeading = function (homepen, dispen, directive) {
         var html, id, name, relationship;
-        id = glo.instId(dispen);
+        id = app.instId(dispen);
         name = dispen.name;
         html = "<a href=\"#view=profile&profid=" + id + "\"" +
                  " title=\"Show profile for " + name + "\"" +
-                 " onclick=\"glo.profile.byprofid('" + id + "');" + 
+                 " onclick=\"app.profile.byprofid('" + id + "');" + 
                             "return false;\"" +
                ">" + name + "</a>";
         html = "<div id=\"profhdiv\">" +
                  "<span id=\"penhnamespan\">" + html + "</span>" +
                  "<span id=\"penhbuttonspan\"> </span>" +
                "</div>";
-        glo.out('centerhdiv', html);
+        app.out('centerhdiv', html);
         html = "";
-        if(glo.instId(homepen) !== glo.instId(dispen) &&
+        if(app.instId(homepen) !== app.instId(dispen) &&
            directive !== "nosettings") {
-            if(glo.rel.relsLoaded()) {
-                relationship = glo.rel.outbound(id);
-                glo.profile.verifyStateVariableValues(dispen);
+            if(app.rel.relsLoaded()) {
+                relationship = app.rel.outbound(id);
+                app.profile.verifyStateVariableValues(dispen);
                 if(relationship) {
-                    html = glo.imglink("#Settings",
+                    html = app.imglink("#Settings",
                                        "Adjust follow settings for " + name,
-                                       "glo.profile.relationship()", 
+                                       "app.profile.relationship()", 
                                        "settings.png"); }
                 else {
-                    html = glo.imglink("#Follow",
+                    html = app.imglink("#Follow",
                                        "Follow " + name + " reviews",
-                                       "glo.profile.relationship()",
+                                       "app.profile.relationship()",
                                        "follow.png"); } }
             else {  
                 //Happens if you go directly to someone's profile via url
                 //and rels are loading slowly.  Not known if you are following
                 //them yet.  The heading updates after the rels are loaded.
                 html = "..."; } }
-        glo.out('penhbuttonspan', html);
+        app.out('penhbuttonspan', html);
     },
 
 
@@ -146,7 +146,7 @@ define([], function () {
 
 
     setPenNameFromInput = function (pen) {
-        var pennamein = glo.byId('pennamein');
+        var pennamein = app.byId('pennamein');
         if(!pen) {
             pen = profpenref.pen; }
         if(pennamein) {
@@ -155,25 +155,25 @@ define([], function () {
 
 
     savePenNameSettings = function () {
-        var pen = glo.pen.currPenRef().pen;
+        var pen = app.pen.currPenRef().pen;
         setPenNameFromInput(pen);
-        glo.skinner.save(pen);
-        glo.pen.updatePen(pen,
+        app.skinner.save(pen);
+        app.pen.updatePen(pen,
                           function () {
-                              glo.layout.closeDialog();
-                              glo.profile.display(); },
+                              app.layout.closeDialog();
+                              app.profile.display(); },
                           function (code, errtxt) {
-                              glo.out('settingsmsgtd', errtxt); });
+                              app.out('settingsmsgtd', errtxt); });
     },
 
 
     cancelPenNameSettings = function (actionTxt) {
-        glo.skinner.cancel();
-        glo.layout.closeDialog();
+        app.skinner.cancel();
+        app.layout.closeDialog();
         if(actionTxt && typeof actionTxt === "string") {
             //nuke the main display as we are about to rebuild contents
-            glo.out('centerhdiv', "");
-            glo.out('cmain', actionTxt); }
+            app.out('centerhdiv', "");
+            app.out('cmain', actionTxt); }
     },
 
 
@@ -189,7 +189,7 @@ define([], function () {
 
     displayAuthSettings = function (domid, pen) {
         var atname, html;
-        html = "<div id=\"accountdiv\">" + glo.login.loginInfoHTML(pen) + 
+        html = "<div id=\"accountdiv\">" + app.login.loginInfoHTML(pen) + 
             "</div>" +
             "Access \"" + pen.name + "\" via: " +
             "<table>";
@@ -197,9 +197,9 @@ define([], function () {
         atname = nameForAuthType("mid");
         html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
             " value=\"" + atname + "\" id=\"aamid\"" +
-            " onchange=\"glo.profile.toggleAuthChange('mid','" + 
+            " onchange=\"app.profile.toggleAuthChange('mid','" + 
                              domid + "');return false;\"";
-        if(glo.isId(pen.mid)) {
+        if(app.isId(pen.mid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
         html += "<tr>";
@@ -207,18 +207,18 @@ define([], function () {
         atname = nameForAuthType("fbid");
         html += "<td><input type=\"checkbox\" name=\"aafbid\"" +
             " value=\"" + atname + "\" id=\"aafbid\"" +
-            " onchange=\"glo.profile.toggleAuthChange('fbid','" + 
+            " onchange=\"app.profile.toggleAuthChange('fbid','" + 
                              domid + "');return false;\"";
-        if(glo.isId(pen.fbid)) {
+        if(app.isId(pen.fbid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aafbid\">" + atname + "</label></td>";
         //Twitter
         atname = nameForAuthType("twid");
         html += "<td><input type=\"checkbox\" name=\"aatwid\"" +
             " value=\"" + atname + "\" id=\"aatwid\"" +
-            " onchange=\"glo.profile.toggleAuthChange('twid','" + 
+            " onchange=\"app.profile.toggleAuthChange('twid','" + 
                              domid + "');return false;\"";
-        if(glo.isId(pen.twid)) {
+        if(app.isId(pen.twid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aatwid\">" + atname + "</label></td>";
         html += "</tr><tr>";
@@ -226,27 +226,27 @@ define([], function () {
         atname = nameForAuthType("gsid");
         html += "<td><input type=\"checkbox\" name=\"aagsid\"" +
             " value=\"" + atname + "\" id=\"aagsid\"" +
-            " onchange=\"glo.profile.toggleAuthChange('gsid','" + 
+            " onchange=\"app.profile.toggleAuthChange('gsid','" + 
                              domid + "');return false;\"";
-        if(glo.isId(pen.gsid)) { 
+        if(app.isId(pen.gsid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aagsid\">" + atname + "</label></td>";
         //GitHub
         atname = nameForAuthType("ghid");
         html += "<td><input type=\"checkbox\" name=\"aaghid\"" +
             " value=\"" + atname + "\" id=\"aaghid\"" +
-            " onchange=\"glo.profile.toggleAuthChange('ghid','" + 
+            " onchange=\"app.profile.toggleAuthChange('ghid','" + 
                              domid + "');return false;\"";
-        if(glo.isId(pen.ghid)) { 
+        if(app.isId(pen.ghid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aaghid\">" + atname + "</label></td>";
         html += "</tr></table>";
-        glo.out(domid, html);
+        app.out(domid, html);
     },
 
 
     addMyOpenReviewsAuth = function (domid, pen) {
-        var html = "<form action=\"" + glo.secsvr + "/loginid\"" +
+        var html = "<form action=\"" + app.secsvr + "/loginid\"" +
                         " enctype=\"multipart/form-data\" method=\"post\">" +
         "<table>" +
           "<tr>" + 
@@ -271,13 +271,13 @@ define([], function () {
             "</td>" +
           "</tr>" +
         "</table></form>";
-        glo.out(domid, html);
+        app.out(domid, html);
     },
 
 
     handleAuthChangeToggle = function (pen, authtype, domid) {
         var action = "remove", methcount, previd;
-        if(glo.byId("aa" + authtype).checked) {
+        if(app.byId("aa" + authtype).checked) {
             action = "add"; }
         if(action === "remove") {
             methcount = (pen.mid? 1 : 0) +
@@ -287,28 +287,28 @@ define([], function () {
                 (pen.ghid? 1 : 0);
             if(methcount < 2) {
                 alert("You must have at least one authentication type.");
-                glo.byId("aa" + authtype).checked = true;
+                app.byId("aa" + authtype).checked = true;
                 return;  } 
-            if(authtype === glo.login.getAuthMethod()) {
+            if(authtype === app.login.getAuthMethod()) {
                 alert("You can't remove the authentication you are " +
                       "currently logged in with.");
-                glo.byId("aa" + authtype).checked = true;
+                app.byId("aa" + authtype).checked = true;
                 return;  } 
             if(confirm("Are you sure you want to remove access to this" +
                        " Pen Name from " + nameForAuthType(authtype) + "?")) {
-                glo.out(domid, "Updating...");
+                app.out(domid, "Updating...");
                 previd = pen[authtype];
                 pen[authtype] = 0;
-                glo.pen.updatePen(pen,
+                app.pen.updatePen(pen,
                                   function (updpen) {
                                       displayAuthSettings(domid, updpen); },
                                   function (code, errtxt) {
-                                      glo.err("handleAuthChangeToggle error " +
+                                      app.err("handleAuthChangeToggle error " +
                                               code + ": " + errtxt);
                                       pen[authtype] = previd;
                                       displayAuthSettings(domid, pen); }); }
             else {
-                glo.byId("aa" + authtype).checked = true; } }
+                app.byId("aa" + authtype).checked = true; } }
         else if(action === "add") {
             switch(authtype) {
             case "mid": 
@@ -316,25 +316,25 @@ define([], function () {
             case "fbid": 
                 require([ "ext/facebook" ],
                         function (facebook) {
-                            if(!glo.facebook) { glo.facebook = facebook; }
+                            if(!app.facebook) { app.facebook = facebook; }
                             facebook.addProfileAuth(domid, pen); });
                 break;
             case "twid":
                 require([ "ext/twitter" ],
                         function (twitter) {
-                            if(!glo.twitter) { glo.twitter = twitter; }
+                            if(!app.twitter) { app.twitter = twitter; }
                             twitter.addProfileAuth(domid, pen); });
                 break;
             case "gsid":
                 require([ "ext/googleplus" ],
                         function (googleplus) {
-                            if(!glo.googleplus) { glo.googleplus = googleplus; }
+                            if(!app.googleplus) { app.googleplus = googleplus; }
                             googleplus.addProfileAuth(domid, pen); });
                 break;
             case "ghid":
                 require([ "ext/github" ],
                         function (github) {
-                            if(!glo.github) { glo.github = github; }
+                            if(!app.github) { app.github = github; }
                             github.addProfileAuth(domid, pen); });
                 break;
             } }
@@ -342,37 +342,37 @@ define([], function () {
 
 
     changeToSelectedPen = function () {
-        var i, sel = glo.byId('penselect'), temp = "";
+        var i, sel = app.byId('penselect'), temp = "";
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
                 //do not call cancelPenNameSettings before done accessing
                 //the selection elementobjects or IE8 has issues.
                 if(sel.options[i].id === 'newpenopt') {
                     cancelPenNameSettings("Creating new pen name...");
-                    glo.pen.newPenName(glo.profile.display); }
+                    app.pen.newPenName(app.profile.display); }
                 else {
                     temp = sel.options[i].value;
                     cancelPenNameSettings("Switching pen names...");
-                    glo.pen.selectPenByName(temp); }
+                    app.pen.selectPenByName(temp); }
                 break; } }
     },
 
 
     penSelectHTML = function (pen) {
-        var html, pens = glo.pen.getPenNames(), i;
+        var html, pens = app.pen.getPenNames(), i;
         html = "<div id=\"penseldiv\">" +
             "<span class=\"headingtxt\">Writing as </span>" +
             "<select id=\"penselect\"" + 
-                   " onchange=\"glo.profile.switchPen();return false;\">";
+                   " onchange=\"app.profile.switchPen();return false;\">";
         for(i = 0; i < pens.length; i += 1) {
-            html += "<option id=\"" + glo.instId(pens[i]) + "\"";
+            html += "<option id=\"" + app.instId(pens[i]) + "\"";
             if(pens[i].name === pen.name) {
                 html += " selected=\"selected\""; }
             html += ">" + pens[i].name + "</option>"; }
         html += "<option id=\"newpenopt\">New Pen Name</option>" +
             "</select>" + "&nbsp;" + 
             "<button type=\"button\" id=\"penselectok\"" + 
-            " onclick=\"glo.profile.switchPen();return false;\"" +
+            " onclick=\"app.profile.switchPen();return false;\"" +
             ">go</button>" +
             "</div>";
         return html;
@@ -382,7 +382,7 @@ define([], function () {
     changeSettings = function (pen) {
         var html = "<div class=\"dlgclosex\">" +
             "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"glo.profile.cancelPenNameSettings();return false;\"" +
+              " onclick=\"app.profile.cancelPenNameSettings();return false;\"" +
             ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
             "<div class=\"floatclear\"></div>" +
           "<table>" +
@@ -416,41 +416,41 @@ define([], function () {
               "</td>" +
             "</tr>" +
           "</table>";
-        glo.out('dlgdiv', html);
-        glo.onchange('pennamein', glo.profile.setPenNameFromInput);
-        glo.onclick('savebutton', savePenNameSettings);
+        app.out('dlgdiv', html);
+        app.onchange('pennamein', app.profile.setPenNameFromInput);
+        app.onclick('savebutton', savePenNameSettings);
         displayAuthSettings('settingsauthtd', pen);
-        glo.services.display('consvcstd', pen);
-        glo.skinner.init('settingsskintd', pen);
-        glo.byId('dlgdiv').style.visibility = "visible";
-        if(glo.isLowFuncBrowser()) {
-            glo.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        glo.onescapefunc = cancelPenNameSettings;
+        app.services.display('consvcstd', pen);
+        app.skinner.init('settingsskintd', pen);
+        app.byId('dlgdiv').style.visibility = "visible";
+        if(app.isLowFuncBrowser()) {
+            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        app.onescapefunc = cancelPenNameSettings;
     },
 
 
     addMyOpenReviewsAuthId = function (pen, mid) {
         var previd;
         if(!mid) {
-            glo.err("No account ID received.");
-            glo.profile.display(); }
+            app.err("No account ID received.");
+            app.profile.display(); }
         else {
             previd = pen.mid;
             pen.mid = mid;
-            glo.pen.updatePen(pen,
+            app.pen.updatePen(pen,
                               function (updpen) {
                                   changeSettings(updpen); },
                               function (code, errtxt) {
-                                  glo.err("addMyOpenReviewsAuthId error " +
+                                  app.err("addMyOpenReviewsAuthId error " +
                                           code + ": " + errtxt);
                                   pen.mid = previd;
-                                  glo.profile.display(); }); }
+                                  app.profile.display(); }); }
     },
 
 
     mailButtonHTML = function () {
         var html, href, subj, body, types, revchecks, i, ts, mepen;
-        mepen = glo.pen.currPenRef().pen;
+        mepen = app.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
             "I'm using MyOpenReviews for things I experience. " + 
@@ -482,8 +482,8 @@ define([], function () {
             "If you are interested in following reviews from me, " + 
             "click the 'follow' icon next to '" + mepen.name +
             "' on my profile page. Here's the direct link to my profile:\n\n" +
-            "    " + glo.mainsvr + "/#view=profile&profid=" +
-            glo.instId(mepen) + "\n\n" +
+            "    " + app.mainsvr + "/#view=profile&profid=" +
+            app.instId(mepen) + "\n\n" +
             "When I see you in my 'Followers' tab, I'll follow back. " +
             "Looking forward to learning about things you've experienced " +
             "recently!" +
@@ -491,9 +491,9 @@ define([], function () {
             "cheers,\n" + 
             mepen.name + 
             "\n\n";
-        href = "mailto:?subject=" + glo.dquotenc(subj) + 
-            "&body=" + glo.dquotenc(body);
-        html = glo.services.serviceLinkHTML(href, "", "shareico", 
+        href = "mailto:?subject=" + app.dquotenc(subj) + 
+            "&body=" + app.dquotenc(body);
+        html = app.services.serviceLinkHTML(href, "", "shareico", 
                                             "Invite via eMail",
                                             "img/email.png");
         return html;
@@ -501,7 +501,7 @@ define([], function () {
 
 
     updateInviteInfo = function () {
-        glo.out('mailbspan', mailButtonHTML());
+        app.out('mailbspan', mailButtonHTML());
     },
 
 
@@ -509,7 +509,7 @@ define([], function () {
         var html;
         html = "<div class=\"dlgclosex\">" +
             "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"glo.layout.closeDialog();return false;\"" +
+              " onclick=\"app.layout.closeDialog();return false;\"" +
             ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
             "<div class=\"floatclear\"></div>" +
             "<div class=\"headingtxt\">" + 
@@ -522,8 +522,8 @@ define([], function () {
               "would you be most interested in seeing from them?</p>" +
             "</td></tr>" +
             "<tr><td id=\"invtypestd\">" + 
-              glo.review.reviewTypeCheckboxesHTML("invrevcb", 
-                                                  "glo.profile.chginvite") +
+              app.review.reviewTypeCheckboxesHTML("invrevcb", 
+                                                  "app.profile.chginvite") +
             "</td></tr>" +
             "<tr><td>" + 
               "Invite your friend to join:" +
@@ -532,11 +532,11 @@ define([], function () {
               "<span id=\"mailbspan\"></span>" +
             "</td></tr>" +
           "</table>";
-        glo.out('dlgdiv', html);
-        glo.byId('dlgdiv').style.visibility = "visible";
-        if(glo.isLowFuncBrowser()) {
-            glo.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        glo.onescapefunc = glo.layout.closeDialog;
+        app.out('dlgdiv', html);
+        app.byId('dlgdiv').style.visibility = "visible";
+        if(app.isLowFuncBrowser()) {
+            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        app.onescapefunc = app.layout.closeDialog;
         updateInviteInfo();
     },
 
@@ -544,25 +544,25 @@ define([], function () {
     badgeDispHTML = function (pen) {
         var html, i, reviewTypes, typename;
         html = "";
-        glo.pen.deserializeFields(pen);
-        reviewTypes = glo.review.getReviewTypes();
+        app.pen.deserializeFields(pen);
+        reviewTypes = app.review.getReviewTypes();
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             if(pen.top20s[typename] && pen.top20s[typename].length >= 20) {
-                html += glo.review.badgeImageHTML(reviewTypes[i]); } }
+                html += app.review.badgeImageHTML(reviewTypes[i]); } }
         return html;
     },
 
 
     penListItemHTML = function (pen) {
-        var penid = glo.instId(pen), picuri, hash, linktitle, html;
-        hash = glo.objdata({ view: "profile", profid: penid });
-        linktitle = glo.ellipsis(pen.shoutout, 75);
+        var penid = app.instId(pen), picuri, hash, linktitle, html;
+        hash = app.objdata({ view: "profile", profid: penid });
+        linktitle = app.ellipsis(pen.shoutout, 75);
         if(!linktitle) {  //do not encode pen name here.  No "First%20Last"..
             linktitle = "View profile for " + pen.name; }
         html = "<li>" +
             "<a href=\"#" + hash + "\"" +
-            " onclick=\"glo.profile.byprofid('" + penid + "');return false;\"" +
+            " onclick=\"app.profile.byprofid('" + penid + "');return false;\"" +
             " title=\"" + linktitle + "\">";
         //empytprofpic.png looks like big checkboxes, use blank instead
         picuri = "img/blank.png";
@@ -581,7 +581,7 @@ define([], function () {
 
 
     findOrLoadPen = function (penid, callback) {
-        glo.lcs.getPenFull(penid, function (penref) {
+        app.lcs.getPenFull(penid, function (penref) {
             callback(penref.pen); });
     },
 
@@ -600,60 +600,60 @@ define([], function () {
 
     readReview = function (revid) {
         var revobj;
-        revobj = glo.lcs.getRevRef(revid).rev;
+        revobj = app.lcs.getRevRef(revid).rev;
         //Make some noise if you can't find it rather than being a dead link
         if(!revobj) {
-            glo.err("readReview " + revid + " not found");
+            app.err("readReview " + revid + " not found");
             return; }
-        glo.history.checkpoint({ view: "review", mode: "display",
+        app.history.checkpoint({ view: "review", mode: "display",
                                  revid: revid });
-        glo.review.setCurrentReview(revobj);
-        glo.review.displayRead();
+        app.review.setCurrentReview(revobj);
+        app.review.displayRead();
     },
 
 
     reviewItemHTML = function (revobj, penNameStr) {
         var revid, type, linkref, linkclass, html;
         //review item line
-        revid = glo.instId(revobj);
-        type = glo.review.getReviewTypeByValue(revobj.revtype);
+        revid = app.instId(revobj);
+        type = app.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
-        linkclass = glo.review.foundHelpful(revid)? "rslcbold" : "rslc";
-        html = "<li>" + glo.review.starsImageHTML(revobj.rating) + 
-            glo.review.badgeImageHTML(type) + "&nbsp;" +
+        linkclass = app.review.foundHelpful(revid)? "rslcbold" : "rslc";
+        html = "<li>" + app.review.starsImageHTML(revobj.rating) + 
+            app.review.badgeImageHTML(type) + "&nbsp;" +
             "<a id=\"lihr" + revid + "\" href=\"" + linkref + "\"" +
-              " onclick=\"glo.profile.readReview('" + revid + "');" + 
+              " onclick=\"app.profile.readReview('" + revid + "');" + 
                          "return false;\"" +
               " class=\"" + linkclass + "\"" +
               " title=\"See full review\">";
         if(type.subkey) {
-            html += "<i>" + glo.ellipsis(revobj[type.key], 60) + "</i> " +
-                glo.ellipsis(revobj[type.subkey], 40); }
+            html += "<i>" + app.ellipsis(revobj[type.key], 60) + "</i> " +
+                app.ellipsis(revobj[type.subkey], 40); }
         else {
-            html += glo.ellipsis(revobj[type.key], 60); }
+            html += app.ellipsis(revobj[type.key], 60); }
         html += "</a>";
         if(revobj.url) {
-            html += " &nbsp;" + glo.review.graphicAbbrevSiteLink(revobj.url); }
+            html += " &nbsp;" + app.review.graphicAbbrevSiteLink(revobj.url); }
         //review meta line
         html += "<div class=\"revtextsummary\">";
         if(penNameStr) {
-            linkref = glo.objdata({ view: "profile", profid: revobj.penid });
+            linkref = app.objdata({ view: "profile", profid: revobj.penid });
             html += "review by " + 
                 "<a href=\"#" + linkref + "\"" +
-                 " onclick=\"glo.profile.byprofid('" + revobj.penid + "');" +
+                 " onclick=\"app.profile.byprofid('" + revobj.penid + "');" +
                             "return false;\"" +
-                 " title=\"Show profile for " + glo.ndq(penNameStr) + "\"" +
+                 " title=\"Show profile for " + app.ndq(penNameStr) + "\"" +
                 ">" + penNameStr + "</a>"; }
         if(revobj.keywords) {
             if(penNameStr) {
                 html += ": "; }
-            html += glo.ellipsis(revobj.keywords, 100); }
-        html += glo.review.linkCountHTML(revid);
+            html += app.ellipsis(revobj.keywords, 100); }
+        html += app.review.linkCountHTML(revid);
         html += "</div>";
         //review description line
         if(revobj.text) {
             html += "<div class=\"revtextsummary\">" + 
-                glo.ellipsis(revobj.text, 255) + "</div>"; }
+                app.ellipsis(revobj.text, 255) + "</div>"; }
         html += "</li>";
         return html;
     },
@@ -678,45 +678,45 @@ define([], function () {
                     if(reviews[i].cursor) {
                         rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
-                glo.lcs.putRev(reviews[i]);  //ensure cached
+                app.lcs.putRev(reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
                 html += reviewItemHTML(reviews[i]); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
             html += "<li>No recent reviews.";
-            if(glo.instId(profpenref.pen) === glo.pen.currPenId()) {
-                html += " " + glo.review.reviewLinkHTML(); }
+            if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+                html += " " + app.review.reviewLinkHTML(); }
             html += "</li>"; }
         html += "</ul>";
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
                 if(rrs.total < 2000) {  //auto-repeat search
-                    setTimeout(glo.profile.revsmore, 10); } 
+                    setTimeout(app.profile.revsmore, 10); } 
                 else {
                     html += "No recent reviews found, only batch updates."; } }
             else {
                 html += "<a href=\"#continuesearch\"" +
-                          " onclick=\"glo.profile.revsmore();" +
+                          " onclick=\"app.profile.revsmore();" +
                                      "return false;\"" +
                           " title=\"More reviews\"" + 
                     ">more reviews...</a>"; } }
-        glo.out('profcontdiv', html);
-        glo.layout.adjust();
+        app.out('profcontdiv', html);
+        app.layout.adjust();
         setTimeout(function () {
-            glo.lcs.verifyReviewLinks(glo.profile.refresh); }, 250);
+            app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
 
 
     findRecentReviews = function (rrs) {  //recentRevState
         var params, critsec = "";
-        params = glo.objdata(rrs.params) + "&" + glo.login.authparams();
+        params = app.objdata(rrs.params) + "&" + app.login.authparams();
         if(rrs.cursor) {
-            params += "&cursor=" + glo.enc(rrs.cursor); }
-        glo.call("srchrevs?" + params, 'GET', null,
+            params += "&cursor=" + app.enc(rrs.cursor); }
+        app.call("srchrevs?" + params, 'GET', null,
                  function (revs) {
                      displayRecentReviews(rrs, revs); },
                  function (code, errtxt) {
-                     glo.out('profcontdiv', "findRecentReviews failed code " + 
+                     app.out('profcontdiv', "findRecentReviews failed code " + 
                              code + " " + errtxt); },
                  critsec);
     },
@@ -727,8 +727,8 @@ define([], function () {
         if(profpenref.profstate.recentRevState) {
             return displayRecentReviews(profpenref.profstate.recentRevState); }
         html = "Retrieving recent activity for " + profpenref.pen.name + "...";
-        glo.out('profcontdiv', html);
-        glo.layout.adjust();
+        app.out('profcontdiv', html);
+        app.layout.adjust();
         profpenref.profstate.recentRevState = rrs = { 
             params: {},
             cursor: "",
@@ -738,7 +738,7 @@ define([], function () {
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
         rrs.params.maxdate = maxdate.toISOString();
         rrs.params.mindate = mindate.toISOString();
-        rrs.params.penid = glo.instId(profpenref.pen);
+        rrs.params.penid = app.instId(profpenref.pen);
         findRecentReviews(rrs);
     },
 
@@ -750,8 +750,8 @@ define([], function () {
             prefixstr = "20+ "; }
         pen = profpenref.pen;
         html = "";
-        glo.pen.deserializeFields(pen);
-        reviewTypes = glo.review.getReviewTypes();
+        app.pen.deserializeFields(pen);
+        reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             dispclass = "reviewbadgedis";
@@ -780,18 +780,18 @@ define([], function () {
     displayBest = function () {
         var state, html, revs, i, revref;
         state = profpenref.profstate;
-        html = revTypeSelectorHTML("glo.profile.showTopRated");
+        html = revTypeSelectorHTML("app.profile.showTopRated");
         revs = [];
         if(profpenref.pen.top20s) {
             revs = profpenref.pen.top20s[state.revtype] || []; }
         html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
             html += "<li>No top rated " + state.revtype + " reviews.";
-            if(glo.instId(profpenref.pen) === glo.pen.currPenId()) {
-                html += " " + glo.review.reviewLinkHTML(); }
+            if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+                html += " " + app.review.reviewLinkHTML(); }
             html += "</li>"; }
         for(i = 0; i < revs.length; i += 1) {
-            revref = glo.lcs.getRevRef(revs[i]);
+            revref = app.lcs.getRevRef(revs[i]);
             if(revref.rev) {
                 html += reviewItemHTML(revref.rev); }
             //if revref.status deleted or other error, then just skip it
@@ -799,13 +799,13 @@ define([], function () {
                 html += "<li>Fetching review " + revs[i] + "...</li>";
                 break; } }
         html += "</ul>";
-        glo.out('profcontdiv', html);
-        glo.layout.adjust();
+        app.out('profcontdiv', html);
+        app.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
-            glo.lcs.getRevFull(revs[i], displayBest); }
+            app.lcs.getRevFull(revs[i], displayBest); }
         else {
             setTimeout(function () {
-                glo.lcs.verifyReviewLinks(glo.profile.refresh); }, 250); }
+                app.lcs.verifyReviewLinks(app.profile.refresh); }, 250); }
     },
 
 
@@ -857,25 +857,25 @@ define([], function () {
         if(state.cursor) {
             if(i === 0 && !allrevMaxAutoSearch()) {
                 //auto-repeat the search to try get a result to display
-                state.autopage = window.setTimeout(glo.profile.searchAllRevs,
+                state.autopage = window.setTimeout(app.profile.searchAllRevs,
                                                    10); }
             else {
                 if(allrevMaxAutoSearch()) {  //they continued search manually
                     state.reqs += 1; }
                 html += "<a href=\"#continuesearch\"" +
-                    " onclick=\"glo.profile.searchAllRevs();return false;\"" +
+                    " onclick=\"app.profile.searchAllRevs();return false;\"" +
                     " title=\"Continue searching for more matching reviews\"" +
                     ">continue search...</a>"; } }
-        glo.out('allrevdispdiv', html);
+        app.out('allrevdispdiv', html);
         setTimeout(function () {
-            glo.lcs.verifyReviewLinks(glo.profile.refresh); }, 250);
+            app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
 
 
     monitorAllRevQuery = function () {
         var state, srchin, qstr = "";
         state = profpenref.profstate;
-        srchin = glo.byId('allrevsrchin');
+        srchin = app.byId('allrevsrchin');
         if(!srchin) {  //probably switched tabs, quit
             return; }
         qstr = srchin.value;
@@ -883,7 +883,7 @@ define([], function () {
             if(state.allRevsState.querymon) {
                 window.clearTimeout(state.allRevsState.querymon);
                 state.allRevsState.querymon = null; }
-            glo.profile.searchAllRevs(); }
+            app.profile.searchAllRevs(); }
         else {
             state.allRevsState.querymon = setTimeout(monitorAllRevQuery, 400); }
     },
@@ -899,22 +899,22 @@ define([], function () {
                 cursor: "",
                 total: 0,
                 reqs: 1 }; }
-        html = revTypeSelectorHTML("glo.profile.searchRevsIfTypeChange");
+        html = revTypeSelectorHTML("app.profile.searchRevsIfTypeChange");
         html += "<div id=\"allrevsrchdiv\">" +
             "<input type=\"text\" id=\"allrevsrchin\" size=\"40\"" +
                   " placeholder=\"Review title or name\"" + 
                   " value=\"" + state.srchval + "\"" +
-                  " onchange=\"glo.profile.allrevs();return false;\"" +
+                  " onchange=\"app.profile.allrevs();return false;\"" +
             "/></div>" +
             "<div id=\"allrevdispdiv\"></div>";
-        glo.out('profcontdiv', html);
-        glo.byId('allrevsrchin').focus();
+        app.out('profcontdiv', html);
+        app.byId('allrevsrchin').focus();
         if(state.revs.length > 0) {
             listAllRevs([]);  //display previous results
             monitorAllRevQuery(); }
         else {
             clearAllRevProfWorkState();
-            glo.profile.searchAllRevs(); }
+            app.profile.searchAllRevs(); }
     },
 
 
@@ -927,39 +927,39 @@ define([], function () {
                 clearAllRevProfWorkState(); } }
         else {
             revtype = state.revtype; }
-        qstr = glo.byId('allrevsrchin').value;
+        qstr = app.byId('allrevsrchin').value;
         if(qstr !== state.allRevsState.srchval) {
             state.allRevsState.srchval = qstr;
             clearAllRevProfWorkState(); }
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
-        params = glo.login.authparams() +
-            "&qstr=" + glo.enc(glo.canonize(qstr)) +
+        params = app.login.authparams() +
+            "&qstr=" + app.enc(app.canonize(qstr)) +
             "&revtype=" + revtype +
-            "&penid=" + glo.instId(profpenref.pen) +
+            "&penid=" + app.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + glo.enc(state.allRevsState.cursor);
-        glo.call("srchrevs?" + params, 'GET', null,
+            "&cursor=" + app.enc(state.allRevsState.cursor);
+        app.call("srchrevs?" + params, 'GET', null,
                  function (results) { 
-                     glo.lcs.putRevs(results);
+                     app.lcs.putRevs(results);
                      listAllRevs(results);
                      monitorAllRevQuery(); },
                  function (code, errtxt) {
-                     glo.err("searchAllRevs call died code: " + code + " " +
+                     app.err("searchAllRevs call died code: " + code + " " +
                              errtxt); },
                  critsec);
     },
 
 
     displayFollowing = function () {
-        glo.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
-        glo.layout.adjust();
+        app.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
+        app.layout.adjust();
     },
 
 
    displayFollowers = function () {
-        glo.rel.displayRelations(profpenref.pen, "inbound", "profcontdiv");
-        glo.layout.adjust();
+        app.rel.displayRelations(profpenref.pen, "inbound", "profcontdiv");
+        app.layout.adjust();
     },
 
 
@@ -995,16 +995,16 @@ define([], function () {
             profpenref.profstate.seltabname = tabname; }
         else {
             tabname = profpenref.profstate.seltabname; }
-        ul = glo.byId('proftabsul');
+        ul = app.byId('proftabsul');
         for(i = 0; i < ul.childNodes.length; i += 1) {
             li = ul.childNodes[i];
             li.className = "unselectedTab";
-            li.style.backgroundColor = glo.skinner.darkbg(); }
-        li = glo.byId(tabname + "li");
+            li.style.backgroundColor = app.skinner.darkbg(); }
+        li = app.byId(tabname + "li");
         li.className = "selectedTab";
         li.style.backgroundColor = "transparent";
-        glo.history.checkpoint({ view: "profile", 
-                                 profid: glo.instId(profpenref.pen),
+        app.history.checkpoint({ view: "profile", 
+                                 profid: app.instId(profpenref.pen),
                                  tab: tabname });
         refreshContentDisplay();
     },
@@ -1015,97 +1015,97 @@ define([], function () {
         verifyProfileState(penref);
         html = "<ul id=\"proftabsul\">" +
           "<li id=\"recentli\" class=\"selectedTab\">" + 
-            tablink("Recent Reviews", "glo.profile.tabselect('recent')") + 
+            tablink("Recent Reviews", "app.profile.tabselect('recent')") + 
           "</li>" +
           "<li id=\"bestli\" class=\"unselectedTab\">" +
-            tablink("Top Rated", "glo.profile.tabselect('best')") + 
+            tablink("Top Rated", "app.profile.tabselect('best')") + 
           "</li>" +
           "<li id=\"allrevsli\" class=\"unselectedTab\">" +
-            tablink("All Reviews", "glo.profile.tabselect('allrevs')") +
+            tablink("All Reviews", "app.profile.tabselect('allrevs')") +
           "</li>" +
           "<li id=\"followingli\" class=\"unselectedTab\">" +
             tablink("Following (" + penref.pen.following + ")", 
-                    "glo.profile.tabselect('following')") + 
+                    "app.profile.tabselect('following')") + 
           "</li>" +
           "<li id=\"followersli\" class=\"unselectedTab\">" +
             tablink("Followers (" + penref.pen.followers + ")", 
-                    "glo.profile.tabselect('followers')") + 
+                    "app.profile.tabselect('followers')") + 
           "</li>";
         html += "</ul>";
-        glo.out('proftabsdiv', html);
+        app.out('proftabsdiv', html);
         tabselect();
     },
 
 
     profileModAuthorized = function (pen) {
-        if(glo.isId(pen.mid) || glo.isId(pen.gsid) || glo.isId(pen.fbid) || 
-           glo.isId(pen.twid) || glo.isId(pen.ghid)) {
+        if(app.isId(pen.mid) || app.isId(pen.gsid) || app.isId(pen.fbid) || 
+           app.isId(pen.twid) || app.isId(pen.ghid)) {
             return true; }
         return false;
     },
 
 
     cancelProfileEdit = function () {
-        glo.profile.updateHeading();
-        glo.profile.display();
+        app.profile.updateHeading();
+        app.profile.display();
     },
 
 
     profEditFail = function (code, errtxt) {
-        glo.out('sysnotice', errtxt);
+        app.out('sysnotice', errtxt);
     },
 
 
     saveEditedProfile = function (pen) {
         var elem;
-        elem = glo.byId('profcityin');
+        elem = app.byId('profcityin');
         if(elem) {
             pen.city = elem.value; }
-        elem = glo.byId('shouttxt');
+        elem = app.byId('shouttxt');
         if(elem) {
             pen.shoutout = elem.value; }
-        glo.pen.updatePen(pen, glo.profile.display, profEditFail);
+        app.pen.updatePen(pen, app.profile.display, profEditFail);
     },
 
 
     displayProfEditButtons = function () {
         var html;
-        if(glo.byId('profcancelb')) {
+        if(app.byId('profcancelb')) {
             return; }  //already have buttons
         html = "&nbsp;" +
             "<button type=\"button\" id=\"profcancelb\">Cancel</button>" +
             "&nbsp;" +
             "<button type=\"button\" id=\"profsaveb\">Save</button>";
-        glo.out('profeditbspan', html);
-        glo.onclick('profcancelb', cancelProfileEdit);
-        glo.onclick('profsaveb', glo.profile.save);
+        app.out('profeditbspan', html);
+        app.onclick('profcancelb', cancelProfileEdit);
+        app.onclick('profsaveb', app.profile.save);
     },
 
 
     styleShout = function (shout) {
         var target;
-        shout.style.color = glo.colors.text;
-        shout.style.backgroundColor = glo.skinner.lightbg();
+        shout.style.color = app.colors.text;
+        shout.style.backgroundColor = app.skinner.lightbg();
         //80px left margin + 160px image + padding
         //+ balancing right margin space (preferable)
         //but going much smaller than the image is stupid regardless of
         //screen size
-        target = Math.max((glo.winw - 350), 200);
+        target = Math.max((app.winw - 350), 200);
         target = Math.min(target, 600);
         shout.style.width = target + "px";
         //modify profcontdiv so it balances the text area size.  This is
         //needed so IE8 doesn't widen profpictd unnecessarily.
-        target += glo.byId('profpictd').offsetWidth;
+        target += app.byId('profpictd').offsetWidth;
         target += 50;  //arbitrary extra to cover padding
-        glo.byId('profcontdiv').style.width = String(target) + "px";
+        app.byId('profcontdiv').style.width = String(target) + "px";
     },
 
 
     editShout = function (pen) {
         var html, shout;
         html = "<textarea id=\"shouttxt\" class=\"shoutout\"></textarea>";
-        glo.out('profshouttd', html);
-        shout = glo.byId('shouttxt');
+        app.out('profshouttd', html);
+        shout = app.byId('shouttxt');
         styleShout(shout);
         shout.readOnly = false;
         shout.value = pen.shoutout;
@@ -1117,83 +1117,83 @@ define([], function () {
     displayShout = function (pen) {
         var html, shout, text;
         text = "No additional information about " + pen.name;
-        if(glo.instId(profpenref.pen) === glo.pen.currPenId()) {
+        if(app.instId(profpenref.pen) === app.pen.currPenId()) {
             text = "About me (anything you would like to say to everyone)." + 
                 " Link to your twitter handle, blog or site if you want."; }
         text = "<span style=\"color:" + greytxt + ";\">" + text + "</span>";
         html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
-        glo.out('profshouttd', html);
-        shout = glo.byId('shoutdiv');
+        app.out('profshouttd', html);
+        shout = app.byId('shoutdiv');
         styleShout(shout);
         shout.style.overflow = "auto";
         //the textarea has a default border, so adding an invisible
         //border here to keep things from jumping around.
-        shout.style.border = "1px solid " + glo.colors.bodybg;
-        text = glo.linkify(pen.shoutout) || text;
-        glo.out('shoutdiv', text);
+        shout.style.border = "1px solid " + app.colors.bodybg;
+        text = app.linkify(pen.shoutout) || text;
+        app.out('shoutdiv', text);
         if(profileModAuthorized(pen)) {
-            glo.onclick('shoutdiv', function () {
+            app.onclick('shoutdiv', function () {
                 editShout(pen); }); }
     },
 
 
 
     saveUnlessShoutEdit = function () {
-        if(glo.byId('shoutdiv')) {
-            glo.profile.save(); }
+        if(app.byId('shoutdiv')) {
+            app.profile.save(); }
     },
 
 
     editCity = function () {
         var val, html, elem;
-        elem = glo.byId('profcityin');
+        elem = app.byId('profcityin');
         if(elem) {
             return; }  //already editing
-        val = glo.byId('profcityspan').innerHTML;
+        val = app.byId('profcityspan').innerHTML;
         //IE8 actually capitalizes the the HTML for you. Sheesh.
         if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
-            val = glo.byId('profcitya').innerHTML; }
+            val = app.byId('profcitya').innerHTML; }
         if(val === unspecifiedCityText) {
             val = ""; }
         html = "<input type=\"text\" id=\"profcityin\" size=\"25\"" +
                      " placeholder=\"City or Region\"" +
                      " value=\"" + val + "\"/>";
-        glo.out('profcityspan', html);
+        app.out('profcityspan', html);
         displayProfEditButtons();
-        glo.onchange('profcityin', saveUnlessShoutEdit);
-        glo.byId('profcityin').focus();
+        app.onchange('profcityin', saveUnlessShoutEdit);
+        app.byId('profcityin').focus();
     },
 
 
     displayCity = function (pen) {
         var html, style = "";
         if(!pen.city) { 
-            glo.byId('profcityspan').style.color = greytxt; }
+            app.byId('profcityspan').style.color = greytxt; }
         html = pen.city || unspecifiedCityText;            
         if(!pen.city) {
             style = " style=\"color:" + greytxt + ";\""; }
         if(profileModAuthorized(pen)) {
             html = "<a href=\"#edit city\" title=\"Edit city\"" +
                      " id=\"profcitya\"" + 
-                     " onclick=\"glo.profile.editCity();return false;\"" +
+                     " onclick=\"app.profile.editCity();return false;\"" +
                        style + ">" + html + "</a>"; }
-        glo.out('profcityspan', html);
+        app.out('profcityspan', html);
     },
 
 
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
         var odiv, html = "";
-        html += glo.paramsToFormInputs(glo.login.authparams());
+        html += app.paramsToFormInputs(app.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + 
-            glo.instId(pen) + "\"/>";
+            app.instId(pen) + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
-            glo.enc(window.location.href + "#profile") + "\"/>";
+            app.enc(window.location.href + "#profile") + "\"/>";
         html = "<form action=\"/profpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
             "<div id=\"closeline\">" +
               "<a id=\"closedlg\" href=\"#close\"" +
-                " onclick=\"glo.cancelPicUpload();return false\">" + 
+                " onclick=\"app.cancelPicUpload();return false\">" + 
                   "&lt;close&nbsp;&nbsp;X&gt;</a>" +
             "</div>" + 
             html +
@@ -1204,25 +1204,25 @@ define([], function () {
               "<tr><td align=\"center\">" +
                     "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
             "</form>";
-        glo.out('overlaydiv', html);
-        odiv = glo.byId('overlaydiv');
+        app.out('overlaydiv', html);
+        odiv = app.byId('overlaydiv');
         odiv.style.top = "80px";
         odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = glo.skinner.lightbg();
-        glo.onescapefunc = glo.cancelPicUpload;
-        glo.byId('picfilein').focus();
+        odiv.style.backgroundColor = app.skinner.lightbg();
+        app.onescapefunc = app.cancelPicUpload;
+        app.byId('picfilein').focus();
     },
 
 
     displayPic = function (pen) {
         var html = "img/emptyprofpic.png";
         if(pen.profpic) {
-            html = "profpic?profileid=" + glo.instId(pen); }
+            html = "profpic?profileid=" + app.instId(pen); }
         html = "<img class=\"profpic\" src=\"" + html + "\"/>";
-        glo.out('profpictd', html);
+        app.out('profpictd', html);
         if(profileModAuthorized(pen)) {
-            glo.onclick('profpictd', function () {
-                if(glo.byId('profcancelb')) {  //save other field edits so
+            app.onclick('profpictd', function () {
+                if(app.byId('profcancelb')) {  //save other field edits so
                     saveEditedProfile(pen); }  //they aren't lost on reload
                 displayUploadPicForm(pen); }); }
     },
@@ -1231,8 +1231,8 @@ define([], function () {
     earnedBadgesHTML = function (pen) {
         var html, i, reviewTypes, typename, label, dispclass;
         html = "";
-        glo.pen.deserializeFields(pen);
-        reviewTypes = glo.review.getReviewTypes();
+        app.pen.deserializeFields(pen);
+        reviewTypes = app.review.getReviewTypes();
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             if(pen.top20s[typename] && pen.top20s[typename].length >= 1) {
@@ -1247,7 +1247,7 @@ define([], function () {
                     " src=\"img/" + reviewTypes[i].img + "\"" +
                     " title=\"" + label + "\"" +
                     " alt=\"" + label + "\"" +
-                    " onclick=\"glo.profile.showTopRated('" + typename + "');" +
+                    " onclick=\"app.profile.showTopRated('" + typename + "');" +
                                "return false;\"" +
                     "/>"; } }
         return html;
@@ -1305,44 +1305,44 @@ define([], function () {
         if(!dispen) {
             dispen = homepen; }
         verifyStateVariableValues(dispen);  //sets profpenref
-        glo.history.checkpoint({ view: "profile", 
-                                 profid: glo.instId(profpenref.pen),
+        app.history.checkpoint({ view: "profile", 
+                                 profid: app.instId(profpenref.pen),
                                  tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
-        glo.skinner.setColorsFromPen(homepen);
+        app.skinner.setColorsFromPen(homepen);
         html = proftopdivHTML();
-        if(!glo.layout.haveContentDivAreas()) { //change pw kills it
-            glo.layout.initContentDivAreas(); }
-        glo.out('cmain', html);
-        glo.out('profbadgestd', earnedBadgesHTML(dispen));
-        if(glo.instId(profpenref.pen) === glo.pen.currPenId()) {
+        if(!app.layout.haveContentDivAreas()) { //change pw kills it
+            app.layout.initContentDivAreas(); }
+        app.out('cmain', html);
+        app.out('profbadgestd', earnedBadgesHTML(dispen));
+        if(app.instId(profpenref.pen) === app.pen.currPenId()) {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
-                     " onclick=\"glo.profile.invite();return false\">" +
+                     " onclick=\"app.profile.invite();return false\">" +
                 "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
                     " border=\"0\">" +
                 "Build your community</a>";
-            glo.out('profcommbuildtd', html); }
+            app.out('profcommbuildtd', html); }
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
         displayTabs(profpenref);
-        glo.layout.adjust();
+        app.layout.adjust();
         if(errmsg) {
-            glo.err("Previous processing failed: " + errmsg); }
+            app.err("Previous processing failed: " + errmsg); }
     },
 
 
     displayProfileForId = function (id, tabname) {
-        glo.layout.closeDialog(); //close pen name search dialog if open
+        app.layout.closeDialog(); //close pen name search dialog if open
         resetStateVars();
         findOrLoadPen(id, function (dispen) {
             if(tabname) {
                 verifyStateVariableValues(dispen);
                 setCurrTabFromString(tabname); }
-            glo.pen.getPen(function (homepen) {
+            app.pen.getPen(function (homepen) {
                 mainDisplay(homepen, dispen); }); });
     };
 
@@ -1351,23 +1351,23 @@ define([], function () {
         resetStateVars: function () {
             resetStateVars(); },
         display: function (action, errmsg) {
-            glo.pen.getPen(function (homepen) {
+            app.pen.getPen(function (homepen) {
                 mainDisplay(homepen, null, action, errmsg); }); },
         updateHeading: function () {  //called during startup
-            glo.pen.getPen(function (homepen) {
+            app.pen.getPen(function (homepen) {
                 writeNavDisplay(homepen,
                                 profpenref && profpenref.pen); }); },
         refresh: function () {
-            glo.pen.getPen(function (homepen) {
+            app.pen.getPen(function (homepen) {
                 mainDisplay(homepen, profpenref.pen); }); },
         settings: function () {
-            glo.pen.getPen(changeSettings); },
+            app.pen.getPen(changeSettings); },
         tabselect: function (tabname) {
             tabselect(tabname); },
         resetReviews: function () {
-            resetReviewDisplays(glo.pen.currPenRef()); },
+            resetReviewDisplays(app.pen.currPenRef()); },
         save: function () {
-            glo.pen.getPen(saveEditedProfile); },
+            app.pen.getPen(saveEditedProfile); },
         byprofid: function (id, tabname) {
             displayProfileForId(id, tabname); },
         relationship: function () {
@@ -1383,12 +1383,12 @@ define([], function () {
         reviewItemHTML: function (revobj, penNameStr) {
             return reviewItemHTML(revobj, penNameStr); },
         toggleAuthChange: function (authtype, domid) {
-            glo.pen.getPen(function (pen) { 
+            app.pen.getPen(function (pen) { 
                 handleAuthChangeToggle(pen, authtype, domid); }); },
         displayAuthSettings: function (domid, pen) {
             displayAuthSettings(domid, pen); },
         addMyOpenReviewsAuthId: function(mid) {
-            glo.pen.getPen(function (pen) {
+            app.pen.getPen(function (pen) {
                 addMyOpenReviewsAuthId(pen, mid); }); },
         writeNavDisplay: function (homepen, dispen, directive) {
             writeNavDisplay(homepen, dispen, directive); },

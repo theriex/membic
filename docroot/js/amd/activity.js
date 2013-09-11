@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -32,8 +32,8 @@ define([], function () {
 
     activityLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            glo.imgntxt("friendact.png", "",
-                        "glo.activity.displayActive()",
+            app.imgntxt("friendact.png", "",
+                        "app.activity.displayActive()",
                         "#Activity",
                         "See what's been posted recently") +
             "</div>";
@@ -43,8 +43,8 @@ define([], function () {
 
     rememberedLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            glo.imgntxt("remembered.png", "",
-                        "glo.activity.displayRemembered()",
+            app.imgntxt("remembered.png", "",
+                        "app.activity.displayRemembered()",
                         "#Remembered",
                         "Show reviews you have remembered") +
             "</div>";
@@ -55,7 +55,7 @@ define([], function () {
     topTypeSelectorHTML = function () {
         var reviewTypes, i, typename, title, html;
         html = "<div id=\"toptypeseldiv\">";
-        reviewTypes = glo.review.getReviewTypes();
+        reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             title = typename.capitalize() + " reviews";
@@ -63,7 +63,7 @@ define([], function () {
                 " src=\"img/" + reviewTypes[i].img + "\"" +
                 " title=\"" + title + "\"" +
                 " alt=\"" + title + "\"" +
-                " onclick=\"glo.activity.toptype('" + typename + "');" +
+                " onclick=\"app.activity.toptype('" + typename + "');" +
                            "return false;\"" +
                 "/>"; }
         html += "</div>";
@@ -75,34 +75,34 @@ define([], function () {
         var html, url;
         if(dispmode === "activity") {
             if(activityMode === "amnew") {
-                url = "rssact?pen=" + glo.pen.currPenId();
+                url = "rssact?pen=" + app.pen.currPenId();
                 html = "New reviews from friends " +
-                    glo.imglink(url, "RSS feed for recent friend reviews",
+                    app.imglink(url, "RSS feed for recent friend reviews",
                                 "window.open('" + url + "')", 
                                 "rssicon.png", "rssico") +
                     "<button type=\"button\" id=\"switchmodebutton\"" +
-                    " onclick=\"glo.activity.switchmode('amtop');" +
+                    " onclick=\"app.activity.switchmode('amtop');" +
                                "return false;\"" +
                     " title=\"Show top rated reviews from friends\"" +
                     ">Show Top</button>"; }
             else if(activityMode === "amtop") {
                 html = "Top reviews from friends " +
                     "<button type=\"button\" id=\"switchmodebutton\"" +
-                    " onclick=\"glo.activity.switchmode('amnew');" +
+                    " onclick=\"app.activity.switchmode('amnew');" +
                                "return false;\"" +
                     " title=\"Show recent reviews from friends\"" +
                     ">Show Recent</button>" +
                     topTypeSelectorHTML(); } }
         else if(dispmode === "memo") {
             html = "Remembered reviews"; }
-        glo.out('centerhdiv', html);
+        app.out('centerhdiv', html);
     },
 
 
     searchOptionsHTML = function () {
         var html = "<div id=\"searchoptionsdiv\" class=\"formstyle\">" +
             "<i>Must have reviewed their top 20</i>" +
-            glo.review.reviewTypeCheckboxesHTML("reqmin") +
+            app.review.reviewTypeCheckboxesHTML("reqmin") +
             "<i>Must have been active within the past</i>&nbsp;" + 
             "<select id=\"srchactivesel\">" +
               "<option id=\"whenever\">Whenever</option>" +
@@ -112,9 +112,9 @@ define([], function () {
             "</select>" +
             "<br/>" +
             "<i>Include</i>&nbsp;" + 
-            glo.checkbox("srchinc", "following") +
-            glo.checkbox("srchinc", "blocked") +
-            glo.checkbox("srchinc", "lurkers") +
+            app.checkbox("srchinc", "following") +
+            app.checkbox("srchinc", "blocked") +
+            app.checkbox("srchinc", "lurkers") +
             " <i> in the search results</i>" +
             "<br/>&nbsp;<br/></div>";
         return html;
@@ -125,7 +125,7 @@ define([], function () {
         var html;
         html = "<div class=\"dlgclosex\">" +
             "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"glo.layout.closeDialog();return false;\"" +
+              " onclick=\"app.layout.closeDialog();return false;\"" +
             ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
             "<div class=\"floatclear\"></div>" +
             "<div class=\"headingtxt\">" + 
@@ -135,13 +135,13 @@ define([], function () {
               "<td class=\"formstyle\">" + 
                 "<input type=\"text\" id=\"searchtxt\" size=\"40\"" +
                       " placeholder=\"Pen name, city, or profile comment...\"" +
-                      " onchange=\"glo.activity.startPenSearch();" + 
+                      " onchange=\"app.activity.startPenSearch();" + 
                                   "return false;\"" +
                       " value=\"\"/></td>" +
               "<td class=\"formstyle\">" +
                 "<span id=\"srchbuttonspan\">" +
                   "<button type=\"button\" id=\"searchbutton\"" + 
-                         " onclick=\"glo.activity.startPenSearch();" + 
+                         " onclick=\"app.activity.startPenSearch();" + 
                                     "return false;\"" + 
                     ">Search</button></span></td></tr>" + 
             "<tr>" +
@@ -150,33 +150,33 @@ define([], function () {
                   "<a href=\"#searchoptions\"" +
                     " id=\"srchoptstogglehref\"" +
                     " title=\"search options\"" +
-                    " onclick=\"glo.activity.togglesrchopts();return false;\"" +
+                    " onclick=\"app.activity.togglesrchopts();return false;\"" +
                   ">show advanced search options</a></span></td></tr>" +
             "</table>" + searchOptionsHTML() +
             "<div id=\"searchresults\"></div>";
-        glo.out('dlgdiv', html);
-        glo.byId('dlgdiv').style.visibility = "visible";
-        if(glo.isLowFuncBrowser()) {
-            glo.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        glo.onescapefunc = glo.layout.closeDialog;
-        glo.byId('searchoptionsdiv').style.display = "none";
-        glo.byId('searchtxt').focus();
+        app.out('dlgdiv', html);
+        app.byId('dlgdiv').style.visibility = "visible";
+        if(app.isLowFuncBrowser()) {
+            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        app.onescapefunc = app.layout.closeDialog;
+        app.byId('searchoptionsdiv').style.display = "none";
+        app.byId('searchtxt').focus();
         //hit the search button for them so they don't have to figure out
         //pressing the button vs search options or what to type.
-        setTimeout(glo.activity.startPenSearch, 50);
+        setTimeout(app.activity.startPenSearch, 50);
     },
 
 
     toggleSearchOptions = function () {
-        var sod = glo.byId('searchoptionsdiv');
+        var sod = app.byId('searchoptionsdiv');
         if(sod) {
             if(sod.style.display === "none") {
-                glo.out('srchoptstogglehref', "hide advanced search options");
+                app.out('srchoptstogglehref', "hide advanced search options");
                 sod.style.display = "block"; }
             else {
-                glo.out('srchoptstogglehref', "show advanced search options");
+                app.out('srchoptstogglehref', "show advanced search options");
                 sod.style.display = "none"; } }
-        glo.layout.adjust();
+        app.layout.adjust();
     },
 
 
@@ -187,9 +187,9 @@ define([], function () {
     //those are filtered out here.
     penSearchFiltered = function (searchitem) {
         var params, pen, rel;
-        params = glo.pen.currPenRef().pensearch.params;
+        params = app.pen.currPenRef().pensearch.params;
         pen = searchitem;
-        rel = glo.rel.outbound(glo.instId(pen));
+        rel = app.rel.outbound(app.instId(pen));
         if(rel) {
             if(params.includeFollowing && rel.status === "following") {
                 return false; }
@@ -202,10 +202,10 @@ define([], function () {
 
     displayPenSearchResults = function (results) {
         var pensearch, i, html;
-        pensearch = glo.pen.currPenRef().pensearch;
+        pensearch = app.pen.currPenRef().pensearch;
         html = "<ul class=\"penlist\">";
         for(i = 0; i < pensearch.pens.length; i += 1) {
-            html += glo.profile.penListItemHTML(pensearch.pens[i]); }
+            html += app.profile.penListItemHTML(pensearch.pens[i]); }
         if(!results || results.length === 0) {
             results = [ { "fetched": 0, "cursor": "" } ]; }
         pensearch.cursor = "";
@@ -220,38 +220,38 @@ define([], function () {
                     pensearch.cursor = results[i].cursor; }
                 break; }  //if no results, i will be left at zero
             if(!penSearchFiltered(results[i])) {
-                glo.lcs.putPen(results[i]);
+                app.lcs.putPen(results[i]);
                 pensearch.pens.push(results[i]);
-                html += glo.profile.penListItemHTML(results[i]); } }
+                html += app.profile.penListItemHTML(results[i]); } }
         if(pensearch.pens.length === 0) {
             html += "<div class=\"sumtotal\">No pen names found</div>"; }
         html += "</ul>";
         if(pensearch.cursor) {
             if(i === 0 && pensearch.total < (pensearchmax * pensearch.reqs)) {
-                setTimeout(glo.activity.searchPens, 10); }  //auto-repeat search
+                setTimeout(app.activity.searchPens, 10); }  //auto-repeat search
             else {
                 if(pensearch.total >= (pensearchmax * pensearch.reqs)) {
                     pensearch.reqs += 1; } 
                 html += "<a href=\"#continuesearch\"" +
-                          " onclick=\"glo.activity.searchPens();" + 
+                          " onclick=\"app.activity.searchPens();" + 
                                      "return false;\"" +
                           " title=\"Continue searching for more pen names\"" +
                     ">continue search...</a>"; } }
-        glo.out('searchresults', html);
-        glo.byId("searchbutton").disabled = false;
+        app.out('searchresults', html);
+        app.byId("searchbutton").disabled = false;
     },
 
 
     readSearchParamsFromForm = function () {
         var pensearch, checkboxes, options, i, t20type, since;
-        pensearch = glo.pen.currPenRef().pensearch;
+        pensearch = app.pen.currPenRef().pensearch;
         pensearch.params.reqmin = [];
         checkboxes = document.getElementsByName("reqmin");
         for(i = 0; i < checkboxes.length; i += 1) {
             if(checkboxes[i].checked) {
-                t20type = glo.review.getReviewTypeByValue(checkboxes[i].value);
+                t20type = app.review.getReviewTypeByValue(checkboxes[i].value);
                 pensearch.params.reqmin.push(t20type.type); } }
-        options = glo.byId('srchactivesel').options;
+        options = app.byId('srchactivesel').options;
         for(i = 0; i < options.length; i += 1) {
             if(options[i].selected) {
                 switch(options[i].id) {
@@ -282,41 +282,41 @@ define([], function () {
 
     searchPens = function () {
         var pensearch, params, qstr, time, t20, i, critsec = "";
-        pensearch = glo.pen.currPenRef().pensearch;
+        pensearch = app.pen.currPenRef().pensearch;
         readSearchParamsFromForm();
-        glo.out('srchoptstogglehref', "show advanced search options");
-        glo.byId('searchoptionsdiv').style.display = "none";
-        glo.byId("searchbutton").disabled = true;
-        qstr = glo.byId('searchtxt').value;
-        params = glo.login.authparams() + "&qstr=" + glo.enc(qstr) +
-            "&cursor=" + glo.enc(pensearch.cursor);
+        app.out('srchoptstogglehref', "show advanced search options");
+        app.byId('searchoptionsdiv').style.display = "none";
+        app.byId("searchbutton").disabled = true;
+        qstr = app.byId('searchtxt').value;
+        params = app.login.authparams() + "&qstr=" + app.enc(qstr) +
+            "&cursor=" + app.enc(pensearch.cursor);
         if(pensearch.params.activeDaysAgo > 0) {
             time = (new Date()).getTime();
             time -= pensearch.params.activeDaysAgo * 24 * 60 * 60 * 1000;
             time = new Date(time);
             time = time.toISOString();
-            params += "&time=" + glo.enc(time); }
+            params += "&time=" + app.enc(time); }
         if(pensearch.params.reqmin.length > 0) {
             t20 = "";
             for(i = 0; i < pensearch.params.reqmin.length; i += 1) {
                 if(i > 0) {
                     t20 += ","; }
                 t20 += pensearch.params.reqmin[i]; }
-            params += "&t20=" + glo.enc(t20); }
+            params += "&t20=" + app.enc(t20); }
         if(pensearch.params.includeLurkers) {
             params += "&lurkers=include"; }
-        glo.call("srchpens?" + params, 'GET', null,
+        app.call("srchpens?" + params, 'GET', null,
                  function (results) {
                      displayPenSearchResults(results); },
                  function (code, errtxt) {
-                     glo.out('searchresults', 
+                     app.out('searchresults', 
                              "error code: " + code + " " + errtxt); },
                  critsec);
     },
 
 
     startPenSearch = function () {
-        glo.pen.currPenRef().pensearch = {
+        app.pen.currPenRef().pensearch = {
             params: {},
             pens: [],
             cursor: "",
@@ -329,7 +329,7 @@ define([], function () {
     displayRemembered = function () {
         var penref, hint, html, i, revref, crid, friend, cfid, 
             params, critsec = "";
-        penref = glo.pen.currPenRef();
+        penref = app.pen.currPenRef();
         if(penref.remembered) {
             hint = "If you see a review worth remembering, click its " + 
                 "\"Remember\" button to keep a reference to it here.";
@@ -339,42 +339,42 @@ define([], function () {
                     hint + "</li>"; }
             else { //have remembered reviews for display
                 for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
-                    revref = glo.lcs.getRevRef(penref.remembered[i].revid);
+                    revref = app.lcs.getRevRef(penref.remembered[i].revid);
                     if(revref.status === "not cached") {
                         crid = penref.remembered[i].revid;
                         html += "<li>Fetching Review " + crid + "...</li>";
                         break; }
                     if(!revref.rev.penNameStr) {
-                        friend = glo.lcs.getPenRef(revref.rev.penid).pen;
+                        friend = app.lcs.getPenRef(revref.rev.penid).pen;
                         if(friend) {
                             revref.rev.penNameStr = friend.name; } }
                     if(!revref.rev.penNameStr) {
                         cfid = revref.rev.penid;
                         html += "<li>Fetching Pen Name " + cfid + "...</li>";
                         break; }
-                    html += glo.profile.reviewItemHTML(revref.rev, 
+                    html += app.profile.reviewItemHTML(revref.rev, 
                                                    revref.rev.penNameStr); } }
             if(i < 3) {  //reinforce how to remember reviews
                 html += "<li></li><li><span class=\"hintText\">" + hint + 
                     "</span></li>"; }
             html += "</ul>";
-            glo.out('revactdiv', html);
-            glo.layout.adjust();
+            app.out('revactdiv', html);
+            app.layout.adjust();
             if(crid) {
-                glo.lcs.getRevFull(crid, displayRemembered); }
+                app.lcs.getRevFull(crid, displayRemembered); }
             if(cfid) {
-                glo.lcs.getPenFull(cfid, displayRemembered); } }
+                app.lcs.getPenFull(cfid, displayRemembered); } }
         else { //!penref.remembered
-            glo.out('revactdiv', "Fetching remembered reviews...");
-            glo.layout.adjust();
-            params = "penid=" + glo.instId(penref.pen) +
-                "&" + glo.login.authparams();
-            glo.call("srchremem?" + params, 'GET', null,
+            app.out('revactdiv', "Fetching remembered reviews...");
+            app.layout.adjust();
+            params = "penid=" + app.instId(penref.pen) +
+                "&" + app.login.authparams();
+            app.call("srchremem?" + params, 'GET', null,
                      function (memos) {
                          penref.remembered = memos;
                          displayRemembered(); },
                      function (code, errtxt) {
-                         glo.err("displayRemembered failed " + code + 
+                         app.err("displayRemembered failed " + code + 
                                  " " + errtxt); },
                      critsec); }
     },
@@ -383,7 +383,7 @@ define([], function () {
     findUniqueRev = function (revrefs, revids) {
         var revref, i, j;
         for(i = 0; !revref && i < revids.length; i += 1) {
-            revref = glo.lcs.getRevRef(revids[i]);
+            revref = app.lcs.getRevRef(revids[i]);
             if(revref.status !== "ok" && revref.status !== "not cached") { 
                 revref = null; }  //bad ids not valid for consideration
             else if(revref.rev) { 
@@ -403,7 +403,7 @@ define([], function () {
         if(revrefs.length > 0) {
             revref = revrefs[revrefs.length - 1];
             for(i = 0; i < penrefs.length; i += 1) {
-                if(revref.rev.penid === glo.instId(penrefs[i].pen)) {
+                if(revref.rev.penid === app.instId(penrefs[i].pen)) {
                     break; } }
             startidx = i + 1; } //start after pen who did the last rev
         revref = null;
@@ -426,13 +426,13 @@ define([], function () {
     displayTopReviews = function () {
         var pens, i, penid, revs, revref, html;
         //get an array of friend pens
-        pens = glo.rel.outboundids();
+        pens = app.rel.outboundids();
         for(i = 0; i < pens.length; i += 1) {
             penid = pens[i];
-            pens[i] = glo.lcs.getPenRef(penid);
+            pens[i] = app.lcs.getPenRef(penid);
             if(pens[i].status === "not cached") {
-                glo.out('revactdiv', "Loading friends..." + (i+1));
-                return glo.lcs.getPenFull(penid, displayTopReviews); } }
+                app.out('revactdiv', "Loading friends..." + (i+1));
+                return app.lcs.getPenFull(penid, displayTopReviews); } }
         //sort them by modified (last login) with most recent first
         pens.sort(function (a, b) {
             if(a.pen && b.pen && a.pen.modified < b.pen.modified) {
@@ -456,31 +456,31 @@ define([], function () {
                 break; }
             if(revref.status === "not cached") {
                 html += "<li>Fetching review " + revref.revid + "</li></ul>";
-                glo.out('revactdiv', html);
-                return glo.lcs.getRevFull(revref.revid, displayTopReviews); }
+                app.out('revactdiv', html);
+                return app.lcs.getRevFull(revref.revid, displayTopReviews); }
             if(revref.rev) {
                 revs.push(revref);
-                html += glo.profile.reviewItemHTML(revref.rev, 
+                html += app.profile.reviewItemHTML(revref.rev, 
                                                    revref.penNameStr); } }
         if(revs.length === 0) {
             html += "<li>No " + topActivityType + " reviews found</li>"; }
         html += "</ul>";
-        glo.out('revactdiv', html);
+        app.out('revactdiv', html);
     },
 
 
     moreRevsFromHTML = function (rev) {
         var html = "<li>" + "<div class=\"morerevs\">" +
-            "<a href=\"#" + glo.objdata({ view: "profile", 
+            "<a href=\"#" + app.objdata({ view: "profile", 
                                           profid: rev.penid }) + "\"" +
-              " onclick=\"glo.profile.byprofid('" + rev.penid + 
+              " onclick=\"app.profile.byprofid('" + rev.penid + 
                                                "', 'recent');" +
                          "return false;\"" +
               " title=\"Show recent reviews from " + 
-                        glo.ndq(rev.penNameStr) + "\"" + 
+                        app.ndq(rev.penNameStr) + "\"" + 
             ">" + "more reviews from " +
-                glo.ndq(rev.penNameStr) + " on " + 
-                glo.colloquialDate(glo.ISOString2Day(rev.modified)) +
+                app.ndq(rev.penNameStr) + " on " + 
+                app.colloquialDate(app.ISOString2Day(rev.modified)) +
             "</a></div></li>";
         return html;
     },
@@ -488,9 +488,9 @@ define([], function () {
 
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html, key, reps = {};
-        glo.byId('switchmodebutton').disabled = false;
+        app.byId('switchmodebutton').disabled = false;
         html = "<ul class=\"revlist\">";
-        actdisp = glo.pen.currPenRef().actdisp;
+        actdisp = app.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {
             html += "<li>None of the people you are following have posted any reviews recently.</li>"; }
@@ -499,7 +499,7 @@ define([], function () {
             key = rev.modified.slice(0, 10) + rev.penid;
             if(!reps[key] || reps[key] < 2) {  //display 2 revs/day/pen
                 reps[key] = (reps[key] || 0) + 1;
-                html += glo.profile.reviewItemHTML(rev, rev.penNameStr); }
+                html += app.profile.reviewItemHTML(rev, rev.penNameStr); }
             else {
                 reps[key] += 1;
                 if(reps[key] === 3) {
@@ -509,26 +509,26 @@ define([], function () {
                 break; } }
         if(breakid) {  //need to fetch pen
             setTimeout(function () {
-                glo.lcs.getPenFull(breakid, function (penref) {
-                    glo.activity.notePenNameStr(penref.pen); }); },
+                app.lcs.getPenFull(breakid, function (penref) {
+                    app.activity.notePenNameStr(penref.pen); }); },
                        50); }
         else {
             setTimeout(function () {
-                glo.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
+                app.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
         html += "</ul>";
         if(actdisp.cursor) {
             html += "<a href=\"#moreact\"" +
-                " onclick=\"glo.activity.moreact();return false;\"" +
+                " onclick=\"app.activity.moreact();return false;\"" +
                 " title=\"More activity\"" + ">more activity...</a>"; }
-        glo.out('revactdiv', html);
-        glo.layout.adjust();
+        app.out('revactdiv', html);
+        app.layout.adjust();
     },
 
 
     notePenNameStr = function (pen) {
         var i, pid, revrefs;
-        revrefs = glo.pen.currPenRef().actdisp.revrefs;
-        pid = glo.instId(pen);
+        revrefs = app.pen.currPenRef().actdisp.revrefs;
+        pid = app.instId(pen);
         for(i = 0; i < revrefs.length; i += 1) {
             if(revrefs[i].rev.penid === pid) {
                 revrefs[i].rev.penNameStr = pen.name; } }
@@ -541,7 +541,7 @@ define([], function () {
     //saving review activity to local storage, the relationships will
     //also have to be saved.
     filtered = function (rev) {
-        var rel = glo.rel.outbound(rev.penid);
+        var rel = app.rel.outbound(rev.penid);
         if(rev.rating < rel.cutoff) {
             return true; }
         if(rel.mute && rel.mute.indexOf(rev.revtype) >= 0) {
@@ -552,14 +552,14 @@ define([], function () {
 
     collectAndDisplayReviewActivity = function (results, continued) {
         var i, actdisp, revref;
-        actdisp = glo.pen.currPenRef().actdisp;
+        actdisp = app.pen.currPenRef().actdisp;
         if(!continued) { //prepend latest results
             for(i = results.length - 1; i >= 0; i -= 1) {
                 if(results[i].fetched) {
                     if(results[i].cursor) {
                         actdisp.cursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
-                    revref = glo.lcs.putRev(results[i]);
+                    revref = app.lcs.putRev(results[i]);
                     actdisp.revrefs.unshift(revref); } } }
         else { //append results and track cursor (if any)
             actdisp.cursor = "";
@@ -568,41 +568,41 @@ define([], function () {
                     if(results[i].cursor) {
                         actdisp.cursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
-                    revref = glo.lcs.putRev(results[i]);
+                    revref = app.lcs.putRev(results[i]);
                     actdisp.revrefs.push(revref); } } }
         if(actdisp.cursor && actdisp.revrefs.length === 0) {
             //auto find more activity without creating a recursion stack
-            setTimeout(glo.activity.moreact, 10); }
+            setTimeout(app.activity.moreact, 10); }
         displayReviewActivity();
     },
 
 
     doActivitySearch = function (continued) {
         var actdisp, time, penids, params, critsec = "";
-        actdisp = glo.pen.currPenRef().actdisp;
-        penids = glo.rel.outboundids();
+        actdisp = app.pen.currPenRef().actdisp;
+        penids = app.rel.outboundids();
         params = "penids=" + penids.join(',');
         if(!continued && actdisp.lastChecked) {
             params += "&since=" + actdisp.lastChecked.toISOString(); }
         else if(continued) {
             params += "&cursor=" + actdisp.cursor; }
         time = new Date().getTime();
-        glo.call("revact?" + params, 'GET', null,
+        app.call("revact?" + params, 'GET', null,
                  function (results) {
                      time = new Date().getTime() - time;
-                     glo.log("revact returned in " + time/1000 + " seconds.");
+                     app.log("revact returned in " + time/1000 + " seconds.");
                      actdisp.lastChecked = new Date();
                      collectAndDisplayReviewActivity(results, continued); },
                  function (code, errtxt) {
-                     glo.out('revactdiv', "error code: " + code + " " + 
+                     app.out('revactdiv', "error code: " + code + " " + 
                              errtxt); },
                  critsec);
     },
 
 
     searchPensLinkHTML = function () {
-        return glo.imgntxt("follow.png", "Find Pen Names", 
-                           "glo.activity.pensearchdialog()", 
+        return app.imgntxt("follow.png", "Find Pen Names", 
+                           "app.activity.pensearchdialog()", 
                            "#findpens",
                            "Find pen names to follow");
     },
@@ -611,8 +611,8 @@ define([], function () {
     bootActivityDisplay = function () {
         var penids, html, retry = false;
         writeNavDisplay("activity");
-        glo.byId('switchmodebutton').disabled = true;
-        penids = glo.rel.outboundids();
+        app.byId('switchmodebutton').disabled = true;
+        penids = app.rel.outboundids();
         if(penids.length === 0) {
             html = "<p>You are not following anyone.</p>" +
                 "<p>To follow someone, click the follow icon next to their " + 
@@ -621,43 +621,43 @@ define([], function () {
                 (penids[penids.length - 1] === "loading")) {
             retry = true;
             html = "Loading relationships..."; }
-        else if(!glo.pen.currPenRef().helpful) {
+        else if(!app.pen.currPenRef().helpful) {
             html = "Loading helpful..."; }
         else {
-            glo.pen.currPenRef().actdisp = { 
+            app.pen.currPenRef().actdisp = { 
                 revrefs: [], 
                 cursor: "" };
             html = "Loading activity..."; }
-        glo.out('revactdiv', html);
-        glo.layout.adjust();
-        if(glo.pen.currPenRef().actdisp) {
+        app.out('revactdiv', html);
+        app.layout.adjust();
+        if(app.pen.currPenRef().actdisp) {
             doActivitySearch(); }
-        else if(!glo.pen.currPenRef().helpful) {
-            glo.review.loadHelpful(bootActivityDisplay); }
+        else if(!app.pen.currPenRef().helpful) {
+            app.review.loadHelpful(bootActivityDisplay); }
         else if(retry) {
-            glo.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
+            app.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
             setTimeout(bootActivityDisplay, 100); }
     },
 
 
     verifyCoreDisplayElements = function () {
-        var html, domelem = glo.byId('revactdiv');
+        var html, domelem = app.byId('revactdiv');
         if(!domelem) {
             html = "<div id=\"revactdiv\"></div>";
-            if(!glo.byId('cmain')) {
-                glo.layout.initContent(); }
-            glo.out('cmain', html); }
+            if(!app.byId('cmain')) {
+                app.layout.initContent(); }
+            app.out('cmain', html); }
     },
 
 
     mainDisplay = function (dispmode) {
-        var penref = glo.pen.currPenRef();
+        var penref = app.pen.currPenRef();
         if(!penref) {
             setTimeout(function () {
-                glo.pen.getPen(function (pen) {
+                app.pen.getPen(function (pen) {
                     mainDisplay(dispmode); }); }, 100);
             return; }
-        glo.history.checkpoint({ view: dispmode });
+        app.history.checkpoint({ view: dispmode });
         writeNavDisplay(dispmode);
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
@@ -706,7 +706,7 @@ define([], function () {
         searchPens: function () {
             searchPens(); },
         reset: function () {
-            glo.pen.currPenRef().actdisp = null; }
+            app.pen.currPenRef().actdisp = null; }
     };
 
 });

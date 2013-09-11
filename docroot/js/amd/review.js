@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, glo: false, require: false, google: false */
+/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, app: false, require: false, google: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -231,7 +231,7 @@ define([], function () {
             if(tdc === 0) {
                 html += "<tr>"; }
             html += "<td>" + 
-                glo.checkrad(intype, gname, value, label, checked, chgfstr) + 
+                app.checkrad(intype, gname, value, label, checked, chgfstr) + 
                 "</td>";
             tdc += 1;
             if(tdc === 4 || i === reviewTypes.length - 1) {
@@ -283,8 +283,8 @@ define([], function () {
 
     reviewLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            glo.imgntxt("writereview.png", "Review and Share",
-                        "glo.review.reset(true)",
+            app.imgntxt("writereview.png", "Review and Share",
+                        "app.review.reset(true)",
                         "#Write", 
                         "Write a review and share it with your friends") +
             "</div>";
@@ -318,7 +318,7 @@ define([], function () {
 
     linkCountHTML = function (revid) {
         var revref, html;
-        revref = glo.lcs.getRevRef(revid);
+        revref = app.lcs.getRevRef(revid);
         if(!revref.revlink) {
             return ""; }
         html = linkCountBadgeHTML(revref.revlink, 'helpful') +
@@ -337,27 +337,27 @@ define([], function () {
 
     readParameters = function (params) {
         if(params.newrev) { 
-            crev.revtype = glo.dec(params.newrev); }
+            crev.revtype = app.dec(params.newrev); }
         if(params.name) {
-            crev.name = glo.dec(params.name); }
+            crev.name = app.dec(params.name); }
         if(params.title) {
-            crev.title = glo.dec(params.title); }
+            crev.title = app.dec(params.title); }
         if(params.artist) {
-            crev.artist = glo.dec(params.artist); }
+            crev.artist = app.dec(params.artist); }
         if(params.author) {
-            crev.author = glo.dec(params.author); }
+            crev.author = app.dec(params.author); }
         if(params.publisher) {
-            crev.publisher = glo.dec(params.publisher); }
+            crev.publisher = app.dec(params.publisher); }
         if(params.album) {
-            crev.album = glo.dec(params.album); }
+            crev.album = app.dec(params.album); }
         if(params.starring) {
-            crev.starring = glo.dec(params.starring); }
+            crev.starring = app.dec(params.starring); }
         if(params.address) {
-            crev.address = glo.dec(params.address); }
+            crev.address = app.dec(params.address); }
         if(params.year) {
-            crev.year = glo.dec(params.year); }
+            crev.year = app.dec(params.year); }
         if(params.imguri) {
-            crev.imguri = glo.dec(params.imguri); }
+            crev.imguri = app.dec(params.imguri); }
     },
 
 
@@ -376,7 +376,7 @@ define([], function () {
 
 
     reviewTextValid = function (type, errors) {
-        var input = glo.byId('reviewtext');
+        var input = app.byId('reviewtext');
         if(input) {
             crev.text = input.value; }
     },
@@ -389,15 +389,15 @@ define([], function () {
         if(!params) {
             params = {}; }
         if(!url) {
-            urlin = glo.byId('urlin');
+            urlin = app.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
         reviewTextValid(crev.revtype, errs);
         if(errs.length > 0) {
             return; }
         if(!url) {  //bail out, but reflect any updates so far
-            return glo.review.display(); }
-        rbc = glo.byId('readurlbuttoncontainer');
+            return app.review.display(); }
+        rbc = app.byId('readurlbuttoncontainer');
         if(rbc) {
             rbc.innerHTML = "reading..."; }
         if(url) {
@@ -406,13 +406,13 @@ define([], function () {
             getURLReader(autourl, function (reader) {
                 reader.fetchData(crev, url, params); }); }
         else {
-            glo.review.display(); }
+            app.review.display(); }
     },
 
 
     setType = function (type) {
         crev.revtype = type;
-        glo.review.display();
+        app.review.display();
     },
 
 
@@ -430,8 +430,8 @@ define([], function () {
                 html += "<tr>"; }
             captype = reviewTypes[i].type.capitalize();
             html += "<td><div class=\"revtypeselectiondiv\">" + 
-                glo.imgntxt(reviewTypes[i].img, captype,
-                            "glo.review.setType('" + reviewTypes[i].type + "')",
+                app.imgntxt(reviewTypes[i].img, captype,
+                            "app.review.setType('" + reviewTypes[i].type + "')",
                             "#" + captype,
                             "Create a " + reviewTypes[i].type + " review") + 
                 "</div></td>";
@@ -452,24 +452,24 @@ define([], function () {
                 "<td align=\"right\">URL</td>" +
                 "<td align=\"left\">" +
                   "<input type=\"text\" id=\"urlin\" size=\"40\"" +
-                        " onchange=\"glo.review.readURL();return false;\"" + 
+                        " onchange=\"app.review.readURL();return false;\"" + 
                     "/>&nbsp;" +
                 "<span id=\"readurlbuttoncontainer\">" +
                   "<button type=\"button\" id=\"readurlbutton\"" +
-                         " onclick=\"glo.review.readURL();return false;\"" +
+                         " onclick=\"app.review.readURL();return false;\"" +
                          " title=\"Read review form fields from pasted URL\"" +
                   ">Read</button></span>" +
                 "</td>" +
               "</tr></table></li>"; }
         html += "</ul></div></div>";
-        if(!glo.byId('cmain')) {
-            glo.layout.initContent(); }
-        glo.out('cmain', html);
+        if(!app.byId('cmain')) {
+            app.layout.initContent(); }
+        app.out('cmain', html);
         //Setting focus on a phone zooms to bring up the keyboard, so the
         //type buttons don't get displayed.  Entering a URL is not the 
         //primary path forward so don't set focus here.
-        //glo.byId('urlin').focus();
-        glo.layout.adjust();
+        //app.byId('urlin').focus();
+        app.layout.adjust();
     },
 
 
@@ -482,24 +482,24 @@ define([], function () {
     //end up with two save AJAX calls queued up which results in a
     //duplicate review.
     picUploadForm = function () {
-        var odiv, html = "", revid = glo.instId(crev);
+        var odiv, html = "", revid = app.instId(crev);
         if(!revid) {
-            html = glo.byId('revformbuttonstd').innerHTML;
+            html = app.byId('revformbuttonstd').innerHTML;
             if(html.indexOf("<button") >= 0) { //not already saving
-                return glo.review.save(false, "uploadpic"); }
+                return app.review.save(false, "uploadpic"); }
             return; }  //already saving, just ignore the pic upload click
-        html += glo.paramsToFormInputs(glo.login.authparams());
+        html += app.paramsToFormInputs(app.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + revid + "\"/>";
         html += "<input type=\"hidden\" name=\"penid\" value=\"" +
             crev.penid + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
-            glo.enc(window.location.href + "#revedit=" + revid) + "\"/>";
+            app.enc(window.location.href + "#revedit=" + revid) + "\"/>";
         //build the rest of the form around that
         html = "<form action=\"/revpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
             "<div id=\"closeline\">" +
               "<a id=\"closedlg\" href=\"#close\"" +
-                " onclick=\"glo.cancelPicUpload();return false\">" + 
+                " onclick=\"app.cancelPicUpload();return false\">" + 
                   "&lt;close&nbsp;&nbsp;X&gt;</a>" +
             "</div>" + 
             html +
@@ -510,13 +510,13 @@ define([], function () {
               "<tr><td align=\"center\">" +
                     "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
             "</form>";
-        glo.out('overlaydiv', html);
-        odiv = glo.byId('overlaydiv');
+        app.out('overlaydiv', html);
+        odiv = app.byId('overlaydiv');
         odiv.style.top = "300px";
         odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = glo.skinner.lightbg();
-        glo.onescapefunc = glo.cancelPicUpload;
-        glo.byId('picfilein').focus();
+        odiv.style.backgroundColor = app.skinner.lightbg();
+        app.onescapefunc = app.cancelPicUpload;
+        app.byId('picfilein').focus();
     },
 
 
@@ -525,7 +525,7 @@ define([], function () {
         if(!keyval) {
             return ""; }
         imgstyle = "";
-        if(glo.isLowFuncBrowser()) {
+        if(app.isLowFuncBrowser()) {
             imgstyle = " style=\"width:125px;height:auto;\""; }
         if(review.imguri) {  //use auto-generated link if avail. No direct edit.
             html = "<img class=\"revimg\"" + imgstyle + 
@@ -537,7 +537,7 @@ define([], function () {
             if(mode === "edit") {
                 html += "<br/>" +
                     "<a href=\"#remove image link\"" +
-                      " onclick=\"glo.review.removeImageLink();" + 
+                      " onclick=\"app.review.removeImageLink();" + 
                                  "return false;\"" +
                     ">remove image</a>"; } }
         else {  //no auto-generated link image, allow personal pic upload
@@ -545,18 +545,18 @@ define([], function () {
             if(mode === "edit") {  //for editing, default is outline pic
                 html = "img/emptyprofpic.png"; }
             if(review.revpic) {  //use uploaded pic if available
-                html = "revpic?revid=" + glo.instId(review); }
+                html = "revpic?revid=" + app.instId(review); }
             html = "<img class=\"revimg\"" + imgstyle + " src=\"" + html + "\"";
             if(mode === "edit") {
                 html += " title=\"Click to upload a picture\"" +
-                    " onclick=glo.review.picUploadForm();return false;"; }
+                    " onclick=app.review.picUploadForm();return false;"; }
             html += "/>"; }
         return html;
     },
 
 
     errlabel = function (domid) {
-        var elem = glo.byId(domid);
+        var elem = app.byId(domid);
         if(elem) {
             elem.style.color = "red";
             if(elem.innerHTML.indexOf("*") < 0) {
@@ -588,7 +588,7 @@ define([], function () {
 
 
     noteURLValue = function () {
-        var input = glo.byId('urlin');
+        var input = app.byId('urlin');
         //if auto read url from initial form, note it and then reset
         if(autourl) {
             crev.url = autourl;
@@ -600,7 +600,7 @@ define([], function () {
 
 
     keyFieldsValid = function (type, errors) {
-        var cankey, input = glo.byId('keyin');
+        var cankey, input = app.byId('keyin');
         if(!input || !input.value) {
             errlabel('keyinlabeltd');
             errors.push("Please specify a value for " + type.key); }
@@ -608,7 +608,7 @@ define([], function () {
             crev[type.key] = input.value;
             cankey = crev[type.key]; }
         if(type.subkey) {
-            input = glo.byId('subkeyin');
+            input = app.byId('subkeyin');
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
                 errors.push("Please specify a value for " + type.subkey); }
@@ -616,7 +616,7 @@ define([], function () {
                 crev[type.subkey] = input.value;
                 cankey += crev[type.subkey]; } }
         if(cankey) {
-            crev.cankey = glo.canonize(cankey); }
+            crev.cankey = app.canonize(cankey); }
     },
 
 
@@ -661,7 +661,7 @@ define([], function () {
         var input, i;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
-            input = glo.byId("field" + i);
+            input = app.byId("field" + i);
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
     },
@@ -679,9 +679,9 @@ define([], function () {
 
     toggleKeyword = function (kwid) {
         var cbox, text, keyin, keywords, i, kw;
-        cbox = glo.byId(kwid);
+        cbox = app.byId(kwid);
         text = "";
-        keyin = glo.byId('keywordin');
+        keyin = app.byId('keywordin');
         keywords = keyin.value.split(",");
         for(i = 0; i < keywords.length; i += 1) {
             kw = keywords[i];
@@ -714,7 +714,7 @@ define([], function () {
                       " id=\"dkw" + i + "\"" + 
                       " value=\"" + type.dkwords[i] + "\"" +
                       //<IE8 onchange only fires after onblur
-                      " onclick=\"glo.review.toggleKeyword('dkw" + i + "');\"";
+                      " onclick=\"app.review.toggleKeyword('dkw" + i + "');\"";
                       //do not return false or check action is nullified
             if(crev.keywords.indexOf(type.dkwords[i]) >= 0) {
                 html += " checked=\"checked\""; }
@@ -740,12 +740,12 @@ define([], function () {
                 "<span class=\"secondaryfield\">Keywords</span> " +
                   "<input type=\"text\" id=\"keywordin\"" + 
                         " size=\"30\"" + 
-                        " value=\"" + glo.safestr(review.keywords) + "\"/>"; }
+                        " value=\"" + app.safestr(review.keywords) + "\"/>"; }
         else { //not editing
-            if(glo.safestr(review.keywords)) {
+            if(app.safestr(review.keywords)) {
                 html += "<div class=\"csvstrdiv\">" +
                     "<span class=\"secondaryfield\">Keywords</span> " +
-                    glo.safestr(review.keywords) + "</div>"; } }
+                    app.safestr(review.keywords) + "</div>"; } }
         return html;
     },
 
@@ -755,7 +755,7 @@ define([], function () {
     //           when people insert their own space separated keywords.
     keywordsValid = function (type, errors) {
         var input, words, i, csv = "";
-        input = glo.byId('keywordin');
+        input = app.byId('keywordin');
         if(input) {
             words = input.value || "";
             words = words.split(",");
@@ -774,27 +774,27 @@ define([], function () {
             if(review.revtype === "video" && review.title && review.artist) {
                 html += "<a href=\"#\"" + 
                           " title=\"Swap the artist and title values\"" +
-                          " onclick=\"glo.review.swapVidTitleAndArtist();" +
+                          " onclick=\"app.review.swapVidTitleAndArtist();" +
                                      "return false;\"" +
                     ">Swap title and artist</a>&nbsp;&nbsp;&nbsp;"; }
             //sometimes videos are really more music and vice versa
             if(review.revtype === "video") {
                 html += "<a href=\"#\"" +
                           " title=\"Review this as music\"" +
-                          " onclick=\"glo.review.changeReviewType('music');" +
+                          " onclick=\"app.review.changeReviewType('music');" +
                                      "return false;\"" +
                     ">Review as music</a>&nbsp;&nbsp;&nbsp;"; }
             if(review.revtype === "music") {
                 html += "<a href=\"#\"" +
                           " title=\"Review this as video\"" +
-                          " onclick=\"glo.review.changeReviewType('video');" +
+                          " onclick=\"app.review.changeReviewType('video');" +
                                      "return false;\"" +
                     ">Review as video</a>&nbsp;&nbsp;&nbsp;"; }
             //Might want to refresh the image link or get other info
             if(review.url) {
                 html += "<a href=\"#\"" +
                           " title=\"Read the URL to fill out review fields\"" +
-                          " onclick=\"glo.review.readURL('" + 
+                          " onclick=\"app.review.readURL('" + 
                                                          review.url + "');" +
                                      "return false;\"" +
                     ">Read review details from URL</a>&nbsp;&nbsp;&nbsp;"; }
@@ -804,9 +804,9 @@ define([], function () {
 
 
     swapVidTitleAndArtist = function () {
-        var titlein = glo.byId('keyin'),
+        var titlein = app.byId('keyin'),
             title = titlein.value,
-            artistin = glo.byId('field0'),
+            artistin = app.byId('field0'),
             artist = artistin.value;
         titlein.value = artist;
         artistin.value = title;
@@ -817,13 +817,13 @@ define([], function () {
         var errs = [];
         reviewTextValid(crev.revtype, errs);
         crev.revtype = typeval;
-        glo.review.display();
+        app.review.display();
     },
 
 
     removeImageLink = function () {
         crev.imguri = "";
-        glo.review.display();
+        app.review.display();
     },
 
 
@@ -833,24 +833,24 @@ define([], function () {
         if(activebuttons) {
             //helpful button. init unchecked then update after lookup
             html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">" +
-                glo.imgntxt("helpfulq.png",
+                app.imgntxt("helpfulq.png",
                             "Helpful",
-                            "glo.review.helpful()", "#helpful",
+                            "app.review.helpful()", "#helpful",
                             "Mark this review as helpful", "", "helpful") +
                 "</div></td>";
             //remember button. init unchecked and then update after lookup
             html += "<td><div id=\"memobutton\" class=\"buttondiv\">" +
-                glo.imgntxt("rememberq.png",
+                app.imgntxt("rememberq.png",
                             "Remember",
-                            "glo.review.memo()", "#memo",
+                            "app.review.memo()", "#memo",
                             "Add this to remembered reviews", "", "memo") +
                 "</div></td>";
             //respond button
             html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
                   //this contents is rewritten after looking up their review
-                  glo.imgntxt("writereview.png",
+                  app.imgntxt("writereview.png",
                               "Your review",
-                              "glo.review.respond()", "#respond",
+                              "app.review.respond()", "#respond",
                               "Edit your corresponding review", "", "respond") +
                 "</div></td>"; }
         else {  //just place markers, no link actions if it's your own review
@@ -883,37 +883,37 @@ define([], function () {
         var staticurl, html;
         //user just chose type for editing
         if(!keyval) {
-            glo.onescapefunc = glo.review.reset;
+            app.onescapefunc = app.review.reset;
             html = "<div id=\"revbuttonsdiv\">" + 
                 "<button type=\"button\" id=\"cancelbutton\"" +
-                       " onclick=\"glo.review.reset(true);return false;\"" +
+                       " onclick=\"app.review.reset(true);return false;\"" +
                 ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
-                       " onclick=\"glo.review.validate();return false;\"" +
+                       " onclick=\"app.review.validate();return false;\"" +
                 ">Create Review</button></div>"; }
         //have key fields and editing full review
         else if(mode === "edit") {
-            glo.onescapefunc = glo.review.reset;
+            app.onescapefunc = app.review.reset;
             html = "<div id=\"revbuttonsdiv\">" + 
                 "<button type=\"button\" id=\"cancelbutton\"" +
-                       " onclick=\"glo.review.reset(" + 
-                               (glo.instId(review)? "false" : "true") +
+                       " onclick=\"app.review.reset(" + 
+                               (app.instId(review)? "false" : "true") +
                                                   ");return false;\"" +
                     ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
-                       " onclick=\"glo.review.save(true,'');return false;\"" +
+                       " onclick=\"app.review.save(true,'');return false;\"" +
                     ">Save</button>&nbsp;" +
                 "</div>"; }
         //reading a previously written review
-        else if(review.penid === glo.pen.currPenId()) {  //is review owner
-            glo.onescapefunc = null;
-            staticurl = "statrev/" + glo.instId(review);
+        else if(review.penid === app.pen.currPenId()) {  //is review owner
+            app.onescapefunc = null;
+            staticurl = "statrev/" + app.instId(review);
             html = "<div id=\"revbuttonsdiv\">" + 
                 "<button type=\"button\" id=\"deletebutton\"" +
-                       " onclick=\"glo.review.delrev();return false;\"" +
+                       " onclick=\"app.review.delrev();return false;\"" +
                 ">Delete</button>&nbsp;" + 
                 "<button type=\"button\" id=\"editbutton\"" +
-                       " onclick=\"glo.review.display();return false;\"" +
+                       " onclick=\"app.review.display();return false;\"" +
                 ">Edit</button>&nbsp;&nbsp;" + 
                 "<a href=\"" + staticurl + "\" class=\"permalink\"" +
                   " onclick=\"window.open('" + staticurl + "');" + 
@@ -953,9 +953,9 @@ define([], function () {
                 "</span>"; }
         html += "&nbsp;" + badgeImageHTML(type) + "</td>";
         if(mode === "edit") {
-            onchange = "glo.review.validate();return false;";
+            onchange = "app.review.validate();return false;";
             if(type.subkey) {
-                onchange = "glo.byId('subkeyin').focus();return false;"; }
+                onchange = "app.byId('subkeyin').focus();return false;"; }
             fval = review[type.key] || "";
             html += "<td><input type=\"text\" id=\"keyin\" size=\"30\"" +
                               " onchange=\"" + onchange + "\"" + 
@@ -966,7 +966,7 @@ define([], function () {
                                   " size=\"30\"" +
                                   " value=\"" + fval + "\"/></td>"; }
             else if(type.subkey) {
-                onchange = "glo.review.validate();return false;";
+                onchange = "app.review.validate();return false;";
                 fval = review[type.subkey] || "";
                 html += "<td id=\"subkeyinlabeltd\">" + 
                     "<input type=\"text\" id=\"subkeyin\"" + 
@@ -991,7 +991,7 @@ define([], function () {
 
     //return a good width for a text entry area
     textTargetWidth = function () {
-        var targetwidth = Math.max((glo.winw - 350), 200);
+        var targetwidth = Math.max((app.winw - 350), 200);
         targetwidth = Math.min(targetwidth, 750);
         return targetwidth;
     },
@@ -1004,8 +1004,8 @@ define([], function () {
         if(keyval) {  //have the basics so display text area
             fval = review.text || "";
             targetwidth = textTargetWidth();
-            style = "color:" + glo.colors.text + ";" +
-                "background-color:" + glo.skinner.lightbg() + ";" +
+            style = "color:" + app.colors.text + ";" +
+                "background-color:" + app.skinner.lightbg() + ";" +
                 "width:" + targetwidth + "px;" +
                 "height:100px;padding:2px 5px;";
             if(mode === "edit") {
@@ -1019,11 +1019,11 @@ define([], function () {
                     fval + "</textarea>"; }
             else {
                 fval = fval || "No comment";
-                style += "border:1px solid " + glo.skinner.darkbg() + ";" +
+                style += "border:1px solid " + app.skinner.darkbg() + ";" +
                     "overflow:auto;margin:auto";
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
-                    glo.linkify(fval) + "</div>"; } }
+                    app.linkify(fval) + "</div>"; } }
         else {  //keyval for review not set yet, provide autocomplete area
             html += "<div id=\"revautodiv\" class=\"autocomplete\"" + 
                         " style=\"width:" + targetwidth + "px;\"" +
@@ -1063,7 +1063,7 @@ define([], function () {
     //    clientX: relative to the top left of browser window
     geoPos = function (event, domelem, pos) {
         if(!event || event.pageX) {
-            return glo.dojo.domgeo.position(domelem); }
+            return app.dojo.domgeo.position(domelem); }
         if(!pos) {
             pos = { h: domelem.offsetHeight, 
                     w: domelem.offsetWidth, 
@@ -1089,10 +1089,10 @@ define([], function () {
 
     ratingMenuSelect = function (rating) {
         var html;
-        glo.cancelPicUpload();  //clears overlaydiv and hides it
+        app.cancelPicUpload();  //clears overlaydiv and hides it
         crev.rating = rating;
         html = starsImageHTML(crev.rating, true);
-        glo.out('stardisp', html);
+        app.out('stardisp', html);
     },
 
 
@@ -1101,27 +1101,27 @@ define([], function () {
         starPointingActive = false;
         for(i = 0; i <= 100; i += 10) {
             html += "<div class=\"ratingmenudiv\" id=\"starsel" + i + "\"" +
-                        " onclick=\"glo.review.ratmenusel(" + i + ");" + 
+                        " onclick=\"app.review.ratmenusel(" + i + ");" + 
                                    "return false;\"" + 
                 ">" + starsImageHTML(i) + "</div>"; }
-        glo.out('overlaydiv', html);
-        odiv = glo.byId('overlaydiv');
+        app.out('overlaydiv', html);
+        odiv = app.byId('overlaydiv');
         odiv.style.top = "100px";
         //bring up to the right of where the touch is occurring, otherwise
         //you can get an instant select as the touch is applied to the div
         odiv.style.left = String(Math.round(evtx + 50)) + "px";
         odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = glo.skinner.lightbg();
-        glo.onescapefunc = glo.cancelPicUpload;
+        odiv.style.backgroundColor = app.skinner.lightbg();
+        app.onescapefunc = app.cancelPicUpload;
     },
 
 
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
-        span = glo.byId('stardisp');
+        span = app.byId('stardisp');
         spanloc = geoPos(event, span);
         evtx = geoXY(event).x;
-        //glo.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
+        //app.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
         if(event.changedTouches && event.changedTouches[0]) {
             evtx = geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
@@ -1129,19 +1129,19 @@ define([], function () {
             setTimeout(function () {  //separate event handling
                 selectRatingByMenu(evtx); }, 20);
             return; }
-        //glo.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
+        //app.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
-        //glo.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
+        //app.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
         if(roundup) {
             sval = starRating(sval, true).value; }
         crev.rating = sval;
         html = starsImageHTML(crev.rating, true);
-        glo.out('stardisp', html);
+        app.out('stardisp', html);
     },
 
 
     starPointing = function (event) {
-        //glo.out('keyinlabeltd', "star pointing");  //debug
+        //app.out('keyinlabeltd', "star pointing");  //debug
         starPointingActive = true;
         starDisplayAdjust(event, true);
     },
@@ -1149,15 +1149,15 @@ define([], function () {
 
     starStopPointing = function (event) {
         //var pos = geoXY(event);  //debug
-        //glo.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
-        //glo.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
+        //app.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
+        //app.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
         starPointingActive = false;
     },
 
 
     starStopPointingBoundary = function (event) {
         var td, tdpos, xypos, evtx, evty;
-        td = glo.byId('starstd');
+        td = app.byId('starstd');
         tdpos = geoPos(event, td);
         xypos = geoXY(event);
         evtx = xypos.x;
@@ -1166,17 +1166,17 @@ define([], function () {
             xypos = geoXY(event.changedTouches[0]);
             evtx = xypos.x;
             evty = xypos.y; }
-        //glo.out('starslabeltd', " " + evtx + ", " + evty);  //debug
+        //app.out('starslabeltd', " " + evtx + ", " + evty);  //debug
         if(evtx < tdpos.x || evtx > tdpos.x + tdpos.w ||
            evty < tdpos.y || evty > tdpos.y + tdpos.h) {
-            //glo.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
+            //app.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
             starPointingActive = false; }
     },
 
 
     starPointAdjust = function (event) {
         if(starPointingActive) {
-            //glo.out('keyinlabeltd', "star point adjust...");  //debug
+            //app.out('keyinlabeltd', "star point adjust...");  //debug
             starDisplayAdjust(event); }
     },
 
@@ -1230,30 +1230,30 @@ define([], function () {
                         secondaryAttr("Manufacturer", attrs.content) +
                         secondaryAttr("ProductGroup", attrs.content); } }
             html += "<li><a href=\"" + url + "\"" + 
-                          " onclick=\"glo.review.readURL('" + url + "');" +
+                          " onclick=\"app.review.readURL('" + url + "');" +
                                      "return false;\"" +
                 ">" + title + "</a></li>";
             itemdat = xmlExtract("Item", itemdat.remainder); }
         html += "</ul>";
-        glo.out('revautodiv', html);
+        app.out('revautodiv', html);
     },
 
 
     callAmazonForAutocomplete = function (acfunc) {
         var url, critsec = "";
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
-            glo.enc(autocomptxt);
-        glo.call(url, 'GET', null,
+            app.enc(autocomptxt);
+        app.call(url, 'GET', null,
                  function (json) {
-                     writeAutocompLinks(glo.dec(json[0].content));
+                     writeAutocompLinks(app.dec(json[0].content));
                      setTimeout(acfunc, 400);
-                     glo.layout.adjust(); },
+                     app.layout.adjust(); },
                  function (code, errtxt) {
-                     glo.out('revautodiv', "");
-                     glo.log("Amazon info retrieval failed code " +
+                     app.out('revautodiv', "");
+                     app.log("Amazon info retrieval failed code " +
                              code + ": " + errtxt);
                      setTimeout(acfunc, 400);
-                     glo.layout.adjust(); },
+                     app.layout.adjust(); },
                  critsec);
     },
 
@@ -1263,14 +1263,14 @@ define([], function () {
         if(!gplacesvc && google && google.maps && google.maps.places) {
             //this can fail intermittently, restarting the review usually works
             try {
-                mapdiv = glo.byId('mapdiv');
+                mapdiv = app.byId('mapdiv');
                 map = new google.maps.Map(mapdiv, {
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
                     center: latlng,
                     zoom: 15 });
                 gplacesvc = new google.maps.places.PlacesService(map);
             } catch (problem) {
-                glo.err("Initializing google maps places failed, so the\n" +
+                app.err("Initializing google maps places failed, so the\n" +
                         "review url and address were not filled out.\n\n" + 
                         "mapdiv: " + mapdiv + "\n" +
                         "problem: " + problem);
@@ -1281,7 +1281,7 @@ define([], function () {
                 function (place, status) {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
                         crev.address = place.formatted_address;
-                        crev.name = place.name || glo.byId('keyin').value;
+                        crev.name = place.name || app.byId('keyin').value;
                         crev.url = crev.url || place.website || "";
                         readURL(crev.url); }
                     }); }
@@ -1291,14 +1291,14 @@ define([], function () {
     selectLocation = function (addr, ref) {
         var html;
         if(addr) {  //even if all other calls fail, use the selected name
-            glo.byId('keyin').value = glo.dec(addr); }
+            app.byId('keyin').value = app.dec(addr); }
         if(!geoc && google && google.maps && google.maps.places) {
             geoc = new google.maps.Geocoder(); }
         if(geoc && addr) {
             try {
-                addr = glo.dec(addr);
+                addr = app.dec(addr);
                 html = "<p>" + addr + "</p><div id=\"mapdiv\"></div>";
-                glo.out('revautodiv', html);
+                app.out('revautodiv', html);
                 //give mapdiv a chance to be output before this call
                 setTimeout(function () {
                     geoc.geocode({address: addr}, function (results, status) {
@@ -1308,7 +1308,7 @@ define([], function () {
                                             ref); }
                         }); }, 50);
             } catch (problem) {
-                glo.err("selectLocation failed: " + problem);
+                app.err("selectLocation failed: " + problem);
             } }
     },
 
@@ -1324,15 +1324,15 @@ define([], function () {
                         for(i = 0; i < results.length; i += 1) {
                             place = results[i];
                             html += "<li><a href=\"#selectloc\"" + 
-                                " onclick=\"glo.review.selectloc('" +
-                                    glo.embenc(place.description) + "','" +
+                                " onclick=\"app.review.selectloc('" +
+                                    app.embenc(place.description) + "','" +
                                     place.reference + "');return false;\"" +
                                 ">" + place.description + "</a>" +
                                 "</li>"; } }
                     html += "</ul><img src=\"img/poweredbygoogle.png\"/>";
-                    glo.out('revautodiv', html);
+                    app.out('revautodiv', html);
                     setTimeout(acfunc, 400);
-                    glo.layout.adjust(); }); }
+                    app.layout.adjust(); }); }
         else {
             setTimeout(acfunc, 400); }
     },
@@ -1340,10 +1340,10 @@ define([], function () {
 
     autocompletion = function (event) {
         var srchtxt;
-        if(glo.byId('revautodiv') && glo.byId('keyin')) {
-            srchtxt = glo.byId('keyin').value;
-            if(glo.byId('subkeyin')) {
-                srchtxt += " " + glo.byId('subkeyin').value; }
+        if(app.byId('revautodiv') && app.byId('keyin')) {
+            srchtxt = app.byId('keyin').value;
+            if(app.byId('subkeyin')) {
+                srchtxt += " " + app.byId('subkeyin').value; }
             if(srchtxt !== autocomptxt) {
                 autocomptxt = srchtxt;
                 if(crev.revtype === 'book' || crev.revtype === 'movie') {
@@ -1360,13 +1360,13 @@ define([], function () {
         var html, imghtml, msghtml = "Your review";
         if(review) {
             setTimeout(function () {
-                glo.lcs.verifyCorrespondingLinks(review, crev); }, 100);
+                app.lcs.verifyCorrespondingLinks(review, crev); }, 100);
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
             msghtml = "Your review: " + imghtml; }
-        html = glo.imgntxt("writereview.png", msghtml,
-                           "glo.review.respond()", "#respond",
+        html = app.imgntxt("writereview.png", msghtml,
+                           "app.review.respond()", "#respond",
                            "Edit your corresponding review", "", "respond");
-        glo.out('respondbutton', html);
+        app.out('respondbutton', html);
     },
 
 
@@ -1394,17 +1394,17 @@ define([], function () {
                     if(t20[i].cankey === crev.cankey && 
                        t20[i].revtype === crev.revtype) {
                         return contfunc(homepen, t20[i]); } } } }
-        params = "penid=" + glo.instId(homepen) + 
+        params = "penid=" + app.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
-            "&" + glo.login.authparams();
-        glo.call("revbykey?" + params, 'GET', null,
+            "&" + app.login.authparams();
+        app.call("revbykey?" + params, 'GET', null,
                  function (revs) {
                      var rev = null;
                      if(revs.length > 0) {
                          rev = revs[0]; }
                      contfunc(homepen, rev); },
                  function (code, errtxt) {
-                     glo.err("findCorrespondingReview failed " + code + 
+                     app.err("findCorrespondingReview failed " + code + 
                              " " + errtxt); },
                  critsec);
     },
@@ -1412,13 +1412,13 @@ define([], function () {
 
     updateCachedReviewTags = function (field, updrevtags) {
         var i, penref, rtid, replaced;
-        rtid = glo.instId(updrevtags[0]);
-        penref = glo.pen.currPenRef();
+        rtid = app.instId(updrevtags[0]);
+        penref = app.pen.currPenRef();
         if(!penref[field]) {
             penref[field] = updrevtags; }
         else {
             for(i = 0; i < penref[field].length; i += 1) {
-                if(glo.instId(penref[field][i]) === rtid) {
+                if(app.instId(penref[field][i]) === rtid) {
                     penref[field][i] = updrevtags[0];
                     replaced = true; } }
             if(!replaced) {  //must prepend if remembered
@@ -1426,7 +1426,7 @@ define([], function () {
         if(field === "remembered") {
             //ensure helpful marks for anything remembered are found
             updateCachedReviewTags('helpful', updrevtags); }
-        glo.lcs.getRevRef(updrevtags[0].revid).revlink = null;
+        app.lcs.getRevRef(updrevtags[0].revid).revlink = null;
     },
 
 
@@ -1439,20 +1439,20 @@ define([], function () {
 
     toggleHelpfulButton = function (value) {
         var img, tbl, data, critsec = "";
-        img = glo.byId('helpfulimg');
+        img = app.byId('helpfulimg');
         if(!img) {  //spurious call, button not displayed
             return; }
-        tbl = glo.byId('helpfultable');
+        tbl = app.byId('helpfultable');
         if(value === "set") {  //just initializing the display
             img.src = "img/helpful.png";
             tbl.title = "Remove mark as helpful";
             return; }
         img.className = "navicodis";  //grey out the image
         value = (img.src.indexOf("helpful.png") > 0)? "no" : "yes";  //toggle
-        data = "penid=" + glo.instId(glo.pen.currPenRef().pen) +
-            "&revid=" + glo.instId(crev) +
+        data = "penid=" + app.instId(app.pen.currPenRef().pen) +
+            "&revid=" + app.instId(crev) +
             "&helpful=" + value;
-        glo.call("notehelpful?" + glo.login.authparams(), 'POST', data,
+        app.call("notehelpful?" + app.login.authparams(), 'POST', data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('helpful', updatedrevtags);
                      if(isHelpful(updatedrevtags[0])) {
@@ -1463,7 +1463,7 @@ define([], function () {
                          tbl.title = "Mark this review as helpful"; }
                      img.className = "navico"; },  //ungrey the image
                  function (code, errtxt) {
-                     glo.err("toggleHelpfulButton failed " + code +
+                     app.err("toggleHelpfulButton failed " + code +
                              " " + errtxt); },
                  critsec);
     },
@@ -1472,7 +1472,7 @@ define([], function () {
     foundHelpful = function (revid, penref) {
         var i;
         if(!penref) {
-            penref = glo.pen.currPenRef(); }
+            penref = app.pen.currPenRef(); }
         for(i = 0; penref.helpful && i < penref.helpful.length; i += 1) {
             if(penref.helpful[i].revid === revid && 
                isHelpful(penref.helpful[i])) {
@@ -1484,15 +1484,15 @@ define([], function () {
     loadHelpful = function (callback, penref) {
         var params, critsec = "";
         if(!penref) {
-            penref = glo.pen.currPenRef(); }
-        params = "penid=" + glo.instId(penref.pen) + 
-            "&" + glo.login.authparams();
-        glo.call("srchhelpful?" + params, 'GET', null,
+            penref = app.pen.currPenRef(); }
+        params = "penid=" + app.instId(penref.pen) + 
+            "&" + app.login.authparams();
+        app.call("srchhelpful?" + params, 'GET', null,
                  function (revtags) {
                      penref.helpful = revtags;
                      callback(); },
                  function (code, errtxt) {
-                     glo.err("initHelpfulButtonSetting failed " + code +
+                     app.err("initHelpfulButtonSetting failed " + code +
                              " " + errtxt); },
                  critsec);
     },
@@ -1500,7 +1500,7 @@ define([], function () {
 
     initHelpfulButtonSetting = function (penref, review) {
         if(penref.helpful) {  //local data initialized
-            if(foundHelpful(glo.instId(review), penref)) {
+            if(foundHelpful(app.instId(review), penref)) {
                 toggleHelpfulButton("set"); } }
         else {  //penref.helpful not defined yet. init from db and retry
             loadHelpful(function () {
@@ -1517,34 +1517,34 @@ define([], function () {
 
     toggleMemoButton = function (value) {
         var img, tbl, data, critsec = "";
-        img = glo.byId('memoimg');
+        img = app.byId('memoimg');
         if(!img) {  //spurious call, button not displayed
             return; }
-        tbl = glo.byId('memotable');
+        tbl = app.byId('memotable');
         if(value === "set") {  //just initializing the display
             img.src = "img/remembered.png";
             tbl.title = "Remove from your remembered reviews";
-            glo.out('memotxttd', "Remembered");
+            app.out('memotxttd', "Remembered");
             return; }
         img.className = "navicodis";  //grey out the image
         value = (img.src.indexOf("remembered.png") > 0)? "no" : "yes"; //toggle
-        data = "penid=" + glo.instId(glo.pen.currPenRef().pen) +
-            "&revid=" + glo.instId(crev) +
+        data = "penid=" + app.instId(app.pen.currPenRef().pen) +
+            "&revid=" + app.instId(crev) +
             "&remember=" + value;
-        glo.call("noteremem?" + glo.login.authparams(), 'POST', data,
+        app.call("noteremem?" + app.login.authparams(), 'POST', data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('remembered', updatedrevtags);
                      if(isRemembered(updatedrevtags[0])) {
                          img.src = "img/remembered.png";
                          tbl.title = "Remove from your remembered reviews";
-                         glo.out('memotxttd', "Remembered"); }
+                         app.out('memotxttd', "Remembered"); }
                      else {
                          img.src = "img/rememberq.png";
                          tbl.title = "Add to your remembered reviews";
-                         glo.out('memotxttd', "Remember"); }
+                         app.out('memotxttd', "Remember"); }
                      img.className = "navico"; },  //ungrey the image
                  function (code, errtxt) {
-                     glo.err("toggleMemoButton failed " + code +
+                     app.err("toggleMemoButton failed " + code +
                              " " + errtxt); },
                  critsec);
     },
@@ -1553,21 +1553,21 @@ define([], function () {
     initMemoButtonSetting = function (penref, review) {
         var i, revid, params, critsec = "";
         if(penref.remembered) {  //local data initialized
-            revid = glo.instId(review);
+            revid = app.instId(review);
             for(i = 0; i < penref.remembered.length; i += 1) {
                 if(penref.remembered[i].revid === revid &&
                    isRemembered(penref.remembered[i])) {
                     toggleMemoButton("set");
                     break; } } }
         else { //penref.remembered not defined yet. init from db and retry
-            params = "penid=" + glo.instId(penref.pen) +
-                "&" + glo.login.authparams();
-            glo.call("srchremem?" + params, 'GET', null,
+            params = "penid=" + app.instId(penref.pen) +
+                "&" + app.login.authparams();
+            app.call("srchremem?" + params, 'GET', null,
                      function (memos) {
                          penref.remembered = memos;
                          initMemoButtonSetting(penref, review); },
                      function (code, errtxt) {
-                         glo.err("initMemoButtonSetting failed " + code +
+                         app.err("initMemoButtonSetting failed " + code +
                                  " " + errtxt); },
                      critsec); }
     },
@@ -1579,13 +1579,13 @@ define([], function () {
                        corresponding: "$Name also reviewed this" },
             html, pen, title, funcstr;
         pen = penref.pen;
-        title = titles[field].replace("$Name", glo.ndq(pen.name));
-        funcstr = "glo.profile.byprofid('" + glo.instId(pen) + "')";
+        title = titles[field].replace("$Name", app.ndq(pen.name));
+        funcstr = "app.profile.byprofid('" + app.instId(pen) + "')";
         if(revref) {
-            funcstr = "glo.profile.readReview('" + 
-                                        glo.instId(revref.rev) + "')"; }
+            funcstr = "app.profile.readReview('" + 
+                                        app.instId(revref.rev) + "')"; }
         html = "<a" + 
-            " href=\"#" + glo.ndq(pen.name) + "\"" +
+            " href=\"#" + app.ndq(pen.name) + "\"" +
             " onclick=\"" + funcstr + ";return false;\"" +
             " title=\"" + title + "\"" +
             ">" + pen.name + "</a>";
@@ -1596,10 +1596,10 @@ define([], function () {
     displayReviewLinks = function () {
         var divs = ["hlinksdiv", "rlinksdiv", "clinksdiv"],
             fields = ["helpful", "remembered", "corresponding"],
-            revref = glo.lcs.getRevRef(crev),  //rev is loaded
+            revref = app.lcs.getRevRef(crev),  //rev is loaded
             html, i, pens, j, penrevid, penid, penrevref, penref;
         if(!revref.revlink) {
-            return glo.lcs.verifyReviewLinks(displayReviewLinks); }
+            return app.lcs.verifyReviewLinks(displayReviewLinks); }
         html = "";
         for(i = 0; i < divs.length; i += 1) {
             pens = revref.revlink[fields[i]];
@@ -1610,41 +1610,41 @@ define([], function () {
                     if(penid.indexOf(":") > 0) {
                         penid = penid.split(":");
                         penrevid = penid[0]; penid = penid[1]; }
-                    penref = glo.lcs.getPenRef(penid);
+                    penref = app.lcs.getPenRef(penid);
                     if(penref.status === "not cached") {
-                        return glo.lcs.getPenFull(penid, displayReviewLinks); }
+                        return app.lcs.getPenFull(penid, displayReviewLinks); }
                     if(penrevid) {
-                        penrevref = glo.lcs.getRevRef(penrevid);
+                        penrevref = app.lcs.getRevRef(penrevid);
                         if(penrevref.status === "not cached") {
-                            return glo.lcs.getRevFull(penrevid, 
+                            return app.lcs.getRevFull(penrevid, 
                                                       displayReviewLinks); } }
-                    if(penref.pen && penref.pen !== glo.pen.currPenRef().pen) {
+                    if(penref.pen && penref.pen !== app.pen.currPenRef().pen) {
                         if(html) {
                             html += ", "; }
                         html += getReviewLinkHTML(fields[i], penref, 
                                                   penrevref); } }
-                glo.out(divs[i], html);
+                app.out(divs[i], html);
                 html = ""; } }
     },
 
 
     startReviewFormDynamicElements = function (revpen, review) {
-        if(glo.byId('helpfulbutton')) {
-            initHelpfulButtonSetting(glo.pen.currPenRef(), review); }
-        if(glo.byId('memobutton')) {
-            initMemoButtonSetting(glo.pen.currPenRef(), review); }
-        if(glo.byId('respondbutton')) {
-            glo.pen.getPen(function (homepen) {
+        if(app.byId('helpfulbutton')) {
+            initHelpfulButtonSetting(app.pen.currPenRef(), review); }
+        if(app.byId('memobutton')) {
+            initMemoButtonSetting(app.pen.currPenRef(), review); }
+        if(app.byId('respondbutton')) {
+            app.pen.getPen(function (homepen) {
                 findCorrespondingReview(homepen, 
                                         displayCorrespondingReviewInfo); 
             }); }
-        if(glo.byId('hlinksdiv')) {
+        if(app.byId('hlinksdiv')) {
             displayReviewLinks(); }
-        if(glo.byId('revautodiv')) {
+        if(app.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }
-        if(glo.byId('sharediv')) {
-            glo.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
+        if(app.byId('sharediv')) {
+            app.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
                                       revpen, review); }
     },
 
@@ -1678,28 +1678,28 @@ define([], function () {
             reviewFormButtonsHTML(pen, review, type, keyval, mode) + "</td>" +
           "</tr>" +
         "</table></div>";
-        if(!glo.byId('cmain')) {
-            glo.layout.initContent(); }
-        glo.out('cmain', html);
+        if(!app.byId('cmain')) {
+            app.layout.initContent(); }
+        app.out('cmain', html);
         if(mode === "edit") {
-            glo.onx('mousedown',   'starstd', starPointing);
-            glo.onx('mouseup',     'starstd', starStopPointing);
-            glo.onx('mouseout',    'starstd', starStopPointingBoundary);
-            glo.onx('mousemove',   'starstd', starPointAdjust);
-            glo.onx('click',       'starstd', starClick);
-            glo.onx('touchstart',  'starstd', starPointing);
-            glo.onx('touchend',    'starstd', starStopPointing);
-            glo.onx('touchcancel', 'starstd', starStopPointing);
-            glo.onx('touchmove',   'starstd', starPointAdjust);
+            app.onx('mousedown',   'starstd', starPointing);
+            app.onx('mouseup',     'starstd', starStopPointing);
+            app.onx('mouseout',    'starstd', starStopPointingBoundary);
+            app.onx('mousemove',   'starstd', starPointAdjust);
+            app.onx('click',       'starstd', starClick);
+            app.onx('touchstart',  'starstd', starPointing);
+            app.onx('touchend',    'starstd', starStopPointing);
+            app.onx('touchcancel', 'starstd', starStopPointing);
+            app.onx('touchmove',   'starstd', starPointAdjust);
             if(!keyval) {
-                glo.byId('keyin').focus(); }
-            else if(glo.byId('subkeyin') && !review[type.subkey]) {
-                glo.byId('subkeyin').focus(); }
+                app.byId('keyin').focus(); }
+            else if(app.byId('subkeyin') && !review[type.subkey]) {
+                app.byId('subkeyin').focus(); }
             else {
-                glo.byId('reviewtext').focus(); } }
-        glo.layout.adjust();
+                app.byId('reviewtext').focus(); } }
+        app.layout.adjust();
         if(errmsg) {
-            glo.out('revsavemsg', errmsg); }
+            app.out('revsavemsg', errmsg); }
         startReviewFormDynamicElements(pen, review);
     },
 
@@ -1725,39 +1725,39 @@ define([], function () {
                 if(errors.length > 0) {
                     for(i = 0; i < errors.length; i += 1) {
                         errtxt += errors[i] + "<br/>"; }
-                    glo.out('revsavemsg', errtxt);
+                    app.out('revsavemsg', errtxt);
                     return; } }
             //if no type, or if all fields valid, then redisplay
-            glo.review.display(); }, 400);
+            app.review.display(); }, 400);
     },
 
 
     cancelReview = function (force) {
-        glo.onescapefunc = null; 
+        app.onescapefunc = null; 
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }
-        if(force || !crev || !glo.instId(crev)) {
+        if(force || !crev || !app.instId(crev)) {
             crev = {};                    //so clear it all out 
             autourl = "";
             attribution = "";
             starPointingActive = false;
             autocomptxt = "";
-            glo.review.display(); }       //and restart
+            app.review.display(); }       //and restart
         else {
-            glo.review.displayRead(); }
+            app.review.displayRead(); }
     },
 
 
     saveReview = function (doneEditing, actionstr) {
         var errors = [], i, errtxt = "", type, url, data, critsec = "", html;
         //remove save button immediately to avoid double click dupes...
-        html = glo.byId('revformbuttonstd').innerHTML;
-        glo.out('revformbuttonstd', "Verifying...");
+        html = app.byId('revformbuttonstd').innerHTML;
+        app.out('revformbuttonstd', "Verifying...");
         type = findReviewType(crev.revtype);
         if(!type) {
-            glo.out('revformbuttonstd', html);
-            glo.out('revsavemsg', "Unknown review type");
+            app.out('revformbuttonstd', html);
+            app.out('revsavemsg', "Unknown review type");
             return; }
         noteURLValue();
         keyFieldsValid(type, errors);
@@ -1766,51 +1766,51 @@ define([], function () {
         reviewTextValid(type, errors);
         verifyRatingStars(type, errors, actionstr);
         if(errors.length > 0) {
-            glo.out('revformbuttonstd', html);
+            app.out('revformbuttonstd', html);
             for(i = 0; i < errors.length; i += 1) {
                 errtxt += errors[i] + "<br/>"; }
-            glo.out('revsavemsg', errtxt);
+            app.out('revsavemsg', errtxt);
             return; }
-        glo.out('revformbuttonstd', "Saving...");
-        glo.onescapefunc = null;
+        app.out('revformbuttonstd', "Saving...");
+        app.onescapefunc = null;
         url = "updrev?";
-        if(!glo.instId(crev)) {
+        if(!app.instId(crev)) {
             url = "newrev?";
             crev.svcdata = ""; }
-        data = glo.objdata(crev);
-        glo.call(url + glo.login.authparams(), 'POST', data,
+        data = app.objdata(crev);
+        app.call(url + app.login.authparams(), 'POST', data,
                  function (reviews) {
-                     crev = glo.lcs.putRev(reviews[0]).rev;
-                     setTimeout(glo.pen.refreshCurrent, 50); //refetch top 20
+                     crev = app.lcs.putRev(reviews[0]).rev;
+                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                      setTimeout(function () {  //update corresponding links
-                         glo.lcs.checkAllCorresponding(crev); }, 200);
+                         app.lcs.checkAllCorresponding(crev); }, 200);
                      if(doneEditing) {
                          attribution = "";
-                         glo.review.displayRead(actionstr); }
+                         app.review.displayRead(actionstr); }
                      else {
-                         glo.review.display(actionstr); } },
+                         app.review.display(actionstr); } },
                  function (code, errtxt) {
-                     glo.log("saveReview failed code: " + code + " " +
+                     app.log("saveReview failed code: " + code + " " +
                              errtxt);
-                     glo.review.display(); },
+                     app.review.display(); },
                  critsec);
     },
 
 
     initWithId = function (revid, mode, action, errmsg) {
         var critsec = "", params = "revid=" + revid;
-        glo.call("revbyid?" + params, 'GET', null,
+        app.call("revbyid?" + params, 'GET', null,
                  function (revs) {
                      if(revs.length > 0) {
                          crev = revs[0];
                          if(mode === "edit") {
-                             glo.review.display(action, errmsg); }
+                             app.review.display(action, errmsg); }
                          else {
-                             glo.review.displayRead(action); } }
+                             app.review.displayRead(action); } }
                      else {
-                         glo.err("initWithId found no review id " + revid); } },
+                         app.err("initWithId found no review id " + revid); } },
                  function (code, errtxt) {
-                     glo.err("initWithId failed code " + code + ": " +
+                     app.err("initWithId failed code " + code + ": " +
                              errtxt); },
                  critsec);
     },
@@ -1821,8 +1821,8 @@ define([], function () {
     copyAndEdit = function (pen, review) {
         if(!review) {
             review = {};
-            review.srcrev = glo.instId(crev);
-            review.penid = glo.instId(pen);
+            review.srcrev = app.instId(crev);
+            review.penid = app.instId(pen);
             review.revtype = crev.revtype;
             review.rating = crev.rating;  //initial value required..
             review.cankey = crev.cankey; }
@@ -1830,7 +1830,7 @@ define([], function () {
         if(crev.imguri && !review.imguri && !review.revpic) {
             review.imguri = crev.imguri; }
         if(crev.revpic && !review.imguri && !review.revpic) {
-            review.imguri = "revpic?revid=" + glo.instId(crev); }
+            review.imguri = "revpic?revid=" + app.instId(crev); }
         if(crev.name && !review.name) {
             review.name = crev.name; }
         if(crev.title && !review.title) {
@@ -1852,7 +1852,7 @@ define([], function () {
         if(crev.year && !review.year) {
             review.year = crev.year; }
         crev = review;
-        glo.review.display();
+        app.review.display();
     },
 
 
@@ -1861,22 +1861,22 @@ define([], function () {
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
-        glo.out('cmain', "Deleting review...");
-        data = glo.objdata(crev);
-        glo.call("delrev?" + glo.login.authparams(), 'POST', data,
+        app.out('cmain', "Deleting review...");
+        data = app.objdata(crev);
+        app.call("delrev?" + app.login.authparams(), 'POST', data,
                  function (reviews) {
                      var html = "<p>Review deleted.  If this review was one" +
                          " of your top 20 best, then you may see an id" +
                          " reference message until the next time you review" +
                          " something.  Recalculating your recent reviews..." +
                          "</p>";
-                     glo.out('cmain', html);
+                     app.out('cmain', html);
                      setTimeout(function () {
-                         glo.profile.resetReviews();
-                         glo.profile.display(); }, 12000); },
+                         app.profile.resetReviews();
+                         app.profile.display(); }, 12000); },
                  function (code, errtxt) {
-                     glo.err("Delete failed code: " + code + " " + errtxt);
-                     glo.profile.display(); },
+                     app.err("Delete failed code: " + code + " " + errtxt);
+                     app.profile.display(); },
                  critsec);
     },
 
@@ -1885,14 +1885,14 @@ define([], function () {
         if(!crev) {
             crev = {}; }
         if(!crev.penid) {
-            crev.penid = glo.pen.currPenId(); }
+            crev.penid = app.pen.currPenId(); }
         setTimeout(function () {  //refresh headings
-            if(crev.penid !== glo.instId(pen)) { 
-                glo.lcs.getPenFull(crev.penid, function (revpenref) {
-                    glo.profile.writeNavDisplay(pen, revpenref.pen,
+            if(crev.penid !== app.instId(pen)) { 
+                app.lcs.getPenFull(crev.penid, function (revpenref) {
+                    app.profile.writeNavDisplay(pen, revpenref.pen,
                                                 "nosettings"); }); }
             else {
-                glo.profile.writeNavDisplay(pen, null, "nosettings"); }
+                app.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must
@@ -1900,13 +1900,13 @@ define([], function () {
         //key field, and the subkey field (if defined for the type).
         if(read) { 
             displayReviewForm(pen, crev);
-            if(crev.penid !== glo.pen.currPenId()) {  //not our review
+            if(crev.penid !== app.pen.currPenId()) {  //not our review
                 if(action === "helpful") {
-                    glo.review.helpful("set"); }
+                    app.review.helpful("set"); }
                 else if(action === "remember") {
-                    glo.review.memo(); }
+                    app.review.memo(); }
                 else if(action === "respond") {
-                    glo.review.respond(); } } }
+                    app.review.respond(); } } }
         else if(!findReviewType(crev.revtype)) {
             displayTypeSelect(); }
         else if(action === "uploadpic") {
@@ -1921,11 +1921,11 @@ define([], function () {
         resetStateVars: function () {
             resetStateVars(); },
         display: function (action, errmsg) {
-            glo.pen.getPen(function (pen) {
+            app.pen.getPen(function (pen) {
                 mainDisplay(pen, false, action, errmsg); 
             }); },
         displayRead: function (action) {
-            glo.pen.getPen(function (pen) {
+            app.pen.getPen(function (pen) {
                 mainDisplay(pen, true, action); 
             }); },
         delrev: function () {
@@ -1971,9 +1971,9 @@ define([], function () {
         initWithId: function (revid, mode, action, errmsg) {
             initWithId(revid, mode, action, errmsg); },
         respond: function () {
-            glo.byId('respondtxttd').style.color = "#666666";
+            app.byId('respondtxttd').style.color = "#666666";
             setTimeout(function () {
-                glo.pen.getPen(function (pen) {
+                app.pen.getPen(function (pen) {
                     findCorrespondingReview(pen, copyAndEdit); }); }, 50); },
         memo: function (value) {
             toggleMemoButton(value); },

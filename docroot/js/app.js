@@ -1,8 +1,8 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false, FB: false, navigator: false, require: false, jtminjsDecorateWithUtilities: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, FB: false, navigator: false, require: false, jtminjsDecorateWithUtilities: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-var glo = {};  //Global container for application level funcs and values
+var app = {};  //Global container for application level funcs and values
 
 ////////////////////////////////////////
 // g l o
@@ -14,17 +14,17 @@ var glo = {};  //Global container for application level funcs and values
     // app variables
     ////////////////////////////////////////
 
-    glo.dojo = null;  //library modules holder
-    glo.colors = { bodybg: "#fffff6",
+    app.dojo = null;  //library modules holder
+    app.colors = { bodybg: "#fffff6",
                    text: "#111111",
                    link: "#3150b2",
                    hover: "#3399cc" };
-    glo.winw = 0;  //adjusted in glo.layout
-    glo.winh = 0;
-    glo.introtext = "";
-    glo.authcookname = "myopenreviewauth";
-    glo.secsvr = "https://myopenreviews.appspot.com";
-    glo.mainsvr = "http://www.myopenreviews.com";
+    app.winw = 0;  //adjusted in app.layout
+    app.winh = 0;
+    app.introtext = "";
+    app.authcookname = "myopenreviewauth";
+    app.secsvr = "https://myopenreviews.appspot.com";
+    app.mainsvr = "http://www.myopenreviews.com";
 
 
     ////////////////////////////////////////
@@ -32,21 +32,21 @@ var glo = {};  //Global container for application level funcs and values
     ////////////////////////////////////////
 
     //library support for factored event connection methods
-    glo.onxnode = function (ename, node, func) {
-        glo.dojo.on(node, ename, func);
+    app.onxnode = function (ename, node, func) {
+        app.dojo.on(node, ename, func);
     };
 
 
     //library support for factored event connection methods
-    glo.onx = function (ename, divid, func) {
-        var node = glo.dojo.dom.byId(divid);
-        glo.onxnode(ename, node, func);
+    app.onx = function (ename, divid, func) {
+        var node = app.dojo.dom.byId(divid);
+        app.onxnode(ename, node, func);
     };
 
 
     //factored method to handle a click with no propagation
-    glo.onclick = function (divid, func) {
-        glo.onx("click", divid, function (e) {
+    app.onclick = function (divid, func) {
+        app.onx("click", divid, function (e) {
             e.preventDefault();
             e.stopPropagation();
             func(e); });
@@ -54,8 +54,8 @@ var glo = {};  //Global container for application level funcs and values
 
 
     //factored method to handle a change with no propagation
-    glo.onchange = function (divid, func) {
-        glo.onx("change", divid, function (e) {
+    app.onchange = function (divid, func) {
+        app.onx("change", divid, function (e) {
             e.preventDefault();
             e.stopPropagation();
             func(e); });
@@ -63,89 +63,89 @@ var glo = {};  //Global container for application level funcs and values
 
 
     //general key handling
-    glo.onescapefunc = null;
-    glo.globkey = function (e) {
+    app.onescapefunc = null;
+    app.globkey = function (e) {
         if(e && e.keyCode === 27) {  //ESC
-            if(glo.onescapefunc) {
+            if(app.onescapefunc) {
                 e.preventDefault();
                 e.stopPropagation();
-                glo.onescapefunc(); } }
+                app.onescapefunc(); } }
     };
 
 
-    glo.cancelPicUpload = function () {
-        glo.out('overlaydiv', "");
-        glo.byId('overlaydiv').style.visibility = "hidden";
-        glo.onescapefunc = null;
+    app.cancelPicUpload = function () {
+        app.out('overlaydiv', "");
+        app.byId('overlaydiv').style.visibility = "hidden";
+        app.onescapefunc = null;
     };
 
 
-    glo.redirectToSecureServer = function (params) {
+    app.redirectToSecureServer = function (params) {
         var href, state;
         state = {};
         if(history && history.state) {
             state = history.state; }
-        href = glo.secsvr + "#returnto=" + glo.enc(glo.mainsvr) + 
+        href = app.secsvr + "#returnto=" + app.enc(app.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
-        href += "&" + glo.objdata(params);
-        glo.out('contentfill', "Redirecting to secure server...");
+        href += "&" + app.objdata(params);
+        app.out('contentfill', "Redirecting to secure server...");
         window.location.href = href;
     };
 
 
-    glo.redirectIfNeeded = function () {
+    app.redirectIfNeeded = function () {
         var href = window.location.href;
-        if(href.indexOf(glo.mainsvr) >= 0 &&
+        if(href.indexOf(app.mainsvr) >= 0 &&
            href.indexOf("authtoken=") < 0 &&
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
-           (!glo.dojo.cookie(glo.authcookname))) {
-            glo.redirectToSecureServer(glo.parseParams());
+           (!app.dojo.cookie(app.authcookname))) {
+            app.redirectToSecureServer(app.parseParams());
             return true; }
     };
 
 
     //secondary initialization load since single monolithic is dog slow
-    glo.init2 = function (layout, login, review, profile, 
+    app.init2 = function (layout, login, review, profile, 
                          activity, pen, rel, skinner,
                          services, lcs, history, basicmod) {
-        var cdiv = glo.byId('contentdiv');
-        if(!glo.introtext) {  //capture original so we can revert as needed
-            glo.introtext = cdiv.innerHTML; }
+        var cdiv = app.byId('contentdiv');
+        if(!app.introtext) {  //capture original so we can revert as needed
+            app.introtext = cdiv.innerHTML; }
         //app module references
-        glo.layout = layout;
-        glo.login = login;
-        glo.review = review;
-        glo.profile = profile;
-        glo.activity = activity;
-        glo.pen = pen;
-        glo.rel = rel;
-        glo.skinner = skinner;
-        glo.services = services;
-        glo.lcs = lcs;
-        glo.history = history;
+        app.layout = layout;
+        app.login = login;
+        app.review = review;
+        app.profile = profile;
+        app.activity = activity;
+        app.pen = pen;
+        app.rel = rel;
+        app.skinner = skinner;
+        app.services = services;
+        app.lcs = lcs;
+        app.history = history;
         //app startup
-        glo.layout.init();
-        glo.dojo.on(document, 'keypress', glo.globkey);
-        glo.dojo.on(window, 'popstate', glo.history.pop);
-        glo.login.init();
-        //glo.skinner.init();
-        glo.basicmod = basicmod;
+        app.layout.init();
+        app.dojo.on(document, 'keypress', app.globkey);
+        app.dojo.on(window, 'popstate', app.history.pop);
+        app.login.init();
+        //app.skinner.init();
+        app.basicmod = basicmod;
     };
 
 
     //faulting in the ext login modules here saves total load time
-    glo.init1 = function (dom, json, on, request, 
+    app.init1 = function (dom, json, on, request, 
                           query, cookie, domgeo) {
-        glo.dojo = { dom: dom, json: json, on: on, request: request,
+        app.dojo = { dom: dom, json: json, on: on, request: request,
                      query: query, cookie: cookie, domgeo: domgeo };
-        if(glo.redirectIfNeeded()) {
+        if(app.redirectIfNeeded()) {
             return; }  //avoid app continue while redirect kicks in
-        glo.out('contentfill', "loading MyOpenReviews...");
-        glo.amdtimer.app = { start: new Date() };
-        require(glo.cdnconf,
+        app.out('contentfill', "loading MyOpenReviews...");
+        app.amdtimer.app = { start: new Date() };
+        require(app.cdnconf,
                 [ "amd/layout", "amd/login", "amd/review", "amd/profile",
                   "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
                   "amd/services", "amd/lcs", "amd/history", "amd/basicmod", 
@@ -155,38 +155,38 @@ var glo = {};  //Global container for application level funcs and values
                 function (layout, login, review, profile, 
                           activity, pen, rel, skinner,
                           services, lcs, history, basicmod) {
-                    glo.amdtimer.app.end = new Date();
-                    glo.out('contentfill', " &nbsp; ");
-                    glo.init2(layout, login, review, profile, 
+                    app.amdtimer.app.end = new Date();
+                    app.out('contentfill', " &nbsp; ");
+                    app.init2(layout, login, review, profile, 
                               activity, pen, rel, skinner,
                               services, lcs, history, basicmod); }
                );
     };
 
 
-    glo.init = function () {
+    app.init = function () {
         var href = window.location.href;
         if(href.indexOf("http://www.wdydfun.com") >= 0) {
-            glo.mainsvr = "http://www.wdydfun.com"; }
-        jtminjsDecorateWithUtilities(glo);
-        glo.amdtimer = {};
-        glo.amdtimer.dojo = { start: new Date() };
-        glo.out('contentfill', "loading libraries...");
-        require(glo.cdnconf,
+            app.mainsvr = "http://www.wdydfun.com"; }
+        jtminjsDecorateWithUtilities(app);
+        app.amdtimer = {};
+        app.amdtimer.dojo = { start: new Date() };
+        app.out('contentfill', "loading libraries...");
+        require(app.cdnconf,
                 [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
                   "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
                   "dojo/domReady!" ],
                 function (dom, json, on, request, 
                           query, cookie, domgeo) {
-                    glo.amdtimer.dojo.end = new Date();
-                    glo.out('contentfill', " &nbsp; ");
-                    glo.init1(dom, json, on, request, 
+                    app.amdtimer.dojo.end = new Date();
+                    app.out('contentfill', " &nbsp; ");
+                    app.init1(dom, json, on, request, 
                               query, cookie, domgeo); }
                );
     };
 
 
-    glo.crash = function (url, method, data, code, errtxt) {
+    app.crash = function (url, method, data, code, errtxt) {
         var html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
         "<p>The server crashed.</p>" +
         "<p>If you want to help out, copy the contents of this page and " +
@@ -202,38 +202,38 @@ var glo = {};  //Global container for application level funcs and values
         "<li>code: " + code +
         "</ul></div>" +
         errtxt;
-        glo.out('contentdiv', html);
+        app.out('contentdiv', html);
     };
 
 
     //General processing of JSON server calls, with fallback error
     //handling.  Caller caches and manages result data, including
     //recognizing stale.
-    glo.call = function (url, method, data, success, failure, 
+    app.call = function (url, method, data, success, failure, 
                          lockvar, setup, errs) {
         var statcode, errtxt, start, now, delayms = 300, temphtml;
         if(lockvar === "processing") {
-            glo.log(method + " " + url + " already in progress...");
+            app.log(method + " " + url + " already in progress...");
             return; }
         lockvar = "processing";
         if(setup) {
             setup(); }
         //local delay to simulate actual site
         if(window.location.href.indexOf("localhost:8080") >= 0) {
-            temphtml = glo.byId('logodiv').innerHTML;
+            temphtml = app.byId('logodiv').innerHTML;
             now = start = new Date().getTime();
             while(now - start < delayms) {
                 now = new Date().getTime();
-                glo.out('logodiv', "delay " + (now - start)); }
-            glo.out('logodiv', temphtml); }
-        glo.dojo.request(url, { method: method, data: data }).then(
+                app.out('logodiv', "delay " + (now - start)); }
+            app.out('logodiv', temphtml); }
+        app.dojo.request(url, { method: method, data: data }).then(
             //successful call result processing function
             function (resp) {
                 lockvar = "success";
                 try {
-                    resp = glo.dojo.json.parse(resp);
+                    resp = app.dojo.json.parse(resp);
                 } catch (e) {
-                    glo.log("JSON parse failure: " + e);
+                    app.log("JSON parse failure: " + e);
                     return failure(415, resp);
                 }
                 success(resp); },
@@ -251,8 +251,8 @@ var glo = {};  //Global container for application level funcs and values
                         statcode = resp.response.status; } }
                 if(errs.indexOf(statcode) < 0) {
                     switch(statcode) {
-                    case 401: return glo.login.logout();
-                    case 500: return glo.crash(url, method, data,
+                    case 401: return app.login.logout();
+                    case 500: return app.crash(url, method, data,
                                                statcode, errtxt);
                     } }
                 failure(statcode, errtxt); },
@@ -267,7 +267,7 @@ var glo = {};  //Global container for application level funcs and values
 
     //factored method to create an image link.  Some older browsers put
     //borders around these...
-    glo.imglink = function (href, title, funcstr, imgfile, cssclass) {
+    app.imglink = function (href, title, funcstr, imgfile, cssclass) {
         var html;
         if(!cssclass) {
             cssclass = "navico"; }
@@ -283,7 +283,7 @@ var glo = {};  //Global container for application level funcs and values
     };
 
 
-    glo.imgntxt = function (imgfile, text, funcstr, href, 
+    app.imgntxt = function (imgfile, text, funcstr, href, 
                             title, cssclass, idbase) {
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
         if(!cssclass) {
@@ -314,7 +314,7 @@ var glo = {};  //Global container for application level funcs and values
     };
 
 
-    glo.checkrad = function (type, name, value, label, checked, chgfstr) {
+    app.checkrad = function (type, name, value, label, checked, chgfstr) {
         var html;
         if(!label) {
             label = value.capitalize(); }
@@ -333,13 +333,13 @@ var glo = {};  //Global container for application level funcs and values
 
 
     //factored method to create a checkbox with a label.
-    glo.checkbox = function (name, value, label) {
-        return glo.checkrad("checkbox", name, value, label);
+    app.checkbox = function (name, value, label) {
+        return app.checkrad("checkbox", name, value, label);
     };
 
 
-    glo.radiobutton = function (name, value, label, checked, chgfstr) {
-        return glo.checkrad("radio", name, value, label, checked, chgfstr);
+    app.radiobutton = function (name, value, label, checked, chgfstr) {
+        return app.checkrad("radio", name, value, label, checked, chgfstr);
     };
 
 
@@ -348,16 +348,16 @@ var glo = {};  //Global container for application level funcs and values
     //handle an ID value in the server side Python JSON serialization.
     //This utility method encapsulates the access, and provides a
     //single point of adjustment if the server side logic changes.
-    glo.instId = function (obj) {
+    app.instId = function (obj) {
         var idfield = "_id";
         if(obj && obj.hasOwnProperty(idfield)) {
             return obj[idfield]; }
     };
-    glo.setInstId = function (obj, idval) {
+    app.setInstId = function (obj, idval) {
         var idfield = "_id";
         obj[idfield] = idval;
     };
-    glo.isId = function (idval) {
+    app.isId = function (idval) {
         if(idval && typeof idval === 'string' && idval !== "0") {
             return true; }
         return false;
@@ -366,7 +366,7 @@ var glo = {};  //Global container for application level funcs and values
 
     //Some things don't work in older browsers and need code workarounds
     //to degrade gracefully.  Like the background texture.
-    glo.isLowFuncBrowser = function () {
+    app.isLowFuncBrowser = function () {
         var nav;
         if(navigator) {
             nav = navigator;

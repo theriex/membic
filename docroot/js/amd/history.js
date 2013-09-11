@@ -1,4 +1,4 @@
-/*global define: false, window: false, document: false, history: false, glo: false */
+/*global define: false, window: false, document: false, history: false, app: false */
 
 /*jslint white: true, unparam: true, maxerr: 50, indent: 4 */
 
@@ -54,8 +54,8 @@ return {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.pushState(pstate, title, url);
-                    glo.log("history.pushState: " + 
-                            glo.dojo.json.stringify(pstate) +
+                    app.log("history.pushState: " + 
+                            app.dojo.json.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } }
             else if(pstate.tab && hstate.tab !== pstate.tab) {
@@ -64,8 +64,8 @@ return {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.replaceState(pstate, title, url);
-                    glo.log("history.replaceState: " + 
-                            glo.dojo.json.stringify(pstate) +
+                    app.log("history.replaceState: " + 
+                            app.dojo.json.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } } }
     },
@@ -73,24 +73,24 @@ return {
 
     pop: function (event) {
         var state = event.state;
-        glo.log("historyPop: " + glo.dojo.json.stringify(state));
+        app.log("historyPop: " + app.dojo.json.stringify(state));
         if(state) {
             switch(state.view) {
             case "profile":
-                if(glo.isId(state.profid)) {
-                    glo.profile.byprofid(state.profid, state.tab); }
+                if(app.isId(state.profid)) {
+                    app.profile.byprofid(state.profid, state.tab); }
                 break; 
             case "activity":
-                glo.activity.displayActive();
+                app.activity.displayActive();
                 break;
             case "memo":
-                glo.activity.displayRemembered();
+                app.activity.displayRemembered();
                 break;
             case "review":
                 //the review was cached when previously viewed..
-                glo.review.setCurrentReview(
-                    glo.lcs.getRevRef(state.revid).rev);
-                glo.review.displayRead();
+                app.review.setCurrentReview(
+                    app.lcs.getRevRef(state.revid).rev);
+                app.review.displayRead();
                 break;
             } }
     },

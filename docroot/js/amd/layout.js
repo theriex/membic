@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -19,10 +19,10 @@ define([], function () {
 
 
     closeDialog = function () {
-        glo.out('dlgdiv', "");
-        glo.byId('dlgdiv').style.visibility = "hidden";
-        glo.layout.adjust();
-        glo.onescapefunc = null;
+        app.out('dlgdiv', "");
+        app.byId('dlgdiv').style.visibility = "hidden";
+        app.layout.adjust();
+        app.onescapefunc = null;
     },
 
 
@@ -36,11 +36,11 @@ define([], function () {
                               html.indexOf("</body")); }
         html = "<div id=\"closeline\">" +
           "<a id=\"closedlg\" href=\"#close\"" +
-            " onclick=\"glo.layout.closeDialog();return false\">" + 
+            " onclick=\"app.layout.closeDialog();return false\">" + 
                  "&lt;close&nbsp;&nbsp;X&gt;</a>" +
           "</div>" + html;
-        glo.out('dlgdiv', html);
-        glo.onescapefunc = closeDialog;
+        app.out('dlgdiv', html);
+        app.onescapefunc = closeDialog;
     },
 
 
@@ -55,11 +55,11 @@ define([], function () {
     displayDoc = function (url) {
         var critsec = "", html = "Fetching " + url + " ...";
         window.scrollTo(0,0);
-        glo.out('dlgdiv', html);
-        glo.byId('dlgdiv').style.visibility = "visible";
+        app.out('dlgdiv', html);
+        app.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
-        glo.call(url, 'GET', null,
+        app.call(url, 'GET', null,
                  function (resp) {
                      displayDocContent(url, resp); },
                  function (code, errtxt) {
@@ -69,7 +69,7 @@ define([], function () {
 
 
     attachDocLinkClick = function (node, link) {
-        glo.onxnode("click", node, function (e) {
+        app.onxnode("click", node, function (e) {
             e.preventDefault();
             e.stopPropagation();
             displayDoc(link); });
@@ -78,7 +78,7 @@ define([], function () {
 
     //faster to grab all links rather than iterating through bottomnav
     localDocLinks = function () {
-        var i, nodes = glo.dojo.query('a'), node, href;
+        var i, nodes = app.dojo.query('a'), node, href;
         for(i = 0; nodes && i < nodes.length; i += 1) {
             node = nodes[i];
             href = node.href;
@@ -94,20 +94,20 @@ define([], function () {
     //preloading images is extra overhead so not doing that.
     slideshow = function (firstrun) {
         var html, previmg, img;
-        if(glo.byId('slidesdiv')) {
-            if(glo.isLowFuncBrowser()) {
-                glo.log("slideshow isLowFuncBrowser so no fades");
+        if(app.byId('slidesdiv')) {
+            if(app.isLowFuncBrowser()) {
+                app.log("slideshow isLowFuncBrowser so no fades");
                 if(firstrun) {
                     slideindex = 0; }
                 html = "<img src=\"img/slides/" + slides[slideindex] +
                          "\" class=\"slideimg\"/>";
-                glo.out('slidesdiv', html);
+                app.out('slidesdiv', html);
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 if(!firstrun) {
-                    glo.log("    fading introslide" + slideslot + ": " + 
+                    app.log("    fading introslide" + slideslot + ": " + 
                             "img/slides/" + slides[slideindex]);
-                    previmg = glo.byId("introslide" + slideslot);
+                    previmg = app.byId("introslide" + slideslot);
                     if(!previmg) {  //probably logged in in the interim
                         return; }
                     setTimeout(function () {
@@ -118,9 +118,9 @@ define([], function () {
                     previmg.style.opacity = 0; }  //fade out
                 slideslot = (slideslot + 1) % 2;
                 slideindex = (slideindex + 1) % slides.length;
-                glo.log("displaying introslide" + slideslot + ": " + 
+                app.log("displaying introslide" + slideslot + ": " + 
                         "img/slides/" + slides[slideindex]);
-                img = glo.byId("introslide" + slideslot);
+                img = app.byId("introslide" + slideslot);
                 if(!img) {  //probably logged in in the interim
                     return; }
                 img.src = "img/slides/" + slides[slideindex];
@@ -141,19 +141,19 @@ define([], function () {
         var width, leftx, logow = 515, slidew = 522;
         width = document.documentElement.clientWidth;
         if(width > logow + slidew) {  //enough room for logo and slides
-            glo.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
+            app.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
                     " id=\"logoimg\" border=\"0\"/>");
             leftx = logow + Math.round(((width - (logow + slidew)) / 2));
-            glo.byId('introslide0').style.left = String(leftx) + "px";
-            glo.byId('introslide1').style.left = String(leftx) + "px"; }
+            app.byId('introslide0').style.left = String(leftx) + "px";
+            app.byId('introslide1').style.left = String(leftx) + "px"; }
         else if(width >= slidew) {  //probably a phone. just slides, but center
-            glo.out('logodiv', "");
+            app.out('logodiv', "");
             leftx = Math.round((width - slidew) / 2); 
-            glo.byId('introslide0').style.left = String(leftx) + "px";
-            glo.byId('introslide1').style.left = String(leftx) + "px"; }
-        if(!glo.isLowFuncBrowser()) {  //skip nice fade transitions
-            glo.byId('introslide0').style.opacity = 0;
-            glo.byId('introslide1').style.opacity = 0; }
+            app.byId('introslide0').style.left = String(leftx) + "px";
+            app.byId('introslide1').style.left = String(leftx) + "px"; }
+        if(!app.isLowFuncBrowser()) {  //skip nice fade transitions
+            app.byId('introslide0').style.opacity = 0;
+            app.byId('introslide1').style.opacity = 0; }
         slideshow(true);
     },
 
@@ -161,44 +161,44 @@ define([], function () {
     //initialize the logged-in content display div areas.  Basically
     //contentdiv is subdivided into chead and cmain.
     haveContentDivAreas = function () {
-        return glo.byId('chead') && glo.byId('cmain');
+        return app.byId('chead') && app.byId('cmain');
     },
 
 
     initContentDivAreas = function () {
         var html = "<div id=\"chead\"> </div>" +
                    "<div id=\"cmain\"> </div>";
-        glo.out('contentdiv', html);
+        app.out('contentdiv', html);
     },
 
 
     initContent = function () {
         if(!haveContentDivAreas()) {
             initContentDivAreas();
-            glo.profile.updateHeading();
-            glo.activity.updateHeading();
-            glo.review.updateHeading(); }
+            app.profile.updateHeading();
+            app.activity.updateHeading();
+            app.review.updateHeading(); }
     },
 
 
     findDisplayHeightAndWidth = function () {
         if(window.innerWidth && window.innerHeight) {
-            glo.winw = window.innerWidth;
-            glo.winh = window.innerHeight; }
+            app.winw = window.innerWidth;
+            app.winh = window.innerHeight; }
         else if(document.compatMode === 'CSS1Compat' &&
                 document.documentElement && 
                 document.documentElement.offsetWidth) {
-            glo.winw = document.documentElement.offsetWidth;
-            glo.winh = document.documentElement.offsetHeight; }
+            app.winw = document.documentElement.offsetWidth;
+            app.winh = document.documentElement.offsetHeight; }
         else if(document.body && document.body.offsetWidth) {
-            glo.winw = document.body.offsetWidth;
-            glo.winh = document.body.offsetHeight; }
+            app.winw = document.body.offsetWidth;
+            app.winh = document.body.offsetHeight; }
         else {  //WTF, just guess.
-            glo.winw = 600;
-            glo.winh = 800; }
+            app.winw = 600;
+            app.winh = 800; }
         //if we are actually on a small screen, dial the width back a bit
         if(window.innerWidth <= 768 || window.screen.width <= 768) {
-            glo.winw = 768; }
+            app.winw = 768; }
     },
 
 
@@ -209,12 +209,12 @@ define([], function () {
         if(!rules) { //decent css support is missing, fall back
             //texturePaper.png is 256x192
             //setting backgroundSize to a scaled up fixed size has no effect
-            //glo.byId('bodyid').style.backgroundSize = "2048px 1536px;";
+            //app.byId('bodyid').style.backgroundSize = "2048px 1536px;";
             //scaled up image either too large or too pixelated for use
             //altimg = "url('../img/texturePaperBig.png')";
             altimg = "url('../img/blank.png')";
-            glo.byId('bodyid').style.backgroundImage = altimg;
-            glo.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
+            app.byId('bodyid').style.backgroundImage = altimg;
+            app.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
     },
 
 
@@ -223,7 +223,7 @@ define([], function () {
             dndState = { domobj: event.target,
                          screenX: event.screenX,
                          screenY: event.screenY };
-            glo.log("dndStart " + dndState.domobj + " " + 
+            app.log("dndStart " + dndState.domobj + " " + 
                     dndState.screenX + "," + dndState.screenY);
             if(event.dataTransfer && event.dataTransfer.setData) {
                 event.dataTransfer.setData("text/plain", "general drag"); } }
@@ -232,27 +232,27 @@ define([], function () {
 
     dndEnd = function (event) {
         if(event && dndState) {
-            glo.log("dndEnd called");
+            app.log("dndEnd called");
             dndState.ended = true; }
     },
                 
 
     dndOver = function (event) {
         if(event && dndState && (!dndState.ended || dndState.dropped)) {
-            //glo.log("dndOver preventing default cancel");
+            //app.log("dndOver preventing default cancel");
             event.preventDefault(); }
     },
 
 
     dndDrop = function (event) {
         var diffX, diffY, domobj, currX, currY;
-        glo.log("dndDrop called");
+        app.log("dndDrop called");
         if(event && dndState) {
             dndState.dropped = true;
             diffX = event.screenX - dndState.screenX;
             diffY = event.screenY - dndState.screenY;
             domobj = dndState.domobj;
-            glo.log("dropping " + domobj + " moved " + diffX + "," + diffY);
+            app.log("dropping " + domobj + " moved " + diffX + "," + diffY);
             currX = domobj.offsetLeft;
             currY = domobj.offsetTop;
             domobj.style.left = String(currX + diffX) + "px";
@@ -264,9 +264,9 @@ define([], function () {
 
     setSoftFocus = function () {
         var revid, focobj;
-        if(glo.review.getCurrentReview()) {
-            revid = "lihr" + glo.instId(glo.review.getCurrentReview());
-            focobj = glo.byId(revid);
+        if(app.review.getCurrentReview()) {
+            revid = "lihr" + app.instId(app.review.getCurrentReview());
+            focobj = app.byId(revid);
             if(focobj) {
                 focobj.focus(); } }
     },
@@ -274,9 +274,9 @@ define([], function () {
 
     currentContentHeight = function () {
         var ch, content, centerh, bottomnav;
-        content = glo.byId("contentdiv").offsetHeight;
-        centerh = glo.byId("centerhdiv").offsetHeight;
-        bottomnav = glo.byId("bottomnav").offsetHeight;
+        content = app.byId("contentdiv").offsetHeight;
+        centerh = app.byId("centerhdiv").offsetHeight;
+        bottomnav = app.byId("bottomnav").offsetHeight;
         ch = content + centerh + bottomnav;
         return ch;
     },
@@ -286,19 +286,19 @@ define([], function () {
         var ch, filldiv, topdiv, contentdiv, target;
         findDisplayHeightAndWidth();
         //fill the bottom content so the footer text isn't too high up
-        filldiv = glo.byId("contentfill");
+        filldiv = app.byId("contentfill");
         ch = currentContentHeight();
-        target = glo.winh - topPaddingAndScroll; 
+        target = app.winh - topPaddingAndScroll; 
         if(ch < target) {
             filldiv.style.height = (target - ch) + "px"; }
         else {  //not filling, just leave a little separator space
             filldiv.style.height = "16px"; }
         //adjust the topdiv and content width so it looks reasonable
-        target = glo.winw - 120;  //Remo is 72px, margin padding
-        topdiv = glo.byId('topdiv');
+        target = app.winw - 120;  //Remo is 72px, margin padding
+        topdiv = app.byId('topdiv');
         if(topdiv) {
             topdiv.style.width = target + "px"; }
-        contentdiv = glo.byId('contentdiv');
+        contentdiv = app.byId('contentdiv');
         if(contentdiv) {
             contentdiv.style.width = target + "px"; }
         setSoftFocus();
@@ -307,7 +307,7 @@ define([], function () {
 
     return {
         init: function () {
-            glo.dojo.on(window, 'resize', fullContentHeight);
+            app.dojo.on(window, 'resize', fullContentHeight);
             initSlideshow();
             localDocLinks();
             fullContentHeight();

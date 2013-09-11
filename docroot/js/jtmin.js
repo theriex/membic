@@ -77,13 +77,13 @@
 var jtminjsDecorateWithUtilities = function (utilityObject) {
     "use strict";
 
-    var glo = utilityObject;  //usually global, and easy to grep
+    var app = utilityObject;  //usually app level decoration, easier to grep
 
 
     ////////////////////////////////////////
     // basic IO convenience
 
-    glo.log = glo.log || function (text) {
+    app.log = app.log || function (text) {
         try {
             if (console && console.log) {
                 console.log(text);
@@ -93,30 +93,30 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.err = glo.err || function (text) {
+    app.err = app.err || function (text) {
         alert(text);
     };
 
 
-    glo.assert = glo.assert || function (testval) {
+    app.assert = app.assert || function (testval) {
         if (!testval) {
-            glo.err("An application integrity check has failed. Please reload the page in your browser.");
-            throw ("glo.assert");
+            app.err("An application integrity check has failed. Please reload the page in your browser.");
+            throw ("app.assert");
         }
     };
 
 
-    glo.byId = glo.byId || function (elemid) {
+    app.byId = app.byId || function (elemid) {
         return document.getElementById(elemid);
     };
 
 
-    glo.out = glo.out || function (domid, html) {
-        var node = glo.byId(domid);
+    app.out = app.out || function (domid, html) {
+        var node = app.byId(domid);
         if (node) {
             node.innerHTML = html;
         } else {
-            glo.log("DOM id " + domid + " not available for output");
+            app.log("DOM id " + domid + " not available for output");
         }
     };
 
@@ -124,7 +124,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     ////////////////////////////////////////
     // String manipulation and conversion 
 
-    glo.prefixed = glo.prefixed || function (string, prefix) {
+    app.prefixed = app.prefixed || function (string, prefix) {
         if (string && string.indexOf(prefix) === 0) {
             return true;
         }
@@ -132,7 +132,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.ellipsis = glo.ellipsis || function (string, length) {
+    app.ellipsis = app.ellipsis || function (string, length) {
         if (!string || typeof string !== "string") {
             return "";
         }
@@ -145,7 +145,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.safestr = glo.safestr || function (string) {
+    app.safestr = app.safestr || function (string) {
         if (!string) {
             return "";
         }
@@ -153,15 +153,15 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.safeget = glo.safeget || function (domid, field) {
-        var elem = glo.byId(domid);
+    app.safeget = app.safeget || function (domid, field) {
+        var elem = app.byId(domid);
         if (elem) {
             return elem[field];
         }
     };
 
 
-    glo.enc = glo.enc || function (val) {
+    app.enc = app.enc || function (val) {
         val = val || "";
         if (typeof val === "string") {
             val = val.trim();
@@ -170,7 +170,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.dec = glo.dec || function (val) {
+    app.dec = app.dec || function (val) {
         val = val || "";
         if (typeof val === "string") {
             val = val.trim();
@@ -178,7 +178,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         try {
             val = decodeURIComponent(val);
         } catch (e) {
-            glo.log("decodeURIComponent failure: " + e);
+            app.log("decodeURIComponent failure: " + e);
         }
         return val;
     };
@@ -187,23 +187,23 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //if a string needs to be URL encoded and then stuffed inside of
     //single quotes, then you need to replace any embedded single
     //quotes to avoid terminating the string early.
-    glo.embenc = glo.embenc || function (val) {
-        val = glo.enc(val);
+    app.embenc = app.embenc || function (val) {
+        val = app.enc(val);
         val = val.replace(/'/g, "%27");
         return val;
     };
 
 
-    glo.dquotenc = glo.dquotenc || function (val) {
+    app.dquotenc = app.dquotenc || function (val) {
         val = val.replace(/"/g, "&quot;");
-        val = glo.enc(val);
+        val = app.enc(val);
         return val;
     };
 
 
     //if making an html attribute value by escaping double quotes,
     //then get rid of any double quotes in the contained value
-    glo.ndq = glo.ndq || function (val) {
+    app.ndq = app.ndq || function (val) {
         if (!val) {
             return "";
         }
@@ -212,7 +212,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.canonize = glo.canonize || function (txt) {
+    app.canonize = app.canonize || function (txt) {
         var strval = txt || "";
         strval = strval.replace(/\s/g, "");
         strval = strval.replace(/\'/g, "");
@@ -225,7 +225,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.ISOString2Day = glo.ISOString2Day || function (str) {
+    app.ISOString2Day = app.ISOString2Day || function (str) {
         var date, year, month, day;
         if (!str) {
             return new Date();
@@ -238,7 +238,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.colloquialDate = glo.colloquialDate || function (date) {
+    app.colloquialDate = app.colloquialDate || function (date) {
         var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday', 'Sunday' ],
             months = [ "January", "February", "March", "April", "May",
@@ -255,12 +255,12 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     //return true if the given text can be reasonably construed to be an
     //email address.
-    glo.isProbablyEmail = glo.isProbablyEmail || function (text) {
+    app.isProbablyEmail = app.isProbablyEmail || function (text) {
         return text && text.match(/^\S+@\S+\.\S+$/);
     };
 
 
-    glo.parseParams = glo.parseParams || function () {
+    app.parseParams = app.parseParams || function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
         if (pstr) {  //parse the hash params
             if (pstr.indexOf("#") === 0) {
@@ -292,7 +292,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     //return the given object field and values as html POST data
-    glo.objdata = glo.objdata || function (obj, skips) {
+    app.objdata = app.objdata || function (obj, skips) {
         var str = "", name;
         if (!obj) {
             return "";
@@ -306,7 +306,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                     if (str) {
                         str += "&";
                     }
-                    str += name + "=" + glo.enc(obj[name]);
+                    str += name + "=" + app.enc(obj[name]);
                 }
             }
         }
@@ -314,7 +314,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.paramsToObj = glo.paramsToObj || function (paramstr) {
+    app.paramsToObj = app.paramsToObj || function (paramstr) {
         var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
         if (idx >= 0) {
             paramstr = paramstr.slice(idx + 1);
@@ -328,7 +328,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.paramsToFormInputs = glo.paramsToFormInputs || function (paramstr) {
+    app.paramsToFormInputs = app.paramsToFormInputs || function (paramstr) {
         var html = "", fields, i, attval;
         if (!paramstr) {
             return "";
@@ -343,7 +343,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    glo.makelink = glo.makelink || function (url) {
+    app.makelink = app.makelink || function (url) {
         var html, suffix = "";
         if (!url) {
             return "";
@@ -364,12 +364,12 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //avoid complex regex since those are annoying to maintain.  Ok
     //with not automatically picking up on things that don't start
     //with "http".  Links other than web not desired.
-    glo.linkify = glo.linkify || function (txt) {
+    app.linkify = app.linkify || function (txt) {
         if (!txt) {
             return "";
         }
         txt = txt.replace(/https?:\S+/g, function (url) {
-            return glo.makelink(url);
+            return app.makelink(url);
         });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;

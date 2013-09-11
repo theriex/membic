@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, glo: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -15,31 +15,31 @@ define([], function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
-            return glo.pen.getPen(function (pen) {
-                glo.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
-        return glo.login.init();
+            return app.pen.getPen(function (pen) {
+                app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
+        return app.login.init();
     },
 
 
     recordGoogleAuthorization = function (gsid) {
         var prevLoginToken;
-        glo.out('contentdiv', "Restoring session...");
-        prevLoginToken = glo.login.readAuthCookie();
+        app.out('contentdiv', "Restoring session...");
+        prevLoginToken = app.login.readAuthCookie();
         if(!prevLoginToken) {
-            glo.log("no previous login found on return from Google");
-            return glo.login.init(); }
-        glo.out('contentdiv', "Recording Google authorization...");
+            app.log("no previous login found on return from Google");
+            return app.login.init(); }
+        app.out('contentdiv', "Recording Google authorization...");
         //the latest used pen name will be selected automatically when
         //pen names are loaded
-        glo.pen.getPen(function (pen) {
+        app.pen.getPen(function (pen) {
             pen.gsid = gsid;
-            glo.pen.updatePen(pen,
+            app.pen.updatePen(pen,
                               function (updpen) {
                                   backToParentDisplay(); },
                               function (code, errtxt) {
-                                  glo.err("record Google auth error " +
+                                  app.err("record Google auth error " +
                                           code + ": " + errtxt);
                                   pen.gsid = "0";
                                   backToParentDisplay(); }); });
@@ -49,28 +49,28 @@ define([], function () {
     validateAuthentication = function (json, token) {
         var addAuthOutDiv, url, critsec = "";
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
-            glo.log("The received token was not intended for this app");
+            app.log("The received token was not intended for this app");
             return backToParentDisplay(); }
-        addAuthOutDiv = glo.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             recordGoogleAuthorization(json.user_id); }
         else {
             url = "https://www.googleapis.com/oauth2/v1/userinfo" + 
                 "?access_token=" + token;
-            url = glo.enc(url);
+            url = app.enc(url);
             url = "jsonget?geturl=" + url;
-            glo.call(url, 'GET', null,
+            app.call(url, 'GET', null,
                      function (json) {
-                         glo.out('contentdiv', 
+                         app.out('contentdiv', 
                                  "<p>Welcome " + json.name + "</p>");
-                         glo.login.setAuth("gsid", token, 
+                         app.login.setAuth("gsid", token, 
                                            json.id + " " + json.name);
                          //name is probably unique, but it's better to
                          //allow for creating a cool pen name without
                          //defaulting it.
-                         glo.login.authComplete(); },
+                         app.login.authComplete(); },
                      function (code, errtxt) {
-                         glo.log("Google authent fetch details failed code " +
+                         app.log("Google authent fetch details failed code " +
                                  code + ": " + errtxt);
                          backToParentDisplay(); },
                      critsec); }
@@ -85,16 +85,16 @@ define([], function () {
     authenticate = function (params) {
         var url, scope, critsec = "";
         if(params.access_token) {  //back from google
-            glo.out("contentdiv", "Returned from Google...");
+            app.out("contentdiv", "Returned from Google...");
             url = "https://www.googleapis.com/oauth2/v1/tokeninfo" +
                 "?access_token=" + params.access_token;
-            url = glo.enc(url);
+            url = app.enc(url);
             url = "jsonget?geturl=" + url;
-            glo.call(url, 'GET', null,
+            app.call(url, 'GET', null,
                      function (json) {
                          validateAuthentication(json, params.access_token); },
                      function (code, errtxt) {
-                         glo.log("Google token retrieval failed code " + 
+                         app.log("Google token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); },
                      critsec); }
@@ -103,8 +103,8 @@ define([], function () {
             url = "https://accounts.google.com/o/oauth2/auth" +
                 "?response_type=token" +
                 "&client_id=1009259210423.apps.googleusercontent.com" +
-                "&redirect_uri=" + glo.enc("http://www.myopenreviews.com/") +
-                "&scope=" + glo.enc(scope) +
+                "&redirect_uri=" + app.enc("http://www.myopenreviews.com/") +
+                "&scope=" + app.enc(scope) +
                 "&state=AltAuth2";
             window.location.href = url; }
     },
@@ -114,18 +114,18 @@ define([], function () {
     //a cookie.  Because cookies are domain dependent, this only 
     //works from the main server.
     addProfileAuth = function (domid, pen) {
-        if(window.location.href.indexOf(glo.mainsvr) !== 0) {
+        if(window.location.href.indexOf(app.mainsvr) !== 0) {
             alert("Google+ authentication is only supported from ",
-                  glo.mainsvr);
-            return glo.profile.displayAuthSettings(domid, pen); }
-        glo.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+                  app.mainsvr);
+            return app.profile.displayAuthSettings(domid, pen); }
+        app.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
         authenticate( {} );
     },
 
 
     getShareLinkURL = function (review) {
-        var url = "http://www.myopenreviews.com/statrev/" + glo.instId(review);
-        url = "https://plus.google.com/share?url=" + glo.enc(url);
+        var url = "http://www.myopenreviews.com/statrev/" + app.instId(review);
+        url = "https://plus.google.com/share?url=" + app.enc(url);
         return url;
     },
 
@@ -151,7 +151,7 @@ define([], function () {
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
         doInitialSetup: function () {
-            glo.log("google+ service initial setup done"); },
+            app.log("google+ service initial setup done"); },
         getLinkURL: function (review) {
             return getShareLinkURL(review); },
         getOnClickStr: function () {

@@ -16,12 +16,12 @@ var build = (function () {
 
 
     getModuleFiles = function (nextfunc) {
-        fs.readFile(docroot + '/js/global.js', readopt, function (err, text) {
+        fs.readFile(docroot + '/js/app.js', readopt, function (err, text) {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
                 throw err; }
-            text = text.slice(text.indexOf("glo.init1 = function"));
-            text = text.slice(text.indexOf("require(glo.cdnconf,"));
+            text = text.slice(text.indexOf("app.init1 = function"));
+            text = text.slice(text.indexOf("require(app.cdnconf,"));
             text = text.slice(text.indexOf("["));
             text = text.slice(1, text.indexOf("]"));
             modules = text.split(",");
