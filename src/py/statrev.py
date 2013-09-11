@@ -354,8 +354,6 @@ def revhtml(rev, pen):
     html += "  </div>\n"
     html += "  <div id=\"topworkdiv\">\n"
     html += "    <div id=\"slidesdiv\" style=\"height:120px;\">\n"
-    html += "      <img src=\"../img/slides/slogan.png\""
-    html +=           " class=\"slideimg\"/>\n"
     html += "    </div>\n"
     html += "  </div>\n"
     html += "</div>\n"

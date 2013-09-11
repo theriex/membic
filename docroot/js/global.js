@@ -82,7 +82,9 @@ var glo = {};  //Global container for application level funcs and values
 
     glo.redirectToSecureServer = function (params) {
         var href, state;
-        state = glo.history.currState();
+        state = {};
+        if(history && history.state) {
+            state = history.state; }
         href = glo.secsvr + "#returnto=" + glo.enc(glo.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
