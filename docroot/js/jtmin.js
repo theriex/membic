@@ -70,20 +70,23 @@
 
 
 ////////////////////////////////////////
-// Decorate the given object with utility methods.  This function name
-// pollutes the global name space, but the likelihood of a name
-// conflict is low, and it seems worth it for the convenience of
-// a simple direct call when first setting up an app.
+// Decorate the given object with the utility methods.
+// Library users will need to live with this one global.
 var jtminjsDecorateWithUtilities = function (utilityObject) {
     "use strict";
 
-    var app = utilityObject;  //usually app level decoration, easier to grep
+    var uo = utilityObject;  //local reference for cooperative functions
 
 
     ////////////////////////////////////////
     // basic IO convenience
 
-    app.log = app.log || function (text) {
+    uo.byId = function (elemid) {
+        return document.getElementById(elemid);
+    };
+
+
+    uo.log = function (text) {
         try {
             if (console && console.log) {
                 console.log(text);
@@ -93,30 +96,25 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.err = app.err || function (text) {
+    uo.err = function (text) {
         alert(text);
     };
 
 
-    app.assert = app.assert || function (testval) {
+    uo.assert = function (testval) {
         if (!testval) {
-            app.err("An application integrity check has failed. Please reload the page in your browser.");
-            throw ("app.assert");
+            uo.err("An application integrity check has failed. Please reload the page in your browser.");
+            throw ("uo.assert");
         }
     };
 
 
-    app.byId = app.byId || function (elemid) {
-        return document.getElementById(elemid);
-    };
-
-
-    app.out = app.out || function (domid, html) {
-        var node = app.byId(domid);
+    uo.out = function (domid, html) {
+        var node = uo.byId(domid);
         if (node) {
             node.innerHTML = html;
         } else {
-            app.log("DOM id " + domid + " not available for output");
+            uo.log("DOM id " + domid + " not available for output");
         }
     };
 
@@ -124,7 +122,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     ////////////////////////////////////////
     // String manipulation and conversion 
 
-    app.prefixed = app.prefixed || function (string, prefix) {
+    uo.prefixed = function (string, prefix) {
         if (string && string.indexOf(prefix) === 0) {
             return true;
         }
@@ -132,7 +130,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.ellipsis = app.ellipsis || function (string, length) {
+    uo.ellipsis = function (string, length) {
         if (!string || typeof string !== "string") {
             return "";
         }
@@ -145,7 +143,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.safestr = app.safestr || function (string) {
+    uo.safestr = function (string) {
         if (!string) {
             return "";
         }
@@ -153,15 +151,15 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.safeget = app.safeget || function (domid, field) {
-        var elem = app.byId(domid);
+    uo.safeget = function (domid, field) {
+        var elem = uo.byId(domid);
         if (elem) {
             return elem[field];
         }
     };
 
 
-    app.enc = app.enc || function (val) {
+    uo.enc = function (val) {
         val = val || "";
         if (typeof val === "string") {
             val = val.trim();
@@ -170,7 +168,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.dec = app.dec || function (val) {
+    uo.dec = function (val) {
         val = val || "";
         if (typeof val === "string") {
             val = val.trim();
@@ -178,7 +176,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         try {
             val = decodeURIComponent(val);
         } catch (e) {
-            app.log("decodeURIComponent failure: " + e);
+            uo.log("decodeURIComponent failure: " + e);
         }
         return val;
     };
@@ -187,23 +185,23 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //if a string needs to be URL encoded and then stuffed inside of
     //single quotes, then you need to replace any embedded single
     //quotes to avoid terminating the string early.
-    app.embenc = app.embenc || function (val) {
-        val = app.enc(val);
+    uo.embenc = function (val) {
+        val = uo.enc(val);
         val = val.replace(/'/g, "%27");
         return val;
     };
 
 
-    app.dquotenc = app.dquotenc || function (val) {
+    uo.dquotenc = function (val) {
         val = val.replace(/"/g, "&quot;");
-        val = app.enc(val);
+        val = uo.enc(val);
         return val;
     };
 
 
     //if making an html attribute value by escaping double quotes,
     //then get rid of any double quotes in the contained value
-    app.ndq = app.ndq || function (val) {
+    uo.ndq = function (val) {
         if (!val) {
             return "";
         }
@@ -212,7 +210,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.canonize = app.canonize || function (txt) {
+    uo.canonize = function (txt) {
         var strval = txt || "";
         strval = strval.replace(/\s/g, "");
         strval = strval.replace(/\'/g, "");
@@ -225,7 +223,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.ISOString2Day = app.ISOString2Day || function (str) {
+    uo.ISOString2Day = function (str) {
         var date, year, month, day;
         if (!str) {
             return new Date();
@@ -238,7 +236,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.colloquialDate = app.colloquialDate || function (date) {
+    uo.colloquialDate = function (date) {
         var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday', 'Sunday' ],
             months = [ "January", "February", "March", "April", "May",
@@ -255,12 +253,12 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     //return true if the given text can be reasonably construed to be an
     //email address.
-    app.isProbablyEmail = app.isProbablyEmail || function (text) {
+    uo.isProbablyEmail = function (text) {
         return text && text.match(/^\S+@\S+\.\S+$/);
     };
 
 
-    app.parseParams = app.parseParams || function () {
+    uo.parseParams = function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
         if (pstr) {  //parse the hash params
             if (pstr.indexOf("#") === 0) {
@@ -292,7 +290,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     //return the given object field and values as html POST data
-    app.objdata = app.objdata || function (obj, skips) {
+    uo.objdata = function (obj, skips) {
         var str = "", name;
         if (!obj) {
             return "";
@@ -306,7 +304,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                     if (str) {
                         str += "&";
                     }
-                    str += name + "=" + app.enc(obj[name]);
+                    str += name + "=" + uo.enc(obj[name]);
                 }
             }
         }
@@ -314,7 +312,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.paramsToObj = app.paramsToObj || function (paramstr) {
+    uo.paramsToObj = function (paramstr) {
         var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
         if (idx >= 0) {
             paramstr = paramstr.slice(idx + 1);
@@ -328,7 +326,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.paramsToFormInputs = app.paramsToFormInputs || function (paramstr) {
+    uo.paramsToFormInputs = function (paramstr) {
         var html = "", fields, i, attval;
         if (!paramstr) {
             return "";
@@ -343,7 +341,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    app.makelink = app.makelink || function (url) {
+    uo.makelink = function (url) {
         var html, suffix = "";
         if (!url) {
             return "";
@@ -364,12 +362,12 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //avoid complex regex since those are annoying to maintain.  Ok
     //with not automatically picking up on things that don't start
     //with "http".  Links other than web not desired.
-    app.linkify = app.linkify || function (txt) {
+    uo.linkify = function (txt) {
         if (!txt) {
             return "";
         }
         txt = txt.replace(/https?:\S+/g, function (url) {
-            return app.makelink(url);
+            return uo.makelink(url);
         });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;
