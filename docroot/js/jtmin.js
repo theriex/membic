@@ -3,6 +3,11 @@
 ////////////////////////////////////////
 // Just The Mods I Need
 //
+// This library is intended to provide the minimally adequate
+// functionality for writing a web application.  No frills, no object
+// model, no layers on top of DOM objects.  Emphasis is on necessary
+// backfill and utilities that are very commonly needed.
+//
 
 ////////////////////////////////////////
 //prototype mods and global overrides
@@ -70,8 +75,8 @@
 
 
 ////////////////////////////////////////
-// Decorate the given object with the utility methods.
-// Library users will need to live with this one global.
+// Utility methods.  Library users will need to tolerate this global
+// variable, and pass in an object to hold the utility methods.
 var jtminjsDecorateWithUtilities = function (utilityObject) {
     "use strict";
 
@@ -373,6 +378,44 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         return txt;
     };
 
+
+    ////////////////////////////////////////
+    // general javascript utility functions
+
+    //Return true if object is not null, and has the given method/object
+    uo.isAvailable = function (object, method) {
+        return object &&
+            (/^(?:function|object|unknown)$/).test(typeof object[method]);
+    };
+
+
+    ////////////////////////////////////////
+    // listening for events
+
+    // synonym for "addEventListener" with basic IE8 shim
+    uo.on = function (element, eventName, handler) {
+        if (uo.isAvailable(element, "addEventListener")) {
+            element.addEventListener(eventName, handler, false);
+        } else if (uo.isAvailable(element, "attachEvent")) {
+            element["e" + eventName + handler] = handler;
+            element[eventName + handler] = function () {
+                element["e" + eventName + handler](window.event);
+            };
+            element.attachEvent("on" + eventName,
+                                element[eventName + handler]);
+        }
+    };
+
+
+    // synonym for "removeEventListener" with basic IE8 shim
+    uo.off = function (element, eventName, handler) {
+        if (uo.isAvailable(element, "removeEventListener")) {
+            element.removeEventListener(eventName, handler, false);
+        } else if (uo.isAvailable(element, "detachEvent")) {
+            element.detachEvent("on" + eventName,
+                                element[eventName + handler]);
+        }
+    };
 
 };
 

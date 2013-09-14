@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="robots" content="noodp" />
+  <meta name="description" content="Scratch space for env testing." />
+  <title>Env Test Page</title>
+</head>
+<body>
+
+<div id="output">Environment test page</div>
+
+<script src="../js/jtmin.js"></script>
+
+<script>
+var html="",
+    outdiv = document.getElementById("output"),
+    jt = {};
+
+jtminjsDecorateWithUtilities(jt);
+
+//for IE8, document.documentElement.uniqueID is defined, but not id. 
+//window and document have neither id nor uniqueID.
+html += "document.documentElement.addEventListener: " + jt.isAvailable(document.documentElement, "addEventListener") + "<br/>";
+html += "document.documentElement.removeEventListener: " + jt.isAvailable(document.documentElement, "removeEventListener") + "<br/>";
+html += "window.addEventListener: " + jt.isAvailable(window, "addEventListener") + "<br/>";
+html += "window.removeEventListener: " + jt.isAvailable(window, "removeEventListener") + "<br/>";
+html += "outdiv.addEventListener: " + jt.isAvailable(outdiv, "addEventListener") + "<br/>";
+html += "outdiv.removeEventListener: " + jt.isAvailable(outdiv, "removeEventListener") + "<br/>";
+html +="<br/>";
+html += "document.documentElement.attachEvent: " + jt.isAvailable(document.documentElement, "attachEvent") + "<br/>";
+html += "document.documentElement.detachEvent: " + jt.isAvailable(document.documentElement, "detachEvent") + "<br/>";
+html += "window.attachEvent: " + jt.isAvailable(window, "attachEvent") + "<br/>";
+html += "window.detachEvent: " + jt.isAvailable(window, "detachEvent") + "<br/>";
+html += "outdiv.attachEvent: " + jt.isAvailable(outdiv, "attachEvent") + "<br/>";
+html += "outdiv.detachEvent: " + jt.isAvailable(outdiv, "detachEvent") + "<br/>";
+html += "<br/>";
+
+html += "<button id=\"clicker\">Clicker</button>"
+html += "<button id=\"stopclick\">Stop Clicker</button>"
+
+outdiv.innerHTML = html;
+
+var clickalert = function () {
+    alert("Clicked");
+};
+
+jt.on(jt.byId('clicker'), 'click', clickalert);
+
+jt.on(jt.byId('stopclick'), 'click', function () {
+    jt.off(jt.byId('clicker'), 'click', clickalert); });
+
+</script>
+
+</body>
+</html>
