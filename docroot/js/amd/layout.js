@@ -69,16 +69,16 @@ define([], function () {
 
 
     attachDocLinkClick = function (node, link) {
-        app.onxnode("click", node, function (e) {
-            e.preventDefault();
-            e.stopPropagation();
+        app.on(node, "click", function (e) {
+            app.evtend(e);
             displayDoc(link); });
     },
 
 
     //faster to grab all links rather than iterating through bottomnav
     localDocLinks = function () {
-        var i, nodes = app.dojo.query('a'), node, href;
+        var i, nodes, node, href;
+        nodes = document.getElementsByTagName('a');
         for(i = 0; nodes && i < nodes.length; i += 1) {
             node = nodes[i];
             href = node.href;
@@ -307,7 +307,7 @@ define([], function () {
 
     return {
         init: function () {
-            app.dojo.on(window, 'resize', fullContentHeight);
+            app.on(window, 'resize', fullContentHeight);
             initSlideshow();
             localDocLinks();
             fullContentHeight();

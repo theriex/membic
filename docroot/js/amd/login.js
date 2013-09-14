@@ -158,16 +158,18 @@ define([], function () {
     },
 
 
-    redirectToMainServer = function () {
+    redirectToMainServer = function (e) {
         var url = app.mainsvr;
+        app.evtend(e);
         if(window.location.href.indexOf("http://localhost:8080") === 0) {
             url = "http://localhost:8080"; }
         window.location.href = url;
     },
 
 
-    updateAccount = function () {
+    updateAccount = function (e) {
         var sel, i, cboxes, csv, data, url, critsec = "";
+        app.evtend(e);
         data = "email=" + app.enc(app.byId('emailin').value || "");
         if(authmethod === "mid") {
             data += "&pass=" + app.enc(app.byId('npin').value || ""); }
@@ -281,10 +283,10 @@ define([], function () {
           emailStatementsRow() +
         "</table>";
         app.out('contentdiv', html);
-        app.onclick('chgpwbutton', updateAccount);
-        app.onclick('updembutton', updateAccount);
-        app.onclick('cancelbutton', redirectToMainServer);
-        app.onclick('savebutton', updateAccount);
+        app.on('chgpwbutton', 'click', updateAccount);
+        app.on('updembutton', 'click', updateAccount);
+        app.on('cancelbutton', 'click', redirectToMainServer);
+        app.on('savebutton', 'click', updateAccount);
         app.layout.adjust();
         app.byId('emailin').focus();
     },
@@ -415,11 +417,25 @@ define([], function () {
     //Some people habitually use their email address as their username,
     //but if they forget their password it still has to be searched via
     //the email field, so copy it over.  They can fix it if not right.
-    usernamechange = function () {
-        var uname = app.byId('userin').value;
+    onUserNameChange = function (e) {
+        var uname;
+        app.evtend(e);
+        uname = app.byId('userin').value;
         if(app.isProbablyEmail(uname)) {
             app.byId('emailin').value = uname; }
         app.byId('passin').focus();
+    },
+
+
+    onPasswordChange = function (e) {
+        app.evtend(e);
+        app.byId('emailin').focus();
+    },
+
+
+    onEmailChange = function (e) {
+        app.evtend(e);
+        createAccount();
     },
 
 
@@ -465,11 +481,17 @@ define([], function () {
           emailStatementsRow() +
         "</table>";
         app.out('logindiv', html);
-        app.onchange('userin', usernamechange);
-        app.onchange('passin', function () { app.byId('emailin').focus(); });
-        app.onchange('emailin', createAccount);
+        app.on('userin', 'change', onUserNameChange);
+        app.on('passin', 'change', onPasswordChange);
+        app.on('emailin', 'change', onEmailChange);
         app.layout.adjust();
         app.byId('userin').focus();
+    },
+
+
+    onReturnToLogin = function (e) {
+        app.evtend(e);
+        app.login.init();
     },
 
 
@@ -490,7 +512,7 @@ define([], function () {
         "<p><a id=\"retlogin\" href=\"return to login\">" +
         "return to login</a></p>";
         app.out('logindiv', html);
-        app.onclick('retlogin', app.login.init);
+        app.on('retlogin', 'click', onReturnToLogin);
         app.layout.adjust();
     },
 
@@ -509,6 +531,12 @@ define([], function () {
                  function (code, errtxt) {
                      app.out('emcrediv', errtxt); },
                  critsec);
+    },
+
+
+    onCredEmailSend = function (e) {
+        app.evtend(e);
+        emailCredentials();
     },
 
 
@@ -539,8 +567,8 @@ define([], function () {
           "</tr>" +
         "</table>";
         app.out('logindiv', html);
-        app.onclick('sendbutton', emailCredentials);
-        app.onchange('emailin', emailCredentials);
+        app.on('sendbutton', 'click', onCredEmailSend);
+        app.on('emailin', 'change', onCredEmailSend);
         app.layout.adjust();
         app.byId('emailin').focus();
     },
@@ -617,6 +645,18 @@ define([], function () {
     },
 
 
+    onLoginUserNameChange = function (e) {
+        app.evtend(e); 
+        app.byId('passin').focus();
+    },
+
+
+    onForgotPassword = function (e) {
+        app.evtend(e);
+        displayEmailCredForm();
+    },
+
+
     displayLoginForm = function (params) {
         var name, html = "";
         app.out('centerhdiv', "");
@@ -659,8 +699,8 @@ define([], function () {
                          " address you set for your account\"" +
             ">" + "forgot your password?</a>";
         app.out('forgotpwtd', html);
-        app.onclick('forgotpw', displayEmailCredForm);
-        app.onchange('userin', function () { app.byId('passin').focus(); });
+        app.on('forgotpw', 'click', onForgotPassword);
+        app.on('userin', 'change', onLoginUserNameChange);
         if(authname) {
             app.byId('userin').value = authname; }
         app.layout.adjust();

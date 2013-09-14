@@ -311,9 +311,8 @@ define([], function () {
             //color controls are high overhead and initialized only when needed.
             "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
         app.out(domid, html);
-        app.onx('change', 'presetsel', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
+        app.on('presetsel', 'change', function (e) {
+            app.evtend(e);
             app.pen.getPen(setColorsFromPreset); });
     };
 

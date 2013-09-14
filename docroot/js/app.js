@@ -25,50 +25,18 @@ var app = {};  //Global container for application level funcs and values
     app.authcookname = "myopenreviewauth";
     app.secsvr = "https://myopenreviews.appspot.com";
     app.mainsvr = "http://www.myopenreviews.com";
+    app.onescapefunc = null;  //app global escape key handler
 
 
     ////////////////////////////////////////
     // general utility functions
     ////////////////////////////////////////
 
-    //library support for factored event connection methods
-    app.onxnode = function (ename, node, func) {
-        app.dojo.on(node, ename, func);
-    };
-
-
-    //library support for factored event connection methods
-    app.onx = function (ename, divid, func) {
-        var node = app.dojo.dom.byId(divid);
-        app.onxnode(ename, node, func);
-    };
-
-
-    //factored method to handle a click with no propagation
-    app.onclick = function (divid, func) {
-        app.onx("click", divid, function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            func(e); });
-    };
-
-
-    //factored method to handle a change with no propagation
-    app.onchange = function (divid, func) {
-        app.onx("change", divid, function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            func(e); });
-    };
-
-
-    //general key handling
-    app.onescapefunc = null;
+    //app global key handling
     app.globkey = function (e) {
         if(e && e.keyCode === 27) {  //ESC
             if(app.onescapefunc) {
-                e.preventDefault();
-                e.stopPropagation();
+                app.evtend(e);
                 app.onescapefunc(); } }
     };
 
@@ -128,8 +96,8 @@ var app = {};  //Global container for application level funcs and values
         app.history = history;
         //app startup
         app.layout.init();
-        app.dojo.on(document, 'keypress', app.globkey);
-        app.dojo.on(window, 'popstate', app.history.pop);
+        app.on(document, 'keypress', app.globkey);
+        app.on(window, 'popstate', app.history.pop);
         app.login.init();
         //app.skinner.init();
         app.basicmod = basicmod;

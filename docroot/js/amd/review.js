@@ -1682,15 +1682,15 @@ define([], function () {
             app.layout.initContent(); }
         app.out('cmain', html);
         if(mode === "edit") {
-            app.onx('mousedown',   'starstd', starPointing);
-            app.onx('mouseup',     'starstd', starStopPointing);
-            app.onx('mouseout',    'starstd', starStopPointingBoundary);
-            app.onx('mousemove',   'starstd', starPointAdjust);
-            app.onx('click',       'starstd', starClick);
-            app.onx('touchstart',  'starstd', starPointing);
-            app.onx('touchend',    'starstd', starStopPointing);
-            app.onx('touchcancel', 'starstd', starStopPointing);
-            app.onx('touchmove',   'starstd', starPointAdjust);
+            app.on('starstd', 'mousedown',   starPointing);
+            app.on('starstd', 'mouseup',     starStopPointing);
+            app.on('starstd', 'mouseout',    starStopPointingBoundary);
+            app.on('starstd', 'mousemove',   starPointAdjust);
+            app.on('starstd', 'click',       starClick);
+            app.on('starstd', 'touchstart',  starPointing);
+            app.on('starstd', 'touchend',    starStopPointing);
+            app.on('starstd', 'touchcancel', starStopPointing);
+            app.on('starstd', 'touchmove',   starPointAdjust);
             if(!keyval) {
                 app.byId('keyin').focus(); }
             else if(app.byId('subkeyin') && !review[type.subkey]) {

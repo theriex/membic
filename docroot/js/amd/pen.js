@@ -150,6 +150,12 @@ define([], function () {
     },
 
 
+    onCreatePenRequest = function (e) {
+        app.evtend(e);
+        createPenName();
+    },
+
+
     cancelNewPen = function () {
         app.login.updateAuthentDisplay();
         app.profile.display();
@@ -193,8 +199,8 @@ define([], function () {
           "</tr>" +
         "</table></div>";
         app.out('contentdiv', html);
-        app.onchange('pnamein', createPenName);
-        app.onclick('createbutton', createPenName);
+        app.on('pnamein', 'change', onCreatePenRequest);
+        app.on('createbutton', 'click', onCreatePenRequest);
         app.layout.adjust();
         app.byId('pnamein').focus();
     },

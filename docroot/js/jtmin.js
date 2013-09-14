@@ -76,7 +76,7 @@
 
 ////////////////////////////////////////
 // Utility methods.  Library users will need to tolerate this global
-// variable, and pass in an object to hold the utility methods.
+// function, and pass in some object to hold all the utility methods.
 var jtminjsDecorateWithUtilities = function (utilityObject) {
     "use strict";
 
@@ -392,8 +392,11 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     ////////////////////////////////////////
     // listening for events
 
-    // synonym for "addEventListener" with basic IE8 shim
+    //synonym for "addEventListener" with basic IE8 shim
     uo.on = function (element, eventName, handler) {
+        if (typeof element === "string") {  //convert DOM id to DOM node
+            element = uo.byId(element);
+        }
         if (uo.isAvailable(element, "addEventListener")) {
             element.addEventListener(eventName, handler, false);
         } else if (uo.isAvailable(element, "attachEvent")) {
@@ -407,13 +410,33 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    // synonym for "removeEventListener" with basic IE8 shim
+    //synonym for "removeEventListener" with basic IE8 shim
     uo.off = function (element, eventName, handler) {
+        if (typeof element === "string") {  //convert DOM id to DOM node
+            element = uo.byId(element);
+        }
         if (uo.isAvailable(element, "removeEventListener")) {
             element.removeEventListener(eventName, handler, false);
         } else if (uo.isAvailable(element, "detachEvent")) {
             element.detachEvent("on" + eventName,
                                 element[eventName + handler]);
+        }
+    };
+
+
+    //synonym for preventDefault + stopPropagation with basic IE8 shim
+    uo.evtend = function (event) {
+        if (event) {
+            if (event.preventDefault) {
+                event.preventDefault();
+            } else {
+                event.returnValue = false;
+            }
+            if (event.stopPropagation) {
+                event.stopPropagation();
+            } else {
+                event.cancelBubble = true;
+            }
         }
     };
 

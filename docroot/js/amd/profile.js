@@ -154,8 +154,10 @@ define([], function () {
     },
 
 
-    savePenNameSettings = function () {
-        var pen = app.pen.currPenRef().pen;
+    savePenNameSettings = function (e) {
+        var pen;
+        app.evtend(e);
+        pen = app.pen.currPenRef().pen;
         setPenNameFromInput(pen);
         app.skinner.save(pen);
         app.pen.updatePen(pen,
@@ -417,8 +419,8 @@ define([], function () {
             "</tr>" +
           "</table>";
         app.out('dlgdiv', html);
-        app.onchange('pennamein', app.profile.setPenNameFromInput);
-        app.onclick('savebutton', savePenNameSettings);
+        app.on('pennamein', 'change', app.profile.penNameChange);
+        app.on('savebutton', 'click', savePenNameSettings);
         displayAuthSettings('settingsauthtd', pen);
         app.services.display('consvcstd', pen);
         app.skinner.init('settingsskintd', pen);
@@ -1045,7 +1047,8 @@ define([], function () {
     },
 
 
-    cancelProfileEdit = function () {
+    cancelProfileEdit = function (e) {
+        app.evtend(e);
         app.profile.updateHeading();
         app.profile.display();
     },
@@ -1068,6 +1071,12 @@ define([], function () {
     },
 
 
+    onProfileSaveClick = function (e) {
+        app.evtend(e);
+        app.profile.save();
+    },
+
+
     displayProfEditButtons = function () {
         var html;
         if(app.byId('profcancelb')) {
@@ -1077,8 +1086,8 @@ define([], function () {
             "&nbsp;" +
             "<button type=\"button\" id=\"profsaveb\">Save</button>";
         app.out('profeditbspan', html);
-        app.onclick('profcancelb', cancelProfileEdit);
-        app.onclick('profsaveb', app.profile.save);
+        app.on('profcancelb', 'click', cancelProfileEdit);
+        app.on('profsaveb', 'click', onProfileSaveClick);
     },
 
 
@@ -1132,13 +1141,15 @@ define([], function () {
         text = app.linkify(pen.shoutout) || text;
         app.out('shoutdiv', text);
         if(profileModAuthorized(pen)) {
-            app.onclick('shoutdiv', function () {
+            app.on('shoutdiv', 'click', function (e) {
+                app.evtend(e);
                 editShout(pen); }); }
     },
 
 
 
-    saveUnlessShoutEdit = function () {
+    saveUnlessShoutEdit = function (e) {
+        app.evtend(e);
         if(app.byId('shoutdiv')) {
             app.profile.save(); }
     },
@@ -1160,7 +1171,7 @@ define([], function () {
                      " value=\"" + val + "\"/>";
         app.out('profcityspan', html);
         displayProfEditButtons();
-        app.onchange('profcityin', saveUnlessShoutEdit);
+        app.on('profcityin', 'change', saveUnlessShoutEdit);
         app.byId('profcityin').focus();
     },
 
@@ -1221,7 +1232,8 @@ define([], function () {
         html = "<img class=\"profpic\" src=\"" + html + "\"/>";
         app.out('profpictd', html);
         if(profileModAuthorized(pen)) {
-            app.onclick('profpictd', function () {
+            app.on('profpictd', 'click', function (e) {
+                app.evtend(e);
                 if(app.byId('profcancelb')) {  //save other field edits so
                     saveEditedProfile(pen); }  //they aren't lost on reload
                 displayUploadPicForm(pen); }); }
@@ -1408,7 +1420,10 @@ define([], function () {
             searchAllRevs(revtype); },
         searchRevsIfTypeChange: function (revtype) {
             if(profpenref.profstate.revtype !== revtype) {
-                searchAllRevs(revtype); } }
+                searchAllRevs(revtype); } },
+        penNameChange: function (event) {
+            app.evtend(event);
+            setPenNameFromInput(); }
     };
 
 });

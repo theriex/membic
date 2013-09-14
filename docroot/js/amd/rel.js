@@ -318,7 +318,8 @@ define([], function () {
         "</table>";
         app.out('dlgdiv', html);
         setFormValuesFromRel(rel);
-        app.onclick('savebutton', function () {
+        app.on('savebutton', 'click', function (e) {
+            app.evtend(e);
             app.out('settingsbuttons', "Saving...");
             setRelFieldsFromFormValues(rel);
             updateRelationship(rel); });
