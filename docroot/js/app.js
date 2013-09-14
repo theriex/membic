@@ -41,7 +41,7 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
-    app.cancelPicUpload = function () {
+    app.cancelOverlay = function () {
         app.out('overlaydiv', "");
         app.byId('overlaydiv').style.visibility = "hidden";
         app.onescapefunc = null;

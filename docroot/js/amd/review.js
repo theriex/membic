@@ -499,7 +499,7 @@ define([], function () {
                     " enctype=\"multipart/form-data\" method=\"post\">" +
             "<div id=\"closeline\">" +
               "<a id=\"closedlg\" href=\"#close\"" +
-                " onclick=\"app.cancelPicUpload();return false\">" + 
+                " onclick=\"app.cancelOverlay();return false\">" + 
                   "&lt;close&nbsp;&nbsp;X&gt;</a>" +
             "</div>" + 
             html +
@@ -515,7 +515,7 @@ define([], function () {
         odiv.style.top = "300px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelPicUpload;
+        app.onescapefunc = app.cancelOverlay;
         app.byId('picfilein').focus();
     },
 
@@ -1089,7 +1089,7 @@ define([], function () {
 
     ratingMenuSelect = function (rating) {
         var html;
-        app.cancelPicUpload();  //clears overlaydiv and hides it
+        app.cancelOverlay();
         crev.rating = rating;
         html = starsImageHTML(crev.rating, true);
         app.out('stardisp', html);
@@ -1112,7 +1112,7 @@ define([], function () {
         odiv.style.left = String(Math.round(evtx + 50)) + "px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelPicUpload;
+        app.onescapefunc = app.cancelOverlay;
     },
 
 

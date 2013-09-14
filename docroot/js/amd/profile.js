@@ -1204,7 +1204,7 @@ define([], function () {
                     " enctype=\"multipart/form-data\" method=\"post\">" +
             "<div id=\"closeline\">" +
               "<a id=\"closedlg\" href=\"#close\"" +
-                " onclick=\"app.cancelPicUpload();return false\">" + 
+                " onclick=\"app.cancelOverlay();return false\">" + 
                   "&lt;close&nbsp;&nbsp;X&gt;</a>" +
             "</div>" + 
             html +
@@ -1220,7 +1220,7 @@ define([], function () {
         odiv.style.top = "80px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelPicUpload;
+        app.onescapefunc = app.cancelOverlay;
         app.byId('picfilein').focus();
     },
 
