@@ -43,7 +43,8 @@ body {
 #logodiv { width:512px; float:left; }
 #topworkdiv { }
 #slidesdiv { }
-.slideimg { position:absolute; left:0px; margin:auto;
+/* left recalculated in layout.initSlideshow, old browsers use this */
+.slideimg { position:absolute; left:520px; margin:auto;
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
   -o-transition: opacity 1s ease-in-out;
