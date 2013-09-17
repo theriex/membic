@@ -1,4 +1,4 @@
-/*global define: false, window: false, document: false, history: false, app: false */
+/*global define: false, window: false, document: false, history: false, JSON: false, app: false */
 
 /*jslint white: true, unparam: true, maxerr: 50, indent: 4 */
 
@@ -55,7 +55,7 @@ return {
                     url = getURL(pstate);
                     history.pushState(pstate, title, url);
                     app.log("history.pushState: " + 
-                            app.dojo.json.stringify(pstate) +
+                            JSON.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } }
             else if(pstate.tab && hstate.tab !== pstate.tab) {
@@ -65,7 +65,7 @@ return {
                     url = getURL(pstate);
                     history.replaceState(pstate, title, url);
                     app.log("history.replaceState: " + 
-                            app.dojo.json.stringify(pstate) +
+                            JSON.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } } }
     },
@@ -73,7 +73,7 @@ return {
 
     pop: function (event) {
         var state = event.state;
-        app.log("historyPop: " + app.dojo.json.stringify(state));
+        app.log("historyPop: " + JSON.stringify(state));
         if(state) {
             switch(state.view) {
             case "profile":

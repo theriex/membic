@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false, navigator: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false, navigator: false, JSON: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -38,7 +38,7 @@ define([], function () {
         if(!penref) {
             penref = profpenref; }
         if(penref.pen && typeof penref.pen.top20s === "string") {
-            penref.pen.top20s = app.dojo.json.parse(penref.pen.top20s); }
+            penref.pen.top20s = JSON.parse(penref.pen.top20s); }
         if(!penref.profstate) {
             penref.profstate = { seltabname: 'recent',
                                  revtype: "" }; }

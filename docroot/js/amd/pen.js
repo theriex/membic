@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, JSON: false, app: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -22,9 +22,9 @@ define([], function () {
 
     serializeFields = function (penName) {
         if(typeof penName.revmem === 'object') {
-            penName.revmem = app.dojo.json.stringify(penName.revmem); }
+            penName.revmem = JSON.stringify(penName.revmem); }
         if(typeof penName.settings === 'object') {
-            penName.settings = app.dojo.json.stringify(penName.settings); }
+            penName.settings = JSON.stringify(penName.settings); }
     },
 
 
@@ -36,7 +36,7 @@ define([], function () {
         else if(typeof penName.revmem !== 'object') {
             try {  //debug vars here help check for double encoding etc
                 text = penName.revmem;
-                obj = app.dojo.json.parse(text);
+                obj = JSON.parse(text);
                 penName.revmem = obj;
             } catch (e) {
                 app.log("pen.deserializeFields " + penName.name + ": " + e);
@@ -52,7 +52,7 @@ define([], function () {
         else if(typeof penName.settings !== 'object') {
             try {  //debug vars here help check for double encoding etc
                 text = penName.settings;
-                obj = app.dojo.json.parse(text);
+                obj = JSON.parse(text);
                 penName.settings = obj;
             } catch (e2) {
                 app.log("pen.deserializeFields " + penName.name + ": " + e2);
@@ -66,7 +66,7 @@ define([], function () {
         if(!penName.top20s) {
             penName.top20s = {}; }
         else if(typeof penName.top20s === "string") {
-            penName.top20s = app.dojo.json.parse(penName.top20s); }
+            penName.top20s = JSON.parse(penName.top20s); }
     },
 
 
