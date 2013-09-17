@@ -15,7 +15,7 @@ define([], function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = app.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             return app.pen.getPen(function (pen) {
                 app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
@@ -51,7 +51,7 @@ define([], function () {
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
             app.log("The received token was not intended for this app");
             return backToParentDisplay(); }
-        addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = app.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             recordGoogleAuthorization(json.user_id); }
         else {
@@ -118,7 +118,7 @@ define([], function () {
             alert("Google+ authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
-        app.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+        app.cookie("addAuthOutDiv", domid, 2);
         authenticate( {} );
     },
 

@@ -69,7 +69,7 @@ var app = {};  //Global container for application level funcs and values
            href.indexOf("authtoken=") < 0 &&
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
-           (!app.dojo.cookie(app.authcookname))) {
+           (!app.cookie(app.authcookname))) {
             app.redirectToSecureServer(app.parseParams());
             return true; }
     };

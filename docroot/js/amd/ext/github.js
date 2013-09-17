@@ -13,7 +13,7 @@ define([], function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = app.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             return app.pen.getPen(function (pen) {
                 app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
@@ -55,7 +55,7 @@ define([], function () {
 
     convertToken = function (token) {
         var addAuthOutDiv, url, critsec = "";
-        addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = app.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
         url = app.enc(url);
         url = "jsonget?geturl=" + url;
@@ -79,7 +79,7 @@ define([], function () {
         var url, state, critsec = "";
         if(params.code) {  //back from github
             app.out("contentdiv", "Returned from GitHub...");
-            state = app.dojo.cookie("githubAuthState");
+            state = app.cookie("githubAuthState");
             if(state !== params.state) {
                 app.log("Bad state returned from GitHub. Sent " + state +
                         " got back " + params.state);
@@ -95,7 +95,7 @@ define([], function () {
                      critsec); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);
-            app.dojo.cookie("githubAuthState", state, { expires: 2 });
+            app.cookie("githubAuthState", state, 2);
             url = "https://github.com/login/oauth/authorize" +
                 "?client_id=5ac4b34b8ae0c21465dc" +
                 "&redirect_uri=" + app.enc("http://www.myopenreviews.com/") +
@@ -110,7 +110,7 @@ define([], function () {
             alert("GitHub authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
-        app.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+        app.cookie("addAuthOutDiv", domid, 2);
         authenticate( {} );
     };
 

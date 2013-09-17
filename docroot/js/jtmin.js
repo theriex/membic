@@ -1,4 +1,4 @@
-/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false */
+/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -544,6 +544,43 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             success(resp);
         }, failure, lockvar, setup, timeoutms);
     };
+
+
+    ////////////////////////////////////////
+    // simple cookie access
+    ////////////////////////////////////////
+
+    //If only the cookie name is provided, then the current value is returned.
+    uo.cookie = function (cname, cval, expiredays) {
+        var expiration, index;
+        if (cval) {
+            if (!expiredays) {
+                expiredays = 365;
+            }
+            expiration = new Date();
+            expiration.setDate(expiration.getDate() + expiredays);
+            cval = escape(cval) + "; expires=" + expiration.toUTCString();
+            document.cookie = cname + "=" + cval;
+        }
+        cval = document.cookie;
+        index = cval.indexOf(" " + cname + "=");
+        if (index < 0) {
+            index = cval.indexOf(cname + "=");
+        }
+        if (index < 0) {
+            cval = null;
+        } else {
+            cval = cval.slice(index);
+            cval = cval.slice(cval.indexOf("=") + 1);
+            index = cval.indexOf(";");
+            if (index >= 0) {
+                cval = cval.slice(0, index);
+            }
+            cval = unescape(cval);
+        }
+        return cval;
+    };
+
 
 };
 

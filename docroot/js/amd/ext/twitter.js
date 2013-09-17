@@ -15,7 +15,7 @@ define([], function () {
 
 
     returnToParentDisplay = function () {
-        var addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        var addAuthOutDiv = app.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             return app.pen.getPen(function (pen) {
                 app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
@@ -31,7 +31,7 @@ define([], function () {
         confirmed = oaparas.oauth_callback_confirmed;
         if(confirmed && token && secret) {
             //save secret so it can be accessed on callback
-            app.dojo.cookie(token, secret, { expires: 2 });
+            app.cookie(token, secret, 2);
             url = twLoginURL + "?oauth_token=" + token;
             window.location.href = url; }
         else {
@@ -67,12 +67,12 @@ define([], function () {
     //After returning from Twitter, use the main contentdiv for all messages.
     twitterAuthComplete = function (oaparas) {
         var token, secret, id, name, addAuthOutDiv;
-        addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = app.cookie("addAuthOutDiv");
         oaparas = app.paramsToObj(oaparas.content);
         token = oaparas.oauth_token;
         secret = oaparas.oauth_token_secret;
-        app.dojo.cookie(token, secret, { expires: 365 });
-        app.dojo.cookie("addAuthOutDiv", "", { expires: -1 });
+        app.cookie(token, secret, 365);
+        app.cookie("addAuthOutDiv", "", -1);
         id = oaparas.user_id;
         name = oaparas.screen_name;
         if(addAuthOutDiv) {
@@ -91,13 +91,13 @@ define([], function () {
     //twitter" click, and the callback from twitter.
     authenticate = function (params) {
         var data, outputdiv, addAuthOutDiv, critsec = "";
-        addAuthOutDiv = app.dojo.cookie("addAuthOutDiv");
+        addAuthOutDiv = app.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
         if(params.oauth_token && params.oauth_verifier) {  //back from twitter
             //on return there is no auth form displayed so use contentdiv
             app.out("contentdiv", "Returned from Twitter...");
             data = "name=Twitter&url=" + app.enc(twTokCnvURL) +
-                "&toksec=" + app.dojo.cookie(params.oauth_token) +
+                "&toksec=" + app.cookie(params.oauth_token) +
                 "&oauth_token=" + params.oauth_token +
                 "&oauth_verifier=" + params.oauth_verifier;
             app.call('POST', "oa1call", data,
@@ -131,7 +131,7 @@ define([], function () {
             alert("Twitter authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
-        app.dojo.cookie("addAuthOutDiv", domid, { expires: 2 });
+        app.cookie("addAuthOutDiv", domid, 2);
         authenticate( {} );
     },
 

@@ -34,7 +34,7 @@ define([], function () {
         var params, sec; 
         params = "am=" + authmethod + "&at=" + authtoken + 
                  "&an=" + app.enc(authname);
-        sec = app.dojo.cookie(authtoken);
+        sec = app.cookie(authtoken);
         if(sec) {
             params += "&as=" + app.enc(sec); }
         return params;
@@ -52,7 +52,7 @@ define([], function () {
 
     logoutWithNoDisplayUpdate = function () {
         //remove the cookie
-        app.dojo.cookie(app.authcookname, "", { expires: -1 });
+        app.cookie(app.authcookname, "", -1);
         authmethod = "";
         authtoken = "";
         authname = "";
@@ -137,7 +137,7 @@ define([], function () {
     //On FF14 without noscript, all is normal.
     setAuthentication = function (method, token, name) {
         var cval = method + cookdelim + token + cookdelim + name;
-        app.dojo.cookie(app.authcookname, cval, { expires: 365 });
+        app.cookie(app.authcookname, cval, 365);
         authmethod = method;
         authtoken = token;
         authname = name;
@@ -147,7 +147,7 @@ define([], function () {
 
     readAuthCookie = function () {
         var cval, mtn;
-        cval = app.dojo.cookie(app.authcookname);
+        cval = app.cookie(app.authcookname);
         if(cval) {
             mtn = cval.split(cookdelim);
             authmethod = mtn[0];
