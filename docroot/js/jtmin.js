@@ -277,48 +277,38 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    //parse the url hash and query parts into an object
-    uo.parseParams = function () {
-        var pstr = window.location.hash, params = {}, avs, av, i;
-        if (pstr) {  //parse the hash params
-            if (pstr.indexOf("#") === 0) {
-                pstr = pstr.slice(1);
-            }
-            avs = pstr.split('&');
-            for (i = 0; i < avs.length; i += 1) {
-                av = avs[i].split('=');
-                if (av.length > 1) {
-                    params[av[0]] = av[1];
-                } else {
-                    params.anchor = av[0];
-                }
-            }
-        }
-        pstr = window.location.search;
-        if (pstr) {
-            if (pstr.indexOf("?") === 0) {
-                pstr = pstr.slice(1);
-            }
-            avs = pstr.split('&');
-            for (i = 0; i < avs.length; i += 1) {
-                av = avs[i].split('=');
-                params[av[0]] = av[1];
-            }
-        }
-        return params;
-    };
-
-
-    uo.paramsToObj = function (paramstr) {
-        var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
+    //convert a "a=1&b=2" type string into an object form
+    uo.paramsToObj = function (paramstr, obj) {
+        var comps, i, attval, idx = paramstr.indexOf("?");
         if (idx >= 0) {
             paramstr = paramstr.slice(idx + 1);
+        }
+        if (!obj) {
+            obj = {};
         }
         comps = paramstr.split("&");
         for (i = 0; i < comps.length; i += 1) {
             attval = comps[i].split("=");
-            obj[attval[0]] = attval[1];
+            if (attval.length > 1) {
+                obj[attval[0]] = attval[1];
+            } else {
+                obj.anchor = attval[0];
+            }
         }
+        return obj;
+    };
+
+
+    //parse the url hash and query parts into an object
+    uo.parseParams = function () {
+        var pstr, obj = {};
+        pstr = window.location.hash;
+        if (pstr.indexOf("#") === 0) {
+            pstr = pstr.slice(1);
+        }
+        uo.paramsToObj(pstr, obj);
+        pstr = window.location.search;
+        uo.paramsToObj(pstr, obj);
         return obj;
     };
 
