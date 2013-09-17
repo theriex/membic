@@ -123,15 +123,15 @@ define([], function () {
         var critsec = "", asin = extractASIN(url);
         app.out('contentdiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
-        app.call(url, 'GET', null,
+        app.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, app.dec(json[0].content));
                      app.review.setAttribution(attribution);
                      app.review.display(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
-                     app.review.display(); },
+                     app.review.display(); }),
                  critsec);
     };
 

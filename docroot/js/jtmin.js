@@ -1,4 +1,4 @@
-/*global alert: false, console: false, document: false, window: false */
+/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -84,12 +84,24 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     ////////////////////////////////////////
-    // basic IO convenience
+    // general javascript utility functions
+    ////////////////////////////////////////
 
     uo.byId = function (elemid) {
         return document.getElementById(elemid);
     };
 
+
+    //Return true if object is not null, and has the given method/object
+    uo.isAvailable = function (object, method) {
+        return object &&
+            (/^(?:function|object|unknown)$/).test(typeof object[method]);
+    };
+
+
+    ////////////////////////////////////////
+    // IO convenience
+    ////////////////////////////////////////
 
     uo.log = function (text) {
         try {
@@ -126,6 +138,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     ////////////////////////////////////////
     // String manipulation and conversion 
+    ////////////////////////////////////////
 
     uo.prefixed = function (string, prefix) {
         if (string && string.indexOf(prefix) === 0) {
@@ -255,6 +268,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     ////////////////////////////////////////
     // value testing and manipulation
+    ////////////////////////////////////////
 
     //return true if the given text can be reasonably construed to be an
     //email address.
@@ -380,17 +394,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     ////////////////////////////////////////
-    // general javascript utility functions
-
-    //Return true if object is not null, and has the given method/object
-    uo.isAvailable = function (object, method) {
-        return object &&
-            (/^(?:function|object|unknown)$/).test(typeof object[method]);
-    };
-
-
+    // event handling
     ////////////////////////////////////////
-    // listening for events
 
     //synonym for "addEventListener" with basic IE8 shim
     uo.on = function (element, eventName, handler) {
@@ -438,6 +443,106 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 event.cancelBubble = true;
             }
         }
+    };
+
+
+    ////////////////////////////////////////
+    // calling the server
+    ////////////////////////////////////////
+
+    //Simulate the latency associated with a server call if local
+    //development.  This helps avoid inadvertent bad code.  Can be
+    //set to null or modified as desired.
+    uo.localDelayBusyWait = function () {
+        var tempdiv, tempdivid, now, start, delayms = 300;
+        if (!document || !window || !window.location || !window.location.href ||
+                window.location.href.indexOf("localhost:8080") < 0) {
+            return;
+        }
+        tempdivid = 'localDelayBusyWaitDiv';
+        tempdiv = uo.byId(tempdivid);
+        if (!tempdiv) {
+            tempdiv = document.createElement("div");
+            tempdiv.id = tempdivid;
+            document.body.appendChild(tempdiv);
+        }
+        now = start = new Date().getTime();
+        while (now - start < delayms) {
+            now = new Date().getTime();
+            uo.out(tempdivid, "delay " + (now - start));
+        }
+        uo.out(tempdivid, "");
+    };
+
+
+    //Make an async call to the server and return the result as text.
+    // - method: GET, POST, etc.
+    // - url: url.
+    // - data: null for GET, form data for POST.
+    // - success(response): called on successful completion.
+    // - failure(errcode, errtxt, method, url, data): called on
+    //   failure. If no failure function is provided, then all call
+    //   errors are ignored.  The recommended approach is to create a
+    //   general handler function at the app level and pass that along
+    //   to deal with required login, crashes etc.
+    // - lockvar: if provided, re-entrant calls are ignored.
+    // - setup(method, url, data, lockvar): if provided, the given
+    //   function is called after the re-entrancy test but before any
+    //   actual processing.
+    // - timeoutms: if not provided, then 0 (no timeout) is used
+    uo.request = function (method, url, data, success, failure,
+                           lockvar, setup, timeoutms) {
+        if (lockvar === "processing") {
+            uo.log(method + " " + url + " already in progress...");
+            return;
+        }
+        lockvar = "processing";
+        if (setup) {
+            setup(method, url, data, lockvar);
+        }
+        if (uo.localDelayBusyWait) {
+            uo.localDelayBusyWait();
+        }
+        timeoutms = timeoutms || 0;
+        (function (m, u, d, s, f, k, t) {
+            var xhr = new XMLHttpRequest();
+            xhr.open(m, u);
+            xhr.setRequestHeader("Content-type",
+                                 "application/x-www-form-urlencoded");
+            xhr.timeout = t;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {  //DONE
+                    if (k) {
+                        k = "completed";
+                    }
+                    if (xhr.status === 200) {  //successful
+                        s(xhr.responseText);
+                    } else if (f) {
+                        f(xhr.status, xhr.statusText, m, u, d);
+                    }
+                }
+            };
+            xhr.send(d);
+        }(method, url, data, success, failure, lockvar, timeoutms));
+    };
+
+
+    //Wrapper for ajax call that returns an object from server JSON.
+    uo.call = function (method, url, data, success, failure,
+                        lockvar, setup, timeoutms) {
+        var jsonobj = JSON || window.JSON;
+        if (!jsonobj) {
+            uo.err("JSON not supported, please use a modern browser");
+        }
+        uo.request(method, url, data, function (resp) {
+            try {
+                resp = jsonobj.parse(resp);
+            } catch (exception) {
+                uo.log("JSON parse failure: " + exception);
+                failure(415, resp, method, url, data);
+            }
+            success(resp);
+        }, failure, lockvar, setup, timeoutms);
     };
 
 };

@@ -19,6 +19,9 @@ var html="",
 
 jtminjsDecorateWithUtilities(jt);
 
+html += "JSON: " + JSON + "<br/>";
+html += "window.JSON: " + window.JSON + "<br/>";
+
 //for IE8, document.documentElement.uniqueID is defined, but not id. 
 //window and document have neither id nor uniqueID.
 html += "document.documentElement.addEventListener: " + jt.isAvailable(document.documentElement, "addEventListener") + "<br/>";

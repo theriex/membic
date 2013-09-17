@@ -70,7 +70,7 @@ define([], function () {
             app.instId(pen);
         if(cursor) {
             params += "&cursor=" + cursor; }
-        app.call("findrels?" + params, 'GET', null,
+        app.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, resultCursor;
                      for(i = 0; i < relationships.length; i += 1) {
@@ -84,11 +84,11 @@ define([], function () {
                      else {
                          verifyRelsInitialized(pen, direction);
                          app.rel.displayRelations(pen, direction, divid); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      var msg = "loadDisplayRels error code " + code + 
                          ": " + errtxt;
                      app.log(msg);
-                     app.err(msg); },
+                     app.err(msg); }),
                  critsec);
     },
 
@@ -247,7 +247,7 @@ define([], function () {
     updateRelationship = function (rel) {
         var critsec = "", data = app.objdata(rel);
         if(rel.status === "nofollow") {  //delete
-            app.call("delrel?" + app.login.authparams(), 'POST', data,
+            app.call('POST', "delrel?" + app.login.authparams(), data,
                      function (updates) {
                          var orgpen = updates[0],  //originator pen
                              relpen = updates[1];  //related pen
@@ -257,20 +257,20 @@ define([], function () {
                          app.layout.closeDialog();
                          app.activity.reset();
                          app.profile.byprofid(app.instId(updates[1])); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.err("Relationship deletion failed code " + code +
-                                 ": " + errtxt); },
+                                 ": " + errtxt); }),
                      critsec); }
         else { //update
-            app.call("updrel?" + app.login.authparams(), 'POST', data,
+            app.call('POST', "updrel?" + app.login.authparams(), data,
                      function (updates) {
                          app.lcs.putRel(updates[0]);
                          app.layout.closeDialog();
                          app.activity.reset();
                          app.profile.byprofid(updates[0].relatedid); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.err("Relationship update failed code " + code +
-                                 ": " + errtxt); },
+                                 ": " + errtxt); }),
                      critsec); }
     },
 
@@ -370,7 +370,7 @@ define([], function () {
             newrel.mute = "";
             newrel.cutoff = 0;
             data = app.objdata(newrel);
-            app.call("newrel?" + app.login.authparams(), 'POST', data,
+            app.call('POST', "newrel?" + app.login.authparams(), data,
                      function (newrels) {
                          var orgpen = newrels[0],  //originator pen
                              relpen = newrels[1];  //related pen
@@ -383,9 +383,9 @@ define([], function () {
                          app.profile.refresh();
                          displayRelationshipDialog(newrels[2], newrels[1], 
                                                    true); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.err("Relationship creation failed code " + code +
-                                 ": " + errtxt); },
+                                 ": " + errtxt); }),
                      critsec); }
     },
 
@@ -417,7 +417,7 @@ define([], function () {
         params = app.login.authparams() + "&originid=" + app.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
             params += "&cursor=" + app.enc(loadoutcursor); }
-        app.call("findrels?" + params, 'GET', null,
+        app.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, relref;
                      loadoutcursor = "";
@@ -433,10 +433,10 @@ define([], function () {
                              loadOutboundRelationships(pen); }, 50); }
                      else {
                          relationshipsLoadFinished(pen); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.log("loadOutboundRelationships errcode " + code +
                              ": " + errtxt);
-                     alert("Sorry. Data error. Please reload the page"); },
+                     alert("Sorry. Data error. Please reload the page"); }),
                  critsec);
     },
 

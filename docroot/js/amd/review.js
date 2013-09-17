@@ -1243,17 +1243,17 @@ define([], function () {
         var url, critsec = "";
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
             app.enc(autocomptxt);
-        app.call(url, 'GET', null,
+        app.call('GET', url, null,
                  function (json) {
                      writeAutocompLinks(app.dec(json[0].content));
                      setTimeout(acfunc, 400);
                      app.layout.adjust(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('revautodiv', "");
                      app.log("Amazon info retrieval failed code " +
                              code + ": " + errtxt);
                      setTimeout(acfunc, 400);
-                     app.layout.adjust(); },
+                     app.layout.adjust(); }),
                  critsec);
     },
 
@@ -1397,15 +1397,15 @@ define([], function () {
         params = "penid=" + app.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
             "&" + app.login.authparams();
-        app.call("revbykey?" + params, 'GET', null,
+        app.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var rev = null;
                      if(revs.length > 0) {
                          rev = revs[0]; }
                      contfunc(homepen, rev); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("findCorrespondingReview failed " + code + 
-                             " " + errtxt); },
+                             " " + errtxt); }),
                  critsec);
     },
 
@@ -1452,7 +1452,7 @@ define([], function () {
         data = "penid=" + app.instId(app.pen.currPenRef().pen) +
             "&revid=" + app.instId(crev) +
             "&helpful=" + value;
-        app.call("notehelpful?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "notehelpful?" + app.login.authparams(), data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('helpful', updatedrevtags);
                      if(isHelpful(updatedrevtags[0])) {
@@ -1462,9 +1462,9 @@ define([], function () {
                          img.src = "img/helpfulq.png";
                          tbl.title = "Mark this review as helpful"; }
                      img.className = "navico"; },  //ungrey the image
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("toggleHelpfulButton failed " + code +
-                             " " + errtxt); },
+                             " " + errtxt); }),
                  critsec);
     },
 
@@ -1487,13 +1487,13 @@ define([], function () {
             penref = app.pen.currPenRef(); }
         params = "penid=" + app.instId(penref.pen) + 
             "&" + app.login.authparams();
-        app.call("srchhelpful?" + params, 'GET', null,
+        app.call('GET', "srchhelpful?" + params, null,
                  function (revtags) {
                      penref.helpful = revtags;
                      callback(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("initHelpfulButtonSetting failed " + code +
-                             " " + errtxt); },
+                             " " + errtxt); }),
                  critsec);
     },
 
@@ -1531,7 +1531,7 @@ define([], function () {
         data = "penid=" + app.instId(app.pen.currPenRef().pen) +
             "&revid=" + app.instId(crev) +
             "&remember=" + value;
-        app.call("noteremem?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "noteremem?" + app.login.authparams(), data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('remembered', updatedrevtags);
                      if(isRemembered(updatedrevtags[0])) {
@@ -1543,9 +1543,9 @@ define([], function () {
                          tbl.title = "Add to your remembered reviews";
                          app.out('memotxttd', "Remember"); }
                      img.className = "navico"; },  //ungrey the image
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("toggleMemoButton failed " + code +
-                             " " + errtxt); },
+                             " " + errtxt); }),
                  critsec);
     },
 
@@ -1562,13 +1562,13 @@ define([], function () {
         else { //penref.remembered not defined yet. init from db and retry
             params = "penid=" + app.instId(penref.pen) +
                 "&" + app.login.authparams();
-            app.call("srchremem?" + params, 'GET', null,
+            app.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
                          initMemoButtonSetting(penref, review); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.err("initMemoButtonSetting failed " + code +
-                                 " " + errtxt); },
+                                 " " + errtxt); }),
                      critsec); }
     },
 
@@ -1778,7 +1778,7 @@ define([], function () {
             url = "newrev?";
             crev.svcdata = ""; }
         data = app.objdata(crev);
-        app.call(url + app.login.authparams(), 'POST', data,
+        app.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
                      crev = app.lcs.putRev(reviews[0]).rev;
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
@@ -1789,17 +1789,17 @@ define([], function () {
                          app.review.displayRead(actionstr); }
                      else {
                          app.review.display(actionstr); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.log("saveReview failed code: " + code + " " +
                              errtxt);
-                     app.review.display(); },
+                     app.review.display(); }),
                  critsec);
     },
 
 
     initWithId = function (revid, mode, action, errmsg) {
         var critsec = "", params = "revid=" + revid;
-        app.call("revbyid?" + params, 'GET', null,
+        app.call('GET', "revbyid?" + params, null,
                  function (revs) {
                      if(revs.length > 0) {
                          crev = revs[0];
@@ -1809,9 +1809,9 @@ define([], function () {
                              app.review.displayRead(action); } }
                      else {
                          app.err("initWithId found no review id " + revid); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("initWithId failed code " + code + ": " +
-                             errtxt); },
+                             errtxt); }),
                  critsec);
     },
 
@@ -1863,7 +1863,7 @@ define([], function () {
             return; }
         app.out('cmain', "Deleting review...");
         data = app.objdata(crev);
-        app.call("delrev?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "delrev?" + app.login.authparams(), data,
                  function (reviews) {
                      var html = "<p>Review deleted.  If this review was one" +
                          " of your top 20 best, then you may see an id" +
@@ -1874,9 +1874,9 @@ define([], function () {
                      setTimeout(function () {
                          app.profile.resetReviews();
                          app.profile.display(); }, 12000); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("Delete failed code: " + code + " " + errtxt);
-                     app.profile.display(); },
+                     app.profile.display(); }),
                  critsec);
     },
 

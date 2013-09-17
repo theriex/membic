@@ -59,7 +59,7 @@ define([], function () {
         app.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
-        app.call(url, 'GET', null,
+        app.ajax('GET', url, null,
                  function (resp) {
                      displayDocContent(url, resp); },
                  function (code, errtxt) {

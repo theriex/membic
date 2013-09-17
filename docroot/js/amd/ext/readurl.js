@@ -254,14 +254,14 @@ define([], function () {
         var geturl, critsec = "";
         app.out('contentdiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + app.enc(url);
-        app.call(geturl, 'GET', null,
+        app.call('GET', geturl, null,
                  function (json) {
                      setReviewFields(review, app.dec(json[0].content), url);
                      app.review.display(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("General URL retrieval failed code " + 
                              code + ": " + errtxt);
-                     app.review.display(); },
+                     app.review.display(); }),
                  critsec);
     };
 

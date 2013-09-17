@@ -59,16 +59,16 @@ define([], function () {
         url = "https://api.github.com/user?access_token=" + token;
         url = app.enc(url);
         url = "jsonget?geturl=" + url;
-        app.call(url, 'GET', null,
+        app.call('GET', url, null,
                  function (json) {
                      if(addAuthOutDiv) {
                          recordGitHubAuthorization(token, json); }
                      else {
                          handleGitHubLogin(token, json); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.log("GitHub authent fetch details failed code " +
                              code + ": " + errtxt);
-                     backToParentDisplay(); },
+                     backToParentDisplay(); }),
                  critsec);
     },
 
@@ -85,13 +85,13 @@ define([], function () {
                         " got back " + params.state);
                 backToParentDisplay(); }
             url = "githubtok?code=" + params.code + "&state=" + state;
-            app.call(url, 'GET', null,
+            app.call('GET', url, null,
                      function (json) {
                          convertToken(json.access_token); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
-                         backToParentDisplay(); },
+                         backToParentDisplay(); }),
                      critsec); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);

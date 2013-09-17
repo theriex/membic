@@ -305,12 +305,12 @@ define([], function () {
             params += "&t20=" + app.enc(t20); }
         if(pensearch.params.includeLurkers) {
             params += "&lurkers=include"; }
-        app.call("srchpens?" + params, 'GET', null,
+        app.call('GET', "srchpens?" + params, null,
                  function (results) {
                      displayPenSearchResults(results); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('searchresults', 
-                             "error code: " + code + " " + errtxt); },
+                             "error code: " + code + " " + errtxt); }),
                  critsec);
     },
 
@@ -369,13 +369,11 @@ define([], function () {
             app.layout.adjust();
             params = "penid=" + app.instId(penref.pen) +
                 "&" + app.login.authparams();
-            app.call("srchremem?" + params, 'GET', null,
+            app.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
                          displayRemembered(); },
-                     function (code, errtxt) {
-                         app.err("displayRemembered failed " + code + 
-                                 " " + errtxt); },
+                     app.failf(),
                      critsec); }
     },
 
@@ -587,15 +585,15 @@ define([], function () {
         else if(continued) {
             params += "&cursor=" + actdisp.cursor; }
         time = new Date().getTime();
-        app.call("revact?" + params, 'GET', null,
+        app.call('GET', "revact?" + params, null,
                  function (results) {
                      time = new Date().getTime() - time;
                      app.log("revact returned in " + time/1000 + " seconds.");
                      actdisp.lastChecked = new Date();
                      collectAndDisplayReviewActivity(results, continued); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('revactdiv', "error code: " + code + " " + 
-                             errtxt); },
+                             errtxt); }),
                  critsec);
     },
 

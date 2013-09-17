@@ -98,7 +98,7 @@ define([], function () {
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
         params = "penid=" + idify(penid);
-        app.call("penbyid?" + params, 'GET', null,
+        app.call('GET', "penbyid?" + params, null,
                  function (foundpens) {
                      if(foundpens.length > 0) {
                          callback(putPen(foundpens[0])); }
@@ -107,11 +107,11 @@ define([], function () {
                                        updtime: new Date() };
                          pens[idify(penid)] = tombstone;
                          callback(tombstone); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      tombstone = { status: String(code) + ": " + errtxt,
                                    updtime: new Date() };
                      pens[idify(penid)] = tombstone;
-                     callback(tombstone); },
+                     callback(tombstone); }),
                  critsec, null, [400, 404]);
     },
 
@@ -186,7 +186,7 @@ define([], function () {
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
-        app.call("revbyid?" + params, 'GET', null,
+        app.call('GET', "revbyid?" + params, null,
                  function (foundrevs) {
                      if(foundrevs.length > 0) {
                          callback(putRev(foundrevs[0])); }
@@ -195,11 +195,11 @@ define([], function () {
                                        updtime: new Date() };
                          revs[idify(revid)] = tombstone;
                          callback(tombstone); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      tombstone = { status: String(code) + ": " + errtxt,
                                    updtime: new Date() };
                      revs[idify(revid)] = tombstone;
-                     callback(tombstone); },
+                     callback(tombstone); }),
                  critsec, null, [400, 404]);
     },
 
@@ -236,13 +236,13 @@ define([], function () {
         if(revids.length > 0) {
             params = "revids=" + revids.join(",") + 
                 "&" + app.login.authparams();
-            app.call("revlinks?" + params, 'GET', null,
+            app.call('GET', "revlinks?" + params, null,
                      function (revlinks) {
                          resolveReviewLinks(revids, revlinks);
                          verifyReviewLinks(onchangefunc, true); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.err("verifyReviewLinks revlinks call failed " +
-                                 code + " " + errtxt); },
+                                 code + " " + errtxt); }),
                      critsec); }
         else if(revids.length === 0 && changed) {
             onchangefunc(); }
@@ -265,14 +265,14 @@ define([], function () {
             revlink.corresponding = corids.join(","); }
         revlink.critsec = "";
         data = app.objdata(revlink);
-        app.call("updlink?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "updlink?" + app.login.authparams(), data,
                  function (updrevlinks) {
                      app.log("verifyCorrespondingLink updated " +
                              updrevlinks[0].revid + " corresponding: " +
                              updrevlinks[0].corresponding); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.log("verifyCorrespondingLink failed " + 
-                             code + " " + errtxt); },
+                             code + " " + errtxt); }),
                  revlink.critsec);
     },
 
@@ -314,15 +314,15 @@ define([], function () {
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
             "&" + app.login.authparams();
-        app.call("revbykey?" + params, 'GET', null,
+        app.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var i;
                      for(i = 0; i < revs.length; i += 1) {
                          putRev(revs[i]); }
                      checkCachedCorresponding(review); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.log("checkAllCorresponding failed " + code + 
-                             ": " + errtxt); },
+                             ": " + errtxt); }),
                  critsec);
     };
 

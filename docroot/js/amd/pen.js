@@ -81,7 +81,7 @@ define([], function () {
         pen = currpenref && currpenref.pen;
         if(pen) {
             params = "penid=" + app.instId(pen);
-            app.call("penbyid?" + params, 'GET', null,
+            app.call('GET', "penbyid?" + params, null,
                      function (pens) {
                          if(pens.length > 0) {
                              currpenref.pen.name = pens[0].name;
@@ -93,9 +93,9 @@ define([], function () {
                              currpenref.pen.following = pens[0].following;
                              currpenref.pen.followers = pens[0].followers;
                              app.profile.resetReviews(); } },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("refreshCurrentPenFields " + code + " " +
-                                 errtxt); },
+                                 errtxt); }),
                      critsec); }
     },
 
@@ -113,13 +113,13 @@ define([], function () {
         var data, critsec = "";
         serializeFields(pen);
         data = app.objdata(pen);
-        app.call("updpen?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
                      currpenref = app.lcs.putPen(updpens[0]);
                      callok(currpenref); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      deserializeFields(pen);  //undo pre-call serialization
-                     callfail(code, errtxt); },
+                     callfail(code, errtxt); }),
                  critsec);
     },
 
@@ -135,7 +135,7 @@ define([], function () {
             newpen.settings = currpenref.settings;
             serializeFields(newpen); }
         data = app.objdata(newpen);
-        app.call("newpen?" + app.login.authparams(), 'POST', data,
+        app.call('POST', "newpen?" + app.login.authparams(), data,
                  function (newpens) {
                      currpenref = app.lcs.putPen(newpens[0]);
                      if(!penNameRefs) {
@@ -143,9 +143,9 @@ define([], function () {
                      penNameRefs.push(currpenref);
                      app.rel.resetStateVars("new");  //updates header display
                      returnCall(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('penformstat', errtxt);
-                     app.out('formbuttons', buttonhtml); },
+                     app.out('formbuttons', buttonhtml); }),
                  critsec);
     },
 
@@ -258,16 +258,16 @@ define([], function () {
         app.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         app.layout.adjust();
         url = "mypens?" + app.login.authparams();
-        app.call(url, 'GET', null,
+        app.call('GET', url, null,
                  function (pens) {
                      var i;
                      penNameRefs = [];
                      for(i = 0; i < pens.length; i += 1) {
                          penNameRefs.push(app.lcs.putPen(pens[i])); }
                      chooseOrCreatePenName(callback); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('contentdiv', "Pen name retrieval failed: " + 
-                             code + " " + errtxt); },
+                             code + " " + errtxt); }),
                  critsec);
     };
 

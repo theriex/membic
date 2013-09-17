@@ -59,7 +59,7 @@ define([], function () {
                 "?access_token=" + token;
             url = app.enc(url);
             url = "jsonget?geturl=" + url;
-            app.call(url, 'GET', null,
+            app.call('GET', url, null,
                      function (json) {
                          app.out('contentdiv', 
                                  "<p>Welcome " + json.name + "</p>");
@@ -69,10 +69,10 @@ define([], function () {
                          //allow for creating a cool pen name without
                          //defaulting it.
                          app.login.authComplete(); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("Google authent fetch details failed code " +
                                  code + ": " + errtxt);
-                         backToParentDisplay(); },
+                         backToParentDisplay(); }),
                      critsec); }
     },
         
@@ -90,13 +90,13 @@ define([], function () {
                 "?access_token=" + params.access_token;
             url = app.enc(url);
             url = "jsonget?geturl=" + url;
-            app.call(url, 'GET', null,
+            app.call('GET', url, null,
                      function (json) {
                          validateAuthentication(json, params.access_token); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("Google token retrieval failed code " + 
                                  code + ": " + errtxt);
-                         backToParentDisplay(); },
+                         backToParentDisplay(); }),
                      critsec); }
         else { //initial login or authorization call
             scope = "https://www.googleapis.com/auth/userinfo.profile";

@@ -154,7 +154,7 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
-    app.crash = function (url, method, data, code, errtxt) {
+    app.crash = function (code, errtxt, method, url, data) {
         var html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
         "<p>The server crashed.</p>" +
         "<p>If you want to help out, copy the contents of this page and " +
@@ -174,62 +174,24 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
-    //General processing of JSON server calls, with fallback error
-    //handling.  Caller caches and manages result data, including
-    //recognizing stale.
-    app.call = function (url, method, data, success, failure, 
-                         lockvar, setup, errs) {
-        var statcode, errtxt, start, now, delayms = 300, temphtml;
-        if(lockvar === "processing") {
-            app.log(method + " " + url + " already in progress...");
-            return; }
-        lockvar = "processing";
-        if(setup) {
-            setup(); }
-        //local delay to simulate actual site
-        if(window.location.href.indexOf("localhost:8080") >= 0) {
-            temphtml = app.byId('logodiv').innerHTML;
-            now = start = new Date().getTime();
-            while(now - start < delayms) {
-                now = new Date().getTime();
-                app.out('logodiv', "delay " + (now - start)); }
-            app.out('logodiv', temphtml); }
-        app.dojo.request(url, { method: method, data: data }).then(
-            //successful call result processing function
-            function (resp) {
-                lockvar = "success";
-                try {
-                    resp = app.dojo.json.parse(resp);
-                } catch (e) {
-                    app.log("JSON parse failure: " + e);
-                    return failure(415, resp);
-                }
-                success(resp); },
-            //failed call result processing function
-            function (resp) {
-                lockvar = "failure";
-                if(!errs) {
-                    errs = []; }
-                if(!statcode) {
-                    //there is supposed to always be a code, but if there
-                    //isn't, then unauthorized is probably the best reset
-                    statcode = 401; 
-                    //recover the status (at least on IE8)
-                    if(resp.response && resp.response.status) {
-                        statcode = resp.response.status; } }
-                if(errs.indexOf(statcode) < 0) {
-                    switch(statcode) {
-                    case 401: return app.login.logout();
-                    case 500: return app.crash(url, method, data,
-                                               statcode, errtxt);
-                    } }
-                failure(statcode, errtxt); },
-            //interim progress status update function
-            function (evt) {
-                if(evt && evt.xhr) {
-                    statcode = evt.xhr.status;
-                    errtxt = evt.xhr.responseText; }
-                });
+    app.failf = function (failfunc) {
+        if(!failfunc) {
+            failfunc = function (code, errtxt, method, url, data) {
+                app.log(app.safestr(code) + " " + method + " " + url + 
+                        " " + data + " " + errtxt); }; }
+        return function (code, errtxt, method, url, data) {
+            switch(code) {
+            //   400 (bad request) -> general error handling
+            //If the user has attempted to do something unauthorized,
+            //then it's most likely because their session has expired
+            //or they logged out and are trying to resubmit an old
+            //form.  The appropriate thing is to redo the login.
+            case 401: return app.login.logout();
+            //   404 (not found) -> general error handling
+            //   405 (GET instead of POST) -> general error handling
+            //   412 (precondition failed) -> general error handling
+            case 500: return app.crash(code, errtxt, method, url, data);
+            default: failfunc(code, errtxt, method, url, data); } };
     };
 
 

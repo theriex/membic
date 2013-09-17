@@ -68,15 +68,15 @@ define([], function () {
             "'http://api.netflix.com/catalog/titles/movies/" + movieId + "'" +
             "&$format=json";
         url = "jsonget?geturl=" + app.enc(url);
-        app.call(url, 'GET', null,
+        app.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, json);
                      app.review.setAttribution(attribution);
                      app.review.display(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("Netflix data retrieval failed code " +
                              code + ": " + errtxt);
-                     app.review.display(); },
+                     app.review.display(); }),
                  critsec);
     };
 

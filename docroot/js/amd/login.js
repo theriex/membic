@@ -188,15 +188,15 @@ define([], function () {
         data += "&sumflags=" + app.enc(csv);
         data += "&" + app.login.authparams();
         url = secureURL("chgpwd");
-        app.call(url, 'POST', data,
+        app.call('POST', url, data,
                  function (objs) {
                      if(authmethod === "mid") {
                          setAuthentication("mid", objs[0].token, authname); }
                      doneWorkingWithAccount(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('setstatdiv', "Account settings update failed: " +
-                             errtxt); },  //412 code not helpful
-                 critsec, null, [405, 412]);
+                             errtxt); }),
+                 critsec);
     },
 
 
@@ -294,16 +294,16 @@ define([], function () {
 
     fetchAccAndUpdate = function () {
         var critsec = "";
-        app.call("getacct?" + authparams(), 'GET', null,
+        app.call('GET', "getacct?" + authparams(), null,
                  function (accarr) {
                      if(accarr.length > 0) {
                          displayUpdateAccountForm(accarr[0]); }
                      else {
                          app.err("No account details available"); } },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("Account details retrieval failed: " + code + 
-                             " " + errtxt); },
-                 critsec, null, [400, 404]);
+                             " " + errtxt); }),
+                 critsec);
     },
 
 
@@ -398,7 +398,7 @@ define([], function () {
         buttonhtml = app.byId('newaccbuttonstd').innerHTML;
         app.out('newaccbuttonstd', "Creating new account...");
         data = app.objdata({ user: username, pass: password, email: maddr });
-        app.call(url, 'POST', data, 
+        app.call('POST', url, data, 
                  function (objs) {
                      var html = "<p>Welcome " + username + "! Your account " +
                          "has been created. </p>" +
@@ -407,9 +407,9 @@ define([], function () {
                      //same flow here as userpassLogin, but db stable wait..
                      setAuthentication("mid", objs[0].token, username);
                      setTimeout(doneWorkingWithAccount, 3000); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('maccstatdiv', errtxt);
-                     app.out('newaccbuttonstd', buttonhtml);  },
+                     app.out('newaccbuttonstd', buttonhtml); }),
                  critsec);
     },
 
@@ -525,11 +525,11 @@ define([], function () {
             return; }  //nothing to send to
         app.out('sendbuttons', "Sending...");
         data = "email=" + app.enc(eaddr);
-        app.call("mailcred", 'POST', data,
+        app.call('POST', "mailcred", data,
                  function (objs) {
                      dispEmailSent(); },
-                 function (code, errtxt) {
-                     app.out('emcrediv', errtxt); },
+                 app.failf(function (code, errtxt) {
+                     app.out('emcrediv', errtxt); }),
                  critsec);
     },
 
@@ -592,15 +592,16 @@ define([], function () {
         app.out('loginbspan', "Signing in...");
         url = secureURL("login");
         data = app.objdata({ user: username, pass: password });
-        app.call(url, 'POST', data,
+        app.call('POST', url, data,
                  function (objs) {
                      //same flow here as createAccount
                      setAuthentication("mid", objs[0].token, username);
                      doneWorkingWithAccount(); },
+                 //no app.failf because need to handle 401 here
                  function (code, errtxt) {
                      app.out('loginstatdiv', "Login failed: " + errtxt);
                      app.out('loginbspan', loginButtonHTML()); },
-                 critsec, null, [401]);
+                 critsec);
     },
 
 

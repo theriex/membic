@@ -714,12 +714,12 @@ define([], function () {
         params = app.objdata(rrs.params) + "&" + app.login.authparams();
         if(rrs.cursor) {
             params += "&cursor=" + app.enc(rrs.cursor); }
-        app.call("srchrevs?" + params, 'GET', null,
+        app.call('GET', "srchrevs?" + params, null,
                  function (revs) {
                      displayRecentReviews(rrs, revs); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.out('profcontdiv', "findRecentReviews failed code " + 
-                             code + " " + errtxt); },
+                             code + " " + errtxt); }),
                  critsec);
     },
 
@@ -941,14 +941,14 @@ define([], function () {
             "&penid=" + app.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
             "&cursor=" + app.enc(state.allRevsState.cursor);
-        app.call("srchrevs?" + params, 'GET', null,
+        app.call('GET', "srchrevs?" + params, null,
                  function (results) { 
                      app.lcs.putRevs(results);
                      listAllRevs(results);
                      monitorAllRevQuery(); },
-                 function (code, errtxt) {
+                 app.failf(function (code, errtxt) {
                      app.err("searchAllRevs call died code: " + code + " " +
-                             errtxt); },
+                             errtxt); }),
                  critsec);
     },
 

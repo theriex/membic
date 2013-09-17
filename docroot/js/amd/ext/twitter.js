@@ -100,26 +100,26 @@ define([], function () {
                 "&toksec=" + app.dojo.cookie(params.oauth_token) +
                 "&oauth_token=" + params.oauth_token +
                 "&oauth_verifier=" + params.oauth_verifier;
-            app.call("oa1call", 'POST', data,
+            app.call('POST', "oa1call", data,
                      function (callresults) {
                          twitterAuthComplete(callresults[0]); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("twitter token conversion failed code " +
                                  code + ": " + errtxt);
-                         returnToParentDisplay(); },
+                         returnToParentDisplay(); }),
                      critsec); }
         else {  //initial login or authorization call
             app.out(outputdiv, "Setting up call to Twitter...");
             data = "name=Twitter&url=" + app.enc(twReqTokURL) + 
                 "&oauth_callback=" +
                 app.enc("http://www.myopenreviews.com#command=AltAuth1");
-            app.call("oa1call", 'POST', data,
+            app.call('POST', "oa1call", data,
                      function (callresults) {
                          redirectForLogin(callresults[0]); },
-                     function (code, errtxt) {
+                     app.failf(function (code, errtxt) {
                          app.log("twitter initial oauth failed code " + 
                                  code + ": " + errtxt);
-                         returnToParentDisplay(); },
+                         returnToParentDisplay(); }),
                      critsec); }
     },
 
