@@ -277,6 +277,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    //parse the url hash and query parts into an object
     uo.parseParams = function () {
         var pstr = window.location.hash, params = {}, avs, av, i;
         if (pstr) {  //parse the hash params
@@ -308,6 +309,20 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    uo.paramsToObj = function (paramstr) {
+        var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
+        if (idx >= 0) {
+            paramstr = paramstr.slice(idx + 1);
+        }
+        comps = paramstr.split("&");
+        for (i = 0; i < comps.length; i += 1) {
+            attval = comps[i].split("=");
+            obj[attval[0]] = attval[1];
+        }
+        return obj;
+    };
+
+
     //return the given object field and values as html POST data
     uo.objdata = function (obj, skips) {
         var str = "", name;
@@ -328,20 +343,6 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             }
         }
         return str;
-    };
-
-
-    uo.paramsToObj = function (paramstr) {
-        var comps, i, attval, obj = {}, idx = paramstr.indexOf("?");
-        if (idx >= 0) {
-            paramstr = paramstr.slice(idx + 1);
-        }
-        comps = paramstr.split("&");
-        for (i = 0; i < comps.length; i += 1) {
-            attval = comps[i].split("=");
-            obj[attval[0]] = attval[1];
-        }
-        return obj;
     };
 
 
@@ -579,6 +580,48 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             cval = unescape(cval);
         }
         return cval;
+    };
+
+
+    ////////////////////////////////////////
+    // event geometry
+    ////////////////////////////////////////
+
+    //Return sensible position info for the given domelem.
+    uo.geoPos = function (domelem, pos) {
+        if (!pos) {
+            pos = { h: domelem.offsetHeight,
+                    w: domelem.offsetWidth,
+                    x: 0,
+                    y: 0 };
+        }
+        pos.x += domelem.offsetLeft;
+        pos.y += domelem.offsetTop;
+        if (domelem.offsetParent) {
+            return uo.geoPos(domelem.offsetParent, pos);
+        }
+        return pos;
+    };
+
+
+    //Return sensible element x,y coordinates for event handling. 
+    //Available position info *should* be
+    //    pageX: relative to top left of fully rendered content 
+    //    screenX: relative to top left of physical screen 
+    //    clientX: relative to the top left of browser window
+    //but IE8 has no event.pageX, clientHeight/Left/Top/Width are
+    //always zero, and event.x/y === event.clientX/Y.
+    uo.geoXY = function (event) {
+        var pos;
+        if (event.pageX) {
+            return { x: event.pageX, y: event.pageY };
+        }
+        pos = { h: -1, w: -1, x: event.offsetX, y: event.offsetY };
+        pos = uo.geoPos(event.srcElement, pos);
+        if (!pos) {
+            pos = { x: event.offsetX, y: event.offsetY };
+        }
+        return pos;
     };
 
 

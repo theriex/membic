@@ -1052,41 +1052,6 @@ define([], function () {
     },
 
 
-    //Return sensible element position info and x,y coordinates
-    //relative to that position for event handling.  Normally
-    //dojo.domgeo.position combined with pageX/Y event coordinates
-    //works just fine, but IE8 has no event.pageX,
-    //clientHeight/Left/Top/Width are always zero, and event.x/y are
-    //the same values as event.clientX/Y.
-    //    pageX: relative to top left of fully rendered content 
-    //    screenX: relative to top left of physical screen 
-    //    clientX: relative to the top left of browser window
-    geoPos = function (event, domelem, pos) {
-        if(!event || event.pageX) {
-            return app.dojo.domgeo.position(domelem); }
-        if(!pos) {
-            pos = { h: domelem.offsetHeight, 
-                    w: domelem.offsetWidth, 
-                    x: 0, 
-                    y: 0 }; }
-        pos.x += domelem.offsetLeft;
-        pos.y += domelem.offsetTop;
-        if(domelem.offsetParent) {
-            return geoPos(event, domelem.offsetParent, pos); }
-        return pos;
-    },
-    geoXY = function (event) {
-        var pos;
-        if(event.pageX) {
-            return { x: event.pageX, y: event.pageY }; }
-        pos = { h: -1, w: -1, x: event.offsetX, y: event.offsetY };
-        pos = geoPos(event, event.srcElement, pos);
-        if(!pos) {
-            pos = { x: event.offsetX, y: event.offsetY }; }
-        return pos;
-    },
-
-
     ratingMenuSelect = function (rating) {
         var html;
         app.cancelOverlay();
@@ -1119,11 +1084,11 @@ define([], function () {
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
         span = app.byId('stardisp');
-        spanloc = geoPos(event, span);
-        evtx = geoXY(event).x;
+        spanloc = app.geoPos(span);
+        evtx = app.geoXY(event).x;
         //app.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
         if(event.changedTouches && event.changedTouches[0]) {
-            evtx = geoXY(event.changedTouches[0]).x; }
+            evtx = app.geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
         if(relx > 100) {  //normal values for relx range from 0 to ~86
             setTimeout(function () {  //separate event handling
@@ -1148,7 +1113,7 @@ define([], function () {
 
 
     starStopPointing = function (event) {
-        //var pos = geoXY(event);  //debug
+        //var pos = app.geoXY(event);  //debug
         //app.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
         //app.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
         starPointingActive = false;
@@ -1158,12 +1123,12 @@ define([], function () {
     starStopPointingBoundary = function (event) {
         var td, tdpos, xypos, evtx, evty;
         td = app.byId('starstd');
-        tdpos = geoPos(event, td);
-        xypos = geoXY(event);
+        tdpos = app.geoPos(td);
+        xypos = app.geoXY(event);
         evtx = xypos.x;
         evty = xypos.y;
         if(event.changedTouches && event.changedTouches[0]) {
-            xypos = geoXY(event.changedTouches[0]);
+            xypos = app.geoXY(event.changedTouches[0]);
             evtx = xypos.x;
             evty = xypos.y; }
         //app.out('starslabeltd', " " + evtx + ", " + evty);  //debug
