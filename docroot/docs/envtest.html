@@ -39,8 +39,13 @@ html += "outdiv.attachEvent: " + jt.isAvailable(outdiv, "attachEvent") + "<br/>"
 html += "outdiv.detachEvent: " + jt.isAvailable(outdiv, "detachEvent") + "<br/>";
 html += "<br/>";
 
-html += "<button id=\"clicker\">Clicker</button>"
-html += "<button id=\"stopclick\">Stop Clicker</button>"
+html += "<button id=\"clicker\">Clicker</button>";
+html += "<button id=\"stopclick\">Stop Clicker</button>";
+
+html += "<div id=\"colortestdiv\">color input: " + 
+    "<input id=\"colorinput\" type=\"color\" value=\"#ffcc99\"/>" +
+    "<button id=\"colorbutton\">Ok</button>";
+    "</div>";
 
 outdiv.innerHTML = html;
 
@@ -53,7 +58,15 @@ jt.on(jt.byId('clicker'), 'click', clickalert);
 jt.on(jt.byId('stopclick'), 'click', function () {
     jt.off(jt.byId('clicker'), 'click', clickalert); });
 
+//jt.byId('colorinput').setAttribute('type', 'color');
+//alert("input type: " + jt.byId('colorinput').getAttribute('type'));
+jt.on(jt.byId('colorbutton'), 'click', function () {
+    alert("Color is " + jt.byId('colorinput').value); });
+jt.on(jt.byId('colorinput'), 'change', function () {
+    jt.log("Color changed to " + jt.byId('colorinput').value) });
+
 </script>
+
 
 </body>
 </html>

@@ -10,8 +10,6 @@ define([], function () {
 
     var oldcolors,
         cancelpen,
-        colorwidget,
-        colorctrl,
         colorctrls = [ { id: "bodybg",  label: "background" },
                        { id: "darkbg",  label: "shadow" },
                        { id: "lightbg", label: "text area" },
@@ -205,27 +203,14 @@ define([], function () {
     },
 
 
-    swatchClick = function (index) {
-        var currcolor, subtext;
-        subtext = " <span class=\"smalltext\">" + 
-            "(click only, drag disabled)</span>";
-        if(!index) {
-            index = 0; }
-        if(typeof index === "string") {
-            index = parseInt(index, 10); }
-        colorctrl = colorctrls[index];
-        app.out('colortitlediv', colorctrl.label + subtext);
-        currcolor = app.colors[colorctrl.id];
-        //this is how you are "supposed" to set the value but it doesn't work:
-        //colorwidget.set('value', currcolor);
-        //this sets the hex value field but the display doesn't update:
-        //app.byId('colorwidgetdiv').value = currcolor;
-        //found this and it seems to work:
-        colorwidget.setColor(currcolor, true);
-    },
-
-
-    createColorControls = function (Colorwidget) {
+    //This relies on html5 color input support, which at the time of
+    //this writing was only available on Chrome and Opera.  If you
+    //actually want to work with palettes, it might be best to use one
+    //of those browsers.  May do a polyfill later, but even detection
+    //of whether support includes a native colorpicker is non-trivial.
+    //For example FF dutifully reports type as "color" even though it
+    //has no colorpicker. 
+    createColorControls = function () {
         var i, clabel, cid, html;
         html = "<table border=\"0\">";
         for(i = 0; i < colorctrls.length; i += 1) {
@@ -233,28 +218,13 @@ define([], function () {
             cid = colorctrls[i].id;
             html += "<tr>" + 
                 "<td class=\"colorattrtd\">" + clabel + "</td>" +
-                "<td><div id=\"" + cid + "div\"" +
-                        " class=\"colorswatch\"" + 
-                        " onclick=\"app.skinner.swatchClick('" + i + "');" +
-                                   "return false;\"" +
-                        " style=\"background:" + app.colors[cid] + ";\"" +
-                "></div>";
-            if(i === 0) {
-                html += "<td rowspan=\"" + colorctrls.length + "\"" + 
-                           " valign=\"top\">" + 
-                    "<div id=\"colortitlediv\"></div>" +
-                    "<div id=\"colorwidgetdiv\"></div></td>"; }
-            html += "</tr>"; }
+                "<td><input type=\"color\" id=\"" + cid + "\"" +
+                          " value=\"" + app.colors[cid] + "\"" +
+                          " onchange=\"app.skinner.onColorChange(" + 
+                              "'" + cid + "');return false;\"/></td>" +
+                "</tr>"; }
         html += "</table>";
         app.out('colorctrlsdiv', html);
-        if(colorwidget) {
-            colorwidget.destroy(); }
-        colorwidget = new Colorwidget(
-            { onChange: function (val) {
-                app.byId(colorctrl.id + "div").style.backgroundColor = val;
-                app.colors[colorctrl.id] = val;
-                updateColors(); } }, 'colorwidgetdiv');
-        swatchClick(0);
     },
 
 
@@ -268,10 +238,7 @@ define([], function () {
                 app.out('skinctrltoggle', "hide color controls");
                 html = app.byId('colorctrlsdiv').innerHTML;
                 if(!html) {  //not initialized yet
-                    require(app.cdnconf,
-                            [ "dojox/widget/ColorPicker", "dojo/domReady!" ],
-                            function (colorwidget) {
-                                createColorControls(colorwidget); }); } }
+                    createColorControls(); } }
             else {  //no support, display as disabled
                 app.byId('skinctrltoggle').style.color = "#666666"; } }
         else {
@@ -281,15 +248,15 @@ define([], function () {
 
 
    setControlValuesAndUpdate = function (colors) {
-       var html, i, div;
+       var html, i, colorinput;
        app.colors = copycolors(colors);
        updateColors();
        html = app.byId('colorctrlsdiv').innerHTML;
        if(html) {  //color controls available
            for(i = 0; i < colorctrls.length; i += 1) {
-               div = app.byId(colorctrls[i].id + "div");
-               div.style.backgroundColor = app.colors[colorctrls[i].id]; }
-           swatchClick(0); }
+               colorinput = app.byId(colorctrls[i].id);
+               if(colorinput) {
+                   colorinput.value = app.colors[colorctrls[i].id]; } } }
    },
 
 
@@ -332,8 +299,9 @@ define([], function () {
             return getDarkBackground(); },
         toggleControls: function () {
             toggleControls(); },
-        swatchClick: function (index) {
-            swatchClick(index); }
+        onColorChange: function (cid) {
+            app.colors[cid] = app.byId(cid).value;
+            updateColors(); }
     };
 
 });
