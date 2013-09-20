@@ -646,7 +646,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     uo.waitForModules = function (app, modulenames, callback) {
-        var i, modname, loaded = true, temp = document.body;
+        var i, modname, loaded = true;
         for (i = 0; i < modulenames.length; i += 1) {
             modname = modulenames[i];
             if (!app[modname]) {

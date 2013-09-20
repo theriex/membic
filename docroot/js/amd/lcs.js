@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global setTimeout: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -47,7 +47,7 @@ app.lcs = (function () {
 
     idify = function (id) {
         if(typeof id === 'object') {
-            id = app.instId(id); }
+            id = jt.instId(id); }
         if(typeof id === 'number') {
             id = String(id); }
         return id;
@@ -96,7 +96,7 @@ app.lcs = (function () {
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
         params = "penid=" + idify(penid);
-        app.call('GET', "penbyid?" + params, null,
+        jt.call('GET', "penbyid?" + params, null,
                  function (foundpens) {
                      if(foundpens.length > 0) {
                          callback(putPen(foundpens[0])); }
@@ -184,7 +184,7 @@ app.lcs = (function () {
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
-        app.call('GET', "revbyid?" + params, null,
+        jt.call('GET', "revbyid?" + params, null,
                  function (foundrevs) {
                      if(foundrevs.length > 0) {
                          callback(putRev(foundrevs[0])); }
@@ -234,13 +234,13 @@ app.lcs = (function () {
         if(revids.length > 0) {
             params = "revids=" + revids.join(",") + 
                 "&" + app.login.authparams();
-            app.call('GET', "revlinks?" + params, null,
+            jt.call('GET', "revlinks?" + params, null,
                      function (revlinks) {
                          resolveReviewLinks(revids, revlinks);
                          verifyReviewLinks(onchangefunc, true); },
                      app.failf(function (code, errtxt) {
-                         app.err("verifyReviewLinks revlinks call failed " +
-                                 code + " " + errtxt); }),
+                         jt.err("verifyReviewLinks revlinks call failed " +
+                                code + " " + errtxt); }),
                      critsec); }
         else if(revids.length === 0 && changed) {
             onchangefunc(); }
@@ -251,7 +251,7 @@ app.lcs = (function () {
     verifyCorrespondingLink = function (revref, rev) {
         var revlink, rlidstr, corids, i, data;
         revlink = revref.revlink;
-        rlidstr = String(app.instId(rev)) + ":" + rev.penid;
+        rlidstr = String(jt.instId(rev)) + ":" + rev.penid;
         if(!revlink.corresponding) {
             revlink.corresponding = rlidstr; }
         else {
@@ -262,15 +262,15 @@ app.lcs = (function () {
             corids.push(rlidstr);
             revlink.corresponding = corids.join(","); }
         revlink.critsec = "";
-        data = app.objdata(revlink);
-        app.call('POST', "updlink?" + app.login.authparams(), data,
+        data = jt.objdata(revlink);
+        jt.call('POST', "updlink?" + app.login.authparams(), data,
                  function (updrevlinks) {
-                     app.log("verifyCorrespondingLink updated " +
-                             updrevlinks[0].revid + " corresponding: " +
-                             updrevlinks[0].corresponding); },
+                     jt.log("verifyCorrespondingLink updated " +
+                            updrevlinks[0].revid + " corresponding: " +
+                            updrevlinks[0].corresponding); },
                  app.failf(function (code, errtxt) {
-                     app.log("verifyCorrespondingLink failed " + 
-                             code + " " + errtxt); }),
+                     jt.log("verifyCorrespondingLink failed " + 
+                            code + " " + errtxt); }),
                  revlink.critsec);
     },
 
@@ -279,10 +279,10 @@ app.lcs = (function () {
         var revref1, revref2;
         if(rev1.penid === rev2.penid) { 
             return; }  //avoid corresponding with yourself
-        revref1 = getRevRef(app.instId(rev1));
+        revref1 = getRevRef(jt.instId(rev1));
         if(revref1.status === "not cached") {
             revref1 = putRev(rev1); }
-        revref2 = getRevRef(app.instId(rev2));
+        revref2 = getRevRef(jt.instId(rev2));
         if(revref2.status === "not cached") {
             revref2 = putRev(rev2); }
         if(!revref1.revlink || !revref2.revlink) {
@@ -312,15 +312,15 @@ app.lcs = (function () {
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
             "&" + app.login.authparams();
-        app.call('GET', "revbykey?" + params, null,
+        jt.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var i;
                      for(i = 0; i < revs.length; i += 1) {
                          putRev(revs[i]); }
                      checkCachedCorresponding(review); },
                  app.failf(function (code, errtxt) {
-                     app.log("checkAllCorresponding failed " + code + 
-                             ": " + errtxt); }),
+                     jt.log("checkAllCorresponding failed " + code + 
+                            ": " + errtxt); }),
                  critsec);
     };
 
@@ -357,6 +357,4 @@ app.lcs = (function () {
     };
 
 }());
-
-
 

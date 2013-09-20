@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global setTimeout: false, window: false, document: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -16,8 +16,8 @@ app.layout = (function () {
 
 
     closeDialog = function () {
-        app.out('dlgdiv', "");
-        app.byId('dlgdiv').style.visibility = "hidden";
+        jt.out('dlgdiv', "");
+        jt.byId('dlgdiv').style.visibility = "hidden";
         app.layout.adjust();
         app.onescapefunc = null;
     },
@@ -36,7 +36,7 @@ app.layout = (function () {
             " onclick=\"app.layout.closeDialog();return false\">" + 
                  "&lt;close&nbsp;&nbsp;X&gt;</a>" +
           "</div>" + html;
-        app.out('dlgdiv', html);
+        jt.out('dlgdiv', html);
         app.onescapefunc = closeDialog;
     },
 
@@ -52,22 +52,22 @@ app.layout = (function () {
     displayDoc = function (url) {
         var critsec = "", html = "Fetching " + url + " ...";
         window.scrollTo(0,0);
-        app.out('dlgdiv', html);
-        app.byId('dlgdiv').style.visibility = "visible";
+        jt.out('dlgdiv', html);
+        jt.byId('dlgdiv').style.visibility = "visible";
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
-        app.ajax('GET', url, null,
-                 function (resp) {
-                     displayDocContent(url, resp); },
-                 function (code, errtxt) {
-                     displayDocContent(url, errtxt); },
-                 critsec);
+        jt.request('GET', url, null,
+                   function (resp) {
+                       displayDocContent(url, resp); },
+                   function (code, errtxt) {
+                       displayDocContent(url, errtxt); },
+                   critsec);
     },
 
 
     attachDocLinkClick = function (node, link) {
-        app.on(node, "click", function (e) {
-            app.evtend(e);
+        jt.on(node, "click", function (e) {
+            jt.evtend(e);
             displayDoc(link); });
     },
 
@@ -91,20 +91,20 @@ app.layout = (function () {
     //preloading images is extra overhead so not doing that.
     slideshow = function (firstrun) {
         var html, previmg, img;
-        if(app.byId('slidesdiv')) {
-            if(app.isLowFuncBrowser()) {
-                app.log("slideshow isLowFuncBrowser so no fades");
+        if(jt.byId('slidesdiv')) {
+            if(jt.isLowFuncBrowser()) {
+                jt.log("slideshow isLowFuncBrowser so no fades");
                 if(firstrun) {
                     slideindex = 0; }
                 html = "<img src=\"img/slides/" + slides[slideindex] +
                          "\" class=\"slideimg\"/>";
-                app.out('slidesdiv', html);
+                jt.out('slidesdiv', html);
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 if(!firstrun) {
-                    app.log("    fading introslide" + slideslot + ": " + 
+                    jt.log("    fading introslide" + slideslot + ": " + 
                             "img/slides/" + slides[slideindex]);
-                    previmg = app.byId("introslide" + slideslot);
+                    previmg = jt.byId("introslide" + slideslot);
                     if(!previmg) {  //probably logged in in the interim
                         return; }
                     setTimeout(function () {
@@ -115,9 +115,9 @@ app.layout = (function () {
                     previmg.style.opacity = 0; }  //fade out
                 slideslot = (slideslot + 1) % 2;
                 slideindex = (slideindex + 1) % slides.length;
-                app.log("displaying introslide" + slideslot + ": " + 
+                jt.log("displaying introslide" + slideslot + ": " + 
                         "img/slides/" + slides[slideindex]);
-                img = app.byId("introslide" + slideslot);
+                img = jt.byId("introslide" + slideslot);
                 if(!img) {  //probably logged in in the interim
                     return; }
                 img.src = "img/slides/" + slides[slideindex];
@@ -138,19 +138,19 @@ app.layout = (function () {
         var width, leftx, logow = 515, slidew = 522;
         width = document.documentElement.clientWidth;
         if(width > logow + slidew) {  //enough room for logo and slides
-            app.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
+            jt.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
                     " id=\"logoimg\" border=\"0\"/>");
             leftx = logow + Math.round(((width - (logow + slidew)) / 2));
-            app.byId('introslide0').style.left = String(leftx) + "px";
-            app.byId('introslide1').style.left = String(leftx) + "px"; }
+            jt.byId('introslide0').style.left = String(leftx) + "px";
+            jt.byId('introslide1').style.left = String(leftx) + "px"; }
         else if(width >= slidew) {  //probably a phone. just slides, but center
-            app.out('logodiv', "");
+            jt.out('logodiv', "");
             leftx = Math.round((width - slidew) / 2); 
-            app.byId('introslide0').style.left = String(leftx) + "px";
-            app.byId('introslide1').style.left = String(leftx) + "px"; }
-        if(!app.isLowFuncBrowser()) {  //skip nice fade transitions
-            app.byId('introslide0').style.opacity = 0;
-            app.byId('introslide1').style.opacity = 0; }
+            jt.byId('introslide0').style.left = String(leftx) + "px";
+            jt.byId('introslide1').style.left = String(leftx) + "px"; }
+        if(!jt.isLowFuncBrowser()) {  //skip nice fade transitions
+            jt.byId('introslide0').style.opacity = 0;
+            jt.byId('introslide1').style.opacity = 0; }
         slideshow(true);
     },
 
@@ -158,14 +158,14 @@ app.layout = (function () {
     //initialize the logged-in content display div areas.  Basically
     //contentdiv is subdivided into chead and cmain.
     haveContentDivAreas = function () {
-        return app.byId('chead') && app.byId('cmain');
+        return jt.byId('chead') && jt.byId('cmain');
     },
 
 
     initContentDivAreas = function () {
         var html = "<div id=\"chead\"> </div>" +
                    "<div id=\"cmain\"> </div>";
-        app.out('contentdiv', html);
+        jt.out('contentdiv', html);
     },
 
 
@@ -206,12 +206,12 @@ app.layout = (function () {
         if(!rules) { //decent css support is missing, fall back
             //texturePaper.png is 256x192
             //setting backgroundSize to a scaled up fixed size has no effect
-            //app.byId('bodyid').style.backgroundSize = "2048px 1536px;";
+            //jt.byId('bodyid').style.backgroundSize = "2048px 1536px;";
             //scaled up image either too large or too pixelated for use
             //altimg = "url('../img/texturePaperBig.png')";
             altimg = "url('../img/blank.png')";
-            app.byId('bodyid').style.backgroundImage = altimg;
-            app.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
+            jt.byId('bodyid').style.backgroundImage = altimg;
+            jt.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
     },
 
 
@@ -220,7 +220,7 @@ app.layout = (function () {
             dndState = { domobj: event.target,
                          screenX: event.screenX,
                          screenY: event.screenY };
-            app.log("dndStart " + dndState.domobj + " " + 
+            jt.log("dndStart " + dndState.domobj + " " + 
                     dndState.screenX + "," + dndState.screenY);
             if(event.dataTransfer && event.dataTransfer.setData) {
                 event.dataTransfer.setData("text/plain", "general drag"); } }
@@ -229,27 +229,27 @@ app.layout = (function () {
 
     dndEnd = function (event) {
         if(event && dndState) {
-            app.log("dndEnd called");
+            jt.log("dndEnd called");
             dndState.ended = true; }
     },
                 
 
     dndOver = function (event) {
         if(event && dndState && (!dndState.ended || dndState.dropped)) {
-            //app.log("dndOver preventing default cancel");
+            //jt.log("dndOver preventing default cancel");
             event.preventDefault(); }
     },
 
 
     dndDrop = function (event) {
         var diffX, diffY, domobj, currX, currY;
-        app.log("dndDrop called");
+        jt.log("dndDrop called");
         if(event && dndState) {
             dndState.dropped = true;
             diffX = event.screenX - dndState.screenX;
             diffY = event.screenY - dndState.screenY;
             domobj = dndState.domobj;
-            app.log("dropping " + domobj + " moved " + diffX + "," + diffY);
+            jt.log("dropping " + domobj + " moved " + diffX + "," + diffY);
             currX = domobj.offsetLeft;
             currY = domobj.offsetTop;
             domobj.style.left = String(currX + diffX) + "px";
@@ -262,8 +262,8 @@ app.layout = (function () {
     setSoftFocus = function () {
         var revid, focobj;
         if(app.review.getCurrentReview()) {
-            revid = "lihr" + app.instId(app.review.getCurrentReview());
-            focobj = app.byId(revid);
+            revid = "lihr" + jt.instId(app.review.getCurrentReview());
+            focobj = jt.byId(revid);
             if(focobj) {
                 focobj.focus(); } }
     },
@@ -271,9 +271,9 @@ app.layout = (function () {
 
     currentContentHeight = function () {
         var ch, content, centerh, bottomnav;
-        content = app.byId("contentdiv").offsetHeight;
-        centerh = app.byId("centerhdiv").offsetHeight;
-        bottomnav = app.byId("bottomnav").offsetHeight;
+        content = jt.byId("contentdiv").offsetHeight;
+        centerh = jt.byId("centerhdiv").offsetHeight;
+        bottomnav = jt.byId("bottomnav").offsetHeight;
         ch = content + centerh + bottomnav;
         return ch;
     },
@@ -283,7 +283,7 @@ app.layout = (function () {
         var ch, filldiv, topdiv, contentdiv, target;
         findDisplayHeightAndWidth();
         //fill the bottom content so the footer text isn't too high up
-        filldiv = app.byId("contentfill");
+        filldiv = jt.byId("contentfill");
         ch = currentContentHeight();
         target = app.winh - topPaddingAndScroll; 
         if(ch < target) {
@@ -292,10 +292,10 @@ app.layout = (function () {
             filldiv.style.height = "16px"; }
         //adjust the topdiv and content width so it looks reasonable
         target = app.winw - 120;  //Remo is 72px, margin padding
-        topdiv = app.byId('topdiv');
+        topdiv = jt.byId('topdiv');
         if(topdiv) {
             topdiv.style.width = target + "px"; }
-        contentdiv = app.byId('contentdiv');
+        contentdiv = jt.byId('contentdiv');
         if(contentdiv) {
             contentdiv.style.width = target + "px"; }
         setSoftFocus();
@@ -304,7 +304,7 @@ app.layout = (function () {
 
     return {
         init: function () {
-            app.on(window, 'resize', fullContentHeight);
+            jt.on(window, 'resize', fullContentHeight);
             initSlideshow();
             localDocLinks();
             fullContentHeight();

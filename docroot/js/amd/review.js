@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, setTimeout: false, clearTimeout: false, window: false, document: false, history: false, app: false, require: false, google: false */
+/*global setTimeout: false, clearTimeout: false, window: false, app: false, jt: false, google: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -228,7 +228,7 @@ app.review = (function () {
             if(tdc === 0) {
                 html += "<tr>"; }
             html += "<td>" + 
-                app.checkrad(intype, gname, value, label, checked, chgfstr) + 
+                jt.checkrad(intype, gname, value, label, checked, chgfstr) + 
                 "</td>";
             tdc += 1;
             if(tdc === 4 || i === reviewTypes.length - 1) {
@@ -280,7 +280,7 @@ app.review = (function () {
 
     reviewLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            app.imgntxt("writereview.png", "Review and Share",
+            jt.imgntxt("writereview.png", "Review and Share",
                         "app.review.reset(true)",
                         "#Write", 
                         "Write a review and share it with your friends") +
@@ -334,27 +334,27 @@ app.review = (function () {
 
     readParameters = function (params) {
         if(params.newrev) { 
-            crev.revtype = app.dec(params.newrev); }
+            crev.revtype = jt.dec(params.newrev); }
         if(params.name) {
-            crev.name = app.dec(params.name); }
+            crev.name = jt.dec(params.name); }
         if(params.title) {
-            crev.title = app.dec(params.title); }
+            crev.title = jt.dec(params.title); }
         if(params.artist) {
-            crev.artist = app.dec(params.artist); }
+            crev.artist = jt.dec(params.artist); }
         if(params.author) {
-            crev.author = app.dec(params.author); }
+            crev.author = jt.dec(params.author); }
         if(params.publisher) {
-            crev.publisher = app.dec(params.publisher); }
+            crev.publisher = jt.dec(params.publisher); }
         if(params.album) {
-            crev.album = app.dec(params.album); }
+            crev.album = jt.dec(params.album); }
         if(params.starring) {
-            crev.starring = app.dec(params.starring); }
+            crev.starring = jt.dec(params.starring); }
         if(params.address) {
-            crev.address = app.dec(params.address); }
+            crev.address = jt.dec(params.address); }
         if(params.year) {
-            crev.year = app.dec(params.year); }
+            crev.year = jt.dec(params.year); }
         if(params.imguri) {
-            crev.imguri = app.dec(params.imguri); }
+            crev.imguri = jt.dec(params.imguri); }
     },
 
 
@@ -372,7 +372,7 @@ app.review = (function () {
 
 
     reviewTextValid = function (type, errors) {
-        var input = app.byId('reviewtext');
+        var input = jt.byId('reviewtext');
         if(input) {
             crev.text = input.value; }
     },
@@ -385,7 +385,7 @@ app.review = (function () {
         if(!params) {
             params = {}; }
         if(!url) {
-            urlin = app.byId('urlin');
+            urlin = jt.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
         reviewTextValid(crev.revtype, errs);
@@ -393,7 +393,7 @@ app.review = (function () {
             return; }
         if(!url) {  //bail out, but reflect any updates so far
             return app.review.display(); }
-        rbc = app.byId('readurlbuttoncontainer');
+        rbc = jt.byId('readurlbuttoncontainer');
         if(rbc) {
             rbc.innerHTML = "reading..."; }
         if(url) {
@@ -426,7 +426,7 @@ app.review = (function () {
                 html += "<tr>"; }
             captype = reviewTypes[i].type.capitalize();
             html += "<td><div class=\"revtypeselectiondiv\">" + 
-                app.imgntxt(reviewTypes[i].img, captype,
+                jt.imgntxt(reviewTypes[i].img, captype,
                             "app.review.setType('" + reviewTypes[i].type + "')",
                             "#" + captype,
                             "Create a " + reviewTypes[i].type + " review") + 
@@ -458,13 +458,13 @@ app.review = (function () {
                 "</td>" +
               "</tr></table></li>"; }
         html += "</ul></div></div>";
-        if(!app.byId('cmain')) {
+        if(!jt.byId('cmain')) {
             app.layout.initContent(); }
-        app.out('cmain', html);
+        jt.out('cmain', html);
         //Setting focus on a phone zooms to bring up the keyboard, so the
         //type buttons don't get displayed.  Entering a URL is not the 
         //primary path forward so don't set focus here.
-        //app.byId('urlin').focus();
+        //jt.byId('urlin').focus();
         app.layout.adjust();
     },
 
@@ -478,9 +478,9 @@ app.review = (function () {
     //end up with two save AJAX calls queued up which results in a
     //duplicate review.
     picUploadForm = function () {
-        var odiv, html = "", revid = app.instId(crev);
+        var odiv, html = "", revid = jt.instId(crev);
         if(!revid) {
-            html = app.byId('revformbuttonstd').innerHTML;
+            html = jt.byId('revformbuttonstd').innerHTML;
             if(html.indexOf("<button") >= 0) { //not already saving
                 return app.review.save(false, "uploadpic"); }
             return; }  //already saving, just ignore the pic upload click
@@ -489,7 +489,7 @@ app.review = (function () {
         html += "<input type=\"hidden\" name=\"penid\" value=\"" +
             crev.penid + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
-            app.enc(window.location.href + "#revedit=" + revid) + "\"/>";
+            jt.enc(window.location.href + "#revedit=" + revid) + "\"/>";
         //build the rest of the form around that
         html = "<form action=\"/revpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
@@ -506,13 +506,13 @@ app.review = (function () {
               "<tr><td align=\"center\">" +
                     "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
             "</form>";
-        app.out('overlaydiv', html);
-        odiv = app.byId('overlaydiv');
+        jt.out('overlaydiv', html);
+        odiv = jt.byId('overlaydiv');
         odiv.style.top = "300px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
         app.onescapefunc = app.cancelOverlay;
-        app.byId('picfilein').focus();
+        jt.byId('picfilein').focus();
     },
 
 
@@ -521,7 +521,7 @@ app.review = (function () {
         if(!keyval) {
             return ""; }
         imgstyle = "";
-        if(app.isLowFuncBrowser()) {
+        if(jt.isLowFuncBrowser()) {
             imgstyle = " style=\"width:125px;height:auto;\""; }
         if(review.imguri) {  //use auto-generated link if avail. No direct edit.
             html = "<img class=\"revimg\"" + imgstyle + 
@@ -541,7 +541,7 @@ app.review = (function () {
             if(mode === "edit") {  //for editing, default is outline pic
                 html = "img/emptyprofpic.png"; }
             if(review.revpic) {  //use uploaded pic if available
-                html = "revpic?revid=" + app.instId(review); }
+                html = "revpic?revid=" + jt.instId(review); }
             html = "<img class=\"revimg\"" + imgstyle + " src=\"" + html + "\"";
             if(mode === "edit") {
                 html += " title=\"Click to upload a picture\"" +
@@ -552,7 +552,7 @@ app.review = (function () {
 
 
     errlabel = function (domid) {
-        var elem = app.byId(domid);
+        var elem = jt.byId(domid);
         if(elem) {
             elem.style.color = "red";
             if(elem.innerHTML.indexOf("*") < 0) {
@@ -584,7 +584,7 @@ app.review = (function () {
 
 
     noteURLValue = function () {
-        var input = app.byId('urlin');
+        var input = jt.byId('urlin');
         //if auto read url from initial form, note it and then reset
         if(autourl) {
             crev.url = autourl;
@@ -596,7 +596,7 @@ app.review = (function () {
 
 
     keyFieldsValid = function (type, errors) {
-        var cankey, input = app.byId('keyin');
+        var cankey, input = jt.byId('keyin');
         if(!input || !input.value) {
             errlabel('keyinlabeltd');
             errors.push("Please specify a value for " + type.key); }
@@ -604,7 +604,7 @@ app.review = (function () {
             crev[type.key] = input.value;
             cankey = crev[type.key]; }
         if(type.subkey) {
-            input = app.byId('subkeyin');
+            input = jt.byId('subkeyin');
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
                 errors.push("Please specify a value for " + type.subkey); }
@@ -612,7 +612,7 @@ app.review = (function () {
                 crev[type.subkey] = input.value;
                 cankey += crev[type.subkey]; } }
         if(cankey) {
-            crev.cankey = app.canonize(cankey); }
+            crev.cankey = jt.canonize(cankey); }
     },
 
 
@@ -657,7 +657,7 @@ app.review = (function () {
         var input, i;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
-            input = app.byId("field" + i);
+            input = jt.byId("field" + i);
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
     },
@@ -675,9 +675,9 @@ app.review = (function () {
 
     toggleKeyword = function (kwid) {
         var cbox, text, keyin, keywords, i, kw;
-        cbox = app.byId(kwid);
+        cbox = jt.byId(kwid);
         text = "";
-        keyin = app.byId('keywordin');
+        keyin = jt.byId('keywordin');
         keywords = keyin.value.split(",");
         for(i = 0; i < keywords.length; i += 1) {
             kw = keywords[i];
@@ -736,12 +736,12 @@ app.review = (function () {
                 "<span class=\"secondaryfield\">Keywords</span> " +
                   "<input type=\"text\" id=\"keywordin\"" + 
                         " size=\"30\"" + 
-                        " value=\"" + app.safestr(review.keywords) + "\"/>"; }
+                        " value=\"" + jt.safestr(review.keywords) + "\"/>"; }
         else { //not editing
-            if(app.safestr(review.keywords)) {
+            if(jt.safestr(review.keywords)) {
                 html += "<div class=\"csvstrdiv\">" +
                     "<span class=\"secondaryfield\">Keywords</span> " +
-                    app.safestr(review.keywords) + "</div>"; } }
+                    jt.safestr(review.keywords) + "</div>"; } }
         return html;
     },
 
@@ -751,7 +751,7 @@ app.review = (function () {
     //           when people insert their own space separated keywords.
     keywordsValid = function (type, errors) {
         var input, words, i, csv = "";
-        input = app.byId('keywordin');
+        input = jt.byId('keywordin');
         if(input) {
             words = input.value || "";
             words = words.split(",");
@@ -800,9 +800,9 @@ app.review = (function () {
 
 
     swapVidTitleAndArtist = function () {
-        var titlein = app.byId('keyin'),
+        var titlein = jt.byId('keyin'),
             title = titlein.value,
-            artistin = app.byId('field0'),
+            artistin = jt.byId('field0'),
             artist = artistin.value;
         titlein.value = artist;
         artistin.value = title;
@@ -829,14 +829,14 @@ app.review = (function () {
         if(activebuttons) {
             //helpful button. init unchecked then update after lookup
             html += "<td><div id=\"helpfulbutton\" class=\"buttondiv\">" +
-                app.imgntxt("helpfulq.png",
+                jt.imgntxt("helpfulq.png",
                             "Helpful",
                             "app.review.helpful()", "#helpful",
                             "Mark this review as helpful", "", "helpful") +
                 "</div></td>";
             //remember button. init unchecked and then update after lookup
             html += "<td><div id=\"memobutton\" class=\"buttondiv\">" +
-                app.imgntxt("rememberq.png",
+                jt.imgntxt("rememberq.png",
                             "Remember",
                             "app.review.memo()", "#memo",
                             "Add this to remembered reviews", "", "memo") +
@@ -844,7 +844,7 @@ app.review = (function () {
             //respond button
             html += "<td><div id=\"respondbutton\" class=\"buttondiv\">" +
                   //this contents is rewritten after looking up their review
-                  app.imgntxt("writereview.png",
+                  jt.imgntxt("writereview.png",
                               "Your review",
                               "app.review.respond()", "#respond",
                               "Edit your corresponding review", "", "respond") +
@@ -893,7 +893,7 @@ app.review = (function () {
             html = "<div id=\"revbuttonsdiv\">" + 
                 "<button type=\"button\" id=\"cancelbutton\"" +
                        " onclick=\"app.review.reset(" + 
-                               (app.instId(review)? "false" : "true") +
+                               (jt.instId(review)? "false" : "true") +
                                                   ");return false;\"" +
                     ">Cancel</button>&nbsp;" +
                 "<button type=\"button\" id=\"savebutton\"" +
@@ -903,7 +903,7 @@ app.review = (function () {
         //reading a previously written review
         else if(review.penid === app.pen.currPenId()) {  //is review owner
             app.onescapefunc = null;
-            staticurl = "statrev/" + app.instId(review);
+            staticurl = "statrev/" + jt.instId(review);
             html = "<div id=\"revbuttonsdiv\">" + 
                 "<button type=\"button\" id=\"deletebutton\"" +
                        " onclick=\"app.review.delrev();return false;\"" +
@@ -951,7 +951,7 @@ app.review = (function () {
         if(mode === "edit") {
             onchange = "app.review.validate();return false;";
             if(type.subkey) {
-                onchange = "app.byId('subkeyin').focus();return false;"; }
+                onchange = "jt.byId('subkeyin').focus();return false;"; }
             fval = review[type.key] || "";
             html += "<td><input type=\"text\" id=\"keyin\" size=\"30\"" +
                               " onchange=\"" + onchange + "\"" + 
@@ -1019,7 +1019,7 @@ app.review = (function () {
                     "overflow:auto;margin:auto";
                 html += "<div id=\"reviewtext\" class=\"shoutout\"" +
                             " style=\"" + style + "\">" + 
-                    app.linkify(fval) + "</div>"; } }
+                    jt.linkify(fval) + "</div>"; } }
         else {  //keyval for review not set yet, provide autocomplete area
             html += "<div id=\"revautodiv\" class=\"autocomplete\"" + 
                         " style=\"width:" + targetwidth + "px;\"" +
@@ -1053,7 +1053,7 @@ app.review = (function () {
         app.cancelOverlay();
         crev.rating = rating;
         html = starsImageHTML(crev.rating, true);
-        app.out('stardisp', html);
+        jt.out('stardisp', html);
     },
 
 
@@ -1065,8 +1065,8 @@ app.review = (function () {
                         " onclick=\"app.review.ratmenusel(" + i + ");" + 
                                    "return false;\"" + 
                 ">" + starsImageHTML(i) + "</div>"; }
-        app.out('overlaydiv', html);
-        odiv = app.byId('overlaydiv');
+        jt.out('overlaydiv', html);
+        odiv = jt.byId('overlaydiv');
         odiv.style.top = "100px";
         //bring up to the right of where the touch is occurring, otherwise
         //you can get an instant select as the touch is applied to the div
@@ -1079,65 +1079,65 @@ app.review = (function () {
 
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
-        span = app.byId('stardisp');
-        spanloc = app.geoPos(span);
-        evtx = app.geoXY(event).x;
-        //app.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
+        span = jt.byId('stardisp');
+        spanloc = jt.geoPos(span);
+        evtx = jt.geoXY(event).x;
+        //jt.out('keyinlabeltd', "starDisplayAdjust evtx: " + evtx);  //debug
         if(event.changedTouches && event.changedTouches[0]) {
-            evtx = app.geoXY(event.changedTouches[0]).x; }
+            evtx = jt.geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
         if(relx > 100) {  //normal values for relx range from 0 to ~86
             setTimeout(function () {  //separate event handling
                 selectRatingByMenu(evtx); }, 20);
             return; }
-        //app.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
+        //jt.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
-        //app.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
+        //jt.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
         if(roundup) {
             sval = starRating(sval, true).value; }
         crev.rating = sval;
         html = starsImageHTML(crev.rating, true);
-        app.out('stardisp', html);
+        jt.out('stardisp', html);
     },
 
 
     starPointing = function (event) {
-        //app.out('keyinlabeltd', "star pointing");  //debug
+        //jt.out('keyinlabeltd', "star pointing");  //debug
         starPointingActive = true;
         starDisplayAdjust(event, true);
     },
 
 
     starStopPointing = function (event) {
-        //var pos = app.geoXY(event);  //debug
-        //app.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
-        //app.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
+        //var pos = jt.geoXY(event);  //debug
+        //jt.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
+        //jt.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
         starPointingActive = false;
     },
 
 
     starStopPointingBoundary = function (event) {
         var td, tdpos, xypos, evtx, evty;
-        td = app.byId('starstd');
-        tdpos = app.geoPos(td);
-        xypos = app.geoXY(event);
+        td = jt.byId('starstd');
+        tdpos = jt.geoPos(td);
+        xypos = jt.geoXY(event);
         evtx = xypos.x;
         evty = xypos.y;
         if(event.changedTouches && event.changedTouches[0]) {
-            xypos = app.geoXY(event.changedTouches[0]);
+            xypos = jt.geoXY(event.changedTouches[0]);
             evtx = xypos.x;
             evty = xypos.y; }
-        //app.out('starslabeltd', " " + evtx + ", " + evty);  //debug
+        //jt.out('starslabeltd', " " + evtx + ", " + evty);  //debug
         if(evtx < tdpos.x || evtx > tdpos.x + tdpos.w ||
            evty < tdpos.y || evty > tdpos.y + tdpos.h) {
-            //app.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
+            //jt.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
             starPointingActive = false; }
     },
 
 
     starPointAdjust = function (event) {
         if(starPointingActive) {
-            //app.out('keyinlabeltd', "star point adjust...");  //debug
+            //jt.out('keyinlabeltd', "star point adjust...");  //debug
             starDisplayAdjust(event); }
     },
 
@@ -1196,22 +1196,22 @@ app.review = (function () {
                 ">" + title + "</a></li>";
             itemdat = xmlExtract("Item", itemdat.remainder); }
         html += "</ul>";
-        app.out('revautodiv', html);
+        jt.out('revautodiv', html);
     },
 
 
     callAmazonForAutocomplete = function (acfunc) {
         var url, critsec = "";
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
-            app.enc(autocomptxt);
-        app.call('GET', url, null,
+            jt.enc(autocomptxt);
+        jt.call('GET', url, null,
                  function (json) {
-                     writeAutocompLinks(app.dec(json[0].content));
+                     writeAutocompLinks(jt.dec(json[0].content));
                      setTimeout(acfunc, 400);
                      app.layout.adjust(); },
                  app.failf(function (code, errtxt) {
-                     app.out('revautodiv', "");
-                     app.log("Amazon info retrieval failed code " +
+                     jt.out('revautodiv', "");
+                     jt.log("Amazon info retrieval failed code " +
                              code + ": " + errtxt);
                      setTimeout(acfunc, 400);
                      app.layout.adjust(); }),
@@ -1224,14 +1224,14 @@ app.review = (function () {
         if(!gplacesvc && google && google.maps && google.maps.places) {
             //this can fail intermittently, restarting the review usually works
             try {
-                mapdiv = app.byId('mapdiv');
+                mapdiv = jt.byId('mapdiv');
                 map = new google.maps.Map(mapdiv, {
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
                     center: latlng,
                     zoom: 15 });
                 gplacesvc = new google.maps.places.PlacesService(map);
             } catch (problem) {
-                app.err("Initializing google maps places failed, so the\n" +
+                jt.err("Initializing google maps places failed, so the\n" +
                         "review url and address were not filled out.\n\n" + 
                         "mapdiv: " + mapdiv + "\n" +
                         "problem: " + problem);
@@ -1242,7 +1242,7 @@ app.review = (function () {
                 function (place, status) {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
                         crev.address = place.formatted_address;
-                        crev.name = place.name || app.byId('keyin').value;
+                        crev.name = place.name || jt.byId('keyin').value;
                         crev.url = crev.url || place.website || "";
                         readURL(crev.url); }
                     }); }
@@ -1252,14 +1252,14 @@ app.review = (function () {
     selectLocation = function (addr, ref) {
         var html;
         if(addr) {  //even if all other calls fail, use the selected name
-            app.byId('keyin').value = app.dec(addr); }
+            jt.byId('keyin').value = jt.dec(addr); }
         if(!geoc && google && google.maps && google.maps.places) {
             geoc = new google.maps.Geocoder(); }
         if(geoc && addr) {
             try {
-                addr = app.dec(addr);
+                addr = jt.dec(addr);
                 html = "<p>" + addr + "</p><div id=\"mapdiv\"></div>";
-                app.out('revautodiv', html);
+                jt.out('revautodiv', html);
                 //give mapdiv a chance to be output before this call
                 setTimeout(function () {
                     geoc.geocode({address: addr}, function (results, status) {
@@ -1269,7 +1269,7 @@ app.review = (function () {
                                             ref); }
                         }); }, 50);
             } catch (problem) {
-                app.err("selectLocation failed: " + problem);
+                jt.err("selectLocation failed: " + problem);
             } }
     },
 
@@ -1286,12 +1286,12 @@ app.review = (function () {
                             place = results[i];
                             html += "<li><a href=\"#selectloc\"" + 
                                 " onclick=\"app.review.selectloc('" +
-                                    app.embenc(place.description) + "','" +
+                                    jt.embenc(place.description) + "','" +
                                     place.reference + "');return false;\"" +
                                 ">" + place.description + "</a>" +
                                 "</li>"; } }
                     html += "</ul><img src=\"img/poweredbygoogle.png\"/>";
-                    app.out('revautodiv', html);
+                    jt.out('revautodiv', html);
                     setTimeout(acfunc, 400);
                     app.layout.adjust(); }); }
         else {
@@ -1301,10 +1301,10 @@ app.review = (function () {
 
     autocompletion = function (event) {
         var srchtxt;
-        if(app.byId('revautodiv') && app.byId('keyin')) {
-            srchtxt = app.byId('keyin').value;
-            if(app.byId('subkeyin')) {
-                srchtxt += " " + app.byId('subkeyin').value; }
+        if(jt.byId('revautodiv') && jt.byId('keyin')) {
+            srchtxt = jt.byId('keyin').value;
+            if(jt.byId('subkeyin')) {
+                srchtxt += " " + jt.byId('subkeyin').value; }
             if(srchtxt !== autocomptxt) {
                 autocomptxt = srchtxt;
                 if(crev.revtype === 'book' || crev.revtype === 'movie') {
@@ -1324,10 +1324,10 @@ app.review = (function () {
                 app.lcs.verifyCorrespondingLinks(review, crev); }, 100);
             imghtml = starsImageHTML(review.rating, false, "inlinestarsimg");
             msghtml = "Your review: " + imghtml; }
-        html = app.imgntxt("writereview.png", msghtml,
+        html = jt.imgntxt("writereview.png", msghtml,
                            "app.review.respond()", "#respond",
                            "Edit your corresponding review", "", "respond");
-        app.out('respondbutton', html);
+        jt.out('respondbutton', html);
     },
 
 
@@ -1355,17 +1355,17 @@ app.review = (function () {
                     if(t20[i].cankey === crev.cankey && 
                        t20[i].revtype === crev.revtype) {
                         return contfunc(homepen, t20[i]); } } } }
-        params = "penid=" + app.instId(homepen) + 
+        params = "penid=" + jt.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
             "&" + app.login.authparams();
-        app.call('GET', "revbykey?" + params, null,
+        jt.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var rev = null;
                      if(revs.length > 0) {
                          rev = revs[0]; }
                      contfunc(homepen, rev); },
                  app.failf(function (code, errtxt) {
-                     app.err("findCorrespondingReview failed " + code + 
+                     jt.err("findCorrespondingReview failed " + code + 
                              " " + errtxt); }),
                  critsec);
     },
@@ -1373,13 +1373,13 @@ app.review = (function () {
 
     updateCachedReviewTags = function (field, updrevtags) {
         var i, penref, rtid, replaced;
-        rtid = app.instId(updrevtags[0]);
+        rtid = jt.instId(updrevtags[0]);
         penref = app.pen.currPenRef();
         if(!penref[field]) {
             penref[field] = updrevtags; }
         else {
             for(i = 0; i < penref[field].length; i += 1) {
-                if(app.instId(penref[field][i]) === rtid) {
+                if(jt.instId(penref[field][i]) === rtid) {
                     penref[field][i] = updrevtags[0];
                     replaced = true; } }
             if(!replaced) {  //must prepend if remembered
@@ -1400,20 +1400,20 @@ app.review = (function () {
 
     toggleHelpfulButton = function (value) {
         var img, tbl, data, critsec = "";
-        img = app.byId('helpfulimg');
+        img = jt.byId('helpfulimg');
         if(!img) {  //spurious call, button not displayed
             return; }
-        tbl = app.byId('helpfultable');
+        tbl = jt.byId('helpfultable');
         if(value === "set") {  //just initializing the display
             img.src = "img/helpful.png";
             tbl.title = "Remove mark as helpful";
             return; }
         img.className = "navicodis";  //grey out the image
         value = (img.src.indexOf("helpful.png") > 0)? "no" : "yes";  //toggle
-        data = "penid=" + app.instId(app.pen.currPenRef().pen) +
-            "&revid=" + app.instId(crev) +
+        data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
+            "&revid=" + jt.instId(crev) +
             "&helpful=" + value;
-        app.call('POST', "notehelpful?" + app.login.authparams(), data,
+        jt.call('POST', "notehelpful?" + app.login.authparams(), data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('helpful', updatedrevtags);
                      if(isHelpful(updatedrevtags[0])) {
@@ -1424,7 +1424,7 @@ app.review = (function () {
                          tbl.title = "Mark this review as helpful"; }
                      img.className = "navico"; },  //ungrey the image
                  app.failf(function (code, errtxt) {
-                     app.err("toggleHelpfulButton failed " + code +
+                     jt.err("toggleHelpfulButton failed " + code +
                              " " + errtxt); }),
                  critsec);
     },
@@ -1446,14 +1446,14 @@ app.review = (function () {
         var params, critsec = "";
         if(!penref) {
             penref = app.pen.currPenRef(); }
-        params = "penid=" + app.instId(penref.pen) + 
+        params = "penid=" + jt.instId(penref.pen) + 
             "&" + app.login.authparams();
-        app.call('GET', "srchhelpful?" + params, null,
+        jt.call('GET', "srchhelpful?" + params, null,
                  function (revtags) {
                      penref.helpful = revtags;
                      callback(); },
                  app.failf(function (code, errtxt) {
-                     app.err("initHelpfulButtonSetting failed " + code +
+                     jt.err("initHelpfulButtonSetting failed " + code +
                              " " + errtxt); }),
                  critsec);
     },
@@ -1461,7 +1461,7 @@ app.review = (function () {
 
     initHelpfulButtonSetting = function (penref, review) {
         if(penref.helpful) {  //local data initialized
-            if(foundHelpful(app.instId(review), penref)) {
+            if(foundHelpful(jt.instId(review), penref)) {
                 toggleHelpfulButton("set"); } }
         else {  //penref.helpful not defined yet. init from db and retry
             loadHelpful(function () {
@@ -1478,34 +1478,34 @@ app.review = (function () {
 
     toggleMemoButton = function (value) {
         var img, tbl, data, critsec = "";
-        img = app.byId('memoimg');
+        img = jt.byId('memoimg');
         if(!img) {  //spurious call, button not displayed
             return; }
-        tbl = app.byId('memotable');
+        tbl = jt.byId('memotable');
         if(value === "set") {  //just initializing the display
             img.src = "img/remembered.png";
             tbl.title = "Remove from your remembered reviews";
-            app.out('memotxttd', "Remembered");
+            jt.out('memotxttd', "Remembered");
             return; }
         img.className = "navicodis";  //grey out the image
         value = (img.src.indexOf("remembered.png") > 0)? "no" : "yes"; //toggle
-        data = "penid=" + app.instId(app.pen.currPenRef().pen) +
-            "&revid=" + app.instId(crev) +
+        data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
+            "&revid=" + jt.instId(crev) +
             "&remember=" + value;
-        app.call('POST', "noteremem?" + app.login.authparams(), data,
+        jt.call('POST', "noteremem?" + app.login.authparams(), data,
                  function (updatedrevtags) {
                      updateCachedReviewTags('remembered', updatedrevtags);
                      if(isRemembered(updatedrevtags[0])) {
                          img.src = "img/remembered.png";
                          tbl.title = "Remove from your remembered reviews";
-                         app.out('memotxttd', "Remembered"); }
+                         jt.out('memotxttd', "Remembered"); }
                      else {
                          img.src = "img/rememberq.png";
                          tbl.title = "Add to your remembered reviews";
-                         app.out('memotxttd', "Remember"); }
+                         jt.out('memotxttd', "Remember"); }
                      img.className = "navico"; },  //ungrey the image
                  app.failf(function (code, errtxt) {
-                     app.err("toggleMemoButton failed " + code +
+                     jt.err("toggleMemoButton failed " + code +
                              " " + errtxt); }),
                  critsec);
     },
@@ -1514,21 +1514,21 @@ app.review = (function () {
     initMemoButtonSetting = function (penref, review) {
         var i, revid, params, critsec = "";
         if(penref.remembered) {  //local data initialized
-            revid = app.instId(review);
+            revid = jt.instId(review);
             for(i = 0; i < penref.remembered.length; i += 1) {
                 if(penref.remembered[i].revid === revid &&
                    isRemembered(penref.remembered[i])) {
                     toggleMemoButton("set");
                     break; } } }
         else { //penref.remembered not defined yet. init from db and retry
-            params = "penid=" + app.instId(penref.pen) +
+            params = "penid=" + jt.instId(penref.pen) +
                 "&" + app.login.authparams();
-            app.call('GET', "srchremem?" + params, null,
+            jt.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
                          initMemoButtonSetting(penref, review); },
                      app.failf(function (code, errtxt) {
-                         app.err("initMemoButtonSetting failed " + code +
+                         jt.err("initMemoButtonSetting failed " + code +
                                  " " + errtxt); }),
                      critsec); }
     },
@@ -1540,13 +1540,13 @@ app.review = (function () {
                        corresponding: "$Name also reviewed this" },
             html, pen, title, funcstr;
         pen = penref.pen;
-        title = titles[field].replace("$Name", app.ndq(pen.name));
-        funcstr = "app.profile.byprofid('" + app.instId(pen) + "')";
+        title = titles[field].replace("$Name", jt.ndq(pen.name));
+        funcstr = "app.profile.byprofid('" + jt.instId(pen) + "')";
         if(revref) {
             funcstr = "app.profile.readReview('" + 
-                                        app.instId(revref.rev) + "')"; }
+                                        jt.instId(revref.rev) + "')"; }
         html = "<a" + 
-            " href=\"#" + app.ndq(pen.name) + "\"" +
+            " href=\"#" + jt.ndq(pen.name) + "\"" +
             " onclick=\"" + funcstr + ";return false;\"" +
             " title=\"" + title + "\"" +
             ">" + pen.name + "</a>";
@@ -1584,27 +1584,27 @@ app.review = (function () {
                             html += ", "; }
                         html += getReviewLinkHTML(fields[i], penref, 
                                                   penrevref); } }
-                app.out(divs[i], html);
+                jt.out(divs[i], html);
                 html = ""; } }
     },
 
 
     startReviewFormDynamicElements = function (revpen, review) {
-        if(app.byId('helpfulbutton')) {
+        if(jt.byId('helpfulbutton')) {
             initHelpfulButtonSetting(app.pen.currPenRef(), review); }
-        if(app.byId('memobutton')) {
+        if(jt.byId('memobutton')) {
             initMemoButtonSetting(app.pen.currPenRef(), review); }
-        if(app.byId('respondbutton')) {
+        if(jt.byId('respondbutton')) {
             app.pen.getPen(function (homepen) {
                 findCorrespondingReview(homepen, 
                                         displayCorrespondingReviewInfo); 
             }); }
-        if(app.byId('hlinksdiv')) {
+        if(jt.byId('hlinksdiv')) {
             displayReviewLinks(); }
-        if(app.byId('revautodiv')) {
+        if(jt.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }
-        if(app.byId('sharediv')) {
+        if(jt.byId('sharediv')) {
             app.services.displayShare('sharebuttonsdiv', 'sharemsgdiv',
                                       revpen, review); }
     },
@@ -1639,28 +1639,28 @@ app.review = (function () {
             reviewFormButtonsHTML(pen, review, type, keyval, mode) + "</td>" +
           "</tr>" +
         "</table></div>";
-        if(!app.byId('cmain')) {
+        if(!jt.byId('cmain')) {
             app.layout.initContent(); }
-        app.out('cmain', html);
+        jt.out('cmain', html);
         if(mode === "edit") {
-            app.on('starstd', 'mousedown',   starPointing);
-            app.on('starstd', 'mouseup',     starStopPointing);
-            app.on('starstd', 'mouseout',    starStopPointingBoundary);
-            app.on('starstd', 'mousemove',   starPointAdjust);
-            app.on('starstd', 'click',       starClick);
-            app.on('starstd', 'touchstart',  starPointing);
-            app.on('starstd', 'touchend',    starStopPointing);
-            app.on('starstd', 'touchcancel', starStopPointing);
-            app.on('starstd', 'touchmove',   starPointAdjust);
+            jt.on('starstd', 'mousedown',   starPointing);
+            jt.on('starstd', 'mouseup',     starStopPointing);
+            jt.on('starstd', 'mouseout',    starStopPointingBoundary);
+            jt.on('starstd', 'mousemove',   starPointAdjust);
+            jt.on('starstd', 'click',       starClick);
+            jt.on('starstd', 'touchstart',  starPointing);
+            jt.on('starstd', 'touchend',    starStopPointing);
+            jt.on('starstd', 'touchcancel', starStopPointing);
+            jt.on('starstd', 'touchmove',   starPointAdjust);
             if(!keyval) {
-                app.byId('keyin').focus(); }
-            else if(app.byId('subkeyin') && !review[type.subkey]) {
-                app.byId('subkeyin').focus(); }
+                jt.byId('keyin').focus(); }
+            else if(jt.byId('subkeyin') && !review[type.subkey]) {
+                jt.byId('subkeyin').focus(); }
             else {
-                app.byId('reviewtext').focus(); } }
+                jt.byId('reviewtext').focus(); } }
         app.layout.adjust();
         if(errmsg) {
-            app.out('revsavemsg', errmsg); }
+            jt.out('revsavemsg', errmsg); }
         startReviewFormDynamicElements(pen, review);
     },
 
@@ -1686,7 +1686,7 @@ app.review = (function () {
                 if(errors.length > 0) {
                     for(i = 0; i < errors.length; i += 1) {
                         errtxt += errors[i] + "<br/>"; }
-                    app.out('revsavemsg', errtxt);
+                    jt.out('revsavemsg', errtxt);
                     return; } }
             //if no type, or if all fields valid, then redisplay
             app.review.display(); }, 400);
@@ -1698,7 +1698,7 @@ app.review = (function () {
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }
-        if(force || !crev || !app.instId(crev)) {
+        if(force || !crev || !jt.instId(crev)) {
             crev = {};                    //so clear it all out 
             autourl = "";
             attribution = "";
@@ -1713,12 +1713,12 @@ app.review = (function () {
     saveReview = function (doneEditing, actionstr) {
         var errors = [], i, errtxt = "", type, url, data, critsec = "", html;
         //remove save button immediately to avoid double click dupes...
-        html = app.byId('revformbuttonstd').innerHTML;
-        app.out('revformbuttonstd', "Verifying...");
+        html = jt.byId('revformbuttonstd').innerHTML;
+        jt.out('revformbuttonstd', "Verifying...");
         type = findReviewType(crev.revtype);
         if(!type) {
-            app.out('revformbuttonstd', html);
-            app.out('revsavemsg', "Unknown review type");
+            jt.out('revformbuttonstd', html);
+            jt.out('revsavemsg', "Unknown review type");
             return; }
         noteURLValue();
         keyFieldsValid(type, errors);
@@ -1727,19 +1727,19 @@ app.review = (function () {
         reviewTextValid(type, errors);
         verifyRatingStars(type, errors, actionstr);
         if(errors.length > 0) {
-            app.out('revformbuttonstd', html);
+            jt.out('revformbuttonstd', html);
             for(i = 0; i < errors.length; i += 1) {
                 errtxt += errors[i] + "<br/>"; }
-            app.out('revsavemsg', errtxt);
+            jt.out('revsavemsg', errtxt);
             return; }
-        app.out('revformbuttonstd', "Saving...");
+        jt.out('revformbuttonstd', "Saving...");
         app.onescapefunc = null;
         url = "updrev?";
-        if(!app.instId(crev)) {
+        if(!jt.instId(crev)) {
             url = "newrev?";
             crev.svcdata = ""; }
-        data = app.objdata(crev);
-        app.call('POST', url + app.login.authparams(), data,
+        data = jt.objdata(crev);
+        jt.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
                      crev = app.lcs.putRev(reviews[0]).rev;
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
@@ -1751,7 +1751,7 @@ app.review = (function () {
                      else {
                          app.review.display(actionstr); } },
                  app.failf(function (code, errtxt) {
-                     app.log("saveReview failed code: " + code + " " +
+                     jt.log("saveReview failed code: " + code + " " +
                              errtxt);
                      app.review.display(); }),
                  critsec);
@@ -1760,7 +1760,7 @@ app.review = (function () {
 
     initWithId = function (revid, mode, action, errmsg) {
         var critsec = "", params = "revid=" + revid;
-        app.call('GET', "revbyid?" + params, null,
+        jt.call('GET', "revbyid?" + params, null,
                  function (revs) {
                      if(revs.length > 0) {
                          crev = revs[0];
@@ -1769,9 +1769,9 @@ app.review = (function () {
                          else {
                              app.review.displayRead(action); } }
                      else {
-                         app.err("initWithId found no review id " + revid); } },
+                         jt.err("initWithId found no review id " + revid); } },
                  app.failf(function (code, errtxt) {
-                     app.err("initWithId failed code " + code + ": " +
+                     jt.err("initWithId failed code " + code + ": " +
                              errtxt); }),
                  critsec);
     },
@@ -1782,8 +1782,8 @@ app.review = (function () {
     copyAndEdit = function (pen, review) {
         if(!review) {
             review = {};
-            review.srcrev = app.instId(crev);
-            review.penid = app.instId(pen);
+            review.srcrev = jt.instId(crev);
+            review.penid = jt.instId(pen);
             review.revtype = crev.revtype;
             review.rating = crev.rating;  //initial value required..
             review.cankey = crev.cankey; }
@@ -1791,7 +1791,7 @@ app.review = (function () {
         if(crev.imguri && !review.imguri && !review.revpic) {
             review.imguri = crev.imguri; }
         if(crev.revpic && !review.imguri && !review.revpic) {
-            review.imguri = "revpic?revid=" + app.instId(crev); }
+            review.imguri = "revpic?revid=" + jt.instId(crev); }
         if(crev.name && !review.name) {
             review.name = crev.name; }
         if(crev.title && !review.title) {
@@ -1822,21 +1822,21 @@ app.review = (function () {
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
-        app.out('cmain', "Deleting review...");
-        data = app.objdata(crev);
-        app.call('POST', "delrev?" + app.login.authparams(), data,
+        jt.out('cmain', "Deleting review...");
+        data = jt.objdata(crev);
+        jt.call('POST', "delrev?" + app.login.authparams(), data,
                  function (reviews) {
                      var html = "<p>Review deleted.  If this review was one" +
                          " of your top 20 best, then you may see an id" +
                          " reference message until the next time you review" +
                          " something.  Recalculating your recent reviews..." +
                          "</p>";
-                     app.out('cmain', html);
+                     jt.out('cmain', html);
                      setTimeout(function () {
                          app.profile.resetReviews();
                          app.profile.display(); }, 12000); },
                  app.failf(function (code, errtxt) {
-                     app.err("Delete failed code: " + code + " " + errtxt);
+                     jt.err("Delete failed code: " + code + " " + errtxt);
                      app.profile.display(); }),
                  critsec);
     },
@@ -1848,7 +1848,7 @@ app.review = (function () {
         if(!crev.penid) {
             crev.penid = app.pen.currPenId(); }
         setTimeout(function () {  //refresh headings
-            if(crev.penid !== app.instId(pen)) { 
+            if(crev.penid !== jt.instId(pen)) { 
                 app.lcs.getPenFull(crev.penid, function (revpenref) {
                     app.profile.writeNavDisplay(pen, revpenref.pen,
                                                 "nosettings"); }); }
@@ -1932,7 +1932,7 @@ app.review = (function () {
         initWithId: function (revid, mode, action, errmsg) {
             initWithId(revid, mode, action, errmsg); },
         respond: function () {
-            app.byId('respondtxttd').style.color = "#666666";
+            jt.byId('respondtxttd').style.color = "#666666";
             setTimeout(function () {
                 app.pen.getPen(function (pen) {
                     findCorrespondingReview(pen, copyAndEdit); }); }, 50); },

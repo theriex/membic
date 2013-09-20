@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -118,15 +118,15 @@ app.amazon = (function () {
 
     fetchData = function (review, url, params) {
         var critsec = "", asin = extractASIN(url);
-        app.out('contentdiv', "Reading details from Amazon...");
+        jt.out('contentdiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
-        app.call('GET', url, null,
+        jt.call('GET', url, null,
                  function (json) {
-                     setReviewFields(review, app.dec(json[0].content));
+                     setReviewFields(review, jt.dec(json[0].content));
                      app.review.setAttribution(attribution);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     app.err("Amazon data retrieval failed code " + 
+                     jt.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);

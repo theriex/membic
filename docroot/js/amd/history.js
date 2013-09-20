@@ -1,4 +1,4 @@
-/*global define: false, window: false, document: false, history: false, JSON: false, app: false */
+/*global window: false, document: false, history: false, JSON: false, app: false, jt: false */
 
 /*jslint white: true, unparam: true, maxerr: 50, indent: 4 */
 
@@ -54,7 +54,7 @@ return {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.pushState(pstate, title, url);
-                    app.log("history.pushState: " + 
+                    jt.log("history.pushState: " + 
                             JSON.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } }
@@ -64,7 +64,7 @@ return {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.replaceState(pstate, title, url);
-                    app.log("history.replaceState: " + 
+                    jt.log("history.replaceState: " + 
                             JSON.stringify(pstate) +
                             ", title: " + title + ", url: " + url); 
                 } } }
@@ -73,11 +73,11 @@ return {
 
     pop: function (event) {
         var state = event.state;
-        app.log("historyPop: " + JSON.stringify(state));
+        jt.log("historyPop: " + JSON.stringify(state));
         if(state) {
             switch(state.view) {
             case "profile":
-                if(app.isId(state.profid)) {
+                if(jt.isId(state.profid)) {
                     app.profile.byprofid(state.profid, state.tab); }
                 break; 
             case "activity":

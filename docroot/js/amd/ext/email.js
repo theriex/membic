@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, window: false, document: false, history: false, app: false */
+/*global app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -35,8 +35,8 @@ app.email = (function () {
         var subject, body, html;
         subject = getSubject(review);
         body = getBody(review);
-        html = "mailto:?subject=" + app.dquotenc(subject) +
-            "&body=" + app.dquotenc(body);
+        html = "mailto:?subject=" + jt.dquotenc(subject) +
+            "&body=" + jt.dquotenc(body);
         return html; 
     };
 
@@ -46,7 +46,7 @@ app.email = (function () {
         svcDesc: "Fills out an email for you to send",
         iconurl: iconurl,
         doInitialSetup: function () {
-            app.log("email service initial setup done"); },
+            jt.log("email service initial setup done"); },
         getLinkURL: function (review) {
             return getLinkURL(review); },
         getOnClickStr: function () {

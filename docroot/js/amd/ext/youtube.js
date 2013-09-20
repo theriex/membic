@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -52,19 +52,19 @@ app.youtube = (function () {
     //The review.url and other fields have already been set from the
     //params, so this only needs to fill out additional info.
     fetchData = function (review, url, params) {
-        var urlobj = app.paramsToObj(url),
+        var urlobj = jt.paramsToObj(url),
             vid = urlobj.v, critsec = "";
-        app.out('contentdiv', "Reading details from YouTube...");
+        jt.out('contentdiv', "Reading details from YouTube...");
         url = "http://gdata.youtube.com/feeds/api/videos/" + vid + 
             "?v=2&alt=json";
-        url = "jsonget?geturl=" + app.enc(url);
-        app.call('GET', url, null,
+        url = "jsonget?geturl=" + jt.enc(url);
+        jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, json);
                      app.review.setAttribution(attribution);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     app.err("YouTube data retrieval failed code " + 
+                     jt.err("YouTube data retrieval failed code " + 
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);

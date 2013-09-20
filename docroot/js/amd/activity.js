@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global setTimeout: false, window: false, document: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -30,7 +30,7 @@ app.activity = (function () {
 
     activityLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            app.imgntxt("friendact.png", "",
+            jt.imgntxt("friendact.png", "",
                         "app.activity.displayActive()",
                         "#Activity",
                         "See what's been posted recently") +
@@ -41,7 +41,7 @@ app.activity = (function () {
 
     rememberedLinkHTML = function () {
         var html = "<div class=\"topnavitemdiv\">" +
-            app.imgntxt("remembered.png", "",
+            jt.imgntxt("remembered.png", "",
                         "app.activity.displayRemembered()",
                         "#Remembered",
                         "Show reviews you have remembered") +
@@ -75,9 +75,9 @@ app.activity = (function () {
             if(activityMode === "amnew") {
                 url = "rssact?pen=" + app.pen.currPenId();
                 html = "New reviews from friends " +
-                    app.imglink(url, "RSS feed for recent friend reviews",
-                                "window.open('" + url + "')", 
-                                "rssicon.png", "rssico") +
+                    jt.imglink(url, "RSS feed for recent friend reviews",
+                               "window.open('" + url + "')", 
+                               "rssicon.png", "rssico") +
                     "<button type=\"button\" id=\"switchmodebutton\"" +
                     " onclick=\"app.activity.switchmode('amtop');" +
                                "return false;\"" +
@@ -93,7 +93,7 @@ app.activity = (function () {
                     topTypeSelectorHTML(); } }
         else if(dispmode === "memo") {
             html = "Remembered reviews"; }
-        app.out('centerhdiv', html);
+        jt.out('centerhdiv', html);
     },
 
 
@@ -110,9 +110,9 @@ app.activity = (function () {
             "</select>" +
             "<br/>" +
             "<i>Include</i>&nbsp;" + 
-            app.checkbox("srchinc", "following") +
-            app.checkbox("srchinc", "blocked") +
-            app.checkbox("srchinc", "lurkers") +
+            jt.checkbox("srchinc", "following") +
+            jt.checkbox("srchinc", "blocked") +
+            jt.checkbox("srchinc", "lurkers") +
             " <i> in the search results</i>" +
             "<br/>&nbsp;<br/></div>";
         return html;
@@ -152,13 +152,13 @@ app.activity = (function () {
                   ">show advanced search options</a></span></td></tr>" +
             "</table>" + searchOptionsHTML() +
             "<div id=\"searchresults\"></div>";
-        app.out('dlgdiv', html);
-        app.byId('dlgdiv').style.visibility = "visible";
-        if(app.isLowFuncBrowser()) {
-            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        jt.out('dlgdiv', html);
+        jt.byId('dlgdiv').style.visibility = "visible";
+        if(jt.isLowFuncBrowser()) {
+            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         app.onescapefunc = app.layout.closeDialog;
-        app.byId('searchoptionsdiv').style.display = "none";
-        app.byId('searchtxt').focus();
+        jt.byId('searchoptionsdiv').style.display = "none";
+        jt.byId('searchtxt').focus();
         //hit the search button for them so they don't have to figure out
         //pressing the button vs search options or what to type.
         setTimeout(app.activity.startPenSearch, 50);
@@ -166,13 +166,13 @@ app.activity = (function () {
 
 
     toggleSearchOptions = function () {
-        var sod = app.byId('searchoptionsdiv');
+        var sod = jt.byId('searchoptionsdiv');
         if(sod) {
             if(sod.style.display === "none") {
-                app.out('srchoptstogglehref', "hide advanced search options");
+                jt.out('srchoptstogglehref', "hide advanced search options");
                 sod.style.display = "block"; }
             else {
-                app.out('srchoptstogglehref', "show advanced search options");
+                jt.out('srchoptstogglehref', "show advanced search options");
                 sod.style.display = "none"; } }
         app.layout.adjust();
     },
@@ -187,7 +187,7 @@ app.activity = (function () {
         var params, pen, rel;
         params = app.pen.currPenRef().pensearch.params;
         pen = searchitem;
-        rel = app.rel.outbound(app.instId(pen));
+        rel = app.rel.outbound(jt.instId(pen));
         if(rel) {
             if(params.includeFollowing && rel.status === "following") {
                 return false; }
@@ -235,8 +235,8 @@ app.activity = (function () {
                                      "return false;\"" +
                           " title=\"Continue searching for more pen names\"" +
                     ">continue search...</a>"; } }
-        app.out('searchresults', html);
-        app.byId("searchbutton").disabled = false;
+        jt.out('searchresults', html);
+        jt.byId("searchbutton").disabled = false;
     },
 
 
@@ -249,7 +249,7 @@ app.activity = (function () {
             if(checkboxes[i].checked) {
                 t20type = app.review.getReviewTypeByValue(checkboxes[i].value);
                 pensearch.params.reqmin.push(t20type.type); } }
-        options = app.byId('srchactivesel').options;
+        options = jt.byId('srchactivesel').options;
         for(i = 0; i < options.length; i += 1) {
             if(options[i].selected) {
                 switch(options[i].id) {
@@ -282,32 +282,32 @@ app.activity = (function () {
         var pensearch, params, qstr, time, t20, i, critsec = "";
         pensearch = app.pen.currPenRef().pensearch;
         readSearchParamsFromForm();
-        app.out('srchoptstogglehref', "show advanced search options");
-        app.byId('searchoptionsdiv').style.display = "none";
-        app.byId("searchbutton").disabled = true;
-        qstr = app.byId('searchtxt').value;
-        params = app.login.authparams() + "&qstr=" + app.enc(qstr) +
-            "&cursor=" + app.enc(pensearch.cursor);
+        jt.out('srchoptstogglehref', "show advanced search options");
+        jt.byId('searchoptionsdiv').style.display = "none";
+        jt.byId("searchbutton").disabled = true;
+        qstr = jt.byId('searchtxt').value;
+        params = app.login.authparams() + "&qstr=" + jt.enc(qstr) +
+            "&cursor=" + jt.enc(pensearch.cursor);
         if(pensearch.params.activeDaysAgo > 0) {
             time = (new Date()).getTime();
             time -= pensearch.params.activeDaysAgo * 24 * 60 * 60 * 1000;
             time = new Date(time);
             time = time.toISOString();
-            params += "&time=" + app.enc(time); }
+            params += "&time=" + jt.enc(time); }
         if(pensearch.params.reqmin.length > 0) {
             t20 = "";
             for(i = 0; i < pensearch.params.reqmin.length; i += 1) {
                 if(i > 0) {
                     t20 += ","; }
                 t20 += pensearch.params.reqmin[i]; }
-            params += "&t20=" + app.enc(t20); }
+            params += "&t20=" + jt.enc(t20); }
         if(pensearch.params.includeLurkers) {
             params += "&lurkers=include"; }
-        app.call('GET', "srchpens?" + params, null,
+        jt.call('GET', "srchpens?" + params, null,
                  function (results) {
                      displayPenSearchResults(results); },
                  app.failf(function (code, errtxt) {
-                     app.out('searchresults', 
+                     jt.out('searchresults', 
                              "error code: " + code + " " + errtxt); }),
                  critsec);
     },
@@ -356,18 +356,18 @@ app.activity = (function () {
                 html += "<li></li><li><span class=\"hintText\">" + hint + 
                     "</span></li>"; }
             html += "</ul>";
-            app.out('revactdiv', html);
+            jt.out('revactdiv', html);
             app.layout.adjust();
             if(crid) {
                 app.lcs.getRevFull(crid, displayRemembered); }
             if(cfid) {
                 app.lcs.getPenFull(cfid, displayRemembered); } }
         else { //!penref.remembered
-            app.out('revactdiv', "Fetching remembered reviews...");
+            jt.out('revactdiv', "Fetching remembered reviews...");
             app.layout.adjust();
-            params = "penid=" + app.instId(penref.pen) +
+            params = "penid=" + jt.instId(penref.pen) +
                 "&" + app.login.authparams();
-            app.call('GET', "srchremem?" + params, null,
+            jt.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
                          displayRemembered(); },
@@ -399,7 +399,7 @@ app.activity = (function () {
         if(revrefs.length > 0) {
             revref = revrefs[revrefs.length - 1];
             for(i = 0; i < penrefs.length; i += 1) {
-                if(revref.rev.penid === app.instId(penrefs[i].pen)) {
+                if(revref.rev.penid === jt.instId(penrefs[i].pen)) {
                     break; } }
             startidx = i + 1; } //start after pen who did the last rev
         revref = null;
@@ -427,7 +427,7 @@ app.activity = (function () {
             penid = pens[i];
             pens[i] = app.lcs.getPenRef(penid);
             if(pens[i].status === "not cached") {
-                app.out('revactdiv', "Loading friends..." + (i+1));
+                jt.out('revactdiv', "Loading friends..." + (i+1));
                 return app.lcs.getPenFull(penid, displayTopReviews); } }
         //sort them by modified (last login) with most recent first
         pens.sort(function (a, b) {
@@ -452,7 +452,7 @@ app.activity = (function () {
                 break; }
             if(revref.status === "not cached") {
                 html += "<li>Fetching review " + revref.revid + "</li></ul>";
-                app.out('revactdiv', html);
+                jt.out('revactdiv', html);
                 return app.lcs.getRevFull(revref.revid, displayTopReviews); }
             if(revref.rev) {
                 revs.push(revref);
@@ -461,22 +461,22 @@ app.activity = (function () {
         if(revs.length === 0) {
             html += "<li>No " + topActivityType + " reviews found</li>"; }
         html += "</ul>";
-        app.out('revactdiv', html);
+        jt.out('revactdiv', html);
     },
 
 
     moreRevsFromHTML = function (rev) {
         var html = "<li>" + "<div class=\"morerevs\">" +
-            "<a href=\"#" + app.objdata({ view: "profile", 
-                                          profid: rev.penid }) + "\"" +
+            "<a href=\"#" + jt.objdata({ view: "profile", 
+                                         profid: rev.penid }) + "\"" +
               " onclick=\"app.profile.byprofid('" + rev.penid + 
                                                "', 'recent');" +
                          "return false;\"" +
               " title=\"Show recent reviews from " + 
-                        app.ndq(rev.penNameStr) + "\"" + 
+                        jt.ndq(rev.penNameStr) + "\"" + 
             ">" + "more reviews from " +
-                app.ndq(rev.penNameStr) + " on " + 
-                app.colloquialDate(app.ISOString2Day(rev.modified)) +
+                jt.ndq(rev.penNameStr) + " on " + 
+                jt.colloquialDate(jt.ISOString2Day(rev.modified)) +
             "</a></div></li>";
         return html;
     },
@@ -484,7 +484,7 @@ app.activity = (function () {
 
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html, key, reps = {};
-        app.byId('switchmodebutton').disabled = false;
+        jt.byId('switchmodebutton').disabled = false;
         html = "<ul class=\"revlist\">";
         actdisp = app.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
@@ -516,7 +516,7 @@ app.activity = (function () {
             html += "<a href=\"#moreact\"" +
                 " onclick=\"app.activity.moreact();return false;\"" +
                 " title=\"More activity\"" + ">more activity...</a>"; }
-        app.out('revactdiv', html);
+        jt.out('revactdiv', html);
         app.layout.adjust();
     },
 
@@ -524,7 +524,7 @@ app.activity = (function () {
     notePenNameStr = function (pen) {
         var i, pid, revrefs;
         revrefs = app.pen.currPenRef().actdisp.revrefs;
-        pid = app.instId(pen);
+        pid = jt.instId(pen);
         for(i = 0; i < revrefs.length; i += 1) {
             if(revrefs[i].rev.penid === pid) {
                 revrefs[i].rev.penNameStr = pen.name; } }
@@ -583,21 +583,21 @@ app.activity = (function () {
         else if(continued) {
             params += "&cursor=" + actdisp.cursor; }
         time = new Date().getTime();
-        app.call('GET', "revact?" + params, null,
+        jt.call('GET', "revact?" + params, null,
                  function (results) {
                      time = new Date().getTime() - time;
-                     app.log("revact returned in " + time/1000 + " seconds.");
+                     jt.log("revact returned in " + time/1000 + " seconds.");
                      actdisp.lastChecked = new Date();
                      collectAndDisplayReviewActivity(results, continued); },
                  app.failf(function (code, errtxt) {
-                     app.out('revactdiv', "error code: " + code + " " + 
+                     jt.out('revactdiv', "error code: " + code + " " + 
                              errtxt); }),
                  critsec);
     },
 
 
     searchPensLinkHTML = function () {
-        return app.imgntxt("follow.png", "Find Pen Names", 
+        return jt.imgntxt("follow.png", "Find Pen Names", 
                            "app.activity.pensearchdialog()", 
                            "#findpens",
                            "Find pen names to follow");
@@ -607,7 +607,7 @@ app.activity = (function () {
     bootActivityDisplay = function () {
         var penids, html, retry = false;
         writeNavDisplay("activity");
-        app.byId('switchmodebutton').disabled = true;
+        jt.byId('switchmodebutton').disabled = true;
         penids = app.rel.outboundids();
         if(penids.length === 0) {
             html = "<p>You are not following anyone.</p>" +
@@ -624,25 +624,25 @@ app.activity = (function () {
                 revrefs: [], 
                 cursor: "" };
             html = "Loading activity..."; }
-        app.out('revactdiv', html);
+        jt.out('revactdiv', html);
         app.layout.adjust();
         if(app.pen.currPenRef().actdisp) {
             doActivitySearch(); }
         else if(!app.pen.currPenRef().helpful) {
             app.review.loadHelpful(bootActivityDisplay); }
         else if(retry) {
-            app.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
+            jt.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
             setTimeout(bootActivityDisplay, 100); }
     },
 
 
     verifyCoreDisplayElements = function () {
-        var html, domelem = app.byId('revactdiv');
+        var html, domelem = jt.byId('revactdiv');
         if(!domelem) {
             html = "<div id=\"revactdiv\"></div>";
-            if(!app.byId('cmain')) {
+            if(!jt.byId('cmain')) {
                 app.layout.initContent(); }
-            app.out('cmain', html); }
+            jt.out('cmain', html); }
     },
 
 

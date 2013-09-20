@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false, navigator: false, JSON: false */
+/*global alert: false, confirm: false, setTimeout: false, window: false, document: false, app: false, jt: false, JSON: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -79,26 +79,26 @@ app.profile = (function () {
 
     updateTopActionDisplay = function (pen) {
         var html;
-        if(!app.byId('homepenhdiv')) {
+        if(!jt.byId('homepenhdiv')) {
             app.login.updateAuthentDisplay(); }
         html = "<div class=\"topnavitemdiv\">" +
-            app.imgntxt("profile.png", "",
+            jt.imgntxt("profile.png", "",
                         "app.profile.display()",
-                        "#view=profile&profid=" + app.instId(pen),
+                        "#view=profile&profid=" + jt.instId(pen),
                         "Show profile for " + pen.name + " (you)") +
             "</div>";
-        app.out('homepenhdiv', html);
-        html = app.imgntxt("settings.png", "", 
+        jt.out('homepenhdiv', html);
+        html = jt.imgntxt("settings.png", "", 
                            "app.profile.settings()",
                            "#Settings",
                            "Adjust your application settings");
-        app.out('settingsbuttondiv', html);
+        jt.out('settingsbuttondiv', html);
     },
 
 
     displayProfileHeading = function (homepen, dispen, directive) {
         var html, id, name, relationship;
-        id = app.instId(dispen);
+        id = jt.instId(dispen);
         name = dispen.name;
         html = "<a href=\"#view=profile&profid=" + id + "\"" +
                  " title=\"Show profile for " + name + "\"" +
@@ -109,20 +109,20 @@ app.profile = (function () {
                  "<span id=\"penhnamespan\">" + html + "</span>" +
                  "<span id=\"penhbuttonspan\"> </span>" +
                "</div>";
-        app.out('centerhdiv', html);
+        jt.out('centerhdiv', html);
         html = "";
-        if(app.instId(homepen) !== app.instId(dispen) &&
+        if(jt.instId(homepen) !== jt.instId(dispen) &&
            directive !== "nosettings") {
             if(app.rel.relsLoaded()) {
                 relationship = app.rel.outbound(id);
                 app.profile.verifyStateVariableValues(dispen);
                 if(relationship) {
-                    html = app.imglink("#Settings",
+                    html = jt.imglink("#Settings",
                                        "Adjust follow settings for " + name,
                                        "app.profile.relationship()", 
                                        "settings.png"); }
                 else {
-                    html = app.imglink("#Follow",
+                    html = jt.imglink("#Follow",
                                        "Follow " + name + " reviews",
                                        "app.profile.relationship()",
                                        "follow.png"); } }
@@ -131,7 +131,7 @@ app.profile = (function () {
                 //and rels are loading slowly.  Not known if you are following
                 //them yet.  The heading updates after the rels are loaded.
                 html = "..."; } }
-        app.out('penhbuttonspan', html);
+        jt.out('penhbuttonspan', html);
     },
 
 
@@ -144,7 +144,7 @@ app.profile = (function () {
 
 
     setPenNameFromInput = function (pen) {
-        var pennamein = app.byId('pennamein');
+        var pennamein = jt.byId('pennamein');
         if(!pen) {
             pen = profpenref.pen; }
         if(pennamein) {
@@ -154,7 +154,7 @@ app.profile = (function () {
 
     savePenNameSettings = function (e) {
         var pen;
-        app.evtend(e);
+        jt.evtend(e);
         pen = app.pen.currPenRef().pen;
         setPenNameFromInput(pen);
         app.skinner.save(pen);
@@ -163,7 +163,7 @@ app.profile = (function () {
                               app.layout.closeDialog();
                               app.profile.display(); },
                           function (code, errtxt) {
-                              app.out('settingsmsgtd', errtxt); });
+                              jt.out('settingsmsgtd', errtxt); });
     },
 
 
@@ -172,8 +172,8 @@ app.profile = (function () {
         app.layout.closeDialog();
         if(actionTxt && typeof actionTxt === "string") {
             //nuke the main display as we are about to rebuild contents
-            app.out('centerhdiv', "");
-            app.out('cmain', actionTxt); }
+            jt.out('centerhdiv', "");
+            jt.out('cmain', actionTxt); }
     },
 
 
@@ -199,7 +199,7 @@ app.profile = (function () {
             " value=\"" + atname + "\" id=\"aamid\"" +
             " onchange=\"app.profile.toggleAuthChange('mid','" + 
                              domid + "');return false;\"";
-        if(app.isId(pen.mid)) {
+        if(jt.isId(pen.mid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
         html += "<tr>";
@@ -209,7 +209,7 @@ app.profile = (function () {
             " value=\"" + atname + "\" id=\"aafbid\"" +
             " onchange=\"app.profile.toggleAuthChange('fbid','" + 
                              domid + "');return false;\"";
-        if(app.isId(pen.fbid)) {
+        if(jt.isId(pen.fbid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aafbid\">" + atname + "</label></td>";
         //Twitter
@@ -218,7 +218,7 @@ app.profile = (function () {
             " value=\"" + atname + "\" id=\"aatwid\"" +
             " onchange=\"app.profile.toggleAuthChange('twid','" + 
                              domid + "');return false;\"";
-        if(app.isId(pen.twid)) {
+        if(jt.isId(pen.twid)) {
             html += " checked=\"checked\""; }
         html += "/><label for=\"aatwid\">" + atname + "</label></td>";
         html += "</tr><tr>";
@@ -228,7 +228,7 @@ app.profile = (function () {
             " value=\"" + atname + "\" id=\"aagsid\"" +
             " onchange=\"app.profile.toggleAuthChange('gsid','" + 
                              domid + "');return false;\"";
-        if(app.isId(pen.gsid)) { 
+        if(jt.isId(pen.gsid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aagsid\">" + atname + "</label></td>";
         //GitHub
@@ -237,11 +237,11 @@ app.profile = (function () {
             " value=\"" + atname + "\" id=\"aaghid\"" +
             " onchange=\"app.profile.toggleAuthChange('ghid','" + 
                              domid + "');return false;\"";
-        if(app.isId(pen.ghid)) { 
+        if(jt.isId(pen.ghid)) { 
             html += " checked=\"checked\""; }
         html += "/><label for=\"aaghid\">" + atname + "</label></td>";
         html += "</tr></table>";
-        app.out(domid, html);
+        jt.out(domid, html);
     },
 
 
@@ -271,13 +271,13 @@ app.profile = (function () {
             "</td>" +
           "</tr>" +
         "</table></form>";
-        app.out(domid, html);
+        jt.out(domid, html);
     },
 
 
     handleAuthChangeToggle = function (pen, authtype, domid) {
         var action = "remove", methcount, previd;
-        if(app.byId("aa" + authtype).checked) {
+        if(jt.byId("aa" + authtype).checked) {
             action = "add"; }
         if(action === "remove") {
             methcount = (pen.mid? 1 : 0) +
@@ -287,28 +287,28 @@ app.profile = (function () {
                 (pen.ghid? 1 : 0);
             if(methcount < 2) {
                 alert("You must have at least one authentication type.");
-                app.byId("aa" + authtype).checked = true;
+                jt.byId("aa" + authtype).checked = true;
                 return;  } 
             if(authtype === app.login.getAuthMethod()) {
                 alert("You can't remove the authentication you are " +
                       "currently logged in with.");
-                app.byId("aa" + authtype).checked = true;
+                jt.byId("aa" + authtype).checked = true;
                 return;  } 
             if(confirm("Are you sure you want to remove access to this" +
                        " Pen Name from " + nameForAuthType(authtype) + "?")) {
-                app.out(domid, "Updating...");
+                jt.out(domid, "Updating...");
                 previd = pen[authtype];
                 pen[authtype] = 0;
                 app.pen.updatePen(pen,
                                   function (updpen) {
                                       displayAuthSettings(domid, updpen); },
                                   function (code, errtxt) {
-                                      app.err("handleAuthChangeToggle error " +
+                                      jt.err("handleAuthChangeToggle error " +
                                               code + ": " + errtxt);
                                       pen[authtype] = previd;
                                       displayAuthSettings(domid, pen); }); }
             else {
-                app.byId("aa" + authtype).checked = true; } }
+                jt.byId("aa" + authtype).checked = true; } }
         else if(action === "add") {
             switch(authtype) {
             case "mid": 
@@ -326,7 +326,7 @@ app.profile = (function () {
 
 
     changeToSelectedPen = function () {
-        var i, sel = app.byId('penselect'), temp = "";
+        var i, sel = jt.byId('penselect'), temp = "";
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
                 //do not call cancelPenNameSettings before done accessing
@@ -349,7 +349,7 @@ app.profile = (function () {
             "<select id=\"penselect\"" + 
                    " onchange=\"app.profile.switchPen();return false;\">";
         for(i = 0; i < pens.length; i += 1) {
-            html += "<option id=\"" + app.instId(pens[i]) + "\"";
+            html += "<option id=\"" + jt.instId(pens[i]) + "\"";
             if(pens[i].name === pen.name) {
                 html += " selected=\"selected\""; }
             html += ">" + pens[i].name + "</option>"; }
@@ -400,15 +400,15 @@ app.profile = (function () {
               "</td>" +
             "</tr>" +
           "</table>";
-        app.out('dlgdiv', html);
-        app.on('pennamein', 'change', app.profile.penNameChange);
-        app.on('savebutton', 'click', savePenNameSettings);
+        jt.out('dlgdiv', html);
+        jt.on('pennamein', 'change', app.profile.penNameChange);
+        jt.on('savebutton', 'click', savePenNameSettings);
         displayAuthSettings('settingsauthtd', pen);
         app.services.display('consvcstd', pen);
         app.skinner.init('settingsskintd', pen);
-        app.byId('dlgdiv').style.visibility = "visible";
-        if(app.isLowFuncBrowser()) {
-            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        jt.byId('dlgdiv').style.visibility = "visible";
+        if(jt.isLowFuncBrowser()) {
+            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         app.onescapefunc = cancelPenNameSettings;
     },
 
@@ -416,7 +416,7 @@ app.profile = (function () {
     addMyOpenReviewsAuthId = function (pen, mid) {
         var previd;
         if(!mid) {
-            app.err("No account ID received.");
+            jt.err("No account ID received.");
             app.profile.display(); }
         else {
             previd = pen.mid;
@@ -425,7 +425,7 @@ app.profile = (function () {
                               function (updpen) {
                                   changeSettings(updpen); },
                               function (code, errtxt) {
-                                  app.err("addMyOpenReviewsAuthId error " +
+                                  jt.err("addMyOpenReviewsAuthId error " +
                                           code + ": " + errtxt);
                                   pen.mid = previd;
                                   app.profile.display(); }); }
@@ -467,7 +467,7 @@ app.profile = (function () {
             "click the 'follow' icon next to '" + mepen.name +
             "' on my profile page. Here's the direct link to my profile:\n\n" +
             "    " + app.mainsvr + "/#view=profile&profid=" +
-            app.instId(mepen) + "\n\n" +
+            jt.instId(mepen) + "\n\n" +
             "When I see you in my 'Followers' tab, I'll follow back. " +
             "Looking forward to learning about things you've experienced " +
             "recently!" +
@@ -475,8 +475,8 @@ app.profile = (function () {
             "cheers,\n" + 
             mepen.name + 
             "\n\n";
-        href = "mailto:?subject=" + app.dquotenc(subj) + 
-            "&body=" + app.dquotenc(body);
+        href = "mailto:?subject=" + jt.dquotenc(subj) + 
+            "&body=" + jt.dquotenc(body);
         html = app.services.serviceLinkHTML(href, "", "shareico", 
                                             "Invite via eMail",
                                             "img/email.png");
@@ -485,7 +485,7 @@ app.profile = (function () {
 
 
     updateInviteInfo = function () {
-        app.out('mailbspan', mailButtonHTML());
+        jt.out('mailbspan', mailButtonHTML());
     },
 
 
@@ -516,10 +516,10 @@ app.profile = (function () {
               "<span id=\"mailbspan\"></span>" +
             "</td></tr>" +
           "</table>";
-        app.out('dlgdiv', html);
-        app.byId('dlgdiv').style.visibility = "visible";
-        if(app.isLowFuncBrowser()) {
-            app.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        jt.out('dlgdiv', html);
+        jt.byId('dlgdiv').style.visibility = "visible";
+        if(jt.isLowFuncBrowser()) {
+            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
         app.onescapefunc = app.layout.closeDialog;
         updateInviteInfo();
     },
@@ -539,9 +539,9 @@ app.profile = (function () {
 
 
     penListItemHTML = function (pen) {
-        var penid = app.instId(pen), picuri, hash, linktitle, html;
-        hash = app.objdata({ view: "profile", profid: penid });
-        linktitle = app.ellipsis(pen.shoutout, 75);
+        var penid = jt.instId(pen), picuri, hash, linktitle, html;
+        hash = jt.objdata({ view: "profile", profid: penid });
+        linktitle = jt.ellipsis(pen.shoutout, 75);
         if(!linktitle) {  //do not encode pen name here.  No "First%20Last"..
             linktitle = "View profile for " + pen.name; }
         html = "<li>" +
@@ -587,7 +587,7 @@ app.profile = (function () {
         revobj = app.lcs.getRevRef(revid).rev;
         //Make some noise if you can't find it rather than being a dead link
         if(!revobj) {
-            app.err("readReview " + revid + " not found");
+            jt.err("readReview " + revid + " not found");
             return; }
         app.history.checkpoint({ view: "review", mode: "display",
                                  revid: revid });
@@ -599,7 +599,7 @@ app.profile = (function () {
     reviewItemHTML = function (revobj, penNameStr) {
         var revid, type, linkref, linkclass, html;
         //review item line
-        revid = app.instId(revobj);
+        revid = jt.instId(revobj);
         type = app.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
         linkclass = app.review.foundHelpful(revid)? "rslcbold" : "rslc";
@@ -611,33 +611,33 @@ app.profile = (function () {
               " class=\"" + linkclass + "\"" +
               " title=\"See full review\">";
         if(type.subkey) {
-            html += "<i>" + app.ellipsis(revobj[type.key], 60) + "</i> " +
-                app.ellipsis(revobj[type.subkey], 40); }
+            html += "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
+                jt.ellipsis(revobj[type.subkey], 40); }
         else {
-            html += app.ellipsis(revobj[type.key], 60); }
+            html += jt.ellipsis(revobj[type.key], 60); }
         html += "</a>";
         if(revobj.url) {
             html += " &nbsp;" + app.review.graphicAbbrevSiteLink(revobj.url); }
         //review meta line
         html += "<div class=\"revtextsummary\">";
         if(penNameStr) {
-            linkref = app.objdata({ view: "profile", profid: revobj.penid });
+            linkref = jt.objdata({ view: "profile", profid: revobj.penid });
             html += "review by " + 
                 "<a href=\"#" + linkref + "\"" +
                  " onclick=\"app.profile.byprofid('" + revobj.penid + "');" +
                             "return false;\"" +
-                 " title=\"Show profile for " + app.ndq(penNameStr) + "\"" +
+                 " title=\"Show profile for " + jt.ndq(penNameStr) + "\"" +
                 ">" + penNameStr + "</a>"; }
         if(revobj.keywords) {
             if(penNameStr) {
                 html += ": "; }
-            html += app.ellipsis(revobj.keywords, 100); }
+            html += jt.ellipsis(revobj.keywords, 100); }
         html += app.review.linkCountHTML(revid);
         html += "</div>";
         //review description line
         if(revobj.text) {
             html += "<div class=\"revtextsummary\">" + 
-                app.ellipsis(revobj.text, 255) + "</div>"; }
+                jt.ellipsis(revobj.text, 255) + "</div>"; }
         html += "</li>";
         return html;
     },
@@ -668,7 +668,7 @@ app.profile = (function () {
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
             html += "<li>No recent reviews.";
-            if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+            if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 html += " " + app.review.reviewLinkHTML(); }
             html += "</li>"; }
         html += "</ul>";
@@ -684,7 +684,7 @@ app.profile = (function () {
                                      "return false;\"" +
                           " title=\"More reviews\"" + 
                     ">more reviews...</a>"; } }
-        app.out('profcontdiv', html);
+        jt.out('profcontdiv', html);
         app.layout.adjust();
         setTimeout(function () {
             app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
@@ -693,14 +693,14 @@ app.profile = (function () {
 
     findRecentReviews = function (rrs) {  //recentRevState
         var params, critsec = "";
-        params = app.objdata(rrs.params) + "&" + app.login.authparams();
+        params = jt.objdata(rrs.params) + "&" + app.login.authparams();
         if(rrs.cursor) {
-            params += "&cursor=" + app.enc(rrs.cursor); }
-        app.call('GET', "srchrevs?" + params, null,
+            params += "&cursor=" + jt.enc(rrs.cursor); }
+        jt.call('GET', "srchrevs?" + params, null,
                  function (revs) {
                      displayRecentReviews(rrs, revs); },
                  app.failf(function (code, errtxt) {
-                     app.out('profcontdiv', "findRecentReviews failed code " + 
+                     jt.out('profcontdiv', "findRecentReviews failed code " + 
                              code + " " + errtxt); }),
                  critsec);
     },
@@ -711,7 +711,7 @@ app.profile = (function () {
         if(profpenref.profstate.recentRevState) {
             return displayRecentReviews(profpenref.profstate.recentRevState); }
         html = "Retrieving recent activity for " + profpenref.pen.name + "...";
-        app.out('profcontdiv', html);
+        jt.out('profcontdiv', html);
         app.layout.adjust();
         profpenref.profstate.recentRevState = rrs = { 
             params: {},
@@ -722,7 +722,7 @@ app.profile = (function () {
         mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
         rrs.params.maxdate = maxdate.toISOString();
         rrs.params.mindate = mindate.toISOString();
-        rrs.params.penid = app.instId(profpenref.pen);
+        rrs.params.penid = jt.instId(profpenref.pen);
         findRecentReviews(rrs);
     },
 
@@ -771,7 +771,7 @@ app.profile = (function () {
         html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
             html += "<li>No top rated " + state.revtype + " reviews.";
-            if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+            if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 html += " " + app.review.reviewLinkHTML(); }
             html += "</li>"; }
         for(i = 0; i < revs.length; i += 1) {
@@ -783,7 +783,7 @@ app.profile = (function () {
                 html += "<li>Fetching review " + revs[i] + "...</li>";
                 break; } }
         html += "</ul>";
-        app.out('profcontdiv', html);
+        jt.out('profcontdiv', html);
         app.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
             app.lcs.getRevFull(revs[i], displayBest); }
@@ -850,7 +850,7 @@ app.profile = (function () {
                     " onclick=\"app.profile.searchAllRevs();return false;\"" +
                     " title=\"Continue searching for more matching reviews\"" +
                     ">continue search...</a>"; } }
-        app.out('allrevdispdiv', html);
+        jt.out('allrevdispdiv', html);
         setTimeout(function () {
             app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
@@ -859,7 +859,7 @@ app.profile = (function () {
     monitorAllRevQuery = function () {
         var state, srchin, qstr = "";
         state = profpenref.profstate;
-        srchin = app.byId('allrevsrchin');
+        srchin = jt.byId('allrevsrchin');
         if(!srchin) {  //probably switched tabs, quit
             return; }
         qstr = srchin.value;
@@ -891,8 +891,8 @@ app.profile = (function () {
                   " onchange=\"app.profile.allrevs();return false;\"" +
             "/></div>" +
             "<div id=\"allrevdispdiv\"></div>";
-        app.out('profcontdiv', html);
-        app.byId('allrevsrchin').focus();
+        jt.out('profcontdiv', html);
+        jt.byId('allrevsrchin').focus();
         if(state.revs.length > 0) {
             listAllRevs([]);  //display previous results
             monitorAllRevQuery(); }
@@ -911,25 +911,25 @@ app.profile = (function () {
                 clearAllRevProfWorkState(); } }
         else {
             revtype = state.revtype; }
-        qstr = app.byId('allrevsrchin').value;
+        qstr = jt.byId('allrevsrchin').value;
         if(qstr !== state.allRevsState.srchval) {
             state.allRevsState.srchval = qstr;
             clearAllRevProfWorkState(); }
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
         params = app.login.authparams() +
-            "&qstr=" + app.enc(app.canonize(qstr)) +
+            "&qstr=" + jt.enc(jt.canonize(qstr)) +
             "&revtype=" + revtype +
-            "&penid=" + app.instId(profpenref.pen) +
+            "&penid=" + jt.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + app.enc(state.allRevsState.cursor);
-        app.call('GET', "srchrevs?" + params, null,
+            "&cursor=" + jt.enc(state.allRevsState.cursor);
+        jt.call('GET', "srchrevs?" + params, null,
                  function (results) { 
                      app.lcs.putRevs(results);
                      listAllRevs(results);
                      monitorAllRevQuery(); },
                  app.failf(function (code, errtxt) {
-                     app.err("searchAllRevs call died code: " + code + " " +
+                     jt.err("searchAllRevs call died code: " + code + " " +
                              errtxt); }),
                  critsec);
     },
@@ -979,16 +979,16 @@ app.profile = (function () {
             profpenref.profstate.seltabname = tabname; }
         else {
             tabname = profpenref.profstate.seltabname; }
-        ul = app.byId('proftabsul');
+        ul = jt.byId('proftabsul');
         for(i = 0; i < ul.childNodes.length; i += 1) {
             li = ul.childNodes[i];
             li.className = "unselectedTab";
             li.style.backgroundColor = app.skinner.darkbg(); }
-        li = app.byId(tabname + "li");
+        li = jt.byId(tabname + "li");
         li.className = "selectedTab";
         li.style.backgroundColor = "transparent";
         app.history.checkpoint({ view: "profile", 
-                                 profid: app.instId(profpenref.pen),
+                                 profid: jt.instId(profpenref.pen),
                                  tab: tabname });
         refreshContentDisplay();
     },
@@ -1016,37 +1016,37 @@ app.profile = (function () {
                     "app.profile.tabselect('followers')") + 
           "</li>";
         html += "</ul>";
-        app.out('proftabsdiv', html);
+        jt.out('proftabsdiv', html);
         tabselect();
     },
 
 
     profileModAuthorized = function (pen) {
-        if(app.isId(pen.mid) || app.isId(pen.gsid) || app.isId(pen.fbid) || 
-           app.isId(pen.twid) || app.isId(pen.ghid)) {
+        if(jt.isId(pen.mid) || jt.isId(pen.gsid) || jt.isId(pen.fbid) || 
+           jt.isId(pen.twid) || jt.isId(pen.ghid)) {
             return true; }
         return false;
     },
 
 
     cancelProfileEdit = function (e) {
-        app.evtend(e);
+        jt.evtend(e);
         app.profile.updateHeading();
         app.profile.display();
     },
 
 
     profEditFail = function (code, errtxt) {
-        app.out('sysnotice', errtxt);
+        jt.out('sysnotice', errtxt);
     },
 
 
     saveEditedProfile = function (pen) {
         var elem;
-        elem = app.byId('profcityin');
+        elem = jt.byId('profcityin');
         if(elem) {
             pen.city = elem.value; }
-        elem = app.byId('shouttxt');
+        elem = jt.byId('shouttxt');
         if(elem) {
             pen.shoutout = elem.value; }
         app.pen.updatePen(pen, app.profile.display, profEditFail);
@@ -1054,22 +1054,22 @@ app.profile = (function () {
 
 
     onProfileSaveClick = function (e) {
-        app.evtend(e);
+        jt.evtend(e);
         app.profile.save();
     },
 
 
     displayProfEditButtons = function () {
         var html;
-        if(app.byId('profcancelb')) {
+        if(jt.byId('profcancelb')) {
             return; }  //already have buttons
         html = "&nbsp;" +
             "<button type=\"button\" id=\"profcancelb\">Cancel</button>" +
             "&nbsp;" +
             "<button type=\"button\" id=\"profsaveb\">Save</button>";
-        app.out('profeditbspan', html);
-        app.on('profcancelb', 'click', cancelProfileEdit);
-        app.on('profsaveb', 'click', onProfileSaveClick);
+        jt.out('profeditbspan', html);
+        jt.on('profcancelb', 'click', cancelProfileEdit);
+        jt.on('profsaveb', 'click', onProfileSaveClick);
     },
 
 
@@ -1086,17 +1086,17 @@ app.profile = (function () {
         shout.style.width = target + "px";
         //modify profcontdiv so it balances the text area size.  This is
         //needed so IE8 doesn't widen profpictd unnecessarily.
-        target += app.byId('profpictd').offsetWidth;
+        target += jt.byId('profpictd').offsetWidth;
         target += 50;  //arbitrary extra to cover padding
-        app.byId('profcontdiv').style.width = String(target) + "px";
+        jt.byId('profcontdiv').style.width = String(target) + "px";
     },
 
 
     editShout = function (pen) {
         var html, shout;
         html = "<textarea id=\"shouttxt\" class=\"shoutout\"></textarea>";
-        app.out('profshouttd', html);
-        shout = app.byId('shouttxt');
+        jt.out('profshouttd', html);
+        shout = jt.byId('shouttxt');
         styleShout(shout);
         shout.readOnly = false;
         shout.value = pen.shoutout;
@@ -1108,60 +1108,60 @@ app.profile = (function () {
     displayShout = function (pen) {
         var html, shout, text;
         text = "No additional information about " + pen.name;
-        if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
             text = "About me (anything you would like to say to everyone)." + 
                 " Link to your twitter handle, blog or site if you want."; }
         text = "<span style=\"color:" + greytxt + ";\">" + text + "</span>";
         html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
-        app.out('profshouttd', html);
-        shout = app.byId('shoutdiv');
+        jt.out('profshouttd', html);
+        shout = jt.byId('shoutdiv');
         styleShout(shout);
         shout.style.overflow = "auto";
         //the textarea has a default border, so adding an invisible
         //border here to keep things from jumping around.
         shout.style.border = "1px solid " + app.colors.bodybg;
-        text = app.linkify(pen.shoutout) || text;
-        app.out('shoutdiv', text);
+        text = jt.linkify(pen.shoutout) || text;
+        jt.out('shoutdiv', text);
         if(profileModAuthorized(pen)) {
-            app.on('shoutdiv', 'click', function (e) {
-                app.evtend(e);
+            jt.on('shoutdiv', 'click', function (e) {
+                jt.evtend(e);
                 editShout(pen); }); }
     },
 
 
 
     saveUnlessShoutEdit = function (e) {
-        app.evtend(e);
-        if(app.byId('shoutdiv')) {
+        jt.evtend(e);
+        if(jt.byId('shoutdiv')) {
             app.profile.save(); }
     },
 
 
     editCity = function () {
         var val, html, elem;
-        elem = app.byId('profcityin');
+        elem = jt.byId('profcityin');
         if(elem) {
             return; }  //already editing
-        val = app.byId('profcityspan').innerHTML;
+        val = jt.byId('profcityspan').innerHTML;
         //IE8 actually capitalizes the the HTML for you. Sheesh.
         if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
-            val = app.byId('profcitya').innerHTML; }
+            val = jt.byId('profcitya').innerHTML; }
         if(val === unspecifiedCityText) {
             val = ""; }
         html = "<input type=\"text\" id=\"profcityin\" size=\"25\"" +
                      " placeholder=\"City or Region\"" +
                      " value=\"" + val + "\"/>";
-        app.out('profcityspan', html);
+        jt.out('profcityspan', html);
         displayProfEditButtons();
-        app.on('profcityin', 'change', saveUnlessShoutEdit);
-        app.byId('profcityin').focus();
+        jt.on('profcityin', 'change', saveUnlessShoutEdit);
+        jt.byId('profcityin').focus();
     },
 
 
     displayCity = function (pen) {
         var html, style = "";
         if(!pen.city) { 
-            app.byId('profcityspan').style.color = greytxt; }
+            jt.byId('profcityspan').style.color = greytxt; }
         html = pen.city || unspecifiedCityText;            
         if(!pen.city) {
             style = " style=\"color:" + greytxt + ";\""; }
@@ -1170,18 +1170,18 @@ app.profile = (function () {
                      " id=\"profcitya\"" + 
                      " onclick=\"app.profile.editCity();return false;\"" +
                        style + ">" + html + "</a>"; }
-        app.out('profcityspan', html);
+        jt.out('profcityspan', html);
     },
 
 
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
         var odiv, html = "";
-        html += app.paramsToFormInputs(app.login.authparams());
+        html += jt.paramsToFormInputs(app.login.authparams());
         html += "<input type=\"hidden\" name=\"_id\" value=\"" + 
-            app.instId(pen) + "\"/>";
+            jt.instId(pen) + "\"/>";
         html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
-            app.enc(window.location.href + "#profile") + "\"/>";
+            jt.enc(window.location.href + "#profile") + "\"/>";
         html = "<form action=\"/profpicupload\"" +
                     " enctype=\"multipart/form-data\" method=\"post\">" +
             "<div id=\"closeline\">" +
@@ -1197,26 +1197,26 @@ app.profile = (function () {
               "<tr><td align=\"center\">" +
                     "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
             "</form>";
-        app.out('overlaydiv', html);
-        odiv = app.byId('overlaydiv');
+        jt.out('overlaydiv', html);
+        odiv = jt.byId('overlaydiv');
         odiv.style.top = "80px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
         app.onescapefunc = app.cancelOverlay;
-        app.byId('picfilein').focus();
+        jt.byId('picfilein').focus();
     },
 
 
     displayPic = function (pen) {
         var html = "img/emptyprofpic.png";
         if(pen.profpic) {
-            html = "profpic?profileid=" + app.instId(pen); }
+            html = "profpic?profileid=" + jt.instId(pen); }
         html = "<img class=\"profpic\" src=\"" + html + "\"/>";
-        app.out('profpictd', html);
+        jt.out('profpictd', html);
         if(profileModAuthorized(pen)) {
-            app.on('profpictd', 'click', function (e) {
-                app.evtend(e);
-                if(app.byId('profcancelb')) {  //save other field edits so
+            jt.on('profpictd', 'click', function (e) {
+                jt.evtend(e);
+                if(jt.byId('profcancelb')) {  //save other field edits so
                     saveEditedProfile(pen); }  //they aren't lost on reload
                 displayUploadPicForm(pen); }); }
     },
@@ -1300,7 +1300,7 @@ app.profile = (function () {
             dispen = homepen; }
         verifyStateVariableValues(dispen);  //sets profpenref
         app.history.checkpoint({ view: "profile", 
-                                 profid: app.instId(profpenref.pen),
+                                 profid: jt.instId(profpenref.pen),
                                  tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
@@ -1310,22 +1310,22 @@ app.profile = (function () {
         html = proftopdivHTML();
         if(!app.layout.haveContentDivAreas()) { //change pw kills it
             app.layout.initContentDivAreas(); }
-        app.out('cmain', html);
-        app.out('profbadgestd', earnedBadgesHTML(dispen));
-        if(app.instId(profpenref.pen) === app.pen.currPenId()) {
+        jt.out('cmain', html);
+        jt.out('profbadgestd', earnedBadgesHTML(dispen));
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
             html = "<a id=\"commbuild\" href=\"#invite\"" + 
                      " onclick=\"app.profile.invite();return false\">" +
                 "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
                     " border=\"0\">" +
                 "Build your community</a>";
-            app.out('profcommbuildtd', html); }
+            jt.out('profcommbuildtd', html); }
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
         displayTabs(profpenref);
         app.layout.adjust();
         if(errmsg) {
-            app.err("Previous processing failed: " + errmsg); }
+            jt.err("Previous processing failed: " + errmsg); }
     },
 
 
@@ -1404,7 +1404,7 @@ app.profile = (function () {
             if(profpenref.profstate.revtype !== revtype) {
                 searchAllRevs(revtype); } },
         penNameChange: function (event) {
-            app.evtend(event);
+            jt.evtend(event);
             setPenNameFromInput(); }
     };
 

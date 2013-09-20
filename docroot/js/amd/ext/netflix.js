@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -17,7 +17,7 @@ app.netflix = (function () {
         if(data && data.d && data.d.results && data.d.results.length > 0) {
             elem = data.d.results[0]; }
         if(!elem) {
-            app.err("Empty data returned from Netflix");
+            jt.err("Empty data returned from Netflix");
             return; }
         //Use the canonical URL as listed in the database.  The raw URL
         //set from the parameters has tracking IDs and other spurious info
@@ -59,19 +59,19 @@ app.netflix = (function () {
     //only needs to fill out additional info.
     fetchData = function (review, url, params) {
         var critsec = "", movieId = extractMovieId(url);
-        app.out('contentdiv', "Reading details from Netflix...");
+        jt.out('contentdiv', "Reading details from Netflix...");
         url = "http://odata.netflix.com/Catalog/Titles" + 
             "?$filter=NetflixApiId%20eq%20" + 
             "'http://api.netflix.com/catalog/titles/movies/" + movieId + "'" +
             "&$format=json";
-        url = "jsonget?geturl=" + app.enc(url);
-        app.call('GET', url, null,
+        url = "jsonget?geturl=" + jt.enc(url);
+        jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, json);
                      app.review.setAttribution(attribution);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     app.err("Netflix data retrieval failed code " +
+                     jt.err("Netflix data retrieval failed code " +
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);

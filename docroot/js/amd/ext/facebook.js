@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, FB: false */
+/*global alert: false, console: false, window: false, document: false, app: false, jt: false, FB: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -12,10 +12,10 @@ app.facebook = (function () {
     facebookWelcome = function (loginResponse) {
         var html = "<p>&nbsp;</p>" + 
             "<p>Facebook login success! Fetching your info...</p>";
-        app.out('contentdiv', html);
+        jt.out('contentdiv', html);
         FB.api('/me', function (infoResponse) {
             html = "<p>&nbsp;</p><p>Welcome " + infoResponse.name + "</p>";
-            app.out('contentdiv', html);
+            jt.out('contentdiv', html);
             app.login.setAuth("fbid", loginResponse.authResponse.accessToken,
                               infoResponse.id + " " + infoResponse.name);
             //The facebook name is NOT a good default pen name since it
@@ -45,7 +45,7 @@ app.facebook = (function () {
                      " onclick=\"" + cancelfstr + ";return false;\"" +
               ">Cancel</button></td>"; }
         html += "</tr></table>";
-        app.out(domid, html);
+        jt.out(domid, html);
         if(cancelfstr) {  //not already in a dialog...
             app.layout.adjust(); }
     },
@@ -80,7 +80,7 @@ app.facebook = (function () {
                       xfbml: true });
             nextfunc(); };
         //Load the FB SDK asynchronously if not already loaded
-        if(app.byId(id)) {
+        if(jt.byId(id)) {
             return; }
         js = document.createElement('script');
         js.id = id;
@@ -92,7 +92,7 @@ app.facebook = (function () {
             msgdivid = "contentdiv"; }
         if(msgdivid !== "quiet") {
             html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
-            app.out(msgdivid, html); }
+            jt.out(msgdivid, html); }
         app.layout.adjust();
     },
 
@@ -100,19 +100,19 @@ app.facebook = (function () {
     addProfileAuth3 = function (domid, pen, fbUserID) {
         var fbid;
         if(!fbUserID) {
-            app.err("No userID received from Facebook");
+            jt.err("No userID received from Facebook");
             return app.profile.displayAuthSettings(domid, pen); }
         fbid = parseInt(fbUserID, 10);
         if(!fbid || fbid <= 0) {
-            app.err("Invalid userID received from Facebook");
+            jt.err("Invalid userID received from Facebook");
             return app.profile.displayAuthSettings(domid, pen); }
-        app.out(domid, "Recording Facebook authorization...");
+        jt.out(domid, "Recording Facebook authorization...");
         pen.fbid = fbUserID;  //use string to avoid any potential rounding
         app.pen.updatePen(pen,
                           function (updpen) {
                               app.profile.displayAuthSettings(domid, updpen); },
                           function (code, errtxt) {
-                              app.err("facebook.addProfileAuth3 error " +
+                              jt.err("facebook.addProfileAuth3 error " +
                                       code + ": " + errtxt);
                               pen.fbid = 0;
                               app.profile.displayAuthSettings(domid, pen); });
@@ -159,17 +159,17 @@ app.facebook = (function () {
 
     authenticate = function () {
         try {
-            if(app.isDefined(FB)) {
+            if(FB) {
                 return checkFBLogin(); }
         } catch (e) {
-            app.log("facebook.js authenticate error: " + e);
+            jt.log("facebook.js authenticate error: " + e);
         }
         loadFacebook(checkFBLogin);
     },
 
 
     closeOverlay = function () {
-        var odiv = app.byId('overlaydiv');
+        var odiv = jt.byId('overlaydiv');
         odiv.innerHTML = "";
         odiv.style.visibility = "hidden";
     },
@@ -186,7 +186,7 @@ app.facebook = (function () {
             app.services.getRevTitleTxt(review);
         fblinkurl = app.services.getRevPermalink(review);
         fbremurl = "http://www.myopenreviews.com/#command=remember&penid=" + 
-            review.penid + "&revid=" + app.instId(review);
+            review.penid + "&revid=" + jt.instId(review);
         fbimage = app.services.getRevTypeImage(review);
         fbprompt = "Check this out if...";
         FB.ui({ method: 'feed',  //use the feed dialog...
@@ -200,10 +200,10 @@ app.facebook = (function () {
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {
-                      app.log("Review posted to Facebook");
+                      jt.log("Review posted to Facebook");
                       review.svcdata[svcName] = response.post_id; }
                   else {  //probably just canceled posting
-                      app.log("Posting to Facebook did not happen.");
+                      jt.log("Posting to Facebook did not happen.");
                       review.svcdata[svcName] = 'nopost'; } 
               });
     },
@@ -228,7 +228,7 @@ app.facebook = (function () {
                             loginResponse.authResponse.userID); }
             else {
                 tmprev = review;
-                odiv = app.byId('overlaydiv');
+                odiv = jt.byId('overlaydiv');
                 odiv.style.top = "80px";
                 odiv.style.visibility = "visible";
                 odiv.style.backgroundColor = app.skinner.lightbg();
@@ -243,7 +243,7 @@ app.facebook = (function () {
 
     getShareLinkURL = function (review) {
         var url = app.services.getRevPermalink(review);
-        url = "http://www.facebook.com/sharer/sharer.php?u=" + app.enc(url);
+        url = "http://www.facebook.com/sharer/sharer.php?u=" + jt.enc(url);
         return url;
     },
 

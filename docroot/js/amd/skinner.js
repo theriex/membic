@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false */
+/*global document: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -113,31 +113,31 @@ app.skinner = (function () {
     updateColors = function () {
         var rules, i, elem, val, tabs = [ "recentli", "bestli", "followingli", 
                                           "followersli", "searchli" ];
-        elem = app.byId('bodyid');
+        elem = jt.byId('bodyid');
         if(elem) {
             elem.style.color = app.colors.text;
             elem.style.backgroundColor = app.colors.bodybg; }
-        elem = app.byId('topsectiondiv');
+        elem = jt.byId('topsectiondiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground();
             val = "8px 8px 4px " + getDarkBackground();
             elem.style.boxShadow = val; }
-        elem = app.byId('shoutdiv');
+        elem = jt.byId('shoutdiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground(); }
         for(i = 0; i < tabs.length; i += 1) {
-            elem = app.byId(tabs[i]);
+            elem = jt.byId(tabs[i]);
             if(elem && elem.className === "unselectedTab") {
                 elem.style.backgroundColor = getDarkBackground(); } }
         rules = document.styleSheets[0].cssRules;
         for(i = 0; rules && i < rules.length; i += 1) {
-            if(app.prefixed(rules[i].cssText, "A:link")) {
+            if(jt.prefixed(rules[i].cssText, "A:link")) {
                 safeSetColorProp(rules[i], app.colors.link); }
-            else if(app.prefixed(rules[i].cssText, "A:visited")) {
+            else if(jt.prefixed(rules[i].cssText, "A:visited")) {
                 safeSetColorProp(rules[i], app.colors.link); }
-            else if(app.prefixed(rules[i].cssText, "A:active")) {
+            else if(jt.prefixed(rules[i].cssText, "A:active")) {
                 safeSetColorProp(rules[i], app.colors.link); }
-            else if(app.prefixed(rules[i].cssText, "A:hover")) {
+            else if(jt.prefixed(rules[i].cssText, "A:hover")) {
                 safeSetColorProp(rules[i], app.colors.hover); } }
     },
 
@@ -221,26 +221,26 @@ app.skinner = (function () {
                               "'" + cid + "');return false;\"/></td>" +
                 "</tr>"; }
         html += "</table>";
-        app.out('colorctrlsdiv', html);
+        jt.out('colorctrlsdiv', html);
     },
 
 
     toggleControls = function () {
         var txt, rules, html;
-        txt = app.byId('skinctrltoggle').innerHTML;
+        txt = jt.byId('skinctrltoggle').innerHTML;
         if(txt === "show color controls") {
             rules = document.styleSheets[0].cssRules;
             if(rules && rules[0].style.setProperty) {
-                app.byId('colorctrlsdiv').style.display = "block";
-                app.out('skinctrltoggle', "hide color controls");
-                html = app.byId('colorctrlsdiv').innerHTML;
+                jt.byId('colorctrlsdiv').style.display = "block";
+                jt.out('skinctrltoggle', "hide color controls");
+                html = jt.byId('colorctrlsdiv').innerHTML;
                 if(!html) {  //not initialized yet
                     createColorControls(); } }
             else {  //no support, display as disabled
-                app.byId('skinctrltoggle').style.color = "#666666"; } }
+                jt.byId('skinctrltoggle').style.color = "#666666"; } }
         else {
-            app.byId('colorctrlsdiv').style.display = "none";
-            app.out('skinctrltoggle', "show color controls"); }
+            jt.byId('colorctrlsdiv').style.display = "none";
+            jt.out('skinctrltoggle', "show color controls"); }
     },
 
 
@@ -248,17 +248,17 @@ app.skinner = (function () {
        var html, i, colorinput;
        app.colors = copycolors(colors);
        updateColors();
-       html = app.byId('colorctrlsdiv').innerHTML;
+       html = jt.byId('colorctrlsdiv').innerHTML;
        if(html) {  //color controls available
            for(i = 0; i < colorctrls.length; i += 1) {
-               colorinput = app.byId(colorctrls[i].id);
+               colorinput = jt.byId(colorctrls[i].id);
                if(colorinput) {
                    colorinput.value = app.colors[colorctrls[i].id]; } } }
    },
 
 
     setColorsFromPreset = function (pen) {
-        var i, sel = app.byId('presetsel');
+        var i, sel = jt.byId('presetsel');
         for(i = 0; i < sel.options.length; i += 1) {
             if(sel.options[i].selected) {
                 cancelpen = pen;
@@ -274,9 +274,9 @@ app.skinner = (function () {
         html = presetSelectorHTML(pen) + 
             //color controls are high overhead and initialized only when needed.
             "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
-        app.out(domid, html);
-        app.on('presetsel', 'change', function (e) {
-            app.evtend(e);
+        jt.out(domid, html);
+        jt.on('presetsel', 'change', function (e) {
+            jt.evtend(e);
             app.pen.getPen(setColorsFromPreset); });
     };
 
@@ -297,7 +297,7 @@ app.skinner = (function () {
         toggleControls: function () {
             toggleControls(); },
         onColorChange: function (cid) {
-            app.colors[cid] = app.byId(cid).value;
+            app.colors[cid] = jt.byId(cid).value;
             updateColors(); }
     };
 

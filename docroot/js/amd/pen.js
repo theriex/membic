@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, JSON: false, app: false */
+/*global JSON: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -36,11 +36,11 @@ app.pen = (function () {
                 obj = JSON.parse(text);
                 penName.revmem = obj;
             } catch (e) {
-                app.log("pen.deserializeFields " + penName.name + ": " + e);
+                jt.log("pen.deserializeFields " + penName.name + ": " + e);
                 penName.revmem = {};
             } }
         if(typeof penName.revmem !== 'object') {
-            app.log("Re-initializing penName revmem.  Deserialized value " +
+            jt.log("Re-initializing penName revmem.  Deserialized value " +
                     "was not an object: " + penName.revmem);
             penName.revmem = {}; }
         //reconstitute settings
@@ -52,11 +52,11 @@ app.pen = (function () {
                 obj = JSON.parse(text);
                 penName.settings = obj;
             } catch (e2) {
-                app.log("pen.deserializeFields " + penName.name + ": " + e2);
+                jt.log("pen.deserializeFields " + penName.name + ": " + e2);
                 penName.settings = {};
             } }
         if(typeof penName.settings !== 'object') {
-            app.log("Re-initializing penName settings.  Deserialized value " +
+            jt.log("Re-initializing penName settings.  Deserialized value " +
                     "was not an object: " + penName.settings);
             penName.settings = {}; }
         //reconstitute top20s
@@ -77,8 +77,8 @@ app.pen = (function () {
         var pen, params, critsec = "";
         pen = currpenref && currpenref.pen;
         if(pen) {
-            params = "penid=" + app.instId(pen);
-            app.call('GET', "penbyid?" + params, null,
+            params = "penid=" + jt.instId(pen);
+            jt.call('GET', "penbyid?" + params, null,
                      function (pens) {
                          if(pens.length > 0) {
                              currpenref.pen.name = pens[0].name;
@@ -91,7 +91,7 @@ app.pen = (function () {
                              currpenref.pen.followers = pens[0].followers;
                              app.profile.resetReviews(); } },
                      app.failf(function (code, errtxt) {
-                         app.log("refreshCurrentPenFields " + code + " " +
+                         jt.log("refreshCurrentPenFields " + code + " " +
                                  errtxt); }),
                      critsec); }
     },
@@ -109,8 +109,8 @@ app.pen = (function () {
     updatePenName = function (pen, callok, callfail) {
         var data, critsec = "";
         serializeFields(pen);
-        data = app.objdata(pen);
-        app.call('POST', "updpen?" + app.login.authparams(), data,
+        data = jt.objdata(pen);
+        jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
                      currpenref = app.lcs.putPen(updpens[0]);
                      callok(currpenref); },
@@ -123,16 +123,16 @@ app.pen = (function () {
 
     createPenName = function () {
         var buttonhtml, newpen, data, name, critsec = "";
-        name = app.byId('pnamein').value;
-        buttonhtml = app.byId('formbuttons').innerHTML;
-        app.out('formbuttons', "Creating Pen Name...");
+        name = jt.byId('pnamein').value;
+        buttonhtml = jt.byId('formbuttons').innerHTML;
+        jt.out('formbuttons', "Creating Pen Name...");
         newpen = {};
         newpen.name = name;
         if(currpenref && currpenref.settings) {
             newpen.settings = currpenref.settings;
             serializeFields(newpen); }
-        data = app.objdata(newpen);
-        app.call('POST', "newpen?" + app.login.authparams(), data,
+        data = jt.objdata(newpen);
+        jt.call('POST', "newpen?" + app.login.authparams(), data,
                  function (newpens) {
                      currpenref = app.lcs.putPen(newpens[0]);
                      if(!penNameRefs) {
@@ -141,14 +141,14 @@ app.pen = (function () {
                      app.rel.resetStateVars("new");  //updates header display
                      returnCall(); },
                  app.failf(function (code, errtxt) {
-                     app.out('penformstat', errtxt);
-                     app.out('formbuttons', buttonhtml); }),
+                     jt.out('penformstat', errtxt);
+                     jt.out('formbuttons', buttonhtml); }),
                  critsec);
     },
 
 
     onCreatePenRequest = function (e) {
-        app.evtend(e);
+        jt.evtend(e);
         createPenName();
     },
 
@@ -163,7 +163,7 @@ app.pen = (function () {
         var html, cancelbutton = "";
         returnFuncMemo = callback;
         app.login.updateAuthentDisplay("hide");
-        app.out('centerhdiv', "");
+        jt.out('centerhdiv', "");
         if(currpenref && currpenref.pen) {
             cancelbutton = "<button type=\"button\" id=\"cancelbutton\"" +
                                   " onclick=\"app.pen.cancelNewPen();" + 
@@ -195,11 +195,11 @@ app.pen = (function () {
             "</td>" +
           "</tr>" +
         "</table></div>";
-        app.out('contentdiv', html);
-        app.on('pnamein', 'change', onCreatePenRequest);
-        app.on('createbutton', 'click', onCreatePenRequest);
+        jt.out('contentdiv', html);
+        jt.on('pnamein', 'change', onCreatePenRequest);
+        jt.on('createbutton', 'click', onCreatePenRequest);
         app.layout.adjust();
-        app.byId('pnamein').focus();
+        jt.byId('pnamein').focus();
     },
 
 
@@ -252,10 +252,10 @@ app.pen = (function () {
         var url, critsec = "";
         if(penNameRefs) {
             chooseOrCreatePenName(callback); }
-        app.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
+        jt.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         app.layout.adjust();
         url = "mypens?" + app.login.authparams();
-        app.call('GET', url, null,
+        jt.call('GET', url, null,
                  function (pens) {
                      var i;
                      penNameRefs = [];
@@ -263,7 +263,7 @@ app.pen = (function () {
                          penNameRefs.push(app.lcs.putPen(pens[i])); }
                      chooseOrCreatePenName(callback); },
                  app.failf(function (code, errtxt) {
-                     app.out('contentdiv', "Pen name retrieval failed: " + 
+                     jt.out('contentdiv', "Pen name retrieval failed: " + 
                              code + " " + errtxt); }),
                  critsec);
     };
@@ -278,7 +278,7 @@ app.pen = (function () {
             getPenName(callback); },  //triggers setup processing.
         currPenId: function () {
             if(currpenref && currpenref.pen) {
-                return app.instId(currpenref.pen); }
+                return jt.instId(currpenref.pen); }
             return 0; },
         currPenRef: function () {
             return currpenref; },

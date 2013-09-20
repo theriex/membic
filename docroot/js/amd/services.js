@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, require: false */
+/*global setTimeout: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -76,7 +76,7 @@ app.services = (function () {
 
 
     toggleDescription = function (divid) {
-        var div = app.byId(divid);
+        var div = jt.byId(divid);
         if(div) {
             if(div.style.display === "none") {
                 div.style.display = "block"; }
@@ -88,7 +88,7 @@ app.services = (function () {
     changestate = function (name, pen) {
         var sel, conf, i;
         app.pen.deserializeFields(pen);
-        sel = app.byId(name + "sel");
+        sel = jt.byId(name + "sel");
         if(sel) {
             for(i = 0; !conf && i < pen.settings.consvcs.length; i += 1) {
                 if(pen.settings.consvcs[i].name === name) {
@@ -115,12 +115,12 @@ app.services = (function () {
             html += ">" + svcstates[i] + "</option>"; }
         html += "</select></td>" +
             "<td><a href=\"#" + svc.svcDispName + "\"" +
-                  " title=\"" + app.ellipsis(svc.svcDesc, 65) + "\"" +
+                  " title=\"" + jt.ellipsis(svc.svcDesc, 65) + "\"" +
                   " onclick=\"app.services.toggleDesc('svcdescdiv" +
                              svc.name + "');return false;\">" +
                     svc.svcDispName + "</a>" + 
               "<div id=\"svcdescdiv" + svc.name + "\"" +
-                  " style=\"display:none;\">" + app.linkify(svc.svcDesc) + 
+                  " style=\"display:none;\">" + jt.linkify(svc.svcDesc) + 
               "</div>" +
             "</td></tr>";
         return html;
@@ -136,7 +136,7 @@ app.services = (function () {
         else {
             html += "<tr><td>No posting services available</td></tr>"; }
         html += "</table>";
-        app.out(domid, html);
+        jt.out(domid, html);
     },
 
 
@@ -180,7 +180,7 @@ app.services = (function () {
                                     svc.getShareImageAlt(), 
                                     svc.getShareImageSrc()) + "</td>"; }
             html += "</tr></table>"; }
-        app.out(buttondiv, html);
+        jt.out(buttondiv, html);
     },
 
 
@@ -194,7 +194,7 @@ app.services = (function () {
                                "shareico",
                                svc.getShareImageAlt(),
                                svc.getShareImageSrc());
-        app.out(svc.name + "td", link);
+        jt.out(svc.name + "td", link);
     },
 
 
@@ -293,7 +293,7 @@ app.services = (function () {
             enablePostingService(svcname); },
         getRevPermalink: function (review) {
             return "http://www.myopenreviews.com/statrev/" + 
-                app.instId(review); },
+                jt.instId(review); },
         getPostServiceMsgDiv: function () {
             return svcmsgdiv; },
         serviceLinkHTML: function (url, clickstr, imgclass, alt, src) {

@@ -20,7 +20,7 @@ var build = (function () {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
                 throw err; }
-            text = text.slice(text.indexOf("modules = "))
+            text = text.slice(text.indexOf("modules = "));
             text = text.slice(text.indexOf("["));
             text = text.slice(1, text.indexOf("]"));
             modules = text.split(",");
@@ -37,7 +37,6 @@ var build = (function () {
     appendSourceFile = function (modefs, index, nextfunc) {
         if(index < modefs.length) {
             fs.readFile(modefs[index].filepath, readopt, function (err, text) {
-                var insidx;
                 if(err) {
                     throw err; }
                 fs.appendFile(outsrc, text, writeopt, function (err) {

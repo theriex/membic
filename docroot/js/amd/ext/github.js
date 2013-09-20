@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global alert: false, window: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -10,7 +10,7 @@ app.github = (function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = app.cookie("addAuthOutDiv");
+        var addAuthOutDiv = jt.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             return app.pen.getPen(function (pen) {
                 app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
@@ -20,12 +20,12 @@ app.github = (function () {
 
     recordGitHubAuthorization = function (token, json) {
         var prevLoginToken;
-        app.out('contentdiv', "Restoring session...");
+        jt.out('contentdiv', "Restoring session...");
         prevLoginToken = app.login.readAuthCookie();
         if(!prevLoginToken) {
-            app.log("no previous login found on return from GitHub");
+            jt.log("no previous login found on return from GitHub");
             return app.login.init(); }
-        app.out('contentdiv', "Recording GitHub authorization...");
+        jt.out('contentdiv', "Recording GitHub authorization...");
         //the last used pen name will be selected authomatically when
         //pen names are loaded
         app.pen.getPen(function (pen) {
@@ -34,7 +34,7 @@ app.github = (function () {
                               function (updpen) {
                                   backToParentDisplay(); },
                               function (code, errtxt) {
-                                  app.err("record GitHub auth error " + 
+                                  jt.err("record GitHub auth error " + 
                                           code + ": " + errtxt);
                                   pen.ghid = 0;
                                   backToParentDisplay(); }); });
@@ -42,7 +42,7 @@ app.github = (function () {
 
 
     handleGitHubLogin = function (token, json) {
-        app.out('contentdiv', "<p>Welcome " + json.login + "</p>");
+        jt.out('contentdiv', "<p>Welcome " + json.login + "</p>");
         app.login.setAuth("ghid", token, json.id + " " + json.login);
         //name is not necessarily cool or unique, so not using it as a
         //default pen name value.
@@ -52,18 +52,18 @@ app.github = (function () {
 
     convertToken = function (token) {
         var addAuthOutDiv, url, critsec = "";
-        addAuthOutDiv = app.cookie("addAuthOutDiv");
+        addAuthOutDiv = jt.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
-        url = app.enc(url);
+        url = jt.enc(url);
         url = "jsonget?geturl=" + url;
-        app.call('GET', url, null,
+        jt.call('GET', url, null,
                  function (json) {
                      if(addAuthOutDiv) {
                          recordGitHubAuthorization(token, json); }
                      else {
                          handleGitHubLogin(token, json); } },
                  app.failf(function (code, errtxt) {
-                     app.log("GitHub authent fetch details failed code " +
+                     jt.log("GitHub authent fetch details failed code " +
                              code + ": " + errtxt);
                      backToParentDisplay(); }),
                  critsec);
@@ -75,27 +75,27 @@ app.github = (function () {
     authenticate = function (params) {
         var url, state, critsec = "";
         if(params.code) {  //back from github
-            app.out("contentdiv", "Returned from GitHub...");
-            state = app.cookie("githubAuthState");
+            jt.out("contentdiv", "Returned from GitHub...");
+            state = jt.cookie("githubAuthState");
             if(state !== params.state) {
-                app.log("Bad state returned from GitHub. Sent " + state +
+                jt.log("Bad state returned from GitHub. Sent " + state +
                         " got back " + params.state);
                 backToParentDisplay(); }
             url = "githubtok?code=" + params.code + "&state=" + state;
-            app.call('GET', url, null,
+            jt.call('GET', url, null,
                      function (json) {
                          convertToken(json.access_token); },
                      app.failf(function (code, errtxt) {
-                         app.log("GitHub token retrieval failed code " + 
+                         jt.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
                      critsec); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);
-            app.cookie("githubAuthState", state, 2);
+            jt.cookie("githubAuthState", state, 2);
             url = "https://github.com/login/oauth/authorize" +
                 "?client_id=5ac4b34b8ae0c21465dc" +
-                "&redirect_uri=" + app.enc("http://www.myopenreviews.com/") +
+                "&redirect_uri=" + jt.enc("http://www.myopenreviews.com/") +
                 //no scope (public read-only access)
                 "&state=" + state;
             window.location.href = url; }
@@ -107,7 +107,7 @@ app.github = (function () {
             alert("GitHub authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
-        app.cookie("addAuthOutDiv", domid, 2);
+        jt.cookie("addAuthOutDiv", domid, 2);
         authenticate( {} );
     };
 

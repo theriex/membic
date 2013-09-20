@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global alert: false, setTimeout: false, document: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -64,10 +64,10 @@ app.rel = (function () {
             return app.rel.displayRelations(pen, direction, divid); }
         field = (direction === "outbound")? "originid" : "relatedid";
         params = app.login.authparams() + "&" + field + "=" +
-            app.instId(pen);
+            jt.instId(pen);
         if(cursor) {
             params += "&cursor=" + cursor; }
-        app.call('GET', "findrels?" + params, null,
+        jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, resultCursor;
                      for(i = 0; i < relationships.length; i += 1) {
@@ -84,8 +84,8 @@ app.rel = (function () {
                  app.failf(function (code, errtxt) {
                      var msg = "loadDisplayRels error code " + code + 
                          ": " + errtxt;
-                     app.log(msg);
-                     app.err(msg); }),
+                     jt.log(msg);
+                     jt.err(msg); }),
                  critsec);
     },
 
@@ -94,12 +94,12 @@ app.rel = (function () {
         var i, refarray, penid, html, srcpen;
         srcpen = app.pen.currPenRef().pen;
         refarray = getRelRefArray(srcpen, "outbound");
-        penid = app.instId(pen);
+        penid = jt.instId(pen);
         for(i = 0; refarray && i < refarray.length; i += 1) {
             if(refarray[i].rel.relatedid === penid) {
                 return ""; } }  //already following
         html = " <a href=\"#followback\" title=\"follow " + pen.name + "\"" +
-                  " onclick=\"app.rel.followBack(" + app.instId(pen) + ");" +
+                  " onclick=\"app.rel.followBack(" + jt.instId(pen) + ");" +
                              "return false;\"" +
                   " class=\"smalltext\"" +
             ">[follow back]</a>";
@@ -166,7 +166,7 @@ app.rel = (function () {
             else if(refarray.length === 0) {
                 if(direction === "outbound") {
                     html += "<li>Not following anyone.</li>";
-                    if(app.instId(pen) === app.pen.currPenId()) {  //own profile
+                    if(jt.instId(pen) === app.pen.currPenId()) {  //own profile
                         html += "<li>" + app.activity.searchPensLinkHTML() +
                             "</li>"; } }
                 else { //inbound
@@ -174,7 +174,7 @@ app.rel = (function () {
         else {  //dump an interim placeholder while retrieving rels
             html += "<li>fetching relationships...</li>"; }
         html += "</ul>";
-        app.out(divid, html);
+        jt.out(divid, html);
         if(!refarray) {  //rels not loaded yet, init and fetch.
             loadDisplayRels(pen, direction, divid); }
         else if(litemp === placeholder) {
@@ -184,14 +184,14 @@ app.rel = (function () {
 
 
     settingsDialogChangeFollowType = function () {
-        if(app.safeget('follow', 'checked')) {
-            app.out('fstatdescr', 
+        if(jt.safeget('follow', 'checked')) {
+            jt.out('fstatdescr', 
                     "Show new reviews under friend reviews"); }
-        else if(app.safeget('block', 'checked')) {
-            app.out('fstatdescr',
+        else if(jt.safeget('block', 'checked')) {
+            jt.out('fstatdescr',
                     "List as following, but do not show new reviews"); }
-        else if(app.safeget('nofollow', 'checked')) {
-            app.out('fstatdescr',
+        else if(jt.safeget('nofollow', 'checked')) {
+            jt.out('fstatdescr',
                     "Do not show new reviews, do not list as following"); }
     },
 
@@ -199,24 +199,24 @@ app.rel = (function () {
     setFormValuesFromRel = function (rel) {
         var mutes, i;
         if(rel.status === "blocked") {
-            app.byId('block').checked = true; }
+            jt.byId('block').checked = true; }
         else {
-            app.byId('follow').checked = true; }
+            jt.byId('follow').checked = true; }
         if(rel.mute) {
             mutes = rel.mute.split(',');
             for(i = 0; i < mutes.length; i += 1) {
-                app.byId(mutes[i]).checked = true; } }
+                jt.byId(mutes[i]).checked = true; } }
         settingsDialogChangeFollowType();
     },
 
 
     setRelFieldsFromFormValues = function (rel) {
         var checkboxes, i;
-        if(app.byId('follow').checked) {
+        if(jt.byId('follow').checked) {
             rel.status = "following"; }
-        else if(app.byId('block').checked) {
+        else if(jt.byId('block').checked) {
             rel.status = "blocked"; }
-        else if(app.byId('nofollow').checked) {
+        else if(jt.byId('nofollow').checked) {
             rel.status = "nofollow"; }
         rel.mute = "";
         checkboxes = document.getElementsByName("mtype");
@@ -229,11 +229,11 @@ app.rel = (function () {
 
 
     removeOutboundRel = function (rel) {
-        var penref, i, relid = app.instId(rel);
+        var penref, i, relid = jt.instId(rel);
         penref = app.pen.currPenRef();
         if(penref.outrels) {
             for(i = 0; i < penref.outrels.length; i += 1) {
-                if(app.instId(penref.outrels[i].rel) === relid) {
+                if(jt.instId(penref.outrels[i].rel) === relid) {
                     break; } }
             if(i < penref.outrels.length) { //found it
                 penref.outrels.splice(i, 1); } }
@@ -242,9 +242,9 @@ app.rel = (function () {
 
 
     updateRelationship = function (rel) {
-        var critsec = "", data = app.objdata(rel);
+        var critsec = "", data = jt.objdata(rel);
         if(rel.status === "nofollow") {  //delete
-            app.call('POST', "delrel?" + app.login.authparams(), data,
+            jt.call('POST', "delrel?" + app.login.authparams(), data,
                      function (updates) {
                          var orgpen = updates[0],  //originator pen
                              relpen = updates[1];  //related pen
@@ -253,20 +253,20 @@ app.rel = (function () {
                          removeOutboundRel(rel);   //relationship
                          app.layout.closeDialog();
                          app.activity.reset();
-                         app.profile.byprofid(app.instId(updates[1])); },
+                         app.profile.byprofid(jt.instId(updates[1])); },
                      app.failf(function (code, errtxt) {
-                         app.err("Relationship deletion failed code " + code +
+                         jt.err("Relationship deletion failed code " + code +
                                  ": " + errtxt); }),
                      critsec); }
         else { //update
-            app.call('POST', "updrel?" + app.login.authparams(), data,
+            jt.call('POST', "updrel?" + app.login.authparams(), data,
                      function (updates) {
                          app.lcs.putRel(updates[0]);
                          app.layout.closeDialog();
                          app.activity.reset();
                          app.profile.byprofid(updates[0].relatedid); },
                      app.failf(function (code, errtxt) {
-                         app.err("Relationship update failed code " + code +
+                         jt.err("Relationship update failed code " + code +
                                  ": " + errtxt); }),
                      critsec); }
     },
@@ -290,11 +290,11 @@ app.rel = (function () {
           "<tr>" +
             "<td>" +
               "<b>Status</b> " + 
-              app.radiobutton("fstat", "follow", "", false, "app.rel.fchg") + 
+              jt.radiobutton("fstat", "follow", "", false, "app.rel.fchg") + 
                 "&nbsp;" +
-              app.radiobutton("fstat", "block", "", false, "app.rel.fchg") + 
+              jt.radiobutton("fstat", "block", "", false, "app.rel.fchg") + 
                 "&nbsp;" +
-              app.radiobutton("fstat", "nofollow", "Stop Following",
+              jt.radiobutton("fstat", "nofollow", "Stop Following",
                               false, "app.rel.fchg") +
             "</td>" +
           "</tr>" +
@@ -313,14 +313,14 @@ app.rel = (function () {
             "</td>" +
           "</tr>" +
         "</table>";
-        app.out('dlgdiv', html);
+        jt.out('dlgdiv', html);
         setFormValuesFromRel(rel);
-        app.on('savebutton', 'click', function (e) {
-            app.evtend(e);
-            app.out('settingsbuttons', "Saving...");
+        jt.on('savebutton', 'click', function (e) {
+            jt.evtend(e);
+            jt.out('settingsbuttons', "Saving...");
             setRelFieldsFromFormValues(rel);
             updateRelationship(rel); });
-        app.byId('dlgdiv').style.visibility = "visible";
+        jt.byId('dlgdiv').style.visibility = "visible";
         app.onescapefunc = app.layout.closeDialog;
     },
 
@@ -353,21 +353,21 @@ app.rel = (function () {
 
     createOrEditRelationship = function (originator, related) {
         var rel, newrel, data, critsec = "";
-        rel = findOutboundRelationship(app.instId(related));
+        rel = findOutboundRelationship(jt.instId(related));
         if(rel) {
             displayRelationshipDialog(rel, related); }
         else if(loadoutcursor) {
             alert("Still loading relationships, try again in a few seconds"); }
         else {
             newrel = {};
-            newrel.originid = app.instId(originator);
-            newrel.relatedid = app.instId(related);
-            app.assert(newrel.originid && newrel.relatedid);
+            newrel.originid = jt.instId(originator);
+            newrel.relatedid = jt.instId(related);
+            jt.assert(newrel.originid && newrel.relatedid);
             newrel.status = "following";
             newrel.mute = "";
             newrel.cutoff = 0;
-            data = app.objdata(newrel);
-            app.call('POST', "newrel?" + app.login.authparams(), data,
+            data = jt.objdata(newrel);
+            jt.call('POST', "newrel?" + app.login.authparams(), data,
                      function (newrels) {
                          var orgpen = newrels[0],  //originator pen
                              relpen = newrels[1];  //related pen
@@ -381,7 +381,7 @@ app.rel = (function () {
                          displayRelationshipDialog(newrels[2], newrels[1], 
                                                    true); },
                      app.failf(function (code, errtxt) {
-                         app.err("Relationship creation failed code " + code +
+                         jt.err("Relationship creation failed code " + code +
                                  ": " + errtxt); }),
                      critsec); }
     },
@@ -391,7 +391,7 @@ app.rel = (function () {
         app.pen.getPen(function (homepen) {
             app.lcs.getPenFull(followerid, function (penref) {
                 createOrEditRelationship(homepen, penref.pen,
-                                         app.instId(homepen)); }); });
+                                         jt.instId(homepen)); }); });
     },
 
 
@@ -411,10 +411,10 @@ app.rel = (function () {
     loadOutboundRelationships = function () {
         var pen, params, critsec = "";
         pen = app.pen.currPenRef().pen;
-        params = app.login.authparams() + "&originid=" + app.instId(pen);
+        params = app.login.authparams() + "&originid=" + jt.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
-            params += "&cursor=" + app.enc(loadoutcursor); }
-        app.call('GET', "findrels?" + params, null,
+            params += "&cursor=" + jt.enc(loadoutcursor); }
+        jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, relref;
                      loadoutcursor = "";
@@ -431,7 +431,7 @@ app.rel = (function () {
                      else {
                          relationshipsLoadFinished(pen); } },
                  app.failf(function (code, errtxt) {
-                     app.log("loadOutboundRelationships errcode " + code +
+                     jt.log("loadOutboundRelationships errcode " + code +
                              ": " + errtxt);
                      alert("Sorry. Data error. Please reload the page"); }),
                  critsec);

@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, unescape: false */
+/*global app: false, jt: false, unescape: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -77,7 +77,7 @@ app.readurl = (function () {
                 idx = content.indexOf("<");
                 content = content.slice(0, idx); }
             } catch (problem) {
-                app.log("readurl.js " + url + " findTagContents: " + problem);
+                jt.log("readurl.js " + url + " findTagContents: " + problem);
             }
         return content;
     },
@@ -251,14 +251,14 @@ app.readurl = (function () {
 
     fetchData = function (review, url, params) {
         var geturl, critsec = "";
-        app.out('contentdiv', "Reading details from " + url + " ...");
-        geturl = "urlcontents?url=" + app.enc(url);
-        app.call('GET', geturl, null,
+        jt.out('contentdiv', "Reading details from " + url + " ...");
+        geturl = "urlcontents?url=" + jt.enc(url);
+        jt.call('GET', geturl, null,
                  function (json) {
-                     setReviewFields(review, app.dec(json[0].content), url);
+                     setReviewFields(review, jt.dec(json[0].content), url);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     app.err("General URL retrieval failed code " + 
+                     jt.err("General URL retrieval failed code " + 
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);

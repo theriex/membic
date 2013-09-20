@@ -1,4 +1,4 @@
-/*global define: false, alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false */
+/*global alert: false, window: false, app: false, jt: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -12,7 +12,7 @@ app.googleplus = (function () {
 
 
     backToParentDisplay = function () {
-        var addAuthOutDiv = app.cookie("addAuthOutDiv");
+        var addAuthOutDiv = jt.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             return app.pen.getPen(function (pen) {
                 app.profile.displayAuthSettings(addAuthOutDiv, pen); }); }
@@ -22,12 +22,12 @@ app.googleplus = (function () {
 
     recordGoogleAuthorization = function (gsid) {
         var prevLoginToken;
-        app.out('contentdiv', "Restoring session...");
+        jt.out('contentdiv', "Restoring session...");
         prevLoginToken = app.login.readAuthCookie();
         if(!prevLoginToken) {
-            app.log("no previous login found on return from Google");
+            jt.log("no previous login found on return from Google");
             return app.login.init(); }
-        app.out('contentdiv', "Recording Google authorization...");
+        jt.out('contentdiv', "Recording Google authorization...");
         //the latest used pen name will be selected automatically when
         //pen names are loaded
         app.pen.getPen(function (pen) {
@@ -36,7 +36,7 @@ app.googleplus = (function () {
                               function (updpen) {
                                   backToParentDisplay(); },
                               function (code, errtxt) {
-                                  app.err("record Google auth error " +
+                                  jt.err("record Google auth error " +
                                           code + ": " + errtxt);
                                   pen.gsid = "0";
                                   backToParentDisplay(); }); });
@@ -46,19 +46,19 @@ app.googleplus = (function () {
     validateAuthentication = function (json, token) {
         var addAuthOutDiv, url, critsec = "";
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
-            app.log("The received token was not intended for this app");
+            jt.log("The received token was not intended for this app");
             return backToParentDisplay(); }
-        addAuthOutDiv = app.cookie("addAuthOutDiv");
+        addAuthOutDiv = jt.cookie("addAuthOutDiv");
         if(addAuthOutDiv) {
             recordGoogleAuthorization(json.user_id); }
         else {
             url = "https://www.googleapis.com/oauth2/v1/userinfo" + 
                 "?access_token=" + token;
-            url = app.enc(url);
+            url = jt.enc(url);
             url = "jsonget?geturl=" + url;
-            app.call('GET', url, null,
+            jt.call('GET', url, null,
                      function (json) {
-                         app.out('contentdiv', 
+                         jt.out('contentdiv', 
                                  "<p>Welcome " + json.name + "</p>");
                          app.login.setAuth("gsid", token, 
                                            json.id + " " + json.name);
@@ -67,7 +67,7 @@ app.googleplus = (function () {
                          //defaulting it.
                          app.login.authComplete(); },
                      app.failf(function (code, errtxt) {
-                         app.log("Google authent fetch details failed code " +
+                         jt.log("Google authent fetch details failed code " +
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
                      critsec); }
@@ -82,16 +82,16 @@ app.googleplus = (function () {
     authenticate = function (params) {
         var url, scope, critsec = "";
         if(params.access_token) {  //back from google
-            app.out("contentdiv", "Returned from Google...");
+            jt.out("contentdiv", "Returned from Google...");
             url = "https://www.googleapis.com/oauth2/v1/tokeninfo" +
                 "?access_token=" + params.access_token;
-            url = app.enc(url);
+            url = jt.enc(url);
             url = "jsonget?geturl=" + url;
-            app.call('GET', url, null,
+            jt.call('GET', url, null,
                      function (json) {
                          validateAuthentication(json, params.access_token); },
                      app.failf(function (code, errtxt) {
-                         app.log("Google token retrieval failed code " + 
+                         jt.log("Google token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
                      critsec); }
@@ -100,8 +100,8 @@ app.googleplus = (function () {
             url = "https://accounts.google.com/o/oauth2/auth" +
                 "?response_type=token" +
                 "&client_id=1009259210423.apps.googleusercontent.com" +
-                "&redirect_uri=" + app.enc("http://www.myopenreviews.com/") +
-                "&scope=" + app.enc(scope) +
+                "&redirect_uri=" + jt.enc("http://www.myopenreviews.com/") +
+                "&scope=" + jt.enc(scope) +
                 "&state=AltAuth2";
             window.location.href = url; }
     },
@@ -115,14 +115,14 @@ app.googleplus = (function () {
             alert("Google+ authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
-        app.cookie("addAuthOutDiv", domid, 2);
+        jt.cookie("addAuthOutDiv", domid, 2);
         authenticate( {} );
     },
 
 
     getShareLinkURL = function (review) {
-        var url = "http://www.myopenreviews.com/statrev/" + app.instId(review);
-        url = "https://plus.google.com/share?url=" + app.enc(url);
+        var url = "http://www.myopenreviews.com/statrev/" + jt.instId(review);
+        url = "https://plus.google.com/share?url=" + jt.enc(url);
         return url;
     },
 
@@ -148,7 +148,7 @@ app.googleplus = (function () {
         addProfileAuth: function (domid, pen) {
             addProfileAuth(domid, pen); },
         doInitialSetup: function () {
-            app.log("google+ service initial setup done"); },
+            jt.log("google+ service initial setup done"); },
         getLinkURL: function (review) {
             return getShareLinkURL(review); },
         getOnClickStr: function () {

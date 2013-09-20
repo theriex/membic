@@ -2,7 +2,8 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-var app = {};  //Global container for application level funcs and values
+var app = {},  //Global container for application level funcs and values
+    jt = {};   //Global access to general utility methods
 
 ////////////////////////////////////////
 // g l o
@@ -28,21 +29,21 @@ var app = {};  //Global container for application level funcs and values
 
 
     ////////////////////////////////////////
-    // general utility functions
+    // application level functions
     ////////////////////////////////////////
 
     //app global key handling
     app.globkey = function (e) {
         if(e && e.keyCode === 27) {  //ESC
             if(app.onescapefunc) {
-                app.evtend(e);
+                jt.evtend(e);
                 app.onescapefunc(); } }
     };
 
 
     app.cancelOverlay = function () {
-        app.out('overlaydiv', "");
-        app.byId('overlaydiv').style.visibility = "hidden";
+        jt.out('overlaydiv', "");
+        jt.byId('overlaydiv').style.visibility = "hidden";
         app.onescapefunc = null;
     };
 
@@ -52,12 +53,12 @@ var app = {};  //Global container for application level funcs and values
         state = {};
         if(history && history.state) {
             state = history.state; }
-        href = app.secsvr + "#returnto=" + app.enc(app.mainsvr) + 
+        href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
-        href += "&" + app.objdata(params);
-        app.out('contentfill', "Redirecting to secure server...");
+        href += "&" + jt.objdata(params);
+        jt.out('contentfill', "Redirecting to secure server...");
         window.location.href = href;
     };
 
@@ -68,8 +69,8 @@ var app = {};  //Global container for application level funcs and values
            href.indexOf("authtoken=") < 0 &&
            href.indexOf("at=") < 0 &&
            href.indexOf("AltAuth") < 0 &&
-           (!app.cookie(app.authcookname))) {
-            app.redirectToSecureServer(app.parseParams());
+           (!jt.cookie(app.authcookname))) {
+            app.redirectToSecureServer(jt.parseParams());
             return true; }
     };
 
@@ -77,14 +78,14 @@ var app = {};  //Global container for application level funcs and values
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
         var cdiv;
-        app.amdtimer.app.end = new Date();
-        cdiv = app.byId('contentdiv');
-        app.out('contentfill', " &nbsp; ");
+        app.amdtimer.load.end = new Date();
+        cdiv = jt.byId('contentdiv');
+        jt.out('contentfill', " &nbsp; ");
         if(!app.introtext) {  //capture original so we can revert as needed
             app.introtext = cdiv.innerHTML; }
         app.layout.init();
-        app.on(document, 'keypress', app.globkey);
-        app.on(window, 'popstate', app.history.pop);
+        jt.on(document, 'keypress', app.globkey);
+        jt.on(window, 'popstate', app.history.pop);
         app.login.init();
     };
 
@@ -103,11 +104,11 @@ var app = {};  //Global container for application level funcs and values
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
-        jtminjsDecorateWithUtilities(app);
-        app.out('contentfill', "loading modules...");
+        jtminjsDecorateWithUtilities(jt);
+        jt.out('contentfill', "loading modules...");
         app.amdtimer = {};
-        app.amdtimer.app = { start: new Date() };
-        app.loadAppModules(app, modules, href, app.init2);
+        app.amdtimer.load = { start: new Date() };
+        jt.loadAppModules(app, modules, href, app.init2);
     };
 
 
@@ -127,15 +128,15 @@ var app = {};  //Global container for application level funcs and values
         "<li>code: " + code +
         "</ul></div>" +
         errtxt;
-        app.out('contentdiv', html);
+        jt.out('contentdiv', html);
     };
 
 
     app.failf = function (failfunc) {
         if(!failfunc) {
             failfunc = function (code, errtxt, method, url, data) {
-                app.log(app.safestr(code) + " " + method + " " + url + 
-                        " " + data + " " + errtxt); }; }
+                jt.log(jt.safestr(code) + " " + method + " " + url + 
+                       " " + data + " " + errtxt); }; }
         return function (code, errtxt, method, url, data) {
             switch(code) {
             //   400 (bad request) -> general error handling
@@ -143,7 +144,7 @@ var app = {};  //Global container for application level funcs and values
             //then it's most likely because their session has expired
             //or they logged out and are trying to resubmit an old
             //form.  The appropriate thing is to redo the login.
-            case 401: return app.login.logout();
+            case 401: return jt.login.logout();
             //   404 (not found) -> general error handling
             //   405 (GET instead of POST) -> general error handling
             //   412 (precondition failed) -> general error handling
@@ -152,9 +153,13 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
+    ////////////////////////////////////////
+    // supplemental utility funtions
+    ////////////////////////////////////////
+
     //factored method to create an image link.  Some older browsers put
     //borders around these...
-    app.imglink = function (href, title, funcstr, imgfile, cssclass) {
+    jt.imglink = function (href, title, funcstr, imgfile, cssclass) {
         var html;
         if(!cssclass) {
             cssclass = "navico"; }
@@ -170,7 +175,7 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
-    app.imgntxt = function (imgfile, text, funcstr, href, 
+    jt.imgntxt = function (imgfile, text, funcstr, href, 
                             title, cssclass, idbase) {
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
         if(!cssclass) {
@@ -201,7 +206,7 @@ var app = {};  //Global container for application level funcs and values
     };
 
 
-    app.checkrad = function (type, name, value, label, checked, chgfstr) {
+    jt.checkrad = function (type, name, value, label, checked, chgfstr) {
         var html;
         if(!label) {
             label = value.capitalize(); }
@@ -220,13 +225,13 @@ var app = {};  //Global container for application level funcs and values
 
 
     //factored method to create a checkbox with a label.
-    app.checkbox = function (name, value, label) {
-        return app.checkrad("checkbox", name, value, label);
+    jt.checkbox = function (name, value, label) {
+        return jt.checkrad("checkbox", name, value, label);
     };
 
 
-    app.radiobutton = function (name, value, label, checked, chgfstr) {
-        return app.checkrad("radio", name, value, label, checked, chgfstr);
+    jt.radiobutton = function (name, value, label, checked, chgfstr) {
+        return jt.checkrad("radio", name, value, label, checked, chgfstr);
     };
 
 
@@ -235,16 +240,16 @@ var app = {};  //Global container for application level funcs and values
     //handle an ID value in the server side Python JSON serialization.
     //This utility method encapsulates the access, and provides a
     //single point of adjustment if the server side logic changes.
-    app.instId = function (obj) {
+    jt.instId = function (obj) {
         var idfield = "_id";
         if(obj && obj.hasOwnProperty(idfield)) {
             return obj[idfield]; }
     };
-    app.setInstId = function (obj, idval) {
+    jt.setInstId = function (obj, idval) {
         var idfield = "_id";
         obj[idfield] = idval;
     };
-    app.isId = function (idval) {
+    jt.isId = function (idval) {
         if(idval && typeof idval === 'string' && idval !== "0") {
             return true; }
         return false;
@@ -253,7 +258,7 @@ var app = {};  //Global container for application level funcs and values
 
     //Some things don't work in older browsers and need code workarounds
     //to degrade gracefully.  Like the background texture.
-    app.isLowFuncBrowser = function () {
+    jt.isLowFuncBrowser = function () {
         var nav;
         if(navigator) {
             nav = navigator;
