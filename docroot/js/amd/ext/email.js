@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . e m a i l
-//
-define([], function () {
+app.email = (function () {
     "use strict";
 
     var svcName = "email",  //no spaces in name, used as an id
@@ -60,5 +57,5 @@ define([], function () {
             return iconurl; }
     };
 
-});
+}());
 

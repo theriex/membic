@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . r e v i e w
-//
-define([], function () {
+app.review = (function () {
     "use strict";
 
     var //If a url was pasted or passed in as a parameter, then potentially
@@ -363,15 +360,14 @@ define([], function () {
 
     getURLReader = function (url, callfunc) {
         if(url.indexOf(".amazon.") > 0) {
-            require([ "ext/amazon" ], callfunc); }
-        //The API calls die all the time, so going with standard tags
-        //else if(url.indexOf(".youtube.") > 0) {
-        //    require([ "ext/youtube" ], callfunc); }
-        //netflix odata catalog retired 08apr, all calls return 404
-        //else if(url.indexOf(".netflix.") > 0) {
-        //    require([ "ext/netflix" ], callfunc); }
+            callfunc(app.amazon); }
+        //app.youtube dies all the time due to the number of API calls
+        //being exhausted, and the standard reader does just as well 
+        //with the tags so not using it anymore
+        //app.netflix became nonfunctional when netflix retired the
+        //odata catalog on 08apr14. Can't do much with a 404.
         else {
-            require([ "ext/readurl" ], callfunc); }
+            callfunc(app.readurl); }
     },
 
 
@@ -1966,6 +1962,6 @@ define([], function () {
             ratingMenuSelect(rating); }
     };
 
-});
+}());
 
 

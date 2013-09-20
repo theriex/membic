@@ -6,7 +6,7 @@
 // history utility methods
 //
 
-define([], function () {
+app.history = (function () {
     "use strict";
 
     ////////////////////////////////////////
@@ -105,5 +105,6 @@ return {
 
 
     }; //end of returned functions
-});
+
+}());
 

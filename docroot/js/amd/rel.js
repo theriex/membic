@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . r e l
-//
-define([], function () {
+app.rel = (function () {
     "use strict";
 
     var loadoutcursor,
@@ -478,5 +475,5 @@ define([], function () {
             return asyncLoadStarted && !loadoutcursor; }
     };
 
-});
+}());
 

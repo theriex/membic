@@ -11,7 +11,7 @@ var build = (function () {
         writeopt = { encoding: 'utf8' },
         buildroot = "",
         docroot = "",
-        outsrc = "amd-source.js",
+        outsrc = "module-source.js",
         outcomp = "/js/compiled.js",
 
 
@@ -20,20 +20,15 @@ var build = (function () {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
                 throw err; }
-            text = text.slice(text.indexOf("app.init1 = function"));
-            text = text.slice(text.indexOf("require(app.cdnconf,"));
+            text = text.slice(text.indexOf("modules = "))
             text = text.slice(text.indexOf("["));
             text = text.slice(1, text.indexOf("]"));
             modules = text.split(",");
             for(i = 0; i < modules.length; i += 1) {
                 modfile = modules[i].trim();
                 modfile = modfile.slice(1, modfile.length - 1);
-                if(modfile.indexOf("amd/") === 0) {
-                    fpath = docroot + "/js/" + modfile + ".js";
-                    modefs.push({ filepath: fpath, module: modfile }); }
-                else if(modfile.indexOf("ext/") === 0) {
-                    fpath = docroot + "/js/amd/" + modfile + ".js";
-                    modefs.push({ filepath: fpath, module: modfile }); } }
+                fpath = docroot + "/" + modfile + ".js";
+                modefs.push({ filepath: fpath, module: modfile }); }
             nextfunc(modefs);
         });
     },
@@ -45,10 +40,6 @@ var build = (function () {
                 var insidx;
                 if(err) {
                     throw err; }
-                insidx = text.indexOf("define(") + "define(".length;
-                text = text.slice(0, insidx) + 
-                    "\"" + modefs[index].module + "\", " +
-                    text.slice(insidx);
                 fs.appendFile(outsrc, text, writeopt, function (err) {
                     if(err) {
                         throw err; }

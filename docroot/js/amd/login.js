@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . l o g i n
-//
-define([], function () {
+app.login = (function () {
     "use strict";
 
     var authmethod = "",
@@ -711,12 +708,8 @@ define([], function () {
 
     logLoadTimes = function () {
         var millis, timer = app.amdtimer;
-        millis = timer.dojo.end.getTime() - timer.dojo.start.getTime();
-        app.log("load dojo: " + millis);
         millis = timer.app.end.getTime() - timer.app.start.getTime();
         app.log("load app: " + millis);
-        millis = timer.ext.end.getTime() - timer.ext.start.getTime();
-        app.log("load ext: " + millis);
     },
 
 
@@ -782,26 +775,13 @@ define([], function () {
 
     return {
         init: function () {
-            app.out('contentfill', "loading login extensions...");
             if(!loginhtml) {  //save original html in case needed later
                 loginhtml = app.byId('logindiv').innerHTML; }
-            app.amdtimer.ext = { start: new Date() };
-            require([ "ext/facebook", "ext/twitter", "ext/googleplus", 
-                      "ext/github" ],
-                    function (facebook, twitter, googleplus,
-                              github) {
-                        app.amdtimer.ext.end = new Date();
-                        app.out('contentfill', " &nbsp; ");
-                        logLoadTimes();
-                        if(!app.facebook) { app.facebook = facebook; }
-                        if(!app.twitter) { app.twitter = twitter; }
-                        if(!app.googleplus) { app.googleplus = googleplus; }
-                        if(!app.github) { app.github = github; }
-                        //do not change this ordering. Some auths need to
-                        //know their index param values.
-                        altauths = [ facebook, twitter, googleplus,
-                                     github ];
-                        handleRedirectOrStartWork(); }); },
+            logLoadTimes();
+            //do not change this ordering. Some auths leverage their index
+            altauths = [ app.facebook, app.twitter, app.googleplus, 
+                         app.github ];
+            handleRedirectOrStartWork(); },
         clearinit: function () {
             app.out('centerhdiv', "");
             app.out('logindiv', "");
@@ -833,5 +813,5 @@ define([], function () {
             return loginInfoHTML(pen); }
     };
 
-});
+}());
 

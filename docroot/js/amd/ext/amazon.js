@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . a m a z o n
-//
-define([], function () {
+app.amazon = (function () {
     "use strict";
 
     var svcName = "Amazon",    //ascii with no spaces, used as an id
@@ -142,5 +139,5 @@ define([], function () {
             fetchData(review, url, params); }
     };
 
-});
+}());
 

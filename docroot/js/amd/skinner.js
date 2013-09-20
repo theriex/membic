@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . s k i n n e r 
-//
-define([], function () {
+app.skinner = (function () {
     "use strict";
 
     var oldcolors,
@@ -304,5 +301,5 @@ define([], function () {
             updateColors(); }
     };
 
-});
+}());
 

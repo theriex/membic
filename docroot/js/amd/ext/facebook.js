@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . f a c e b o o k
-//
-define([], function () {
+app.facebook = (function () {
     "use strict";
 
     var svcName = "Facebook",  //no spaces in name, used as an id
@@ -314,5 +311,5 @@ define([], function () {
             postRevBailout(tmprev); }
     };
 
-});
+}());
 

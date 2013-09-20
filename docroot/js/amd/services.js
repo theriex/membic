@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . s e r v i c e s 
-//
-define([], function () {
+app.services = (function () {
     "use strict";
 
     var connServices,
@@ -267,17 +264,9 @@ define([], function () {
     verifyConnectionServices = function (pen, callback) {
         if(connServices) {
             return mergeConnectionServices(pen, callback); }
-        require([ "ext/facebook", "ext/twitter", "ext/googleplus",
-                  "ext/email" ],
-                function (facebook, twitter, googleplus, 
-                          email) {
-                    if(!app.facebook) { app.facebook = facebook; }
-                    if(!app.twitter) { app.twitter = twitter; }
-                    if(!app.googleplus) { app.googleplus = googleplus; }
-                    if(!app.email) { app.email = email; }
-                    connServices = [ facebook, twitter, googleplus,
-                                     email ];
-                    mergeConnectionServices(pen, callback); });
+        connServices = [ app.facebook, app.twitter, app.googleplus, 
+                         app.email ];
+        mergeConnectionServices(pen, callback);
     };
 
 
@@ -311,5 +300,5 @@ define([], function () {
             return serviceLinkHTML(url, clickstr, imgclass, alt, src); }
     };
 
-});
+}());
 

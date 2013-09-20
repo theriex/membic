@@ -2,5 +2,5 @@
 .DS_Store
 *.pyc
 docroot/downloads
-src/build/amd-source.js
+src/build/module-source.js
 src/build/compiler-latest

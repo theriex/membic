@@ -14,7 +14,6 @@ var app = {};  //Global container for application level funcs and values
     // app variables
     ////////////////////////////////////////
 
-    app.dojo = null;  //library modules holder
     app.colors = { bodybg: "#fffff6",
                    text: "#111111",
                    link: "#3150b2",
@@ -76,81 +75,39 @@ var app = {};  //Global container for application level funcs and values
 
 
     //secondary initialization load since single monolithic is dog slow
-    app.init2 = function (layout, login, review, profile, 
-                         activity, pen, rel, skinner,
-                         services, lcs, history, basicmod) {
-        var cdiv = app.byId('contentdiv');
+    app.init2 = function () {
+        var cdiv;
+        app.amdtimer.app.end = new Date();
+        cdiv = app.byId('contentdiv');
+        app.out('contentfill', " &nbsp; ");
         if(!app.introtext) {  //capture original so we can revert as needed
             app.introtext = cdiv.innerHTML; }
-        //app module references
-        app.layout = layout;
-        app.login = login;
-        app.review = review;
-        app.profile = profile;
-        app.activity = activity;
-        app.pen = pen;
-        app.rel = rel;
-        app.skinner = skinner;
-        app.services = services;
-        app.lcs = lcs;
-        app.history = history;
-        //app startup
         app.layout.init();
         app.on(document, 'keypress', app.globkey);
         app.on(window, 'popstate', app.history.pop);
         app.login.init();
-        //app.skinner.init();
-        app.basicmod = basicmod;
-    };
-
-
-    //faulting in the ext login modules here saves total load time
-    app.init1 = function (dom, json, on, request, 
-                          query, cookie, domgeo) {
-        app.dojo = { dom: dom, json: json, on: on, request: request,
-                     query: query, cookie: cookie, domgeo: domgeo };
-        if(app.redirectIfNeeded()) {
-            return; }  //avoid app continue while redirect kicks in
-        app.out('contentfill', "loading MyOpenReviews...");
-        app.amdtimer.app = { start: new Date() };
-        require(app.cdnconf,
-                [ "amd/layout", "amd/login", "amd/review", "amd/profile",
-                  "amd/activity", "amd/pen", "amd/rel", "amd/skinner",
-                  "amd/services", "amd/lcs", "amd/history", "amd/basicmod", 
-                  "ext/facebook", "ext/twitter", "ext/googleplus", 
-                  "ext/github",
-                  "dojo/domReady!" ],
-                function (layout, login, review, profile, 
-                          activity, pen, rel, skinner,
-                          services, lcs, history, basicmod) {
-                    app.amdtimer.app.end = new Date();
-                    app.out('contentfill', " &nbsp; ");
-                    app.init2(layout, login, review, profile, 
-                              activity, pen, rel, skinner,
-                              services, lcs, history, basicmod); }
-               );
     };
 
 
     app.init = function () {
-        var href = window.location.href;
+        var href = window.location.href,
+            modules = [ "js/amd/layout", "js/amd/login", "js/amd/review", 
+                        "js/amd/profile", "js/amd/activity", "js/amd/pen", 
+                        "js/amd/rel", "js/amd/skinner", "js/amd/services", 
+                        "js/amd/lcs", "js/amd/history", 
+                        "js/amd/ext/facebook", "js/amd/ext/twitter", 
+                        "js/amd/ext/googleplus", "js/amd/ext/github" ];
         if(href.indexOf("http://www.wdydfun.com") >= 0) {
             app.mainsvr = "http://www.wdydfun.com"; }
+        if(href.indexOf("#") > 0) {
+            href = href.slice(0, href.indexOf("#")); }
+        if(href.indexOf("?") > 0) {
+            href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(app);
+        app.out('contentfill', "loading modules...");
         app.amdtimer = {};
-        app.amdtimer.dojo = { start: new Date() };
-        app.out('contentfill', "loading libraries...");
-        require(app.cdnconf,
-                [ "dojo/dom", "dojo/json", "dojo/on", "dojo/request",
-                  "dojo/query", "dojo/cookie", "dojo/dom-geometry", 
-                  "dojo/domReady!" ],
-                function (dom, json, on, request, 
-                          query, cookie, domgeo) {
-                    app.amdtimer.dojo.end = new Date();
-                    app.out('contentfill', " &nbsp; ");
-                    app.init1(dom, json, on, request, 
-                              query, cookie, domgeo); }
-               );
+        app.amdtimer.app = { start: new Date() };
+        app.loadAppModules(app, modules, href, app.init2);
     };
 
 

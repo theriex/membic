@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . t w i t t e r
-//
-define([], function () {
+app.twitter = (function () {
     "use strict";
 
     var svcName = "Twitter",  //no spaces in name, used as an id
@@ -187,5 +184,5 @@ define([], function () {
             return app.twitter.iconurl; }
     };
 
-});
+}());
 

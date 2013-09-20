@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . n e t f l i x
-//
-define([], function () {
+app.netflix = (function () {
     "use strict";
 
     var svcName = "Netflix",    //ascii with no spaces, used as an id
@@ -87,5 +84,5 @@ define([], function () {
             fetchData(review, url, params); }
     };
 
-});
+}());
 

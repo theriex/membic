@@ -2,9 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . p r o f i l e
-//
+//////////////////////////////////////////////////////////////////////
 // Display a pen name and provide for updating settings.  Cached data
 // off the currently displayed pen name reference:
 //
@@ -26,7 +24,7 @@
 //       total: count of records searched so far
 //
 
-define([], function () {
+app.profile = (function () {
     "use strict";
 
     var greytxt = "#999999",
@@ -316,29 +314,13 @@ define([], function () {
             case "mid": 
                 addMyOpenReviewsAuth(domid, pen); break;
             case "fbid": 
-                require([ "ext/facebook" ],
-                        function (facebook) {
-                            if(!app.facebook) { app.facebook = facebook; }
-                            facebook.addProfileAuth(domid, pen); });
-                break;
+                app.facebook.addProfileAuth(domid, pen); break;
             case "twid":
-                require([ "ext/twitter" ],
-                        function (twitter) {
-                            if(!app.twitter) { app.twitter = twitter; }
-                            twitter.addProfileAuth(domid, pen); });
-                break;
+                app.twitter.addProfileAuth(domid, pen); break;
             case "gsid":
-                require([ "ext/googleplus" ],
-                        function (googleplus) {
-                            if(!app.googleplus) { app.googleplus = googleplus; }
-                            googleplus.addProfileAuth(domid, pen); });
-                break;
+                app.googleplus.addProfileAuth(domid, pen); break;
             case "ghid":
-                require([ "ext/github" ],
-                        function (github) {
-                            if(!app.github) { app.github = github; }
-                            github.addProfileAuth(domid, pen); });
-                break;
+                app.github.addProfileAuth(domid, pen); break;
             } }
     },
 
@@ -1426,5 +1408,5 @@ define([], function () {
             setPenNameFromInput(); }
     };
 
-});
+}());
 

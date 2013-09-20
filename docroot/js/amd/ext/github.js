@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . g i t h u b
-//
-define([], function () {
+app.github = (function () {
     "use strict";
 
     var svcName = "GitHub",
@@ -125,5 +122,5 @@ define([], function () {
             addProfileAuth(domid, pen); }
     };
 
-});
+}());
 

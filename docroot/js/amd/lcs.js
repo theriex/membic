@@ -2,9 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . l c s
-//
+//////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, and reviews.
 // Objects are indexed by the string value of the Id to avoid any
 // potential object attribute/array index confusion.  The top level
@@ -39,7 +37,7 @@
 //     inrels: array of inbound RelRefs
 //
 
-define([], function () {
+app.lcs = (function () {
     "use strict";
 
     var pens = {},
@@ -358,7 +356,7 @@ define([], function () {
             checkAllCorresponding(review); }
     };
 
-});
+}());
 
 
 

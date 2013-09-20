@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . l a y o u t
-//
-define([], function () {
+app.layout = (function () {
     "use strict";
 
     var slides = [ "promo_cycle.png",
@@ -336,5 +333,5 @@ define([], function () {
             dndDrop(event); }
     };
 
-});
+}());
 

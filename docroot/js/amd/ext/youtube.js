@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . y o u t u b e
-//
-define([], function () {
+app.youtube = (function () {
     "use strict";
 
     var svcName = "YouTube",    //ascii with no spaces, used as an id
@@ -80,6 +77,6 @@ define([], function () {
             fetchData(review, url, params); }
     };
 
-});
+}());
 
 

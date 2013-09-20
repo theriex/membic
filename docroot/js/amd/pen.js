@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . p e n
-//
-define([], function () {
+app.pen = (function () {
     "use strict";
 
     var penNameRefs,  //array of authorized PenRefs
@@ -301,6 +298,6 @@ define([], function () {
             cancelNewPen(); }
     };
 
-});
+}());
 
 

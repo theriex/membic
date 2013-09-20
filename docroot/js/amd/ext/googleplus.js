@@ -2,10 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . g o o g l e p l u s
-//
-define([], function () {
+app.googleplus = (function () {
     "use strict";
 
     var svcName = "GooglePlus",   //ascii with no spaces, used as an id
@@ -162,5 +159,5 @@ define([], function () {
             return svcIconURL; }
     };
 
-});
+}());
 

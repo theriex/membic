@@ -1,4 +1,4 @@
-/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false */
+/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false, setTimeout: false */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -614,6 +614,54 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         return pos;
     };
 
+
+    ////////////////////////////////////////
+    // dynamic script loader
+    ////////////////////////////////////////
+
+    uo.loadAppModules = function (app, modulenames, path, callback) {
+        var i, url, modname, js;
+        if (path.lastIndexOf(".") > path.lastIndexOf("/")) {
+            path = path.slice(0, path.lastIndexOf("/"));
+        }
+        if (path.charAt(path.length - 1) !== '/') {
+            path += "/";
+        }
+        for (i = 0; i < modulenames.length; i += 1) {
+            url = path + modulenames[i] + ".js";
+            modname = modulenames[i];
+            if (modname.indexOf("/") >= 0) {
+                modname = modname.slice(modname.lastIndexOf("/") + 1);
+                modulenames[i] = modname;
+            }
+            if (!app[modname]) {
+                js = document.createElement('script');
+                js.async = true;
+                js.src = url;
+                document.body.appendChild(js);
+            }
+        }
+        uo.waitForModules(app, modulenames, callback);
+    };
+
+
+    uo.waitForModules = function (app, modulenames, callback) {
+        var i, modname, loaded = true, temp = document.body;
+        for (i = 0; i < modulenames.length; i += 1) {
+            modname = modulenames[i];
+            if (!app[modname]) {
+                loaded = false;
+                break;
+            }
+        }
+        if (!loaded) {
+            setTimeout(function () {
+                uo.waitForModules(app, modulenames, callback);
+            }, 100);
+        } else {
+            callback();
+        }
+    };
 
 };
 

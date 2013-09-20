@@ -3,15 +3,14 @@
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
 
+//////////////////////////////////////////////////////////////////////
 //This is a catchall reader that does the best it can to fill out some
 //of the review fields using information generally available from any
 //url.  If there are standards for declaring media that are in general
 //use, this is the place to support them.  Anything specific to a URL
 //belongs in a separate reader.
-////////////////////////////////////////
-// m o r . r e a d u r l
-//
-define([], function () {
+
+app.readurl = (function () {
     "use strict";
 
     var svcName = "URLReader",  //ascii with no spaces, used as an id
@@ -272,5 +271,5 @@ define([], function () {
             fetchData(review, url, params); }
     };
 
-});
+}());
 

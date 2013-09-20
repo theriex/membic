@@ -2,9 +2,7 @@
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
-////////////////////////////////////////
-// m o r . a c t i v i t y
-//
+//////////////////////////////////////////////////////////////////////
 // Display of recent reviews from friends, remembered reviews, and
 // searching for pen names to follow.  Cached data off the current pen:
 //
@@ -21,7 +19,7 @@
 //     reqs: count of times the search was manually requested
 //
 
-define([], function () {
+app.activity = (function () {
     "use strict";
 
     var pensearchmax = 1000,  //max records to read through automatically
@@ -707,5 +705,5 @@ define([], function () {
             app.pen.currPenRef().actdisp = null; }
     };
 
-});
+}());
 
