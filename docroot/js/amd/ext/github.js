@@ -94,8 +94,8 @@ app.github = (function () {
             state = "AltAuth3" + Math.random().toString(36).slice(2);
             jt.cookie("githubAuthState", state, 2);
             url = "https://github.com/login/oauth/authorize" +
-                "?client_id=5ac4b34b8ae0c21465dc" +
-                "&redirect_uri=" + jt.enc("http://www.myopenreviews.com/") +
+                "?client_id=be02d0691db630ee69c7" +
+                "&redirect_uri=" + jt.enc("http://www.wdydfun.com/") +
                 //no scope (public read-only access)
                 "&state=" + state;
             window.location.href = url; }
