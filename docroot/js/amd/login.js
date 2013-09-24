@@ -200,8 +200,8 @@ app.login = (function () {
     emailStatementsRow = function () {
         var html = "<tr>" + 
             "<td colspan=\"3\" align=\"center\">" +
-              "<p>MyOpenReviews will not share your email address. </p>" +
-              "<p>MyOpenReviews will respect your inbox. </p>" +
+              "<p>wdydfun will not share your email address. </p>" +
+              "<p>wdydfun will respect your inbox. </p>" +
             "</td>" +
           "</tr>";
         return html;
@@ -325,7 +325,7 @@ app.login = (function () {
                 ">Account settings</a>"; }
         else {
             html += "<a class=\"greytxt\" id=\"accset\"" +
-                      " onclick=\"alert('Sign out and login via MyOpenReviews" +
+                      " onclick=\"alert('Sign out and login via wdydfun" +
                                       " to access your account settings');" +
                                  "return false;\"" +
                 ">Account settings</a>"; }
@@ -365,7 +365,7 @@ app.login = (function () {
                 "</div>";
             jt.out('topworkdiv', html);
             if(!jt.byId('logoimg')) {
-                jt.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
+                jt.out('logodiv', "<img src=\"img/wdydfun.png\"" +
                         " id=\"logoimg\" border=\"0\"/>"); }
             jt.byId('logoimg').style.width = "260px";
             jt.byId('logoimg').style.height = "120px";
@@ -731,7 +731,7 @@ app.login = (function () {
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
         else if(typeof params.mid === "string") {  //empty string on failure
-            app.profile.addMyOpenReviewsAuthId(params.mid); }
+            app.profile.addMORAuthId(params.mid); }
         else {  //pass parameters along to the general processing next step
             doneWorkingWithAccount(params); }
     },

@@ -52,7 +52,7 @@ app.services = (function () {
 
     getRevTypeImage = function (review) {
         var type = app.review.getReviewTypeByValue(review.revtype);
-        return "http://www.myopenreviews.com/img/" + type.img;
+        return "http://www.wdydfun.com/img/" + type.img;
     },
 
 
@@ -292,7 +292,7 @@ app.services = (function () {
         enable: function (svcname) {
             enablePostingService(svcname); },
         getRevPermalink: function (review) {
-            return "http://www.myopenreviews.com/statrev/" + 
+            return "http://www.wdydfun.com/statrev/" + 
                 jt.instId(review); },
         getPostServiceMsgDiv: function () {
             return svcmsgdiv; },

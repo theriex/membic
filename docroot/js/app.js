@@ -1,4 +1,4 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, FB: false, navigator: false, require: false, jtminjsDecorateWithUtilities: false */
+/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, FB: false, navigator: false, require: false, jtminjsDecorateWithUtilities: false */
 
 /*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -24,7 +24,7 @@ var app = {},  //Global container for application level funcs and values
     app.introtext = "";
     app.authcookname = "myopenreviewauth";
     app.secsvr = "https://myopenreviews.appspot.com";
-    app.mainsvr = "http://www.myopenreviews.com";
+    app.mainsvr = "http://www.wdydfun.com";
     app.onescapefunc = null;  //app global escape key handler
 
 
@@ -97,9 +97,13 @@ var app = {},  //Global container for application level funcs and values
                         "js/amd/rel", "js/amd/skinner", "js/amd/services", 
                         "js/amd/lcs", "js/amd/history", 
                         "js/amd/ext/facebook", "js/amd/ext/twitter", 
-                        "js/amd/ext/googleplus", "js/amd/ext/github" ];
+                        "js/amd/ext/googleplus", "js/amd/ext/github",
+                        "js/amd/ext/amazon", "js/amd/ext/email",
+                        "js/amd/ext/readurl" ];
         if(href.indexOf("http://www.wdydfun.com") >= 0) {
             app.mainsvr = "http://www.wdydfun.com"; }
+        if(href.indexOf("http://www.myopenreviews.com") >= 0) {
+            app.mainsvr = "http://www.myopenreviews.com"; }
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {

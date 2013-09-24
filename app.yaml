@@ -25,9 +25,9 @@ handlers:
 ######################################################################
 
 ######################################################################
-##        MyOpenReviews native site authentication 
+##        Native site authentication 
 
-## Get an access token from native MyOpenReviews credentials
+## Get an access token from native credentials
 ## POST params: user, pass 
 - url: /login.*
   script: src.py.moracct.app
@@ -37,7 +37,7 @@ handlers:
 - url: /redirlogin.*
   script: src.py.moracct.app
 
-## Create a new native account on MyOpenReviews
+## Create a new native account
 ## POST params: user, pass, email
 - url: /newacct.*
   script: src.py.moracct.app

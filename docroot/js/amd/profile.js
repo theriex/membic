@@ -179,7 +179,7 @@ app.profile = (function () {
 
     nameForAuthType = function (authtype) {
         switch(authtype) {
-        case "mid": return "MyOpenReviews";
+        case "mid": return "wdydfun";
         case "gsid": return "Google+";
         case "fbid": return "Facebook";
         case "twid": return "Twitter";
@@ -193,7 +193,7 @@ app.profile = (function () {
             "</div>" +
             "Access \"" + pen.name + "\" via: " +
             "<table>";
-        //MyOpenReviews
+        //wdydfun
         atname = nameForAuthType("mid");
         html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
             " value=\"" + atname + "\" id=\"aamid\"" +
@@ -245,7 +245,7 @@ app.profile = (function () {
     },
 
 
-    addMyOpenReviewsAuth = function (domid, pen) {
+    addMORAuth = function (domid, pen) {
         var html = "<form action=\"" + app.secsvr + "/loginid\"" +
                         " enctype=\"multipart/form-data\" method=\"post\">" +
         "<table>" +
@@ -312,7 +312,7 @@ app.profile = (function () {
         else if(action === "add") {
             switch(authtype) {
             case "mid": 
-                addMyOpenReviewsAuth(domid, pen); break;
+                addMORAuth(domid, pen); break;
             case "fbid": 
                 app.facebook.addProfileAuth(domid, pen); break;
             case "twid":
@@ -413,7 +413,7 @@ app.profile = (function () {
     },
 
 
-    addMyOpenReviewsAuthId = function (pen, mid) {
+    addMORAuthId = function (pen, mid) {
         var previd;
         if(!mid) {
             jt.err("No account ID received.");
@@ -425,7 +425,7 @@ app.profile = (function () {
                               function (updpen) {
                                   changeSettings(updpen); },
                               function (code, errtxt) {
-                                  jt.err("addMyOpenReviewsAuthId error " +
+                                  jt.err("addMORAuthId error " +
                                           code + ": " + errtxt);
                                   pen.mid = previd;
                                   app.profile.display(); }); }
@@ -437,7 +437,7 @@ app.profile = (function () {
         mepen = app.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
-            "I'm using MyOpenReviews for things I experience. " + 
+            "I'm using wdydfun for things I experience. " + 
             "I trust your taste, and would be interested in reading reviews " + 
             "from you";
         revchecks = document.getElementsByName("invrevcb");
@@ -1381,9 +1381,9 @@ app.profile = (function () {
                 handleAuthChangeToggle(pen, authtype, domid); }); },
         displayAuthSettings: function (domid, pen) {
             displayAuthSettings(domid, pen); },
-        addMyOpenReviewsAuthId: function(mid) {
+        addMORAuthId: function(mid) {
             app.pen.getPen(function (pen) {
-                addMyOpenReviewsAuthId(pen, mid); }); },
+                addMORAuthId(pen, mid); }); },
         writeNavDisplay: function (homepen, dispen, directive) {
             writeNavDisplay(homepen, dispen, directive); },
         verifyStateVariableValues: function (pen) {

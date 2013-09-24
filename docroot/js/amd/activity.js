@@ -633,6 +633,8 @@ app.activity = (function () {
         else if(retry) {
             jt.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
             setTimeout(bootActivityDisplay, 100); }
+        else {  //finished loading and content, but display could be slow
+            setTimeout(app.layout.adjust, 100); }
     },
 
 

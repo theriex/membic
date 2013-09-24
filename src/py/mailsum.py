@@ -48,7 +48,7 @@ def write_summary_email_body(pen, reviews, tstr, prs):
             ("reviews" if len(reviews) > 1 else "review") + "."
     body += "  For more details" +\
             " (or to change your summary email preferences)" +\
-            " go to http://www.myopenreviews.com \n\n"
+            " go to http://www.wdydfun.com \n\n"
     for review in reviews:
         body += str(review.penname) + " reviewed a " +\
             str(review.rating / 20) + " star " + review.revtype + ": " +\
@@ -56,14 +56,14 @@ def write_summary_email_body(pen, reviews, tstr, prs):
             "\n" +\
             safestr(review.keywords) + " | " + safestr(review.text) +\
             "\n" +\
-            "http://www.myopenreviews.com/statrev/" + str(review.key().id()) +\
+            "http://www.wdydfun.com/statrev/" + str(review.key().id()) +\
             "\n\n"
     return body
 
 
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
-    subj = "Your MyOpenReviews " + freq + " activity since " + tstr
+    subj = "Your wdydfun " + freq + " activity since " + tstr
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
     accs = MORAccount.gql(where, freq, thresh)
     for acc in accs:
@@ -83,7 +83,7 @@ def mail_summaries(freq, thresh, request, response):
                     content = write_summary_email_body(pen, reviews, tstr, prs)
                     if not request.url.startswith('http://localhost'):
                         mail.send_mail(
-                            sender="MyOpenReviews support <theriex@gmail.com>",
+                            sender="wdydfun support <theriex@gmail.com>",
                             to=acc.email,
                             subject=subj,
                             body=content)

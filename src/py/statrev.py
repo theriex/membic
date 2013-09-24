@@ -347,10 +347,10 @@ def revhtml(rev, pen):
     # watch the height on this next div, overflow causes major ad placement skew
     html += "<div id=\"topsectiondiv\" style=\"height:130px;\">\n"
     html += "  <div id=\"logodiv\" style=\"width:260px;\">\n"
-    html += "    <img src=\"../img/slides/logoMOR.png\" id=\"logoimg\"\n"
+    html += "    <img src=\"../img/wdydfun.png\" id=\"logoimg\"\n"
     html += "         border=\"0\"\n"
     html += "         onclick=\"app.profile.display();return false;\"\n"
-    html += "         style=\"width:260px;height:120px;\"/>\n"
+    html += "         style=\"width:243px;height:120px;\"/>\n"
     html += "  </div>\n"
     html += "  <div id=\"topworkdiv\">\n"
     html += "    <div id=\"slidesdiv\" style=\"height:120px;\">\n"

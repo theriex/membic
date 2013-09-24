@@ -868,13 +868,6 @@ app.review = (function () {
     },
 
 
-    //ATTENTION: Once review responses are available, there needs to
-    //be a way to view those responses as a list so you can see what
-    //other people thought of the same thing or what kind of an impact
-    //you are having.  This is a good way to find other pen names to
-    //follow, and a response review is how you communicate about
-    //things on MyOpenReviews.  "Like", "+1" and general chatter
-    //is best handled via integration with general social networks.
     reviewFormButtonsHTML = function (pen, review, type, keyval, mode) {
         var staticurl, html;
         //user just chose type for editing

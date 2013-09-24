@@ -1,28 +1,26 @@
 myopenreviews
 =============
 
-Welcome to the sourcebase for http://www.myopenreviews.com.  The site
-is written in JavaScript, and the REST API is implemented in Python.
-The site is hosted on Google App Engine.
+MyOpenReviews is a platform for social review sharing.  The goal is to
+enable sharing of detailed impressions withough requiring a dossier of
+personal details.  The source is provided so you can see how things
+work, help make things work better, and see how to use the API to
+build applications.
+
+The main web app is http://www.wdydfun.com (what did you do fun) which
+is a single page javascript application.  There is also some separate
+applescript for interfacing directly with iTunes.  The REST API is
+implemented in Python and hosted on Google App Engine.
 
 
 Getting involved:
 ----------------
 
-All comments, questions, suggestions, requests are welcome.  This is a
-community site that wants your input, whether you have any technical
-experience or not.
+All comments, questions, suggestions, requests are welcome.  The goal
+is to make this a community site that wants your input, whether you
+are coming from a technical background or not.
 
-* If you have testing, graphics, UX, legal, marketing or other skills,
-feel free to get involved however you think is best.  Get in touch if
-you have any questions.
-
-* If you have programming skills, feel free to review code, fix anything
-broken, address any of the areas marked "ATTENTION", write a connector
-(see below) or whatever you think is best.  Get in touch if you have
-any questions.
-
-![alt text](https://myopenreviews.appspot.com/img/remo.png "Thanks for being part of the MyOpenReviews community!")
+Currently the best way to get involved is to contact theriex over at gmail.
 
 
 Code organization:
@@ -35,32 +33,32 @@ corresponding `.py` file in `src/py`.  The js flow starts from
 GIMP workfiles for images are in `src/imgsrc`, `docroot/docs` is for
 supporting static HTML for the site. 
 
-For local development download the Google App Engine SDK.  Under the
-"Extra Flags" setting for the app, include `--high_replication` for
-the relationship updates to work.
+For local development, download the Google App Engine SDK.
 
 
 Using the API:
 -------------
 
-Feel free to call the REST API directly from whatever cool interface
-you are working on (whether it is part of MyOpenReviews or not), but
-PLEASE DO NOT BATCH REQUESTS!  This is a fledgling site and after
-writing about a 1000 reviews the whole site will run out of resources
-for the day.  Once normal interactive site use starts approaching half
-the current limit, that's the time to open the pipes.  In the meantime
-please help to conserve resources by pulling only what you need, and
-caching locally whenever possible.
+Feel free to call the REST API directly, but PLEASE DO NOT BATCH
+REQUESTS!  This is a fledgling site and after writing about a 1000
+reviews the whole site will run out of resources for the day.  Once
+normal interactive site use starts approaching half the current limit,
+that's the time to open the pipes.  In the meantime please help to
+conserve resources by pulling only what you need, and caching locally
+whenever possible.
+
+The API consists of HTTP GET/POST calls that generally return JSON.
+Available endpoints are defined and documented in `app.yaml`.
 
 
 Connectors:
 ----------
 
-MyOpenReviews exists as a convenient supplemental interface between
-your content sites and your social sites.  To work smoothly, it makes
+MyOpenReviews exists as a supplemental interface between
+content sites and social sites.  To work smoothly, it makes
 use of APIs for *inbound* and *outbound* connectors.  The connectors
 are organized by API provider in `docroot/js/amd/ext`.  New and
-improved connectors are always welcome.  This site can never be too
+improved connectors are always welcome.  This project can never be too
 connected or too smooth.  To build a new connector, it's easiest to
 model an existing one.
 
@@ -76,12 +74,11 @@ to where the content can be found, and post back review information if
 that's reasonable.  For an outbound connection, send only compatible,
 desirable, and expected content.
 
-Big bonus points for respecting the MyOpenReviews users and making
-their lives as easy as possible. 
+Respect users and make their lives better.
 
 MyOpenReviews does not provide media for review, nor does it support
-general social conversation, so any API calls relating to either of those
-actions cannot be utilized.
+general social conversation, so it can't integrate with external APIs
+expecting those kinds of interactions.
 
 
 Applications:
@@ -91,13 +88,7 @@ The MyOpenReviews REST API is available for use by applications as
 described above.  Please identify your app in the HTTP headers when
 calling the API.  
 
-Get in touch if you want MyOpenReviews to have a link to your app.
+Get in touch if you want MyOpenReviews to have a link to your app or
+have other integration ideas.
 
-
-Other sites:
------------
-
-MyOpenReviews is not the single solution for every person's every
-need, and moving smoothly between communities is good for everyone, so
-get in touch.
 

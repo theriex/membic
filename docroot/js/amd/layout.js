@@ -5,12 +5,7 @@
 app.layout = (function () {
     "use strict";
 
-    var slides = [ "promo_cycle.png",
-                   "promo_balloons2.png",
-                   "promo_list.png" ],
-        slideindex = -1,
-        slideslot = -1,
-        topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
+    var topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
         topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
         dndState = null,
 
@@ -82,76 +77,6 @@ app.layout = (function () {
             //href may have been resolved from relative to absolute...
             if(href && href.indexOf("docs/") >= 0) {
                 attachDocLinkClick(node, href); } }
-    },
-
-
-    //Set the src of the current img to the next slide and change its
-    //opacity to 1.  Then change the opacity of the prev img to 0.  If
-    //someone is logging in automatically (the most common case), then
-    //preloading images is extra overhead so not doing that.
-    slideshow = function (firstrun) {
-        var html, previmg, img;
-        if(jt.byId('slidesdiv')) {
-            if(jt.isLowFuncBrowser()) {
-                jt.log("slideshow isLowFuncBrowser so no fades");
-                if(firstrun) {
-                    slideindex = 0; }
-                html = "<img src=\"img/slides/" + slides[slideindex] +
-                         "\" class=\"slideimg\"/>";
-                jt.out('slidesdiv', html);
-                slideindex = (slideindex + 1) % slides.length; }
-            else {  //use nice opacity transitions
-                if(!firstrun) {
-                    jt.log("    fading introslide" + slideslot + ": " + 
-                            "img/slides/" + slides[slideindex]);
-                    previmg = jt.byId("introslide" + slideslot);
-                    if(!previmg) {  //probably logged in in the interim
-                        return; }
-                    setTimeout(function () {
-                        //blank out so if there is a lag on image load when
-                        //faded back for display, old content won't flash.
-                        //wait until fade completes though.
-                        previmg.src = "img/slides/blank.png"; }, 1200);
-                    previmg.style.opacity = 0; }  //fade out
-                slideslot = (slideslot + 1) % 2;
-                slideindex = (slideindex + 1) % slides.length;
-                jt.log("displaying introslide" + slideslot + ": " + 
-                        "img/slides/" + slides[slideindex]);
-                img = jt.byId("introslide" + slideslot);
-                if(!img) {  //probably logged in in the interim
-                    return; }
-                img.src = "img/slides/" + slides[slideindex];
-                img.style.opacity = 1; }
-            if(!slides[slideindex] || slides[slideindex] === "blank.png") {
-                setTimeout(slideshow, 2200); }
-            else {
-                setTimeout(slideshow, 6400); } }
-    },
-
-
-    //Even though window.screen.width *might* give you a semi-accurate
-    //value of something like 480px for a phone, using minimum space
-    //here does not cause the browser to use anything other than full
-    //client width in its own layout calculations.  So just go with
-    //what is being reported.
-    initSlideshow = function () {
-        var width, leftx, logow = 515, slidew = 522;
-        width = document.documentElement.clientWidth;
-        if(width > logow + slidew) {  //enough room for logo and slides
-            jt.out('logodiv', "<img src=\"img/slides/logoMOR.png\"" +
-                    " id=\"logoimg\" border=\"0\"/>");
-            leftx = logow + Math.round(((width - (logow + slidew)) / 2));
-            jt.byId('introslide0').style.left = String(leftx) + "px";
-            jt.byId('introslide1').style.left = String(leftx) + "px"; }
-        else if(width >= slidew) {  //probably a phone. just slides, but center
-            jt.out('logodiv', "");
-            leftx = Math.round((width - slidew) / 2); 
-            jt.byId('introslide0').style.left = String(leftx) + "px";
-            jt.byId('introslide1').style.left = String(leftx) + "px"; }
-        if(!jt.isLowFuncBrowser()) {  //skip nice fade transitions
-            jt.byId('introslide0').style.opacity = 0;
-            jt.byId('introslide1').style.opacity = 0; }
-        slideshow(true);
     },
 
 
@@ -305,7 +230,6 @@ app.layout = (function () {
     return {
         init: function () {
             jt.on(window, 'resize', fullContentHeight);
-            initSlideshow();
             localDocLinks();
             fullContentHeight();
             fixTextureCover(); },

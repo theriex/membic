@@ -40,7 +40,7 @@ body {
 #topsectiondiv { padding:0px 10px; background:#fffffd;
   box-shadow:8px 8px 4px #cccccc; 
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
-#logodiv { width:512px; float:left; }
+#logodiv { width:470px; padding:5px; float:left; }
 #topworkdiv { }
 #slidesdiv { }
 /* left recalculated in layout.initSlideshow, old browsers use this */
@@ -93,7 +93,7 @@ body {
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
-#dlgdiv { position:absolute; left:400px; top:20px; padding:10px 20px;
+#dlgdiv { position:absolute; left:20px; top:60px; padding:10px 20px;
   background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }

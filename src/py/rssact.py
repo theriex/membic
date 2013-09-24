@@ -13,14 +13,14 @@ def rss_title(review):
     return title
 
 def item_url(review):
-    url = "http://www.myopenreviews.com/statrev/" + str(review.key().id())
+    url = "http://www.wdydfun.com/statrev/" + str(review.key().id())
     return url
 
 
 def rss_content(penid, reviews, checked, following):
-    url = "http://www.myopenreviews.com/rssact?pen=" + str(penid)
-    email = "robot@myopenreviews.com"
-    title = "MyOpenReviews Activity Feed"
+    url = "http://www.wdydfun.com/rssact?pen=" + str(penid)
+    email = "robot@wdydfun.com"
+    title = "wdydfun reviews from friends"
     #The content of each review was created by the pen name, but that
     #is not tied to any particular person and there needs to be some
     #kind of recourse against unintended content distribution so
