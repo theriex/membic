@@ -28,7 +28,7 @@ app.facebook = (function () {
                                          okfstr, cancelfstr) {
         var msg, html;
         if(loginResponse.status === "not_authorized") {
-            msg = "You have not yet authorized MyOpenReviews," +
+            msg = "You have not yet authorized wdydfun," +
                 " click to authorize..."; }
         else {
             msg = "You are not currently logged into Facebook," +
@@ -74,7 +74,7 @@ app.facebook = (function () {
     loadFacebook = function (nextfunc, msgdivid) {
         var js, id = 'facebook-jssdk', firstscript, html;
         window.fbAsyncInit = function () {
-            FB.init({ appId: 265001633620583, 
+            FB.init({ appId: 661315260568822,
                       status: true, //check login status
                       cookie: true, //enable server to access the session
                       xfbml: true });
@@ -185,7 +185,7 @@ app.facebook = (function () {
         fblinkname = app.services.getRevStarsTxt(review, "unicode") + " " +
             app.services.getRevTitleTxt(review);
         fblinkurl = app.services.getRevPermalink(review);
-        fbremurl = "http://www.myopenreviews.com/#command=remember&penid=" + 
+        fbremurl = "http://www.wdydfun.com/#command=remember&penid=" + 
             review.penid + "&revid=" + jt.instId(review);
         fbimage = app.services.getRevTypeImage(review);
         fbprompt = "Check this out if...";
