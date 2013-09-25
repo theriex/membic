@@ -100,7 +100,7 @@ app.googleplus = (function () {
             url = "https://accounts.google.com/o/oauth2/auth" +
                 "?response_type=token" +
                 "&client_id=1009259210423.apps.googleusercontent.com" +
-                "&redirect_uri=" + jt.enc("http://www.myopenreviews.com/") +
+                "&redirect_uri=" + jt.enc("http://www.wdydfun.com/") +
                 "&scope=" + jt.enc(scope) +
                 "&state=AltAuth2";
             window.location.href = url; }
@@ -121,7 +121,7 @@ app.googleplus = (function () {
 
 
     getShareLinkURL = function (review) {
-        var url = "http://www.myopenreviews.com/statrev/" + jt.instId(review);
+        var url = "http://www.wdydfun.com/statrev/" + jt.instId(review);
         url = "https://plus.google.com/share?url=" + jt.enc(url);
         return url;
     },
