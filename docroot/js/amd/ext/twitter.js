@@ -83,7 +83,7 @@ app.twitter = (function () {
     },
 
 
-    //Surfing to http://www.myopenreviews.com#command=AltAuth1 leads
+    //Surfing to http://www.wdydfun.com#command=AltAuth1 leads
     //to this function, which is used for both the "log in via
     //twitter" click, and the callback from twitter.
     authenticate = function (params) {
@@ -109,7 +109,7 @@ app.twitter = (function () {
             jt.out(outputdiv, "Setting up call to Twitter...");
             data = "name=Twitter&url=" + jt.enc(twReqTokURL) + 
                 "&oauth_callback=" +
-                jt.enc("http://www.myopenreviews.com#command=AltAuth1");
+                jt.enc("http://www.wdydfun.com#command=AltAuth1");
             jt.call('POST', "oa1call", data,
                      function (callresults) {
                          redirectForLogin(callresults[0]); },
