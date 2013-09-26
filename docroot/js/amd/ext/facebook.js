@@ -181,19 +181,25 @@ app.facebook = (function () {
 
 
     postReview4 = function (review) {
-        var fblinkname, fblinkurl, fbremurl, fbimage, fbprompt;
-        fblinkname = app.services.getRevStarsTxt(review, "unicode") + " " +
-            app.services.getRevTitleTxt(review);
+        var fbimage, fblinkurl, fblinktext, fbtitle, fbtext, 
+            fbremurl, fbmessage, fbprompt;
+        fbimage = app.services.getRevTypeImage(review);
         fblinkurl = app.services.getRevPermalink(review);
+        fblinktext = "wdydfun this week? " + review.revtype;
+        if(review.keywords) {
+            fblinktext += ": " + review.keywords; }
+        fbtitle = app.services.getRevStarsTxt(review, "unicode") + " " +
+            app.services.getRevTitleTxt(review);
+        fbtext = review.text;
         fbremurl = "http://www.wdydfun.com/#command=remember&penid=" + 
             review.penid + "&revid=" + jt.instId(review);
-        fbimage = app.services.getRevTypeImage(review);
+        fbmessage = "wdydfun " + review.revtype + " review";
         fbprompt = "Check this out if...";
         FB.ui({ method: 'feed',  //use the feed dialog...
-                message: review.revtype + " review",
-                name: fblinkname,
-                caption: review.keywords,
-                description: review.text,
+                message: fbmessage,  //not part of final post
+                name: fblinktext,
+                caption: fbtitle,
+                description: fbtext,
                 link: fblinkurl,
                 picture: fbimage,
                 actions: [ { name: 'Remember', link: fbremurl } ],
