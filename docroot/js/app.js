@@ -117,21 +117,27 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.crash = function (code, errtxt, method, url, data) {
-        var html = "<div id=\"chead\"> </div><div id=\"cmain\">" + 
-        "<p>The server crashed.</p>" +
-        "<p>If you want to help out, copy the contents of this page and " +
-        "post it to " +
-        "<a href=\"https://github.com/theriex/myopenreviews/issues\" " +
-        "onclick=\"window.open('https://github.com/theriex/myopenreviews/" +
-        "issues');return false\">open issues</a>.  Otherwise reload the " +
-        "page in your browser and see if it happens again...</p>" +
-        "<ul>" +
-        "<li>method: " + method +
-        "<li>url: " + url +
-        "<li>data: " + data +
-        "<li>code: " + code +
-        "</ul></div>" +
-        errtxt;
+        var html, githuburl;
+        githuburl = "https://github.com/theriex/myopenreviews/issues";
+        html = [
+            ["div", {id: "chead"}],
+            ["div", {id: "cmain"},
+             [["p", "The server crashed."],
+              ["p", 
+               ["If you want to help out, copy the contents of" +
+                " this page and post it to ",
+                ["a", {href: githuburl,
+                       onclick: jt.fs("window.open('" + githuburl + "')")},
+                 "open issues"],
+                ". Otherwise you can try reloading this page in your" +
+                " browser and try again."]],
+              ["ul",
+               [["li", "method: " + method],
+                ["li", "url: " + url],
+                ["li", "data: " + data],
+                ["li", "code: " + code]]],
+              errtxt]]];
+        html = jt.tac2html(html);
         jt.out('contentdiv', html);
     };
 
@@ -160,24 +166,6 @@ var app = {},  //Global container for application level funcs and values
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////
-
-    //factored method to create an image link.  Some older browsers put
-    //borders around these...
-    jt.imglink = function (href, title, funcstr, imgfile, cssclass) {
-        var html;
-        if(!cssclass) {
-            cssclass = "navico"; }
-        if(funcstr.indexOf(";") < 0) {
-            funcstr += ";"; }
-        if(imgfile.indexOf("/") < 0) {
-            imgfile = "img/" + imgfile; }
-        html = "<a href=\"" + href + "\" title=\"" + title + "\"" +
-                 " onclick=\"" + funcstr + "return false;\"" +
-               "><img class=\"" + cssclass + "\" src=\"" + imgfile + "\"" +
-                    " border=\"0\"/></a>";
-        return html;
-    };
-
 
     jt.imgntxt = function (imgfile, text, funcstr, href, 
                             title, cssclass, idbase) {

@@ -74,23 +74,27 @@ app.activity = (function () {
         if(dispmode === "activity") {
             if(activityMode === "amnew") {
                 url = "rssact?pen=" + app.pen.currPenId();
-                html = "New reviews from friends " +
-                    jt.imglink(url, "RSS feed for recent friend reviews",
-                               "window.open('" + url + "')", 
-                               "rssicon.png", "rssico") +
-                    "<button type=\"button\" id=\"switchmodebutton\"" +
-                    " onclick=\"app.activity.switchmode('amtop');" +
-                               "return false;\"" +
-                    " title=\"Show top rated reviews from friends\"" +
-                    ">Show Top</button>"; }
+                html = ["New reviews from friends ",
+                        ["a", {href: url,
+                               title: "RSS feed for recent friend reviews",
+                               onclick: jt.fs("window.open('" + url + "')")},
+                         ["img", {cla: "rssico", src: "img/rssicon.png"}]],
+                        ["button", {type: "button", id: "switchmodebutton",
+                                    onclick: jt.fs("app.activity.switchmode" +
+                                                   "('amtop')"),
+                                    title: "Show top rated reviews from" + 
+                                          " friends"},
+                         "Show Top"]];
+                html = jt.tac2html(html); }
             else if(activityMode === "amtop") {
-                html = "Top reviews from friends " +
-                    "<button type=\"button\" id=\"switchmodebutton\"" +
-                    " onclick=\"app.activity.switchmode('amnew');" +
-                               "return false;\"" +
-                    " title=\"Show recent reviews from friends\"" +
-                    ">Show Recent</button>" +
-                    topTypeSelectorHTML(); } }
+                html += ["Top reviews from friends ",
+                         ["button", {type: "button", id: "switchmodebutton",
+                                     onclick: jt.fs("app.activity.switchmode" +
+                                                    "('amnew')"),
+                                     title: "Show recent reviews from" +
+                                           " friends"},
+                          "Show Recent"]];
+                html = jt.tac2html(html) + topTypeSelectorHTML(); } }
         else if(dispmode === "memo") {
             html = "Remembered reviews"; }
         jt.out('centerhdiv', html);

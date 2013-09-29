@@ -76,11 +76,11 @@
 
 ////////////////////////////////////////
 // Utility methods.  Library users will need to tolerate this global
-// function, and pass in some object to hold all the utility methods.
+// function, and pass in an object to hold all the utility methods.
 var jtminjsDecorateWithUtilities = function (utilityObject) {
     "use strict";
 
-    var uo = utilityObject;  //local reference for cooperative functions
+    var uo = utilityObject;  //local reference for function chaining
 
 
     ////////////////////////////////////////
@@ -434,6 +434,112 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 event.cancelBubble = true;
             }
         }
+    };
+
+
+    //append false return to a literal function string
+    uo.fs = function (fstr) {
+        fstr = (uo.safestr(fstr)).trim();
+        if (fstr.indexOf(";") < fstr.length - 1) {
+            fstr += ";";
+        }
+        if (fstr.indexOf("return false") < 0) {
+            fstr += "return false;";
+        }
+        return uo.fsd(fstr);
+    };
+
+
+    //does nothing, can be redefined to use as a general intercept point.
+    uo.fsd = function (fstr) {
+        return fstr;
+    };
+
+
+    ////////////////////////////////////////
+    // HTML creation
+    ////////////////////////////////////////
+
+    //override this function if you need your own custom tags.  If I've
+    //missed anything generally useful, let me know.
+    uo.isHTMLElement = function (elemtype) {
+        var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"];
+        elemtype = (uo.safestr(elemtype)).trim().toLowerCase();
+        if (elems.indexOf(elemtype) >= 0) {
+            return true;
+        }
+        return false;
+    };
+
+
+    uo.isHTMLVoidElement = function (elemtype) {
+        var voids = ["area", "base", "br", "col", "command", "embed",
+                     "hr", "img", "input", "keygen", "link", "menuitem",
+                     "meta", "param", "source", "track", "wbr"];
+        elemtype = (uo.safestr(elemtype)).trim().toLowerCase();
+        if (voids.indexOf(elemtype) >= 0) {
+            return true;
+        }
+        return false;
+    };
+
+
+    //A TAC array has the general form [tagname, attrobj, content] where
+    //content can be another TAC array, a value, or omitted.  This is a
+    //recursive function that passes all context in its own memoized
+    //stackframe param because of a mix of paranoia and debugger bugs.
+    uo.tac2html = function (tac, frame) {
+        var name;
+        if (!frame) {
+            frame = { html: "", elemtype: null, attrobj: null,
+                      content: null, isHTMLTag: false, i: null};
+        }
+        //if tac is something other than an "array", use its string value
+        if (typeof tac !== 'object' || !tac.length) {
+            return uo.safestr(tac);
+        }
+        if (tac.length === 0) {
+            return "";
+        }
+        frame.elemtype = tac[0];
+        frame.isHTMLTag = uo.isHTMLElement(frame.elemtype);
+        if (frame.isHTMLTag) {  //make an html element
+            frame.html += "<" + frame.elemtype;
+            if (tac.length > 1) { //have attributes and/or content
+                frame.attrobj = tac[1];
+                //if plain object without length then treat as attributes
+                if (typeof frame.attrobj === 'object' &&
+                        !frame.attrobj.length) {
+                    for (name in frame.attrobj) {
+                        if (frame.attrobj.hasOwnProperty(name)) {
+                            frame.html += " " + 
+                                ((name === "cla")? "class" : name) +
+                                "=\"" + frame.attrobj[name] + "\"";
+                        }
+                    }
+                } else if (frame.attrobj) {  //treat as content
+                    frame.content = frame.attrobj;
+                }
+            }
+            if (uo.isHTMLVoidElement(frame.elemtype)) {
+                frame.html += " />";  //extra space is just traditional
+                return frame.html;  //no content allowed so we're done.
+            }
+            //regular element, close normally and include any specified content
+            frame.html += ">";
+            if (!frame.content && tac.length > 2) {
+                frame.content = tac[2];
+            }
+            if (frame.content) {
+                frame.html += uo.tac2html(frame.content);
+            }
+            frame.html += "</" + frame.elemtype + ">";
+            return frame.html;
+        } //we have an array of tacs, append them all together
+        for (frame.i = 0; frame.i < tac.length; frame.i += 1) {
+            frame.html += uo.tac2html(tac[frame.i]);
+        }
+        return frame.html;
     };
 
 

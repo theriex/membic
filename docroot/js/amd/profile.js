@@ -100,15 +100,15 @@ app.profile = (function () {
         var html, id, name, relationship;
         id = jt.instId(dispen);
         name = dispen.name;
-        html = "<a href=\"#view=profile&profid=" + id + "\"" +
-                 " title=\"Show profile for " + name + "\"" +
-                 " onclick=\"app.profile.byprofid('" + id + "');" + 
-                            "return false;\"" +
-               ">" + name + "</a>";
-        html = "<div id=\"profhdiv\">" +
-                 "<span id=\"penhnamespan\">" + html + "</span>" +
-                 "<span id=\"penhbuttonspan\"> </span>" +
-               "</div>";
+        html = ["div", {id: "profhdiv"},
+                [["span", {id: "penhnamespan"},
+                  ["a", {href: "#view=profile&profid=" + id,
+                         title: "Show profile for " + name,
+                         onclick: jt.fs("app.profile.byprofid('" + id + "')")},
+                   name]],
+                 ["span", {id: "penbuttonspan"},
+                  " "]]];
+        html = jt.tac2html(html);
         jt.out('centerhdiv', html);
         html = "";
         if(jt.instId(homepen) !== jt.instId(dispen) &&
@@ -117,15 +117,18 @@ app.profile = (function () {
                 relationship = app.rel.outbound(id);
                 app.profile.verifyStateVariableValues(dispen);
                 if(relationship) {
-                    html = jt.imglink("#Settings",
-                                       "Adjust follow settings for " + name,
-                                       "app.profile.relationship()", 
-                                       "settings.png"); }
+                    html = ["a", {href: "#Settings",
+                                  title: "Adjust follow settings for " + name,
+                                  onclick: jt.fs("app.profile.relationship()")},
+                            ["img", {cla: "navico", 
+                                     src: "img/settings.png"}]]; }
                 else {
-                    html = jt.imglink("#Follow",
-                                       "Follow " + name + " reviews",
-                                       "app.profile.relationship()",
-                                       "follow.png"); } }
+                    html = ["a", {href: "#Follow",
+                                  title: "Follow " + name + " reviews",
+                                  onclick: jt.fs("app.profile.relationship()")},
+                            ["img", {cla: "navico",
+                                     src: "img/follow.png"}]]; }
+                html = jt.tac2html(html); }
             else {  
                 //Happens if you go directly to someone's profile via url
                 //and rels are loading slowly.  Not known if you are following
