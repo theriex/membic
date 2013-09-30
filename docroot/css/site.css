@@ -27,6 +27,8 @@ body {
   background-size: cover;
 }
 
+img { border:0px; }
+
 /*
  ************************************************************
  * general class and id formatting
