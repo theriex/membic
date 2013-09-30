@@ -172,28 +172,22 @@ var app = {},  //Global container for application level funcs and values
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
         if(!cssclass) {
             cssclass = "navico"; }
-        if(funcstr.indexOf(";") < 0) {
-            funcstr += ";"; }
         if(imgfile && imgfile.indexOf("/") < 0) {
             imgfile = "img/" + imgfile; }
-        if(title) {
-            title = " title=\"" + title + "\""; }
-        else {
-            title = ""; }
+        title = title || "";
         if(idbase) {
-            tblid = " id=\"" + idbase + "table\"";
-            imgtdid = " id=\"" + idbase + "imgtd\"";
-            imgid = " id=\"" + idbase + "img\"";
-            txttdid = " id=\"" + idbase + "txttd\""; }
-        html = "<table" + tblid + " class=\"buttontable\" border=\"0\"" + 
-                       title + " onclick=\"" + funcstr + "return false;\">" +
-            "<tr>" +
-              "<td" + imgtdid + ">" +
-                "<img" + imgid + " class=\"" + cssclass + "\" src=\"" + 
-                     imgfile + "\"" + " border=\"0\"/></td>" +
-              "<td" + txttdid + " class=\"buttontabletexttd\">" +
-                  text + "</td>" +
-            "</tr></table>";
+            tblid = idbase + "table";
+            imgtdid = idbase + "imgtd";
+            imgid = idbase + "img";
+            txttdid = idbase + "txttd"; }
+        html = ["table", {id: tblid, cla: "buttontable", title: title,
+                          onclick: jt.fs(funcstr)},
+                ["tr",
+                 [["td", {id: imgtdid},
+                   ["img", {id: imgid, cla: cssclass, src: imgfile}]],
+                  ["td", {id: txttdid, cla: "buttontabletexttd"},
+                   text]]]];
+        html = jt.tac2html(html);
         return html;
     };
 
@@ -202,23 +196,16 @@ var app = {},  //Global container for application level funcs and values
         var html;
         if(!label) {
             label = value.capitalize(); }
-        html = "<input type=\"" + type + "\" name=\"" + name + "\" value=\"" +
-            value + "\" id=\"" + value + "\"";
-        if(checked) {
-            html += " checked=\"checked\""; }
-        //the source element for the change event is unreliable if 
-        //you click on a label, so not passing back any value.  
-        //Change listener will need to check what is selected.
-        if(chgfstr) {
-            html += " onchange=\"" + chgfstr + "();return false;\""; }
-        html += "/>" + "<label for=\"" + value + "\">" + label + "</label>";
+        html = [["input", {type: type, name: name, value: value, id: value,
+                          checked: checked, onchange: jt.fs(chgfstr)}],
+                ["label", {fo: value}, label]];
+        html = jt.tac2html(html);
         return html;
     };
 
 
-    //factored method to create a checkbox with a label.
-    jt.checkbox = function (name, value, label) {
-        return jt.checkrad("checkbox", name, value, label);
+    jt.checkbox = function (name, value, label, checked, chgfstr) {
+        return jt.checkrad("checkbox", name, value, label, checked, chgfstr);
     };
 
 

@@ -255,7 +255,7 @@ app.login = (function () {
           "<tr>" +
             "<td></td>" +
             "<td colspan=\"2\">" +
-              jt.checkrad("checkbox", "summaryflags", "sumiflogin",
+              jt.checkbox("summaryflags", "sumiflogin",
                            "Send summary even if site visited",
                            (account.summaryflags && 
                             account.summaryflags.indexOf('sumiflogin') >= 0)) +
@@ -264,7 +264,7 @@ app.login = (function () {
           "<tr>" +
             "<td></td>" +
             "<td colspan=\"2\">" +
-              jt.checkrad("checkbox", "summaryflags", "sumifnoact",
+              jt.checkbox("summaryflags", "sumifnoact",
                            "Send summary even if no reviews from friends",
                            (account.summaryflags && 
                             account.summaryflags.indexOf('sumifnoact') >= 0)) +
@@ -307,7 +307,7 @@ app.login = (function () {
     loginInfoHTML = function (pen) {
         var html, iconurl;
         switch(authmethod) {
-            case "mid": iconurl = "img/iconMOR.png"; break;
+            case "mid": iconurl = "img/iconwdydfun.png"; break;
             case "fbid": iconurl = app.facebook.iconurl; break;
             case "twid": iconurl = app.twitter.iconurl; break;
             case "gsid": iconurl = app.googleplus.iconurl; break;

@@ -6,7 +6,8 @@
 // This library is intended to provide the minimally adequate
 // functionality for writing a web application.  No frills, no object
 // model, no layers on top of DOM objects.  Emphasis is on necessary
-// backfill and utilities that are very commonly needed.
+// backfill and utilities that are commonly needed.  Use directly or
+// copy whatever you need.
 //
 
 ////////////////////////////////////////
@@ -439,12 +440,14 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     //append false return to a literal function string
     uo.fs = function (fstr) {
-        fstr = (uo.safestr(fstr)).trim();
-        if (fstr.indexOf(";") < fstr.length - 1) {
-            fstr += ";";
-        }
-        if (fstr.indexOf("return false") < 0) {
-            fstr += "return false;";
+        if (fstr) {  //Do not wrap if undefined, null, or anything else falsy
+            fstr = (uo.safestr(fstr)).trim();
+            if (fstr.indexOf(";") < fstr.length - 1) {
+                fstr += ";";
+            }
+            if (fstr.indexOf("return false") < 0) {
+                fstr += "return false;";
+            }
         }
         return uo.fsd(fstr);
     };
@@ -460,7 +463,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     // HTML creation
     ////////////////////////////////////////
 
-    //override this function if you need your own custom tags.  If I've
+    //Override this function if you need your own custom tags.  If I've
     //missed anything generally useful, let me know.
     uo.isHTMLElement = function (elemtype) {
         var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"];
@@ -484,10 +487,27 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    //A TAC array has the general form [tagname, attrobj, content] where
-    //content can be another TAC array, a value, or omitted.  This is a
-    //recursive function that passes all context in its own memoized
-    //stackframe param because of a mix of paranoia and debugger bugs.
+    //Some html attribute names are javascript reserved words and
+    //therefore can't be directly used as object labels.  You can
+    //quote them or use synonyms.  If I've missed anything generally
+    //useful, let me know.
+    uo.tacattr = function (name) {
+        switch (name) {
+        case "cla":
+            return "class";
+        case "fo":
+            return "for";
+        }
+        return name;
+    };
+
+
+    //A TAC array has the general form [tagname, attrobj, content]
+    //where content can be another TAC array, a value, or omitted.
+    //Attributes with undefined or null values are ignored, empty
+    //string attributes are valid values.  The implementation passes
+    //all context in its own memoized stackframe param due to a mix of
+    //paranoia and debugger bugs.
     uo.tac2html = function (tac, frame) {
         var name;
         if (!frame) {
@@ -512,9 +532,11 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                         !frame.attrobj.length) {
                     for (name in frame.attrobj) {
                         if (frame.attrobj.hasOwnProperty(name)) {
-                            frame.html += " " + 
-                                ((name === "cla")? "class" : name) +
-                                "=\"" + frame.attrobj[name] + "\"";
+                            if (frame.attrobj[name] !== undefined &&
+                                    frame.attrobj[name] !== null) {
+                                frame.html += " " + uo.tacattr(name) +
+                                    "=\"" + frame.attrobj[name] + "\"";
+                            }
                         }
                     }
                 } else if (frame.attrobj) {  //treat as content
