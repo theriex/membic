@@ -1,6 +1,6 @@
 /*global setTimeout: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white: true, maxerr: 50, indent: 4 */
 
 //////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, and reviews.
@@ -40,10 +40,18 @@
 app.lcs = (function () {
     "use strict";
 
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
     var pens = {},
         rels = {},
         revs = {},
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     idify = function (id) {
         if(typeof id === 'object') {
@@ -51,154 +59,6 @@ app.lcs = (function () {
         if(typeof id === 'number') {
             id = String(id); }
         return id;
-    },
-
-
-    getPenRef = function (penid) {
-        var penref;
-        penid = idify(penid);
-        penref = pens[penid];
-        if(!penref) {
-            penref = { status: "not cached",
-                       penid: penid,
-                       updtime: new Date() }; }
-        return penref;
-    },
-
-
-    putPen = function (penobj) {
-        var penref;
-        //once cached, subsequent accesss shouldn't have to verify the
-        //pen object has been deserialized so do it once now.
-        app.pen.deserializeFields(penobj);
-        penref = getPenRef(penobj);
-        pens[idify(penobj)] = penref;
-        penref.pen = penobj;
-        penref.status = "ok";
-        penref.updtime = new Date();
-        //existing outrels and other decorator fields not overwritten
-        return penref;
-    },
-
-
-    remPen = function (penobj) {
-        var penref;
-        penref = getPenRef(penobj);
-        penref.status = "deleted";
-        penref.updtime = new Date();
-        penref.pen = null;
-    },
-
-
-    getPenFull = function (penid, callback) {
-        var penref, tombstone, params, critsec = "";
-        penref = getPenRef(penid);
-        if(penref && penref.status === "ok" && penref.pen) {
-            return callback(penref); }
-        params = "penid=" + idify(penid);
-        jt.call('GET', "penbyid?" + params, null,
-                 function (foundpens) {
-                     if(foundpens.length > 0) {
-                         callback(putPen(foundpens[0])); }
-                     else {  //should never happen, but treat as deleted
-                         tombstone = { status: "deleted",
-                                       updtime: new Date() };
-                         pens[idify(penid)] = tombstone;
-                         callback(tombstone); } },
-                 app.failf(function (code, errtxt) {
-                     tombstone = { status: String(code) + ": " + errtxt,
-                                   updtime: new Date() };
-                     pens[idify(penid)] = tombstone;
-                     callback(tombstone); }),
-                 critsec, null, [400, 404]);
-    },
-
-
-    getRelRef = function (relid) {
-        var relref;
-        relid = idify(relid);
-        relref = rels[relid];
-        if(!relref) {
-            relref = { status: "not cached",
-                       relid: relid,
-                       updtime: new Date() }; }
-        return relref;
-    },
-
-
-    putRel = function (relobj) {
-        var relref;
-        relref = getRelRef(relobj);
-        rels[idify(relobj)] = relref;
-        relref.rel = relobj;
-        relref.status = "ok";
-        relref.updtime = new Date();
-        return relref;
-    },
-
-
-    remRel = function (relobj) {
-        var relref;
-        relref = getRelRef(relobj);
-        relref.status = "deleted";
-        relref.updtime = new Date();
-        relref.pen = null;
-    },
-
-
-    getRevRef = function (revid) {
-        var revref;
-        revid = idify(revid);
-        revref = revs[revid];
-        if(!revref) {
-            revref = { status: "not cached",
-                       revid: revid,
-                       updtime: new Date() }; }
-        return revref;
-    },
-
-
-    putRev = function (revobj) {
-        var revref;
-        revref = getRevRef(revobj);
-        revs[idify(revobj)] = revref;
-        revref.rev = revobj;
-        revref.status = "ok";
-        revref.updtime = new Date();
-        return revref;
-    },
-
-
-    putRevs = function (revobjs) {
-        var i;
-        for(i = 0; revobjs && i < revobjs.length; i += 1) {
-            if(revobjs[i].fetched) {
-                break; }  //skip stats and cursor object
-            putRev(revobjs[i]); }
-    },
-
-
-    getRevFull = function (revid, callback) {
-        var revref, tombstone, params, critsec = "";
-        revref = getRevRef(revid);
-        if(revref && revref.status === "ok" && revref.rev) {
-            return callback(revref); }
-        params = "revid=" + idify(revid);
-        jt.call('GET', "revbyid?" + params, null,
-                 function (foundrevs) {
-                     if(foundrevs.length > 0) {
-                         callback(putRev(foundrevs[0])); }
-                     else {  //should never happen, but treat as deleted
-                         tombstone = { status: "deleted",
-                                       updtime: new Date() };
-                         revs[idify(revid)] = tombstone;
-                         callback(tombstone); } },
-                 app.failf(function (code, errtxt) {
-                     tombstone = { status: String(code) + ": " + errtxt,
-                                   updtime: new Date() };
-                     revs[idify(revid)] = tombstone;
-                     callback(tombstone); }),
-                 critsec, null, [400, 404]);
     },
 
 
@@ -216,38 +76,6 @@ app.lcs = (function () {
     },
 
 
-    //Walk the revrefs and verify each has an associated revlink,
-    //retrieving from the server as needed.  Adds an empty placeholder
-    //revlink if no server info exists.  Also verifies markups from
-    //the current pen ref are reflected in the revlinks.  The changed
-    //parameter switches to true if anything was loaded or updated, and
-    //that triggers the callback to onchangefunc.
-    verifyReviewLinks = function (onchangefunc, changed) {
-        var revid, revref, revids = [], maxq = 20, params, critsec = "";
-        for(revid in revs) {
-            if(revs.hasOwnProperty(revid)) {
-                revref = revs[revid];
-                if(revref && !revref.revlink) {
-                    revids.push(revid); }
-                if(revids.length >= maxq) {
-                    break; } } }
-        if(revids.length > 0) {
-            params = "revids=" + revids.join(",") + 
-                "&" + app.login.authparams();
-            jt.call('GET', "revlinks?" + params, null,
-                     function (revlinks) {
-                         resolveReviewLinks(revids, revlinks);
-                         verifyReviewLinks(onchangefunc, true); },
-                     app.failf(function (code, errtxt) {
-                         jt.err("verifyReviewLinks revlinks call failed " +
-                                code + " " + errtxt); }),
-                     critsec); }
-        else if(revids.length === 0 && changed) {
-            onchangefunc(); }
-    },
-
-
-    
     verifyCorrespondingLink = function (revref, rev) {
         var revlink, rlidstr, corids, i, data;
         revlink = revref.revlink;
@@ -275,26 +103,6 @@ app.lcs = (function () {
     },
 
 
-    verifyCorrespondingLinks = function (rev1, rev2) {
-        var revref1, revref2;
-        if(rev1.penid === rev2.penid) { 
-            return; }  //avoid corresponding with yourself
-        revref1 = getRevRef(jt.instId(rev1));
-        if(revref1.status === "not cached") {
-            revref1 = putRev(rev1); }
-        revref2 = getRevRef(jt.instId(rev2));
-        if(revref2.status === "not cached") {
-            revref2 = putRev(rev2); }
-        if(!revref1.revlink || !revref2.revlink) {
-            setTimeout(function () {
-                verifyReviewLinks(function () {
-                    verifyCorrespondingLinks(rev1, rev2); }); }, 50);
-            return; }
-        verifyCorrespondingLink(revref1, rev2);
-        verifyCorrespondingLink(revref2, rev1);
-    },
-
-
     checkCachedCorresponding = function (review) {
         var revid, revref;
         for(revid in revs) {
@@ -303,11 +111,215 @@ app.lcs = (function () {
                 if(revref && revref.rev 
                    && revref.rev.cankey === review.cankey
                    && revref.rev.penid !== review.penid) {
-                    verifyCorrespondingLinks(review, revref.rev); } } }
+                    app.lcs.verifyCorrespondingLinks(review, revref.rev); } } }
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    getPenRef: function (penid) {
+        var penref;
+        penid = idify(penid);
+        penref = pens[penid];
+        if(!penref) {
+            penref = { status: "not cached",
+                       penid: penid,
+                       updtime: new Date() }; }
+        return penref;
     },
 
 
-    checkAllCorresponding = function (review) {
+    getPenFull: function (penid, callback) {
+        var penref, tombstone, params, critsec = "";
+        penref = app.lcs.getPenRef(penid);
+        if(penref && penref.status === "ok" && penref.pen) {
+            return callback(penref); }
+        params = "penid=" + idify(penid);
+        jt.call('GET', "penbyid?" + params, null,
+                 function (foundpens) {
+                     if(foundpens.length > 0) {
+                         callback(app.lcs.putPen(foundpens[0])); }
+                     else {  //should never happen, but treat as deleted
+                         tombstone = { status: "deleted",
+                                       updtime: new Date() };
+                         pens[idify(penid)] = tombstone;
+                         callback(tombstone); } },
+                 app.failf(function (code, errtxt) {
+                     tombstone = { status: String(code) + ": " + errtxt,
+                                   updtime: new Date() };
+                     pens[idify(penid)] = tombstone;
+                     callback(tombstone); }),
+                 critsec, null, [400, 404]);
+    },
+
+
+    putPen: function (penobj) {
+        var penref;
+        //once cached, subsequent accesss shouldn't have to verify the
+        //pen object has been deserialized so do it once now.
+        app.pen.deserializeFields(penobj);
+        penref = app.lcs.getPenRef(penobj);
+        pens[idify(penobj)] = penref;
+        penref.pen = penobj;
+        penref.status = "ok";
+        penref.updtime = new Date();
+        //existing outrels and other decorator fields not overwritten
+        return penref;
+    },
+
+
+    remPen: function (penobj) {
+        var penref;
+        penref = app.lcs.getPenRef(penobj);
+        penref.status = "deleted";
+        penref.updtime = new Date();
+        penref.pen = null;
+    },
+
+
+    getRelRef: function (relid) {
+        var relref;
+        relid = idify(relid);
+        relref = rels[relid];
+        if(!relref) {
+            relref = { status: "not cached",
+                       relid: relid,
+                       updtime: new Date() }; }
+        return relref;
+    },
+
+
+    putRel: function (relobj) {
+        var relref;
+        relref = app.lcs.getRelRef(relobj);
+        rels[idify(relobj)] = relref;
+        relref.rel = relobj;
+        relref.status = "ok";
+        relref.updtime = new Date();
+        return relref;
+    },
+
+
+    remRel: function (relobj) {
+        var relref;
+        relref = app.lcs.getRelRef(relobj);
+        relref.status = "deleted";
+        relref.updtime = new Date();
+        relref.pen = null;
+    },
+
+
+    getRevRef: function (revid) {
+        var revref;
+        revid = idify(revid);
+        revref = revs[revid];
+        if(!revref) {
+            revref = { status: "not cached",
+                       revid: revid,
+                       updtime: new Date() }; }
+        return revref;
+    },
+
+
+    getRevFull: function (revid, callback) {
+        var revref, tombstone, params, critsec = "";
+        revref = app.lcs.getRevRef(revid);
+        if(revref && revref.status === "ok" && revref.rev) {
+            return callback(revref); }
+        params = "revid=" + idify(revid);
+        jt.call('GET', "revbyid?" + params, null,
+                 function (foundrevs) {
+                     if(foundrevs.length > 0) {
+                         callback(app.lcs.putRev(foundrevs[0])); }
+                     else {  //should never happen, but treat as deleted
+                         tombstone = { status: "deleted",
+                                       updtime: new Date() };
+                         revs[idify(revid)] = tombstone;
+                         callback(tombstone); } },
+                 app.failf(function (code, errtxt) {
+                     tombstone = { status: String(code) + ": " + errtxt,
+                                   updtime: new Date() };
+                     revs[idify(revid)] = tombstone;
+                     callback(tombstone); }),
+                 critsec, null, [400, 404]);
+    },
+
+
+    putRev: function (revobj) {
+        var revref;
+        revref = app.lcs.getRevRef(revobj);
+        revs[idify(revobj)] = revref;
+        revref.rev = revobj;
+        revref.status = "ok";
+        revref.updtime = new Date();
+        return revref;
+    },
+
+
+    putRevs: function (revobjs) {
+        var i;
+        for(i = 0; revobjs && i < revobjs.length; i += 1) {
+            if(revobjs[i].fetched) {
+                break; }  //skip stats and cursor object
+            app.lcs.putRev(revobjs[i]); }
+    },
+
+
+    //Walk the revrefs and verify each has an associated revlink,
+    //retrieving from the server as needed.  Adds an empty placeholder
+    //revlink if no server info exists.  Also verifies markups from
+    //the current pen ref are reflected in the revlinks.  The changed
+    //parameter switches to true if anything was loaded or updated, and
+    //that triggers the callback to onchangefunc.
+    verifyReviewLinks: function (onchangefunc, changed) {
+        var revid, revref, revids = [], maxq = 20, params, critsec = "";
+        for(revid in revs) {
+            if(revs.hasOwnProperty(revid)) {
+                revref = revs[revid];
+                if(revref && !revref.revlink) {
+                    revids.push(revid); }
+                if(revids.length >= maxq) {
+                    break; } } }
+        if(revids.length > 0) {
+            params = "revids=" + revids.join(",") + 
+                "&" + app.login.authparams();
+            jt.call('GET', "revlinks?" + params, null,
+                     function (revlinks) {
+                         resolveReviewLinks(revids, revlinks);
+                         app.lcs.verifyReviewLinks(onchangefunc, true); },
+                     app.failf(function (code, errtxt) {
+                         jt.err("verifyReviewLinks revlinks call failed " +
+                                code + " " + errtxt); }),
+                     critsec); }
+        else if(revids.length === 0 && changed) {
+            onchangefunc(); }
+    },
+
+
+    verifyCorrespondingLinks: function (rev1, rev2) {
+        var revref1, revref2;
+        if(rev1.penid === rev2.penid) { 
+            return; }  //avoid corresponding with yourself
+        revref1 = app.lcs.getRevRef(jt.instId(rev1));
+        if(revref1.status === "not cached") {
+            revref1 = app.lcs.putRev(rev1); }
+        revref2 = app.lcs.getRevRef(jt.instId(rev2));
+        if(revref2.status === "not cached") {
+            revref2 = app.lcs.putRev(rev2); }
+        if(!revref1.revlink || !revref2.revlink) {
+            setTimeout(function () {
+                app.lcs.verifyReviewLinks(function () {
+                    app.lcs.verifyCorrespondingLinks(rev1, rev2); }); }, 50);
+            return; }
+        verifyCorrespondingLink(revref1, rev2);
+        verifyCorrespondingLink(revref2, rev1);
+    },
+
+
+    checkAllCorresponding: function (review) {
         var params, critsec = "";
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
@@ -316,45 +328,15 @@ app.lcs = (function () {
                  function (revs) {
                      var i;
                      for(i = 0; i < revs.length; i += 1) {
-                         putRev(revs[i]); }
+                         app.lcs.putRev(revs[i]); }
                      checkCachedCorresponding(review); },
                  app.failf(function (code, errtxt) {
                      jt.log("checkAllCorresponding failed " + code + 
                             ": " + errtxt); }),
                  critsec);
-    };
+    }
 
 
-    return {
-        getPenRef: function (penid) {
-            return getPenRef(penid); },
-        getPenFull: function (penid, callback) {
-            getPenFull(penid, callback); },
-        putPen: function (penobj) {
-            return putPen(penobj); },
-        remPen: function (penobj) {
-            remPen(penobj); },
-        getRelRef: function (relid) {
-            return getRelRef(relid); },
-        putRel: function (relobj) {
-            return putRel(relobj); },
-        remRel: function (relobj) {
-            remRel(relobj); },
-        getRevRef: function (revid) {
-            return getRevRef(revid); },
-        getRevFull: function (revid, callback) {
-            getRevFull(revid, callback); },
-        putRev: function (revobj) {
-            return putRev(revobj); },
-        putRevs: function (revobjs) {
-            putRevs(revobjs); },
-        verifyReviewLinks: function (onchangefunc) {
-            verifyReviewLinks(onchangefunc); },
-        verifyCorrespondingLinks: function (rev1, rev2) {
-            verifyCorrespondingLinks(rev1, rev2); },
-        checkAllCorresponding: function (review) {
-            checkAllCorresponding(review); }
-    };
-
+}; //end of returned functions
 }());
 
