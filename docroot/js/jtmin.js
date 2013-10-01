@@ -250,7 +250,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         year = parseInt(str.slice(0, 4), 10);
         month = parseInt(str.slice(5, 7), 10);
         day = parseInt(str.slice(8, 10), 10);
-        date = new Date(year, month, day, 0, 0, 0, 0);
+        date = new Date(year, (month - 1), day, 0, 0, 0, 0);
         return date;
     };
 
@@ -487,6 +487,15 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    //If value is not falsy, then return tval if specified and value
+    //otherwise.  If value is falsy, return undefined.  Useful for
+    //handling html attributes like "checked", "disabled" etc.
+    uo.toru = function (value, tval) {
+        if(value) {
+            return tval || value; }
+    };
+
+
     //Some html attribute names are javascript reserved words and
     //therefore can't be directly used as object labels.  You can
     //quote them or use synonyms.  If I've missed anything generally
@@ -672,7 +681,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //If only the cookie name is provided, then the current value is returned.
     uo.cookie = function (cname, cval, expiredays) {
         var expiration, index;
-        if (cval) {
+        if (cval || expiredays <= 0) {
+            cval = cval || "";
             if (!expiredays) {
                 expiredays = 365;
             }

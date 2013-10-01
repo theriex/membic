@@ -138,7 +138,7 @@ app.rel = (function () {
     relRefPenHTMLFooter = function (direction) {
         var html = "<div id=\"srchpenslinkdiv\">" + 
               "<a id=\"srchpens\" href=\"#findpens\"" + 
-                " onclick=\"app.activity.pensearchdialog();" + 
+                " onclick=\"app.activity.penNameSearchDialog();" + 
                            "return false;\">" +
                 "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
                     " border=\"0\">" +

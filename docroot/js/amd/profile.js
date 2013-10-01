@@ -106,7 +106,7 @@ app.profile = (function () {
                          title: "Show profile for " + name,
                          onclick: jt.fs("app.profile.byprofid('" + id + "')")},
                    name]],
-                 ["span", {id: "penbuttonspan"},
+                 ["span", {id: "penhbuttonspan"},
                   " "]]];
         html = jt.tac2html(html);
         jt.out('centerhdiv', html);

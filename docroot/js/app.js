@@ -197,7 +197,8 @@ var app = {},  //Global container for application level funcs and values
         if(!label) {
             label = value.capitalize(); }
         html = [["input", {type: type, name: name, value: value, id: value,
-                          checked: checked, onchange: jt.fs(chgfstr)}],
+                           checked: jt.toru(checked, "checked"), 
+                           onchange: jt.fs(chgfstr)}],
                 ["label", {fo: value}, label]];
         html = jt.tac2html(html);
         return html;
