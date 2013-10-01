@@ -491,8 +491,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //otherwise.  If value is falsy, return undefined.  Useful for
     //handling html attributes like "checked", "disabled" etc.
     uo.toru = function (value, tval) {
-        if(value) {
-            return tval || value; }
+        if (value) {
+            return tval || value;
+        }
     };
 
 

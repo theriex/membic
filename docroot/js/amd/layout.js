@@ -1,38 +1,39 @@
 /*global setTimeout: false, window: false, document: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.layout = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
         topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
         dndState = null,
 
 
-    closeDialog = function () {
-        jt.out('dlgdiv', "");
-        jt.byId('dlgdiv').style.visibility = "hidden";
-        app.layout.adjust();
-        app.onescapefunc = null;
-    },
-
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     displayDocContent = function (url, html) {
-        var bodyidx;
+        var output = [], bodyidx;
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
         bodyidx = html.indexOf("<body>");
         if(bodyidx > 0) {
             html = html.slice(bodyidx + "<body>".length,
                               html.indexOf("</body")); }
-        html = "<div id=\"closeline\">" +
-          "<a id=\"closedlg\" href=\"#close\"" +
-            " onclick=\"app.layout.closeDialog();return false\">" + 
-                 "&lt;close&nbsp;&nbsp;X&gt;</a>" +
-          "</div>" + html;
+        output.push(["div", {id: "closeline"},
+                     ["a", {id: "closedlg", href: "#close",
+                            onclick: jt.fs("app.layout.closeDialog()")},
+                      "&lt;close&nbsp;&nbsp;X&gt;"]]);
+        output.push(html);
+        html = jt.tac2html(output);
         jt.out('dlgdiv', html);
-        app.onescapefunc = closeDialog;
+        app.onescapefunc = app.layout.closeDialog;
     },
 
 
@@ -44,26 +45,10 @@ app.layout = (function () {
     },
 
 
-    displayDoc = function (url) {
-        var critsec = "", html = "Fetching " + url + " ...";
-        window.scrollTo(0,0);
-        jt.out('dlgdiv', html);
-        jt.byId('dlgdiv').style.visibility = "visible";
-        if(url.indexOf(":") < 0) {
-            url = relativeToAbsolute(url); }
-        jt.request('GET', url, null,
-                   function (resp) {
-                       displayDocContent(url, resp); },
-                   function (code, errtxt) {
-                       displayDocContent(url, errtxt); },
-                   critsec);
-    },
-
-
     attachDocLinkClick = function (node, link) {
         jt.on(node, "click", function (e) {
             jt.evtend(e);
-            displayDoc(link); });
+            app.layout.displayDoc(link); });
     },
 
 
@@ -77,29 +62,6 @@ app.layout = (function () {
             //href may have been resolved from relative to absolute...
             if(href && href.indexOf("docs/") >= 0) {
                 attachDocLinkClick(node, href); } }
-    },
-
-
-    //initialize the logged-in content display div areas.  Basically
-    //contentdiv is subdivided into chead and cmain.
-    haveContentDivAreas = function () {
-        return jt.byId('chead') && jt.byId('cmain');
-    },
-
-
-    initContentDivAreas = function () {
-        var html = "<div id=\"chead\"> </div>" +
-                   "<div id=\"cmain\"> </div>";
-        jt.out('contentdiv', html);
-    },
-
-
-    initContent = function () {
-        if(!haveContentDivAreas()) {
-            initContentDivAreas();
-            app.profile.updateHeading();
-            app.activity.updateHeading();
-            app.review.updateHeading(); }
     },
 
 
@@ -137,50 +99,6 @@ app.layout = (function () {
             altimg = "url('../img/blank.png')";
             jt.byId('bodyid').style.backgroundImage = altimg;
             jt.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
-    },
-
-
-    dndStart = function (event) {
-        if(event) {
-            dndState = { domobj: event.target,
-                         screenX: event.screenX,
-                         screenY: event.screenY };
-            jt.log("dndStart " + dndState.domobj + " " + 
-                    dndState.screenX + "," + dndState.screenY);
-            if(event.dataTransfer && event.dataTransfer.setData) {
-                event.dataTransfer.setData("text/plain", "general drag"); } }
-    },
-
-
-    dndEnd = function (event) {
-        if(event && dndState) {
-            jt.log("dndEnd called");
-            dndState.ended = true; }
-    },
-                
-
-    dndOver = function (event) {
-        if(event && dndState && (!dndState.ended || dndState.dropped)) {
-            //jt.log("dndOver preventing default cancel");
-            event.preventDefault(); }
-    },
-
-
-    dndDrop = function (event) {
-        var diffX, diffY, domobj, currX, currY;
-        jt.log("dndDrop called");
-        if(event && dndState) {
-            dndState.dropped = true;
-            diffX = event.screenX - dndState.screenX;
-            diffY = event.screenY - dndState.screenY;
-            domobj = dndState.domobj;
-            jt.log("dropping " + domobj + " moved " + diffX + "," + diffY);
-            currX = domobj.offsetLeft;
-            currY = domobj.offsetTop;
-            domobj.style.left = String(currX + diffX) + "px";
-            domobj.style.top = String(currY + diffY) + "px";
-            event.preventDefault();
-            event.stopPropagation(); }
     },
 
 
@@ -227,35 +145,120 @@ app.layout = (function () {
     };
 
 
-    return {
-        init: function () {
-            jt.on(window, 'resize', fullContentHeight);
-            localDocLinks();
-            fullContentHeight();
-            fixTextureCover(); },
-        haveContentDivAreas: function () {
-            return haveContentDivAreas(); },
-        initContentDivAreas: function () {
-            initContentDivAreas(); },
-        initContent: function () {
-            initContent(); },
-        adjust: function () {
-            fullContentHeight(); },
-        displayDoc: function (url) {
-            displayDoc(url); },
-        closeDialog: function () {
-            closeDialog(); },
-        setTopPaddingAndScroll: function (val) {
-            topPaddingAndScroll = val + topextra; },
-        dragstart: function (event) {
-            dndStart(event); },
-        dragend: function (event) {
-            dndEnd(event); },
-        bodydragover: function (event) {
-            dndOver(event); },
-        bodydrop: function (event) {
-            dndDrop(event); }
-    };
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
 
+    init: function () {
+        jt.on(window, 'resize', fullContentHeight);
+        localDocLinks();
+        fullContentHeight();
+        fixTextureCover();
+    },
+
+
+    haveContentDivAreas: function () {
+        return jt.byId('chead') && jt.byId('cmain');
+    },
+
+
+    initContentDivAreas: function () {
+        var html = "<div id=\"chead\"> </div>" +
+                   "<div id=\"cmain\"> </div>";
+        jt.out('contentdiv', html);
+    },
+
+
+    //initialize the logged-in content display div areas.  Basically
+    //contentdiv is subdivided into chead and cmain.
+    initContent: function () {
+        if(!app.layout.haveContentDivAreas()) {
+            app.layout.initContentDivAreas();
+            app.profile.updateHeading();
+            app.activity.updateHeading();
+            app.review.updateHeading(); }
+    },
+
+
+    adjust: function () {
+        fullContentHeight();
+    },
+
+
+    displayDoc: function (url) {
+        var critsec = "", html = "Fetching " + url + " ...";
+        window.scrollTo(0,0);
+        jt.out('dlgdiv', html);
+        jt.byId('dlgdiv').style.visibility = "visible";
+        if(url.indexOf(":") < 0) {
+            url = relativeToAbsolute(url); }
+        jt.request('GET', url, null,
+                   function (resp) {
+                       displayDocContent(url, resp); },
+                   function (code, errtxt) {
+                       displayDocContent(url, errtxt); },
+                   critsec);
+    },
+
+
+    closeDialog: function () {
+        jt.out('dlgdiv', "");
+        jt.byId('dlgdiv').style.visibility = "hidden";
+        app.layout.adjust();
+        app.onescapefunc = null;
+    },
+
+
+    setTopPaddingAndScroll: function (val) {
+        topPaddingAndScroll = val + topextra;
+    },
+
+
+    dragstart: function (event) {
+        if(event) {
+            dndState = { domobj: event.target,
+                         screenX: event.screenX,
+                         screenY: event.screenY };
+            jt.log("dragstart " + dndState.domobj + " " + 
+                    dndState.screenX + "," + dndState.screenY);
+            if(event.dataTransfer && event.dataTransfer.setData) {
+                event.dataTransfer.setData("text/plain", "general drag"); } }
+    },
+
+
+    dragend: function (event) {
+        if(event && dndState) {
+            jt.log("dragend called");
+            dndState.ended = true; }
+    },
+
+
+    bodydragover: function (event) {
+        if(event && dndState && (!dndState.ended || dndState.dropped)) {
+            //jt.log("dndOver preventing default cancel");
+            event.preventDefault(); }
+    },
+
+
+    bodydrop: function (event) {
+        var diffX, diffY, domobj, currX, currY;
+        jt.log("bodydrop called");
+        if(event && dndState) {
+            dndState.dropped = true;
+            diffX = event.screenX - dndState.screenX;
+            diffY = event.screenY - dndState.screenY;
+            domobj = dndState.domobj;
+            jt.log("dropping " + domobj + " moved " + diffX + "," + diffY);
+            currX = domobj.offsetLeft;
+            currY = domobj.offsetTop;
+            domobj.style.left = String(currX + diffX) + "px";
+            domobj.style.top = String(currY + diffY) + "px";
+            event.preventDefault();
+            event.stopPropagation(); }
+    }
+
+
+};  //end of returned functions
 }());
 
