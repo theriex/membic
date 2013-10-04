@@ -1,6 +1,6 @@
 /*global alert: false, confirm: false, setTimeout: false, window: false, document: false, app: false, jt: false, JSON: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 //////////////////////////////////////////////////////////////////////
 // Display a pen name and provide for updating settings.  Cached data
@@ -27,10 +27,24 @@
 app.profile = (function () {
     "use strict";
 
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
     var greytxt = "#999999",
         unspecifiedCityText = "City not specified",
         profpenref,
+        authtypes = { mid: "wdydfun",
+                      gsid: "Google+",
+                      fbid: "Facebook",
+                      twid: "Twitter",
+                      ghid: "GitHub" },
 
+
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     verifyProfileState = function (penref) {
         if(!penref) {
@@ -61,33 +75,16 @@ app.profile = (function () {
     },
 
 
-    resetStateVars = function () {
-        profpenref = null;
-    },
-
-
-    verifyStateVariableValues = function (pen) {
-        profpenref = app.lcs.getPenRef(pen);
-        verifyProfileState(profpenref);
-    },
-
-
-    createOrEditRelationship = function () {
-        app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen);
-    },
-
-
     updateTopActionDisplay = function (pen) {
         var html;
         if(!jt.byId('homepenhdiv')) {
             app.login.updateAuthentDisplay(); }
-        html = "<div class=\"topnavitemdiv\">" +
-            jt.imgntxt("profile.png", "",
-                        "app.profile.display()",
-                        "#view=profile&profid=" + jt.instId(pen),
-                        "Show profile for " + pen.name + " (you)") +
-            "</div>";
-        jt.out('homepenhdiv', html);
+        html = ["div", {cla: "topnavitemdiv"},
+                jt.imgntxt("profile.png", "",
+                           "app.profile.display()",
+                           "#view=profile&profid=" + jt.instId(pen),
+                           "Show profile for " + pen.name + " (you)")];
+        jt.out('homepenhdiv', jt.tac2html(html));
         html = jt.imgntxt("settings.png", "", 
                            "app.profile.settings()",
                            "#Settings",
@@ -146,20 +143,11 @@ app.profile = (function () {
     },
 
 
-    setPenNameFromInput = function (pen) {
-        var pennamein = jt.byId('pennamein');
-        if(!pen) {
-            pen = profpenref.pen; }
-        if(pennamein) {
-            pen.name = pennamein.value; }
-    },
-
-
     savePenNameSettings = function (e) {
         var pen;
         jt.evtend(e);
         pen = app.pen.currPenRef().pen;
-        setPenNameFromInput(pen);
+        app.profile.readPenNameIn(pen);
         app.skinner.save(pen);
         app.pen.updatePen(pen,
                           function () {
@@ -170,111 +158,77 @@ app.profile = (function () {
     },
 
 
-    cancelPenNameSettings = function (actionTxt) {
-        app.skinner.cancel();
-        app.layout.closeDialog();
-        if(actionTxt && typeof actionTxt === "string") {
-            //nuke the main display as we are about to rebuild contents
-            jt.out('centerhdiv', "");
-            jt.out('cmain', actionTxt); }
-    },
-
-
-    nameForAuthType = function (authtype) {
-        switch(authtype) {
-        case "mid": return "wdydfun";
-        case "gsid": return "Google+";
-        case "fbid": return "Facebook";
-        case "twid": return "Twitter";
-        case "ghid": return "GitHub"; }
-    },
-
-
     displayAuthSettings = function (domid, pen) {
-        var atname, html;
-        html = "<div id=\"accountdiv\">" + app.login.loginInfoHTML(pen) + 
-            "</div>" +
-            "Access \"" + pen.name + "\" via: " +
-            "<table>";
-        //wdydfun
-        atname = nameForAuthType("mid");
-        html += "<tr><td><input type=\"checkbox\" name=\"aamid\"" +
-            " value=\"" + atname + "\" id=\"aamid\"" +
-            " onchange=\"app.profile.toggleAuthChange('mid','" + 
-                             domid + "');return false;\"";
-        if(jt.isId(pen.mid)) {
-            html += " checked=\"checked\""; }
-        html += "/><label for=\"aamid\">" + atname + "</label></td></tr>";
-        html += "<tr>";
-        //Facebook
-        atname = nameForAuthType("fbid");
-        html += "<td><input type=\"checkbox\" name=\"aafbid\"" +
-            " value=\"" + atname + "\" id=\"aafbid\"" +
-            " onchange=\"app.profile.toggleAuthChange('fbid','" + 
-                             domid + "');return false;\"";
-        if(jt.isId(pen.fbid)) {
-            html += " checked=\"checked\""; }
-        html += "/><label for=\"aafbid\">" + atname + "</label></td>";
-        //Twitter
-        atname = nameForAuthType("twid");
-        html += "<td><input type=\"checkbox\" name=\"aatwid\"" +
-            " value=\"" + atname + "\" id=\"aatwid\"" +
-            " onchange=\"app.profile.toggleAuthChange('twid','" + 
-                             domid + "');return false;\"";
-        if(jt.isId(pen.twid)) {
-            html += " checked=\"checked\""; }
-        html += "/><label for=\"aatwid\">" + atname + "</label></td>";
-        html += "</tr><tr>";
-        //Google+
-        atname = nameForAuthType("gsid");
-        html += "<td><input type=\"checkbox\" name=\"aagsid\"" +
-            " value=\"" + atname + "\" id=\"aagsid\"" +
-            " onchange=\"app.profile.toggleAuthChange('gsid','" + 
-                             domid + "');return false;\"";
-        if(jt.isId(pen.gsid)) { 
-            html += " checked=\"checked\""; }
-        html += "/><label for=\"aagsid\">" + atname + "</label></td>";
-        //GitHub
-        atname = nameForAuthType("ghid");
-        html += "<td><input type=\"checkbox\" name=\"aaghid\"" +
-            " value=\"" + atname + "\" id=\"aaghid\"" +
-            " onchange=\"app.profile.toggleAuthChange('ghid','" + 
-                             domid + "');return false;\"";
-        if(jt.isId(pen.ghid)) { 
-            html += " checked=\"checked\""; }
-        html += "/><label for=\"aaghid\">" + atname + "</label></td>";
-        html += "</tr></table>";
-        jt.out(domid, html);
+        var html;
+        html = [
+            ["div", {id: "accountdiv"},
+             app.login.loginInfoHTML(pen)],
+            "Access \"" + pen.name + "\" via: ",
+            ["table",
+             [["tr",
+               ["td",  //native app
+                [["input", {type: "checkbox", name: "aamid", id: "aamid",
+                            value: authtypes.mid,
+                            checked: jt.toru(jt.isId(pen.mid), "checked"),
+                            onchange: jt.fs("app.profile.toggleAuth('" +
+                                            "mid','" + domid + "')")}],
+                 ["label", {fo: "aamid"}, authtypes.mid]]]],
+              ["tr",
+               [["td",  //Facebook
+                 [["input", {type: "checkbox", name: "aafbid", id: "aafbid",
+                             value: authtypes.fbid,
+                             checked: jt.toru(jt.isId(pen.fbid), "checked"),
+                             onchange: jt.fs("app.profile.toggleAuth('" +
+                                             "fbid','" + domid + "')")}],
+                  ["label", {fo: "aafbid"}, authtypes.fbid]]],
+                ["td",  //Twitter
+                 [["input", {type: "checkbox", name: "aatwid", id: "aatwid",
+                             value: authtypes.twid,
+                             checked: jt.toru(jt.isId(pen.twid), "checked"),
+                             onchange: jt.fs("app.profile.toggleAuth('" +
+                                             "twid','" + domid + "')")}],
+                  ["label", {fo: "aatwid"}, authtypes.twid]]]]],
+              ["tr",
+               [["td",  //Google+
+                 [["input", {type: "checkbox", name: "aagsid", id: "aagsid",
+                             value: authtypes.gsid,
+                             checked: jt.toru(jt.isId(pen.gsid), "checked"),
+                             onchange: jt.fs("app.profile.toggleAuth('" +
+                                             "gsid','" + domid + "')")}],
+                  ["label", {fo: "aagsid"}, authtypes.gsid]]],
+                ["td",  //GitHub
+                 [["input", {type: "checkbox", name: "aaghid", id: "aaghid",
+                             value: authtypes.ghid,
+                             checked: jt.toru(jt.isId(pen.ghid), "checked"),
+                             onchange: jt.fs("app.profile.toggleAuth('" +
+                                             "ghid','" + domid + "')")}],
+                  ["label", {fo: "aaghid"}, authtypes.ghid]]]]]]]];
+        jt.out(domid, jt.tac2html(html));
     },
 
 
     addMORAuth = function (domid, pen) {
-        var html = "<form action=\"" + app.secsvr + "/loginid\"" +
-                        " enctype=\"multipart/form-data\" method=\"post\">" +
-        "<table>" +
-          "<tr>" + 
-            "<td colspan=\"2\">Adding native authorization to " + pen.name + 
-            ":</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td align=\"right\">username</td>" +
-            "<td align=\"left\">" +
-              "<input type=\"text\" id=\"userin\" name=\"userin\"" + 
-                    " size=\"20\"/></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td align=\"right\">password</td>" +
-            "<td align=\"left\">" +
-              "<input type=\"password\" id=\"passin\" name=\"passin\"" + 
-                    " size=\"20\"/></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
-              "<input type=\"submit\" value=\"Log in\">" +
-            "</td>" +
-          "</tr>" +
-        "</table></form>";
-        jt.out(domid, html);
+        var html;
+        html = ["form", {action: app.secsvr + "/loginid",
+                         enctype: "multipart/form-data", method: "post"},
+                ["table",
+                 [["tr", 
+                   ["td", {colspan: 2}, 
+                    "Adding native authorization to " + pen.name]],
+                  ["tr",
+                   [["td", {align: "right"}, "username"],
+                    ["td", {align: "left"},
+                     ["input", {type: "text", id: "userin", name: "userin",
+                                size: 20}]]]],
+                  ["tr",
+                   [["td", {align: "right"}, "password"],
+                    ["td", {align: "left"}, 
+                     ["input", {type: "password", id: "passin", name: "passin",
+                                size: 20}]]]],
+                  ["tr",
+                   ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
+                    ["input", {type: "submit", value: "Log in"}]]]]]];
+        jt.out(domid, jt.tac2html(html));
     },
 
 
@@ -298,7 +252,7 @@ app.profile = (function () {
                 jt.byId("aa" + authtype).checked = true;
                 return;  } 
             if(confirm("Are you sure you want to remove access to this" +
-                       " Pen Name from " + nameForAuthType(authtype) + "?")) {
+                       " Pen Name from " + authtypes[authtype] + "?")) {
                 jt.out(domid, "Updating...");
                 previd = pen[authtype];
                 pen[authtype] = 0;
@@ -328,83 +282,60 @@ app.profile = (function () {
     },
 
 
-    changeToSelectedPen = function () {
-        var i, sel = jt.byId('penselect'), temp = "";
-        for(i = 0; i < sel.options.length; i += 1) {
-            if(sel.options[i].selected) {
-                //do not call cancelPenNameSettings before done accessing
-                //the selection elementobjects or IE8 has issues.
-                if(sel.options[i].id === 'newpenopt') {
-                    cancelPenNameSettings("Creating new pen name...");
-                    app.pen.newPenName(app.profile.display); }
-                else {
-                    temp = sel.options[i].value;
-                    cancelPenNameSettings("Switching pen names...");
-                    app.pen.selectPenByName(temp); }
-                break; } }
-    },
-
-
     penSelectHTML = function (pen) {
-        var html, pens = app.pen.getPenNames(), i;
-        html = "<div id=\"penseldiv\">" +
-            "<span class=\"headingtxt\">Writing as </span>" +
-            "<select id=\"penselect\"" + 
-                   " onchange=\"app.profile.switchPen();return false;\">";
+        var opts = [], html, pens = app.pen.getPenNames(), i;
         for(i = 0; i < pens.length; i += 1) {
-            html += "<option id=\"" + jt.instId(pens[i]) + "\"";
-            if(pens[i].name === pen.name) {
-                html += " selected=\"selected\""; }
-            html += ">" + pens[i].name + "</option>"; }
-        html += "<option id=\"newpenopt\">New Pen Name</option>" +
-            "</select>" + "&nbsp;" + 
-            "<button type=\"button\" id=\"penselectok\"" + 
-            " onclick=\"app.profile.switchPen();return false;\"" +
-            ">go</button>" +
-            "</div>";
-        return html;
+            opts.push(["option", {id: jt.instId(pens[i]),
+                                  selected: jt.toru((pens[i].name === pen.name),
+                                                    "selected")},
+                       pens[i].name]); }
+        opts.push(["option", {id: "newpenopt"}, "New Pen Name"]);
+        html = ["div", {id: "penseldiv"},
+                [["span", {cla: "headingtxt"}, 
+                  ["Writing as ",
+                   ["select", {id: "penselect",
+                               onchange: jt.fs("app.profile.switchPen()")},
+                    opts]]],
+                 "&nbsp;",
+                 ["button", {type: "button", id: "penselectok",
+                             onclick: jt.fs("app.profile.switchPen()")},
+                  "go"]]];
+        return jt.tac2html(html);
     },
 
 
     changeSettings = function (pen) {
-        var html = "<div class=\"dlgclosex\">" +
-            "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"app.profile.cancelPenNameSettings();return false;\"" +
-            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
-            "<div class=\"floatclear\"></div>" +
-          "<table>" +
-            "<tr>" +
-              "<td colspan=\"2\" align=\"left\" id=\"pensettitletd\">" +
-                penSelectHTML(pen) + "</td>" +
-            "</tr>" +
-            "<tr>" +
-              "<td colspan=\"2\" id=\"settingsmsgtd\"></td>" +
-            "</tr>" +
-            "<tr>" +
-              "<td rowspan=\"2\" align=\"right\" valign=\"top\">" + 
-                "<img src=\"img/penname.png\" alt=\"Pen Name\"/></td>" +
-              "<td align=\"left\">" +
-                "<input type=\"text\" id=\"pennamein\" size=\"25\"" + 
-                      " value=\"" + pen.name + "\"/></td>" +
-            "</tr>" +
-            "<tr>" +
-              //td from previous row
-              "<td id=\"settingsauthtd\"></td>" +
-            "</tr>" +
-            "<tr>" +
-              "<td colspan=\"2\" id=\"settingsskintd\"></td>" +
-            "</tr>" +
-            "<tr>" + 
-              "<td colspan=\"2\" id=\"consvcstd\"></td>" +
-            "</tr>" +
-            "<tr>" +
-              "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
-                "<button type=\"button\" id=\"savebutton\">Save</button>" +
-              "</td>" +
-            "</tr>" +
-          "</table>";
-        jt.out('dlgdiv', html);
-        jt.on('pennamein', 'change', app.profile.penNameChange);
+        var html;
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.profile.cancelPenNameSettings()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["table",
+                 [["tr",
+                   ["td", {colspan: 2, align: "left", id: "pensettitletd"},
+                    penSelectHTML(pen)]],
+                  ["tr",
+                   ["td", {colspan: 2, id: "settingsmsgtd"}]],
+                  ["tr",
+                   [["td", {rowspan: 2, align: "right", valign: "top"},
+                     ["img", {src: "img/penname.png", alt: "Pen Name"}]],
+                    ["td", {align: "left"},
+                     ["input", {type: "text", id: "pennamein", size: 25,
+                                onchange: jt.fs("app.profile.readPenNameIn()"),
+                                value: pen.name}]]]],
+                  ["tr",
+                   //td from previous row extends into here
+                   ["td", {id: "settingsauthtd"}]],
+                  ["tr",
+                   ["td", {colspan: 2, id: "settingsskintd"}]],
+                  ["tr",
+                   ["td", {colspan: 2, id: "consvcstd"}]],
+                  ["tr",
+                   ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
+                    ["button", {type: "button", id: "savebutton"},
+                     "Save"]]]]]];
+        jt.out('dlgdiv', jt.tac2html(html));
         jt.on('savebutton', 'click', savePenNameSettings);
         displayAuthSettings('settingsauthtd', pen);
         app.services.display('consvcstd', pen);
@@ -412,26 +343,7 @@ app.profile = (function () {
         jt.byId('dlgdiv').style.visibility = "visible";
         if(jt.isLowFuncBrowser()) {
             jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        app.onescapefunc = cancelPenNameSettings;
-    },
-
-
-    addMORAuthId = function (pen, mid) {
-        var previd;
-        if(!mid) {
-            jt.err("No account ID received.");
-            app.profile.display(); }
-        else {
-            previd = pen.mid;
-            pen.mid = mid;
-            app.pen.updatePen(pen,
-                              function (updpen) {
-                                  changeSettings(updpen); },
-                              function (code, errtxt) {
-                                  jt.err("addMORAuthId error " +
-                                          code + ": " + errtxt);
-                                  pen.mid = previd;
-                                  app.profile.display(); }); }
+        app.onescapefunc = app.profile.cancelPenNameSettings;
     },
 
 
@@ -487,47 +399,6 @@ app.profile = (function () {
     },
 
 
-    updateInviteInfo = function () {
-        jt.out('mailbspan', mailButtonHTML());
-    },
-
-
-    displayInvitationDialog = function () {
-        var html;
-        html = "<div class=\"dlgclosex\">" +
-            "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"app.layout.closeDialog();return false;\"" +
-            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
-            "<div class=\"floatclear\"></div>" +
-            "<div class=\"headingtxt\">" + 
-            "Build your community... Invite a friend</div>" +
-          "<table class=\"formstyle\">" +
-            "<tr><td id=\"invintrotd\" style=\"width:400px;\">" +
-              "<p>Know someone whose taste you trust?<br/>" + 
-              "Want to share your reviews?</p>" +
-              "<p>What types of reviews " +
-              "would you be most interested in seeing from them?</p>" +
-            "</td></tr>" +
-            "<tr><td id=\"invtypestd\">" + 
-              app.review.reviewTypeCheckboxesHTML("invrevcb", 
-                                                  "app.profile.chginvite") +
-            "</td></tr>" +
-            "<tr><td>" + 
-              "Invite your friend to join:" +
-            "</td></tr>" +
-            "<tr><td align=\"center\">" + 
-              "<span id=\"mailbspan\"></span>" +
-            "</td></tr>" +
-          "</table>";
-        jt.out('dlgdiv', html);
-        jt.byId('dlgdiv').style.visibility = "visible";
-        if(jt.isLowFuncBrowser()) {
-            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        app.onescapefunc = app.layout.closeDialog;
-        updateInviteInfo();
-    },
-
-
     badgeDispHTML = function (pen) {
         var html, i, reviewTypes, typename;
         html = "";
@@ -541,118 +412,18 @@ app.profile = (function () {
     },
 
 
-    penListItemHTML = function (pen) {
-        var penid = jt.instId(pen), picuri, hash, linktitle, html;
-        hash = jt.objdata({ view: "profile", profid: penid });
-        linktitle = jt.ellipsis(pen.shoutout, 75);
-        if(!linktitle) {  //do not encode pen name here.  No "First%20Last"..
-            linktitle = "View profile for " + pen.name; }
-        html = "<li>" +
-            "<a href=\"#" + hash + "\"" +
-            " onclick=\"app.profile.byprofid('" + penid + "');return false;\"" +
-            " title=\"" + linktitle + "\">";
-        //empytprofpic.png looks like big checkboxes, use blank instead
-        picuri = "img/blank.png";
-        if(pen.profpic) {
-            picuri = "profpic?profileid=" + penid; }
-        html += "<img class=\"srchpic\" src=\"" + picuri + "\"" + 
-                    " border=\"0\"/>" + "&nbsp;" + 
-            "<span class=\"penfont\">" + pen.name + 
-            "</span>" + "</a>";
-        if(pen.city) {
-            html += " <span class=\"smalltext\">(" + pen.city + ")</span>"; }
-        html += badgeDispHTML(pen);
-        html += "</li>";
-        return html;
-    },
-
-
     findOrLoadPen = function (penid, callback) {
         app.lcs.getPenFull(penid, function (penref) {
             callback(penref.pen); });
     },
 
 
-    tablink = function (text, funcstr) {
-        var html;
-        if(funcstr.indexOf(";") < 0) {
-            funcstr += ";"; }
-        html = "<a href=\"#" + text + "\"" +
-                 " title=\"Click to see " + text + "\"" +
-                 " onclick=\"" + funcstr + "return false;\">" + 
-               text + "</a>";
-        return html;
-    },
-
-
-    readReview = function (revid) {
-        var revobj;
-        revobj = app.lcs.getRevRef(revid).rev;
-        //Make some noise if you can't find it rather than being a dead link
-        if(!revobj) {
-            jt.err("readReview " + revid + " not found");
-            return; }
-        app.history.checkpoint({ view: "review", mode: "display",
-                                 revid: revid });
-        app.review.setCurrentReview(revobj);
-        app.review.displayRead();
-    },
-
-
-    reviewItemHTML = function (revobj, penNameStr) {
-        var revid, type, linkref, linkclass, html;
-        //review item line
-        revid = jt.instId(revobj);
-        type = app.review.getReviewTypeByValue(revobj.revtype);
-        linkref = "statrev/" + revid;
-        linkclass = app.review.foundHelpful(revid)? "rslcbold" : "rslc";
-        html = "<li>" + app.review.starsImageHTML(revobj.rating) + 
-            app.review.badgeImageHTML(type) + "&nbsp;" +
-            "<a id=\"lihr" + revid + "\" href=\"" + linkref + "\"" +
-              " onclick=\"app.profile.readReview('" + revid + "');" + 
-                         "return false;\"" +
-              " class=\"" + linkclass + "\"" +
-              " title=\"See full review\">";
-        if(type.subkey) {
-            html += "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
-                jt.ellipsis(revobj[type.subkey], 40); }
-        else {
-            html += jt.ellipsis(revobj[type.key], 60); }
-        html += "</a>";
-        if(revobj.url) {
-            html += " &nbsp;" + app.review.graphicAbbrevSiteLink(revobj.url); }
-        //review meta line
-        html += "<div class=\"revtextsummary\">";
-        if(penNameStr) {
-            linkref = jt.objdata({ view: "profile", profid: revobj.penid });
-            html += "review by " + 
-                "<a href=\"#" + linkref + "\"" +
-                 " onclick=\"app.profile.byprofid('" + revobj.penid + "');" +
-                            "return false;\"" +
-                 " title=\"Show profile for " + jt.ndq(penNameStr) + "\"" +
-                ">" + penNameStr + "</a>"; }
-        if(revobj.keywords) {
-            if(penNameStr) {
-                html += ": "; }
-            html += jt.ellipsis(revobj.keywords, 100); }
-        html += app.review.linkCountHTML(revid);
-        html += "</div>";
-        //review description line
-        if(revobj.text) {
-            html += "<div class=\"revtextsummary\">" + 
-                jt.ellipsis(revobj.text, 255) + "</div>"; }
-        html += "</li>";
-        return html;
-    },
-
-
     displayRecentReviews = function (rrs, reviews) {
-        var i, html, fetched;
-        html = "<ul class=\"revlist\">";
+        var revitems = [], i, text, html, fetched;
         if(!rrs.results) {
             rrs.results = []; }
         for(i = 0; i < rrs.results.length; i += 1) {
-            html += reviewItemHTML(rrs.results[i]); }
+            revitems.push(app.profile.reviewItemHTML(rrs.results[i])); }
         if(reviews) {  //have fresh search results
             rrs.cursor = "";
             for(i = 0; i < reviews.length; i += 1) {
@@ -660,34 +431,36 @@ app.profile = (function () {
                     fetched = reviews[i].fetched;
                     if(typeof fetched === "number" && fetched >= 0) {
                         rrs.total += reviews[i].fetched;
-                        html += "<div class=\"sumtotal\">" +
-                            rrs.total + " reviews searched</div>"; }
+                        revitems.push(["div", {cla: "sumtotal"},
+                                       String(rrs.total) + 
+                                       " reviews searched"]); }
                     if(reviews[i].cursor) {
                         rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
                 app.lcs.putRev(reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
-                html += reviewItemHTML(reviews[i]); } }
+                revitems.push(app.profile.reviewItemHTML(reviews[i])); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
-            html += "<li>No recent reviews.";
+            text = "No recent reviews.";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-                html += " " + app.review.reviewLinkHTML(); }
-            html += "</li>"; }
-        html += "</ul>";
+                text += " " + app.review.reviewLinkHTML(); }
+            revitems.push(["li", text]); }
+        html = [];
+        html.push(["ul", {cla: "revlist"}, revitems]);
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
                 if(rrs.total < 2000) {  //auto-repeat search
                     setTimeout(app.profile.revsmore, 10); } 
                 else {
-                    html += "No recent reviews found, only batch updates."; } }
+                    html.push("No recent reviews found" + 
+                              ", only batch updates."); } }
             else {
-                html += "<a href=\"#continuesearch\"" +
-                          " onclick=\"app.profile.revsmore();" +
-                                     "return false;\"" +
-                          " title=\"More reviews\"" + 
-                    ">more reviews...</a>"; } }
-        jt.out('profcontdiv', html);
+                html.push(["a", {href: "#continuesearch",
+                                 onclick: jt.fs("app.profile.revsmore()"),
+                                 title: "More reviews"},
+                           "more reviews..."]); } }
+        jt.out('profcontdiv', jt.tac2html(html));
         app.layout.adjust();
         setTimeout(function () {
             app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
@@ -736,7 +509,7 @@ app.profile = (function () {
         if(clickfuncstr && clickfuncstr.indexOf("Top") < 0) {
             prefixstr = "20+ "; }
         pen = profpenref.pen;
-        html = "";
+        html = [];
         app.pen.deserializeFields(pen);
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
@@ -752,41 +525,36 @@ app.profile = (function () {
                     label = String(pen.top20s[typename].length) + " " + 
                         reviewTypes[i].type.capitalize() + " reviews.";
                     dispclass = "reviewbadge"; } }
-            html += "<img" + 
-                " class=\"" + dispclass + "\"" +
-                " src=\"img/" + reviewTypes[i].img + "\"" +
-                " title=\"" + label + "\"" +
-                " alt=\"" + label + "\"" +
-                " onclick=\"" + clickfuncstr + "('" + typename + "');" +
-                           "return false;\"" +
-                "/>"; }
-        return html;
+            html.push(["img", {cla: dispclass, 
+                               src: "img/" + reviewTypes[i].img,
+                               title: label, alt: label,
+                               onclick: jt.fs(clickfuncstr + "('" + 
+                                              typename + "')")}]); }
+        return jt.tac2html(html);
     },
 
 
     displayBest = function () {
-        var state, html, revs, i, revref;
+        var state, revs = [], text, revitems = [], html, i, revref;
         state = profpenref.profstate;
-        html = revTypeSelectorHTML("app.profile.showTopRated");
-        revs = [];
         if(profpenref.pen.top20s) {
             revs = profpenref.pen.top20s[state.revtype] || []; }
-        html += "<ul class=\"revlist\">";
         if(revs.length === 0) {
-            html += "<li>No top rated " + state.revtype + " reviews.";
+            text = "No top rated " + state.revtype + " reviews.";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-                html += " " + app.review.reviewLinkHTML(); }
-            html += "</li>"; }
+                text += " " + app.review.reviewLinkHTML(); }
+            revitems.push(["li", text]); }
         for(i = 0; i < revs.length; i += 1) {
             revref = app.lcs.getRevRef(revs[i]);
             if(revref.rev) {
-                html += reviewItemHTML(revref.rev); }
+                revitems.push(app.profile.reviewItemHTML(revref.rev)); }
             //if revref.status deleted or other error, then just skip it
             else if(revref.status === "not cached") {
-                html += "<li>Fetching review " + revs[i] + "...</li>";
+                revitems.push(["li", "Fetching review " + revs[i] + "..."]);
                 break; } }
-        html += "</ul>";
-        jt.out('profcontdiv', html);
+        html = [revTypeSelectorHTML("app.profile.showTopRated"),
+                ["ul", {cla: "revlist"}, revitems]];
+        jt.out('profcontdiv', jt.tac2html(html));
         app.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
             app.lcs.getRevFull(revs[i], displayBest); }
@@ -823,24 +591,24 @@ app.profile = (function () {
 
 
     listAllRevs = function (results) {
-        var html, i, state = profpenref.profstate.allRevsState;
-        html = "<ul class=\"revlist\">";
+        var revitems = [], html, i, state = profpenref.profstate.allRevsState;
         for(i = 0; i < state.revs.length; i += 1) {
-            html += reviewItemHTML(state.revs[i]); }
+            revitems.push(app.profile.reviewItemHTML(state.revs[i])); }
         if(!results || results.length === 0) {
             results = [ { "fetched": 0, "cursor": "" } ]; }
         state.cursor = "";  //used, so reset
         for(i = 0; i < results.length; i += 1) {
             if(typeof results[i].fetched === "number") {
                 state.total += results[i].fetched;
-                html += "<div class=\"sumtotal\">" +
-                    state.total + " reviews searched</div>";
+                revitems.push(["div", {cla: "sumtotal"},
+                               String(state.total) + " reviews searched"]);
                 if(results[i].cursor) {
                     state.cursor = results[i].cursor; }
                 break; }  //leave i at its current value
             state.revs.push(results[i]);
-            html += reviewItemHTML(results[i]); }
-        html += "</ul>";
+            revitems.push(app.profile.reviewItemHTML(results[i])); }
+        html = [];
+        html.push(["ul", {cla: "revlist"}, revitems]);
         if(state.cursor) {
             if(i === 0 && !allrevMaxAutoSearch()) {
                 //auto-repeat the search to try get a result to display
@@ -849,11 +617,12 @@ app.profile = (function () {
             else {
                 if(allrevMaxAutoSearch()) {  //they continued search manually
                     state.reqs += 1; }
-                html += "<a href=\"#continuesearch\"" +
-                    " onclick=\"app.profile.searchAllRevs();return false;\"" +
-                    " title=\"Continue searching for more matching reviews\"" +
-                    ">continue search...</a>"; } }
-        jt.out('allrevdispdiv', html);
+                html.push(["a", {href: "#continuesearch",
+                                 onclick: jt.fs("app.profile.searchAllRevs()"),
+                                 title: "Continue searching for more " + 
+                                        "matching reviews"},
+                           "continue search..."]); } }
+        jt.out('allrevdispdiv', jt.tac2html(html));
         setTimeout(function () {
             app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
@@ -886,15 +655,14 @@ app.profile = (function () {
                 cursor: "",
                 total: 0,
                 reqs: 1 }; }
-        html = revTypeSelectorHTML("app.profile.searchRevsIfTypeChange");
-        html += "<div id=\"allrevsrchdiv\">" +
-            "<input type=\"text\" id=\"allrevsrchin\" size=\"40\"" +
-                  " placeholder=\"Review title or name\"" + 
-                  " value=\"" + state.srchval + "\"" +
-                  " onchange=\"app.profile.allrevs();return false;\"" +
-            "/></div>" +
-            "<div id=\"allrevdispdiv\"></div>";
-        jt.out('profcontdiv', html);
+        html = [revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"),
+                ["div", {id: "allrevsrchdiv"},
+                 ["input", {type: "text", id: "allrevsrchin", size: 40,
+                            placeholder: "Review title or name",
+                            value: state.srchval,
+                            onchange: jt.fs("app.profile.allrevs()")}]],
+                ["div", {id: "allrevdispdiv"}]];
+        jt.out('profcontdiv', jt.tac2html(html));
         jt.byId('allrevsrchin').focus();
         if(state.revs.length > 0) {
             listAllRevs([]);  //display previous results
@@ -902,39 +670,6 @@ app.profile = (function () {
         else {
             clearAllRevProfWorkState();
             app.profile.searchAllRevs(); }
-    },
-
-
-    searchAllRevs = function (revtype) {
-        var state, qstr, maxdate, mindate, params, critsec = "";
-        state = profpenref.profstate;
-        if(revtype) {
-            if(state.revtype !== revtype) {
-                state.revtype = revtype;
-                clearAllRevProfWorkState(); } }
-        else {
-            revtype = state.revtype; }
-        qstr = jt.byId('allrevsrchin').value;
-        if(qstr !== state.allRevsState.srchval) {
-            state.allRevsState.srchval = qstr;
-            clearAllRevProfWorkState(); }
-        maxdate = (new Date()).toISOString();
-        mindate = (new Date(0)).toISOString();
-        params = app.login.authparams() +
-            "&qstr=" + jt.enc(jt.canonize(qstr)) +
-            "&revtype=" + revtype +
-            "&penid=" + jt.instId(profpenref.pen) +
-            "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + jt.enc(state.allRevsState.cursor);
-        jt.call('GET', "srchrevs?" + params, null,
-                 function (results) { 
-                     app.lcs.putRevs(results);
-                     listAllRevs(results);
-                     monitorAllRevQuery(); },
-                 app.failf(function (code, errtxt) {
-                     jt.err("searchAllRevs call died code: " + code + " " +
-                             errtxt); }),
-                 critsec);
     },
 
 
@@ -975,52 +710,37 @@ app.profile = (function () {
     },
 
 
-    tabselect = function (tabname) {
-        var i, ul, li;
-        verifyProfileState(profpenref);
-        if(tabname) {
-            profpenref.profstate.seltabname = tabname; }
-        else {
-            tabname = profpenref.profstate.seltabname; }
-        ul = jt.byId('proftabsul');
-        for(i = 0; i < ul.childNodes.length; i += 1) {
-            li = ul.childNodes[i];
-            li.className = "unselectedTab";
-            li.style.backgroundColor = app.skinner.darkbg(); }
-        li = jt.byId(tabname + "li");
-        li.className = "selectedTab";
-        li.style.backgroundColor = "transparent";
-        app.history.checkpoint({ view: "profile", 
-                                 profid: jt.instId(profpenref.pen),
-                                 tab: tabname });
-        refreshContentDisplay();
-    },
-
-
     displayTabs = function (penref) {
         var html;
         verifyProfileState(penref);
-        html = "<ul id=\"proftabsul\">" +
-          "<li id=\"recentli\" class=\"selectedTab\">" + 
-            tablink("Recent Reviews", "app.profile.tabselect('recent')") + 
-          "</li>" +
-          "<li id=\"bestli\" class=\"unselectedTab\">" +
-            tablink("Top Rated", "app.profile.tabselect('best')") + 
-          "</li>" +
-          "<li id=\"allrevsli\" class=\"unselectedTab\">" +
-            tablink("All Reviews", "app.profile.tabselect('allrevs')") +
-          "</li>" +
-          "<li id=\"followingli\" class=\"unselectedTab\">" +
-            tablink("Following (" + penref.pen.following + ")", 
-                    "app.profile.tabselect('following')") + 
-          "</li>" +
-          "<li id=\"followersli\" class=\"unselectedTab\">" +
-            tablink("Followers (" + penref.pen.followers + ")", 
-                    "app.profile.tabselect('followers')") + 
-          "</li>";
-        html += "</ul>";
-        jt.out('proftabsdiv', html);
-        tabselect();
+        html = ["ul", {id: "proftabsul"},
+                [["li", {id: "recentli", cla: "selectedTab"},
+                  ["a", {href: "#recentreviews",
+                         title: "Click to see recent reviews",
+                         onclick: jt.fs("app.profile.tabselect('recent')")},
+                   "Recent Reviews"]],
+                 ["li", {id: "bestli", cla: "unselectedTab"},
+                  ["a", {href: "#bestreviews",
+                         title: "Click to see top rated",
+                         onclick: jt.fs("app.profile.tabselect('best')")},
+                   "Top Rated"]],
+                 ["li", {id: "allrevsli", cla: "unselectedTab"},
+                  ["a", {href: "#allreviews",
+                         title: "Click to see all reviews",
+                         onclick: jt.fs("app.profile.tabselect('allrevs')")},
+                   "All Reviews"]],
+                 ["li", {id: "followingli", cla: "unselectedTab"},
+                  ["a", {href: "#following",
+                         title: "Click to see who you are following",
+                         onclick: jt.fs("app.profile.tabselect('following')")},
+                   "Following (" + penref.pen.following + ")"]],
+                 ["li", {id: "followersli", cla: "unselectedTab"},
+                  ["a", {href: "#followers",
+                         title: "Click to see who is following you",
+                         onclick: jt.fs("app.profile.tabselect('followers')")},
+                   "Followers (" + penref.pen.followers + ")"]]]];
+        jt.out('proftabsdiv', jt.tac2html(html));
+        app.profile.tabselect();
     },
 
 
@@ -1029,13 +749,6 @@ app.profile = (function () {
            jt.isId(pen.twid) || jt.isId(pen.ghid)) {
             return true; }
         return false;
-    },
-
-
-    cancelProfileEdit = function (e) {
-        jt.evtend(e);
-        app.profile.updateHeading();
-        app.profile.display();
     },
 
 
@@ -1056,23 +769,19 @@ app.profile = (function () {
     },
 
 
-    onProfileSaveClick = function (e) {
-        jt.evtend(e);
-        app.profile.save();
-    },
-
-
     displayProfEditButtons = function () {
         var html;
         if(jt.byId('profcancelb')) {
             return; }  //already have buttons
-        html = "&nbsp;" +
-            "<button type=\"button\" id=\"profcancelb\">Cancel</button>" +
-            "&nbsp;" +
-            "<button type=\"button\" id=\"profsaveb\">Save</button>";
-        jt.out('profeditbspan', html);
-        jt.on('profcancelb', 'click', cancelProfileEdit);
-        jt.on('profsaveb', 'click', onProfileSaveClick);
+        html = ["&nbsp;",
+                ["button", {type: "button", id: "profcancelb",
+                            onclick: jt.fs("app.profile.cancelProfileEdit()")},
+                 "Cancel"],
+                "&nbsp;",
+                ["button", {type: "button", id: "profsaveb",
+                            onclick: jt.fs("app.profile.save()")},
+                 "Save"]];
+        jt.out('profeditbspan', jt.tac2html(html));
     },
 
 
@@ -1097,8 +806,8 @@ app.profile = (function () {
 
     editShout = function (pen) {
         var html, shout;
-        html = "<textarea id=\"shouttxt\" class=\"shoutout\"></textarea>";
-        jt.out('profshouttd', html);
+        html = ["textarea", {id: "shouttxt", cla: "shoutout"}];
+        jt.out('profshouttd', jt.tac2html(html));
         shout = jt.byId('shouttxt');
         styleShout(shout);
         shout.readOnly = false;
@@ -1114,9 +823,10 @@ app.profile = (function () {
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
             text = "About me (anything you would like to say to everyone)." + 
                 " Link to your twitter handle, blog or site if you want."; }
-        text = "<span style=\"color:" + greytxt + ";\">" + text + "</span>";
-        html = "<div id=\"shoutdiv\" class=\"shoutout\"></div>";
-        jt.out('profshouttd', html);
+        text = ["span", {style: "color:" + greytxt + ";"}, text];
+        text = jt.tac2html(text);
+        html = ["div", {id: "shoutdiv", cla: "shoutout"}];
+        jt.out('profshouttd', jt.tac2html(html));
         shout = jt.byId('shoutdiv');
         styleShout(shout);
         shout.style.overflow = "auto";
@@ -1133,74 +843,50 @@ app.profile = (function () {
 
 
 
-    saveUnlessShoutEdit = function (e) {
-        jt.evtend(e);
-        if(jt.byId('shoutdiv')) {
-            app.profile.save(); }
-    },
-
-
-    editCity = function () {
-        var val, html, elem;
-        elem = jt.byId('profcityin');
-        if(elem) {
-            return; }  //already editing
-        val = jt.byId('profcityspan').innerHTML;
-        //IE8 actually capitalizes the the HTML for you. Sheesh.
-        if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
-            val = jt.byId('profcitya').innerHTML; }
-        if(val === unspecifiedCityText) {
-            val = ""; }
-        html = "<input type=\"text\" id=\"profcityin\" size=\"25\"" +
-                     " placeholder=\"City or Region\"" +
-                     " value=\"" + val + "\"/>";
-        jt.out('profcityspan', html);
-        displayProfEditButtons();
-        jt.on('profcityin', 'change', saveUnlessShoutEdit);
-        jt.byId('profcityin').focus();
-    },
-
-
     displayCity = function (pen) {
-        var html, style = "";
+        var html;
         if(!pen.city) { 
             jt.byId('profcityspan').style.color = greytxt; }
-        html = pen.city || unspecifiedCityText;            
-        if(!pen.city) {
-            style = " style=\"color:" + greytxt + ";\""; }
+        html = pen.city || unspecifiedCityText;
         if(profileModAuthorized(pen)) {
-            html = "<a href=\"#edit city\" title=\"Edit city\"" +
-                     " id=\"profcitya\"" + 
-                     " onclick=\"app.profile.editCity();return false;\"" +
-                       style + ">" + html + "</a>"; }
-        jt.out('profcityspan', html);
+            html = ["a", {href: "#edit city", title: "Edit city",
+                          id: "profcitya",
+                          onclick: jt.fs("app.profile.editCity()"),
+                          style: jt.toru(!pen.city, 
+                                         "color:" + greytxt + ";")},
+                    html]; }
+        jt.out('profcityspan', jt.tac2html(html));
     },
 
 
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
-        var odiv, html = "";
-        html += jt.paramsToFormInputs(app.login.authparams());
-        html += "<input type=\"hidden\" name=\"_id\" value=\"" + 
-            jt.instId(pen) + "\"/>";
-        html += "<input type=\"hidden\" name=\"returnto\" value=\"" +
-            jt.enc(window.location.href + "#profile") + "\"/>";
-        html = "<form action=\"/profpicupload\"" +
-                    " enctype=\"multipart/form-data\" method=\"post\">" +
-            "<div id=\"closeline\">" +
-              "<a id=\"closedlg\" href=\"#close\"" +
-                " onclick=\"app.cancelOverlay();return false\">" + 
-                  "&lt;close&nbsp;&nbsp;X&gt;</a>" +
-            "</div>" + 
-            html +
-            "<table>" +
-              "<tr><td>Upload New Profile Pic</td></tr>" +
-              "<tr><td><input type=\"file\" name=\"picfilein\"" + 
-                                          " id=\"picfilein\"/></td></tr>" +
-              "<tr><td align=\"center\">" +
-                    "<input type=\"submit\" value=\"Upload\"/></td></tr>" +
-            "</form>";
-        jt.out('overlaydiv', html);
+        var inputs, html, odiv;
+        inputs = [
+            jt.paramsToFormInputs(app.login.authparams()),
+            ["input", {type: "hidden", name: "_id", 
+                       value: jt.instId(pen)}],
+            ["input", {type: "hidden", name: "returnto", 
+                       value: jt.enc(window.location.href) + "#profile"}]];
+        html = ["form", {action: "/profpicupload",
+                         enctype: "multipart/form-data", method: "post"},
+                [["div", {id: "closeline"},
+                  ["a", {id: "closedlg", href: "#close",
+                         onclick: jt.fs("app.cancelOverlay()")},
+                   "&lt;close&nbsp;&nbsp;X&gt;"]],
+                 inputs,
+                 ["table",
+                  [["tr", 
+                    ["td", 
+                     "Upload New Profile Pic"]],
+                   ["tr", 
+                    ["td", 
+                     ["input", {type: "file", name: "picfilein", 
+                                id: "picfilein"}]]],
+                   ["tr", 
+                    ["td", {align: "center"},
+                     ["input", {type: "submit", value: "Upload"}]]]]]]];
+        jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
         odiv.style.top = "80px";
         odiv.style.visibility = "visible";
@@ -1214,8 +900,8 @@ app.profile = (function () {
         var html = "img/emptyprofpic.png";
         if(pen.profpic) {
             html = "profpic?profileid=" + jt.instId(pen); }
-        html = "<img class=\"profpic\" src=\"" + html + "\"/>";
-        jt.out('profpictd', html);
+        html = ["img", {cla: "profpic", src: html}];
+        jt.out('profpictd', jt.tac2html(html));
         if(profileModAuthorized(pen)) {
             jt.on('profpictd', 'click', function (e) {
                 jt.evtend(e);
@@ -1227,7 +913,7 @@ app.profile = (function () {
 
     earnedBadgesHTML = function (pen) {
         var html, i, reviewTypes, typename, label, dispclass;
-        html = "";
+        html = [];
         app.pen.deserializeFields(pen);
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
@@ -1239,61 +925,40 @@ app.profile = (function () {
                     label = String(pen.top20s[typename].length) + " " + 
                         reviewTypes[i].plural.capitalize();
                     dispclass = "reviewbadgedis"; }
-                html += "<img" + 
-                    " class=\"" + dispclass + "\"" +
-                    " src=\"img/" + reviewTypes[i].img + "\"" +
-                    " title=\"" + label + "\"" +
-                    " alt=\"" + label + "\"" +
-                    " onclick=\"app.profile.showTopRated('" + typename + "');" +
-                               "return false;\"" +
-                    "/>"; } }
-        return html;
-    },
-
-
-    showTopRated = function (typename) {
-        verifyProfileState(profpenref);
-        profpenref.profstate.revtype = typename;
-        displayBest();
+                html.push(["img", {cla: dispclass, 
+                                   src: "img/" + reviewTypes[i].img,
+                                   title: label, alt: label,
+                                   onclick: jt.fs("app.profile.showTopRated('" +
+                                                  typename + "')")}]); } }
+        return jt.tac2html(html);
     },
 
 
     proftopdivHTML = function () {
-        var html = "<div id=\"proftopdiv\">" +
-        "<table id=\"profdisptable\" border=\"0\">" +
-          "<tr>" +
-            "<td id=\"sysnotice\" colspan=\"3\">" +
-          "</tr>" +
-          "<tr>" +
-            "<td id=\"profpictd\" rowspan=\"3\">" +
-              "<img class=\"profpic\" src=\"img/emptyprofpic.png\"/>" +
-            "</td>" +
-            "<td id=\"profcitytd\">" +
-              "<span id=\"profcityspan\"> </span>" +
-              "<span id=\"profeditbspan\"> </span>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td id=\"profshouttd\" colspan=\"2\" valign=\"top\">" +
-              "<div id=\"shoutdiv\" class=\"shoutout\"></div>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" + 
-            "<td id=\"profbadgestd\">" + "</td>" +
-            "<td id=\"profcommbuildtd\">" + "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"3\">" +
-              "<div id=\"proftabsdiv\"> </div>" +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"3\">" +
-              "<div id=\"profcontdiv\"> </div>" +
-            "</td>" +
-          "</tr>" +
-        "</table></div>";
-        return html;
+        var html;
+        html = ["div", {id: "proftopdiv"},
+                ["table", {id: "profdisptable"},
+                 [["tr",
+                   ["td", {id: "sysnotice", colspan: 3}]],
+                  ["tr",
+                   [["td", {id: "profpictd", rowspan: 3},
+                     ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
+                    ["td", {id: "profcitytd"},
+                     [["span", {id: "profcityspan"}],
+                      ["span", {id: "profeditbspan"}]]]]],
+                  ["tr",
+                   ["td", {id: "profshouttd", colspan: 2, valign: "top"},
+                    ["div", {id: "shoutdiv", cla: "shoutout"}]]],
+                  ["tr",
+                   [["td", {id: "profbadgestd"}],
+                    ["td", {id: "profcommbuildtd"}]]],
+                  ["tr",
+                   ["td", {colspan: 3},
+                    ["div", {id: "proftabsdiv"}]]],
+                  ["tr",
+                   ["td", {colspan: 3},
+                    ["div", {id: "profcontdiv"}]]]]]];
+        return jt.tac2html(html);
     },
 
 
@@ -1301,7 +966,7 @@ app.profile = (function () {
         var html;
         if(!dispen) {
             dispen = homepen; }
-        verifyStateVariableValues(dispen);  //sets profpenref
+        app.profile.verifyStateVariableValues(dispen);  //sets profpenref
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: profpenref.profstate.seltabname });
@@ -1316,12 +981,11 @@ app.profile = (function () {
         jt.out('cmain', html);
         jt.out('profbadgestd', earnedBadgesHTML(dispen));
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            html = "<a id=\"commbuild\" href=\"#invite\"" + 
-                     " onclick=\"app.profile.invite();return false\">" +
-                "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
-                    " border=\"0\">" +
-                "Build your community</a>";
-            jt.out('profcommbuildtd', html); }
+            html = ["a", {id: "commbuild", href: "#invite",
+                          onclick: jt.fs("app.profile.invite()")},
+                    [["img", {cla: "reviewbadge", src: "img/follow.png"}],
+                     "Build your community"]];
+            jt.out('profcommbuildtd', jt.tac2html(html)); }
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
@@ -1329,87 +993,381 @@ app.profile = (function () {
         app.layout.adjust();
         if(errmsg) {
             jt.err("Previous processing failed: " + errmsg); }
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    resetStateVars: function () {
+        profpenref = null;
     },
 
 
-    displayProfileForId = function (id, tabname) {
+    display: function (action, errmsg) {
+        app.pen.getPen(function (homepen) {
+            mainDisplay(homepen, null, action, errmsg); });
+    },
+
+
+    updateHeading: function () {  //called during startup
+        app.pen.getPen(function (homepen) {
+            writeNavDisplay(homepen, profpenref && profpenref.pen); });
+    },
+
+
+    refresh: function () {
+        app.pen.getPen(function (homepen) {
+            mainDisplay(homepen, profpenref.pen); });
+    },
+
+
+    settings: function () {
+        app.pen.getPen(changeSettings);
+    },
+
+
+    tabselect: function (tabname) {
+        var i, ul, li;
+        verifyProfileState(profpenref);
+        if(tabname) {
+            profpenref.profstate.seltabname = tabname; }
+        else {
+            tabname = profpenref.profstate.seltabname; }
+        ul = jt.byId('proftabsul');
+        for(i = 0; i < ul.childNodes.length; i += 1) {
+            li = ul.childNodes[i];
+            li.className = "unselectedTab";
+            li.style.backgroundColor = app.skinner.darkbg(); }
+        li = jt.byId(tabname + "li");
+        li.className = "selectedTab";
+        li.style.backgroundColor = "transparent";
+        app.history.checkpoint({ view: "profile", 
+                                 profid: jt.instId(profpenref.pen),
+                                 tab: tabname });
+        refreshContentDisplay();
+    },
+
+
+    resetReviews: function () {
+        resetReviewDisplays(app.pen.currPenRef());
+    },
+
+
+    save: function () {
+        app.pen.getPen(saveEditedProfile);
+    },
+
+
+    byprofid: function (id, tabname) {
         app.layout.closeDialog(); //close pen name search dialog if open
-        resetStateVars();
+        app.profile.resetStateVars();
         findOrLoadPen(id, function (dispen) {
             if(tabname) {
-                verifyStateVariableValues(dispen);
+                app.profile.verifyStateVariableValues(dispen);
                 setCurrTabFromString(tabname); }
             app.pen.getPen(function (homepen) {
                 mainDisplay(homepen, dispen); }); });
-    };
+    },
 
 
-    return {
-        resetStateVars: function () {
-            resetStateVars(); },
-        display: function (action, errmsg) {
-            app.pen.getPen(function (homepen) {
-                mainDisplay(homepen, null, action, errmsg); }); },
-        updateHeading: function () {  //called during startup
-            app.pen.getPen(function (homepen) {
-                writeNavDisplay(homepen,
-                                profpenref && profpenref.pen); }); },
-        refresh: function () {
-            app.pen.getPen(function (homepen) {
-                mainDisplay(homepen, profpenref.pen); }); },
-        settings: function () {
-            app.pen.getPen(changeSettings); },
-        tabselect: function (tabname) {
-            tabselect(tabname); },
-        resetReviews: function () {
-            resetReviewDisplays(app.pen.currPenRef()); },
-        save: function () {
-            app.pen.getPen(saveEditedProfile); },
-        byprofid: function (id, tabname) {
-            displayProfileForId(id, tabname); },
-        relationship: function () {
-            createOrEditRelationship(); },
-        switchPen: function () {
-            changeToSelectedPen(); },
-        penListItemHTML: function (pen) {
-            return penListItemHTML(pen); },
-        revsmore: function () {
-            findRecentReviews(profpenref.profstate.recentRevState); },
-        readReview: function (revid) {
-            return readReview(revid); },
-        reviewItemHTML: function (revobj, penNameStr) {
-            return reviewItemHTML(revobj, penNameStr); },
-        toggleAuthChange: function (authtype, domid) {
-            app.pen.getPen(function (pen) { 
-                handleAuthChangeToggle(pen, authtype, domid); }); },
-        displayAuthSettings: function (domid, pen) {
-            displayAuthSettings(domid, pen); },
-        addMORAuthId: function(mid) {
-            app.pen.getPen(function (pen) {
-                addMORAuthId(pen, mid); }); },
-        writeNavDisplay: function (homepen, dispen, directive) {
-            writeNavDisplay(homepen, dispen, directive); },
-        verifyStateVariableValues: function (pen) {
-            verifyStateVariableValues(pen); },
-        cancelPenNameSettings: function () {
-            cancelPenNameSettings(); },
-        editCity: function () {
-            editCity(); },
-        invite: function () {
-            displayInvitationDialog(); },
-        chginvite: function () {
-            updateInviteInfo(); },
-        showTopRated: function (typename) {
-            showTopRated(typename); },
-        searchAllRevs: function (revtype) {
-            searchAllRevs(revtype); },
-        searchRevsIfTypeChange: function (revtype) {
-            if(profpenref.profstate.revtype !== revtype) {
-                searchAllRevs(revtype); } },
-        penNameChange: function (event) {
-            jt.evtend(event);
-            setPenNameFromInput(); }
-    };
+    relationship: function () {
+        app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen);
+    },
 
+
+    switchPen: function () {
+        var i, sel = jt.byId('penselect'), temp = "";
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                //do not call cancelPenNameSettings before done accessing
+                //the selection elementobjects or IE8 has issues.
+                if(sel.options[i].id === 'newpenopt') {
+                    app.profile.cancelPenNameSettings("Creating pen name...");
+                    app.pen.newPenName(app.profile.display); }
+                else {
+                    temp = sel.options[i].value;
+                    app.profile.cancelPenNameSettings("Switching pen names...");
+                    app.pen.selectPenByName(temp); }
+                break; } }
+    },
+
+
+    penListItemHTML: function (pen) {
+        var penid, picuri, hash, linktitle, city = "", html;
+        penid = jt.instId(pen);
+        //empytprofpic.png looks like big checkboxes, use blank instead
+        picuri = "img/blank.png";
+        if(pen.profpic) {
+            picuri = "profpic?profileid=" + penid; }
+        hash = jt.objdata({ view: "profile", profid: penid });
+        linktitle = jt.ellipsis(pen.shoutout, 75);
+        if(!linktitle) {  //do not encode pen name here.  No "First%20Last"..
+            linktitle = "View profile for " + pen.name; }
+        if(pen.city) {
+            city = jt.tac2html(["span", {cla: "smalltext"},
+                                "(" + pen.city + ")"]); }
+        html = ["li",
+                [["a", {href: "#" + hash, title: linktitle,
+                        onclick: jt.fs("app.profile.byprofid('" + 
+                                       penid + "')")},
+                  [["img", {cla: "srchpic", src: picuri}],
+                   "&nbsp;",
+                   ["span", {cla: "penfont"}, pen.name]]],
+                 ["span", {cla: "smalltext"}, city],
+                 badgeDispHTML(pen)]];
+        html = jt.tac2html(html);
+        return html;
+    },
+
+
+    revsmore: function () {
+        findRecentReviews(profpenref.profstate.recentRevState);
+    },
+
+
+    readReview: function (revid) {
+        var revobj;
+        revobj = app.lcs.getRevRef(revid).rev;
+        //Make some noise if you can't find it rather than being a dead link
+        if(!revobj) {
+            jt.err("readReview " + revid + " not found");
+            return; }
+        app.history.checkpoint({ view: "review", mode: "display",
+                                 revid: revid });
+        app.review.setCurrentReview(revobj);
+        app.review.displayRead();
+    },
+
+
+    reviewItemHTML: function (revobj, penNameStr) {
+        var revid, type, linkref, linkclass, linktxt, jump = "", byline = "", 
+            keywords = "", revtext = "", html;
+        revid = jt.instId(revobj);
+        type = app.review.getReviewTypeByValue(revobj.revtype);
+        linkref = "statrev/" + revid;
+        linkclass = app.review.foundHelpful(revid)? "rslcbold" : "rslc";
+        if(type.subkey) {
+            linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
+                jt.ellipsis(revobj[type.subkey], 40); }
+        else {
+            linktxt = jt.ellipsis(revobj[type.key], 60); }
+        if(revobj.url) {
+            jump = " &nbsp;" + app.review.graphicAbbrevSiteLink(revobj.url); }
+        if(penNameStr) {
+            byline = ["review by ",
+                      ["a", {title: "Show profile for " + jt.ndq(penNameStr),
+                             href: "#" + jt.objdata({view: "profile", 
+                                                     profid: revobj.penid }),
+                             onclick: jt.fs("app.profile.byprofid('" +
+                                            revobj.penid + "')")},
+                       penNameStr]]; }
+        if(revobj.keywords) {
+            if(penNameStr) {
+                keywords += ": "; }
+            keywords += jt.ellipsis(revobj.keywords, 100); }
+        if(revobj.text) {
+            revtext = ["div", {cla: "revtextsummary"},
+                       jt.ellipsis(revobj.text, 255)]; }
+        html = ["li",
+                [app.review.starsImageHTML(revobj.rating),
+                 app.review.badgeImageHTML(type),
+                 "&nbsp;",
+                 ["a", {id: "lihr" + revid, cla: linkclass, 
+                        href: linkref, title: "See full review",
+                        onclick: jt.fs("app.profile.readReview('" + 
+                                       revid + "')")},
+                  linktxt],
+                 jump,
+                 ["div", {cla: "revtextsummary"},
+                  [byline,
+                   keywords,
+                   app.review.linkCountHTML(revid)]],
+                 revtext]];
+        html = jt.tac2html(html);
+        return html;
+    },
+
+
+    toggleAuth: function (authtype, domid) {
+        app.pen.getPen(function (pen) { 
+            handleAuthChangeToggle(pen, authtype, domid); });
+    },
+
+
+    displayAuthSettings: function (domid, pen) {
+        displayAuthSettings(domid, pen);
+    },
+
+
+    addMORAuthId: function(mid) {
+        app.pen.getPen(function (pen) {
+            var previd;
+            if(!mid) {
+                jt.err("No account ID received.");
+                app.profile.display(); }
+            else {
+                previd = pen.mid;
+                pen.mid = mid;
+                app.pen.updatePen(pen,
+                                  function (updpen) {
+                                      changeSettings(updpen); },
+                                  function (code, errtxt) {
+                                      jt.err("addMORAuthId error " +
+                                             code + ": " + errtxt);
+                                      pen.mid = previd;
+                                      app.profile.display(); }); }
+        });
+    },
+
+
+    writeNavDisplay: function (homepen, dispen, directive) {
+        writeNavDisplay(homepen, dispen, directive);
+    },
+
+
+    verifyStateVariableValues: function (pen) {
+        profpenref = app.lcs.getPenRef(pen);
+        verifyProfileState(profpenref);
+    },
+
+
+    cancelPenNameSettings: function (actionTxt) {
+        app.skinner.cancel();
+        app.layout.closeDialog();
+        if(actionTxt && typeof actionTxt === "string") {
+            //nuke the main display as we are about to rebuild contents
+            jt.out('centerhdiv', "");
+            jt.out('cmain', actionTxt); }
+    },
+
+
+    saveIfNotShoutEdit: function () {
+        if(jt.byId('shoutdiv')) {
+            app.profile.save(); }
+    },
+
+
+    editCity: function () {
+        var val, html, elem;
+        elem = jt.byId('profcityin');
+        if(elem) {
+            return; }  //already editing
+        val = jt.byId('profcityspan').innerHTML;
+        //IE8 actually capitalizes the the HTML for you. Sheesh.
+        if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
+            val = jt.byId('profcitya').innerHTML; }
+        if(val === unspecifiedCityText) {
+            val = ""; }
+        html = ["input", {type: "text", id: "profcityin", size: 25,
+                          placeholder: "City or Region", value: val,
+                          onchange: jt.fs("app.profile.saveIfNotShoutEdit()")}];
+        jt.out('profcityspan', jt.tac2html(html));
+        displayProfEditButtons();
+        jt.byId('profcityin').focus();
+    },
+
+
+    invite: function () {
+        var html;
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 "Build your community... Invite a friend"],
+                ["table", {cla: "formstyle"},
+                 [["tr",
+                   ["td", {id: "invintrotd", style: "width:400px;"},
+                    [["p",
+                      ["Know someone whose taste you trust?",
+                       ["br"],
+                       "Want to share your reviews?"]],
+                     ["p",
+                      "What types of reviews would you be most interested in " +
+                      "seeing from them?"]]]],
+                  ["tr",
+                   ["td", {id: "invtypestd"},
+                    app.review.reviewTypeCheckboxesHTML("invrevcb")]],
+                  ["tr",
+                   ["td",
+                    "Invite your friend to join:"]],
+                  ["tr",
+                   ["td", {align: "center"},
+                    ["span", {id: "mailbspan"},
+                     mailButtonHTML()]]]]]];
+        jt.out('dlgdiv', jt.tac2html(html));
+        jt.byId('dlgdiv').style.visibility = "visible";
+        if(jt.isLowFuncBrowser()) {
+            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
+        app.onescapefunc = app.layout.closeDialog;
+    },
+
+
+    showTopRated: function (typename) {
+        verifyProfileState(profpenref);
+        profpenref.profstate.revtype = typename;
+        displayBest();
+    },
+
+
+    searchAllRevs: function (revtype) {
+        var state, qstr, maxdate, mindate, params, critsec = "";
+        state = profpenref.profstate;
+        if(revtype) {
+            if(state.revtype !== revtype) {
+                state.revtype = revtype;
+                clearAllRevProfWorkState(); } }
+        else {
+            revtype = state.revtype; }
+        qstr = jt.byId('allrevsrchin').value;
+        if(qstr !== state.allRevsState.srchval) {
+            state.allRevsState.srchval = qstr;
+            clearAllRevProfWorkState(); }
+        maxdate = (new Date()).toISOString();
+        mindate = (new Date(0)).toISOString();
+        params = app.login.authparams() +
+            "&qstr=" + jt.enc(jt.canonize(qstr)) +
+            "&revtype=" + revtype +
+            "&penid=" + jt.instId(profpenref.pen) +
+            "&maxdate=" + maxdate + "&mindate=" + mindate +
+            "&cursor=" + jt.enc(state.allRevsState.cursor);
+        jt.call('GET', "srchrevs?" + params, null,
+                 function (results) { 
+                     app.lcs.putRevs(results);
+                     listAllRevs(results);
+                     monitorAllRevQuery(); },
+                 app.failf(function (code, errtxt) {
+                     jt.err("searchAllRevs call died code: " + code + " " +
+                             errtxt); }),
+                 critsec);
+    },
+
+
+    searchRevsIfTypeChange: function (revtype) {
+        if(profpenref.profstate.revtype !== revtype) {
+            app.profile.searchAllRevs(revtype); }
+    },
+
+
+    readPenNameIn: function (pen) {
+        var pennamein = jt.byId('pennamein');
+        if(!pen) {
+            pen = profpenref.pen; }
+        if(pennamein) {
+            pen.name = pennamein.value; }
+    },
+
+
+    cancelProfileEdit: function () {
+        app.profile.updateHeading();
+        app.profile.display();
+    }
+
+
+};  //end of returned functions
 }());
 

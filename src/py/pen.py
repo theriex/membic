@@ -192,6 +192,7 @@ class UploadProfPic(webapp2.RequestHandler):
                             errmsg = "Profile picture upload failed: " + str(e)
         redurl = self.request.get('returnto')
         if not redurl:
+            logging.info("UploadProfPic using default returnto");
             redurl = "http://www.wdydfun.com#profile"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)

@@ -287,13 +287,15 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         if (!obj) {
             obj = {};
         }
-        comps = paramstr.split("&");
-        for (i = 0; i < comps.length; i += 1) {
-            attval = comps[i].split("=");
-            if (attval.length > 1) {
-                obj[attval[0]] = attval[1];
-            } else {
-                obj.anchor = attval[0];
+        if(paramstr) {
+            comps = paramstr.split("&");
+            for (i = 0; i < comps.length; i += 1) {
+                attval = comps[i].split("=");
+                if (attval.length > 1) {
+                    obj[attval[0]] = attval[1];
+                } else {
+                    obj.anchor = attval[0];
+                }
             }
         }
         return obj;
