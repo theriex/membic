@@ -1,31 +1,22 @@
 /*global alert: false, setTimeout: false, document: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.rel = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var loadoutcursor,
         asyncLoadStarted,
         maxpgdisp = 100,
 
 
-    resetStateVars = function (relstate) {
-        loadoutcursor = null;
-        asyncLoadStarted = false;
-        if(relstate === "new") {
-            //a new pen name has no outbound relationships yet.  Just
-            //init the outrels in the cache PenRef to an empty array.
-            app.pen.currPenRef().outrels = [];
-            asyncLoadStarted = true;  //started and finished..
-            app.profile.updateHeading(); }
-        else if(relstate !== "logout") {
-            //start the async load of the outrels.  relstate === "reload" 
-            //is ignored since the relationships are cached with each pen
-            //and are asumed to have been updated through this UI.
-            app.rel.loadoutbound(); }
-    },
-
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     getRelRefArray = function (pen, direction, init) {
         var penref, field;
@@ -98,12 +89,12 @@ app.rel = (function () {
         for(i = 0; refarray && i < refarray.length; i += 1) {
             if(refarray[i].rel.relatedid === penid) {
                 return ""; } }  //already following
-        html = " <a href=\"#followback\" title=\"follow " + pen.name + "\"" +
-                  " onclick=\"app.rel.followBack(" + jt.instId(pen) + ");" +
-                             "return false;\"" +
-                  " class=\"smalltext\"" +
-            ">[follow back]</a>";
-        return html;
+        html = ["a", {cla: "smalltext", href: "#followback", 
+                      title: "follow " + pen.name,
+                      onclick: jt.fs("app.rel.followBack(" + 
+                                     jt.instId(pen) + ")")},
+                "[follow back]"];
+        return jt.tac2html(html);
     },
 
 
@@ -136,63 +127,13 @@ app.rel = (function () {
 
 
     relRefPenHTMLFooter = function (direction) {
-        var html = "<div id=\"srchpenslinkdiv\">" + 
-              "<a id=\"srchpens\" href=\"#findpens\"" + 
-                " onclick=\"app.activity.penNameSearchDialog();" + 
-                           "return false;\">" +
-                "<img class=\"reviewbadge\" src=\"img/follow.png\"" + 
-                    " border=\"0\">" +
-                "Find pen names to follow</a>" +
-            "</div>";
-        return html;
-    },
-
-
-    displayRelatedPens = function (pen, direction, divid) {
-        var html, refarray, placeholder, i, litemp;
-        placeholder = "<li>Fetching pen names</li>";
-        refarray = getRelRefArray(pen, direction);
-        html = "<ul class=\"penlist\">";
-        if(refarray) {
-            if(refarray.length > 0) {
-                for(i = 0; i < refarray.length && i < maxpgdisp; i += 1) {
-                    litemp = relRefPenHTML(refarray[i], direction, placeholder);
-                    html += litemp;
-                    if(litemp === placeholder) {
-                        break; } }
-                //ATTENTION: continue display link if maxpgdisp
-                if(i === refarray.length) {
-                    html += relRefPenHTMLFooter(direction); } }
-            else if(refarray.length === 0) {
-                if(direction === "outbound") {
-                    html += "<li>Not following anyone.</li>";
-                    if(jt.instId(pen) === app.pen.currPenId()) {  //own profile
-                        html += "<li>" + app.activity.searchPensLinkHTML() +
-                            "</li>"; } }
-                else { //inbound
-                    html += "<li>No followers.</li>"; } } }
-        else {  //dump an interim placeholder while retrieving rels
-            html += "<li>fetching relationships...</li>"; }
-        html += "</ul>";
-        jt.out(divid, html);
-        if(!refarray) {  //rels not loaded yet, init and fetch.
-            loadDisplayRels(pen, direction, divid); }
-        else if(litemp === placeholder) {
-            loadReferencedPens(refarray[i], function () {
-                displayRelatedPens(pen, direction, divid); }); }
-    },
-
-
-    settingsDialogChangeFollowType = function () {
-        if(jt.safeget('follow', 'checked')) {
-            jt.out('fstatdescr', 
-                    "Show new reviews under friend reviews"); }
-        else if(jt.safeget('block', 'checked')) {
-            jt.out('fstatdescr',
-                    "List as following, but do not show new reviews"); }
-        else if(jt.safeget('nofollow', 'checked')) {
-            jt.out('fstatdescr',
-                    "Do not show new reviews, do not list as following"); }
+        var html;
+        html = ["div", {id: "srchpenslinkdiv"},
+                ["a", {id: "srchpens", href: "#findpens",
+                       onclick: jt.fs("app.activity.penNameSearchDialog()")},
+                 [["img", {cla: "reviewbadge", src: "img/follow.png"}],
+                  "Find pen names to follow"]]];
+        return jt.tac2html(html);
     },
 
 
@@ -206,7 +147,7 @@ app.rel = (function () {
             mutes = rel.mute.split(',');
             for(i = 0; i < mutes.length; i += 1) {
                 jt.byId(mutes[i]).checked = true; } }
-        settingsDialogChangeFollowType();
+        app.rel.fchg();
     },
 
 
@@ -276,44 +217,39 @@ app.rel = (function () {
     //unless and until there is a real need to limit activity noise
     //beyond the types.
     displayRelationshipDialog = function (rel, related, isnew) {
-        var html = "<div class=\"dlgclosex\">" +
-            "<a id=\"closedlg\" href=\"#close\"" +
-              " onclick=\"app.layout.closeDialog();return false;\"" +
-            ">&lt;close&nbsp;&nbsp;X&gt;</a></div>" + 
-            "<div class=\"floatclear\"></div>" +
-            "<span class=\"headingtxt\">";
+        var html, titletxt;
+        titletxt = "Follow settings for " + related.name;
         if(isnew) {
-            html += "You are now following " + related.name; }
-        else {
-            html += "Follow settings for " + related.name; }
-        html += "</span><table class=\"formstyle\">" +
-          "<tr>" +
-            "<td>" +
-              "<b>Status</b> " + 
-              jt.radiobutton("fstat", "follow", "", false, "app.rel.fchg") + 
-                "&nbsp;" +
-              jt.radiobutton("fstat", "block", "", false, "app.rel.fchg") + 
-                "&nbsp;" +
-              jt.radiobutton("fstat", "nofollow", "Stop Following",
-                              false, "app.rel.fchg") +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td><div id=\"fstatdescr\"></div></td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td>" +
-              "<b>Ignore reviews from " + related.name + " about</b>" +
-              app.review.reviewTypeCheckboxesHTML("mtype") +
-            "</td>" +
-          "</tr>" +
-          "<tr>" +
-            "<td colspan=\"2\" align=\"center\" id=\"settingsbuttons\">" +
-              "<button type=\"button\" id=\"savebutton\">Save</button>" +
-            "</td>" +
-          "</tr>" +
-        "</table>";
-        jt.out('dlgdiv', html);
+            titletxt = "You are now following " + related.name; }
+        html = [
+            ["div", {cla: "dlgclosex"},
+             ["a", {id: "closedlg", href: "#close",
+                    onclick: jt.fs("app.layout.closeDialog()")},
+              "&lt;close&nbsp;&nbsp;X&gt;"]],
+            ["div", {cla: "floatclear"}],
+            ["span", {cla: "headingtxt"}, titletxt],
+            ["table", {cla: "formstyle"},
+             [["tr",
+               ["td",
+                [["b", "Status "],
+                 jt.radiobutton("fstat", "follow", "", false, "app.rel.fchg"),
+                 "&nbsp;" +
+                 jt.radiobutton("fstat", "block", "", false, "app.rel.fchg"),
+                 "&nbsp;" +
+                 jt.radiobutton("fstat", "nofollow", "Stop Following",
+                                false, "app.rel.fchg")]]],
+              ["tr",
+               ["td",
+                ["div", {id: "fstatdescr"}]]],
+              ["tr",
+               ["td",
+                [["b", "Ignore reviews from " + related.name + " about"],
+                 app.review.reviewTypeCheckboxesHTML("mtype")]]],
+              ["tr",
+               ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
+                ["button", {type: "button", id: "savebutton"},
+                 "Save"]]]]]];
+        jt.out('dlgdiv', jt.tac2html(html));
         setFormValuesFromRel(rel);
         jt.on('savebutton', 'click', function (e) {
             jt.evtend(e);
@@ -325,35 +261,9 @@ app.rel = (function () {
     },
 
 
-    findOutboundRelationship = function (relatedid) {
-        var pen, relrefs, i;
-        pen = app.pen.currPenRef().pen;
-        relrefs = getRelRefArray(pen, "outbound");
-        for(i = 0; relrefs && i < relrefs.length; i += 1) {
-            if(relrefs[i].rel.relatedid === relatedid) {
-                return relrefs[i].rel; } }
-    },
-
-
-    getOutboundRelationshipIds = function () {
-        var pen, relrefs, i, relids = [];
-        pen = app.pen.currPenRef().pen;
-        relrefs = getRelRefArray(pen, "outbound");
-        for(i = 0; relrefs && i < relrefs.length; i += 1) {
-            //do not include blocked relationships in result ids
-            if(relrefs[i].rel.status === "following") {
-                relids.push(relrefs[i].rel.relatedid); } }
-        if(!asyncLoadStarted) {
-            relids.push("waiting"); }
-        else if(loadoutcursor) {
-            relids.push("loading"); }
-        return relids;
-    },
-
-
     createOrEditRelationship = function (originator, related) {
         var rel, newrel, data, critsec = "";
-        rel = findOutboundRelationship(jt.instId(related));
+        rel = app.rel.outbound(jt.instId(related));
         if(rel) {
             displayRelationshipDialog(rel, related); }
         else if(loadoutcursor) {
@@ -384,14 +294,6 @@ app.rel = (function () {
                          jt.err("Relationship creation failed code " + code +
                                  ": " + errtxt); }),
                      critsec); }
-    },
-
-
-    addFollowerDisplayHome = function (followerid) {
-        app.pen.getPen(function (homepen) {
-            app.lcs.getPenFull(followerid, function (penref) {
-                createOrEditRelationship(homepen, penref.pen,
-                                         jt.instId(homepen)); }); });
     },
 
 
@@ -435,6 +337,56 @@ app.rel = (function () {
                              ": " + errtxt);
                      alert("Sorry. Data error. Please reload the page"); }),
                  critsec);
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    resetStateVars: function (relstate, pen) {
+        loadoutcursor = null;
+        asyncLoadStarted = false;
+        if(relstate === "new") {
+            //a new pen name has no outbound relationships yet.  Just
+            //init the outrels in the cache PenRef to an empty array.
+            app.pen.currPenRef().outrels = [];
+            asyncLoadStarted = true;  //started and finished..
+            app.profile.updateHeading(); }
+        else if(relstate !== "logout") {
+            //start the async load of the outrels.  relstate === "reload" 
+            //is ignored since the relationships are cached with each pen
+            //and are asumed to have been updated through this UI.
+            app.rel.loadoutbound(); }
+    },
+
+
+    reledit: function (from, to) {
+        createOrEditRelationship(from, to);
+    },
+
+
+    fchg: function () {
+        if(jt.safeget('follow', 'checked')) {
+            jt.out('fstatdescr', 
+                    "Show new reviews under friend reviews"); }
+        else if(jt.safeget('block', 'checked')) {
+            jt.out('fstatdescr',
+                    "List as following, but do not show new reviews"); }
+        else if(jt.safeget('nofollow', 'checked')) {
+            jt.out('fstatdescr',
+                    "Do not show new reviews, do not list as following"); }
+    },
+
+
+    outbound: function (relatedid) {
+        var pen, relrefs, i;
+        pen = app.pen.currPenRef().pen;
+        relrefs = getRelRefArray(pen, "outbound");
+        for(i = 0; relrefs && i < relrefs.length; i += 1) {
+            if(relrefs[i].rel.relatedid === relatedid) {
+                return relrefs[i].rel; } }
     },
 
 
@@ -442,7 +394,7 @@ app.rel = (function () {
     //block since nobody wants to sit and wait for it.  Protect
     //against duplicate calls, since that can happen as closures
     //are establishing their state at startup.
-    asyncLoadOutboundRelationships = function () {
+    loadoutbound: function () {
         if(asyncLoadStarted) {
             return; }  //allready working on loading
         if(app.pen.currPenRef().outrels) {
@@ -451,29 +403,72 @@ app.rel = (function () {
         loadoutcursor = "starting";
         setTimeout(function () {
             loadOutboundRelationships(); }, 50);
-    };
+    },
 
 
-    return {
-        resetStateVars: function (relstate, pen) {
-            resetStateVars(relstate, pen); },
-        reledit: function (from, to) {
-            createOrEditRelationship(from, to); },
-        fchg: function () {
-            settingsDialogChangeFollowType(); },
-        outbound: function (relatedid) {
-            return findOutboundRelationship(relatedid); },
-        loadoutbound: function () {
-            asyncLoadOutboundRelationships(); },
-        outboundids: function () {
-            return getOutboundRelationshipIds(); },
-        displayRelations: function (pen, direction, divid) {
-            return displayRelatedPens(pen, direction, divid); },
-        followBack: function (followerid) {
-            addFollowerDisplayHome(followerid); },
-        relsLoaded: function () {
-            return asyncLoadStarted && !loadoutcursor; }
-    };
+    outboundids: function () {
+        var pen, relrefs, i, relids = [];
+        pen = app.pen.currPenRef().pen;
+        relrefs = getRelRefArray(pen, "outbound");
+        for(i = 0; relrefs && i < relrefs.length; i += 1) {
+            //do not include blocked relationships in result ids
+            if(relrefs[i].rel.status === "following") {
+                relids.push(relrefs[i].rel.relatedid); } }
+        if(!asyncLoadStarted) {
+            relids.push("waiting"); }
+        else if(loadoutcursor) {
+            relids.push("loading"); }
+        return relids;
+    },
 
+
+    displayRelations: function (pen, direction, divid) {
+        var html, refarray, relitems = [], placeholder, i, litemp;
+        placeholder = jt.tac2html(["li", "Fetching pen names"]);
+        refarray = getRelRefArray(pen, direction);
+        if(refarray) {
+            if(refarray.length > 0) {
+                for(i = 0; i < refarray.length && i < maxpgdisp; i += 1) {
+                    litemp = relRefPenHTML(refarray[i], direction, placeholder);
+                    relitems.push(litemp);
+                    if(litemp === placeholder) {
+                        break; } }
+                //ATTENTION: continue display link if maxpgdisp
+                if(i === refarray.length) {
+                    relitems.push(relRefPenHTMLFooter(direction)); } }
+            else if(refarray.length === 0) {
+                if(direction === "outbound") {
+                    relitems.push(["li", "Not following anyone."]);
+                    if(jt.instId(pen) === app.pen.currPenId()) {  //own profile
+                        relitems.push(["li", 
+                                       app.activity.searchPensLinkHTML()]); } }
+                else { //inbound
+                    relitems.push(["li", "No followers."]); } } }
+        else {  //dump an interim status while retrieving rels
+            relitems.push(["li", "fetching relationships..."]); }
+        html = ["ul", {cla: "penlist"}, relitems];
+        jt.out(divid, jt.tac2html(html));
+        if(!refarray) {  //rels not loaded yet, init and fetch.
+            loadDisplayRels(pen, direction, divid); }
+        else if(litemp === placeholder) {
+            loadReferencedPens(refarray[i], function () {
+                app.rel.displayRelations(pen, direction, divid); }); }
+    },
+
+
+    followBack: function (followerid) {
+        app.pen.getPen(function (homepen) {
+            app.lcs.getPenFull(followerid, function (penref) {
+                createOrEditRelationship(homepen, penref.pen,
+                                         jt.instId(homepen)); }); });
+    },
+
+
+    relsLoaded: function () {
+        return asyncLoadStarted && !loadoutcursor;
+    }
+
+
+}; //end of returned functions
 }());
 
