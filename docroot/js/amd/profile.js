@@ -1155,7 +1155,7 @@ return {
         else {
             linktxt = jt.ellipsis(revobj[type.key], 60); }
         if(revobj.url) {
-            jump = " &nbsp;" + app.review.graphicAbbrevSiteLink(revobj.url); }
+            jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(penNameStr) {
             byline = ["review by ",
                       ["a", {title: "Show profile for " + jt.ndq(penNameStr),
