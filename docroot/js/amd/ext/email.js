@@ -29,13 +29,17 @@ app.email = (function () {
     //many clients if reading text only, and the escape characters
     //look terrible when composing the message.  KISS.
     getBody = function (review) {
-        return "\n\nThis is my review from wdydfun:\n\n" + 
+        var title, text;
+        title = app.services.getRevTitleTxt(review);
+        text = "\n\nThis is my review of " + title + 
+            " from wdydfun in case you might find it helpful:\n\n" + 
             app.services.getRevTitleTxt(review) + "\n" +
             "[" + review.revtype + "] " +
             app.services.getRevStarsTxt(review, "txtexp") + "\n" +
             review.text + "\n\n" +
             "To see my full review, go to\n" +
             app.services.getRevPermalink(review) + "\n";
+        return text;
     };
 
 
@@ -47,6 +51,7 @@ return {
     name: svcName,
     svcDesc: "Prepares an email message for you to edit and send",
     iconurl: iconurl,
+
 
     doInitialSetup: function () {
         jt.log("email service initial setup done");
