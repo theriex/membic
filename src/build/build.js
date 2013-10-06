@@ -6,7 +6,7 @@ var build = (function () {
     "use strict";
 
     var fs = require('fs'),
-        cp = require('child_process'),
+        childproc = require('child_process'),
         readopt = { encoding: 'utf8' },
         writeopt = { encoding: 'utf8' },
         buildroot = "",
@@ -72,7 +72,7 @@ var build = (function () {
         command = makeMinCommand(outsrc, outcomp);
         console.log(command);
         args = command.split(" ");
-        cp.spawn(args[0], args.slice(1));
+        childproc.spawn(args[0], args.slice(1));
     },
 
 
@@ -80,22 +80,33 @@ var build = (function () {
         var ref = docroot + "/js/jtmin.js",
             tmp = docroot + "/js/jtmin.src",
             command = "mv " +  ref + " " + tmp;
-        cp.exec(command, function () {
+        childproc.exec(command, function () {
             var args;
             command = makeMinCommand(tmp, ref);
             console.log(command);
             args = command.split(" ");
-            cp.spawn(args[0], args.slice(1)); });
+            childproc.spawn(args[0], args.slice(1)); });
     },
 
 
     unminifyjtmin = function () {
         var ref = docroot + "/js/jtmin.js",
             tmp = docroot + "/js/jtmin.src",
-            command = "mv " +  tmp + " " + ref;
+            command;
+        try { //copy minified to separate jtmin project to track changes
+            command = "mv " + ref + " /general/dev/jtmin/jtminmin.js";
+            childproc.exec(command);
+        } catch(ignore) {
+        }
         try {
-            cp.exec(command, function () {
+            command = "mv " +  tmp + " " + ref;
+            childproc.exec(command, function () {
                 console.log("jtmin.js restored"); });
+        } catch(ignore) {
+        }
+        try { //copy source to separate jtmin project to track changes
+            command = "cp " + ref + " /general/dev/jtmin/";
+            childproc.exec(command);
         } catch(ignore) {
         }
     },
@@ -105,12 +116,12 @@ var build = (function () {
         var ref = docroot + "/js/app.js",
             tmp = docroot + "/js/app.src",
             command = "mv " + ref + " " + tmp;
-        cp.exec(command, function () {
+        childproc.exec(command, function () {
             var args;
             command = makeMinCommand(tmp, ref);
             console.log(command);
             args = command.split(" ");
-            cp.spawn(args[0], args.slice(1)); });
+            childproc.spawn(args[0], args.slice(1)); });
     },
 
 
@@ -119,7 +130,7 @@ var build = (function () {
             tmp = docroot + "/js/app.src",
             command = "mv " + tmp + " " + ref;
         try {
-            cp.exec(command, function () {
+            childproc.exec(command, function () {
                 console.log("app.js restored"); });
         } catch(ignore) {
         }
