@@ -1,6 +1,6 @@
 /*global setTimeout: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.services = (function () {
     "use strict";

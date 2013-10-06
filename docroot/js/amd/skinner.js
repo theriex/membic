@@ -1,9 +1,13 @@
 /*global document: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.skinner = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var oldcolors,
         cancelpen,
@@ -33,6 +37,10 @@ app.skinner = (function () {
                       lightbg: "#ffefaf", darkbg: "#997335",
                          link: "#333300",  hover: "#666633" } ],
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     copycolors = function (colors) {
         var cc = { name: colors.name,
@@ -142,105 +150,49 @@ app.skinner = (function () {
     },
 
 
-    cancelSkinChange = function () {
-        if(oldcolors) {  //if spurious cancel call oldcolors may be undefined
-            app.colors = oldcolors; }
-        if(cancelpen && cancelpen.settings && 
-           cancelpen.settings.colorPresetId) {
-            cancelpen.settings.colorPresetId = oldcolors.id; }
-        updateColors();
-    },
-
-
-    saveSkinChangeSettings = function (pen) {
-        pen.settings.colors = copycolors(app.colors);
-    },
-
-
-    setColorsFromPen = function (pen) {
-        if(!pen) {  //use default colors
-            app.colors = presets[0]; }
-        else { //have pen
-            if(!pen.settings) {  //use default colors
-                app.colors = presets[0]; }
-            else { //have settings
-                if(typeof pen.settings === 'string') {
-                    app.pen.deserializeFields(pen); }
-                if(!pen.settings.colors) {  //use default colors
-                    app.colors = presets[0]; }
-                else { //have colors
-                    app.colors = copycolors(pen.settings.colors); } } }
-        updateColors();
-    },
-
-
     presetSelectorHTML = function (pen) {
-        var html, i, pid;
-        html = "<table>" +
-          "<tr>" + 
-            "<td align=\"right\">Display</td>" +
-            "<td align=\"left\">" +
-                "<select id=\"presetsel\">";
+        var i, pid, sel, options = [], html;
         for(i = 0; i < presets.length; i += 1) {
             pid = presets[i].id;
-            html += "<option id=\"" + pid + "\"";
-            if(pen && pen.settings && pen.settings.colorPresetId === pid) {
-                html += " selected=\"selected\""; }
-            html += ">" + 
-                presets[i].name + "</option>"; }
-        html += "</select></td>" +
-            "<td>&nbsp;&nbsp;" + 
-                "<a href=\"#toggleSkinControls\" id=\"skinctrltoggle\"" +
-                  " class=\"permalink\"" + 
-                  " onclick=\"app.skinner.toggleControls();return false;\"" +
-            ">show color controls</a></td>" +
-          "</tr>" +
-        "</table>";
-        return html;
+            sel = pen && pen.settings && pen.settings.colorPresetId === pid;
+            options.push(["option", {id: pid, 
+                                     selected: jt.toru(sel, "selected")},
+                          presets[i].name]); }
+        html = ["table",
+                ["tr",
+                 [["td", {align: "right"}, "Display"],
+                  ["td", {align: "left"},
+                   ["select", {id: "presetsel"}, options]],
+                  ["td",
+                   ["&nbsp;&nbsp;",
+                    ["a", {href: "#toggleSkinControls", id: "skinctrltoggle",
+                           cla: "permalink",
+                           onclick: jt.fs("app.skinner.toggleControls()")},
+                     "show color controls"]]]]]];
+        return jt.tac2html(html);
     },
 
 
     //This relies on html5 color input support, which at the time of
     //this writing was only available on Chrome and Opera.  If you
     //actually want to work with palettes, it might be best to use one
-    //of those browsers.  May do a polyfill later, but even detection
-    //of whether support includes a native colorpicker is non-trivial.
-    //For example FF dutifully reports type as "color" even though it
-    //has no colorpicker. 
+    //of those browsers.  May do a polyfill later, but detection of an
+    //available native colorpicker is non-trivial.  Firefox dutifully
+    //reports type as "color" even though it has no colorpicker.
     createColorControls = function () {
-        var i, clabel, cid, html;
-        html = "<table border=\"0\">";
+        var i, cid, rows = [];
         for(i = 0; i < colorctrls.length; i += 1) {
-            clabel = colorctrls[i].label;
             cid = colorctrls[i].id;
-            html += "<tr>" + 
-                "<td class=\"colorattrtd\">" + clabel + "</td>" +
-                "<td><input type=\"color\" id=\"" + cid + "\"" +
-                          " value=\"" + app.colors[cid] + "\"" +
-                          " onchange=\"app.skinner.onColorChange(" + 
-                              "'" + cid + "');return false;\"/></td>" +
-                "</tr>"; }
-        html += "</table>";
-        jt.out('colorctrlsdiv', html);
-    },
-
-
-    toggleControls = function () {
-        var txt, rules, html;
-        txt = jt.byId('skinctrltoggle').innerHTML;
-        if(txt === "show color controls") {
-            rules = document.styleSheets[0].cssRules;
-            if(rules && rules[0].style.setProperty) {
-                jt.byId('colorctrlsdiv').style.display = "block";
-                jt.out('skinctrltoggle', "hide color controls");
-                html = jt.byId('colorctrlsdiv').innerHTML;
-                if(!html) {  //not initialized yet
-                    createColorControls(); } }
-            else {  //no support, display as disabled
-                jt.byId('skinctrltoggle').style.color = "#666666"; } }
-        else {
-            jt.byId('colorctrlsdiv').style.display = "none";
-            jt.out('skinctrltoggle', "show color controls"); }
+            rows.push(
+                ["tr",
+                 [["td", {cla: "colorattrtd"}, 
+                   colorctrls[i].label],
+                  ["td", 
+                   ["input", {type: "color", id: cid,
+                              value: app.colors[cid],
+                              onchange: jt.fs("app.skinner.onColorChange(" + 
+                                              "'" + cid + "')")}]]]]); }
+        jt.out('colorctrlsdiv', jt.tac2html(["table", rows]));
     },
 
 
@@ -265,41 +217,94 @@ app.skinner = (function () {
                 pen.settings.colorPresetId = presets[i].id;
                 setControlValuesAndUpdate(presets[i]);
                 break; } }
-    },
+    };
 
 
-    displayDialog = function (domid, pen) {
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    init: function (domid, pen) {
         var html;
         oldcolors = copycolors(app.colors);
-        html = presetSelectorHTML(pen) + 
-            //color controls are high overhead and initialized only when needed.
-            "<div id=\"colorctrlsdiv\" style=\"display:none;\"></div>";
-        jt.out(domid, html);
+        html = [presetSelectorHTML(pen),
+                //high overhead color controls initialized only when needed.
+                ["div", {id: "colorctrlsdiv", style: "display:none;"}]];
+        jt.out(domid, jt.tac2html(html));
         jt.on('presetsel', 'change', function (e) {
             jt.evtend(e);
             app.pen.getPen(setColorsFromPreset); });
-    };
+    },
 
 
-    return {
-        init: function (domid, pen) {
-            displayDialog(domid, pen); },
-        cancel: function () {
-            cancelSkinChange(); },
-        save: function (pen) {
-            saveSkinChangeSettings(pen); },
-        setColorsFromPen: function (pen) {
-            setColorsFromPen(pen); },
-        lightbg: function () {
-            return getLightBackground(); },
-        darkbg: function () {
-            return getDarkBackground(); },
-        toggleControls: function () {
-            toggleControls(); },
-        onColorChange: function (cid) {
-            app.colors[cid] = jt.byId(cid).value;
-            updateColors(); }
-    };
+    cancel: function () {
+        if(oldcolors) {  //if spurious cancel call oldcolors may be undefined
+            app.colors = oldcolors; }
+        if(cancelpen && cancelpen.settings && 
+           cancelpen.settings.colorPresetId) {
+            cancelpen.settings.colorPresetId = oldcolors.id; }
+        updateColors();
+    },
 
+
+    save: function (pen) {
+        pen.settings.colors = copycolors(app.colors);
+    },
+
+
+    setColorsFromPen: function (pen) {
+        if(!pen) {  //use default colors
+            app.colors = presets[0]; }
+        else { //have pen
+            if(!pen.settings) {  //use default colors
+                app.colors = presets[0]; }
+            else { //have settings
+                if(typeof pen.settings === 'string') {
+                    app.pen.deserializeFields(pen); }
+                if(!pen.settings.colors) {  //use default colors
+                    app.colors = presets[0]; }
+                else { //have colors
+                    app.colors = copycolors(pen.settings.colors); } } }
+        updateColors();
+    },
+
+
+    lightbg: function () {
+        return getLightBackground();
+    },
+
+
+    darkbg: function () {
+        return getDarkBackground();
+    },
+
+
+    toggleControls: function () {
+        var txt, rules, html;
+        txt = jt.byId('skinctrltoggle').innerHTML;
+        if(txt === "show color controls") {
+            rules = document.styleSheets[0].cssRules;
+            if(rules && rules[0].style.setProperty) {
+                jt.byId('colorctrlsdiv').style.display = "block";
+                jt.out('skinctrltoggle', "hide color controls");
+                html = jt.byId('colorctrlsdiv').innerHTML;
+                if(!html) {  //not initialized yet
+                    createColorControls(); } }
+            else {  //no support, display as disabled
+                jt.byId('skinctrltoggle').style.color = "#666666"; } }
+        else {
+            jt.byId('colorctrlsdiv').style.display = "none";
+            jt.out('skinctrltoggle', "show color controls"); }
+    },
+
+
+    onColorChange: function (cid) {
+        app.colors[cid] = jt.byId(cid).value;
+        updateColors();
+    }
+
+
+};  //end of returned functions
 }());
 
