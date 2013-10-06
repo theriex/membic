@@ -1,15 +1,24 @@
 /*global app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.netflix = (function () {
     "use strict";
 
-    var svcName = "Netflix",    //ascii with no spaces, used as an id
-        attribution = "<a href=\"http://www.netflix.com\"" +
-            " title=\"The Netflix API was called to try save some typing\"" +
-            ">delivered by Netflix</a>",
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
+    var svcName = "Netflix",    //ascii with no spaces, used as an id
+        attribution = jt.tac2html(
+            ["a", {href: "http://www.netflix.com",
+                   title: "Review details retrieved from Netflix"},
+             "delivered by Netflix"]),
+
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     setReviewFields = function (review, data) {
         var elem;
@@ -50,14 +59,22 @@ app.netflix = (function () {
         var pieces = url.split("?");
         pieces = pieces[0].split("/");
         return pieces[pieces.length - 1];
-    },
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    name: svcName,
 
 
     //Uses contentdiv for interim display information, calls
     //app.review.display on completion.  The review.url and other
     //fields have already been set from the params, so this function
     //only needs to fill out additional info.
-    fetchData = function (review, url, params) {
+    fetchData: function (review, url, params) {
         var critsec = "", movieId = extractMovieId(url);
         jt.out('contentdiv', "Reading details from Netflix...");
         url = "http://odata.netflix.com/Catalog/Titles" + 
@@ -75,14 +92,9 @@ app.netflix = (function () {
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);
-    };
+    }
 
 
-    return {
-        name: svcName,
-        fetchData: function (review, url, params) {
-            fetchData(review, url, params); }
-    };
-
+};  //end of returned functions
 }());
 
