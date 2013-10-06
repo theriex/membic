@@ -19,6 +19,7 @@ var build = (function () {
         fs.readFile(docroot + '/js/app.js', readopt, function (err, text) {
             var modules, i, modfile, fpath, modefs = [];
             if(err) {
+                console.log("getModuleFiles reading app.js failed: " + err);
                 throw err; }
             text = text.slice(text.indexOf("modules = "));
             text = text.slice(text.indexOf("["));
@@ -58,14 +59,70 @@ var build = (function () {
     },
 
 
+    makeMinCommand = function (src, minf) {
+        var command = "java -jar " + buildroot + 
+            "/compiler-latest/compiler.jar --js " + src + 
+            " --js_output_file " + minf;
+        return command;
+    },
+
+
     minifyAndDeploy = function () {
         var command, args;
-        command = "java -jar " + buildroot + 
-            "/compiler-latest/compiler.jar --js " + outsrc + 
-            " --js_output_file " + outcomp;
+        command = makeMinCommand(outsrc, outcomp);
         console.log(command);
         args = command.split(" ");
         cp.spawn(args[0], args.slice(1));
+    },
+
+
+    minifyjtmin = function () {
+        var ref = docroot + "/js/jtmin.js",
+            tmp = docroot + "/js/jtmin.src",
+            command = "mv " +  ref + " " + tmp;
+        cp.exec(command, function () {
+            var args;
+            command = makeMinCommand(tmp, ref);
+            console.log(command);
+            args = command.split(" ");
+            cp.spawn(args[0], args.slice(1)); });
+    },
+
+
+    unminifyjtmin = function () {
+        var ref = docroot + "/js/jtmin.js",
+            tmp = docroot + "/js/jtmin.src",
+            command = "mv " +  tmp + " " + ref;
+        try {
+            cp.exec(command, function () {
+                console.log("jtmin.js restored"); });
+        } catch(ignore) {
+        }
+    },
+
+
+    minifyapp = function () {
+        var ref = docroot + "/js/app.js",
+            tmp = docroot + "/js/app.src",
+            command = "mv " + ref + " " + tmp;
+        cp.exec(command, function () {
+            var args;
+            command = makeMinCommand(tmp, ref);
+            console.log(command);
+            args = command.split(" ");
+            cp.spawn(args[0], args.slice(1)); });
+    },
+
+
+    unminifyapp = function () {
+        var ref = docroot + "/js/app.js",
+            tmp = docroot + "/js/app.src",
+            command = "mv " + tmp + " " + ref;
+        try {
+            cp.exec(command, function () {
+                console.log("app.js restored"); });
+        } catch(ignore) {
+        }
     },
 
 
@@ -73,6 +130,8 @@ var build = (function () {
         getModuleFiles(function (modefs) {
             aggregateSource(modefs, function () {
                 minifyAndDeploy(); }); });
+        minifyjtmin();
+        minifyapp();
     },
 
 
@@ -87,6 +146,8 @@ var build = (function () {
                 throw err; }
             console.log("cleared out " + outsrc);
         });
+        unminifyjtmin();
+        unminifyapp();
     },
 
 
