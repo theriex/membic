@@ -1,21 +1,30 @@
 /*global alert: false, console: false, window: false, document: false, app: false, jt: false, FB: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.facebook = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var svcName = "Facebook",  //no spaces in name, used as an id
         tmprev,  //temporary review holder for posting process
     
 
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
+
     facebookWelcome = function (loginResponse) {
-        var html = "<p>&nbsp;</p>" + 
-            "<p>Facebook login success! Fetching your info...</p>";
-        jt.out('contentdiv', html);
+        var html = [["p", "&nbsp;"],
+                    ["p", "Facebook login success! Fetching your info..."]];
+        jt.out('contentdiv', jt.tac2html(html));
         FB.api('/me', function (infoResponse) {
-            html = "<p>&nbsp;</p><p>Welcome " + infoResponse.name + "</p>";
-            jt.out('contentdiv', html);
+            html = [["p", "&nbsp;"],
+                    ["p", "Welcome " + infoResponse.name]];
+            jt.out('contentdiv', jt.tac2html(html));
             app.login.setAuth("fbid", loginResponse.authResponse.accessToken,
                               infoResponse.id + " " + infoResponse.name);
             //The facebook name is NOT a good default pen name since it
@@ -26,37 +35,32 @@ app.facebook = (function () {
 
     facebookLoginFormDisplay = function (loginResponse, domid, 
                                          okfstr, cancelfstr) {
-        var msg, html;
+        var msg, canceltd = "", html;
         if(loginResponse.status === "not_authorized") {
             msg = "You have not yet authorized wdydfun," +
                 " click to authorize..."; }
         else {
             msg = "You are not currently logged into Facebook," +
                 " click to log in..."; }
-        html = "<p>" + msg + "</p><table><tr>" + 
-            "<td><a href=\"http://www.facebook.com\"" +
-                  " title=\"Log in to Facebook\"" +
-                  " onclick=\"app.facebook." + okfstr + ";return false;\"" +
-                "><img class=\"loginico\" src=\"img/f_logo.png\"" +
-                     " border=\"0\"/> Log in to Facebook</a></td>";
         if(cancelfstr) {
-            html += "<td>&nbsp;" + 
-              "<button type=\"button\" id=\"cancelbutton\"" +
-                     " onclick=\"" + cancelfstr + ";return false;\"" +
-              ">Cancel</button></td>"; }
-        html += "</tr></table>";
-        jt.out(domid, html);
+            canceltd = ["td", 
+                        ["&nbsp;",
+                         ["button", {type: "button", id: "cancelbutton",
+                                     onclick: jt.fs(cancelfstr)},
+                          "Cancel"]]]; }
+        html = [["p", msg],
+                ["table", 
+                 ["tr", 
+                  [["td",
+                    ["a", {href: "http://www.facebook.com",
+                           title: "Log in to Facebook",
+                           onclick: jt.fs("app.facebook." + okfstr)},
+                     [["img", {cla: "loginico", src: "img/f_logo.png"}],
+                      " Log in to Facebook"]]],
+                   canceltd]]]];
+        jt.out(domid, jt.tac2html(html));
         if(cancelfstr) {  //not already in a dialog...
             app.layout.adjust(); }
-    },
-
-
-    handleFBLogin = function () {
-        FB.login(function (loginResponse) {
-            if(loginResponse.status === "connected") {
-                facebookWelcome(loginResponse); }
-            else {
-                app.login.init(); } });
     },
 
 
@@ -91,8 +95,9 @@ app.facebook = (function () {
         if(!msgdivid) {
             msgdivid = "contentdiv"; }
         if(msgdivid !== "quiet") {
-            html = "<p>&nbsp;</p><p>Loading Facebook API...</p>";
-            jt.out(msgdivid, html); }
+            html = [["p", "&nbsp;"],
+                    ["p", "Loading Facebook API..."]];
+            jt.out(msgdivid, jt.tac2html(html)); }
         app.layout.adjust();
     },
 
@@ -128,43 +133,6 @@ app.facebook = (function () {
                 facebookLoginFormDisplay(loginResponse, domid, 
                                          "authFB('" + domid + "')"); } 
         });
-    },
-
-
-    addProfileAuth1 = function (domid, pen) {
-        if(window.location.href.indexOf(app.mainsvr) !== 0) {
-            alert("Facebook authentication is only supported from " +
-                  app.mainsvr);
-            return app.profile.displayAuthSettings(domid, pen); }
-        if(typeof FB === 'object' || typeof FB === 'function') {
-            return addProfileAuth2(domid, pen); }
-        loadFacebook(function () {
-            addProfileAuth2(domid, pen); });
-    },
-
-
-    handleFBProfileAuth = function (domid) {
-        FB.login(function (loginResponse) {
-            if(loginResponse.status === "connected") {
-                app.pen.getPen(function (pen) {
-                    addProfileAuth3(domid, pen,
-                                    loginResponse.authResponse.userID); 
-                }); }
-            else {
-                app.pen.getPen(function (pen) {
-                    app.profile.displayAuthSettings(domid, pen); }); }
-        });
-    },
-
-
-    authenticate = function () {
-        try {
-            if(FB) {
-                return checkFBLogin(); }
-        } catch (e) {
-            jt.log("facebook.js authenticate error: " + e);
-        }
-        loadFacebook(checkFBLogin);
     },
 
 
@@ -244,25 +212,70 @@ app.facebook = (function () {
                 facebookLoginFormDisplay(loginResponse, 'overlaydiv',
                                          "postTmpRev()", "bailTmpRev()"); }
         });
+    };
+
+
+    ////////////////////////////////////////
+    // published function
+    ////////////////////////////////////////
+return {
+
+    loginurl: "https://www.facebook.com",
+    name: svcName,  //no spaces in name, used as an id
+    svcDispName: "Facebook Wall Post",
+    svcDesc: "Posts a review to your wall",
+    iconurl: "img/f_logo.png",
+
+
+    loginFB: function () {
+        FB.login(function (loginResponse) {
+            if(loginResponse.status === "connected") {
+                facebookWelcome(loginResponse); }
+            else {
+                app.login.init(); } });
     },
 
 
-    getShareLinkURL = function (review) {
-        var url = app.services.getRevPermalink(review);
-        url = "http://www.facebook.com/sharer/sharer.php?u=" + jt.enc(url);
-        return url;
+    authenticate: function () {
+        try {
+            if(FB) {
+                return checkFBLogin(); }
+        } catch (e) {
+            jt.log("facebook.js authenticate error: " + e);
+        }
+        loadFacebook(checkFBLogin);
     },
 
 
-    getShareOnClickStr = function (review) {
-        var str = "app.facebook.shareCurrentReview();return false;";
-        return str;
+    addProfileAuth: function (domid, pen) {
+        if(window.location.href.indexOf(app.mainsvr) !== 0) {
+            alert("Facebook authentication is only supported from " +
+                  app.mainsvr);
+            return app.profile.displayAuthSettings(domid, pen); }
+        if(typeof FB === 'object' || typeof FB === 'function') {
+            return addProfileAuth2(domid, pen); }
+        loadFacebook(function () {
+            addProfileAuth2(domid, pen); });
     },
 
 
-    verifyFacebookLoaded = function () {
+    authFB: function (domid) {
+        FB.login(function (loginResponse) {
+            if(loginResponse.status === "connected") {
+                app.pen.getPen(function (pen) {
+                    addProfileAuth3(domid, pen,
+                                    loginResponse.authResponse.userID); 
+                }); }
+            else {
+                app.pen.getPen(function (pen) {
+                    app.profile.displayAuthSettings(domid, pen); }); }
+        });
+    },
+
+
+    doInitialSetup: function () {
         if(window.location.href.indexOf(app.mainsvr) === 0 &&
-           !(typeof FB === 'object' || typeof FB === 'function')) {
+               !(typeof FB === 'object' || typeof FB === 'function')) {
             loadFacebook(function () {
                 console.log("facebook service initial setup done"); },
                          "quiet"); }
@@ -271,7 +284,21 @@ app.facebook = (function () {
     },
 
 
-    postReview1 = function (review) {
+    getLinkURL: function (review) {
+        var url = app.services.getRevPermalink(review);
+        url = "http://www.facebook.com/sharer/sharer.php?u=" + jt.enc(url);
+        return url;
+    },
+
+
+    getOnClickStr: function (review) {
+        var str = "app.facebook.shareCurrentReview();return false;";
+        return str;
+    },
+
+
+    shareCurrentReview: function () {
+        var review = app.review.getCurrentReview();
         if(window.location.href.indexOf(app.mainsvr) !== 0) {
             alert("Posting to Facebook is only supported from " +
                   app.mainsvr);
@@ -280,42 +307,30 @@ app.facebook = (function () {
             return postReview2(review); }
         loadFacebook(function () {
             postReview2(review); });
-    };
-            
+    },
 
-    return {
-        loginurl: "https://www.facebook.com",
-        name: svcName,  //no spaces in name, used as an id
-        svcDispName: "Facebook Wall Post",
-        svcDesc: "Posts a review to your wall",
-        iconurl: "img/f_logo.png",
-        loginFB: function () {
-            handleFBLogin(); },
-        authenticate: function () {
-            authenticate(); },
-        addProfileAuth: function (domid, pen) {
-            addProfileAuth1(domid, pen); },
-        authFB: function (domid) {
-            handleFBProfileAuth(domid); },
-        doInitialSetup: function () {
-            verifyFacebookLoaded(); },
-        getLinkURL: function (review) {
-            return getShareLinkURL(review); },
-        getOnClickStr: function (review) {
-            return getShareOnClickStr(review); },
-        shareCurrentReview: function () {
-            postReview1(app.review.getCurrentReview()); },
-        getShareImageAlt: function () {
-            return "Post to your wall"; },
-        getShareImageSrc: function () {
-            return app.facebook.iconurl; },
-        postTmpRev: function () {
-            closeOverlay();
-            postReview3(tmprev); },
-        bailTmpRev: function () {
-            closeOverlay();
-            postRevBailout(tmprev); }
-    };
 
+    getShareImageAlt: function () {
+        return "Post to your wall";
+    },
+
+
+    getShareImageSrc: function () {
+        return app.facebook.iconurl;
+    },
+
+
+    postTmpRev: function () {
+        closeOverlay();
+        postReview3(tmprev);
+    },
+
+
+    bailTmpRev: function () {
+        closeOverlay();
+        postRevBailout(tmprev);
+    }
+
+};  //end of returned functions
 }());
 
