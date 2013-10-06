@@ -287,7 +287,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         if (!obj) {
             obj = {};
         }
-        if(paramstr) {
+        if (paramstr) {
             comps = paramstr.split("&");
             for (i = 0; i < comps.length; i += 1) {
                 attval = comps[i].split("=");
@@ -455,7 +455,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    //does nothing, can be redefined to use as a general intercept point.
+    //does nothing, can be redefined to use for general decoration.
     uo.fsd = function (fstr) {
         return fstr;
     };
