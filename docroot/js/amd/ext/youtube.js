@@ -1,15 +1,24 @@
 /*global app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.youtube = (function () {
     "use strict";
 
-    var svcName = "YouTube",    //ascii with no spaces, used as an id
-        attribution = "<a href=\"http://www.youtube.com\"" +
-            " title=\"The YouTube API was called to try save some typing\"" +
-            ">delivered by YouTube</a>",
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
+    var svcName = "YouTube",    //ascii with no spaces, used as an id
+        attribution = jt.tac2html(
+            ["a", {href: "http://www.youtube.com",
+                   title: "Review details retrieved from YouTube"},
+             "delivered by YouTube"]),
+
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     //Attempt to parse the title.  Add smarts on case basis.  In
     //general, guessing artist, title is most likely due to players
@@ -45,13 +54,21 @@ app.youtube = (function () {
            data.entry.media$group.media$thumbnail[0]) {
             review.imguri = data.entry.media$group.media$thumbnail[0].url; }
         parseTitle(review);
-    },
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    name: svcName,
 
 
     //Use contentdiv for displays, call app.review.display when done.
     //The review.url and other fields have already been set from the
     //params, so this only needs to fill out additional info.
-    fetchData = function (review, url, params) {
+    fetchData: function (review, url, params) {
         var urlobj = jt.paramsToObj(url),
             vid = urlobj.v, critsec = "";
         jt.out('contentdiv', "Reading details from YouTube...");
@@ -68,15 +85,7 @@ app.youtube = (function () {
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);
-    };
+    }
 
-
-    return {
-        name: svcName,
-        fetchData: function (review, url, params) {
-            fetchData(review, url, params); }
-    };
-
+};  //end of returned functions
 }());
-
-
