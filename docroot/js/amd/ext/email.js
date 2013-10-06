@@ -1,13 +1,21 @@
 /*global app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.email = (function () {
     "use strict";
 
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
     var svcName = "email",  //no spaces in name, used as an id
         iconurl = "img/email.png",
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     //Putting stars in the subject makes it resemble spam, so don't do
     //that.  Also consider what the text will look like with "re: " or
@@ -28,34 +36,47 @@ app.email = (function () {
             review.text + "\n\n" +
             "To see my full review, go to\n" +
             app.services.getRevPermalink(review) + "\n";
+    };
+
+
+    ////////////////////////////////////////
+    // returned functions
+    ////////////////////////////////////////
+return {
+
+    name: svcName,
+    svcDesc: "Prepares an email message for you to edit and send",
+    iconurl: iconurl,
+
+    doInitialSetup: function () {
+        jt.log("email service initial setup done");
     },
 
 
-    getLinkURL = function (review) {
+    getLinkURL: function (review) {
         var subject, body, html;
         subject = getSubject(review);
         body = getBody(review);
         html = "mailto:?subject=" + jt.dquotenc(subject) +
             "&body=" + jt.dquotenc(body);
         return html; 
-    };
+    },
 
 
-    return {
-        name: svcName,
-        svcDesc: "Fills out an email for you to send",
-        iconurl: iconurl,
-        doInitialSetup: function () {
-            jt.log("email service initial setup done"); },
-        getLinkURL: function (review) {
-            return getLinkURL(review); },
-        getOnClickStr: function () {
-            return ""; },
-        getShareImageAlt: function () {
-            return "Send via eMail"; },
-        getShareImageSrc: function () {
-            return iconurl; }
-    };
+    getOnClickStr: function () {
+        return "";
+    },
 
+
+    getShareImageAlt: function () {
+        return "Send via eMail";
+    },
+
+
+    getShareImageSrc: function () {
+        return iconurl;
+    }
+
+};  //end of returned functions
 }());
 
