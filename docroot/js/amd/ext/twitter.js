@@ -1,15 +1,23 @@
 /*global alert: false, window: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.twitter = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var svcName = "Twitter",  //no spaces in name, used as an id
         twReqTokURL = "https://api.twitter.com/oauth/request_token",
         twTokCnvURL = "https://api.twitter.com/oauth/access_token",
         twLoginURL = "http://api.twitter.com/oauth/authenticate",
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     returnToParentDisplay = function () {
         var addAuthOutDiv = jt.cookie("addAuthOutDiv");
@@ -75,18 +83,30 @@ app.twitter = (function () {
         if(addAuthOutDiv) {
             recordTwitterAuthorization(id); }
         else {
-            jt.out('contentdiv', "<p>&nbsp;</p><p>Welcome " + name + "</p>");
+            jt.out('contentdiv', jt.tac2html([["p", "&nbsp;"],
+                                              ["p", "Welcome " + name]]));
             app.login.setAuth("twid", token, id + " " + name);
             //The twitter name is probably unique, but it's better to
             //allow for entry of a creative pen name without defaulting it.
             app.login.authComplete(); }
-    },
+    };
 
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    loginurl: "https://www.twitter.com",
+    name: svcName,  //no spaces in name, used as an id
+    svcDispName: "Tweet",
+    svcDesc: "Tweets a condensed review",
+    iconurl: "img/tw_logo.png",
 
     //Surfing to http://www.wdydfun.com#command=AltAuth1 leads
     //to this function, which is used for both the "log in via
     //twitter" click, and the callback from twitter.
-    authenticate = function (params) {
+    authenticate: function (params) {
         var data, outputdiv, addAuthOutDiv, critsec = "";
         addAuthOutDiv = jt.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
@@ -123,17 +143,22 @@ app.twitter = (function () {
 
     //Twitter always requires a redirect and callback, so have to
     //track context in a cookie.
-    addProfileAuth = function (domid, pen) {
+    addProfileAuth: function (domid, pen) {
         if(window.location.href.indexOf(app.mainsvr) !== 0) {
             alert("Twitter authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
         jt.cookie("addAuthOutDiv", domid, 2);
-        authenticate( {} );
+        app.twitter.authenticate( {} );
     },
 
 
-    getShareLinkURL = function (review) {
+    doInitialSetup: function () {
+        jt.log("twitter service initial setup done");
+    },
+
+
+    getLinkURL: function (review) {
         var text, url;
         text = app.services.getRevStarsTxt(review, "unicode") + " " +
             app.services.getRevTitleTxt(review);
@@ -145,9 +170,9 @@ app.twitter = (function () {
     },
 
 
-    getShareOnClickStr = function (review) {
+    getOnClickStr: function (review) {
         var str, url, windowOptions, width, height, left, top = 0;
-        url = getShareLinkURL(review);
+        url = app.twitter.getLinkURL(review);
         windowOptions = 'scrollbars=yes,resizable=yes,toolbar=no,location=yes';
         width = 550;
         height = 420;
@@ -159,30 +184,19 @@ app.twitter = (function () {
             "'" + windowOptions + ",width=" + width + ",height=" + height + 
                 ",left=" + left + ",top=" + top + "');return false;";
         return str;
-    };
+    },
 
 
-    return {
-        loginurl: "https://www.twitter.com",
-        name: svcName,  //no spaces in name, used as an id
-        svcDispName: "Tweet",
-        svcDesc: "Tweets a condensed review",
-        iconurl: "img/tw_logo.png",
-        authenticate: function (params) {
-            authenticate(params); },
-        addProfileAuth: function (domid, pen) {
-            addProfileAuth(domid, pen); },
-        doInitialSetup: function () {
-            jt.log("twitter service initial setup done"); },
-        getLinkURL: function (review) {
-            return getShareLinkURL(review); },
-        getOnClickStr: function (review) {
-            return getShareOnClickStr(review); },
-        getShareImageAlt: function () {
-            return "Tweet condensed review"; },
-        getShareImageSrc: function () {
-            return app.twitter.iconurl; }
-    };
+    getShareImageAlt: function () {
+        return "Tweet condensed review";
+    },
 
+
+    getShareImageSrc: function () {
+        return app.twitter.iconurl;
+    }
+
+
+};  //end of returned functions
 }());
 
