@@ -1,15 +1,24 @@
 /*global app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.amazon = (function () {
     "use strict";
 
-    var svcName = "Amazon",    //ascii with no spaces, used as an id
-        attribution = "<a href=\"http://www.amazon.com\"" +
-            " title=\"The Amazon API was called to try save some typing\"" +
-            ">delivered by Amazon</a>",
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
+    var svcName = "Amazon",    //ascii with no spaces, used as an id
+        attribution = jt.tac2html(
+            ["a", {href: "http://www.amazon.com",
+                   title: "Review details retrieved from Amazon"},
+             "delivered by Amazon"]),
+
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     extractField = function (field, xml) {
         var idx, tag = "<" + field + ">";
@@ -113,10 +122,18 @@ app.amazon = (function () {
         pieces = pieces[0].split("/");
         pieces = pieces[pieces.length - 1].split("%");
         return pieces[0];
-    },
+    };
 
 
-    fetchData = function (review, url, params) {
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    name: svcName,
+    
+
+    fetchData: function (review, url, params) {
         var critsec = "", asin = extractASIN(url);
         jt.out('contentdiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
@@ -130,14 +147,9 @@ app.amazon = (function () {
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);
-    };
+    }
 
 
-    return {
-        name: svcName,
-        fetchData: function (review, url, params) {
-            fetchData(review, url, params); }
-    };
-
+};  //end of returned functions
 }());
 
