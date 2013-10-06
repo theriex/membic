@@ -1,13 +1,21 @@
 /*global alert: false, window: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.github = (function () {
     "use strict";
 
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
     var svcName = "GitHub",
         iconurl = "img/blacktocat-32.png",
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     backToParentDisplay = function () {
         var addAuthOutDiv = jt.cookie("addAuthOutDiv");
@@ -67,12 +75,21 @@ app.github = (function () {
                              code + ": " + errtxt);
                      backToParentDisplay(); }),
                  critsec);
-    },
+    };
 
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    loginurl: "https://github.com",
+    name: svcName, //ascii with no spaces, used as an id
+    iconurl: iconurl,
 
     //This function gets called when you click "Login via GitHub", and
     //when adding authentication, and on return from GitHub.
-    authenticate = function (params) {
+    authenticate: function (params) {
         var url, state, critsec = "";
         if(params.code) {  //back from github
             jt.out("contentdiv", "Returned from GitHub...");
@@ -102,25 +119,16 @@ app.github = (function () {
     },
 
 
-    addProfileAuth = function (domid, pen) {
+    addProfileAuth: function (domid, pen) {
         if(window.location.href.indexOf(app.mainsvr) !== 0) {
             alert("GitHub authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
         jt.cookie("addAuthOutDiv", domid, 2);
-        authenticate( {} );
-    };
+        app.github.authenticate( {} );
+    }
 
 
-    return {
-        loginurl: "https://github.com",
-        name: svcName, //ascii with no spaces, used as an id
-        iconurl: iconurl,
-        authenticate: function (params) {
-            authenticate(params); },
-        addProfileAuth: function (domid, pen) {
-            addProfileAuth(domid, pen); }
-    };
-
+};  //end of returned functions
 }());
 
