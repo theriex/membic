@@ -1,15 +1,23 @@
 /*global alert: false, window: false, app: false, jt: false */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.googleplus = (function () {
     "use strict";
+
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
 
     var svcName = "GooglePlus",   //ascii with no spaces, used as an id
         dispName = "Google+",     //what should actually be displayed
         iconurl = "https://www.google.com/favicon.ico",
         svcIconURL = "https://www.gstatic.com/images/icons/gplus-32.png",
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     backToParentDisplay = function () {
         var addAuthOutDiv = jt.cookie("addAuthOutDiv");
@@ -71,15 +79,28 @@ app.googleplus = (function () {
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
                      critsec); }
-    },
+    };
         
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    loginurl: "https://plus.google.com",
+    name: svcName,  //ascii with no spaces, used as an id
+    loginDispName: dispName,
+    svcDispName: "Google+ Share",
+    svcDesc: "Posts a review to your Google+ Stream",
+    svcIconURL: svcIconURL,
+    iconurl: iconurl,
 
 
     //You get to this function from a direct call when you click the
     //"Login via Google+" href.  A redirect to Google results in a
     //callback with "AltAuth2" returned in the hash fragment, which
     //leads back to this method again.
-    authenticate = function (params) {
+    authenticate: function (params) {
         var url, scope, critsec = "";
         if(params.access_token) {  //back from google
             jt.out("contentdiv", "Returned from Google...");
@@ -110,54 +131,46 @@ app.googleplus = (function () {
     //Google requires a redirect and callback, so track context in
     //a cookie.  Because cookies are domain dependent, this only 
     //works from the main server.
-    addProfileAuth = function (domid, pen) {
+    addProfileAuth: function (domid, pen) {
         if(window.location.href.indexOf(app.mainsvr) !== 0) {
             alert("Google+ authentication is only supported from ",
                   app.mainsvr);
             return app.profile.displayAuthSettings(domid, pen); }
         jt.cookie("addAuthOutDiv", domid, 2);
-        authenticate( {} );
+        app.googleplus.authenticate( {} );
     },
 
 
-    getShareLinkURL = function (review) {
+    doInitialSetup: function () {
+        jt.log("google+ service initial setup done");
+    },
+
+
+    getLinkURL: function (review) {
         var url = "http://www.wdydfun.com/statrev/" + jt.instId(review);
         url = "https://plus.google.com/share?url=" + jt.enc(url);
         return url;
     },
 
 
-    getShareOnClickStr = function () {
+    getOnClickStr: function () {
         var str = "window.open(this.href,  ''," + 
             " 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes," + 
             "height=600,width=600');return false;";
         return str;
-    };
+    },
 
 
-    return {
-        loginurl: "https://plus.google.com",
-        name: svcName,  //ascii with no spaces, used as an id
-        loginDispName: dispName,
-        svcDispName: "Google+ Share",
-        svcDesc: "Posts a review to your Google+ Stream",
-        svcIconURL: svcIconURL,
-        iconurl: iconurl,
-        authenticate: function (params) {
-            authenticate(params); },
-        addProfileAuth: function (domid, pen) {
-            addProfileAuth(domid, pen); },
-        doInitialSetup: function () {
-            jt.log("google+ service initial setup done"); },
-        getLinkURL: function (review) {
-            return getShareLinkURL(review); },
-        getOnClickStr: function () {
-            return getShareOnClickStr(); },
-        getShareImageAlt: function () {
-            return "Post to your Google+ stream"; },
-        getShareImageSrc: function () {
-            return svcIconURL; }
-    };
+    getShareImageAlt: function () {
+        return "Post to your Google+ stream";
+    },
 
+
+    getShareImageSrc: function () {
+        return svcIconURL;
+    }
+
+
+};  //end of returned functions
 }());
 
