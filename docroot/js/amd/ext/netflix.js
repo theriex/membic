@@ -10,10 +10,9 @@ app.netflix = (function () {
     ////////////////////////////////////////
 
     var svcName = "Netflix",    //ascii with no spaces, used as an id
-        attribution = jt.tac2html(
-            ["a", {href: "http://www.netflix.com",
-                   title: "Review details retrieved from Netflix"},
-             "delivered by Netflix"]),
+        attribution = "<a href=\"http://www.netflix.com\"" + 
+                        " title=\"Review details retrieved from Netflix\"" +
+                      ">delivered by Netflix</a>",
 
 
     ////////////////////////////////////////

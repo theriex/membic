@@ -10,10 +10,9 @@ app.youtube = (function () {
     ////////////////////////////////////////
 
     var svcName = "YouTube",    //ascii with no spaces, used as an id
-        attribution = jt.tac2html(
-            ["a", {href: "http://www.youtube.com",
-                   title: "Review details retrieved from YouTube"},
-             "delivered by YouTube"]),
+        attribution = "<a href=\"http://www.youtube.com\"" + 
+                        " title=\"Review details retrieved from YouTube\"" +
+                      ">delivered by YouTube</a>",
 
 
     ////////////////////////////////////////

@@ -10,10 +10,9 @@ app.amazon = (function () {
     ////////////////////////////////////////
 
     var svcName = "Amazon",    //ascii with no spaces, used as an id
-        attribution = jt.tac2html(
-            ["a", {href: "http://www.amazon.com",
-                   title: "Review details retrieved from Amazon"},
-             "delivered by Amazon"]),
+        attribution = "<a href=\"http://www.amazon.com\"" + 
+                        " title=\"Review details retrieved from Amazon\"" +
+                      ">delivered by Amazon</a>",
 
 
     ////////////////////////////////////////
