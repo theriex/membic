@@ -4,18 +4,28 @@
 
 
 //////////////////////////////////////////////////////////////////////
-//This is a catchall reader that does the best it can to fill out some
-//of the review fields using information generally available from any
-//url.  If there are standards for declaring media that are in general
-//use, this is the place to support them.  Anything specific to a URL
-//belongs in a separate reader.
+// This is a catchall reader that does the best it can to fill out
+// some of the review fields using information generally available
+// from any url.  If there are standards for declaring media that are
+// in general use then this is the place to support them.  Anything
+// seriously specific to a particular URL probably indicates the need
+// for a separate reader.
+//////////////////////////////////////////////////////////////////////
 
 app.readurl = (function () {
     "use strict";
 
+    ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
     var svcName = "URLReader",  //ascii with no spaces, used as an id
         //no attribution since no API provided.
 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
 
     valueForField = function (elem, field) {
         var idx, val;
@@ -81,8 +91,6 @@ app.readurl = (function () {
             }
         return content;
     },
-
-
 
 
     verifyFullURL = function (val, url) {
@@ -245,10 +253,18 @@ app.readurl = (function () {
             parseTitle(review); }
         setImageURI(review, html, url);
         setCanonicalURL(review, html, url);
-    },
+    };
 
 
-    fetchData = function (review, url, params) {
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    name: svcName,
+
+
+    fetchData: function (review, url, params) {
         var geturl, critsec = "";
         jt.out('contentdiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + jt.enc(url);
@@ -261,14 +277,8 @@ app.readurl = (function () {
                              code + ": " + errtxt);
                      app.review.display(); }),
                  critsec);
-    };
+    }
 
-
-    return {
-        name: svcName,
-        fetchData: function (review, url, params) {
-            fetchData(review, url, params); }
-    };
-
+};  //end of returned functions
 }());
 
