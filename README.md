@@ -30,7 +30,7 @@ Code organization:
 For the javascript web app, you can trace the flow from `index.html`
 into `app.js` and/or search the codebase for points of interest.  The
 app is written in pure javascript following the functional javascript
-architecture http://sandservices.com/docs/funcjsarch.html
+architecture: http://sandservices.com/docs/funcjsarch.html
 
 For the server side REST API, start from `app.yaml` and then reference the
 corresponding `.py` file in `src/py`. 
@@ -38,16 +38,27 @@ corresponding `.py` file in `src/py`.
 For local development, you will need to install the Google App Engine SDK.
 
 `docroot`
+
   `css`: site.css
+
   `docs`: supporting static HTML for the site
+
   `downloads`: other standalone apps and add-ons
+
   `js`: top level javascript files
+
     `amd`: app javascript modules
+
       `ext`: javascript modules for app extensions (third party integration)
+
   `img`: supporting graphics
+
 `src`
+
   `build`: deployment minification, not required for local development
+
   `imgsrc`: GIMP workfiles for site graphics
+
   `py`: server processing modules
   
 
