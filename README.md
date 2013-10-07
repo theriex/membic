@@ -37,29 +37,18 @@ corresponding `.py` file in `src/py`.
 
 For local development, you will need to install the Google App Engine SDK.
 
-`docroot`
-
-  `css`: site.css
-
-  `docs`: supporting static HTML for the site
-
-  `downloads`: other standalone apps and add-ons
-
-  `js`: top level javascript files
-
-    `amd`: app javascript modules
-
-      `ext`: javascript modules for app extensions (third party integration)
-
-  `img`: supporting graphics
-
-`src`
-
-  `build`: deployment minification, not required for local development
-
-  `imgsrc`: GIMP workfiles for site graphics
-
-  `py`: server processing modules
+        docroot
+          css: site.css
+          docs: supporting static HTML for the site
+          downloads: other standalone apps and add-ons
+          js: top level javascript files
+            amd: app javascript modules
+              ext: javascript modules for app extensions
+          img: supporting graphics
+        src
+          build: deployment minification, not required for local development
+          imgsrc: GIMP workfiles for site graphics
+          py: server processing modules
   
 
 Using the API:
