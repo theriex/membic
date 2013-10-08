@@ -624,7 +624,7 @@ return {
                     ["label", {fo: "emailin"}, "email"]],
                    ["td", {align: "left"},
                     ["input", {type: "email", name: "emailin", id: "emailin",
-                               onchange: jt.fs("app.login.emailCred()"),
+                               onchange: jt.fs("app.login.emailCredentials()"),
                                size: 30}]]]],
                  ["tr",
                   ["td", {colspan: 2, align: "center", id: "sendbuttons"},
@@ -633,7 +633,7 @@ return {
                      "Cancel"],
                     "&nbsp;",
                     ["button", {type: "button", id: "sendbutton",
-                                onclick: jt.fs("app.login.emailCred()")},
+                                onclick: jt.fs("app.login.emailCredentials()")},
                      "Send"]]]]]];
         html = jt.tac2html(html);
         jt.out('logindiv', html);
