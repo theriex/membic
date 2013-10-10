@@ -29,8 +29,7 @@ app.email = (function () {
     //many clients if reading text only, and the escape characters
     //look terrible when composing the message.  KISS.
     getBody = function (review) {
-        var title, text;
-        title = app.services.getRevTitleTxt(review);
+        var text;
         text = "Hi,\n\nSending along one of my " + review.revtype + 
             " reviews in case you find it helpful:\n\n" + 
             app.services.getRevTitleTxt(review) + "\n" +

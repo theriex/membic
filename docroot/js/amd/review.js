@@ -555,7 +555,7 @@ app.review = (function () {
                            title: "Read the URL to fill out review fields"},
                      "Read review details from URL"]);
                 actions.push("&nbsp;&nbsp;&nbsp;"); }
-            html = jt.tac2html(html); }
+            html = jt.tac2html(actions); }
         return html;
     },
 
