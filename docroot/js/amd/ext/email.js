@@ -31,14 +31,16 @@ app.email = (function () {
     getBody = function (review) {
         var title, text;
         title = app.services.getRevTitleTxt(review);
-        text = "\n\nThis is my review of " + title + 
-            " from wdydfun in case you might find it helpful:\n\n" + 
+        text = "Hi,\n\nSending along one of my " + review.revtype + 
+            " reviews in case you find it helpful:\n\n" + 
             app.services.getRevTitleTxt(review) + "\n" +
             "[" + review.revtype + "] " +
             app.services.getRevStarsTxt(review, "txtexp") + "\n" +
             review.text + "\n\n" +
-            "To see my full review, go to\n" +
-            app.services.getRevPermalink(review) + "\n";
+            "If you want to remember this review for later, just click " +
+            "the link off the full review page: " +
+            app.services.getRevPermalink(review) + 
+            "\n\ncheers,\n" + app.pen.currPenRef().pen.name + "\n";
         return text;
     };
 

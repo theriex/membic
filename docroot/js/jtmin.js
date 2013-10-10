@@ -212,8 +212,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     uo.dquotenc = function (val) {
-        val = val.replace(/"/g, "&quot;");
         val = uo.enc(val);
+        val = val.replace(/"/g, "&quot;");
         return val;
     };
 
