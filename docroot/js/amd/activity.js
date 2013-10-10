@@ -219,18 +219,13 @@ app.activity = (function () {
             params, critsec = "";
         penref = app.pen.currPenRef();
         if(penref.remembered) {
-            hint = "If you see a review worth remembering, click its " + 
-                "\"Remember\" button to keep a reference to it here.";
-            if(!penref.remembered.length) {
-                remitems.push(["li", "You have not remembered any reviews. " +
-                               hint]); }
-            else { //have remembered reviews for display
-                for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
+            for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
+                if(!penref.remembered[i].forgotten) {
                     revref = app.lcs.getRevRef(penref.remembered[i].revid);
                     if(revref.status === "not cached") {
                         crid = penref.remembered[i].revid;
-                        remitems.push(["li", "Fetching Review " + 
-                                       crid + "..."]);
+                        remitems.push(["li",
+                                       "Fetching Review " + crid + "..."]);
                         break; }
                     if(!revref.rev.penNameStr) {
                         friend = app.lcs.getPenRef(revref.rev.penid).pen;
@@ -238,13 +233,18 @@ app.activity = (function () {
                             revref.rev.penNameStr = friend.name; } }
                     if(!revref.rev.penNameStr) {
                         cfid = revref.rev.penid;
-                        remitems.push(["li", "Fetching Pen Name " + 
-                                       cfid + "..."]);
+                        remitems.push(["li", 
+                                       "Fetching Pen Name " + cfid + "..."]);
                         break; }
                     //have review with associated pen name
                     remitems.push(app.profile.reviewItemHTML(revref.rev, 
-                                                   revref.rev.penNameStr)); } }
-            if(i < 3) {  //reinforce how to remember reviews
+                                                  revref.rev.penNameStr)); } }
+            hint = "If you see a review worth remembering, click its " + 
+                "\"Remember\" button to keep a reference to it here.";
+            if(remitems.length === 0) {  //no reviews currently remembered
+                remitems.push(["li", "You have not remembered any reviews. " +
+                               hint]); }
+            else if(i < 3) {  //reinforce how to remember reviews
                 remitems.push(["li"]);
                 remitems.push(["li", ["span", {cla: "hintText"}, hint]]); }
             html = ["ul", {cla: "revlist"}, remitems];
