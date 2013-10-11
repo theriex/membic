@@ -64,13 +64,14 @@ def write_summary_email_body(pen, reviews, tstr, prs):
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
     subj = "Your wdydfun " + freq + " activity since " + tstr
+    logsum = "Mail sent for " + freq + " activity since " + tstr
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
     accs = MORAccount.gql(where, freq, thresh)
     for acc in accs:
         logmsg = "username: " + acc.username
         pen = eligible_pen(acc, thresh)
         if pen:
-            logmsg += ", pen: " + pen.name
+            logmsg += " (" + acc.email + "), pen: " + pen.name
             relids = outbound_relids_for_penid(pen.key().id())
             if len(relids) > 0:
                 logmsg += ", following: " + str(len(relids))
@@ -91,6 +92,13 @@ def mail_summaries(freq, thresh, request, response):
         acc.lastsummary = nowISO()
         acc.put()
         split(response, logmsg)
+        logsum += logmsg + "\n"
+    if not request.url.startswith('http://localhost'):
+        mail.send_mail(
+            sender="wdydfun support <theriex@gmail.com>",
+            to="theriex@gmail.com",
+            subject="wdydfun " + freq + " mail summaries",
+            body=logsum)
 
 
 class MailSummaries(webapp2.RequestHandler):
