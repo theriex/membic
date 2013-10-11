@@ -370,13 +370,13 @@ return {
     fchg: function () {
         if(jt.safeget('follow', 'checked')) {
             jt.out('fstatdescr', 
-                    "Show new reviews under friend reviews"); }
+                    "(Show new reviews)"); }
         else if(jt.safeget('block', 'checked')) {
             jt.out('fstatdescr',
-                    "List as following, but do not show new reviews"); }
+                    "(List as following, but do not show new reviews)"); }
         else if(jt.safeget('nofollow', 'checked')) {
             jt.out('fstatdescr',
-                    "Do not show new reviews, do not list as following"); }
+                    "(Do not show new reviews, do not list as following)"); }
     },
 
 

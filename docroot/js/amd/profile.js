@@ -123,8 +123,9 @@ app.profile = (function () {
                     html = ["a", {href: "#Follow",
                                   title: "Follow " + name + " reviews",
                                   onclick: jt.fs("app.profile.relationship()")},
-                            ["img", {cla: "navico",
-                                     src: "img/follow.png"}]]; }
+                            [["img", {cla: "navico",
+                                      src: "img/follow.png"}],
+                             "follow"]]; }
                 html = jt.tac2html(html); }
             else {  
                 //Happens if you go directly to someone's profile via url

@@ -376,6 +376,24 @@ app.activity = (function () {
     },
 
 
+    followMoreHTML = function (penids, lowactivity) {
+        var html = "", text;
+        if(penids && penids.length < 3) {
+            text = "You are currently following " + penids.length +
+                       " pen names. <br/>You want at least 3 to see" + 
+                       " anything interesting."; }
+        else {
+            text = "To see more reviews, <br/>follow more pen names."; }
+        if(text) {
+            html = ["table", {id: "followmore", cla: "formstyle"},
+                    ["tr",
+                     [["td", text],
+                      ["td", app.activity.searchPensLinkHTML()]]]];
+            html = jt.tac2html(html); }
+        return html;
+    },
+
+
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
         jt.byId('switchmodebutton').disabled = false;
@@ -407,12 +425,14 @@ app.activity = (function () {
                 app.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
         html = ["ul", {cla: "revlist"}, html];
         if(actdisp.cursor) {
-            html.push(["a", {href: "#moreact",
-                             onclick: jt.fs("app.activity.moreact()"),
-                             title: "More activity"},
-                       "more activity..."]); }
-        html = jt.tac2html(html);
-        jt.out('revactdiv', html);
+            html = [html, 
+                    ["a", {href: "#moreact",
+                           onclick: jt.fs("app.activity.moreact()"),
+                           title: "More activity"},
+                     "more activity..."]]; }
+        else if(revrefs.length < 3) {
+            html = [html, followMoreHTML(null, true)]; }
+        jt.out('revactdiv', jt.tac2html(html));
         app.layout.adjust();
     },
 
@@ -487,9 +507,7 @@ app.activity = (function () {
         jt.byId('switchmodebutton').disabled = true;
         penids = app.rel.outboundids();
         if(penids.length === 0) {
-            html = "<p>You are not following anyone.</p>" +
-                "<p>To follow someone, click the follow icon next to their " + 
-                "profile name.</p>" + app.activity.searchPensLinkHTML(); }
+            html = followMoreHTML(penids); }
         else if((penids[penids.length - 1] === "waiting") ||
                 (penids[penids.length - 1] === "loading")) {
             retry = true;
@@ -619,8 +637,8 @@ return {
 
 
     searchPensLinkHTML: function () {
-        return jt.imgntxt("follow.png", "Find Pen Names", 
-                          "app.activity.penNameSearchDialog()", 
+        return jt.imgntxt("follow.png", "Find Active Pen Names",
+                          "app.activity.penNameSearchDialog()",
                           "#findpens",
                           "Find pen names to follow");
     },
@@ -736,4 +754,5 @@ return {
 
 }; //end of returned functions
 }());
+
 

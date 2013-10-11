@@ -215,7 +215,7 @@ img { border:0px; }
 .buttontable { cursor:pointer; }
 .buttontable:hover { text-decoration:underline; }
 .buttontable td { padding:0px; }
-.buttontabletexttd { text-align:left; }
+.buttontabletexttd { text-align:left; font-size:large; }
 .pennametable td { padding:0px 10px; }
 .colorattrtd { font-size:small; text-align:right; }
 .colorswatch { height:20px; width:40px; cursor:pointer; }

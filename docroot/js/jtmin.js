@@ -444,6 +444,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     uo.fs = function (fstr) {
         if (fstr) {  //Do not wrap if undefined, null, or anything else falsy
             fstr = (uo.safestr(fstr)).trim();
+            if (fstr.indexOf(")") < 0) {
+                fstr += "()";
+            }
             if (fstr.indexOf(";") < fstr.length - 1) {
                 fstr += ";";
             }
