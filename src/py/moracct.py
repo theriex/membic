@@ -105,8 +105,19 @@ def authenticated(request):
         for account in accounts:
             key = pwd2key(account.password)
             token = decodeToken(key, token)
-            unidx = token.index(username)
-            if not token or unidx <= 2:
+            if not token:
+                return False
+            try:
+                unidx = token.index(username)
+            except:
+                try:
+                    unidx = token.index(userlcase)
+                except:
+                    try:
+                        unidx = token.index(account.username)
+                    except:
+                        unidx = -1
+            if unidx <= 2:
                 return False
             secs = int(token[(token.index(":") + 1) : (unidx - 1)])
             now = int(round(time.time()))
