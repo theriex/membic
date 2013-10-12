@@ -148,17 +148,31 @@ app.facebook = (function () {
     },
 
 
+    revaction = function (revtype) {
+        switch(revtype) {
+        case 'book': return "I read...";
+        case 'movie': return "I watched...";
+        case 'video': return "I watched...";
+        case 'music': return "I listened to...";
+        case 'food': return "I ate...";
+        case 'drink': return "I drank...";
+        case 'activity': return "I did...";
+        default: return "I ..."; }
+    },
+
+
     postReview4 = function (review) {
         var fbimage, fblinkurl, fblinktext, fbtitle, fbtext, 
             fbremurl, fbmessage, fbprompt;
         fbimage = app.services.getRevTypeImage(review);
+        fbimage = fbimage.slice(0, fbimage.length - 6) + "Pic.png";
         fblinkurl = app.services.getRevPermalink(review);
-        fblinktext = "wdydfun this week? " + review.revtype;
-        if(review.keywords) {
-            fblinktext += ": " + review.keywords; }
+        fblinktext = "wdydfun this week? " + revaction(review.revtype);
         fbtitle = app.services.getRevStarsTxt(review, "unicode") + " " +
             app.services.getRevTitleTxt(review);
         fbtext = review.text;
+        if(review.keywords) {
+            fbtext += " [" + review.keywords + "]"; }
         fbremurl = "http://www.wdydfun.com/#command=remember&penid=" + 
             review.penid + "&revid=" + jt.instId(review);
         fbmessage = "wdydfun " + review.revtype + " review";
