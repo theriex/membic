@@ -1109,7 +1109,7 @@ return {
             linktitle = "View profile for " + pen.name; }
         if(pen.city) {
             city = jt.tac2html(["span", {cla: "smalltext"},
-                                "(" + pen.city + ")"]); }
+                                " (" + pen.city + ")"]); }
         html = ["li",
                 [["a", {href: "#" + hash, title: linktitle,
                         onclick: jt.fs("app.profile.byprofid('" + 
