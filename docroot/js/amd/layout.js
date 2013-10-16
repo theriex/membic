@@ -65,24 +65,31 @@ app.layout = (function () {
     },
 
 
+    //logo + 5 nav buttons with padding == 460 + (5 * 60) == 760
+    //standard phone width of 480 zoomed to .6 == 800
+    //going with 800 as the standard minimum display width, zoom accordingly
+    //The max width is primarily driven by index.html viewport meta tag.
     findDisplayHeightAndWidth = function () {
+        //var method;
         if(window.innerWidth && window.innerHeight) {
+            //method = "window.innerWidth";
             app.winw = window.innerWidth;
             app.winh = window.innerHeight; }
         else if(document.compatMode === 'CSS1Compat' &&
                 document.documentElement && 
                 document.documentElement.offsetWidth) {
+            //method = "documentElement.offsetWidth";
             app.winw = document.documentElement.offsetWidth;
             app.winh = document.documentElement.offsetHeight; }
         else if(document.body && document.body.offsetWidth) {
+            //method = "body.offsetWidth";
             app.winw = document.body.offsetWidth;
             app.winh = document.body.offsetHeight; }
         else {  //WTF, just guess.
-            app.winw = 600;
+            //method = "guess";
+            app.winw = 800;
             app.winh = 800; }
-        //if we are actually on a small screen, dial the width back a bit
-        if(window.innerWidth <= 768 || window.screen.width <= 768) {
-            app.winw = 768; }
+        //jt.out('dimspan', method + " " + app.winw + "x" + app.winh);
     },
 
 
