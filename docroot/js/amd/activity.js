@@ -380,8 +380,7 @@ app.activity = (function () {
         var html = "", text;
         if(penids && penids.length < 3) {
             text = "You are currently following " + penids.length +
-                       " pen names. <br/>You want at least 3 to see" + 
-                       " anything interesting."; }
+                " pen names. <br/>Recommend following at least 3..."; }
         else {
             text = "To see more reviews, <br/>follow more pen names."; }
         if(text) {
