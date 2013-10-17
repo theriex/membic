@@ -236,6 +236,17 @@ app.login = (function () {
     },
 
 
+    //safari displays "No%20match%20for%20those%20credentials"
+    //and even "No%2520match%2520for%2520those%2520credentials"
+    fixServerText = function (text) {
+        if(!text) {
+            text = ""; }
+        text = text.replace(/%20/g, " ");
+        text = text.replace(/%2520/g, " ");
+        return text;
+    },
+
+
     displayLoginForm = function (params) {
         var name, html;
         jt.out('centerhdiv', "");
@@ -257,7 +268,7 @@ app.login = (function () {
         jt.out('loginparaminputs', jt.tac2html(html));
         //decorate contents and connect additional actions
         if(params.loginerr) {
-            jt.out('loginstatdiv', params.loginerr); }
+            jt.out('loginstatdiv', fixServerText(params.loginerr)); }
         jt.out('sittd', "Sign in directly...");
         jt.out('osacctd', "&nbsp;&nbsp;...or with your social account");
         jt.out('altauthmethods', displayAltAuthMethods());

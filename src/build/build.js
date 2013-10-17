@@ -95,18 +95,20 @@ var build = (function () {
             command;
         try { //copy minified to separate jtmin project to track changes
             command = "mv " + ref + " /general/dev/jtmin/jtminmin.js";
-            childproc.exec(command);
-        } catch(ignore) {
-        }
-        try {
-            command = "mv " +  tmp + " " + ref;
             childproc.exec(command, function () {
-                console.log("jtmin.js restored"); });
-        } catch(ignore) {
-        }
-        try { //copy source to separate jtmin project to track changes
-            command = "cp " + ref + " /general/dev/jtmin/";
-            childproc.exec(command);
+                try {
+                    command = "mv " +  tmp + " " + ref;
+                    childproc.exec(command, function () {
+                        console.log("jtmin.js restored"); 
+                        try { //copy source to separate jtmin project 
+                            command = "cp " + ref + " /general/dev/jtmin/";
+                            childproc.exec(command);
+                        } catch(ignore) {
+                        }
+                    });
+                } catch(ignore) {
+                }
+            });
         } catch(ignore) {
         }
     },
