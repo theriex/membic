@@ -395,7 +395,8 @@ app.activity = (function () {
 
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
-        jt.byId('switchmodebutton').disabled = false;
+        if(jt.byId('switchmodebutton')) {
+            jt.byId('switchmodebutton').disabled = false; }
         actdisp = app.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {

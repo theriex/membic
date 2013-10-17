@@ -980,6 +980,8 @@ app.profile = (function () {
         if(!app.layout.haveContentDivAreas()) { //change pw kills it
             app.layout.initContentDivAreas(); }
         jt.out('cmain', html);
+        if(app.winw > 850 && jt.byId('profdisptable')) {
+            jt.byId('profdisptable').style.marginLeft = "8%"; }
         jt.out('profbadgestd', earnedBadgesHTML(dispen));
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
             html = ["a", {id: "commbuild", href: "#invite",

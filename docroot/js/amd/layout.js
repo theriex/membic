@@ -146,12 +146,15 @@ app.layout = (function () {
         else {  //not filling, just leave a little separator space
             filldiv.style.height = "16px"; }
         //adjust the topdiv and content width so it looks reasonable
-        target = app.winw - 120;  //Remo is 72px, margin padding
+        target = app.winw;
+        if(target > 850) {
+            target -= 120; }  //margin padding
         topdiv = jt.byId('topdiv');
         if(topdiv) {
             topdiv.style.width = target + "px"; }
         contentdiv = jt.byId('contentdiv');
         if(contentdiv) {
+            //jt.out('dimspan', "app.winw:" + app.winw);
             contentdiv.style.width = target + "px"; }
         setSoftFocus();
     };

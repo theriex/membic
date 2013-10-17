@@ -163,7 +163,7 @@ img { border:0px; }
  }
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
-#profdisptable { margin-left:8%; }
+#profdisptable { }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
 .penlist { list-style:none; padding:0; margin:0; }
