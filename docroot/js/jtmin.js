@@ -652,7 +652,11 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                     if (xhr.status === 200) {  //successful
                         s(xhr.responseText);
                     } else if (f) {
-                        f(xhr.status, xhr.statusText, m, u, d);
+                        //use responseText for custom error messages,
+                        //statusText for general error messages.  Custom
+                        //overrides general
+                        f(xhr.status, xhr.responseText || xhr.statusText,
+                            m, u, d);
                     }
                 }
             };
