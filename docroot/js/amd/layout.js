@@ -70,26 +70,31 @@ app.layout = (function () {
     //going with 800 as the standard minimum display width, zoom accordingly
     //The max width is primarily driven by index.html viewport meta tag.
     findDisplayHeightAndWidth = function () {
-        //var method;
+        var viewport;
+        //most browsers (FF, safari, chrome, 
         if(window.innerWidth && window.innerHeight) {
-            //method = "window.innerWidth";
             app.winw = window.innerWidth;
             app.winh = window.innerHeight; }
+        //alternate that must have been useful at some point?
         else if(document.compatMode === 'CSS1Compat' &&
                 document.documentElement && 
                 document.documentElement.offsetWidth) {
-            //method = "documentElement.offsetWidth";
             app.winw = document.documentElement.offsetWidth;
             app.winh = document.documentElement.offsetHeight; }
+        //IE8
         else if(document.body && document.body.offsetWidth) {
-            //method = "body.offsetWidth";
             app.winw = document.body.offsetWidth;
             app.winh = document.body.offsetHeight; }
+        //last resort
         else {  //WTF, just guess.
-            //method = "guess";
             app.winw = 800;
             app.winh = 800; }
-        //jt.out('dimspan', method + " " + app.winw + "x" + app.winh);
+        //jt.out('dimspan', String(app.winw) + "x" + app.winh);
+        if(window.screen && window.screen.width && window.screen.width > 700) {
+            viewport = document.querySelector("meta[name=viewport]");
+            viewport.setAttribute("content", 
+                                  "width=device-width, initial-scale=1.0"); }
+        //jt.out('dimspan', "window.screen.width:" + window.screen.width);
     },
 
 
