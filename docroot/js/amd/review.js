@@ -81,9 +81,9 @@ app.review = (function () {
             keyprompt: "Name of restaurant or dish",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Late Night", 
-                       "Snack", "Inexpensive", "Expensive", "Fast", "Slow", 
-                       "Outdoor", "Quiet", "Loud" ] },
+            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Desert",
+                       "Late Night", "Snack", "Inexpensive", "Expensive", 
+                       "Fast", "Slow", "Outdoor", "Quiet", "Loud" ] },
           { type: "drink", plural: "drinks", img: "TypeDrink50.png",
             keyprompt: "Name and where from",
             key: "name", //subkey
