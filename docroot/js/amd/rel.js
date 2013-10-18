@@ -94,7 +94,7 @@ app.rel = (function () {
                       onclick: jt.fs("app.rel.followBack(" + 
                                      jt.instId(pen) + ")")},
                 "[follow back]"];
-        return jt.tac2html(html);
+        return " " + jt.tac2html(html);
     },
 
 
@@ -119,7 +119,7 @@ app.rel = (function () {
             return ""; }  //skip any deleted or otherwise unresolved refs
         if(penref.pen) {
             temp = app.profile.penListItemHTML(penref.pen);
-            if(direction === "inbound") {  //showing followers
+            if(direction === "inbound" && app.profile.displayingSelf()) {
                 temp = temp.slice(0, temp.indexOf("</li>"));
                 temp += followBackLink(penref.pen) + "</li>"; } }
         return temp;

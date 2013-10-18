@@ -1368,6 +1368,14 @@ return {
     cancelProfileEdit: function () {
         app.profile.updateHeading();
         app.profile.display();
+    },
+
+
+    displayingSelf: function () {
+        var cpr = app.pen.currPenRef();
+        if(profpenref && profpenref.pen && cpr && cpr.pen === profpenref.pen) {
+            return true; }
+        return false;
     }
 
 
