@@ -353,9 +353,9 @@ app.profile = (function () {
         mepen = app.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hey,\n\n" +
-            "I'm using wdydfun for things I experience. " + 
-            "I trust your taste, and would be interested in reading reviews " + 
-            "from you";
+            "I'm using wdydfun (what did you do fun) to note and share " +
+            "experiences. I trust your taste, and would be interested in " + 
+            "reading reviews from you";
         revchecks = document.getElementsByName("invrevcb");
         types = "";
         for(i = 0; i < revchecks.length; i += 1) {
@@ -376,8 +376,8 @@ app.profile = (function () {
             body += ", especially about " + types + "."; }
         else {
             body += "."; }
-        body += " If you sign up, then I'll be able to follow reviews " +
-            "from you to learn about things you've experienced." + 
+        body += " I'm hoping you will sign up and occasionally post " + 
+            "something good you've experienced so I can follow you." + 
             "\n\n" +
             "If you are interested in following reviews from me, " + 
             "click the 'follow' icon next to '" + mepen.name +
@@ -987,7 +987,7 @@ app.profile = (function () {
             html = ["a", {id: "commbuild", href: "#invite",
                           onclick: jt.fs("app.profile.invite()")},
                     [["img", {cla: "reviewbadge", src: "img/follow.png"}],
-                     "Build your community"]];
+                     "Invite a friend"]];
             jt.out('profcommbuildtd', jt.tac2html(html)); }
         displayShout(dispen);
         displayCity(dispen);
@@ -1281,12 +1281,12 @@ return {
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"},
-                 "Build your community... Invite a friend"],
+                 "Invite a friend... build your community"],
                 ["table", {cla: "formstyle"},
                  [["tr",
                    ["td", {id: "invintrotd", style: "width:400px;"},
                     [["p",
-                      ["Know someone whose taste you trust?",
+                      ["Know someone whose tastes you trust?",
                        ["br"],
                        "Want to share your reviews?"]],
                      ["p",
