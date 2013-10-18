@@ -64,7 +64,7 @@ def write_summary_email_body(pen, reviews, tstr, prs):
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
     subj = "Your wdydfun " + freq + " activity since " + tstr
-    logsum = "Mail sent for " + freq + " activity since " + tstr
+    logsum = "Mail sent for " + freq + " activity since " + tstr + "\n"
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
     accs = MORAccount.gql(where, freq, thresh)
     for acc in accs:
