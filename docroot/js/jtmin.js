@@ -178,6 +178,23 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    uo.saferef = function (object, fieldspec) {
+        var fields, i;
+        if (!object) {
+            return null;
+        }
+        fields = fieldspec.split(".?");
+        for (i = 0; i < fields.length; i += 1) {
+            if (object && object[fields[i]]) {
+                object = object[fields[i]];
+            } else {
+                return null;
+            }
+        }
+        return object;
+    };
+
+
     uo.enc = function (val) {
         val = val || "";
         if (typeof val === "string") {

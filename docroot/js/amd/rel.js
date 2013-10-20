@@ -98,6 +98,41 @@ app.rel = (function () {
     },
 
 
+    activityIndicatorHTML = function (penref) {
+        var text, revs, lr, selfref, i, days, html;
+        text = "No recent reviews";
+        if(!penref.pen.top20s || !penref.pen.top20s.latestrevtype) {
+            text = "No reviews yet"; }
+        else {  //they've written at least one review at some point
+            revs = jt.saferef(penref, "profstate.?recentRevState.?results");
+            if(revs && revs.length > 0) {
+                lr = revs[0]; }
+            if(!lr) {
+                selfref = app.pen.currPenRef();
+                revs = jt.saferef(selfref, "actdisp.?revrefs");
+                if(revs && revs.length > 0) {
+                    for(i = 0; i < revs.length; i += 1) {
+                        if(revs[i].rev.penid === penref.penid) {
+                            lr = revs[i].rev;
+                            break; } } } }
+            if(lr) {
+                days = new Date().toISOString();
+                days = jt.ISOString2Day(days).getTime();
+                days = days - jt.ISOString2Day(lr.modified).getTime();
+                days = days / (1000 * 60 * 60 * 24);
+                days = Math.round(days);
+                if(days === 0) {
+                    text = "Posted today"; }
+                else if(days === 1) {
+                    text = "Posted yesterday"; }
+                else {
+                    text = "Posted " + days + " days ago"; } } }
+        html = ["span", {style: "font-size:small;color:#666;"},
+                "&nbsp;&nbsp;&nbsp;" + text];
+        return jt.tac2html(html);
+    },
+
+
     loadReferencedPens = function (relref, callback) {
         var penid, penref;
         penid = relref.rel.relatedid;
@@ -112,16 +147,21 @@ app.rel = (function () {
 
 
     relRefPenHTML = function (relref, direction, placeholder) {
-        var idfield, penref, temp = placeholder;
+        var idfield, penref, temp;
+        temp = placeholder;
         idfield = (direction === "outbound")? "relatedid" : "originid";
         penref = app.lcs.getPenRef(relref.rel[idfield]);
         if(penref.status !== "ok" && penref.status !== "not cached") {
             return ""; }  //skip any deleted or otherwise unresolved refs
         if(penref.pen) {
             temp = app.profile.penListItemHTML(penref.pen);
-            if(direction === "inbound" && app.profile.displayingSelf()) {
+            if(app.profile.displayingSelf()) {
                 temp = temp.slice(0, temp.indexOf("</li>"));
-                temp += followBackLink(penref.pen) + "</li>"; } }
+                if(direction === "inbound") {
+                    temp += followBackLink(penref.pen); }
+                else if(direction === "outbound") {
+                    temp += activityIndicatorHTML(penref); }
+                temp += "</li>"; } }
         return temp;
     },
 
