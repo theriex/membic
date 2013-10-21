@@ -146,6 +146,38 @@ app.rel = (function () {
     },
 
 
+    sortRelRefsByPenName = function (refarray, direction) {
+        refarray.sort(function (a, b) {
+            var idfield, penrefA, penrefB, nameA, nameB;
+            if(a.status === "ok" && b.status !== "ok") {
+                return -1; }  //resolved belongs before unresolved
+            if(a.status !== "ok" && b.status === "ok") {
+                return 1; } 
+            if(a.status !== "ok" && b.status !== "ok") {
+                return 0; }
+            idfield = (direction === "outbound")? "relatedid" : "originid";
+            penrefA = app.lcs.getPenRef(a.rel[idfield]);
+            penrefB = app.lcs.getPenRef(b.rel[idfield]);
+            if(penrefA.status === "ok" && penrefB.status !== "ok") {
+                return -1; }
+            if(penrefA.status !== "ok" && penrefB.status === "ok") {
+                return 1; }
+            if(penrefA.status !== "ok" && penrefB.status !== "ok") {
+                return 0; }
+            nameA = penrefA.pen.name;
+            nameB = penrefB.pen.name;
+            if(nameA) {
+                nameA = nameA.toLowerCase(); }
+            if(nameB) {
+                nameB = nameB.toLowerCase(); }
+            if(nameA < nameB) {
+                return -1; }
+            if(nameA > nameB) {
+                return 1; }
+            return 0; });
+    },
+
+
     relRefPenHTML = function (relref, direction, placeholder) {
         var idfield, penref, temp;
         temp = placeholder;
@@ -468,6 +500,7 @@ return {
         refarray = getRelRefArray(pen, direction);
         if(refarray) {
             if(refarray.length > 0) {
+                sortRelRefsByPenName(refarray, direction);
                 for(i = 0; i < refarray.length && i < maxpgdisp; i += 1) {
                     litemp = relRefPenHTML(refarray[i], direction, placeholder);
                     relitems.push(litemp);
