@@ -1006,6 +1006,33 @@ app.review = (function () {
     },
 
 
+    selectLocVerifyHTML = function (addr, ref, retry) {
+        var mapdiv, maxretry;
+        maxretry = 10;
+        mapdiv = jt.byId('mapdiv');
+        if(!retry) {
+            retry = 0; }
+        if(retry > maxretry) {
+            jt.err("Tried " + maxretry + " times to create a map holder\n" +
+                   "to retrieve location info, but it's not working. Not\n" +
+                   "going to be able to read the review details..."); }
+        if(!mapdiv) {
+            setTimeout(function () {
+                selectLocVerifyHTML(addr, ref, retry + 1);
+                }, 50);
+            return; }
+        try {
+            geoc.geocode({address: addr}, function (results, status) {
+                var ok = google.maps.places.PlacesServiceStatus.OK;
+                if(status === ok) {
+                    selectLocLatLng(results[0].geometry.location, ref); }
+                });
+        } catch (problem) {
+            jt.err("Places service geocode failed: " + problem);
+        }
+    },
+
+
     autocompletion = function (event) {
         var srchtxt;
         if(jt.byId('revautodiv') && jt.byId('keyin')) {
@@ -1866,22 +1893,11 @@ return {
         if(!geoc && google && google.maps && google.maps.places) {
             geoc = new google.maps.Geocoder(); }
         if(geoc && addr) {
-            try {
-                addr = jt.dec(addr);
-                html = [["p", addr],
-                        ["div", {id: "mapdiv"}]];
-                jt.out('revautodiv', jt.tac2html(html));
-                //give mapdiv a chance to be output before this call
-                setTimeout(function () {
-                    geoc.geocode({address: addr}, function (results, status) {
-                        var ok = google.maps.places.PlacesServiceStatus.OK;
-                        if(status === ok) {
-                            selectLocLatLng(results[0].geometry.location, 
-                                            ref); }
-                        }); }, 50);
-            } catch (problem) {
-                jt.err("selectLocation failed: " + problem);
-            } }
+            addr = jt.dec(addr);
+            html = [["p", addr],
+                    ["div", {id: "mapdiv"}]];
+            jt.out('revautodiv', jt.tac2html(html));
+            selectLocVerifyHTML(addr, ref); }
     },
 
 
