@@ -402,7 +402,7 @@ app.profile = (function () {
 
     badgeDispHTML = function (pen) {
         var html, i, reviewTypes, typename;
-        html = "";
+        html = " ";  //need some separator whitespace
         app.pen.deserializeFields(pen);
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
