@@ -31,6 +31,17 @@ def eligible_pen(acc, thresh):
     return latestpen
 
 
+def text_stars(review):
+    stars = ["    - ",
+             "    * ",
+             "   ** ",
+             "  *** ",
+             " **** ",
+             "***** "]
+    index = review.rating / 20
+    return stars[index]
+
+
 def write_summary_email_body(pen, reviews, tstr, prs):
     body = "Experienced anything worth remembering recently? Your current" +\
         " and future followers would be interested in hearing from you!"
@@ -42,29 +53,48 @@ def write_summary_email_body(pen, reviews, tstr, prs):
         body += "Tragically, none of the people you are following have" +\
             " posted any reviews since " + tstr + ". Please do what you" +\
             " can to help them experience more things."
-    else:
-        body += "Since " + tstr + ", friends you are following have posted " +\
-            str(len(reviews)) + " " +\
-            ("reviews" if len(reviews) > 1 else "review") + "."
+        return body
+    body += "Since " + tstr + ", friends you are following have posted " +\
+        str(len(reviews)) + " " +\
+        ("reviews" if len(reviews) > 1 else "review") + "."
     body += "  For more details" +\
-            " (or to change your summary email preferences)" +\
+            " (or to change your account settings)" +\
             " go to http://www.wdydfun.com \n\n"
-    for review in reviews:
-        body += str(review.penname) + " reviewed a " +\
-            str(review.rating / 20) + " star " + review.revtype + ": " +\
-            getTitle(review) + " " + getSubkey(review) +\
-            "\n" +\
-            safestr(review.keywords) + " | " + safestr(review.text) +\
-            "\n" +\
-            "http://www.wdydfun.com/statrev/" + str(review.key().id()) +\
-            "\n\n"
+    revtypes = [["book",     "Books"], 
+                ["movie",    "Movies"], 
+                ["video",    "Videos"], 
+                ["music",    "Music"],
+                ["food",     "Food"], 
+                ["drink",    "Drinks"], 
+                ["activity", "Activities"], 
+                ["other",    "Other"]]
+    for revtype in revtypes:
+        tline = "      -------------- " + revtype[1] + "---------------\n\n"
+        wroteHeaderLine = False
+        for review in reviews:
+            if review.revtype == revtype[0]:
+                if not wroteHeaderLine:
+                    body += tline
+                    wroteHeaderLine = True
+                url = "http://www.wdydfun.com/statrev/" + str(review.key().id())
+                keywords = safestr(review.keywords)
+                if keywords:
+                    keywords = "      " + keywords + "\n"
+                body += text_stars(review) + getTitle(review) +\
+                    " " + getSubkey(review) + "\n"
+                body += "      review by " + str(review.penname) +\
+                    " " + url + "\n"
+                body += "      " + safestr(review.text) + "\n"
+                body += keywords
+                body += "\n"
     return body
 
 
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
     subj = "Your wdydfun " + freq + " activity since " + tstr
-    logsum = "Mail sent for " + freq + " activity since " + tstr + "\n"
+    logsum = "----------------------------------------\n"
+    logsum += "Mail sent for " + freq + " activity since " + tstr + "\n"
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
     accs = MORAccount.gql(where, freq, thresh)
     for acc in accs:
@@ -93,29 +123,56 @@ def mail_summaries(freq, thresh, request, response):
         acc.put()
         split(response, logmsg)
         logsum += logmsg + "\n"
-    if not request.url.startswith('http://localhost'):
-        mail.send_mail(
-            sender="wdydfun support <theriex@gmail.com>",
-            to="theriex@gmail.com",
-            subject="wdydfun " + freq + " mail summaries",
-            body=logsum)
+    return logsum
 
 
 class MailSummaries(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
         split(self.response, "MailSummaries")
+        emsum = "Email summary send processing summary:\n"
         dtnow = datetime.datetime.utcnow()
         split(self.response, "---------- daily: ----------")
-        mail_summaries("daily", dt2ISO(dtnow - datetime.timedelta(hours=24)),
-                       self.request, self.response)
+        emsum += mail_summaries("daily", 
+                                dt2ISO(dtnow - datetime.timedelta(hours=24)),
+                                self.request, self.response)
         split(self.response, "---------- weekly: ----------")
-        mail_summaries("weekly", dt2ISO(dtnow - datetime.timedelta(7)),
-                       self.request, self.response)
+        emsum += mail_summaries("weekly", 
+                                dt2ISO(dtnow - datetime.timedelta(7)),
+                                self.request, self.response)
         split(self.response, "---------- fortnightly: ----------")
-        mail_summaries("fortnightly", dt2ISO(dtnow - datetime.timedelta(14)),
-                       self.request, self.response)
+        emsum += mail_summaries("fortnightly", 
+                                dt2ISO(dtnow - datetime.timedelta(14)),
+                                self.request, self.response)
+        if not self.request.url.startswith('http://localhost'):
+            mail.send_mail(
+                sender="wdydfun support <theriex@gmail.com>",
+                to="theriex@gmail.com",
+                subject="wdydfun mail summaries",
+                body=emsum)
 
 
-app = webapp2.WSGIApplication([('/mailsum', MailSummaries)], debug=True)
+class SummaryForUser(webapp2.RequestHandler):
+    def get(self):
+        username = self.request.get('username')
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("username: " + username + "\n")
+        accs = MORAccount.gql("WHERE username = :1", username)
+        dtnow = datetime.datetime.utcnow()
+        thresh = dt2ISO(dtnow - datetime.timedelta(7))
+        tstr = ISO2dt(thresh).strftime("%d %B %Y")
+        for acc in accs:
+            pen = eligible_pen(acc, "2400-01-01T00:00:00Z")
+            self.response.out.write("pen: " + pen.name + "\n")
+            relids = outbound_relids_for_penid(pen.key().id())
+            checked, reviews = review_activity_search(thresh, "", relids)
+            checked, prs = review_activity_search(thresh, "", 
+                                                  [ str(pen.key().id()) ])
+            content = write_summary_email_body(pen, reviews, tstr, prs)
+        self.response.out.write(content)
+        
+
+
+app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
+                               ('/emuser', SummaryForUser)], debug=True)
 
