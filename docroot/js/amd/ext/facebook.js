@@ -291,10 +291,10 @@ return {
         if(window.location.href.indexOf(app.mainsvr) === 0 &&
                !(typeof FB === 'object' || typeof FB === 'function')) {
             loadFacebook(function () {
-                console.log("facebook service initial setup done"); },
+                jt.log("facebook service initial setup done"); },
                          "quiet"); }
         else {
-            console.log("facebook service initial setup skipped"); }
+            jt.log("facebook service initial setup skipped"); }
     },
 
 
