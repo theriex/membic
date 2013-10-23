@@ -169,13 +169,15 @@ app.profile = (function () {
             "Access \"" + pen.name + "\" via: ",
             ["table",
              [["tr",
-               ["td",  //native app
-                [["input", {type: "checkbox", name: "aamid", id: "aamid",
-                            value: authtypes.mid,
-                            checked: jt.toru(jt.isId(pen.mid), "checked"),
-                            onchange: jt.fs("app.profile.toggleAuth('" +
-                                            "mid','" + domid + "')")}],
-                 ["label", {fo: "aamid"}, authtypes.mid]]]],
+               [["td",  //native app
+                 [["input", {type: "checkbox", name: "aamid", id: "aamid",
+                             value: authtypes.mid,
+                             checked: jt.toru(jt.isId(pen.mid), "checked"),
+                             onchange: jt.fs("app.profile.toggleAuth('" +
+                                             "mid','" + domid + "')")}],
+                  ["label", {fo: "aamid"}, authtypes.mid]]],
+                ["td",  //Account settings link
+                 app.login.accountSettingsLinkHTML(pen)]]],
               ["tr",
                [["td",  //Facebook
                  [["input", {type: "checkbox", name: "aafbid", id: "aafbid",

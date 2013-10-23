@@ -36,7 +36,7 @@ img { border:0px; }
  ************************************************************
  */
 
-/* topsectiondiv and contained elements */
+/* >> topsectiondiv and contained elements */
 #mascotdiv { position:absolute; left:10px; top:265px; }
 .mascotimg { vertical-align:middle; width:29px; height:14px; }
 #topsectiondiv { padding:0px 10px; background:#fffffd;
@@ -57,7 +57,7 @@ img { border:0px; }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { }
 
-/* main display area and contained elements */
+/* >> main display area and contained elements */
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:10px auto; }
 #centerhdivstatic { margin:0px 0px 0px 240px; }
@@ -121,7 +121,7 @@ img { border:0px; }
  padding:5px 10px; display:table; cursor:pointer; 
  border: 1px solid #003; border-radius:5px; box-shadow: 5px 5px 2px #888888 }
 
-/* intro layout */
+/* >> intro layout */
 #bookslidediv { text-align:center; }
 #bookmarkletlinkdiv { padding:5px 20px; }
 #logindiv { margin:auto; }
@@ -132,7 +132,7 @@ img { border:0px; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
 #closebookslide { clear:both; }
 
-/* profile layout */
+/* >> profile layout */
 #proftopdiv { }
 #profshouttd { padding:0px 10px; }
 #profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
@@ -224,13 +224,17 @@ img { border:0px; }
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
 
-/* review layout */
+/* >> review layout */
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }
 
-/* activity layout */
+/* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #toptypeseldiv { padding-left:60px; }
 
-/* general classes */
+/* >> settings dialog */
+#accset, .accsetlinkdis { font-size:small; }
+.accsetlinkdis { color:#999999; }
+
+/* >> general classes */
 .greytxt { color:#999999; }

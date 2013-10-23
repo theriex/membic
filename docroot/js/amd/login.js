@@ -785,6 +785,31 @@ return {
     },
 
 
+    accountSettingsLinkHTML: function (pen) {
+        var html, msgtxt;
+        if(authmethod === "mid") {
+            html = ["a", {href: "#AccountSettings", id: "accset",
+                          onclick: jt.fs("app.login.displayUpdAccForm()")},
+                    "Account settings"]; }
+        else {  //not logged in natively
+            if(pen.mid && pen.mid !== "0") {  //have native login authorization
+                msgtxt = "You need to sign in to wdydfun directly to change" +
+                    " your account settings.\\n" + 
+                    "Pardon the inconvenience, it\\'s a security thing...";
+                html = ["a", {cla: "accsetlinkdis", id: "accset",
+                              onclick: jt.fs("alert('" + msgtxt + "')")},
+                        "Account settings"]; }
+            else {
+                msgtxt = "To access cool features like a weekly activity" +
+                    " summary, you first\\n" + 
+                    "need to authorize wdydfun access for " + pen.name + ".";
+                html = ["a", {cla: "accsetlinkdis", id: "accset",
+                              onclick: jt.fs("alert('" + msgtxt + "')")},
+                        "Account settings"]; } }
+        return jt.tac2html(html);
+    },
+
+
     loginInfoHTML: function (pen) {
         var html, iconurl;
         switch(authmethod) {
@@ -798,18 +823,7 @@ return {
                 " &nbsp; ",
                 ["a", {href: "logout", id: "logout",
                        onclick: jt.fs("app.login.logout()")},
-                 "Sign out"],
-                "&nbsp;|&nbsp;"];
-        if(authmethod === "mid") {
-            html.push(["a", {href: "#AccountSettings", id: "accset",
-                             onclick: jt.fs("app.login.displayUpdAccForm()")},
-                       "Account settings"]); }
-        else {
-            html.push(["a", {cla: "greytxt", id: "accset",
-                             onclick: jt.fs("alert('Sign out and login via" +
-                                            " wdydfun to access your account" +
-                                            " settings');")},
-                       "Account settings"]); }
+                 "Sign out"]];
         html = jt.tac2html(html);
         return html;
     },
