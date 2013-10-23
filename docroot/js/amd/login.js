@@ -90,6 +90,8 @@ app.login = (function () {
             //if changing here, also check /redirlogin
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
+            if(params.special === "nativeonly") {
+                redurl += "&special=nativeonly"; }
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
             if(params.command === "chgpwd") {
@@ -269,9 +271,14 @@ app.login = (function () {
         //decorate contents and connect additional actions
         if(params.loginerr) {
             jt.out('loginstatdiv', fixServerText(params.loginerr)); }
-        jt.out('sittd', "Sign in directly...");
-        jt.out('osacctd', "&nbsp;&nbsp;...or with your social account");
-        jt.out('altauthmethods', displayAltAuthMethods());
+        if(params.special === "nativeonly") {
+            jt.out('sittd', "Native wdydfun login:");
+            jt.out('osacctd', "");
+            jt.out('altauthmethods', ""); }
+        else {  //regular login
+            jt.out('sittd', "Sign in directly...");
+            jt.out('osacctd', "&nbsp;&nbsp;...or with your social account");
+            jt.out('altauthmethods', displayAltAuthMethods()); }
         if(!jt.isLowFuncBrowser()) {  //upgrade the sign in button look
             html = ["div", {id: "signinbuttondiv",
                             onclick: "jt.byId('loginform').submit();"},
@@ -303,6 +310,23 @@ app.login = (function () {
     },
 
 
+    addNativeAuthToPen = function (params) {
+        var url, critsec = "";
+        jt.out('contentdiv', "Verifying account");
+        url = "getacct?am=" + params.am + "&at=" + params.at +
+            "&an=" + jt.enc(params.an);
+        jt.call('GET', url, null,
+                function (accarr) {
+                    var mid;
+                    if(accarr.length > 0) {
+                        mid = jt.instId(accarr[0]); }
+                    app.profile.addMORAuthId(mid); },
+                app.failf(function (code, errtxt) {
+                    jt.out('contentdiv', "Account verification failed"); }),
+                critsec);
+    },
+
+
     //On localhost, params are lost when the login form is displayed.
     //On the server, they are passed to the secure host and returned
     //post-login.  These are separate flows.  Not supporting a
@@ -320,8 +344,8 @@ app.login = (function () {
                                       params.command); }); }
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
-        else if(typeof params.mid === "string") {  //empty string on failure
-            app.profile.addMORAuthId(params.mid); }
+        else if(params.special === "nativeonly") {
+            addNativeAuthToPen(params); }
         else {  //pass parameters along to the general processing next step
             doneWorkingWithAccount(params); }
     },
@@ -334,7 +358,7 @@ app.login = (function () {
         if(params.authtoken) { params.at = params.authtoken; }
         if(params.authname) { params.an = params.authname; }
         //do data directed side effects
-        if(params.am && params.at && params.an) {  //have login info
+        if(params.am && params.at && params.an && !params.special) {
             params.at = jt.enc(params.at);  //restore token encoding 
             setAuthentication(params.am, params.at, params.an); }
         if(params.logout) {

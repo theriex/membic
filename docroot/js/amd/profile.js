@@ -161,6 +161,8 @@ app.profile = (function () {
 
     displayAuthSettings = function (domid, pen) {
         var html;
+        if(pen.pen) {  //got a penref, adjust accordingly
+            pen = pen.pen; }
         html = [
             ["div", {id: "accountdiv"},
              app.login.loginInfoHTML(pen)],
@@ -209,27 +211,8 @@ app.profile = (function () {
 
 
     addMORAuth = function (domid, pen) {
-        var html;
-        html = ["form", {action: app.secsvr + "/loginid",
-                         enctype: "multipart/form-data", method: "post"},
-                ["table",
-                 [["tr", 
-                   ["td", {colspan: 2}, 
-                    "Adding native authorization to " + pen.name]],
-                  ["tr",
-                   [["td", {align: "right"}, "username"],
-                    ["td", {align: "left"},
-                     ["input", {type: "text", id: "userin", name: "userin",
-                                size: 20}]]]],
-                  ["tr",
-                   [["td", {align: "right"}, "password"],
-                    ["td", {align: "left"}, 
-                     ["input", {type: "password", id: "passin", name: "passin",
-                                size: 20}]]]],
-                  ["tr",
-                   ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
-                    ["input", {type: "submit", value: "Log in"}]]]]]];
-        jt.out(domid, jt.tac2html(html));
+        jt.out(domid, "Logging in via wdydfun...");
+        app.redirectToSecureServer({special: "nativeonly"});
     },
 
 
@@ -252,8 +235,8 @@ app.profile = (function () {
                       "currently logged in with.");
                 jt.byId("aa" + authtype).checked = true;
                 return;  } 
-            if(confirm("Are you sure you want to remove access to this" +
-                       " Pen Name from " + authtypes[authtype] + "?")) {
+            if(confirm("Remove access to \"" + pen.name + "\" from " +
+                       authtypes[authtype] + "?")) {
                 jt.out(domid, "Updating...");
                 previd = pen[authtype];
                 pen[authtype] = 0;

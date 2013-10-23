@@ -406,6 +406,9 @@ class TokenAndRedirect(webapp2.RequestHandler):
         command = self.request.get('command')
         if command and command != "chgpwd":
             redurl += "&command=" + command
+        special = self.request.get('special')
+        if special:
+            redurl += "&special=" + special
         reqprof = self.request.get('reqprof')
         if reqprof:
             redurl += "&view=profile&profid=" + reqprof
@@ -500,8 +503,12 @@ class ChangePassword(webapp2.RequestHandler):
 class GetAccount(webapp2.RequestHandler):
     def get(self):
         account = authenticated(self.request)
-        account.password = "WriteOnlyFieldCannotBeEmptySoUsePlaceholder"
-        returnJSON(self.response, [ account ])
+        if account:
+            account.password = "WriteOnlyFieldCannotBeEmptySoUsePlaceholder"
+            returnJSON(self.response, [ account ])
+        else:
+            self.error(401)
+            self.response.out.write("Authentication failed")
 
 
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
