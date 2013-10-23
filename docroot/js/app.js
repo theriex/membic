@@ -117,26 +117,36 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.crash = function (code, errtxt, method, url, data) {
-        var html, githuburl;
-        githuburl = "https://github.com/theriex/myopenreviews/issues";
+        var html, now, subj, body, emref, support;
+        support = "theriex";
+        support += "@gmail.com";
+        now = new Date();
+        subj = "Server crash";
+        body = "Hey,\n\n" +
+            "The server crashed.  Here are some details:\n\n" +
+            "local time: " + now + "\n" +
+            "method: " + method + "\n" +
+            "url: " + url + "\n" +
+            "data: " + data + "\n" +
+            "code: " + code + "\n" +
+            errtxt + "\n\n" +
+            "Please fix this so it doesn't happen again.  If it is " +
+            "anything more than a minor bug, open an issue on " +
+            "https://github.com/theriex/myopenreviews/issues for " +
+            "tracking purposes.\n\n" +
+            "thanks,\n";
+        emref = "mailto:" + support + "?subject=" + jt.dquotenc(subj) + 
+            "&body=" + jt.dquotenc(body);
         html = [
             ["div", {id: "chead"}],
             ["div", {id: "cmain"},
-             [["p", "The server crashed."],
+             [["p", "The server just bonked."],
               ["p", 
-               ["If you want to help out, copy the contents of" +
-                " this page and post it to ",
-                ["a", {href: githuburl,
-                       onclick: jt.fs("window.open('" + githuburl + "')")},
-                 "open issues"],
-                ". Otherwise you can try reloading this page in your" +
-                " browser and try again."]],
-              ["ul",
-               [["li", "method: " + method],
-                ["li", "url: " + url],
-                ["li", "data: " + data],
-                ["li", "code: " + code]]],
-              errtxt]]];
+               ["Sometimes this sort of thing can be fixed by hitting the " +
+                "reload button in your browser.  If that doesn't work, " + 
+                "then it would awesome if would please ",
+                ["a", {href: emref},
+                 "email support so we can fix it."]]]]]];
         html = jt.tac2html(html);
         jt.out('contentdiv', html);
     };
