@@ -453,6 +453,17 @@ app.profile = (function () {
     },
 
 
+    //It is possible have created a new review and not have it be
+    //found by the search processing due to database lag.  Walk the 
+    //cache to make sure there is nothing newer there.
+    sanityCompleteRevsViaCache = function(rrs, revs) {
+        var modified = "2012-10-10T00:00:00Z";
+        if(revs && revs.length > 0) {
+            modified = revs[0].modified; }
+        rrs.results = app.lcs.findNewerReviews(rrs.params.penid, modified);
+    },
+
+
     findRecentReviews = function (rrs) {  //recentRevState
         var params, critsec = "";
         params = jt.objdata(rrs.params) + "&" + app.login.authparams();
@@ -460,6 +471,7 @@ app.profile = (function () {
             params += "&cursor=" + jt.enc(rrs.cursor); }
         jt.call('GET', "srchrevs?" + params, null,
                  function (revs) {
+                     sanityCompleteRevsViaCache(rrs, revs);
                      displayRecentReviews(rrs, revs); },
                  app.failf(function (code, errtxt) {
                      jt.out('profcontdiv', "findRecentReviews failed code " + 

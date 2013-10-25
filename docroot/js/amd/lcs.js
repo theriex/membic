@@ -268,6 +268,18 @@ return {
     },
 
 
+    findNewerReviews: function (penid, modified) {
+        var revcache = revs, revid, revref, results = [];
+        for(revid in revcache) {
+            if(revcache.hasOwnProperty(revid)) {
+                revref = revcache[revid];
+                if(revref && revref.rev && revref.rev.penid === penid &&
+                   revref.rev.modified > modified) {
+                    results.push(revref.rev); } } }
+        return results;
+    },
+
+
     //Walk the revrefs and verify each has an associated revlink,
     //retrieving from the server as needed.  Adds an empty placeholder
     //revlink if no server info exists.  Also verifies markups from
