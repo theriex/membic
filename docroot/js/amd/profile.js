@@ -513,16 +513,16 @@ app.profile = (function () {
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             dispclass = "reviewbadgedis";
+            if(typename === profpenref.profstate.revtype) {
+                dispclass = "reviewbadge"; }
             label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
                     label = prefixstr + reviewTypes[i].type.capitalize() +
-                        " reviews.";
-                    dispclass = "reviewbadge"; }
+                        " reviews."; }
                 else if(pen.top20s[typename].length >= 1) {
                     label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].type.capitalize() + " reviews.";
-                    dispclass = "reviewbadge"; } }
+                        reviewTypes[i].type.capitalize() + " reviews."; } }
             html.push(["img", {cla: dispclass, 
                                src: "img/" + reviewTypes[i].img,
                                title: label, alt: label,
@@ -550,7 +550,8 @@ app.profile = (function () {
             else if(revref.status === "not cached") {
                 revitems.push(["li", "Fetching review " + revs[i] + "..."]);
                 break; } }
-        html = [revTypeSelectorHTML("app.profile.showTopRated"),
+        html = [["div", {id: "revTypeSelectorDiv"},
+                 revTypeSelectorHTML("app.profile.showTopRated")],
                 ["ul", {cla: "revlist"}, revitems]];
         jt.out('profcontdiv', jt.tac2html(html));
         app.layout.adjust();
@@ -653,7 +654,8 @@ app.profile = (function () {
                 cursor: "",
                 total: 0,
                 reqs: 1 }; }
-        html = [revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"),
+        html = [["div", {id: "revTypeSelectorDiv"},
+                 revTypeSelectorHTML("app.profile.searchRevsIfTypeChange")],
                 ["div", {id: "allrevsrchdiv"},
                  ["input", {type: "text", id: "allrevsrchin", size: 40,
                             placeholder: "Review title or name",
@@ -1320,6 +1322,8 @@ return {
         if(revtype) {
             if(state.revtype !== revtype) {
                 state.revtype = revtype;
+                jt.out('revTypeSelectorDiv', 
+                    revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"));
                 clearAllRevProfWorkState(); } }
         else {
             revtype = state.revtype; }
