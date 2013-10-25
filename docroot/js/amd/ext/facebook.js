@@ -43,6 +43,7 @@ app.facebook = (function () {
             msg = "You are not currently logged into Facebook," +
                 " click to log in..."; }
         if(cancelfstr) {
+            cancelfstr = "app.facebook." + cancelfstr;
             canceltd = ["td", 
                         ["&nbsp;",
                          ["button", {type: "button", id: "cancelbutton",
@@ -51,13 +52,13 @@ app.facebook = (function () {
         html = [["p", msg],
                 ["table", 
                  ["tr", 
-                  [["td",
+                  [canceltd,
+                   ["td",
                     ["a", {href: "http://www.facebook.com",
                            title: "Log in to Facebook",
                            onclick: jt.fs("app.facebook." + okfstr)},
                      [["img", {cla: "loginico", src: "img/f_logo.png"}],
-                      " Log in to Facebook"]]],
-                   canceltd]]]];
+                      " Log in to Facebook"]]]]]]];
         jt.out(domid, jt.tac2html(html));
         if(cancelfstr) {  //not already in a dialog...
             app.layout.adjust(); }
