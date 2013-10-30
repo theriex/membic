@@ -3,7 +3,7 @@ import datetime
 import logging
 from pen import PenName
 from rel import outbound_relids_for_penid
-from rev import review_activity_search
+from rev import Review, review_activity_search
 from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
@@ -13,6 +13,44 @@ def split(response, text):
     logging.info("mailsum: " + text)
     response.out.write(text + "\n")
 
+
+def pen_stats_range(label, thresh):
+    active = 0   # number of pens that logged in
+    onerev = 0   # number of pens that wrote at least one review
+    tworev = 0   # number of pens that wrote at least two reviews
+    pl3rev = 0   # number of pens that wrote three or more reviews
+    ttlrev = 0   # total number of reviews created/modified
+    names = ""   # pen names that logged in, separated by semicolons
+    where = "WHERE accessed >= :1"
+    pens = PenName.gql(where, thresh)
+    for pen in pens:
+        active += 1
+        where2 = "WHERE modified >= :1"
+        revs = Review.gql(where2, thresh)
+        revcount = revs.count()
+        if revcount > 0:
+            onerev += 1
+        if revcount > 1:
+            tworev += 1
+        if revcount > 2:
+            pl3rev += 1
+        ttlrev += revcount
+        if names:
+            names += ";"
+        names += pen.name
+    result = label + " active: " + str(active) + ", 1rev: " + str(onerev) +\
+        ", 2rev: " + str(tworev) + ", 3+rev: " + str(pl3rev) +\
+        ", ttlrevs: " + str(ttlrev) + "\n" + names + "\n"
+    return result
+
+
+def pen_stats():
+    dtnow = datetime.datetime.utcnow()
+    stats = pen_stats_range("past24", 
+                            dt2ISO(dtnow - datetime.timedelta(hours=24)))
+    stats += pen_stats_range("week", dt2ISO(dtnow - datetime.timedelta(7)))
+    return stats
+        
 
 def eligible_pen(acc, thresh):
     # eventually this will need to track and test bad email addresses also
@@ -144,12 +182,13 @@ class MailSummaries(webapp2.RequestHandler):
         emsum += mail_summaries("fortnightly", 
                                 dt2ISO(dtnow - datetime.timedelta(14)),
                                 self.request, self.response)
+        summary = pen_stats() + "\n" + emsum
         if not self.request.url.startswith('http://localhost'):
             mail.send_mail(
                 sender="wdydfun support <theriex@gmail.com>",
                 to="theriex@gmail.com",
                 subject="wdydfun mail summaries",
-                body=emsum)
+                body=summary)
 
 
 class SummaryForUser(webapp2.RequestHandler):
@@ -170,9 +209,16 @@ class SummaryForUser(webapp2.RequestHandler):
                                                   [ str(pen.key().id()) ])
             content = write_summary_email_body(pen, reviews, tstr, prs)
         self.response.out.write(content)
-        
+
+
+class UserActivity(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("User activity:\n")
+        self.response.out.write(pen_stats())
 
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
-                               ('/emuser', SummaryForUser)], debug=True)
+                               ('/emuser', SummaryForUser),
+                               ('/activity', UserActivity)], debug=True)
 
