@@ -25,8 +25,8 @@ def pen_stats_range(label, thresh):
     pens = PenName.gql(where, thresh)
     for pen in pens:
         active += 1
-        where2 = "WHERE modified >= :1"
-        revs = Review.gql(where2, thresh)
+        where2 = "WHERE modified >= :1 and penid = :2"
+        revs = Review.gql(where2, thresh, pen.key().id())
         revcount = revs.count()
         if revcount > 0:
             onerev += 1

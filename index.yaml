@@ -45,6 +45,11 @@ indexes:
   properties:
   - name: penid
   - name: modified
+
+- kind: Review
+  properties:
+  - name: penid
+  - name: modified
     direction: desc
 
 - kind: Review
