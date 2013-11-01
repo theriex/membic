@@ -21,7 +21,7 @@ def pen_stats_range(label, thresh):
     pl3rev = 0   # number of pens that wrote three or more reviews
     ttlrev = 0   # total number of reviews created/modified
     names = ""   # pen names that logged in, separated by semicolons
-    where = "WHERE accessed >= :1"
+    where = "WHERE modified >= :1"
     pens = PenName.gql(where, thresh)
     for pen in pens:
         active += 1
