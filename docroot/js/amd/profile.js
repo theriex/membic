@@ -1312,7 +1312,7 @@ return {
     showTopRated: function (typename) {
         verifyProfileState(profpenref);
         profpenref.profstate.revtype = typename;
-        displayBest();
+        app.profile.tabselect("best");
     },
 
 
