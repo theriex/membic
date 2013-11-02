@@ -38,8 +38,8 @@ def pen_stats_range(label, thresh):
         if names:
             names += ";"
         names += pen.name
-    result = label + " active: " + str(active) + ", 1rev: " + str(onerev) +\
-        ", 2rev: " + str(tworev) + ", 3+rev: " + str(pl3rev) +\
+    result = label + " active: " + str(active) + ", onerev: " + str(onerev) +\
+        ", tworevs: " + str(tworev) + ", more: " + str(pl3rev) +\
         ", ttlrevs: " + str(ttlrev) + "\n" + names + "\n"
     return result
 
