@@ -1,5 +1,6 @@
 import webapp2
 import datetime
+from google.appengine.ext import db
 import logging
 from pen import PenName
 from rel import outbound_relids_for_penid
@@ -9,47 +10,79 @@ from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 
 
-def split(response, text):
+class ActivityStat(db.Model):
+    """ Activity metrics for tracking purposes """
+    day = db.StringProperty(required=True)  # yyyy-mm-ddT00:00:00Z
+    active = db.IntegerProperty()  # number of pens that logged in
+    onerev = db.IntegerProperty()  # num pens that wrote at least one review
+    tworev = db.IntegerProperty()  # num pens that wrote at least two reviews
+    morev = db.IntegerProperty()   # 3 or more reviews
+    ttlrev = db.IntegerProperty()
+    names = db.TextProperty()      # semi delim pen names that logged in
+    calculated = db.StringProperty()  # iso date
+
+
+def split_output(response, text):
     logging.info("mailsum: " + text)
     response.out.write(text + "\n")
 
 
-def pen_stats_range(label, thresh):
-    active = 0   # number of pens that logged in
-    onerev = 0   # number of pens that wrote at least one review
-    tworev = 0   # number of pens that wrote at least two reviews
-    pl3rev = 0   # number of pens that wrote three or more reviews
-    ttlrev = 0   # total number of reviews created/modified
-    names = ""   # pen names that logged in, separated by semicolons
-    where = "WHERE modified >= :1"
-    pens = PenName.gql(where, thresh)
-    for pen in pens:
-        active += 1
-        where2 = "WHERE modified >= :1 and penid = :2"
-        revs = Review.gql(where2, thresh, pen.key().id())
-        revcount = revs.count()
-        if revcount > 0:
-            onerev += 1
-        if revcount > 1:
-            tworev += 1
-        if revcount > 2:
-            pl3rev += 1
-        ttlrev += revcount
-        if names:
-            names += ";"
-        names += pen.name
-    result = label + " active: " + str(active) + ", onerev: " + str(onerev) +\
-        ", tworevs: " + str(tworev) + ", more: " + str(pl3rev) +\
-        ", ttlrevs: " + str(ttlrev) + "\n" + names + "\n"
-    return result
+def stats_text(stat):
+    text = stat.day[:10] + " active: " + str(stat.active) +\
+        ", onerev: " + str(stat.onerev) +\
+        ", tworevs: " + str(stat.tworev) +\
+        ", more: " + str(stat.morev) +\
+        ", ttlrevs: " + str(stat.ttlrev) +\
+        "\n" + stat.names + "\n"
+    return text
 
 
 def pen_stats():
+    # calculate day window
     dtnow = datetime.datetime.utcnow()
-    stats = pen_stats_range("past24", 
-                            dt2ISO(dtnow - datetime.timedelta(hours=24)))
-    stats += pen_stats_range("week", dt2ISO(dtnow - datetime.timedelta(7)))
-    return stats
+    isostart = dt2ISO(dtnow - datetime.timedelta(hours=24))
+    isostart = isostart[:10] + "T00:00:00Z"
+    isoend = dt2ISO(dtnow)
+    isoend = isoend[:10] + "T00:00:00Z"
+    # init a default stat instance
+    stat = ActivityStat(day=isostart)
+    stat.active = 0
+    stat.onerev = 0
+    stat.tworev = 0
+    stat.morev = 0
+    stat.ttlrev = 0
+    stat.names = ""
+    # use existing stat if already available
+    try:
+        where = "WHERE day = :1"
+        stats = ActivityStat.gql(where, isostart)
+        for existing_stat in stats:
+            stat = existing_stat
+        if stat.calculated:
+            return stats_text(stat)
+    except Exception as e:
+        logging.info("Existing stat retrieval failed: " + str(e))
+    # calculate values for new stat instance
+    stat.calculated = dt2ISO(dtnow)
+    where = "WHERE modified >= :1 AND modified < :2"
+    pens = PenName.gql(where, isostart, isoend)
+    for pen in pens:
+        stat.active += 1
+        where2 = "WHERE modified >= :1 AND modified < :2 AND penid = :3"
+        revs = Review.gql(where2, isostart, isoend, pen.key().id())
+        revcount = revs.count()
+        if revcount > 0:
+            stat.onerev += 1
+        if revcount > 1:
+            stat.tworev += 1
+        if revcount > 2:
+            stat.morev += 1
+        stat.ttlrev += revcount
+        if stat.names:
+            stat.names += ";"
+        stat.names += pen.name
+    stat.put()
+    return stats_text(stat)
         
 
 def eligible_pen(acc, thresh):
@@ -159,7 +192,7 @@ def mail_summaries(freq, thresh, request, response):
                         logmsg += ", mail sent"
         acc.lastsummary = nowISO()
         acc.put()
-        split(response, logmsg)
+        split_output(response, logmsg)
         logsum += logmsg + "\n"
     return logsum
 
@@ -167,18 +200,18 @@ def mail_summaries(freq, thresh, request, response):
 class MailSummaries(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
-        split(self.response, "MailSummaries")
+        split_output(self.response, "MailSummaries")
         emsum = "Email summary send processing summary:\n"
         dtnow = datetime.datetime.utcnow()
-        split(self.response, "---------- daily: ----------")
+        split_output(self.response, "---------- daily: ----------")
         emsum += mail_summaries("daily", 
                                 dt2ISO(dtnow - datetime.timedelta(hours=24)),
                                 self.request, self.response)
-        split(self.response, "---------- weekly: ----------")
+        split_output(self.response, "---------- weekly: ----------")
         emsum += mail_summaries("weekly", 
                                 dt2ISO(dtnow - datetime.timedelta(7)),
                                 self.request, self.response)
-        split(self.response, "---------- fortnightly: ----------")
+        split_output(self.response, "---------- fortnightly: ----------")
         emsum += mail_summaries("fortnightly", 
                                 dt2ISO(dtnow - datetime.timedelta(14)),
                                 self.request, self.response)
