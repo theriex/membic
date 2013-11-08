@@ -157,13 +157,18 @@ var actstat = (function () {
 
 
     fetchDataAndDisplay = function () {
-        data = [{"_id":"5838406743490560", "tworev": 0, "names": "Eric Parker", "active": 1, "day": "2013-11-01T00:00:00Z", "morev": 0, "onerev": 1, "calculated": "2013-11-05T23:56:45Z", "ttlrev": 1},
- {"_id":"5275456790069248", "tworev": 1, "names": "Eric Parker", "active": 1, "day": "2013-11-02T00:00:00Z", "morev": 0, "onerev": 1, "calculated": "2013-11-05T23:56:45Z", "ttlrev": 2},
- {"_id":"6401356696911872", "tworev": 0, "names": "Eric Parker", "active": 1, "day": "2013-11-03T00:00:00Z", "morev": 0, "onerev": 1, "calculated": "2013-11-05T23:56:45Z", "ttlrev": 1},
- {"_id":"4993981813358592", "tworev": 0, "names": "sbdesign;egaliani", "active": 2, "day": "2013-11-04T00:00:00Z", "morev": 0, "onerev": 2, "calculated": "2013-11-05T23:56:45Z", "ttlrev": 2}];
-        prepData();
-        displayActivityGraph();
-        displayUserAverages();
+        var critsec = "";
+        jt.out('useractdiv', "Fetching ActivityStat records");
+        jt.call('GET', "../activity", null,
+                function (actstats) {
+                    data = actstats;
+                    prepData();
+                    displayActivityGraph();
+                    displayUserAverages(); },
+                function (code, errtxt) {
+                    jt.out('useractdiv', "fetch failed: " + code + 
+                           " " + errtxt); },
+                critsec);
     };
 
 
