@@ -5,7 +5,7 @@ import logging
 from pen import PenName
 from rel import outbound_relids_for_penid
 from rev import Review, review_activity_search
-from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr
+from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 
@@ -83,7 +83,7 @@ def pen_stats():
         stat.names += pen.name
     stat.put()
     return stats_text(stat)
-        
+
 
 def eligible_pen(acc, thresh):
     # eventually this will need to track and test bad email addresses also
@@ -246,12 +246,61 @@ class SummaryForUser(webapp2.RequestHandler):
 
 class UserActivity(webapp2.RequestHandler):
     def get(self):
+        daysback = 70  # 10 weeks back
+        dtnow = datetime.datetime.utcnow()
+        thresh = dt2ISO(dtnow - datetime.timedelta(daysback))
+        where = "WHERE day > :1"
+        statquery = ActivityStat.gql(where, thresh)
+        stats = statquery.run(read_policy=db.EVENTUAL_CONSISTENCY,
+                              batch_size=daysback)
+        returnJSON(self.response, stats)
+
+
+class BackfillActivity(webapp2.RequestHandler):
+    def get(self):
+        isonow = dt2ISO(datetime.datetime.utcnow())
+        stat = ActivityStat(day="2013-11-01T00:00:00Z")
+        stat.active = 1
+        stat.onerev = 1
+        stat.tworev = 0
+        stat.morev = 0
+        stat.ttlrev = 1
+        stat.names = "Eric Parker"
+        stat.calculated = isonow
+        stat.put()
+        stat = ActivityStat(day="2013-11-02T00:00:00Z")
+        stat.active = 1
+        stat.onerev = 1
+        stat.tworev = 1
+        stat.morev = 0
+        stat.ttlrev = 2
+        stat.names = "Eric Parker"
+        stat.calculated = isonow
+        stat.put()
+        stat = ActivityStat(day="2013-11-03T00:00:00Z")
+        stat.active = 1
+        stat.onerev = 1
+        stat.tworev = 0
+        stat.morev = 0
+        stat.ttlrev = 1
+        stat.names = "Eric Parker"
+        stat.calculated = isonow
+        stat.put()
+        stat = ActivityStat(day="2013-11-04T00:00:00Z")
+        stat.active = 2
+        stat.onerev = 2
+        stat.tworev = 0
+        stat.morev = 0
+        stat.ttlrev = 2
+        stat.names = "sbdesign;egaliani"
+        stat.calculated = isonow
+        stat.put()
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("User activity:\n")
-        self.response.out.write(pen_stats())
+        self.response.out.write("Backfill ActivityStat records created\n")
 
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/emuser', SummaryForUser),
+                               ('/backfillactivity', BackfillActivity),
                                ('/activity', UserActivity)], debug=True)
 
