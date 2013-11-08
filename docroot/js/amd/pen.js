@@ -26,6 +26,14 @@ app.pen = (function () {
     },
 
 
+    verifyPenFields = function (pen) {
+        if(!pen.following) {  //may be null
+            pen.following = 0; }
+        if(!pen.followers) {
+            pen.followers = 0; }
+    },
+
+
     returnCall = function (callback) {
         if(!callback) {
             callback = returnFuncMemo; }
@@ -170,6 +178,7 @@ return {
                     var i;
                     penNameRefs = [];
                     for(i = 0; i < pens.length; i += 1) {
+                        verifyPenFields(pens[i]);
                         penNameRefs.push(app.lcs.putPen(pens[i])); }
                     chooseOrCreatePenName(callback); },
                 app.failf(function (code, errtxt) {
