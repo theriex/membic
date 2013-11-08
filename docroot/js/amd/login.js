@@ -141,8 +141,8 @@ app.login = (function () {
     emailStatementsRow = function () {
         var html = ["tr",
                     ["td", {colspan: 3, align: "center"},
-                     [["p", "wdydfun will not share your email address."],
-                      ["p", "wdydfun will respect your inbox."]]]];
+                     ["p", "wdydfun will <em>not</em> share your email " +
+                       " or spam you."]]];
         html = jt.tac2html(html);
         return html;
     },
