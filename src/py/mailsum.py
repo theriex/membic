@@ -256,51 +256,7 @@ class UserActivity(webapp2.RequestHandler):
         returnJSON(self.response, stats)
 
 
-class BackfillActivity(webapp2.RequestHandler):
-    def get(self):
-        isonow = dt2ISO(datetime.datetime.utcnow())
-        stat = ActivityStat(day="2013-11-01T00:00:00Z")
-        stat.active = 1
-        stat.onerev = 1
-        stat.tworev = 0
-        stat.morev = 0
-        stat.ttlrev = 1
-        stat.names = "Eric Parker"
-        stat.calculated = isonow
-        stat.put()
-        stat = ActivityStat(day="2013-11-02T00:00:00Z")
-        stat.active = 1
-        stat.onerev = 1
-        stat.tworev = 1
-        stat.morev = 0
-        stat.ttlrev = 2
-        stat.names = "Eric Parker"
-        stat.calculated = isonow
-        stat.put()
-        stat = ActivityStat(day="2013-11-03T00:00:00Z")
-        stat.active = 1
-        stat.onerev = 1
-        stat.tworev = 0
-        stat.morev = 0
-        stat.ttlrev = 1
-        stat.names = "Eric Parker"
-        stat.calculated = isonow
-        stat.put()
-        stat = ActivityStat(day="2013-11-04T00:00:00Z")
-        stat.active = 2
-        stat.onerev = 2
-        stat.tworev = 0
-        stat.morev = 0
-        stat.ttlrev = 2
-        stat.names = "sbdesign;egaliani"
-        stat.calculated = isonow
-        stat.put()
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("Backfill ActivityStat records created\n")
-
-
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/emuser', SummaryForUser),
-                               ('/backfillactivity', BackfillActivity),
                                ('/activity', UserActivity)], debug=True)
 
