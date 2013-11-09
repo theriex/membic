@@ -117,14 +117,15 @@ var actstat = (function () {
 
 
     displayUserAverages = function () {
-        var html = [], logins = {}, frequency, total = 0, sum = 0;
+        var html = [], logins = {}, name, frequency, total = 0, sum = 0;
         data.forEach(function (datum) {
-            var pens = datum.names.split(";");
+            var pens = jt.safestr(datum.names).split(";");
             pens.forEach(function (name) {
-                if(logins[name]) {
-                    logins[name] += 1; }
-                else {
-                    logins[name] = 1; } }); });
+                if(name) {  //possible empty string if no logins for the day
+                    if(logins[name]) {
+                        logins[name] += 1; }
+                    else {
+                        logins[name] = 1; } } }); });
         for(name in logins) {
             if(logins.hasOwnProperty(name)) {
                 frequency = Math.round(data.length / logins[name]);
@@ -138,6 +139,7 @@ var actstat = (function () {
                             ["td",
                              "days"]]]); } }
         html = [["div",
+                 "Window: " + data.length + " days.<br>" +
                  "Average login frequency: " + (sum / total) + " days"],
                 ["div", { style: "padding:0px 20px;" },
                  ["table",
