@@ -796,14 +796,14 @@ return {
                 msgtxt = "You need to sign in to wdydfun directly to change" +
                     " your account settings.\\n" + 
                     "Pardon the inconvenience, it\\'s a security thing...";
-                html = ["a", {cla: "accsetlinkdis", id: "accset",
+                html = ["a", {href: "#AccountSettings", id: "accset",
                               onclick: jt.fs("alert('" + msgtxt + "')")},
                         "Account settings"]; }
             else {
                 msgtxt = "To access cool features like a weekly activity" +
                     " summary, you first\\n" + 
                     "need to authorize wdydfun access for " + pen.name + ".";
-                html = ["a", {cla: "accsetlinkdis", id: "accset",
+                html = ["a", {href: "#AccountSettings", id: "accset",
                               onclick: jt.fs("alert('" + msgtxt + "')")},
                         "Account settings"]; } }
         return jt.tac2html(html);

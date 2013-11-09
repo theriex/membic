@@ -233,8 +233,7 @@ img { border:0px; }
 #toptypeseldiv { padding-left:60px; }
 
 /* >> settings dialog */
-#accset, .accsetlinkdis { font-size:small; }
-.accsetlinkdis { color:#999999; }
+#accset { font-size:small; }
 
 /* >> general classes */
 .greytxt { color:#999999; }
