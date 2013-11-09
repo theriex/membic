@@ -88,7 +88,7 @@ app.profile = (function () {
         html = jt.imgntxt("settings.png", "", 
                            "app.profile.settings()",
                            "#Settings",
-                           "Adjust your application settings");
+                           "Adjust your profile settings");
         jt.out('settingsbuttondiv', html);
     },
 
