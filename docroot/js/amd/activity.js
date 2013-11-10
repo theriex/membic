@@ -637,7 +637,7 @@ return {
 
 
     searchPensLinkHTML: function () {
-        return jt.imgntxt("follow.png", "Find Active Pen Names",
+        return jt.imgntxt("follow.png", "Find Recommended Pen Names",
                           "app.activity.penNameSearchDialog()",
                           "#findpens",
                           "Find pen names to follow");
