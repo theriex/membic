@@ -30,8 +30,20 @@ def add_relationship(rel):
     if rel.originid == rel.relatedid:
         return [ ]
     origin = PenName.get_by_id(rel.originid)
-    origin.following += 1
+    if not origin:
+        logging.warn("add_relationship origin pen not found: " +\
+                         str(rel.originid))
+        return [ ]
     related = PenName.get_by_id(rel.relatedid)
+    if not related:
+        logging.warn("add_relationship related pen not found: " +\
+                         str(rel.relatedid))
+        return [ ]
+    if not origin.following:
+        origin.following = 0
+    if not related.followers:
+        related.followers = 0
+    origin.following += 1
     related.followers += 1
     origin.put()
     related.put()
