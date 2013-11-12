@@ -141,7 +141,10 @@ def read_review_values(handler, review):
         review.rating = int(ratingstr)
     set_if_param_given(review, "keywords", handler, "keywords")
     set_if_param_given(review, "text", handler, "text")
-    # review.revpic is uploaded separately
+    # review.revpic is uploaded separately, but deleted via flag:
+    val = handler.request.get("revpic", "")
+    if val == "DELETED":
+        review.revpic = None
     set_if_param_given(review, "imguri", handler, "imguri")
     review.modified = nowISO()
     review.name = onelinestr(handler.request.get('name'))

@@ -115,8 +115,8 @@ app.login = (function () {
             if(state.view === "activity") {
                 return app.activity.displayActive(); }
             if(state.view === "review" && state.revid) {
-                app.review.initWithId(state.revid, state.mode,
-                                      params.action, params.errmsg); } }
+                return app.review.initWithId(state.revid, state.mode,
+                                             params.action, params.errmsg); } }
         //go with default display
         app.activity.displayActive();
     },

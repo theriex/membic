@@ -1,4 +1,4 @@
-/*global setTimeout: false, window: false, document: false, app: false, jt: false */
+/*global window: false, document: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 

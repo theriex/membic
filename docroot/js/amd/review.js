@@ -328,6 +328,12 @@ app.review = (function () {
     },
 
 
+    haveRevpic = function (review) {
+        if(review.revpic && review.revpic !== "DELETED") {
+            return true; }
+    },
+
+
     picHTML = function (review, type, keyval, mode) {
         var imgstyle, imgattr = {}, html = [];
         if(!keyval) {
@@ -340,25 +346,25 @@ app.review = (function () {
                              onclick: jt.fs("window.open('" + review.url + 
                                             "')")},
                        ["img", {cla: "revimg" + imgstyle,
-                                src: review.imguri}]]);
-            if(mode === "edit") {
-                html.push([
-                    ["br"],
-                    ["a", {href: "#remove image link",
-                           onclick: jt.fs("app.review.removeImageLink()")},
-                     "remove image"]]); } }
+                                src: review.imguri}]]); }
         else {  //no auto-generated link image, allow personal pic upload
             imgattr.src = ""; //no pic when just viewing
             if(mode === "edit") {  //for editing, default is outline pic
                 imgattr.src = "img/emptyprofpic.png"; }
-            if(review.revpic) {  //use uploaded pic if available
+            if(haveRevpic(review)) {  //use uploaded pic if available
                 imgattr.src = "revpic?revid=" + jt.instId(review); }
             imgattr.cla = "revimg" + imgstyle;
             if(mode === "edit") {
                 imgattr.title = "Click to upload a picture";
                 imgattr.onclick = jt.fs("app.review.picUploadForm()"); }
             html.push(["img", imgattr]); }
-        return jt.tac2html(html);
+        if(mode === "edit" && (review.imguri || haveRevpic(review))) {
+            html.push(["br"]);
+            html.push(["a", {href: "#remove image link",
+                             onclick: jt.fs("app.review.removeImageLink()")},
+                       "remove image"]); }
+        html = jt.tac2html(html);
+        return html;
     },
 
 
@@ -1561,7 +1567,7 @@ return {
                   ["a", {id: "closedlg", href: "#close",
                          onclick: jt.fs("app.cancelOverlay()")},
                    "&lt;close&nbsp;&nbsp;X&gt;"]],
-                 app.paramsToFormInputs(app.login.authparams()),
+                 jt.paramsToFormInputs(app.login.authparams()),
                  ["input", {type: "hidden", name: "_id", value: revid}],
                  ["input", {type: "hidden", name: "penid", value: crev.penid}],
                  ["input", {type: "hidden", name: "returnto",
@@ -1616,6 +1622,8 @@ return {
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }
+        if(crev && crev.revpic === "DELETED") {
+            crev.revpic = crev.oldrevpic; }
         if(force || !crev || !jt.instId(crev)) {
             crev = {};                    //so clear it all out 
             autourl = "";
@@ -1838,6 +1846,8 @@ return {
 
     removeImageLink: function () {
         crev.imguri = "";
+        crev.oldrevpic = crev.revpic;
+        crev.revpic = "DELETED";
         app.review.display();
     },
 
