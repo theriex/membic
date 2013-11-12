@@ -333,39 +333,44 @@ app.rel = (function () {
     },
 
 
+    addFollow = function (originator, related, contfunc) {
+        var newrel = {}, data, critsec = "";
+        newrel.originid = jt.instId(originator);
+        newrel.relatedid = jt.instId(related);
+        jt.assert(newrel.originid && newrel.relatedid);
+        newrel.status = "following";
+        newrel.mute = "";
+        newrel.cutoff = 0;
+        data = jt.objdata(newrel);
+        jt.call('POST', "newrel?" + app.login.authparams(), data,
+                function (newrels) {
+                    var orgpen = newrels[0],  //originator pen
+                        relpen = newrels[1];  //related pen
+                    newrel = newrels[2];  //new relationship
+                    app.lcs.putPen(orgpen);
+                    app.lcs.putPen(relpen);
+                    pushRel(orgpen, "outbound", newrel);
+                    contfunc(orgpen, relpen, newrel); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Relationship creation failed code " + code +
+                           ": " + errtxt); }),
+                critsec);
+    },
+
+
     createOrEditRelationship = function (originator, related) {
-        var rel, newrel, data, critsec = "";
+        var rel;
         rel = app.rel.outbound(jt.instId(related));
         if(rel) {
             displayRelationshipDialog(rel, related); }
         else if(loadoutcursor) {
             alert("Still loading relationships, try again in a few seconds"); }
         else {
-            newrel = {};
-            newrel.originid = jt.instId(originator);
-            newrel.relatedid = jt.instId(related);
-            jt.assert(newrel.originid && newrel.relatedid);
-            newrel.status = "following";
-            newrel.mute = "";
-            newrel.cutoff = 0;
-            data = jt.objdata(newrel);
-            jt.call('POST', "newrel?" + app.login.authparams(), data,
-                     function (newrels) {
-                         var orgpen = newrels[0],  //originator pen
-                             relpen = newrels[1];  //related pen
-                         newrel = newrels[2];  //new relationship
-                         app.lcs.putPen(orgpen);
-                         app.lcs.putPen(relpen);
-                         pushRel(orgpen, "outbound", newrel);
-                         //profile.writeNavDisplay is not enough if followBack,
-                         //have to redraw follow tab counts also.
-                         app.profile.refresh();
-                         displayRelationshipDialog(newrels[2], newrels[1], 
-                                                   true); },
-                     app.failf(function (code, errtxt) {
-                         jt.err("Relationship creation failed code " + code +
-                                 ": " + errtxt); }),
-                     critsec); }
+            addFollow(originator, related, function (orgpen, relpen, newrel) {
+                //profile.writeNavDisplay is not enough if followBack,
+                //have to redraw follow tab counts also.
+                app.profile.refresh();
+                displayRelationshipDialog(newrel, relpen, true); }); }
     },
 
 
@@ -436,6 +441,11 @@ return {
 
     reledit: function (from, to) {
         createOrEditRelationship(from, to);
+    },
+
+
+    follow: function (pen, contfunc) {
+        addFollow(app.pen.currPenRef().pen, pen, contfunc);
     },
 
 
@@ -532,8 +542,7 @@ return {
     followBack: function (followerid) {
         app.pen.getPen(function (homepen) {
             app.lcs.getPenFull(followerid, function (penref) {
-                createOrEditRelationship(homepen, penref.pen,
-                                         jt.instId(homepen)); }); });
+                createOrEditRelationship(homepen, penref.pen); }); });
     },
 
 

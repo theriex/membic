@@ -118,8 +118,9 @@ app.activity = (function () {
     //handle joins across relationships due to indexing overhead, so
     //those are filtered out here.
     penSearchFiltered = function (searchitem) {
-        var params, pen, rel;
-        params = app.pen.currPenRef().pensearch.params;
+        var pensearch, params, pen, rel;
+        pensearch = app.pen.currPenRef().pensearch || {};
+        params = pensearch.params || {};
         pen = searchitem;
         rel = app.rel.outbound(jt.instId(pen));
         if(rel) {
@@ -376,18 +377,40 @@ app.activity = (function () {
     },
 
 
+    followNewTipstersAndRedisplay = function (tries, pens) {
+        var i, contfunc, outrels = app.rel.outboundids();
+        if(outrels.length >= 3 || tries >= 20) {  //done adding new followers
+            app.activity.displayActive(); }
+        else {  //follow someone
+            contfunc = function (orgpen, relpen, newrel) {
+                followNewTipstersAndRedisplay(tries + 1, pens); };
+            for(i = 0; i < pens.length; i += 1) {
+                if(!penSearchFiltered(pens[i])) {
+                    jt.out('revactdiv', "Following " + pens[i].name + "...");
+                    app.rel.follow(pens[i], contfunc);
+                    break; } } }
+    },
+
+
     followMoreHTML = function (penids, lowactivity) {
         var html = "", text;
         if(penids && penids.length < 3) {
+            html = jt.imgntxt("follow.png", "Party Mode",
+                              "app.activity.autofollow()",
+                              "#autofollow",
+                              "Connect with the top active tipsters");
             text = "You are currently following " + penids.length +
                 " pen names. <br/>Recommend following at least 3..."; }
         else {
             text = "To see more reviews, <br/>follow more pen names."; }
         if(text) {
             html = ["table", {id: "followmore", cla: "formstyle"},
-                    ["tr",
-                     [["td", text],
-                      ["td", app.activity.searchPensLinkHTML()]]]];
+                    [["tr",
+                      [["td", text],
+                       ["td", app.activity.searchPensLinkHTML()]]],
+                     ["tr",
+                      [["td"],
+                       ["td", html]]]]];
             html = jt.tac2html(html); }
         return html;
     },
@@ -617,6 +640,21 @@ return {
         //hit the search button for them so they don't have to figure out
         //search options unless they want to.
         setTimeout(app.activity.startPenSearch, 50);
+    },
+
+
+    autofollow: function () {
+        var critsec = "";
+        jt.out('revactdiv', "Finding top tipsters...");
+        jt.call('GET', "srchpens?" + app.login.authparams(), null,
+                 function (results) {
+                     jt.out('revactdiv', 
+                            "Found " + results.length + " tipsters.");
+                     followNewTipstersAndRedisplay(0, results); },
+                 app.failf(function (code, errtxt) {
+                     jt.out('searchresults', 
+                             "error code: " + code + " " + errtxt); }),
+                 critsec);
     },
 
 
