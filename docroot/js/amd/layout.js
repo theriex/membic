@@ -216,13 +216,11 @@ return {
 
     openDialog: function (coords, html, initf) {
         var dlgdiv = jt.byId('dlgdiv');
+        window.scrollTo(0,0);
         if(coords) {
-            if(coords.scrollx && coords.scrolly) {
-                window.scroolTo(coords.scrollx, coords.scrolly); }
             dlgdiv.style.left = String(coords.x) + "px";
             dlgdiv.style.top = String(coords.y) + "px"; }
         else {
-            window.scrollTo(0,0);
             dlgdiv.style.left = "20px";
             dlgdiv.style.top = "60px"; }
         app.onescapefunc = app.layout.closeDialog;

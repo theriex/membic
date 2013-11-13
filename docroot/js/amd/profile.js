@@ -291,7 +291,7 @@ app.profile = (function () {
 
 
     changeSettings = function (pen) {
-        var coords, html;
+        var html;
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.profile.cancelPenNameSettings()")},
@@ -321,8 +321,7 @@ app.profile = (function () {
                    ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
                     ["button", {type: "button", id: "savebutton"},
                      "Save"]]]]]];
-        coords = {x:280, y:20, scrollx:0, scrolly:0};
-        app.layout.openDialog(coords, jt.tac2html(html), function () {
+        app.layout.openDialog({x:280, y:20}, jt.tac2html(html), function () {
             jt.on('savebutton', 'click', savePenNameSettings);
             displayAuthSettings('settingsauthtd', pen);
             app.services.display('consvcstd', pen);
@@ -1270,7 +1269,7 @@ return {
 
 
     invite: function () {
-        var coords, html;
+        var html;
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.layout.closeDialog()")},
@@ -1298,8 +1297,7 @@ return {
                    ["td", {align: "center"},
                     ["span", {id: "mailbspan"},
                      mailButtonHTML()]]]]]];
-        coords = {x:220, y:140, scrollx:0, scrolly:0};
-        app.layout.openDialog(coords, jt.tac2html(html));
+        app.layout.openDialog({x:220, y:140}, jt.tac2html(html));
     },
 
 
