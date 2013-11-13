@@ -289,7 +289,7 @@ app.rel = (function () {
     //unless and until there is a real need to limit activity noise
     //beyond the types.
     displayRelationshipDialog = function (rel, related, isnew) {
-        var html, titletxt;
+        var coords, html, titletxt;
         titletxt = "Follow settings for " + related.name;
         if(isnew) {
             titletxt = "You are now following " + related.name; }
@@ -321,15 +321,14 @@ app.rel = (function () {
                ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
                 ["button", {type: "button", id: "savebutton"},
                  "Save"]]]]]];
-        jt.out('dlgdiv', jt.tac2html(html));
-        setFormValuesFromRel(rel);
-        jt.on('savebutton', 'click', function (e) {
-            jt.evtend(e);
-            jt.out('settingsbuttons', "Saving...");
-            setRelFieldsFromFormValues(rel);
-            updateRelationship(rel); });
-        jt.byId('dlgdiv').style.visibility = "visible";
-        app.onescapefunc = app.layout.closeDialog;
+        coords = {x:220, y:140, scrollx:0, scrolly:0};
+        app.layout.openDialog(coords, jt.tac2html(html), function () {
+            setFormValuesFromRel(rel);
+            jt.on('savebutton', 'click', function (e) {
+                jt.evtend(e);
+                jt.out('settingsbuttons', "Saving...");
+                setRelFieldsFromFormValues(rel);
+                updateRelationship(rel); }); });
     },
 
 

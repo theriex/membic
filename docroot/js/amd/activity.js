@@ -601,7 +601,7 @@ return {
 
 
     penNameSearchDialog: function () {
-        var html, searchfunc = jt.fs("app.activity.startPenSearch()");
+        var coords, html, searchfunc = jt.fs("app.activity.startPenSearch()");
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.layout.closeDialog()")},
@@ -630,11 +630,8 @@ return {
                 searchOptionsHTML(),
                 ["div", {id: "searchresults"}]];
         html = jt.tac2html(html);
-        jt.out('dlgdiv', html);
-        jt.byId('dlgdiv').style.visibility = "visible";
-        if(jt.isLowFuncBrowser()) {
-            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        app.onescapefunc = app.layout.closeDialog;
+        coords = {x:180, y:140, scrollx:0, scrolly:0};
+        app.layout.openDialog(coords, html);
         jt.byId('searchoptionsdiv').style.display = "none";
         jt.byId('searchtxt').focus();
         //hit the search button for them so they don't have to figure out

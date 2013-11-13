@@ -291,7 +291,7 @@ app.profile = (function () {
 
 
     changeSettings = function (pen) {
-        var html;
+        var coords, html;
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.profile.cancelPenNameSettings()")},
@@ -321,15 +321,12 @@ app.profile = (function () {
                    ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
                     ["button", {type: "button", id: "savebutton"},
                      "Save"]]]]]];
-        jt.out('dlgdiv', jt.tac2html(html));
-        jt.on('savebutton', 'click', savePenNameSettings);
-        displayAuthSettings('settingsauthtd', pen);
-        app.services.display('consvcstd', pen);
-        app.skinner.init('settingsskintd', pen);
-        jt.byId('dlgdiv').style.visibility = "visible";
-        if(jt.isLowFuncBrowser()) {
-            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        app.onescapefunc = app.profile.cancelPenNameSettings;
+        coords = {x:280, y:20, scrollx:0, scrolly:0};
+        app.layout.openDialog(coords, jt.tac2html(html), function () {
+            jt.on('savebutton', 'click', savePenNameSettings);
+            displayAuthSettings('settingsauthtd', pen);
+            app.services.display('consvcstd', pen);
+            app.skinner.init('settingsskintd', pen); });
     },
 
 
@@ -1273,7 +1270,7 @@ return {
 
 
     invite: function () {
-        var html;
+        var coords, html;
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.layout.closeDialog()")},
@@ -1301,11 +1298,8 @@ return {
                    ["td", {align: "center"},
                     ["span", {id: "mailbspan"},
                      mailButtonHTML()]]]]]];
-        jt.out('dlgdiv', jt.tac2html(html));
-        jt.byId('dlgdiv').style.visibility = "visible";
-        if(jt.isLowFuncBrowser()) {
-            jt.byId('dlgdiv').style.backgroundColor = "#eeeeee"; }
-        app.onescapefunc = app.layout.closeDialog;
+        coords = {x:220, y:140, scrollx:0, scrolly:0};
+        app.layout.openDialog(coords, jt.tac2html(html));
     },
 
 

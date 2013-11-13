@@ -33,7 +33,6 @@ app.layout = (function () {
         output.push(html);
         html = jt.tac2html(output);
         jt.out('dlgdiv', html);
-        app.onescapefunc = app.layout.closeDialog;
     },
 
 
@@ -110,7 +109,7 @@ app.layout = (function () {
             //altimg = "url('../img/texturePaperBig.png')";
             altimg = "url('../img/blank.png')";
             jt.byId('bodyid').style.backgroundImage = altimg;
-            jt.byId('dlgdiv').style.backgroundColor = "#CCCCCC"; }
+            jt.byId('dlgdiv').style.backgroundColor = "#EEEEEE"; }
     },
 
 
@@ -203,9 +202,7 @@ return {
 
     displayDoc: function (url) {
         var critsec = "", html = "Fetching " + url + " ...";
-        window.scrollTo(0,0);
-        jt.out('dlgdiv', html);
-        jt.byId('dlgdiv').style.visibility = "visible";
+        app.layout.openDialog(null, html);
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
         jt.request('GET', url, null,
@@ -214,6 +211,25 @@ return {
                    function (code, errtxt) {
                        displayDocContent(url, errtxt); },
                    critsec);
+    },
+
+
+    openDialog: function (coords, html, initf) {
+        var dlgdiv = jt.byId('dlgdiv');
+        if(coords) {
+            if(coords.scrollx && coords.scrolly) {
+                window.scroolTo(coords.scrollx, coords.scrolly); }
+            dlgdiv.style.left = String(coords.x) + "px";
+            dlgdiv.style.top = String(coords.y) + "px"; }
+        else {
+            window.scrollTo(0,0);
+            dlgdiv.style.left = "20px";
+            dlgdiv.style.top = "60px"; }
+        app.onescapefunc = app.layout.closeDialog;
+        jt.out('dlgdiv', html);
+        if(initf) {
+            initf(); }
+        jt.byId('dlgdiv').style.visibility = "visible";
     },
 
 
