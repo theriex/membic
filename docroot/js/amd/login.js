@@ -424,7 +424,7 @@ return {
                         ["td",
                          ["div", {id: "rememberedhdiv"},
                           app.activity.rememberedLinkHTML()]],
-                        ["td",
+                        ["td", {rowspan: 2},
                          //div filled by profile.updateTopActionDisplay
                          ["div", {id: "settingsbuttondiv"}, ""]]]],
                       ["tr",
