@@ -486,7 +486,10 @@ class ChangePassword(webapp2.RequestHandler):
         if account:
             if pwd:
                 account.password = pwd
-            account.email = (self.request.get('email') or "").lower()
+            mailval = (self.request.get('email') or "").lower()
+            if not mailval:
+                mailval = None
+            account.email = mailval
             if not account.lastsummary:
                 account.lastsummary = nowISO()
             account.summaryfreq = self.request.get('sumfreq') or "weekly"

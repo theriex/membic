@@ -58,7 +58,6 @@ handlers:
   script: src.py.moracct.app
 
 
-
 ######################################################################
 ##        Pen Names
 
@@ -96,6 +95,16 @@ handlers:
 ## Return the pen name for the given id.
 ## GET params: penid
 - url: /penbyid.*
+  script: src.py.pen.app
+
+## Return non-protected account information for the given pen
+## GET params: penid, authparams
+- url: /acctinfo
+  script: src.py.pen.app
+
+## Init an account email address for the given pen
+## POST params: penid, email, authparams
+- url: /penmail.*
   script: src.py.pen.app
 
 

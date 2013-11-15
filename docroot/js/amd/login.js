@@ -465,9 +465,9 @@ return {
 
     updacc: function () {
         var sel, i, cboxes, csv, data, url, critsec = "";
-        data = "email=" + jt.enc(jt.byId('emailin').value || "");
+        data = "email=" + jt.enc(jt.safeget('emailin', 'value'));
         if(authmethod === "mid") {
-            data += "&pass=" + jt.enc(jt.byId('npin').value || ""); }
+            data += "&pass=" + jt.enc(jt.safeget('npin', 'value')); }
         sel = jt.byId('offsumsel');
         for(i = 0; i < sumfreqs.length; i += 1) {
             if(sel.options[i].selected) {

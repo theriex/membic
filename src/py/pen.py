@@ -6,14 +6,7 @@ import logging
 from moracct import *
 import urllib
 import json
-
-
-def authorized(acc, pen):
-    matched = False
-    if acc._id == pen.mid or acc._id == pen.gsid or \
-            acc._id == pen.fbid or acc._id == pen.twid or acc._id == pen.ghid:
-        matched = True
-    return matched
+import string
 
 
 class PenName(db.Model):
@@ -46,6 +39,14 @@ class PenName(db.Model):
     followers = db.IntegerProperty()
 
 
+def authorized(acc, pen):
+    matched = False
+    if acc._id == pen.mid or acc._id == pen.gsid or \
+            acc._id == pen.fbid or acc._id == pen.twid or acc._id == pen.ghid:
+        matched = True
+    return matched
+
+
 def has_top_twenty(pen, revtype):
     """ Return true if the given pen has 20 reviews of the given type """
     if not revtype or not pen or not pen.top20s:
@@ -74,6 +75,37 @@ def set_pen_attrs(pen, request):
     pen.revmem = request.get('revmem') or ""
     pen.settings = request.get('settings') or ""
             
+
+def gen_password():
+    """ Return a vaguely reasonable html safe password you can read """
+    size = 16
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ' + 'abcdefghijkmnopqrstuvwxyz' +\
+        string.digits + '!$^.,'
+    pwd = "".join(random.choice(chars) for x in range(size))
+    return pwd
+
+
+def native_account_for_pen(request):
+    """ Get the authorized pen, then return the native account for it """
+    acc = authenticated(request)
+    if not acc:
+        return None, None
+    penid = request.get('penid')
+    pen = PenName.get_by_id(intz(penid))
+    if not pen:
+        return None, None
+    authok = authorized(acc, pen)
+    if not authok:
+        return None, None
+    # They are authorized for the given pen.  Good enough to fill out email.
+    if pen.mid:
+        acc = MORAccount.get_by_id(pen.mid)
+    else:
+        uname = acc.username
+        passw = gen_password()
+        acc = MORAccount(username=uname, password=passw)
+    return acc, pen
+
 
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
@@ -308,6 +340,57 @@ class GetPenById(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
 
 
+class GetInfoForAccount(webapp2.RequestHandler):
+    def get(self):
+        acc, pen = native_account_for_pen(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authorization failed")
+            return
+        jsontxt = "{"
+        jsontxt += "\"hasEmail\":"
+        if acc.email:
+            jsontxt += "true"
+        else:
+            jsontxt += "false"
+        jsontxt += "}"
+        jsontxt = "[" + jsontxt + "]"
+        writeJSONResponse(jsontxt, self.response)
+
+
+class SetEmailFromPen(webapp2.RequestHandler):
+    def post(self):
+        acc, pen = native_account_for_pen(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authorization failed")
+            return
+        if acc.email:
+            self.error(409)  #Conflict
+            self.response.out.write("Existing email cannot be overwritten")
+            return
+        emaddr = self.request.get('email')
+        if not emaddr:
+            self.error(401)
+            self.response.out.write("No email address specified")
+            return
+        acc.email = emaddr
+        # if the generated account username already exists, or something
+        # else goes wrong transactionally then this could fail.  Unlikely
+        # and not automatically recoverable so just error out.
+        try:
+            acc.put()
+            pen.mid = acc.key().id()
+            pen.modified = nowISO()
+            pen.accessed = nowISO()
+            pen.put()
+            returnJSON(self.response, [ pen ])
+        except Exception as e:
+            self.error(409)  #Conflict
+            self.response.out.write("Update conflict: " + str(e))
+            return
+
+
 class MakeTestPens(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
@@ -339,5 +422,7 @@ app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/profpic', GetProfPic),
                                ('/srchpens', SearchPenNames),
                                ('/penbyid', GetPenById),
+                               ('/acctinfo', GetInfoForAccount),
+                               ('/penmail', SetEmailFromPen),
                                ('/testpens', MakeTestPens)], debug=True)
 

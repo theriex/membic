@@ -525,34 +525,31 @@ app.activity = (function () {
 
 
     bootActivityDisplay = function () {
-        var penids, html, retry = false;
+        var penids;
         writeNavDisplay("activity");
         jt.byId('switchmodebutton').disabled = true;
         penids = app.rel.outboundids();
         if(penids.length === 0) {
-            html = followMoreHTML(penids); }
+            jt.out('revactdiv', followMoreHTML(penids));
+            app.layout.adjust(); }
         else if((penids[penids.length - 1] === "waiting") ||
                 (penids[penids.length - 1] === "loading")) {
-            retry = true;
-            html = "Loading relationships..."; }
-        else if(!app.pen.currPenRef().helpful) {
-            html = "Loading helpful..."; }
-        else {
-            app.pen.currPenRef().actdisp = { 
-                revrefs: [], 
-                cursor: "" };
-            html = "Loading activity..."; }
-        jt.out('revactdiv', html);
-        app.layout.adjust();
-        if(app.pen.currPenRef().actdisp) {
+            jt.out('revactdiv', "Loading relationships...");
+            app.layout.adjust();
+            setTimeout(bootActivityDisplay, 100);
+            return; }
+        if(!app.pen.currPenRef().helpful) {
+            jt.out('revactdiv', "Loading helpful...");
+            app.layout.adjust();
+            app.review.loadHelpful(bootActivityDisplay);
+            return; }
+        app.pen.currPenRef().actdisp = {
+            revrefs: [], 
+            cursor: "" };
+        if(penids.length > 0) {
+            jt.out('revactdiv', "Loading activity...");
+            app.layout.adjust();
             doActivitySearch(); }
-        else if(!app.pen.currPenRef().helpful) {
-            app.review.loadHelpful(bootActivityDisplay); }
-        else if(retry) {
-            jt.log("bootActivityDisplay retry: " + penids[penids.length - 1]);
-            setTimeout(bootActivityDisplay, 100); }
-        else {  //finished loading and content, but display could be slow
-            setTimeout(app.layout.adjust, 100); }
     },
 
 
