@@ -7,6 +7,7 @@ from moracct import *
 import urllib
 import json
 import string
+import random
 
 
 class PenName(db.Model):
