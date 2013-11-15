@@ -64,8 +64,13 @@ def pen_stats():
         logging.info("Existing stat retrieval failed: " + str(e))
     # calculate values for new stat instance
     stat.calculated = dt2ISO(dtnow)
-    where = "WHERE modified >= :1 AND modified < :2"
-    pens = PenName.gql(where, isostart, isoend)
+    # do not restrict an upper bound for PenName retrieval, otherwise
+    # anyone who has logged after midnight GMT will be excluded and
+    # their login may never get counted if they log in again the next
+    # day.  If they do not login the next day, they may be double
+    # counted, but that's better than missed.
+    where = "WHERE modified >= :1"
+    pens = PenName.gql(where, isostart)
     for pen in pens:
         stat.active += 1
         where2 = "WHERE modified >= :1 AND modified < :2 AND penid = :3"
