@@ -949,8 +949,17 @@ app.review = (function () {
     },
 
 
-    selectLocLatLng = function (latlng, ref) {
-        var mapdiv, map;
+    selectLocLatLng = function (latlng, ref, retry, errmsg) {
+        var mapdiv, map, maxretry = 10;
+        retry = retry || 0;
+        if(retry > maxretry) {
+            jt.err("Initializing google maps places failed, so the\n" +
+                   "review url and address were not filled out.\n\n" + 
+                   "mapdiv: " + mapdiv + "\n" +
+                   "error: " + errmsg + "\n\n" +
+                   "You can try creating the review again, or fill out\n" +
+                   "the fields manually\n");
+            return; }
         if(!gplacesvc && google && google.maps && google.maps.places) {
             //this can fail intermittently, restarting the review usually works
             try {
@@ -961,11 +970,11 @@ app.review = (function () {
                     zoom: 15 });
                 gplacesvc = new google.maps.places.PlacesService(map);
             } catch (problem) {
-                jt.err("Initializing google maps places failed, so the\n" +
-                        "review url and address were not filled out.\n\n" + 
-                        "mapdiv: " + mapdiv + "\n" +
-                        "problem: " + problem);
-                gplacesvc = null; 
+                gplacesvc = null;
+                setTimeout(function () {
+                    selectLocLatLng(latlng, ref, retry + 1, problem);
+                    }, 50);
+                return;
             } }
         if(gplacesvc && ref) {
             gplacesvc.getDetails({reference: ref},
