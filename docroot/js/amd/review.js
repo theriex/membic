@@ -973,7 +973,7 @@ app.review = (function () {
                 gplacesvc = null;
                 setTimeout(function () {
                     selectLocLatLng(latlng, ref, retry + 1, problem);
-                    }, 50);
+                    }, 200);
                 return;
             } }
         if(gplacesvc && ref) {
