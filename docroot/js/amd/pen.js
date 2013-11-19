@@ -68,8 +68,9 @@ app.pen = (function () {
                  ["button", {type: "button", id: "emailpromptok",
                              onclick: jt.fs("app.pen.processEmailForm()")},
                   "OK"]]];
-        app.layout.openDialog({x:80, y:140}, jt.tac2html(html));
-        jt.byId('emailin').focus();
+        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+                               function () {
+                                   jt.byId('emailin').focus(); });
     },
 
 

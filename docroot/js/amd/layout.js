@@ -12,6 +12,7 @@ app.layout = (function () {
     var topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
         topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
         dndState = null,
+        dlgqueue = [],
 
 
     ////////////////////////////////////////
@@ -214,7 +215,17 @@ return {
     },
 
 
-    openDialog: function (coords, html, initf) {
+    queueDialog: function (coords, html, initf, visf) {
+        if(jt.byId('dlgdiv').style.visibility === "visible") {
+            dlgqueue.push({coords: coords, html: html, 
+                           initf: initf, visf: visf}); }
+        else {
+            app.layout.openDialog(coords, html, initf, visf); }
+    },
+
+
+    //clobbers existing dialog if already open
+    openDialog: function (coords, html, initf, visf) {
         var dlgdiv = jt.byId('dlgdiv');
         window.scrollTo(0,0);
         if(coords) {
@@ -228,14 +239,20 @@ return {
         if(initf) {
             initf(); }
         jt.byId('dlgdiv').style.visibility = "visible";
+        if(visf) {
+            visf(); }
     },
 
 
     closeDialog: function () {
+        var dlg;
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
         app.layout.adjust();
         app.onescapefunc = null;
+        if(dlgqueue.length > 0) {
+            dlg = dlgqueue.pop();
+            app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }
     },
 
 

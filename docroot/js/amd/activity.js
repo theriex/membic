@@ -385,20 +385,53 @@ app.activity = (function () {
             contfunc = function (orgpen, relpen, newrel) {
                 followNewTipstersAndRedisplay(tries + 1, pens); };
             for(i = 0; i < pens.length; i += 1) {
-                if(!penSearchFiltered(pens[i])) {
+                if(jt.instId(pens[i]) && !penSearchFiltered(pens[i])) {
                     jt.out('revactdiv', "Following " + pens[i].name + "...");
                     app.rel.follow(pens[i], contfunc);
-                    break; } } }
+                    break; } }
+            if(i === pens.length) {  //did not find anyone to follow
+                app.activity.displayActive(); } }
+    },
+
+
+    autofollow = function () {
+        var critsec = "";
+        jt.out('revactdiv', "Finding top tipsters...");
+        jt.call('GET', "srchpens?" + app.login.authparams(), null,
+                 function (results) {
+                     jt.out('revactdiv', 
+                            "Found " + results.length + " tipsters.");
+                     followNewTipstersAndRedisplay(0, results); },
+                 app.failf(function (code, errtxt) {
+                     jt.out('searchresults', 
+                             "error code: " + code + " " + errtxt); }),
+                 critsec);
+    },
+
+
+    displayIntroductionsNotice = function () {
+        var html;
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},"Making Introductions For You"],
+                ["p",
+                 "To help start things off, wdydfun is now introducing you to some active members you might enjoy following. You can change who you are following anytime from your profile page."],
+                ["div", {cla: "headingtxt"},
+                 ["button", {type: "button", id: "introduceok",
+                             onclick: jt.fs("app.layout.closeDialog()")},
+                  "OK"]]];
+        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null, 
+                               function () {
+                                   jt.byId('introduceok').focus(); });
     },
 
 
     followMoreHTML = function (penids, lowactivity) {
         var html = "", text;
         if(penids && penids.length < 3) {
-            html = jt.imgntxt("follow.png", "Party Mode",
-                              "app.activity.autofollow()",
-                              "#autofollow",
-                              "Connect with the top active tipsters");
             text = "You are currently following " + penids.length +
                 " pen names. <br/>Recommend following at least 3..."; }
         else {
@@ -407,10 +440,7 @@ app.activity = (function () {
             html = ["table", {id: "followmore", cla: "formstyle"},
                     [["tr",
                       [["td", text],
-                       ["td", app.activity.searchPensLinkHTML()]]],
-                     ["tr",
-                      [["td"],
-                       ["td", html]]]]];
+                       ["td", app.activity.searchPensLinkHTML()]]]]];
             html = jt.tac2html(html); }
         return html;
     },
@@ -550,6 +580,9 @@ app.activity = (function () {
             jt.out('revactdiv', "Loading activity...");
             app.layout.adjust();
             doActivitySearch(); }
+        else { //not following anyone, make introductions
+            displayIntroductionsNotice();
+            autofollow(); }
     },
 
 
@@ -633,21 +666,6 @@ return {
         //hit the search button for them so they don't have to figure out
         //search options unless they want to.
         setTimeout(app.activity.startPenSearch, 50);
-    },
-
-
-    autofollow: function () {
-        var critsec = "";
-        jt.out('revactdiv', "Finding top tipsters...");
-        jt.call('GET', "srchpens?" + app.login.authparams(), null,
-                 function (results) {
-                     jt.out('revactdiv', 
-                            "Found " + results.length + " tipsters.");
-                     followNewTipstersAndRedisplay(0, results); },
-                 app.failf(function (code, errtxt) {
-                     jt.out('searchresults', 
-                             "error code: " + code + " " + errtxt); }),
-                 critsec);
     },
 
 
