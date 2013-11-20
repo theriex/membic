@@ -316,10 +316,13 @@ def actionButtonsHTML(penrevparms):
 
 def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
-    penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
     subkey = getSubkey(rev)
     timg = "../img/" + typeImage(rev.revtype)
+    simg = timg[0:-6] + "Pic.png"
     rdesc = descrip(rev)
+    penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
+    revurl = "../#view=review&" + penrevparms
+    profurl = "../#view=profile&profid=" + str(rev.penid)
     # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
@@ -329,9 +332,9 @@ def revhtml(rev, pen):
     html +=   "<meta http-equiv=\"Content-Type\""
     html +=        " content=\"text/html; charset=UTF-8\" />\n"
     html +=   "<meta name=\"description\" content=\"" + rdesc + "\" />\n"
-    html +=   "<meta property=\"og:image\" content=\"" + timg + "\" />\n"
-    html +=   "<meta property=\"twitter:image\" content=\"" + timg + "\" />\n"
-    html +=   "<meta itemprop=\"image\" content=\"" + timg + "\" />\n"
+    html +=   "<meta property=\"og:image\" content=\"" + simg + "\" />\n"
+    html +=   "<meta property=\"twitter:image\" content=\"" + simg + "\" />\n"
+    html +=   "<meta itemprop=\"image\" content=\"" + simg + "\" />\n"
     html +=   "<meta itemprop=\"description\" content=\"" + rdesc + "\" />\n"
     html +=   "<title>" + getTitle(rev)
     if subkey:
@@ -340,21 +343,16 @@ def revhtml(rev, pen):
     html +=   "<link href=\"../css/site.css\" rel=\"stylesheet\""
     html +=        " type=\"text/css\" />\n"
     html +=   "<link rel=\"image_src\""
-    html +=        " href=\"" + timg + "\" />\n"
+    html +=        " href=\"" + simg + "\" />\n"
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
     # HTML content from index.html...
     # watch the height on this next div, overflow causes major ad placement skew
-    html += "<div id=\"topsectiondiv\" style=\"height:130px;\">\n"
-    html += "  <div id=\"logodiv\" style=\"width:260px;\">\n"
+    html += "<div id=\"statictopsectiondiv\">\n"
+    html += "  <div id=\"staticlogodiv\">\n"
     html += "    <img src=\"../img/wdydfun.png\" id=\"logoimg\"\n"
     html += "         border=\"0\"\n"
-    html += "         onclick=\"app.profile.display();return false;\"\n"
     html += "         style=\"width:243px;height:120px;\"/>\n"
-    html += "  </div>\n"
-    html += "  <div id=\"topworkdiv\">\n"
-    html += "    <div id=\"slidesdiv\" style=\"height:120px;\">\n"
-    html += "    </div>\n"
     html += "  </div>\n"
     html += "</div>\n"
     # Specialized class for content area, left spacing used by ads..
@@ -366,6 +364,7 @@ def revhtml(rev, pen):
 
     # This is a public facing page, not a logged in page, so show some
     # ads to help pay for hosting service. Yeah right. 
+    html += "<div id=\"staticadupperspacer\"></div>"
     html += "<div id=\"adreservespace\" style=\""
     html +=   "width:170px;height:610px;"
     html +=   "background:#fffffc;"
@@ -397,11 +396,19 @@ def revhtml(rev, pen):
     # HTML adapted from profile.js displayProfileHeading
     html +=     "<div id=\"centerhdivstatic\">\n"
     html +=       "<span id=\"penhnamespan\">"
-    html +=       "<a href=\"../#view=profile&profid=" + str(rev.penid)
-    html +=                "\" title=\"Show profile for " + pen.name
-    html +=                "\">" + pen.name + "</a>"
+    html +=         "<a href=\"" + profurl + "\""
+    html +=           " title=\"Show profile for " + pen.name + "\""
+    html +=           " onclick=\"window.open('" + profurl + "');"
+    html +=                      "return false;\""
+    html +=           ">" + pen.name + "</a>"
     html +=       "</span>\n"
-    html +=       "<span id=\"penhbuttonspan\"> </span>\n"
+    html +=       "<span id=\"penhbuttonspan\">"
+    html +=         "<a href=\"" + revurl + "\""
+    html +=           " title=\"View from your pen name\""
+    html +=           " onclick=\"window.open('" + revurl + "');"
+    html +=                      "return false;\""
+    html +=         "><img class=\"navico\" src=\"../img/penname.png\"/></a>"
+    html +=       "</span>\n"
     html +=     "</div>"
 
     # HTML copied from review.js displayReviewForm
@@ -438,7 +445,8 @@ def revhtml(rev, pen):
     html +=         "</tr><tr>\n"
     html +=           "<!-- image continues into this row -->\n"
     html +=           "<td colspan=\"2\" align=\"left\">\n"
-    html +=               actionButtonsHTML(penrevparms) + "</td>\n"
+    # html +=               actionButtonsHTML(penrevparms) + 
+    html +=           "</td>\n"
     html +=         "</tr>\n"
     html +=       "</table>\n"
     html +=     "</div> <!-- formstyle -->\n"

@@ -42,7 +42,10 @@ img { border:0px; }
 #topsectiondiv { padding:0px 10px; background:#fffffd;
   box-shadow:8px 8px 4px #cccccc; 
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
+#statictopsectiondiv { height:10px; }
 #logodiv { width:470px; padding:5px; float:left; }
+#staticlogodiv { position:absolute; left:10px; top:10px; }
+#staticadupperspacer { height:120px; }
 #topworkdiv { }
 #slidesdiv { }
 /* left recalculated in layout.initSlideshow, old browsers use this */
