@@ -118,7 +118,7 @@ app.profile = (function () {
                                   title: "Adjust follow settings for " + name,
                                   onclick: jt.fs("app.profile.relationship()")},
                             ["img", {cla: "navico", 
-                                     src: "img/settings.png"}]]; }
+                                     src: "img/settingsinv.png"}]]; }
                 else {
                     html = ["a", {href: "#Follow",
                                   title: "Follow " + name + " reviews",
