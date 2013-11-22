@@ -8,18 +8,26 @@ from rev import Review, review_activity_search
 from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
+from google.appengine.api.logservice import logservice
 
 
 class ActivityStat(db.Model):
     """ Activity metrics for tracking purposes """
     day = db.StringProperty(required=True)  # yyyy-mm-ddT00:00:00Z
-    active = db.IntegerProperty()  # number of pens that logged in
-    onerev = db.IntegerProperty()  # num pens that wrote at least one review
-    tworev = db.IntegerProperty()  # num pens that wrote at least two reviews
-    morev = db.IntegerProperty()   # 3 or more reviews
-    ttlrev = db.IntegerProperty()
-    names = db.TextProperty()      # semi delim pen names that logged in
-    calculated = db.StringProperty()  # iso date
+    active = db.IntegerProperty()     # number of pens that logged in
+    onerev = db.IntegerProperty()     # num pens that wrote at least one review
+    tworev = db.IntegerProperty()     # num pens that wrote at least two reviews
+    morev = db.IntegerProperty()      # num pens that wrote 3 or more reviews
+    ttlrev = db.IntegerProperty()     # total reviews for the day
+    names = db.TextProperty()         # ';' delimited pen names that logged in
+    calculated = db.StringProperty()  # iso date when things were tallied up
+    logttl = db.IntegerProperty()     # total log requests for the day
+    botttl = db.IntegerProperty()     # total bot requests for the day
+    logsecure = db.IntegerProperty()  # num requests for secure login page
+    logstatic = db.IntegerProperty()  # num requests for statrev pages
+    clickthru = db.IntegerProperty()  # num parameterized prof/rev requests
+    statrefs = db.TextProperty()      # '#' delimited referrers for statrev reqs
+    agents = db.TextProperty()        # '~' delimited accessing agents
 
 
 def split_output(response, text):
@@ -88,6 +96,82 @@ def pen_stats():
         stat.names += pen.name
     stat.put()
     return stats_text(stat)
+
+
+def unix_time(dt):
+    se = dt - datetime.datetime.utcfromtimestamp(0)
+    return int(round(se.total_seconds()))
+
+
+def is_known_bot(agentstr):
+    bots = ["AhrefsBot", "Baiduspider", "ezooms.bot", 
+            "netvibes.com",  # not really a bot, but not a really a hit either
+            "AppEngine-Google"]
+    for botstr in bots:
+        if botstr in agentstr:
+            return True
+    return False
+
+
+def log_stats():
+    # calculate day window (identical logic as done by pen_stats)
+    dtnow = datetime.datetime.utcnow()
+    dtend = datetime.datetime(dtnow.year, dtnow.month, dtnow.day)
+    dtstart = dtend - datetime.timedelta(hours=24)
+    isostart = dt2ISO(dtstart)
+    isostart = isostart[:10] + "T00:00:00Z"
+    # retrieve existing stats instance already written by pen_stats
+    stat = None
+    try:
+        where = "WHERE day = :1"
+        stats = ActivityStat.gql(where, isostart)
+        for existing_stat in stats:
+            stat = existing_stat
+    except Exception as e:
+        logging.info("log_stats stat retrieval failed: " + str(e))
+        return
+    if not stat:
+        logging.info("No stat instance available")
+        return
+    # init the stat fields we are using
+    stat.logttl = 0
+    stat.botttl = 0
+    stat.logsecure = 0
+    stat.logstatic = 0
+    stat.clickthru = 0
+    stat.agents = ""
+    # iterate through matching log entries and update the stats
+    agents = []
+    refers = []
+    prevagent = ""
+    isbot = False
+    for loge in logservice.fetch(start_time=unix_time(dtstart), 
+                                 end_time=unix_time(dtend),
+                                 minimum_log_level=logservice.LOG_LEVEL_INFO):
+        stat.logttl += 1
+        agent = loge.user_agent
+        if agent != prevagent:
+            prevagent = agent
+            isbot = is_known_bot(agent)
+            if not isbot and not agent in agents:
+                agents.append(agent)
+        if isbot:
+            stat.botttl += 1
+        else:  # actual user request
+            if loge.resource == "/" and\
+                    loge.host == "myopenreviews.appspot.com":
+                stat.logsecure += 1
+            elif loge.resource.startswith("/statrev/"):
+                stat.logstatic += 1
+                if loge.referrer and not loge.referrer in refers:
+                    refers.append(loge.referrer)
+            elif "view=profile&profid=" in loge.resource:
+                stat.clickthru += 1
+            elif "view=review&penid=" in loge.resource:
+                stat.clickthru += 1
+    stat.agents = "~".join(agents)
+    stat.statrefs = "#".join(refers)
+    return stat
 
 
 def eligible_pen(acc, thresh):
@@ -229,6 +313,27 @@ class MailSummaries(webapp2.RequestHandler):
                 body=summary)
 
 
+class LogSummaries(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        split_output(self.response, "---------- LogSummaries ----------")
+        stat = log_stats()
+        if not stat:
+            split_output(self.response, "LogSummaries stat retrieval failed.")
+            return
+        agstr = stat.agents or ""
+        refstr = stat.statrefs or ""
+        summary = "Log Summary:\n" +\
+            "            Total log lines: " + str(stat.logttl) + "\n" +\
+            "               Bot requests: " + str(stat.botttl) + "\n" +\
+            "     Secure login page hits: " + str(stat.logsecure) + "\n" +\
+            "    Static review page hits: " + str(stat.logstatic) + "\n" +\
+            "Static review clickthroughs: " + str(stat.clickthru) + "\n" +\
+            "Static review referrers:\n" + refstr.replace("#", "\n") +\
+            "agents:\n" + agstr.replace("~", "\n")
+        split_output(self.response, summary)
+
+
 class SummaryForUser(webapp2.RequestHandler):
     def get(self):
         username = self.request.get('username')
@@ -262,6 +367,7 @@ class UserActivity(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
+                               ('/logsum', LogSummaries),
                                ('/emuser', SummaryForUser),
                                ('/activity', UserActivity)], debug=True)
 

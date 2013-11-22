@@ -25,8 +25,8 @@ def starsImageHTML(rating):
     step = int(math.floor((rating * maxstep) / 100))
     title = starTitles[step]
     width = int(math.floor(step * (imgwidth / maxstep)))
-    logging.info("step: " + str(step));
-    logging.info("width: " + str(width));
+    # logging.info("step: " + str(step));
+    # logging.info("width: " + str(width));
     html = "<img class=\"starsimg\" src=\"../img/blank.png\"" +\
                " style=\"width:" + str(imgwidth - width) + "px;" +\
                         "height:" + str(imgheight) + "px;\"/>" +\
@@ -321,8 +321,8 @@ def revhtml(rev, pen):
     simg = timg[0:-6] + "Pic.png"
     rdesc = descrip(rev)
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
-    revurl = "../#view=review&" + penrevparms
-    profurl = "../#view=profile&profid=" + str(rev.penid)
+    revurl = "../?view=review&" + penrevparms
+    profurl = "../?view=profile&profid=" + str(rev.penid)
     # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
