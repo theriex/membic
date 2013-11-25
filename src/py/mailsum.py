@@ -23,6 +23,7 @@ class ActivityStat(db.Model):
     calculated = db.StringProperty()  # iso date when things were tallied up
     logttl = db.IntegerProperty()     # total log requests for the day
     botttl = db.IntegerProperty()     # total bot requests for the day
+    clinq = db.IntegerProperty()      # site inquiries from craigslist
     logsecure = db.IntegerProperty()  # num requests for secure login page
     logstatic = db.IntegerProperty()  # num requests for statrev pages
     clickthru = db.IntegerProperty()  # num parameterized prof/rev requests
@@ -136,6 +137,7 @@ def log_stats():
     # init the stat fields we are using
     stat.logttl = 0
     stat.botttl = 0
+    stat.clinq = 0
     stat.logsecure = 0
     stat.logstatic = 0
     stat.clickthru = 0
@@ -158,19 +160,24 @@ def log_stats():
         if isbot:
             stat.botttl += 1
         else:  # actual user request
-            if loge.resource == "/" and\
-                    loge.host == "myopenreviews.appspot.com":
-                stat.logsecure += 1
+            # logging.info("loge.resource: " + loge.resource)
+            if loge.resource == "/" or loge.resource.startswith("/?"):
+                if loge.host == "myopenreviews.appspot.com":
+                    stat.logsecure += 1
+                else: # regular www.wdydfun.com
+                    if loge.referrer and "craigslist" in loge.referrer:
+                        stat.clinq += 1
+                    if "view=profile&profid=" in loge.resource:
+                        stat.clickthru += 1
+                    if "view=review&penid=" in loge.resource:
+                        stat.clickthru += 1
             elif loge.resource.startswith("/statrev/"):
                 stat.logstatic += 1
                 if loge.referrer and not loge.referrer in refers:
                     refers.append(loge.referrer)
-            elif "view=profile&profid=" in loge.resource:
-                stat.clickthru += 1
-            elif "view=review&penid=" in loge.resource:
-                stat.clickthru += 1
     stat.agents = "~".join(agents)
     stat.statrefs = "#".join(refers)
+    stat.put()
     return stat
 
 
@@ -326,6 +333,7 @@ class LogSummaries(webapp2.RequestHandler):
         summary = "Log Summary:\n" +\
             "            Total log lines: " + str(stat.logttl) + "\n" +\
             "               Bot requests: " + str(stat.botttl) + "\n" +\
+            "       Craigslist inquiries: " + str(stat.clinq) + "\n" +\
             "     Secure login page hits: " + str(stat.logsecure) + "\n" +\
             "    Static review page hits: " + str(stat.logstatic) + "\n" +\
             "Static review clickthroughs: " + str(stat.clickthru) + "\n" +\
