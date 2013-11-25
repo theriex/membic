@@ -78,7 +78,7 @@ def pen_stats():
     # their login may never get counted if they log in again the next
     # day.  If they do not login the next day, they may be double
     # counted, but that's better than missed.
-    where = "WHERE modified >= :1"
+    where = "WHERE accessed >= :1"
     pens = PenName.gql(where, isostart)
     for pen in pens:
         stat.active += 1
