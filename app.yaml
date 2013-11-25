@@ -107,6 +107,11 @@ handlers:
 - url: /penmail.*
   script: src.py.pen.app
 
+## Note the given pen name was accessed
+## POST params: penid, authparams
+- url: /penacc.*
+  script: src.py.pen.app
+
 
 
 ######################################################################

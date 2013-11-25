@@ -332,6 +332,15 @@ app.login = (function () {
     //post-login.  These are separate flows.  Not supporting a
     //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
+        //Need to note login, but definitely don't hold up display work
+        setTimeout(function () {
+            var data = "penid=" + app.pen.currPenId(), 
+                critsec = "";
+            jt.call('POST', "penacc?" + app.login.authparams(), data,
+                    function () {
+                        jt.log("Pen access time updated"); },
+                    app.failf(),
+                    critsec); }, 4000);
         if(params.command === "chgpwd") {
             app.login.displayUpdAccForm(); }
         else if(params.command === "helpful" ||

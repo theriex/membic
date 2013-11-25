@@ -392,6 +392,31 @@ class SetEmailFromPen(webapp2.RequestHandler):
             return
 
 
+class PenAccessed(webapp2.RequestHandler):
+    """ Note the given pen name was accessed. """
+    def post(self):
+        # Do NOT update any other fields here (race conditions)
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        penid = self.request.get('penid')
+        pen = PenName.get_by_id(intz(penid))
+        if not pen:
+            self.error(404)
+            self.response.out.write("PenName id: " + str(id) + " not found.")
+            return
+        authok = authorized(acc, pen)
+        if not authok:
+            self.error(401)
+            self.response.out.write("You may only update your own pen name.")
+            return
+        pen.accessed = nowISO()
+        pen.put()
+        returnJSON(self.response, [ pen ])
+            
+
 class MakeTestPens(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
@@ -425,5 +450,6 @@ app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/penbyid', GetPenById),
                                ('/acctinfo', GetInfoForAccount),
                                ('/penmail', SetEmailFromPen),
+                               ('/penacc', PenAccessed),
                                ('/testpens', MakeTestPens)], debug=True)
 
