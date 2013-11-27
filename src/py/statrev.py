@@ -318,7 +318,7 @@ def revhtml(rev, pen):
     """ dump a static viewable review without requiring login """
     subkey = getSubkey(rev)
     timg = "../img/" + typeImage(rev.revtype)
-    simg = timg[0:-6] + "Pic.png"
+    simg = timg[0:-6] + "Pic2.png"
     rdesc = descrip(rev)
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
     revurl = "../?view=review&" + penrevparms
