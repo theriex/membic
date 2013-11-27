@@ -111,11 +111,11 @@ def reviewPicHTML(rev):
         html = "<a href=\"" + rev.url + "\""
         html +=  " onclick=\"window.open('" + rev.url + "');"
         html +=             "return false;\""
-        html +=  "><img class=\"revimgsafe\""
+        html +=  "><img id=\"reviewimg\" class=\"revimg\""
         html +=       " src=\"" + rev.imguri
         html +=  "\"></a>"
     if rev.revpic:
-        html = "<img class=\"revimgsafe\""
+        html = "<img id=\"reviewimg\" class=\"revimg\""
         html +=    " src=\"../revpic?revid=" + str(rev.key().id())
         html +=  "\"/>"
     return html;

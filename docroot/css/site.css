@@ -187,7 +187,6 @@ img { border:0px; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revlist li { padding:4px; }
 .revimg { max-width:125px; height:auto; }
-.revimgsafe { width:125px; height:auto; }
 .revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
 .rslc { font-size:medium; }
 .rslcbold { font-size:medium; font-weight:bold; }
