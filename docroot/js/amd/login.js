@@ -347,6 +347,11 @@ app.login = (function () {
                 params.command === "remember" ||
                 params.command === "respond" ||
                 (params.view === "review" && params.revid)) {
+            setTimeout(function () {
+                jt.call('GET', "/bytheway?clickthrough=review", null,
+                        function () {
+                            jt.log("noted review clickthrough"); },
+                        app.failf); }, 200);
             app.lcs.getPenFull(params.penid, function (penref) {
                 app.profile.verifyStateVariableValues(penref.pen);
                 app.review.initWithId(params.revid, "read", 
@@ -375,6 +380,11 @@ app.login = (function () {
         if(!params.returnto) {  //on home server, clean the location display
             clearParams(); }
         if(params.view && params.profid) {
+            setTimeout(function () {
+                jt.call('GET', "/bytheway?clickthrough=profile", null,
+                        function () {
+                            jt.log("noted profile clickthrough"); },
+                        app.failf); }, 200);
             app.history.checkpoint({ view: params.view, 
                                      profid: params.profid }); }
         else if(params.revedit) {

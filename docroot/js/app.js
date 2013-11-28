@@ -86,7 +86,13 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, 'keypress', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
-        app.login.init();
+        if(document.referrer && document.referrer.indexOf("craigslist") > 0) {
+            setTimeout(function () {
+                jt.call('GET', "bytheway?referral=craigslist", null,
+                        function () {
+                            jt.log("noted craigslist referral"); },
+                        app.failf); }, 2); }
+        setTimeout(app.login.init, 10);
     };
 
 

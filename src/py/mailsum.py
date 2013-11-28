@@ -23,11 +23,8 @@ class ActivityStat(db.Model):
     calculated = db.StringProperty()  # iso date when things were tallied up
     logttl = db.IntegerProperty()     # total log requests for the day
     botttl = db.IntegerProperty()     # total bot requests for the day
-    clinq = db.IntegerProperty()      # site inquiries from craigslist
-    logsecure = db.IntegerProperty()  # num requests for secure login page
-    logstatic = db.IntegerProperty()  # num requests for statrev pages
-    clickthru = db.IntegerProperty()  # num parameterized prof/rev requests
-    statrefs = db.TextProperty()      # '#' delimited referrers for statrev reqs
+    refers = db.TextProperty()        # src1:3,src2:4...
+    clickthru = db.IntegerProperty()  # num specific profile or review requests
     agents = db.TextProperty()        # '~' delimited accessing agents
 
 
@@ -114,6 +111,28 @@ def is_known_bot(agentstr):
     return False
 
 
+def bump_counter(refer):
+    components = refer.split(":")
+    count = int(components[1]) + 1
+    return components[0] + ":" + str(count)
+
+
+def bump_referral_count(refers, entryref):
+    if not entryref:
+        return
+    refername = "other"
+    knownrefs = ["facebook", "plus.google", "twitter", "craigslist"]
+    for kr in knownrefs:
+        if kr in entryref:
+            refername = kr
+            break
+    for idx, refer in enumerate(refers):
+        if refer.startswith(refername):
+            refers[idx] = bump_counter(refer)
+            return
+    refers.append(refername + ":1")
+
+
 def log_stats():
     # calculate day window (identical logic as done by pen_stats)
     dtnow = datetime.datetime.utcnow()
@@ -137,16 +156,15 @@ def log_stats():
     # init the stat fields we are using
     stat.logttl = 0
     stat.botttl = 0
-    stat.clinq = 0
-    stat.logsecure = 0
-    stat.logstatic = 0
+    stat.refers = ""
     stat.clickthru = 0
     stat.agents = ""
-    # iterate through matching log entries and update the stats
     agents = []
     refers = []
     prevagent = ""
     isbot = False
+    # iterate through matching log entries and update the stats. Note that
+    # only the application call logs are fetched, not resource requests.
     for loge in logservice.fetch(start_time=unix_time(dtstart), 
                                  end_time=unix_time(dtend),
                                  minimum_log_level=logservice.LOG_LEVEL_INFO):
@@ -160,23 +178,15 @@ def log_stats():
         if isbot:
             stat.botttl += 1
         else:  # actual user request
-            # logging.info("loge.resource: " + loge.resource)
-            if loge.resource == "/" or loge.resource.startswith("/?"):
-                if loge.host == "myopenreviews.appspot.com":
-                    stat.logsecure += 1
-                else: # regular www.wdydfun.com
-                    if loge.referrer and "craigslist" in loge.referrer:
-                        stat.clinq += 1
-                    if "view=profile&profid=" in loge.resource:
-                        stat.clickthru += 1
-                    if "view=review&penid=" in loge.resource:
-                        stat.clickthru += 1
-            elif loge.resource.startswith("/statrev/"):
-                stat.logstatic += 1
-                if loge.referrer and not loge.referrer in refers:
-                    refers.append(loge.referrer)
+            if loge.resource.startswith("/statrev/"):
+                bump_referral_count(refers, loge.referrer)
+            elif loge.resource.startswith("/bytheway"):
+                if "craigslist" in loge.resource:
+                    bump_referral_count(refers, "craigslist")
+                elif "clickthrough" in loge.resource:
+                    stat.clickthru += 1
     stat.agents = "~".join(agents)
-    stat.statrefs = "#".join(refers)
+    stat.refers = ",".join(refers)
     stat.put()
     return stat
 
@@ -328,16 +338,13 @@ class LogSummaries(webapp2.RequestHandler):
         if not stat:
             split_output(self.response, "LogSummaries stat retrieval failed.")
             return
+        refstr = stat.refers or ""
         agstr = stat.agents or ""
-        refstr = stat.statrefs or ""
         summary = "Log Summary:\n" +\
             "            Total log lines: " + str(stat.logttl) + "\n" +\
             "               Bot requests: " + str(stat.botttl) + "\n" +\
-            "       Craigslist inquiries: " + str(stat.clinq) + "\n" +\
-            "     Secure login page hits: " + str(stat.logsecure) + "\n" +\
-            "    Static review page hits: " + str(stat.logstatic) + "\n" +\
             "Static review clickthroughs: " + str(stat.clickthru) + "\n" +\
-            "Static review referrers:\n" + refstr.replace("#", "\n") +\
+            "refers:\n" + refstr.replace(",", "\n") +\
             "agents:\n" + agstr.replace("~", "\n")
         split_output(self.response, summary)
 
@@ -374,8 +381,15 @@ class UserActivity(webapp2.RequestHandler):
         returnJSON(self.response, stats)
 
 
+class ByTheWay(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("ok")
+
+
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/logsum', LogSummaries),
                                ('/emuser', SummaryForUser),
-                               ('/activity', UserActivity)], debug=True)
+                               ('/activity', UserActivity),
+                               ('/bytheway', ByTheWay)], debug=True)
 
