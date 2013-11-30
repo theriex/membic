@@ -138,6 +138,12 @@ var actstat = (function () {
                              frequency],
                             ["td",
                              "days"]]]); } }
+        html.sort(function (a, b) {
+            var afreq = parseInt(a[1][1][1], 10),
+                bfreq = parseInt(b[1][1][1], 10);
+            if(afreq < bfreq) { return -1; }
+            if(afreq > bfreq) { return 1; }
+            return 0; });
         html = [["div",
                  "Window: " + data.length + " days.<br>" +
                  "Average login frequency: " + (sum / total) + " days"],
