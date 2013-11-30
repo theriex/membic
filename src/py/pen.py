@@ -402,7 +402,12 @@ class PenAccessed(webapp2.RequestHandler):
             self.response.out.write("Authentication failed")
             return
         penid = self.request.get('penid')
-        pen = PenName.get_by_id(intz(penid))
+        try:
+            pen = PenName.get_by_id(intz(penid))
+        except Exception as e:
+            self.error(400)
+            self.response.out.write("Bad penid " + str(penid) + ". " + str(e))
+            return
         if not pen:
             self.error(404)
             self.response.out.write("PenName id: " + str(id) + " not found.")
@@ -413,7 +418,12 @@ class PenAccessed(webapp2.RequestHandler):
             self.response.out.write("You may only update your own pen name.")
             return
         pen.accessed = nowISO()
-        pen.put()
+        try:
+            pen.put()
+        except Exception as e2:
+            self.error(412)  #precondition failed
+            self.response.out.write("Update failed: " + str(e2))
+            return
         returnJSON(self.response, [ pen ])
             
 
