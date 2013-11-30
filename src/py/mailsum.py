@@ -220,23 +220,25 @@ def text_stars(review):
 
 
 def write_summary_email_body(pen, reviews, tstr, prs):
-    body = "Experienced anything worth remembering recently? Your current" +\
-        " and future followers would be interested in hearing from you!"
+    body = "Hi " + pen.name + ",\n\n"
     if prs and len(prs) > 0:
-        body = "Thanks for reviewing! Your current and future followers" +\
+        body += "Thanks for reviewing! Your current and future followers" +\
             " appreciate it."
-    body += "\n\n"
+    else:
+        body += "Experienced anything worth a review recently?" +\
+            " Your friends would like to hear about it."
+    body += "\n" +\
+        "To write a review or get more info, go to http://www.wdydfun.com" +\
+        "\n\n"
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
             " posted any reviews since " + tstr + ". Please do what you" +\
-            " can to help them experience more things."
+            " can to help them experience more of life. In the meantime" +\
+            " you might want to follow a few more people."
         return body
     body += "Since " + tstr + ", friends you are following have posted " +\
         str(len(reviews)) + " " +\
-        ("reviews" if len(reviews) > 1 else "review") + "."
-    body += "  For more details" +\
-            " (or to change your account settings)" +\
-            " go to http://www.wdydfun.com \n\n"
+        ("reviews" if len(reviews) > 1 else "review") + ".\n\n"
     revtypes = [["book",     "Books"], 
                 ["movie",    "Movies"], 
                 ["video",    "Videos"], 
@@ -289,6 +291,8 @@ def mail_summaries(freq, thresh, request, response):
                         thresh, "", [ str(pen.key().id()) ])
                     logmsg += ", reviewed: " + str(len(prs))
                     content = write_summary_email_body(pen, reviews, tstr, prs)
+                    content += "\nTo change email settings for your account" +\
+                        " go to http://www.wdydfun.com \n\n"
                     if not request.url.startswith('http://localhost'):
                         mail.send_mail(
                             sender="wdydfun support <theriex@gmail.com>",
@@ -361,6 +365,9 @@ class SummaryForUser(webapp2.RequestHandler):
         for acc in accs:
             pen = eligible_pen(acc, "2400-01-01T00:00:00Z")
             self.response.out.write("pen: " + pen.name + "\n")
+            self.response.out.write("--------------------------------------")
+            self.response.out.write("--------------------------------------")
+            self.response.out.write("\n\n")
             relids = outbound_relids_for_penid(pen.key().id())
             checked, reviews = review_activity_search(thresh, "", relids)
             checked, prs = review_activity_search(thresh, "", 
