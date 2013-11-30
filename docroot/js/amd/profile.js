@@ -333,10 +333,8 @@ app.profile = (function () {
         var html, href, subj, body, types, revchecks, i, ts, mepen;
         mepen = app.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
-        body = "Hey,\n\n" +
-            "I'm using wdydfun (what did you do fun) to note and share " +
-            "experiences. I trust your taste, and would be interested in " + 
-            "reading reviews from you";
+        body = "Hi,\n\n" +
+            "Please join wdydfun so I can read reviews from you";
         revchecks = document.getElementsByName("invrevcb");
         types = "";
         for(i = 0; i < revchecks.length; i += 1) {
@@ -356,24 +354,17 @@ app.profile = (function () {
                 types += ts[i]; }
             body += ", especially about " + types + "."; }
         else {
-            body += "."; }
-        body += " I'm hoping you will sign up and occasionally post " + 
-            "something good you've experienced so I can follow you." + 
-            "\n\n" +
-            "If you are interested in following reviews from me, " + 
-            "click the 'follow' icon next to '" + mepen.name +
-            "' on my profile page. Here's the direct link to my profile:\n\n" +
+            body += "!"; }
+        body += "\n\n" +
+            "Here's a direct link to my profile:\n\n" +
             "    " + app.mainsvr + "/#view=profile&profid=" +
             jt.instId(mepen) + "\n\n" +
-            "When I see you in my 'Followers' tab, I'll follow back. " +
-            "Looking forward to learning about things you've experienced " +
-            "recently!" +
+            "After you have a pen name, click the follow link on my " + 
+            "profile so I can find you and follow back. " + 
             "\n\n" +
-            "cheers,\n" + 
-            mepen.name + 
-            "\n\n";
+            "cheers,\n";
         href = "mailto:?subject=" + jt.dquotenc(subj) + 
-            "&body=" + jt.dquotenc(body);
+            "&body=" + jt.dquotenc(body) + "%0A";
         html = app.services.serviceLinkHTML(href, "", "shareico", 
                                             "Invite via eMail",
                                             "img/email.png");
@@ -1268,6 +1259,17 @@ return {
     },
 
 
+    invitecboxchange: function () {
+        jt.out('mailbspan', mailButtonHTML());
+    },
+
+
+    //Reading people's email contacts feels creepy to me. Saving email
+    //entered by friends seems presumptuous. Automatically creating an
+    //account might seem nice the first time, but not if they already
+    //have an account (or the click the setup link more than
+    //once). The invitee might want to use a different email address
+    //than the one for the invite.
     invite: function () {
         var html;
         html = [["div", {cla: "dlgclosex"},
@@ -1276,23 +1278,21 @@ return {
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"},
-                 "Invite a friend... build your community"],
+                 "Invite a friend... build your community!"],
                 ["table", {cla: "formstyle"},
                  [["tr",
-                   ["td", {id: "invintrotd", style: "width:400px;"},
+                   ["td", {style: "width:400px;"},
                     [["p",
-                      ["Know someone whose tastes you trust?",
-                       ["br"],
-                       "Want to share your reviews?"]],
-                     ["p",
-                      "What types of reviews would you be most interested in " +
-                      "seeing from them?"]]]],
+                      ["span", {cla: "secondaryfield"},
+                       "Use this form to generate an email you can " +
+                       "edit and send..."]]]]],
+                  ["tr",
+                   ["td", 
+                      "Particularly interested in reviews of"]],
                   ["tr",
                    ["td", {id: "invtypestd"},
-                    app.review.reviewTypeCheckboxesHTML("invrevcb")]],
-                  ["tr",
-                   ["td",
-                    "Invite your friend to join:"]],
+                    app.review.reviewTypeCheckboxesHTML("invrevcb",
+                        jt.fs("app.profile.invitecboxchange()"))]],
                   ["tr",
                    ["td", {align: "center"},
                     ["span", {id: "mailbspan"},
