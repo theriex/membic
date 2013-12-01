@@ -121,10 +121,11 @@ def bump_referral_count(refers, entryref):
     if not entryref:
         return
     refername = "other"
-    knownrefs = ["facebook", "plus.google", "twitter", "craigslist"]
-    for kr in knownrefs:
-        if kr in entryref:
-            refername = kr
+    srchstrs = ["facebook", "twitter", "plus.google", "craigslist"]
+    namestrs = ["facebook", "twitter", "googleplus", "craigslist"]
+    for idx, srchstr in enumerate(srchstrs):
+        if srchstr in entryref:
+            refername = namestrs[idx]
             break
     for idx, refer in enumerate(refers):
         if refer.startswith(refername):
