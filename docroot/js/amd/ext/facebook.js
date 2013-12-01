@@ -162,11 +162,22 @@ app.facebook = (function () {
     },
 
 
+    getFacebookReviewImage = function (review) {
+        var fbimage = app.services.getRevTypeImage(review);
+        fbimage = fbimage.slice(0, fbimage.length - 6) + "Pic2.png";
+        if(review.revpic) {  //overrides default image
+            fbimage = "http://www.wdydfun.com/revpic?revid=" + 
+                jt.instId(review); }
+        if(review.imguri) {  //overrides manual image
+            fbimage = review.imguri; }
+        return fbimage;
+    },
+
+
     postReview4 = function (review) {
         var fbimage, fblinkurl, fblinktext, fbtitle, fbtext, 
             fbremurl, fbmessage, fbprompt;
-        fbimage = app.services.getRevTypeImage(review);
-        fbimage = fbimage.slice(0, fbimage.length - 6) + "Pic2.png";
+        fbimage = getFacebookReviewImage(review);
         fblinkurl = app.services.getRevPermalink(review);
         fblinktext = "wdydfun this week? " + revaction(review.revtype);
         fbtitle = app.services.getRevStarsTxt(review, "unicode") + " " +
