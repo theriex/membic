@@ -567,47 +567,56 @@ app.review = (function () {
 
 
     reviewLinkActionHTML = function (activebuttons) {
-        var buttons, html;
+        var html;
         if(activebuttons) {
-            buttons = [["td",
-                        //helpful button. init unchecked, update after lookup
-                        ["div", {id: "helpfulbutton", cla: "buttondiv"},
-                         jt.imgntxt("helpfulq.png", "Helpful",
-                                    "app.review.toggleHelpfulButton()", 
-                                    "#helpful", 
-                                    "Mark this review as helpful", 
-                                    "", "helpful")]],
-                       ["td",
-                        //remember button. init unchecked, update after lookup
-                        ["div", {id: "memobutton", cla: "buttondiv"},
-                         jt.imgntxt("rememberq.png", "Remember",
-                                    "app.review.toggleMemoButton()", 
-                                    "#memo", 
-                                    "Add this to remembered reviews", 
-                                    "", "memo")]],
-                       ["td",
-                        //respond button, contents rewritten after lookup
-                        ["div", {id: "respondbutton", cla: "buttondiv"},
-                         jt.imgntxt("writereview.png", "Your review",
-                                    "app.review.respond()", 
-                                    "#respond", 
-                                    "Edit your corresponding review", 
-                                    "", "respond")]]]; }
-        else {  //place markers help indicate it's your own review
-            buttons = [["td", ["img", {cla: "shareicodis", 
-                                       src: "img/helpful.png"}]],
-                       ["td", ["img", {cla: "shareicodis",
-                                       src: "img/remembered.png"}]],
-                       ["td", ["img", {cla: "shareicodis",
-                                       src: "img/writereview.png"}]]]; }
+            html = [["tr",
+                     [["td",
+                       //helpful button. init unchecked, update after lookup
+                       ["div", {id: "helpfulbutton", cla: "buttondiv"},
+                        jt.imgntxt("helpfulq.png", "Helpful",
+                                   "app.review.toggleHelpfulButton()", 
+                                   "#helpful", 
+                                   "Mark this review as helpful", 
+                                   "", "helpful")]],
+                      ["td",
+                       //remember button. init unchecked, update after lookup
+                       ["div", {id: "memobutton", cla: "buttondiv"},
+                        jt.imgntxt("rememberq.png", "Remember",
+                                   "app.review.toggleMemoButton()", 
+                                   "#memo", 
+                                   "Add this to remembered reviews", 
+                                   "", "memo")]],
+                      ["td",
+                       //respond button, contents rewritten after lookup
+                       ["div", {id: "respondbutton", cla: "buttondiv"},
+                        jt.imgntxt("writereview.png", "Your review",
+                                   "app.review.respond()", 
+                                   "#respond", 
+                                   "Edit your corresponding review", 
+                                   "", "respond")]]]],
+                    ["tr",
+                     [["td", ["div", {id: "hlinksdiv", cla: "linksdiv"}]],
+                      ["td", ["div", {id: "rlinksdiv", cla: "linksdiv"}]],
+                      ["td", ["div", {id: "clinksdiv", cla: "linksdiv"}]]]]]; }
+        else {
+            html = [["tr", { id:"hlinksdivtr", style: "display:none;"},
+                     [["td", 
+                       ["img", {cla: "buttondiv", src: "img/helpful.png"}]],
+                      ["td",
+                       ["div", {id: "hlinksdiv", cla: "linksdiv"}]]]],
+                    ["tr", { id: "rlinksdivtr", style: "display:none;"},
+                     [["td", 
+                       ["img", {cla: "buttondiv", src: "img/remembered.png"}]],
+                      ["td",
+                       ["div", {id: "rlinksdiv", cla: "linksdiv"}]]]],
+                    ["tr", { id: "clinksdivtr", style: "display:none;"},
+                     [["td",
+                       ["img", {cla: "buttondiv", src: "img/writereview.png"}]],
+                      ["td",
+                       ["div", {id: "clinksdiv", cla: "linksdiv"}]]]]]; }
         html = ["div", { id: "socialrevactdiv"},
                 ["table", {cla: "socialrevacttable"},
-                 [["tr",
-                   buttons],
-                  ["tr", 
-                   [["td", ["div", {id: "hlinksdiv", cla: "linksdiv"}]],
-                    ["td", ["div", {id: "rlinksdiv", cla: "linksdiv"}]],
-                    ["td", ["div", {id: "clinksdiv", cla: "linksdiv"}]]]]]]];
+                 html]];
         return html;
     },
 
@@ -1210,7 +1219,7 @@ app.review = (function () {
         var divs = ["hlinksdiv", "rlinksdiv", "clinksdiv"],
             fields = ["helpful", "remembered", "corresponding"],
             revref = app.lcs.getRevRef(crev),  //rev is loaded
-            html, i, pens, j, penrevid, penid, penrevref, penref;
+            html, i, pens, j, penrevid, penid, penrevref, penref, tr;
         if(!revref.revlink) {
             return app.lcs.verifyReviewLinks(displayReviewLinks); }
         html = "";
@@ -1236,6 +1245,10 @@ app.review = (function () {
                             html += ", "; }
                         html += getReviewLinkHTML(fields[i], penref, 
                                                   penrevref); } }
+                if(html) {
+                    tr = jt.byId(divs[i] + "tr");
+                    if(tr) {
+                        tr.style.display = "block"; } }
                 jt.out(divs[i], html);
                 html = ""; } }
     },
