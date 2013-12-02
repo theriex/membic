@@ -9,6 +9,7 @@ from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
+from google.appengine.api import images
 
 
 class ActivityStat(db.Model):
@@ -120,6 +121,8 @@ def bump_counter(refer):
 def bump_referral_count(refers, entryref):
     if not entryref:
         return
+    if "wdydfun" in entryref:
+        return
     refername = "other"
     srchstrs = ["facebook", "twitter", "plus.google", "craigslist"]
     namestrs = ["facebook", "twitter", "googleplus", "craigslist"]
@@ -134,7 +137,7 @@ def bump_referral_count(refers, entryref):
     refers.append(refername + ":1")
 
 
-def log_stats():
+def log_stats(response):
     # calculate day window (identical logic as done by pen_stats)
     dtnow = datetime.datetime.utcnow()
     dtend = datetime.datetime(dtnow.year, dtnow.month, dtnow.day)
@@ -179,9 +182,13 @@ def log_stats():
         if isbot:
             stat.botttl += 1
         else:  # actual user request
-            if loge.resource.startswith("/statrev/"):
-                bump_referral_count(refers, loge.referrer)
-            elif loge.resource.startswith("/bytheway"):
+            response.out.write(loge.resource + "\n")
+            #read /bytheway and /bytheimg log entries for refs
+            if loge.resource.startswith("/bythe"):
+                if "statinqref" in loge.resource:
+                    components = loge.resource.split("=")
+                    referrer = components[len(components) - 1]
+                    bump_referral_count(refers, referrer)
                 if "craigslist" in loge.resource:
                     bump_referral_count(refers, "craigslist")
                 elif "clickthrough" in loge.resource:
@@ -339,7 +346,7 @@ class LogSummaries(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
         split_output(self.response, "---------- LogSummaries ----------")
-        stat = log_stats()
+        stat = log_stats(self.response)
         if not stat:
             split_output(self.response, "LogSummaries stat retrieval failed.")
             return
@@ -350,7 +357,7 @@ class LogSummaries(webapp2.RequestHandler):
             "               Bot requests: " + str(stat.botttl) + "\n" +\
             "Static review clickthroughs: " + str(stat.clickthru) + "\n" +\
             "refers:\n" + refstr.replace(",", "\n") +\
-            "agents:\n" + agstr.replace("~", "\n")
+            "\n\nagents:\n" + agstr.replace("~", "\n")
         split_output(self.response, summary)
 
 
@@ -391,13 +398,25 @@ class UserActivity(webapp2.RequestHandler):
 
 class ByTheWay(webapp2.RequestHandler):
     def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("ok")
+        returnJSON(self.response, []);
+
+
+class ByTheImg(webapp2.RequestHandler):
+    """ alternative approach when XMLHttpRequest is a hassle """
+    def get(self):
+        # hex values for a 4x4 transparent PNG created with GIMP:
+        imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
+        img = images.Image(imgstr)
+        img.resize(width=4, height=4)
+        img = img.execute_transforms(output_encoding=images.PNG)
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.out.write(img)
 
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/logsum', LogSummaries),
                                ('/emuser', SummaryForUser),
                                ('/activity', UserActivity),
-                               ('/bytheway', ByTheWay)], debug=True)
+                               ('/bytheway', ByTheWay),
+                               ('/bytheimg', ByTheImg)], debug=True)
 

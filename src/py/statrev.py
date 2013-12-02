@@ -3,7 +3,7 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
-from moracct import safestr, intz, safestr
+from moracct import safestr, intz, safeURIEncode
 import re
 import json
 import math
@@ -240,6 +240,11 @@ def generalScriptHTML():
     html += "if(!(document.styleSheets[0].cssRules)) {\n"
     html += "    document.getElementById('bodyid').style.backgroundImage = "
     html +=          "\"url('../img/blank.png')\" }\n"
+    html += "if(document.referrer) {\n"
+    html += "    var btwimg = document.getElementById('btwimg');\n"
+    html += "    if(btwimg) {\n"
+    html += "        btwimg.src = \"../bytheimg?statinqref=\" + " 
+    html +=          "encodeURIComponent(document.referrer) } }\n"
     html += "</script>\n"
     return html
 
@@ -314,13 +319,14 @@ def actionButtonsHTML(penrevparms):
     return html
 
 
-def revhtml(rev, pen):
+def revhtml(rev, pen, refer):
     """ dump a static viewable review without requiring login """
     subkey = getSubkey(rev)
     timg = "../img/" + typeImage(rev.revtype)
     simg = timg[0:-6] + "Pic2.png"
     rdesc = descrip(rev)
-    penrevparms = "penid=" + str(rev.penid) + "&revid=" + str(rev.key().id())
+    revidstr = str(rev.key().id())
+    penrevparms = "penid=" + str(rev.penid) + "&revid=" + revidstr
     revurl = "../?view=review&" + penrevparms
     profurl = "../?view=profile&profid=" + str(rev.penid)
     # HTML head copied from index.html...
@@ -454,6 +460,12 @@ def revhtml(rev, pen):
     html += "</div> <!-- statrevactdiv -->\n"
     html += "  </td></tr></table> <!-- forceAdsSameLineTable -->"
     html += "</div> <!-- appspacedivstatic -->\n"
+    if refer:
+        html += "<img src=\"../bytheimg?statinqref=" + safeURIEncode(refer) +\
+            "\"/>\n"
+    else: #use img with id and try find referrer via script
+        html += "<img id=\"btwimg\" src=\"../bytheimg?statinq=" + revidstr +\
+            "\"/>\n"
     html += generalScriptHTML()
     html += "</body>\n"
     html += "</html>\n"
@@ -472,7 +484,8 @@ class StaticReviewDisplay(webapp2.RequestHandler):
             self.error(404)
             self.response.out.write("PenName " + review.penid + " not found")
             return
-        html = revhtml(review, pen);
+        logging.info("request: " + str(self.request))
+        html = revhtml(review, pen, self.request.referer);
         self.response.headers['Content-Type'] = "text/html; charset=UTF-8";
         self.response.out.write(html);
 

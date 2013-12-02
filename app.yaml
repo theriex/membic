@@ -300,6 +300,8 @@ handlers:
   script: src.py.mailsum.app
 - url: /bytheway.*
   script: src.py.mailsum.app
+- url: /bytheimg.*
+  script: src.py.mailsum.app
 - url: /loginid.*
   script: src.py.moracct.app
 # Trap anything ending with a slash and send it to index.html since there
