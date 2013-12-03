@@ -377,13 +377,18 @@ app.review = (function () {
     },
 
 
+    //Validating URLs without accidentally complaining about things
+    //that actually can work is not trivial.  The only real way is
+    //probably to fetch it.  Checking for embedded javascript is a
+    //whole other issue.
     noteURLValue = function () {
-        var input = jt.byId('urlin');
-        //if auto read url from initial form, note it and then reset
+        var input;
+        //if auto read url from initial form, note it and then reset var
         if(autourl) {
             crev.url = autourl;
             autourl = ""; }
-        //the url may be edited
+        //the url may be edited, note the current value
+        input = jt.byId('urlin');
         if(input) {
             crev.url = input.value; }
     },
@@ -508,20 +513,61 @@ app.review = (function () {
     },
 
 
-    //ATTENTION: This needs to do a quick pass through and get rid of
-    //           any extraneous commas.  For extra credit: Add commas
-    //           when people insert their own space separated keywords.
     keywordsValid = function (type, errors) {
-        var input, words, i, csv = "";
+        var input, words, word, i, csv = "";
         input = jt.byId('keywordin');
         if(input) {
             words = input.value || "";
             words = words.split(",");
             for(i = 0; i < words.length; i += 1) {
-                if(i > 0) {
-                    csv += ", "; }
-                csv += words[i].trim(); }
+                word = words[i].trim();
+                if(word) {
+                    if(csv) {
+                        csv += ", "; }
+                    csv += word; } }
             crev.keywords = csv; }
+    },
+
+
+    readAndValidateFieldValues = function (type, errors) {
+        if(!type) {
+            type = findReviewType(crev.revtype); }
+        if(!errors) {
+            errors = []; }
+        if(type) {
+            keyFieldsValid(type, errors);
+            keywordsValid(type, errors);
+            reviewTextValid(type, errors);
+            secondaryFieldsValid(type, errors);
+            noteURLValue(); }
+    },
+
+
+    //Returns true if the user input review field values have been altered.
+    reviewFieldValuesChanged = function () {
+        var prev;
+        if(!crev || !jt.instId(crev)) {
+            return true; }
+        prev = app.lcs.getRevRef(crev).rev;
+        if(!prev) {  //nothing to compare against
+            jt.log("Seems there should always be a cached version.");
+            return false; }
+        if(crev.revtype !== prev.revtype ||
+           crev.rating !== prev.rating ||
+           crev.keywords !== prev.keywords ||
+           crev.text !== prev.text ||
+           crev.name !== prev.name ||
+           crev.title !== prev.title ||
+           crev.url !== prev.url ||
+           crev.artist !== prev.artist ||
+           crev.author !== prev.author ||
+           crev.publisher !== prev.publisher ||
+           crev.album !== prev.album ||
+           crev.starring !== prev.starring ||
+           crev.address !== prev.address ||
+           crev.year !== prev.year) {
+            return true; }
+        return false;
     },
 
 
@@ -1327,6 +1373,15 @@ app.review = (function () {
     },
 
 
+    copyReview = function (review) {
+        var name, copy = {};
+        for(name in review) {
+            if(review.hasOwnProperty(name)) {
+                copy[name] = review[name]; } }
+        return copy;
+    },
+
+
     //Fill any missing descriptive fields in the given review from the
     //current review, then edit the given review.
     copyAndEdit = function (pen, review) {
@@ -1372,6 +1427,8 @@ app.review = (function () {
             crev = {}; }
         if(!crev.penid) {
             crev.penid = app.pen.currPenId(); }
+        if(!read) {
+            crev = copyReview(crev); }
         setTimeout(function () {  //refresh headings
             if(crev.penid !== jt.instId(pen)) { 
                 app.lcs.getPenFull(crev.penid, function (revpenref) {
@@ -1544,7 +1601,9 @@ return {
             urlin = jt.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
-        reviewTextValid(crev.revtype, errs);
+        //If the title or other key fields are not valid, that's ok because
+        //we are about to read them. But don't lose comment text.
+        reviewTextValid(null, errs);
         if(errs.length > 0) {
             return; }
         if(!url) {  //bail out, but reflect any updates so far
@@ -1568,17 +1627,18 @@ return {
     },
 
 
-    //There must be a review instance ID in order for the server to
-    //find the associated review so it can store the image.  The
-    //review does NOT need to be up to date with the latest fields
-    //(that's handled during the main save processing).  If no id,
-    //then save first.  There is a slight chance of the autosave for
-    //the pic upload and the save button processing happening at the
-    //same time, which could result in a duplicate review.  Seems very
-    //unlikely though, and most images are not manually uploaded.
+    //The review must have an id so the server can find the instance
+    //to hold the associated revpic data.  Since the pic upload is a
+    //form submit requiring the app to reconstruct its state
+    //afterwards, any changed field values also need to be saved.  If
+    //a user clicks the save button for a new review, and also manages
+    //to click for a pic upload, then it might be possible for them to
+    //create two instances of the same review.  Protect against that.
     picUploadForm: function () {
-        var odiv, html, revid = jt.instId(crev);
-        if(!revid) {
+        var odiv, html, revid;
+        readAndValidateFieldValues();
+        revid = jt.instId(crev);
+        if(!revid || reviewFieldValuesChanged()) {
             html = jt.byId('revformbuttonstd').innerHTML;
             if(html.indexOf("<button") >= 0) { //not already saving
                 return app.review.save(false, "uploadpic"); }
@@ -1654,6 +1714,7 @@ return {
             autocomptxt = "";
             app.review.display(); }       //and restart
         else {
+            crev = app.lcs.getRevRef(crev).rev;
             app.review.displayRead(); }
     },
 
@@ -1665,22 +1726,14 @@ return {
     //timeout values (< 200) won't work consistently.
     validate: function () {
         fullEditDisplayTimeout = setTimeout(function () {
-            var i, errtxt = "", errors = [], type;
+            var i, errtxt = "", errors = [];
             fullEditDisplayTimeout = null;
-            type = findReviewType(crev.revtype);
-            if(type) {
-                keyFieldsValid(type, errors);
-                //need to check all fields to capture their values 
-                //back into the current review so they are not lost.
-                keywordsValid(type, errors);
-                reviewTextValid(type, errors);
-                secondaryFieldsValid(type, errors);
-                if(errors.length > 0) {
-                    for(i = 0; i < errors.length; i += 1) {
-                        errtxt += errors[i] + "<br/>"; }
-                    jt.out('revsavemsg', errtxt);
-                    return; } }
-            //if no type, or if all fields valid, then redisplay
+            readAndValidateFieldValues(null, errors);
+            if(errors.length > 0) {
+                for(i = 0; i < errors.length; i += 1) {
+                    errtxt += errors[i] + "<br/>"; }
+                jt.out('revsavemsg', errtxt);
+                return; }
             app.review.display(); }, 400);
     },
 
@@ -1695,11 +1748,7 @@ return {
             jt.out('revformbuttonstd', html);
             jt.out('revsavemsg', "Unknown review type");
             return; }
-        noteURLValue();
-        keyFieldsValid(type, errors);
-        secondaryFieldsValid(type, errors);
-        keywordsValid(type, errors);
-        reviewTextValid(type, errors);
+        readAndValidateFieldValues(type, errors);
         verifyRatingStars(type, errors, actionstr);
         if(errors.length > 0) {
             jt.out('revformbuttonstd', html);
@@ -1716,7 +1765,7 @@ return {
         data = jt.objdata(crev);
         jt.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
-                     crev = app.lcs.putRev(reviews[0]).rev;
+                     crev = copyReview(app.lcs.putRev(reviews[0]).rev);
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                      setTimeout(function () {  //update corresponding links
                          app.lcs.checkAllCorresponding(crev); }, 200);
@@ -1748,7 +1797,7 @@ return {
         jt.call('GET', "revbyid?" + params, null,
                  function (revs) {
                      if(revs.length > 0) {
-                         crev = revs[0];
+                         crev = copyReview(app.lcs.putRev(revs[0]).rev);
                          if(mode === "edit") {
                              app.review.display(action, errmsg); }
                          else {
@@ -1859,14 +1908,14 @@ return {
 
 
     changeRevType: function (typeval) {
-        var errs = [];
-        reviewTextValid(crev.revtype, errs);
+        readAndValidateFieldValues();
         crev.revtype = typeval;
         app.review.display();
     },
 
 
     removeImageLink: function () {
+        readAndValidateFieldValues();
         crev.imguri = "";
         crev.oldrevpic = crev.revpic;
         crev.revpic = "DELETED";
