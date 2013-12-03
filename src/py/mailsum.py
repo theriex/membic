@@ -97,9 +97,26 @@ def pen_stats():
     return stats_text(stat)
 
 
+def log_btw_params(src, request):
+    """ log the params at info level so they can be found in the log later """
+    logstr = ""
+    params = ["clickthrough", "referral", "statinqref"]
+    for param in params:
+        val = request.get(param);
+        if val:
+            if logstr:
+                 logstr += ", "
+            logstr += param + ": " + val
+    logging.info(src + " " + logstr)
+
+
 def unix_time(dt):
     se = dt - datetime.datetime.utcfromtimestamp(0)
     return int(round(se.total_seconds()))
+
+
+def isostr(seconds):
+    return (datetime.datetime.fromtimestamp(seconds)).isoformat()[:19]
 
 
 def is_known_bot(agentstr):
@@ -139,7 +156,7 @@ def bump_referral_count(refers, entryref):
 
 def log_stats(response):
     # calculate day window (identical logic as done by pen_stats)
-    dtnow = datetime.datetime.utcnow()
+    dtnow = datetime.datetime.now()
     dtend = datetime.datetime(dtnow.year, dtnow.month, dtnow.day)
     dtstart = dtend - datetime.timedelta(hours=24)
     isostart = dt2ISO(dtstart)
@@ -169,8 +186,12 @@ def log_stats(response):
     isbot = False
     # iterate through matching log entries and update the stats. Note that
     # only the application call logs are fetched, not resource requests.
-    for loge in logservice.fetch(start_time=unix_time(dtstart), 
-                                 end_time=unix_time(dtend),
+    # also the end_time parameter is bugged, cuts off early as of 3dec13.
+    response.out.write("start: " + str(dtstart) + "\n")
+    response.out.write("  end: " + str(dtend) + "\n")
+    startsec = unix_time(dtstart)
+    endsec = startsec + (24 * 60 * 60) - 1
+    for loge in logservice.fetch(start_time=startsec, end_time=endsec,
                                  minimum_log_level=logservice.LOG_LEVEL_INFO):
         stat.logttl += 1
         agent = loge.user_agent
@@ -179,10 +200,11 @@ def log_stats(response):
             isbot = is_known_bot(agent)
             if not isbot and not agent in agents:
                 agents.append(agent)
+        prefix = " "
         if isbot:
+            prefix = "x"
             stat.botttl += 1
         else:  # actual user request
-            response.out.write(loge.resource + "\n")
             #read /bytheway and /bytheimg log entries for refs
             if loge.resource.startswith("/bythe"):
                 if "statinqref" in loge.resource:
@@ -193,6 +215,8 @@ def log_stats(response):
                     bump_referral_count(refers, "craigslist")
                 elif "clickthrough" in loge.resource:
                     stat.clickthru += 1
+        tend = isostr(loge.end_time)
+        response.out.write(prefix + tend + " " + loge.resource + "\n")
     stat.agents = "~".join(agents)
     stat.refers = ",".join(refers)
     stat.put()
@@ -398,12 +422,14 @@ class UserActivity(webapp2.RequestHandler):
 
 class ByTheWay(webapp2.RequestHandler):
     def get(self):
+        log_btw_params("/bytheway", self.request)
         returnJSON(self.response, []);
 
 
 class ByTheImg(webapp2.RequestHandler):
     """ alternative approach when XMLHttpRequest is a hassle """
     def get(self):
+        log_btw_params("/bytheimg", self.request)
         # hex values for a 4x4 transparent PNG created with GIMP:
         imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
         img = images.Image(imgstr)
