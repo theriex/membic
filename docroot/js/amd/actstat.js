@@ -49,11 +49,11 @@ var actstat = (function () {
 
     makeInquirySeries = function () {
         var series = [  //see also mailsum.py bump_referral_count
-            {name: "clickthru", color: "grey", width: "2px", dashes: "2, 5"},
+            {name: "clickthru", color: "red", width: "2px", dashes: "2, 5"},
             {name: "facebook", color: "blue", width: "2px", dashes: "2, 2"},
             {name: "twitter", color: "green", width: "2px", dashes: "3, 3"},
-            {name: "googleplus", color: "yellow", width: "2px", dashes: "5, 5"},
-            {name: "craigslist", color: "purple", width: "2px", dashes: "4, 4"},
+            {name: "googleplus", color: "purple", width: "2px", dashes: "5, 5"},
+            {name: "craigslist", color: "yellow", width: "2px", dashes: "4, 4"},
             {name: "other", color: "tan", width: "2px", dashes: "1, 1"} ];
         return series;
     },
