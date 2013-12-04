@@ -3,7 +3,3 @@ cron:
   url: /mailsum
   schedule: every day 10:00
   timezone: America/New_York
-- description: log summaries
-  url: /logsum
-  schedule: every day 10:30
-  timezone: America/New_York

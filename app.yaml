@@ -292,8 +292,6 @@ handlers:
   script: src.py.rssact.app
 - url: /mailsum.*
   script: src.py.mailsum.app
-- url: /logsum.*
-  script: src.py.mailsum.app
 - url: /emuser.*
   script: src.py.mailsum.app
 - url: /activity.*

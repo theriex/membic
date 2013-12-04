@@ -22,12 +22,75 @@ class ActivityStat(db.Model):
     ttlrev = db.IntegerProperty()     # total reviews for the day
     names = db.TextProperty()         # ';' delimited pen names that logged in
     calculated = db.StringProperty()  # iso date when things were tallied up
-    logttl = db.IntegerProperty()     # total log requests for the day
-    botttl = db.IntegerProperty()     # total bot requests for the day
     refers = db.TextProperty()        # src1:3,src2:4...
     clickthru = db.IntegerProperty()  # num specific profile or review requests
     agents = db.TextProperty()        # '~' delimited accessing agents
 
+
+def get_activity_stat(sday):
+    stat = ActivityStat(day=sday)
+    stat.active = 0
+    stat.onerev = 0
+    stat.tworev = 0
+    stat.morev = 0
+    stat.ttlrev = 0
+    stat.names = ""
+    stat.calculated = ""
+    stat.refers = ""
+    stat.clickthru = 0
+    stat.agents = ""
+    try:
+        where = "WHERE day = :1"
+        stats = ActivityStat.gql(where, sday)
+        for existing_stat in stats:
+            stat = existing_stat
+    except Exception as e:
+        logging.info("Existing stat retrieval failed: " + str(e))
+    return stat
+
+
+def bump_referral_count(stat, bumpref):
+    bumped_existing = False
+    refers = stat.refers.split(",")
+    for idx, refer in enumerate(refers):
+        if bumpref in refer:
+            components = refer.split(":")
+            count = int(components[1]) + 1
+            refers[idx] = bumpref + ":" + str(count)
+            stat.refers = ",".join(refers)
+            bumped_existing = True
+            break
+    if not bumped_existing:
+        if stat.refers:
+            stat.refers += ","
+        stat.refers += bumpref + ":1"
+
+
+def btw_activity(src, request):
+    sday = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
+    stat = get_activity_stat(sday)
+    val = request.get("clickthrough")
+    if val:  #somebody clicked through from statrev to the main site
+        stat.clickthru += 1
+    val = request.get("referral")
+    if val:  #somebody clicked through on an ad
+        if "craigslist" in val:
+            bump_referral_count(stat, "craigslist")
+        else:
+            logging.warn("untracked referral: " + val)
+    val = request.get("statinqref")
+    if val:  #somebody clicked through to a statrev from an outside link
+        if "facebook" in val:
+            bump_referral_count(stat, "facebook")
+        elif "twitter" in val:
+            bump_referral_count(stat, "twitter")
+        elif "plus.google" in val:
+            bump_referral_count(stat, "googleplus")
+        elif "wdydfun" not in val:
+            logging.info("other referral: " + val)
+            bump_referral_count(stat, "other")
+    stat.put()
+            
 
 def split_output(response, text):
     logging.info("mailsum: " + text)
@@ -45,37 +108,17 @@ def stats_text(stat):
 
 
 def pen_stats():
-    # calculate day window
-    dtnow = datetime.datetime.utcnow()
-    isostart = dt2ISO(dtnow - datetime.timedelta(hours=24))
-    isostart = isostart[:10] + "T00:00:00Z"
-    isoend = dt2ISO(dtnow)
-    isoend = isoend[:10] + "T00:00:00Z"
-    # init a default stat instance
-    stat = ActivityStat(day=isostart)
-    stat.active = 0
-    stat.onerev = 0
-    stat.tworev = 0
-    stat.morev = 0
-    stat.ttlrev = 0
-    stat.names = ""
-    # use existing stat if already available
-    try:
-        where = "WHERE day = :1"
-        stats = ActivityStat.gql(where, isostart)
-        for existing_stat in stats:
-            stat = existing_stat
-        if stat.calculated:
-            return stats_text(stat)
-    except Exception as e:
-        logging.info("Existing stat retrieval failed: " + str(e))
-    # calculate values for new stat instance
-    stat.calculated = dt2ISO(dtnow)
+    yesterday = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+    isostart = dt2ISO(yesterday)[:10] + "T00:00:00Z"
+    isoend = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
+    stat = get_activity_stat(isostart)
+    if stat.calculated:  #already did all the work
+        return stats_text(stat)
     # do not restrict an upper bound for PenName retrieval, otherwise
     # anyone who has logged after midnight GMT will be excluded and
     # their login may never get counted if they log in again the next
-    # day.  If they do not login the next day, they may be double
-    # counted, but that's better than missed.
+    # day.  If they do login the next day, they may be double counted,
+    # but that's better than missed.
     where = "WHERE accessed >= :1"
     pens = PenName.gql(where, isostart)
     for pen in pens:
@@ -93,134 +136,9 @@ def pen_stats():
         if stat.names:
             stat.names += ";"
         stat.names += pen.name
+    stat.calculated = dt2ISO(datetime.datetime.utcnow())
     stat.put()
     return stats_text(stat)
-
-
-def log_btw_params(src, request):
-    """ log the params at info level so they can be found in the log later """
-    logstr = ""
-    params = ["clickthrough", "referral", "statinqref"]
-    for param in params:
-        val = request.get(param);
-        if val:
-            if logstr:
-                 logstr += ", "
-            logstr += param + ": " + val
-    logging.info(src + " " + logstr)
-
-
-def unix_time(dt):
-    se = dt - datetime.datetime.utcfromtimestamp(0)
-    return int(round(se.total_seconds()))
-
-
-def isostr(seconds):
-    return (datetime.datetime.fromtimestamp(seconds)).isoformat()[:19]
-
-
-def is_known_bot(agentstr):
-    bots = ["AhrefsBot", "Baiduspider", "ezooms.bot", 
-            "netvibes.com",  # not really a bot, but not a really a hit either
-            "AppEngine-Google"]
-    for botstr in bots:
-        if botstr in agentstr:
-            return True
-    return False
-
-
-def bump_counter(refer):
-    components = refer.split(":")
-    count = int(components[1]) + 1
-    return components[0] + ":" + str(count)
-
-
-def bump_referral_count(refers, entryref):
-    if not entryref:
-        return
-    if "wdydfun" in entryref:
-        return
-    refername = "other"
-    srchstrs = ["facebook", "twitter", "plus.google", "craigslist"]
-    namestrs = ["facebook", "twitter", "googleplus", "craigslist"]
-    for idx, srchstr in enumerate(srchstrs):
-        if srchstr in entryref:
-            refername = namestrs[idx]
-            break
-    for idx, refer in enumerate(refers):
-        if refer.startswith(refername):
-            refers[idx] = bump_counter(refer)
-            return
-    refers.append(refername + ":1")
-
-
-def log_stats(response):
-    # calculate day window (identical logic as done by pen_stats)
-    dtnow = datetime.datetime.now()
-    dtend = datetime.datetime(dtnow.year, dtnow.month, dtnow.day)
-    dtstart = dtend - datetime.timedelta(hours=24)
-    isostart = dt2ISO(dtstart)
-    isostart = isostart[:10] + "T00:00:00Z"
-    # retrieve existing stats instance already written by pen_stats
-    stat = None
-    try:
-        where = "WHERE day = :1"
-        stats = ActivityStat.gql(where, isostart)
-        for existing_stat in stats:
-            stat = existing_stat
-    except Exception as e:
-        logging.info("log_stats stat retrieval failed: " + str(e))
-        return
-    if not stat:
-        logging.info("No stat instance available")
-        return
-    # init the stat fields we are using
-    stat.logttl = 0
-    stat.botttl = 0
-    stat.refers = ""
-    stat.clickthru = 0
-    stat.agents = ""
-    agents = []
-    refers = []
-    prevagent = ""
-    isbot = False
-    # iterate through matching log entries and update the stats. Note that
-    # only the application call logs are fetched, not resource requests.
-    # also the end_time parameter is bugged, cuts off early as of 3dec13.
-    response.out.write("start: " + str(dtstart) + "\n")
-    response.out.write("  end: " + str(dtend) + "\n")
-    startsec = unix_time(dtstart)
-    endsec = startsec + (24 * 60 * 60) - 1
-    for loge in logservice.fetch(start_time=startsec, end_time=endsec,
-                                 minimum_log_level=logservice.LOG_LEVEL_INFO):
-        stat.logttl += 1
-        agent = loge.user_agent
-        if agent != prevagent:
-            prevagent = agent
-            isbot = is_known_bot(agent)
-            if not isbot and not agent in agents:
-                agents.append(agent)
-        prefix = " "
-        if isbot:
-            prefix = "x"
-            stat.botttl += 1
-        else:  # actual user request
-            #read /bytheway and /bytheimg log entries for refs
-            if loge.resource.startswith("/bythe"):
-                if "statinqref" in loge.resource:
-                    components = loge.resource.split("=")
-                    referrer = components[len(components) - 1]
-                    bump_referral_count(refers, referrer)
-                if "craigslist" in loge.resource:
-                    bump_referral_count(refers, "craigslist")
-                elif "clickthrough" in loge.resource:
-                    stat.clickthru += 1
-        tend = isostr(loge.end_time)
-        response.out.write(prefix + tend + " " + loge.resource + "\n")
-    stat.agents = "~".join(agents)
-    stat.refers = ",".join(refers)
-    stat.put()
-    return stat
 
 
 def eligible_pen(acc, thresh):
@@ -366,25 +284,6 @@ class MailSummaries(webapp2.RequestHandler):
                 body=summary)
 
 
-class LogSummaries(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        split_output(self.response, "---------- LogSummaries ----------")
-        stat = log_stats(self.response)
-        if not stat:
-            split_output(self.response, "LogSummaries stat retrieval failed.")
-            return
-        refstr = stat.refers or ""
-        agstr = stat.agents or ""
-        summary = "Log Summary:\n" +\
-            "            Total log lines: " + str(stat.logttl) + "\n" +\
-            "               Bot requests: " + str(stat.botttl) + "\n" +\
-            "Static review clickthroughs: " + str(stat.clickthru) + "\n" +\
-            "refers:\n" + refstr.replace(",", "\n") +\
-            "\n\nagents:\n" + agstr.replace("~", "\n")
-        split_output(self.response, summary)
-
-
 class SummaryForUser(webapp2.RequestHandler):
     def get(self):
         username = self.request.get('username')
@@ -422,14 +321,13 @@ class UserActivity(webapp2.RequestHandler):
 
 class ByTheWay(webapp2.RequestHandler):
     def get(self):
-        log_btw_params("/bytheway", self.request)
-        returnJSON(self.response, []);
+        btw_activity("/bytheway", self.request)
 
 
 class ByTheImg(webapp2.RequestHandler):
     """ alternative approach when XMLHttpRequest is a hassle """
     def get(self):
-        log_btw_params("/bytheimg", self.request)
+        btw_activity("/bytheimg", self.request)
         # hex values for a 4x4 transparent PNG created with GIMP:
         imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
         img = images.Image(imgstr)
@@ -440,7 +338,6 @@ class ByTheImg(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
-                               ('/logsum', LogSummaries),
                                ('/emuser', SummaryForUser),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
