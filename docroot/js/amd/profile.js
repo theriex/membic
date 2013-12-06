@@ -500,9 +500,9 @@ app.profile = (function () {
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
-            dispclass = "reviewbadgedis";
+            dispclass = "reviewbadge";
             if(typename === profpenref.profstate.revtype) {
-                dispclass = "reviewbadge"; }
+                dispclass = "reviewbadgedis"; }
             label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
