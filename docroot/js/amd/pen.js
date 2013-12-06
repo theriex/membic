@@ -141,6 +141,7 @@ app.pen = (function () {
                      penNameRefs.push(currpenref);
                      app.rel.resetStateVars("new");  //updates header display
                      setTimeout(promptForEmailIfNeeded, 200);
+                     setTimeout(app.hinter.showStartTip, 4000);
                      returnCall(); },
                  app.failf(function (code, errtxt) {
                      jt.out('penformstat', errtxt);

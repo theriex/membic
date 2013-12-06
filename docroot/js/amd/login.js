@@ -338,7 +338,8 @@ app.login = (function () {
                 critsec = "";
             jt.call('POST', "penacc?" + app.login.authparams(), data,
                     function () {
-                        jt.log("Pen access time updated"); },
+                        jt.log("Pen access time updated");
+                        app.hinter.showStartTip(); },
                     app.failf(),
                     critsec); }, 4000);
         if(params.command === "chgpwd") {

@@ -33,6 +33,7 @@ app.profile = (function () {
 
     var greytxt = "#999999",
         unspecifiedCityText = "City not specified",
+        profeditfield = "",
         profpenref,
         authtypes = { mid: "wdydfun",
                       gsid: "Google+",
@@ -808,8 +809,7 @@ app.profile = (function () {
         var html, shout, text;
         text = "No additional information about " + pen.name;
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            text = "About me (anything you would like to say to everyone)." + 
-                " Link to your twitter handle, blog or site if you want."; }
+            text = "Anything you would like to say to everyone. Link to your site, favorite quote, shoutouts, interests..."; }
         text = ["span", {style: "color:" + greytxt + ";"}, text];
         text = jt.tac2html(text);
         html = ["div", {id: "shoutdiv", cla: "shoutout"}];
@@ -982,6 +982,8 @@ app.profile = (function () {
         app.layout.adjust();
         if(errmsg) {
             jt.err("Previous processing failed: " + errmsg); }
+        if(profeditfield === "city") {
+            app.profile.editCity(); }
     };
 
 
@@ -1046,6 +1048,7 @@ return {
 
 
     save: function () {
+        profeditfield = "";
         app.pen.getPen(saveEditedProfile);
     },
 
@@ -1251,7 +1254,7 @@ return {
         if(val === unspecifiedCityText) {
             val = ""; }
         html = ["input", {type: "text", id: "profcityin", size: 25,
-                          placeholder: "City or Region", value: val,
+                          placeholder: "City, township, or region", value: val,
                           onchange: jt.fs("app.profile.saveIfNotShoutEdit()")}];
         jt.out('profcityspan', jt.tac2html(html));
         displayProfEditButtons();
@@ -1358,7 +1361,13 @@ return {
     },
 
 
+    setEditField: function (fieldname) {
+        profeditfield = fieldname;
+    },
+
+
     cancelProfileEdit: function () {
+        profeditfield = "";
         app.profile.updateHeading();
         app.profile.display();
     },

@@ -126,7 +126,9 @@ img { border:0px; }
 
 /* >> intro layout */
 #bookslidediv { text-align:center; }
-#bookmarkletlinkdiv { padding:5px 20px; }
+.bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
+.bookmarkletdescr { font-size:small; text-align:right; 
+  padding:0px 0px 0px 40px;}
 #logindiv { margin:auto; }
 #loginform { margin:auto; }
 #loginformtable { margin:auto; }
@@ -236,6 +238,12 @@ img { border:0px; }
 
 /* >> settings dialog */
 #accset { font-size:small; }
+
+/* >> tips dialog */
+.dismissradiodiv { padding:10px 5px 20px 5px; font-size:small; }
+.rightclick { font-size:large; font-style:italic; color: #333; }
+.tipsbuttondiv { padding:0px 0px 20px 0px; font-size:large; font-weight:bold; 
+ text-align:center;}
 
 /* >> general classes */
 .greytxt { color:#999999; }
