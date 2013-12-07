@@ -157,7 +157,7 @@ app.facebook = (function () {
         case 'music': return "I listened to...";
         case 'food': return "I ate...";
         case 'drink': return "I drank...";
-        case 'activity': return "I did...";
+        case 'activity': return "I checked out...";
         default: return "I ..."; }
     },
 
