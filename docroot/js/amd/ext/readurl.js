@@ -275,6 +275,7 @@ return {
                  app.failf(function (code, errtxt) {
                      jt.err("General URL retrieval failed code " + 
                              code + ": " + errtxt);
+                     app.review.resetAutoURL();
                      app.review.display(); }),
                  critsec);
     }

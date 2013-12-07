@@ -2017,6 +2017,20 @@ return {
         crev.rating = rating;
         html = starsImageHTML(crev.rating, true);
         jt.out('stardisp', html);
+    },
+
+
+    //If the user manually entered a bad URL, then the reader will
+    //fail and it is better to clear out the badly pasted value than
+    //to continue with it as if it was good.  Arguably the correct
+    //thing would be to provide the bad URL for them to edit, but I'm
+    //guessing numerous users will not know how to edit a URL and just
+    //get stuck in a loop entering the same busted value.  Clearing it
+    //out makes them cut and paste it again which is the best hope of
+    //getting a reasonable value.  If they are using the bookmarklet
+    //then this never happens, so good enough.
+    resetAutoURL: function () {
+        autourl = "";
     }
 
 
