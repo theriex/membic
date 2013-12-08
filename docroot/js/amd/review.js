@@ -730,7 +730,12 @@ app.review = (function () {
         var row = "", secondary = "";
         if(keyval) {  //primary identifiers entered so URL in upper right
             secondary = [["img", {cla: "webjump", src: "img/gotolink.png"}],
-                         "URL"]; }
+                         "URL",
+                         "&nbsp;&nbsp;&nbsp;&nbsp;",
+                         ["a", {href: "#ezlink", cla: "permalink",
+                                onclick: jt.fs("app.hinter.ezlink()"),
+                                title: "Write a review from any site"},
+                          "ezlink"]]; }
         else if(type.subkey) {  //secondary field entry if there is one
             secondary = type.subkey.capitalize(); }
         if(mode === "edit") {

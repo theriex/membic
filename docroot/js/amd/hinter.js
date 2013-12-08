@@ -74,10 +74,11 @@ app.hinter = (function () {
     },
 
 
-    ezlink = function () {
+    ezlink = function (interactive) {
         var html, cboxhtml = "", nothanks;
         nothanks = "I already have the extremely handy bookmark link.  Don't display this message ever again.";
-        cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
+        if(!interactive) {
+            cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks); }
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.layout.closeDialog()")},
@@ -310,6 +311,11 @@ return {
         app.hinter.tipok('fillcity');
         app.profile.setEditField("city");
         app.profile.display();
+    },
+
+
+    ezlink: function () {
+        ezlink(true);
     }
 
 
