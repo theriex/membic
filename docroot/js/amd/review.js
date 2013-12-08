@@ -421,7 +421,7 @@ app.review = (function () {
             return html; }
         if(mode === "edit" && type.subkey) {
             field = type.subkey;
-            fval = review[type.subkey] || "";
+            fval = jt.ndq(review[type.subkey]);
             rows.push(["tr",
                        [["td", {id: "subkeyinlabeltd"},
                          ["span", {cla: "secondaryfield"},
@@ -431,7 +431,7 @@ app.review = (function () {
                                     size: fsize, value: fval}]]]]); }
         for(i = 0; i < type.fields.length; i += 1) {
             field = type.fields[i];
-            fval = review[field] || "";
+            fval = jt.ndq(review[field]);
             if(field !== "url") {
                 if(fval || mode === "edit") {
                     valtd = ["td", fval];
@@ -760,24 +760,24 @@ app.review = (function () {
             cells.push(["td",
                         ["input", {type: "text", id: "keyin", size: 30,
                                    onchange: jt.fs(keyinchg),
-                                   value: review[type.key] || ""}]]);
+                                   value: jt.ndq(review[type.key])}]]);
             if(keyval) {  //key fields have been specified, so show url
                 cells.push(["td",
                             ["input", {type: "text", id: "urlin", size: 30,
-                                       value: review.url || ""}]]); }
+                                       value: jt.ndq(review.url)}]]); }
             else if(type.subkey) {  //show subkey input if revtype has subkey
                 cells.push(["td", {id: "subkeyinlabeltd"},
                             ["input", {type: "text", id: "subkeyin", size: 30,
                                        onchange: jt.fs("app.review.validate()"),
-                                       value: review[type.subkey] || ""}]]); } }
+                                     value: jt.ndq(review[type.subkey])}]]); } }
         else {  //not editing, read only display
             cells.push(["td",
                         ["span", {cla: "revtitle"},
-                         review[type.key] || ""]]);
+                         jt.ndq(review[type.key])]]);
             if(type.subkey) {
                 cells.push(["td",
                             ["span", {cla: "revauthor"},
-                             review[type.subkey] || ""]]); }
+                             jt.ndq(review[type.subkey])]]); }
             if("url" !== type.key && "url" !== type.subkey) {
                 cells.push(["td",
                             app.review.jumpLinkHTML(review.url || "")]); } }
@@ -1349,7 +1349,8 @@ app.review = (function () {
                     reviewFormButtonsHTML(pen, review, type, keyval, mode)]]]]];
         if(!jt.byId('cmain')) {
             app.layout.initContent(); }
-        jt.out('cmain', jt.tac2html(html));
+        html = jt.tac2html(html);
+        jt.out('cmain', html);
         if(mode === "edit") {
             jt.on('starstd', 'mousedown',   starPointing);
             jt.on('starstd', 'mouseup',     starStopPointing);
