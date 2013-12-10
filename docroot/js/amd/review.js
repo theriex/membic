@@ -267,6 +267,24 @@ app.review = (function () {
     },
 
 
+    okToLoseChanges =  function () {
+        var prev, revid, mustconfirm, cmsg;
+        revid = jt.instId(crev);
+        reviewTextValid();  //read current review input value
+        if(crev.text && crev.text.length > 60) {
+            if(!revid) {
+                mustconfirm = true; }
+            else {
+                prev = app.lcs.getRevRef(crev).rev;
+                if(crev.text.length - prev.text.length > 60) {
+                    mustconfirm = true; } } }
+        if(!mustconfirm) {
+            return true; }
+        cmsg = "You've added some review text. OK to throw it away?";
+        return window.confirm(cmsg);
+    },
+
+
     displayTypeSelect = function () {
         var i, captype, ts = [], urlh, html;
         for(i = 0; i < reviewTypes.length; i += 1) {
@@ -1706,6 +1724,8 @@ return {
 
 
     cancelReview: function (force) {
+        if(!okToLoseChanges()) {
+            return; }
         app.onescapefunc = null; 
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
