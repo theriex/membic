@@ -809,7 +809,7 @@ app.profile = (function () {
         var html, shout, text;
         text = "No additional information about " + pen.name;
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            text = "Anything you would like to say to everyone. Link to your site, favorite quote, shoutouts, interests..."; }
+            text = "Anything you would like to say to everyone (link to your site, twitter handle, favorite quote, shoutouts, interests...)"; }
         text = ["span", {style: "color:" + greytxt + ";"}, text];
         text = jt.tac2html(text);
         html = ["div", {id: "shoutdiv", cla: "shoutout"}];
@@ -954,6 +954,8 @@ app.profile = (function () {
         if(!dispen) {
             dispen = homepen; }
         app.profile.verifyStateVariableValues(dispen);  //sets profpenref
+        if(action === "penfinder") {
+            profpenref.profstate.seltabname = "following"; }
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: profpenref.profstate.seltabname });
@@ -984,6 +986,8 @@ app.profile = (function () {
             jt.err("Previous processing failed: " + errmsg); }
         if(profeditfield === "city") {
             app.profile.editCity(); }
+        else if(action === "penfinder") {
+            app.activity.penNameSearchDialog(); }
     };
 
 

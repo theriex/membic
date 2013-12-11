@@ -377,10 +377,22 @@ app.rel = (function () {
     },
 
 
+    //Even though the server calls are protected from re-entrancy, it
+    //is still possible to end up with two work processes both loading
+    //outbound relationships. For example the async load of outbound
+    //relationships that kicks off on app init, and a second sync load
+    //of the same thing trying to display the profile "following" tab.
+    //So this needs to protect against appending duplicates.
     appendOutboundRel = function (relref) {
-        var penref = app.pen.currPenRef();
+        var i, penref = app.pen.currPenRef();
         if(!penref.outrels) {
             penref.outrels = []; }
+        for(i = 0; i < penref.outrels.length; i += 1) {
+            if(penref.outrels[i].relid === relref.relid) {
+                return; }    //already there, don't duplicate
+            if(penref.outrels[i].rel && 
+               penref.outrels[i].rel.relatedid === relref.rel.relatedid) {
+                return; } }  //already there, don't duplicate
         penref.outrels.push(relref);
     },
 

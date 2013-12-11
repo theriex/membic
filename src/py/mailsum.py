@@ -183,8 +183,9 @@ def write_summary_email_body(pen, reviews, tstr, prs):
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
             " posted any reviews since " + tstr + ". Please do what you" +\
-            " can to help them experience more of life. In the meantime" +\
-            " you might want to follow a few more people."
+            " can to help them experience more of life. In the meantime," +\
+            " this link will find you some interesting people to follow:\n" +\
+            "\n    http://www.wdydfun.com/?command=penfinder\n\n"
         return body
     body += "Since " + tstr + ", friends you are following have posted " +\
         str(len(reviews)) + " " +\
@@ -198,7 +199,7 @@ def write_summary_email_body(pen, reviews, tstr, prs):
                 ["activity", "Activities"], 
                 ["other",    "Other"]]
     for revtype in revtypes:
-        tline = "      -------------- " + revtype[1] + "---------------\n\n"
+        tline = "\n      ------------( " + revtype[1] + " )------------\n\n"
         wroteHeaderLine = False
         for review in reviews:
             if review.revtype == revtype[0]:
@@ -235,21 +236,20 @@ def mail_summaries(freq, thresh, request, response):
             if len(relids) > 0:
                 logmsg += ", following: " + str(len(relids))
                 checked, reviews = review_activity_search(thresh, "", relids)
-                if len(reviews) > 0 or "sumifnoact" in acc.summaryflags:
-                    logmsg += ", reviews: " + str(len(reviews))
-                    checked, prs = review_activity_search(
-                        thresh, "", [ str(pen.key().id()) ])
-                    logmsg += ", reviewed: " + str(len(prs))
-                    content = write_summary_email_body(pen, reviews, tstr, prs)
-                    content += "\nTo change email settings for your account" +\
-                        " go to http://www.wdydfun.com \n\n"
-                    if not request.url.startswith('http://localhost'):
-                        mail.send_mail(
-                            sender="wdydfun support <theriex@gmail.com>",
-                            to=acc.email,
-                            subject=subj,
-                            body=content)
-                        logmsg += ", mail sent"
+                logmsg += ", reviews: " + str(len(reviews))
+                checked, prs = review_activity_search(
+                    thresh, "", [ str(pen.key().id()) ])
+                logmsg += ", reviewed: " + str(len(prs))
+                content = write_summary_email_body(pen, reviews, tstr, prs)
+                content += "\nTo change email settings for your account" +\
+                    " go to http://www.wdydfun.com \n\n"
+                if not request.url.startswith('http://localhost'):
+                    mail.send_mail(
+                        sender="wdydfun support <theriex@gmail.com>",
+                        to=acc.email,
+                        subject=subj,
+                        body=content)
+                    logmsg += ", mail sent"
         acc.lastsummary = nowISO()
         acc.put()
         split_output(response, logmsg)

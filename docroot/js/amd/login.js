@@ -357,6 +357,8 @@ app.login = (function () {
                 app.profile.verifyStateVariableValues(penref.pen);
                 app.review.initWithId(params.revid, "read", 
                                       params.command); }); }
+        else if(params.command === "penfinder") {
+            app.profile.display("penfinder"); }
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
         else if(params.special === "nativeonly") {
@@ -559,12 +561,6 @@ return {
                          jt.checkbox("summaryflags", "sumiflogin",
                                      "Send summary even if site visited",
                                      hasflag(account, 'sumiflogin'))]]]);
-            rows.push(["tr",
-                       [["td"],
-                        ["td", {colspan: 2},
-                         jt.checkbox("summaryflags", "sumifnoact",
-                                 "Send summary even if no reviews from friends",
-                                     hasflag(account, 'sumifnoact'))]]]);
             rows.push(["tr",
                        ["td", {colspan: 2, align: "center", cla: "actbuttons"},
                         [["button", {type: "button", id: "cancelbutton",
