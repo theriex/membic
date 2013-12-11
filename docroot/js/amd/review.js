@@ -366,7 +366,7 @@ app.review = (function () {
                        ["img", {cla: "revimg" + imgstyle,
                                 src: review.imguri}]]); }
         else {  //no auto-generated link image, allow personal pic upload
-            imgattr.src = ""; //no pic when just viewing
+            imgattr.src = "img/blank.png"; 
             if(mode === "edit") {  //for editing, default is outline pic
                 imgattr.src = "img/emptyprofpic.png"; }
             if(haveRevpic(review)) {  //use uploaded pic if available
@@ -816,18 +816,36 @@ app.review = (function () {
     },
 
 
+    hex2rgb = function (hex) {
+        var r, g, b;
+        if(hex.indexOf("#") === 0) {
+            hex = hex.slice(1); }
+        r = hex.slice(0, 2);
+        g = hex.slice(2, 4);
+        b = hex.slice(4, 6);
+        r = parseInt(r, 16);
+        g = parseInt(g, 16);
+        b = parseInt(b, 16);
+        return String(r) + "," + g + "," + b;
+    },
+
+
     //This should have a similar look and feel to the shoutout display
     revFormTextRow = function (review, type, keyval, mode) {
-        var area, style, placetext;
+        var area, style, placetext, lightbg;
         if(keyval) {  //have the basics so display text area
+            lightbg = app.skinner.lightbg();
             style = "color:" + app.colors.text + ";" +
-                    "background-color:" + app.skinner.lightbg() + ";" +
                     "width:" + textTargetWidth() + "px;" +
-                    "height:100px;padding:2px 5px;";
+                    "padding:5px 8px;" +
+                    "background-color:" + lightbg + ";";
             if(mode === "edit") {
                 placetext = ">>What was most noteworthy about this?";
                 //margin:auto does not work for a textarea
                 style += "margin-left:50px;";   //displayReviewForm 100/2
+                style += "height:100px;";
+                //make background-color semi-transparent if browser supports it
+                style += "background-color:rgba(" + hex2rgb(lightbg) + ",0.6);";
                 area = ["textarea", {id: "reviewtext", cla: "shoutout",
                                      placeholder: placetext,
                                      style: style},
@@ -835,6 +853,8 @@ app.review = (function () {
             else {
                 style += "border:1px solid " + app.skinner.darkbg() + ";" +
                     "overflow:auto; margin:auto;";
+                //make background-color semi-transparent if browser supports it
+                style += "background-color:rgba(" + hex2rgb(lightbg) + ",0.3);";
                 area = ["div", {id: "reviewtext", cla: "shoutout",
                                 style: style},
                         jt.linkify(review.text || "")]; } }

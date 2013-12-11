@@ -157,7 +157,7 @@ img { border:0px; }
 .shoutout, .shoutoutstatic { text-align:left;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
-.shoutout { width:200px; height:50px; }
+.shoutout { width:200px; min-height:100px; }
 .shoutoutstatic { width:600px; padding:10px; }
 #proftabsdiv ul { list-style:none; padding:0; margin:0; }
 #proftabsdiv ul li { display:inline; 
