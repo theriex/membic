@@ -743,6 +743,14 @@ app.review = (function () {
     },
 
 
+    ezlink = function () {
+        return ["a", {href: "#ezlink", cla: "permalink",
+                      onclick: jt.fs("app.hinter.ezlink()"),
+                      title: "Write a review from any site"},
+                "ezlink"];
+    },
+
+
     //labels for first line of the form (if editing)
     revFormEditHeadingRow = function (review, type, keyval, mode) {
         var row = "", secondary = "";
@@ -750,10 +758,8 @@ app.review = (function () {
             secondary = [["img", {cla: "webjump", src: "img/gotolink.png"}],
                          "URL",
                          "&nbsp;&nbsp;&nbsp;&nbsp;",
-                         ["a", {href: "#ezlink", cla: "permalink",
-                                onclick: jt.fs("app.hinter.ezlink()"),
-                                title: "Write a review from any site"},
-                          "ezlink"]]; }
+                         ["span", {id: "ezlinkspan"},
+                          ezlink()]]; }
         else if(type.subkey) {  //secondary field entry if there is one
             secondary = type.subkey.capitalize(); }
         if(mode === "edit") {
@@ -787,6 +793,7 @@ app.review = (function () {
             if(keyval) {  //key fields have been specified, so show url
                 cells.push(["td",
                             ["input", {type: "text", id: "urlin", size: 30,
+                                       onchange: jt.fs("app.review.urlchg()"),
                                        value: jt.ndq(review.url)}]]); }
             else if(type.subkey) {  //show subkey input if revtype has subkey
                 cells.push(["td", {id: "subkeyinlabeltd"},
@@ -1369,7 +1376,7 @@ app.review = (function () {
             keyval = review[type.key],
             twidth = textTargetWidth() + 100,
             attribrow = "", html,
-            transrow = transformActionsHTML(review, type, keyval, mode) || "";
+            transrow = transformActionsHTML(review, type, keyval, mode);
         if(mode === "edit" && attribution) {
             attribrow = ["tr",
                          ["td", {colspan: 4},
@@ -1656,6 +1663,9 @@ return {
         if(rbc) {
             rbc.innerHTML = "reading..."; }
         if(url) {
+            url = url.trim();
+            if(url.toLowerCase().indexOf("http") !== 0) {
+                url = "http://" + url; }
             crev.url = autourl = url;
             readParameters(params);
             getURLReader(autourl, function (reader) {
@@ -1762,6 +1772,19 @@ return {
         else {
             crev = app.lcs.getRevRef(crev).rev;
             app.review.displayRead(); }
+    },
+
+
+    urlchg: function () {
+        var html;
+        noteURLValue();
+        if(!crev.url) {
+            html = ezlink(); }
+        else {
+            html = ["a", {href: "#", title: "Read review details from URL",
+                          onclick: jt.fs("app.review.readURL()")},
+                    "Read URL"]; }
+        jt.out('ezlinkspan', jt.tac2html(html));
     },
 
 

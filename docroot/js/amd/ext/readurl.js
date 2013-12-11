@@ -273,7 +273,7 @@ return {
                      setReviewFields(review, jt.dec(json[0].content), url);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     jt.err("General URL retrieval failed code " + 
+                     jt.err("Could not read URL. Code " + 
                              code + ": " + errtxt);
                      app.review.resetAutoURL();
                      app.review.display(); }),
