@@ -82,7 +82,7 @@ def btw_activity(src, request):
     if val:  #somebody clicked through to a statrev from an outside link
         if "facebook" in val:
             bump_referral_count(stat, "facebook")
-        elif "twitter" in val:
+        elif "twitter" in val or "/t.co/" in val:
             bump_referral_count(stat, "twitter")
         elif "plus.google" in val:
             bump_referral_count(stat, "googleplus")
