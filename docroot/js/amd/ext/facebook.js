@@ -174,11 +174,28 @@ app.facebook = (function () {
     },
 
 
+    //For some links, the content is immediately available on the net,
+    //the review text tends to be short enough to fit in the included
+    //text, and the picture is there from the url. In these cases
+    //linking to the static review page has no real utility and is
+    //kind of annoying.  So link through to the content directly.
+    useDirectLinkToContent = function (review) {
+        if(review.url) {
+            if(review.revtype === 'video' ||
+               review.revtype === 'music' ||
+               review.revtype === 'other') {
+                return true; } }
+        return false;
+    },
+
+
     postReview4 = function (review) {
         var fbimage, fblinkurl, fblinktext, fbtitle, fbtext, 
             fbremurl, fbmessage, fbprompt;
         fbimage = getFacebookReviewImage(review);
         fblinkurl = app.services.getRevPermalink(review);
+        if(useDirectLinkToContent(review)) {
+            fblinkurl = review.url; }
         fblinktext = "wdydfun this week? " + revaction(review.revtype);
         fbtitle = app.services.getRevStarsTxt(review, "unicode") + " " +
             app.services.getRevTitleTxt(review);
