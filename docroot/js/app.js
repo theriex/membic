@@ -269,4 +269,18 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    jt.hex2rgb = function (hex) {
+        var r, g, b;
+        if(hex.indexOf("#") === 0) {
+            hex = hex.slice(1); }
+        r = hex.slice(0, 2);
+        g = hex.slice(2, 4);
+        b = hex.slice(4, 6);
+        r = parseInt(r, 16);
+        g = parseInt(g, 16);
+        b = parseInt(b, 16);
+        return String(r) + "," + g + "," + b;
+    };
+
+
 } () );

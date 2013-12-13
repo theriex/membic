@@ -784,6 +784,7 @@ app.profile = (function () {
         target = Math.max((app.winw - 350), 200);
         target = Math.min(target, 600);
         shout.style.width = target + "px";
+        shout.style.padding = "5px 8px";
         //modify profcontdiv so it balances the text area size.  This is
         //needed so IE8 doesn't widen profpictd unnecessarily.
         target += jt.byId('profpictd').offsetWidth;
@@ -798,6 +799,9 @@ app.profile = (function () {
         jt.out('profshouttd', jt.tac2html(html));
         shout = jt.byId('shouttxt');
         styleShout(shout);
+        if(!jt.isLowFuncBrowser()) {
+            shout.style.backgroundColor = "rgba(" + 
+                jt.hex2rgb(app.skinner.lightbg()) + ",0.6)"; }
         shout.readOnly = false;
         shout.value = pen.shoutout;
         shout.focus();
@@ -817,6 +821,9 @@ app.profile = (function () {
         shout = jt.byId('shoutdiv');
         styleShout(shout);
         shout.style.overflow = "auto";
+        if(!jt.isLowFuncBrowser()) {
+            shout.style.backgroundColor = "rgba(" + 
+                jt.hex2rgb(app.skinner.lightbg()) + ",0.3)"; }
         //the textarea has a default border, so adding an invisible
         //border here to keep things from jumping around.
         shout.style.border = "1px solid " + app.colors.bodybg;
