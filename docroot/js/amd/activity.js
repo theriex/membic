@@ -711,7 +711,7 @@ return {
                     jt.imgntxt("friendact.png", "",
                                "app.activity.displayActive()",
                                "#Activity",
-                               "See what's been posted recently")];
+                               "Show reviews from friends")];
         html = jt.tac2html(html);
         return html;
     },
