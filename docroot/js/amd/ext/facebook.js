@@ -174,26 +174,24 @@ app.facebook = (function () {
     },
 
 
-    //For some links, the content is immediately available on the net,
-    //the review text tends to be short enough to fit in the included
-    //text, and the picture is there from the url. In these cases
-    //linking to the static review page has no real utility and is
-    //kind of annoying.  So link through to the content directly.
+    //People on facebook expect to go directly through to the video or
+    //whatever that is being posted.  Making them do an extra click
+    //off the statrev page eliminates wdydfun as a viable option for
+    //sharing the way facebook users are accustomed to.  If there is a
+    //URL to click through to, then use that as the main link
+    //regardless of the review type.
     useDirectLinkToContent = function (review) {
         if(review.url) {
-            if(review.revtype === 'video' ||
-               review.revtype === 'music' ||
-               review.revtype === 'other') {
-                return true; } }
+            return true; }
         return false;
     },
 
 
     postReview4 = function (review) {
         var fbimage, fblinkurl, fblinktext, fbtitle, fbtext, 
-            fbremurl, fbmessage, fbprompt;
+            fbacturl, fbmessage, fbprompt;
         fbimage = getFacebookReviewImage(review);
-        fblinkurl = app.services.getRevPermalink(review);
+        fbacturl = fblinkurl = app.services.getRevPermalink(review);
         if(useDirectLinkToContent(review)) {
             fblinkurl = review.url; }
         fblinktext = "wdydfun this week? " + revaction(review.revtype);
@@ -202,8 +200,6 @@ app.facebook = (function () {
         fbtext = review.text;
         if(review.keywords) {
             fbtext += " [" + review.keywords + "]"; }
-        fbremurl = "http://www.wdydfun.com/#command=remember&penid=" + 
-            review.penid + "&revid=" + jt.instId(review);
         fbmessage = "wdydfun " + review.revtype + " review";
         fbprompt = "Check this out if...";
         FB.ui({ method: 'feed',  //use the feed dialog...
@@ -213,7 +209,7 @@ app.facebook = (function () {
                 description: fbtext,
                 link: fblinkurl,
                 picture: fbimage,
-                actions: [ { name: 'Remember', link: fbremurl } ],
+                actions: [ { name: 'See My Review', link: fbacturl } ],
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {
