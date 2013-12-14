@@ -282,17 +282,31 @@ app.activity = (function () {
     },
 
 
+    isLameTopRev = function (revrefs, revref) {
+        var lame = false, i;
+        //the review may not be cached yet, but if it is, then check
+        //to see if it should be included in the results.
+        if(revref.rev) { 
+            if(!revref.rev.rating || revref.rev.rating < 69) {
+                lame = true; }  //mediocre ratings not useful here
+            for(i = 0; i < revrefs.length; i += 1) {
+                if(revref.rev.cankey === revrefs[i].rev.cankey) {
+                    lame = true;  //dupes not valid
+                    break; } } }
+        return lame;
+    },
+
+
     findUniqueRev = function (revrefs, revids) {
-        var revref, i, j;
+        var revref, i;
         for(i = 0; !revref && i < revids.length; i += 1) {
             revref = app.lcs.getRevRef(revids[i]);
-            if(revref.status !== "ok" && revref.status !== "not cached") { 
+            if(!revref) {  //might be null if deleted...
+                revref = null; }
+            else if(revref.status !== "ok" && revref.status !== "not cached") { 
                 revref = null; }  //bad ids not valid for consideration
-            else if(revref.rev) { 
-                for(j = 0; j < revrefs.length; j += 1) {
-                    if(revref.rev.cankey === revrefs[j].rev.cankey) {
-                        revref = null;  //dupes not valid
-                        break; } } } }
+            else if(revref.rev && isLameTopRev(revrefs, revref)) {
+                revref = null; } }
         return revref;
     },
 
@@ -317,6 +331,15 @@ app.activity = (function () {
                 if(revref) {
                     break; } } }
         return revref;
+    },
+
+
+    verifyPenNameStrFromCached = function (revref) {
+        var penref;
+        if(revref.rev && !revref.rev.penNameStr) {
+            penref = app.lcs.getPenRef(revref.rev.penid);
+            if(penref.pen) {  //should already be cached
+                revref.rev.penNameStr = penref.pen.name; } }
     },
 
 
@@ -361,10 +384,11 @@ app.activity = (function () {
                 html = jt.tac2html(html);
                 jt.out('revactdiv', html);
                 return app.lcs.getRevFull(revref.revid, displayTopReviews); }
-            if(revref.rev) {
+            if(revref.rev && !isLameTopRev(revs, revref)) {
+                verifyPenNameStrFromCached(revref);
                 revs.push(revref);
                 revitems.push(["li", app.profile.reviewItemHTML(revref.rev, 
-                                                   revref.penNameStr)]); } }
+                                                   revref.rev.penNameStr)]); } }
         if(revs.length === 0) {
             revitems.push(["li", "No " + topActivityType + " reviews found"]); }
         html = ["ul", {cla: "revlist"}, revitems];
@@ -758,6 +782,7 @@ return {
 
 
     toptype: function (typestr) {
+        activityMode = "amtop";
         topActivityType = typestr;
         mainDisplay("activity");
     },
