@@ -28,6 +28,7 @@ app.activity = (function () {
 
     var pensearchmax = 1000,  //max records to read through automatically
         activityMode = "amnew",  //other option is "amtop"
+        topModeEnabled = false,   //need to finish loading basics first
         topActivityType = "",  //book or whatever review type is selected
         topDispMax = 20,  //max top reviews to display
 
@@ -37,12 +38,15 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     topTypeSelectorHTML = function () {
-        var reviewTypes, divc = [], i, typename, title, html;
+        var reviewTypes, divc = [], i, typename, title, dispclass, html;
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             title = typename.capitalize() + " reviews";
-            divc.push(["img", {cla: "reviewbadge",
+            dispclass = "reviewbadge";
+            if(typename === topActivityType) {
+                dispclass = "reviewbadgedis"; }
+            divc.push(["img", {cla: dispclass,
                                src: "img/" + reviewTypes[i].img,
                                title: title, alt: title,
                                onclick: jt.fs("app.activity.toptype('" + 
@@ -54,31 +58,39 @@ app.activity = (function () {
 
 
     writeNavDisplay = function (dispmode) {
-        var html, url;
+        var html, recent, top, url, rsslink;
         if(dispmode === "activity") {
             if(activityMode === "amnew") {
-                url = "rssact?pen=" + app.pen.currPenId();
-                html = ["New reviews from friends ",
-                        ["a", {href: url,
-                               title: "RSS feed for recent friend reviews",
-                               onclick: jt.fs("window.open('" + url + "')")},
-                         ["img", {cla: "rssico", src: "img/rssicon.png"}]],
-                        ["button", {type: "button", id: "switchmodebutton",
-                                    onclick: jt.fs("app.activity.switchmode" +
-                                                   "('amtop')"),
-                                    title: "Show top rated reviews from" + 
-                                          " friends"},
-                         "Show Top"]];
-                html = jt.tac2html(html); }
-            else if(activityMode === "amtop") {
-                html = ["Top reviews from friends ",
-                        ["button", {type: "button", id: "switchmodebutton",
-                                    onclick: jt.fs("app.activity.switchmode" +
-                                                   "('amnew')"),
-                                    title: "Show recent reviews from" +
-                                          " friends"},
-                         "Show Recent"]];
-                html = jt.tac2html(html) + topTypeSelectorHTML(); } }
+                recent = ["span", {cla: "actmodesel"},
+                          "Recent"];
+                if(topModeEnabled) {
+                    top = ["a", {href: "#", title: "Show top reviews",
+                                 onclick: jt.fs("app.activity.switchmode" +
+                                                "('amtop')")},
+                           "Top"]; }
+                else {
+                    top = ["span", {cla: "actmodeseldis"},
+                           "Top"]; } }
+            else { //activityMode === "amtop"
+                recent = ["a", {href: "#", title: "Show recent reviews",
+                                onclick: jt.fs("app.activity.switchmode" + 
+                                               "('amnew')")},
+                          "Recent"];
+                top = ["span", {cla: "actmodesel"},
+                       "Top"]; }
+            url = "rssact?pen=" + app.pen.currPenId();
+            rsslink = ["a", {href: url, id: "rsslink",
+                             title: "RSS feed for recent friend reviews",
+                             onclick: jt.fs("window.open('" + url + "')")},
+                       ["img", {cla: "rssico", src: "img/rssicon.png"}]];
+            html = ["table",
+                    ["tr",
+                     [["td", recent],
+                      ["td", rsslink],
+                      ["td", "|"],
+                      ["td", top],
+                      ["td", topTypeSelectorHTML()]]]];
+            html = jt.tac2html(html); }
         else if(dispmode === "memo") {
             html = "Remembered reviews"; }
         jt.out('centerhdiv', html);
@@ -358,6 +370,7 @@ app.activity = (function () {
         html = ["ul", {cla: "revlist"}, revitems];
         html = jt.tac2html(html);
         jt.out('revactdiv', html);
+        writeNavDisplay("activity");  //reflect the selected type
     },
 
 
@@ -448,8 +461,8 @@ app.activity = (function () {
 
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
-        if(jt.byId('switchmodebutton')) {
-            jt.byId('switchmodebutton').disabled = false; }
+        topModeEnabled = true;
+        writeNavDisplay("activity");
         actdisp = app.pen.currPenRef().actdisp;
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {
@@ -556,8 +569,8 @@ app.activity = (function () {
 
     bootActivityDisplay = function () {
         var penids;
+        topModeEnabled = false;
         writeNavDisplay("activity");
-        jt.byId('switchmodebutton').disabled = true;
         penids = app.rel.outboundids();
         if(penids.length === 0) {
             jt.out('revactdiv', followMoreHTML(penids));
