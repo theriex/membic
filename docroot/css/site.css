@@ -234,7 +234,9 @@ img { border:0px; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
-#toptypeseldiv { padding:0px 0px 0px 20px; }
+#revtypeseldiv { }
+#toptd { padding:0px 20px 0px 0px; }
+#alltd { padding:0px 10px 0px 20px; }
 .actmodesel { color:#ffd100; }
 .actmodeseldis { color:#999999; }
 #rsslink { padding:0px 0px 0px 10px; }

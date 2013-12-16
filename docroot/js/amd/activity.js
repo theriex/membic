@@ -31,34 +31,38 @@ app.activity = (function () {
         topModeEnabled = false,   //need to finish loading basics first
         topActivityType = "",  //book or whatever review type is selected
         topDispMax = 20,  //max top reviews to display
+        remActivityType = "",  //by default display all remembered reviews
 
 
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
 
-    topTypeSelectorHTML = function () {
-        var reviewTypes, divc = [], i, typename, title, dispclass, html;
+    revTypeSelectorHTML = function (funcname) {
+        var reviewTypes, divc = [], i, typename, title, dispclass, csel, html;
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             title = typename.capitalize() + " reviews";
             dispclass = "reviewbadge";
-            if(typename === topActivityType) {
+            csel = topActivityType;
+            if(funcname === "remtype") {
+                csel = remActivityType; }
+            if(typename === csel) {
                 dispclass = "reviewbadgedis"; }
             divc.push(["img", {cla: dispclass,
                                src: "img/" + reviewTypes[i].img,
                                title: title, alt: title,
-                               onclick: jt.fs("app.activity.toptype('" + 
-                                              typename + "')")}]); }
-        html = ["div", {id: "toptypeseldiv"}, divc];
+                               onclick: jt.fs("app.activity." + funcname +
+                                              "('" + typename + "')")}]); }
+        html = ["div", {id: "revtypeseldiv"}, divc];
         html = jt.tac2html(html);
         return html;
     },
 
 
     writeNavDisplay = function (dispmode) {
-        var html, recent, top, url, rsslink;
+        var html, recent, top, url, rsslink, remall;
         if(dispmode === "activity") {
             if(activityMode === "amnew") {
                 recent = ["span", {cla: "actmodesel"},
@@ -88,11 +92,22 @@ app.activity = (function () {
                      [["td", recent],
                       ["td", rsslink],
                       ["td", "|"],
-                      ["td", top],
-                      ["td", topTypeSelectorHTML()]]]];
-            html = jt.tac2html(html); }
+                      ["td", {id: "toptd"}, top],
+                      ["td", revTypeSelectorHTML("toptype")]]]]; }
         else if(dispmode === "memo") {
-            html = "Remembered reviews"; }
+            if(!remActivityType) {
+                remall = ["span", {cla: "actmodesel"},
+                          "All"]; }
+            else {
+                remall = ["a", {href: "#", title: "Show all remembered reviews",
+                                onclick: jt.fs("app.activity.remtype('')")},
+                          "All"]; }
+            html = ["table",
+                    ["tr",
+                     [["td", "Remembered"],
+                      ["td", {id: "alltd"}, remall],
+                      ["td", revTypeSelectorHTML("remtype")]]]]; }
+        html = jt.tac2html(html);
         jt.out('centerhdiv', html);
     },
 
@@ -250,13 +265,17 @@ app.activity = (function () {
                                        "Fetching Pen Name " + cfid + "..."]);
                         break; }
                     //have review with associated pen name
-                    remitems.push(app.profile.reviewItemHTML(revref.rev, 
-                                                  revref.rev.penNameStr)); } }
+                    if(!remActivityType || 
+                       revref.rev.revtype === remActivityType) {
+                        remitems.push(app.profile.reviewItemHTML(
+                            revref.rev, revref.rev.penNameStr)); } } }
             hint = "If you see a review worth remembering, click its " + 
                 "\"Remember\" button to keep a reference to it here.";
             if(remitems.length === 0) {  //no reviews currently remembered
-                remitems.push(["li", "You have not remembered any reviews. " +
-                               hint]); }
+                remitems.push(["li", "You have not remembered any " + 
+                               remActivityType +
+                               (remActivityType ? " " : "") +
+                               "reviews. " + hint]); }
             else if(i < 3) {  //reinforce how to remember reviews
                 remitems.push(["li"]);
                 remitems.push(["li", ["span", {cla: "hintText"}, hint]]); }
@@ -785,6 +804,13 @@ return {
         activityMode = "amtop";
         topActivityType = typestr;
         mainDisplay("activity");
+    },
+
+
+    remtype: function (typestr) {
+        remActivityType = typestr;
+        writeNavDisplay("memo");
+        displayRemembered();
     },
 
 
