@@ -376,6 +376,22 @@ return {
             domobj.style.top = String(currY + diffY) + "px";
             event.preventDefault();
             event.stopPropagation(); }
+    },
+
+
+    //The current pen top20s have not yet been updated to include this review.
+    runMeritDisplay: function (rev) {
+        // var pen, top, count, img;
+        // pen = app.pen.currPenRef().pen;
+        // top = pen.top20s[rev.revtype];
+        // if(!top) {
+        //     top = []; }
+        // count = top.length + 1;
+        // color = "Blue";
+        // if(count >= 5) {
+        //     color = "Green"; }
+        // ???
+        // img = "img/merit/Type" + rev.revtype.capitalize() + 
     }
 
 

@@ -91,11 +91,12 @@ app.review = (function () {
             dkwords: [ "Traditional", "Innovative", "Inexpensive", "Expensive",
                        "Essential", "Special", "Quiet", "Loud", "Outdoor" ] },
           { type: "activity", plural: "activities", img: "TypeActivity50.png",
-            keyprompt: "Name of activity, place, or event",
+            keyprompt: "Name of place or event",
             key: "name", //subkey
             fields: [ "address" ],
             dkwords: [ "Indoor", "Outdoor", "Educational", "Artistic", 
-                       "Kid Ok", "Inexpensive", "Expensive" ] },
+                       "Live Performance", "Kid Ok", "Inexpensive", 
+                       "Expensive" ] },
           { type: "other", plural: "other", img: "TypeOther50.png",
             keyprompt: "Name or title", 
             key: "name", //subkey
@@ -1823,6 +1824,8 @@ return {
         jt.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
                      crev = copyReview(app.lcs.putRev(reviews[0]).rev);
+                     if(url === "newrev") {
+                         app.layout.runMeritDisplay(crev); }
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                      setTimeout(function () {  //update corresponding links
                          app.lcs.checkAllCorresponding(crev); }, 200);
