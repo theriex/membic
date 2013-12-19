@@ -379,7 +379,25 @@ return {
     },
 
 
-    //The current pen top20s have not yet been updated to include this review.
+    badgeImgSrc: function (pen, type) {
+        var top;
+        if(pen.top20s && pen.top20s[type]) {
+            top = pen.top20s[type]; }
+        if(!top || top.length < 1) {
+            return ""; }
+        if(top.length >= 20) {
+            return "img/merit/Merit" + type.capitalize() + "20.png"; }
+        if(top.length >= 10) {
+            return "img/merit/Merit" + type.capitalize() + "10.png"; }
+        if(top.length >= 5) {
+            return "img/merit/Merit" + type.capitalize() + "5.png"; }
+        return "img/merit/Merit" + type.capitalize() + "1.png";
+    },
+
+
+    //The current pen top20s have NOT been updated to reflect this
+    //review yet.  The overlaydiv is available for use, although it's
+    //background may have been set so it needs to be made transparent.
     runMeritDisplay: function (rev) {
         // var pen, top, count, img;
         // pen = app.pen.currPenRef().pen;

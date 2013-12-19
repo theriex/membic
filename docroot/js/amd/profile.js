@@ -373,19 +373,6 @@ app.profile = (function () {
     },
 
 
-    badgeDispHTML = function (pen) {
-        var html, i, reviewTypes, typename;
-        html = " ";  //need some separator whitespace
-        app.pen.deserializeFields(pen);
-        reviewTypes = app.review.getReviewTypes();
-        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
-            typename = reviewTypes[i].type;
-            if(pen.top20s[typename] && pen.top20s[typename].length >= 20) {
-                html += app.review.badgeImageHTML(reviewTypes[i]); } }
-        return html;
-    },
-
-
     findOrLoadPen = function (penid, callback) {
         app.lcs.getPenFull(penid, function (penref) {
             callback(penref.pen); });
@@ -905,25 +892,25 @@ app.profile = (function () {
     },
 
 
-    earnedBadgesHTML = function (pen) {
-        var html, i, reviewTypes, typename, label, dispclass;
+    earnedBadgesHTML = function (pen, clickable) {
+        var html, i, reviewTypes, typename, label, imgsrc, attrobj;
         html = [];
         app.pen.deserializeFields(pen);
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
-            if(pen.top20s[typename] && pen.top20s[typename].length >= 1) {
+            imgsrc = app.layout.badgeImgSrc(pen, typename);
+            if(imgsrc) {
                 label = "Top 20 " + reviewTypes[i].plural.capitalize();
-                dispclass = "reviewbadge";
                 if(pen.top20s[typename].length < 20) {
                     label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].plural.capitalize();
-                    dispclass = "reviewbadgedis"; }
-                html.push(["img", {cla: dispclass, 
-                                   src: "img/" + reviewTypes[i].img,
-                                   title: label, alt: label,
-                                   onclick: jt.fs("app.profile.showTopRated('" +
-                                                  typename + "')")}]); } }
+                        reviewTypes[i].plural.capitalize(); }
+                attrobj = { cla: "reviewbadge", src: imgsrc,
+                            title: label, alt: label};
+                if(clickable) {
+                    attrobj.onclick = jt.fs("app.profile.showTopRated('" +
+                                            typename + "')"); }
+                html.push(["img", attrobj]); } }
         return jt.tac2html(html);
     },
 
@@ -977,7 +964,7 @@ app.profile = (function () {
         jt.out('cmain', html);
         if(app.winw > 850 && jt.byId('profdisptable')) {
             jt.byId('profdisptable').style.marginLeft = "8%"; }
-        jt.out('profbadgestd', earnedBadgesHTML(dispen));
+        jt.out('profbadgestd', earnedBadgesHTML(dispen, true));
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
             html = ["a", {id: "commbuild", href: "#invite",
                           onclick: jt.fs("app.profile.invite()")},
@@ -1120,7 +1107,7 @@ return {
                    "&nbsp;",
                    ["span", {cla: "penfont"}, pen.name]]],
                  ["span", {cla: "smalltext"}, city],
-                 badgeDispHTML(pen)]];
+                 earnedBadgesHTML(pen, false)]];
         html = jt.tac2html(html);
         return html;
     },
