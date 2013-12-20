@@ -413,6 +413,7 @@ app.activity = (function () {
         html = ["ul", {cla: "revlist"}, revitems];
         html = jt.tac2html(html);
         jt.out('revactdiv', html);
+        app.layout.adjust();
         writeNavDisplay("activity");  //reflect the selected type
     },
 
