@@ -133,6 +133,8 @@ img { border:0px; }
 #loginform { margin:auto; }
 #loginformtable { margin:auto; }
 #loginstatdiv { }
+.liflab { font-size:large; font-weight:normal; padding:10px; }
+.liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
 #closebookslide { clear:both; }
