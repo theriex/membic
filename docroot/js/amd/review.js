@@ -891,6 +891,7 @@ app.review = (function () {
                        starsImageHTML(i)]); }
         jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
+        odiv.style.left = "70px";
         odiv.style.top = "100px";
         //bring up to the right of where the touch is occurring, otherwise
         //you can get an instant select as the touch is applied to the div
@@ -1711,6 +1712,7 @@ return {
                      ["input", {type: "submit", value: "Upload"}]]]]]]];
         jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
+        odiv.style.left = "70px";
         odiv.style.top = "300px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
@@ -1824,8 +1826,7 @@ return {
         jt.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
                      crev = copyReview(app.lcs.putRev(reviews[0]).rev);
-                     if(url === "newrev") {
-                         app.layout.runMeritDisplay(crev); }
+                     app.layout.runMeritDisplay(crev);
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                      setTimeout(function () {  //update corresponding links
                          app.lcs.checkAllCorresponding(crev); }, 200);

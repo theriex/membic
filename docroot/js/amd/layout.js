@@ -18,6 +18,7 @@ app.layout = (function () {
                    "promo_list.png" ],
         slideindex = -1,
         slideslot = -1,
+        meritactive = false,
 
 
     ////////////////////////////////////////
@@ -379,37 +380,73 @@ return {
     },
 
 
-    badgeImgSrc: function (pen, type) {
-        var top;
-        if(pen.top20s && pen.top20s[type]) {
-            top = pen.top20s[type]; }
-        if(!top || top.length < 1) {
+    badgeImgSrc: function (pen, type, count) {
+        if(!count && pen.top20s && pen.top20s[type]) {
+            count = pen.top20s[type].length; }
+        if(!count) {
             return ""; }
-        if(top.length >= 20) {
+        if(count >= 20) {
             return "img/merit/Merit" + type.capitalize() + "20.png"; }
-        if(top.length >= 10) {
+        if(count >= 10) {
             return "img/merit/Merit" + type.capitalize() + "10.png"; }
-        if(top.length >= 5) {
+        if(count >= 5) {
             return "img/merit/Merit" + type.capitalize() + "5.png"; }
         return "img/merit/Merit" + type.capitalize() + "1.png";
     },
 
 
     //The current pen top20s have NOT been updated to reflect this
-    //review yet.  The overlaydiv is available for use, although it's
-    //background may have been set so it needs to be made transparent.
+    //review yet.  The overlaydiv is available for use.
     runMeritDisplay: function (rev) {
-        // var pen, top, count, img;
-        // pen = app.pen.currPenRef().pen;
-        // top = pen.top20s[rev.revtype];
-        // if(!top) {
-        //     top = []; }
-        // count = top.length + 1;
-        // color = "Blue";
-        // if(count >= 5) {
-        //     color = "Green"; }
-        // ???
-        // img = "img/merit/Type" + rev.revtype.capitalize() + 
+        var pen, top, revcount, msg, psrc, nsrc, html, odiv;
+        if(meritactive) {
+            return; }
+        meritactive = true;
+        pen = app.pen.currPenRef().pen;
+        top = [];
+        if(pen.top20s && pen.top20s[rev.revtype]) {
+            top = pen.top20s[rev.revtype]; }
+        revcount = top.length + 1;  //top20s not updated yet...
+        switch(revcount) {
+        case 1: 
+            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
+            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
+            msg = "New Profile Badge!"; 
+            break;
+        case 5:
+            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
+            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 5);
+            msg = "Upgraded Profile Badge!";
+            break;
+        case 10:
+            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 5);
+            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 10);
+            msg = "Upgraded Profile Badge!";
+            break;
+        case 20:
+            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 10);
+            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 20);
+            msg = "Upgraded Profile Badge!";
+            break;
+        default:  //skip interim displays
+            meritactive = false; 
+            return; }
+        html = [["div", {cla: "headingtxt"},
+                 msg],
+                ["div", {cla: "headingtxt"},
+                 ["img", {id: "meritimg", src: psrc}]]];
+        jt.out('overlaydiv', jt.tac2html(html));
+        odiv = jt.byId('overlaydiv');
+        odiv.style.left ="300px";
+        odiv.style.top = "190px";
+        odiv.style.backgroundColor = app.skinner.darkbg();
+        odiv.style.visibility = "visible";
+        app.onescapefunc = app.cancelOverlay;
+        setTimeout(function () {
+            jt.byId("meritimg").src = nsrc; }, 450);
+        setTimeout(function () {
+            meritactive = false;
+            app.cancelOverlay(); }, 2800);
     }
 
 

@@ -869,6 +869,7 @@ app.profile = (function () {
                      ["input", {type: "submit", value: "Upload"}]]]]]]];
         jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
+        odiv.style.left = "70px";
         odiv.style.top = "80px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();

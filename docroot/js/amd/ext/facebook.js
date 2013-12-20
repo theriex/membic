@@ -242,6 +242,7 @@ app.facebook = (function () {
             else {
                 tmprev = review;
                 odiv = jt.byId('overlaydiv');
+                odiv.style.left = "70px";
                 odiv.style.top = "80px";
                 odiv.style.visibility = "visible";
                 odiv.style.backgroundColor = app.skinner.lightbg();
