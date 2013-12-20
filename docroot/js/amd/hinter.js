@@ -35,7 +35,7 @@ app.hinter = (function () {
     //up all the time, so give them the opt out option.
     looktop = function () {
         var html, cboxhtml = "", nothanks;
-        nothanks = "I know how to find top rated reviews. Don't display this message ever again.";
+        nothanks = "I know how to find a friend's top rated reviews. Don't display this message ever again.";
         cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
@@ -44,7 +44,7 @@ app.hinter = (function () {
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"}, "Top Rated Reviews"],
                 ["p",
-                 "To see favorite activities, books, movies, places to go and more, click any pen name and select the \"Top Rated\" tab."],
+                 "To see top reviews for a specific person, click their name to go to their profile and then select the \"Top Rated\" tab."],
                 ["div", {cla: "dismissradiodiv"},
                  cboxhtml],
                 ["div", {cla: "tipsbuttondiv"},
