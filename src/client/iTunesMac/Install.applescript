@@ -7,10 +7,10 @@ set itsdir to (POSIX path of ((path to home folder as text) & "Library:iTunes:Sc
 display dialog "Installing to " & itsdir
 set command to "mkdir -p " & (quoted form of itsdir)
 do shell script command
-set filenames to {"MORUtil.scpt", "MORSetup.scpt", "morLinifyRecord.py", "MORKeywords.scpt", "MORUpdate.scpt"}
+set filenames to {"WDYDFunExport.scpt", "WDYDFunList.scpt", "morLinifyRecord.py", "WDYDFunReview.scpt"}
 repeat with fname in filenames
 	set cfile to (quoted form of (locdir & fname))
 	set command to "cp " & cfile & " " & itsdir
 	do shell script command
 end repeat
-display dialog "Script files installed. From the iTunes script menu, select MORSetup to get started"
+display dialog "Script files installed. Choose WDYDFunReview to review the currently playing track. You might want to set up option-; as a key binding for that.  Use WDYDFunList to create a new playlist from track review data.  Use WDYDFunExport to export a playlist."

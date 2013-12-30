@@ -4,10 +4,9 @@ end tell
 set uld to POSIX path of locdir
 -- display dialog "uld: " & uld
 -- compile the source script files so (path to me) etc evaluates properly
-do shell script "osacompile -o " & uld & "MORUtil.scpt " & uld & "MORUtil.applescript"
-do shell script "osacompile -o " & uld & "MORSetup.scpt " & uld & "MORSetup.applescript"
-do shell script "osacompile -o " & uld & "MORKeywords.scpt " & uld & "MORKeywords.applescript"
-do shell script "osacompile -o " & uld & "MORUpdate.scpt " & uld & "MORUpdate.applescript"
+do shell script "osacompile -o " & uld & "WDYDFunExport.scpt " & uld & "WDYDFunExport.applescript"
+do shell script "osacompile -o " & uld & "WDYDFunList.scpt " & uld & "WDYDFunList.applescript"
+do shell script "osacompile -o " & uld & "WDYDFunReview.scpt " & uld & "WDYDFunReview.applescript"
 do shell script "osacompile -o " & uld & "Install.scpt " & uld & "Install.applescript"
 -- zip the compile script files and supporting python script
 set zipf to uld & "../../../docroot/downloads/iTunesMac.zip"
