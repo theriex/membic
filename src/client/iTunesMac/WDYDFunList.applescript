@@ -282,6 +282,7 @@ on writePlaylistUploadScript(plname, fname)
 	try
 		set wf to (open for access fname with write permission)
 		set eof wf to 0
+		write "# -*- coding: utf-8 -*-" & newline to wf
 		write "# Upload music review data from tracks in " & plname & newline to wf
 		write "# This file written from AppleScript " & (current date) & newline to wf
 		write "import urllib, httplib" & newline to wf
