@@ -50,10 +50,12 @@ end loadConfig
 
 on writeConfig()
 	try
-		set wf to open for access getConfigFileMacName() with write permission
+		set fname to getConfigFileMacName()
+		set wf to open for access fname with write permission
 		set eof wf to 0
 		write wdconf to wf starting at eof as list
 		close access wf
+		-- display dialog "wdconf written to " & fname
 	on error errStr number errorNumber
 		try
 			close access wf
@@ -286,15 +288,15 @@ on writePlaylistUploadScript(plname, fname)
 		write "headers = {\"Content-type\": \"application/x-www-form-urlencoded\", \"Accept\": \"text/plain\"}" & newline to wf
 		write "# ------------------------" & newline to wf
 		tell application "iTunes"
-			repeat with currtrack in (every track of plname)
+			repeat with currtrack in (every track of user playlist plname)
 				if (rating of currtrack) > 0 then
 					set tdata to revscript's parseTrackData(comment of currtrack)
 					set keycsv to (ptdkeys of tdata)
-					set datline to "data = \"am=mid&an=" & (username of conf) & "&at=" & (token of conf) & "&penid=" & (penid of conf) & "&revtype=music&title=\" + urllib.quote(\"" & (name of currtrack) & "\") + \"&artist=\" + urllib.quote(\"" & (artist of currtrack) & "\") + \"&rating=" & (rating of currtrack) & "&keywords=\" + urllib.quote(\"" & keycsv & "\") + \"&mode=batch\""
+					set datline to "data = \"am=mid&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&penid=" & (penid of wdconf) & "&revtype=music&title=\" + urllib.quote(\"" & (name of currtrack) & "\") + \"&artist=\" + urllib.quote(\"" & (artist of currtrack) & "\") + \"&rating=" & (rating of currtrack) & "&keywords=\" + urllib.quote(\"" & keycsv & "\") + \"&mode=batch\""
 					-- text may contain newlines so have to triple quote
 					-- empty string triple quotes work badly, so check first
 					if (((ptdcmt of tdata) is not missing value) and (length of (ptdcmt of tdata) > 0)) then
-						set datline to datline & " + \"&text=\" + urllib.quote(\"\"\"" & (comtxt of tdata) & "\"\"\")"
+						set datline to datline & " + \"&text=\" + urllib.quote(\"\"\"" & (ptdcmt of tdata) & "\"\"\")"
 					end if
 					if (album of currtrack) is not missing value then
 						set datline to datline & " + \"&album=\" + urllib.quote(\"" & (album of currtrack) & "\")"
@@ -315,11 +317,12 @@ on writePlaylistUploadScript(plname, fname)
 		end tell
 		write "print \"Upload complete\"" & newline to wf
 		close access wf
-	on error
+	on error errStr number errorNumber
 		try
 			close access wf
 		end try
-		display dialog "Writing " & ups & " failed."
+		display dialog "Writing " & fname & " failed."
+		error errStr number errorNumber
 		return false
 	end try
 end writePlaylistUploadScript
@@ -345,13 +348,13 @@ on uploadPlaylistReviewData(pldef)
 	-- at the time of this comment, ~/Library/Caches/TemporaryItems/
 	set tempfolderstr to ((path to temporary items from user domain) as string)
 	set ups to tempfolderstr & "WDYDFunUpload.py"
-	writePlaylistUploadScript(pldef, ups)
+	writePlaylistUploadScript((plname of pldef), ups)
 	set outfile to tempfolderstr & "WDYDFunUpload.out"
 	-- run the upload script in the background
 	set command to "/usr/bin/python " & (quoted form of (POSIX path of ups)) & " &> " & (quoted form of (POSIX path of outfile)) & " &"
 	set sorted to do shell script command
 	tell application "iTunes"
-		repeat with ctrk in (every track of (plname of pldef))
+		repeat with ctrk in (every track of user playlist (plname of pldef))
 			set played date of ctrk to current date
 		end repeat
 	end tell
@@ -359,10 +362,12 @@ on uploadPlaylistReviewData(pldef)
 end uploadPlaylistReviewData
 
 
-on copyMatchingTracks(plen, pldef)
+on copyMatchingTracks(plen, tids, pldef)
 	-- display dialog "copyMatchingTracks start..."
 	set dstart to current date
 	set toff to (toff of wdconf)
+	set skipquantum to 30 -- one selection per double album
+	set skipping to skipquantum
 	set tcnt to 0
 	set tcopied to 0
 	set plname to (plname of pldef)
@@ -372,31 +377,39 @@ on copyMatchingTracks(plen, pldef)
 	tell application "iTunes"
 		repeat with ct in every track
 			set tcnt to tcnt + 1
-			-- display dialog "tcnt: " & tcnt & ", toff: " & toff
 			if tcnt is greater than or equal to toff then
+				-- display dialog "tcnt: " & tcnt & ", toff: " & toff & ", skipping: " & skipping
 				set toff to toff + 1
-				-- display dialog (name of ct) & " - " & (artist of ct) & ", min: " & minrat & ", rating: " & (rating of ct)
-				if (rating of ct) is greater than or equal to minrat then
-					set cmt to (comment of ct)
-					set haveAttrs to false
-					repeat with attr in filtopts
-						if cmt contains attr then
-							set haveAttrs to true
-							exit repeat
-						end if
-					end repeat
-					-- display dialog cmt & newline & "attrs: " & filtopts & newline & "haveAttrs: " & haveAttrs
-					if haveAttrs then
-						set badAttrs to false
-						repeat with attr in notopts
+				set skipping to skipping - 1
+				if skipping is less than or equal to 0 then
+					-- display dialog (name of ct) & " - " & (artist of ct) & ", min: " & minrat & ", rating: " & (rating of ct)
+					if (rating of ct) is greater than or equal to minrat then
+						set cmt to (comment of ct)
+						set haveAttrs to false
+						repeat with attr in filtopts
 							if cmt contains attr then
-								set badAttrs to true
+								set haveAttrs to true
+								exit repeat
 							end if
 						end repeat
-						-- display dialog cmt & newline & notopts & newline & "batAttrs: " & badAttrs
-						if not badAttrs then
-							duplicate ct to user playlist plname
-							set tcopied to tcopied + 1
+						-- display dialog cmt & newline & "attrs: " & filtopts & newline & "haveAttrs: " & haveAttrs
+						if haveAttrs then
+							set badAttrs to false
+							repeat with attr in notopts
+								if cmt contains attr then
+									set badAttrs to true
+								end if
+							end repeat
+							-- display dialog cmt & newline & notopts & newline & "batAttrs: " & badAttrs
+							if not badAttrs then
+								set tid to (id of ct)
+								if tids does not contain tid then
+									duplicate ct to user playlist plname
+									set end of tids to (id of ct)
+									set tcopied to tcopied + 1
+									set skipping to skipquantum
+								end if
+							end if
 						end if
 					end if
 				end if
@@ -407,24 +420,30 @@ on copyMatchingTracks(plen, pldef)
 		end repeat
 	end tell
 	set dend to current date
-	display dialog "start: " & dstart & newline & "  end: " & dend & newline & "toff: " & toff & newline & "tcopied: " & tcopied
+	-- display dialog "start: " & dstart & newline & "  end: " & dend & newline & "toff: " & toff & newline & "tcopied: " & tcopied
 	set (toff of wdconf) to toff
 	return tcopied
 end copyMatchingTracks
 
 
 on updatePlaylistTracks(pldef)
+	set tids to {}
 	tell application "iTunes"
+		repeat with ct in every track of user playlist (plname of pldef)
+			set end of tids to (id of ct)
+		end repeat
 		delete every track of user playlist (plname of pldef)
 	end tell
+	-- display dialog "Updating tracks, toff: " & (toff of wdconf)
+	-- display dialog "tids: " & tids
 	set plen to 80
-	set tcopied to copyMatchingTracks(plen, pldef)
+	set tcopied to copyMatchingTracks(plen, tids, pldef)
 	if tcopied is less than plen then
-		set (toff of wdconf) to 0
+		set (toff of wdconf) to random number from 0 to 50
 		set plrem to plen - tcopied
-		copyMatchingTracks(plrem, pldef)
+		copyMatchingTracks(plrem, tids, pldef)
 	end if
-	display dialog "Writing updated config, toff: " & (toff of wdconf)
+	-- display dialog "Writing updated config, toff: " & (toff of wdconf)
 	writeConfig() -- note updated toff
 end updatePlaylistTracks
 
@@ -443,6 +462,4 @@ end updatePlaylist
 -- Main script
 set revscript to loadScript("WDYDFunReview")
 loadConfig()
-set (toff of wdconf) to 5200
-updatePlaylistTracks(item 1 of (plists of wdconf))
 updatePlaylist(selectPlaylist())
