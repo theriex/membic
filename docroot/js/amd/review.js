@@ -435,7 +435,7 @@ app.review = (function () {
 
 
     secondaryFieldsHTML = function (review, type, keyval, mode) {
-        var html = "", rows = [], i, field, fval, valtd, fsize = 25;
+        var html = "", rows = [], i, field, fval, valtd, fsize = 25, url;
         if(!keyval) {
             return html; }
         if(mode === "edit" && type.subkey) {
@@ -451,6 +451,11 @@ app.review = (function () {
         for(i = 0; i < type.fields.length; i += 1) {
             field = type.fields[i];
             fval = jt.ndq(review[field]);
+            if(fval && field === "address" && mode !== "edit") {
+                url = "http://maps.google.com/?q=" + fval;
+                fval = ["a", {href:url,
+                              onclick: jt.fs("window.open('" + url + "')")},
+                        fval]; }
             if(field !== "url") {
                 if(fval || mode === "edit") {
                     valtd = ["td", fval];
