@@ -358,6 +358,8 @@ def revhtml(rev, pen, refer):
     html += "  <div id=\"staticlogodiv\">\n"
     html += "    <img src=\"../img/wdydfun.png\" id=\"logoimg\"\n"
     html += "         border=\"0\"\n"
+    html += "         onclick=\"window.open('http://www.wdydfun.com');"
+    html +=                                 "return false;\""
     html += "         style=\"width:243px;height:120px;\"/>\n"
     html += "  </div>\n"
     html += "</div>\n"
