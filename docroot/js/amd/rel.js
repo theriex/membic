@@ -209,6 +209,19 @@ app.rel = (function () {
     },
 
 
+    getNoFollowersHTML = function (pen) {
+        var txt, html = [];
+        if(pen.top20s && pen.top20s.latestrevtype) {
+            html.push(["p", "No followers yet, but if you continue to post a review every week people will definitely see you."]); }
+        else {
+            html.push(["p", "No followers yet. Consider writing a review."]);
+            html.push(["p", "In fact, why not commit yourself to experiencing" +
+                            " at least one thing worth reviewing each week?"]);
+        }
+        return html;
+    },
+
+
     setFormValuesFromRel = function (rel) {
         var mutes, i;
         if(rel.status === "blocked") {
@@ -536,7 +549,7 @@ return {
                         relitems.push(["li", 
                                        app.activity.searchPensLinkHTML()]); } }
                 else { //inbound
-                    relitems.push(["li", "No followers."]); } } }
+                    relitems.push(["li", getNoFollowersHTML(pen)]); } } }
         else {  //dump an interim status while retrieving rels
             relitems.push(["li", "fetching relationships..."]); }
         html = ["ul", {cla: "penlist"}, relitems];
