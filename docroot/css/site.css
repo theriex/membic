@@ -229,6 +229,7 @@ img { border:0px; }
 #revsavemsg { font-size:x-large; padding:5px; }
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
+.relctrlsdiv { font-size:small; }
 
 /* >> review layout */
 #revfdiv { }

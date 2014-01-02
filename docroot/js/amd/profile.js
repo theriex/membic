@@ -1377,6 +1377,11 @@ return {
         if(profpenref && profpenref.pen && cpr && cpr.pen === profpenref.pen) {
             return true; }
         return false;
+    },
+
+
+    getProfilePenReference: function () {
+        return profpenref;
     }
 
 

@@ -12,6 +12,8 @@ app.rel = (function () {
     var loadoutcursor,
         asyncLoadStarted,
         maxpgdisp = 100,
+        hideNoRevOutbound = true,
+        hideNoRevInbound = true,
 
 
     ////////////////////////////////////////
@@ -186,6 +188,11 @@ app.rel = (function () {
         if(penref.status !== "ok" && penref.status !== "not cached") {
             return ""; }  //skip any deleted or otherwise unresolved refs
         if(penref.pen) {
+            if(!penref.pen.top20s || !penref.pen.top20s.latestrevtype) {
+                if(direction === "outbound" && hideNoRevOutbound) {
+                    return ""; }
+                if(direction === "inbound" && hideNoRevInbound) {
+                    return ""; } }
             temp = app.profile.penListItemHTML(penref.pen);
             if(app.profile.displayingSelf()) {
                 temp = temp.slice(0, temp.indexOf("</li>"));
@@ -209,8 +216,21 @@ app.rel = (function () {
     },
 
 
-    getNoFollowersHTML = function (pen) {
-        var txt, html = [];
+    relListCtrlsHTML = function (pen, direction, divid, refarray) {
+        var html = "";
+        if(refarray && refarray.length > 0) {
+            html = jt.checkbox("cblurkincl", "hidenorev",
+                               "Hide if no reviews",
+                               (direction === "outbound" ? hideNoRevOutbound
+                                                         : hideNoRevInbound),
+                               jt.fs("app.rel.toggleNoRevHide('" + direction +
+                                     "','" + divid + "')")); }
+        return html;
+    },
+
+
+    noFollowersHTML = function (pen) {
+        var html = [];
         if(pen.top20s && pen.top20s.latestrevtype) {
             html.push(["p", "No followers yet, but if you continue to post a review every week people will definitely see you."]); }
         else {
@@ -527,6 +547,8 @@ return {
     },
 
 
+    //Working on ameliorating large number issues as they develop
+    //(before maxpgdisp kicks in), so there is context for strategies.
     displayRelations: function (pen, direction, divid) {
         var html, refarray, relitems = [], placeholder, i, litemp;
         placeholder = jt.tac2html(["li", "Fetching pen names"]);
@@ -539,7 +561,6 @@ return {
                     relitems.push(litemp);
                     if(litemp === placeholder) {
                         break; } }
-                //ATTENTION: continue display link if maxpgdisp
                 if(i === refarray.length) {
                     relitems.push(relRefPenHTMLFooter(direction)); } }
             else if(refarray.length === 0) {
@@ -549,10 +570,13 @@ return {
                         relitems.push(["li", 
                                        app.activity.searchPensLinkHTML()]); } }
                 else { //inbound
-                    relitems.push(["li", getNoFollowersHTML(pen)]); } } }
+                    relitems.push(["li", noFollowersHTML(pen)]); } } }
         else {  //dump an interim status while retrieving rels
             relitems.push(["li", "fetching relationships..."]); }
-        html = ["ul", {cla: "penlist"}, relitems];
+        html = [["div", {cla: "relctrlsdiv"},
+                 relListCtrlsHTML(pen, direction, divid, refarray)],
+                ["ul", {cla: "penlist"}, 
+                 relitems]];
         jt.out(divid, jt.tac2html(html));
         if(!refarray) {  //rels not loaded yet, init and fetch.
             loadDisplayRels(pen, direction, divid); }
@@ -571,6 +595,16 @@ return {
 
     relsLoaded: function () {
         return asyncLoadStarted && !loadoutcursor;
+    },
+
+
+    toggleNoRevHide: function (direction, divid) {
+        if(direction === 'outbound') {
+            hideNoRevOutbound = !hideNoRevOutbound; }
+        else {  //direction === 'inbound'
+            hideNoRevInbound = !hideNoRevInbound; }
+        app.rel.displayRelations(app.profile.getProfilePenReference().pen, 
+                                 direction, divid);
     }
 
 
