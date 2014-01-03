@@ -10,6 +10,7 @@ from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
 from google.appengine.api import images
+import textwrap
 
 
 class ActivityStat(db.Model):
@@ -214,7 +215,8 @@ def write_summary_email_body(pen, reviews, tstr, prs):
                     " " + getSubkey(review) + "\n"
                 body += "      review by " + unicode(review.penname) +\
                     " " + url + "\n"
-                body += "      " + safestr(review.text) + "\n"
+                body += "      " +\
+                    "\n      ".join(textwrap.wrap(safestr(review.text))) + "\n"
                 body += keywords
                 body += "\n"
     return body
