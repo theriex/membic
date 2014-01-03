@@ -252,8 +252,11 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
-    //Some things don't work in older browsers and need code workarounds
-    //to degrade gracefully.  Like the background texture.
+    //Some things don't work in older browsers and need code
+    //workarounds to degrade gracefully e.g. the background image.
+    //IE8 is a known problem, but also older android browsers.  Better
+    //to enumerate the ones that are probably good (those that are
+    //consistently updated)
     jt.isLowFuncBrowser = function () {
         var nav;
         if(navigator) {
@@ -263,9 +266,13 @@ var app = {},  //Global container for application level funcs and values
             //       "appVersion: " + nav.appVersion + "\n" +
             //       "platform: " + nav.platform + "\n" +
             //       "userAgent: " + nav.userAgent + "\n");
-            if(nav.appName === "Microsoft Internet Explorer") {
-                return true; } }
-        return false;
+            if(nav.userAgent.indexOf("Firefox") >= 0) {
+                return false; }
+            if(nav.userAgent.indexOf("Chrome") >= 0) {
+                return false; }
+            if(nav.userAgent.indexOf("Safari") >= 0) {
+                return false; } }
+        return true;
     };
 
 
