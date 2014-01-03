@@ -126,7 +126,11 @@ def pen_stats():
         stat.active += 1
         where2 = "WHERE modified >= :1 AND modified < :2 AND penid = :3"
         revs = Review.gql(where2, isostart, isoend, pen.key().id())
-        revcount = revs.count()
+        filtrevs = []
+        for rev in revs:
+            if not 'batchUpdated' in safestr(rev.svcdata):
+                filtrevs.append(rev)
+        revcount = len(filtrevs)
         if revcount > 0:
             stat.onerev += 1
         if revcount > 1:
