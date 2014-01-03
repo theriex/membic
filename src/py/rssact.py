@@ -7,7 +7,7 @@ from statrev import getTitle, getSubkey
 
 
 def rss_title(review):
-    title = str(review.penname) + " reviewed a " +\
+    title = unicode(review.penname) + " reviewed a " +\
         str(review.rating / 20) + " star " + review.revtype + ": " +\
         getTitle(review) + " " + getSubkey(review)
     return title

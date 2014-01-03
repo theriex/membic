@@ -212,7 +212,7 @@ def write_summary_email_body(pen, reviews, tstr, prs):
                     keywords = "      " + keywords + "\n"
                 body += text_stars(review) + getTitle(review) +\
                     " " + getSubkey(review) + "\n"
-                body += "      review by " + str(review.penname) +\
+                body += "      review by " + unicode(review.penname) +\
                     " " + url + "\n"
                 body += "      " + safestr(review.text) + "\n"
                 body += keywords

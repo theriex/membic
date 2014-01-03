@@ -27,10 +27,15 @@ class MORAccount(db.Model):
     summaryflags = db.StringProperty()  # sumiflogin, sumifnoact
     
 
+def asciienc(val):
+    val = unicode(val)
+    return val.encode('utf8')
+
 
 def pwd2key(password):
     """ make a password into an encryption key """
-    pwd = str(password)
+    pwd = unicode(password)
+    pwd = asciienc(pwd)
     # passwords have a min length of 6 so get at least 32 by repeating it
     key = str(pwd) * 6
     key = key[:32]
@@ -40,7 +45,7 @@ def pwd2key(password):
 def newtoken(username, password):
     """ Make a new token value and return it """
     key = pwd2key(password)
-    token = ":" + str(int(round(time.time()))) + ":" + username
+    token = ":" + str(int(round(time.time()))) + ":" + asciienc(username)
     token = token.rjust(32, 'X')
     token = AES.new(key, AES.MODE_CBC).encrypt(token)
     token = base64.b64encode(token)
@@ -108,13 +113,13 @@ def authenticated(request):
             if not token:
                 return False
             try:
-                unidx = token.index(username)
+                unidx = token.index(asciienc(username))
             except:
                 try:
-                    unidx = token.index(userlcase)
+                    unidx = token.index(asciienc(userlcase))
                 except:
                     try:
-                        unidx = token.index(account.username)
+                        unidx = token.index(asciienc(account.username))
                     except:
                         unidx = -1
             if unidx <= 2:
@@ -288,9 +293,12 @@ def safestr(val):
     if not val:
         return ""
     try:
-        val = str(val)
-    except:
+        #str(val) yields ascii only. Review names are not all english.
+        val = unicode(val)
+    except Exception as e:
+        logging.info("safestr exception: " + str(e))
         val = val.encode('ascii', 'xmlcharrefreplace')
+        logging.info("safestr fallback encoding: " + val)
     return val
 
 
@@ -399,7 +407,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
         if found:
             token = newtoken(username, password)
             redurl += "authmethod=mid&authtoken=" + token
-            redurl += "&authname=" + username
+            redurl += "&authname=" + urllib.quote(asciienc(username))
         else:
             redurl += "loginerr=" + "No match for those credentials"
         # if changing these params, also check login.doneWorkingWithAccount
