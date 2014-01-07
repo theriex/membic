@@ -183,6 +183,11 @@ img { border:0px; }
 #transformactionstd { padding:2px 5px 10px 15px; }
 #revformbuttonstd { }
 #revbuttonsdiv { margin-left:15%; }
+#requestbuttonsdiv { text-align:center; padding:10px; }
+.bluetxt { color:#7a40ff; }
+.cyantxt { color:#40fff4; }
+.greentxt { color:#6fff21; }
+.goldtxt { color:#ffd100; }
 #socialrevactdiv { margin-left:4%; }
 #staticsocialrevactdiv { margin-left:1%; padding:20px 0px; }
 .revtitle { font-size:large; font-weight:bold; }
@@ -230,6 +235,8 @@ img { border:0px; }
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
 .relctrlsdiv { font-size:small; }
+.poststatspan { font-size:small; color:#666; }
+.reqlinkspan { font-size:small; }
 
 /* >> review layout */
 #revfdiv { }

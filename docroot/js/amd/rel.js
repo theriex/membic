@@ -14,6 +14,7 @@ app.rel = (function () {
         maxpgdisp = 100,
         hideNoRevOutbound = true,
         hideNoRevInbound = true,
+        dlgreq = null,
 
 
     ////////////////////////////////////////
@@ -100,6 +101,165 @@ app.rel = (function () {
     },
 
 
+    reqTypeSelectHTML = function (req) {
+        var html, revtypes, ts = [], i, captype, imgsrc, vtxt, labtxt;
+        revtypes = app.review.getReviewTypes();
+        for(i = 0; i < revtypes.length; i += 1) {
+            captype = revtypes[i].type.capitalize();
+            imgsrc = revtypes[i].img;
+            vtxt = "Set";
+            labtxt = captype;
+            if(revtypes[i].type === req.revtype) {
+                vtxt = "Unset";
+                imgsrc = "img/merit/Merit" + captype + "1.png";
+                labtxt = "<span class=\"bluetxt\">" + captype + "</span>"; }
+            ts.push(["div", {cla: "reqrevtseldiv"},
+                     jt.imgntxt(imgsrc, labtxt,
+                                "app.rel.reqdlgseltype('" + revtypes[i].type + 
+                                                      "')",
+                                "#" + captype,
+                                vtxt + " review request type " + captype)]); }
+        html = ["table",
+                [["tr",
+                  [["td", ts[0]],
+                   ["td", ts[1]],
+                   ["td", ts[2]],
+                   ["td", ts[3]]]],
+                 ["tr",
+                  [["td", ts[4]],
+                   ["td", ts[5]],
+                   ["td", ts[6]],
+                   ["td", ts[7]]]]]];
+        return html;
+    },
+
+
+    withdrawButtonHTML = function () {
+        var html = "";
+        if(jt.instId(dlgreq)) {
+            html = ["button", {type: "button", id: "withdrawbutton",
+                               onclick: jt.fs("app.rel.withdrawRequest()")},
+                    "Withdraw Request"]; }
+        return html;
+    },
+
+
+    displayRequestDialog = function () {
+        var req = dlgreq, html, pen, keyrow = "", revtype;
+        pen = app.lcs.getPenRef(req.toid).pen;
+        if(req.revtype) {
+            revtype = app.review.getReviewTypeByValue(req.revtype);
+            if(!req.keywords) {
+                req.keywords = ""; }
+            keyrow = ["tr",
+                      [["td",
+                        ["b", "Keywords"]],
+                       ["td",
+                        app.review.keywordCheckboxesHTML(
+                            revtype, req.keywords, 4,
+                            "app.rel.toggleReqKeyword")]]]; }
+        html = [
+            ["div", {cla: "dlgclosex"},
+             ["a", {id: "closedlg", href: "#close",
+                    onclick: jt.fs("app.layout.closeDialog()")},
+              "&lt;close&nbsp;&nbsp;X&gt;"]],
+            ["div", {cla: "floatclear"}],
+            ["div", {cla: "headingtxt"}, 
+             "Requesting a review from " + pen.name],
+            ["table", {cla: "formstyle"},
+             [["tr",
+               [["td",
+                 ["b", "Requested"]],
+                ["td",
+                 jt.colloquialDate(jt.ISOString2Day(req.modified))]]],
+              ["tr",
+               [["td",
+                 ["b", "Review Type"]],
+                ["td",
+                 reqTypeSelectHTML(req)]]],
+              keyrow]],
+            ["div", {id: "requestbuttonsdiv"},
+             [withdrawButtonHTML(),
+              "&nbsp;",
+              ["button", {type: "button", id: "cancelbutton",
+                          onclick: jt.fs("app.layout.closeDialog()")},
+               "Cancel"],
+              "&nbsp;",
+              ["button", {type: "button", id: "savebutton",
+                          onclick: jt.fs("app.rel.saveRequest()")},
+               "Ok"],
+              ["br"],
+              ["div", {id: "reqsavemsg"}]]]];
+        app.layout.openDialog({x:220, y:140}, jt.tac2html(html));
+    },
+
+
+    requestLinkHTML = function (penref) {
+        var selfref, params, critsec = "", i, req, html = "";
+        selfref = app.pen.currPenRef();
+        if(!selfref.outreqs) {
+            params = app.login.authparams() + "&fromid=" + selfref.penid;
+            jt.call('GET', "findreqs?" + params, null,
+                    function (reqs) {
+                        selfref.outreqs = reqs;
+                        app.profile.tabselect(); },
+                    app.failf,
+                    critsec); }
+        else { //have reqs, 
+            for(i = 0; i < selfref.outreqs.length; i += 1) {
+                if(selfref.outreqs[i].toid === penref.penid) {
+                    req = selfref.outreqs[i];
+                    break; } }
+            if(req) {
+                html = ["a", {href: "#request", title: "Modify review request",
+                              onclick: jt.fs("app.rel.editreq('" + 
+                                             penref.penid + "','" +
+                                             jt.instId(req) + "')") },
+                        "<i>sent request</i>"]; }
+            else {
+                html = ["a", {href: "#request", title: "Request a review",
+                              onclick: jt.fs("app.rel.editreq('" + 
+                                             penref.penid + "')") },
+                        "Request a review"]; } }
+        return html;                
+    },
+
+
+    writeRequestToServer = function () {
+        var reqid, selfref, outreq, i, data, critsec = "";
+        reqid = jt.instId(dlgreq);
+        selfref = app.pen.currPenRef();
+        if(reqid) {  //previously loaded, check if changed
+            for(i = 0; i < selfref.outreqs.length; i += 1) {
+                if(jt.instId(selfref.outreqs[i]) === reqid) {
+                    outreq = selfref.outreqs[i];
+                    break; } }
+            if(outreq.revtype === dlgreq.revtype &&
+               outreq.keywords === dlgreq.keywords &&
+               outreq.status === dlgreq.status) {
+                app.layout.closeDialog();
+                return; } }
+        //new or changed request
+        data = jt.objdata(dlgreq);
+        jt.call('POST', "updreq?" + app.login.authparams(), data,
+                function (newreqs) {
+                    if(reqid) {  //modified
+                        if(newreqs[0].status === "open") {
+                            selfref.outreqs[i] = newreqs[0]; }
+                        else {
+                            selfref.outreqs.splice(i, 1); } }
+                    else {
+                        selfref.outreqs.push(newreqs[0]); }
+                    dlgreq = null;
+                    app.layout.closeDialog();
+                    app.profile.tabselect(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Review request save failed code " + code +
+                           ": " + errtxt); }),
+                critsec);
+    },
+
+
     activityIndicatorHTML = function (penref) {
         var text, revs, lr, selfref, i, days, html;
         text = "No recent reviews";
@@ -129,8 +289,10 @@ app.rel = (function () {
                     text = "Posted yesterday"; }
                 else {
                     text = "Posted " + days + " days ago"; } } }
-        html = ["span", {style: "font-size:small;color:#666;"},
-                "&nbsp;&nbsp;&nbsp;" + text];
+        html = [["span", {cla: "poststatspan"},
+                 "&nbsp;&nbsp;&nbsp;" + text + "&nbsp;"],
+                ["span", {id: "reqspan" + penref.penid, cla: "reqlinkspan"},
+                 requestLinkHTML(penref)]];
         return jt.tac2html(html);
     },
 
@@ -605,6 +767,62 @@ return {
             hideNoRevInbound = !hideNoRevInbound; }
         app.rel.displayRelations(app.profile.getProfilePenReference().pen, 
                                  direction, divid);
+    },
+
+
+    editreq: function (toid, reqid) {
+        var selfref = app.pen.currPenRef(), outreq, i;
+        if(reqid) {
+            for(i = 0; i < selfref.outreqs.length; i += 1) {
+                if(jt.instId(selfref.outreqs[i]) === reqid) {
+                    outreq = selfref.outreqs[i];
+                    break; } } }
+        if(!outreq) {
+            outreq = { fromid: selfref.penid,
+                       toid: toid,
+                       qtype: "review",
+                       modified: new Date().toISOString(),
+                       status: "open" }; }
+        //make a copy for editing
+        dlgreq = { fromid: outreq.fromid,
+                   toid: outreq.toid,
+                   qtype: outreq.qtype,
+                   revtype: outreq.revtype,
+                   keywords: outreq.keywords,
+                   modified: outreq.modified,
+                   status: outreq.status };
+        jt.setInstId(dlgreq, jt.instId(outreq));
+        displayRequestDialog();
+    },
+
+
+    reqdlgseltype: function (revtype) {
+        if(dlgreq.revtype === revtype) {  //toggle off
+            dlgreq.revtype = ""; }
+        else { 
+            dlgreq.revtype = revtype;
+            dlgreq.keywords = ""; }
+        displayRequestDialog();
+    },
+
+
+    toggleReqKeyword: function (kwid) {
+        var text = dlgreq.keywords;
+        text = app.review.keywordcsv(kwid, text);
+        dlgreq.keywords = text;
+    },
+
+
+    withdrawRequest: function () {
+        jt.out('requestbuttonsdiv', "Deleting request...");
+        dlgreq.status = "withdrawn";
+        writeRequestToServer();
+    },
+
+
+    saveRequest: function () {
+        jt.out('requestbuttonsdiv', "Saving...");
+        writeRequestToServer();
     }
 
 

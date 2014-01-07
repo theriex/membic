@@ -492,37 +492,15 @@ app.review = (function () {
     },
 
 
-    keywordCheckboxesHTML = function (type) {
-        var cols = 3, tdc = 0, i, checked, cells = [], rows = [];
-        if(!crev.keywords) {
-            crev.keywords = ""; }
-        for(i = 0; i < type.dkwords.length; i += 1) {
-            checked = jt.toru((crev.keywords.indexOf(type.dkwords[i]) >= 0),
-                              "checked");
-            cells.push(
-                ["td", {style: "white-space:nowrap;"},
-                 [["input", {type: "checkbox", name: "dkw" + i, id: "dkw" + i,
-                             value: type.dkwords[i], checked: checked,
-                             //<IE8 onchange only fires after onblur
-                             //do not return false or check action is nullified
-                             onclick: jt.fsd("app.review.toggleKeyword('dkw" + 
-                                             i + "')")}],
-                  ["label", {fo: "dkw" + i}, type.dkwords[i]]]]);
-            tdc += 1;
-            if(tdc === cols || i === type.dkwords.length - 1) {
-                rows.push(["tr", cells]);
-                tdc = 0;
-                cells = []; } }
-        return ["table", rows];
-    },
-
-
     keywordsHTML = function (review, type, keyval, mode) {
         var html = "";
         if(!keyval) {
             return html; }
         if(mode === "edit") {
-            html = [keywordCheckboxesHTML(type),
+            if(!crev.keywords) {
+                crev.keywords = ""; }
+            html = [app.review.keywordCheckboxesHTML(
+                        type, crev.keywords, 3, "app.review.toggleKeyword"),
                     [["span", {cla: "secondaryfield"},
                       "Keywords "],
                      ["input", {type: "text", id: "keywordin", size: 30,
@@ -1726,12 +1704,10 @@ return {
     },
 
 
-    toggleKeyword: function (kwid) {
-        var cbox, text, keyin, keywords, i, kw;
-        cbox = jt.byId(kwid);
-        text = "";
-        keyin = jt.byId('keywordin');
-        keywords = keyin.value.split(",");
+    keywordcsv: function (kwid, keycsv) {
+        var cbox = jt.byId(kwid), 
+            text = "", kw, i,
+            keywords = keycsv.split(",");
         for(i = 0; i < keywords.length; i += 1) {
             kw = keywords[i];
             if(kw) {  //have something not a null value or empty string
@@ -1745,7 +1721,15 @@ return {
             if(text) {
                 text += ", "; }
             text += cbox.value; }
-        keyin.value = text;
+        return text;
+    },
+
+
+    toggleKeyword: function (kwid) {
+        var keyin = jt.byId('keywordin'),
+            keycsv = keyin.value;
+        keycsv = app.review.keywordcsv(kwid, keycsv);
+        keyin.value = keycsv;
     },
 
 
@@ -2097,6 +2081,28 @@ return {
     //then this never happens, so good enough.
     resetAutoURL: function () {
         autourl = "";
+    },
+
+
+    keywordCheckboxesHTML: function (type, keycsv, cols, togfstr) {
+        var tdc = 0, i, checked, cells = [], rows = [];
+        for(i = 0; i < type.dkwords.length; i += 1) {
+            checked = jt.toru((keycsv.indexOf(type.dkwords[i]) >= 0),
+                              "checked");
+            cells.push(
+                ["td", {style: "white-space:nowrap;"},
+                 [["input", {type: "checkbox", name: "dkw" + i, id: "dkw" + i,
+                             value: type.dkwords[i], checked: checked,
+                             //<IE8 onchange only fires after onblur
+                             //do not return false or check action is nullified
+                             onclick: jt.fsd(togfstr + "('dkw" + i + "')")}],
+                  ["label", {fo: "dkw" + i}, type.dkwords[i]]]]);
+            tdc += 1;
+            if(tdc === cols || i === type.dkwords.length - 1) {
+                rows.push(["tr", cells]);
+                tdc = 0;
+                cells = []; } }
+        return ["table", rows];
     }
 
 

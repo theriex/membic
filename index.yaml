@@ -27,6 +27,12 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: Request
+  properties:
+  - name: fromid
+  - name: status
+  - name: modified
+
 - kind: Review
   properties:
   - name: cankey

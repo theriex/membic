@@ -236,6 +236,19 @@ handlers:
   script: src.py.revlink.app
 
 
+######################################################################
+##        Requests
+
+## Create or update a request
+## POST params: request, authparams
+- url: /updreq.*
+  script: src.py.req.app
+
+## Return requests matching the fromid or toid
+## GET params: fromid or toid, authparams
+- url: /findreqs.*
+  script: src.py.req.app
+
 
 ######################################################################
 ##        Connection Services
