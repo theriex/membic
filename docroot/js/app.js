@@ -270,7 +270,9 @@ var app = {},  //Global container for application level funcs and values
                 return false; }
             if(nav.userAgent.indexOf("Chrome") >= 0) {
                 return false; }
-            if(nav.userAgent.indexOf("Safari") >= 0) {
+            if((nav.userAgent.indexOf("Safari") >= 0) &&
+               (nav.userAgent.indexOf("CyanogenMod") < 0) &&
+               (nav.userAgent.indexOf("Android") < 0)) {
                 return false; } }
         return true;
     };
