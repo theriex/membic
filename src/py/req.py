@@ -13,8 +13,7 @@ class Request(db.Model):
     revtype = db.StringProperty()   # book, movie ...
     keywords = db.StringProperty()  # csv of match keywords for revtype
     modified = db.StringProperty()  # iso date
-    status = db.StringProperty()    # open, withdrawn, denied, fulfilled, 
-                                    # stoppedfollowing
+    status = db.StringProperty()    # open, withdrawn, denied, fulfilled
 
 
 class UpdateRequest(webapp2.RequestHandler):

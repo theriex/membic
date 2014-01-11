@@ -93,6 +93,9 @@ return {
                 app.review.displayRead();
                 break;
             } }
+        else {  //if no state, reset back to the main
+            jt.log("historyPop: no state, so displaying activity by default");
+            app.activity.displayActive(); }
     },
 
 

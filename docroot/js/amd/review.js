@@ -344,6 +344,7 @@ app.review = (function () {
         //primary path forward so don't set focus here.
         //jt.byId('urlin').focus();
         app.layout.adjust();
+        app.onescapefunc = app.activity.displayActive;
     },
 
 
@@ -1733,7 +1734,7 @@ return {
     },
 
 
-    cancelReview: function (force) {
+    cancelReview: function (force, revtype) {
         if(!okToLoseChanges()) {
             return; }
         app.onescapefunc = null; 
@@ -1744,6 +1745,8 @@ return {
             crev.revpic = crev.oldrevpic; }
         if(force || !crev || !jt.instId(crev)) {
             crev = {};                    //so clear it all out 
+            if(revtype) {
+                crev.revtype = revtype; }
             autourl = "";
             attribution = "";
             starPointingActive = false;
@@ -1817,6 +1820,8 @@ return {
                      crev = copyReview(app.lcs.putRev(reviews[0]).rev);
                      app.layout.runMeritDisplay(crev);
                      setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
+                     setTimeout(function () {  //update matching requests
+                         app.activity.fulfillRequests(crev); }, 100);
                      setTimeout(function () {  //update corresponding links
                          app.lcs.checkAllCorresponding(crev); }, 200);
                      if(doneEditing) {

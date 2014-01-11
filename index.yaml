@@ -33,6 +33,12 @@ indexes:
   - name: status
   - name: modified
 
+- kind: Request
+  properties:
+  - name: status
+  - name: toid
+  - name: modified
+
 - kind: Review
   properties:
   - name: cankey

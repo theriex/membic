@@ -503,6 +503,61 @@ app.activity = (function () {
     },
 
 
+    activeRequestsLoadedHTML = function () {
+        var reqs, i, rows = [], penref, rtype, tlnk, linktxt, html = "";
+        reqs = app.pen.currPenRef().inreqs;
+        reqs.sort(function (a, b) {
+            if(a.modified > b.modified) { return -1; }
+            if(a.modified < b.modified) { return 1; }
+            return 0; });
+        for(i = 0; i < reqs.length && i < 3; i += 1) {
+            rtype = app.review.getReviewTypeByValue(reqs[i].revtype);
+            tlnk = ["span", {cla: "reqrevtypespan"},
+                    [["img", {cla: "smallbadge", src: "img/" + rtype.img}],
+                     "&nbsp;" + reqs[i].revtype]];
+            penref = app.lcs.getPenRef(reqs[i].fromid);
+            if(penref.pen) {
+                linktxt = [];
+                if(penref.pen.profpic) {
+                    linktxt.push(["img", {cla: "smallbadge", 
+                                          src: "profpic?profileid=" + 
+                                               jt.instId(penref.pen)}]);
+                    linktxt.push("&nbsp;"); }
+                linktxt.push(penref.pen.name + " has requested a ");
+                linktxt.push(tlnk);
+                linktxt.push(" review"); }
+            else {
+                linktxt = jt.tac2html(tlnk) + " request";
+                app.lcs.getPenFull(reqs[i].fromid, activeRequestsLoadedHTML); }
+            rows.push(["li", {cla: "reqli"},
+                       ["a", {href: "#request", title: "View request",
+                              onclick: jt.fs("app.activity.showreq(" + 
+                                             i + ")") },
+                        linktxt]]); }
+        if(rows.length > 0) {
+            html = ["ul", {cla: "reqlist"},
+                    rows]; }
+        return jt.tac2html(html);
+    },
+
+
+    activeRequestsHTML = function () {
+        var selfref, params, critsec = "", html = "";
+        selfref = app.pen.currPenRef();
+        if(!selfref.inreqs) {
+            params = app.login.authparams() + "&toid=" + selfref.penid;
+            jt.call('GET', "findreqs?" + params, null,
+                    function (reqs) {
+                        selfref.inreqs = reqs;
+                        jt.out('activereqsdiv', activeRequestsLoadedHTML()); },
+                    app.failf,
+                    critsec); }
+        else {
+            html = activeRequestsLoadedHTML(); }
+        return html;
+    },
+
+
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
         topModeEnabled = true;
@@ -533,15 +588,17 @@ app.activity = (function () {
         else {
             setTimeout(function () {
                 app.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
-        html = ["ul", {cla: "revlist"}, html];
+        html = [["div", {id: "activereqsdiv"},
+                 activeRequestsHTML()],
+                ["ul", {cla: "revlist"}, 
+                 html]];
         if(actdisp.cursor) {
-            html = [html, 
-                    ["a", {href: "#moreact",
-                           onclick: jt.fs("app.activity.moreact()"),
-                           title: "More activity"},
-                     "more activity..."]]; }
+            html.push(["a", {href: "#moreact",
+                             onclick: jt.fs("app.activity.moreact()"),
+                             title: "More activity"},
+                       "more activity..."]); }
         else if(revrefs.length < 3) {
-            html = [html, followMoreHTML(null, true)]; }
+            html.push(followMoreHTML(null, true)); }
         jt.out('revactdiv', jt.tac2html(html));
         app.layout.adjust();
     },
@@ -863,6 +920,95 @@ return {
 
     reset: function () {
         app.pen.currPenRef().actdisp = null;
+    },
+
+
+    showreq: function (index) {
+        var req, pen, keywords = "", titlehtml = [], rtype, html;
+        req = app.pen.currPenRef().inreqs[index];
+        pen = app.lcs.getPenRef(req.fromid).pen;
+        rtype = app.review.getReviewTypeByValue(req.revtype);
+        if(req.keywords) {
+            keywords = "(" + req.keywords + ")"; }
+        if(pen.profpic) {
+            titlehtml.push(["img", {cla: "profpicsmall",
+                                    src: "profpic?profileid=" +
+                                          jt.instId(pen)}]);
+            titlehtml.push("&nbsp;"); }
+        titlehtml.push(pen.name + " has requested a ");
+        titlehtml.push(["span", {cla: "reqrevtypespan"},
+                        [["img", {cla: "revtypeimg", 
+                                  src: "img/" + rtype.img}],
+                         "&nbsp;" + req.revtype]]);
+        titlehtml.push(" review");
+        html = [
+            ["div", {cla: "dlgclosex"},
+             ["a", {id: "closedlg", href: "#close",
+                    onclick: jt.fs("app.layout.closeDialog()")},
+              "&lt;close&nbsp;&nbsp;X&gt;"]],
+            ["div", {cla: "floatclear"}],
+            ["div", {cla: "headingtxt"}, 
+             titlehtml],
+            ["div", {cla: "reqkeywordsdiv"},
+             keywords],
+            ["div", {id: "requestbuttonsdiv"},
+             [["button", {type: "button", id: "cancelbutton",
+                          onclick: jt.fs("app.layout.closeDialog()")},
+               "Cancel"],
+              "&nbsp;",
+              ["button", {type: "button", id: "denyreqbutton",
+                          onclick: jt.fs("app.activity.denyRequest(" + 
+                                         index + ")")},
+               "Deny Request"],
+              "&nbsp;",
+              ["button", {type: "button", id: "writereqrevbutton",
+                          onclick: jt.fs("app.activity.writeReqRev(" +
+                                         index + ")")},
+               "Write Review"]]]];
+        app.layout.openDialog({x:220, y:140}, jt.tac2html(html));
+    },
+
+
+    denyRequest: function (index) {
+        var req, data, critsec = "";
+        app.layout.closeDialog();
+        req = app.pen.currPenRef().inreqs[index];
+        app.pen.currPenRef().inreqs.splice(index, 1);
+        req.status = "denied";
+        data = jt.objdata(req);
+        jt.call('POST', "updreq?" + app.login.authparams(), data,
+                function (updreqs) {
+                    app.activity.displayActive(); },
+                app.failf,
+                critsec);
+    },
+
+
+    //Write the requested review
+    writeReqRev: function (index) {
+        var req = app.pen.currPenRef().inreqs[index];
+        app.layout.closeDialog();
+        app.review.cancelReview(true, req.revtype);
+    },
+
+
+    fulfillRequests: function (review) {
+        var reqs, i, data, critsec = "", keepgoingfunc;
+        reqs = app.pen.currPenRef().inreqs;
+        keepgoingfunc = function (newreqs) {
+            app.activity.fulfillRequests(review); };
+        for(i = 0; i < reqs.length; i += 1) {
+            //matches even if the keywords aren't all accounted for.
+            //Requestor can resubmit if they want more.
+            if(reqs[i].revtype === review.revtype) {
+                reqs[i].status = "fulfilled";
+                data = jt.objdata(reqs[i]);
+                app.pen.currPenRef().inreqs.splice(i, 1);
+                jt.call('POST', "updreq?" + app.login.authparams(), data,
+                        keepgoingfunc,
+                        app.failf,
+                        critsec);
+                break; } }
     }
 
 
