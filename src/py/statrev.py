@@ -237,9 +237,11 @@ def descrip(rev):
 def generalScriptHTML():
     html = ""
     html += "<script>\n"
-    html += "if(!(document.styleSheets[0].cssRules)) {\n"
-    html += "    document.getElementById('bodyid').style.backgroundImage = "
-    html +=          "\"url('../img/blank.png')\" }\n"
+    # Turn off the background image since some browsers can't handle it
+    # and it doesn't look that great with the ad column anyway.  If 
+    # re-enabling, this needs to follow the jt.isLowFuncBrower logic
+    html += "document.getElementById('bodyid').style.backgroundImage = "
+    html +=          "\"url('../img/blank.png')\";\n"
     html += "if(document.referrer) {\n"
     html += "    var btwimg = document.getElementById('btwimg');\n"
     html += "    if(btwimg) {\n"

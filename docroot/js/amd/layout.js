@@ -104,11 +104,9 @@ app.layout = (function () {
     },
 
 
-    //ie8 and below don't support cover so we end up with just a postage
-    //stamp image in the middle of the screen.
     fixTextureCover = function () {
-        var altimg, rules = document.styleSheets[0].cssRules;
-        if(!rules) { //decent css support is missing, fall back
+        var altimg;
+        if(jt.isLowFuncBrowser()) { //decent css support is missing, fall back
             //texturePaper.png is 256x192
             //setting backgroundSize to a scaled up fixed size has no effect
             //jt.byId('bodyid').style.backgroundSize = "2048px 1536px;";
