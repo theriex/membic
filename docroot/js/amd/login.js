@@ -233,8 +233,33 @@ app.login = (function () {
 
 
     onLoginUserNameChange = function (e) {
+        var passin;
         jt.evtend(e); 
-        jt.byId('passin').focus();
+        passin = jt.byId('passin');
+        //Unbelievably, the passin field may not be available yet if
+        //this is a browser autosubmit of saved credentials in Safari.
+        //Don't create error noise in that case.
+        if(passin) {
+            passin.focus(); }
+    },
+
+
+    //Need to have automatic form submission so you can hit return
+    //after the password to trigger the login.  The default form
+    //button is too small on a phone, so we have the div with an
+    //anchor in it that submits when you click it.  Safari is going to
+    //continue to fill out the form automatically if the password is
+    //saved and that can cause an infinite loop.
+    onLoginPasswordChange = function (e) {
+        var signinlink, userin, passin;
+        jt.evtend(e);
+        signinlink = jt.byId('signinlink');
+        userin = jt.byId('userin');
+        passin = jt.byId('passin');
+        if(signinlink && userin && passin) {
+            if(userin.value && userin.value.length > 1 &&
+               passin.value && passin.value.length > 5) {
+                jt.byId('loginform').submit(); } }
     },
 
 
@@ -282,7 +307,8 @@ app.login = (function () {
         if(!jt.isLowFuncBrowser()) {  //upgrade the sign in button look
             html = ["div", {id: "signinbuttondiv",
                             onclick: "jt.byId('loginform').submit();"},
-                    ["a", {title: "Sign in via secure server"}, "Sign in"]];
+                    ["a", {id: "signinlink",
+                           title: "Sign in via secure server"}, "Sign in"]];
             jt.out('loginbtd', jt.tac2html(html)); }
         html = ["a", {id: "macc", href: "create new account...",
                       title: "Create new native login",
@@ -296,10 +322,13 @@ app.login = (function () {
                 "forgot your password?"];
         jt.out('forgotpwtd', jt.tac2html(html));
         jt.on('userin', 'change', onLoginUserNameChange);
+        jt.on('passin', 'change', onLoginPasswordChange);
         if(authname) {
             jt.byId('userin').value = authname; }
         app.layout.adjust();
-        jt.byId('userin').focus();
+        jt.byId('userin').focus();  //doesn't always work
+        setTimeout(function () {
+            jt.byId('userin').focus(); }, 200);
     },
 
 
@@ -695,6 +724,13 @@ return {
 
     authparams: function () {
         return authparams();
+    },
+
+
+    isLoggedIn: function () {
+        if(authmethod && authtoken && authname) {
+            return true; }
+        return false;
     },
 
 

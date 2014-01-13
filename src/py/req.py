@@ -52,7 +52,6 @@ class UpdateRequest(webapp2.RequestHandler):
 
 class FindRequests(webapp2.RequestHandler):
     def get(self):
-        logging.info("FindRequests called...")
         acc = authenticated(self.request)
         if not acc:
             self.error(401)
@@ -62,7 +61,7 @@ class FindRequests(webapp2.RequestHandler):
         fromid = intz(self.request.get('fromid'))
         dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
         matchqual = " and status = 'open' and modified > '" + dold + "'"
-        logging.info("matchqual: " + matchqual)
+        # logging.info("matchqual: " + matchqual)
         if toid > 0:
             where = "WHERE toid = :1" + matchqual
             qry = Request.gql(where, toid)

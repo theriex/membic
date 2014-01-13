@@ -93,9 +93,12 @@ return {
                 app.review.displayRead();
                 break;
             } }
-        else {  //if no state, reset back to the main
+        else if(app.login.isLoggedIn()) { 
             jt.log("historyPop: no state, so displaying activity by default");
             app.activity.displayActive(); }
+        //no default action if not logged in.  A browser may pop the
+        //history to attempt to return to the raw site in the event of
+        //an autologin failure.
     },
 
 

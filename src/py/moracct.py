@@ -399,6 +399,10 @@ class TokenAndRedirect(webapp2.RequestHandler):
             redurl = urllib.unquote(redurl)
         redurl += "#"
         username = self.request.get('userin')
+        if not username or len(username) < 1:
+            self.error(401)
+            self.response.out.write("No username specified");
+            return;
         password = self.request.get('passin')
         userlcase = username.lower()
         where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
@@ -410,6 +414,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
             redurl += "&authname=" + urllib.quote(asciienc(username))
         else:
             redurl += "loginerr=" + "No match for those credentials"
+            logging.info("self.request.params: " + str(self.request.params))
         # if changing these params, also check login.doneWorkingWithAccount
         command = self.request.get('command')
         if command and command != "chgpwd":

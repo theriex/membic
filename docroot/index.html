@@ -58,9 +58,9 @@
             <td align="right">
               <label for="passin" class="liflab">password</label></td>
             <td align="left">
+              <!-- no onchange submit here, safari pw autofill breaks -->
               <input type="password" name="passin" 
-                     id="passin" size="20"
-                     onchange="jt.byId('loginform').submit();"/></td>
+                     id="passin" size="20"/></td>
             <td align="center" id="altauthmethods"></td>
           </tr><tr>
             <td colspan="2" align="right" id="loginbtd">
