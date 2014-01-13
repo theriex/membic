@@ -229,6 +229,39 @@ app.hinter = (function () {
     },
 
 
+    requestActive = function (pen) {
+        var penref = app.pen.currPenRef();
+        if((penref.outreqs && penref.outreqs.length > 0) ||
+           (penref.inreqs && penref.inreqs.length > 0)) {
+            return false; }
+        return true;
+    },
+
+
+    request = function (displayCount) {
+        var html, cboxhtml = "", nothanks;
+        nothanks = "I know how to request a review from someone I'm following. Don't display this message ever again.";
+        cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"}, "Request a Review"],
+                ["p",
+                 "If you would like to request a review from someone you are following, you can click the link next to their name on the \"Following\" tab of your profile."],
+                ["div", {cla: "dismissradiodiv"},
+                 cboxhtml],
+                ["div", {cla: "tipsbuttondiv"},
+                 ["button", {type: "button", id: "tipok",
+                             onclick: jt.fs("app.hinter.tipok('remrev')")},
+                  "OK"]]];
+        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+                               function () {
+                                   jt.byId('tipok').focus(); });
+    },
+
+
     writeUpdatedTipsInfo = function (pen) {
         app.pen.updatePen(pen,
                           function () {
@@ -244,7 +277,8 @@ app.hinter = (function () {
             { name: "ezlink",   checkf: ezlinkActive,   runf: ezlink },
             { name: "writerev", checkf: writerevActive, runf: writerev },
             { name: "fillcity", checkf: fillcityActive, runf: fillcity },
-            { name: "remrev",   checkf: remrevActive,   runf: remrev } ];
+            { name: "remrev",   checkf: remrevActive,   runf: remrev },
+            { name: "request",  checkf: requestActive,  runf: request } ];
     };
 
 
