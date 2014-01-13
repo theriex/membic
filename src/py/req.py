@@ -16,6 +16,20 @@ class Request(db.Model):
     status = db.StringProperty()    # open, withdrawn, denied, fulfilled
 
 
+def find_requests(toid, fromid):
+    dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
+    matchqual = " and status = 'open' and modified > '" + dold + "'"
+    # logging.info("matchqual: " + matchqual)
+    if toid > 0:
+        where = "WHERE toid = :1" + matchqual
+        qry = Request.gql(where, toid)
+    elif fromid > 0:
+        where = "WHERE fromid = :1" + matchqual
+        qry = Request.gql(where, fromid)
+    reqs = qry.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    return reqs
+
+
 class UpdateRequest(webapp2.RequestHandler):
     def post(self):
         toid = intz(self.request.get('toid'))
@@ -59,16 +73,7 @@ class FindRequests(webapp2.RequestHandler):
             return
         toid = intz(self.request.get('toid'))
         fromid = intz(self.request.get('fromid'))
-        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
-        matchqual = " and status = 'open' and modified > '" + dold + "'"
-        # logging.info("matchqual: " + matchqual)
-        if toid > 0:
-            where = "WHERE toid = :1" + matchqual
-            qry = Request.gql(where, toid)
-        elif fromid > 0:
-            where = "WHERE fromid = :1" + matchqual
-            qry = Request.gql(where, fromid)
-        reqs = qry.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        reqs = find_requests(toid, fromid)
         returnJSON(self.response, reqs)
     
 

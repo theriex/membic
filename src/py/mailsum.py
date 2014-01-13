@@ -5,6 +5,7 @@ import logging
 from pen import PenName
 from rel import outbound_relids_for_penid
 from rev import Review, review_activity_search
+from req import Request, find_requests
 from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
@@ -174,7 +175,19 @@ def text_stars(review):
     return stars[index]
 
 
-def write_summary_email_body(pen, reviews, tstr, prs):
+def req_summary_text(reqs):
+    text = ""
+    if reqs and len(reqs) > 0:
+        text += "You have review requests from your followers:\n"
+        for req in reqs:
+            pen = PenName.get_by_id(req.fromid)
+            text += "    " + pen.name + " has requested a " + req.revtype +\
+                " review.\n"
+        text += "\n\n"
+    return text
+
+
+def write_summary_email_body(pen, reviews, tstr, prs, reqs):
     body = "Hi " + pen.name + ",\n\n"
     if prs and len(prs) > 0:
         body += "Thanks for reviewing! Your current and future followers" +\
@@ -184,12 +197,12 @@ def write_summary_email_body(pen, reviews, tstr, prs):
             " Your friends would like to hear about it."
     body += "\n" +\
         "To write a review or get more info, go to http://www.wdydfun.com" +\
-        "\n\n"
+        "\n\n" + req_summary_text(reqs)
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
             " posted any reviews since " + tstr + ". Please do what you" +\
             " can to help them experience more of life. In the meantime," +\
-            " this link will find you some interesting people to follow:\n" +\
+            " you can find interesting people to follow here:\n" +\
             "\n    http://www.wdydfun.com/?command=penfinder\n\n"
         return body
     body += "Since " + tstr + ", friends you are following have posted " +\
@@ -246,7 +259,9 @@ def mail_summaries(freq, thresh, request, response):
                 checked, prs = review_activity_search(
                     thresh, "", [ str(pen.key().id()) ])
                 logmsg += ", reviewed: " + str(len(prs))
-                content = write_summary_email_body(pen, reviews, tstr, prs)
+                reqs = find_requests(pen.key().id(), 0)
+                content = write_summary_email_body(pen, reviews, tstr, 
+                                                   prs, reqs)
                 content += "\nTo change email settings for your account" +\
                     " go to http://www.wdydfun.com \n\n"
                 if not request.url.startswith('http://localhost'):
@@ -309,7 +324,8 @@ class SummaryForUser(webapp2.RequestHandler):
             checked, reviews = review_activity_search(thresh, "", relids)
             checked, prs = review_activity_search(thresh, "", 
                                                   [ str(pen.key().id()) ])
-            content = write_summary_email_body(pen, reviews, tstr, prs)
+            reqs = find_requests(pen.key().id(), 0)
+            content = write_summary_email_body(pen, reviews, tstr, prs, reqs)
         self.response.out.write(content)
 
 
