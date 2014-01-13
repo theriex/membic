@@ -123,13 +123,13 @@ var actstat = (function () {
             if(agents.hasOwnProperty(agent)) {
                 if(agents[agent] > 1) {
                     html.push(["tr",
-                               [["td",
+                               [["td", {align: "right"}, 
                                  agents[agent]],
                                 ["td",
                                  agent]]]); } } }
         html.sort(function (a, b) {  //descending...
-            if(a[1][0][1] > b[1][0][1]) { return -1; }
-            if(a[1][0][1] < b[1][0][1]) { return 1; }
+            if(a[1][0][2] > b[1][0][2]) { return -1; }
+            if(a[1][0][2] < b[1][0][2]) { return 1; }
             return 0; });
         html = ["table",
                 html];
@@ -197,7 +197,8 @@ var actstat = (function () {
 
 
     displayUserAverages = function () {
-        var html = [], logins = {}, name, frequency, total = 0, sum = 0;
+        var html = [], logins = {}, name, frequency, 
+            freqsum = 0, active = 0, flybys = 0;
         data.forEach(function (datum) {
             var pens = jt.safestr(datum.names).split(";");
             pens.forEach(function (name) {
@@ -208,28 +209,35 @@ var actstat = (function () {
                         logins[name] = 1; } } }); });
         for(name in logins) {
             if(logins.hasOwnProperty(name)) {
-                frequency = Math.round(data.length / logins[name]);
-                total += 1;
-                sum += frequency;
-                html.push(["tr",
-                           [["td", {style: "padding:0px 10px;"},
-                             name],
-                            ["td",
-                             frequency],
-                            ["td",
-                             "days"]]]); } }
+                if(logins[name] > 1) {
+                    frequency = Math.round(data.length / logins[name]);
+                    active += 1;
+                    freqsum += frequency;
+                    html.push(["tr",
+                               [["td", {style: "padding:0px 10px;"},
+                                 name],
+                                ["td", {align: "right"},
+                                 frequency],
+                                ["td",
+                                 "days"]]]); }
+                else {
+                    flybys += 1; } } }
         html.sort(function (a, b) {
-            var afreq = parseInt(a[1][1][1], 10),
-                bfreq = parseInt(b[1][1][1], 10);
+            var afreq = parseInt(a[1][1][2], 10),
+                bfreq = parseInt(b[1][1][2], 10);
             if(afreq < bfreq) { return -1; }
             if(afreq > bfreq) { return 1; }
             return 0; });
         html = [["div",
                  "Window: " + data.length + " days.<br>" +
-                 "Average login frequency: " + (sum / total) + " days"],
+                 "Average login frequency: " + (freqsum / active) + " days"],
                 ["div", { style: "padding:0px 20px;" },
                  ["table",
-                  html]]];
+                  html]],
+                ["div",
+                 "Active: " + active + ", Flybys: " + flybys + 
+                 ": " + ((active / (active + flybys)) * 100) + 
+                 "% participation"]];
         jt.out('averagesdiv', jt.tac2html(html));
     },
 
