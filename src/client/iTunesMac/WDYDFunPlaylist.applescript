@@ -1,4 +1,4 @@
-property wdtitle : "WDYDFunList"
+property wdtitle : "WDYDFunPlaylist"
 property revscript : null
 property wdconf : null
 property newline : "
@@ -363,6 +363,21 @@ on uploadPlaylistReviewData(pldef)
 end uploadPlaylistReviewData
 
 
+on recentPlay(lastplay, cmt)
+	set freq to revscript's readColonFieldVal("freq", cmt, -1)
+	if (freq as number) is equal to 0 then
+		return true
+	end if
+	if freq is greater than 0 and lastplay is not missing value then
+		set availdate to lastplay + (freq * days)
+		if (current date) is less than availdate then
+			return true
+		end if
+	end if
+	return false
+end recentPlay
+
+
 on copyMatchingTracks(plen, tids, pldef)
 	-- display dialog "copyMatchingTracks start..."
 	set dstart to current date
@@ -403,12 +418,15 @@ on copyMatchingTracks(plen, tids, pldef)
 							end repeat
 							-- display dialog cmt & newline & notopts & newline & "batAttrs: " & badAttrs
 							if not badAttrs then
-								set tid to (id of ct)
-								if tids does not contain tid then
-									duplicate ct to user playlist plname
-									set end of tids to (id of ct)
-									set tcopied to tcopied + 1
-									set skipping to skipquantum
+								set rp to my recentPlay((played date of ct), cmt)
+								if not rp then
+									set tid to (id of ct)
+									if tids does not contain tid then
+										duplicate ct to user playlist plname
+										set end of tids to (id of ct)
+										set tcopied to tcopied + 1
+										set skipping to skipquantum
+									end if
 								end if
 							end if
 						end if

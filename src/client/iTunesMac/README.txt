@@ -14,7 +14,7 @@ Description of files:
 Core script files:
   - WDYDFunExport:
     Copy source songs for any playlist to another directory.
-  - WDYDFunList:
+  - WDYDFunPlaylist:
     Upload ratings for songs in the list, Create/Update/Merge a
     playlist from specified keywords and rating level.
   - WDYDFunReview:
@@ -28,15 +28,13 @@ Supporting script files:
 Other script files are from general hacking and are kept around for
 example code.  To edit an applescript file, double click it in the
 Finder to bring it up in the AppleScript editor.  Edit, compile and
-run.  Here's what I usually do to test locally:
+run.
+
+To test locally:
  1. Run Packager.applescript to zip things up for release
  2. cp ../../../docroot/downloads/iTunesMac.zip ~/Downloads/
  3. double click iTunesMac.zip in ~/Downloads to expand it
- 4. double click Install.scpt
-
-Run Packager.applescript to zip things up for release.  Unpack
-the zip and run the install script.  
-
+ 4. double click Install.scpt and run it
 
 
 Applescript coding:
