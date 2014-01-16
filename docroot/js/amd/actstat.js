@@ -29,7 +29,7 @@ var actstat = (function () {
     },
 
 
-    showColorKeys = function (divid, serieslayout) {
+    showColorKeys = function (divid, keytitle, serieslayout) {
         var html = [];
         serieslayout.forEach(function (rowlayout) {
             var rowhtml = [];
@@ -42,7 +42,12 @@ var actstat = (function () {
             html.push(["tr",
                        rowhtml]); });
         html = ["table",
-                html];
+                ["tr",
+                 [["td", {cla: "titletxt"},
+                   keytitle],
+                  ["td",
+                   ["table",
+                    html]]]]];
         jt.out(divid, jt.tac2html(html));
     },
 
@@ -76,9 +81,9 @@ var actstat = (function () {
     displayInquiriesGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeInquirySeries();
-        showColorKeys('inqactdiv', [[series[0], series[1]],
-                                    [series[4], series[2]],
-                                    [series[5], series[3]]]);
+        showColorKeys('inqactdiv', "Inquiries", [[series[0], series[1]],
+                                                 [series[4], series[2]],
+                                                 [series[5], series[3]]]);
         svg = d3.select('#inqactdiv')
             .data(data)
             .append("svg")
@@ -163,9 +168,9 @@ var actstat = (function () {
     displayActivityGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeActivitySeries();
-        showColorKeys('useractdiv', [[series[0], series[2]],
-                                     [series[1], series[3]],
-                                     [null, series[4]]]);
+        showColorKeys('useractdiv', "Interaction", [[series[0], series[2]],
+                                                    [series[1], series[3]],
+                                                    [null, series[4]]]);
         svg = d3.select("#useractdiv")
             .data(data)
             .append("svg")
@@ -236,7 +241,7 @@ var actstat = (function () {
                   html]],
                 ["div",
                  "Active: " + active + ", Flybys: " + flybys + 
-                 ": " + ((active / (active + flybys)) * 100) + 
+                 ": " + (Math.round((active / (active + flybys)) * 100)) + 
                  "% participation"]];
         jt.out('averagesdiv', jt.tac2html(html));
     },
