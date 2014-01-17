@@ -87,7 +87,7 @@ app.hinter = (function () {
                 ["div", {cla: "headingtxt"}, "Easy Review Link"],
                 ["div",
                  [["p",
-                  "To instantly read review details from any site, add one of these links to your bookmarks:"],
+                  "To import information from any site for your review, add one of these links to your bookmarks:"],
                   ["table",
                    [["tr",
                      [["td", {cla: "bookmarkletdescr"},
