@@ -138,7 +138,7 @@ var actstat = (function () {
                             agents[agent] = 1; } } }); } });
         for(agent in agents) {
             if(agents.hasOwnProperty(agent)) {
-                if(agents[agent] > 1) {
+                if(agents[agent] > 0) {
                     html.push(["tr",
                                [["td", {align: "right"}, 
                                  agents[agent]],
