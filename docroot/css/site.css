@@ -250,8 +250,8 @@ img { border:0px; }
 .actmodesel { color:#ffd100; }
 .actmodeseldis { color:#999999; }
 #rsslink { padding:0px 0px 0px 10px; }
-#activereqsdiv { padding:0px 0px 5px 200px; }
-.reqlist { list-style:none; padding:0; margin:0; font-size:small; }
+#activereqsdiv { padding:0px 0px 5px 40px; }
+.reqlist { list-style:none; padding:0; margin:0; font-size:medium; }
 .reqlist li { font-style:italic; }
 .reqkeywordsdiv { text-align:center; font-size:small; }
 .smallbadge { width:20px; height:20px; vertical-align:middle; }

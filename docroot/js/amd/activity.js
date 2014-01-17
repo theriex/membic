@@ -965,7 +965,7 @@ return {
                           onclick: jt.fs("app.activity.writeReqRev(" +
                                          index + ")")},
                "Write Review"]]]];
-        app.layout.openDialog({x:220, y:140}, jt.tac2html(html));
+        app.layout.openDialog({x:100, y:140}, jt.tac2html(html));
     },
 
 
