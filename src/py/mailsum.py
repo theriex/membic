@@ -6,7 +6,7 @@ from pen import PenName
 from rel import outbound_relids_for_penid
 from rev import Review, review_activity_search
 from req import Request, find_requests
-from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON
+from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON, writeJSONResponse
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
@@ -26,7 +26,13 @@ class ActivityStat(db.Model):
     calculated = db.StringProperty()  # iso date when things were tallied up
     refers = db.TextProperty()        # src1:3,src2:4...
     clickthru = db.IntegerProperty()  # num specific profile or review requests
-    agents = db.TextProperty()        # '~' delimited accessing agents
+    agents = db.TextProperty()        # CSV of accessing agents
+
+
+#substrings identifying web crawler agents.  No embedded commas.
+bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
+           "netvibes.com", # not really a bot, but not a really a hit either
+           "AppEngine-Google"]
 
 
 def get_activity_stat(sday):
@@ -68,9 +74,34 @@ def bump_referral_count(stat, bumpref):
         stat.refers += bumpref + ":1"
 
 
+def is_known_bot(agentstr):
+    for botsig in bot_ids:
+        if botsig in agentstr:
+            return True
+    return False
+
+
+def note_agent(agentstr, stat):
+    #An agent string can have pretty much any unicode character in it
+    #except for reserved separators. For general information purposes,
+    #dealing with these strings in CSV format is easiest.  Pretty sure
+    #that commas are not allowed, but replace if found.
+    agentstr = agentstr.replace(",", ";");
+    if agentstr not in stat.agents:
+        if stat.agents:
+            stat.agents += ", "
+        stat.agents += agentstr
+
+
 def btw_activity(src, request):
+    agentstr = request.headers.get('User-Agent')
+    logging.info("btw_activity agent: " + agentstr)
+    agentstr = agentstr[:255]  #These CAN grow huge
+    if is_known_bot(agentstr):
+        return
     sday = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
     stat = get_activity_stat(sday)
+    note_agent(agentstr, stat)
     val = request.get("clickthrough")
     if val:  #somebody clicked through from statrev to the main site
         stat.clickthru += 1
@@ -79,7 +110,8 @@ def btw_activity(src, request):
         if "craigslist" in val:
             bump_referral_count(stat, "craigslist")
         else:
-            logging.warn("untracked referral: " + val)
+            #many bad resource warnings from bots, so log as error level
+            logging.error("untracked referral: " + val)
     val = request.get("statinqref")
     if val:  #somebody clicked through to a statrev from an outside link
         if "facebook" in val:
@@ -329,6 +361,12 @@ class SummaryForUser(webapp2.RequestHandler):
         self.response.out.write(content)
 
 
+class ReturnBotIDs(webapp2.RequestHandler):
+    def get(self):
+        csv = ",".join(bot_ids)
+        writeJSONResponse("[{\"botids\":\"" + csv +  "\"}]", self.response)
+
+
 class UserActivity(webapp2.RequestHandler):
     def get(self):
         daysback = 70  # 10 weeks back
@@ -361,6 +399,7 @@ class ByTheImg(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/emuser', SummaryForUser),
+                               ('/botids', ReturnBotIDs),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
                                ('/bytheimg', ByTheImg)], debug=True)

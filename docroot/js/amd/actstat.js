@@ -10,6 +10,7 @@ var actstat = (function () {
     ////////////////////////////////////////
 
     var data = null,
+        botids = [],
         jt = {},
         margin = { top: 20, right: 20, bottom: 40, left: 40},
         width = 600 - margin.left - margin.right,
@@ -114,16 +115,27 @@ var actstat = (function () {
     },
 
 
+    isRealUserAgent = function (agentstr) {
+        if(!agentstr) {
+            return false; }
+        botids.forEach(function (botid) {
+            if(agentstr.indexOf(botid) >= 0) {
+                return false; } });
+        return true;
+    },
+
+
     displayAccessAgents = function () {
         var html = [], agents = {}, agent;
         data.forEach(function (datum) {
-            var das = jt.safestr(datum.agents).split("~");
-            das.forEach(function (agent) {
-                if(agent) {
-                    if(agents[agent]) {
-                        agents[agent] += 1; }
-                    else {
-                        agents[agent] = 1; } } }); });
+            if(datum.day.toISOString() > "2013-12-10T00:00:00Z") { //new format
+                var das = jt.safestr(datum.agents).split(",");
+                das.forEach(function (agent) {
+                    if(isRealUserAgent(agent)) {
+                        if(agents[agent]) {
+                            agents[agent] += 1; }
+                        else {
+                            agents[agent] = 1; } } }); } });
         for(agent in agents) {
             if(agents.hasOwnProperty(agent)) {
                 if(agents[agent] > 1) {
@@ -278,6 +290,19 @@ var actstat = (function () {
     },
 
 
+    fetchBotListAndDisplayAgents = function () {
+        var critsec = "";
+        jt.call('GET', "../botids", null,
+                function (results) {
+                    botids = results[0].botids.split(',');
+                    displayAccessAgents(); },
+                function (code, errtxt) {
+                    jt.out('useractdiv', "botids failed: " + code + 
+                           " " + errtxt); },
+                critsec);
+    },
+
+
     fetchDataAndDisplay = function () {
         var critsec = "";
         jt.out('useractdiv', "Fetching ActivityStat records");
@@ -286,7 +311,7 @@ var actstat = (function () {
                     data = actstats;
                     prepData();
                     displayInquiriesGraph();
-                    displayAccessAgents();
+                    fetchBotListAndDisplayAgents();
                     displayActivityGraph();
                     displayUserAverages(); },
                 function (code, errtxt) {
