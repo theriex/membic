@@ -470,8 +470,8 @@ return {
                     ["table", {id: "topactionstable"},
                      [["tr",
                        [["td",
-                         //div filled by profile.updateTopActionDisplay
-                         ["div", {id: "homepenhdiv"}, ""]],
+                         ["div", {id: "recentacthdiv"},
+                          app.activity.activityLinkHTML()]],
                         ["td",
                          ["div", {id: "rememberedhdiv"},
                           app.activity.rememberedLinkHTML()]],
@@ -483,8 +483,8 @@ return {
                          ["div", {id: "writerevhdiv"},
                           app.review.reviewLinkHTML()]],
                         ["td",
-                         ["div", {id: "recentacthdiv"},
-                          app.activity.activityLinkHTML()]]]]]]];
+                         //div filled by profile.updateTopActionDisplay
+                         ["div", {id: "homepenhdiv"}, ""]]]]]]];
             html = jt.tac2html(html);
             jt.out('topworkdiv', html);
             if(!jt.byId('logoimg')) {

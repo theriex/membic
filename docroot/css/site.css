@@ -92,7 +92,7 @@ img { border:0px; }
 #penhnamespan { font-size:xx-large; }
 #homepennamespan { font-size:large; }
 #penhbuttonspan { padding:0px 0px 0px 20px; }
-#homepenhdiv { float:right; }
+#recentacthdiv { float:right; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
