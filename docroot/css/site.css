@@ -91,8 +91,12 @@ img { border:0px; }
  }
 #penhnamespan { font-size:xx-large; }
 #homepennamespan { font-size:large; }
-#penhbuttonspan { padding:0px 0px 0px 20px; }
+#penhbuttondiv { padding:0px 0px 0px 20px; }
 #recentacthdiv { float:right; }
+#rememberedhdiv { background:transparent; }
+#homepenhdiv { background:transparent; }
+#settingsbuttondiv { background:transparent; }
+#profstarhdiv { background:transparent; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
@@ -105,9 +109,11 @@ img { border:0px; }
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }
-.navico, .navicodis { margin:0px 0px 0px 14px; padding:4px; 
-  vertical-align:bottom; }
+.navico, .navicodis, .naviconopad, .naviconospace { margin:0px 0px 0px 14px; 
+  padding:4px; vertical-align:bottom; }
 .navicodis { opacity:0.3; filter:alpha(opacity=30); }
+.naviconopad { padding:0px; }
+.naviconospace { margin:0px; padding:0px; }
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 .svcico, .loginico { margin:0px 0px 0px 20px; border:none; 
   vertical-align:middle; }
@@ -171,6 +177,7 @@ img { border:0px; }
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
 #profdisptable { }
+#inlinkdiv { font-size:small; font-weight:normal; padding:0px 30px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
 .penlist { list-style:none; padding:0; margin:0; }
@@ -237,7 +244,9 @@ img { border:0px; }
 .relctrlsdiv { font-size:small; }
 .poststatspan { font-size:small; color:#666; }
 .reqlinkspan { font-size:small; }
-
+.inlinkspan { background:url('../img/inlinkbg.png') no-repeat center center;
+  height:19px; width:19px; display:inline-block; 
+  text-align:center; font-size:14px; font-weight:bold; vertical-align:middle; }
 /* >> review layout */
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }

@@ -77,6 +77,11 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: ReviewLink
+  properties:
+  - name: revpenid
+  - name: modified
+
 - kind: ReviewTag
   properties:
   - name: forgotten

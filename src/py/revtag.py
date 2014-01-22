@@ -4,7 +4,7 @@ from google.appengine.ext import db
 import logging
 from moracct import *
 from pen import PenName, authorized
-from revlink import ReviewLink
+from revlink import ReviewLink, verify_review_link_revpenid, make_review_link
 import json
 
 
@@ -36,6 +36,8 @@ def update_revlink_and_refobj(rlid, add, linkfield, linkvalue, dbobj):
         arr.insert(0, linkvalue)                 # prepend update value
     arr = ",".join(arr)
     setattr(revlink, linkfield, arr)
+    verify_review_link_revpenid(revlink)
+    revlink.modified = nowISO()
     revlink.put()
     dbobj.put()
 
@@ -45,7 +47,7 @@ def note_review_feedback(revid, add, linkfield, linkvalue, dbobj):
     rlq = ReviewLink.gql(where, revid)
     rls = rlq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=5)
     if len(rls) <= 0:
-        revlink = ReviewLink(revid=revid)
+        revlink = make_review_link(revid)
         revlink.put()
         rls = [ revlink ]
     update_revlink_and_refobj(rls[0].key().id(), add,

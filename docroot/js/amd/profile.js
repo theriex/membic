@@ -76,6 +76,53 @@ app.profile = (function () {
     },
 
 
+    displayInboundLinkIndicator = function () {
+        var penref, html = "", linksummary, i, count;
+        penref = app.pen.currPenRef();
+        if(!penref.linksummary) {
+            if(!penref.inlinks) {
+                //fetch is low prio, don't compete with startup processing
+                setTimeout(function () {
+                    var params, critsec = "";
+                    params = "penid=" + jt.instId(penref.pen) + "&" + 
+                        app.login.authparams();
+                    jt.call('GET', "inlinks?" + params, null,
+                            function (inlinks) {
+                                penref.inlinks = inlinks;
+                                displayInboundLinkIndicator(); },
+                            app.failf,
+                            critsec); }, 1200);
+                return; }
+            linksummary = {helpful: 0, remembered: 0, corresponding: 0};
+            for(i = 0; i < penref.inlinks.length; i += 1) {
+                if(penref.inlinks[i].helpful) {
+                    linksummary.helpful += 
+                        penref.inlinks[i].helpful.split(",").length; }
+                if(penref.inlinks[i].remembered) {
+                    linksummary.remembered += 
+                        penref.inlinks[i].remembered.split(",").length; }
+                if(penref.inlinks[i].corresponding) {
+                    linksummary.corresponding +=
+                        penref.inlinks[i].corresponding.split(",").length; } }
+            penref.linksummary = linksummary; }
+        count = penref.linksummary.helpful + penref.linksummary.remembered +
+            penref.linksummary.corresponding;
+        if(count) {
+            html = ["a", {href: "#profile",
+                          onclick: jt.fs("app.profile.display()")},
+                    ["span", {cla: "inlinkspan",
+                              title: "helpful: " + 
+                                  penref.linksummary.helpful +
+                                  ", remembered: " + 
+                                  penref.linksummary.remembered + 
+                                  ", corresponding: " +
+                                  penref.linksummary.corresponding},
+                    String(count)]];
+            html = jt.tac2html(html); }
+        jt.out('profstarhdiv', html);
+    },
+
+
     updateTopActionDisplay = function (pen) {
         var html;
         if(!jt.byId('homepenhdiv')) {
@@ -84,33 +131,57 @@ app.profile = (function () {
                 jt.imgntxt("profile.png", "",
                            "app.profile.display()",
                            "#view=profile&profid=" + jt.instId(pen),
-                           "Show profile for " + pen.name + " (you)")];
+                           "Show profile for " + pen.name + " (you)",
+                           "naviconospace")];
         jt.out('homepenhdiv', jt.tac2html(html));
         html = jt.imgntxt("settings.png", "", 
-                           "app.profile.settings()",
-                           "#Settings",
-                           "Adjust your profile settings");
+                          "app.profile.settings()",
+                          "#Settings",
+                          "Adjust your profile settings",
+                          "naviconospace");
         jt.out('settingsbuttondiv', html);
+        displayInboundLinkIndicator();
     },
 
 
     displayProfileHeading = function (homepen, dispen, directive) {
-        var html, id, name, relationship;
+        var html, id, name, linksum, relationship;
         id = jt.instId(dispen);
         name = dispen.name;
         html = ["div", {id: "profhdiv"},
-                [["span", {id: "penhnamespan"},
-                  ["a", {href: "#view=profile&profid=" + id,
-                         title: "Show profile for " + name,
-                         onclick: jt.fs("app.profile.byprofid('" + id + "')")},
-                   name]],
-                 ["span", {id: "penhbuttonspan"},
-                  " "]]];
+                ["table",
+                 ["tr",
+                  [["td",
+                    ["span", {id: "penhnamespan"},
+                     ["a", {href: "#view=profile&profid=" + id,
+                            title: "Show profile for " + name,
+                            onclick: jt.fs("app.profile.byprofid('" + id + 
+                                           "')")},
+                      name]]],
+                   ["td",
+                    ["div", {id: "penhbuttondiv"},
+                     " "]]]]]];
         html = jt.tac2html(html);
         jt.out('centerhdiv', html);
+        if(directive === "nosettings") {
+            return; }
         html = "";
-        if(jt.instId(homepen) !== jt.instId(dispen) &&
-           directive !== "nosettings") {
+        if(jt.instId(homepen) === jt.instId(dispen)) {
+            linksum = app.pen.currPenRef().linksummary;
+            if(linksum) {
+                html = ["div", {id: "inlinkdiv"},
+                        ["table",
+                         [["tr",
+                           [["td", {align: "right"}, "helpful:"],
+                            ["td", String(linksum.helpful)]]],
+                          ["tr",
+                           [["td", {align: "right"}, "remembered:"],
+                            ["td", String(linksum.remembered)]]],
+                          ["tr",
+                           [["td", {align: "right"}, "corresponding:"],
+                            ["td", String(linksum.corresponding)]]]]]];
+                html = jt.tac2html(html); } }
+        else if(jt.instId(homepen) !== jt.instId(dispen)) {
             if(app.rel.relsLoaded()) {
                 relationship = app.rel.outbound(id);
                 app.profile.verifyStateVariableValues(dispen);
@@ -133,7 +204,7 @@ app.profile = (function () {
                 //and rels are loading slowly.  Not known if you are following
                 //them yet.  The heading updates after the rels are loaded.
                 html = "..."; } }
-        jt.out('penhbuttonspan', html);
+        jt.out('penhbuttondiv', html);
     },
 
 

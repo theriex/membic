@@ -223,6 +223,13 @@ handlers:
 ######################################################################
 ##        Review Links
 
+## Return all ReviewLink entries for the given penid modified in the
+## past 30 days
+## GET params: penid, authparams
+- url: /inlinks.*
+  script: src.py.revlink.app
+
+
 ## Search the ReviewLink entries returning any that are in the given
 ## csv of review ids.
 ## GET params: revids, authparams

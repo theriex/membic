@@ -472,9 +472,10 @@ return {
                        [["td",
                          ["div", {id: "recentacthdiv"},
                           app.activity.activityLinkHTML()]],
-                        ["td",
+                        ["td", {colspan: 2},
                          ["div", {id: "rememberedhdiv"},
                           app.activity.rememberedLinkHTML()]],
+                        ["td"],
                         ["td", {rowspan: 2},
                          //div filled by profile.updateTopActionDisplay
                          ["div", {id: "settingsbuttondiv"}, ""]]]],
@@ -482,9 +483,12 @@ return {
                        [["td",
                          ["div", {id: "writerevhdiv"},
                           app.review.reviewLinkHTML()]],
+                        ["td", {align: "right"}, 
+                         //div filled by profile.updateTopActionDisplay
+                         ["div", {id: "homepenhdiv"}, ""]],
                         ["td",
                          //div filled by profile.updateTopActionDisplay
-                         ["div", {id: "homepenhdiv"}, ""]]]]]]];
+                         ["div", {id: "profstarhdiv"}, ""]]]]]]];
             html = jt.tac2html(html);
             jt.out('topworkdiv', html);
             if(!jt.byId('logoimg')) {
