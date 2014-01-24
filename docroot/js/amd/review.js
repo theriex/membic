@@ -615,57 +615,35 @@ app.review = (function () {
     },
 
 
-    reviewLinkActionHTML = function (activebuttons) {
+    reviewLinkActionHTML = function () {
         var html;
-        if(activebuttons) {
-            html = [["tr",
-                     [["td",
-                       //helpful button. init unchecked, update after lookup
-                       ["div", {id: "helpfulbutton", cla: "buttondiv"},
-                        jt.imgntxt("helpfulq.png", "Helpful",
-                                   "app.review.toggleHelpfulButton()", 
-                                   "#helpful", 
-                                   "Mark this review as helpful", 
-                                   "", "helpful")]],
-                      ["td",
-                       //remember button. init unchecked, update after lookup
-                       ["div", {id: "memobutton", cla: "buttondiv"},
-                        jt.imgntxt("rememberq.png", "Remember",
-                                   "app.review.toggleMemoButton()", 
-                                   "#memo", 
-                                   "Add this to remembered reviews", 
-                                   "", "memo")]],
-                      ["td",
-                       //respond button, contents rewritten after lookup
-                       ["div", {id: "respondbutton", cla: "buttondiv"},
-                        jt.imgntxt("writereview.png", "Your review",
-                                   "app.review.respond()", 
-                                   "#respond", 
-                                   "Edit your corresponding review", 
-                                   "", "respond")]]]],
-                    ["tr",
-                     [["td", ["div", {id: "hlinksdiv", cla: "linksdiv"}]],
-                      ["td", ["div", {id: "rlinksdiv", cla: "linksdiv"}]],
-                      ["td", ["div", {id: "clinksdiv", cla: "linksdiv"}]]]]]; }
-        else {
-            html = [["tr", { id:"hlinksdivtr", style: "display:none;"},
-                     [["td", 
-                       ["img", {cla: "buttondiv", src: "img/helpful.png"}]],
-                      ["td",
-                       ["div", {id: "hlinksdiv", cla: "linksdiv"}]]]],
-                    ["tr", { id: "rlinksdivtr", style: "display:none;"},
-                     [["td", 
-                       ["img", {cla: "buttondiv", src: "img/remembered.png"}]],
-                      ["td",
-                       ["div", {id: "rlinksdiv", cla: "linksdiv"}]]]],
-                    ["tr", { id: "clinksdivtr", style: "display:none;"},
-                     [["td",
-                       ["img", {cla: "buttondiv", src: "img/writereview.png"}]],
-                      ["td",
-                       ["div", {id: "clinksdiv", cla: "linksdiv"}]]]]]; }
         html = ["div", { id: "socialrevactdiv"},
                 ["table", {cla: "socialrevacttable"},
-                 html]];
+                 [["tr",
+                   [["td",
+                     //helpful button. init unchecked, update after lookup
+                     ["div", {id: "helpfulbutton", cla: "buttondiv"},
+                      jt.imgntxt("helpfulq.png", "Helpful",
+                                 "app.review.toggleHelpfulButton()", 
+                                 "#helpful", 
+                                 "Mark this review as helpful", 
+                                 "", "helpful")]],
+                    ["td",
+                     //remember button. init unchecked, update after lookup
+                     ["div", {id: "memobutton", cla: "buttondiv"},
+                      jt.imgntxt("rememberq.png", "Remember",
+                                 "app.review.toggleMemoButton()", 
+                                 "#memo", 
+                                 "Add this to remembered reviews", 
+                                 "", "memo")]],
+                    ["td",
+                     //respond button, contents rewritten after lookup
+                     ["div", {id: "respondbutton", cla: "buttondiv"},
+                      jt.imgntxt("writereview.png", "Your review",
+                                 "app.review.respond()", 
+                                 "#respond", 
+                                 "Edit your corresponding review", 
+                                 "", "respond")]]]]]]];
         return html;
     },
 
@@ -717,11 +695,10 @@ app.review = (function () {
                     ["div", {id: "sharediv"},
                      [["div", {id: "sharebuttonsdiv"}],
                       ["div", {id: "sharemsgdiv"}]]],
-                    reviewLinkActionHTML(false),
                     ["br"],
                     ["div", {id: "revsavemsg"}]]; }
         else {  //reading other review
-            html = [reviewLinkActionHTML(true),
+            html = [reviewLinkActionHTML(),
                     ["br"],
                     ["div", {id: "revsavemsg"}]]; }
         return html;
@@ -1199,26 +1176,6 @@ app.review = (function () {
     },
 
 
-    updateCachedReviewTags = function (field, updrevtags) {
-        var i, penref, rtid, replaced;
-        rtid = jt.instId(updrevtags[0]);
-        penref = app.pen.currPenRef();
-        if(!penref[field]) {
-            penref[field] = updrevtags; }
-        else {
-            for(i = 0; i < penref[field].length; i += 1) {
-                if(jt.instId(penref[field][i]) === rtid) {
-                    penref[field][i] = updrevtags[0];
-                    replaced = true; } }
-            if(!replaced) {  //must prepend if remembered
-                penref[field].unshift(updrevtags[0]); } }
-        if(field === "remembered") {
-            //ensure helpful marks for anything remembered are found
-            updateCachedReviewTags('helpful', updrevtags); }
-        app.lcs.getRevRef(updrevtags[0].revid).revlink = null;
-    },
-
-
     isHelpful = function (revtag) {
         if(revtag && revtag.helpful && !revtag.nothelpful) {
             return true; }
@@ -1266,61 +1223,150 @@ app.review = (function () {
     },
 
 
-    getReviewLinkHTML = function (field, penref, revref) {
-        var titles = { helpful: "$Name found this review helpful",
-                       remembered: "$Name remembered this review",
-                       corresponding: "$Name also reviewed this" },
-            html, pen, title, funcstr;
-        pen = penref.pen;
-        title = titles[field].replace("$Name", jt.ndq(pen.name));
-        funcstr = "app.profile.byprofid('" + jt.instId(pen) + "')";
-        if(revref) {
-            funcstr = "app.profile.readReview('" + 
-                                        jt.instId(revref.rev) + "')"; }
-        html = ["a", {href: "#" + jt.ndq(pen.name),
-                      onclick: jt.fs(funcstr),
-                      title: title},
-                pen.name];
-        return jt.tac2html(html);
+    penlinksHTML = function (pencsv, redrawfunc, title) {
+        var html = "", penids, selfidstr, i, penref, penlinks = [], 
+            max = 20, slop = 3;
+        selfidstr = String(jt.instId(app.pen.currPenRef().pen));
+        penids = pencsv.split(",");
+        //start with "You" if applicable
+        for(i = 0; i < penids.length; i += 1) {
+            if(penids[i] === selfidstr) {
+                penlinks.push("You");
+                break; } }
+        for(i = 0; i < penids.length; i += 1) {
+            penref = app.lcs.getPenRef(penids[i]);
+            if(penref.status === "not cached") {
+                app.lcs.getPenFull(penids[i], redrawfunc);
+                break; }
+            if(penref.pen && String(penref.penid) !== selfidstr) {
+                html = ["a", {href: "#" + jt.ndq(penref.pen.name),
+                              onclick: jt.fs("app.profile.byprofid('" +
+                                             penref.penid + "')"),
+                              title: title.replace("$Name", 
+                                                   jt.ndq(penref.pen.name))},
+                        penref.pen.name];
+                html = jt.tac2html(html);
+                penlinks.push(html);
+                if(penlinks.length > max && (penids.length - max) > slop) {
+                    penlinks.push(String(penids.length - max) + " others");
+                    break; } } }
+        if(penlinks.length > 0) {
+            html = "";
+            for(i = 0; i < penlinks.length; i += 1) {
+                if(html && i === penlinks.length - 1) {
+                    html += " and "; }
+                else if(html) {
+                    html += ", "; }
+                html += penlinks[i]; }
+            html += title.replace("$Name", ""); }
+        return html;
     },
 
 
-    displayReviewLinks = function () {
-        var divs = ["hlinksdiv", "rlinksdiv", "clinksdiv"],
-            fields = ["helpful", "remembered", "corresponding"],
-            revref = app.lcs.getRevRef(crev),  //rev is loaded
-            html, i, pens, j, penrevid, penid, penrevref, penref, tr;
+    helpfulRowHTML = function (redrawfunc) {
+        var html = "", pencsv;
+        pencsv = app.lcs.getRevRef(crev).revlink.helpful;
+        if(pencsv) {
+            html = ["tr",
+                    [["td", {cla:"respcol", align:"right"},
+                      ["img", {src:"img/helpful.png",
+                               style:"width:25px;height:22px"}]],
+                     ["td", {cla:"respval", colspan: 2},
+                      penlinksHTML(pencsv, redrawfunc,
+                                   "$Name found this review helpful")]]]; }
+        return html;
+    },
+
+
+    rememberedRowHTML = function (redrawfunc) {
+        var html = "", pencsv;
+        pencsv = app.lcs.getRevRef(crev).revlink.remembered;
+        if(pencsv) {
+            html = ["tr",
+                    [["td", {cla:"respcol", align:"right"},
+                      ["img", {src:"img/remembered.png",
+                               style:"width:25px;height:22px"}]],
+                     ["td", {cla:"respval", colspan: 2},
+                      penlinksHTML(pencsv, redrawfunc,
+                                   "$Name remembered this review")]]]; }
+        return html;
+    },
+
+
+    queryAndCommentRowsHTML = function (redrawfunc) {
+        var html = "";
+        //functionality coming soon...
+        return html;
+    },
+
+
+    correspondingReviewsHTML = function (redrawfunc) {
+        var rows = [], csv, elems, i, penid, revid, penref, revref;
+        csv = app.lcs.getRevRef(crev).revlink.corresponding;
+        if(csv) {
+            elems = csv.split(",");
+            for(i = 0; i < elems.length; i += 1) {
+                revid = elems[i].split(":");
+                penid = revid[1];
+                revid = revid[0];
+                penref = app.lcs.getPenRef(penid);
+                if(penref.status === "not cached") {
+                    app.lcs.getPenFull(penid, redrawfunc);
+                    break; }
+                revref = app.lcs.getRevRef(revid);
+                if(revref.status === "not cached") {
+                    app.lcs.getRevFull(revid, redrawfunc);
+                    break; }
+                if(penref.pen && revref.rev) {
+                    rows.push(
+                        ["tr",
+                         [["td", {cla:"respcol", align:"left"},
+                           app.review.starsImageHTML(revref.rev.rating)],
+                          ["td", {cla:"respval", valign:"top", align:"right"},
+                           ["a", {href: "#" + jt.ndq(penref.pen.name),
+                                  onclick: jt.fs("app.profile.readReview('" +
+                                                 revref.revid + "')")},
+                             penref.pen.name]],
+                          ["td", {cla:"respval", valign:"top", align:"left"},
+                           jt.ellipsis(revref.rev.text, 255)]]]); } } }
+        return rows;
+    },
+
+
+    displayReviewResponses = function () {
+        var revref, html;
+        revref = app.lcs.getRevRef(crev);  //review is already loaded
         if(!revref.revlink) {
-            return app.lcs.verifyReviewLinks(displayReviewLinks); }
-        html = "";
-        for(i = 0; i < divs.length; i += 1) {
-            pens = revref.revlink[fields[i]];
-            if(pens) {
-                pens = pens.split(",");
-                for(j = 0; j < pens.length; j += 1) {
-                    penrevid = 0; penid = pens[j];
-                    if(penid.indexOf(":") > 0) {
-                        penid = penid.split(":");
-                        penrevid = penid[0]; penid = penid[1]; }
-                    penref = app.lcs.getPenRef(penid);
-                    if(penref.status === "not cached") {
-                        return app.lcs.getPenFull(penid, displayReviewLinks); }
-                    if(penrevid) {
-                        penrevref = app.lcs.getRevRef(penrevid);
-                        if(penrevref.status === "not cached") {
-                            return app.lcs.getRevFull(penrevid, 
-                                                      displayReviewLinks); } }
-                    if(penref.pen && penref.pen !== app.pen.currPenRef().pen) {
-                        if(html) {
-                            html += ", "; }
-                        html += getReviewLinkHTML(fields[i], penref, 
-                                                  penrevref); } }
-                if(html) {
-                    tr = jt.byId(divs[i] + "tr");
-                    if(tr) {
-                        tr.style.display = "block"; } }
-                jt.out(divs[i], html);
-                html = ""; } }
+            return app.lcs.verifyReviewLinks(displayReviewResponses); }
+        html = ["table",
+                [helpfulRowHTML(displayReviewResponses),
+                 rememberedRowHTML(displayReviewResponses),
+                 queryAndCommentRowsHTML(displayReviewResponses),
+                 correspondingReviewsHTML(displayReviewResponses)]];
+        jt.out('revcommentsdiv', jt.tac2html(html));
+    },
+
+
+    updateCachedReviewTags = function (field, updrevtags) {
+        var revtag, revlink, i, penref, revtagid, replaced;
+        revtag = updrevtags[0];
+        revlink = updrevtags[1];
+        revtagid = jt.instId(revtag);
+        penref = app.pen.currPenRef();
+        if(!penref[field]) {
+            penref[field] = [revtag]; }
+        else {
+            for(i = 0; i < penref[field].length; i += 1) {
+                if(jt.instId(penref[field][i]) === revtagid) {
+                    penref[field][i] = revtag;
+                    replaced = true; } }
+            if(!replaced) {  //must prepend if remembered
+                penref[field].unshift(revtag); } }
+        if(field === "remembered") {
+            //ensure helpful marks for anything remembered are found
+            updateCachedReviewTags('helpful', updrevtags); }
+        app.lcs.getRevRef(revtag.revid).revlink = revlink;
+        setTimeout(displayReviewResponses, 50);
     },
 
 
@@ -1334,8 +1380,8 @@ app.review = (function () {
                 findCorrespondingReview(homepen, 
                                         displayCorrespondingReviewInfo); 
             }); }
-        if(jt.byId('hlinksdiv')) {
-            displayReviewLinks(); }
+        if(jt.byId('revcommentsdiv')) {
+            displayReviewResponses(); }
         if(jt.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }
@@ -1369,8 +1415,13 @@ app.review = (function () {
                   revFormDetailRow(review, type, keyval, mode),
                   transrow,
                   ["tr",  //picture extends into this row
-                   ["td", {colspan: 3, id: "revformbuttonstd"},
-                    reviewFormButtonsHTML(pen, review, type, keyval, mode)]]]]];
+                   ["td", {colspan: 3, id:"revformbuttonstd"},
+                    reviewFormButtonsHTML(pen, review, type, keyval, mode)]],
+                  ["tr", {cla:"spacertr"}],
+                  ["tr",  //this row starts after the picture
+                   ["td", {colspan: 3},
+                    ["div", {id:"revcommentsdiv"},
+                     ""]]]]]];
         if(!jt.byId('cmain')) {
             app.layout.initContent(); }
         html = jt.tac2html(html);
@@ -1891,7 +1942,7 @@ return {
             "&revid=" + jt.instId(crev) +
             "&remember=" + value;
         jt.call('POST', "noteremem?" + app.login.authparams(), data,
-                 function (updatedrevtags) {
+                 function (updatedrevtags) {  //revtag, revlink
                      updateCachedReviewTags('remembered', updatedrevtags);
                      if(isRemembered(updatedrevtags[0])) {
                          img.src = "img/remembered.png";
@@ -1925,7 +1976,7 @@ return {
             "&revid=" + jt.instId(crev) +
             "&helpful=" + value;
         jt.call('POST', "notehelpful?" + app.login.authparams(), data,
-                 function (updatedrevtags) {
+                 function (updatedrevtags) {  //revtag, revlink
                      updateCachedReviewTags('helpful', updatedrevtags);
                      if(isHelpful(updatedrevtags[0])) {
                          img.src = "img/helpful.png";

@@ -40,6 +40,7 @@ def update_revlink_and_refobj(rlid, add, linkfield, linkvalue, dbobj):
     revlink.modified = nowISO()
     revlink.put()
     dbobj.put()
+    return revlink
 
 
 def note_review_feedback(revid, add, linkfield, linkvalue, dbobj):
@@ -50,8 +51,9 @@ def note_review_feedback(revid, add, linkfield, linkvalue, dbobj):
         revlink = make_review_link(revid)
         revlink.put()
         rls = [ revlink ]
-    update_revlink_and_refobj(rls[0].key().id(), add,
-                              linkfield, linkvalue, dbobj)
+    revlink = update_revlink_and_refobj(rls[0].key().id(), add,
+                                        linkfield, linkvalue, dbobj)
+    return revlink
 
 
 def fetch_or_create_tag_authorized(penid, revid):
@@ -143,9 +145,9 @@ class NoteHelpful(webapp2.RequestHandler):
             revtag.nothelpful = None
         else:
             revtag.nothelpful = nowISO()
-        note_review_feedback(revtag.revid, helpful, 
-                             "helpful", revtag.penid, revtag)
-        returnJSON(self.response, [ revtag ])
+        revlink = note_review_feedback(revtag.revid, helpful, 
+                                       "helpful", revtag.penid, revtag)
+        returnJSON(self.response, [ revtag, revlink ])
 
 
 class NoteRemember(webapp2.RequestHandler):
@@ -159,9 +161,9 @@ class NoteRemember(webapp2.RequestHandler):
             revtag.forgotten = None
         else:
             revtag.forgotten = nowISO()
-        note_review_feedback(revtag.revid, remember, 
-                             "remembered", revtag.penid, revtag)
-        returnJSON(self.response, [ revtag ])
+        revlink = note_review_feedback(revtag.revid, remember, 
+                                       "remembered", revtag.penid, revtag)
+        returnJSON(self.response, [ revtag, revlink ])
 
 
 class SearchHelpful(webapp2.RequestHandler):
