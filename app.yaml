@@ -244,6 +244,45 @@ handlers:
 
 
 ######################################################################
+##        ReviewComments
+
+## Fetch pending questions/comments from others
+## GET params: penid, authparams
+- url: /pendincmt.*
+  script: src.py.revcmt.app
+
+
+## Fetch pending questions/comments you have written
+## GET params: penid, authparams
+- url: /pendoutcmt.*
+  script: src.py.revcmt.app
+
+
+## Fetch accepted questions/comments for a specific review
+## GET params: revid, authparams
+- url: /revcmt.*
+  script: src.py.revcmt.app
+
+
+## Update a question/comment (reviewer)
+## POST params: revcmt, authparams
+- url: /updcmt.*
+  script: src.py.revcmt.app
+
+
+## Create a new question/comment (commenter)
+## POST params: revcmt, authparams
+- url: /crecmt.*
+  script: src.py.revcmt.app
+
+
+## Delete a comment you previously wrote (commenter)
+## POST params: revcmt, authparams
+- url: /delcmt.*
+  script: src.py.revcmt.app
+
+
+######################################################################
 ##        Requests
 
 ## Create or update a request
