@@ -685,7 +685,7 @@ app.activity = (function () {
         if(!app.pen.currPenRef().helpful) {
             jt.out('revactdiv', "Loading helpful...");
             app.layout.adjust();
-            app.review.loadHelpful(bootActivityDisplay);
+            app.revresp.loadHelpful(bootActivityDisplay);
             return; }
         app.pen.currPenRef().actdisp = {
             revrefs: [], 

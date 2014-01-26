@@ -190,6 +190,16 @@ class CreateComment(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("rctype must be question or comment")
             return
+        where = "WHERE revid = :1 AND revpenid = :2 AND cmtpenid = :3" +\
+            " AND (rcstat = 'pending' OR rcstat = 'ignored')"
+        rcq = ReviewComment.gql(where, rc.revid, rc.revpenid, rc.cmtpenid)
+        rcs = rcq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(rcs) > 0:
+            self.error(401)
+            self.response.out.write("New " + rc.rctype + 
+                                    " not allowed while previous " + 
+                                    rcs[0].rctype + " still pending")
+            return
         rc.rcstat = "pending"
         rc.comment = self.request.get('comment')
         rc.resp = ""

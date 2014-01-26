@@ -1210,7 +1210,7 @@ return {
         revid = jt.instId(revobj);
         type = app.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
-        linkclass = app.review.foundHelpful(revid)? "rslcbold" : "rslc";
+        linkclass = app.revresp.foundHelpful(revid)? "rslcbold" : "rslc";
         if(type.subkey) {
             linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
                 jt.ellipsis(revobj[type.subkey], 40); }
