@@ -1,4 +1,4 @@
-/*global setTimeout: false, app: false, jt: false */
+/*global setTimeout: false, window: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -49,7 +49,7 @@ app.revresp = (function () {
     //already instantiated, then that instance is used and written
     //through on save. 
     findCorrespondingReview = function (homepen, contfunc) {
-        var params, i, t20, critsec = "", crev;
+        var params, i, t20, critsec, crev;
         crev = app.review.getCurrentReview();
         if(homepen.top20s) {
             t20 = homepen.top20s[app.review.getCurrentReview().revtype];
@@ -61,6 +61,7 @@ app.revresp = (function () {
         params = "penid=" + jt.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
             "&" + app.login.authparams();
+        critsec = critsec || "";
         jt.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var rev = null;
@@ -140,7 +141,7 @@ app.revresp = (function () {
 
 
     initMemoButtonSetting = function (penref, review) {
-        var i, revid, params, critsec = "";
+        var i, revid, params, critsec;
         if(penref.remembered) {  //local data initialized
             revid = jt.instId(review);
             for(i = 0; i < penref.remembered.length; i += 1) {
@@ -151,6 +152,7 @@ app.revresp = (function () {
         else { //penref.remembered not defined yet. init from db and retry
             params = "penid=" + jt.instId(penref.pen) +
                 "&" + app.login.authparams();
+            critsec = critsec || "";
             jt.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
@@ -162,13 +164,49 @@ app.revresp = (function () {
     },
 
 
-    initQuestionButtonSetting = function () {
-        var img;
-        img = jt.byId('questionimg');
-        if(!img) {  //spurious call, button not displayed
-            return; }
-        img.className = "navicodis";  //grey out the image to react to click
-        jt.byId('questiontxttd').style.color = greytxt;
+    execIfMutuallyFollowing = function (execfunc) {
+        var review, penref, i, following;
+        review = app.review.getCurrentReview();
+        penref = app.pen.currPenRef();
+        //outbound relationships are loaded already so just walk them
+        for(i = 0; i < penref.outrels.length; i += 1) {
+            if(penref.outrels[i].rel.relatedid === review.penid) {
+                following = true;
+                break; } }
+        if(following) {  //see if they are following back
+            app.rel.loadDisplayRels(penref.pen, "inbound", function (rels) {
+                for(i = 0; i < rels.length; i += 1) {
+                    if(rels[i].rel.originid === review.penid) {
+                        return execfunc(); } } }); }
+    },
+
+
+    disableQuestionButton = function () {
+        var img, txt;
+        if(jt.byId('questionbutton')) {
+            img = jt.byId('questionimg');
+            if(img) {
+                img.className = "navicodis"; }
+            txt = jt.byId('questiontxttd');
+            if(txt) {
+                txt.style.color = greytxt; } }
+    },
+
+
+    testEnableQuestionButton = function () {
+        disableQuestionButton();
+        execIfMutuallyFollowing(function () {
+            var penref, img, txt;
+            penref = app.pen.currPenRef();
+            //if they have pending or rejected comments, those need to
+            //be deleted before any more can be added.
+            if(!penref.qcmts || penref.qcmts.length === 0) { 
+                img = jt.byId('questionimg');
+                if(img) {
+                    img.className = "navico"; }
+                txt = jt.byId('questiontxttd');
+                if(txt) {
+                    txt.style.color = app.colors.text; } } });
     },
 
 
@@ -177,7 +215,7 @@ app.revresp = (function () {
         img = jt.byId('commentimg');
         if(!img) {  //spurious call, button not displayed
             return; }
-        img.className = "navicodis";  //grey out the image to react to click
+        img.className = "navicodis";
         jt.byId('commenttxttd').style.color = greytxt;
     },
 
@@ -222,8 +260,27 @@ app.revresp = (function () {
     },
 
 
+    //return a good width for a text entry area
+    textTargetWidth = function () {
+        var targetwidth = Math.max((app.winw - 400), 200);
+        targetwidth = Math.min(targetwidth, 750);
+        return targetwidth;
+    },
+
+
     crevlink = function () {
         return app.lcs.getRevRef(app.review.getCurrentReview()).revlink;
+    },
+
+
+    questionButtonsHTML = function () {
+        return [["button", {type: "button", id: "cmtcancelb",
+                            onclick: jt.fs("app.layout.closeDialog()")},
+                 "Cancel"],
+                "&nbsp;",
+                ["button", {type: "button", id: "cmtokb",
+                            onclick: jt.fs("app.revresp.askquestion()")},
+                 "Ask"]];
     },
 
 
@@ -257,13 +314,108 @@ app.revresp = (function () {
     },
 
 
-    queryAndCommentRowsHTML = function (redrawfunc) {
+    commentDeleteHTML = function (revcmt) {
+        var penid, rcid;
+        penid = app.pen.currPenRef().penid;
+        if(penid !== revcmt.cmtpenid) {
+            return ""; }
+        rcid = jt.instId(revcmt);
+        return ["a", {cla: "cmtdelex", id: "rcx" + rcid, href: "#delete",
+                      onclick: jt.fs("app.revresp.deleterevcmt('" +
+                                     rcid + "')")},
+                "(x)&nbsp;"];
+    },
+
+
+    miniProfPicHTML = function (penref) {
         var html = "";
-        //functionality coming soon...
+        if(penref.pen.profpic) {
+            html = ["img", {src: "profpic?profileid=" + jt.instId(penref.pen),
+                            cla: "srchpic"}]; }
         return html;
     },
 
 
+    appendReviewComments = function (rows, qcmts, redrawfunc) {
+        var i, qcmt, penref, resptxt, revref;
+        for(i = 0; i < qcmts.length; i += 1) {
+            qcmt = qcmts[i];
+            penref = app.lcs.getPenRef(qcmt.cmtpenid);
+            if(penref.status === "not cached") {
+                app.lcs.getPenFull(qcmt.cmtpenid, redrawfunc);
+                break; }
+            if(penref.pen) {
+                switch(qcmt.rcstat) {
+                case "accepted": resptxt = ""; break;
+                case "rejected": resptxt = "Rejected: "; break;
+                default: resptxt = "Pending..."; }
+                resptxt += qcmt.resp;
+                rows.push(
+                    ["tr",
+                     [["td", {cla:"respcol", align:"right"},
+                       [commentDeleteHTML(qcmt),
+                        miniProfPicHTML(penref),
+                        ["span", {cla: "qcaspan"},
+                         (qcmt.rctype === "question" ? "Q" : "C")]]],
+                      ["td", {cla:"respval", align:"right", valign:"top"},
+                       ["a", {href: "#" + jt.ndq(penref.pen.name),
+                              onclick: jt.fs("app.profile.byprofid('" +
+                                             qcmt.cmtpenid + "')")},
+                        penref.pen.name]],
+                      ["td", {cla:"respval", align:"left", valign:"top"},
+                       jt.ellipsis(qcmt.comment, 255)]]]);
+                if(resptxt) {
+                    revref = app.lcs.getRevRef(app.review.getCurrentReview());
+                    penref = app.lcs.getPenRef(revref.rev.penid);
+                    rows.push(
+                        ["tr",
+                         [["td", {cla:"respcol", align:"right"},
+                           [miniProfPicHTML(penref),
+                            ["span", {cla: "qcaspan"},
+                             "A"]]],
+                          ["td"],
+                          ["td", {cla:"respval", align:"left", valign:"top"},
+                           resptxt]]]); } } }
+        return rows;
+    },
+
+
+    queryAndCommentRowsHTML = function (redrawfunc) {
+        var penref, revref, rows = [], params, critsec;
+        penref = app.pen.currPenRef();
+        if(!penref.qcmts) {
+            params = "penid=" + penref.penid + "&" + app.login.authparams();
+            critsec = critsec || "";
+            penref.qcmts = [];  //if call crashes hard, don't loop
+            jt.call('GET', "pendoutcmt?" + params, null,
+                    function (revcmts) {
+                        penref.qcmts = revcmts;
+                        redrawfunc(); },
+                    app.failf(function (code, errtxt) {
+                        jt.err("Pending comment retrieval failed " + code +
+                               " " + errtxt); }),
+                    critsec); }
+        else {  //have penref.qcmts
+            appendReviewComments(rows, penref.qcmts, redrawfunc);
+            revref = app.lcs.getRevRef(app.review.getCurrentReview());
+            if(!revref.qcmts) {
+                params = "revid=" + revref.revid + "&" + app.login.authparams();
+                critsec = critsec || "";
+                revref.qcmts = [];  //if call crashes hard, don't loop
+                jt.call('GET', "revcmt?" + params, null,
+                        function (revcmts) {
+                            revref.qcmts = revcmts;
+                            redrawfunc(); },
+                        app.failf(function (code, errtxt) {
+                            jt.err("Review comment retrieval failed: " + code +
+                                   " " + errtxt); }),
+                        critsec); }
+            else {  //have revref.qcmts
+                appendReviewComments(rows, revref.qcmts, redrawfunc); } }
+        return rows;
+    },
+                
+            
     correspondingReviewsHTML = function (redrawfunc) {
         var rows = [], csv, elems, i, penid, revid, penref, revref;
         csv = crevlink().corresponding;
@@ -308,6 +460,7 @@ app.revresp = (function () {
                  queryAndCommentRowsHTML(displayReviewResponses),
                  correspondingReviewsHTML(displayReviewResponses)]];
         jt.out('revcommentsdiv', jt.tac2html(html));
+        testEnableQuestionButton();
     },
 
 
@@ -348,7 +501,7 @@ return {
 
 
     toggleMemoButton: function (value) {
-        var img, tbl, data, critsec = "";
+        var img, tbl, data, critsec;
         img = jt.byId('memoimg');
         if(!img) {  //spurious call, button not displayed
             return; }
@@ -363,6 +516,7 @@ return {
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
             "&remember=" + value;
+        critsec = critsec || "";
         jt.call('POST', "noteremem?" + app.login.authparams(), data,
                  function (updatedrevtags) {  //revtag, revlink
                      updateCachedReviewTags('remembered', updatedrevtags);
@@ -383,7 +537,7 @@ return {
 
 
     toggleHelpfulButton: function (value) {
-        var img, tbl, data, critsec = "";
+        var img, tbl, data, critsec;
         img = jt.byId('helpfulimg');
         if(!img) {  //spurious call, button not displayed
             return; }
@@ -397,6 +551,7 @@ return {
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
             "&helpful=" + value;
+        critsec = critsec || "";
         jt.call('POST', "notehelpful?" + app.login.authparams(), data,
                  function (updatedrevtags) {  //revtag, revlink
                      updateCachedReviewTags('helpful', updatedrevtags);
@@ -415,7 +570,114 @@ return {
 
 
     question: function () {
-        jt.err("not implemented yet.");
+        var img, html, visf = null, crev, revpen, lightbg, tas;
+        img = jt.byId('questionimg');
+        if(!img) {  //button not displayed, spurious call
+            return; }
+        crev = app.review.getCurrentReview();
+        revpen = app.lcs.getPenRef(crev.penid).pen;
+        if(img.className === "navicodis") {
+            html = ["div", {cla: "commentdiv"},
+                    [["div", {cla: "commentform", 
+                              style: "width:" + textTargetWidth() + "px;"},
+                      "You must be following " + revpen.name + ", and " + 
+                      revpen.name + " must be following you back " + 
+                      "before you can create a question. You can only " +
+                      "have one pending question or comment open at a time."],
+                     ["div", {id: "requestbuttonsdiv"},
+                      ["button", {type: "button", id: "niokb",
+                                  onclick: jt.fs("app.layout.closeDialog()")},
+                       "OK"]]]];
+            visf = function () {
+                jt.byId('niokb').focus(); }; }
+
+        else {
+            lightbg = app.skinner.lightbg();
+            tas = "color:" + app.colors.text + ";" + "width:" + 
+                textTargetWidth() + "px;" + "height:50px;padding:5px 8px;" +
+                "background-color:" + lightbg + ";background-color:rgba(" +
+                jt.hex2rgb(lightbg) + ",0.6);";
+            html = ["div", {cla: "commentdiv"},
+                    [["div", {cla: "commentform"},
+                      ["Your question for " + revpen.name,
+                       ["br"],
+                       ["textarea", {id: "cmtta", style: tas},
+                        ""]]],
+                     ["div", {id: "cmterrdiv"}, ""],
+                     ["div", {id: "requestbuttonsdiv"},
+                      questionButtonsHTML()]]];
+            visf = function () {
+                jt.byId('cmtta').focus(); }; }
+        //wrap content in standard dialog box
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 "Question"],
+                html];
+        app.layout.openDialog({x:150, y:400}, jt.tac2html(html), null, visf);
+    },
+
+
+    askquestion: function () {
+        var question, crev, data, critsec;
+        jt.out('requestbuttonsdiv', "Asking...");
+        question = jt.byId('cmtta').value;
+        crev = app.review.getCurrentReview();
+        data = { revid: jt.instId(crev), 
+                 revpenid: crev.penid,
+                 cmtpenid: jt.instId(app.pen.currPenRef().pen),
+                 rctype: "question",
+                 comment: question };
+        data = jt.objdata(data);
+        critsec = critsec || "";
+        jt.call('POST', "crecmt?" + app.login.authparams(), data,
+                function (updcmts) {  //returned comment rcstat: "pending"
+                    app.pen.currPenRef().qcmts.push(updcmts[0]);
+                    app.layout.closeDialog();
+                    displayReviewResponses(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('cmterrdiv', "Asking failed " + code + 
+                           " " + errtxt);
+                    jt.out('requestbuttonsdiv', questionButtonsHTML()); }),
+                critsec);
+    },
+
+
+    deleterevcmt: function (rcid) {
+        var qcmts, index, rc = null, i, data, critsec;
+        qcmts = app.pen.currPenRef().qcmts;
+        for(i = 0; qcmts && i < qcmts.length; i += 1) {
+            if(jt.instId(qcmts[i]) === rcid) {
+                rc = qcmts[i];
+                index = i;
+                break; } }
+        if(!rc) {
+            qcmts = app.lcs.getRevRef(app.review.getCurrentReview()).qcmts;
+            for(i = 0; qcmts && i < qcmts.length; i += 1) {
+                if(jt.instId(qcmts[i]) === rcid) {
+                    rc = qcmts[i];
+                    index = i;
+                    break; } } }
+        if(!rc) {
+            jt.err("Could not find comment id " + rcid);
+            return; }
+        if(!window.confirm("Are you sure you want to delete this " + 
+                           rc.rctype + "?")) {
+            return; }
+        jt.out("rcx" + rcid, "(&nbsp;)&nbsp;");
+        data = jt.objdata(rc);
+        critsec = critsec || "";
+        jt.call('POST', "delcmt?" + app.login.authparams(), data,
+                function () {
+                    qcmts.splice(index, 1);
+                    displayReviewResponses(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Delete failed " + code + " " + errtxt);
+                    jt.out("rcx" + rcid, "(x)&nbsp;"); }),
+                critsec);
     },
 
 
@@ -425,11 +687,12 @@ return {
 
 
     loadHelpful: function (callback, penref) {
-        var params, critsec = "";
+        var params, critsec;
         if(!penref) {
             penref = app.pen.currPenRef(); }
         params = "penid=" + jt.instId(penref.pen) + 
             "&" + app.login.authparams();
+        critsec = critsec || "";
         jt.call('GET', "srchhelpful?" + params, null,
                  function (revtags) {
                      penref.helpful = revtags;
@@ -506,6 +769,7 @@ return {
 
 
     activateResponseButtons: function (review) {
+        disableQuestionButton();
         if(jt.byId('helpfulbutton')) {
             initHelpfulButtonSetting(app.pen.currPenRef(), review); }
         if(jt.byId('memobutton')) {
@@ -516,7 +780,7 @@ return {
                                         displayCorrespondingReviewInfo); 
             }); }
         if(jt.byId('questionbutton')) {
-            initQuestionButtonSetting(); }
+            testEnableQuestionButton(); }
         if(jt.byId('commentbutton')) {
             initCommentButtonSetting(); }
         if(jt.byId('revcommentsdiv')) {

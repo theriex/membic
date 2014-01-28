@@ -4,6 +4,8 @@ from google.appengine.ext import db
 import logging
 from moracct import *
 from pen import PenName, authorized
+from rev import Review
+from rel import Relationship
 
 
 class ReviewComment(db.Model):
@@ -12,7 +14,7 @@ class ReviewComment(db.Model):
     revpenid = db.IntegerProperty()    # reviewer pen name id
     cmtpenid = db.IntegerProperty()    # commenter pen name id
     rctype = db.StringProperty()       # question, comment
-    rcstat = db.StringProperty()       # pending, accepted, ignored, rejected
+    rcstat = db.StringProperty()       # accepted, ignored, pending, rejected
     comment = db.TextProperty()        # the question or comment text
     resp = db.TextProperty()           # response text, rejection reason
     modified = db.StringProperty()     # iso date
@@ -39,12 +41,12 @@ def comment_access_authorized_pen(handler, penidparamname):
         
 
 def fetch_review_comment_for_update(handler, penidparamname):
-    pen = comment_access_authorized_pen(self, penidparamname)
-    rcid = self.request.get('_id')
+    pen = comment_access_authorized_pen(handler, penidparamname)
+    rcid = handler.request.get('_id')
     rc = ReviewComment.get_by_id(intz(rcid))
     if not rc:
-        self.error(404)
-        self.response.out.write("ReviewComment: " + str(rcid) + " not found")
+        handler.error(404)
+        handler.response.out.write("ReviewComment: " + str(rcid) + " not found")
         return False
     if penidparamname == 'revpenid':
         penid = intz(handler.request.get('revpenid'))
@@ -67,10 +69,27 @@ def fetch_review_comment_for_update(handler, penidparamname):
 # it looks like you are following, then you can see comments.
 def is_following(originid, relatedid):
     where = "WHERE originid = :1 AND relatedid = :2 LIMIT 1"
-    relq = Relationship.gql(where, originid, penid)
+    relq = Relationship.gql(where, originid, relatedid)
     rels = relq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     if len(rels) > 0:
         return rels[0]
+    return False
+
+
+def have_pending_comment(rc):
+    where = "WHERE revid = :1 AND revpenid = :2 AND cmtpenid = :3" +\
+        " AND rcstat = 'pending'"
+    rcq = ReviewComment.gql(where, rc.revid, rc.revpenid, rc.cmtpenid)
+    rcs = rcq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    if len(rcs) > 0:
+        return True
+    # same as pending test above, but look for "ignored".
+    where = "WHERE revid = :1 AND revpenid = :2 AND cmtpenid = :3" +\
+        " AND rcstat = 'ignored'"
+    rcq = ReviewComment.gql(where, rc.revid, rc.revpenid, rc.cmtpenid)
+    rcs = rcq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    if len(rcs) > 0:
+        return True
     return False
 
 
@@ -94,9 +113,12 @@ class FetchOutboundPendingComments(webapp2.RequestHandler):
         pen = comment_access_authorized_pen(self, 'penid')
         if not pen:
             return
-        where = "WHERE cmtpenid = :1" +\
-            " AND (rcstat = 'pending' OR rcstat = 'ignored')" +\
-            " ORDER BY modified DESC"
+        # GQL does not support OR. And the != operator is syntactic
+        # sugar that translates into multiple queries.  Leveraging
+        # that non-terminal rcstat values are lexically greater than
+        # "accepted", but can't ORDER BY modified in that case because
+        # GQL only allows ordering by the inequality field.
+        where = "WHERE cmtpenid = :1 AND rcstat > 'accepted'"
         rcq = ReviewComment.gql(where, pen.key().id())
         rcs = rcq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         for rc in rcs:
@@ -190,11 +212,7 @@ class CreateComment(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("rctype must be question or comment")
             return
-        where = "WHERE revid = :1 AND revpenid = :2 AND cmtpenid = :3" +\
-            " AND (rcstat = 'pending' OR rcstat = 'ignored')"
-        rcq = ReviewComment.gql(where, rc.revid, rc.revpenid, rc.cmtpenid)
-        rcs = rcq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        if len(rcs) > 0:
+        if have_pending_comment(rc):
             self.error(401)
             self.response.out.write("New " + rc.rctype + 
                                     " not allowed while previous " + 

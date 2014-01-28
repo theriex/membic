@@ -77,6 +77,18 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: ReviewComment
+  properties:
+  - name: cmtpenid
+  - name: rcstat
+
+- kind: ReviewComment
+  properties:
+  - name: rcstat
+  - name: revid
+  - name: modified
+    direction: desc
+
 - kind: ReviewLink
   properties:
   - name: revpenid

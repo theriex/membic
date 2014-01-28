@@ -662,11 +662,9 @@ app.review = (function () {
                     ["div", {id: "sharediv"},
                      [["div", {id: "sharebuttonsdiv"}],
                       ["div", {id: "sharemsgdiv"}]]],
-                    ["br"],
                     ["div", {id: "revsavemsg"}]]; }
         else {  //reading other review
             html = [app.revresp.respActionsHTML(),
-                    ["br"],
                     ["div", {id: "revsavemsg"}]]; }
         return html;
     },
@@ -1090,7 +1088,8 @@ app.review = (function () {
 
 
     startReviewFormDynamicElements = function (revpen, review) {
-        app.revresp.activateResponseButtons(review);
+        setTimeout(function () {  //secondary stuff, do after main display
+            app.revresp.activateResponseButtons(review); }, 50);
         if(jt.byId('revautodiv')) {
             autocomptxt = "";
             autocompletion(); }

@@ -218,7 +218,7 @@ img { border:0px; }
 .statnoticeactlinktable { margin-left:auto; margin-right:auto; padding:10px; }
 .statnoticeactlinktable td { }
 /* only actual buttons should look like buttons */
-.buttondiv { padding:5px; font-size:large; }
+.buttondiv { padding:0px 5px; font-size:large; }
 .searchtable td { padding:5px 10px; }
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#333; }
@@ -238,7 +238,7 @@ img { border:0px; }
 .colorattrtd { font-size:small; text-align:right; }
 .colorswatch { height:20px; width:40px; cursor:pointer; }
 #colortitlediv { text-align:center; border-top: 1px solid #666; }
-#revsavemsg { font-size:x-large; padding:5px; }
+#revsavemsg { font-size:x-large; }
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
 .relctrlsdiv { font-size:small; }
@@ -250,6 +250,8 @@ img { border:0px; }
 /* >> review layout */
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }
+.commentform { padding:20px 0px 0px 0px; font-size:small; }
+.qcaspan { font-style:italic; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }

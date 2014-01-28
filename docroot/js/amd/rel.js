@@ -51,39 +51,6 @@ app.rel = (function () {
     },
 
 
-    loadDisplayRels = function (pen, direction, divid, cursor) {
-        var refarray, field, params, critsec = "";
-        refarray = getRelRefArray(pen, direction);
-        if(refarray && !cursor) {  //relationships already loaded
-            return app.rel.displayRelations(pen, direction, divid); }
-        field = (direction === "outbound")? "originid" : "relatedid";
-        params = app.login.authparams() + "&" + field + "=" +
-            jt.instId(pen);
-        if(cursor) {
-            params += "&cursor=" + cursor; }
-        jt.call('GET', "findrels?" + params, null,
-                 function (relationships) {
-                     var i, resultCursor;
-                     for(i = 0; i < relationships.length; i += 1) {
-                         if(relationships[i].fetched) {
-                             if(relationships[i].cursor) {
-                                 resultCursor = relationships[i].cursor; }
-                             break; }
-                         pushRel(pen, direction, relationships[i]); }
-                     if(resultCursor) {
-                         loadDisplayRels(pen, direction, divid, resultCursor); }
-                     else {
-                         verifyRelsInitialized(pen, direction);
-                         app.rel.displayRelations(pen, direction, divid); } },
-                 app.failf(function (code, errtxt) {
-                     var msg = "loadDisplayRels error code " + code + 
-                         ": " + errtxt;
-                     jt.log(msg);
-                     jt.err(msg); }),
-                 critsec);
-    },
-
-
     followBackLink = function (pen) {
         var i, refarray, penid, html, srcpen;
         srcpen = app.pen.currPenRef().pen;
@@ -709,6 +676,40 @@ return {
     },
 
 
+    loadDisplayRels: function (pen, direction, contfunc, cursor) {
+        var refarray, field, params, critsec = "";
+        refarray = getRelRefArray(pen, direction);
+        if(refarray && !cursor) {  //relationships already loaded
+            return contfunc(refarray); }
+        field = (direction === "outbound")? "originid" : "relatedid";
+        params = app.login.authparams() + "&" + field + "=" +
+            jt.instId(pen);
+        if(cursor) {
+            params += "&cursor=" + cursor; }
+        jt.call('GET', "findrels?" + params, null,
+                 function (relationships) {
+                     var i, resultCursor;
+                     for(i = 0; i < relationships.length; i += 1) {
+                         if(relationships[i].fetched) {
+                             if(relationships[i].cursor) {
+                                 resultCursor = relationships[i].cursor; }
+                             break; }
+                         pushRel(pen, direction, relationships[i]); }
+                     if(resultCursor) {
+                         app.rel.loadDisplayRels(pen, direction, contfunc, 
+                                                 resultCursor); }
+                     else {
+                         verifyRelsInitialized(pen, direction);
+                         contfunc(getRelRefArray(pen, direction)); } },
+                 app.failf(function (code, errtxt) {
+                     var msg = "loadDisplayRels error code " + code + 
+                         ": " + errtxt;
+                     jt.log(msg);
+                     jt.err(msg); }),
+                 critsec);
+    },
+
+
     //Working on ameliorating large number issues as they develop
     //(before maxpgdisp kicks in), so there is context for strategies.
     displayRelations: function (pen, direction, divid) {
@@ -741,7 +742,8 @@ return {
                  relitems]];
         jt.out(divid, jt.tac2html(html));
         if(!refarray) {  //rels not loaded yet, init and fetch.
-            loadDisplayRels(pen, direction, divid); }
+            app.rel.loadDisplayRels(pen, direction, function () {
+                app.rel.displayRelations(pen, direction, divid); }); }
         else if(litemp === placeholder) {
             loadReferencedPens(refarray[i], function () {
                 app.rel.displayRelations(pen, direction, divid); }); }
