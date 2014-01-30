@@ -38,6 +38,8 @@ class PenName(db.Model):
     # the relationship transaction processing
     following = db.IntegerProperty()
     followers = db.IntegerProperty()
+    # csv of penids flagged for harassment
+    abusive = db.TextProperty()
 
 
 def authorized(acc, pen):
@@ -75,7 +77,9 @@ def set_pen_attrs(pen, request):
     # pen.top20s is maintained separately as part of reviews
     pen.revmem = request.get('revmem') or ""
     pen.settings = request.get('settings') or ""
-            
+    pen.abusive = request.get('abusive') or ""
+    pen.abusive = str(pen.abusive)
+
 
 def gen_password():
     """ Return a vaguely reasonable html safe password you can read """
@@ -311,6 +315,7 @@ class SearchPenNames(webapp2.RequestHandler):
                 pen.fbid = 0
                 pen.twid = 0
                 pen.ghid = 0
+                pen.abusive = ""
                 results.append(pen)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch
@@ -338,6 +343,7 @@ class GetPenById(webapp2.RequestHandler):
         pen.fbid = 0
         pen.twid = 0
         pen.ghid = 0
+        pen.abusive = ""
         returnJSON(self.response, [ pen ])
 
 

@@ -426,46 +426,65 @@ app.revresp = (function () {
     },
 
 
+    isAbusivePen = function (penid) {
+        var abcsv, abpens, i;
+        abcsv = app.pen.currPenRef().pen.abusive;
+        if(abcsv) {
+            abpens = abcsv.split(",");
+            for(i = 0; i < abpens.length; i += 1) {
+                if(abpens[i] === penid) {
+                    return true; } } }
+        return false;
+    },
+
+
+    appendReviewComment = function (rows, qcmt, acceptable, penref) {
+        var resptxt, revref;
+        switch(qcmt.rcstat) {
+        case "accepted": resptxt = ""; break;
+        case "rejected": resptxt = "Rejected: "; break;
+        default: resptxt = "Pending..."; }
+        resptxt += qcmt.resp;
+        rows.push(
+            ["tr",
+             [["td", {cla:"respcol", align:"right"},
+               [commentDeleteHTML(qcmt),
+                miniProfPicHTML(penref),
+                ["span", {cla: "qcaspan"},
+                 (qcmt.rctype === "question" ? "Q" : "C")]]],
+              ["td", {cla:"respval", align:"right", valign:"top"},
+               ["a", {href: "#" + jt.ndq(penref.pen.name),
+                      onclick: jt.fs("app.profile.byprofid('" +
+                                     qcmt.cmtpenid + "')")},
+                penref.pen.name]],
+              ["td", {cla:"respval", align:"left", valign:"top"},
+               commentText(qcmt, acceptable)]]]);
+        if(resptxt) {
+            revref = app.lcs.getRevRef(app.review.getCurrentReview());
+            penref = app.lcs.getPenRef(revref.rev.penid);
+            rows.push(
+                ["tr",
+                 [["td", {cla:"respcol", align:"right"},
+                   [miniProfPicHTML(penref),
+                    ["span", {cla: "qcaspan"},
+                     "A"]]],
+                  ["td"],
+                  ["td", {cla:"respval", align:"left", valign:"top"},
+                   resptxt]]]); }
+    },
+
+
     appendReviewComments = function (rows, qcmts, redrawfunc, acceptable) {
-        var i, qcmt, penref, resptxt, revref;
+        var i, qcmt, penref;
         for(i = 0; i < qcmts.length; i += 1) {
             qcmt = qcmts[i];
-            penref = app.lcs.getPenRef(qcmt.cmtpenid);
-            if(penref.status === "not cached") {
-                app.lcs.getPenFull(qcmt.cmtpenid, redrawfunc);
-                break; }
-            if(penref.pen) {
-                switch(qcmt.rcstat) {
-                case "accepted": resptxt = ""; break;
-                case "rejected": resptxt = "Rejected: "; break;
-                default: resptxt = "Pending..."; }
-                resptxt += qcmt.resp;
-                rows.push(
-                    ["tr",
-                     [["td", {cla:"respcol", align:"right"},
-                       [commentDeleteHTML(qcmt),
-                        miniProfPicHTML(penref),
-                        ["span", {cla: "qcaspan"},
-                         (qcmt.rctype === "question" ? "Q" : "C")]]],
-                      ["td", {cla:"respval", align:"right", valign:"top"},
-                       ["a", {href: "#" + jt.ndq(penref.pen.name),
-                              onclick: jt.fs("app.profile.byprofid('" +
-                                             qcmt.cmtpenid + "')")},
-                        penref.pen.name]],
-                      ["td", {cla:"respval", align:"left", valign:"top"},
-                       commentText(qcmt, acceptable)]]]);
-                if(resptxt) {
-                    revref = app.lcs.getRevRef(app.review.getCurrentReview());
-                    penref = app.lcs.getPenRef(revref.rev.penid);
-                    rows.push(
-                        ["tr",
-                         [["td", {cla:"respcol", align:"right"},
-                           [miniProfPicHTML(penref),
-                            ["span", {cla: "qcaspan"},
-                             "A"]]],
-                          ["td"],
-                          ["td", {cla:"respval", align:"left", valign:"top"},
-                           resptxt]]]); } } }
+            if(!isAbusivePen(qcmt.cmtpenid)) {
+                penref = app.lcs.getPenRef(qcmt.cmtpenid);
+                if(penref.status === "not cached") {
+                    app.lcs.getPenFull(qcmt.cmtpenid, redrawfunc);
+                    break; }
+                if(penref.pen) {
+                    appendReviewComment(rows, qcmt, acceptable, penref); } } }
         return rows;
     },
 
@@ -526,21 +545,23 @@ app.revresp = (function () {
         var qcs, i, penref, nametxt, linktxt, rows = [], html = "";
         qcs = app.pen.currPenRef().pendqcs;
         for(i = 0; i < qcs.length; i += 1) {
-            nametxt = "";
-            penref = app.lcs.getPenRef(qcs[i].cmtpenid);
-            if(penref.pen) {
-                nametxt = " from " + commenterNameHTML(qcs[i]); }
-            else if(penref.status === "not cached") {
-                app.lcs.getPenFull(qcs[i].cmtpenid, 
-                                   app.revresp.redrawPendingComments); }
-            linktxt = qcs[i].rctype.capitalize() + nametxt + ": " + 
-                qcs[i].comment;
-            rows.push(["li", {cla: "cmtli"},
-                       ["a", {href: "#" + qcs[i].rctype,
-                              title: "Accept or reject this " + qcs[i].rctype,
-                              onclick: jt.fs("app.revresp.initPendingQC('" +
-                                             jt.instId(qcs[i]) + "')")},
-                        linktxt]]); }
+            if(!isAbusivePen(qcs[i].cmtpenid)) {
+                nametxt = "";
+                penref = app.lcs.getPenRef(qcs[i].cmtpenid);
+                if(penref.pen) {
+                    nametxt = " from " + commenterNameHTML(qcs[i]); }
+                else if(penref.status === "not cached") {
+                    app.lcs.getPenFull(qcs[i].cmtpenid, 
+                                       app.revresp.redrawPendingComments); }
+                linktxt = qcs[i].rctype.capitalize() + nametxt + ": " + 
+                    qcs[i].comment;
+                rows.push(["li", {cla: "cmtli"},
+                           ["a", {href: "#" + qcs[i].rctype,
+                                  title: "Accept or reject this " + 
+                                         qcs[i].rctype,
+                                  onclick: jt.fs("app.revresp.initPendingQC('" +
+                                                 jt.instId(qcs[i]) + "')")},
+                            linktxt]]); } }
         if(rows.length > 0) {
             html = ["ul", {cla: "cmtlist"},
                     rows]; }
@@ -558,6 +579,20 @@ app.revresp = (function () {
     },
 
 
+    correspRevHTML = function (penref, revref) {
+        return ["tr",
+                [["td", {cla:"respcol", align:"left"},
+                  app.review.starsImageHTML(revref.rev.rating)],
+                 ["td", {cla:"respval", valign:"top", align:"right"},
+                  ["a", {href: "#" + jt.ndq(penref.pen.name),
+                         onclick: jt.fs("app.profile.readReview('" +
+                                        revref.revid + "')")},
+                   penref.pen.name]],
+                 ["td", {cla:"respval", valign:"top", align:"left"},
+                  jt.ellipsis(revref.rev.text, 255)]]];
+    },
+
+
     correspondingReviewsHTML = function (redrawfunc) {
         var rows = [], csv, elems, i, penid, revid, penref, revref;
         csv = crevlink().corresponding;
@@ -567,26 +602,17 @@ app.revresp = (function () {
                 revid = elems[i].split(":");
                 penid = revid[1];
                 revid = revid[0];
-                penref = app.lcs.getPenRef(penid);
-                if(penref.status === "not cached") {
-                    app.lcs.getPenFull(penid, redrawfunc);
-                    break; }
-                revref = app.lcs.getRevRef(revid);
-                if(revref.status === "not cached") {
-                    app.lcs.getRevFull(revid, redrawfunc);
-                    break; }
-                if(penref.pen && revref.rev) {
-                    rows.push(
-                        ["tr",
-                         [["td", {cla:"respcol", align:"left"},
-                           app.review.starsImageHTML(revref.rev.rating)],
-                          ["td", {cla:"respval", valign:"top", align:"right"},
-                           ["a", {href: "#" + jt.ndq(penref.pen.name),
-                                  onclick: jt.fs("app.profile.readReview('" +
-                                                 revref.revid + "')")},
-                             penref.pen.name]],
-                          ["td", {cla:"respval", valign:"top", align:"left"},
-                           jt.ellipsis(revref.rev.text, 255)]]]); } } }
+                if(!isAbusivePen(penid)) {
+                    penref = app.lcs.getPenRef(penid);
+                    if(penref.status === "not cached") {
+                        app.lcs.getPenFull(penid, redrawfunc);
+                        break; }
+                    revref = app.lcs.getRevRef(revid);
+                    if(revref.status === "not cached") {
+                        app.lcs.getRevFull(revid, redrawfunc);
+                        break; }
+                    if(penref.pen && revref.rev) {
+                        rows.push(correspRevHTML(penref, revref)); } } } }
         return rows;
     },
 
@@ -1145,7 +1171,23 @@ return {
 
 
     reportAbuse: function (qcid) {
-        jt.err("not implemented yet");
+        var pen, qcmt;
+        jt.out('requestbuttonsdiv', "Reporting...");
+        pen = app.pen.currPenRef().pen;
+        qcmt = findPendingComment(qcid);
+        if(pen.abusive) {
+            pen.abusive += "," + qcmt.cmtpenid; }
+        else {
+            pen.abusive = String(qcmt.cmtpenid); }
+        app.pen.updatePen(pen,
+                          function () {
+                              app.layout.closeDialog();
+                              displayReviewResponses(); },
+                          app.failf(function (code, errtxt) {
+                              jt.out('cmterrdiv', "Reporting failed " + code + 
+                                     " " + errtxt);
+                              jt.out('requestbuttonsdiv', 
+                                     toprejectButtonsHTML(qcid)); }));
     },
 
 
