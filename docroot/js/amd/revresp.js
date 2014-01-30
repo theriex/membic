@@ -10,6 +10,7 @@ app.revresp = (function () {
     ////////////////////////////////////////
 
     var greytxt = "#999999",
+        correspcheck = 0,
 
 
     ////////////////////////////////////////
@@ -210,13 +211,38 @@ app.revresp = (function () {
     },
 
 
-    initCommentButtonSetting = function () {
-        var img;
-        img = jt.byId('commentimg');
-        if(!img) {  //spurious call, button not displayed
-            return; }
-        img.className = "navicodis";
-        jt.byId('commenttxttd').style.color = greytxt;
+    disableCommentButton = function () {
+        var img, txt;
+        if(jt.byId('commentbutton')) {
+            img = jt.byId('commentimg');
+            if(img) {
+                img.className = "navicodis"; }
+            txt = jt.byId('commenttxttd');
+            if(txt) {
+                txt.style.color = greytxt; } }
+    },
+
+
+    testEnableCommentButton = function () {
+        var now = new Date().getTime();
+        if(now - correspcheck < 9000) {
+            return; }  //don't pound the db for no reason
+        correspcheck = now;
+        disableCommentButton();
+        findCorrespondingReview(app.pen.currPenRef().pen, function (pen, rev) {
+            var penref, img, txt;
+            if(!rev) {  //no corresponding review, leave disabled
+                return; }
+            penref = app.pen.currPenRef();
+            //if they have pending or rejected comments, those need to
+            //be deleted before any more can be added.
+            if(!penref.qcmts || penref.qcmts.length === 0) { 
+                img = jt.byId('commentimg');
+                if(img) {
+                    img.className = "navico"; }
+                txt = jt.byId('commenttxttd');
+                if(txt) {
+                    txt.style.color = app.colors.text; } } });
     },
 
 
@@ -290,8 +316,21 @@ app.revresp = (function () {
                  "Cancel"],
                 "&nbsp;",
                 ["button", {type: "button", id: "cmtokb",
-                            onclick: jt.fs("app.revresp.askquestion()")},
+                            onclick: jt.fs("app.revresp.createcomment('" +
+                                           "question')")},
                  "Ask"]];
+    },
+
+
+    commentButtonsHTML = function () {
+        return [["button", {type: "button", id: "cmtcancelb",
+                            onclick: jt.fs("app.layout.closeDialog()")},
+                 "Cancel"],
+                "&nbsp;",
+                ["button", {type: "button", id: "cmtokb",
+                            onclick: jt.fs("app.revresp.createcomment('" +
+                                           "comment')")},
+                 "Comment"]];
     },
 
 
@@ -579,6 +618,51 @@ app.revresp = (function () {
     },
 
 
+    displayQCDialog = function (bid, dismsg, bhtmlf) {
+        var img, html, visf = null, crev, revpen;
+        img = jt.byId(bid + "img");
+        if(!img) {  //button not displayed, spurious call
+            return; }
+        crev = app.review.getCurrentReview();
+        revpen = app.lcs.getPenRef(crev.penid).pen;
+        dismsg = dismsg.replace(/\$REVIEWER/g, revpen.name);
+        dismsg = dismsg.replace(/\$REVTITLE/g, crev.title || crev.name);
+        if(img.className === "navicodis") {
+            html = ["div", {cla: "commentdiv"},
+                    [["div", {cla: "commentform", 
+                              style: "width:" + textTargetWidth() + "px;"},
+                      dismsg],
+                     ["div", {id: "requestbuttonsdiv"},
+                      ["button", {type: "button", id: "niokb",
+                                  onclick: jt.fs("app.layout.closeDialog()")},
+                       "OK"]]]];
+            visf = function () {
+                jt.byId('niokb').focus(); }; }
+        else {
+            html = ["div", {cla: "commentdiv"},
+                    [["div", {cla: "commentform"},
+                      ["Your " + bid + " for " + revpen.name,
+                       ["br"],
+                       ["textarea", {id: "cmtta", style: taStyle()},
+                        ""]]],
+                     ["div", {id: "cmterrdiv"}, ""],
+                     ["div", {id: "requestbuttonsdiv"},
+                      bhtmlf()]]];
+            visf = function () {
+                jt.byId('cmtta').focus(); }; }
+        //wrap content in standard dialog box
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 bid.capitalize()],
+                html];
+        app.layout.openDialog({x:150, y:370}, jt.tac2html(html), null, visf);
+    },
+
+
     correspRevHTML = function (penref, revref) {
         return ["tr",
                 [["td", {cla:"respcol", align:"left"},
@@ -629,6 +713,7 @@ app.revresp = (function () {
                  correspondingReviewsHTML(displayReviewResponses)]];
         jt.out('revcommentsdiv', jt.tac2html(html));
         testEnableQuestionButton();
+        testEnableCommentButton();
     },
 
 
@@ -738,62 +823,35 @@ return {
 
 
     question: function () {
-        var img, html, visf = null, crev, revpen;
-        img = jt.byId('questionimg');
-        if(!img) {  //button not displayed, spurious call
-            return; }
-        crev = app.review.getCurrentReview();
-        revpen = app.lcs.getPenRef(crev.penid).pen;
-        if(img.className === "navicodis") {
-            html = ["div", {cla: "commentdiv"},
-                    [["div", {cla: "commentform", 
-                              style: "width:" + textTargetWidth() + "px;"},
-                      "You must be following " + revpen.name + ", and " + 
-                      revpen.name + " must be following you back " + 
-                      "before you can create a question. You can only " +
-                      "have one pending question or comment open at a time."],
-                     ["div", {id: "requestbuttonsdiv"},
-                      ["button", {type: "button", id: "niokb",
-                                  onclick: jt.fs("app.layout.closeDialog()")},
-                       "OK"]]]];
-            visf = function () {
-                jt.byId('niokb').focus(); }; }
-
-        else {
-            html = ["div", {cla: "commentdiv"},
-                    [["div", {cla: "commentform"},
-                      ["Your question for " + revpen.name,
-                       ["br"],
-                       ["textarea", {id: "cmtta", style: taStyle()},
-                        ""]]],
-                     ["div", {id: "cmterrdiv"}, ""],
-                     ["div", {id: "requestbuttonsdiv"},
-                      questionButtonsHTML()]]];
-            visf = function () {
-                jt.byId('cmtta').focus(); }; }
-        //wrap content in standard dialog box
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 "Question"],
-                html];
-        app.layout.openDialog({x:150, y:400}, jt.tac2html(html), null, visf);
+        displayQCDialog(
+            "question",
+            "You must be following $REVIEWER, and $REVIEWER must be" + 
+                " following you back before you can create a question." +
+                " You can only have one pending question or comment" + 
+                " open at a time.",
+            questionButtonsHTML);
     },
 
 
-    askquestion: function () {
-        var question, crev, data, critsec;
-        jt.out('requestbuttonsdiv', "Asking...");
-        question = jt.byId('cmtta').value;
+    comment: function () {
+        displayQCDialog(
+            "comment",
+            "You must review $REVTITLE before commenting on this review.",
+            commentButtonsHTML);
+    },
+
+
+    createcomment: function (rctype) {
+        var verb, text, crev, data, critsec;
+        verb = (rctype === "question" ? "Asking" : "Writing");
+        jt.out('requestbuttonsdiv', verb + "...");
+        text = jt.byId('cmtta').value;
         crev = app.review.getCurrentReview();
         data = { revid: jt.instId(crev), 
                  revpenid: crev.penid,
                  cmtpenid: jt.instId(app.pen.currPenRef().pen),
-                 rctype: "question",
-                 comment: question };
+                 rctype: rctype,
+                 comment: text };
         data = jt.objdata(data);
         critsec = critsec || "";
         jt.call('POST', "crecmt?" + app.login.authparams(), data,
@@ -802,9 +860,11 @@ return {
                     app.layout.closeDialog();
                     displayReviewResponses(); },
                 app.failf(function (code, errtxt) {
-                    jt.out('cmterrdiv', "Asking failed " + code + 
+                    jt.out('cmterrdiv', verb + " failed " + code + 
                            " " + errtxt);
-                    jt.out('requestbuttonsdiv', questionButtonsHTML()); }),
+                    jt.out('requestbuttonsdiv', 
+                           (rctype === "question" ? questionButtonsHTML() :
+                            commentButtonsHTML())); }),
                 critsec);
     },
 
@@ -841,11 +901,6 @@ return {
                     jt.err("Delete failed " + code + " " + errtxt);
                     jt.out("rcx" + rcid, "(x)&nbsp;"); }),
                 critsec);
-    },
-
-
-    comment: function () {
-        jt.err("not implemented yet.");
     },
 
 
@@ -1193,6 +1248,7 @@ return {
 
     activateResponseButtons: function (review) {
         disableQuestionButton();
+        disableCommentButton();
         if(jt.byId('helpfulbutton')) {
             initHelpfulButtonSetting(app.pen.currPenRef(), review); }
         if(jt.byId('memobutton')) {
@@ -1205,7 +1261,7 @@ return {
         if(jt.byId('questionbutton')) {
             testEnableQuestionButton(); }
         if(jt.byId('commentbutton')) {
-            initCommentButtonSetting(); }
+            testEnableCommentButton(); }
         if(jt.byId('revcommentsdiv')) {
             displayReviewResponses(); }
     }

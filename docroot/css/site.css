@@ -224,7 +224,7 @@ img { border:0px; }
 .tagline { font-style:italic; color:#333; }
 #statrevactdiv { text-align:center; padding:10px; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
-#starstd { text-align:right; width:150px; }
+#starstd { text-align:right; width:150px; white-space:nowrap; }
 .inlinestarsimg { vertical-align:bottom; }
 .starsimg { vertical-align:middle; }
 .permalink { font-size:xx-small; }

@@ -208,7 +208,7 @@ class CreateComment(webapp2.RequestHandler):
             revq = Review.gql(where, rc.cmtpenid, review.revtype, review.cankey)
             revs = revq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, 
                               deadline=10)
-            if len(reviews) == 0:
+            if len(revs) == 0:
                 self.error(401)
                 self.response.out.write(
                     "You must have a corresponding review to comment")
