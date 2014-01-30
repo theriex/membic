@@ -162,6 +162,11 @@ class UpdateComment(webapp2.RequestHandler):
         rc.rcstat = status
         # comment may not be changed
         rc.resp = self.request.get('resp')
+        if rc.rctype == "question" and rc.rcstat == "accepted" and\
+                len(rc.resp.strip()) == 0:
+            self.error(400)
+            self.response.out.write("Response required for question")
+            return
         rc.modified = nowISO()
         rc.put()
         retval = [ rc ]

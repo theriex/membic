@@ -133,22 +133,25 @@ return {
 
 
     getPenFull: function (penid, callback) {
-        var penref, tombstone, params, critsec = "";
+        var penref, tombstone, params, critsec;
         penref = app.lcs.getPenRef(penid);
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
         params = "penid=" + idify(penid);
+        critsec = critsec || "";
         jt.call('GET', "penbyid?" + params, null,
                  function (foundpens) {
                      if(foundpens.length > 0) {
                          callback(app.lcs.putPen(foundpens[0])); }
                      else {  //should never happen, but treat as deleted
                          tombstone = { status: "deleted",
+                                       penid: penid,
                                        updtime: new Date() };
                          pens[idify(penid)] = tombstone;
                          callback(tombstone); } },
                  app.failf(function (code, errtxt) {
                      tombstone = { status: String(code) + ": " + errtxt,
+                                   penid: penid,
                                    updtime: new Date() };
                      pens[idify(penid)] = tombstone;
                      callback(tombstone); }),
@@ -225,22 +228,25 @@ return {
 
 
     getRevFull: function (revid, callback) {
-        var revref, tombstone, params, critsec = "";
+        var revref, tombstone, params, critsec;
         revref = app.lcs.getRevRef(revid);
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
+        critsec = critsec || "";
         jt.call('GET', "revbyid?" + params, null,
                  function (foundrevs) {
                      if(foundrevs.length > 0) {
                          callback(app.lcs.putRev(foundrevs[0])); }
                      else {  //should never happen, but treat as deleted
                          tombstone = { status: "deleted",
+                                       revid: revid,
                                        updtime: new Date() };
                          revs[idify(revid)] = tombstone;
                          callback(tombstone); } },
                  app.failf(function (code, errtxt) {
                      tombstone = { status: String(code) + ": " + errtxt,
+                                   revid: revid,
                                    updtime: new Date() };
                      revs[idify(revid)] = tombstone;
                      callback(tombstone); }),
@@ -287,7 +293,7 @@ return {
     //parameter switches to true if anything was loaded or updated, and
     //that triggers the callback to onchangefunc.
     verifyReviewLinks: function (onchangefunc, changed) {
-        var revid, revref, revids = [], maxq = 20, params, critsec = "";
+        var revid, revref, revids = [], maxq = 20, params, critsec;
         for(revid in revs) {
             if(revs.hasOwnProperty(revid)) {
                 revref = revs[revid];
@@ -298,6 +304,7 @@ return {
         if(revids.length > 0) {
             params = "revids=" + revids.join(",") + 
                 "&" + app.login.authparams();
+            critsec = critsec || "";
             jt.call('GET', "revlinks?" + params, null,
                      function (revlinks) {
                          resolveReviewLinks(revids, revlinks);
@@ -332,10 +339,11 @@ return {
 
 
     checkAllCorresponding: function (review) {
-        var params, critsec = "";
+        var params, critsec;
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
             "&" + app.login.authparams();
+        critsec = critsec || "";
         jt.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var i;

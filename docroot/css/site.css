@@ -261,13 +261,18 @@ img { border:0px; }
 .actmodesel { color:#ffd100; }
 .actmodeseldis { color:#999999; }
 #rsslink { padding:0px 0px 0px 10px; }
-#activereqsdiv { padding:0px 0px 5px 40px; }
+#activereqsdiv, #pendingqcsdiv { padding:0px 0px 5px 40px; }
 .reqlist { list-style:none; padding:0; margin:0; font-size:medium; }
 .reqlist li { font-style:italic; }
+.cmtlist { list-style:none; padding:0; margin:0; font-size:medium; }
+.cmtlist li { font-style:italic; }
 .reqkeywordsdiv { text-align:center; font-size:small; }
 .smallbadge { width:20px; height:20px; vertical-align:middle; }
 .profpicsmall { max-width:60px; max-height:60px; vertical-align:middle; }
 .revtypeimg { width:50px; height:50px; vertical-align:middle; }
+.confirmtext, .confirmlastline { font-size:large; }
+.confirmlastline { text-align:center; }
+.qctext { font-size:small; }
 
 /* >> settings dialog */
 #accset { font-size:small; }

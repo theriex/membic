@@ -273,6 +273,17 @@ app.revresp = (function () {
     },
 
 
+    taStyle = function () {
+        var lightbg, tas;
+        lightbg = app.skinner.lightbg();
+        tas = "color:" + app.colors.text + ";" + "width:" + 
+            textTargetWidth() + "px;" + "height:50px;padding:5px 8px;" +
+            "background-color:" + lightbg + ";background-color:rgba(" +
+            jt.hex2rgb(lightbg) + ",0.6);";
+        return tas;
+    },
+
+
     questionButtonsHTML = function () {
         return [["button", {type: "button", id: "cmtcancelb",
                             onclick: jt.fs("app.layout.closeDialog()")},
@@ -281,6 +292,73 @@ app.revresp = (function () {
                 ["button", {type: "button", id: "cmtokb",
                             onclick: jt.fs("app.revresp.askquestion()")},
                  "Ask"]];
+    },
+
+
+    topacceptButtonsHTML = function (qcid) {
+        var html;
+        html = [["button", {type: "button", id: "cmtcancelb",
+                            onclick: jt.fs("app.revresp.handlePendingQC('" + 
+                                           qcid + "')")},
+                 "Cancel"],
+                "&nbsp;",
+                ["button", {type: "button", id: "acceptb",
+                            onclick: jt.fs("app.revresp.topacceptConfirmed('" +
+                                           qcid + "')")},
+                 "Accept"]];
+        return jt.tac2html(html);
+    },
+
+
+    topignoreButtonsHTML = function (qcid) {
+        var html;
+        html = [["button", {type: "button", id: "cmtcancelb",
+                            onclick: jt.fs("app.revresp.handlePendingQC('" +
+                                           qcid + "')")},
+                 "Cancel"],
+                "&nbsp;",
+                ["button", {type: "button", id: "ignoreb",
+                            onclick: jt.fs("app.revresp.topignoreConfirmed('" +
+                                           qcid + "')")},
+                 "Ignore Forever"]];
+        return jt.tac2html(html);
+    },
+
+
+    toprejectButtonsHTML = function (qcid) {
+        var html, cbharass;
+        html = [["button", {type: "button", id: "cmtcancelb",
+                            onclick: jt.fs("app.revresp.handlePendingQC('" +
+                                           qcid + "')")},
+                 "Cancel"],
+                "&nbsp;"];
+        cbharass = jt.byId('cbharass');
+        if(cbharass && cbharass.checked) {
+            html.push(
+                ["button", {type: "button", id: "rejectb",
+                            onclick: jt.fs("app.revresp.reportAbuse('" +
+                                           qcid + "')")},
+                 "Report Harassment"]); }
+        else {
+            html.push(
+                ["button", {type: "button", id: "rejectb",
+                            onclick: jt.fs("app.revresp.toprejectConfirmed('" +
+                                           qcid + "')")},
+                 "Reject"]); }
+        return jt.tac2html(html);
+    },
+
+
+    removePendingComment = function (qcid) {
+        var qcs, qc, i, index;
+        qcs = app.pen.currPenRef().pendqcs;
+        for(i = 0; i < qcs.length; i += 1) {
+            if(jt.instId(qcs[i]) === qcid) {
+                qc = qcs[i];
+                index = i;
+                break; } }
+        if(qc) {
+            qcs.splice(index, 1); }
     },
 
 
@@ -336,7 +414,19 @@ app.revresp = (function () {
     },
 
 
-    appendReviewComments = function (rows, qcmts, redrawfunc) {
+    commentText = function (qcmt, acceptable) {
+        var html = jt.ellipsis(qcmt.comment, 255);
+        if(acceptable) {
+            html = ["a", {href: "#rejectoraccept",
+                          onclick: jt.fs("app.revresp.handlePendingQC('" +
+                                         jt.instId(qcmt) + "')")},
+                    html];
+            html = jt.tac2html(html); }
+        return html;
+    },
+
+
+    appendReviewComments = function (rows, qcmts, redrawfunc, acceptable) {
         var i, qcmt, penref, resptxt, revref;
         for(i = 0; i < qcmts.length; i += 1) {
             qcmt = qcmts[i];
@@ -363,7 +453,7 @@ app.revresp = (function () {
                                              qcmt.cmtpenid + "')")},
                         penref.pen.name]],
                       ["td", {cla:"respval", align:"left", valign:"top"},
-                       jt.ellipsis(qcmt.comment, 255)]]]);
+                       commentText(qcmt, acceptable)]]]);
                 if(resptxt) {
                     revref = app.lcs.getRevRef(app.review.getCurrentReview());
                     penref = app.lcs.getPenRef(revref.rev.penid);
@@ -383,6 +473,8 @@ app.revresp = (function () {
     queryAndCommentRowsHTML = function (redrawfunc) {
         var penref, revref, rows = [], params, critsec;
         penref = app.pen.currPenRef();
+        if(penref.pendqcs) {  //loaded by activity display
+            appendReviewComments(rows, penref.pendqcs, redrawfunc, true); }
         if(!penref.qcmts) {
             params = "penid=" + penref.penid + "&" + app.login.authparams();
             critsec = critsec || "";
@@ -390,7 +482,7 @@ app.revresp = (function () {
             jt.call('GET', "pendoutcmt?" + params, null,
                     function (revcmts) {
                         penref.qcmts = revcmts;
-                        redrawfunc(); },
+                        redrawfunc(); },  //calls back to here for output...
                     app.failf(function (code, errtxt) {
                         jt.err("Pending comment retrieval failed " + code +
                                " " + errtxt); }),
@@ -416,6 +508,56 @@ app.revresp = (function () {
     },
                 
             
+
+    commenterNameHTML = function (qcmt) {
+        var penref, html = [];
+        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        if(penref.pen) {
+            if(penref.pen.profpic) {
+                html.push(["img", {cla: "smallbadge",
+                                   src: "profpic?profileid=" + penref.penid}]);
+                html.push("&nbsp;"); }
+            html.push(penref.pen.name); }
+        return jt.tac2html(html);
+    },
+
+
+    pendingCommentsLoadedHTML = function () {
+        var qcs, i, penref, nametxt, linktxt, rows = [], html = "";
+        qcs = app.pen.currPenRef().pendqcs;
+        for(i = 0; i < qcs.length; i += 1) {
+            nametxt = "";
+            penref = app.lcs.getPenRef(qcs[i].cmtpenid);
+            if(penref.pen) {
+                nametxt = " from " + commenterNameHTML(qcs[i]); }
+            else if(penref.status === "not cached") {
+                app.lcs.getPenFull(qcs[i].cmtpenid, 
+                                   app.revresp.redrawPendingComments); }
+            linktxt = qcs[i].rctype.capitalize() + nametxt + ": " + 
+                qcs[i].comment;
+            rows.push(["li", {cla: "cmtli"},
+                       ["a", {href: "#" + qcs[i].rctype,
+                              title: "Accept or reject this " + qcs[i].rctype,
+                              onclick: jt.fs("app.revresp.initPendingQC('" +
+                                             jt.instId(qcs[i]) + "')")},
+                        linktxt]]); }
+        if(rows.length > 0) {
+            html = ["ul", {cla: "cmtlist"},
+                    rows]; }
+        return jt.tac2html(html);
+    },
+
+
+    findPendingComment = function (qcid) {
+        var qcs, i;
+        qcs = app.pen.currPenRef().pendqcs;
+        for(i = 0; i < qcs.length; i += 1) {
+            if(jt.instId(qcs[i]) === qcid) {
+                return qcs[i]; } }
+        return null;
+    },
+
+
     correspondingReviewsHTML = function (redrawfunc) {
         var rows = [], csv, elems, i, penid, revid, penref, revref;
         csv = crevlink().corresponding;
@@ -570,7 +712,7 @@ return {
 
 
     question: function () {
-        var img, html, visf = null, crev, revpen, lightbg, tas;
+        var img, html, visf = null, crev, revpen;
         img = jt.byId('questionimg');
         if(!img) {  //button not displayed, spurious call
             return; }
@@ -592,16 +734,11 @@ return {
                 jt.byId('niokb').focus(); }; }
 
         else {
-            lightbg = app.skinner.lightbg();
-            tas = "color:" + app.colors.text + ";" + "width:" + 
-                textTargetWidth() + "px;" + "height:50px;padding:5px 8px;" +
-                "background-color:" + lightbg + ";background-color:rgba(" +
-                jt.hex2rgb(lightbg) + ",0.6);";
             html = ["div", {cla: "commentdiv"},
                     [["div", {cla: "commentform"},
                       ["Your question for " + revpen.name,
                        ["br"],
-                       ["textarea", {id: "cmtta", style: tas},
+                       ["textarea", {id: "cmtta", style: taStyle()},
                         ""]]],
                      ["div", {id: "cmterrdiv"}, ""],
                      ["div", {id: "requestbuttonsdiv"},
@@ -765,6 +902,250 @@ return {
                     ["td",
                      "&nbsp;"]]]]]];
         return html;
+    },
+
+
+    redrawPendingComments: function () {
+        jt.out("pendingqcsdiv", pendingCommentsLoadedHTML());
+    },
+    pendingCommentsHTML: function () {
+        var selfref, params, critsec, html = "";
+        selfref = app.pen.currPenRef();
+        if(!selfref.pendqcs) {
+            params = "penid=" + selfref.penid + "&" + app.login.authparams();
+            critsec = critsec || "";
+            selfref.pendqcs = [];  //don't loop if GET crashes hard
+            jt.call('GET', "pendincmt?" + params, null,
+                    function (revcmts) {
+                        selfref.pendqcs = revcmts;
+                        jt.out("pendingqcsdiv", pendingCommentsLoadedHTML()); },
+                    app.failf,
+                    critsec); }
+        else {
+            html = pendingCommentsLoadedHTML(); }
+        return html;
+    },
+
+
+    initPendingQC: function (qcid) {
+        var qcmt = findPendingComment(qcid);
+        if(qcmt) {
+            app.lcs.getRevFull(qcmt.revid, function (revref) {
+                if(revref.rev) {
+                    app.review.setCurrentReview(revref.rev);
+                    app.review.displayRead();
+                    app.revresp.handlePendingQC(qcid); } }); }
+    },
+
+
+    handlePendingQC: function (qcid) {
+        var qcmt, html;
+        qcmt = findPendingComment(qcid);
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 qcmt.rctype.capitalize() + " from " + commenterNameHTML(qcmt)],
+                ["div", {cla: "commentdiv"},
+                 [["div", {id: "formcontentdiv", cla: "commentform"},
+                   ["p", {cla: "qctext"},
+                    qcmt.comment]],
+                  ["div", {id: "cmterrdiv"}, ""],
+                  ["div", {id: "requestbuttonsdiv"},
+                   [["button", {type: "button", id: "cmtcancelb",
+                                onclick: jt.fs("app.layout.closeDialog('" +
+                                               qcid + "')")},
+                     "Cancel"],
+                    "&nbsp;",
+                    ["button", {type: "button", id: "cmtaccb",
+                                onclick: jt.fs("app.revresp.topaccept('" +
+                                               qcid + "')")},
+                     "Accept"],
+                    "&nbsp;",
+                    ["button", {type: "button", id: "cmtignoreb",
+                                onclick: jt.fs("app.revresp.topignore('" +
+                                               qcid + "')")},
+                     "Ignore Forever"],
+                    "&nbsp;",
+                    ["button", {type: "button", id: "cmtrejectb",
+                                onclick: jt.fs("app.revresp.topreject('" +
+                                               qcid + "')")},
+                     "Reject"]]]]]];
+        app.layout.openDialog({x:150, y:300}, jt.tac2html(html));
+    },
+
+
+    topaccept: function (qcid) {
+        var qcmt, html = "";
+        qcmt = findPendingComment(qcid);
+        if(qcmt.rctype === "comment") {
+            html = " (optional)"; }
+        html = [["p", {cla: "qctext"},
+                 qcmt.comment],
+                ["br"],
+                "Your response" + html,
+                ["br"],
+                ["textarea", {id: "cmtta", style: taStyle()},
+                 ""]];
+        jt.out('formcontentdiv', jt.tac2html(html));
+        jt.out('cmterrdiv', "");
+        jt.out('requestbuttonsdiv', topacceptButtonsHTML(qcid));
+    },
+
+
+    topacceptConfirmed: function (qcid) {
+        var qcmt, revref, data, critsec;
+        jt.out('requestbuttonsdiv', "Accepting...");
+        revref = app.lcs.getRevRef(app.review.getCurrentReview());
+        qcmt = findPendingComment(qcid);
+        qcmt.resp = jt.byId('cmtta').value;
+        qcmt.rcstat = "accepted";
+        data = jt.objdata(qcmt);
+        critsec = critsec || "";
+        jt.call('POST', "updcmt?" + app.login.authparams(), data,
+                function (updcmts) {
+                    revref.qcmts.push(updcmts[0]);
+                    removePendingComment(qcid);
+                    app.layout.closeDialog();
+                    displayReviewResponses(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('cmterrdiv', "Accept failed " + code + 
+                           " " + errtxt);
+                    jt.out('requestbuttonsdiv', topacceptButtonsHTML(qcid)); }),
+                critsec);
+    },
+
+
+    topignore: function (qcid) {
+        var qcmt, penref, html = "";
+        qcmt = findPendingComment(qcid);
+        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        html = [["p", {cla: "qctext"},
+                 qcmt.comment],
+                ["div", {cla: "confirmlastline"},
+                 "This " + qcmt.rctype + " will be permanently ignored."],
+                ["div", {cla: "qctext"},
+                 ["Neither you, nor anyone else, will ever see this " +
+                  qcmt.rctype + " again, ",
+                  ["br"],
+                  "but " + penref.pen.name + " will still see it as pending."]],
+                ["div", {cla: "confirmlastline"},
+                 "Are you sure?"]];
+        jt.out('formcontentdiv', jt.tac2html(html));
+        jt.out('cmterrdiv', "");
+        jt.out('requestbuttonsdiv', topignoreButtonsHTML(qcid));
+    },
+
+
+    topignoreConfirmed: function (qcid) {
+        var qcmt, data, critsec;
+        jt.out('requestbuttonsdiv', "Ignoring forever...");
+        qcmt = findPendingComment(qcid);
+        qcmt.rcstat = "ignored";
+        data = jt.objdata(qcmt);
+        critsec = critsec || "";
+        jt.call('POST', "updcmt?" + app.login.authparams(), data,
+                function (updcmts) {
+                    removePendingComment(qcid);
+                    app.layout.closeDialog();
+                    displayReviewResponses(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('cmterrdiv', "Ignore failed " + code + 
+                           " " + errtxt);
+                    jt.out('requestbuttonsdiv', topignoreButtonsHTML(qcid)); }),
+                critsec);
+    },
+
+
+    topreject: function (qcid) {
+        var qcmt, penref, html = "";
+        qcmt = findPendingComment(qcid);
+        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        html = [["p", {cla: "qctext"},
+                 qcmt.comment],
+                ["div", {cla: "harasscbdiv"},
+                 jt.checkbox("cbharass", "cbharass", "This " + qcmt.rctype +
+                             " is harassment.",
+                             false, jt.fs("app.revresp.toggleabusecb('" + 
+                                          qcid + "')"))],
+                ["div", {id: "harassdiv", cla: "confirmtext",
+                         style: "display:none;"},
+                 [["div", {cla: "confirmlastline"},
+                   penref.pen.name + " will be noted as abusive."],
+                  ["div", {cla: "qctext"},
+                   ["This, and all further questions or comments from " +
+                    penref.pen.name + " will be permanently ignored.",
+                    ["br"],
+                    "Neither you, nor anyone else will see any more of " +
+                    "this person's commentary on your reviews."]],
+                  ["div", {cla: "confirmlastline"},
+                   "Are you sure?"]]],
+                ["div", {id: "rejcontdiv", cla: "commentform"},
+                 ["table",
+                  [["tr",
+                    [["td", "Rejection Reason"],
+                     ["td", "Details"]]],
+                   ["tr",
+                    [["td",
+                      ["select", {id: "rejreasonsel"},
+                       [["option", "Not Helpful"],
+                        ["option", "Not Public Appropriate"],
+                        ["option", "Not Clear"],
+                        ["option", "Other"]]]],
+                     ["td",
+                      ["input", {type: "text", id: "rejresin", size: 50}]]
+                      ]]]]]];
+        jt.out('formcontentdiv', jt.tac2html(html));
+        jt.out('cmterrdiv', "");
+        jt.out('requestbuttonsdiv', toprejectButtonsHTML(qcid));
+    },
+
+
+    toggleabusecb: function (qcid) {
+        var cbharass = jt.byId('cbharass');
+        if(cbharass && cbharass.checked) {
+            jt.byId('harassdiv').style.display = "block";
+            jt.byId('rejcontdiv').style.display = "none"; }
+        else {
+            jt.byId('harassdiv').style.display = "none";
+            jt.byId('rejcontdiv').style.display = "block"; }
+        jt.out('cmterrdiv', "");
+        jt.out('requestbuttonsdiv', toprejectButtonsHTML(qcid));
+    },
+
+
+    toprejectConfirmed: function (qcid) {
+        var qcmt, sel, i, det, data, critsec;
+        jt.out('requestbuttonsdiv', "Rejecting...");
+        qcmt = findPendingComment(qcid);
+        qcmt.rcstat = "rejected";
+        sel = jt.byId("rejreasonsel");
+        for(i = 0; i < sel.options.length; i += 1) {
+            if(sel.options[i].selected) {
+                qcmt.resp = sel.options[i].value;
+                break; } }
+        det = jt.byId("rejresin");
+        if(det.value) {
+            qcmt.resp += ": " + det.value; }
+        data = jt.objdata(qcmt);
+        critsec = critsec || "";
+        jt.call('POST', "updcmt?" + app.login.authparams(), data,
+                function (updcmts) {
+                    removePendingComment(qcid);
+                    app.layout.closeDialog();
+                    displayReviewResponses(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('cmterrdiv', "Reject failed " + code + 
+                           " " + errtxt);
+                    jt.out('requestbuttonsdiv', toprejectButtonsHTML(qcid)); }),
+                critsec);
+    },
+
+
+    reportAbuse: function (qcid) {
+        jt.err("not implemented yet");
     },
 
 

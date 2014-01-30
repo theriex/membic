@@ -29,6 +29,13 @@
     }
 
 
+    if (!String.prototype.endsWith) {
+        String.prototype.endsWith = function (suffix) {
+            return this.indexOf(suffix, this.length - suffix.length) !== -1;
+        };
+    }
+
+
     if (!Array.prototype.indexOf) {
         Array.prototype.indexOf = function (searchElement) {
             var i;

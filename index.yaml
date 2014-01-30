@@ -89,6 +89,13 @@ indexes:
   - name: modified
     direction: desc
 
+- kind: ReviewComment
+  properties:
+  - name: rcstat
+  - name: revpenid
+  - name: modified
+    direction: desc
+
 - kind: ReviewLink
   properties:
   - name: revpenid
