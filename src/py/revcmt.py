@@ -153,7 +153,7 @@ class UpdateComment(webapp2.RequestHandler):
         # rctype may not be changed
         status = self.request.get('rcstat')
         if rc.rcstat == 'accepted' and status != 'accepted':
-            self.error(401)
+            self.error(400)
             self.response.out.write("Cannot unaccept a comment")
             return
         updaterev = False
@@ -194,11 +194,11 @@ class CreateComment(webapp2.RequestHandler):
         rc.rctype = self.request.get('rctype')
         if rc.rctype == "question":
             if not is_following(rc.cmtpenid, rc.revpenid):
-                self.error(401)
+                self.error(400)
                 self.response.out.write("Must be following to question")
                 return
             if not is_following(rc.revpenid, rc.cmtpenid):
-                self.error(401)
+                self.error(400)
                 self.response.out.write("Must be following back to question")
                 return
         elif rc.rctype == "comment":
@@ -209,22 +209,26 @@ class CreateComment(webapp2.RequestHandler):
             revs = revq.fetch(5, read_policy=db.EVENTUAL_CONSISTENCY, 
                               deadline=10)
             if len(revs) == 0:
-                self.error(401)
+                self.error(400)
                 self.response.out.write(
                     "You must have a corresponding review to comment")
                 return
         else:
-            self.error(401)
+            self.error(400)
             self.response.out.write("rctype must be question or comment")
             return
         if have_pending_comment(rc):
-            self.error(401)
+            self.error(400)
             self.response.out.write("New " + rc.rctype + 
                                     " not allowed while previous " + 
                                     rcs[0].rctype + " still pending")
             return
         rc.rcstat = "pending"
         rc.comment = self.request.get('comment')
+        if len(rc.comment.strip()) == 0:
+            self.error(400)
+            self.response.out.write("No text sent")
+            return
         rc.resp = ""
         rc.modified = nowISO()
         rc.put()

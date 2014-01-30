@@ -311,7 +311,8 @@ app.revresp = (function () {
 
 
     questionButtonsHTML = function () {
-        return [["button", {type: "button", id: "cmtcancelb",
+        var html;
+        html = [["button", {type: "button", id: "cmtcancelb",
                             onclick: jt.fs("app.layout.closeDialog()")},
                  "Cancel"],
                 "&nbsp;",
@@ -319,11 +320,13 @@ app.revresp = (function () {
                             onclick: jt.fs("app.revresp.createcomment('" +
                                            "question')")},
                  "Ask"]];
+        return jt.tac2html(html);
     },
 
 
     commentButtonsHTML = function () {
-        return [["button", {type: "button", id: "cmtcancelb",
+        var html;
+        html = [["button", {type: "button", id: "cmtcancelb",
                             onclick: jt.fs("app.layout.closeDialog()")},
                  "Cancel"],
                 "&nbsp;",
@@ -331,6 +334,7 @@ app.revresp = (function () {
                             onclick: jt.fs("app.revresp.createcomment('" +
                                            "comment')")},
                  "Comment"]];
+        return jt.tac2html(html);
     },
 
 
