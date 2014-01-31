@@ -195,7 +195,7 @@ app.profile = (function () {
                     html = ["a", {href: "#Follow",
                                   title: "Follow " + name + " reviews",
                                   onclick: jt.fs("app.profile.relationship()")},
-                            [["img", {cla: "navico",
+                            [["img", {cla: "navico", id: "followbimg",
                                       src: "img/follow.png"}],
                              "follow"]]; }
                 html = jt.tac2html(html); }
@@ -1136,7 +1136,8 @@ return {
 
 
     relationship: function () {
-        app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen);
+        app.revresp.clearAbuse(profpenref.pen, function () {
+            app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen); });
     },
 
 

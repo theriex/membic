@@ -11,6 +11,7 @@ app.revresp = (function () {
 
     var greytxt = "#999999",
         correspcheck = 0,
+        abcontf = null,
 
 
     ////////////////////////////////////////
@@ -1040,8 +1041,7 @@ return {
                   ["div", {id: "cmterrdiv"}, ""],
                   ["div", {id: "requestbuttonsdiv"},
                    [["button", {type: "button", id: "cmtcancelb",
-                                onclick: jt.fs("app.layout.closeDialog('" +
-                                               qcid + "')")},
+                                onclick: jt.fs("app.layout.closeDialog()")},
                      "Cancel"],
                     "&nbsp;",
                     ["button", {type: "button", id: "cmtaccb",
@@ -1247,6 +1247,68 @@ return {
                                      " " + errtxt);
                               jt.out('requestbuttonsdiv', 
                                      toprejectButtonsHTML(qcid)); }));
+    },
+
+
+    clearAbuse: function (otherpen, contf) {
+        var pen, abid, html, flagged = false;
+        if(!jt.byId("followbimg")) {
+            return contf(); }
+        pen = app.pen.currPenRef().pen;
+        if(pen.abusive) {
+            abid = jt.instId(otherpen);
+            if(pen.abusive.indexOf(abid + ",") >= 0 || 
+               pen.abusive.endsWith(abid)) {
+                flagged = true; } }
+        if(!flagged) {
+            return contf(); }
+        abcontf = contf;
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 "Follow " + otherpen.name + "?"],
+                ["div", {cla: "commentdiv"},
+                 [["div", {id: "formcontentdiv", cla: "commentform"},
+                   [["p", {cla: "qctext"},
+                     "You previously reported " + otherpen.name + 
+                    " for harassment."],
+                    ["p", {cla: "qctext"},
+                     "Following them could set a bad precedent. " +
+                     "Are you sure?"],
+                    ["div", {cla: "harasscbdiv"},
+                     jt.checkbox("cbclear", "cbclear", "Clear " + 
+                                 otherpen.name + " harassment report.")]]],
+                  ["div", {id: "cmterrdiv"}, ""],
+                  ["div", {id: "requestbuttonsdiv"},
+                   [["button", {type: "button", id: "cancelb",
+                                onclick: jt.fs("app.layout.closeDialog()")},
+                     "Cancel"],
+                    "&nbsp;",
+                    ["button", {type: "button", id: "confirmb",
+                                onclick: jt.fs("app.revresp.clearAbuseConf('" +
+                                               abid + "')")},
+                     "OK"]]]]]];
+        app.layout.openDialog({x:150, y:200}, jt.tac2html(html));
+    },
+
+
+    clearAbuseConf: function (abid) {
+        var pen, cbclear, ids, i;
+        cbclear = jt.byId('cbclear');
+        if(!cbclear || !cbclear.checked) {
+            return abcontf(); }
+        pen = app.pen.currPenRef().pen;
+        ids = pen.abusive.split(",");
+        pen.abusive = [];
+        for(i = 0; i < ids.length; i += 1) {
+            if(ids[i] !== abid) {
+                pen.abusive.push(ids[i]); } }
+        pen.abusive = pen.abusive.join(",");
+        app.layout.closeDialog();
+        app.pen.updatePen(pen, abcontf, app.failf);
     },
 
 
