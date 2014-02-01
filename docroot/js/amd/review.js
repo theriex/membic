@@ -1068,7 +1068,8 @@ app.review = (function () {
                 srchtxt += " " + jt.byId('subkeyin').value; }
             if(srchtxt !== autocomptxt) {
                 autocomptxt = srchtxt;
-                if(crev.revtype === 'book' || crev.revtype === 'movie') {
+                if(crev.revtype === 'book' || crev.revtype === 'movie' ||
+                   crev.revtype === 'music') {
                     callAmazonForAutocomplete(autocompletion); }
                 else if(crev.revtype === 'food' || crev.revtype === 'drink' ||
                         crev.revtype === 'activity') {

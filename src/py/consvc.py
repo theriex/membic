@@ -301,6 +301,8 @@ class AmazonSearch(webapp2.RequestHandler):
             amznidx = "Books"
         elif revtype == "movie":
             amznidx = "DVD"
+        elif revtype == "music":
+            amznidx = "Music"
         # The results from this are worse than not suggesting anything.
         # elif revtype == "music":
         #     amznidx = "Music"
