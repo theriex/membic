@@ -113,7 +113,7 @@ app.revresp = (function () {
             review.address = crev.address; }
         if(crev.year && !review.year) {
             review.year = crev.year; }
-        crev = review;
+        app.review.setCurrentReview(review);
         app.review.display();
     },
 
