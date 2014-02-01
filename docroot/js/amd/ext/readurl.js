@@ -265,9 +265,10 @@ return {
 
 
     fetchData: function (review, url, params) {
-        var geturl, critsec = "";
+        var geturl, critsec;
         jt.out('contentdiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + jt.enc(url);
+        critsec = critsec || "";
         jt.call('GET', geturl, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content), url);

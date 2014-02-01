@@ -83,9 +83,10 @@ app.profile = (function () {
             if(!penref.inlinks) {
                 //fetch is low prio, don't compete with startup processing
                 setTimeout(function () {
-                    var params, critsec = "";
+                    var params, critsec;
                     params = "penid=" + jt.instId(penref.pen) + "&" + 
                         app.login.authparams();
+                    critsec = critsec || "";
                     jt.call('GET', "inlinks?" + params, null,
                             function (inlinks) {
                                 penref.inlinks = inlinks;
@@ -511,10 +512,11 @@ app.profile = (function () {
 
 
     findRecentReviews = function (rrs) {  //recentRevState
-        var params, critsec = "";
+        var params, critsec;
         params = jt.objdata(rrs.params) + "&" + app.login.authparams();
         if(rrs.cursor) {
             params += "&cursor=" + jt.enc(rrs.cursor); }
+        critsec = critsec || "";
         jt.call('GET', "srchrevs?" + params, null,
                  function (revs) {
                      sanityCompleteRevsViaCache(rrs, revs);
@@ -1383,7 +1385,7 @@ return {
 
 
     searchAllRevs: function (revtype) {
-        var state, qstr, maxdate, mindate, params, critsec = "";
+        var state, qstr, maxdate, mindate, params, critsec;
         state = profpenref.profstate;
         if(revtype) {
             if(state.revtype !== revtype) {
@@ -1405,6 +1407,7 @@ return {
             "&penid=" + jt.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
             "&cursor=" + jt.enc(state.allRevsState.cursor);
+        critsec = critsec || "";
         jt.call('GET', "srchrevs?" + params, null,
                  function (results) { 
                      app.lcs.putRevs(results);

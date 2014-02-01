@@ -133,8 +133,9 @@ return {
     
 
     fetchData: function (review, url, params) {
-        var critsec = "", asin = extractASIN(url);
+        var critsec, asin = extractASIN(url);
         jt.out('contentdiv', "Reading details from Amazon...");
+        critsec = critsec || "";
         url = "amazoninfo?asin=" + asin;
         jt.call('GET', url, null,
                  function (json) {

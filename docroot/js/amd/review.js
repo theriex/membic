@@ -952,9 +952,10 @@ app.review = (function () {
 
 
     callAmazonForAutocomplete = function (acfunc) {
-        var url, critsec = "";
+        var url, critsec;
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
             jt.enc(autocomptxt);
+        critsec = critsec || "";
         jt.call('GET', url, null,
                  function (json) {
                      writeAutocompLinks(jt.dec(json[0].content));
@@ -1231,12 +1232,13 @@ return {
 
 
     delrev: function () {
-        var data, critsec = "";
+        var data, critsec;
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
         jt.out('cmain', "Deleting review...");
         data = jt.objdata(crev);
+        critsec = critsec || "";
         jt.call('POST', "delrev?" + app.login.authparams(), data,
                  function (reviews) {
                      var html = "<p>Review deleted.  If this review was one" +
@@ -1510,7 +1512,7 @@ return {
 
 
     save: function (doneEditing, actionstr) {
-        var errors = [], i, errtxt = "", type, url, data, critsec = "", html;
+        var errors = [], i, errtxt = "", type, url, data, critsec, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('revformbuttonstd').innerHTML;
         jt.out('revformbuttonstd', "Verifying...");
@@ -1534,6 +1536,7 @@ return {
             url = "newrev?";
             crev.svcdata = ""; }
         data = jt.objdata(crev);
+        critsec = critsec || "";
         jt.call('POST', url + app.login.authparams(), data,
                  function (reviews) {
                      crev = copyReview(app.lcs.putRev(reviews[0]).rev);
@@ -1567,7 +1570,8 @@ return {
 
 
     initWithId: function (revid, mode, action, errmsg) {
-        var critsec = "", params = "revid=" + revid;
+        var critsec, params = "revid=" + revid;
+        critsec = critsec || "";
         jt.call('GET', "revbyid?" + params, null,
                  function (revs) {
                      if(revs.length > 0) {

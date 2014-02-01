@@ -107,9 +107,10 @@ return {
     //to this function, which is used for both the "log in via
     //twitter" click, and the callback from twitter.
     authenticate: function (params) {
-        var data, outputdiv, addAuthOutDiv, critsec = "";
+        var data, outputdiv, addAuthOutDiv, critsec;
         addAuthOutDiv = jt.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
+        critsec = critsec || "";
         if(params.oauth_token && params.oauth_verifier) {  //back from twitter
             //on return there is no auth form displayed so use contentdiv
             jt.out("contentdiv", "Returned from Twitter...");

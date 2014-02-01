@@ -162,10 +162,11 @@ app.rel = (function () {
 
 
     requestLinkHTML = function (penref) {
-        var selfref, params, critsec = "", i, req, html = "";
+        var selfref, params, critsec, i, req, html = "";
         selfref = app.pen.currPenRef();
         if(!selfref.outreqs) {
             params = app.login.authparams() + "&fromid=" + selfref.penid;
+            critsec = critsec || "";
             jt.call('GET', "findreqs?" + params, null,
                     function (reqs) {
                         selfref.outreqs = reqs;
@@ -193,7 +194,7 @@ app.rel = (function () {
 
 
     writeRequestToServer = function () {
-        var reqid, selfref, outreq, i, data, critsec = "";
+        var reqid, selfref, outreq, i, data, critsec;
         reqid = jt.instId(dlgreq);
         selfref = app.pen.currPenRef();
         if(reqid) {  //previously loaded, check if changed
@@ -208,6 +209,7 @@ app.rel = (function () {
                 return; } }
         //new or changed request
         data = jt.objdata(dlgreq);
+        critsec = critsec || "";
         jt.call('POST', "updreq?" + app.login.authparams(), data,
                 function (newreqs) {
                     if(reqid) {  //modified
@@ -417,7 +419,8 @@ app.rel = (function () {
 
 
     updateRelationship = function (rel) {
-        var critsec = "", data = jt.objdata(rel);
+        var critsec, data = jt.objdata(rel);
+        critsec = critsec || "";
         if(rel.status === "nofollow") {  //delete
             jt.call('POST', "delrel?" + app.login.authparams(), data,
                      function (updates) {
@@ -494,7 +497,7 @@ app.rel = (function () {
 
 
     addFollow = function (originator, related, contfunc) {
-        var newrel = {}, data, critsec = "";
+        var newrel = {}, data, critsec;
         newrel.originid = jt.instId(originator);
         newrel.relatedid = jt.instId(related);
         jt.assert(newrel.originid && newrel.relatedid);
@@ -502,6 +505,7 @@ app.rel = (function () {
         newrel.mute = "";
         newrel.cutoff = 0;
         data = jt.objdata(newrel);
+        critsec = critsec || "";
         jt.call('POST', "newrel?" + app.login.authparams(), data,
                 function (newrels) {
                     var orgpen = newrels[0],  //originator pen
@@ -560,11 +564,12 @@ app.rel = (function () {
 
 
     loadOutboundRelationships = function () {
-        var pen, params, critsec = "";
+        var pen, params, critsec;
         pen = app.pen.currPenRef().pen;
         params = app.login.authparams() + "&originid=" + jt.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
             params += "&cursor=" + jt.enc(loadoutcursor); }
+        critsec = critsec || "";
         jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, relref;
@@ -677,7 +682,7 @@ return {
 
 
     loadDisplayRels: function (pen, direction, contfunc, cursor) {
-        var refarray, field, params, critsec = "";
+        var refarray, field, params, critsec;
         refarray = getRelRefArray(pen, direction);
         if(refarray && !cursor) {  //relationships already loaded
             return contfunc(refarray); }
@@ -686,6 +691,7 @@ return {
             jt.instId(pen);
         if(cursor) {
             params += "&cursor=" + cursor; }
+        critsec = critsec || "";
         jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, resultCursor;

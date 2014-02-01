@@ -275,10 +275,11 @@ return {
 
 
     displayDoc: function (url) {
-        var critsec = "", html = "Fetching " + url + " ...";
+        var critsec, html = "Fetching " + url + " ...";
         app.layout.openDialog(null, html);
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
+        critsec = critsec || "";
         jt.request('GET', url, null,
                    function (resp) {
                        displayDocContent(url, resp); },

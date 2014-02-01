@@ -340,10 +340,11 @@ app.login = (function () {
 
 
     addNativeAuthToPen = function (params) {
-        var url, critsec = "";
+        var url, critsec;
         jt.out('contentdiv', "Verifying account");
         url = "getacct?am=" + params.am + "&at=" + params.at +
             "&an=" + jt.enc(params.an);
+        critsec = critsec || "";
         jt.call('GET', url, null,
                 function (accarr) {
                     var mid;
@@ -363,8 +364,8 @@ app.login = (function () {
     loggedInDoNextStep = function (params) {
         //Need to note login, but definitely don't hold up display work
         setTimeout(function () {
-            var data = "penid=" + app.pen.currPenId(), 
-                critsec = "";
+            var data = "penid=" + app.pen.currPenId(), critsec;
+            critsec = critsec || "";
             jt.call('POST', "penacc?" + app.login.authparams(), data,
                     function () {
                         jt.log("Pen access time updated");
@@ -519,7 +520,7 @@ return {
 
 
     updacc: function () {
-        var sel, i, cboxes, csv, data, url, critsec = "";
+        var sel, i, cboxes, csv, data, url, critsec;
         data = "email=" + jt.enc(jt.safeget('emailin', 'value'));
         if(authmethod === "mid") {
             data += "&pass=" + jt.enc(jt.safeget('npin', 'value')); }
@@ -538,6 +539,7 @@ return {
         data += "&sumflags=" + jt.enc(csv);
         data += "&" + authparams();
         url = secureURL("chgpwd");
+        critsec = critsec || "";
         jt.call('POST', url, data,
                  function (objs) {
                      if(authmethod === "mid") {
@@ -551,8 +553,7 @@ return {
 
 
     displayUpdAccForm: function (account) {
-        var rows = [], html, title = "Account settings for $USERNAME", 
-            critsec = "";
+        var rows = [], html, critsec, title = "Account settings for $USERNAME";
         if(account) {
             if(secureURL("chgpwd") !== "chgpwd") { //redirect if needed
                 window.location.href = app.secsvr + 
@@ -610,6 +611,7 @@ return {
             app.layout.adjust();
             jt.byId('emailin').focus(); }
         else {  //no account given, go get it.
+            critsec = critsec || "";
             jt.call('GET', "getacct?" + authparams(), null,
                     function (accarr) {
                         if(accarr.length > 0) {
@@ -774,13 +776,14 @@ return {
     upwlogin: function () {
         var username = jt.byId('userin').value,
             password = jt.byId('passin').value,
-            url, data, critsec = "";
+            url, data, critsec;
         if(!username || !password || !username.trim() || !password.trim()) {
             jt.out('loginstatdiv', "Please specify a username and password");
             return; }
         jt.out('loginbspan', "Signing in...");
         url = secureURL("login");
         data = jt.objdata({ user: username, pass: password });
+        critsec = critsec || "";
         jt.call('POST', url, data,
                  function (objs) {
                      //same flow here as createAccount
@@ -812,7 +815,7 @@ return {
         var username = jt.byId('userin').value,
             password = jt.byId('passin').value,
             maddr = jt.byId('emailin').value || "",
-            data = "", url, buttonhtml, critsec = "";
+            data = "", url, buttonhtml, critsec;
         if(!username || !password || !username.trim() || !password.trim()) {
             jt.out('maccstatdiv', "Please specify a username and password");
             return; }
@@ -820,6 +823,7 @@ return {
         buttonhtml = jt.byId('newaccbuttonstd').innerHTML;
         jt.out('newaccbuttonstd', "Creating new account...");
         data = jt.objdata({ user: username, pass: password, email: maddr });
+        critsec = critsec || "";
         jt.call('POST', url, data, 
                  function (objs) {
                      var html = "<p>Welcome " + username + "! Your account " +
@@ -887,12 +891,13 @@ return {
 
     emailCredentials: function () {
         var eaddr = jt.byId('emailin').value,
-            data = "", critsec = "";
+            data = "", critsec;
         if(!eaddr || !eaddr.trim() || !jt.isProbablyEmail(eaddr)) {
             jt.out('emcrediv', "Please enter your email address");
             return; }  //nothing to send to
         jt.out('sendbuttons', "Sending...");
         data = "email=" + jt.enc(eaddr);
+        critsec = critsec || "";
         jt.call('POST', "mailcred", data,
                  function (objs) {
                      dispEmailSent(); },

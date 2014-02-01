@@ -291,7 +291,8 @@ var actstat = (function () {
 
 
     fetchBotListAndDisplayAgents = function () {
-        var critsec = "";
+        var critsec;
+        critsec = critsec || "";
         jt.call('GET', "../botids", null,
                 function (results) {
                     botids = results[0].botids.split(',');
@@ -304,8 +305,9 @@ var actstat = (function () {
 
 
     fetchDataAndDisplay = function () {
-        var critsec = "";
+        var critsec;
         jt.out('useractdiv', "Fetching ActivityStat records");
+        critsec = critsec || "";
         jt.call('GET', "../activity", null,
                 function (actstats) {
                     data = actstats;

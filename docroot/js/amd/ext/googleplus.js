@@ -52,7 +52,7 @@ app.googleplus = (function () {
 
 
     validateAuthentication = function (json, token) {
-        var addAuthOutDiv, url, critsec = "";
+        var addAuthOutDiv, url, critsec;
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
             jt.log("The received token was not intended for this app");
             return backToParentDisplay(); }
@@ -64,6 +64,7 @@ app.googleplus = (function () {
                 "?access_token=" + token;
             url = jt.enc(url);
             url = "jsonget?geturl=" + url;
+            critsec = critsec || "";
             jt.call('GET', url, null,
                      function (json) {
                          jt.out('contentdiv', 
@@ -101,13 +102,14 @@ return {
     //callback with "AltAuth2" returned in the hash fragment, which
     //leads back to this method again.
     authenticate: function (params) {
-        var url, scope, critsec = "";
+        var url, scope, critsec;
         if(params.access_token) {  //back from google
             jt.out("contentdiv", "Returned from Google...");
             url = "https://www.googleapis.com/oauth2/v1/tokeninfo" +
                 "?access_token=" + params.access_token;
             url = jt.enc(url);
             url = "jsonget?geturl=" + url;
+            critsec = critsec || "";
             jt.call('GET', url, null,
                      function (json) {
                          validateAuthentication(json, params.access_token); },
