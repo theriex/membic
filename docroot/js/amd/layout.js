@@ -308,6 +308,7 @@ return {
         else {
             dlgdiv.style.left = "20px";
             dlgdiv.style.top = "60px"; }
+        app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.closeDialog;
         jt.out('dlgdiv', html);
         if(initf) {
@@ -323,7 +324,7 @@ return {
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
         app.layout.adjust();
-        app.onescapefunc = null;
+        app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();
             app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }

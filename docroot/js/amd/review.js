@@ -1,4 +1,4 @@
-/*global setTimeout: false, clearTimeout: false, window: false, app: false, jt: false, google: false */
+/*global setTimeout: false, clearTimeout: false, window: false, document: false, app: false, jt: false, google: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -156,7 +156,7 @@ app.review = (function () {
     },
 
 
-    revTypeChoiceHTML = function (intype, gname, selt, chgfstr, revrefs) {
+    revTypeChoiceHTML = function (intype, gname, selt, chgfstr, revrefs, sing) {
         var i, typename, greyed, tobj, ts = [], html;
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
@@ -166,8 +166,8 @@ app.review = (function () {
                     greyed = true; } }
             tobj = { typename: typename, greyed: greyed,
                      label: app.review.badgeImageHTML(reviewTypes[i], 
-                                                      true, greyed),
-                     value: reviewTypes[i].plural,
+                                                      true, greyed, sing),
+                     value: sing ? reviewTypes[i].type : reviewTypes[i].plural,
                      checked: (typename === selt) };
             ts.push(jt.checkrad(intype, gname, tobj.value, tobj.label,
                                 tobj.checked, chgfstr)); }
@@ -577,6 +577,12 @@ app.review = (function () {
     transformActionsHTML = function (review, type, keyval, mode) {
         var html = "", actions = [];
         if(keyval && mode === "edit") {
+            actions.push(
+                ["a", {href: "#",
+                       onclick: jt.fs("app.review.changeRevType()"),
+                       title: "Change Review Type"},
+                 "Change type"]);
+            actions.push("&nbsp;&nbsp;&nbsp;");
             if(review.revtype === "video" && review.title && review.artist) {
                 //video import may have mapped the title and artist wrong
                 actions.push(
@@ -584,22 +590,6 @@ app.review = (function () {
                            onclick: jt.fs("app.review.swapTitleAndArtist()"),
                            title: "Swap the artist and title values"},
                      "Swap title and artist"]);
-                actions.push("&nbsp;&nbsp;&nbsp;"); }
-            if(review.revtype === "video") {
-                //sometimes a video is really more music
-                actions.push(
-                    ["a", {href: "#",
-                           onclick: jt.fs("app.review.changeRevType('music')"),
-                           title: "Review this as music"},
-                     "Review as music"]);
-                actions.push("&nbsp;&nbsp;&nbsp;"); }
-            if(review.revtype === "music") {
-                //sometimes music is really more video
-                actions.push(
-                    ["a", {href: "#",
-                           onclick: jt.fs("app.review.changeRevType('video')"),
-                           title: "Review this as video"},
-                     "Review as video"]);
                 actions.push("&nbsp;&nbsp;&nbsp;"); }
             if(review.url) {
                 //Might want to refresh the image link or re-read info
@@ -1307,8 +1297,10 @@ return {
     },
 
 
-    badgeImageHTML: function (type, withtext, greyed) {
+    badgeImageHTML: function (type, withtext, greyed, sing) {
         var label = type.plural.capitalize(), html = [];
+        if(sing) {
+            label = type.type.capitalize(); }
         if(type.img) {
             html.push(["img", {cla: "reviewbadge", src: "img/" + type.img,
                                title: label, alt: label}]);
@@ -1610,9 +1602,29 @@ return {
     },
 
 
-    changeRevType: function (typeval) {
+    changeRevType: function () {
+        var html;
         readAndValidateFieldValues();
-        crev.revtype = typeval;
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                revTypeChoiceHTML("radio", "rgrp", crev.revtype,
+                                  jt.fs("app.review.selRevType()"), 
+                                  null, true)];
+        app.layout.openDialog({x:100, y:300}, jt.tac2html(html));
+    },
+
+
+    selRevType: function () {
+        var radios, i;
+        radios = document.getElementsByName("rgrp");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                crev.revtype = radios[i].value;
+                break; } }
+        app.layout.closeDialog();
         app.review.display();
     },
 

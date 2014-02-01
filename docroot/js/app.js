@@ -26,6 +26,7 @@ var app = {},  //Global container for application level funcs and values
     app.secsvr = "https://myopenreviews.appspot.com";
     app.mainsvr = "http://www.wdydfun.com";
     app.onescapefunc = null;  //app global escape key handler
+    app.escapefuncstack = [];  //for levels of escaping
 
 
     ////////////////////////////////////////
