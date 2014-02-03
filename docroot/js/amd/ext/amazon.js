@@ -1,6 +1,6 @@
 /*global app: false, jt: false */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
 
 app.amazon = (function () {
     "use strict";
@@ -70,6 +70,22 @@ app.amazon = (function () {
     },
 
 
+    //Clear annoying parentheticals to get a cleaner title
+    cleanReviewTitle = function (review) {
+        var parenyear = review.title.match(/\(\d\d\d\d\)/);
+        if(parenyear) {
+            review.year = parenyear[0].slice(1, -1);
+            review.title.replace(/\(\d\d\d\d\)/g, ""); }
+        //books and music are not polluted as bad as movie titles are
+        if(review.revtype === "movie") {
+            review.title = review.title.replace(/\(.*DVD.*\)/g, "");
+            review.title = review.title.replace(/\[.*DVD.*\]/g, "");
+            review.title = review.title.replace(/\(.*Blu-ray.*\)/g, "");
+            review.title = review.title.replace(/\[.*Blu-ray.*\]/g, ""); }
+        review.title = review.title.trim();
+    },
+
+
     setReviewFields = function (review, xml) {
         review.revtype = extractField("ProductGroup", xml).toLowerCase();
         if((review.revtype.indexOf("book") >= 0) ||
@@ -113,6 +129,7 @@ app.amazon = (function () {
         setIfFound(review, "starring",
                    extractElements("ItemLookupResponse.Items.Item" + 
                                    ".ItemAttributes.Actor", xml));
+        cleanReviewTitle(review);
     },
 
 
