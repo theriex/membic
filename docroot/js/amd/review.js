@@ -913,8 +913,17 @@ app.review = (function () {
     },
 
 
+    hasComplexTitle = function (item) {
+        if(item && item.title && item.title.indexOf("(") >= 0) {
+            return true; }
+        if(item && item.title && item.title.indexOf("[") >= 0) {
+            return true; }
+        return false;
+    },
+
+
     writeAutocompLinks = function (xml) {
-        var itemdat, url, attrs, title, items = [];
+        var itemdat, url, attrs, title, rest, items = [], i, lis = [];
         itemdat = xmlExtract("Item", xml);
         while(itemdat) {
             url = xmlExtract("DetailPageURL", itemdat.content);
@@ -923,21 +932,35 @@ app.review = (function () {
             title = xmlExtract("Title", attrs.content);
             title = title.content || "";
             if(title) {
+                rest = "";
                 if(crev.revtype === 'book') {
-                    title += secondaryAttr("Author", attrs.content); }
+                    rest = secondaryAttr("Author", attrs.content); }
                 else if(crev.revtype === 'movie') {
-                    title += secondaryAttr("ProductGroup", attrs.content); }
+                    rest = secondaryAttr("ProductGroup", attrs.content); }
                 else if(crev.revtype === 'music') {
-                    title += secondaryAttr("Artist", attrs.content) + " " +
+                    rest = secondaryAttr("Artist", attrs.content) + " " +
                         secondaryAttr("Manufacturer", attrs.content) +
-                        secondaryAttr("ProductGroup", attrs.content); } }
-            items.push(["li",
-                        ["a", {href: url, 
-                               onclick: jt.fs("app.review.readURL('" + url + 
-                                              "')")},
-                         title]]);
+                        secondaryAttr("ProductGroup", attrs.content); }
+                items.push({url: url, title: title, rest: rest}); }
             itemdat = xmlExtract("Item", itemdat.remainder); }
-        jt.out('revautodiv', jt.tac2html(["ul", items]));
+        items.sort(function (a, b) {
+            //titles without paren or square bracket addendums first
+            if(!hasComplexTitle(a) && hasComplexTitle(b)) { return -1; }
+            if(hasComplexTitle(a) && !hasComplexTitle(b)) { return 1; }
+            //alpha order puts shorter titles first, which is generally better
+            if(a.title < b.title) { return -1; }
+            if(a.title > b.title) { return 1; }
+            //shorter remainders may or may not be better, whatever.
+            if(a.rest < b.rest) { return -1; }
+            if(a.rest > b.rest) { return 1; }
+            return 0; });
+        for(i = 0; i < items.length; i += 1) {
+            lis.push(["li",
+                      ["a", {href: items[i].url, 
+                             onclick: jt.fs("app.review.readURL('" + 
+                                            items[i].url + "')")},
+                       items[i].title + " " + items[i].rest]]); }
+        jt.out('revautodiv', jt.tac2html(["ul", lis]));
     },
 
 

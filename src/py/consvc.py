@@ -302,10 +302,7 @@ class AmazonSearch(webapp2.RequestHandler):
         elif revtype == "movie":
             amznidx = "DVD"
         elif revtype == "music":
-            amznidx = "Music"
-        # The results from this are worse than not suggesting anything.
-        # elif revtype == "music":
-        #     amznidx = "Music"
+            amznidx = "Music"  # album oriented, but tolerable results
         if not amznidx:
             json = "[{\"content\":\"\"}]"
             self.response.headers['Content-Type'] = 'application/json'
