@@ -227,8 +227,9 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
     else:
         body += "Experienced anything worth a review recently?" +\
             " Your friends would like to hear about it."
-    body += "\n" +\
-        "To write a review or get more info, go to http://www.wdydfun.com" +\
+    body += "\n\n" +\
+        "To see top rated reviews from your friends," +\
+        " go to http://www.wdydfun.com" +\
         "\n\n" + req_summary_text(reqs)
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
