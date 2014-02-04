@@ -943,7 +943,18 @@ app.review = (function () {
                         secondaryAttr("ProductGroup", attrs.content); }
                 items.push({url: url, title: title, rest: rest}); }
             itemdat = xmlExtract("Item", itemdat.remainder); }
+        title = "";
+        if(jt.byId('keyin')) {
+            title = jt.byId('keyin').value.toLowerCase(); }
         items.sort(function (a, b) {
+            //prefer autocomps that actually include the title text
+            if(title) {
+                if(a.title.toLowerCase().indexOf(title) >= 0 && 
+                   b.title.toLowerCase().indexOf(title) < 0) {
+                    return -1; }
+                if(a.title.toLowerCase().indexOf(title) < 0 && 
+                   b.title.toLowerCase().indexOf(title) >= 0) {
+                    return 1; } }
             //titles without paren or square bracket addendums first
             if(!hasComplexTitle(a) && hasComplexTitle(b)) { return -1; }
             if(hasComplexTitle(a) && !hasComplexTitle(b)) { return 1; }
