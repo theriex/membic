@@ -605,7 +605,8 @@ return {
         jt.log("rel.resetStateVars called");
         loadoutcursor = null;
         asyncLoadStarted = false;
-        app.pen.currPenRef().outrels = null;
+        if(app.pen.currPenRef()) {
+            app.pen.currPenRef().outrels = null; }
         if(relstate === "new") {
             //a new pen name has no outbound relationships yet.  Just
             //init the outrels in the cache PenRef to an empty array.
