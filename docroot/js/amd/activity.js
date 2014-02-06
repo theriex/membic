@@ -32,6 +32,7 @@ app.activity = (function () {
         topActivityType = "",  //book or whatever review type is selected
         topDispMax = 20,  //max top reviews to display
         remActivityType = "",  //by default display all remembered reviews
+        announcedismiss = false,
 
 
     ////////////////////////////////////////
@@ -580,6 +581,27 @@ app.activity = (function () {
     },
 
 
+    announcementHTML = function () {
+        var html = "", url, nowiso;
+        if(!announcedismiss) {
+            nowiso = new Date().toISOString();
+            if(nowiso > "2014-02-11T00:00:00Z" && 
+               nowiso < "2014-02-11T23:59:59Z") {
+                url = "https://thedaywefightback.org";
+                html = ["div", {cla: "announcecontent"},
+                        [["a", {cla: "cmtdelex", id: "announcex", 
+                                href: "#dismiss announcement",
+                                onclick: jt.fs("app.activity.announcex()")},
+                          "(x)&nbsp;"],
+                         ["a", {href: url,
+                                onclick: "window.open('" + url + "');" + 
+                                         "return false;"},
+                          "It's shutdown mass surveillance day! " + url]]];
+                html = jt.tac2html(html); } }
+        return html;
+    },
+
+
     displayReviewActivity = function () {
         var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
         topModeEnabled = true;
@@ -610,7 +632,9 @@ app.activity = (function () {
         else {
             setTimeout(function () {
                 app.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
-        html = [["div", {id: "pendingqcsdiv"},
+        html = [["div", {id: "announcementdiv"},
+                 announcementHTML()],
+                ["div", {id: "pendingqcsdiv"},
                  app.revresp.pendingCommentsHTML()],
                 ["div", {id: "activereqsdiv"},
                  activeRequestsHTML()],
@@ -1036,6 +1060,12 @@ return {
                         keepgoingfunc,
                         app.failf);
                 break; } }
+    },
+
+
+    announcex: function () {
+        announcedismiss = true;
+        jt.out('announcementdiv', "");
     }
 
 
