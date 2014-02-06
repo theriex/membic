@@ -269,7 +269,7 @@ img { border:0px; }
 .announcecontent { padding:5px 0px; font-size:medium; font-style:italic; }
 .reqlist { list-style:none; padding:0; margin:0; font-size:medium; }
 .reqlist li { font-style:italic; }
-.cmtlist { list-style:none; padding:0; margin:0; font-size:medium; }
+.cmtlist { list-style:none; padding:5px 0px; margin:0; font-size:medium; }
 .cmtlist li { font-style:italic; }
 .reqkeywordsdiv { text-align:center; font-size:small; }
 .smallbadge { width:20px; height:20px; vertical-align:middle; }
