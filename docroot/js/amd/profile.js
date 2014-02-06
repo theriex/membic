@@ -55,7 +55,7 @@ app.profile = (function () {
         if(!penref.profstate) {
             penref.profstate = { seltabname: 'recent',
                                  revtype: "" }; }
-        if(!penref.profstate.revtype && penref.pen.top20s) {
+        if(!penref.profstate.revtype && penref.pen && penref.pen.top20s) {
             penref.profstate.revtype = penref.pen.top20s.latestrevtype; }
         if(!penref.profstate.revtype) {
             penref.profstate.revtype = 'book'; }
@@ -1207,6 +1207,17 @@ return {
     },
 
 
+    reviewItemNameHTML: function (type, revobj) {
+        var linktxt = "";
+        if(type.subkey) {
+            linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
+                jt.ellipsis(revobj[type.subkey], 40); }
+        else {
+            linktxt = jt.ellipsis(revobj[type.key], 60); }
+        return linktxt;
+    },
+
+
     reviewItemHTML: function (revobj, penNameStr) {
         var revid, type, linkref, linkclass, linktxt, jump = "", byline = "", 
             keywords = "", revtext = "", html;
@@ -1214,11 +1225,7 @@ return {
         type = app.review.getReviewTypeByValue(revobj.revtype);
         linkref = "statrev/" + revid;
         linkclass = app.revresp.foundHelpful(revid)? "rslcbold" : "rslc";
-        if(type.subkey) {
-            linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
-                jt.ellipsis(revobj[type.subkey], 40); }
-        else {
-            linktxt = jt.ellipsis(revobj[type.key], 60); }
+        linktxt = app.profile.reviewItemNameHTML(type, revobj);
         if(revobj.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(penNameStr) {

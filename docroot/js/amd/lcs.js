@@ -103,15 +103,30 @@ app.lcs = (function () {
     },
 
 
+    isCanonicalMatch = function (fromrev, torev) {
+        var keys, i;
+        if(fromrev.revtype !== torev.revtype) {
+            return false; }
+        if(fromrev.cankey === torev.cankey) {
+            return true; }
+        if(fromrev.altkeys) {
+            keys = fromrev.altkeys.split(",");
+            for(i = 0; i < keys.length; i += 1) {
+                if(keys[i] === torev.cankey) {
+                    return true; } } }
+        return false;
+    },
+
+
     checkCachedCorresponding = function (review) {
         var revid, revref;
         for(revid in revs) {
             if(revs.hasOwnProperty(revid)) {
                 revref = revs[revid];
-                if(revref && revref.rev 
-                   && revref.rev.cankey === review.cankey
-                   && revref.rev.penid !== review.penid) {
-                    app.lcs.verifyCorrespondingLinks(review, revref.rev); } } }
+                if(revref && revref.rev && revref.rev.penid !== review.penid) {
+                    if(isCanonicalMatch(review, revref.rev)) {
+                        app.lcs.verifyCorrespondingLinks(review, 
+                                                         revref.rev); } } } }
     };
 
 
@@ -354,6 +369,13 @@ return {
                      jt.log("checkAllCorresponding failed " + code + 
                             ": " + errtxt); }),
                  critsec);
+    },
+
+
+    nukeItAll: function () {
+        pens = {};
+        rels = {};
+        revs = {};
     }
 
 

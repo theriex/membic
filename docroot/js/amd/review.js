@@ -577,14 +577,23 @@ app.review = (function () {
     transformActionsHTML = function (review, type, keyval, mode) {
         var html = "", actions = [];
         if(keyval && mode === "edit") {
+            if(review.srcrev && !jt.instId(review)) {
+                //new corresponding review, allow finding mismatched title
+                actions.push(
+                    ["a", {href: "#",
+                           onclick: jt.fs("app.revresp.searchCorresponding()"),
+                           title: "Find existing corresponding review"},
+                     "Find review"]);
+                actions.push("&nbsp;&nbsp;&nbsp;"); }
+            //always be able to change the review type
             actions.push(
                 ["a", {href: "#",
                        onclick: jt.fs("app.review.changeRevType()"),
-                       title: "Change Review Type"},
+                       title: "Change this review type"},
                  "Change type"]);
             actions.push("&nbsp;&nbsp;&nbsp;");
             if(review.revtype === "video" && review.title && review.artist) {
-                //video import may have mapped the title and artist wrong
+                //video import may have mapped the title and artist backwards
                 actions.push(
                     ["a", {href: "#",
                            onclick: jt.fs("app.review.swapTitleAndArtist()"),
@@ -1273,8 +1282,15 @@ return {
                          "</p>";
                      jt.out('cmain', html);
                      setTimeout(function () {
-                         app.profile.resetReviews();
-                         app.profile.display(); }, 12000); },
+                         //between comments and corresponding review links
+                         //it's easiest to effectively just reload.
+                         app.lcs.nukeItAll();
+                         app.review.resetStateVars();
+                         app.activity.reset();
+                         app.profile.resetStateVars();
+                         app.rel.resetStateVars();
+                         app.pen.resetStateVars();
+                         app.login.init(); }, 12000); },
                  app.failf(function (code, errtxt) {
                      jt.err("Delete failed code: " + code + " " + errtxt);
                      app.profile.display(); }),
@@ -1538,24 +1554,25 @@ return {
     },
 
 
-    save: function (doneEditing, actionstr) {
+    save: function (doneEditing, actionstr, skipvalidation) {
         var errors = [], i, errtxt = "", type, url, data, critsec, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('revformbuttonstd').innerHTML;
-        jt.out('revformbuttonstd', "Verifying...");
-        type = findReviewType(crev.revtype);
-        if(!type) {
-            jt.out('revformbuttonstd', html);
-            jt.out('revsavemsg', "Unknown review type");
-            return; }
-        readAndValidateFieldValues(type, errors);
-        verifyRatingStars(type, errors, actionstr);
-        if(errors.length > 0) {
-            jt.out('revformbuttonstd', html);
-            for(i = 0; i < errors.length; i += 1) {
-                errtxt += errors[i] + "<br/>"; }
-            jt.out('revsavemsg', errtxt);
-            return; }
+        if(!skipvalidation) {
+            jt.out('revformbuttonstd', "Verifying...");
+            type = findReviewType(crev.revtype);
+            if(!type) {
+                jt.out('revformbuttonstd', html);
+                jt.out('revsavemsg', "Unknown review type");
+                return; }
+            readAndValidateFieldValues(type, errors);
+            verifyRatingStars(type, errors, actionstr);
+            if(errors.length > 0) {
+                jt.out('revformbuttonstd', html);
+                for(i = 0; i < errors.length; i += 1) {
+                    errtxt += errors[i] + "<br/>"; }
+                jt.out('revsavemsg', errtxt);
+                return; } }
         jt.out('revformbuttonstd', "Saving...");
         app.onescapefunc = null;
         url = "updrev?";
@@ -1575,6 +1592,7 @@ return {
                          app.lcs.checkAllCorresponding(crev); }, 200);
                      if(doneEditing) {
                          attribution = "";
+                         app.revresp.pollForUpdates();
                          app.review.displayRead(actionstr); }
                      else {
                          app.review.display(actionstr); } },

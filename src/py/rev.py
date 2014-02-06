@@ -37,6 +37,7 @@ class Review(db.Model):
     year = db.StringProperty()
     # The canonized key/subkey field value for search match
     cankey = db.StringProperty()
+    altkeys = db.TextProperty()
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
     srcrev = db.IntegerProperty()
@@ -160,6 +161,7 @@ def read_review_values(handler, review):
     review.cankey = handler.request.get('cankey')
     if not review.cankey:
         review.cankey = create_cankey_from_request(handler)
+    set_if_param_given(review, "altkeys", handler, "altkeys")
     srevidstr = handler.request.get('srevid')
     if srevidstr:
         review.srevid = intz(srevidstr)

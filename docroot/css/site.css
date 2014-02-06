@@ -252,6 +252,9 @@ img { border:0px; }
 .linksdiv { padding:10px; text-align:center; }
 .commentform { padding:20px 0px 0px 0px; font-size:small; }
 .qcaspan { font-style:italic; }
+#csrchindiv { padding:0px 0px 10px 0px; }
+#csrchcontentdiv { padding:20px 0px 0px 0px; }
+#csrchbuttonsdiv { padding:20px; text-align:center; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }

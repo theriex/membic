@@ -41,7 +41,9 @@ def make_review_link(revid):
 
 
 # Return a summary of linkages to reviews written by the given pen id
-# within the past 30 days
+# within the past 30 days.  This is used for the "influence score"
+# indicator next to the profile icon in the nav bar, and the breakdown
+# count you see on your own profile display.
 class FetchLinkActivity(webapp2.RequestHandler):
     def get(self):
         # not looking up account info since no real authorization needed...

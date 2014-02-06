@@ -565,6 +565,8 @@ app.rel = (function () {
 
     loadOutboundRelationships = function () {
         var pen, params, critsec;
+        if(!app.pen.currPenRef()) {
+            return app.pen.getPen(loadOutboundRelationships); }
         pen = app.pen.currPenRef().pen;
         params = app.login.authparams() + "&originid=" + jt.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
@@ -600,8 +602,10 @@ app.rel = (function () {
 return {
 
     resetStateVars: function (relstate, pen) {
+        jt.log("rel.resetStateVars called");
         loadoutcursor = null;
         asyncLoadStarted = false;
+        app.pen.currPenRef().outrels = null;
         if(relstate === "new") {
             //a new pen name has no outbound relationships yet.  Just
             //init the outrels in the cache PenRef to an empty array.
@@ -655,9 +659,12 @@ return {
     //are establishing their state at startup.
     loadoutbound: function () {
         if(asyncLoadStarted) {
-            return; }  //allready working on loading
+            jt.log("rel.loadoutbound already started");
+            return; }  //already working on loading
         if(app.pen.currPenRef().outrels) {
+            jt.log("rel.loadoutbound curr penref outrels already loaded");
             return; }  //already loaded
+        jt.log("rel.loadoutbound starting load");
         asyncLoadStarted = true;
         loadoutcursor = "starting";
         setTimeout(function () {

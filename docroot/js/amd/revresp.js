@@ -1,4 +1,4 @@
-/*global setTimeout: false, window: false, app: false, jt: false */
+/*global setTimeout: false, window: false, document: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -11,7 +11,10 @@ app.revresp = (function () {
 
     var greytxt = "#999999",
         correspcheck = 0,
+        correspsrch = {},
         abcontf = null,
+        pollcount = 0,
+        polltimer = null,
 
 
     ////////////////////////////////////////
@@ -20,6 +23,8 @@ app.revresp = (function () {
 
     displayCorrespondingReviewInfo = function (pen, review) {
         var html, imghtml, msghtml = "Your review";
+        if(!jt.byId('respondbutton')) {
+            return; }
         if(review) {
             setTimeout(function () {
                 app.lcs.verifyCorrespondingLinks(review, 
@@ -50,9 +55,20 @@ app.revresp = (function () {
     //call, but if the response review is part of the top20s and was
     //already instantiated, then that instance is used and written
     //through on save. 
-    findCorrespondingReview = function (homepen, contfunc) {
-        var params, i, t20, critsec, crev;
+    findCorrespondingReview = function (homepen, contfunc, cacheonly) {
+        var params, i, t20, critsec, crev, revref, elems, revid, penid;
         crev = app.review.getCurrentReview();
+        revref = app.lcs.getRevRef(crev);
+        if(revref && revref.revlink && revref.revlink.corresponding) {
+            elems = revref.revlink.corresponding.split(",");
+            for(i = 0; i < elems.length; i += 1) {
+                revid = elems[i].split(":");
+                penid = revid[1];
+                revid = revid[0];
+                if(penid === jt.instId(homepen)) {
+                    revref = app.lcs.getRevRef(revid);
+                    if(revref.rev) {
+                        return contfunc(homepen, revref.rev); } } } }
         if(homepen.top20s) {
             t20 = homepen.top20s[app.review.getCurrentReview().revtype];
             if(t20 && t20.length) {
@@ -60,6 +76,8 @@ app.revresp = (function () {
                     if(t20[i].cankey === crev.cankey && 
                        t20[i].revtype === crev.revtype) {
                         return contfunc(homepen, t20[i]); } } } }
+        if(cacheonly) {
+            return contfunc(homepen, null); }
         params = "penid=" + jt.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
             "&" + app.login.authparams();
@@ -78,8 +96,8 @@ app.revresp = (function () {
 
 
     //Fill any missing descriptive fields in the given review from the
-    //current review, then edit the given review.
-    copyAndEdit = function (pen, review) {
+    //current review, then edit the given corresponding review.
+    copyAndEditCorresponding = function (pen, review) {
         var crev = app.review.getCurrentReview();
         if(!review) {
             review = {};
@@ -115,6 +133,33 @@ app.revresp = (function () {
             review.year = crev.year; }
         app.review.setCurrentReview(review);
         app.review.display();
+    },
+
+
+    displayCorrespSearchRevs = function (results) {
+        var i, lines = [], crev, type, text, html;
+        if(correspsrch.monitor === "stopped") {
+            return; }
+        crev = app.review.getCurrentReview();
+        type = app.review.getReviewTypeByValue(crev.revtype);
+        if(!results.length) {
+            lines.push("No " + type.type + " reviews found."); }
+        for(i = 0; i < results.length; i += 1) {
+            if(results[i].fetched) {
+                if(results[i].cursor) {
+                    lines.push(["li", "..."]); } }
+            else {
+                text = app.profile.reviewItemNameHTML(type, results[i]);
+                lines.push(
+                    ["li",
+                     ["a", {href: "#",
+                            title: "Select corresponding review",
+                            onclick: jt.fs("app.revresp.selcorresp('" +
+                                           jt.instId(results[i]) + "')") },
+                      text]]); } }
+        html = ["ul", {cla: "revlist"}, lines];
+        html = jt.tac2html(html);
+        jt.out('csrchresdiv', html);
     },
 
 
@@ -682,8 +727,16 @@ app.revresp = (function () {
     },
 
 
+    updateCorrespondingReviewButton = function (cacheonly) {
+        app.pen.getPen(function (homepen) {
+            findCorrespondingReview(homepen, 
+                                    displayCorrespondingReviewInfo,
+                                    cacheonly); }); 
+    },
+
+
     correspondingReviewsHTML = function (redrawfunc) {
-        var rows = [], csv, elems, i, penid, revid, penref, revref;
+        var rows = [], csv, elems, i, penid, revid, penref, revref, cb;
         csv = crevlink().corresponding;
         if(csv) {
             elems = csv.split(",");
@@ -695,13 +748,17 @@ app.revresp = (function () {
                     penref = app.lcs.getPenRef(penid);
                     if(penref.status === "not cached") {
                         app.lcs.getPenFull(penid, redrawfunc);
+                        cb = true;
                         break; }
                     revref = app.lcs.getRevRef(revid);
                     if(revref.status === "not cached") {
                         app.lcs.getRevFull(revid, redrawfunc);
+                        cb = true;
                         break; }
                     if(penref.pen && revref.rev) {
                         rows.push(correspRevHTML(penref, revref)); } } } }
+        if(!cb) {
+            updateCorrespondingReviewButton(true); }
         return rows;
     },
 
@@ -719,6 +776,12 @@ app.revresp = (function () {
         jt.out('revcommentsdiv', jt.tac2html(html));
         testEnableQuestionButton();
         testEnableCommentButton();
+        if(pollcount && !polltimer) {
+            polltimer = setTimeout(function () {
+                jt.log("revresp polling for changes, pollcount: " + pollcount);
+                polltimer = null;
+                pollcount -= 1;
+                displayReviewResponses(); }, 2400); }
     },
 
 
@@ -754,7 +817,133 @@ return {
         jt.byId('respondtxttd').style.color = greytxt;
         setTimeout(function () {
             app.pen.getPen(function (pen) {
-                findCorrespondingReview(pen, copyAndEdit); }); }, 50);
+                findCorrespondingReview(pen, copyAndEditCorresponding); }); },
+                   50);
+    },
+
+
+    searchCorresponding: function (val) {
+        var html;
+        correspsrch = {value: val || "", monitor: null};
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"},
+                 "Find your corresponding review"],
+                ["div", {id: "csrchcontentdiv"},
+                 [["div", {id: "csrchindiv"},
+                   ["input", {type: "text", id: "searchtxt", size: "40",
+                              placeholder: "Review title or name",
+                              value: correspsrch.value,
+                              onchange: jt.fs("app.revresp.csrchupd()")}]],
+                  ["div", {id: "csrchresdiv"}]]]];
+        app.layout.openDialog({x:150, y:370}, jt.tac2html(html), null,
+                              function () {
+                                  jt.byId("searchtxt").focus(); });
+        setTimeout(app.revresp.csrchupd, 50);
+    },
+
+
+    csrchupd: function () {
+        var srchin, crev, qstr, maxdate, mindate, params, critsec;
+        srchin = jt.byId("searchtxt");
+        if(!srchin) {  //dialog no longer displayed, quit
+            return; }
+        crev = app.review.getCurrentReview();
+        qstr = srchin.value;
+        if(!correspsrch.monitor || qstr !== correspsrch.value) {
+            if(correspsrch.monitor) {
+                window.clearTimeout(correspsrch.monitor);
+                correspsrch.monitor = null; }
+            correspsrch.value = qstr;
+            maxdate = (new Date()).toISOString();
+            mindate = (new Date(0)).toISOString();
+            params = app.login.authparams() +
+                "&qstr=" + jt.enc(jt.canonize(qstr)) +
+                "&revtype=" + crev.revtype +
+                "&penid=" + crev.penid +
+                "&maxdate=" + maxdate + 
+                "&mindate=" + mindate;
+            critsec = critsec || "";
+            jt.call('GET', "srchrevs?" + params, null,
+                    function (results) { 
+                        app.lcs.putRevs(results);
+                        displayCorrespSearchRevs(results);
+                        correspsrch.monitor = setTimeout(
+                            app.revresp.csrchupd, 400); },
+                    app.failf(function (code, errtxt) {
+                        jt.out('csrchresdiv', "Search call failure " + code +
+                               " " + errtxt); }),
+                    critsec); }
+        else if(correspsrch.monitor !== "stopped") {
+            correspsrch.monitor = setTimeout(app.revresp.csrchupd, 400); }
+    },
+
+
+    selcorresp: function (revid) {
+        var crev, theirrev, ourrev, type, html;
+        correspsrch.monitor = "stopped";
+        crev = app.review.getCurrentReview();
+        theirrev = app.lcs.getRevRef(crev.srcrev).rev;
+        ourrev = app.lcs.getRevRef(revid).rev;
+        type = app.review.getReviewTypeByValue(crev.revtype);
+        html = [["div", {id: "csrchconfirmdiv"},
+                 ["Which " + type.key + " should be used for your review?",
+                  ["ul", {cla: "reqlist"},
+                   [["li", jt.checkrad("radio", "tgrp", 
+                                       jt.instId(theirrev),
+                                       app.profile.reviewItemNameHTML(
+                                           type, theirrev),
+                                       false)],
+                    ["li", jt.checkrad("radio", "tgrp",
+                                       jt.instId(ourrev),
+                                       app.profile.reviewItemNameHTML(
+                                           type, ourrev),
+                                       true)]]]]],
+                ["div", {id: "csrchbuttonsdiv"},
+                 [["button", {type: "button", id: "cancelb",
+                              onclick: jt.fs(
+                                  "app.revresp.searchCorresponding('" + 
+                                      correspsrch.value + "')")},
+                   "Cancel"],
+                  "&nbsp;",
+                  ["button", {type: "button", id: "confirmb",
+                              onclick: jt.fs("app.revresp.confirmcorresp('" +
+                                             revid + "')")},
+                   "OK"]]]];
+        jt.out('csrchcontentdiv', jt.tac2html(html));
+    },
+
+
+    confirmcorresp: function (revid) {
+        var crev, theirrev, ourrev, type, radios, i;
+        crev = app.review.getCurrentReview();
+        theirrev = app.lcs.getRevRef(crev.srcrev).rev;
+        ourrev = app.lcs.getRevRef(revid).rev;
+        type = app.review.getReviewTypeByValue(crev.revtype);
+        app.review.setCurrentReview(ourrev);
+        radios = document.getElementsByName("tgrp");
+        for(i = 0; i < radios.length; i += 1) {
+            if(radios[i].checked) {
+                if(radios[i].value === jt.instId(theirrev)) {
+                    jt.out('csrchbuttonsdiv', "Updating " + type.key + "...");
+                    ourrev[type.key] = theirrev[type.key];
+                    if(type.subkey) {
+                        ourrev[type.subkey] = theirrev[type.subkey]; }
+                    ourrev.cankey = theirrev.cankey;
+                    break; }
+                if(radios[i].value === jt.instId(ourrev)) {
+                    jt.out('csrchbuttonsdiv', "Adding corresponding links...");
+                    ourrev.altkeys = ourrev.altkeys || "";
+                    if(ourrev.altkeys) {
+                        ourrev.altkeys += ","; }
+                    ourrev.altkeys += theirrev.cankey;
+                    break; } } }
+        app.review.displayRead();  //show review, no form input
+        app.layout.closeDialog();
+        app.review.save(true, "", true);
     },
 
 
@@ -1312,6 +1501,12 @@ return {
     },
 
 
+    //Sometimes corresponding links can take a few server calls to settle
+    pollForUpdates: function () {
+        pollcount = 3;
+    },
+
+
     activateResponseButtons: function (review) {
         disableQuestionButton();
         disableCommentButton();
@@ -1320,10 +1515,7 @@ return {
         if(jt.byId('memobutton')) {
             initMemoButtonSetting(app.pen.currPenRef(), review); }
         if(jt.byId('respondbutton')) {
-            app.pen.getPen(function (homepen) {
-                findCorrespondingReview(homepen, 
-                                        displayCorrespondingReviewInfo); 
-            }); }
+            updateCorrespondingReviewButton(); }
         if(jt.byId('questionbutton')) {
             testEnableQuestionButton(); }
         if(jt.byId('commentbutton')) {
