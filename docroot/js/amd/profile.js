@@ -658,7 +658,7 @@ app.profile = (function () {
         html.push(["ul", {cla: "revlist"}, revitems]);
         if(state.cursor) {
             if(i === 0 && !allrevMaxAutoSearch()) {
-                //auto-repeat the search to try get a result to display
+                //auto-repeat the search to try get a result to display.
                 state.autopage = window.setTimeout(app.profile.searchAllRevs,
                                                    10); }
             else {
@@ -686,6 +686,7 @@ app.profile = (function () {
             if(state.allRevsState.querymon) {
                 window.clearTimeout(state.allRevsState.querymon);
                 state.allRevsState.querymon = null; }
+            state.revs = [];  //previous results may not match anymore
             app.profile.searchAllRevs(); }
         else {
             state.allRevsState.querymon = setTimeout(monitorAllRevQuery, 400); }
@@ -1394,6 +1395,7 @@ return {
     searchAllRevs: function (revtype) {
         var state, qstr, maxdate, mindate, params, critsec;
         state = profpenref.profstate;
+        //verify revtype
         if(revtype) {
             if(state.revtype !== revtype) {
                 state.revtype = revtype;
@@ -1402,10 +1404,20 @@ return {
                 clearAllRevProfWorkState(); } }
         else {
             revtype = state.revtype; }
+        //verify search string
         qstr = jt.byId('allrevsrchin').value;
         if(qstr !== state.allRevsState.srchval) {
             state.allRevsState.srchval = qstr;
             clearAllRevProfWorkState(); }
+        //verify query is not already outstanding
+        if(state.allRevsState.inprog && 
+               state.allRevsState.inprog.revtype === revtype &&
+               state.allRevsState.inprog.qstr === qstr &&
+               state.allRevsState.inprog.cursor === state.allRevsState.cursor) {
+            return; }
+        state.allRevsState.inprog = { revtype: revtype, qstr: qstr, 
+                                      cursor: state.allRevsState.cursor };
+        //make the call
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
         params = app.login.authparams() +
