@@ -637,8 +637,31 @@ app.profile = (function () {
     },
 
 
+    //It is totally possible change the srchval faster than calls to
+    //the server can keep up.  That means returned data processing can
+    //get overlapped.  Refusing to react to input until the previous
+    //server call finishes is annoying, so verify the data here.
+    sanityPush = function (revs, rev, srchval) {
+        var i, revid;
+        if(rev.cankey.indexOf(srchval) < 0) {
+            return false; }
+        revid = jt.instId(rev);
+        for(i = 0; i < revs.length; i += 1) {
+            if(jt.instId(revs[i]) === revid) {  //dupe
+                return false; } }
+        revs.push(rev);
+        return rev;
+    },
+
+
     listAllRevs = function (results) {
-        var revitems = [], html, i, state = profpenref.profstate.allRevsState;
+        var revs = [], revitems = [], html, i, 
+            state = profpenref.profstate.allRevsState;
+        //sanity check all existing reviews match the current state
+        for(i = 0; i < state.revs.length; i += 1) {
+            sanityPush(revs, state.revs[i], state.srchval); }
+        state.revs = revs;
+        //list previously fetched matching reviews
         for(i = 0; i < state.revs.length; i += 1) {
             revitems.push(app.profile.reviewItemHTML(state.revs[i])); }
         if(!results || results.length === 0) {
@@ -652,15 +675,15 @@ app.profile = (function () {
                 if(results[i].cursor) {
                     state.cursor = results[i].cursor; }
                 break; }  //leave i at its current value
-            state.revs.push(results[i]);
-            revitems.push(app.profile.reviewItemHTML(results[i])); }
+            if(sanityPush(state.revs, results[i], state.srchval)) {
+                revitems.push(app.profile.reviewItemHTML(results[i])); } }
         html = [];
         html.push(["ul", {cla: "revlist"}, revitems]);
         if(state.cursor) {
             if(i === 0 && !allrevMaxAutoSearch()) {
                 //auto-repeat the search to try get a result to display.
-                state.autopage = window.setTimeout(app.profile.searchAllRevs,
-                                                   10); }
+                state.autopage = window.setTimeout(app.profile.searchAllRevs, 
+                                                   100); }
             else {
                 if(allrevMaxAutoSearch()) {  //they continued search manually
                     state.reqs += 1; }
@@ -677,19 +700,17 @@ app.profile = (function () {
 
     monitorAllRevQuery = function () {
         var state, srchin, qstr = "";
-        state = profpenref.profstate;
+        state = profpenref.profstate.allRevsState;
         srchin = jt.byId('allrevsrchin');
         if(!srchin) {  //probably switched tabs, quit
             return; }
         qstr = srchin.value;
-        if(qstr !== state.allRevsState.srchval) {
-            if(state.allRevsState.querymon) {
-                window.clearTimeout(state.allRevsState.querymon);
-                state.allRevsState.querymon = null; }
-            state.revs = [];  //previous results may not match anymore
+        if(qstr !== state.srchval) {
+            clearAllRevProfWorkState();
+            state.srchval = qstr;
             app.profile.searchAllRevs(); }
         else {
-            state.allRevsState.querymon = setTimeout(monitorAllRevQuery, 400); }
+            state.querymon = setTimeout(monitorAllRevQuery, 400); }
     },
 
 
@@ -1194,6 +1215,14 @@ return {
     },
 
 
+    allrevs: function () {
+        clearAllRevProfWorkState();
+        profpenref.profstate.allRevsState.srchval = 
+            jt.byId('allrevsrchin').value;
+        displayAllRevs();
+    },
+
+
     readReview: function (revid) {
         var revobj;
         revobj = app.lcs.getRevRef(revid).rev;
@@ -1392,40 +1421,28 @@ return {
     },
 
 
-    searchAllRevs: function (revtype) {
-        var state, qstr, maxdate, mindate, params, critsec;
-        state = profpenref.profstate;
-        //verify revtype
-        if(revtype) {
-            if(state.revtype !== revtype) {
-                state.revtype = revtype;
-                jt.out('revTypeSelectorDiv', 
-                    revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"));
-                clearAllRevProfWorkState(); } }
-        else {
-            revtype = state.revtype; }
-        //verify search string
-        qstr = jt.byId('allrevsrchin').value;
-        if(qstr !== state.allRevsState.srchval) {
-            state.allRevsState.srchval = qstr;
-            clearAllRevProfWorkState(); }
-        //verify query is not already outstanding
-        if(state.allRevsState.inprog && 
-               state.allRevsState.inprog.revtype === revtype &&
-               state.allRevsState.inprog.qstr === qstr &&
-               state.allRevsState.inprog.cursor === state.allRevsState.cursor) {
+    searchAllRevs: function () {
+        var pstate, arstate, maxdate, mindate, params, critsec;
+        pstate = profpenref.profstate;
+        arstate = pstate.allRevsState;
+        //verify search call is not already outstanding
+        if(arstate.inprog && 
+               arstate.inprog.revtype === pstate.revtype &&
+               arstate.inprog.srchval === arstate.srchval &&
+               arstate.inprog.cursor === arstate.cursor) {
             return; }
-        state.allRevsState.inprog = { revtype: revtype, qstr: qstr, 
-                                      cursor: state.allRevsState.cursor };
+        arstate.inprog = { revtype: pstate.revtype, 
+                           srchval: arstate.srchval,
+                           cursor: arstate.cursor };
         //make the call
         maxdate = (new Date()).toISOString();
         mindate = (new Date(0)).toISOString();
         params = app.login.authparams() +
-            "&qstr=" + jt.enc(jt.canonize(qstr)) +
-            "&revtype=" + revtype +
+            "&qstr=" + jt.enc(jt.canonize(arstate.srchval)) +
+            "&revtype=" + pstate.revtype +
             "&penid=" + jt.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + jt.enc(state.allRevsState.cursor);
+            "&cursor=" + jt.enc(arstate.cursor);
         critsec = critsec || "";
         jt.call('GET', "srchrevs?" + params, null,
                  function (results) { 
@@ -1441,7 +1458,11 @@ return {
 
     searchRevsIfTypeChange: function (revtype) {
         if(profpenref.profstate.revtype !== revtype) {
-            app.profile.searchAllRevs(revtype); }
+            profpenref.profstate.revtype = revtype;
+            jt.out('revTypeSelectorDiv', 
+                   revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"));
+            clearAllRevProfWorkState();
+            app.profile.searchAllRevs(); }
     },
 
 
