@@ -732,12 +732,14 @@ return {
     //(before maxpgdisp kicks in), so there is context for strategies.
     displayRelations: function (pen, direction, divid) {
         var html, refarray, relitems = [], placeholder, i, litemp;
-        placeholder = jt.tac2html(["li", "Fetching pen names"]);
         refarray = getRelRefArray(pen, direction);
         if(refarray) {
             if(refarray.length > 0) {
                 sortRelRefsByPenName(refarray, direction);
                 for(i = 0; i < refarray.length && i < maxpgdisp; i += 1) {
+                    placeholder = jt.tac2html(
+                        ["li", "Fetching pen names (" + i + " out of " + 
+                         refarray.length + ")..."]);
                     litemp = relRefPenHTML(refarray[i], direction, placeholder);
                     relitems.push(litemp);
                     if(litemp === placeholder) {
@@ -753,7 +755,7 @@ return {
                 else { //inbound
                     relitems.push(["li", noFollowersHTML(pen)]); } } }
         else {  //dump an interim status while retrieving rels
-            relitems.push(["li", "fetching relationships..."]); }
+            relitems.push(["li", "Fetching relationships..."]); }
         html = [["div", {cla: "relctrlsdiv"},
                  relListCtrlsHTML(pen, direction, divid, refarray)],
                 ["ul", {cla: "penlist"}, 
