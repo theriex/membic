@@ -466,18 +466,21 @@ class MailCredentials(webapp2.RequestHandler):
             eaddr = eaddr.lower()
             where = "WHERE email=:1 LIMIT 9"
             accounts = MORAccount.gql(where, eaddr)
-            for account in accounts:
+            for account in accounts:  # might not be any if bad email..
                 usernames += " " + account.username
                 content += "\nUsername: " + account.username
                 content += "\nPassword: " + account.password + "\n"
-            logging.info("mailing credentials to " + account.email +
+            if not content:
+                content = "No accounts found for this email address.\n\n" +\
+                    "Perhaps you logged in via a social net before?\n"
+            logging.info("mailing credentials to " + eaddr +
                          " usernames: " + usernames)
             # sender needs to be a valid email address.  This should
             # change to noreply@wdydfun.com if traffic gets bad
             if not ":8080" in self.request.url:
                 mail.send_mail(
                     sender="wdydfun support <theriex@gmail.com>",
-                    to=account.email,
+                    to=eaddr,
                     subject="wdydfun account login",
                     body=content)
         writeJSONResponse("[]", self.response)
