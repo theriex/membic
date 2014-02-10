@@ -162,17 +162,16 @@ app.rel = (function () {
 
 
     requestLinkHTML = function (penref) {
-        var selfref, params, critsec, i, req, html = "";
+        var selfref, params, i, req, html = "";
         selfref = app.pen.currPenRef();
         if(!selfref.outreqs) {
             params = app.login.authparams() + "&fromid=" + selfref.penid;
-            critsec = critsec || "";
             jt.call('GET', "findreqs?" + params, null,
                     function (reqs) {
                         selfref.outreqs = reqs;
                         app.profile.tabselect(); },
                     app.failf,
-                    critsec); }
+                    jt.semaphore("rel.requestLinkHTML")); }
         else { //have reqs, 
             for(i = 0; i < selfref.outreqs.length; i += 1) {
                 if(selfref.outreqs[i].toid === penref.penid) {
@@ -194,7 +193,7 @@ app.rel = (function () {
 
 
     writeRequestToServer = function () {
-        var reqid, selfref, outreq, i, data, critsec;
+        var reqid, selfref, outreq, i, data;
         reqid = jt.instId(dlgreq);
         selfref = app.pen.currPenRef();
         if(reqid) {  //previously loaded, check if changed
@@ -209,7 +208,6 @@ app.rel = (function () {
                 return; } }
         //new or changed request
         data = jt.objdata(dlgreq);
-        critsec = critsec || "";
         jt.call('POST', "updreq?" + app.login.authparams(), data,
                 function (newreqs) {
                     if(reqid) {  //modified
@@ -225,7 +223,7 @@ app.rel = (function () {
                 app.failf(function (code, errtxt) {
                     jt.err("Review request save failed code " + code +
                            ": " + errtxt); }),
-                critsec);
+                jt.semaphore("rel.writeRequestToServer"));
     },
 
 
@@ -423,23 +421,22 @@ app.rel = (function () {
 
 
     updateRelationship = function (rel) {
-        var critsec, data = jt.objdata(rel);
-        critsec = critsec || "";
+        var data = jt.objdata(rel);
         if(rel.status === "nofollow") {  //delete
             jt.call('POST', "delrel?" + app.login.authparams(), data,
-                     function (updates) {
-                         var orgpen = updates[0],  //originator pen
-                             relpen = updates[1];  //related pen
-                         app.lcs.putPen(orgpen);
-                         app.lcs.putPen(relpen);
-                         removeOutboundRel(rel);   //relationship
-                         app.layout.closeDialog();
-                         app.activity.reset();
-                         app.profile.byprofid(jt.instId(updates[1])); },
-                     app.failf(function (code, errtxt) {
-                         jt.err("Relationship deletion failed code " + code +
-                                 ": " + errtxt); }),
-                     critsec); }
+                    function (updates) {
+                        var orgpen = updates[0],  //originator pen
+                            relpen = updates[1];  //related pen
+                        app.lcs.putPen(orgpen);
+                        app.lcs.putPen(relpen);
+                        removeOutboundRel(rel);   //relationship
+                        app.layout.closeDialog();
+                        app.activity.reset();
+                        app.profile.byprofid(jt.instId(updates[1])); },
+                    app.failf(function (code, errtxt) {
+                        jt.err("Relationship deletion failed code " + code +
+                               ": " + errtxt); }),
+                    jt.semaphore("rel.updateRelationship")); }
         else { //update
             jt.call('POST', "updrel?" + app.login.authparams(), data,
                      function (updates) {
@@ -450,7 +447,7 @@ app.rel = (function () {
                      app.failf(function (code, errtxt) {
                          jt.err("Relationship update failed code " + code +
                                  ": " + errtxt); }),
-                     critsec); }
+                     jt.semaphore("rel.updateRelationship")); }
     },
 
 
@@ -501,7 +498,7 @@ app.rel = (function () {
 
 
     addFollow = function (originator, related, contfunc) {
-        var newrel = {}, data, critsec;
+        var newrel = {}, data;
         newrel.originid = jt.instId(originator);
         newrel.relatedid = jt.instId(related);
         jt.assert(newrel.originid && newrel.relatedid);
@@ -509,7 +506,6 @@ app.rel = (function () {
         newrel.mute = "";
         newrel.cutoff = 0;
         data = jt.objdata(newrel);
-        critsec = critsec || "";
         jt.call('POST', "newrel?" + app.login.authparams(), data,
                 function (newrels) {
                     var orgpen = newrels[0],  //originator pen
@@ -522,7 +518,7 @@ app.rel = (function () {
                 app.failf(function (code, errtxt) {
                     jt.err("Relationship creation failed code " + code +
                            ": " + errtxt); }),
-                critsec);
+                jt.semaphore("rel.addFollow"));
     },
 
 
@@ -568,14 +564,13 @@ app.rel = (function () {
 
 
     loadOutboundRelationships = function () {
-        var pen, params, critsec;
+        var pen, params;
         if(!app.pen.currPenRef()) {
             return app.pen.getPen(loadOutboundRelationships); }
         pen = app.pen.currPenRef().pen;
         params = app.login.authparams() + "&originid=" + jt.instId(pen);
         if(loadoutcursor && loadoutcursor !== "starting") {
             params += "&cursor=" + jt.enc(loadoutcursor); }
-        critsec = critsec || "";
         jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, relref;
@@ -596,7 +591,7 @@ app.rel = (function () {
                      jt.log("loadOutboundRelationships errcode " + code +
                              ": " + errtxt);
                      alert("Sorry. Data error. Please reload the page"); }),
-                 critsec);
+                jt.semaphore("rel.loadOutboundRelationships"));
     };
 
 
@@ -694,7 +689,7 @@ return {
 
 
     loadDisplayRels: function (pen, direction, contfunc, cursor) {
-        var refarray, field, params, critsec;
+        var refarray, field, params;
         refarray = getRelRefArray(pen, direction);
         if(refarray && !cursor) {  //relationships already loaded
             return contfunc(refarray); }
@@ -703,7 +698,6 @@ return {
             jt.instId(pen);
         if(cursor) {
             params += "&cursor=" + cursor; }
-        critsec = critsec || "";
         jt.call('GET', "findrels?" + params, null,
                  function (relationships) {
                      var i, resultCursor;
@@ -724,7 +718,7 @@ return {
                          ": " + errtxt;
                      jt.log(msg);
                      jt.err(msg); }),
-                 critsec);
+                jt.semaphore("rel.loadDisplayRels"));
     },
 
 

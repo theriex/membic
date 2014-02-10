@@ -89,17 +89,17 @@ app.lcs = (function () {
                     return; } } //already exists, so done
             corids.push(rlidstr);
             revlink.corresponding = corids.join(","); }
-        revlink.critsec = "";
         data = jt.objdata(revlink);
         jt.call('POST', "updlink?" + app.login.authparams(), data,
-                 function (updrevlinks) {
-                     jt.log("verifyCorrespondingLink updated " +
-                            updrevlinks[0].revid + " corresponding: " +
-                            updrevlinks[0].corresponding); },
-                 app.failf(function (code, errtxt) {
-                     jt.log("verifyCorrespondingLink failed " + 
-                            code + " " + errtxt); }),
-                 revlink.critsec);
+                function (updrevlinks) {
+                    jt.log("verifyCorrespondingLink updated " +
+                           updrevlinks[0].revid + " corresponding: " +
+                           updrevlinks[0].corresponding); },
+                app.failf(function (code, errtxt) {
+                    jt.log("verifyCorrespondingLink failed " + 
+                           code + " " + errtxt); }),
+                jt.semaphore("lcs.verifyCorrespondingLink" + 
+                             jt.instId(revlink)));
     },
 
 
@@ -148,12 +148,12 @@ return {
 
 
     getPenFull: function (penid, callback) {
-        var penref, tombstone, params, critsec;
+        var penref, tombstone, params;
         penref = app.lcs.getPenRef(penid);
         if(penref && penref.status === "ok" && penref.pen) {
             return callback(penref); }
-        params = "penid=" + idify(penid);
-        critsec = critsec || "";
+        penid = idify(penid);
+        params = "penid=" + penid;
         jt.call('GET', "penbyid?" + params, null,
                  function (foundpens) {
                      if(foundpens.length > 0) {
@@ -162,15 +162,15 @@ return {
                          tombstone = { status: "deleted",
                                        penid: penid,
                                        updtime: new Date() };
-                         pens[idify(penid)] = tombstone;
+                         pens[penid] = tombstone;
                          callback(tombstone); } },
                  app.failf(function (code, errtxt) {
                      tombstone = { status: String(code) + ": " + errtxt,
                                    penid: penid,
                                    updtime: new Date() };
-                     pens[idify(penid)] = tombstone;
+                     pens[penid] = tombstone;
                      callback(tombstone); }),
-                 critsec, null, [400, 404]);
+                 jt.semaphore("lcs.getPenFull" + penid), null, [400, 404]);
     },
 
 
@@ -243,12 +243,11 @@ return {
 
 
     getRevFull: function (revid, callback) {
-        var revref, tombstone, params, critsec;
+        var revref, tombstone, params;
         revref = app.lcs.getRevRef(revid);
         if(revref && revref.status === "ok" && revref.rev) {
             return callback(revref); }
         params = "revid=" + idify(revid);
-        critsec = critsec || "";
         jt.call('GET', "revbyid?" + params, null,
                  function (foundrevs) {
                      if(foundrevs.length > 0) {
@@ -265,7 +264,7 @@ return {
                                    updtime: new Date() };
                      revs[idify(revid)] = tombstone;
                      callback(tombstone); }),
-                 critsec, null, [400, 404]);
+                jt.semaphore("lcs.getRevFull"), null, [400, 404]);
     },
 
 
@@ -308,7 +307,7 @@ return {
     //parameter switches to true if anything was loaded or updated, and
     //that triggers the callback to onchangefunc.
     verifyReviewLinks: function (onchangefunc, changed) {
-        var revid, revref, revids = [], maxq = 20, params, critsec;
+        var revid, revref, revids = [], maxq = 20, params;
         for(revid in revs) {
             if(revs.hasOwnProperty(revid)) {
                 revref = revs[revid];
@@ -319,7 +318,6 @@ return {
         if(revids.length > 0) {
             params = "revids=" + revids.join(",") + 
                 "&" + app.login.authparams();
-            critsec = critsec || "";
             jt.call('GET', "revlinks?" + params, null,
                      function (revlinks) {
                          resolveReviewLinks(revids, revlinks);
@@ -327,7 +325,7 @@ return {
                      app.failf(function (code, errtxt) {
                          jt.err("verifyReviewLinks revlinks call failed " +
                                 code + " " + errtxt); }),
-                     critsec); }
+                    jt.semaphore("lcs.verifyReviewLinks")); }
         else if(revids.length === 0 && changed) {
             onchangefunc(); }
     },
@@ -354,21 +352,20 @@ return {
 
 
     checkAllCorresponding: function (review) {
-        var params, critsec;
+        var params;
         checkCachedCorresponding(review);
         params = "revtype=" + review.revtype + "&cankey=" + review.cankey +
             "&" + app.login.authparams();
-        critsec = critsec || "";
         jt.call('GET', "revbykey?" + params, null,
-                 function (revs) {
-                     var i;
-                     for(i = 0; i < revs.length; i += 1) {
-                         app.lcs.putRev(revs[i]); }
-                     checkCachedCorresponding(review); },
-                 app.failf(function (code, errtxt) {
-                     jt.log("checkAllCorresponding failed " + code + 
-                            ": " + errtxt); }),
-                 critsec);
+                function (revs) {
+                    var i;
+                    for(i = 0; i < revs.length; i += 1) {
+                        app.lcs.putRev(revs[i]); }
+                    checkCachedCorresponding(review); },
+                app.failf(function (code, errtxt) {
+                    jt.log("checkAllCorresponding failed " + code + 
+                           ": " + errtxt); }),
+                jt.semaphore("lcs.checkAllCorresponding"));
     },
 
 

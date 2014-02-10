@@ -83,16 +83,15 @@ app.profile = (function () {
             if(!penref.inlinks) {
                 //fetch is low prio, don't compete with startup processing
                 setTimeout(function () {
-                    var params, critsec;
+                    var params;
                     params = "penid=" + jt.instId(penref.pen) + "&" + 
                         app.login.authparams();
-                    critsec = critsec || "";
                     jt.call('GET', "inlinks?" + params, null,
                             function (inlinks) {
                                 penref.inlinks = inlinks;
                                 displayInboundLinkIndicator(); },
                             app.failf,
-                            critsec); }, 1200);
+                            jt.semaphore("profile.dispInbLinkInd")); }, 1200);
                 return; }
             linksummary = {helpful: 0, remembered: 0, corresponding: 0};
             for(i = 0; i < penref.inlinks.length; i += 1) {
@@ -512,19 +511,18 @@ app.profile = (function () {
 
 
     findRecentReviews = function (rrs) {  //recentRevState
-        var params, critsec;
+        var params;
         params = jt.objdata(rrs.params) + "&" + app.login.authparams();
         if(rrs.cursor) {
             params += "&cursor=" + jt.enc(rrs.cursor); }
-        critsec = critsec || "";
         jt.call('GET', "srchrevs?" + params, null,
-                 function (revs) {
-                     sanityCompleteRevsViaCache(rrs, revs);
-                     displayRecentReviews(rrs, revs); },
-                 app.failf(function (code, errtxt) {
-                     jt.out('profcontdiv', "findRecentReviews failed code " + 
-                             code + " " + errtxt); }),
-                 critsec);
+                function (revs) {
+                    sanityCompleteRevsViaCache(rrs, revs);
+                    displayRecentReviews(rrs, revs); },
+                app.failf(function (code, errtxt) {
+                    jt.out('profcontdiv', "findRecentReviews failed code " + 
+                           code + " " + errtxt); }),
+                jt.semaphore("profile.findRecentReviews"));
     },
 
 
@@ -1422,7 +1420,7 @@ return {
 
 
     searchAllRevs: function () {
-        var pstate, arstate, maxdate, mindate, params, critsec;
+        var pstate, arstate, maxdate, mindate, params;
         pstate = profpenref.profstate;
         arstate = pstate.allRevsState;
         //verify search call is not already outstanding
@@ -1443,16 +1441,15 @@ return {
             "&penid=" + jt.instId(profpenref.pen) +
             "&maxdate=" + maxdate + "&mindate=" + mindate +
             "&cursor=" + jt.enc(arstate.cursor);
-        critsec = critsec || "";
         jt.call('GET', "srchrevs?" + params, null,
-                 function (results) { 
-                     app.lcs.putRevs(results);
-                     listAllRevs(results);
-                     monitorAllRevQuery(); },
-                 app.failf(function (code, errtxt) {
-                     jt.err("searchAllRevs call died code: " + code + " " +
-                             errtxt); }),
-                 critsec);
+                function (results) { 
+                    app.lcs.putRevs(results);
+                    listAllRevs(results);
+                    monitorAllRevQuery(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("searchAllRevs call died code: " + code + " " +
+                           errtxt); }),
+                jt.semaphore("profile.searchAllRevs"));
     },
 
 

@@ -74,14 +74,13 @@ return {
     //fields have already been set from the params, so this function
     //only needs to fill out additional info.
     fetchData: function (review, url, params) {
-        var critsec, movieId = extractMovieId(url);
+        var movieId = extractMovieId(url);
         jt.out('contentdiv', "Reading details from Netflix...");
         url = "http://odata.netflix.com/Catalog/Titles" + 
             "?$filter=NetflixApiId%20eq%20" + 
             "'http://api.netflix.com/catalog/titles/movies/" + movieId + "'" +
             "&$format=json";
         url = "jsonget?geturl=" + jt.enc(url);
-        critsec = critsec || "";
         jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, json);
@@ -91,7 +90,7 @@ return {
                      jt.err("Netflix data retrieval failed code " +
                              code + ": " + errtxt);
                      app.review.display(); }),
-                 critsec);
+                jt.semaphore("netflix.fetchData"));
     }
 
 

@@ -69,12 +69,11 @@ return {
     //params, so this only needs to fill out additional info.
     fetchData: function (review, url, params) {
         var urlobj = jt.paramsToObj(url),
-            vid = urlobj.v, critsec;
+            vid = urlobj.v;
         jt.out('contentdiv', "Reading details from YouTube...");
         url = "http://gdata.youtube.com/feeds/api/videos/" + vid + 
             "?v=2&alt=json";
         url = "jsonget?geturl=" + jt.enc(url);
-        critsec = critsec || "";
         jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, json);
@@ -84,7 +83,7 @@ return {
                      jt.err("YouTube data retrieval failed code " + 
                              code + ": " + errtxt);
                      app.review.display(); }),
-                 critsec);
+                jt.semaphore("youtube.fetchData"));
     }
 
 };  //end of returned functions

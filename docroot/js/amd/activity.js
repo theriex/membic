@@ -245,7 +245,7 @@ app.activity = (function () {
 
     displayRemembered = function () {
         var penref, hint, remitems = [], html, i, revref, crid, friend, cfid, 
-            params, critsec;
+            params;
         penref = app.pen.currPenRef();
         if(penref.remembered) {
             for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
@@ -293,13 +293,12 @@ app.activity = (function () {
             app.layout.adjust();
             params = "penid=" + jt.instId(penref.pen) +
                 "&" + app.login.authparams();
-            critsec = critsec || "";
             jt.call('GET', "srchremem?" + params, null,
                      function (memos) {
                          penref.remembered = memos;
                          displayRemembered(); },
                      app.failf(),
-                     critsec); }
+                    jt.semaphore("activity.displayRemembered")); }
     },
 
 
@@ -454,9 +453,7 @@ app.activity = (function () {
 
 
     autofollow = function () {
-        var critsec;
         jt.out('revactdiv', "Finding top tipsters...");
-        critsec = critsec || "";
         jt.call('GET', "srchpens?" + app.login.authparams(), null,
                  function (results) {
                      jt.out('revactdiv', 
@@ -465,7 +462,7 @@ app.activity = (function () {
                  app.failf(function (code, errtxt) {
                      jt.out('searchresults', 
                              "error code: " + code + " " + errtxt); }),
-                 critsec);
+                jt.semaphore("activity.autofollow"));
     },
 
 
@@ -559,12 +556,11 @@ app.activity = (function () {
 
 
     activeRequestsHTML = function () {
-        var selfref, params, critsec, html = "";
+        var selfref, params, html = "";
         selfref = app.pen.currPenRef();
         if(!selfref.inreqs) {
             selfref.inreqs = [];  //don't loop on server call crash
             params = app.login.authparams() + "&toid=" + selfref.penid;
-            critsec = critsec || "";
             jt.call('GET', "findreqs?" + params, null,
                     function (reqs) {
                         reqs.sort(function (a, b) {
@@ -574,7 +570,7 @@ app.activity = (function () {
                         selfref.inreqs = reqs;
                         jt.out("activereqsdiv", activeRequestsLoadedHTML()); },
                     app.failf,
-                    critsec); }
+                    jt.semaphore("activity.activeRequestsHTML")); }
         else { 
             html = activeRequestsLoadedHTML(); }
         return html;
@@ -694,7 +690,7 @@ app.activity = (function () {
 
 
     doActivitySearch = function (continued) {
-        var actdisp, time, penids, params, critsec;
+        var actdisp, time, penids, params;
         actdisp = app.pen.currPenRef().actdisp;
         penids = app.rel.outboundids();
         params = "penids=" + penids.join(',');
@@ -703,7 +699,6 @@ app.activity = (function () {
         else if(continued) {
             params += "&cursor=" + actdisp.cursor; }
         time = new Date().getTime();
-        critsec = critsec || "";
         jt.call('GET', "revact?" + params, null,
                  function (results) {
                      time = new Date().getTime() - time;
@@ -713,7 +708,7 @@ app.activity = (function () {
                  app.failf(function (code, errtxt) {
                      jt.out('revactdiv', "error code: " + code + " " + 
                              errtxt); }),
-                 critsec);
+                jt.semaphore("activity.doActivitySearch"));
     },
 
 
@@ -933,7 +928,7 @@ return {
 
 
     searchPens: function () {
-        var pensearch, params, qstr, time, t20, i, critsec;
+        var pensearch, params, qstr, time, t20, i;
         pensearch = app.pen.currPenRef().pensearch;
         readSearchParamsFromForm();
         jt.out('srchoptstogglehref', "show advanced search options");
@@ -957,14 +952,13 @@ return {
             params += "&t20=" + jt.enc(t20); }
         if(pensearch.params.includeLurkers) {
             params += "&lurkers=include"; }
-        critsec = critsec || "";
         jt.call('GET', "srchpens?" + params, null,
                  function (results) {
                      displayPenSearchResults(results); },
                  app.failf(function (code, errtxt) {
                      jt.out('searchresults', 
                              "error code: " + code + " " + errtxt); }),
-                 critsec);
+                jt.semaphore("activity.searchPens"));
     },
 
 
@@ -1020,18 +1014,17 @@ return {
 
 
     denyRequest: function (index) {
-        var req, data, critsec;
+        var req, data;
         app.layout.closeDialog();
         req = app.pen.currPenRef().inreqs[index];
         app.pen.currPenRef().inreqs.splice(index, 1);
         req.status = "denied";
         data = jt.objdata(req);
-        critsec = critsec || "";
         jt.call('POST', "updreq?" + app.login.authparams(), data,
                 function (updreqs) {
                     app.activity.displayActive(); },
                 app.failf,
-                critsec);
+                jt.semaphore("activity.denyRequest"));
     },
 
 
@@ -1055,7 +1048,7 @@ return {
                 reqs[i].status = "fulfilled";
                 data = jt.objdata(reqs[i]);
                 app.pen.currPenRef().inreqs.splice(i, 1);
-                //no critsec. ok to be fulfilling several at once
+                //no semaphore. ok to be fulfilling several at once
                 jt.call('POST', "updreq?" + app.login.authparams(), data,
                         keepgoingfunc,
                         app.failf);

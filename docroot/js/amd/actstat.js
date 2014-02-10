@@ -291,8 +291,6 @@ var actstat = (function () {
 
 
     fetchBotListAndDisplayAgents = function () {
-        var critsec;
-        critsec = critsec || "";
         jt.call('GET', "../botids", null,
                 function (results) {
                     botids = results[0].botids.split(',');
@@ -300,14 +298,12 @@ var actstat = (function () {
                 function (code, errtxt) {
                     jt.out('useractdiv', "botids failed: " + code + 
                            " " + errtxt); },
-                critsec);
+                jt.semaphore("actstat.fetchBotListAndDisplayAgents"));
     },
 
 
     fetchDataAndDisplay = function () {
-        var critsec;
         jt.out('useractdiv', "Fetching ActivityStat records");
-        critsec = critsec || "";
         jt.call('GET', "../activity", null,
                 function (actstats) {
                     data = actstats;
@@ -319,7 +315,7 @@ var actstat = (function () {
                 function (code, errtxt) {
                     jt.out('useractdiv', "fetch failed: " + code + 
                            " " + errtxt); },
-                critsec);
+                jt.semaphore("actstat.fetchDataAndDisplay"));
     };
 
 

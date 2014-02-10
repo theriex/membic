@@ -59,8 +59,7 @@ app.github = (function () {
 
 
     convertToken = function (token) {
-        var addAuthOutDiv, url, critsec;
-        critsec = critsec || "";
+        var addAuthOutDiv, url;
         addAuthOutDiv = jt.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
         url = jt.enc(url);
@@ -75,7 +74,7 @@ app.github = (function () {
                      jt.log("GitHub authent fetch details failed code " +
                              code + ": " + errtxt);
                      backToParentDisplay(); }),
-                 critsec);
+                jt.semaphore("github.convertToken"));
     };
 
 
@@ -91,7 +90,7 @@ return {
     //This function gets called when you click "Login via GitHub", and
     //when adding authentication, and on return from GitHub.
     authenticate: function (params) {
-        var url, state, critsec;
+        var url, state;
         if(params.code) {  //back from github
             jt.out("contentdiv", "Returned from GitHub...");
             state = jt.cookie("githubAuthState");
@@ -100,7 +99,6 @@ return {
                         " got back " + params.state);
                 backToParentDisplay(); }
             url = "githubtok?code=" + params.code + "&state=" + state;
-            critsec = critsec || "";
             jt.call('GET', url, null,
                      function (json) {
                          convertToken(json.access_token); },
@@ -108,7 +106,7 @@ return {
                          jt.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
-                     critsec); }
+                    jt.semaphore("github.authenticate")); }
         else {  //initial login or authorization call
             state = "AltAuth3" + Math.random().toString(36).slice(2);
             jt.cookie("githubAuthState", state, 2);

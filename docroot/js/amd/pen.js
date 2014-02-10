@@ -75,7 +75,7 @@ app.pen = (function () {
 
 
     promptForEmailIfNeeded = function () {
-        var yesterday, settings, lastprompt, ttlprompts, params, critsec;
+        var yesterday, settings, lastprompt, ttlprompts, params;
         app.pen.deserializeFields(currpenref.pen);
         settings = currpenref.pen.settings;
         lastprompt = settings.emailprompt || "2012-01-01T00:00:00Z";
@@ -87,7 +87,6 @@ app.pen = (function () {
         if(ttlprompts >= 2) {
             return; }  //don't be too pesky. See form verbiage.
         params = app.login.authparams() + "&penid=" + jt.instId(currpenref.pen);
-        critsec = critsec || "";
         jt.call('GET', "acctinfo?" + params, null,
                 function (infos) {
                     if(!infos[0].hasEmail) {
@@ -95,7 +94,7 @@ app.pen = (function () {
                 app.failf(function (code, errtxt) {
                     jt.log("promptForEmailIfNeeded call failed: " + 
                            code + " " + errtxt); }),
-                critsec);
+                jt.semaphore("pen.promptForEmailIfNeeded"));
     },
 
 
@@ -109,10 +108,9 @@ app.pen = (function () {
 
 
     updatePenName = function (pen, callok, callfail) {
-        var data, critsec;
+        var data;
         serializeFields(pen);
         data = jt.objdata(pen);
-        critsec = critsec || "";
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
                      currpenref = app.lcs.putPen(updpens[0]);
@@ -120,12 +118,12 @@ app.pen = (function () {
                  app.failf(function (code, errtxt) {
                      app.pen.deserializeFields(pen);  //undo pre-call serialize
                      callfail(code, errtxt); }),
-                 critsec);
+                jt.semaphore("pen.updatePenName"));
     },
 
 
     createPenName = function () {
-        var buttonhtml, newpen, data, name, critsec;
+        var buttonhtml, newpen, data, name;
         name = jt.byId('pnamein').value;
         buttonhtml = jt.byId('formbuttons').innerHTML;
         jt.out('formbuttons', "Creating Pen Name...");
@@ -135,7 +133,6 @@ app.pen = (function () {
             newpen.settings = currpenref.settings;
             serializeFields(newpen); }
         data = jt.objdata(newpen);
-        critsec = critsec || "";
         jt.call('POST', "newpen?" + app.login.authparams(), data,
                  function (newpens) {
                      currpenref = app.lcs.putPen(newpens[0]);
@@ -149,7 +146,7 @@ app.pen = (function () {
                  app.failf(function (code, errtxt) {
                      jt.out('penformstat', errtxt);
                      jt.out('formbuttons', buttonhtml); }),
-                 critsec);
+                jt.semaphore("pen.createPenName"));
     },
 
 
@@ -235,7 +232,7 @@ return {
 
 
     getPen: function (callback) {
-        var url, critsec;
+        var url;
         if(currpenref) { 
             return callback(currpenref.pen); }
         if(penNameRefs) {
@@ -243,7 +240,6 @@ return {
         jt.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         app.layout.adjust();
         url = "mypens?" + app.login.authparams();
-        critsec = critsec || "";
         jt.call('GET', url, null,
                 function (pens) {
                     var i;
@@ -255,7 +251,7 @@ return {
                 app.failf(function (code, errtxt) {
                     jt.out('contentdiv', "Pen name retrieval failed: " + 
                            code + " " + errtxt); }),
-                critsec);
+                jt.semaphore("pen.getPen"));
     },
 
 
@@ -312,27 +308,26 @@ return {
     //while this call is going on.  The cached pen ref is modified
     //directly so the updated info is globally available.
     refreshCurrent: function () {
-        var pen, params, critsec;
+        var pen, params;
         pen = currpenref && currpenref.pen;
         if(pen) {
             params = "penid=" + jt.instId(pen);
-            critsec = critsec || "";
             jt.call('GET', "penbyid?" + params, null,
-                     function (pens) {
-                         if(pens.length > 0) {
-                             currpenref.pen.name = pens[0].name;
-                             currpenref.pen.shoutout = pens[0].shoutout;
-                             currpenref.pen.city = pens[0].city;
-                             currpenref.pen.accessed = pens[0].accessed;
-                             currpenref.pen.modified = pens[0].modified;
-                             currpenref.pen.top20s = pens[0].top20s;
-                             currpenref.pen.following = pens[0].following;
-                             currpenref.pen.followers = pens[0].followers;
-                             app.profile.resetReviews(); } },
-                     app.failf(function (code, errtxt) {
-                         jt.log("pen.refreshCurrent " + code + " " + 
-                                errtxt); }),
-                     critsec); }
+                    function (pens) {
+                        if(pens.length > 0) {
+                            currpenref.pen.name = pens[0].name;
+                            currpenref.pen.shoutout = pens[0].shoutout;
+                            currpenref.pen.city = pens[0].city;
+                            currpenref.pen.accessed = pens[0].accessed;
+                            currpenref.pen.modified = pens[0].modified;
+                            currpenref.pen.top20s = pens[0].top20s;
+                            currpenref.pen.following = pens[0].following;
+                            currpenref.pen.followers = pens[0].followers;
+                            app.profile.resetReviews(); } },
+                    app.failf(function (code, errtxt) {
+                        jt.log("pen.refreshCurrent " + code + " " + 
+                               errtxt); }),
+                    jt.semaphore("pen.refreshCurrent")); }
     },
 
 
@@ -381,7 +376,7 @@ return {
     processEmailForm: function () {
         var email = jt.safeget('emailin', 'value'),
             rejected = jt.safeget('nomail', 'checked'),
-            pen = currpenref.pen, data, critsec;
+            pen = currpenref.pen, data;
         if(rejected) {
             pen.settings.emailprompt = new Date().toISOString();
             pen.settings.askedemail = pen.settings.askedemail || 0;
@@ -394,7 +389,6 @@ return {
             if(!jt.isProbablyEmail(email)) {
                 return askForEmailAddress("Please enter your email address"); }
             data = "penid=" + jt.instId(pen) + "&email=" + jt.enc(email);
-            critsec = critsec || "";
             jt.call('POST', "penmail?" + app.login.authparams(), data,
                     function (pens) {
                         currpenref = app.lcs.putPen(pens[0]);
@@ -403,7 +397,7 @@ return {
                         jt.err("Email update failure: " + code + "\n" +
                                "Please login natively to update your email.\n" +
                                errtxt); }),
-                    critsec); }
+                    jt.semaphore("pen.processEmailForm")); }
     },
 
 

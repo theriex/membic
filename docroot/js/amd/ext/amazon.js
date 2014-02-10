@@ -150,9 +150,8 @@ return {
     
 
     fetchData: function (review, url, params) {
-        var critsec, asin = extractASIN(url);
+        var asin = extractASIN(url);
         jt.out('contentdiv', "Reading details from Amazon...");
-        critsec = critsec || "";
         url = "amazoninfo?asin=" + asin;
         jt.call('GET', url, null,
                  function (json) {
@@ -163,7 +162,7 @@ return {
                      jt.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
                      app.review.display(); }),
-                 critsec);
+                jt.semaphore("amazon.fetchData"));
     }
 
 

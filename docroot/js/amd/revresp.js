@@ -56,7 +56,7 @@ app.revresp = (function () {
     //already instantiated, then that instance is used and written
     //through on save. 
     findCorrespondingReview = function (homepen, contfunc, cacheonly) {
-        var params, i, t20, critsec, crev, revref, elems, revid, penid;
+        var params, i, t20, crev, revref, elems, revid, penid;
         crev = app.review.getCurrentReview();
         revref = app.lcs.getRevRef(crev);
         if(revref && revref.revlink && revref.revlink.corresponding) {
@@ -81,7 +81,6 @@ app.revresp = (function () {
         params = "penid=" + jt.instId(homepen) + 
             "&revtype=" + crev.revtype + "&cankey=" + crev.cankey +
             "&" + app.login.authparams();
-        critsec = critsec || "";
         jt.call('GET', "revbykey?" + params, null,
                  function (revs) {
                      var rev = null;
@@ -91,7 +90,7 @@ app.revresp = (function () {
                  app.failf(function (code, errtxt) {
                      jt.err("findCorrespondingReview failed " + code + 
                              " " + errtxt); }),
-                 critsec);
+                jt.semaphore("revresp.findCorrespondingReview"));
     },
 
 
@@ -188,7 +187,7 @@ app.revresp = (function () {
 
 
     initMemoButtonSetting = function (penref, review) {
-        var i, revid, params, critsec;
+        var i, revid, params;
         if(penref.remembered) {  //local data initialized
             revid = jt.instId(review);
             for(i = 0; i < penref.remembered.length; i += 1) {
@@ -199,15 +198,14 @@ app.revresp = (function () {
         else { //penref.remembered not defined yet. init from db and retry
             params = "penid=" + jt.instId(penref.pen) +
                 "&" + app.login.authparams();
-            critsec = critsec || "";
             jt.call('GET', "srchremem?" + params, null,
-                     function (memos) {
-                         penref.remembered = memos;
-                         initMemoButtonSetting(penref, review); },
-                     app.failf(function (code, errtxt) {
-                         jt.err("initMemoButtonSetting failed " + code +
-                                 " " + errtxt); }),
-                     critsec); }
+                    function (memos) {
+                        penref.remembered = memos;
+                        initMemoButtonSetting(penref, review); },
+                    app.failf(function (code, errtxt) {
+                        jt.err("initMemoButtonSetting failed " + code +
+                               " " + errtxt); }),
+                    jt.semaphore("revresp.initMemoButtonSetting")); }
     },
 
 
@@ -579,13 +577,12 @@ app.revresp = (function () {
 
 
     queryAndCommentRowsHTML = function (redrawfunc) {
-        var penref, revref, rows = [], params, critsec;
+        var penref, revref, rows = [], params;
         penref = app.pen.currPenRef();
         if(penref.pendqcs) {  //loaded by activity display
             appendReviewComments(rows, penref.pendqcs, redrawfunc, true); }
         if(!penref.qcmts) {
             params = "penid=" + penref.penid + "&" + app.login.authparams();
-            critsec = critsec || "";
             penref.qcmts = [];  //if call crashes hard, don't loop
             jt.call('GET', "pendoutcmt?" + params, null,
                     function (revcmts) {
@@ -594,13 +591,12 @@ app.revresp = (function () {
                     app.failf(function (code, errtxt) {
                         jt.err("Pending comment retrieval failed " + code +
                                " " + errtxt); }),
-                    critsec); }
+                    jt.semaphore("revresp.queryAndCommentRowsHTML")); }
         else {  //have penref.qcmts
             appendReviewComments(rows, penref.qcmts, redrawfunc);
             revref = app.lcs.getRevRef(app.review.getCurrentReview());
             if(!revref.qcmts) {
                 params = "revid=" + revref.revid + "&" + app.login.authparams();
-                critsec = critsec || "";
                 revref.qcmts = [];  //if call crashes hard, don't loop
                 jt.call('GET', "revcmt?" + params, null,
                         function (revcmts) {
@@ -609,7 +605,7 @@ app.revresp = (function () {
                         app.failf(function (code, errtxt) {
                             jt.err("Review comment retrieval failed: " + code +
                                    " " + errtxt); }),
-                        critsec); }
+                        jt.semaphore("revresp.queryAndCommentRowsHTML")); }
             else {  //have revref.qcmts
                 appendReviewComments(rows, revref.qcmts, redrawfunc); } }
         return rows;
@@ -847,7 +843,7 @@ return {
 
 
     csrchupd: function () {
-        var srchin, crev, qstr, maxdate, mindate, params, critsec;
+        var srchin, crev, qstr, maxdate, mindate, params;
         srchin = jt.byId("searchtxt");
         if(!srchin) {  //dialog no longer displayed, quit
             return; }
@@ -866,7 +862,6 @@ return {
                 "&penid=" + crev.penid +
                 "&maxdate=" + maxdate + 
                 "&mindate=" + mindate;
-            critsec = critsec || "";
             jt.call('GET', "srchrevs?" + params, null,
                     function (results) { 
                         app.lcs.putRevs(results);
@@ -876,7 +871,7 @@ return {
                     app.failf(function (code, errtxt) {
                         jt.out('csrchresdiv', "Search call failure " + code +
                                " " + errtxt); }),
-                    critsec); }
+                    jt.semaphore("revresp.csrchupd")); }
         else if(correspsrch.monitor !== "stopped") {
             correspsrch.monitor = setTimeout(app.revresp.csrchupd, 400); }
     },
@@ -948,7 +943,7 @@ return {
 
 
     toggleMemoButton: function (value) {
-        var img, tbl, data, critsec;
+        var img, tbl, data;
         img = jt.byId('memoimg');
         if(!img) {  //spurious call, button not displayed
             return; }
@@ -963,28 +958,27 @@ return {
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
             "&remember=" + value;
-        critsec = critsec || "";
         jt.call('POST', "noteremem?" + app.login.authparams(), data,
-                 function (updatedrevtags) {  //revtag, revlink
-                     updateCachedReviewTags('remembered', updatedrevtags);
-                     if(isRemembered(updatedrevtags[0])) {
-                         img.src = "img/remembered.png";
-                         tbl.title = "Remove from your remembered reviews";
-                         jt.out('memotxttd', "Remembered"); }
-                     else {
-                         img.src = "img/rememberq.png";
-                         tbl.title = "Add to your remembered reviews";
-                         jt.out('memotxttd', "Remember"); }
-                     img.className = "navico"; },  //ungrey the image
-                 app.failf(function (code, errtxt) {
-                     jt.err("toggleMemoButton failed " + code +
-                             " " + errtxt); }),
-                 critsec);
+                function (updatedrevtags) {  //revtag, revlink
+                    updateCachedReviewTags('remembered', updatedrevtags);
+                    if(isRemembered(updatedrevtags[0])) {
+                        img.src = "img/remembered.png";
+                        tbl.title = "Remove from your remembered reviews";
+                        jt.out('memotxttd', "Remembered"); }
+                    else {
+                        img.src = "img/rememberq.png";
+                        tbl.title = "Add to your remembered reviews";
+                        jt.out('memotxttd', "Remember"); }
+                    img.className = "navico"; },  //ungrey the image
+                app.failf(function (code, errtxt) {
+                    jt.err("toggleMemoButton failed " + code +
+                           " " + errtxt); }),
+                jt.semaphore("revresp.toggleMemoButton"));
     },
 
 
     toggleHelpfulButton: function (value) {
-        var img, tbl, data, critsec;
+        var img, tbl, data;
         img = jt.byId('helpfulimg');
         if(!img) {  //spurious call, button not displayed
             return; }
@@ -998,21 +992,20 @@ return {
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
             "&helpful=" + value;
-        critsec = critsec || "";
         jt.call('POST', "notehelpful?" + app.login.authparams(), data,
-                 function (updatedrevtags) {  //revtag, revlink
-                     updateCachedReviewTags('helpful', updatedrevtags);
-                     if(isHelpful(updatedrevtags[0])) {
-                         img.src = "img/helpful.png";
-                         tbl.title = "Remove mark as helpful"; }
-                     else {
-                         img.src = "img/helpfulq.png";
-                         tbl.title = "Mark this review as helpful"; }
-                     img.className = "navico"; },  //ungrey the image
-                 app.failf(function (code, errtxt) {
-                     jt.err("toggleHelpfulButton failed " + code +
-                             " " + errtxt); }),
-                 critsec);
+                function (updatedrevtags) {  //revtag, revlink
+                    updateCachedReviewTags('helpful', updatedrevtags);
+                    if(isHelpful(updatedrevtags[0])) {
+                        img.src = "img/helpful.png";
+                        tbl.title = "Remove mark as helpful"; }
+                    else {
+                        img.src = "img/helpfulq.png";
+                        tbl.title = "Mark this review as helpful"; }
+                    img.className = "navico"; },  //ungrey the image
+                app.failf(function (code, errtxt) {
+                    jt.err("toggleHelpfulButton failed " + code +
+                           " " + errtxt); }),
+                jt.semaphore("revresp.toggleHelpfulButton"));
     },
 
 
@@ -1036,7 +1029,7 @@ return {
 
 
     createcomment: function (rctype) {
-        var verb, text, crev, data, critsec;
+        var verb, text, crev, data;
         verb = (rctype === "question" ? "Asking" : "Writing");
         jt.out('requestbuttonsdiv', verb + "...");
         text = jt.byId('cmtta').value;
@@ -1047,7 +1040,6 @@ return {
                  rctype: rctype,
                  comment: text };
         data = jt.objdata(data);
-        critsec = critsec || "";
         jt.call('POST', "crecmt?" + app.login.authparams(), data,
                 function (updcmts) {  //returned comment rcstat: "pending"
                     app.pen.currPenRef().qcmts.push(updcmts[0]);
@@ -1059,12 +1051,12 @@ return {
                     jt.out('requestbuttonsdiv', 
                            (rctype === "question" ? questionButtonsHTML() :
                             commentButtonsHTML())); }),
-                critsec);
+                jt.semaphore("revresp.createComment"));
     },
 
 
     deleterevcmt: function (rcid) {
-        var qcmts, index, rc = null, i, data, critsec;
+        var qcmts, index, rc = null, i, data;
         qcmts = app.pen.currPenRef().qcmts;
         for(i = 0; qcmts && i < qcmts.length; i += 1) {
             if(jt.instId(qcmts[i]) === rcid) {
@@ -1086,7 +1078,6 @@ return {
             return; }
         jt.out("rcx" + rcid, "(&nbsp;)&nbsp;");
         data = jt.objdata(rc);
-        critsec = critsec || "";
         jt.call('POST', "delcmt?" + app.login.authparams(), data,
                 function () {
                     qcmts.splice(index, 1);
@@ -1094,25 +1085,24 @@ return {
                 app.failf(function (code, errtxt) {
                     jt.err("Delete failed " + code + " " + errtxt);
                     jt.out("rcx" + rcid, "(x)&nbsp;"); }),
-                critsec);
+                jt.semaphore("revresp.deleterevcmt"));
     },
 
 
     loadHelpful: function (callback, penref) {
-        var params, critsec;
+        var params;
         if(!penref) {
             penref = app.pen.currPenRef(); }
         params = "penid=" + jt.instId(penref.pen) + 
             "&" + app.login.authparams();
-        critsec = critsec || "";
         jt.call('GET', "srchhelpful?" + params, null,
-                 function (revtags) {
-                     penref.helpful = revtags;
-                     callback(); },
-                 app.failf(function (code, errtxt) {
-                     jt.err("initHelpfulButtonSetting failed " + code +
-                             " " + errtxt); }),
-                 critsec);
+                function (revtags) {
+                    penref.helpful = revtags;
+                    callback(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("initHelpfulButtonSetting failed " + code +
+                           " " + errtxt); }),
+                jt.semaphore("revresp.loadHelpful"));
     },
 
 
@@ -1184,18 +1174,17 @@ return {
         jt.out("pendingqcsdiv", pendingCommentsLoadedHTML());
     },
     pendingCommentsHTML: function () {
-        var selfref, params, critsec, html = "";
+        var selfref, params, html = "";
         selfref = app.pen.currPenRef();
         if(!selfref.pendqcs) {
             params = "penid=" + selfref.penid + "&" + app.login.authparams();
-            critsec = critsec || "";
             selfref.pendqcs = [];  //don't loop if GET crashes hard
             jt.call('GET', "pendincmt?" + params, null,
                     function (revcmts) {
                         selfref.pendqcs = revcmts;
                         jt.out("pendingqcsdiv", pendingCommentsLoadedHTML()); },
                     app.failf,
-                    critsec); }
+                    jt.semaphore("revresp.pendingCommentsHTML")); }
         else {
             html = pendingCommentsLoadedHTML(); }
         return html;
@@ -1270,14 +1259,13 @@ return {
 
 
     topacceptConfirmed: function (qcid) {
-        var qcmt, revref, data, critsec;
+        var qcmt, revref, data;
         jt.out('requestbuttonsdiv', "Accepting...");
         revref = app.lcs.getRevRef(app.review.getCurrentReview());
         qcmt = findPendingComment(qcid);
         qcmt.resp = jt.byId('cmtta').value;
         qcmt.rcstat = "accepted";
         data = jt.objdata(qcmt);
-        critsec = critsec || "";
         jt.call('POST', "updcmt?" + app.login.authparams(), data,
                 function (updcmts) {
                     revref.qcmts.push(updcmts[0]);
@@ -1288,7 +1276,7 @@ return {
                     jt.out('cmterrdiv', "Accept failed " + code + 
                            " " + errtxt);
                     jt.out('requestbuttonsdiv', topacceptButtonsHTML(qcid)); }),
-                critsec);
+                jt.semaphore("revresp.topacceptConfirmed"));
     },
 
 
@@ -1314,12 +1302,11 @@ return {
 
 
     topignoreConfirmed: function (qcid) {
-        var qcmt, data, critsec;
+        var qcmt, data;
         jt.out('requestbuttonsdiv', "Ignoring forever...");
         qcmt = findPendingComment(qcid);
         qcmt.rcstat = "ignored";
         data = jt.objdata(qcmt);
-        critsec = critsec || "";
         jt.call('POST', "updcmt?" + app.login.authparams(), data,
                 function (updcmts) {
                     removePendingComment(qcid);
@@ -1329,7 +1316,7 @@ return {
                     jt.out('cmterrdiv', "Ignore failed " + code + 
                            " " + errtxt);
                     jt.out('requestbuttonsdiv', topignoreButtonsHTML(qcid)); }),
-                critsec);
+                jt.semaphore("revresp.topignoreConfirmed"));
     },
 
 
@@ -1391,7 +1378,7 @@ return {
 
 
     toprejectConfirmed: function (qcid) {
-        var qcmt, sel, i, det, data, critsec;
+        var qcmt, sel, i, det, data;
         jt.out('requestbuttonsdiv', "Rejecting...");
         qcmt = findPendingComment(qcid);
         qcmt.rcstat = "rejected";
@@ -1404,7 +1391,6 @@ return {
         if(det.value) {
             qcmt.resp += ": " + det.value; }
         data = jt.objdata(qcmt);
-        critsec = critsec || "";
         jt.call('POST', "updcmt?" + app.login.authparams(), data,
                 function (updcmts) {
                     removePendingComment(qcid);
@@ -1414,7 +1400,7 @@ return {
                     jt.out('cmterrdiv', "Reject failed " + code + 
                            " " + errtxt);
                     jt.out('requestbuttonsdiv', toprejectButtonsHTML(qcid)); }),
-                critsec);
+                jt.semaphore("revresp.toprejectConfirmed"));
     },
 
 

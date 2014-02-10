@@ -633,6 +633,16 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    //Use a semaphore for preventing duplicate server calls. 
+    uo.semaphores = {};
+    uo.semaphore = function (key) {
+        if (!uo.semaphore[key]) {
+            uo.semaphore[key] = {};
+        }
+        return uo.semaphore[key];
+    };
+
+
     //Make an async call to the server and return the result as text.
     // - method: GET, POST, etc.
     // - url: url.
@@ -643,20 +653,22 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //   errors are ignored.  The recommended approach is to create a
     //   general handler function at the app level and pass that along
     //   to deal with required login, crashes etc.
-    // - lockvar: if provided, re-entrant calls are ignored.
-    // - setup(method, url, data, lockvar): if provided, the given
+    // - lockobj: if provided, re-entrant calls are ignored.
+    // - setup(method, url, data, lockobj): if provided, the given
     //   function is called after the re-entrancy test but before any
     //   actual processing.
     // - timeoutms: if not provided, then 0 (no timeout) is used
     uo.request = function (method, url, data, success, failure,
-                           lockvar, setup, timeoutms) {
-        if (lockvar === "processing") {
+                           lockobj, setup, timeoutms) {
+        if (lockobj && lockobj.critsec === "processing") {
             uo.log(method + " " + url + " already in progress...");
             return;
         }
-        lockvar = "processing";
+        if (lockobj) {
+            lockobj.critsec = "processing";
+        }
         if (setup) {
-            setup(method, url, data, lockvar);
+            setup(method, url, data, lockobj);
         }
         if (uo.localDelayBusyWait) {
             uo.localDelayBusyWait();
@@ -671,7 +683,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4) {  //DONE
                     if (k) {
-                        k = "completed";
+                        k.critsec = "completed";
                     }
                     if (xhr.status === 200) {  //successful
                         s(xhr.responseText);
@@ -685,13 +697,13 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 }
             };
             xhr.send(d);
-        }(method, url, data, success, failure, lockvar, timeoutms));
+        }(method, url, data, success, failure, lockobj, timeoutms));
     };
 
 
     //Wrapper for ajax call that returns an object from server JSON.
     uo.call = function (method, url, data, success, failure,
-                        lockvar, setup, timeoutms) {
+                        lockobj, setup, timeoutms) {
         var jsonobj = JSON || window.JSON;
         if (!jsonobj) {
             uo.err("JSON not supported, please use a modern browser");
@@ -704,7 +716,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 failure(415, resp, method, url, data);
             }
             success(resp);
-        }, failure, lockvar, setup, timeoutms);
+        }, failure, lockobj, setup, timeoutms);
     };
 
 

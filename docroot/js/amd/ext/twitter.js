@@ -107,10 +107,9 @@ return {
     //to this function, which is used for both the "log in via
     //twitter" click, and the callback from twitter.
     authenticate: function (params) {
-        var data, outputdiv, addAuthOutDiv, critsec;
+        var data, outputdiv, addAuthOutDiv;
         addAuthOutDiv = jt.cookie("addAuthOutDiv");
         outputdiv = addAuthOutDiv || "contentdiv";
-        critsec = critsec || "";
         if(params.oauth_token && params.oauth_verifier) {  //back from twitter
             //on return there is no auth form displayed so use contentdiv
             jt.out("contentdiv", "Returned from Twitter...");
@@ -125,7 +124,7 @@ return {
                          jt.log("twitter token conversion failed code " +
                                  code + ": " + errtxt);
                          returnToParentDisplay(); }),
-                     critsec); }
+                    jt.semaphore("twitter.authenticate")); }
         else {  //initial login or authorization call
             jt.out(outputdiv, "Setting up call to Twitter...");
             data = "name=Twitter&url=" + jt.enc(twReqTokURL) + 
@@ -138,7 +137,7 @@ return {
                          jt.log("twitter initial oauth failed code " + 
                                  code + ": " + errtxt);
                          returnToParentDisplay(); }),
-                     critsec); }
+                     jt.semaphore("twitter.authenticate")); }
     },
 
 

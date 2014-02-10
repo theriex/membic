@@ -985,22 +985,21 @@ app.review = (function () {
 
 
     callAmazonForAutocomplete = function (acfunc) {
-        var url, critsec;
+        var url;
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
             jt.enc(autocomptxt);
-        critsec = critsec || "";
         jt.call('GET', url, null,
-                 function (json) {
-                     writeAutocompLinks(jt.dec(json[0].content));
-                     setTimeout(acfunc, 400);
-                     app.layout.adjust(); },
-                 app.failf(function (code, errtxt) {
-                     jt.out('revautodiv', "");
-                     jt.log("Amazon info retrieval failed code " +
-                             code + ": " + errtxt);
-                     setTimeout(acfunc, 400);
-                     app.layout.adjust(); }),
-                 critsec);
+                function (json) {
+                    writeAutocompLinks(jt.dec(json[0].content));
+                    setTimeout(acfunc, 400);
+                    app.layout.adjust(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('revautodiv', "");
+                    jt.log("Amazon info retrieval failed code " +
+                           code + ": " + errtxt);
+                    setTimeout(acfunc, 400);
+                    app.layout.adjust(); }),
+                jt.semaphore("review.callAmazonForAutocomplete"));
     },
 
 
@@ -1266,13 +1265,12 @@ return {
 
 
     delrev: function () {
-        var data, critsec;
+        var data;
         if(!crev || 
            !window.confirm("Are you sure you want to delete this review?")) {
             return; }
         jt.out('cmain', "Deleting review...");
         data = jt.objdata(crev);
-        critsec = critsec || "";
         jt.call('POST', "delrev?" + app.login.authparams(), data,
                  function (reviews) {
                      var html = "<p>Review deleted.  If this review was one" +
@@ -1294,7 +1292,7 @@ return {
                  app.failf(function (code, errtxt) {
                      jt.err("Delete failed code: " + code + " " + errtxt);
                      app.profile.display(); }),
-                 critsec);
+                jt.semaphore("review.delrev"));
     },
 
 
@@ -1555,7 +1553,7 @@ return {
 
 
     save: function (doneEditing, actionstr, skipvalidation) {
-        var errors = [], i, errtxt = "", type, url, data, critsec, html;
+        var errors = [], i, errtxt = "", type, url, data, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('revformbuttonstd').innerHTML;
         if(!skipvalidation) {
@@ -1580,27 +1578,26 @@ return {
             url = "newrev?";
             crev.svcdata = ""; }
         data = jt.objdata(crev);
-        critsec = critsec || "";
         jt.call('POST', url + app.login.authparams(), data,
-                 function (reviews) {
-                     crev = copyReview(app.lcs.putRev(reviews[0]).rev);
-                     app.layout.runMeritDisplay(crev);
-                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
-                     setTimeout(function () {  //update matching requests
-                         app.activity.fulfillRequests(crev); }, 100);
-                     setTimeout(function () {  //update corresponding links
-                         app.lcs.checkAllCorresponding(crev); }, 200);
-                     if(doneEditing) {
-                         attribution = "";
-                         app.revresp.pollForUpdates();
-                         app.review.displayRead(actionstr); }
-                     else {
-                         app.review.display(actionstr); } },
-                 app.failf(function (code, errtxt) {
-                     jt.log("saveReview failed code: " + code + " " +
-                             errtxt);
-                     app.review.display(); }),
-                 critsec);
+                function (reviews) {
+                    crev = copyReview(app.lcs.putRev(reviews[0]).rev);
+                    app.layout.runMeritDisplay(crev);
+                    setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
+                    setTimeout(function () {  //update matching requests
+                        app.activity.fulfillRequests(crev); }, 100);
+                    setTimeout(function () {  //update corresponding links
+                        app.lcs.checkAllCorresponding(crev); }, 200);
+                    if(doneEditing) {
+                        attribution = "";
+                        app.revresp.pollForUpdates();
+                        app.review.displayRead(actionstr); }
+                    else {
+                        app.review.display(actionstr); } },
+                app.failf(function (code, errtxt) {
+                    jt.log("saveReview failed code: " + code + " " +
+                           errtxt);
+                    app.review.display(); }),
+                jt.semaphore("review.save"));
     },
 
 
@@ -1615,22 +1612,21 @@ return {
 
 
     initWithId: function (revid, mode, action, errmsg) {
-        var critsec, params = "revid=" + revid;
-        critsec = critsec || "";
+        var params = "revid=" + revid;
         jt.call('GET', "revbyid?" + params, null,
-                 function (revs) {
-                     if(revs.length > 0) {
-                         crev = copyReview(app.lcs.putRev(revs[0]).rev);
-                         if(mode === "edit") {
-                             app.review.display(action, errmsg); }
-                         else {
-                             app.review.displayRead(action); } }
-                     else {
-                         jt.err("initWithId found no review id " + revid); } },
-                 app.failf(function (code, errtxt) {
-                     jt.err("initWithId failed code " + code + ": " +
-                             errtxt); }),
-                 critsec);
+                function (revs) {
+                    if(revs.length > 0) {
+                        crev = copyReview(app.lcs.putRev(revs[0]).rev);
+                        if(mode === "edit") {
+                            app.review.display(action, errmsg); }
+                        else {
+                            app.review.displayRead(action); } }
+                    else {
+                        jt.err("initWithId found no review id " + revid); } },
+                app.failf(function (code, errtxt) {
+                    jt.err("initWithId failed code " + code + ": " +
+                           errtxt); }),
+                jt.semaphore("review.initWithId"));
     },
 
 

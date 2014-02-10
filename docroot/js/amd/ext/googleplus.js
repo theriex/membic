@@ -52,7 +52,7 @@ app.googleplus = (function () {
 
 
     validateAuthentication = function (json, token) {
-        var addAuthOutDiv, url, critsec;
+        var addAuthOutDiv, url;
         if("1009259210423.apps.googleusercontent.com" !== json.audience) {
             jt.log("The received token was not intended for this app");
             return backToParentDisplay(); }
@@ -64,7 +64,6 @@ app.googleplus = (function () {
                 "?access_token=" + token;
             url = jt.enc(url);
             url = "jsonget?geturl=" + url;
-            critsec = critsec || "";
             jt.call('GET', url, null,
                      function (json) {
                          jt.out('contentdiv', 
@@ -79,7 +78,7 @@ app.googleplus = (function () {
                          jt.log("Google authent fetch details failed code " +
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
-                     critsec); }
+                    jt.semaphore("googleplus.validateAuthentication")); }
     };
         
 
@@ -102,14 +101,13 @@ return {
     //callback with "AltAuth2" returned in the hash fragment, which
     //leads back to this method again.
     authenticate: function (params) {
-        var url, scope, critsec;
+        var url, scope;
         if(params.access_token) {  //back from google
             jt.out("contentdiv", "Returned from Google...");
             url = "https://www.googleapis.com/oauth2/v1/tokeninfo" +
                 "?access_token=" + params.access_token;
             url = jt.enc(url);
             url = "jsonget?geturl=" + url;
-            critsec = critsec || "";
             jt.call('GET', url, null,
                      function (json) {
                          validateAuthentication(json, params.access_token); },
@@ -117,7 +115,7 @@ return {
                          jt.log("Google token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
-                     critsec); }
+                    jt.semaphore("googleplus.authenticate")); }
         else { //initial login or authorization call
             scope = "https://www.googleapis.com/auth/userinfo.profile";
             url = "https://accounts.google.com/o/oauth2/auth" +
