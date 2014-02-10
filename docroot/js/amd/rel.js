@@ -350,12 +350,16 @@ app.rel = (function () {
     relListCtrlsHTML = function (pen, direction, divid, refarray) {
         var html = "";
         if(refarray && refarray.length > 0) {
-            html = jt.checkbox("cblurkincl", "hidenorev",
-                               "Hide if no reviews",
-                               (direction === "outbound" ? hideNoRevOutbound
-                                                         : hideNoRevInbound),
-                               jt.fs("app.rel.toggleNoRevHide('" + direction +
-                                     "','" + divid + "')")); }
+            html = [["input", {type: "checkbox", name: "cblurkincl",
+                               value: "hidenorev", id: "hidenorev",
+                               checked: jt.toru(direction === "outbound" ?
+                                                hideNoRevOutbound : 
+                                                hideNoRevInbound),
+                               onclick: jt.fs("app.rel.toggleNoRevHide('" + 
+                                              direction + "','" + divid + 
+                                              "')")}],
+                     ["label", {fo: "hidenorev"}, "Hide if no reviews"]];
+            html = jt.tac2html(html); }
         return html;
     },
 

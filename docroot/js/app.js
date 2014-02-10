@@ -223,6 +223,9 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    //Single checkbox onchange is not triggered on IE8 until the focus
+    //leaves the checkbox.  For IE8, use onclick rather than onchange 
+    //and redraw the checkbox from scratch with the new value.
     jt.checkbox = function (name, value, label, checked, chgfstr) {
         return jt.checkrad("checkbox", name, value, label, checked, chgfstr);
     };
