@@ -32,7 +32,7 @@ class ActivityStat(db.Model):
 #substrings identifying web crawler agents.  No embedded commas.
 bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "netvibes.com", # not really a bot, but not a really a hit either
-           "AppEngine-Google"]
+           "AppEngine-Google", "Googlebot", "YandexImages"]
 
 
 def get_activity_stat(sday):

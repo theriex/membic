@@ -116,11 +116,12 @@ var actstat = (function () {
 
 
     isRealUserAgent = function (agentstr) {
+        var i;
         if(!agentstr) {
             return false; }
-        botids.forEach(function (botid) {
-            if(agentstr.indexOf(botid) >= 0) {
-                return false; } });
+        for(i = 0; i < botids.length; i += 1) {
+            if(agentstr.indexOf(botids[i]) >= 0) {
+                return false; } }
         return true;
     },
 
@@ -131,6 +132,7 @@ var actstat = (function () {
             if(datum.day.toISOString() > "2013-12-10T00:00:00Z") { //new format
                 var das = jt.safestr(datum.agents).split(",");
                 das.forEach(function (agent) {
+                    agent = agent.trim();
                     if(isRealUserAgent(agent)) {
                         if(agents[agent]) {
                             agents[agent] += 1; }
@@ -144,9 +146,13 @@ var actstat = (function () {
                                  agents[agent]],
                                 ["td",
                                  agent]]]); } } }
-        html.sort(function (a, b) {  //descending...
+        html.sort(function (a, b) {  
+            //descending count
             if(a[1][0][2] > b[1][0][2]) { return -1; }
             if(a[1][0][2] < b[1][0][2]) { return 1; }
+            //ascending agent name
+            if(a[1][1][1] > b[1][1][1]) { return 1; }
+            if(a[1][1][1] < b[1][1][1]) { return -1; }
             return 0; });
         html = ["table",
                 html];
