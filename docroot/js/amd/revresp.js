@@ -11,7 +11,6 @@ app.revresp = (function () {
 
     var greytxt = "#999999",
         correspcheck = 0,
-        correspsrch = {},
         abcontf = null,
         pollcount = 0,
         polltimer = null,
@@ -132,33 +131,6 @@ app.revresp = (function () {
             review.year = crev.year; }
         app.review.setCurrentReview(review);
         app.review.display();
-    },
-
-
-    displayCorrespSearchRevs = function (results) {
-        var i, lines = [], crev, type, text, html;
-        if(correspsrch.monitor === "stopped") {
-            return; }
-        crev = app.review.getCurrentReview();
-        type = app.review.getReviewTypeByValue(crev.revtype);
-        if(!results.length) {
-            lines.push("No " + type.type + " reviews found."); }
-        for(i = 0; i < results.length; i += 1) {
-            if(results[i].fetched) {
-                if(results[i].cursor) {
-                    lines.push(["li", "..."]); } }
-            else {
-                text = app.profile.reviewItemNameHTML(type, results[i]);
-                lines.push(
-                    ["li",
-                     ["a", {href: "#",
-                            title: "Select corresponding review",
-                            onclick: jt.fs("app.revresp.selcorresp('" +
-                                           jt.instId(results[i]) + "')") },
-                      text]]); } }
-        html = ["ul", {cla: "revlist"}, lines];
-        html = jt.tac2html(html);
-        jt.out('csrchresdiv', html);
     },
 
 
@@ -819,8 +791,20 @@ return {
 
 
     searchCorresponding: function (val) {
-        var html;
-        correspsrch = {value: val || "", monitor: null};
+        var html, correspsrch;
+        correspsrch = {
+            inputId: "searchtxt",
+            outdivId: "csrchresdiv",
+            revrendf: function (state, type, review) {
+                return jt.tac2html(
+                    ["li",
+                     ["a", {href: "#" + jt.instId(review),
+                            title: "Select corresponding review",
+                            onclick: jt.fs("app.revresp.selcorresp('" +
+                                           jt.instId(review) + "')") },
+                      app.profile.reviewItemNameHTML(type, review)]]); },
+            revtype: app.review.getCurrentReview().revtype,
+            srchval: val || "" };
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.layout.closeDialog()")},
@@ -830,56 +814,19 @@ return {
                  "Find your corresponding review"],
                 ["div", {id: "csrchcontentdiv"},
                  [["div", {id: "csrchindiv"},
-                   ["input", {type: "text", id: "searchtxt", size: "40",
+                   ["input", {type: "text", id: correspsrch.inputId, size: "40",
                               placeholder: "Review title or name",
-                              value: correspsrch.value,
-                              onchange: jt.fs("app.revresp.csrchupd()")}]],
-                  ["div", {id: "csrchresdiv"}]]]];
+                              value: correspsrch.srchval}]],
+                  ["div", {id: correspsrch.outdivId}]]]];
         app.layout.openDialog({x:150, y:370}, jt.tac2html(html), null,
                               function () {
-                                  jt.byId("searchtxt").focus(); });
-        setTimeout(app.revresp.csrchupd, 50);
-    },
-
-
-    csrchupd: function () {
-        var srchin, crev, qstr, maxdate, mindate, params;
-        srchin = jt.byId("searchtxt");
-        if(!srchin) {  //dialog no longer displayed, quit
-            return; }
-        crev = app.review.getCurrentReview();
-        qstr = srchin.value;
-        if(!correspsrch.monitor || qstr !== correspsrch.value) {
-            if(correspsrch.monitor) {
-                window.clearTimeout(correspsrch.monitor);
-                correspsrch.monitor = null; }
-            correspsrch.value = qstr;
-            maxdate = (new Date()).toISOString();
-            mindate = (new Date(0)).toISOString();
-            params = app.login.authparams() +
-                "&qstr=" + jt.enc(jt.canonize(qstr)) +
-                "&revtype=" + crev.revtype +
-                "&penid=" + crev.penid +
-                "&maxdate=" + maxdate + 
-                "&mindate=" + mindate;
-            jt.call('GET', "srchrevs?" + params, null,
-                    function (results) { 
-                        app.lcs.putRevs(results);
-                        displayCorrespSearchRevs(results);
-                        correspsrch.monitor = setTimeout(
-                            app.revresp.csrchupd, 400); },
-                    app.failf(function (code, errtxt) {
-                        jt.out('csrchresdiv', "Search call failure " + code +
-                               " " + errtxt); }),
-                    jt.semaphore("revresp.csrchupd")); }
-        else if(correspsrch.monitor !== "stopped") {
-            correspsrch.monitor = setTimeout(app.revresp.csrchupd, 400); }
+                                  jt.byId(correspsrch.inputId).focus(); });
+        app.profile.revsearch(correspsrch);
     },
 
 
     selcorresp: function (revid) {
         var crev, theirrev, ourrev, type, html;
-        correspsrch.monitor = "stopped";
         crev = app.review.getCurrentReview();
         theirrev = app.lcs.getRevRef(crev.srcrev).rev;
         ourrev = app.lcs.getRevRef(revid).rev;
@@ -899,9 +846,7 @@ return {
                                        true)]]]]],
                 ["div", {id: "csrchbuttonsdiv"},
                  [["button", {type: "button", id: "cancelb",
-                              onclick: jt.fs(
-                                  "app.revresp.searchCorresponding('" + 
-                                      correspsrch.value + "')")},
+                              onclick: jt.fs("app.profile.revsearch()")},
                    "Cancel"],
                   "&nbsp;",
                   ["button", {type: "button", id: "confirmb",

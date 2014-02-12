@@ -40,6 +40,7 @@ app.profile = (function () {
                       fbid: "Facebook",
                       twid: "Twitter",
                       ghid: "GitHub" },
+        revsrchstate = null,
 
 
 
@@ -609,26 +610,10 @@ app.profile = (function () {
     },
 
 
-    clearAllRevProfWorkState = function () {
-        var state = profpenref.profstate.allRevsState;
-        //does not reset allRevsState.srchval or revtype
-        if(state && state.autopage) {
-            window.clearTimeout(state.autopage);
-            state.autopage = null; }
-        if(state && state.querymon) {
-            window.clearTimeout(state.querymon);
-            state.querymon = null; }
-        state.cursor = "";
-        state.total = 0;
-        state.reqs = 1;
-        state.revs = [];
-    },
-
-
-    allrevMaxAutoSearch = function () {
+    atMaxAutoRevSearch = function () {
         var maxauto = 1000,
-            ttl = profpenref.profstate.allRevsState.total,
-            contreqs = profpenref.profstate.allRevsState.reqs;
+            ttl = revsrchstate.total,
+            contreqs = revsrchstate.reqs;
         if(ttl >= (maxauto * contreqs)) {
             return true; }
         return false;
@@ -641,7 +626,7 @@ app.profile = (function () {
     //server call finishes is annoying, so verify the data here.
     sanityPush = function (revs, rev, srchval) {
         var i, revid;
-        if(rev.cankey.indexOf(srchval) < 0) {
+        if(rev.cankey.indexOf(jt.canonize(srchval)) < 0) {
             return false; }
         revid = jt.instId(rev);
         for(i = 0; i < revs.length; i += 1) {
@@ -652,92 +637,93 @@ app.profile = (function () {
     },
 
 
-    listAllRevs = function (results) {
-        var revs = [], revitems = [], html, i, 
-            state = profpenref.profstate.allRevsState;
-        //sanity check all existing reviews match the current state
-        for(i = 0; i < state.revs.length; i += 1) {
-            sanityPush(revs, state.revs[i], state.srchval); }
-        state.revs = revs;
-        //list previously fetched matching reviews
-        for(i = 0; i < state.revs.length; i += 1) {
-            revitems.push(app.profile.reviewItemHTML(state.revs[i])); }
-        if(!results || results.length === 0) {
-            results = [ { "fetched": 0, "cursor": "" } ]; }
-        state.cursor = "";  //used, so reset
-        for(i = 0; i < results.length; i += 1) {
-            if(typeof results[i].fetched === "number") {
-                state.total += results[i].fetched;
-                revitems.push(["div", {cla: "sumtotal"},
-                               String(state.total) + " reviews searched"]);
-                if(results[i].cursor) {
-                    state.cursor = results[i].cursor; }
-                break; }  //leave i at its current value
-            if(sanityPush(state.revs, results[i], state.srchval)) {
-                revitems.push(app.profile.reviewItemHTML(results[i])); } }
-        html = [];
-        html.push(["ul", {cla: "revlist"}, revitems]);
-        if(state.cursor) {
-            if(i === 0 && !allrevMaxAutoSearch()) {
-                //auto-repeat the search to try get a result to display.
-                state.autopage = window.setTimeout(app.profile.searchAllRevs, 
-                                                   100); }
-            else {
-                if(allrevMaxAutoSearch()) {  //they continued search manually
-                    state.reqs += 1; }
-                html.push(["a", {href: "#continuesearch",
-                                 onclick: jt.fs("app.profile.searchAllRevs()"),
-                                 title: "Continue searching for more " + 
-                                        "matching reviews"},
-                           "continue search..."]); } }
-        jt.out('allrevdispdiv', jt.tac2html(html));
-        setTimeout(function () {
-            app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
-    },
-
-
-    monitorAllRevQuery = function () {
-        var state, srchin, qstr = "";
-        state = profpenref.profstate.allRevsState;
-        srchin = jt.byId('allrevsrchin');
-        if(!srchin) {  //probably switched tabs, quit
-            return; }
-        qstr = srchin.value;
-        if(qstr !== state.srchval) {
-            clearAllRevProfWorkState();
-            state.srchval = qstr;
-            app.profile.searchAllRevs(); }
-        else {
-            state.querymon = setTimeout(monitorAllRevQuery, 400); }
-    },
-
-
     displayAllRevs = function () {
         var html, state;
         state = profpenref.profstate.allRevsState;
-        if(!state) {
+        if(!state || state.revtype !== profpenref.profstate.revtype) {
             state = profpenref.profstate.allRevsState = {
+                inputId: "allrevsrchin",
+                outdivId: "allrevdispdiv",
+                revrendf: function (state, type, review) {
+                    return app.profile.reviewItemHTML(review); },
+                revtype: profpenref.profstate.revtype,
                 srchval: "",
-                revs: [],
-                cursor: "",
-                total: 0,
-                reqs: 1 }; }
+                preserve: true }; }
         html = [["div", {id: "revTypeSelectorDiv"},
-                 revTypeSelectorHTML("app.profile.searchRevsIfTypeChange")],
+                 revTypeSelectorHTML("app.profile.revsearchIfTypeChange")],
                 ["div", {id: "allrevsrchdiv"},
-                 ["input", {type: "text", id: "allrevsrchin", size: 40,
+                 ["input", {type: "text", id: state.inputId, size: 40,
                             placeholder: "Review title or name",
-                            value: state.srchval,
-                            onchange: jt.fs("app.profile.allrevs()")}]],
-                ["div", {id: "allrevdispdiv"}]];
+                            value: state.srchval}]],
+                ["div", {id: state.outdivId}]];
         jt.out('profcontdiv', jt.tac2html(html));
-        jt.byId('allrevsrchin').focus();
-        if(state.revs.length > 0) {
-            listAllRevs([]);  //display previous results
-            monitorAllRevQuery(); }
+        jt.byId(state.inputId).focus();
+        app.profile.revsearch(state);
+    },
+
+
+    displayRevSearchResults = function (results) {
+        var revs = [], revitems = [], type, html, i;
+        //sanity check all existing reviews match the current state
+        for(i = 0; i < revsrchstate.revs.length; i += 1) {
+            sanityPush(revs, revsrchstate.revs[i], revsrchstate.srchval); }
+        revsrchstate.revs = revs;
+        //list previously fetched matching reviews
+        type = app.review.getReviewTypeByValue(revsrchstate.revtype);
+        for(i = 0; i < revsrchstate.revs.length; i += 1) {
+            revitems.push(revsrchstate.revrendf(revsrchstate, type, 
+                                                revsrchstate.revs[i])); }
+        if(!results || results.length === 0) {
+            results = [ { "fetched": 0, "cursor": "" } ]; }
+        revsrchstate.cursor = "";  //used, so reset
+        for(i = 0; i < results.length; i += 1) {
+            if(typeof results[i].fetched === "number") {
+                revsrchstate.total += results[i].fetched;
+                revitems.push(
+                    ["div", {cla: "sumtotal"},
+                     String(revsrchstate.total) + " reviews searched"]);
+                if(results[i].cursor) {
+                    revsrchstate.cursor = results[i].cursor; }
+                break; }  //leave i at its current value
+            if(sanityPush(revsrchstate.revs, results[i], 
+                          revsrchstate.srchval)) {
+                revitems.push(revsrchstate.revrendf(revsrchstate, type,
+                                                    results[i])); } }
+        html = [];
+        html.push(["ul", {cla: "revlist"}, revitems]);
+        if(revsrchstate.cursor) {
+            if(i === 0 && !atMaxAutoRevSearch()) {
+                //auto-repeat the search to try get a result to display.
+                revsrchstate.autopage = 
+                    window.setTimeout(app.profile.revsearch, 100); }
+            else {
+                if(atMaxAutoRevSearch()) {  //they continued search manually
+                    revsrchstate.reqs += 1; }
+                html.push(["a", {href: "#continuesearch",
+                                 onclick: jt.fs("app.profile.revsearch()"),
+                                 title: "Continue searching for more " + 
+                                        "matching reviews"},
+                           "continue search..."]); } }
+        jt.out(revsrchstate.outdivId, jt.tac2html(html));
+    },
+
+
+    monitorRevSearchValue = function () {
+        var srchin, qstr = "";
+        srchin = jt.byId(revsrchstate.inputId);
+        if(!srchin) {  //probably switched tabs, quit
+            return; }
+        qstr = srchin.value;
+        if(qstr !== revsrchstate.srchval) {
+            app.profile.clearRevSearch();
+            revsrchstate.revs = [];
+            revsrchstate.cursor = "";
+            revsrchstate.total = 0;
+            revsrchstate.reqs = 1;
+            revsrchstate.srchval = qstr;
+            app.profile.revsearch(); }
         else {
-            clearAllRevProfWorkState();
-            app.profile.searchAllRevs(); }
+            revsrchstate.querymon = setTimeout(monitorRevSearchValue, 400); }
     },
 
 
@@ -1213,14 +1199,6 @@ return {
     },
 
 
-    allrevs: function () {
-        clearAllRevProfWorkState();
-        profpenref.profstate.allRevsState.srchval = 
-            jt.byId('allrevsrchin').value;
-        displayAllRevs();
-    },
-
-
     readReview: function (revid) {
         var revobj;
         revobj = app.lcs.getRevRef(revid).rev;
@@ -1419,47 +1397,82 @@ return {
     },
 
 
-    searchAllRevs: function () {
-        var pstate, arstate, maxdate, mindate, params;
-        pstate = profpenref.profstate;
-        arstate = pstate.allRevsState;
-        //verify search call is not already outstanding
-        if(arstate.inprog && 
-               arstate.inprog.revtype === pstate.revtype &&
-               arstate.inprog.srchval === arstate.srchval &&
-               arstate.inprog.cursor === arstate.cursor) {
-            return; }
-        arstate.inprog = { revtype: pstate.revtype, 
-                           srchval: arstate.srchval,
-                           cursor: arstate.cursor };
-        //make the call
-        maxdate = (new Date()).toISOString();
-        mindate = (new Date(0)).toISOString();
-        params = app.login.authparams() +
-            "&qstr=" + jt.enc(jt.canonize(arstate.srchval)) +
-            "&revtype=" + pstate.revtype +
-            "&penid=" + jt.instId(profpenref.pen) +
-            "&maxdate=" + maxdate + "&mindate=" + mindate +
-            "&cursor=" + jt.enc(arstate.cursor);
-        jt.call('GET', "srchrevs?" + params, null,
-                function (results) { 
-                    app.lcs.putRevs(results);
-                    listAllRevs(results);
-                    monitorAllRevQuery(); },
-                app.failf(function (code, errtxt) {
-                    jt.err("searchAllRevs call died code: " + code + " " +
-                           errtxt); }),
-                jt.semaphore("profile.searchAllRevs"));
+    clearRevSearch: function () {
+        if(revsrchstate) {
+            if(revsrchstate.autopage) {
+                window.clearTimeout(revsrchstate.autopage);
+                revsrchstate.autopage = null; }
+            if(revsrchstate.querymon) {
+                window.clearTimeout(revsrchstate.querymon);
+                revsrchstate.querymon = null; } }
+        else {
+            revsrchstate = {}; }
+        if(!revsrchstate.revs || !revsrchstate.preserve) {
+            revsrchstate.revs = []; }
+        if(!revsrchstate.cursor || !revsrchstate.preserve) {
+            revsrchstate.cursor = ""; }
+        if(!revsrchstate.total || !revsrchstate.preserve) {
+            revsrchstate.total = 0; }
+        if(!revsrchstate.reqs || !revsrchstate.preserve) {
+            revsrchstate.reqs = 1; }
+        //inputId managed by caller
+        //outdivId managed by caller
+        //revrendf managed by caller
+        //revtype managed by caller
+        //srchval managed by caller
     },
 
 
-    searchRevsIfTypeChange: function (revtype) {
+    revsearch: function (srchstate) {
+        var penid, params;
+        if(srchstate) {
+            app.profile.clearRevSearch();  //clear any outstanding timeouts
+            revsrchstate = srchstate;
+            app.profile.clearRevSearch();  //reset and init as needed
+            if(revsrchstate.revs.length > 0) {  //skip initial db call
+                displayRevSearchResults([]);
+                monitorRevSearchValue(); }
+            else {
+                setTimeout(app.profile.revsearch, 50); }
+            return; }
+        //verify not already searching what is being requested
+        if(revsrchstate.inprog &&
+               revsrchstate.inprog.revtype === revsrchstate.revtype &&
+               revsrchstate.inprog.srchval === revsrchstate.srchval &&
+               revsrchstate.inprog.cursor === revsrchstate.cursor) {
+            return; }
+        revsrchstate.inprog = { revtype: revsrchstate.revtype,
+                                srchval: revsrchstate.srchval,
+                                cursor: revsrchstate.cursor };
+        //make the call
+        penid = jt.instId(app.pen.currPenRef().pen);
+        if(profpenref && profpenref.pen) {
+            penid = jt.instId(profpenref.pen); }
+        params = app.login.authparams() +
+            "&qstr=" + jt.enc(jt.canonize(revsrchstate.srchval)) +
+            "&revtype=" + revsrchstate.revtype +
+            "&penid=" + penid +
+            "&maxdate=" + ((new Date()).toISOString()) + 
+            "&mindate=" + ((new Date(0)).toISOString()) +
+            "&cursor=" + jt.enc(revsrchstate.cursor);
+        jt.call('GET', "srchrevs?" + params, null,
+                function (results) { 
+                    app.lcs.putRevs(results);
+                    displayRevSearchResults(results);
+                    monitorRevSearchValue(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("revsearch call died code: " + code + " " +
+                           errtxt); }),
+                jt.semaphore("profile.revsearch"));
+    },
+
+
+    revsearchIfTypeChange: function (revtype) {
         if(profpenref.profstate.revtype !== revtype) {
             profpenref.profstate.revtype = revtype;
             jt.out('revTypeSelectorDiv', 
-                   revTypeSelectorHTML("app.profile.searchRevsIfTypeChange"));
-            clearAllRevProfWorkState();
-            app.profile.searchAllRevs(); }
+                   revTypeSelectorHTML("app.profile.revsearchIfTypeChange"));
+            displayAllRevs(); }
     },
 
 
