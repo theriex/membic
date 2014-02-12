@@ -534,10 +534,11 @@ app.revresp = (function () {
 
 
     appendReviewComments = function (rows, qcmts, redrawfunc, acceptable) {
-        var i, qcmt, penref;
+        var revid, i, qcmt, penref;
+        revid = jt.instId(app.review.getCurrentReview());
         for(i = 0; i < qcmts.length; i += 1) {
             qcmt = qcmts[i];
-            if(!isAbusivePen(qcmt.cmtpenid)) {
+            if(qcmt.revid === revid && !isAbusivePen(qcmt.cmtpenid)) {
                 penref = app.lcs.getPenRef(qcmt.cmtpenid);
                 if(penref.status === "not cached") {
                     app.lcs.getPenFull(qcmt.cmtpenid, redrawfunc);
