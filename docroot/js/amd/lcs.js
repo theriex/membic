@@ -90,6 +90,8 @@ app.lcs = (function () {
             corids.push(rlidstr);
             revlink.corresponding = corids.join(","); }
         data = jt.objdata(revlink);
+        //no semaphore on this call. All link updates need to go through,
+        //even if we are quickly processing two in a row.
         jt.call('POST', "updlink?" + app.login.authparams(), data,
                 function (updrevlinks) {
                     jt.log("verifyCorrespondingLink updated " +
@@ -97,9 +99,7 @@ app.lcs = (function () {
                            updrevlinks[0].corresponding); },
                 app.failf(function (code, errtxt) {
                     jt.log("verifyCorrespondingLink failed " + 
-                           code + " " + errtxt); }),
-                jt.semaphore("lcs.verifyCorrespondingLink" + 
-                             jt.instId(revlink)));
+                           code + " " + errtxt); }));
     },
 
 
