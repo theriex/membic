@@ -280,6 +280,10 @@ app.login = (function () {
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out('contentdiv', html); }
+        //Change the form target back to a relative url so that
+        //hitting return works properly for local testing.  It is set
+        //to an https url originally to avoid firebug security warnings.
+        jt.byId('loginform').action = "/redirlogin";
         jt.byId('loginform').style.display = "block";
         html = [];
         //add url parameters to pass through on form submit
