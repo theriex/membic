@@ -11,6 +11,10 @@ libraries:
 builtins:
 - remote_api: on
 
+error_handlers:
+- error_code: over_quota
+  file: overquota.html
+
 handlers:
 ######################################################################
 ##                  API
