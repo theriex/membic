@@ -6,6 +6,7 @@ from moracct import *
 from pen import PenName, authorized
 from rev import Review
 from rel import Relationship
+from cacheman import *
 
 
 class ReviewComment(db.Model):
@@ -175,7 +176,7 @@ class UpdateComment(webapp2.RequestHandler):
             review = Review.get_by_id(revid)
             if review:
                 review.modified = nowISO()
-                review.put()
+                cached_put(review)
                 retval = [ rc, review ]
         returnJSON(self.response, retval)
 

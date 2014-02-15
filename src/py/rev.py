@@ -9,6 +9,7 @@ from pen import PenName, authorized
 import json
 from operator import attrgetter
 import re
+from cacheman import *
 
 
 class Review(db.Model):
@@ -255,7 +256,7 @@ def filter_reviews(reviews, qstr):
         filtered = False
         if not review.cankey:
             review.cankey = create_cankey_for_review(review)
-            review.put()
+            cached_put(review)
         if qstr and not qstr in review.cankey:
             filtered = True
         elif review.svcdata and batch_flag_attrval(review) in review.svcdata:
@@ -281,7 +282,7 @@ class NewReview(webapp2.RequestHandler):
             # Might be better to unpack the existing svcdata value and 
             # update rather than rewriting, but maybe not. Change if needed
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
-        review.put()
+        cached_put(review)
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
@@ -296,7 +297,7 @@ class UpdateReview(webapp2.RequestHandler):
             return
         read_review_values(self, review)
         review.penname = pen.name
-        review.put()
+        cached_put(review)
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
@@ -329,7 +330,7 @@ class UploadReviewPic(webapp2.RequestHandler):
                     try:
                         review.revpic = db.Blob(upfile)
                         review.revpic = images.resize(review.revpic, 160, 160)
-                        review.put()
+                        cached_put(review)
                         errmsg = ""
                     except Exception as e:
                         errmsg = "Picture upload failed: " + str(e)
@@ -373,27 +374,24 @@ class SearchReviews(webapp2.RequestHandler):
         qstr = self.request.get('qstr')
         revtype = self.request.get('revtype')
         oldfirst = self.request.get('oldfirst')
+        cursor = self.request.get('cursor')
         fetchmax = 100
         where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"
+        ckey = "SearchReviews" + str(penid) + mindate + maxdate
         if revtype:
             where += " AND revtype = '" + revtype + "'"
+            ckey += revtype
         if oldfirst:
             where += " ORDER BY modified ASC"
+            ckey += "ASC"
         else:
             where += " ORDER BY modified DESC"
-        # logging.info(where + "\n" + str(penid) + 
-        #              ", " + mindate + ", " + maxdate)
+            ckey += "DESC"
         revquery = Review.gql(where, penid, mindate, maxdate)
-        cursor = self.request.get('cursor')
-        if cursor:
-            revquery.with_cursor(start_cursor = cursor)
-        cursor = ""
-        reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
-                                 deadline=10)
-        if len(reviews) >= fetchmax:
-            cursor = revquery.cursor()
-        checked = len(reviews)
-        reviews = filter_reviews(reviews, qstr)
+        qres = cached_query(ckey, revquery, cursor, fetchmax, Review)
+        checked = len(qres.objects)
+        logging.info("SearchReviews checked: " + str(checked))
+        reviews = filter_reviews(qres.objects, qstr)
         if self.request.get('format') == "record":
             result = ""
             for review in reviews:
@@ -408,12 +406,12 @@ class SearchReviews(webapp2.RequestHandler):
                     ", text: " + safeURIEncode(review.text, True)
                 result += record + "\n"
             result += "fetched: " + str(checked)
-            if cursor:
-                result += ", cursor: " + cursor
+            if qres.cursor:
+                result += ", cursor: " + qres.cursor
             result += "\n"
             writeTextResponse(result, self.response)
         else:
-            returnJSON(self.response, reviews, cursor, checked)
+            returnJSON(self.response, reviews, qres.cursor, checked)
 
 
 class GetReviewById(webapp2.RequestHandler):
@@ -496,7 +494,7 @@ class MakeTestReviews(webapp2.RequestHandler):
                 rev.modified = nowISO()
                 rev.title = "movie " + str(count) + str(moviecount)
                 rev.cankey = canonize(rev.title)
-                rev.put()
+                cached_put(rev)
         self.response.out.write("Test reviews created")
 
 

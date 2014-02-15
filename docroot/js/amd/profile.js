@@ -727,6 +727,19 @@ app.profile = (function () {
     },
 
 
+    //keep maxdate consistent to give server cache a consistent key
+    revsearchMaxDate = function () {
+        var now = new Date(), 
+            nowiso = now.toISOString(),
+            state = revsrchstate;
+        if(!state.maxdate || nowiso >= state.maxdateExpires) {
+            state.maxdate = nowiso;
+            state.maxdateExpires = 
+                new Date(now.getTime() + (60 * 60 * 1000)).toISOString(); }
+        return state.maxdate;
+    },
+
+
     displayFollowing = function () {
         app.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
         app.layout.adjust();
@@ -1452,8 +1465,8 @@ return {
             "&qstr=" + jt.enc(jt.canonize(revsrchstate.srchval)) +
             "&revtype=" + revsrchstate.revtype +
             "&penid=" + penid +
-            "&maxdate=" + ((new Date()).toISOString()) + 
-            "&mindate=" + ((new Date(0)).toISOString()) +
+            "&maxdate=" + revsearchMaxDate() + 
+            "&mindate=1970-01-01T00:00:00Z" + 
             "&cursor=" + jt.enc(revsrchstate.cursor);
         jt.call('GET', "srchrevs?" + params, null,
                 function (results) { 
