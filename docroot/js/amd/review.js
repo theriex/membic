@@ -1200,6 +1200,13 @@ app.review = (function () {
     },
 
 
+    cacheBustPersonalReviewSearches = function () {
+        var penref = app.pen.currPenRef();
+        if(penref.profstate) {
+            penref.profstate.allRevsState = null; }
+    },
+
+
     mainDisplay = function (pen, read, action, errmsg) {
         if(!crev) {
             crev = {}; }
@@ -1582,6 +1589,7 @@ return {
                 function (reviews) {
                     crev = copyReview(app.lcs.putRev(reviews[0]).rev);
                     app.layout.runMeritDisplay(crev);
+                    cacheBustPersonalReviewSearches();
                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                     setTimeout(function () {  //update matching requests
                         app.activity.fulfillRequests(crev); }, 100);
