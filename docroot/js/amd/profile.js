@@ -680,7 +680,7 @@ app.profile = (function () {
             if(typeof results[i].fetched === "number") {
                 revsrchstate.total += results[i].fetched;
                 revitems.push(
-                    ["div", {cla: "sumtotal"},
+                    ["div", {id: "revsrchcountdiv", cla: "sumtotal"},
                      String(revsrchstate.total) + " reviews searched"]);
                 if(results[i].cursor) {
                     revsrchstate.cursor = results[i].cursor; }
@@ -699,7 +699,7 @@ app.profile = (function () {
             else {
                 if(atMaxAutoRevSearch()) {  //they continued search manually
                     revsrchstate.reqs += 1; }
-                html.push(["a", {href: "#continuesearch",
+                html.push(["a", {id: "contlinkhref", href: "#continuesearch",
                                  onclick: jt.fs("app.profile.revsearch()"),
                                  title: "Continue searching for more " + 
                                         "matching reviews"},
@@ -1458,6 +1458,13 @@ return {
         revsrchstate.inprog = { revtype: revsrchstate.revtype,
                                 srchval: revsrchstate.srchval,
                                 cursor: revsrchstate.cursor };
+        if(!jt.byId("revsrchcountdiv")) {
+            jt.out(revsrchstate.outdivId, jt.tac2html(
+                ["div", {cla: "sumtotal"},
+                 "Searching..."])); }
+        if(jt.byId("contlinkhref")) {
+            jt.byId("contlinkhref").onclick = "";
+            jt.out("contlinkhref", "continuing..."); }
         //make the call
         penid = jt.instId(app.pen.currPenRef().pen);
         if(profpenref && profpenref.pen) {
