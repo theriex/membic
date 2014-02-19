@@ -2,7 +2,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 import pickle
 import logging
-from moracct import nowISO
+from moracct import nowISO, intz
 
 # Notes on caching:
 
@@ -40,11 +40,24 @@ def cached_get(idval, dbclass):
         # logging.info("cached_get " + key + " retrieved from cache")
         instance = pickle.loads(instance)
         return instance
-    # logging.info("cached_get " + key + " pulled from db")
+    # logging.info("cached_get pulling " + key + " from db...")
     instance = dbclass.get_by_id(intz(idval))
-    memcache.set(key, pickle.dumps(instance))
+    if instance:
+        # logging.info("cached_get cached " + key)
+        memcache.set(key, pickle.dumps(instance))
     return instance
 
+
+# Null out the cache reference for this ID, and remove it from the db.
+def cached_delete(idval, dbclass):
+    key = dbclass.kind() + str(idval)
+    instance = memcache.get(key)
+    if instance:
+        memcache.set(key, "")
+    instance = dbclass.get_by_id(intz(idval))
+    if instance:
+        instance.delete()
+    
 
 class QueryCache(object):
     def __init__(self):

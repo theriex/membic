@@ -1085,6 +1085,7 @@ return {
 
     resetStateVars: function () {
         profpenref = null;
+        revsrchstate = null;
     },
 
 

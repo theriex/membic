@@ -72,7 +72,9 @@ return {
 
 
     pop: function (event) {
-        var state = event.state;
+        var state;
+        if(event) {
+            state = event.state; }
         jt.log("historyPop: " + JSON.stringify(state));
         if(state) {
             switch(state.view) {

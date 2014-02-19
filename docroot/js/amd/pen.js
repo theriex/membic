@@ -240,6 +240,13 @@ return {
         jt.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
         app.layout.adjust();
         url = "mypens?" + app.login.authparams();
+        //no semaphore on this call.  During startup and reset,
+        //multiple functions might be needing access to the current
+        //pen, and it is not reasonable to ignore a secondary call
+        //because that leads to a line of processing being ignored.
+        //With no semaphore, the log may show multiple server calls
+        //for the same pen in some situations, but it is better than
+        //unexplained lack of display updates.
         jt.call('GET', url, null,
                 function (pens) {
                     var i;
@@ -250,8 +257,7 @@ return {
                     chooseOrCreatePenName(callback); },
                 app.failf(function (code, errtxt) {
                     jt.out('contentdiv', "Pen name retrieval failed: " + 
-                           code + " " + errtxt); }),
-                jt.semaphore("pen.getPen"));
+                           code + " " + errtxt); }));
     },
 
 

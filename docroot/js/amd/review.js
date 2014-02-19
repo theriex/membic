@@ -1286,6 +1286,10 @@ return {
                          " something.  Recalculating your recent reviews..." +
                          "</p>";
                      jt.out('cmain', html);
+                     cacheBustPersonalReviewSearches();
+                     setTimeout(function () {
+                         jt.out('cmain', html + "This may take a moment..."); },
+                                6000);
                      setTimeout(function () {
                          //between comments and corresponding review links
                          //it's easiest to effectively just reload.
@@ -1630,7 +1634,8 @@ return {
                         else {
                             app.review.displayRead(action); } }
                     else {
-                        jt.err("initWithId found no review id " + revid); } },
+                        jt.err("initWithId found no review id " + revid);
+                        app.profile.display(); } },
                 app.failf(function (code, errtxt) {
                     jt.err("initWithId failed code " + code + ": " +
                            errtxt); }),

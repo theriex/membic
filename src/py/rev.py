@@ -70,7 +70,7 @@ def review_modification_authorized(handler):
 
 def safe_get_review_for_update(handler):
     id = handler.request.get('_id')
-    review = Review.get_by_id(intz(id))
+    review = cached_get(intz(id), Review)
     if not review:
         handler.error(404)
         handler.response.out.write("Review id: " + str(id) + " not found.")
@@ -181,7 +181,7 @@ def update_top20_reviews(pen, review):
         t20ids = t20dict[review.revtype]
     t20revs = [ review ]
     for revid in t20ids:
-        resolved = Review.get_by_id(revid)
+        resolved = cached_get(intz(id), Review)
         # if unresolved reference, or wrong type, then just skip it
         if resolved and resolved.revtype == review.revtype:
             t20revs.append(resolved)
@@ -310,7 +310,7 @@ class DeleteReview(webapp2.RequestHandler):
         review = safe_get_review_for_update(self)
         if not review:
             return
-        review.delete()
+        cached_delete(review.key().id(), Review)
         ## there may be a tombstone reference in the top20s.  That's ok.
         returnJSON(self.response, [])
 
@@ -348,7 +348,7 @@ class UploadReviewPic(webapp2.RequestHandler):
 class GetReviewPic(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = Review.get_by_id(intz(revid))
+        review = cached_get(intz(revid), Review)
         havepic = review and review.revpic
         if not havepic:
             self.error(404)
@@ -417,7 +417,7 @@ class SearchReviews(webapp2.RequestHandler):
 class GetReviewById(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = Review.get_by_id(intz(revid))
+        review = cached_get(intz(revid), Review)
         if not review:
             self.error(404)
             self.response.write("No Review found for id " + revid)
