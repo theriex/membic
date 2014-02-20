@@ -637,10 +637,18 @@ app.profile = (function () {
     },
 
 
+    resetSearchStateInterimResults = function (state) {
+        revsrchstate.revs = [];
+        revsrchstate.cursor = "";
+        revsrchstate.total = 0;
+        revsrchstate.reqs = 1;
+    },
+
+
     displayAllRevs = function () {
         var html, state;
         state = profpenref.profstate.allRevsState;
-        if(!state || state.revtype !== profpenref.profstate.revtype) {
+        if(!state) {
             state = profpenref.profstate.allRevsState = {
                 inputId: "allrevsrchin",
                 outdivId: "allrevdispdiv",
@@ -649,6 +657,9 @@ app.profile = (function () {
                 revtype: profpenref.profstate.revtype,
                 srchval: "",
                 preserve: true }; }
+        if(state.revtype !== profpenref.profstate.revtype) {
+            resetSearchStateInterimResults(state);
+            state.revtype = profpenref.profstate.revtype; }
         html = [["div", {id: "revTypeSelectorDiv"},
                  revTypeSelectorHTML("app.profile.revsearchIfTypeChange")],
                 ["div", {id: "allrevsrchdiv"},
@@ -716,10 +727,7 @@ app.profile = (function () {
         qstr = srchin.value;
         if(qstr !== revsrchstate.srchval) {
             app.profile.clearRevSearch();
-            revsrchstate.revs = [];
-            revsrchstate.cursor = "";
-            revsrchstate.total = 0;
-            revsrchstate.reqs = 1;
+            resetSearchStateInterimResults();
             revsrchstate.srchval = qstr;
             app.profile.revsearch(); }
         else {
