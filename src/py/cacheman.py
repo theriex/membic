@@ -2,7 +2,8 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 import pickle
 import logging
-from moracct import nowISO, intz
+from morutil import *
+
 
 # Notes on caching:
 
@@ -134,4 +135,3 @@ def reset_cached_query(ckey):
         qc.idvals = []
         qc.cursor = ""
         memcache.set(ckey, pickle.dumps(qc))
-

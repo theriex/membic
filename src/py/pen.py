@@ -4,10 +4,12 @@ from google.appengine.ext import db
 from google.appengine.api import images
 import logging
 from moracct import *
+from morutil import *
 import urllib
 import json
 import string
 import random
+from cacheman import *
 
 
 class PenName(db.Model):
@@ -96,7 +98,7 @@ def native_account_for_pen(request):
     if not acc:
         return None, None
     penid = request.get('penid')
-    pen = PenName.get_by_id(intz(penid))
+    pen = cached_get(intz(penid), PenName)
     if not pen:
         return None, None
     authok = authorized(acc, pen)
@@ -104,7 +106,7 @@ def native_account_for_pen(request):
         return None, None
     # They are authorized for the given pen.  Good enough to fill out email.
     if pen.mid:
-        acc = MORAccount.get_by_id(pen.mid)
+        acc = MORAccount.get_by_id(pen.mid)  #nocache
     else:
         uname = acc.username
         passw = gen_password()
@@ -159,7 +161,7 @@ class NewPenName(webapp2.RequestHandler):
         setattr(pen, self.request.get('am'), acc._id)
         pen.following = 0
         pen.followers = 0
-        pen.put()
+        cached_put(pen)
         returnJSON(self.response, [ pen ])
 
 
@@ -176,12 +178,12 @@ class UpdatePenName(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Invalid value for name")
             return
-        id = self.request.get('_id')
-        logging.info("UpdatePenName id: " + id)
-        pen = PenName.get_by_id(intz(id))
+        penid = self.request.get('_id')
+        logging.info("UpdatePenName id: " + penid)
+        pen = cached_get(intz(penid), PenName)
         if not pen:
             self.error(404)
-            self.response.out.write("PenName id: " + str(id) + " not found.")
+            self.response.out.write("PenName id: " + str(penid) + " not found.")
             return
         authok = authorized(acc, pen)
         if not authok:
@@ -198,7 +200,7 @@ class UpdatePenName(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Authorized access reference required.")
             return
-        pen.put()
+        cached_put(pen)
         returnJSON(self.response, [ pen ])
         
 
@@ -210,7 +212,7 @@ class UploadProfPic(webapp2.RequestHandler):
             errmsg = "Could not find pen name for pic attachment"
             profid = self.request.get('_id')
             logging.info("UploadProfPic profid: " + profid)
-            pen = PenName.get_by_id(intz(profid))
+            pen = cached_get(intz(profid), PenName)
             if pen:
                 errmsg = "You may only update your own pen name"
                 authok = authorized(acc, pen)
@@ -223,7 +225,7 @@ class UploadProfPic(webapp2.RequestHandler):
                             pen.profpic = db.Blob(upfile)
                             # change profpic to max 160x160 png...
                             pen.profpic = images.resize(pen.profpic, 160, 160)
-                            pen.put()
+                            cached_put(pen)
                             errmsg = ""
                         except Exception as e:
                             errmsg = "Profile picture upload failed: " + str(e)
@@ -242,7 +244,7 @@ class UploadProfPic(webapp2.RequestHandler):
 class GetProfPic(webapp2.RequestHandler):
     def get(self):
         profid = self.request.get('profileid');
-        pen = PenName.get_by_id(intz(profid))
+        pen = cached_get(intz(profid), PenName)
         havepic = pen and pen.profpic
         if not havepic:
             self.error(404)
@@ -332,7 +334,7 @@ class GetPenById(webapp2.RequestHandler):
             self.error(400)
             self.response.write("Invalid ID for Pen Name: " + penidstr)
             return
-        pen = PenName.get_by_id(intz(penid))
+        pen = cached_get(intz(penid), PenName)
         if not pen:
             self.error(404)
             self.response.write("No Pen Name found for id " + str(penid))
@@ -386,11 +388,11 @@ class SetEmailFromPen(webapp2.RequestHandler):
         # else goes wrong transactionally then this could fail.  Unlikely
         # and not automatically recoverable so just error out.
         try:
-            acc.put()
+            acc.put()  #nocache
             pen.mid = acc.key().id()
             pen.modified = nowISO()
             pen.accessed = nowISO()
-            pen.put()
+            cached_put(pen)
             returnJSON(self.response, [ pen ])
         except Exception as e:
             self.error(409)  #Conflict
@@ -409,7 +411,7 @@ class PenAccessed(webapp2.RequestHandler):
             return
         penid = self.request.get('penid')
         try:
-            pen = PenName.get_by_id(intz(penid))
+            pen = cached_get(intz(penid), PenName)
         except Exception as e:
             self.error(400)
             self.response.out.write("Bad penid " + str(penid) + ". " + str(e))
@@ -425,7 +427,7 @@ class PenAccessed(webapp2.RequestHandler):
             return
         pen.accessed = nowISO()
         try:
-            pen.put()
+            cached_put(pen)
         except Exception as e2:
             self.error(412)  #precondition failed
             self.response.out.write("Update failed: " + str(e2))
@@ -453,7 +455,7 @@ class MakeTestPens(webapp2.RequestHandler):
             pen.settings = ""
             pen.following = 0
             pen.followers = 0
-            pen.put()
+            cached_put(pen)
         self.response.out.write("Test pen names created")
 
 

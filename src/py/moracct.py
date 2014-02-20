@@ -8,11 +8,11 @@ import base64
 import httplib
 import urllib
 import time
-import re
 import json
 from google.appengine.api.datastore_types import Blob
 from consvc import doOAuthGet
 from google.appengine.api import urlfetch
+from morutil import *
 
 
 class MORAccount(db.Model):
@@ -190,32 +190,6 @@ def authenticated(request):
         logging.info("could not authenticate unknown account type: " + acctype)
 
 
-def ISO2dt(isostr):
-    dt = datetime.datetime.utcnow()
-    dt = dt.strptime(isostr, "%Y-%m-%dT%H:%M:%SZ")
-    return dt
-
-
-def dt2ISO(dt):
-    iso = str(dt.year) + "-" + str(dt.month).rjust(2, '0') + "-"
-    iso += str(dt.day).rjust(2, '0') + "T" + str(dt.hour).rjust(2, '0')
-    iso += ":" + str(dt.minute).rjust(2, '0') + ":"
-    iso += str(dt.second).rjust(2, '0') + "Z"
-    return iso
-
-
-def nowISO():
-    """ Return the current time as an ISO string """
-    return dt2ISO(datetime.datetime.utcnow())
-
-
-def canonize(strval):
-    """ Convert to lower case and remove all whitespace """
-    strval = re.sub(r"\s+", "", strval)
-    strval = strval.lower();
-    return strval
-
-
 def writeTextResponse(text, response):
     """ Factored method to write headers for plain text result """
     response.headers['Content-Type'] = 'text/plain'
@@ -279,14 +253,6 @@ def returnDictAsJSON(response, obj):
     jsontxt = json.dumps(obj, True)
     # logging.info(jsontxt)
     writeJSONResponse("[" + jsontxt + "]", response)
-
-
-def intz(val):
-    if not val:
-        return 0
-    if isinstance(val, basestring) and val.startswith("\""):
-        val = val[1:len(val) - 1]
-    return int(val)
 
 
 def safestr(val):
@@ -353,7 +319,7 @@ class WriteAccount(webapp2.RequestHandler):
         acct.lastsummary = nowISO()
         acct.summaryfreq = "weekly"
         acct.summaryflags = ""
-        acct.put()
+        acct.put()  #nocache
         token = newtoken(user, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
 
@@ -511,7 +477,7 @@ class ChangePassword(webapp2.RequestHandler):
             account.summaryfreq = self.request.get('sumfreq') or "weekly"
             account.summaryflags = self.request.get('sumflags') or ""
             account.modified = nowISO()
-            account.put()
+            account.put()  #nocache
             token = newtoken(account.username, account.password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:

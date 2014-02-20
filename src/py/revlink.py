@@ -3,9 +3,11 @@ import datetime
 from google.appengine.ext import db
 import logging
 from moracct import *
+from morutil import *
 from pen import PenName, authorized
 from rev import Review
 import json
+from cacheman import *
 
 
 class ReviewLink(db.Model):
@@ -23,7 +25,7 @@ class ReviewLink(db.Model):
 
 def verify_review_link_revpenid(revlink):
     if not revlink.revpenid:
-        review = Review.get_by_id(revlink.revid)
+        review = cached_get(revlink.revid, Review)
         if not review:
             logging.error("ReviewLink " + str(revlink.key().id()) + " revid " +
                           str(revlink.revid) + " does not exist.")
@@ -103,7 +105,7 @@ class UpdateReviewLink(webapp2.RequestHandler):
         # of verification here, but trying to save the processing overhead.
         revlink.corresponding = self.request.get('corresponding') or ""
         revlink.modified = nowISO()
-        revlink.put()
+        cached_put(revlink)
         returnJSON(self.response, [ revlink ])
         
 

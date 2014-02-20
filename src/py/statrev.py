@@ -3,10 +3,12 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
-from moracct import safestr, intz, safeURIEncode
+from moracct import safestr, safeURIEncode
+from morutil import *
 import re
 import json
 import math
+from cacheman import *
 
 
 def starsImageHTML(rating):
@@ -478,12 +480,12 @@ def revhtml(rev, pen, refer):
 
 class StaticReviewDisplay(webapp2.RequestHandler):
     def get(self, revid):
-        review = Review.get_by_id(intz(revid))
+        review = cached_get(intz(revid), Review)
         if not review:
             self.error(404)
             self.response.out.write("Review " + revid + " not found")
             return
-        pen = PenName.get_by_id(review.penid)
+        pen = cached_get(review.penid, PenName)
         if not pen:
             self.error(404)
             self.response.out.write("PenName " + review.penid + " not found")

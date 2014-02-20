@@ -4,7 +4,8 @@ from google.appengine.ext import db
 import logging
 import json
 from rev import Review
-from moracct import nowISO, dt2ISO
+from morutil import *
+
 
 class Week(db.Model):
     """ An overview of reviews for the week """
@@ -76,7 +77,7 @@ def verify_day_fields(week):
                 setattr(week, daystr, summary)
     if updated:
         week.modified = nowISO()
-        week.put()
+        week.put()  #nocache
     return week
 
 

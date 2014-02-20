@@ -2,7 +2,8 @@ import webapp2
 import logging
 from rel import outbound_relids_for_penid
 from rev import review_activity_search
-from moracct import nowISO, intz, safestr
+from moracct import safestr
+from morutil import *
 from statrev import getTitle, getSubkey
 
 

@@ -3,6 +3,7 @@ import datetime
 from google.appengine.ext import db
 import logging
 from moracct import *
+from morutil import *
 
 
 class Request(db.Model):
@@ -46,7 +47,7 @@ class UpdateRequest(webapp2.RequestHandler):
         reqid = self.request.get('_id')
         req = None
         if reqid:
-            req = Request.get_by_id(intz(reqid))
+            req = Request.get_by_id(intz(reqid))  #nocache
             if not req or req.fromid != fromid or req.toid != toid:
                 self.error(404)
                 self.response.out.write("Request " + reqid + " not found.")
@@ -60,7 +61,7 @@ class UpdateRequest(webapp2.RequestHandler):
         req.revtype = self.request.get('revtype')
         req.keywords = self.request.get('keywords')
         req.modified = nowISO()
-        req.put()
+        req.put()  #nocache
         returnJSON(self.response, [ req ])
 
 

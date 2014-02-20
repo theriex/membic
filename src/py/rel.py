@@ -4,7 +4,9 @@ from google.appengine.ext import db
 from google.appengine.api import images
 import logging
 from moracct import *
+from morutil import *
 from pen import PenName, authorized
+from cacheman import *
 
 
 class Relationship(db.Model):
@@ -29,12 +31,12 @@ def add_relationship(rel):
     # that there is an extra check here just in case.
     if rel.originid == rel.relatedid:
         return [ ]
-    origin = PenName.get_by_id(rel.originid)
+    origin = PenName.get_by_id(rel.originid)  #intransaction
     if not origin:
         logging.warn("add_relationship origin pen not found: " +\
                          str(rel.originid))
         return [ ]
-    related = PenName.get_by_id(rel.relatedid)
+    related = PenName.get_by_id(rel.relatedid)  #intransaction
     if not related:
         logging.warn("add_relationship related pen not found: " +\
                          str(rel.relatedid))
@@ -45,21 +47,21 @@ def add_relationship(rel):
         related.followers = 0
     origin.following += 1
     related.followers += 1
-    origin.put()
-    related.put()
-    rel.put()
+    cached_put(origin)
+    cached_put(related)
+    cached_put(rel)
     return [ origin, related, rel ]
 
 
 @db.transactional(xg=True)
 def delete_relationship(rel):
-    origin = PenName.get_by_id(rel.originid)
+    origin = PenName.get_by_id(rel.originid)  #intransaction
     origin.following -= 1
-    related = PenName.get_by_id(rel.relatedid)
+    related = PenName.get_by_id(rel.relatedid)  #intransaction
     related.followers -= 1
-    origin.put()
-    related.put()
-    db.delete(rel)
+    cached_put(origin)
+    cached_put(related)
+    cached_delete(rel.key().id(), Relationship)
     return [ origin, related ]
     
 
@@ -72,7 +74,7 @@ def relationship_modification_authorized(handler):
         handler.response.out.write("Authentication failed")
         return False
     originid = intz(handler.request.get('originid'))
-    pen = PenName.get_by_id(originid)
+    pen = cached_get(originid, PenName)
     if not pen:
         handler.error(404)
         handler.response.out.write("Pen " + str(originid) + " not found.")
@@ -147,7 +149,7 @@ class DeleteRelationship(webapp2.RequestHandler):
         if not relationship_modification_authorized(self):
             return
         relid = self.request.get('_id')
-        rel = Relationship.get_by_id(intz(relid))
+        rel = cached_get(intz(relid), Relationship)
         if not valid_relationship_modification(self, rel):
             return
         elements = delete_relationship(rel)
@@ -159,7 +161,7 @@ class UpdateRelationship(webapp2.RequestHandler):
         if not relationship_modification_authorized(self):
             return
         relid = self.request.get('_id')
-        rel = Relationship.get_by_id(intz(relid))
+        rel = cached_get(intz(relid), Relationship)
         if not valid_relationship_modification(self, rel):
             return
         # originid is never modified
@@ -171,7 +173,7 @@ class UpdateRelationship(webapp2.RequestHandler):
         if cutoffstr:
             rel.cutoff = intz(cutoffstr)
         rel.modified = nowISO()
-        rel.put()
+        cached_put(rel)
         returnJSON(self.response, [ rel ])
 
 

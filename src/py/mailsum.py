@@ -6,12 +6,14 @@ from pen import PenName
 from rel import outbound_relids_for_penid
 from rev import Review, review_activity_search
 from req import Request, find_requests
-from moracct import MORAccount, dt2ISO, nowISO, ISO2dt, safestr, returnJSON, writeJSONResponse
+from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
+from morutil import *
 from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
 from google.appengine.api import images
 import textwrap
+from cacheman import *
 
 
 class ActivityStat(db.Model):
@@ -123,7 +125,7 @@ def btw_activity(src, request):
         elif "wdydfun" not in val:
             logging.info("other referral: " + val)
             bump_referral_count(stat, "other")
-    stat.put()
+    stat.put()  #nocache
             
 
 def split_output(response, text):
@@ -175,7 +177,7 @@ def pen_stats():
             stat.names += ";"
         stat.names += pen.name
     stat.calculated = dt2ISO(datetime.datetime.utcnow())
-    stat.put()
+    stat.put()  #nocache
     return stats_text(stat)
 
 
@@ -212,7 +214,7 @@ def req_summary_text(reqs):
     if reqs and len(reqs) > 0:
         text += "You have review requests from your followers:\n"
         for req in reqs:
-            pen = PenName.get_by_id(req.fromid)
+            pen = cached_get(req.fromid, PenName)
             text += "    " + pen.name + " has requested a " + req.revtype +\
                 " review.\n"
         text += "\n\n"
@@ -305,7 +307,7 @@ def mail_summaries(freq, thresh, request, response):
                         body=content)
                     logmsg += ", mail sent"
         acc.lastsummary = nowISO()
-        acc.put()
+        acc.put()  #nocache
         split_output(response, logmsg)
         logsum += logmsg + "\n"
     return logsum

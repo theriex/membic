@@ -3,6 +3,7 @@ import datetime
 from google.appengine.ext import db
 import logging
 from moracct import *
+from morutil import *
 from pen import PenName, authorized
 from rev import Review
 from rel import Relationship
@@ -28,7 +29,7 @@ def comment_access_authorized_pen(handler, penidparamname):
         self.response.out.write("Authentication failed")
         return False
     penid = intz(handler.request.get(penidparamname))
-    pen = PenName.get_by_id(penid)
+    pen = cached_get(penid, PenName)
     if not pen:
         handler.error(404)
         handler.response.out.write("Pen " + str(penid) + " not found.")
@@ -44,7 +45,7 @@ def comment_access_authorized_pen(handler, penidparamname):
 def fetch_review_comment_for_update(handler, penidparamname):
     pen = comment_access_authorized_pen(handler, penidparamname)
     rcid = handler.request.get('_id')
-    rc = ReviewComment.get_by_id(intz(rcid))
+    rc = ReviewComment.get_by_id(intz(rcid))  #nocache
     if not rc:
         handler.error(404)
         handler.response.out.write("ReviewComment: " + str(rcid) + " not found")
@@ -169,11 +170,11 @@ class UpdateComment(webapp2.RequestHandler):
             self.response.out.write("Response required for question")
             return
         rc.modified = nowISO()
-        rc.put()
+        rc.put()  #nocache
         retval = [ rc ]
         if updaterev:
             revid = intz(self.request.get('revid'))
-            review = Review.get_by_id(revid)
+            review = cached_get(revid, Review)
             if review:
                 review.modified = nowISO()
                 cached_put(review)
@@ -185,7 +186,7 @@ class UpdateComment(webapp2.RequestHandler):
 class CreateComment(webapp2.RequestHandler):
     def post(self):
         rc = ReviewComment(revid = intz(self.request.get('revid')))
-        review = Review.get_by_id(rc.revid)
+        review = cached_get(rc.revid, Review)
         if not review:
             self.error(404)
             self.response.out.write("Review " + str(rc.revid) + " not found")
@@ -232,7 +233,7 @@ class CreateComment(webapp2.RequestHandler):
             return
         rc.resp = ""
         rc.modified = nowISO()
-        rc.put()
+        rc.put()  #nocache
         returnJSON(self.response, [ rc ])
 
 
@@ -241,7 +242,7 @@ class CreateComment(webapp2.RequestHandler):
 class DeleteComment(webapp2.RequestHandler):
     def post(self):
         rc = fetch_review_comment_for_update(self, 'cmtpenid')
-        rc.delete()
+        rc.delete()  #nocache
         returnJSON(self.response, [])
 
 

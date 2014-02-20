@@ -5,6 +5,7 @@ from google.appengine.api import images
 import logging
 import urllib
 from moracct import *
+from morutil import *
 from pen import PenName, authorized
 import json
 from operator import attrgetter
@@ -55,7 +56,7 @@ def review_modification_authorized(handler):
         handler.response.out.write("Authentication failed")
         return False
     penid = intz(handler.request.get('penid'))
-    pen = PenName.get_by_id(penid)
+    pen = cached_get(penid, PenName)
     if not pen:
         handler.error(404)
         handler.response.out.write("Pen " + str(penid) + " not found.")
@@ -200,7 +201,7 @@ def update_top20_reviews(pen, review):
     t20dict["latestrevtype"] = review.revtype
     pen.top20s = json.dumps(t20dict)
     pen.modified = nowISO();
-    pen.put()
+    cached_put(pen)
 
 
 def fetch_review_by_cankey(handler):
@@ -484,7 +485,7 @@ class MakeTestReviews(webapp2.RequestHandler):
             pen.settings = ""
             pen.following = 0
             pen.followers = 0
-            pen.put()
+            cached_put(pen)
             moviecount = 0
             while moviecount < 4:
                 moviecount += 1

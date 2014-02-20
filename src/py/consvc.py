@@ -12,6 +12,7 @@ from google.appengine.api import urlfetch
 import urllib
 import datetime
 from base64 import b64encode
+from cacheman import *
 
 
 class ConnectionService(db.Model):
@@ -36,7 +37,7 @@ def getConnectionService(svcname):
         return svc
     # no service found, create a stub instance for later editing
     svc = ConnectionService(name=svcname, ckey="unknown", secret="unknown")
-    svc.put()
+    cached_put(svc)
     return svc
 
 

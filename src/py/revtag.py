@@ -3,9 +3,11 @@ import datetime
 from google.appengine.ext import db
 import logging
 from moracct import *
+from morutil import *
 from pen import PenName, authorized
 from revlink import ReviewLink, verify_review_link_revpenid, make_review_link
 import json
+from cacheman import *
 
 
 class ReviewTag(db.Model):
@@ -25,7 +27,7 @@ class ReviewTag(db.Model):
 @db.transactional(xg=True)
 def update_revlink_and_refobj(rlid, add, linkfield, linkvalue, dbobj):
     linkvalue = str(linkvalue)
-    revlink = ReviewLink.get_by_id(rlid)
+    revlink = ReviewLink.get_by_id(rlid)  #intransaction
     arr = getattr(revlink, linkfield)
     if arr:
         arr = arr.split(',')
@@ -38,8 +40,8 @@ def update_revlink_and_refobj(rlid, add, linkfield, linkvalue, dbobj):
     setattr(revlink, linkfield, arr)
     verify_review_link_revpenid(revlink)
     revlink.modified = nowISO()
-    revlink.put()
-    dbobj.put()
+    cached_put(revlink)
+    cached_put(dbobj)
     return revlink
 
 
@@ -49,7 +51,7 @@ def note_review_feedback(revid, add, linkfield, linkvalue, dbobj):
     rls = rlq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=5)
     if len(rls) <= 0:
         revlink = make_review_link(revid)
-        revlink.put()
+        cached_put(revlink)
         rls = [ revlink ]
     revlink = update_revlink_and_refobj(rls[0].key().id(), add,
                                         linkfield, linkvalue, dbobj)
@@ -78,7 +80,7 @@ def fetch_or_create_tag(handler):
         handler.response.out.write("Authentication failed")
         return None
     penid = intz(handler.request.get('penid'))
-    pen = PenName.get_by_id(penid)
+    pen = cached_get(penid, PenName)
     if not pen:
         handler.error(404)
         handler.response.out.write("Pen " + str(penid) + " not found.")
@@ -193,7 +195,7 @@ class ConvertPenRemember(webapp2.RequestHandler):
                         revtag = fetch_or_create_tag_authorized(penid, revid)
                         revtag.remembered = nowISO()
                         revtag.forgotten = None
-                        revtag.put()
+                        cached_put(revtag)
                         self.response.out.write("\n    " + str(revid))
                     
 
