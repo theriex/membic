@@ -518,6 +518,10 @@ app.profile = (function () {
             params += "&cursor=" + jt.enc(rrs.cursor); }
         jt.call('GET', "srchrevs?" + params, null,
                 function (revs) {
+                    if(profpenref.profstate.seltabname !== "recent") {
+                        //switched tabs before we came back. Bail out.
+                        profpenref.profstate.recentRevState = null;
+                        return; }
                     sanityCompleteRevsViaCache(rrs, revs);
                     displayRecentReviews(rrs, revs); },
                 app.failf(function (code, errtxt) {
