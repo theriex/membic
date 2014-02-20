@@ -80,8 +80,9 @@ class QueryResult(object):
 #   cursor: "cache" + offset, or db access value (value is opaque to caller)
 #   fetchmax: Any chunk value, value may not vary for any given WHERE
 #   dbclass: The db.Model whose instances are being searched (e.g. Review)
-def cached_query(ckey, query, cursor, fetchmax, dbclass):
-    logging.info("cached_query ckey: " + ckey)
+def cached_query(ckey, query, cursor, fetchmax, dbclass, logit):
+    if logit:
+        logging.info("cached_query ckey: " + ckey)
     # get the QueryCache we are working with
     qc = memcache.get(ckey)
     if qc:
@@ -90,14 +91,17 @@ def cached_query(ckey, query, cursor, fetchmax, dbclass):
         qc = QueryCache()
     qres = QueryResult()
     qres.qcstart = qc.started
-    # Have previous QueryCache, return from cache if adequate
+    # Have previous QueryCache, return from cache if adequate.  Cached
+    # results may be empty, it is the responsibility of the caller to
+    # bust the cache after adding a new instance.
     if qc.started:
         offset = 0
         if cursor and cursor.startswith("cache"):
             offset = int(cursor[len("cache"):])
         endidx = offset + fetchmax
         if endidx <= len(qc.idvals) or not qc.cursor:
-            logging.info("Query results retrieved from cache")
+            if logit:
+                logging.info("Query results retrieved from cache")
             idvals = qc.idvals[offset:endidx]
             for idval in idvals:
                 qres.objects.append(cached_get(idval, dbclass))
@@ -106,16 +110,19 @@ def cached_query(ckey, query, cursor, fetchmax, dbclass):
             return qres;
     # No previous QueryCache, or need more values from the db
     if not qc.started:
-        logging.info("Creating new query cache")
+        if logit:
+            logging.info("Creating new query cache")
         qc.started = nowISO()
     else:
-        logging.info("Fetching and caching more db values")
+        if logit:
+            logging.info("Fetching and caching more db values")
         assert qc.cursor
         query.with_cursor(start_cursor = qc.cursor)
     qres.objects = query.fetch(fetchmax, 
                                read_policy=db.EVENTUAL_CONSISTENCY,
                                deadline=10)
-    logging.info("cached_query found " + str(len(qres.objects)) + " objects")
+    if logit:
+        logging.info("cached_query found " + str(len(qres.objects)))
     for obj in qres.objects:
         cached_put(obj)
         qc.idvals.append(obj.key().id())

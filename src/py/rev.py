@@ -389,7 +389,7 @@ class SearchReviews(webapp2.RequestHandler):
             where += " ORDER BY modified DESC"
             ckey += "DESC"
         revquery = Review.gql(where, penid, mindate, maxdate)
-        qres = cached_query(ckey, revquery, cursor, fetchmax, Review)
+        qres = cached_query(ckey, revquery, cursor, fetchmax, Review, True)
         checked = len(qres.objects)
         logging.info("SearchReviews checked: " + str(checked))
         reviews = filter_reviews(qres.objects, qstr)

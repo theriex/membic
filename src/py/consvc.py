@@ -31,13 +31,16 @@ class GenObj:
 
 
 def getConnectionService(svcname):
-    where = "WHERE name=:1 LIMIT 1"
-    svcs = ConnectionService.gql(where, svcname)
-    for svc in svcs:
+    cskey = svcname
+    where = "WHERE name = :1 LIMIT 1"
+    csquery = ConnectionService.gql(where, svcname)
+    qres = cached_query(cskey, csquery, "", 5, ConnectionService, False)
+    for svc in qres.objects:
         return svc
     # no service found, create a stub instance for later editing
     svc = ConnectionService(name=svcname, ckey="unknown", secret="unknown")
     cached_put(svc)
+    reset_cached_query(cskey)
     return svc
 
 
