@@ -182,7 +182,7 @@ def update_top20_reviews(pen, review):
         t20ids = t20dict[review.revtype]
     t20revs = [ review ]
     for revid in t20ids:
-        resolved = cached_get(intz(id), Review)
+        resolved = cached_get(intz(revid), Review)
         # if unresolved reference, or wrong type, then just skip it
         if resolved and resolved.revtype == review.revtype:
             t20revs.append(resolved)
