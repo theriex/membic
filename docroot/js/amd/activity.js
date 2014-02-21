@@ -10,6 +10,7 @@
 //     revrefs: array of cached reviews, most recent first
 //     lastChecked: timestamp when recent reviews were last fetched
 //     cursor: cursor for continuing to load more activity
+//     reps: obj for tracking display of extra reviews per person per day
 //
 //   penref.pensearch:
 //     params: parameters for search
@@ -419,16 +420,15 @@ app.activity = (function () {
     },
 
 
-    moreRevsFromHTML = function (rev) {
+    moreRevsFromHTML = function (key, rev) {
         var html = ["li",
                     ["div", {cla: "morerevs"},
-                     ["a", {href: "#" + jt.objdata({ view: "profile", 
-                                                     profid: rev.penid }),
-                            onclick: jt.fs("app.profile.byprofid('" + 
-                                           rev.penid + "', 'recent')"),
-                            title: "Show recent reviews from " + 
-                                   jt.ndq(rev.penNameStr)},
-                      "more reviews from " + jt.ndq(rev.penNameStr) + " on " + 
+                     ["a", {href: "#" + key,
+                            onclick: jt.fs("app.activity.toggleExtraRevs('" +
+                                           key + "')"),
+                            id: "toga" + key},
+                      "+ more reviews by " + jt.ndq(rev.penNameStr) + 
+                      " from " + 
                       jt.colloquialDate(jt.ISOString2Day(rev.modified))]]];
         html = jt.tac2html(html);
         return html;
@@ -598,25 +598,40 @@ app.activity = (function () {
     },
 
 
-    displayReviewActivity = function () {
-        var actdisp, revrefs, rev, i, breakid, html = [], key, reps = {};
-        topModeEnabled = true;
-        writeNavDisplay("activity");
-        actdisp = app.pen.currPenRef().actdisp;
+    repkey = function (rev, rsq) {
+        //day modified + repetition sequence number + who wrote it
+        return rev.modified.slice(0, 10) + "_" + rsq + "_" + rev.penid;
+    },
+
+
+    dispRevActItemsHTML = function (actdisp) {
+        var revrefs, rev, i, breakid, html = [], key, repobj, liato, rsq = 0;
+        actdisp.reps = {};
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {
             html.push(["li", "None of the people you are following have" + 
                             " posted any reviews recently."]); }
         for(i = 0; i < revrefs.length; i += 1) {
             rev = revrefs[i].rev;
-            key = rev.modified.slice(0, 10) + rev.penid;
-            if(!reps[key] || reps[key] < 2) {  //display 2 revs/day/pen
-                reps[key] = (reps[key] || 0) + 1;
+            key = repkey(rev, rsq);
+            actdisp.reps[key] = actdisp.reps[key] || { count: 0, hidden: [] };
+            repobj = actdisp.reps[key];
+            liato = { id: "li" + jt.instId(rev) };
+            if(repobj.count < 2) {  //display latest 2 revs/day/pen
+                liato.style = "";
                 html.push(app.profile.reviewItemHTML(rev, rev.penNameStr)); }
             else {
-                reps[key] += 1;
-                if(reps[key] === 3) {
-                    html.push(moreRevsFromHTML(rev)); } }
+                liato.style = "display:none;";
+                repobj.hidden.push(jt.instId(rev));
+                html.push(app.profile.reviewItemHTML(rev, rev.penNameStr,
+                                                     liato)); }
+            repobj.count += 1;
+            if(repobj.count >= 3 && 
+                   ((i >= revrefs.length - 1) ||
+                    (i < revrefs.length - 1 &&
+                     repkey(revrefs[i + 1].rev, rsq) !== key))) {
+                rsq += 1;
+                html.push(moreRevsFromHTML(key, rev)); }
             if(!rev.penNameStr) {
                 breakid = rev.penid;
                 break; } }
@@ -625,9 +640,21 @@ app.activity = (function () {
                 app.lcs.getPenFull(breakid, function (penref) {
                     app.activity.notePenNameStr(penref.pen); }); },
                        50); }
-        else {
+        else {  //redisplay if any review linkages have changed
             setTimeout(function () {
-                app.lcs.verifyReviewLinks(displayReviewActivity); }, 250); }
+                app.lcs.verifyReviewLinks(
+                    app.activity.displayReviewActivity); }, 
+                       250); }
+        return html;
+    },
+
+
+    displayReviewActivity = function () {
+        var actdisp, itemhtml, html;
+        topModeEnabled = true;
+        writeNavDisplay("activity");
+        actdisp = app.pen.currPenRef().actdisp;
+        itemhtml = dispRevActItemsHTML(actdisp);
         html = [["div", {id: "announcementdiv"},
                  announcementHTML()],
                 ["div", {id: "pendingqcsdiv"},
@@ -635,13 +662,13 @@ app.activity = (function () {
                 ["div", {id: "activereqsdiv"},
                  activeRequestsHTML()],
                 ["ul", {cla: "revlist"}, 
-                 html]];
+                 itemhtml]];
         if(actdisp.cursor) {
             html.push(["a", {href: "#moreact",
                              onclick: jt.fs("app.activity.moreact()"),
                              title: "More activity"},
                        "more activity..."]); }
-        else if(revrefs.length < 3) {
+        else if(itemhtml.length < 3) {
             html.push(followMoreHTML(null, true)); }
         jt.out('revactdiv', jt.tac2html(html));
         app.layout.adjust();
@@ -733,7 +760,8 @@ app.activity = (function () {
             return; }
         app.pen.currPenRef().actdisp = {
             revrefs: [], 
-            cursor: "" };
+            cursor: "",
+            reps: {} };
         if(penids.length > 0) {
             jt.out('revactdiv', "Loading activity...");
             app.layout.adjust();
@@ -840,6 +868,28 @@ return {
             if(revrefs[i].rev.penid === pid) {
                 revrefs[i].rev.penNameStr = pen.name; } }
         displayReviewActivity();
+    },
+
+
+    displayReviewActivity: function () {
+        displayReviewActivity();
+    },
+
+
+    toggleExtraRevs: function (key) {
+        var toga, repobj, disp, i, li;
+        toga = jt.byId("toga" + key);
+        if(toga) {
+            repobj = app.pen.currPenRef().actdisp.reps[key];
+            if(toga.text.indexOf("+ more") === 0) {
+                disp = "block";
+                toga.text = "- less" + toga.text.slice("+ more".length); }
+            else {
+                disp = "none";
+                toga.text = "+ more" + toga.text.slice("- less".length); }
+            for(i = 0; i < repobj.hidden.length; i += 1) {
+                li = jt.byId("li" + repobj.hidden[i]);
+                li.style.display = disp; } }
     },
 
 

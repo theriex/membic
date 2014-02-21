@@ -1250,7 +1250,7 @@ return {
     },
 
 
-    reviewItemHTML: function (revobj, penNameStr) {
+    reviewItemHTML: function (revobj, penNameStr, liattrobj) {
         var revid, type, linkref, linkclass, linktxt, jump = "", byline = "", 
             keywords = "", revtext = "", html;
         revid = jt.instId(revobj);
@@ -1275,7 +1275,7 @@ return {
         if(revobj.text) {
             revtext = ["div", {cla: "revtextsummary"},
                        jt.ellipsis(revobj.text, 255)]; }
-        html = ["li",
+        html = ["li", liattrobj,
                 [app.review.starsImageHTML(revobj.rating),
                  app.review.badgeImageHTML(type),
                  "&nbsp;",
