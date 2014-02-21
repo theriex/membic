@@ -142,3 +142,10 @@ def reset_cached_query(ckey):
         qc.idvals = []
         qc.cursor = ""
         memcache.set(ckey, pickle.dumps(qc))
+
+
+def bust_cache_key(ckey):
+    logging.info("bust_cache_key " + ckey)
+    memcache.set(ckey, "")
+
+

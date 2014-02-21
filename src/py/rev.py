@@ -2,6 +2,7 @@ import webapp2
 import datetime
 from google.appengine.ext import db
 from google.appengine.api import images
+from google.appengine.api import memcache
 import logging
 import urllib
 from moracct import *
@@ -218,7 +219,43 @@ def fetch_review_by_cankey(handler):
         return reviews[0]
 
 
+def simple_rev_activity_search(penids):
+    rps = memcache.get("recentrevs")
+    # revid0:penid0,revid1:penid1,revid2:penid2...
+    if not rps:
+        logging.info("simple_rev_activity_search finding recent reviews...")
+        rps = ""
+        revs = Review.all()
+        revs.order('-modified')
+        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
+        checked = 0
+        for rev in revs:
+            checked += 1
+            if not (rev.svcdata and batch_flag_attrval(rev) in rev.svcdata):
+                if rps:
+                    rps += ","
+                rps += str(rev.key().id()) + ":" + str(rev.penid)
+            if rev.modified < dold:
+                break  # remaining reviews are too old to display
+        memcache.set("recentrevs", rps)
+    logging.info("simple_rev_activity_search filtering cached reviews")
+    checked = 0
+    results = []
+    rps = rps.split(",")
+    for rp in rps:
+        checked += 1
+        revpen = rp.split(":")
+        if revpen[1] in penids:
+            rev = cached_get(intz(revpen[0]), Review)
+            results.append(rev)
+        if len(results) > 200:
+            break
+    return checked, results
+
+
 def review_activity_search(since, cursor, penids):
+    if not since and not cursor:
+        return simple_rev_activity_search(penids)
     results = []
     revs = Review.all()
     revs.order('-modified')
@@ -284,6 +321,7 @@ class NewReview(webapp2.RequestHandler):
             # update rather than rewriting, but maybe not. Change if needed
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
         cached_put(review)
+        bust_cache_key("recentrevs")
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
@@ -299,6 +337,7 @@ class UpdateReview(webapp2.RequestHandler):
         read_review_values(self, review)
         review.penname = pen.name
         cached_put(review)
+        bust_cache_key("recentrevs")
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
@@ -496,6 +535,7 @@ class MakeTestReviews(webapp2.RequestHandler):
                 rev.title = "movie " + str(count) + str(moviecount)
                 rev.cankey = canonize(rev.title)
                 cached_put(rev)
+                bust_cache_key("recentrevs")
         self.response.out.write("Test reviews created")
 
 

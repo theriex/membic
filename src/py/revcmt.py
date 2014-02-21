@@ -178,6 +178,7 @@ class UpdateComment(webapp2.RequestHandler):
             if review:
                 review.modified = nowISO()
                 cached_put(review)
+                bust_cache_key("recentrevs")
                 retval = [ rc, review ]
         returnJSON(self.response, retval)
 
