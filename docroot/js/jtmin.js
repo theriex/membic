@@ -685,7 +685,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                     if (k) {
                         k.critsec = "completed";
                     }
-                    if (xhr.status === 200) {  //successful
+                    if (xhr.status === 200 ||  //successful
+                           //or local access retrieved something...
+                            (xhr.status === 0 && xhr.responseText)) {
                         s(xhr.responseText);
                     } else if (f) {
                         //use responseText for custom error messages,

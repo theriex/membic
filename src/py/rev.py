@@ -245,7 +245,7 @@ def simple_rev_activity_search(penids):
     for rp in rps:
         checked += 1
         revpen = rp.split(":")
-        if revpen[1] in penids:
+        if len(revpen) > 1 and revpen[1] in penids:
             rev = cached_get(intz(revpen[0]), Review)
             results.append(rev)
         if len(results) > 200:
