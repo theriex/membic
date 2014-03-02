@@ -1307,10 +1307,13 @@ return {
     },
 
 
-    reviewLinkHTML: function () {
-        var html;
+    reviewLinkHTML: function (mode) {
+        var state, html, imgsrc = "writereview.png";
+        state = app.history.currState();
+        if(mode === "review" || (!mode && state.view === "review")) {
+            imgsrc = "writereviewsel.png"; }
         html = ["div", {cla: "topnavitemdiv"},
-                jt.imgntxt("writereview.png", "Review and Share",
+                jt.imgntxt(imgsrc, "Review and Share",
                            "app.review.cancelReview(true)", "#Write", 
                            "Write a review and share it with your friends")];
         return jt.tac2html(html);
@@ -1511,6 +1514,7 @@ return {
         if(!okToLoseChanges()) {
             return; }
         app.onescapefunc = null; 
+        app.layout.updateNavIcons("review");
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }

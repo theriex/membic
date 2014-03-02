@@ -124,27 +124,6 @@ app.profile = (function () {
     },
 
 
-    updateTopActionDisplay = function (pen) {
-        var html;
-        if(!jt.byId('homepenhdiv')) {
-            app.login.updateAuthentDisplay(); }
-        html = ["div", {cla: "topnavitemdiv"},
-                jt.imgntxt("profile.png", "",
-                           "app.profile.display()",
-                           "#view=profile&profid=" + jt.instId(pen),
-                           "Show profile for " + pen.name + " (you)",
-                           "naviconospace")];
-        jt.out('homepenhdiv', jt.tac2html(html));
-        html = jt.imgntxt("settings.png", "", 
-                          "app.profile.settings()",
-                          "#Settings",
-                          "Adjust your profile settings",
-                          "naviconospace");
-        jt.out('settingsbuttondiv', html);
-        displayInboundLinkIndicator();
-    },
-
-
     displayProfileHeading = function (homepen, dispen, directive) {
         var html, id, name, linksum, relationship;
         id = jt.instId(dispen);
@@ -212,7 +191,7 @@ app.profile = (function () {
     writeNavDisplay = function (homepen, dispen, directive) {
         if(!dispen) {
             dispen = homepen; }
-        updateTopActionDisplay(homepen);
+        app.profile.updateTopActionDisplay(homepen);
         displayProfileHeading(homepen, dispen, directive);
     },
 
@@ -396,6 +375,7 @@ app.profile = (function () {
                      "Save"]]]]]];
         app.layout.openDialog({x:280, y:20}, jt.tac2html(html), function () {
             jt.on('savebutton', 'click', savePenNameSettings);
+            jt.byId('settingsnavimg').src = "img/settingsel.png";
             displayAuthSettings('settingsauthtd', pen);
             app.services.display('consvcstd', pen);
             app.skinner.init('settingsskintd', pen); });
@@ -1060,6 +1040,7 @@ app.profile = (function () {
                                  tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
+        app.layout.updateNavIcons();
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
         app.skinner.setColorsFromPen(homepen);
@@ -1540,6 +1521,30 @@ return {
 
     getProfilePenReference: function () {
         return profpenref;
+    },
+
+
+    updateTopActionDisplay: function (pen, mode) {
+        var state, html, imgsrc = "profile.png";
+        if(!jt.byId('homepenhdiv')) {
+            app.login.updateAuthentDisplay(); }
+        state = app.history.currState();
+        if(mode === "memo" || (!mode && state.view === "profile")) {
+            imgsrc = "profilesel.png"; }
+        html = ["div", {cla: "topnavitemdiv"},
+                jt.imgntxt(imgsrc, "",
+                           "app.profile.display()",
+                           "#view=profile&profid=" + jt.instId(pen),
+                           "Show profile for " + pen.name + " (you)",
+                           "naviconospace")];
+        jt.out('homepenhdiv', jt.tac2html(html));
+        html = jt.imgntxt("settings.png", "", 
+                          "app.profile.settings()",
+                          "#Settings",
+                          "Adjust your profile settings",
+                          "naviconospace", "settingsnav");
+        jt.out('settingsbuttondiv', html);
+        displayInboundLinkIndicator();
     }
 
 

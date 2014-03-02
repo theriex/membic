@@ -322,6 +322,7 @@ return {
         var dlg;
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
+        app.layout.updateNavIcons();
         app.layout.adjust();
         app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
@@ -446,6 +447,17 @@ return {
         setTimeout(function () {
             meritactive = false;
             app.cancelOverlay(); }, 2800);
+    },
+
+
+    //mode: "activity", "memo", "review", "profile"
+    updateNavIcons: function (mode) {
+        var penref = app.pen.currPenRef();
+        jt.out('recentacthdiv', app.activity.activityLinkHTML(mode));
+        jt.out('rememberedhdiv', app.activity.rememberedLinkHTML(mode));
+        jt.out('writerevhdiv', app.review.reviewLinkHTML(mode));
+        if(penref && penref.pen) {
+            app.profile.updateTopActionDisplay(penref.pen, mode); }
     }
 
 

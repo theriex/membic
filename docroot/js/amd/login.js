@@ -471,7 +471,7 @@ return {
         if(authtoken && override !== "hide") {  //logged in, standard display
             html = ["div", {id: "topactionsdiv"},
                     ["table", {id: "topactionstable"},
-                     [["tr",
+                     [["tr",  //See also layout.updateNavIcons
                        [["td",
                          ["div", {id: "recentacthdiv"},
                           app.activity.activityLinkHTML()]],

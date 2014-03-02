@@ -791,6 +791,7 @@ app.activity = (function () {
             return; }
         app.history.checkpoint({ view: dispmode });
         writeNavDisplay(dispmode);
+        app.layout.updateNavIcons();
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
             displayRemembered(); }
@@ -914,23 +915,32 @@ return {
     },
 
 
-    activityLinkHTML: function () {
-        var html = ["div", {cla: "topnavitemdiv"},
-                    jt.imgntxt("friendact.png", "",
-                               "app.activity.displayActive()",
-                               "#Activity",
-                               "Show reviews from friends")];
+    activityLinkHTML: function (mode) {
+        var state, html, imgsrc = "friendact.png";
+        state = app.history.currState();
+        if(mode === "activity" ||
+               (!mode && (!state.view || state.view === "activity"))) {
+            imgsrc = "friendactsel.png"; }
+        html = ["div", {cla: "topnavitemdiv"},
+                jt.imgntxt(imgsrc, "",
+                           "app.activity.displayActive()",
+                           "#Activity",
+                           "Show reviews from friends")];
         html = jt.tac2html(html);
         return html;
     },
 
 
-    rememberedLinkHTML: function () {
-        var html = ["div", {cla: "topnavitemdiv"},
-                    jt.imgntxt("remembered.png", "",
-                               "app.activity.displayRemembered()",
-                               "#Remembered",
-                               "Show reviews you have remembered")];
+    rememberedLinkHTML: function (mode) {
+        var state, html, imgsrc = "remembered.png";
+        state = app.history.currState();
+        if(mode === "memo" || (!mode && state.view === "memo")) {
+            imgsrc = "rememberedsel.png"; }
+        html = ["div", {cla: "topnavitemdiv"},
+                jt.imgntxt(imgsrc, "",
+                           "app.activity.displayRemembered()",
+                           "#Remembered",
+                           "Show reviews you have remembered")];
         html = jt.tac2html(html);
         return html;
     },
