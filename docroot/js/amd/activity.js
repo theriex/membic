@@ -791,11 +791,12 @@ app.activity = (function () {
             return; }
         app.history.checkpoint({ view: dispmode });
         writeNavDisplay(dispmode);
-        app.layout.updateNavIcons();
         verifyCoreDisplayElements();
         if(dispmode === "memo") {
+            app.layout.updateNavIcons("memo");
             displayRemembered(); }
         else {  //dispmode === "activity"
+            app.layout.updateNavIcons("activity");
             if(activityMode === "amtop") {
                 displayTopReviews(); }
             else {  //activityMode === "amnew"
@@ -916,10 +917,10 @@ return {
 
 
     activityLinkHTML: function (mode) {
-        var state, html, imgsrc = "friendact.png";
-        state = app.history.currState();
-        if(mode === "activity" ||
-               (!mode && (!state.view || state.view === "activity"))) {
+        var html, imgsrc = "friendact.png";
+        if(!mode) {
+            mode = app.layout.currnavmode(); }
+        if(mode === "activity") {
             imgsrc = "friendactsel.png"; }
         html = ["div", {cla: "topnavitemdiv"},
                 jt.imgntxt(imgsrc, "",
@@ -932,9 +933,10 @@ return {
 
 
     rememberedLinkHTML: function (mode) {
-        var state, html, imgsrc = "remembered.png";
-        state = app.history.currState();
-        if(mode === "memo" || (!mode && state.view === "memo")) {
+        var html, imgsrc = "remembered.png";
+        if(!mode) {
+            mode = app.layout.currnavmode(); }
+        if(mode === "memo") {
             imgsrc = "rememberedsel.png"; }
         html = ["div", {cla: "topnavitemdiv"},
                 jt.imgntxt(imgsrc, "",

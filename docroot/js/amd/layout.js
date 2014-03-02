@@ -19,6 +19,7 @@ app.layout = (function () {
         slideindex = -1,
         slideslot = -1,
         meritactive = false,
+        navmode = "activity",
 
 
     ////////////////////////////////////////
@@ -319,9 +320,14 @@ return {
 
 
     closeDialog: function () {
-        var dlg;
+        var state, dlg;
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
+        state = app.history.currState();
+        if(!state || !state.view) {
+            navmode = "activity"; }
+        else {
+            navmode = state.view; }
         app.layout.updateNavIcons();
         app.layout.adjust();
         app.onescapefunc = app.escapefuncstack.pop();
@@ -450,14 +456,20 @@ return {
     },
 
 
-    //mode: "activity", "memo", "review", "profile"
     updateNavIcons: function (mode) {
         var penref = app.pen.currPenRef();
-        jt.out('recentacthdiv', app.activity.activityLinkHTML(mode));
-        jt.out('rememberedhdiv', app.activity.rememberedLinkHTML(mode));
-        jt.out('writerevhdiv', app.review.reviewLinkHTML(mode));
+        if(mode) {
+            navmode = mode; }
+        jt.out('recentacthdiv', app.activity.activityLinkHTML(navmode));
+        jt.out('rememberedhdiv', app.activity.rememberedLinkHTML(navmode));
+        jt.out('writerevhdiv', app.review.reviewLinkHTML(navmode));
         if(penref && penref.pen) {
-            app.profile.updateTopActionDisplay(penref.pen, mode); }
+            app.profile.updateTopActionDisplay(penref.pen, navmode); }
+    },
+
+
+    currnavmode: function () {
+        return navmode;
     }
 
 

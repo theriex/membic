@@ -1040,7 +1040,7 @@ app.profile = (function () {
                                  tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
-        app.layout.updateNavIcons();
+        app.layout.updateNavIcons("profile");
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
         app.skinner.setColorsFromPen(homepen);
@@ -1525,11 +1525,12 @@ return {
 
 
     updateTopActionDisplay: function (pen, mode) {
-        var state, html, imgsrc = "profile.png";
+        var html, imgsrc = "profile.png";
         if(!jt.byId('homepenhdiv')) {
             app.login.updateAuthentDisplay(); }
-        state = app.history.currState();
-        if(mode === "memo" || (!mode && state.view === "profile")) {
+        if(!mode) {
+            mode = app.layout.currnavmode(); }
+        if(mode === "profile") {
             imgsrc = "profilesel.png"; }
         html = ["div", {cla: "topnavitemdiv"},
                 jt.imgntxt(imgsrc, "",

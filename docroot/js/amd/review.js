@@ -1308,9 +1308,10 @@ return {
 
 
     reviewLinkHTML: function (mode) {
-        var state, html, imgsrc = "writereview.png";
-        state = app.history.currState();
-        if(mode === "review" || (!mode && state.view === "review")) {
+        var html, imgsrc = "writereview.png";
+        if(!mode) {
+            mode = app.layout.currnavmode(); }
+        if(mode === "review") {
             imgsrc = "writereviewsel.png"; }
         html = ["div", {cla: "topnavitemdiv"},
                 jt.imgntxt(imgsrc, "Review and Share",
