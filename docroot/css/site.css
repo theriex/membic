@@ -103,7 +103,7 @@ img { border:0px; }
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #dlgdiv { position:absolute; left:20px; top:60px; padding:10px 20px;
-  background:url('../img/dlgback.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
+  background:url('../img/topbg.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #closeline { text-align:right; font-size:x-small; }
