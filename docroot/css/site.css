@@ -39,7 +39,8 @@ img { border:0px; }
 /* >> topsectiondiv and contained elements */
 #mascotdiv { position:absolute; left:10px; top:265px; }
 .mascotimg { vertical-align:middle; width:29px; height:14px; }
-#topsectiondiv { padding:0px 10px; background:#fffffd;
+#topsectiondiv { padding:0px 10px;
+  background:url('../img/topbg.png') repeat, #ffffff;
   box-shadow:8px 8px 4px #cccccc; 
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
 #statictopsectiondiv { height:10px; }
