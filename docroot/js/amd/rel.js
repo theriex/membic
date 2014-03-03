@@ -368,8 +368,8 @@ app.rel = (function () {
             html.push(["p", "No followers yet, but if you continue to post a review every week people will definitely see you."]); }
         else {
             html.push(["p", "No followers yet. Consider writing a review."]);
-            html.push(["p", "In fact, why not commit yourself to experiencing" +
-                            " at least one thing worth reviewing each week?"]);
+            html.push(["p", "Guaranteed you've experienced <em>something</em>" +
+                       " other people would like to hear about..."]);
         }
         return html;
     },

@@ -8,6 +8,11 @@ A:visited {text-decoration:none; color:#521919; }
 A:active {text-decoration:none; color:#521919; }
 A:hover {text-decoration:underline; color:#885555; }
 
+a.gold:link {text-decoration:none; color:#ffd100; }
+a.gold:visited {text-decoration:none; color:#ffd100; }
+a.gold:active {text-decoration:none; color:#ffd100; }
+a.gold:hover {text-decoration:underline; color:#ffd100; }
+
 body {
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-style:normal;
@@ -89,7 +94,7 @@ img { border:0px; }
    and use that for any browser that can handle it.
 */
  }
-#penhnamespan { font-size:xx-large; }
+#penhnamespan { font-size:xx-large; font-style:italic; }
 #homepennamespan { font-size:large; }
 #penhbuttondiv { padding:0px 0px 0px 20px; }
 #recentacthdiv { float:right; }
@@ -158,6 +163,8 @@ img { border:0px; }
 .reviewbadge, .reviewbadgedis { 
   width:30px; height:30px; vertical-align:middle; }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
+.followico { width:30px; height:30px; vertical-align:bottom; }
+.followingico { width:20px; height:20px; vertical-align:middle; }
 #profbadgestd { padding: 0px 10px 5px 10px; width:300px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */

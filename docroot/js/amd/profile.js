@@ -124,27 +124,37 @@ app.profile = (function () {
     },
 
 
-    displayProfileHeading = function (homepen, dispen, directive) {
-        var html, id, name, linksum, relationship;
+    displayProfileHeadingName = function (homepen, dispen, directive) {
+        var html, id, name;
         id = jt.instId(dispen);
         name = dispen.name;
+        if(directive === "nosettings") {
+            name = ["a", {href: "#view=profile&profid=" + id,
+                          title: "Show profile for " + name,
+                          onclick: jt.fs("app.profile.byprofid('" + id + 
+                                         "')")},
+                    name]; }
         html = ["div", {id: "profhdiv"},
                 ["table",
                  ["tr",
                   [["td",
                     ["span", {id: "penhnamespan"},
-                     ["a", {href: "#view=profile&profid=" + id,
-                            title: "Show profile for " + name,
-                            onclick: jt.fs("app.profile.byprofid('" + id + 
-                                           "')")},
-                      name]]],
+                     name]],
                    ["td",
                     ["div", {id: "penhbuttondiv"},
                      " "]]]]]];
         html = jt.tac2html(html);
         jt.out('centerhdiv', html);
+    },
+
+
+    displayProfileHeading = function (homepen, dispen, directive) {
+        var html, id, name, linksum, relationship;
+        displayProfileHeadingName(homepen, dispen, directive);
         if(directive === "nosettings") {
             return; }
+        id = jt.instId(dispen);
+        name = dispen.name;
         html = "";
         if(jt.instId(homepen) === jt.instId(dispen)) {
             linksum = app.pen.currPenRef().linksummary;
@@ -166,18 +176,19 @@ app.profile = (function () {
                 relationship = app.rel.outbound(id);
                 app.profile.verifyStateVariableValues(dispen);
                 if(relationship) {
-                    html = ["a", {href: "#Settings",
+                    html = ["a", {href: "#Settings", cla: "gold", 
                                   title: "Adjust follow settings for " + name,
                                   onclick: jt.fs("app.profile.relationship()")},
-                            ["img", {cla: "navico", 
-                                     src: "img/settingsinv.png"}]]; }
+                            [["img", {cla: "followingico", 
+                                      src: "img/followset.png"}],
+                             "Following"]]; }
                 else {
                     html = ["a", {href: "#Follow",
                                   title: "Follow " + name + " reviews",
                                   onclick: jt.fs("app.profile.relationship()")},
-                            [["img", {cla: "navico", id: "followbimg",
+                            [["img", {cla: "followico", id: "followbimg",
                                       src: "img/follow.png"}],
-                             "follow"]]; }
+                             "Follow"]]; }
                 html = jt.tac2html(html); }
             else {  
                 //Happens if you go directly to someone's profile via url
