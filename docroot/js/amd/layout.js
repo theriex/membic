@@ -229,6 +229,8 @@ app.layout = (function () {
         if(contentdiv) {
             //jt.out('dimspan', "app.winw:" + app.winw);
             contentdiv.style.width = target + "px"; }
+        if(navmode === "profile") {
+            app.profile.positionAndSizeMainDivs(); }
         setSoftFocus();
     };
 

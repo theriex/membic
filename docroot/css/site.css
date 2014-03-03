@@ -152,12 +152,15 @@ img { border:0px; }
 
 /* >> profile layout */
 #proftopdiv { }
-#profshouttd { padding:0px 10px; }
-#profcitytd { font-size:small; padding: 0px 10px 5px 10px; }
-#profcommbuildtd { font-size:small; padding: 0px 10px 5px 10px; }
+#profparticipatediv { }
+#profpersonaldiv { 
+  position:absolute; left:400px; top:140px; width:150px; padding:10px; }
+#profshoutdiv { padding:0px 10px; }
+#profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
+#profinvitediv { font-size:small; padding: 0px 10px 5px 10px; }
 #srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
-#profpictd { width:130px; text-align:right; }
+#profpicdiv { width:130px; text-align:right; }
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
 .reviewbadge, .reviewbadgedis { 
@@ -165,7 +168,7 @@ img { border:0px; }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
 .followico { width:30px; height:30px; vertical-align:bottom; }
 .followingico { width:20px; height:20px; vertical-align:middle; }
-#profbadgestd { padding: 0px 10px 5px 10px; width:300px; }
+#profbadgestd { padding: 0px 10px 5px 10px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; }
 /* width dynamically modified in profile.styleShout */
 .textareatd { }
@@ -184,7 +187,7 @@ img { border:0px; }
 #proftabsdiv a { padding: 0 1em; }
 .unselectedTab { border-bottom: 1px solid #666; }
 #profdisptable { }
-#inlinkdiv { font-size:small; font-weight:normal; padding:0px 30px; }
+#inlinkdiv { font-size:small; font-weight:normal; padding:10px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .formstyle { font-size:small; }
 .penlist { list-style:none; padding:0; margin:0; }

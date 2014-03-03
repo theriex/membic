@@ -124,6 +124,29 @@ app.profile = (function () {
     },
 
 
+    earnedBadgesHTML = function (pen, clickable) {
+        var html, i, reviewTypes, typename, label, imgsrc, attrobj;
+        html = [];
+        app.pen.deserializeFields(pen);
+        reviewTypes = app.review.getReviewTypes();
+        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            imgsrc = app.layout.badgeImgSrc(pen, typename);
+            if(imgsrc) {
+                label = "Top 20 " + reviewTypes[i].plural.capitalize();
+                if(pen.top20s[typename].length < 20) {
+                    label = String(pen.top20s[typename].length) + " " + 
+                        reviewTypes[i].plural.capitalize(); }
+                attrobj = { cla: "reviewbadge", src: imgsrc,
+                            title: label, alt: label};
+                if(clickable) {
+                    attrobj.onclick = jt.fs("app.profile.showTopRated('" +
+                                            typename + "')"); }
+                html.push(["img", attrobj]); } }
+        return jt.tac2html(html);
+    },
+
+
     displayProfileHeadingName = function (homepen, dispen, directive) {
         var html, id, name;
         id = jt.instId(dispen);
@@ -137,7 +160,9 @@ app.profile = (function () {
         html = ["div", {id: "profhdiv"},
                 ["table",
                  ["tr",
-                  [["td",
+                  [["td", {id: "profbadgestd"},
+                    earnedBadgesHTML(dispen, true)],
+                   ["td",
                     ["span", {id: "penhnamespan"},
                      name]],
                    ["td",
@@ -149,29 +174,14 @@ app.profile = (function () {
 
 
     displayProfileHeading = function (homepen, dispen, directive) {
-        var html, id, name, linksum, relationship;
+        var html, id, name, relationship;
         displayProfileHeadingName(homepen, dispen, directive);
         if(directive === "nosettings") {
             return; }
         id = jt.instId(dispen);
         name = dispen.name;
         html = "";
-        if(jt.instId(homepen) === jt.instId(dispen)) {
-            linksum = app.pen.currPenRef().linksummary;
-            if(linksum) {
-                html = ["div", {id: "inlinkdiv"},
-                        ["table",
-                         [["tr",
-                           [["td", {align: "right"}, "helpful:"],
-                            ["td", String(linksum.helpful)]]],
-                          ["tr",
-                           [["td", {align: "right"}, "remembered:"],
-                            ["td", String(linksum.remembered)]]],
-                          ["tr",
-                           [["td", {align: "right"}, "corresponding:"],
-                            ["td", String(linksum.corresponding)]]]]]];
-                html = jt.tac2html(html); } }
-        else if(jt.instId(homepen) !== jt.instId(dispen)) {
+        if(jt.instId(homepen) !== jt.instId(dispen)) {
             if(app.rel.relsLoaded()) {
                 relationship = app.rel.outbound(id);
                 app.profile.verifyStateVariableValues(dispen);
@@ -788,7 +798,7 @@ app.profile = (function () {
                   ["a", {href: "#recentreviews",
                          title: "Click to see recent reviews",
                          onclick: jt.fs("app.profile.tabselect('recent')")},
-                   "Recent Reviews"]],
+                   "Recent"]],
                  ["li", {id: "bestli", cla: "unselectedTab"},
                   ["a", {href: "#bestreviews",
                          title: "Click to see top rated",
@@ -856,29 +866,17 @@ app.profile = (function () {
 
 
     styleShout = function (shout) {
-        var target;
         shout.style.color = app.colors.text;
         shout.style.backgroundColor = app.skinner.lightbg();
-        //80px left margin + 160px image + padding
-        //+ balancing right margin space (preferable)
-        //but going much smaller than the image is stupid regardless of
-        //screen size
-        target = Math.max((app.winw - 350), 200);
-        target = Math.min(target, 600);
-        shout.style.width = target + "px";
+        shout.style.width = "160px";  //image plus padding
         shout.style.padding = "5px 8px";
-        //modify profcontdiv so it balances the text area size.  This is
-        //needed so IE8 doesn't widen profpictd unnecessarily.
-        target += jt.byId('profpictd').offsetWidth;
-        target += 50;  //arbitrary extra to cover padding
-        jt.byId('profcontdiv').style.width = String(target) + "px";
     },
 
 
     editShout = function (pen) {
         var html, shout;
         html = ["textarea", {id: "shouttxt", cla: "shoutout"}];
-        jt.out('profshouttd', jt.tac2html(html));
+        jt.out('profshoutdiv', jt.tac2html(html));
         shout = jt.byId('shouttxt');
         styleShout(shout);
         if(!jt.isLowFuncBrowser()) {
@@ -893,13 +891,13 @@ app.profile = (function () {
 
     displayShout = function (pen) {
         var html, shout, text;
-        text = "No additional information about " + pen.name;
+        text = "No profile details";
         if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            text = "Anything you would like to say to everyone (link to your site, twitter handle, favorite quote, shoutouts, interests...)"; }
+            text = "Your website(s), Twitter handle, shoutouts..."; }
         text = ["span", {style: "color:" + greytxt + ";"}, text];
         text = jt.tac2html(text);
         html = ["div", {id: "shoutdiv", cla: "shoutout"}];
-        jt.out('profshouttd', jt.tac2html(html));
+        jt.out('profshoutdiv', jt.tac2html(html));
         shout = jt.byId('shoutdiv');
         styleShout(shout);
         shout.style.overflow = "auto";
@@ -978,9 +976,9 @@ app.profile = (function () {
         if(pen.profpic) {
             html = "profpic?profileid=" + jt.instId(pen); }
         html = ["img", {cla: "profpic", src: html}];
-        jt.out('profpictd', jt.tac2html(html));
+        jt.out('profpicdiv', jt.tac2html(html));
         if(profileModAuthorized(pen)) {
-            jt.on('profpictd', 'click', function (e) {
+            jt.on('profpicdiv', 'click', function (e) {
                 jt.evtend(e);
                 if(jt.byId('profcancelb')) {  //save other field edits so
                     saveEditedProfile(pen); }  //they aren't lost on reload
@@ -988,54 +986,40 @@ app.profile = (function () {
     },
 
 
-    earnedBadgesHTML = function (pen, clickable) {
-        var html, i, reviewTypes, typename, label, imgsrc, attrobj;
-        html = [];
-        app.pen.deserializeFields(pen);
-        reviewTypes = app.review.getReviewTypes();
-        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
-            typename = reviewTypes[i].type;
-            imgsrc = app.layout.badgeImgSrc(pen, typename);
-            if(imgsrc) {
-                label = "Top 20 " + reviewTypes[i].plural.capitalize();
-                if(pen.top20s[typename].length < 20) {
-                    label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].plural.capitalize(); }
-                attrobj = { cla: "reviewbadge", src: imgsrc,
-                            title: label, alt: label};
-                if(clickable) {
-                    attrobj.onclick = jt.fs("app.profile.showTopRated('" +
-                                            typename + "')"); }
-                html.push(["img", attrobj]); } }
-        return jt.tac2html(html);
+    revimpactHTML = function (homepen, dispen) {
+        var linksum, html = "";
+        if(jt.instId(homepen) === jt.instId(dispen)) {
+            linksum = app.pen.currPenRef().linksummary;
+            if(linksum) {
+                html = ["div", {id: "inlinkdiv"},
+                        ["table",
+                         [["tr",
+                           [["td", {align: "left"}, 
+                             ["img", {cla: "reviewbadge",
+                                      src: "img/follow.png"}]],
+                            ["td", {align: "right"}, 
+                             "helpful:"],
+                            ["td", String(linksum.helpful)]]],
+                          ["tr",
+                           [["td", {colspan: 2, align: "right"}, 
+                             "remembered:"],
+                            ["td", String(linksum.remembered)]]],
+                          ["tr",
+                           [["td", {colspan: 2, align: "right"}, 
+                             "corresponding:"],
+                            ["td", String(linksum.corresponding)]]]]]]; } }
+        return html;
     },
 
 
-    proftopdivHTML = function () {
-        var html;
-        html = ["div", {id: "proftopdiv"},
-                ["table", {id: "profdisptable"},
-                 [["tr",
-                   ["td", {id: "sysnotice", colspan: 3}]],
-                  ["tr",
-                   [["td", {id: "profpictd", rowspan: 3},
-                     ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
-                    ["td", {id: "profcitytd"},
-                     [["span", {id: "profcityspan"}],
-                      ["span", {id: "profeditbspan"}]]]]],
-                  ["tr",
-                   ["td", {id: "profshouttd", colspan: 2, valign: "top"},
-                    ["div", {id: "shoutdiv", cla: "shoutout"}]]],
-                  ["tr",
-                   [["td", {id: "profbadgestd"}],
-                    ["td", {id: "profcommbuildtd"}]]],
-                  ["tr",
-                   ["td", {colspan: 3},
-                    ["div", {id: "proftabsdiv"}]]],
-                  ["tr",
-                   ["td", {colspan: 3},
-                    ["div", {id: "profcontdiv"}]]]]]];
-        return jt.tac2html(html);
+    inviteHTML = function () {
+        var html = "";
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            html = ["a", {id: "commbuild", href: "#invite",
+                          onclick: jt.fs("app.profile.invite()")},
+                    [["img", {cla: "reviewbadge", src: "img/follow.png"}],
+                     "Invite a friend"]]; }
+        return html;
     },
 
 
@@ -1055,19 +1039,27 @@ app.profile = (function () {
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
         app.skinner.setColorsFromPen(homepen);
-        html = proftopdivHTML();
         if(!app.layout.haveContentDivAreas()) { //change pw kills it
             app.layout.initContentDivAreas(); }
-        jt.out('cmain', html);
-        if(app.winw > 850 && jt.byId('profdisptable')) {
-            jt.byId('profdisptable').style.marginLeft = "8%"; }
-        jt.out('profbadgestd', earnedBadgesHTML(dispen, true));
-        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            html = ["a", {id: "commbuild", href: "#invite",
-                          onclick: jt.fs("app.profile.invite()")},
-                    [["img", {cla: "reviewbadge", src: "img/follow.png"}],
-                     "Invite a friend"]];
-            jt.out('profcommbuildtd', jt.tac2html(html)); }
+        html = ["div", {id: "proftopdiv"},
+                [["div", {id: "profparticipatediv"},
+                  [["div", {id: "sysnotice"}],
+                   ["div", {id: "proftabsdiv"}],
+                   ["div", {id: "profcontdiv"}]]],
+                 ["div", {id: "profpersonaldiv"},
+                  [["div", {id: "profpicdiv"},
+                    ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
+                   ["div", {id: "profcitydiv"},
+                    [["span", {id: "profcityspan"}],
+                     ["span", {id: "profeditbspan"}]]],
+                   ["div", {id: "profshoutdiv"},
+                    ["div", {id: "shoutdiv", cla: "shoutout"}]],
+                   ["div", {id: "profrevimpactdiv"},
+                    revimpactHTML(homepen, dispen)],
+                   ["div", {id: "profinvitediv"},
+                    inviteHTML()]]]]];
+        jt.out('cmain', jt.tac2html(html));
+        app.profile.positionAndSizeMainDivs();
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
@@ -1557,6 +1549,20 @@ return {
                           "naviconospace", "settingsnav");
         jt.out('settingsbuttondiv', html);
         displayInboundLinkIndicator();
+    },
+
+
+    positionAndSizeMainDivs: function () {
+        var adiv = jt.byId('profparticipatediv'),
+            pdiv = jt.byId('profpersonaldiv'),
+            width, margin, pdivpad = 30;
+        width = jt.byId('contentdiv').offsetWidth;
+        margin = Math.floor((app.winw - width) / 2);
+        width -= pdiv.offsetWidth;
+        width -= pdivpad;
+        adiv.style.width = String(width) + "px";
+        margin += Math.floor(pdivpad / 2);
+        pdiv.style.left = String(width + margin) + "px";
     }
 
 
