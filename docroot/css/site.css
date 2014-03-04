@@ -3,6 +3,9 @@
  * HTML tag level settings
  ************************************************************
  */
+@font-face { font-family: "Penscript"; 
+             src: url('../Pacifico.ttf'); }
+
 A:link {text-decoration:none; color:#521919; }
 A:visited {text-decoration:none; color:#521919; }
 A:active {text-decoration:none; color:#521919; }
@@ -85,17 +88,9 @@ img { border:0px; }
  width:50%; margin:auto; }
 
 .penfont, #penhnamespan { 
-  font-style:italic; 
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
-/* font-family:"Palatino Linotype", "Book Antiqua", "Palatino", serif;
-   This was removed because some people have such a strong association
-   of serif fonts with formal docs that it was anti-fun for them. 
-   ATTENTION: find some kind of a flourish quill pen font for download
-   and use that for any browser that can handle it.
-*/
+  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
  }
-#penhnamespan { font-size:xx-large; font-style:italic; }
-#homepennamespan { font-size:large; }
+#penhnamespan { font-size:xx-large; }
 #penhbuttondiv { padding:0px 0px 0px 20px; }
 #recentacthdiv { float:right; }
 #rememberedhdiv { background:transparent; }
