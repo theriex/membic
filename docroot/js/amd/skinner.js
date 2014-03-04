@@ -125,11 +125,6 @@ app.skinner = (function () {
         if(elem) {
             elem.style.color = app.colors.text;
             elem.style.backgroundColor = app.colors.bodybg; }
-        elem = jt.byId('topsectiondiv');
-        if(elem) {
-            elem.style.backgroundColor = getLightBackground();
-            val = "8px 8px 4px " + getDarkBackground();
-            elem.style.boxShadow = val; }
         elem = jt.byId('shoutdiv');
         if(elem) {
             elem.style.backgroundColor = getLightBackground(); }

@@ -169,7 +169,7 @@ app.profile = (function () {
                     ["div", {id: "penhbuttondiv"},
                      " "]]]]]];
         html = jt.tac2html(html);
-        jt.out('centerhdiv', html);
+        app.layout.headingout(html);
     },
 
 
@@ -790,9 +790,29 @@ app.profile = (function () {
     },
 
 
+    writeFollowTabContent = function (penref) {
+        var html;
+        if(penref.profstate.foltabmode === "following") {
+            html = ["a", {href: "#following",
+                          title: "Click to see who you are following",
+                          onclick: jt.fs("app.profile.tabselect('following')")},
+                    "Following (" + penref.pen.following + ")"]; }
+        else {
+            html = ["a", {href: "#followers",
+                          title: "Click to see who is following you",
+                          onclick: jt.fs("app.profile.tabselect('followers')")},
+                    "Followers (" + penref.pen.followers + ")"]; }
+        jt.out('followli', jt.tac2html(html));
+    },
+
+
     displayTabs = function (penref) {
         var html;
         verifyProfileState(penref);
+        if(!penref.profstate.foltabmode) {
+            penref.profstate.foltabmode = "following";
+            if(app.pen.currPenRef() === penref) {
+                penref.profstate.foltabmode = "followers"; } }
         html = ["ul", {id: "proftabsul"},
                 [["li", {id: "recentli", cla: "selectedTab"},
                   ["a", {href: "#recentreviews",
@@ -809,17 +829,9 @@ app.profile = (function () {
                          title: "Click to see all reviews",
                          onclick: jt.fs("app.profile.tabselect('allrevs')")},
                    "All Reviews"]],
-                 ["li", {id: "followingli", cla: "unselectedTab"},
-                  ["a", {href: "#following",
-                         title: "Click to see who you are following",
-                         onclick: jt.fs("app.profile.tabselect('following')")},
-                   "Following (" + penref.pen.following + ")"]],
-                 ["li", {id: "followersli", cla: "unselectedTab"},
-                  ["a", {href: "#followers",
-                         title: "Click to see who is following you",
-                         onclick: jt.fs("app.profile.tabselect('followers')")},
-                   "Followers (" + penref.pen.followers + ")"]]]];
+                 ["li", {id: "followli", cla: "unselectedTab"}]]];
         jt.out('proftabsdiv', jt.tac2html(html));
+        writeFollowTabContent(penref);
         app.profile.tabselect();
     },
 
@@ -868,7 +880,7 @@ app.profile = (function () {
     styleShout = function (shout) {
         shout.style.color = app.colors.text;
         shout.style.backgroundColor = app.skinner.lightbg();
-        shout.style.width = "160px";  //image plus padding
+        shout.style.width = "140px";  //image plus padding
         shout.style.padding = "5px 8px";
     },
 
@@ -1045,21 +1057,21 @@ app.profile = (function () {
                 [["div", {id: "profparticipatediv"},
                   [["div", {id: "sysnotice"}],
                    ["div", {id: "proftabsdiv"}],
-                   ["div", {id: "profcontdiv"}]]],
-                 ["div", {id: "profpersonaldiv"},
-                  [["div", {id: "profpicdiv"},
-                    ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
-                   ["div", {id: "profcitydiv"},
-                    [["span", {id: "profcityspan"}],
-                     ["span", {id: "profeditbspan"}]]],
-                   ["div", {id: "profshoutdiv"},
-                    ["div", {id: "shoutdiv", cla: "shoutout"}]],
-                   ["div", {id: "profrevimpactdiv"},
-                    revimpactHTML(homepen, dispen)],
-                   ["div", {id: "profinvitediv"},
-                    inviteHTML()]]]]];
+                   ["div", {id: "profcontdiv"}]]]]];
         jt.out('cmain', jt.tac2html(html));
-        app.profile.positionAndSizeMainDivs();
+        html = ["div", {id: "profpersonaldiv"},
+                [["div", {id: "profpicdiv"},
+                  ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
+                 ["div", {id: "profcitydiv"},
+                  [["span", {id: "profcityspan"}],
+                   ["span", {id: "profeditbspan"}]]],
+                 ["div", {id: "profshoutdiv"},
+                  ["div", {id: "shoutdiv", cla: "shoutout"}]],
+                 ["div", {id: "profrevimpactdiv"},
+                  revimpactHTML(homepen, dispen)],
+                 ["div", {id: "profinvitediv"},
+                  inviteHTML()]]];
+        jt.out('rightcoldiv', jt.tac2html(html));
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
@@ -1121,12 +1133,17 @@ return {
             li.className = "unselectedTab";
             li.style.backgroundColor = app.skinner.darkbg(); }
         li = jt.byId(tabname + "li");
+        if(!li && tabname.indexOf("follow") >= 0) {
+            profpenref.profstate.foltabmode = tabname;
+            writeFollowTabContent(profpenref);
+            li = jt.byId("followli"); }
         li.className = "selectedTab";
         li.style.backgroundColor = "transparent";
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: tabname });
         refreshContentDisplay();
+        app.layout.adjust();
     },
 
 
@@ -1549,20 +1566,6 @@ return {
                           "naviconospace", "settingsnav");
         jt.out('settingsbuttondiv', html);
         displayInboundLinkIndicator();
-    },
-
-
-    positionAndSizeMainDivs: function () {
-        var adiv = jt.byId('profparticipatediv'),
-            pdiv = jt.byId('profpersonaldiv'),
-            width, margin, pdivpad = 30;
-        width = jt.byId('contentdiv').offsetWidth;
-        margin = Math.floor((app.winw - width) / 2);
-        width -= pdiv.offsetWidth;
-        width -= pdivpad;
-        adiv.style.width = String(width) + "px";
-        margin += Math.floor(pdivpad / 2);
-        pdiv.style.left = String(width + margin) + "px";
     }
 
 

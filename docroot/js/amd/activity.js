@@ -110,7 +110,8 @@ app.activity = (function () {
                       ["td", {id: "alltd"}, remall],
                       ["td", revTypeSelectorHTML("remtype")]]]]; }
         html = jt.tac2html(html);
-        jt.out('centerhdiv', html);
+        app.layout.headingout(html);
+        jt.out('rightcoldiv', "");
     },
 
 

@@ -1516,6 +1516,7 @@ return {
             return; }
         app.onescapefunc = null; 
         app.layout.updateNavIcons("review");
+        jt.out('rightcoldiv', "");
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }

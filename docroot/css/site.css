@@ -45,8 +45,6 @@ img { border:0px; }
 #mascotdiv { position:absolute; left:10px; top:265px; }
 .mascotimg { vertical-align:middle; width:29px; height:14px; }
 #topsectiondiv { padding:0px 10px;
-  background:url('../img/topbg.png') repeat, #ffffff;
-  box-shadow:8px 8px 4px #cccccc; 
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
 #statictopsectiondiv { height:10px; }
 #logodiv { width:470px; padding:5px; float:left; }
@@ -67,9 +65,11 @@ img { border:0px; }
 .topnavitemdiv { }
 
 /* >> main display area and contained elements */
+#centerhdivtd { }
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }
-#centerhdiv { display:table; margin:10px auto; }
+#centerhdiv { display:table; margin:0px auto; }
 #centerhdivstatic { margin:0px 0px 0px 240px; }
+#rightcoldiv { width:160px; }
 .instructional { font-size:x-large; font-weight:bold; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
@@ -151,10 +151,9 @@ img { border:0px; }
 #closebookslide { clear:both; }
 
 /* >> profile layout */
-#proftopdiv { }
+#proftopdiv { font-size:large; }
 #profparticipatediv { }
-#profpersonaldiv { 
-  position:absolute; left:400px; top:140px; width:150px; padding:10px; }
+#profpersonaldiv { padding:10px; }
 #profshoutdiv { padding:0px 10px; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv { font-size:small; padding: 0px 10px 5px 10px; }
@@ -177,6 +176,8 @@ img { border:0px; }
   font-size:small; }
 .shoutout { width:200px; min-height:100px; }
 .shoutoutstatic { width:600px; padding:10px; }
+#proftabsdiv { }
+#proftabsul { }
 #proftabsdiv ul { list-style:none; padding:0; margin:0; }
 #proftabsdiv ul li { display:inline; 
   border-top-left-radius:5px; border-top-right-radius:5px;
@@ -251,7 +252,8 @@ img { border:0px; }
 #revsavemsg { font-size:x-large; }
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
-.relctrlsdiv { font-size:small; }
+#relctrlsdiv { font-size:small; }
+#followmodelinkdiv { padding:0px 20px; }
 .poststatspan { font-size:small; color:#666; }
 .reqlinkspan { font-size:small; }
 .inlinkspan { background:url('../img/inlinkbg.png') no-repeat center center;

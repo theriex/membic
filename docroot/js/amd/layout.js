@@ -227,10 +227,15 @@ app.layout = (function () {
             topdiv.style.width = target + "px"; }
         contentdiv = jt.byId('contentdiv');
         if(contentdiv) {
+            target = app.winw - jt.byId('rightcoldiv').offsetWidth;
+            if(target > 600) {
+                target -= 60; //padding around screen
+                if(app.winw > 900) {   //add left margin, see below
+                    target -= 100; } } 
             //jt.out('dimspan', "app.winw:" + app.winw);
-            contentdiv.style.width = target + "px"; }
-        if(navmode === "profile") {
-            app.profile.positionAndSizeMainDivs(); }
+            contentdiv.style.width = target + "px";
+            if(app.winw > 900) {
+                jt.byId('contentdiv').style.marginLeft = "100px"; } }
         setSoftFocus();
     };
 
@@ -472,6 +477,16 @@ return {
 
     currnavmode: function () {
         return navmode;
+    },
+
+
+    headingout: function (html) {
+        jt.out('centerhdiv', html);
+        jt.byId('centerhdivtd').style.height = 
+            String(jt.byId('centerhdiv').offsetHeight) + "px";
+        jt.byId('centerhdivtd').style.maxHeight = 
+            String(jt.byId('centerhdiv').offsetHeight) + "px";
+        app.layout.adjust();
     }
 
 

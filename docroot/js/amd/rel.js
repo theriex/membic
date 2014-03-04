@@ -266,14 +266,15 @@ app.rel = (function () {
 
     loadReferencedPens = function (relref, callback) {
         var penid, penref;
-        penid = relref.rel.relatedid;
-        penref = app.lcs.getPenRef(penid);
-        if(penref.pen) {
-            penid = relref.rel.originid;
-            penref = app.lcs.getPenRef(penid); }
-        if(penref.pen) {  //both loaded, return directly
-            return callback(); }
-        app.lcs.getPenFull(penid, callback);
+        if(relref) {  //could get a spurious call if no followers
+            penid = relref.rel.relatedid;
+            penref = app.lcs.getPenRef(penid);
+            if(penref.pen) {
+                penid = relref.rel.originid;
+                penref = app.lcs.getPenRef(penid); }
+            if(penref.pen) {  //both loaded, return directly
+                return callback(); }
+            app.lcs.getPenFull(penid, callback); }
     },
 
 
@@ -346,7 +347,7 @@ app.rel = (function () {
 
 
     relListCtrlsHTML = function (pen, direction, divid, refarray) {
-        var html = "";
+        var html = "", tab;
         if(refarray && refarray.length > 0) {
             html = [["input", {type: "checkbox", name: "cblurkincl",
                                value: "hidenorev", id: "hidenorev",
@@ -356,16 +357,42 @@ app.rel = (function () {
                                onclick: jt.fs("app.rel.toggleNoRevHide('" + 
                                               direction + "','" + divid + 
                                               "')")}],
-                     ["label", {fo: "hidenorev"}, "Hide if no reviews"]];
-            html = jt.tac2html(html); }
+                     ["label", {fo: "hidenorev"}, "Hide if no reviews"]]; }
+        tab = "following";
+        if(direction === "outbound") {
+            tab = "followers"; }
+        html = 
+            ["table", {id: "relctrlstable"},
+             ["tr",
+              [["td",
+                html],
+               ["td",
+                ["div", {id: "followmodelinkdiv"},
+                 ["a", {href:"#followshowtoggle",
+                        onclick: jt.fs("app.profile.tabselect('" + tab + "')")},
+                  "Show " + tab.capitalize()]]]]]];
+        html = jt.tac2html(html);
         return html;
+    },
+
+
+    positionFollowControls = function () {
+        var ctrls, fli, ctbl, x;
+        ctrls = jt.byId('relctrlstable');
+        if(ctrls) {
+            fli = jt.byId('followli');
+            if(fli) {
+                ctbl = jt.byId('relctrlstable');
+                x = Math.floor(fli.offsetLeft + (fli.offsetWidth / 2));
+                x -= ctbl.offsetWidth;
+                jt.byId('relctrlsdiv').style.marginLeft = String(x) + "px"; } }
     },
 
 
     noFollowersHTML = function (pen) {
         var html = [];
         if(pen.top20s && pen.top20s.latestrevtype) {
-            html.push(["p", "No followers yet, but if you continue to post a review every week people will definitely see you."]); }
+            html.push(["p", "No followers yet, but if you post a review every once in a while you will get noticed."]); }
         else {
             html.push(["p", "No followers yet. Consider writing a review."]);
             html.push(["p", "Guaranteed you've experienced <em>something</em>" +
@@ -750,7 +777,7 @@ return {
                     relitems.push(["li", noFollowersHTML(pen)]); } } }
         else {  //dump an interim status while retrieving rels
             relitems.push(["li", "Fetching relationships..."]); }
-        html = [["div", {cla: "relctrlsdiv"},
+        html = [["div", {id: "relctrlsdiv"},
                  relListCtrlsHTML(pen, direction, divid, refarray)],
                 ["ul", {cla: "penlist"}, 
                  relitems]];
@@ -761,6 +788,7 @@ return {
         else if(litemp === placeholder) {
             loadReferencedPens(refarray[i], function () {
                 app.rel.displayRelations(pen, direction, divid); }); }
+        positionFollowControls();
     },
 
 
