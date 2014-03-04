@@ -807,6 +807,24 @@ app.profile = (function () {
     },
 
 
+    niceTabStyling = function () {
+        var css = "background:#CCCCCC;";
+        if(jt.isLowFuncBrowser()) {
+            return css; }
+        css = "background:" + app.skinner.darkbg() + "px;" +
+            " background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgba(255, 255, 255, .15)), to(rgba(0, 0, 0, .25))), -webkit-gradient(linear, left top, right bottom, color-stop(0, rgba(255, 255, 255, 0)), color-stop(0.5, rgba(255, 255, 255, .1)), color-stop(0.501, rgba(255, 255, 255, 0)), color-stop(1, rgba(255, 255, 255, 0)));" +
+            " background: -moz-linear-gradient(top, rgba(255, 255, 255, .15), rgba(0, 0, 0, .25)), -moz-linear-gradient(left top, rgba(255, 255, 255, 0), rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0));" +
+            " background: linear-gradient(top, rgba(255, 255, 255, .15), rgba(0, 0, 0, .25)), linear-gradient(left top, rgba(255, 255, 255, 0), rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0));";
+        return css;
+    },
+
+
+    noTabStyling = function () {
+        var css = "background: 0;";
+        return css;
+    },
+
+
     displayTabs = function (penref) {
         var html;
         verifyProfileState(penref);
@@ -1135,13 +1153,14 @@ return {
         for(i = 0; i < ul.childNodes.length; i += 1) {
             li = ul.childNodes[i];
             li.className = "unselectedTab";
-            li.style.backgroundColor = app.skinner.darkbg(); }
+            li.style.cssText = niceTabStyling(); }
         li = jt.byId(tabname + "li");
         if(!li && tabname.indexOf("follow") >= 0) {
             profpenref.profstate.foltabmode = tabname;
             writeFollowTabContent(profpenref);
             li = jt.byId("followli"); }
         li.className = "selectedTab";
+        li.style.cssText = noTabStyling();
         li.style.backgroundColor = "transparent";
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
