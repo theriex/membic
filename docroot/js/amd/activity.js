@@ -91,11 +91,11 @@ app.activity = (function () {
                        ["img", {cla: "rssico", src: "img/rssicon.png"}]];
             html = ["table",
                     ["tr",
-                     [["td", recent],
-                      ["td", rsslink],
+                     [["td", {id: "toptd"}, top],
+                      ["td", revTypeSelectorHTML("toptype")],
                       ["td", "|"],
-                      ["td", {id: "toptd"}, top],
-                      ["td", revTypeSelectorHTML("toptype")]]]]; }
+                      ["td", recent],
+                      ["td", rsslink]]]]; }
         else if(dispmode === "memo") {
             if(!remActivityType) {
                 remall = ["span", {cla: "actmodesel"},
