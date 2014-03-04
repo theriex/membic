@@ -814,23 +814,26 @@ app.profile = (function () {
             penref.profstate.foltabmode = "following";
             if(app.pen.currPenRef() === penref) {
                 penref.profstate.foltabmode = "followers"; } }
-        html = ["ul", {id: "proftabsul"},
-                [["li", {id: "recentli", cla: "selectedTab"},
-                  ["a", {href: "#recentreviews",
-                         title: "Click to see recent reviews",
-                         onclick: jt.fs("app.profile.tabselect('recent')")},
-                   "Recent"]],
-                 ["li", {id: "bestli", cla: "unselectedTab"},
-                  ["a", {href: "#bestreviews",
-                         title: "Click to see top rated",
-                         onclick: jt.fs("app.profile.tabselect('best')")},
-                   "Top Rated"]],
-                 ["li", {id: "allrevsli", cla: "unselectedTab"},
-                  ["a", {href: "#allreviews",
-                         title: "Click to see all reviews",
-                         onclick: jt.fs("app.profile.tabselect('allrevs')")},
-                   "All Reviews"]],
-                 ["li", {id: "followli", cla: "unselectedTab"}]]];
+        html = ["table",  //hiding in a table to avoid phone text autozoom
+                ["tr",
+                 ["td",
+                  ["ul", {id: "proftabsul"},
+                   [["li", {id: "recentli", cla: "selectedTab"},
+                     ["a", {href: "#recentreviews",
+                            title: "Click to see recent reviews",
+                            onclick: jt.fs("app.profile.tabselect('recent')")},
+                      "Recent"]],
+                    ["li", {id: "bestli", cla: "unselectedTab"},
+                     ["a", {href: "#bestreviews",
+                            title: "Click to see top rated",
+                            onclick: jt.fs("app.profile.tabselect('best')")},
+                      "Top Rated"]],
+                    ["li", {id: "allrevsli", cla: "unselectedTab"},
+                     ["a", {href: "#allreviews",
+                            title: "Click to see all reviews",
+                            onclick: jt.fs("app.profile.tabselect('allrevs')")},
+                      "All Reviews"]],
+                    ["li", {id: "followli", cla: "unselectedTab"}]]]]]];
         jt.out('proftabsdiv', jt.tac2html(html));
         writeFollowTabContent(penref);
         app.profile.tabselect();
