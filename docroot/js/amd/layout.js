@@ -142,9 +142,8 @@ app.layout = (function () {
                     if(!previmg) {  //probably logged in in the interim
                         return; }
                     setTimeout(function () {
-                        //blank out so if there is a lag on image load when
-                        //faded back for display, old content won't flash.
-                        //wait until fade completes though.
+                        jt.log("displaying blank to avoid flashing previous");
+                        //timeout value must be > css transition time
                         previmg.src = "img/slides/blank.png"; }, 1200);
                     previmg.style.opacity = 0; }  //fade out
                 slideslot = (slideslot + 1) % 2;
@@ -157,9 +156,9 @@ app.layout = (function () {
                 img.src = "img/slides/" + slides[slideindex];
                 img.style.opacity = 1; }
             if(!slides[slideindex] || slides[slideindex] === "blank.png") {
-                setTimeout(slideshow, 2200); }
+                setTimeout(slideshow, 2000); }
             else {
-                setTimeout(slideshow, 6400); } }
+                setTimeout(slideshow, 2600); } }
         else {  //slideshow is over
             if(jt.byId('slidesdiv')) {
                 jt.out('slidesdiv', ""); } }
