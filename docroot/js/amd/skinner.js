@@ -119,8 +119,8 @@ app.skinner = (function () {
 
 
     updateColors = function () {
-        var rules, i, elem, val, tabs = [ "recentli", "bestli", "followingli", 
-                                          "followersli", "searchli" ];
+        var rules, i, elem, tabs = [ "recentli", "bestli", "followingli", 
+                                     "followersli", "searchli" ];
         elem = jt.byId('bodyid');
         if(elem) {
             elem.style.color = app.colors.text;
