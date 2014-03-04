@@ -436,7 +436,8 @@ app.profile = (function () {
             "After you have a pen name, click the follow link on my " + 
             "profile so I can find you and follow back. " + 
             "\n\n" +
-            "cheers,\n";
+            "cheers,\n" +
+            mepen.name;
         href = "mailto:?subject=" + jt.dquotenc(subj) + 
             "&body=" + jt.dquotenc(body) + "%0A";
         html = app.services.serviceLinkHTML(href, "", "shareico", 
@@ -1030,7 +1031,7 @@ app.profile = (function () {
             html = ["a", {id: "commbuild", href: "#invite",
                           onclick: jt.fs("app.profile.invite()")},
                     [["img", {cla: "reviewbadge", src: "img/follow.png"}],
-                     "Invite a friend"]]; }
+                     "Send Invite"]]; }
         return html;
     },
 
