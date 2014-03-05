@@ -110,8 +110,8 @@ img { border:0px; }
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }
-.navico, .navicodis, .naviconopad, .naviconospace { margin:0px 0px 0px 14px; 
-  padding:4px; vertical-align:bottom; }
+.navico, .navicodis, .naviconopad, .naviconospace { 
+  margin:0px 0px 0px 14px; padding:4px; vertical-align:bottom; }
 .navicodis { opacity:0.3; filter:alpha(opacity=30); }
 .naviconopad { padding:0px; }
 .naviconospace { margin:0px; padding:0px; }

@@ -502,9 +502,8 @@ return {
             html = jt.tac2html(html);
             jt.out('topworkdiv', html);
             if(!jt.byId('logoimg')) {
-                html = ["img", {src: "img/wdydfun.png", id: "logoimg"}];
-                html = jt.tac2html(html);
-                jt.out('logodiv', html); }
+                jt.out('logodiv', jt.tac2html(
+                    ["img", {src: "img/wdydfun.png", id: "logoimg"}])); }
             jt.byId('logoimg').style.width = "260px";
             jt.byId('logoimg').style.height = "120px";
             jt.byId('logodiv').style.width = "260px";

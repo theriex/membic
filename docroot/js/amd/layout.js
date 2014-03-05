@@ -174,8 +174,8 @@ app.layout = (function () {
         var width, leftx, logow = 515, slidew = 522;
         width = document.documentElement.clientWidth;
         if(width > logow + slidew) {  //enough room for logo and slides
-            jt.out('logodiv', "<img src=\"img/wdydfun.png\"" +
-                    " id=\"logoimg\" border=\"0\"/>");
+            jt.out('logodiv', jt.tac2html(
+                ["img", {src: "img/wdydfun.png", id: "logoimg"}]));
             leftx = logow + Math.round(((width - (logow + slidew)) / 2));
             jt.byId('introslide0').style.left = String(leftx) + "px";
             jt.byId('introslide1').style.left = String(leftx) + "px"; }
