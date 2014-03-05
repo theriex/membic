@@ -1308,12 +1308,13 @@ return {
 
 
     reviewLinkHTML: function (mode) {
-        var html, imgsrc = "writereview.png";
+        var html, imgsrc = "writereview.png", style = "";
         if(!mode) {
             mode = app.layout.currnavmode(); }
         if(mode === "review") {
+            style = "color:#ffd100";
             imgsrc = "writereviewsel.png"; }
-        html = ["div", {cla: "topnavitemdiv"},
+        html = ["div", {cla: "topnavitemdiv", style: style },
                 jt.imgntxt(imgsrc, "Review and Share",
                            "app.review.cancelReview(true)", "#Write", 
                            "Write a review and share it with your friends")];

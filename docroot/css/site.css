@@ -65,7 +65,8 @@ img { border:0px; }
 #topactionsdiv { font-size:x-large; }
 #topactionstable { margin:0px; padding:0px; }
 #topactionstable td { padding:0px; }
-.topnavitemdiv { }
+.topnavitemdiv { 
+  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
 
 /* >> main display area and contained elements */
 #centerhdivtd { }
@@ -264,6 +265,7 @@ img { border:0px; }
 #csrchindiv { padding:0px 0px 10px 0px; }
 #csrchcontentdiv { padding:20px 0px 0px 0px; }
 #csrchbuttonsdiv { padding:20px; text-align:center; }
+
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
