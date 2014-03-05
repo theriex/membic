@@ -996,8 +996,8 @@ app.profile = (function () {
                      ["input", {type: "submit", value: "Upload"}]]]]]]];
         jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
-        odiv.style.left = "70px";
-        odiv.style.top = "80px";
+        odiv.style.left = jt.byId('contentdiv').offsetWidth + "px";
+        odiv.style.top = "130px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
         app.onescapefunc = app.cancelOverlay;
@@ -1006,12 +1006,22 @@ app.profile = (function () {
 
 
     displayPic = function (pen) {
-        var html = "img/emptyprofpic.png";
-        if(pen.profpic) {
-            html = "profpic?profileid=" + jt.instId(pen); }
-        html = ["img", {cla: "profpic", src: html}];
+        var modauth, imgsrc, html, picdiv;
+        modauth = profileModAuthorized(pen);
+        imgsrc = "img/emptyprofpic.png";
+        if(modauth && !pen.profpic) {
+            picdiv = jt.byId('profpicdiv');
+            picdiv.style.background = "url('" + imgsrc + "') no-repeat";
+            picdiv.style.backgroundSize = "125px 125px";
+            html = ["div", {id: "picplaceholderdiv"},
+                    "Click to upload a pic of you, your avatar," +
+                    " your goldfish..."]; }
+        else { //have pic, or not authorized to upload
+            if(pen.profpic) {
+                imgsrc = "profpic?profileid=" + jt.instId(pen); }
+            html = ["img", {cla: "profpic", src: imgsrc}]; }
         jt.out('profpicdiv', jt.tac2html(html));
-        if(profileModAuthorized(pen)) {
+        if(modauth) {
             jt.on('profpicdiv', 'click', function (e) {
                 jt.evtend(e);
                 if(jt.byId('profcancelb')) {  //save other field edits so
@@ -1389,7 +1399,7 @@ return {
             val = jt.byId('profcitya').innerHTML; }
         if(val === unspecifiedCityText) {
             val = ""; }
-        html = ["input", {type: "text", id: "profcityin", size: 25,
+        html = ["input", {type: "text", id: "profcityin", size: 16,
                           placeholder: "City, township, or region", value: val,
                           onchange: jt.fs("app.profile.saveIfNotShoutEdit()")}];
         jt.out('profcityspan', jt.tac2html(html));

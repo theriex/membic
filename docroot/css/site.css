@@ -155,6 +155,8 @@ img { border:0px; }
 #srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
 #profpicdiv { width:130px; text-align:right; }
+#picplaceholderdiv { color:#999999; font-size:small;
+  height:125px; width:110px; padding:10px; text-align:left; }
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
 .reviewbadge, .reviewbadgedis { 
