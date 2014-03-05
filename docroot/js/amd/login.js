@@ -330,9 +330,16 @@ app.login = (function () {
         if(authname) {
             jt.byId('userin').value = authname; }
         app.layout.adjust();
-        jt.byId('userin').focus();  //doesn't always work
-        setTimeout(function () {
-            jt.byId('userin').focus(); }, 200);
+        jt.retry(function () {  //setting the focus is not reliable
+            var actel = document.activeElement;
+            if(!actel || actel.id !== 'userin') {
+                actel = jt.byId('userin');
+                if(actel) {
+                    actel.focus();
+                    jt.log("Set userin focus..."); } }
+            else {
+                jt.log("userin focus set already."); }
+        }, [200, 400, 600]);
     },
 
 

@@ -297,4 +297,13 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    jt.retry = function (rfunc, times) {
+        var i;
+        rfunc();
+        if(times) {
+            for(i = 0; i < times.length; i += 1) {
+                setTimeout(rfunc, times[i]); } }
+    };
+
+
 } () );
