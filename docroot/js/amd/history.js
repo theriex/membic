@@ -80,15 +80,19 @@ return {
             switch(state.view) {
             case "profile":
                 if(jt.isId(state.profid)) {
+                    app.layout.updateNavIcons("profile");
                     app.profile.byprofid(state.profid, state.tab); }
                 break; 
             case "activity":
+                app.layout.updateNavIcons("activity");
                 app.activity.displayActive();
                 break;
             case "memo":
+                app.layout.updateNavIcons("memo");
                 app.activity.displayRemembered();
                 break;
             case "review":
+                app.layout.updateNavIcons("review");
                 //the review was cached when previously viewed..
                 app.review.setCurrentReview(
                     app.lcs.getRevRef(state.revid).rev);

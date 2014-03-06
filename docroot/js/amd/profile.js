@@ -1268,6 +1268,7 @@ return {
             return; }
         app.history.checkpoint({ view: "review", mode: "display",
                                  revid: revid });
+        app.layout.updateNavIcons("review");
         app.review.setCurrentReview(revobj);
         app.review.displayRead();
     },

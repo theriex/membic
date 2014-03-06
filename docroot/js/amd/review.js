@@ -1222,6 +1222,7 @@ app.review = (function () {
             else {
                 app.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);
+        jt.out('rightcoldiv', "");
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must
         //already have values for penid, svcdata, revtype, the defined
@@ -1532,7 +1533,6 @@ return {
             return; }
         app.onescapefunc = null; 
         app.layout.updateNavIcons("review");
-        jt.out('rightcoldiv', "");
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }
