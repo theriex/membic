@@ -40,21 +40,34 @@ app.activity = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    revTypeSelectorImgSrc = function (typename, selected) {
+        var type, mode;
+        type = app.review.getReviewTypeByValue(typename);
+        mode = app.layout.currnavmode();
+        if(selected ||
+           (mode === "activity" && activityMode === "amtop" && topModeEnabled &&
+            topActivityType === typename) ||
+           (mode === "memo" && remActivityType === typename)) {
+            return "img/merit/Merit" + typename.capitalize() + "20.png"; }
+        return "img/" + type.img;
+    },
+
+
     revTypeSelectorHTML = function (funcname) {
-        var reviewTypes, divc = [], i, typename, title, dispclass, csel, html;
+        var reviewTypes, divc = [], i, typename, title, imgsrc, html;
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             title = typename.capitalize() + " reviews";
-            dispclass = "reviewbadge";
-            csel = topActivityType;
-            if(funcname === "remtype") {
-                csel = remActivityType; }
-            if(typename === csel) {
-                dispclass = "reviewbadgedis"; }
-            divc.push(["img", {cla: dispclass,
-                               src: "img/" + reviewTypes[i].img,
-                               title: title, alt: title,
+            if(funcname === "toptype") {
+                title = "Top " + title; }
+            imgsrc = revTypeSelectorImgSrc(typename);
+            divc.push(["img", {cla: "reviewbadge", id: "rtsimg" + typename,
+                               src: imgsrc, title: title, alt: title,
+                               onmouseover: jt.fs("app.activity.mrollrts('" +
+                                                  typename + "','over')"),
+                               onmouseout: jt.fs("app.activity.mrollrts('" +
+                                                 typename + "','out')"),
                                onclick: jt.fs("app.activity." + funcname +
                                               "('" + typename + "')")}]); }
         html = ["div", {id: "revtypeseldiv"}, divc];
@@ -970,6 +983,16 @@ return {
                 jt.byId('navremimg').src = "img/rememberedsel.png"; }
             else {
                 jt.byId('navremimg').src = "img/remembered.png"; } }
+    },
+
+
+    mrollrts: function (typename, mouse) {
+        var src;
+        if(mouse === "over") {
+            src = revTypeSelectorImgSrc(typename, true); }
+        else {
+            src = revTypeSelectorImgSrc(typename); }
+        jt.byId("rtsimg" + typename).src = src;
     },
 
 
