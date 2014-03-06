@@ -912,7 +912,8 @@ app.profile = (function () {
     styleShout = function (shout) {
         shout.style.color = app.colors.text;
         shout.style.backgroundColor = app.skinner.lightbg();
-        shout.style.width = "140px";  //image plus padding
+        //rightcoldiv - profpersonaldiv - profshoutdiv - 2*shoutdiv|shoutout
+        shout.style.width = "134px";
         shout.style.padding = "5px 8px";
     },
 

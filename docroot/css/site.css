@@ -149,8 +149,8 @@ img { border:0px; }
 /* >> profile layout */
 #proftopdiv { font-size:large; }
 #profparticipatediv { }
-#profpersonaldiv { padding:10px; }
-#profshoutdiv { padding:0px 10px; }
+#profpersonaldiv { padding:0px 0px 0px 10px; }
+#profshoutdiv { padding:0px; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv { font-size:small; padding: 0px 10px 5px 10px; }
 #srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
@@ -174,7 +174,7 @@ img { border:0px; }
 .shoutout, .shoutoutstatic { text-align:left;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
-.shoutout { width:200px; min-height:100px; }
+.shoutout { width:160px; min-height:100px; }
 .shoutoutstatic { width:600px; padding:10px; }
 #proftabsdiv { }
 #proftabsul { }
