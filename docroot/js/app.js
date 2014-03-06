@@ -186,13 +186,13 @@ var app = {},  //Global container for application level funcs and values
     ////////////////////////////////////////
 
     jt.imgntxt = function (imgfile, text, funcstr, href, 
-                            title, cssclass, idbase) {
+                           title, cssclass, idbase, mcbfnstr) {
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
-        if(!cssclass) {
-            cssclass = "navico"; }
         if(imgfile && imgfile.indexOf("/") < 0) {
             imgfile = "img/" + imgfile; }
         title = title || "";
+        cssclass = cssclass || "navico"; 
+        mcbfnstr = mcbfnstr || "";
         if(idbase) {
             tblid = idbase + "table";
             imgtdid = idbase + "imgtd";
@@ -202,8 +202,12 @@ var app = {},  //Global container for application level funcs and values
                           onclick: jt.fs(funcstr)},
                 ["tr",
                  [["td", {id: imgtdid},
-                   ["img", {id: imgid, cla: cssclass, src: imgfile}]],
-                  ["td", {id: txttdid, cla: "buttontabletexttd"},
+                   ["img", {id: imgid, cla: cssclass, src: imgfile,
+                            onmouseover: jt.fs(mcbfnstr + "('over')"),
+                            onmouseout: jt.fs(mcbfnstr + "('out')")}]],
+                  ["td", {id: txttdid, cla: "buttontabletexttd",
+                          onmouseover: jt.fs(mcbfnstr + "('over')"),
+                          onmouseout: jt.fs(mcbfnstr + "('out')")},
                    text]]]];
         html = jt.tac2html(html);
         return html;

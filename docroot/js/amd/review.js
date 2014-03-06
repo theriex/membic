@@ -1312,13 +1312,28 @@ return {
         if(!mode) {
             mode = app.layout.currnavmode(); }
         if(mode === "review") {
-            style = "color:#ffd100";
+            style = "color:#FFD100";
             imgsrc = "writereviewsel.png"; }
         html = ["div", {cla: "topnavitemdiv", style: style },
                 jt.imgntxt(imgsrc, "Review and Share",
-                           "app.review.cancelReview(true)", "#Write", 
-                           "Write a review and share it with your friends")];
+                           "app.review.cancelReview(true)", "#Write",
+                           "Write a review and share it with your friends",
+                           "navico", "navrev", "app.review.mroll")];
         return jt.tac2html(html);
+    },
+
+
+    mroll: function (mouse) {
+        if(mouse === "over") {
+            jt.byId('navrevimg').src = "img/writereviewsel.png";
+            jt.byId('navrevtxttd').style.color = "#FFD100"; }
+        else { //"out"
+            if(app.layout.currnavmode() === "review" || jt.byId('revfdiv')) {
+                jt.byId('navrevimg').src = "img/writereviewsel.png";
+                jt.byId('navrevtxttd').style.color = "#FFD100"; }
+            else {
+                jt.byId('navrevimg').src = "img/writereview.png";
+                jt.byId('navrevtxttd').style.color = app.colors.text; } }
     },
 
 

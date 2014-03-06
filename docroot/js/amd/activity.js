@@ -927,9 +927,21 @@ return {
                 jt.imgntxt(imgsrc, "",
                            "app.activity.displayActive()",
                            "#Activity",
-                           "Show reviews from friends")];
+                           "Show reviews from friends",
+                           "navico", "navact", "app.activity.mrolla")];
         html = jt.tac2html(html);
         return html;
+    },
+
+
+    mrolla: function (mouse) {
+        if(mouse === "over") {
+            jt.byId('navactimg').src = "img/friendactsel.png"; }
+        else {  //"out"
+            if(app.layout.currnavmode() === "activity") {
+                jt.byId('navactimg').src = "img/friendactsel.png"; }
+            else {
+                jt.byId('navactimg').src = "img/friendact.png"; } }
     },
 
 
@@ -943,9 +955,21 @@ return {
                 jt.imgntxt(imgsrc, "",
                            "app.activity.displayRemembered()",
                            "#Remembered",
-                           "Show reviews you have remembered")];
+                           "Show reviews you have remembered",
+                           "navico", "navrem", "app.activity.mrollr")];
         html = jt.tac2html(html);
         return html;
+    },
+
+
+    mrollr: function (mouse) {
+        if(mouse === "over") {
+            jt.byId('navremimg').src = "img/rememberedsel.png"; }
+        else { //"out"
+            if(app.layout.currnavmode() === "memo") {
+                jt.byId('navremimg').src = "img/rememberedsel.png"; }
+            else {
+                jt.byId('navremimg').src = "img/remembered.png"; } }
     },
 
 

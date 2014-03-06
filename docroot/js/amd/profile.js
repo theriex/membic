@@ -370,7 +370,7 @@ app.profile = (function () {
                         onclick: jt.fs("app.profile.cancelPenNameSettings()")},
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 ["div", {cla: "floatclear"}],
-                ["table",
+                ["table", {id: "pensettingstable"},
                  [["tr",
                    ["td", {colspan: 2, align: "left", id: "pensettitletd"},
                     penSelectHTML(pen)]],
@@ -1590,15 +1590,39 @@ return {
                            "app.profile.display()",
                            "#view=profile&profid=" + jt.instId(pen),
                            "Show profile for " + pen.name + " (you)",
-                           "naviconospace")];
+                           "naviconospace", "navprof", 
+                           "app.profile.mrollp")];
         jt.out('homepenhdiv', jt.tac2html(html));
         html = jt.imgntxt("settings.png", "", 
                           "app.profile.settings()",
                           "#Settings",
                           "Adjust your profile settings",
-                          "naviconospace", "settingsnav");
+                          "naviconospace", "settingsnav",
+                          "app.profile.mrollset");
         jt.out('settingsbuttondiv', html);
         displayInboundLinkIndicator();
+    },
+
+
+    mrollp: function (mouse) {
+        if(mouse === "over") {
+            jt.byId('navprofimg').src = "img/profilesel.png"; }
+        else { //"out"
+            if(app.layout.currnavmode() === "profile") {
+                jt.byId('navprofimg').src = "img/profilesel.png"; }
+            else {
+                jt.byId('navprofimg').src = "img/profile.png"; } }
+    },
+
+
+    mrollset: function (mouse) {
+        if(mouse === "over") {
+            jt.byId('settingsnavimg').src = "img/settingsel.png"; }
+        else { //"out"
+            if(jt.byId('pensettingstable')) {
+                jt.byId('settingsnavimg').src = "img/settingsel.png"; }
+            else {
+                jt.byId('settingsnavimg').src = "img/settings.png"; } }
     }
 
 
