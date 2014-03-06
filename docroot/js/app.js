@@ -203,11 +203,15 @@ var app = {},  //Global container for application level funcs and values
                 ["tr",
                  [["td", {id: imgtdid},
                    ["img", {id: imgid, cla: cssclass, src: imgfile,
-                            onmouseover: jt.fs(mcbfnstr + "('over')"),
-                            onmouseout: jt.fs(mcbfnstr + "('out')")}]],
+                            onmouseover: jt.fs(mcbfnstr + "('over','" + 
+                                               imgid + "')"),
+                            onmouseout: jt.fs(mcbfnstr + "('out','" + 
+                                              imgid + "')")}]],
                   ["td", {id: txttdid, cla: "buttontabletexttd",
-                          onmouseover: jt.fs(mcbfnstr + "('over')"),
-                          onmouseout: jt.fs(mcbfnstr + "('out')")},
+                          onmouseover: jt.fs(mcbfnstr + "('over','" + 
+                                             imgid + "')"),
+                          onmouseout: jt.fs(mcbfnstr + "('out','" + 
+                                            imgid + "')")},
                    text]]]];
         html = jt.tac2html(html);
         return html;

@@ -287,15 +287,17 @@ app.review = (function () {
 
 
     displayTypeSelect = function () {
-        var i, captype, ts = [], urlh, html;
+        var i, typename, captype, ts = [], urlh, html;
         for(i = 0; i < reviewTypes.length; i += 1) {
-            captype = reviewTypes[i].type.capitalize();
+            typename = reviewTypes[i].type;
+            captype = typename.capitalize();
             ts.push(
                 ["div", {cla: "revtypeselectiondiv"},
                  jt.imgntxt(reviewTypes[i].img, captype,
-                            "app.review.setType('" + reviewTypes[i].type + "')",
+                            "app.review.setType('" + typename + "')",
                             "#" + captype,
-                            "Create a " + reviewTypes[i].type + " review")]); }
+                            "Create a " + typename + " review",
+                            "navico", typename, "app.review.mrollwr")]); }
         if(autourl) {
             urlh = ["a", {href: autourl}, autourl]; }
         else {  //no url being read automatically, allow manual entry
@@ -1823,6 +1825,19 @@ return {
                 tdc = 0;
                 cells = []; } }
         return ["table", rows];
+    },
+
+
+    mrollwr: function (mouse, imgid) {
+        var type, typename = imgid.slice(0, imgid.indexOf("img"));
+        if(mouse === "over") {
+            jt.byId(imgid).src = 
+                "img/merit/Merit" + typename.capitalize() + "20.png";
+            jt.byId(typename + "txttd").style.color = "#FFD100"; }
+        else {
+            type = findReviewType(typename);
+            jt.byId(imgid).src = "img/" + type.img; 
+            jt.byId(typename + "txttd").style.color = app.colors.link; }
     }
 
 
