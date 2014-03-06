@@ -554,8 +554,17 @@ app.profile = (function () {
     },
 
 
+    revTypeSelectorImgSrc = function (typename, selected) {
+        var type;
+        if(selected || typename === profpenref.profstate.revtype) {
+            return "img/merit/Merit" + typename.capitalize() + "20.png"; }
+        type = app.review.getReviewTypeByValue(typename);
+        return "img/" + type.img;
+    },
+
+
     revTypeSelectorHTML = function (clickfuncstr) {
-        var html, i, reviewTypes, typename, label, dispclass, pen, prefixstr;
+        var html, i, reviewTypes, typename, label, imgsrc, pen, prefixstr;
         prefixstr = "Top 20 ";
         if(clickfuncstr && clickfuncstr.indexOf("Top") < 0) {
             prefixstr = "20+ "; }
@@ -565,9 +574,7 @@ app.profile = (function () {
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
-            dispclass = "reviewbadge";
-            if(typename === profpenref.profstate.revtype) {
-                dispclass = "reviewbadgedis"; }
+            imgsrc = revTypeSelectorImgSrc(typename);
             label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
@@ -576,9 +583,12 @@ app.profile = (function () {
                 else if(pen.top20s[typename].length >= 1) {
                     label = String(pen.top20s[typename].length) + " " + 
                         reviewTypes[i].type.capitalize() + " reviews."; } }
-            html.push(["img", {cla: dispclass, 
-                               src: "img/" + reviewTypes[i].img,
-                               title: label, alt: label,
+            html.push(["img", {cla: "reviewbadge", id: "rtsimg" + typename,
+                               src: imgsrc, title: label, alt: label,
+                               onmouseover: jt.fs("app.profile.mrollrts('" +
+                                                  typename + "','over')"),
+                               onmouseout: jt.fs("app.profile.mrollrts('" +
+                                                 typename + "','out')"),
                                onclick: jt.fs(clickfuncstr + "('" + 
                                               typename + "')")}]); }
         return jt.tac2html(html);
@@ -1624,6 +1634,16 @@ return {
                 jt.byId('settingsnavimg').src = "img/settingsel.png"; }
             else {
                 jt.byId('settingsnavimg').src = "img/settings.png"; } }
+    },
+
+
+    mrollrts: function (typename, mouse) {
+        var src;
+        if(mouse === "over") {
+            src = revTypeSelectorImgSrc(typename, true); }
+        else {
+            src = revTypeSelectorImgSrc(typename); }
+        jt.byId("rtsimg" + typename).src = src;
     }
 
 
