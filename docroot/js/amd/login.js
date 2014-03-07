@@ -274,9 +274,25 @@ app.login = (function () {
     },
 
 
-    displayLoginForm = function (params) {
-        var name, html;
+    setFocusOnUsernameInput = function () {
+        jt.retry(function () {  //setting the focus is not reliable
+            var actel = document.activeElement;
+            if(!actel || actel.id !== 'userin') {
+                actel = jt.byId('userin');
+                if(actel) {
+                    actel.focus();
+                    jt.log("Set userin focus..."); } }
+            else {
+                jt.log("userin focus set already."); }
+        }, [200, 400, 600]);
+    },
+
+
+
+    verifyCoreLoginForm = function () {
+        var html;
         jt.out('centerhdiv', "");
+        jt.out('rightcoldiv', "");
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out('contentdiv', html); }
@@ -285,7 +301,11 @@ app.login = (function () {
         //to an https url originally to avoid firebug security warnings.
         jt.byId('loginform').action = "/redirlogin";
         jt.byId('loginform').style.display = "block";
-        html = [];
+    },
+
+
+    addParamValuesToLoginForm = function (params) {
+        var name, html = [];
         //add url parameters to pass through on form submit
         for(name in params) {
             if(params.hasOwnProperty(name)) {
@@ -297,16 +317,56 @@ app.login = (function () {
                                  value: window.location.protocol + "//" + 
                                         window.location.host}]); }
         jt.out('loginparaminputs', jt.tac2html(html));
+    },
+
+
+    minw = function (elem) {
+        if(typeof elem === "string") {
+            elem = jt.byId(elem); }
+        elem.style.width = String(Math.max(elem.offsetWidth, 300)) + "px";
+    },
+
+
+    expandLoginFormLayoutIfSpace = function () {
+        var lh, rh, html;
+        if(app.winw > (320 + 320 + 10)) {  //smallest side by side display
+            lh = jt.byId('userpassdiv').innerHTML;
+            rh = jt.byId('altauthlogindiv').innerHTML;
+            html = ["table", {id: "sidebysideloginvistable",
+                              style: "width:" + (app.winw - 20) + "px;"},
+                    ["tr",
+                     [["td", {valign: "top", align: "right"},
+                       ["div", {id: "userpassdiv"}, lh]],
+                      ["td", {valign: "top", align: "left"},
+                       ["div", {id: "altauthlogindiv"}, rh]]]]];
+            jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
+        else {  //not side by side, make sure nothing is too shrunken
+            minw('nativelogintitlediv');
+            minw('makenewaccountdiv');
+            minw('forgotpassdiv');
+            minw('altauthinstrdiv');
+            minw('altauthmethods');
+            minw('introverview'); }
+    },
+
+
+    //The login form must already exist in index.html for saved passwords
+    //to work on some browsers.  But it needs to be tweaked and decorated
+    displayLoginForm = function (params) {
+        var html;
+        verifyCoreLoginForm();
+        addParamValuesToLoginForm(params);
         //decorate contents and connect additional actions
         if(params.loginerr) {
             jt.out('loginstatdiv', fixServerText(params.loginerr)); }
         if(params.special === "nativeonly") {
-            jt.out('sittd', "Native wdydfun login:");
-            jt.out('osacctd', "");
+            jt.out('nativelogintitlediv', "Native wdydfun login:");
+            jt.out('altauthinstrdiv', "");
             jt.out('altauthmethods', ""); }
         else {  //regular login
-            jt.out('sittd', "Sign in directly...");
-            jt.out('osacctd', "&nbsp;&nbsp;...or with your social account");
+            jt.out('nativelogintitlediv', "Sign in directly...");
+            jt.out('altauthinstrdiv', 
+                   "&nbsp;&nbsp;...or with your social account");
             jt.out('altauthmethods', displayAltAuthMethods()); }
         if(!jt.isLowFuncBrowser()) {  //upgrade the sign in button look
             html = ["div", {id: "signinbuttondiv",
@@ -318,28 +378,20 @@ app.login = (function () {
                       title: "Create new native login",
                       onclick: jt.fs("app.login.displayNewAccountForm()")},
                 "Create a new account"];
-        jt.out('macctd', jt.tac2html(html));
+        jt.out('makenewaccountdiv', jt.tac2html(html));
         html = ["a", {id: "forgotpw", href: "forgot credentials...",
                       title: "Retrieve your credentials using the email" + 
                             " address you set for your account",
                       onclick: jt.fs("app.login.displayEmailCredForm()")},
-                "forgot your password?"];
-        jt.out('forgotpwtd', jt.tac2html(html));
+                "forgot my password..."];
+        jt.out('forgotpassdiv', jt.tac2html(html));
         jt.on('userin', 'change', onLoginUserNameChange);
         jt.on('passin', 'change', onLoginPasswordChange);
         if(authname) {
             jt.byId('userin').value = authname; }
+        expandLoginFormLayoutIfSpace();
         app.layout.adjust();
-        jt.retry(function () {  //setting the focus is not reliable
-            var actel = document.activeElement;
-            if(!actel || actel.id !== 'userin') {
-                actel = jt.byId('userin');
-                if(actel) {
-                    actel.focus();
-                    jt.log("Set userin focus..."); } }
-            else {
-                jt.log("userin focus set already."); }
-        }, [200, 400, 600]);
+        setFocusOnUsernameInput();
     },
 
 

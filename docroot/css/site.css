@@ -50,7 +50,7 @@ img { border:0px; }
 #topsectiondiv { padding:0px 10px;
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
 #statictopsectiondiv { height:10px; }
-#logodiv, #staticlogodiv { position:absolute; left:10px; top:10px; }
+#logodiv, #staticlogodiv { position:absolute; left:0px; top:0px; }
 #staticadupperspacer { height:120px; }
 #topworkdiv { }
 #slidesdiv { }
@@ -122,7 +122,6 @@ img { border:0px; }
 .shareico, .shareicodis { height:32px; width:32px; margin:5px 15px;
   border:none; vertical-align:middle; }
 .shareicodis { opacity:0.3; filter:alpha(opacity=30); }
-#forgotpwtd { padding:3px 10px; }
 #forgotpw { font-size:small; font-style:italic; }
 #loginbtd { padding:10px 30px; }
 #signinbuttondiv { background:#70bbe9;
@@ -137,8 +136,11 @@ img { border:0px; }
   padding:0px 0px 0px 40px;}
 #logindiv { margin:auto; }
 #loginform { margin:auto; }
-#loginformtable { margin:auto; }
 #loginstatdiv { }
+#makenewaccountdiv { }
+#forgotpassdiv { text-align:center; }
+#altauthinstrdiv { padding:0px 0px 10px 0px; }
+#altauthmethods { padding:0px 0px 0px 30px; }
 .liflab { font-size:large; font-weight:normal; padding:10px; }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }

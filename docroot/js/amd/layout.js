@@ -184,6 +184,8 @@ app.layout = (function () {
 
 
     adjustLogoAndSlides = function (logodim, slidedim, sep) {
+        jt.byId('topsectiondiv').style.height = 
+            String(Math.max(logodim.h, slidedim.h)) + "px";
         //#logodiv position:absolute
         jt.out('logodiv', jt.tac2html(
             ["img", {src: "img/wdydfun.png", id: "logoimg",
@@ -204,7 +206,6 @@ app.layout = (function () {
     },
 
 
-    //wdydfun.png: 460x227, slides are 522x250
     initSlideshow = function () {
         var logodim = {w: 460, h: 227}, slidedim = {w: 522, h: 250},
             minsep = 40;
