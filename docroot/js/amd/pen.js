@@ -181,8 +181,8 @@ app.pen = (function () {
                        ["img", {src: "img/penname.png"}]],
                       ["td", { cla: "formattr"}, "Writing as..."]]],
                     ["tr",
-                     ["td", {cla: "formval"},
-                      ["input", {type: "text", id: "pnamein", size: 34}]]],
+                     ["td", {cla: "formval"},               //fits on phone...
+                      ["input", {type: "text", id: "pnamein", size: 24}]]],
                     ["tr",
                      ["td", {colspan: 2, id: "formbuttons", align: "center"},
                       [bcancel,

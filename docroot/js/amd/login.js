@@ -341,6 +341,10 @@ app.login = (function () {
                        ["div", {id: "altauthlogindiv"}, rh]]]]];
             jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
         else {  //not side by side, make sure nothing is too shrunken
+            html = jt.byId('altauthinstrdiv').innerHTML;
+            if(html.indexOf("or with") > 0) {
+                html = "...or sign in from a social net";
+                jt.out('altauthinstrdiv', html); }
             minw('nativelogintitlediv');
             minw('makenewaccountdiv');
             minw('forgotpassdiv');
@@ -709,7 +713,7 @@ return {
         var username, password, html;
         username = jt.safestr(jt.safeget('userin', "value"));
         password = jt.safestr(jt.safeget('passin', "value"));
-        jt.out('centerhdiv', "Creating New Account");
+        jt.out('centerhdiv', "Creating Your New Account");
         html = ["table", {id: "loginform", cla: "formstyle"},
                 [["tr",
                   ["td", {colspan: 2, align: "center"},
@@ -734,7 +738,7 @@ return {
                    ["td", {align: "left"},
                     ["input", {type: "email", name: "emailin", id: "emailin", 
                                onchange: jt.fs("app.login.onEmailChange()"),
-                               size: 30}]]]],
+                               size: 22}]]]],  //fits on a phone
                  ["tr",
                   ["td", {colspan: 2, align: "center", cla: "actbuttons",
                           id: "newaccbuttonstd"},
