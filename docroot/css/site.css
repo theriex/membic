@@ -50,13 +50,12 @@ img { border:0px; }
 #topsectiondiv { padding:0px 10px;
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
 #statictopsectiondiv { height:10px; }
-#logodiv { width:470px; padding:5px; float:left; }
-#staticlogodiv { position:absolute; left:10px; top:10px; }
+#logodiv, #staticlogodiv { position:absolute; left:10px; top:10px; }
 #staticadupperspacer { height:120px; }
 #topworkdiv { }
 #slidesdiv { }
 /* left recalculated in layout.initSlideshow, old browsers use this */
-.slideimg { position:absolute; left:520px; margin:auto;
+.slideimg { position:absolute; left:0px; 
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
   -o-transition: opacity 1s ease-in-out;

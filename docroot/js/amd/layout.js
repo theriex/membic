@@ -124,15 +124,18 @@ app.layout = (function () {
     //someone is logging in automatically (the most common case), then
     //preloading images is extra overhead so not doing that.
     slideshow = function (firstrun) {
-        var html, previmg, img;
-        if(jt.byId('slidesdiv') && jt.byId('userin') && jt.byId('passin')) {
+        var sdiv, html, previmg, img;
+        sdiv = jt.byId('slidesdiv');
+        if(sdiv && jt.byId('userin') && jt.byId('passin')) {
             if(jt.isLowFuncBrowser()) {
                 jt.log("slideshow isLowFuncBrowser so no fades");
                 if(firstrun) {
                     slideindex = 0; }
-                html = "<img src=\"img/slides/" + slides[slideindex] +
-                         "\" class=\"slideimg\"/>";
-                jt.out('slidesdiv', html);
+                html = ["img", {src: "img/slides/" + slides[slideindex],
+                                cla: "slideimg", 
+                                style: "width:" + sdiv.offsetWidth + "px;" +
+                                       "height:" + sdiv.offsetHeight + "px;"}];
+                jt.out('slidesdiv', jt.tac2html(html));
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions
                 if(!firstrun) {
@@ -165,23 +168,58 @@ app.layout = (function () {
     },
 
 
-    //Even though window.screen.width *might* give you a semi-accurate
-    //value of something like 480px for a phone, using minimum space
-    //here does not cause the browser to use anything other than full
-    //client width in its own layout calculations.  So just go with
-    //what is being reported.
-    initSlideshow = function () {
-        var width, leftx, logow = 515, slidew = 522;
-        width = document.documentElement.clientWidth;
-        if(width > logow + slidew) {  //enough room for logo and slides
-            jt.out('logodiv', jt.tac2html(
-                ["img", {src: "img/wdydfun.png", id: "logoimg"}]));
-            leftx = logow + Math.round(((width - (logow + slidew)) / 2));
-            jt.byId('introslide0').style.left = String(leftx) + "px";
-            jt.byId('introslide1').style.left = String(leftx) + "px"; }
+    setdims = function (elem, dim) {
+        if(typeof elem === "string") {
+            elem = jt.byId(elem); }
+        if(elem) {
+            if(dim.x) {
+                elem.style.left = dim.x + "px"; }
+            if(dim.y) {
+                elem.style.top = dim.y + "px"; }
+            if(dim.w) {
+                elem.style.width = dim.w + "px"; }
+            if(dim.h) {
+                elem.style.height = dim.h + "px"; } }
+    },
+
+
+    adjustLogoAndSlides = function (logodim, slidedim, sep) {
+        //#logodiv position:absolute
+        jt.out('logodiv', jt.tac2html(
+            ["img", {src: "img/wdydfun.png", id: "logoimg",
+                     style: "width:" + logodim.w + "px;" + 
+                            "height:" + logodim.h + "px;"}]));
+        setdims('logodiv', logodim);
+        //slides
+        slidedim.x = 0;
+        if(sep) {
+            slidedim.x = logodim.w + sep; }
+        setdims('slidesdiv', slidedim);
+        setdims('introslide0', slidedim);
+        setdims('introslide1', slidedim);
+        //remove smooth slide opacity transitions if transitions not supported
         if(!jt.isLowFuncBrowser()) {
             jt.byId('introslide0').style.opacity = 0;
             jt.byId('introslide1').style.opacity = 0; }
+    },
+
+
+    //wdydfun.png: 460x227, slides are 522x250
+    initSlideshow = function () {
+        var logodim = {w: 460, h: 227}, slidedim = {w: 522, h: 250},
+            minsep = 40;
+        if(app.winw > logodim.w + slidedim.w + minsep) {  //space available
+            adjustLogoAndSlides(logodim, slidedim,
+                Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
+        else {  //go with mobile size images
+            logodim = {w: 320, h: 158};
+            slidedim = {w: 320, h: 153};
+            if(app.winw > logodim.w + slidedim.w + minsep) {
+                adjustLogoAndSlides(logodim, slidedim,
+                    Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
+            else {
+                slides.unshift("blank.png");  //reveal logo in slide cycles
+                adjustLogoAndSlides(logodim, slidedim, 0); } }
         slideshow(true);
     },
 
