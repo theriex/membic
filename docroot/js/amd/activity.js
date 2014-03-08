@@ -102,13 +102,22 @@ app.activity = (function () {
                              title: "RSS feed for recent friend reviews",
                              onclick: jt.fs("window.open('" + url + "')")},
                        ["img", {cla: "rssico", src: "img/rssicon.png"}]];
-            html = ["table",
-                    ["tr",
-                     [["td", {id: "toptd"}, top],
-                      ["td", revTypeSelectorHTML("toptype")],
-                      ["td", "|"],
-                      ["td", recent],
-                      ["td", rsslink]]]]; }
+            if(app.winw >= app.minSideBySide) {
+                html = ["table",
+                        ["tr",
+                         [["td", {id: "toptd"}, top],
+                          ["td", revTypeSelectorHTML("toptype")],
+                          ["td", "|"],
+                          ["td", recent],
+                          ["td", rsslink]]]]; }
+            else { //too tight, need to go vertical
+                html = ["table", {style: "width:" + (app.winw - 20) + "px;"},
+                        [["tr",
+                          [["td", {id: "toptd", align: "right"}, top],
+                           ["td", revTypeSelectorHTML("toptype")]]],
+                         ["tr",
+                          [["td", {align: "right"}, recent],
+                           ["td", rsslink]]]]]; } }
         else if(dispmode === "memo") {
             if(!remActivityType) {
                 remall = ["span", {cla: "actmodesel"},
@@ -125,6 +134,7 @@ app.activity = (function () {
         html = jt.tac2html(html);
         app.layout.headingout(html);
         jt.out('rightcoldiv', "");
+        jt.byId('rightcoldiv').style.display = "none";
     },
 
 

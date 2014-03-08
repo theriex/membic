@@ -21,6 +21,7 @@ var app = {},  //Global container for application level funcs and values
                    hover: "#3399cc" };
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
+    app.minSideBySide = (320 + 320 + 10);  //smallest possible expanded display
     app.introtext = "";
     app.authcookname = "myopenreviewauth";
     app.secsvr = "https://myopenreviews.appspot.com";
@@ -311,6 +312,21 @@ var app = {},  //Global container for application level funcs and values
         if(times) {
             for(i = 0; i < times.length; i += 1) {
                 setTimeout(rfunc, times[i]); } }
+    };
+
+
+    jt.setdims = function (elem, dim) {
+        if(typeof elem === "string") {
+            elem = jt.byId(elem); }
+        if(elem) {
+            if(dim.x) {
+                elem.style.left = dim.x + "px"; }
+            if(dim.y) {
+                elem.style.top = dim.y + "px"; }
+            if(dim.w) {
+                elem.style.width = dim.w + "px"; }
+            if(dim.h) {
+                elem.style.height = dim.h + "px"; } }
     };
 
 

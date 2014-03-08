@@ -20,7 +20,7 @@ app.review = (function () {
         //The current review being displayed or edited.
         crev = {},
         //If changing the width or height of the stars img, also change
-        //site.css .revtextsummary and corresponding function in statrev.py
+        //profile.reviewItemHTML indent and statrev.py
         starimgw = 85,
         starimgh = 15,
         starPointingActive = false,  //true if star sliding active
@@ -1225,6 +1225,7 @@ app.review = (function () {
                 app.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);
         jt.out('rightcoldiv', "");
+        jt.byId('rightcoldiv').style.display = "none";
         //if reading or updating an existing review, that review is
         //assumed to be minimally complete, which means it must
         //already have values for penid, svcdata, revtype, the defined

@@ -1115,6 +1115,7 @@ app.profile = (function () {
                  ["div", {id: "profinvitediv"},
                   inviteHTML()]]];
         jt.out('rightcoldiv', jt.tac2html(html));
+        jt.byId('rightcoldiv').style.display = "block";
         displayShout(dispen);
         displayCity(dispen);
         displayPic(dispen);
@@ -1297,13 +1298,16 @@ return {
 
 
     reviewItemHTML: function (revobj, penNameStr, liattrobj) {
-        var revid, type, linkref, linkclass, linktxt, jump = "", byline = "", 
-            keywords = "", revtext = "", html;
-        revid = jt.instId(revobj);
-        type = app.review.getReviewTypeByValue(revobj.revtype);
-        linkref = "statrev/" + revid;
-        linkclass = app.revresp.foundHelpful(revid)? "rslcbold" : "rslc";
-        linktxt = app.profile.reviewItemNameHTML(type, revobj);
+        var revid = jt.instId(revobj), 
+            type = app.review.getReviewTypeByValue(revobj.revtype), 
+            linkref = "statrev/" + revid, 
+            linkclass = app.revresp.foundHelpful(revid)? "rslcbold" : "rslc",
+            linktxt = app.profile.reviewItemNameHTML(type, revobj),
+            divattrs = {cla: "revtextsummary", 
+                        style: "padding:0px 0px 0px 97px;"},
+            jump = "", byline = "", keywords = "", revtext = "", html;
+        if(app.winw < 700) {
+            divattrs.style = "padding:0px 0px 0px 10px;"; }
         if(revobj.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(penNameStr) {
@@ -1319,7 +1323,7 @@ return {
                 keywords += ": "; }
             keywords += jt.ellipsis(revobj.keywords, 100); }
         if(revobj.text) {
-            revtext = ["div", {cla: "revtextsummary"},
+            revtext = ["div", divattrs,
                        jt.ellipsis(revobj.text, 255)]; }
         html = ["li", liattrobj,
                 [app.review.starsImageHTML(revobj.rating),
@@ -1331,7 +1335,7 @@ return {
                                        revid + "')")},
                   linktxt],
                  jump,
-                 ["div", {cla: "revtextsummary"},
+                 ["div", divattrs,
                   [byline,
                    keywords,
                    app.review.linkCountHTML(revid)]],

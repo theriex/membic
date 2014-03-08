@@ -293,6 +293,7 @@ app.login = (function () {
         var html;
         jt.out('centerhdiv', "");
         jt.out('rightcoldiv', "");
+        jt.byId('rightcoldiv').style.display = "none";
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out('contentdiv', html); }
@@ -329,7 +330,7 @@ app.login = (function () {
 
     expandLoginFormLayoutIfSpace = function () {
         var lh, rh, html;
-        if(app.winw > (320 + 320 + 10)) {  //smallest side by side display
+        if(app.winw >= app.minSideBySide) {
             lh = jt.byId('userpassdiv').innerHTML;
             rh = jt.byId('altauthlogindiv').innerHTML;
             html = ["table", {id: "sidebysideloginvistable",
@@ -556,16 +557,19 @@ return {
                          //div filled by profile.updateTopActionDisplay
                          ["div", {id: "profstarhdiv"}, ""]]]]]]];
             html = jt.tac2html(html);
-            jt.out('topworkdiv', html);
+            jt.out('topworkdiv', html);  //min height: 45 + 43 + 2*(2*4): 104
+            jt.setdims('topsectiondiv', {h: 130});  //better with space
             if(!jt.byId('logoimg')) {
                 jt.out('logodiv', jt.tac2html(
                     ["img", {src: "img/wdydfun.png", id: "logoimg"}])); }
-            jt.byId('logoimg').style.width = "260px";
-            jt.byId('logoimg').style.height = "120px";
-            jt.byId('logodiv').style.width = "260px";
-            jt.byId('topsectiondiv').style.height = "130px";  //same val below
-            jt.byId('topworkdiv').style.marginLeft = "280px";
-            jt.byId('mascotdiv').style.top = "135px";
+            if(app.winw >= app.minSideBySide) {
+                jt.byId('topworkdiv').style.marginLeft = "280px";
+                jt.setdims('logoimg', {w: 243, h: 120});
+                jt.setdims('logodiv', {w: 243, h: 120}); }
+            else { 
+                //jt.setdims('logoimg', {w: 100, h: 49});
+                //jt.setdims('logodiv', {w: 100, h: 49});
+                jt.out('logodiv', ""); }
             app.layout.setTopPaddingAndScroll(130); }  //matches topsectiondiv
         else if(override === "hide") { 
             jt.out('topworkdiv', ""); }

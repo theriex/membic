@@ -168,21 +168,6 @@ app.layout = (function () {
     },
 
 
-    setdims = function (elem, dim) {
-        if(typeof elem === "string") {
-            elem = jt.byId(elem); }
-        if(elem) {
-            if(dim.x) {
-                elem.style.left = dim.x + "px"; }
-            if(dim.y) {
-                elem.style.top = dim.y + "px"; }
-            if(dim.w) {
-                elem.style.width = dim.w + "px"; }
-            if(dim.h) {
-                elem.style.height = dim.h + "px"; } }
-    },
-
-
     adjustLogoAndSlides = function (logodim, slidedim, sep) {
         jt.byId('topsectiondiv').style.height = 
             String(Math.max(logodim.h, slidedim.h)) + "px";
@@ -191,14 +176,14 @@ app.layout = (function () {
             ["img", {src: "img/wdydfun.png", id: "logoimg",
                      style: "width:" + logodim.w + "px;" + 
                             "height:" + logodim.h + "px;"}]));
-        setdims('logodiv', logodim);
+        jt.setdims('logodiv', logodim);
         //slides
         slidedim.x = 0;
         if(sep) {
             slidedim.x = logodim.w + sep; }
-        setdims('slidesdiv', slidedim);
-        setdims('introslide0', slidedim);
-        setdims('introslide1', slidedim);
+        jt.setdims('slidesdiv', slidedim);
+        jt.setdims('introslide0', slidedim);
+        jt.setdims('introslide1', slidedim);
         //remove smooth slide opacity transitions if transitions not supported
         if(!jt.isLowFuncBrowser()) {
             jt.byId('introslide0').style.opacity = 0;
@@ -270,6 +255,8 @@ app.layout = (function () {
                 target -= 60; //padding around screen
                 if(app.winw > 900) {   //add left margin, see below
                     target -= 100; } } 
+            else if(target <= 320) {
+                target = 316; }  //fudge pixels...
             //jt.out('dimspan', "app.winw:" + app.winw);
             contentdiv.style.width = target + "px";
             if(app.winw > 900) {

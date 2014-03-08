@@ -68,6 +68,7 @@ img { border:0px; }
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
 
 /* >> main display area and contained elements */
+#phonetextzoomfixtable { border-collapse:collapse; }
 #centerhdivtd { }
 #centerhdiv, #centerhdivstatic { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
@@ -78,7 +79,7 @@ img { border:0px; }
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
 #appspacediv, #appspacedivstatic { }
-#appspacediv { padding:10px 10px 0px 10px; margin:auto; }
+#appspacediv { margin:auto; }
 #appspacedivstatic { clear:both; padding:0px 15px 10px 5px; }
 .statrevcontent { padding-left:15px; padding-top:15px; }
 #bottomnav { font-size:x-small; text-align:center; 
@@ -215,7 +216,7 @@ img { border:0px; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revlist li { padding:4px; }
 .revimg { max-width:125px; height:auto; }
-.revtextsummary { font-size:small; padding: 0px 0px 0px 97px; }
+.revtextsummary { font-size:small; } /* padded in profile.reviewItemHTML */
 .rslc { font-size:medium; }
 .rslcbold { font-size:medium; font-weight:bold; }
 .morerevs { font-size:small; padding: 0px 0px 0px 30px; }
