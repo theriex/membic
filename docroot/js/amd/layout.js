@@ -132,9 +132,7 @@ app.layout = (function () {
                 if(firstrun) {
                     slideindex = 0; }
                 html = ["img", {src: "img/slides/" + slides[slideindex],
-                                cla: "slideimg", 
-                                style: "width:" + sdiv.offsetWidth + "px;" +
-                                       "height:" + sdiv.offsetHeight + "px;"}];
+                                cla: "slideimglowfuncb"}];
                 jt.out('slidesdiv', jt.tac2html(html));
                 slideindex = (slideindex + 1) % slides.length; }
             else {  //use nice opacity transitions

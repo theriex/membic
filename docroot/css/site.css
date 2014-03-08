@@ -54,7 +54,8 @@ img { border:0px; }
 #staticadupperspacer { height:120px; }
 #topworkdiv { }
 #slidesdiv { }
-/* left recalculated in layout.initSlideshow, old browsers use this */
+.slideimglowfuncb { position:absolute; left:500px; }
+/* left recalculated in layout.initSlideshow */
 .slideimg { position:absolute; left:0px; 
   -webkit-transition: opacity 1s ease-in-out;
   -moz-transition: opacity 1s ease-in-out;
