@@ -229,7 +229,7 @@ app.layout = (function () {
 
 
     fullContentHeight = function () {
-        var ch, filldiv, topdiv, contentdiv, target;
+        var ch, filldiv, topdiv, contentdiv, target, leftmargin;
         findDisplayHeightAndWidth();
         //fill the bottom content so the footer text isn't too high up
         filldiv = jt.byId("contentfill");
@@ -249,16 +249,16 @@ app.layout = (function () {
         contentdiv = jt.byId('contentdiv');
         if(contentdiv) {
             target = app.winw - jt.byId('rightcoldiv').offsetWidth;
-            if(target > 600) {
-                target -= 60; //padding around screen
-                if(app.winw > 900) {   //add left margin, see below
-                    target -= 100; } } 
-            else if(target <= 320) {
-                target = 316; }  //fudge pixels...
-            //jt.out('dimspan', "app.winw:" + app.winw);
+            leftmargin = 0;
+            if(target <= 320) {  //hard minimum phone size
+                target = 316; }  //fudge pixels to avoid side scrolling
+            if(target > 600) { //enough space to play with
+                leftmargin = Math.round(target * 0.1);
+                leftmargin = Math.min(leftmargin, 100); }
+            target -= leftmargin;
+            //jt.out('dimspan', "lm:" + leftmargin + ", cd:" + target);
             contentdiv.style.width = target + "px";
-            if(app.winw > 900) {
-                jt.byId('contentdiv').style.marginLeft = "100px"; } }
+            contentdiv.style.marginLeft = leftmargin + "px"; }
         setSoftFocus();
     };
 

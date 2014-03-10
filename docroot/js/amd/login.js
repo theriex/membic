@@ -567,8 +567,10 @@ return {
                 jt.setdims('logoimg', {w: 243, h: 120});
                 jt.setdims('logodiv', {w: 243, h: 120}); }
             else { 
-                //jt.setdims('logoimg', {w: 100, h: 49});
-                //jt.setdims('logodiv', {w: 100, h: 49});
+                //small 100x49 logo just makes things crowded and confused.
+                //move logodiv out of the way of clicks
+                jt.setdims('logoimg', {w: 2, h: 2});
+                jt.setdims('logodiv', {w: 2, h: 2});
                 jt.out('logodiv', ""); }
             app.layout.setTopPaddingAndScroll(130); }  //matches topsectiondiv
         else if(override === "hide") { 

@@ -91,7 +91,7 @@ app.services = (function () {
 
 
     initShareDisplay = function (buttondiv, msgdiv, pen, review) {
-        var i, conf, svc, svcact, cells = [], html = "";
+        var i, conf, svc, svcact, html = [];
         app.pen.deserializeFields(pen);
         if(!review.svcdata) {
             review.svcdata = {}; }
@@ -111,16 +111,13 @@ app.services = (function () {
                     svcact.url = "#disabled, click to enable";
                     svcact.clickstr = "app.services.enable('" + 
                         conf.name + "');return false;"; }
-                cells.push(
-                    ["td", {id: svc.name + "td"},
+                html.push(
+                    ["div", {id: svc.name + "div", cla: "sharebuttondiv"},
                      app.services.serviceLinkHTML(svcact.url, svcact.clickstr, 
                                                   svcact.imgclass,
                                                   svc.getShareImageAlt(), 
-                                                  svc.getShareImageSrc())]); }
-            html = ["table", {id: "svcbuttontable"},
-                    ["tr", cells]];
-            html = jt.tac2html(html); }
-        jt.out(buttondiv, html);
+                                                  svc.getShareImageSrc())]); } }
+        jt.out(buttondiv, jt.tac2html(html));
     },
 
 

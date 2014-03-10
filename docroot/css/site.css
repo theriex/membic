@@ -124,6 +124,9 @@ img { border:0px; }
 .shareico, .shareicodis { height:32px; width:32px; margin:5px 15px;
   border:none; vertical-align:middle; }
 .shareicodis { opacity:0.3; filter:alpha(opacity=30); }
+.revtypeico { vertical-align:bottom; }
+.respico { vertical-align:bottom; }
+.respicodis { opacity:0.3; filter:alpha(opacity=30); }
 #forgotpw { font-size:small; font-style:italic; }
 #loginbtd { padding:10px 30px; }
 #signinbuttondiv { background:#70bbe9;
@@ -198,19 +201,21 @@ img { border:0px; }
 .sumtotal { font-size:small; }
 #srchmessagespan { font-size:small; }
 .smalltext { font-size:small; }
+#revdispdiv { }
 .reviewformul { list-style:none; padding:0; margin:0; }
-.revdisptable { margin-left:auto; margin-right:auto; }
+.revdisptable { }
 .revdisptable td { padding:2px 5px; }
 #transformactionstd { padding:2px 5px 10px 15px; }
 #revformbuttonstd { }
-#revbuttonsdiv { margin-left:15%; }
+#revbuttonsdiv { margin-left:15%; padding:20px; word-spacing:10px; }
+#revsavemsg { word-spacing:normal; }
 #requestbuttonsdiv { text-align:center; padding:10px; }
 .bluetxt { color:#7a40ff; }
 .cyantxt { color:#40fff4; }
 .greentxt { color:#6fff21; }
 .goldtxt { color:#ffd100; }
-#socialrevactdiv { margin-left:4%; }
-#staticsocialrevactdiv { margin-left:1%; padding:20px 0px; }
+#socialrevactdiv { }
+#staticsocialrevactdiv { }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
@@ -233,6 +238,7 @@ img { border:0px; }
 .statnoticeactlinktable td { }
 /* only actual buttons should look like buttons */
 .buttondiv { padding:0px 5px; font-size:large; }
+.sharebuttondiv { display:inline; }  /* see shareico for padding */
 .searchtable td { padding:5px 10px; }
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#333; }
@@ -270,6 +276,10 @@ img { border:0px; }
 #csrchindiv { padding:0px 0px 10px 0px; }
 #csrchcontentdiv { padding:20px 0px 0px 0px; }
 #csrchbuttonsdiv { padding:20px; text-align:center; }
+.keywordcheckboxtable { padding:10px; }
+.keywordcheckboxtable td { padding:4px; }
+.transformlinkdiv { border: 1px solid #666666; border-radius:5px; 
+  padding:0px 5px; margin:8px; display:table; }
 
 
 /* >> activity layout */

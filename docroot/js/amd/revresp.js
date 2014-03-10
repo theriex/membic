@@ -34,7 +34,8 @@ app.revresp = (function () {
             msghtml = "Your review: " + imghtml; }
         html = jt.imgntxt("writereview.png", msghtml,
                            "app.revresp.respond()", "#respond",
-                           "Edit your corresponding review", "", "respond");
+                           "Edit your corresponding review", 
+                           "respico", "respond");
         jt.out('respondbutton', html);
     },
 
@@ -203,7 +204,7 @@ app.revresp = (function () {
         if(jt.byId('questionbutton')) {
             img = jt.byId('questionimg');
             if(img) {
-                img.className = "navicodis"; }
+                img.className = "respicodis"; }
             txt = jt.byId('questiontxttd');
             if(txt) {
                 txt.style.color = greytxt; } }
@@ -220,7 +221,7 @@ app.revresp = (function () {
             if(!penref.qcmts || penref.qcmts.length === 0) { 
                 img = jt.byId('questionimg');
                 if(img) {
-                    img.className = "navico"; }
+                    img.className = "respico"; }
                 txt = jt.byId('questiontxttd');
                 if(txt) {
                     txt.style.color = app.colors.text; } } });
@@ -232,7 +233,7 @@ app.revresp = (function () {
         if(jt.byId('commentbutton')) {
             img = jt.byId('commentimg');
             if(img) {
-                img.className = "navicodis"; }
+                img.className = "respicodis"; }
             txt = jt.byId('commenttxttd');
             if(txt) {
                 txt.style.color = greytxt; } }
@@ -255,7 +256,7 @@ app.revresp = (function () {
             if(!penref.qcmts || penref.qcmts.length === 0) { 
                 img = jt.byId('commentimg');
                 if(img) {
-                    img.className = "navico"; }
+                    img.className = "respico"; }
                 txt = jt.byId('commenttxttd');
                 if(txt) {
                     txt.style.color = app.colors.text; } } });
@@ -646,7 +647,7 @@ app.revresp = (function () {
         revpen = app.lcs.getPenRef(crev.penid).pen;
         dismsg = dismsg.replace(/\$REVIEWER/g, revpen.name);
         dismsg = dismsg.replace(/\$REVTITLE/g, crev.title || crev.name);
-        if(img.className === "navicodis") {
+        if(img.className === "respicodis") {
             html = ["div", {cla: "commentdiv"},
                     [["div", {cla: "commentform", 
                               style: "width:" + textTargetWidth() + "px;"},
@@ -744,6 +745,7 @@ app.revresp = (function () {
                  correspondingReviewsHTML(displayReviewResponses)]];
         jt.out('revcommentsdiv', jt.tac2html(html));
         testEnableQuestionButton();
+        correspcheck = 0;
         testEnableCommentButton();
         if(pollcount && !polltimer) {
             polltimer = setTimeout(function () {
@@ -899,7 +901,7 @@ return {
             tbl.title = "Remove from your remembered reviews";
             jt.out('memotxttd', "Remembered");
             return; }
-        img.className = "navicodis";  //grey out the image
+        img.className = "respicodis";  //grey out the image
         value = (img.src.indexOf("remembered.png") > 0)? "no" : "yes"; //toggle
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
@@ -915,7 +917,7 @@ return {
                         img.src = "img/rememberq.png";
                         tbl.title = "Add to your remembered reviews";
                         jt.out('memotxttd', "Remember"); }
-                    img.className = "navico"; },  //ungrey the image
+                    img.className = "respico"; },  //ungrey the image
                 app.failf(function (code, errtxt) {
                     jt.err("toggleMemoButton failed " + code +
                            " " + errtxt); }),
@@ -933,7 +935,7 @@ return {
             img.src = "img/helpful.png";
             tbl.title = "Remove mark as helpful";
             return; }
-        img.className = "navicodis";  //grey out the image
+        img.className = "respicodis";  //grey out the image
         value = (img.src.indexOf("helpful.png") > 0)? "no" : "yes";  //toggle
         data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
             "&revid=" + jt.instId(app.review.getCurrentReview()) +
@@ -947,7 +949,7 @@ return {
                     else {
                         img.src = "img/helpfulq.png";
                         tbl.title = "Mark this review as helpful"; }
-                    img.className = "navico"; },  //ungrey the image
+                    img.className = "respico"; },  //ungrey the image
                 app.failf(function (code, errtxt) {
                     jt.err("toggleHelpfulButton failed " + code +
                            " " + errtxt); }),
@@ -1066,52 +1068,48 @@ return {
 
     respActionsHTML: function () {
         var html;
-        html = ["div", { id: "socialrevactdiv"},
-                ["table", {cla: "socialrevacttable"},
-                 [["tr",
-                   [["td", {colspan: 2},
-                     //helpful button. init unchecked, update after lookup
-                     ["div", {id: "helpfulbutton", cla: "buttondiv"},
-                      jt.imgntxt("helpfulq.png", "Helpful",
-                                 "app.revresp.toggleHelpfulButton()", 
-                                 "#helpful", 
-                                 "Mark this review as helpful", 
-                                 "", "helpful")]],
-                    ["td", {colspan: 2},
-                     //remember button. init unchecked, update after lookup
-                     ["div", {id: "memobutton", cla: "buttondiv"},
-                      jt.imgntxt("rememberq.png", "Remember",
-                                 "app.revresp.toggleMemoButton()", 
-                                 "#memo", 
-                                 "Add this to remembered reviews", 
-                                 "", "memo")]],
-                    ["td", {colspan: 2},
-                     //respond button, contents rewritten after lookup
-                     ["div", {id: "respondbutton", cla: "buttondiv"},
-                      jt.imgntxt("writereview.png", "Your review",
-                                 "app.revresp.respond()", 
-                                 "#respond", 
-                                 "Edit your corresponding review", 
-                                 "", "respond")]]]],
-                  ["tr",
-                   [["td",
-                     "&nbsp;"],
-                    ["td", {colspan: 2},
-                     ["div", {id: "questionbutton", cla: "buttondiv"},
-                      jt.imgntxt("questionb.png", "Question",
-                                 "app.revresp.question()",
-                                 "#question",
-                                 "Ask a question about this review",
-                                 "", "question")]],
-                    ["td", {colspan: 2},
-                     ["div", {id: "commentbutton", cla: "buttondiv"},
-                      jt.imgntxt("commentb.png", "Comment",
-                                 "app.revresp.comment()",
-                                 "#comment",
-                                 "Comment on this review",
-                                 "", "comment")]],
-                    ["td",
-                     "&nbsp;"]]]]]];
+        html = ["div", {id: "socialrevactdiv"},
+                [["div", {id: "helpfulbutton", cla: "buttondiv"},
+                  jt.imgntxt("helpfulq.png", "Helpful",
+                             "app.revresp.toggleHelpfulButton()", 
+                             "#helpful", 
+                             "Mark this review as helpful", 
+                             "respico", "helpful")],
+                 ["div", {id: "memobutton", cla: "buttondiv"},
+                  jt.imgntxt("rememberq.png", "Remember",
+                             "app.revresp.toggleMemoButton()", 
+                             "#memo", 
+                             "Add this to remembered reviews", 
+                             "respico", "memo")],
+                 ["div", {id: "respondbutton", cla: "buttondiv"},
+                  jt.imgntxt("writereview.png", "Your review",
+                             "app.revresp.respond()", 
+                             "#respond", 
+                             "Edit your corresponding review", 
+                             "respico", "respond")]]];
+        return html;
+    },
+
+
+    feedbackActionsHTML: function () {
+        var html;
+        html = ["div", {id: "socialrevtalkdiv"},
+                ["table",
+                 ["tr",
+                  [["td",
+                    ["div", {id: "questionbutton", cla: "buttondiv"},
+                     jt.imgntxt("questionb.png", "Question",
+                                "app.revresp.question()",
+                                "#question",
+                                "Ask a question about this review",
+                                "respico", "question")]],
+                   ["td",
+                    ["div", {id: "commentbutton", cla: "buttondiv"},
+                     jt.imgntxt("commentb.png", "Comment",
+                                "app.revresp.comment()",
+                                "#comment",
+                                "Comment on this review",
+                                "respico", "comment")]]]]]];
         return html;
     },
 

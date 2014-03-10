@@ -171,17 +171,32 @@ app.review = (function () {
                      checked: (typename === selt) };
             ts.push(jt.checkrad(intype, gname, tobj.value, tobj.label,
                                 tobj.checked, chgfstr)); }
-        html = ["table",
-                [["tr",
-                  [["td", ts[0]],
-                   ["td", ts[1]],
-                   ["td", ts[2]],
-                   ["td", ts[3]]]],
-                 ["tr",
-                  [["td", ts[4]],
-                   ["td", ts[5]],
-                   ["td", ts[6]],
-                   ["td", ts[7]]]]]];
+        if(app.winw < 600) {
+            html = ["table",
+                    [["tr",
+                      [["td", ts[0]],
+                       ["td", ts[1]]]],
+                     ["tr",
+                      [["td", ts[2]],
+                       ["td", ts[3]]]],
+                     ["tr",
+                      [["td", ts[4]],
+                       ["td", ts[5]]]],
+                     ["tr",
+                      [["td", ts[6]],
+                       ["td", ts[7]]]]]]; }
+        else {
+            html = ["table",
+                    [["tr",
+                      [["td", ts[0]],
+                       ["td", ts[1]],
+                       ["td", ts[2]],
+                       ["td", ts[3]]]],
+                     ["tr",
+                      [["td", ts[4]],
+                       ["td", ts[5]],
+                       ["td", ts[6]],
+                       ["td", ts[7]]]]]]; }
         return jt.tac2html(html);
     },
 
@@ -286,6 +301,51 @@ app.review = (function () {
     },
 
 
+    typeSelectHTML = function (ts, urlh) {
+        var html;
+        if(app.winw < 600) {
+            html = ["table",
+                    [["tr",
+                      ["td", {colspan: 2},
+                       ["div", {cla: "bigoverlabel"},
+                        "Choose a review type"]]],
+                     ["tr",
+                       [["td", ts[0]],
+                        ["td", ts[1]]]],
+                     ["tr",
+                      [["td", ts[2]],
+                       ["td", ts[3]]]],
+                     ["tr",
+                      [["td", ts[4]],
+                       ["td", ts[5]]]],
+                     ["tr",
+                      [["td", ts[6]],
+                       ["td", ts[7]]]]]]; }
+        else {  //use full width
+            html = ["table",
+                    [["tr",
+                      ["td", {colspan: 4},
+                       ["div", {cla: "bigoverlabel"},
+                        "Choose a review type"]]],
+                     ["tr",
+                      [["td", ts[0]],
+                       ["td", ts[1]],
+                       ["td", ts[2]],
+                       ["td", ts[3]]]],
+                     ["tr",
+                      [["td", ts[4]],
+                       ["td", ts[5]],
+                       ["td", ts[6]],
+                       ["td", ts[7]]]]]]; }
+        html = ["div", {id: "revfdiv", cla: "formstyle", align: "center"},
+                ["div", {id: "formrejustifydiv", cla: "centertablediv"},
+                 ["ul", {cla: "reviewformul"},
+                  [["li", html],
+                   ["li", urlh]]]]];
+        return html;
+    },
+
+
     displayTypeSelect = function () {
         var i, typename, captype, ts = [], urlh, html;
         for(i = 0; i < reviewTypes.length; i += 1) {
@@ -297,7 +357,7 @@ app.review = (function () {
                             "app.review.setType('" + typename + "')",
                             "#" + captype,
                             "Create a " + typename + " review",
-                            "navico", typename, "app.review.mrollwr")]); }
+                            "revtypeico", typename, "app.review.mrollwr")]); }
         if(autourl) {
             urlh = ["a", {href: autourl}, autourl]; }
         else {  //no url being read automatically, allow manual entry
@@ -307,9 +367,9 @@ app.review = (function () {
                        ["div", {cla: "bigoverlabel"},
                         "or paste a web address to read information from"]]],
                      ["tr",
-                      [["td", {align: "right"}, "URL"],
+                      [["td", {valign: "top", align: "right"}, "URL"],
                        ["td", {align: "left"},
-                        [["input", {type: "url", id: "urlin", size: 40,
+                        [["input", {type: "url", id: "urlin", size: 32,
                                     onchange: jt.fs("app.review.readURL()")}],
                          "&nbsp;",
                          ["span", {id: "readurlbuttoncontainer"},
@@ -318,26 +378,7 @@ app.review = (function () {
                                       title: "Read review form fields" + 
                                             " from pasted URL"},
                            "Read"]]]]]]]]; }
-        html = ["div", {id: "revfdiv", cla: "formstyle", align: "center"},
-                ["div", {id: "formrejustifydiv", cla: "centertablediv"},
-                 ["ul", {cla: "reviewformul"},
-                  [["li",
-                    ["table",
-                     [["tr",
-                       ["td", {colspan: 4},
-                        ["div", {cla: "bigoverlabel"},
-                         "Choose a review type"]]],
-                      ["tr",
-                       [["td", ts[0]],
-                        ["td", ts[1]],
-                        ["td", ts[2]],
-                        ["td", ts[3]]]],
-                      ["tr",
-                       [["td", ts[4]],
-                        ["td", ts[5]],
-                        ["td", ts[6]],
-                        ["td", ts[7]]]]]]],
-                   ["li", urlh]]]]];
+        html = typeSelectHTML(ts, urlh);
         if(!jt.byId('cmain')) {
             app.layout.initContent(); }
         jt.out('cmain', jt.tac2html(html));
@@ -356,7 +397,7 @@ app.review = (function () {
     },
 
 
-    picHTML = function (review, type, keyval, mode) {
+    revFormImageHTML = function (review, type, keyval, mode) {
         var imgstyle, imgattr = {}, html = [];
         if(!keyval) {
             return ""; }
@@ -437,44 +478,6 @@ app.review = (function () {
     },
 
 
-    secondaryFieldsHTML = function (review, type, keyval, mode) {
-        var html = "", rows = [], i, field, fval, valtd, fsize = 25, url;
-        if(!keyval) {
-            return html; }
-        if(mode === "edit" && type.subkey) {
-            field = type.subkey;
-            fval = jt.ndq(review[type.subkey]);
-            rows.push(["tr",
-                       [["td", {id: "subkeyinlabeltd"},
-                         ["span", {cla: "secondaryfield"},
-                          field.capitalize()]],
-                        ["td", {align: "left"},
-                         ["input", {type: "text", id: "subkeyin", 
-                                    size: fsize, value: fval}]]]]); }
-        for(i = 0; i < type.fields.length; i += 1) {
-            field = type.fields[i];
-            fval = jt.ndq(review[field]);
-            if(fval && field === "address" && mode !== "edit") {
-                url = "http://maps.google.com/?q=" + fval;
-                fval = ["a", {href:url,
-                              onclick: jt.fs("window.open('" + url + "')")},
-                        fval]; }
-            if(field !== "url") {
-                if(fval || mode === "edit") {
-                    valtd = ["td", fval];
-                    if(mode === "edit") {
-                        valtd = ["td", {align: "left"},
-                                 ["input", {type: "text", id: "field" + i,
-                                            size: fsize, value: fval}]]; }
-                    rows.push(["tr",
-                               [["td",
-                                 ["span", {cla: "secondaryfield"},
-                                  field.capitalize()]],
-                                valtd]]); } } }
-        return ["table", rows];
-    },
-
-
     secondaryFieldsValid = function (type, errors) {
         var input, i;
         //none of the secondary fields are required, so just note the values
@@ -495,7 +498,7 @@ app.review = (function () {
     },
 
 
-    keywordsHTML = function (review, type, keyval, mode) {
+    revFormKeywordsHTML = function (review, type, keyval, mode) {
         var html = "";
         if(!keyval) {
             return html; }
@@ -576,48 +579,56 @@ app.review = (function () {
     },
 
 
-    transformActionsHTML = function (review, type, keyval, mode) {
-        var html = "", actions = [];
-        if(keyval && mode === "edit") {
-            if(review.srcrev && !jt.instId(review)) {
-                //new corresponding review, allow finding mismatched title
-                actions.push(
-                    ["a", {href: "#",
-                           onclick: jt.fs("app.revresp.searchCorresponding()"),
-                           title: "Find existing corresponding review"},
-                     "Find review"]);
-                actions.push("&nbsp;&nbsp;&nbsp;"); }
-            //always be able to change the review type
-            actions.push(
-                ["a", {href: "#",
-                       onclick: jt.fs("app.review.changeRevType()"),
-                       title: "Change this review type"},
-                 "Change type"]);
-            actions.push("&nbsp;&nbsp;&nbsp;");
-            if(review.revtype === "video" && review.title && review.artist) {
-                //video import may have mapped the title and artist backwards
-                actions.push(
-                    ["a", {href: "#",
-                           onclick: jt.fs("app.review.swapTitleAndArtist()"),
-                           title: "Swap the artist and title values"},
-                     "Swap title and artist"]);
-                actions.push("&nbsp;&nbsp;&nbsp;"); }
-            if(review.url) {
-                //Might want to refresh the image link or re-read info
-                actions.push(
-                    ["a", {href: "#",
-                           onclick: jt.fs("app.review.readURL('" + 
-                                          review.url + "')"),
-                           title: "Read the URL to fill out review fields"},
-                     "Read review details from URL"]);
-                actions.push("&nbsp;&nbsp;&nbsp;"); }
-            html = jt.tac2html(actions); }
+    makeTransformLink = function (fstr, title, text) {
+        var html;
+        html = ["div", {cla: "transformlinkdiv",
+                        style: "background:" + app.colors.bodybg + ";"},
+                ["a", {href: "#", onclick: jt.fs(fstr), title: title},
+                 text]];
         return html;
     },
 
 
-    reviewFormButtonsHTML = function (pen, review, type, keyval, mode) {
-        var temp, html;
+    transformActionsHTML = function (review, type, keyval, mode) {
+        var html = "", actions = [];
+        if(keyval && mode === "edit") {
+            if(review.srcrev && !jt.instId(review)) {
+                //new corresponding review, allow finding mismatched titles
+                actions.push(makeTransformLink(
+                    "app.revresp.searchCorresponding()",
+                    "Find existing corresponding review",
+                    "Find review")); }
+            //always be able to change the review type
+            actions.push(makeTransformLink(
+                "app.review.changeRevType()",
+                "Change this review type",
+                "Change Review Type"));
+            if(review.revtype === "video" && review.title && review.artist) {
+                //video import may have mapped the title and artist backwards
+                actions.push(makeTransformLink(
+                    "app.review.swapTitleAndArtist()",
+                    "Swap the artist and title values",
+                    "Swap Title and Artist")); }
+            if(review.url) {
+                //Might want to refresh the image link or re-read info
+                actions.push(makeTransformLink(
+                    "app.review.readURL('" + review.url + "')",
+                    "Read the URL to fill out review fields",
+                    "Import URL Details")); }
+            html = jt.tac2html(actions); }
+        else if(mode !== "edit") { 
+            if(review.penid === app.pen.currPenId()) {
+                html = ["div", {id: "sharediv"},
+                        [["div", {id: "sharebuttonsdiv"}],
+                         ["div", {id: "sharemsgdiv"}]]]; }
+            else { //reading someone else's review
+                html = app.revresp.respActionsHTML(); } }
+        return html;
+    },
+
+
+    revFormButtonsHTML = function (pen, review, type, keyval, mode) {
+        var temp, html = "";
         if(!keyval) {  //user just chose type for editing
             app.onescapefunc = app.review.cancelReview;
             html = ["div", {id: "revbuttonsdiv"},
@@ -648,24 +659,22 @@ app.review = (function () {
         else if(review.penid === app.pen.currPenId()) {  //reading own review
             app.onescapefunc = null;
             temp = "statrev/" + jt.instId(review);
-            html = [["div", {id: "revbuttonsdiv"},
-                     [["button", {type: "button", id: "deletebutton",
-                                  onclick: jt.fs("app.review.delrev()")},
-                       "Delete"],
-                      "&nbsp;",
-                      ["button", {type: "button", id: "editbutton",
-                                  onclick: jt.fs("app.review.display()")},
-                       "Edit"],
-                      "&nbsp;&nbsp;",
-                      ["a", {href: temp, cla: "permalink",
-                             onclick: jt.fs("window.open('" + temp + "')")},
-                       "permalink"]]],
-                    ["div", {id: "sharediv"},
-                     [["div", {id: "sharebuttonsdiv"}],
-                      ["div", {id: "sharemsgdiv"}]]],
-                    ["div", {id: "revsavemsg"}]]; }
-        else {  //reading other review
-            html = [app.revresp.respActionsHTML(),
+            html = ["div", {id: "revbuttonsdiv"},
+                    [["button", {type: "button", id: "deletebutton",
+                                 onclick: jt.fs("app.review.delrev()")},
+                      "Delete"],
+                     "&nbsp;",
+                     ["button", {type: "button", id: "editbutton",
+                                 onclick: jt.fs("app.review.display()")},
+                      "Edit"],
+                     "&nbsp;&nbsp;",
+                     ["a", {href: temp, cla: "permalink",
+                            onclick: jt.fs("window.open('" + temp + "')")},
+                      "permalink"],
+                     ["br"],
+                     ["div", {id: "revsavemsg"}]]]; }
+        else {  //reading someone else's review
+            html = [app.revresp.feedbackActionsHTML(),
                     ["div", {id: "revsavemsg"}]]; }
         return html;
     },
@@ -679,91 +688,116 @@ app.review = (function () {
     },
 
 
-    //labels for first line of the form (if editing)
-    revFormEditHeadingRow = function (review, type, keyval, mode) {
-        var row = "", secondary = "";
-        if(keyval) {  //primary identifiers entered so URL in upper right
-            secondary = [["img", {cla: "webjump", src: "img/gotolink.png"}],
-                         "URL",
-                         "&nbsp;&nbsp;&nbsp;&nbsp;",
-                         ["span", {id: "ezlinkspan"},
-                          ezlink()]]; }
-        else if(type.subkey) {  //secondary field entry if there is one
-            secondary = type.subkey.capitalize(); }
-        if(mode === "edit") {
-            row = ["tr",
-                   [["td", {id: "starslabeltd"}],
-                    ["td", {id: "keyinlabeltd"},
-                     type.keyprompt],
-                    ["td",
-                     secondary]]]; }
-        return row;
-    },
-
-
-    revFormIdentRow = function (review, type, keyval, mode) {
-        var stardisp = "", keyinchg, cells = [];
-        if(keyval) {
-            stardisp = ["span", {id: "stardisp"},
-                        starsImageHTML(review.rating, mode === "edit")]; }
-        cells.push(["td", {id: "starstd"},
-                    [stardisp,
-                     "&nbsp;",
-                     app.review.badgeImageHTML(type)]]);
-        if(mode === "edit") {
-            keyinchg = "app.review.validate()";
-            if(type.subkey) {
-                keyinchg = "jt.byId('subkeyin').focus()"; }
-            cells.push(["td",
-                        ["input", {type: "text", id: "keyin", size: 30,
-                                   onchange: jt.fs(keyinchg),
-                                   value: jt.ndq(review[type.key])}]]);
-            if(keyval) {  //key fields have been specified, so show url
-                cells.push(["td",
-                            ["input", {type: "text", id: "urlin", size: 30,
-                                       onchange: jt.fs("app.review.urlchg()"),
-                                       value: jt.ndq(review.url)}]]); }
-            else if(type.subkey) {  //show subkey input if revtype has subkey
-                cells.push(["td", {id: "subkeyinlabeltd"},
-                            ["input", {type: "text", id: "subkeyin", size: 30,
-                                       onchange: jt.fs("app.review.validate()"),
-                                     value: jt.ndq(review[type.subkey])}]]); } }
-        else {  //not editing, read only display
-            cells.push(["td",
-                        ["span", {cla: "revtitle"},
-                         jt.ndq(review[type.key])]]);
-            if(type.subkey) {
-                cells.push(["td",
-                            ["span", {cla: "revauthor"},
-                             jt.ndq(review[type.subkey])]]); }
-            if("url" !== type.key && "url" !== type.subkey) {
-                cells.push(["td",
-                            app.review.jumpLinkHTML(review.url || "")]); } }
-        return ["tr", cells];
-    },
-
-
     //return a good width for a text entry area
     textTargetWidth = function () {
-        var targetwidth = Math.max((app.winw - 350), 200);
-        targetwidth = Math.min(targetwidth, 750);
+        var targetwidth = app.winw - 40;
+        if(app.winw > 600) {  //enough space for scaling
+            targetwidth = Math.round(app.winw * 0.75);
+            if(targetwidth > 750) {  //too wide even if display is huge
+                targetwidth = 750; } }
         return targetwidth;
     },
 
 
+    revFormStarsHTML = function (review, type, keyval, mode) {
+        var jumplink, width, html = "";
+        if(keyval) {
+            width = textTargetWidth() + 20;
+            jumplink = "";
+            if(mode !== "edit") {
+                jumplink = app.review.jumpLinkHTML(review.url || ""); }
+            html = ["div", {id: "revformstarscontent",
+                            style: "width:" + width + "px;"},
+                    [["div", {id: "rfsjumpdiv", style: "float:right;"},
+                      jumplink],
+                     ["div", {id: "rfsratediv"},
+                      [["span", {id: "stardisp"},
+                        starsImageHTML(review.rating, mode === "edit")],
+                       "&nbsp;",
+                       app.review.badgeImageHTML(type)]]]]; }
+        return html;
+    },
+        
+    
+    makeFieldInputRow = function (review, mode, field, inid, onchange) {
+        var html, valdisp, labval, ndqval, url;
+        onchange = onchange || "";
+        labval = field.capitalize();
+        ndqval = jt.ndq(review[field]);
+        if(mode === "edit") {
+            if(field === "url") {  //special graphic label
+                labval = ["a", {href: "#ezlink", cla: "permalink",
+                                onclick: jt.fs("app.hinter.ezlink()"),
+                                title: "Write a review from any site"},
+                          [["img", {cla: "webjump", src: "img/gotolink.png"}],
+                           "ezlink"]]; }
+            valdisp = ["input", {type: "text", id: inid, size: 25, 
+                                 value: ndqval, onchange: onchange}]; }
+        else { 
+            if(ndqval && field === "address") {
+                url = "http://maps.google.com/?q=" + ndqval;
+                ndqval = ["a", {href:url,
+                                onclick: jt.fs("window.open('" + url + "')")},
+                          ndqval]; }
+            else {
+                valdisp = ndqval; } }
+        html = ["tr", 
+                [["td", {id: inid + "labeltd"},
+                  ["span", {cla: "secondaryfield"},
+                   labval]],
+                 ["td", {align: "left"},
+                  valdisp]]];
+        return html;
+    },
+
+
+    revFormFieldsHTML = function (review, type, keyval, mode) {
+        var keyrows = [], secrows = [], onchange, i, html;
+        if(app.winw < 750) {
+            secrows = keyrows; }
+        onchange = jt.fs("app.review.validate()");
+        if(type.subkey) {
+            onchange = jt.fs("jt.byId('subkeyin').focus()"); }
+        keyrows.push(makeFieldInputRow(review, mode, type.key, "keyin", 
+                                       onchange));
+        if(type.subkey) {
+            onchange = jt.fs("app.review.validate()");
+            keyrows.push(makeFieldInputRow(review, mode, type.subkey, 
+                                           "subkeyin", onchange)); }
+        for(i = 0; i < type.fields.length; i += 1) {
+            if(review[type.fields[i]] || mode === "edit") {
+                secrows.push(makeFieldInputRow(review, mode, type.fields[i],
+                                               type.fields[i] + i)); } }
+        if(mode === "edit") {
+            onchange = jt.fs("app.review.urlchg()");
+            keyrows.push(makeFieldInputRow(review, mode, "url", "urlin", 
+                                           onchange)); }
+        if(app.winw < 750) {
+            html = ["table", keyrows]; }
+        else {
+            html = ["div", {id: "revformfieldsdisplaydiv"},
+                    ["table",
+                     ["tr",
+                      [["td", {valign: "top"},
+                        ["table", keyrows]],
+                       ["td", {valign: "top"},
+                        ["table", secrows]]]]]]; }
+        return html;
+    },
+
+
     //This should have a similar look and feel to the shoutout display
-    revFormTextRow = function (review, type, keyval, mode) {
+    revFormTextAreaHTML = function (review, type, keyval, mode) {
         var area, style, placetext, lightbg;
         if(keyval) {  //have the basics so display text area
             lightbg = app.skinner.lightbg();
             style = "color:" + app.colors.text + ";" +
                     "width:" + textTargetWidth() + "px;" +
                     "padding:5px 8px;" +
-                    "background-color:" + lightbg + ";";
+                    "background-color:" + lightbg + ";" +
+                    "margin-left:10px;";
             if(mode === "edit") {
                 placetext = ">>What was most noteworthy about this?";
-                //margin:auto does not work for a textarea
-                style += "margin-left:50px;";   //displayReviewForm 100/2
                 style += "height:100px;";
                 //make background-color semi-transparent if browser supports it
                 style += "background-color:rgba(" + 
@@ -774,7 +808,7 @@ app.review = (function () {
                         review.text || ""]; }
             else {
                 style += "border:1px solid " + app.skinner.darkbg() + ";" +
-                    "overflow:auto; margin:auto;";
+                    "overflow:auto;";
                 //make background-color semi-transparent if browser supports it
                 style += "background-color:rgba(" + 
                     jt.hex2rgb(lightbg) + ",0.3);";
@@ -784,29 +818,9 @@ app.review = (function () {
         else {  //keyval for review not set yet, provide autocomplete area
             area = ["div", {id: "revautodiv", cla: "autocomplete",
                             style: "width:" + textTargetWidth() + "px;"}]; }
-        return ["tr",
-                ["td", {colspan: 4, cla: "textareatd"},
-                 area]];
+        return area;
     },
         
-
-    //pic, keywords, secondary fields
-    revFormDetailRow = function (review, type, keyval, mode) {
-        var html;
-        html = ["tr",
-                [["td", {align: "right", rowspan: 3, valign: "top"},
-                  picHTML(review, type, keyval, mode)],
-                 ["td", {colspan: 2},
-                  //use a subtable to avoid skew from really long titles
-                  ["table", {cla: "subtable", width: "100%"},
-                   ["tr",
-                    [["td", {valign: "top"},
-                      secondaryFieldsHTML(review, type, keyval, mode)],
-                     ["td", {valign: "top"},
-                      keywordsHTML(review, type, keyval, mode)]]]]]]];
-        return html;
-    },
-
 
     selectRatingByMenu = function (evtx) {
         var i, html = [], odiv;
@@ -1135,57 +1149,65 @@ app.review = (function () {
     },
 
 
+    activateStarsAndFocus = function (type, review, keyval) {
+        jt.on('starstd', 'mousedown',   starPointing);
+        jt.on('starstd', 'mouseup',     starStopPointing);
+        jt.on('starstd', 'mouseout',    starStopPointingBoundary);
+        jt.on('starstd', 'mousemove',   starPointAdjust);
+        jt.on('starstd', 'click',       starClick);
+        jt.on('starstd', 'touchstart',  starPointing);
+        jt.on('starstd', 'touchend',    starStopPointing);
+        jt.on('starstd', 'touchcancel', starStopPointing);
+        jt.on('starstd', 'touchmove',   starPointAdjust);
+        if(!keyval) {
+            jt.byId('keyin').focus(); }
+        else if(jt.byId('subkeyin') && !review[type.subkey]) {
+            jt.byId('subkeyin').focus(); }
+        else {
+            jt.byId('reviewtext').focus(); }
+    },
+
+
+    revFormAttributionHTML = function (mode) {
+        var html = "";
+        if(mode === "edit" && attribution) {
+            html = attribution; }
+        return html;
+    },
+
+
     displayReviewForm = function (pen, review, mode, errmsg) {
         var type = findReviewType(review.revtype),
             keyval = review[type.key],
-            twidth = textTargetWidth() + 100,
-            attribrow = "", html,
-            transrow = transformActionsHTML(review, type, keyval, mode);
-        if(mode === "edit" && attribution) {
-            attribrow = ["tr",
-                         ["td", {colspan: 4},
-                          ["div", {id: "attributiondiv"},
-                           attribution]]]; }
-        if(transrow) { //special case additional helper functions
-            transrow = ["tr",  //picture extends into this row
-                        ["td", {colspan: 3, id: "transformactionstd"},
-                         transrow]]; }
-        html = ["div", {cla: "formstyle", style: "width:" + twidth + "px;"},
-                ["table", {cla: "revdisptable"},
-                 [attribrow,
-                  revFormEditHeadingRow(review, type, keyval, mode),
-                  revFormIdentRow(review, type, keyval, mode),
-                  revFormTextRow(review, type, keyval, mode),
-                  revFormDetailRow(review, type, keyval, mode),
-                  transrow,
-                  ["tr",  //picture extends into this row
-                   ["td", {colspan: 3, id:"revformbuttonstd"},
-                    reviewFormButtonsHTML(pen, review, type, keyval, mode)]],
-                  ["tr", {cla:"spacertr"}],
-                  ["tr",  //this row starts after the picture
-                   ["td", {colspan: 3},
-                    ["div", {id:"revcommentsdiv"},
-                     ""]]]]]];
+            html;
+        html = ["div", {cla: "formstyle", id: "revdispdiv"},
+                [["div", {id: "revformattributiondiv"},
+                  revFormAttributionHTML(mode)],
+                 ["div", {id: "revformstarsdiv"},
+                  revFormStarsHTML(review, type, keyval, mode)],
+                 ["div", {id: "revformfieldsdiv"},
+                  revFormFieldsHTML(review, type, keyval, mode)],
+                 ["div", {id: "revformtextareadiv"},
+                  revFormTextAreaHTML(review, type, keyval, mode)],
+                 ["div", {id: "revformkeywareadiv"},
+                  revFormKeywordsHTML(review, type, keyval, mode)],
+                 ["table",
+                  ["tr",
+                   [["td", {valign: "top"},
+                     ["div", {id: "revformimagediv"},
+                      revFormImageHTML(review, type, keyval, mode)]],
+                    ["td", {valign: "top"},
+                     ["div", {id: "revformtranformactionsdiv"},
+                      transformActionsHTML(review, type, keyval, mode)]]]]],
+                 ["div", {id: "revformbuttonsdiv"},
+                  revFormButtonsHTML(pen, review, type, keyval, mode)],
+                 ["div", {id: "revcommentsdiv"}, ""]]];
         if(!jt.byId('cmain')) {
             app.layout.initContent(); }
         html = jt.tac2html(html);
         jt.out('cmain', html);
         if(mode === "edit") {
-            jt.on('starstd', 'mousedown',   starPointing);
-            jt.on('starstd', 'mouseup',     starStopPointing);
-            jt.on('starstd', 'mouseout',    starStopPointingBoundary);
-            jt.on('starstd', 'mousemove',   starPointAdjust);
-            jt.on('starstd', 'click',       starClick);
-            jt.on('starstd', 'touchstart',  starPointing);
-            jt.on('starstd', 'touchend',    starStopPointing);
-            jt.on('starstd', 'touchcancel', starStopPointing);
-            jt.on('starstd', 'touchmove',   starPointAdjust);
-            if(!keyval) {
-                jt.byId('keyin').focus(); }
-            else if(jt.byId('subkeyin') && !review[type.subkey]) {
-                jt.byId('subkeyin').focus(); }
-            else {
-                jt.byId('reviewtext').focus(); } }
+            activateStarsAndFocus(type, review, keyval); }
         app.layout.adjust();
         if(errmsg) {
             jt.out('revsavemsg', errmsg); }
@@ -1464,7 +1486,7 @@ return {
         readAndValidateFieldValues();
         revid = jt.instId(crev);
         if(!revid || reviewFieldValuesChanged()) {
-            html = jt.byId('revformbuttonstd').innerHTML;
+            html = jt.byId('revformbuttonsdiv').innerHTML;
             if(html.indexOf("<button") >= 0) { //not already saving
                 return app.review.save(false, "uploadpic"); }
             return; }  //already saving, just ignore the pic upload click
@@ -1591,23 +1613,23 @@ return {
     save: function (doneEditing, actionstr, skipvalidation) {
         var errors = [], i, errtxt = "", type, url, data, html;
         //remove save button immediately to avoid double click dupes...
-        html = jt.byId('revformbuttonstd').innerHTML;
+        html = jt.byId('revformbuttonsdiv').innerHTML;
         if(!skipvalidation) {
-            jt.out('revformbuttonstd', "Verifying...");
+            jt.out('revformbuttonsdiv', "Verifying...");
             type = findReviewType(crev.revtype);
             if(!type) {
-                jt.out('revformbuttonstd', html);
+                jt.out('revformbuttonsdiv', html);
                 jt.out('revsavemsg', "Unknown review type");
                 return; }
             readAndValidateFieldValues(type, errors);
             verifyRatingStars(type, errors, actionstr);
             if(errors.length > 0) {
-                jt.out('revformbuttonstd', html);
+                jt.out('revformbuttonsdiv', html);
                 for(i = 0; i < errors.length; i += 1) {
                     errtxt += errors[i] + "<br/>"; }
                 jt.out('revsavemsg', errtxt);
                 return; } }
-        jt.out('revformbuttonstd', "Saving...");
+        jt.out('revformbuttonsdiv', "Saving...");
         app.onescapefunc = null;
         url = "updrev?";
         if(!jt.instId(crev)) {
@@ -1700,7 +1722,7 @@ return {
                 revTypeChoiceHTML("radio", "rgrp", crev.revtype,
                                   jt.fs("app.review.selRevType()"), 
                                   null, true)];
-        app.layout.openDialog({x:100, y:300}, jt.tac2html(html));
+        app.layout.openDialog({x:100, y:480}, jt.tac2html(html));
     },
 
 
@@ -1825,7 +1847,7 @@ return {
                 rows.push(["tr", cells]);
                 tdc = 0;
                 cells = []; } }
-        return ["table", rows];
+        return ["table", {cla: "keywordcheckboxtable"}, rows];
     },
 
 
