@@ -891,7 +891,7 @@ app.review = (function () {
 
     starStopPointingBoundary = function (event) {
         var td, tdpos, xypos, evtx, evty;
-        td = jt.byId('starstd');
+        td = jt.byId('revformstarsdiv');
         tdpos = jt.geoPos(td);
         xypos = jt.geoXY(event);
         evtx = xypos.x;
@@ -1157,15 +1157,15 @@ app.review = (function () {
 
 
     activateStarsAndFocus = function (type, review, keyval) {
-        jt.on('starstd', 'mousedown',   starPointing);
-        jt.on('starstd', 'mouseup',     starStopPointing);
-        jt.on('starstd', 'mouseout',    starStopPointingBoundary);
-        jt.on('starstd', 'mousemove',   starPointAdjust);
-        jt.on('starstd', 'click',       starClick);
-        jt.on('starstd', 'touchstart',  starPointing);
-        jt.on('starstd', 'touchend',    starStopPointing);
-        jt.on('starstd', 'touchcancel', starStopPointing);
-        jt.on('starstd', 'touchmove',   starPointAdjust);
+        jt.on('revformstarsdiv', 'mousedown',   starPointing);
+        jt.on('revformstarsdiv', 'mouseup',     starStopPointing);
+        jt.on('revformstarsdiv', 'mouseout',    starStopPointingBoundary);
+        jt.on('revformstarsdiv', 'mousemove',   starPointAdjust);
+        jt.on('revformstarsdiv', 'click',       starClick);
+        jt.on('revformstarsdiv', 'touchstart',  starPointing);
+        jt.on('revformstarsdiv', 'touchend',    starStopPointing);
+        jt.on('revformstarsdiv', 'touchcancel', starStopPointing);
+        jt.on('revformstarsdiv', 'touchmove',   starPointAdjust);
         if(!keyval) {
             jt.byId('keyin').focus(); }
         else if(jt.byId('subkeyin') && !review[type.subkey]) {
