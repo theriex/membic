@@ -804,17 +804,25 @@ app.profile = (function () {
 
 
     writeFollowTabContent = function (penref) {
-        var html;
+        var tabtxt, html;
         if(penref.profstate.foltabmode === "following") {
+            tabtxt = "Following&nbsp;(" + penref.pen.following + ")";
+            if(app.winw < 600) {
+                tabtxt = String(penref.pen.following); }
             html = ["a", {href: "#following",
                           title: "Click to see who you are following",
                           onclick: jt.fs("app.profile.tabselect('following')")},
-                    "Following (" + penref.pen.following + ")"]; }
+                    [["img", {cla: "tabico", src: "img/following.png"}],
+                     "&nbsp;" + tabtxt]]; }
         else {
+            tabtxt = "Followers&nbsp;(" + penref.pen.followers + ")";
+            if(app.winw < 600) {
+                tabtxt = String(penref.pen.followers); }
             html = ["a", {href: "#followers",
                           title: "Click to see who is following you",
                           onclick: jt.fs("app.profile.tabselect('followers')")},
-                    "Followers (" + penref.pen.followers + ")"]; }
+                    [["img", {cla: "tabico", src: "img/follow.png"}],
+                     "&nbsp;" + tabtxt]]; }
         jt.out('followli', jt.tac2html(html));
     },
 
@@ -852,17 +860,17 @@ app.profile = (function () {
                      ["a", {href: "#recentreviews",
                             title: "Click to see recent reviews",
                             onclick: jt.fs("app.profile.tabselect('recent')")},
-                      "Recent"]],
+                      "Latest"]],
                     ["li", {id: "bestli", cla: "unselectedTab"},
                      ["a", {href: "#bestreviews",
                             title: "Click to see top rated",
                             onclick: jt.fs("app.profile.tabselect('best')")},
-                      "Top Rated"]],
+                      app.winw > 600 ? "Top&nbsp;Rated" : "Top"]],
                     ["li", {id: "allrevsli", cla: "unselectedTab"},
                      ["a", {href: "#allreviews",
                             title: "Click to see all reviews",
                             onclick: jt.fs("app.profile.tabselect('allrevs')")},
-                      "All Reviews"]],
+                      app.winw > 600 ? "All&nbsp;Reviews": "All"]],
                     ["li", {id: "followli", cla: "unselectedTab"}]]]]]];
         jt.out('proftabsdiv', jt.tac2html(html));
         writeFollowTabContent(penref);
@@ -915,7 +923,7 @@ app.profile = (function () {
         shout.style.color = app.colors.text;
         shout.style.backgroundColor = app.skinner.lightbg();
         //rightcoldiv - profpersonaldiv - profshoutdiv - 2*shoutdiv|shoutout
-        shout.style.width = "134px";
+        shout.style.width = "130px";
         shout.style.padding = "5px 8px";
     },
 

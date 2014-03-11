@@ -191,8 +191,9 @@ img { border:0px; }
   border-left: 1px solid #666;
   border-right: 1px solid #666;
  }
-#proftabsdiv a { padding: 0 1em; }
+#proftabsdiv a { padding: 0 15px; }
 .unselectedTab { border-bottom: 1px solid #666; }
+.tabico { width:20px; height:20px; vertical-align:top; }
 #profdisptable { }
 #inlinkdiv { font-size:small; font-weight:normal; padding:10px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }

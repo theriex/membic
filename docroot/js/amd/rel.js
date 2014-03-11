@@ -347,7 +347,7 @@ app.rel = (function () {
 
 
     relListCtrlsHTML = function (pen, direction, divid, refarray) {
-        var html = "", tab;
+        var html = "", showing, tab;
         if(refarray && refarray.length > 0) {
             html = [["input", {type: "checkbox", name: "cblurkincl",
                                value: "hidenorev", id: "hidenorev",
@@ -359,18 +359,22 @@ app.rel = (function () {
                                               "')")}],
                      ["label", {fo: "hidenorev"}, "Hide if no reviews"]]; }
         tab = "following";
+        showing = "followers";
         if(direction === "outbound") {
-            tab = "followers"; }
-        html = 
-            ["table", {id: "relctrlstable"},
-             ["tr",
-              [["td",
-                html],
-               ["td",
-                ["div", {id: "followmodelinkdiv"},
-                 ["a", {href:"#followshowtoggle",
-                        onclick: jt.fs("app.profile.tabselect('" + tab + "')")},
-                  "Show " + tab.capitalize()]]]]]];
+            tab = "followers";
+            showing = "following"; }
+        html = ["table", {id: "relctrlstable"},
+                [["tr",
+                  [["td", {cla: "headingtxt"}, showing.capitalize()],
+                   ["td",
+                    ["div", {id: "followmodelinkdiv"},
+                     ["a", {href:"#followshowtoggle",
+                            onclick: jt.fs("app.profile.tabselect('" + 
+                                           tab + "')")},
+                      "Show " + tab.capitalize()]]]]],
+                 ["tr",
+                  ["td",
+                   html]]]];
         html = jt.tac2html(html);
         return html;
     },
@@ -385,6 +389,7 @@ app.rel = (function () {
                 ctbl = jt.byId('relctrlstable');
                 x = Math.floor(fli.offsetLeft + (fli.offsetWidth / 2));
                 x -= ctbl.offsetWidth;
+                x = Math.max(x, 0);
                 jt.byId('relctrlsdiv').style.marginLeft = String(x) + "px"; } }
     },
 

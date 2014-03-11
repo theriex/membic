@@ -86,17 +86,17 @@ app.activity = (function () {
                     top = ["a", {href: "#", title: "Show top reviews",
                                  onclick: jt.fs("app.activity.switchmode" +
                                                 "('amtop')")},
-                           "Top"]; }
+                           "Top Rated"]; }
                 else {
                     top = ["span", {cla: "actmodeseldis"},
-                           "Top"]; } }
+                           "Top Rated"]; } }
             else { //activityMode === "amtop"
                 recent = ["a", {href: "#", title: "Show recent reviews",
                                 onclick: jt.fs("app.activity.switchmode" + 
                                                "('amnew')")},
                           "Recent"];
                 top = ["span", {cla: "actmodesel"},
-                       "Top"]; }
+                       "Top Rated"]; }
             url = "rssact?pen=" + app.pen.currPenId();
             rsslink = ["a", {href: url, id: "rsslink",
                              title: "RSS feed for recent friend reviews",
@@ -116,8 +116,8 @@ app.activity = (function () {
                           [["td", {id: "toptd", align: "right"}, top],
                            ["td", revTypeSelectorHTML("toptype")]]],
                          ["tr",
-                          [["td", {align: "right"}, recent],
-                           ["td", rsslink]]]]]; } }
+                          ["td", {colspan: 2}, 
+                           [recent, rsslink]]]]]; } }
         else if(dispmode === "memo") {
             if(!remActivityType) {
                 remall = ["span", {cla: "actmodesel"},
@@ -675,6 +675,8 @@ app.activity = (function () {
     displayReviewActivity = function () {
         var actdisp, itemhtml, html;
         topModeEnabled = true;
+        if(app.layout.currnavmode() !== "activity") {
+            return; }  //probably switched modes while things were loading
         writeNavDisplay("activity");
         actdisp = app.pen.currPenRef().actdisp;
         itemhtml = dispRevActItemsHTML(actdisp);
@@ -765,7 +767,8 @@ app.activity = (function () {
     bootActivityDisplay = function () {
         var penids;
         topModeEnabled = false;
-        writeNavDisplay("activity");
+        if(app.layout.currnavmode() === "activity") {  //might have switched
+            writeNavDisplay("activity"); }             //while loading...
         penids = app.rel.outboundids();
         if(penids.length === 0) {
             jt.out('revactdiv', followMoreHTML(penids));

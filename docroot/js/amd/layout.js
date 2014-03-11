@@ -253,6 +253,7 @@ app.layout = (function () {
             if(target <= 320) {  //hard minimum phone size
                 target = 316; }  //fudge pixels to avoid side scrolling
             if(target > 600) { //enough space to play with
+                target -= 4;  //fudge pixels to avoid side scrolling
                 leftmargin = Math.round(target * 0.1);
                 leftmargin = Math.min(leftmargin, 100); }
             target -= leftmargin;
