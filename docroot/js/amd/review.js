@@ -346,6 +346,17 @@ app.review = (function () {
     },
 
 
+    urlLabel = function () {
+        var html;
+        html = ["a", {href: "#ezlink", cla: "permalink",
+                      onclick: jt.fs("app.hinter.ezlink()"),
+                      title: "Write a review from any site"},
+                [["img", {cla: "webjump", src: "img/gotolink.png"}],
+                 "ezlink"]];
+        return html;
+    },
+
+
     displayTypeSelect = function () {
         var i, typename, captype, ts = [], urlh, html;
         for(i = 0; i < reviewTypes.length; i += 1) {
@@ -367,7 +378,7 @@ app.review = (function () {
                        ["div", {cla: "bigoverlabel"},
                         "or paste a web address to read information from"]]],
                      ["tr",
-                      [["td", {valign: "top", align: "right"}, "URL"],
+                      [["td", {valign: "top", align: "right"}, urlLabel()],
                        ["td", {align: "left"},
                         [["input", {type: "url", id: "urlin", size: 32,
                                     onchange: jt.fs("app.review.readURL()")}],
@@ -726,11 +737,7 @@ app.review = (function () {
         ndqval = jt.ndq(review[field]);
         if(mode === "edit") {
             if(field === "url") {  //special graphic label
-                labval = ["a", {href: "#ezlink", cla: "permalink",
-                                onclick: jt.fs("app.hinter.ezlink()"),
-                                title: "Write a review from any site"},
-                          [["img", {cla: "webjump", src: "img/gotolink.png"}],
-                           "ezlink"]]; }
+                labval = urlLabel(); }
             valdisp = ["input", {type: "text", id: inid, size: 25, 
                                  value: ndqval, onchange: onchange}]; }
         else { 
@@ -1722,7 +1729,7 @@ return {
                 revTypeChoiceHTML("radio", "rgrp", crev.revtype,
                                   jt.fs("app.review.selRevType()"), 
                                   null, true)];
-        app.layout.openDialog({x:100, y:480}, jt.tac2html(html));
+        app.layout.openDialog({y:480}, jt.tac2html(html));
     },
 
 

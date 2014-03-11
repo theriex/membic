@@ -9,15 +9,19 @@
 <body>
 
   <div id="bookslidediv">
-    <p class="tagline">For easy reviewing, bookmark this link:</p>
+    <p class="tagline">For easy reviewing, "right click" the following link and add it to your bookmarks:</p>
 
     <div class="bookmarkletlinkdiv">
       <a href="javascript:(function(){window.open('http://www.wdydfun.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
-         style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">wdydfun&nbsp;link</a>
+         style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">wdydfun&nbsp;review</a>
     </div>
 
-    <p class="tagline">then surf to any page on the internet and select the bookmark to kick off the review process.
-If you prefer to not open a new window for your review, bookmark this link instead: 
+    <p class="tagline">This magic link is called a "bookmarklet",
+    which is a fancy name for a line of javascript that opens up
+    wdydfun in a new browser window, passing along the url of the site
+    you were just on.  Voila, instant review details. </p>
+
+<p>If you prefer to open wdydfun using the same window, add this bookmarklet instead: 
 <a href="javascript:(function(){window.location.href='http://www.wdydfun.com?newrev=&url='+encodeURIComponent(window.location.href);})();">
 wdydfun&nbsp;same&nbsp;window</a>
 </p>

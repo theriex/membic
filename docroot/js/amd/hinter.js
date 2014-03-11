@@ -51,7 +51,7 @@ app.hinter = (function () {
                  ["button", {type: "button", id: "tipok",
                              onclick: jt.fs("app.hinter.tipok('looktop')")},
                   "OK"]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
     },
@@ -86,27 +86,19 @@ app.hinter = (function () {
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"}, "Easy Review Link"],
                 [["p",
-                  "To import information from any site for your review, add one of these links to your bookmarks:"],
-                 ["table",
-                  [["tr",
-                    [["td", {cla: "bookmarkletdescr"},
-                      "Start a review in a new window:"],
-                     ["td",
-                      ["div", {cla: "bookmarkletlinkdiv"},
-                       ["a", {href: hideBookmarkletFromJSLint(true)},
-                        "wdydfun window"]]],
-                     ["td", {rowspan: 2, valign: "middle"},
-                      "&#x21D6;<br/>&#x21D9;"],
-                     ["td", {rowspan: 2, valign: "middle"},
-                      ["div", {cla: "rightclick"},
-                       "(\"right click\")"]]]],
-                   ["tr",
-                    [["td", {cla: "bookmarkletdescr"},
-                      "Start a review in the same tab:"],
-                     ["td",
-                      ["div", {cla: "bookmarkletlinkdiv"},
-                       ["a", {href: hideBookmarkletFromJSLint(false)},
-                        "wdydfun this"]]]]]]]],
+                  "The wdydfun bookmarklet lets you kick off a review from any site. To install it, \"right click\" this link:"],
+                 ["p",
+                  ["&#x2192;&nbsp;",
+                   ["a", {href: hideBookmarkletFromJSLint(true)},
+                    "wdydfun review"],
+                   "&nbsp;&#x2190;"]],
+                 ["p",
+                  ["and add it to your bookmarks. ",
+                   ["span", {cla: "smalltext"},
+                    ["a", {href: "#more", 
+                           onclick: jt.fs("app.layout.displayDoc('" + 
+                                          "docs/more.html')")},
+                     "Read how it works."]]]]],
                 ["div", {cla: "dismissradiodiv"},
                  cboxhtml],
                 ["div", {cla: "tipsbuttondiv"},
@@ -114,7 +106,7 @@ app.hinter = (function () {
                              onclick: jt.fs("app.hinter.tipok('ezlink')")},
                   "OK"]]];
         html = jt.tac2html(html);
-        app.layout.queueDialog({x:80, y:140}, html, null,
+        app.layout.queueDialog({y:140}, html, null,
                                function () {
                                    jt.byId('tipok').focus(); });
     },
@@ -151,7 +143,7 @@ app.hinter = (function () {
                     ["button", {type: "button", id: "writerevbutton",
                              onclick: jt.fs("app.hinter.writeReview()")},
                      "Write My First Review"]]]]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('writerevbutton').focus(); });
     },
@@ -190,7 +182,7 @@ app.hinter = (function () {
                     ["button", {type: "button", id: "fillcitybutton",
                                 onclick: jt.fs("app.hinter.fillCity()")},
                      "Update Profile"]]]]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('fillcitybutton').focus(); });
     },
@@ -222,7 +214,7 @@ app.hinter = (function () {
                  ["button", {type: "button", id: "tipok",
                              onclick: jt.fs("app.hinter.tipok('remrev')")},
                   "OK"]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
     },
@@ -255,7 +247,7 @@ app.hinter = (function () {
                  ["button", {type: "button", id: "tipok",
                              onclick: jt.fs("app.hinter.tipok('request')")},
                   "OK"]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null,
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
     },

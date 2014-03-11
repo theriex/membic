@@ -331,8 +331,12 @@ return {
     //clobbers existing dialog if already open
     openDialog: function (coords, html, initf, visf) {
         var dlgdiv = jt.byId('dlgdiv');
-        window.scrollTo(0,0);
+        //window.scrollTo(0,0);  -- makes phone dialogs jump around
         if(coords) {
+            if(!coords.x) {
+                coords.x = Math.min(Math.round(app.winw * 0.1), 100); }
+            if(coords.x > (app.winw / 2)) {
+                coords.x = 20; }  //display too tight, use default left pos
             dlgdiv.style.left = String(coords.x) + "px";
             dlgdiv.style.top = String(coords.y) + "px"; }
         else {

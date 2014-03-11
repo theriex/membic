@@ -237,8 +237,6 @@ app.profile = (function () {
         if(pen.pen) {  //got a penref, adjust accordingly
             pen = pen.pen; }
         html = [
-            ["div", {id: "accountdiv"},
-             app.login.loginInfoHTML(pen)],
             "Access \"" + pen.name + "\" via: ",
             ["table",
              [["tr",
@@ -252,14 +250,14 @@ app.profile = (function () {
                 ["td",  //Account settings link
                  app.login.accountSettingsLinkHTML(pen)]]],
               ["tr",
-               [["td",  //Facebook
+               [["td", {cla: "authcbtd"},  //Facebook
                  [["input", {type: "checkbox", name: "aafbid", id: "aafbid",
                              value: authtypes.fbid,
                              checked: jt.toru(jt.isId(pen.fbid), "checked"),
                              onchange: jt.fs("app.profile.toggleAuth('" +
                                              "fbid','" + domid + "')")}],
                   ["label", {fo: "aafbid"}, authtypes.fbid]]],
-                ["td",  //Twitter
+                ["td", {cla: "authcbtd"},  //Twitter
                  [["input", {type: "checkbox", name: "aatwid", id: "aatwid",
                              value: authtypes.twid,
                              checked: jt.toru(jt.isId(pen.twid), "checked"),
@@ -267,14 +265,14 @@ app.profile = (function () {
                                              "twid','" + domid + "')")}],
                   ["label", {fo: "aatwid"}, authtypes.twid]]]]],
               ["tr",
-               [["td",  //Google+
+               [["td", {cla: "authcbtd"},  //Google+
                  [["input", {type: "checkbox", name: "aagsid", id: "aagsid",
                              value: authtypes.gsid,
                              checked: jt.toru(jt.isId(pen.gsid), "checked"),
                              onchange: jt.fs("app.profile.toggleAuth('" +
                                              "gsid','" + domid + "')")}],
                   ["label", {fo: "aagsid"}, authtypes.gsid]]],
-                ["td",  //GitHub
+                ["td", {cla: "authcbtd"},  //GitHub
                  [["input", {type: "checkbox", name: "aaghid", id: "aaghid",
                              value: authtypes.ghid,
                              checked: jt.toru(jt.isId(pen.ghid), "checked"),
@@ -350,7 +348,7 @@ app.profile = (function () {
                        pens[i].name]); }
         opts.push(["option", {id: "newpenopt"}, "New Pen Name"]);
         html = ["div", {id: "penseldiv"},
-                [["span", {cla: "headingtxt"}, 
+                [["span", {id: "writingas"}, 
                   ["Writing as ",
                    ["select", {id: "penselect",
                                onchange: jt.fs("app.profile.switchPen()")},
@@ -385,7 +383,11 @@ app.profile = (function () {
                                 value: pen.name}]]]],
                   ["tr",
                    //td from previous row extends into here
-                   ["td", {id: "settingsauthtd"}]],
+                   ["td", 
+                    ["div", {id: "accountdiv"},
+                     app.login.loginInfoHTML(pen)]]],
+                  ["tr",
+                   ["td", {colspan: 2, id: "settingsauthtd"}]],
                   ["tr",
                    ["td", {colspan: 2, id: "settingsskintd"}]],
                   ["tr",

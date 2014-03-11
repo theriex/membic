@@ -679,7 +679,7 @@ app.revresp = (function () {
                 ["div", {cla: "headingtxt"},
                  bid.capitalize()],
                 html];
-        app.layout.openDialog({x:150, y:370}, jt.tac2html(html), null, visf);
+        app.layout.openDialog({x:200, y:370}, jt.tac2html(html), null, visf);
     },
 
 
@@ -821,7 +821,7 @@ return {
                               placeholder: "Review title or name",
                               value: correspsrch.srchval}]],
                   ["div", {id: correspsrch.outdivId}]]]];
-        app.layout.openDialog({x:150, y:370}, jt.tac2html(html), null,
+        app.layout.openDialog({x:200, y:370}, jt.tac2html(html), null,
                               function () {
                                   jt.byId(correspsrch.inputId).focus(); });
         app.profile.revsearch(correspsrch);
@@ -1180,7 +1180,7 @@ return {
                                 onclick: jt.fs("app.revresp.topreject('" +
                                                qcid + "')")},
                      "Reject"]]]]]];
-        app.layout.openDialog({x:150, y:300}, jt.tac2html(html));
+        app.layout.openDialog({x:200, y:300}, jt.tac2html(html));
     },
 
 
@@ -1410,7 +1410,7 @@ return {
                                 onclick: jt.fs("app.revresp.clearAbuseConf('" +
                                                abid + "')")},
                      "OK"]]]]]];
-        app.layout.openDialog({x:150, y:200}, jt.tac2html(html));
+        app.layout.openDialog({x:200, y:200}, jt.tac2html(html));
     },
 
 

@@ -370,8 +370,8 @@ app.login = (function () {
             jt.out('altauthmethods', ""); }
         else {  //regular login
             jt.out('nativelogintitlediv', "Sign in directly...");
-            jt.out('altauthinstrdiv', 
-                   "&nbsp;&nbsp;...or with your social account");
+            jt.out('altauthinstrdiv',  //mind the ipad length here
+                   "&nbsp;&nbsp;...or with your social net");
             jt.out('altauthmethods', displayAltAuthMethods()); }
         if(!jt.isLowFuncBrowser()) {  //upgrade the sign in button look
             html = ["div", {id: "signinbuttondiv",

@@ -128,8 +128,7 @@ app.activity = (function () {
                           "All"]; }
             html = ["table",
                     ["tr",
-                     [["td", "Remembered"],
-                      ["td", {id: "alltd"}, remall],
+                     [["td", {id: "alltd"}, remall],
                       ["td", revTypeSelectorHTML("remtype")]]]]; }
         html = jt.tac2html(html);
         app.layout.headingout(html);
@@ -504,7 +503,7 @@ app.activity = (function () {
                  ["button", {type: "button", id: "introduceok",
                              onclick: jt.fs("app.layout.closeDialog()")},
                   "OK"]]];
-        app.layout.queueDialog({x:80, y:140}, jt.tac2html(html), null, 
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null, 
                                function () {
                                    jt.byId('introduceok').focus(); });
     },
@@ -872,7 +871,7 @@ return {
                 searchOptionsHTML(),
                 ["div", {id: "searchresults"}]];
         html = jt.tac2html(html);
-        app.layout.openDialog({x:180, y:140}, html);
+        app.layout.openDialog({y:140}, html);
         jt.byId('searchoptionsdiv').style.display = "none";
         jt.byId('searchtxt').focus();
         //hit the search button for them so they don't have to figure out
@@ -1129,7 +1128,7 @@ return {
                           onclick: jt.fs("app.activity.writeReqRev(" +
                                          index + ")")},
                "Write Review"]]]];
-        app.layout.openDialog({x:100, y:140}, jt.tac2html(html));
+        app.layout.openDialog({y:140}, jt.tac2html(html));
     },
 
 
