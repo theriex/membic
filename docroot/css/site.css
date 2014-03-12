@@ -128,7 +128,7 @@ img { border:0px; }
 .respico { vertical-align:bottom; }
 .respicodis { opacity:0.3; filter:alpha(opacity=30); }
 #forgotpw { font-size:small; font-style:italic; }
-#loginbtd { padding:10px 30px; }
+#loginbtd { padding:20px 30px 20px 20px; }
 #signinbuttondiv { background:#70bbe9;
  color:#003; font-size:x-large; font-weight:normal;
  padding:5px 10px; display:table; cursor:pointer; 

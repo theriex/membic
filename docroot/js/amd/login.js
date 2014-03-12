@@ -373,12 +373,6 @@ app.login = (function () {
             jt.out('altauthinstrdiv',  //mind the ipad length here
                    "&nbsp;&nbsp;...or with your social net");
             jt.out('altauthmethods', displayAltAuthMethods()); }
-        if(!jt.isLowFuncBrowser()) {  //upgrade the sign in button look
-            html = ["div", {id: "signinbuttondiv",
-                            onclick: "jt.byId('loginform').submit();"},
-                    ["a", {id: "signinlink",
-                           title: "Sign in via secure server"}, "Sign in"]];
-            jt.out('loginbtd', jt.tac2html(html)); }
         html = ["a", {id: "macc", href: "create new account...",
                       title: "Create new native login",
                       onclick: jt.fs("app.login.displayNewAccountForm()")},
@@ -860,9 +854,8 @@ return {
                  function (code, errtxt) {
                      var html;
                      jt.out('loginstatdiv', "Login failed: " + errtxt);
-                     html = ["button", {type: "button", id: "loginbutton",
-                                        onclick: jt.fs("app.login.upwlogin()")},
-                             "Sign in"];
+                     html = ["input", {type: "submit", cla: "loginbutton",
+                                       value: "Sign in"}];
                      jt.out('loginbspan', jt.tac2html(html)); },
                 jt.semaphore("login.upwlogin"));
     },
