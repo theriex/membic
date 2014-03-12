@@ -337,8 +337,8 @@ app.review = (function () {
                        ["td", ts[5]],
                        ["td", ts[6]],
                        ["td", ts[7]]]]]]; }
-        html = ["div", {id: "revfdiv", cla: "formstyle", align: "center"},
-                ["div", {id: "formrejustifydiv", cla: "centertablediv"},
+        html = ["div", {id: "revfdiv", cla: "formstyle"},
+                ["div", {id: "formrejustifydiv"},
                  ["ul", {cla: "reviewformul"},
                   [["li", html],
                    ["li", urlh]]]]];
@@ -726,6 +726,8 @@ app.review = (function () {
                         starsImageHTML(review.rating, mode === "edit")],
                        "&nbsp;",
                        app.review.badgeImageHTML(type)]]]]; }
+        else {  //show type 
+            html = app.review.badgeImageHTML(type); }
         return html;
     },
         
