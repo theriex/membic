@@ -179,6 +179,8 @@ app.layout = (function () {
         slidedim.x = 0;
         if(sep) {
             slidedim.x = logodim.w + sep; }
+        else { //adjust slides down to cover the bottom loop of the 'y'
+            slidedim.y = 11; }
         jt.setdims('slidesdiv', slidedim);
         jt.setdims('introslide0', slidedim);
         jt.setdims('introslide1', slidedim);
