@@ -94,19 +94,6 @@ def getSubkey(rev):
     return subkey
 
 
-def urlImageLink(rev):
-    if not rev.url:
-        return ""
-    index = max(0, rev.url.rfind('.'))
-    abbrev = rev.url[index : index + 4]
-    html = "<a href=\"" + rev.url + "\""
-    html +=  " onclick=\"window.open('" + rev.url + "');return false;\""
-    html +=  " title=\"" + rev.url + "\">"
-    html +=  "<img class=\"webjump\" src=\"../img/gotolink.png\"/>"
-    html += "</a>"
-    return html
-
-
 def reviewPicHTML(rev):
     html = ""
     if rev.imguri:
@@ -121,6 +108,60 @@ def reviewPicHTML(rev):
         html +=    " src=\"../revpic?revid=" + str(rev.key().id())
         html +=  "\"/>"
     return html;
+
+
+def urlImageLink(rev):
+    if not rev.url:
+        return ""
+    index = max(0, rev.url.rfind('.'))
+    abbrev = rev.url[index : index + 4]
+    html = "<a href=\"" + rev.url + "\""
+    html +=  " onclick=\"window.open('" + rev.url + "');return false;\""
+    html +=  " title=\"" + rev.url + "\">"
+    html +=  "<img class=\"webjump\" src=\"../img/gotolink.png\"/>"
+    html += "</a>"
+    return html
+
+
+def fieldsZip(rev):
+    fields = []
+    vals = []
+    if rev.revtype == "book":
+        fields = [ "title", "author", "publisher", "year" ]
+        vals = [ rev.title, rev.author, rev.publisher, rev.year ]
+    if rev.revtype == "movie":
+        fields = [ "title", "year", "starring" ]
+        vals = [ rev.title, rev.year, rev.starring ]
+    if rev.revtype == "video":
+        fields = [ "title", "artist" ]
+        vals = [ rev.title, rev.artist ]
+    if rev.revtype == "music":
+        fields = [ "title", "artist", "album", "year" ]
+        vals = [ rev.title, rev.artist, rev.album, rev.year ]
+    if rev.revtype == "food":
+        fields = [ "name", "address" ]
+        vals = [ rev.name, rev.address ]
+    if rev.revtype == "drink":
+        fields = [ "name", "address" ]
+        vals = [ rev.name, rev.address ]
+    if rev.revtype == "to do":
+        fields = [ "name", "address" ]
+        vals = [ rev.name, rev.address ]
+    assoc = zip(fields, vals)
+    return assoc
+
+
+def fieldsTable(rev):
+    assoc = fieldsZip(rev)
+    html = "<table>"
+    for av in assoc:
+        if av[1]:
+            html += "<tr><td><span class=\"secondaryfield\">"
+            html +=   av[0][:1].upper() + av[0][1:]
+            html +=   "</span></td>"
+            html += "<td>" + safestr(av[1]) + "</td></tr>"
+    html += "</table>"
+    return html
 
 
 def secondaryFieldZip(rev):
@@ -330,9 +371,12 @@ def revhtml(rev, pen, refer):
     simg = timg[0:-6] + "Pic2.png"
     rdesc = descrip(rev)
     revidstr = str(rev.key().id())
+    # People are not here to study this page.  Whether they know about
+    # wdydfun or not, the next logical step is always to switch from
+    # the static to the dynamic display.
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + revidstr
     revurl = "../?view=review&" + penrevparms
-    profurl = "../?view=profile&profid=" + str(rev.penid)
+    # profurl = "../?view=profile&profid=" + str(rev.penid)
     # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
@@ -356,27 +400,64 @@ def revhtml(rev, pen, refer):
     html +=        " href=\"" + simg + "\" />\n"
     html += "</head>\n"
     html += "<body id=\"bodyid\">\n"
-    # HTML content from index.html...
-    # watch the height on this next div, overflow causes major ad placement skew
-    html += "<div id=\"statictopsectiondiv\">\n"
-    html += "  <div id=\"staticlogodiv\">\n"
-    html += "    <img src=\"../img/wdydfun.png\" id=\"logoimg\"\n"
-    html += "         border=\"0\"\n"
-    html += "         onclick=\"window.open('http://www.wdydfun.com');"
-    html +=                                 "return false;\""
-    html += "         style=\"width:243px;height:120px;\"/>\n"
-    html += "  </div>\n"
+    # HTML content adapted from index.html...
+    html += "<div id=\"staticlogodiv\">\n"
+    html += "  <img src=\"../img/wdydfun.png\" id=\"logoimg\"\n"
+    html += "       border=\"0\"\n"
+    html += "       onclick=\"window.location.href='" + revurl + "';"
+    html +=                  "return false;\""
+    html += "       style=\"width:243px;height:120px;\"/>\n"
     html += "</div>\n"
-    # Specialized class for content area, left spacing used by ads..
-    html += "<div id=\"appspacedivstatic\">\n"
-    # older android browser won't keep divs on same line..
-    html += "<table id=\"forceAdsSameLineTable\">"
-    html += " <tr>"
-    html += "  <td valign=\"top\" align=\"left\">"
-
+    html += "<div id=\"contentdiv\" class=\"statrevcontent\">\n"
+    # HTML adapted from profile.js displayProfileHeading
+    html +=   "<div id=\"centerhdiv\">\n"
+    html +=     "<span id=\"penhnamespan\">"
+    html +=       "<a href=\"" + revurl + "\""
+    html +=         " title=\"Show profile for " + pen.name + "\""
+    html +=         " onclick=\"window.location.href='" + revurl + "';"
+    html +=                    "return false;\""
+    html +=         ">" + pen.name + "</a>"
+    html +=     "</span>\n"
+    html +=     "<span id=\"penhbuttonspan\">"
+    html +=       "<a href=\"" + revurl + "\""
+    html +=         " title=\"View from your pen name\""
+    html +=         " onclick=\"window.location.href='" + revurl + "';"
+    html +=                    "return false;\""
+    html +=       "><img class=\"navico\" src=\"../img/penname.png\"/></a>"
+    html +=     "</span>\n"
+    html +=   "</div>"
+    # HTML copied/adapted from review.js displayReviewForm
+    html +=   "<div class=\"formstyle\" id=\"revdispdiv\"\n>"
+    html +=     "<div id=\"revformstarsdiv\" style=\"width:90%;\">\n"
+    html +=       "<div id=\"revformstarscontent\">\n"
+    html +=         "<div id=\"rfsjumpdiv\" style=\"float:right;\">\n"
+    html +=           urlImageLink(rev)
+    html +=         "</div>\n"
+    html +=         "<div id=\"rfsratediv\">\n"
+    html +=           "<span id=\"stardisp\">\n"
+    html +=             starsImageHTML(rev.rating)
+    html +=           "</span>\n" 
+    html +=           "&nbsp;" + badgeImageHTML(rev.revtype)
+    html +=         "</div>\n"
+    html +=       "</div>\n"
+    html +=     "</div>\n"  #revformstarsdiv
+    html +=     "<div id=\"revformfieldsdiv\">\n"
+    html +=       fieldsTable(rev)
+    html +=     "</div>\n"
+    html +=     "<div class=\"shoutoutstatic\" style=\"width:90%;\">\n"
+    html +=       displayText(rev.text)
+    html +=     "</div>\n"
+    html +=     "<div id=\"revformkeywareadiv\">\n"
+    html +=       "<div class=\"csvstrdiv\">\n"
+    html +=         safestr(rev.keywords)
+    html +=       "</div>\n"
+    html +=     "</div>\n"
+    html +=     "<div id=\"revformimagediv\">\n"
+    html +=       reviewPicHTML(rev)
+    html +=     "</div>\n"
+    html +=   "</div>\n"
     # This is a public facing page, not a logged in page, so show some
-    # ads to help pay for hosting service. Yeah right. 
-    html += "<div id=\"staticadupperspacer\"></div>"
+    # ads to help pay for hosting. As if anyone ever clicks...
     html += "<div id=\"adreservespace\" style=\""
     html +=   "width:170px;height:610px;"
     html +=   "background:#fffffc;"
@@ -400,72 +481,7 @@ def revhtml(rev, pen, refer):
     html += "</script>\n"
     # end of code copied from adsense
     html += "</div>\n"
-    html += "</div>\n"
-
-    html += "  </td><td valign=\"top\">"
-    # general content area from index.html
-    html +=   "<div id=\"contentdiv\" class=\"statrevcontent\">\n"
-    # HTML adapted from profile.js displayProfileHeading
-    html +=     "<div id=\"centerhdivstatic\">\n"
-    html +=       "<span id=\"penhnamespan\">"
-    html +=         "<a href=\"" + profurl + "\""
-    html +=           " title=\"Show profile for " + pen.name + "\""
-    html +=           " onclick=\"window.open('" + profurl + "');"
-    html +=                      "return false;\""
-    html +=           ">" + pen.name + "</a>"
-    html +=       "</span>\n"
-    html +=       "<span id=\"penhbuttonspan\">"
-    html +=         "<a href=\"" + revurl + "\""
-    html +=           " title=\"View from your pen name\""
-    html +=           " onclick=\"window.open('" + revurl + "');"
-    html +=                      "return false;\""
-    html +=         "><img class=\"navico\" src=\"../img/penname.png\"/></a>"
-    html +=       "</span>\n"
-    html +=     "</div>"
-
-    # HTML copied from review.js displayReviewForm
-    html +=     "<div class=\"formstyle\">\n"
-    html +=       "<table class=\"revdisptable\" border=\"0\">\n"
-    html +=         "<tr>\n"
-    html +=           "<td class=\"starstd\">\n"
-    html +=             "<span id=\"stardisp\">\n"
-    html +=               starsImageHTML(rev.rating)
-    html +=             "</span>\n" 
-    html +=                "&nbsp;" + badgeImageHTML(rev.revtype)
-    html +=             "</td>\n"
-    html +=           "<td><span class=\"revtitle\">" + getTitle(rev)
-    html +=             "</span></td>\n"
-    if subkey:
-        html += "<td><span class=\"revauthor\">" + subkey + "</span></td>\n"
-    html +=           "<td>" + urlImageLink(rev) + "</td>\n"
-    html +=         "</tr>\n"
-    html +=         "<tr><td colspan=\"4\" class=\"textareatd\">\n"
-    html +=           "<div id=\"reviewtext\" class=\"shoutoutstatic\">\n"
-    html +=             displayText(rev.text) + "</div>\n"
-    html +=         "</td></tr>\n"
-    html +=         "<tr>\n"
-    html +=           "<td rowspan=\"2\" valign=\"top\">"
-    html +=               reviewPicHTML(rev) + "</td>\n"
-    html +=           "<td colspan=\"2\">\n"
-    html +=             "<table class=\"subtable\" width=\"100%\"><tr>\n"
-    html +=               "<td valign=\"top\">"
-    html +=                   secondaryFields(rev) + "</td>\n"
-    html +=               "<td valign=\"top\">"
-    html +=                   "<div class=\"csvstrdiv\">"
-    html +=                       safestr(rev.keywords) + "</div></td>\n"
-    html +=             "</tr></table></td>\n"
-    html +=         "</tr><tr>\n"
-    html +=           "<!-- image continues into this row -->\n"
-    html +=           "<td colspan=\"2\" align=\"left\">\n"
-    # html +=               actionButtonsHTML(penrevparms) + 
-    html +=           "</td>\n"
-    html +=         "</tr>\n"
-    html +=       "</table>\n"
-    html +=     "</div> <!-- formstyle -->\n"
-    html +=   "</div> <!-- contentdiv -->\n"
-    html += "</div> <!-- statrevactdiv -->\n"
-    html += "  </td></tr></table> <!-- forceAdsSameLineTable -->"
-    html += "</div> <!-- appspacedivstatic -->\n"
+    # referral tracking
     if refer:
         html += "<img src=\"../bytheimg?statinqref=" + safeURIEncode(refer) +\
             "\"/>\n"
