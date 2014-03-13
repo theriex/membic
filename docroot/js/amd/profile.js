@@ -162,7 +162,7 @@ app.profile = (function () {
                  ["tr",
                   [["td", {id: "profbadgestd"},
                     earnedBadgesHTML(dispen, true)],
-                   ["td",
+                   ["td", {id: "penhnametd"},
                     ["span", {id: "penhnamespan"},
                      name]],
                    ["td",
@@ -191,7 +191,7 @@ app.profile = (function () {
                                   onclick: jt.fs("app.profile.relationship()")},
                             [["img", {cla: "followingico", 
                                       src: "img/followset.png"}],
-                             "Following"]]; }
+                             ""]]; }
                 else {
                     html = ["a", {href: "#Follow",
                                   title: "Follow " + name + " reviews",

@@ -92,8 +92,9 @@ img { border:0px; }
 .penfont, #penhnamespan { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
  }
+#penhnametd { padding:0px 0px 0px 0px; }
 #penhnamespan { font-size:xx-large; }
-#penhbuttondiv { padding:0px 0px 0px 20px; }
+#penhbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #recentacthdiv { float:right; }
 #rememberedhdiv { background:transparent; }
 #homepenhdiv { background:transparent; }
