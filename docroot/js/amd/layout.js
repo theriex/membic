@@ -474,18 +474,20 @@ return {
             return; }
         html = [["div", {cla: "headingtxt"},
                  msg],
-                ["div", {cla: "headingtxt"},
+                ["div", {id: "earnedmeritbadgegraphicdiv"},
                  ["img", {id: "meritimg", src: psrc}]]];
         jt.out('overlaydiv', jt.tac2html(html));
         odiv = jt.byId('overlaydiv');
         odiv.style.left ="300px";
         odiv.style.top = "190px";
-        odiv.style.backgroundColor = app.skinner.darkbg();
+        odiv.style.backgroundColor = app.skinner.lightbg();
         odiv.style.visibility = "visible";
         app.onescapefunc = app.cancelOverlay;
         setTimeout(function () {
             jt.byId("meritimg").src = nsrc; }, 450);
         setTimeout(function () {
+            app.profile.writeNavDisplay(app.pen.currPenRef().pen,
+                                        null, "nosettings");
             meritactive = false;
             app.cancelOverlay(); }, 2800);
     },

@@ -282,7 +282,7 @@ img { border:0px; }
 .keywordcheckboxtable td { padding:4px; }
 .transformlinkdiv { border: 1px solid #666666; border-radius:5px; 
   padding:0px 5px; margin:8px; display:table; }
-
+#earnedmeritbadgegraphicdiv { text-align:center; padding:15px; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
