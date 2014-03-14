@@ -86,15 +86,30 @@ def safe_get_review_for_update(handler):
 
 
 def canonize_cankey(cankey):
+    # whitespace and generally problematic characters
     cankey = re.sub(r'\s', '', cankey)
-    cankey = re.sub(r'\'', '', cankey)
     cankey = re.sub(r'\"', '', cankey)
-    cankey = re.sub(r'\,', '', cankey)
     cankey = re.sub(r'\.', '', cankey)
-    cankey = re.sub(r'\!', '', cankey)
+    # URI reserved delimiters
+    cankey = re.sub(r'\:', '', cankey)
+    cankey = re.sub(r'\/', '', cankey)
     cankey = re.sub(r'\?', '', cankey)
     cankey = re.sub(r'\#', '', cankey)
+    cankey = re.sub(r'\[', '', cankey)
+    cankey = re.sub(r'\]', '', cankey)
     cankey = re.sub(r'\@', '', cankey)
+    # URI reserved sub delimiters
+    cankey = re.sub(r'\!', '', cankey)
+    cankey = re.sub(r'\$', '', cankey)
+    cankey = re.sub(r'\&', '', cankey)
+    cankey = re.sub(r'\'', '', cankey)
+    cankey = re.sub(r'\(', '', cankey)
+    cankey = re.sub(r'\)', '', cankey)
+    cankey = re.sub(r'\*', '', cankey)
+    cankey = re.sub(r'\+', '', cankey)
+    cankey = re.sub(r'\,', '', cankey)
+    cankey = re.sub(r'\;', '', cankey)
+    cankey = re.sub(r'\=', '', cankey)
     cankey = cankey.lower()
     return cankey
 

@@ -253,17 +253,36 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    //see also http://tools.ietf.org/html/rfc3986 and also
+    //http://www.ietf.org/rfc/rfc2396.  Note that this does not
+    //guarantee a canonized string value will be a valid url parameter
+    //value.  Characters may still need to be encoded.
     uo.canonize = function (txt) {
         var strval = txt || "";
+        //whitespace and generally problematic characters
         strval = strval.replace(/\s/g, "");
-        strval = strval.replace(/\'/g, "");
         strval = strval.replace(/\"/g, "");
-        strval = strval.replace(/\,/g, "");
         strval = strval.replace(/\./g, "");
-        strval = strval.replace(/\!/g, "");
+        //URI reserved characters gen-delims
+        strval = strval.replace(/\:/g, "");
+        strval = strval.replace(/\//g, "");
         strval = strval.replace(/\?/g, "");
         strval = strval.replace(/\#/g, "");
+        strval = strval.replace(/\[/g, "");
+        strval = strval.replace(/\]/g, "");
         strval = strval.replace(/\@/g, "");
+        //URI reserved characters sub-delims
+        strval = strval.replace(/\!/g, "");
+        strval = strval.replace(/\$/g, "");
+        strval = strval.replace(/\&/g, "");
+        strval = strval.replace(/\'/g, "");
+        strval = strval.replace(/\(/g, "");
+        strval = strval.replace(/\)/g, "");
+        strval = strval.replace(/\*/g, "");
+        strval = strval.replace(/\+/g, "");
+        strval = strval.replace(/\,/g, "");
+        strval = strval.replace(/\;/g, "");
+        strval = strval.replace(/\=/g, "");
         strval = strval.toLowerCase();
         return strval;
     };
