@@ -261,6 +261,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         strval = strval.replace(/\,/g, "");
         strval = strval.replace(/\./g, "");
         strval = strval.replace(/\!/g, "");
+        strval = strval.replace(/\?/g, "");
+        strval = strval.replace(/\#/g, "");
+        strval = strval.replace(/\@/g, "");
         strval = strval.toLowerCase();
         return strval;
     };

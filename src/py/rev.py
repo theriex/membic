@@ -92,6 +92,9 @@ def canonize_cankey(cankey):
     cankey = re.sub(r'\,', '', cankey)
     cankey = re.sub(r'\.', '', cankey)
     cankey = re.sub(r'\!', '', cankey)
+    cankey = re.sub(r'\?', '', cankey)
+    cankey = re.sub(r'\#', '', cankey)
+    cankey = re.sub(r'\@', '', cankey)
     cankey = cankey.lower()
     return cankey
 
