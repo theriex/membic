@@ -280,7 +280,7 @@ return {
                                             "shareico",
                                             svc.getShareImageAlt(),
                                             svc.getShareImageSrc());
-        jt.out(svc.name + "td", link);
+        jt.out(svc.name + "div", link);
     },
 
 
