@@ -39,7 +39,14 @@ var actstat = (function () {
                 rowhtml.push(["td", {style: "padding:5px 20px;"},
                               [["span", {style: "color:" + seriesdef.color},
                                 " -------- "],
-                               seriesdef.name]]); });
+                               ["span", {style: "display:inline-block;" +
+                                                "width:20px;" + 
+                                                "text-align:right;"},
+                                seriesdef.total],
+                               "&nbsp;",
+                               ["a", {name: seriesdef.name,
+                                      title: seriesdef.title},
+                                seriesdef.name]]]); });
             html.push(["tr",
                        rowhtml]); });
         html = ["table",
@@ -55,13 +62,29 @@ var actstat = (function () {
 
     makeInquirySeries = function () {
         var series = [  //see also mailsum.py bump_referral_count
-            {name: "clickthru", color: "red", width: "2px", dashes: "2, 5"},
-            {name: "facebook", color: "blue", width: "2px", dashes: "2, 2"},
-            {name: "twitter", color: "green", width: "2px", dashes: "3, 3"},
-            {name: "googleplus", color: "purple", width: "2px", dashes: "5, 5"},
-            {name: "craigslist", color: "yellow", width: "2px", dashes: "4, 4"},
-            {name: "other", color: "tan", width: "2px", dashes: "1, 1"} ];
+            {name: "clickthru", color: "red", width: "2px", dashes: "2, 5",
+             title: "From static review display to the main site"},
+            {name: "facebook", color: "blue", width: "2px", dashes: "2, 2",
+             title: "From FB post to static review"},
+            {name: "twitter", color: "green", width: "2px", dashes: "3, 3",
+             title: "From tweet through to static review"},
+            {name: "googleplus", color: "purple", width: "2px", dashes: "5, 5",
+             title: "From g+ through to static review"},
+            {name: "craigslist", color: "yellow", width: "2px", dashes: "4, 4",
+             title: "From craigslist ad through to site"},
+            {name: "other", color: "tan", width: "2px", dashes: "1, 1",
+             title: "Other access to a statrev, not a known bot or wdydfun"} ];
         return series;
+    },
+
+
+    addTotalCountsToSeries = function (series) {
+        var i, j, val, ttl;
+        for(i = 0; i < data.length; i += 1) {
+            for(j = 0; j < series.length; j += 1) {
+                val = data[i][series[j].name] || 0;
+                ttl = series[j].total || 0;
+                series[j].total = ttl + val; } }
     },
 
 
@@ -82,6 +105,7 @@ var actstat = (function () {
     displayInquiriesGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeInquirySeries();
+        addTotalCountsToSeries(series);
         showColorKeys('inqactdiv', "Inquiries", [[series[0], series[1]],
                                                  [series[4], series[2]],
                                                  [series[5], series[3]]]);
@@ -126,36 +150,176 @@ var actstat = (function () {
     },
 
 
-    displayAccessAgents = function () {
-        var html = [], agents = {}, agent;
+    classifyComponent = function (comps, comp) {
+        var i, classified = false;
+        //"other" is always last in the comps array 
+        for(i = 0; !classified && i < comps.length; i += 1) {
+            switch(comps[i].key) {
+            case "touch":
+                if(comp.key.indexOf("Mobi") >= 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "mouse":
+                if(comp.key.indexOf("Mobi") < 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "iPhone":
+                if(comp.key.indexOf("iPhone") >= 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "iPad":
+                if(comp.key.indexOf("iPad") >= 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "Android":
+                if(comp.key.indexOf("Android") >= 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "IE":
+                if(comp.key.indexOf("MSIE") >= 0 ||
+                   (comp.key.indexOf("Windows NT") >= 0 &&
+                    comp.key.indexOf("rv:11") >= 0)) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "Safari":
+                if(comp.key.indexOf("Safari/") >= 0 &&
+                   comp.key.indexOf("Chrome/") < 0 &&
+                   comp.key.indexOf("Chromium/") < 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "Firefox":
+                if(comp.key.indexOf("Firefox/") >= 0 && 
+                   comp.key.indexOf("Seamonkey/") < 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "Chrome":
+                if(comp.key.indexOf("Chrome/") >= 0 && 
+                   comp.key.indexOf("Chromium/") < 0) {
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break;
+            case "other":  
+                if(!classified) { //didn't match any previous cases...
+                    comps[i].count += 1;
+                    classifyComponent(comps[i].components, comp);
+                    classified = true; }
+                break; 
+            default: //bump the leaf count if already there
+                if(comps[i].key === comp.key) {
+                    comps[i].count += 1;
+                    classified = true; } } }
+        if(!classified) {  //add leaf node
+            comps.push(comp); }
+    },
+
+
+    classifyData = function (taxon) {
         data.forEach(function (datum) {
-            if(datum.day.toISOString() > "2013-12-10T00:00:00Z") { //new format
-                var das = jt.safestr(datum.agents).split(",");
+            var das;
+            //the agent csv format was standardized 12/10/13, ignore previous
+            if(datum.day.toISOString() > "2013-12-10T00:00:00Z") { 
+                das = jt.safestr(datum.agents).split(",");
                 das.forEach(function (agent) {
+                    var comp;
                     agent = agent.trim();
                     if(isRealUserAgent(agent)) {
-                        if(agents[agent]) {
-                            agents[agent] += 1; }
-                        else {
-                            agents[agent] = 1; } } }); } });
-        for(agent in agents) {
-            if(agents.hasOwnProperty(agent)) {
-                if(agents[agent] > 0) {
-                    html.push(["tr",
-                               [["td", {align: "right"}, 
-                                 agents[agent]],
-                                ["td",
-                                 agent]]]); } } }
-        html.sort(function (a, b) {  
-            //descending count
-            if(a[1][0][2] > b[1][0][2]) { return -1; }
-            if(a[1][0][2] < b[1][0][2]) { return 1; }
-            //ascending agent name
-            if(a[1][1][1] > b[1][1][1]) { return 1; }
-            if(a[1][1][1] < b[1][1][1]) { return -1; }
+                        comp = { key: agent, count: 1 };  //leaf component
+                        classifyComponent(taxon, comp); } }); } });
+    },
+
+                    
+    sortTaxonomy = function (comps) {
+        var i;
+        if(!comps || comps.length === 0) {
+            return; }
+        comps.sort(function (a, b) {
+            if(a.count < b.count) {
+                return 1; }
+            if(a.count > b.count) {
+                return -1; }
             return 0; });
-        html = ["table",
+        for(i = 0; i < comps.length; i += 1) {
+            sortTaxonomy(comps[i].components); }
+    },
+        
+
+    hasSubLevelComponents = function (comps) {
+        var i;
+        for(i = 0; i < comps.length; i += 1) {
+            if(comps[i].components && comps[i].components.length > 0) {
+                return true; } }
+        return false;
+    },
+
+
+    taxonomyHTML = function (comps, prefix) {
+        var html = [], i, domid, sublist, li, style;
+        prefix = prefix || "";
+        for(i = 0; i < comps.length; i += 1) {
+            sublist = "";
+            domid = prefix + comps[i].key;
+            if(comps[i].components && comps[i].components.length > 0) {
+                sublist = taxonomyHTML(comps[i].components, domid); }
+            li = [["span", {style: "display:inline-block;width:30px;" + 
+                                   "text-align:right;" },
+                   comps[i].count],
+                  "&nbsp;",
+                  comps[i].key];
+            if(sublist) {
+                li = ["a", {href: "#" + domid,
+                            onclick: jt.fs("actstat.toggleAgents('" + 
+                                           domid + "')")},
+                      li]; }
+            html.push(["li", 
+                       [li,
+                        sublist]]); }
+        style = "list-style-type:none;padding-left:40px;";
+        if(!hasSubLevelComponents(comps)) {
+            style += "display:none;"; }
+        html = ["ul", {id: prefix,
+                       style: style},
                 html];
+        return html;
+    },
+
+
+    //key-count-components
+    displayAccessAgents = function () {
+        var taxon, html;
+        taxon = [ 
+            { key: "touch", count: 0, components: [
+                { key: "iPhone",  count: 0, components: [] },
+                { key: "iPad",    count: 0, components: [] },
+                { key: "Android", count: 0, components: [] },
+                { key: "other",   count: 0, components: [] }]},
+            { key: "mouse", count: 0, components: [
+                { key: "IE",      count: 0, components: [] },
+                { key: "Safari",  count: 0, components: [] },
+                { key: "Firefox", count: 0, components: [] },
+                { key: "Chrome",  count: 0, components: [] },
+                { key: "other",   count: 0, components: [] }]}];
+        classifyData(taxon);
+        sortTaxonomy(taxon);
+        html = [["p", { style: "padding-left:40px;"},
+                 "Agent summary:"],
+                taxonomyHTML(taxon)];
         jt.out('agentsdiv', jt.tac2html(html));
     },
 
@@ -329,6 +493,16 @@ var actstat = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    toggleAgents: function (key) {
+        var ul = jt.byId(key);
+        if(ul) {
+            if(ul.style.display === "none") {
+                ul.style.display = "block"; }
+            else {
+                ul.style.display = "none"; } }
+    },
+
 
     display: function () {
         jtminjsDecorateWithUtilities(jt);
