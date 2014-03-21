@@ -1093,6 +1093,13 @@ app.profile = (function () {
     },
 
 
+    clickspan = function (html, funcstr) {
+        html = ["span", {cla: "clickspan", onclick: funcstr},
+                html];
+        return jt.tac2html(html);
+    },
+
+
     mainDisplay = function (homepen, dispen, action, errmsg) {
         var html;
         if(!dispen) {
@@ -1320,7 +1327,8 @@ return {
             linktxt = app.profile.reviewItemNameHTML(type, revobj),
             divattrs = {cla: "revtextsummary", 
                         style: "padding:0px 0px 0px 97px;"},
-            jump = "", byline = "", keywords = "", revtext = "", html;
+            jump = "", byline = "", keywords = "", revtext = "", html,
+            revclick = jt.fs("app.profile.readReview('" + revid + "')");
         if(app.winw < 700) {
             divattrs.style = "padding:0px 0px 0px 10px;"; }
         if(revobj.url) {
@@ -1341,20 +1349,19 @@ return {
             revtext = ["div", divattrs,
                        jt.ellipsis(revobj.text, 255)]; }
         html = ["li", liattrobj,
-                [app.review.starsImageHTML(revobj.rating),
-                 app.review.badgeImageHTML(type),
+                [clickspan(app.review.starsImageHTML(revobj.rating), revclick),
+                 clickspan(app.review.badgeImageHTML(type), revclick),
                  "&nbsp;",
                  ["a", {id: "lihr" + revid, cla: linkclass, 
                         href: linkref, title: "See full review",
-                        onclick: jt.fs("app.profile.readReview('" + 
-                                       revid + "')")},
+                        onclick: revclick},
                   linktxt],
                  jump,
                  ["div", divattrs,
                   [byline,
-                   keywords,
-                   app.review.linkCountHTML(revid)]],
-                 revtext]];
+                   clickspan(keywords, revclick),
+                   clickspan(app.review.linkCountHTML(revid), revclick)]],
+                 clickspan(revtext, revclick)]];
         html = jt.tac2html(html);
         return html;
     },

@@ -304,6 +304,7 @@ img { border:0px; }
 .confirmtext, .confirmlastline { font-size:large; }
 .confirmlastline { text-align:center; }
 .qctext { font-size:small; }
+.clickspan { cursor:pointer; }
 
 /* >> settings dialog */
 #writingas { font-size:medium; font-weight:bold; }
