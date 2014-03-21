@@ -41,6 +41,7 @@ app.profile = (function () {
                       twid: "Twitter",
                       ghid: "GitHub" },
         revsrchstate = null,
+        lastInLinkType = "helpful",
         recencyDays = 30,
         dayMillis = 24 * 60 * 60 * 1000,
 
@@ -1068,15 +1069,24 @@ app.profile = (function () {
                              ["img", {cla: "reviewbadge",
                                       src: "img/follow.png"}]],
                             ["td", {align: "right"}, 
-                             "helpful:"],
+                             ["a", {href: "#helpful",
+                                    onclick: jt.fs("app.profile.displayResp('" +
+                                                   "helpful')")},
+                              "helpful:"]],
                             ["td", String(linksum.helpful)]]],
                           ["tr",
                            [["td", {colspan: 2, align: "right"}, 
-                             "remembered:"],
+                             ["a", {href: "#remembered",
+                                    onclick: jt.fs("app.profile.displayResp('" +
+                                                   "remembered')")},
+                              "remembered:"]],
                             ["td", String(linksum.remembered)]]],
                           ["tr",
-                           [["td", {colspan: 2, align: "right"}, 
-                             "corresponding:"],
+                           [["td", {colspan: 2, align: "right"},
+                             ["a", {href: "#corresponding",
+                                    onclick: jt.fs("app.profile.displayResp('" +
+                                                   "corresponding')")},
+                              "corresponding:"]],
                             ["td", String(linksum.corresponding)]]]]]]; } }
         return html;
     },
@@ -1097,6 +1107,24 @@ app.profile = (function () {
         html = ["span", {cla: "clickspan", onclick: funcstr},
                 html];
         return jt.tac2html(html);
+    },
+
+
+    tabswitch = function (tabname) {
+        var i, ul, li;
+        ul = jt.byId('proftabsul');
+        for(i = 0; i < ul.childNodes.length; i += 1) {
+            li = ul.childNodes[i];
+            li.className = "unselectedTab";
+            li.style.cssText = niceTabStyling(); }
+        li = jt.byId(tabname + "li");
+        if(!li && tabname.indexOf("follow") >= 0) {
+            profpenref.profstate.foltabmode = tabname;
+            writeFollowTabContent(profpenref);
+            li = jt.byId("followli"); }
+        li.className = "selectedTab";
+        li.style.cssText = noTabStyling();
+        li.style.backgroundColor = "transparent";
     },
 
 
@@ -1187,30 +1215,52 @@ return {
 
 
     tabselect: function (tabname) {
-        var i, ul, li;
         verifyProfileState(profpenref);
         if(tabname) {
             profpenref.profstate.seltabname = tabname; }
         else {
             tabname = profpenref.profstate.seltabname; }
-        ul = jt.byId('proftabsul');
-        for(i = 0; i < ul.childNodes.length; i += 1) {
-            li = ul.childNodes[i];
-            li.className = "unselectedTab";
-            li.style.cssText = niceTabStyling(); }
-        li = jt.byId(tabname + "li");
-        if(!li && tabname.indexOf("follow") >= 0) {
-            profpenref.profstate.foltabmode = tabname;
-            writeFollowTabContent(profpenref);
-            li = jt.byId("followli"); }
-        li.className = "selectedTab";
-        li.style.cssText = noTabStyling();
-        li.style.backgroundColor = "transparent";
+        tabswitch(tabname);
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: tabname });
         refreshContentDisplay();
         app.layout.adjust();
+    },
+
+
+    displayResp: function (inlinktype) {
+        var inlinks, i, revitems = [], revref, html = "";
+        if(!inlinktype || typeof inlinktype !== "string") {
+            inlinktype = lastInLinkType; }
+        lastInLinkType = inlinktype;
+        tabswitch('recent');
+        inlinks = app.pen.currPenRef().inlinks;
+        if(!inlinks || inlinks.length === 0) {
+            revitems.push(["li", "No reviews found"]); }
+        for(i = 0; inlinks && i < inlinks.length; i += 1) {
+            if(inlinks[i][inlinktype]) {
+                revref = app.lcs.getRevRef(inlinks[i].revid);
+                if(revref.rev) {
+                    revitems.push(app.profile.reviewItemHTML(revref.rev)); }
+                else if(revref.status === "not cached") {
+                    revitems.push(["li", "Fetching review " +
+                                   inlinks[i].revid + "..."]);
+                    break; } } }
+        switch(inlinktype) {
+          case 'helpful': 
+            html = "Reviews that have been helpful to other people"; break;
+          case 'remembered':
+            html = "Reviews other people have remembered"; break;
+          case 'corresponding':
+            html = "Reviews of things other people also reviewed"; break; }
+        html = [["div", {cla: "tabcontentheadertext"},
+                 html],
+                ["ul", {cla: "revlist"}, revitems]];
+        jt.out('profcontdiv', jt.tac2html(html));
+        app.layout.adjust();
+        if(inlinks && i < inlinks.length) { //didn't have all revs
+            app.lcs.getRevFull(inlinks[i].revid, app.profile.displayResp); }
     },
 
 
