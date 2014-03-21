@@ -41,7 +41,8 @@ app.profile = (function () {
                       twid: "Twitter",
                       ghid: "GitHub" },
         revsrchstate = null,
-
+        recencyDays = 30,
+        dayMillis = 24 * 60 * 60 * 1000,
 
 
     ////////////////////////////////////////
@@ -484,6 +485,10 @@ app.profile = (function () {
                 text += " " + app.review.reviewLinkHTML(); }
             revitems.push(["li", text]); }
         html = [];
+        if(rrs.total > 0) {
+            html.push(["div", {cla: "tabcontentheadertext"},
+                       "Reviews from you in the past " + recencyDays + 
+                       " days"]); }
         html.push(["ul", {cla: "revlist"}, revitems]);
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
@@ -548,7 +553,7 @@ app.profile = (function () {
             results: [],
             total: 0 };
         maxdate = new Date();
-        mindate = new Date(maxdate.getTime() - (30 * 24 * 60 * 60 * 1000));
+        mindate = new Date(maxdate.getTime() - (recencyDays * dayMillis));
         rrs.params.maxdate = maxdate.toISOString();
         rrs.params.mindate = mindate.toISOString();
         rrs.params.penid = jt.instId(profpenref.pen);
