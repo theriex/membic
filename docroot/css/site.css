@@ -205,7 +205,8 @@ img { border:0px; }
 .revdisptable td { padding:2px 5px; }
 #transformactionstd { padding:2px 5px 10px 15px; }
 #revformbuttonstd { }
-#revbuttonsdiv { margin-left:15%; padding:20px; word-spacing:10px; }
+#revbuttonsdiv { margin-left:15%; padding:20px; }
+#revbuttonsdiv button { margin:0px 10px; }
 #revsavemsg { word-spacing:normal; }
 #requestbuttonsdiv { text-align:center; padding:10px; }
 .bluetxt { color:#7a40ff; }
