@@ -229,7 +229,7 @@ app.review = (function () {
             len = "+"; }
         html = ["span", {style: "background:url('img/" + fieldimages[field] + 
                                                 "') no-repeat center center;" +
-                               " height:15px; width:22px;" +
+                               " height:20px; width:28px;" +
                                " display:inline-block;" + 
                                " text-align:center;",
                          title: String(len) + " " + field},
