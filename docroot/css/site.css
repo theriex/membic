@@ -163,9 +163,15 @@ img { border:0px; }
   height:125px; width:110px; padding:10px; text-align:left; }
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
+.badgespan { display:inline-block; width:36px; height:36px; padding:1px; }
 .reviewbadge, .reviewbadgedis { 
   width:30px; height:30px; vertical-align:middle; }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
+.bbk1, .bbk5, .bbk10, .bbk20 { padding:4px; }
+.bbk1  { background:url('../img/bbk1.png') no-repeat center center; }
+.bbk5  { background:url('../img/bbk5.png') no-repeat center center; }
+.bbk10 { background:url('../img/bbk10.png') no-repeat center center; }
+.bbk20 { background:url('../img/bbk20.png') no-repeat center center; }
 .followico { width:30px; height:30px; vertical-align:bottom; }
 .followingico { width:20px; height:20px; vertical-align:middle; }
 #profbadgestd { padding: 0px 10px 5px 10px; }

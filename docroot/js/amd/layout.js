@@ -423,18 +423,26 @@ return {
     },
 
 
+    badgeDrawer: function (pen, type, count) {
+        if(!count && pen.top20s && pen.top20s[type]) {
+            count = pen.top20s[type].length; }
+        if(count >= 20) {
+            return 20; }
+        if(count >= 10) {
+            return 10; }
+        if(count >= 5) {
+            return 5; }
+        return 1;
+    },
+
+
     badgeImgSrc: function (pen, type, count) {
         if(!count && pen.top20s && pen.top20s[type]) {
             count = pen.top20s[type].length; }
         if(!count) {
             return ""; }
-        if(count >= 20) {
-            return "img/merit/Merit" + type.capitalize() + "20.png"; }
-        if(count >= 10) {
-            return "img/merit/Merit" + type.capitalize() + "10.png"; }
-        if(count >= 5) {
-            return "img/merit/Merit" + type.capitalize() + "5.png"; }
-        return "img/merit/Merit" + type.capitalize() + "1.png";
+        return "img/merit/Merit" + type.capitalize() + 
+            app.layout.badgeDrawer(pen, type, count) + ".png";
     },
 
 

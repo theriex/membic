@@ -139,12 +139,14 @@ app.profile = (function () {
                 if(pen.top20s[typename].length < 20) {
                     label = String(pen.top20s[typename].length) + " " + 
                         reviewTypes[i].plural.capitalize(); }
-                attrobj = { cla: "reviewbadge", src: imgsrc,
-                            title: label, alt: label};
+                attrobj = { cla: "reviewbadge bbk" +
+                                 app.layout.badgeDrawer(pen, typename), 
+                            src: imgsrc, title: label, alt: label};
                 if(clickable) {
                     attrobj.onclick = jt.fs("app.profile.showTopRated('" +
                                             typename + "')"); }
-                html.push(["img", attrobj]); } }
+                html.push(["span", {cla: "badgespan"},
+                           ["img", attrobj]]); } }
         return jt.tac2html(html);
     },
 
