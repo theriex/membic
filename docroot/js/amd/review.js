@@ -750,12 +750,17 @@ app.review = (function () {
                           ndqval]; }
             else {
                 valdisp = ndqval; } }
-        html = ["tr", 
-                [["td", {id: inid + "labeltd"},
-                  ["span", {cla: "secondaryfield"},
-                   labval]],
-                 ["td", {align: "left"},
-                  valdisp]]];
+        if(inid === "keyin" && mode !== "edit") {
+            html = ["tr",
+                    ["td", {id: inid + "labeltd", colspan: 2, cla: "rslc"},
+                     valdisp]]; }
+        else {
+            html = ["tr", 
+                    [["td", {id: inid + "labeltd"},
+                      ["span", {cla: "secondaryfield"},
+                       labval]],
+                     ["td", {align: "left"},
+                      valdisp]]]; }
         return html;
     },
 
