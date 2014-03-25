@@ -47,31 +47,56 @@ var blogview = (function () {
     },
 
 
+    appendIfMissing = function (val, csv) {
+        if(!csv) {
+            return val; }
+        if(csv.indexOf(val) === 0 || csv.indexOf(", " + val) > 0) {
+            return csv; } //value already there
+        return csv + ", " + val;
+    },
+
+
     displayReviews = function () {
-        var i, type, revid, jump, revitems = [], html;
+        var i, type, revid, jump, revitems = [], artists = "", ld, html;
         for(i = 0; i < revs.length; i += 1) {
             revid = jt.instId(revs[i]);
             type = app.review.getReviewTypeByValue(revs[i].revtype);
-            jump = "";
-            if(revs[i].url) {
-                jump = " &nbsp;" + app.review.jumpLinkHTML(revs[i].url); }
-            revitems.push(
-                ["li",
-                 [["div", {cla: "revtextsummary"},
-                   jt.colloquialDate(jt.ISOString2Day(revs[i].modified)) +
-                   "&nbsp;" + revs[i].keywords],
-                  app.review.starsImageHTML(revs[i].rating),
-                  app.review.badgeImageHTML(type),
-                  "&nbsp;",
-                  ["a", {cla: "rslc", href: "../statrev/" + revid},
-                   app.profile.reviewItemNameHTML(type, revs[i])],
-                  jump,
-                  ["div", {cla: "revtextsummary"},
-                   [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
-                     app.review.picHTML(revs[i], type)],
-                    ["div", {style: "padding:10px;"},
-                     jt.linkify(revs[i].text)]]],
-                  ["div", {style: "clear:both;"}]]]); }
+            if(revs[i].revtype === "music" && revs[i].svcdata &&
+               revs[i].svcdata.indexOf("\"batchUpdated\":\"" + 
+                                       revs[i].modified + "\"") >= 0) {
+                ld = revs[i].modified;
+                artists = appendIfMissing(revs[i].artist, artists); }
+            else {
+                if(artists) {
+                    revitems.push(
+                        ["li",
+                         [["div", {cla: "revtextsummary"},
+                           jt.colloquialDate(jt.ISOString2Day(ld)) + 
+                           "&nbsp;Playlist Update:"],
+                          ["div", {cla: "revtextsummary",
+                                   style: "padding:0px 0px 20px 97px;"},
+                           artists]]]);
+                    artists = ""; }
+                jump = "";
+                if(revs[i].url) {
+                    jump = " &nbsp;" + app.review.jumpLinkHTML(revs[i].url); }
+                revitems.push(
+                    ["li",
+                     [["div", {cla: "revtextsummary"},
+                       jt.colloquialDate(jt.ISOString2Day(revs[i].modified)) +
+                       "&nbsp;" + revs[i].keywords],
+                      app.review.starsImageHTML(revs[i].rating),
+                      app.review.badgeImageHTML(type),
+                      "&nbsp;",
+                      ["a", {cla: "rslc", href: "../statrev/" + revid},
+                       app.profile.reviewItemNameHTML(type, revs[i])],
+                      jump,
+                      ["div", {cla: "revtextsummary"},
+                       [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
+                         app.review.picHTML(revs[i], type)],
+                        ["div", {style: "padding:10px;"},
+                         jt.linkify(revs[i].text)]]],
+                      ["div", {style: "clear:both;"}]]]); } }
         html = ["div", {id: "blogcontentdiv"},
                 ["ul", {cla: "revlist"}, revitems]];
         html = jt.tac2html(html);
