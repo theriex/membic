@@ -88,6 +88,7 @@ class BlogViewDisplay(webapp2.RequestHandler):
         content = re.sub('\$PENJSON', obj2JSON(pen), content)
         content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
         content = re.sub('\$REVDATA', qres2JSON(revs, "", -1, ""), content)
+        content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
         self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write(content)
         
