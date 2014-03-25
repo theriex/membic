@@ -1162,6 +1162,11 @@ app.profile = (function () {
                    ["span", {id: "profeditbspan"}]]],
                  ["div", {id: "profshoutdiv"},
                   ["div", {id: "shoutdiv", cla: "shoutout"}]],
+                 ["div", {id: "wdydfunblogdiv"},
+                  ["a", {href: "blogs/" + dispen.name_c,
+                         onclick: jt.fs("window.open('blogs/" + 
+                                        dispen.name_c + "')")},
+                   "wdydfun blog"]],
                  ["div", {id: "profrevimpactdiv"},
                   revimpactHTML(homepen, dispen)],
                  ["div", {id: "profinvitediv"},
