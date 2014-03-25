@@ -745,9 +745,9 @@ app.review = (function () {
         else { 
             if(ndqval && field === "address") {
                 url = "http://maps.google.com/?q=" + ndqval;
-                ndqval = ["a", {href:url,
-                                onclick: jt.fs("window.open('" + url + "')")},
-                          ndqval]; }
+                valdisp = ["a", {href:url,
+                                 onclick: jt.fs("window.open('" + url + "')")},
+                           ndqval]; }
             else {
                 valdisp = ndqval; } }
         if(inid === "keyin" && mode !== "edit") {
