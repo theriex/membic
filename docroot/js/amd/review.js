@@ -1870,6 +1870,11 @@ return {
             type = findReviewType(typename);
             jt.byId(imgid).src = "img/" + type.img; 
             jt.byId(typename + "txttd").style.color = app.colors.link; }
+    },
+
+
+    picHTML: function (review, type) {
+        return revFormImageHTML(review, type, "defined", "listing");
     }
 
 

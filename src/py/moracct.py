@@ -218,33 +218,44 @@ def quoteTop20IDs(top20s):
     return json.dumps(t20dict)
 
 
-def returnJSON(response, queryResults, cursor="", fetched=-1):
+def obj2JSON(obj):
+    """ Factored method return a database object as JSON text """
+    props = db.to_dict(obj)
+    # logging.info("props: " + str(props))
+    for prop, val in props.iteritems():
+        if(isinstance(val, Blob)):
+            props[prop] = str(obj.key().id())
+        # javascript integer value cannot hold database integer value..
+        if(isinstance(val, (int, long)) and (prop.endswith("id"))):
+            props[prop] = str(props[prop])
+        if(prop == "top20s"):
+            props[prop] = quoteTop20IDs(props[prop])
+        # logging.info(prop + ": " + str(props[prop]))
+    jsontxt = json.dumps(props, True)
+    jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " + jsontxt[1:]
+    # logging.info(jsontxt)
+    return jsontxt
+
+
+def qres2JSON(queryResults, cursor="", fetched=-1):
     """ Factored method to return query results as JSON """
     result = ""
     for obj in queryResults:
         if result:
             result += ",\n "
-        props = db.to_dict(obj)
-        # logging.info("props: " + str(props))
-        for prop, val in props.iteritems():
-            if(isinstance(val, Blob)):
-                props[prop] = str(obj.key().id())
-            # javascript integer value cannot hold database integer value..
-            if(isinstance(val, (int, long)) and (prop.endswith("id"))):
-                props[prop] = str(props[prop])
-            if(prop == "top20s"):
-                props[prop] = quoteTop20IDs(props[prop])
-            # logging.info(prop + ": " + str(props[prop]))
-        jsontxt = json.dumps(props, True)
-        jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " + jsontxt[1:]
-        # logging.info(jsontxt)
-        result += jsontxt
+        result += obj2JSON(obj)
     if cursor or fetched > 0:
         if result:
             result += ",\n "
         result += "{\"fetched\":" + str(fetched) + \
             ", \"cursor\":\"" + cursor + "\"}"
     result = "[" + result + "]"
+    return result
+
+
+def returnJSON(response, queryResults, cursor="", fetched=-1):
+    """ Factored method to respond back with JSON query results """
+    result = qres2JSON(queryResults, cursor, fetched)
     writeJSONResponse(result, response)
 
 

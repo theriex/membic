@@ -347,6 +347,8 @@ handlers:
   script: src.py.pen.app
 - url: /testrevs
   script: src.py.rev.app
+- url: /blogs/.*
+  script: src.py.blogview.app  
 - url: /statrev/\d+
   script: src.py.statrev.app
 - url: /stats.*

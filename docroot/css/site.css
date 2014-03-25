@@ -79,6 +79,7 @@ img { border:0px; }
 #appspacediv { }
 #appspacediv { margin:auto; }
 .statrevcontent { padding-left:15px; padding-top:15px; }
+#blogcontentdiv { padding:10px; margin-left:7%; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
 #contentdiv { margin:auto; }
