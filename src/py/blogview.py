@@ -1,5 +1,6 @@
 import webapp2
 from google.appengine.ext import db
+from google.appengine.api import memcache
 import logging
 from rev import Review
 from pen import PenName
@@ -7,6 +8,7 @@ from moracct import obj2JSON, qres2JSON
 from morutil import *
 import re
 import json
+from cacheman import *
 
 
 html = """
@@ -72,15 +74,13 @@ class BlogViewDisplay(webapp2.RequestHandler):
         # filtering out batch updates.  More of an archival display...
         # See how it goes.
         dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(90))
-        # Not caching for now.  Fresh results need to show up in a
-        # reasonable timeframe and no indication whether anything was
-        # modified.  Probably not worth it.
         # Same index retrieval already used by rev.py SearchReviews
         where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3" +\
             " ORDER BY modified DESC"
+        ckey = "blog" + pen.name_c
         revquery = Review.gql(where, pen.key().id(), dold, nowISO())
-        revs = revquery.fetch(5000, read_policy=db.EVENTUAL_CONSISTENCY,
-                              deadline=10)
+        qres = cached_query(ckey, revquery, "", 3000, Review, True)
+        revs = qres.objects;
         # write content
         content = html
         content = re.sub('\$PENNAME', pen.name, content)

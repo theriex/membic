@@ -340,6 +340,7 @@ class NewReview(webapp2.RequestHandler):
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
         cached_put(review)
         bust_cache_key("recentrevs")
+        bust_cache_key("blog" + pen.name_c)
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
@@ -356,6 +357,7 @@ class UpdateReview(webapp2.RequestHandler):
         review.penname = pen.name
         cached_put(review)
         bust_cache_key("recentrevs")
+        bust_cache_key("blog" + pen.name_c)
         update_top20_reviews(pen, review)
         returnJSON(self.response, [ review ])
 
