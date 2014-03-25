@@ -237,16 +237,16 @@ def obj2JSON(obj):
     return jsontxt
 
 
-def qres2JSON(queryResults, cursor="", fetched=-1):
+def qres2JSON(queryResults, cursor="", fetched=-1, itemsep="\n"):
     """ Factored method to return query results as JSON """
     result = ""
     for obj in queryResults:
         if result:
-            result += ",\n "
+            result += "," + itemsep + " "
         result += obj2JSON(obj)
     if cursor or fetched > 0:
         if result:
-            result += ",\n "
+            result += "," + itemsep + " "
         result += "{\"fetched\":" + str(fetched) + \
             ", \"cursor\":\"" + cursor + "\"}"
     result = "[" + result + "]"

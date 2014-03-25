@@ -80,13 +80,21 @@ var blogview = (function () {
     },
 
 
-    readData = function () {
-        var i, jsonobj = JSON || window.JSON;
+    parseEmbeddedJSON = function (text) {
+        var obj, jsonobj = JSON || window.JSON;
         if(!jsonobj) {
             jt.err("JSON not supported, please use a modern browser"); }
-        pen = jsonobj.parse(jt.byId('pendatadiv').innerHTML);
+        text = text.trim();
+        text = text.replace(/\n/g, "\\n");
+        obj = jsonobj.parse(text);
+        return obj;
+    },
+
+
+    readData = function () {
+        pen = parseEmbeddedJSON(jt.byId('pendatadiv').innerHTML);
         jt.out('pendatadiv', "");
-        revs = jsonobj.parse(jt.byId('revdatadiv').innerHTML);
+        revs = parseEmbeddedJSON(jt.byId('revdatadiv').innerHTML);
         jt.out('revdatadiv', "");
         if(!jt.instId) {
             jt.instId = function (obj) {
