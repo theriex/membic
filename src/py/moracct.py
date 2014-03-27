@@ -20,11 +20,12 @@ class MORAccount(db.Model):
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
     email = db.EmailProperty()
-    modified = db.StringProperty()  # iso date
-    userlcase = db.StringProperty()  # lowercase username for case ins login
-    lastsummary = db.StringProperty() # iso date last summary run
-    summaryfreq = db.StringProperty()  # daily, weekly, fortnightly, never
+    modified = db.StringProperty()      # iso date
+    userlcase = db.StringProperty()     # lowercase username for case ins login
+    lastsummary = db.StringProperty()   # iso date last summary run
+    summaryfreq = db.StringProperty()   # daily, weekly, fortnightly, never
     summaryflags = db.StringProperty()  # sumiflogin, sumifnoact
+    mailbounce = db.TextProperty()      # isodate1, isodate2...
     
 
 def asciienc(val):

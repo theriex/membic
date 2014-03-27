@@ -12,6 +12,8 @@ from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
 from google.appengine.api import images
+from google.appengine.ext.webapp.mail_handlers import BounceNotification
+from google.appengine.ext.webapp.mail_handlers import BounceNotificationHandler
 import textwrap
 from cacheman import *
 
@@ -284,6 +286,15 @@ def mail_summaries(freq, thresh, request, response):
     for acc in accs:
         logmsg = "username: " + acc.username
         pen = eligible_pen(acc, thresh)
+        if acc.mailbounce and "," in acc.mailbounce:
+            bouncedates = acc.mailbounce.split(",")
+            if bouncedates[-1] < acc.modified:
+                logmsg += " BOUNCE RESET"
+                acc.mailbounce = ""
+            else:
+                logmsg += " (" + acc.email + ") bounced " + bouncedates[-1] +\
+                    ". No summary sent."
+                pen = null
         if pen:
             logmsg += " (" + acc.email + "), pen: " + pen.name
             relids = outbound_relids_for_penid(pen.key().id())
@@ -400,10 +411,27 @@ class ByTheImg(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
+class BounceHandler(BounceNotificationHandler):
+  def receive(self, notification):  # BounceNotification class instance
+      logging.info("BouncedEmailHandler called")
+      emaddr = notification.original()['to']
+      logging.info("BouncedEmailHandler emaddr: " + emaddr)
+      # this uses the same access indexing as moracct.py MailCredentials
+      where = "WHERE email=:1 LIMIT 9"
+      accounts = MORAccount.gql(where, emaddr)
+      for account in accounts:
+          bouncestr = nowISO()
+          if account.mailbounce:
+              bouncestr = account.mailbounce + "," + bouncestr
+          account.mailbounce = bouncestr
+          account.put()
+
+
 app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/emuser', SummaryForUser),
                                ('/botids', ReturnBotIDs),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
-                               ('/bytheimg', ByTheImg)], debug=True)
+                               ('/bytheimg', ByTheImg),
+                               ('/_ah/bounce', BounceHandler)], debug=True)
 

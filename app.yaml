@@ -11,6 +11,9 @@ libraries:
 builtins:
 - remote_api: on
 
+inbound_services:
+- mail_bounce
+
 error_handlers:
 - error_code: over_quota
   file: overquota.html
@@ -367,6 +370,9 @@ handlers:
   script: src.py.mailsum.app
 - url: /botids.*
   script: src.py.mailsum.app
+- url: /_ah/bounce
+  script: src.py.mailsum.app
+  login: admin
 - url: /loginid.*
   script: src.py.moracct.app
 # Trap anything ending with a slash and send it to index.html since there
