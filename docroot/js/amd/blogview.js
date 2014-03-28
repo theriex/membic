@@ -127,10 +127,6 @@ var blogview = (function () {
                 if(obj && obj.hasOwnProperty(idfield)) {
                     return obj[idfield]; }
             }; }
-        if(!jt.isLowFuncBrowser) {
-            jt.isLowFuncBrowser = function () {
-                return false;
-            }; }
     };
 
 
@@ -143,6 +139,7 @@ return {
         readData();
         displayName();
         displayReviews();
+        app.layout.fixTextureCover();
     }
 
 }; //end of returned functions

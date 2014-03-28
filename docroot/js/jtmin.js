@@ -1,4 +1,4 @@
-/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false, setTimeout: false */
+/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false, setTimeout: false, navigator: false */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -430,6 +430,36 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         });
         txt = txt.replace(/\n/g, "<br/>");
         return txt;
+    };
+
+
+    //Some things don't work in older browsers and need code
+    //workarounds to degrade gracefully.  Like not scaling fixed
+    //background images.  IE8 is a known problem, but some older stock
+    //android browsers are also problematic.  This function identifies
+    //the more common browsers known to be consistently updated.
+    uo.isLowFuncBrowser = function () {
+        var nav;
+        if (navigator) {
+            nav = navigator;
+            // alert("appCodeName: " + nav.appCodeName + "\n" +
+            //       "appName: " + nav.appName + "\n" +
+            //       "appVersion: " + nav.appVersion + "\n" +
+            //       "platform: " + nav.platform + "\n" +
+            //       "userAgent: " + nav.userAgent + "\n");
+            if (nav.userAgent.indexOf("Firefox") >= 0) {
+                return false;
+            }
+            if (nav.userAgent.indexOf("Chrome") >= 0) {
+                return false;
+            }
+            if ((nav.userAgent.indexOf("Safari") >= 0) &&
+                    (nav.userAgent.indexOf("CyanogenMod") < 0) &&
+                    (nav.userAgent.indexOf("Android") < 0)) {
+                return false;
+            }
+        }
+        return true;
     };
 
 

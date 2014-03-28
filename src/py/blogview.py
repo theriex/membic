@@ -43,6 +43,7 @@ $REVDATA
 
 <script src="../js/jtmin.js"></script>
 <script src="../js/amd/blogview.js"></script>
+<script src="../js/amd/layout.js"></script>
 <script src="../js/amd/profile.js"></script>
 <script src="../js/amd/review.js"></script>
 <script>

@@ -281,6 +281,11 @@ return {
     },
 
 
+    fixTextureCover: function () {  //for static page support
+        fixTextureCover();
+    },
+
+
     haveContentDivAreas: function () {
         return jt.byId('chead') && jt.byId('cmain');
     },
