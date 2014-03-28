@@ -377,6 +377,7 @@ def revhtml(rev, pen, refer):
     penrevparms = "penid=" + str(rev.penid) + "&revid=" + revidstr
     revurl = "../?view=review&" + penrevparms
     # profurl = "../?view=profile&profid=" + str(rev.penid)
+    blogurl = "../blogs/" + pen.name_c
     # HTML head copied from index.html...
     html = "<!doctype html>\n"
     html += "<html itemscope=\"itemscope\""
@@ -412,9 +413,9 @@ def revhtml(rev, pen, refer):
     # HTML adapted from profile.js displayProfileHeading
     html +=   "<div id=\"centerhdiv\">\n"
     html +=     "<span id=\"penhnamespan\">"
-    html +=       "<a href=\"" + revurl + "\""
-    html +=         " title=\"Show profile for " + pen.name + "\""
-    html +=         " onclick=\"window.location.href='" + revurl + "';"
+    html +=       "<a href=\"" + blogurl + "\""
+    html +=         " title=\"Show blog for " + pen.name + "\""
+    html +=         " onclick=\"window.location.href='" + blogurl + "';"
     html +=                    "return false;\""
     html +=         ">" + pen.name + "</a>"
     html +=     "</span>\n"

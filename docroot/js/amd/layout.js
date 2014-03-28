@@ -38,7 +38,8 @@ app.layout = (function () {
                      ["a", {id: "closedlg", href: "#close",
                             onclick: jt.fs("app.layout.closeDialog()")},
                       "&lt;close&nbsp;&nbsp;X&gt;"]]);
-        output.push(html);
+        output.push(["div", {cla: "documentcontentsdiv"},
+                     html]);
         html = jt.tac2html(output);
         jt.out('dlgdiv', html);
     },

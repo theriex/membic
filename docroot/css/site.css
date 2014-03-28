@@ -65,6 +65,7 @@ img { border:0px; }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
+.documentcontentsdiv { padding:0px 10px 10px 20px; }
 
 /* >> main display area and contained elements */
 #phonetextzoomfixtable { border-collapse:collapse; }
