@@ -79,7 +79,7 @@ class BlogViewDisplay(webapp2.RequestHandler):
             " ORDER BY modified DESC"
         ckey = "blog" + pen.name_c
         revquery = Review.gql(where, pen.key().id(), dold, nowISO())
-        qres = cached_query(ckey, revquery, "", 3000, Review, True)
+        qres = cached_query(ckey, revquery, "", 100, Review, True)
         revs = qres.objects;
         # write content
         content = html
