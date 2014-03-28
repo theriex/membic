@@ -414,7 +414,7 @@ class ByTheImg(webapp2.RequestHandler):
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       logging.info("BouncedEmailHandler called")
-      emaddr = notification.original()['to']
+      emaddr = notification.original['to']
       logging.info("BouncedEmailHandler emaddr: " + emaddr)
       # this uses the same access indexing as moracct.py MailCredentials
       where = "WHERE email=:1 LIMIT 9"
