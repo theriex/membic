@@ -221,7 +221,7 @@ class StaticReviewDisplay(webapp2.RequestHandler):
                 safeURIEncode(refer) + "\"/>\n"
         else:
             refer = "<img id=\"btwimg\" src=\"../bytheimg?statinq=" +\
-                revidstr + "\"/>\n"
+                str(review.key().id()) + "\"/>\n"
         content = re.sub('\$REFER', refer, content)
         content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
         self.response.headers['Content-Type'] = "text/html; charset=UTF-8";
