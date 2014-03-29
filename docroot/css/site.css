@@ -79,8 +79,6 @@ img { border:0px; }
 #accountdiv { font-size:small; }
 #appspacediv { }
 #appspacediv { margin:auto; }
-.statrevcontent { padding-left:15px; padding-top:15px; }
-#blogcontentdiv { padding:10px; margin-left:7%; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
 #contentdiv { margin:auto; }
@@ -250,7 +248,6 @@ img { border:0px; }
 .searchtable td { padding:5px 10px; }
 #userin, #passin { width:152px; }
 .tagline { font-style:italic; color:#333; }
-#statrevactdiv { text-align:center; padding:10px; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; white-space:nowrap; }
 .inlinestarsimg { vertical-align:bottom; }
@@ -290,6 +287,12 @@ img { border:0px; }
   padding:0px 5px; margin:8px; display:table; }
 #earnedmeritbadgegraphicdiv { text-align:center; padding:15px; }
 .tabcontentheadertext { font-size:small; padding:0px 0px 0px 10px; }
+/* static display elements */
+#blogcontentdiv { padding:10px; margin-left:7%; }
+#statrevcontent { padding:10px 20px 0px 20px; }
+#statrevactdiv { text-align:center; padding:10px; }
+.statrevdiv {}
+.statrevmodkeydiv { font-size:small; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
@@ -328,3 +331,5 @@ img { border:0px; }
 
 /* >> general classes */
 .greytxt { color:#999999; }
+.stdadspacediv { width:170px; height:610px; background:#fffffc; 
+  border-radius:5px; padding:8px 0px 0px 8px; margin:20px 0px 0px 0px; }

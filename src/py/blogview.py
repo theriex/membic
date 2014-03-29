@@ -41,6 +41,8 @@ $PENJSON
 $REVDATA
 </div>
 
+<div id="dlgdiv"></div>
+
 <script src="../js/jtmin.js"></script>
 <script src="../js/amd/blogview.js"></script>
 <script src="../js/amd/layout.js"></script>

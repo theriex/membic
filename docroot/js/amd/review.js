@@ -1311,6 +1311,37 @@ return {
     },
 
 
+    staticReviewDisplay: function (review, revlink) {
+        var type, html, revid, jump = "";
+        revid = jt.instId(review);
+        type = app.review.getReviewTypeByValue(review.revtype);
+        if(!revlink) {
+            revlink = ["a", {cla: "rslc", href: "../statrev/" + revid},
+                       app.profile.reviewItemNameHTML(type, review)]; }
+        if(revlink === "none") {
+            revlink = ["span", {cla: "rslc"},
+                       app.profile.reviewItemNameHTML(type, review)]; }
+        if(review.url) {
+            jump = " &nbsp;" + app.review.jumpLinkHTML(review.url); }
+        html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
+                [["div", {cla: "statrevmodkeydiv"},
+                  jt.colloquialDate(jt.ISOString2Day(review.modified)) +
+                  "&nbsp;" + review.keywords],
+                 app.review.starsImageHTML(review.rating),
+                 app.review.badgeImageHTML(type),
+                 "&nbsp;",
+                 revlink,
+                 jump,
+                 ["div", {cla: "revtextsummary"},
+                  [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
+                    app.review.picHTML(review, type)],
+                   ["div", {style: "padding:10px;"},
+                    jt.linkify(review.text)]]],
+                 ["div", {style: "clear:both;"}]]];
+        return jt.tac2html(html);
+    },
+
+
     delrev: function () {
         var data;
         if(!crev || 
