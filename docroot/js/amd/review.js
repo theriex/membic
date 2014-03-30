@@ -1337,6 +1337,12 @@ return {
                     app.review.picHTML(review, type)],
                    ["div", {style: "padding:10px;"},
                     jt.linkify(review.text)]]],
+                 ["div", {style: "clear:both;"}],
+                 ["div", {cla: "statrevrespdiv"},
+                  ["a", {href: "../?view=review&penid=" + review.penid +
+                               "&revid=" + jt.instId(review),
+                         title: "Open in application to see responses"},
+                   "Responses/Comments"]],
                  ["div", {style: "clear:both;"}]]];
         return jt.tac2html(html);
     },

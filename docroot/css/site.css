@@ -293,6 +293,7 @@ img { border:0px; }
 #statrevactdiv { text-align:center; padding:10px; }
 .statrevdiv {}
 .statrevmodkeydiv { font-size:small; }
+.statrevrespdiv { font-size:small; float:right; padding-right:25%; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }

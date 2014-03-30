@@ -61,7 +61,7 @@ $REFER
 </script>
 
 <div class="stdadspacediv">
-  <div id="morgoogleads">"
+  <div id="morgoogleads">
     <!-- start of code copied from adsense -->
 <script type="text/javascript"><!--
 google_ad_client = "ca-pub-3945939102920673";
