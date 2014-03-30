@@ -73,15 +73,15 @@ class BlogViewDisplay(webapp2.RequestHandler):
         pen.twid = 0
         pen.ghid = 0
         pen.abusive = ""
-        # retrieve the review data.  Going back 90 days and not
-        # filtering out batch updates.  More of an archival display...
-        # See how it goes.
-        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(90))
+        # retrieve the review data, not filtering out batch updates
+        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(365*2))
         # Same index retrieval already used by rev.py SearchReviews
         where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3" +\
             " ORDER BY modified DESC"
         ckey = "blog" + pen.name_c
         revquery = Review.gql(where, pen.key().id(), dold, nowISO())
+        # Retun enough results to cover an 80 item playlist update,
+        # and normally fill a page.  Client requests more as needed.
         qres = cached_query(ckey, revquery, "", 100, Review, True)
         revs = qres.objects;
         # write content
