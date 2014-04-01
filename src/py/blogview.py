@@ -4,7 +4,7 @@ from google.appengine.api import memcache
 import logging
 from rev import Review
 from pen import PenName
-from moracct import obj2JSON, qres2JSON
+from moracct import obj2JSON, qres2JSON, safeURIEncode
 from morutil import *
 import re
 import json
