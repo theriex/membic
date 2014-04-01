@@ -22,20 +22,26 @@ var blogview = (function () {
     ////////////////////////////////////////
 
     displayName = function () {
-        var penid, imgsrc, html;
+        var penid, imgsrc, rssurl, html;
         penid = jt.instId(pen);
         imgsrc = "../img/emptyprofpic.png";
         if(pen.profpic) {
             imgsrc = "../profpic?profileid=" + penid; }
+        rssurl = "../rsspen?pen=" + penid;
         html = ["table",
                 [["tr",
                   [["td",
                     ["img", {cla: "profpic", src: imgsrc}]],
                    ["td", {style: "padding:5px 10px;"},
-                    ["span", {id: "penhnamespan"},
-                     ["a", {href: "../#view=profile&profid=" + penid,
-                            title: "Show profile for " + pen.name},
-                      pen.name]]]]],
+                    [["span", {id: "penhnamespan"},
+                      ["a", {href: "../#view=profile&profid=" + penid,
+                             title: "Show profile for " + pen.name},
+                       pen.name]],
+                     "&nbsp;",
+                     ["a", {href: rssurl, id: "rsslink",
+                            title: "RSS feed for " + pen.name,
+                            onclick: jt.fs("window.open('" + rssurl + "')")},
+                      ["img", {cla: "rssico", src: "../img/rssicon.png"}]]]]]],
                  ["tr",
                   [["td",
                     ["div", {id: "profcitydiv"},
