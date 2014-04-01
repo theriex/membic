@@ -294,7 +294,7 @@ def mail_summaries(freq, thresh, request, response):
             else:
                 logmsg += " (" + acc.email + ") bounced " + bouncedates[-1] +\
                     ". No summary sent."
-                pen = null
+                pen = None
         if pen:
             logmsg += " (" + acc.email + "), pen: " + pen.name
             relids = outbound_relids_for_penid(pen.key().id())
