@@ -1,4 +1,4 @@
-/*global window: false, jtminjsDecorateWithUtilities: false */
+/*global window: false, jtminjsDecorateWithUtilities: false, document: false */
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 var app = {},  //Global container for application level funcs and values
@@ -20,6 +20,16 @@ var blogview = (function () {
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
+
+    noteRefer = function () {
+        var btwimg;
+        if(document.referrer) {
+            btwimg = jt.byId('btwimg');
+            if(btwimg) {
+                btwimg.src = "../bytheimg?bloginqref=" + 
+                    jt.enc(document.referrer); } }
+    },
+
 
     displayName = function () {
         var penid, imgsrc, rssurl, html;
@@ -123,6 +133,7 @@ return {
     display: function () {
         jtminjsDecorateWithUtilities(jt);
         readData();
+        noteRefer();
         displayName();
         displayReviews();
         app.layout.fixTextureCover();

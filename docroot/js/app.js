@@ -79,7 +79,7 @@ var app = {},  //Global container for application level funcs and values
 
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
-        var cdiv;
+        var cdiv, ref;
         app.amdtimer.load.end = new Date();
         cdiv = jt.byId('contentdiv');
         jt.out('contentfill', " &nbsp; ");
@@ -88,11 +88,12 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, 'keypress', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
-        if(document.referrer && document.referrer.indexOf("craigslist") > 0) {
+        if(document.referrer) {
+            ref = jt.enc(document.referrer);
             setTimeout(function () {
-                jt.call('GET', "bytheway?referral=craigslist", null,
+                jt.call('GET', "bytheway?referral=" + ref, null,
                         function () {
-                            jt.log("noted craigslist referral"); },
+                            jt.log("noted referrer: " + document.referrer); },
                         app.failf); }, 2); }
         setTimeout(app.login.init, 10);
     };

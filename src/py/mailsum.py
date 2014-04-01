@@ -16,6 +16,7 @@ from google.appengine.ext.webapp.mail_handlers import BounceNotification
 from google.appengine.ext.webapp.mail_handlers import BounceNotificationHandler
 import textwrap
 from cacheman import *
+import re
 
 
 class ActivityStat(db.Model):
@@ -78,6 +79,29 @@ def bump_referral_count(stat, bumpref):
         stat.refers += bumpref + ":1"
 
 
+# Translate and group referral URLs into bite size series identifiers
+def bump_referral(stat, entry, val):
+    if "facebook" in val:
+        bump_referral_count(stat, entry + "fb")
+    elif "twitter" in val or "/t.co/" in val:
+        bump_referral_count(stat, entry + "tw")
+    elif "plus.google" in val:
+        bump_referral_count(stat, entry + "gp")
+    elif "craigslist" in val:
+        if "/act/" in val:
+            bump_referral_count(stat, entry + "clact")
+        elif "/cps/" in val:
+            bump_referral_count(stat, entry + "clact")
+        else:
+            bump_referral_count(stat, entry + "cl")
+    elif "wdydfun" not in val:
+        # Write the whole url (without colons) as the identifier, thus
+        # causing the activity display to get real ugly.  Then write
+        # more logic in this method and fix the data to match.
+        ident = re.sub(":", "_", val)
+        bump_referral_count(stat, entry + ident)
+
+
 def is_known_bot(agentstr):
     for botsig in bot_ids:
         if botsig in agentstr:
@@ -99,7 +123,7 @@ def note_agent(agentstr, stat):
 
 def btw_activity(src, request):
     agentstr = request.headers.get('User-Agent')
-    logging.info("btw_activity agent: " + agentstr)
+    logging.info("btw_activity " + src + " agent: " + agentstr)
     agentstr = agentstr[:255]  #These CAN grow huge
     if is_known_bot(agentstr):
         return
@@ -107,26 +131,29 @@ def btw_activity(src, request):
     stat = get_activity_stat(sday)
     note_agent(agentstr, stat)
     val = request.get("clickthrough")
-    if val:  #somebody clicked through from statrev to the main site
+    if val:  # Somebody accessed the site requesting a specific review
+             # id or profile id in the url parameters (as happens when
+             # you click one of the links in a static review
+             # display). This is primarily an indicator of how helpful
+             # the static displays are.
         stat.clickthru += 1
     val = request.get("referral")
-    if val:  #somebody clicked through on an ad
-        if "craigslist" in val:
-            bump_referral_count(stat, "craigslist")
-        else:
-            #many bad resource warnings from bots, so log as error level
-            logging.error("untracked referral: " + val)
+    if val:  # Somebody clicked on a link to the core application.
+             # Most likely an ad.  See client code.
+        bump_referral(stat, "core", val)
     val = request.get("statinqref")
-    if val:  #somebody clicked through to a statrev from an outside link
-        if "facebook" in val:
-            bump_referral_count(stat, "facebook")
-        elif "twitter" in val or "/t.co/" in val:
-            bump_referral_count(stat, "twitter")
-        elif "plus.google" in val:
-            bump_referral_count(stat, "googleplus")
-        elif "wdydfun" not in val:
-            logging.info("other referral: " + val)
-            bump_referral_count(stat, "other")
+    if val:  # Somebody clicked on a link to a review.  This happens
+             # if you post a link to your review somewhere and
+             # somebody clicks on it.  Helpful to have some clue where
+             # reviews are being shared.
+        bump_referral(stat, "rev", val)
+    val = request.get("bloginqref")
+    if val: # Somebody clicked on a link to a blog.  Helpful to have
+            # some clue on inbound blog links.  Passing blog link info
+            # through to each pen name will be handled separately so
+            # each pen can decide if they want to mention outside
+            # links in their shoutout or review text.
+        bump_referral(stat, "blog", val)
     stat.put()  #nocache
             
 
