@@ -17,16 +17,36 @@ var actstat = (function () {
         height = 400 - margin.top - margin.bottom,
         xscale = d3.time.scale().range([0, width]),
         yscale = d3.scale.linear().range([height, 0]),
+        sercoloridx = 0,
 
 
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
 
+    seriesValue = function (series, datum) {
+        var refs, i, refelems;
+        if(datum.refers && datum.refers.indexOf(series.name) >= 0) {
+            refs = datum.refers.split(",");
+            for(i = 0; i < refs.length; i += 1) {
+                refelems = refs[i].split(":");
+                if(refelems[0] === series.name) {
+                    return parseInt(refelems[1], 10); } } }
+        return 0;
+    },
+
+
+    dataValue = function (datum, accessor) {
+        if(typeof accessor === "string") {
+            return datum[accessor]; }
+        return seriesValue(accessor, datum);
+    },
+
+
     makeLine = function (attr) {
         return d3.svg.line()
             .x(function (d) { return xscale(d.day); })
-            .y(function (d) { return yscale(d[attr]); });
+            .y(function (d) { return yscale(dataValue(d, attr)); });
     },
 
 
@@ -60,55 +80,78 @@ var actstat = (function () {
     },
 
 
-    makeInquirySeries = function () {
-        var series = [  //see also mailsum.py bump_referral_count
-            {name: "clickthru", color: "red", width: "2px", dashes: "2, 5",
-             title: "From static review display to the main site"},
-            {name: "facebook", color: "blue", width: "2px", dashes: "2, 2",
-             title: "From FB post to static review"},
-            {name: "twitter", color: "green", width: "2px", dashes: "3, 3",
-             title: "From tweet through to static review"},
-            {name: "googleplus", color: "purple", width: "2px", dashes: "5, 5",
-             title: "From g+ through to static review"},
-            {name: "craigslist", color: "yellow", width: "2px", dashes: "4, 4",
-             title: "From craigslist ad through to site"},
-            {name: "other", color: "tan", width: "2px", dashes: "1, 1",
-             title: "Other access to a statrev, not a known bot or wdydfun"} ];
-        return series;
+    makeSeriesDef = function (sname) {
+        var scolor, colors = [ "red", "orange", "yellow", "green", "blue", 
+                               "purple", "silver", "tan", "brown" ];
+        scolor = colors[sercoloridx % colors.length];
+        sercoloridx += 1;
+        return { name: sname, width: "2px", dashes: "1, 1", 
+                 color: scolor, total: 0,
+                 title: "See mailsum.py bump_referral for key defs" };
     },
 
 
-    addTotalCountsToSeries = function (series) {
-        var i, j, val, ttl;
-        for(i = 0; i < data.length; i += 1) {
-            for(j = 0; j < series.length; j += 1) {
-                val = data[i][series[j].name] || 0;
-                ttl = series[j].total || 0;
-                series[j].total = ttl + val; } }
+    //For more information on series, see mailsum.py bump_referral
+    makeInquirySeries = function () {
+        var series, i, refs, j, refelems, refname, refcount, sdef, result;
+        series = {};
+        series.clickthru = makeSeriesDef("clickthru");
+        for(i = 0;i < data.length; i += 1) {
+            if(data[i].clickthru) {
+                series.clickthru.total += data[i].clickthru; }
+            if(data[i].refers) {
+                refs = data[i].refers.split(",");
+                for(j = 0; j < refs.length; j += 1) {
+                    refelems = refs[j].split(":");
+                    refname = refelems[0];
+                    refcount = parseInt(refelems[1], 10);
+                    if(!series[refname]) {
+                        series[refname] = makeSeriesDef(refname); }
+                    series[refname].total += refcount; } } }
+        result = [];
+        for(sdef in series) {
+            if(series.hasOwnProperty(sdef)) {
+                result.push(series[sdef]); } }
+        result.sort(function (a, b) {
+            if(a.total > b.total) {
+                return -1; }
+            if(a.total < b.total) {
+                return 1; }
+            return 0; });
+        return result;
     },
 
 
     minMaxInq = function (series) {
-        var min, max;
-        min = data.reduce(function (value, elem) {
-            return Math.min(value, elem.clickthru, elem.facebook, elem.twitter,
-                            elem.googleplus, elem.craigslist, elem.other); }, 
-                          1000000);
+        var max;
         max = data.reduce(function (value, elem) {
-            return Math.max(value, elem.clickthru, elem.facebook, elem.twitter,
-                            elem.googleplus, elem.craigslist, elem.other); }, 
-                          0);
-        return [min, max];
+            var i, elmax = 0;
+            for(i = 0; i < series.length; i += 1) {
+                elmax = Math.max(elmax, seriesValue(series[i], elem)); }
+            return Math.max(value, elmax); }, 0);
+        return [0, max];
+    },
+
+
+    rowify = function (series, cols) {
+        var i, tdc = 0, rows = [], row = [];
+        for(i = 0; i < series.length; i += 1) {
+            if(tdc >= cols) {
+                rows.push(row);
+                row = [];
+                tdc = 0; }
+            row.push(series[i]);
+            tdc += 1; }
+        if(row.length > 0) {
+            rows.push(row); }
+        return rows;
     },
 
 
     displayInquiriesGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeInquirySeries();
-        addTotalCountsToSeries(series);
-        showColorKeys('inqactdiv', "Inquiries", [[series[0], series[1]],
-                                                 [series[4], series[2]],
-                                                 [series[5], series[3]]]);
+        showColorKeys('inqactdiv', "Inquiries", rowify(series, 3));
         svg = d3.select('#inqactdiv')
             .data(data)
             .append("svg")
@@ -135,7 +178,7 @@ var actstat = (function () {
                 .attr("stroke", sdef.color)
                 .attr("stroke-width", sdef.width)
                 .attr("stroke-dasharray", sdef.dashes)
-                .attr("d", makeLine(sdef.name)); });
+                .attr("d", makeLine(sdef)); });
     },
 
 
@@ -430,10 +473,7 @@ var actstat = (function () {
 
 
     attributizeReferrals = function (elem) {
-        var refs = makeInquirySeries();
-        refs.forEach(function (seriesdef) {
-            elem[seriesdef.name] = elem[seriesdef.name] || 0; });
-        refs = elem.refers.split(",");
+        var refs = elem.refers.split(",");
         refs.forEach(function (ref) {
             var components = ref.split(":"),
                 refername = components[0],
