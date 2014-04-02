@@ -256,8 +256,8 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
         body += "Thanks for reviewing! Your current and future followers" +\
             " appreciate it."
     else:
-        body += "Experienced anything worth a review recently?" +\
-            " Your friends would like to hear about it."
+        body += "Done anything fun recently?" +\
+            " Your friends would like to hear about it..."
     body += "\n\n" +\
         "To see top rated reviews from your friends," +\
         " go to http://www.wdydfun.com" +\
