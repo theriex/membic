@@ -440,6 +440,25 @@ class ByTheImg(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
+# Since you can't edit text fields in the GAE Data Viewer, unhandled
+# referral keys get cleaned up by calling this endpoint.
+class FixReferKeys(webapp2.RequestHandler):
+    def get(self):
+        message = "Nothing doing."
+        statid = request.get('statid')
+        if statid:
+            stat = ActivityStat.get_by_id(intz(statid))
+            if stat:
+                text = stat.refers
+                text = re.sub("revhttps_//www.google.com/", "revSE", text)
+                text = re.sub("coreclact", "coreCLact", text)
+                stat.refers = text
+                stat.put()
+                message = "ActivityStat " + statid + " refers field updated."
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write(message + "\n")
+
+
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       logging.info("BouncedEmailHandler called")
@@ -462,5 +481,6 @@ app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
                                ('/bytheimg', ByTheImg),
+                               ('/fixrefkeys', FixReferKeys),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 

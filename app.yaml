@@ -372,6 +372,8 @@ handlers:
   script: src.py.mailsum.app
 - url: /botids.*
   script: src.py.mailsum.app
+- url: /fixrefkeys.*
+  script: src.py.mailsum.app
 - url: /_ah/bounce
   script: src.py.mailsum.app
   login: admin
