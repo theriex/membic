@@ -445,7 +445,7 @@ class ByTheImg(webapp2.RequestHandler):
 class FixReferKeys(webapp2.RequestHandler):
     def get(self):
         message = "Nothing doing."
-        statid = request.get('statid')
+        statid = self.request.get('statid')
         if statid:
             stat = ActivityStat.get_by_id(intz(statid))
             if stat:
