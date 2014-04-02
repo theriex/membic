@@ -82,18 +82,20 @@ def bump_referral_count(stat, bumpref):
 # Translate and group referral URLs into bite size series identifiers
 def bump_referral(stat, entry, val):
     if "facebook" in val:
-        bump_referral_count(stat, entry + "fb")
+        bump_referral_count(stat, entry + "FB")
     elif "twitter" in val or "/t.co/" in val:
-        bump_referral_count(stat, entry + "tw")
+        bump_referral_count(stat, entry + "TW")
     elif "plus.google" in val:
-        bump_referral_count(stat, entry + "gp")
+        bump_referral_count(stat, entry + "GP")
+    elif "google" in val:
+        bump_referral_count(stat, entry + "SE")  # Search Engine
     elif "craigslist" in val:
         if "/act/" in val:
-            bump_referral_count(stat, entry + "clact")
+            bump_referral_count(stat, entry + "CLact")
         elif "/cps/" in val:
-            bump_referral_count(stat, entry + "clact")
+            bump_referral_count(stat, entry + "CLcps")
         else:
-            bump_referral_count(stat, entry + "cl")
+            bump_referral_count(stat, entry + "CL")
     elif "wdydfun" not in val:
         # Write the whole url (without colons) as the identifier, thus
         # causing the activity display to get real ugly.  Then write
