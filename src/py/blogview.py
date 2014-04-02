@@ -19,9 +19,13 @@ html = """
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
   <meta name="description" content="WDYDFun Blog for $PENNAME" />
+  <meta property="og:image" content="$IMGSRC" />
+  <meta property="twitter:image" content="$IMGSRC" />
+  <meta itemprop="image" content="$IMGSRC" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$PENNAME</title>
   <link href="../css/site.css" rel="stylesheet" type="text/css" />
+  <link rel="image_src" href="$IMGSRC" />
 </head>
 <body id="bodyid">
 
@@ -94,8 +98,12 @@ class BlogViewDisplay(webapp2.RequestHandler):
         # retrieve reviews
         revs = fetch_blog_reviews(pen)
         # write content
+        picurl = "../img/emptyprofpic.png"
+        if pen.profpic:
+            picurl = "../profpic?profileid=" + str(pen.key().id())
         content = html
         content = re.sub('\$PENNAME', pen.name, content)
+        content = re.sub('\$IMGSRC', picurl, content)
         content = re.sub('\$PENID', str(pen.key().id()), content)
         content = re.sub('\$PENJSON', obj2JSON(pen), content)
         content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)

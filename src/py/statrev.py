@@ -19,13 +19,13 @@ html = """
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
   <meta name="description" content="$REVDESC" />
-  <meta property="og:image" content="$IMGSRC />
+  <meta property="og:image" content="$IMGSRC" />
   <meta property="twitter:image" content="$IMGSRC" />
   <meta itemprop="image" content="$IMGSRC" />
-  <meta itemprop="description" content="$REVDESC" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$REVTITLE</title>
   <link href="../css/site.css" rel="stylesheet" type="text/css" />
+  <link rel="image_src" href="$IMGSRC" />
 </head>
 <body id="bodyid">
 
