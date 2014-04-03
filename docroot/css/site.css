@@ -291,9 +291,10 @@ img { border:0px; }
 #blogcontentdiv { padding:10px; margin-left:7%; }
 #statrevcontent { padding:10px 20px 0px 20px; }
 #statrevactdiv { text-align:center; padding:10px; }
-.statrevdiv {}
-.statrevmodkeydiv { font-size:small; }
-.statrevrespdiv { font-size:small; float:right; padding-right:25%; }
+.statrevdiv { padding:0px 0px 15px 0px; }
+.statrevmodkeydiv { font-size:small; color: #666666; }
+.statrevrespdiv { font-size:small; float:right; padding:0px 10px 0px 0px; }
+.blogidentdiv { padding:0px 0px 20px 0px; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
