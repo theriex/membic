@@ -1336,13 +1336,12 @@ return {
                   [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
                     app.review.picHTML(review, type)],
                    ["div", {style: "padding:10px;"},
-                    jt.linkify(review.text)]]],
-                 ["div", {style: "clear:both;"}],
-                 ["div", {cla: "statrevrespdiv"},
-                  ["a", {href: "../?view=review&penid=" + review.penid +
-                               "&revid=" + jt.instId(review),
-                         title: "Open in application to see responses"},
-                   "Responses/Comments"]],
+                    jt.linkify(review.text)],
+                   ["div", {cla: "statrevrespdiv"},
+                    ["a", {href: "../?view=review&penid=" + review.penid +
+                                 "&revid=" + jt.instId(review),
+                           title: "Open in application to see responses"},
+                     "Responses/Comments"]]]],
                  ["div", {style: "clear:both;"}]]];
         return jt.tac2html(html);
     },
