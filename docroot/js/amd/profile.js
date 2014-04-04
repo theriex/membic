@@ -79,8 +79,31 @@ app.profile = (function () {
     },
 
 
+    tallyInLinks = function (penref) {
+        var linksummary, inlinks, i;
+        linksummary = { helpful: 0, helpsrc: 0, 
+                        remembered: 0, remsrc: 0,
+                        corresponding: 0, correspsrc: 0 };
+        inlinks = penref.inlinks;
+        for(i = 0; i < inlinks.length; i += 1) {
+            if(inlinks[i].helpful) {
+                linksummary.helpful += inlinks[i].helpful.
+                    split(",").length;
+                linksummary.helpsrc += 1; }
+            if(inlinks[i].remembered) {
+                linksummary.remembered += inlinks[i].remembered.
+                    split(",").length;
+                linksummary.remsrc += 1; }
+            if(inlinks[i].corresponding) {
+                linksummary.corresponding += inlinks[i].corresponding.
+                    split(",").length;
+                linksummary.correspsrc += 1; } }
+        return linksummary;
+    },
+
+
     displayInboundLinkIndicator = function () {
-        var penref, html = "", linksummary, i, count;
+        var penref, html = "", count;
         penref = app.pen.currPenRef();
         if(!penref.linksummary) {
             if(!penref.inlinks) {
@@ -96,18 +119,7 @@ app.profile = (function () {
                             app.failf,
                             jt.semaphore("profile.dispInbLinkInd")); }, 1200);
                 return; }
-            linksummary = {helpful: 0, remembered: 0, corresponding: 0};
-            for(i = 0; i < penref.inlinks.length; i += 1) {
-                if(penref.inlinks[i].helpful) {
-                    linksummary.helpful += 
-                        penref.inlinks[i].helpful.split(",").length; }
-                if(penref.inlinks[i].remembered) {
-                    linksummary.remembered += 
-                        penref.inlinks[i].remembered.split(",").length; }
-                if(penref.inlinks[i].corresponding) {
-                    linksummary.corresponding +=
-                        penref.inlinks[i].corresponding.split(",").length; } }
-            penref.linksummary = linksummary; }
+            penref.linksummary = tallyInLinks(penref); }
         count = penref.linksummary.helpful + penref.linksummary.remembered +
             penref.linksummary.corresponding;
         if(count) {
@@ -1075,21 +1087,27 @@ app.profile = (function () {
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "helpful')")},
                               "helpful:"]],
-                            ["td", String(linksum.helpful)]]],
+                            ["td", {cla: "inbct"},
+                             String(linksum.helpsrc) + "/" +
+                             String(linksum.helpful)]]],
                           ["tr",
                            [["td", {colspan: 2, align: "right"}, 
                              ["a", {href: "#remembered",
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "remembered')")},
                               "remembered:"]],
-                            ["td", String(linksum.remembered)]]],
+                            ["td", {cla: "inbct"},
+                             String(linksum.remsrc) + "/" + 
+                             String(linksum.remembered)]]],
                           ["tr",
                            [["td", {colspan: 2, align: "right"},
                              ["a", {href: "#corresponding",
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "corresponding')")},
                               "corresponding:"]],
-                            ["td", String(linksum.corresponding)]]]]]]; } }
+                            ["td", {cla: "inbct"},
+                             String(linksum.correspsrc) + "/" + 
+                             String(linksum.corresponding)]]]]]]; } }
         return html;
     },
 

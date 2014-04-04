@@ -273,6 +273,8 @@ img { border:0px; }
 .inlinkspan { background:url('../img/inlinkbg.png') no-repeat center center;
   height:19px; width:19px; display:inline-block; 
   text-align:center; font-size:14px; font-weight:bold; vertical-align:middle; }
+.inbct { color:#666666; }
+
 /* >> review layout */
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }
