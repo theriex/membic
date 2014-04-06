@@ -30,7 +30,15 @@ app.activity = (function () {
     var pensearchmax = 1000,  //max records to read through automatically
         activityMode = "amnew",  //other option is "amtop"
         topModeEnabled = false,   //need to finish loading basics first
-        topActivityType = "",  //book or whatever review type is selected
+        topact = { type: "", dispmax: 20,
+                   book: { currpg: 0, pages: [] },
+                   movie: { currpg: 0, pages: [] },
+                   video: { currpg: 0, pages: [] },
+                   music: { currpg: 0, pages: [] },
+                   food: { currpg: 0, pages: [] },
+                   drink: { currpg: 0, pages: [] },
+                   activity: { currpg: 0, pages: [] },
+                   other: { currpg: 0, pages: [] } },
         topDispMax = 20,  //max top reviews to display
         remActivityType = "",  //by default display all remembered reviews
         announcedismiss = false,
@@ -46,7 +54,7 @@ app.activity = (function () {
         mode = app.layout.currnavmode();
         if(selected ||
            (mode === "activity" && activityMode === "amtop" && topModeEnabled &&
-            topActivityType === typename) ||
+            topact.type === typename) ||
            (mode === "memo" && remActivityType === typename)) {
             return "img/merit/Merit" + typename.capitalize() + "20.png"; }
         return "img/" + type.img;
@@ -341,7 +349,17 @@ app.activity = (function () {
     },
 
 
-    findUniqueRev = function (revrefs, revids) {
+    inPrevTopPage = function (revid, topdat) {
+        var i, j;
+        for(i = 0; i < topdat.pages.length; i += 1) {
+            for(j = 0; j < topdat.pages[i].revs.length; j += 1) {
+                if(revid === topdat.pages[i].revs[j].revid) {
+                    return true; } } }
+        return false;
+    },
+
+
+    findUniqueRev = function (revrefs, revids, topdat) {
         var revref, i;
         for(i = 0; !revref && i < revids.length; i += 1) {
             revref = app.lcs.getRevRef(revids[i]);
@@ -349,6 +367,9 @@ app.activity = (function () {
                 revref = null; }
             else if(revref.status !== "ok" && revref.status !== "not cached") { 
                 revref = null; }  //bad ids not valid for consideration
+            else if(revref.rev && inPrevTopPage(jt.instId(revref.rev), 
+                                                topdat)) {
+                revref = null; }
             else if(revref.rev && isLameTopRev(revrefs, revref)) {
                 revref = null; } }
         return revref;
@@ -358,7 +379,7 @@ app.activity = (function () {
     //find the next viable top review to add to the revrefs.  Returns
     //null if nothing left to find, revref otherwise.  The revref may
     //need to be resolved if not cached.
-    nextTopRev = function (revrefs, penrefs) {
+    nextTopRev = function (revrefs, penrefs, topdat) {
         var i, revref, startidx = 0, penidx, pen;
         if(revrefs.length > 0) {
             revref = revrefs[revrefs.length - 1];
@@ -370,8 +391,9 @@ app.activity = (function () {
         for(i = 0; i < penrefs.length; i += 1) { 
             penidx = (i + startidx) % penrefs.length;
             pen = penrefs[penidx].pen;
-            if(pen.top20s && pen.top20s[topActivityType]) {
-                revref = findUniqueRev(revrefs, pen.top20s[topActivityType]);
+            if(pen.top20s && pen.top20s[topact.type]) {
+                revref = findUniqueRev(revrefs, pen.top20s[topact.type],
+                                       topdat);
                 if(revref) {
                     break; } } }
         return revref;
@@ -387,13 +409,8 @@ app.activity = (function () {
     },
 
 
-
-    //The outbound relationships are assumed to be loaded at this
-    //point.  Rebuild the pen array every time, since they might have
-    //blocked someone in the meantime and not much overhead if
-    //everything is already cached.
-    displayTopReviews = function () {
-        var pens, i, penid, revs, revref, revitems = [], html;
+    getFriendPens = function () {
+        var pens, i, penid;
         //get an array of friend pens
         pens = app.rel.outboundids();
         for(i = 0; i < pens.length; i += 1) {
@@ -401,7 +418,8 @@ app.activity = (function () {
             pens[i] = app.lcs.getPenRef(penid);
             if(pens[i].status === "not cached") {
                 jt.out('revactdiv', "Loading friends..." + (i+1));
-                return app.lcs.getPenFull(penid, displayTopReviews); } }
+                return app.lcs.getPenFull(penid, 
+                                          app.activity.displayTopReviews); } }
         //sort them by modified (last login) with most recent first
         pens.sort(function (a, b) {
             if(a.pen && b.pen && a.pen.modified < b.pen.modified) {
@@ -409,33 +427,81 @@ app.activity = (function () {
             if(a.pen && b.pen && a.pen.modified > b.pen.modified) {
                 return -1; }
             return 0; });
-        //initialize the topActivityType if necessary
-        for(i = 0; !topActivityType && i < pens.length; i += 1) {
+        //initialize the topact type if necessary
+        for(i = 0; !topact.type && i < pens.length; i += 1) {
             if(pens[i].pen && pens[i].pen.top20s 
                && pens[i].pen.top20s.latestrevtype) {
-                topActivityType = pens[i].pen.top20s.latestrevtype; } }
-        if(!topActivityType) {
-            topActivityType = "book"; }
-        //dump the reviews
-        revs = [];
-        while(revs.length < topDispMax) { 
-            revref = nextTopRev(revs, pens);
-            if(!revref) {  //no more reviews found, so done
-                break; }
-            if(revref.status === "not cached") {
-                revitems.push(["li", "Fetching review " + revref.revid]);
-                html = ["ul", {cla: "revlist"}, revitems];
-                html = jt.tac2html(html);
-                jt.out('revactdiv', html);
-                return app.lcs.getRevFull(revref.revid, displayTopReviews); }
-            if(revref.rev && !isLameTopRev(revs, revref)) {
-                verifyPenNameStrFromCached(revref);
-                revs.push(revref);
-                revitems.push(["li", app.profile.reviewItemHTML(revref.rev, 
+                topact.type = pens[i].pen.top20s.latestrevtype; } }
+        if(!topact.type) {
+            topact.type = "book"; }
+        return pens;
+    },
+
+
+    getTopRevPaginationHTML = function (topdat, lah) {
+        var pgh = [];
+        if(topdat.currpg > 0) {
+            pgh.push(["a", {href: "#previous", cla: "smalltext",
+                            title: "Back to previous top " + topact.type + 
+                                   " reviews",
+                            onclick: jt.fs("app.activity.pgtop('" +
+                                           topact.type + "',-1)")},
+                      "&larr;&nbsp;Previous"]); }
+        if(lah) { //lookahead shows more available
+            pgh.push("&nbsp;&nbsp;&nbsp;");
+            pgh.push(["a", {href: "#more", cla: "smalltext",
+                            title: "More top " + topact.type + " reviews",
+                            onclick: jt.fs("app.activity.pgtop('" +
+                                           topact.type + "',1)")},
+                      "More&nbsp;&rarr;"]); }
+        return pgh;
+    },
+
+
+    //The outbound relationships are assumed to be loaded at this
+    //point.  Rebuild the pen array every time, since they might have
+    //blocked someone in the meantime and not much overhead if
+    //everything is already cached.
+    displayTopReviews = function () {
+        var topdat, pens, revs, revref, revitems = [], pgh, lah, html = "";
+        if(topact.type) {
+            topdat = topact[topact.type];
+            if(topdat.currpg < topdat.pages.length) {
+                html = topdat.pages[topdat.currpg].html; } }
+        if(!html) {
+            pens = getFriendPens();  //initializes topact type if needed
+            topdat = topact[topact.type];
+            revs = [];
+            while(revs.length < topDispMax + 1) { //lookahead for paging
+                revref = nextTopRev(revs, pens, topdat);
+                if(!revref) {  //no more reviews found, so done
+                    break; }
+                if(revref.status === "not cached") {
+                    revitems.push(["li", "Fetching review " + revref.revid]);
+                    html = ["ul", {cla: "revlist"}, revitems];
+                    html = jt.tac2html(html);
+                    jt.out('revactdiv', html);
+                    return app.lcs.getRevFull(revref.revid, 
+                                              displayTopReviews); }
+                if(revref.rev && !isLameTopRev(revs, revref)) {
+                    verifyPenNameStrFromCached(revref);
+                    revs.push(revref);
+                    revitems.push(["li", app.profile.reviewItemHTML(revref.rev, 
                                                    revref.rev.penNameStr)]); } }
-        if(revs.length === 0) {
-            revitems.push(["li", "No " + topActivityType + " reviews found"]); }
-        html = ["ul", {cla: "revlist"}, revitems];
+            if(revs.length === 0) {
+                revitems.push(["li", "No " + topact.type + 
+                               " reviews found"]); }
+            if(revs.length > topDispMax) {
+                lah = revs.pop();  //note lookahead revref
+                revitems.pop(); }
+            pgh = getTopRevPaginationHTML(topdat, lah);
+            if(pgh.length > 0) {
+                revitems.push(["li", pgh]); }
+            if(!lah) { 
+                revitems.push(["li", app.rel.findPenNamesHTML(
+                    "To see more top ratings, follow more people")]); }
+            html = ["ul", {cla: "revlist"}, revitems];
+            topdat.pages.push({revs: revs, html: html}); }
         html = jt.tac2html(html);
         jt.out('revactdiv', html);
         app.layout.adjust();
@@ -1026,7 +1092,7 @@ return {
 
     toptype: function (typestr) {
         activityMode = "amtop";
-        topActivityType = typestr;
+        topact.type = typestr;
         mainDisplay("activity");
     },
 
@@ -1181,6 +1247,17 @@ return {
     announcex: function () {
         announcedismiss = true;
         jt.out('announcementdiv', "");
+    },
+
+
+    displayTopReviews: function () {
+        displayTopReviews();
+    },
+
+
+    pgtop: function (revtype, pgincr) {
+        topact[revtype].currpg += pgincr;
+        displayTopReviews();
     }
 
 

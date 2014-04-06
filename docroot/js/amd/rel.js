@@ -335,17 +335,6 @@ app.rel = (function () {
     },
 
 
-    relRefPenHTMLFooter = function (direction) {
-        var html;
-        html = ["div", {id: "srchpenslinkdiv"},
-                ["a", {id: "srchpens", href: "#findpens",
-                       onclick: jt.fs("app.activity.penNameSearchDialog()")},
-                 [["img", {cla: "reviewbadge", src: "img/follow.png"}],
-                  "Find pen names to follow"]]];
-        return jt.tac2html(html);
-    },
-
-
     relListCtrlsHTML = function (pen, direction, divid, refarray) {
         var html = "", showing, tab;
         if(refarray && refarray.length > 0) {
@@ -771,7 +760,7 @@ return {
                     if(litemp === placeholder) {
                         break; } }
                 if(i === refarray.length) {
-                    relitems.push(relRefPenHTMLFooter(direction)); } }
+                    relitems.push(app.rel.findPenNamesHTML()); } }
             else if(refarray.length === 0) {
                 if(direction === "outbound") {
                     relitems.push(["li", "Not following anyone."]);
@@ -872,6 +861,21 @@ return {
     saveRequest: function () {
         jt.out('requestbuttonsdiv', "Saving...");
         writeRequestToServer();
+    },
+
+
+    findPenNamesHTML: function (preftxt) {
+        var html;
+        if(!preftxt) {
+            preftxt = ""; }
+        html = ["div", {id: "srchpenslinkdiv"},
+                [["div", {cla: "smalltext"},
+                  preftxt],
+                 ["a", {id: "srchpens", href: "#findpens",
+                        onclick: jt.fs("app.activity.penNameSearchDialog()")},
+                  [["img", {cla: "reviewbadge", src: "img/follow.png"}],
+                   "Find pen names to follow"]]]];
+        return jt.tac2html(html);
     }
 
 

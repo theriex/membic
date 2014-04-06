@@ -12,6 +12,7 @@ import json
 from operator import attrgetter
 import re
 from cacheman import *
+import time
 
 
 class Review(db.Model):
@@ -322,6 +323,13 @@ def filter_reviews(reviews, qstr):
     return results
 
 
+def write_review(review, pen):
+    cached_put(review)
+    bust_cache_key("recentrevs")
+    bust_cache_key("blog" + pen.name_c)
+    update_top20_reviews(pen, review)
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -338,10 +346,7 @@ class NewReview(webapp2.RequestHandler):
             # Might be better to unpack the existing svcdata value and 
             # update rather than rewriting, but maybe not. Change if needed
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
-        cached_put(review)
-        bust_cache_key("recentrevs")
-        bust_cache_key("blog" + pen.name_c)
-        update_top20_reviews(pen, review)
+        write_review(review, pen)
         returnJSON(self.response, [ review ])
 
 
@@ -355,10 +360,7 @@ class UpdateReview(webapp2.RequestHandler):
             return
         read_review_values(self, review)
         review.penname = pen.name
-        cached_put(review)
-        bust_cache_key("recentrevs")
-        bust_cache_key("blog" + pen.name_c)
-        update_top20_reviews(pen, review)
+        write_review(review, pen)
         returnJSON(self.response, [ review ])
 
 
@@ -529,33 +531,31 @@ class MakeTestReviews(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
             self.error(405)
-            self.response.out.write("Test pens are only for local testing")
+            self.response.out.write("Test reviews are only for local testing")
             return
-        count = 0
-        while count < 10:
-            count += 1
-            name = "RevTestPen " + str(count)
-            pen = PenName(name=name, name_c=canonize(name))
-            pen.shoutout = "MakeTestReviews dummy pen name " + str(count)
-            pen.city = "fake city " + str(count)
-            pen.accessed = nowISO()
-            pen.modified = nowISO()
-            pen.revmem = ""
-            pen.settings = ""
-            pen.following = 0
-            pen.followers = 0
-            cached_put(pen)
-            moviecount = 0
-            while moviecount < 4:
-                moviecount += 1
-                rev = Review(penid=pen.key().id(), revtype="movie")
-                rev.rating = 50
-                rev.text = "dummy movie review " + str(count) + str(moviecount)
-                rev.modified = nowISO()
-                rev.title = "movie " + str(count) + str(moviecount)
-                rev.cankey = canonize(rev.title)
-                cached_put(rev)
-                bust_cache_key("recentrevs")
+        pencname = self.request.get('pencname')
+        if not pencname:
+            self.error(400)
+            self.response.out.write("pencname required")
+            return
+        for i in range(20):
+            # PenName top20 updated with each write, so refetch each time
+            # Same index retrieval already used by pen.py NewPenName
+            pens = PenName.gql("WHERE name_c=:1 LIMIT 1", pencname)
+            if pens.count() != 1:
+                self.error(404)
+                self.response.out.write("PenName name_c " + pencname + 
+                                        " not found")
+                return
+            rev = Review(penid=pens[0].key().id(), revtype="movie")
+            rev.rating = 75
+            rev.text = "dummy movie review " + str(i)
+            rev.modified = nowISO()
+            rev.title = "movie " + str(i)
+            rev.cankey = canonize(rev.title)
+            logging.info("Writing test review: " + rev.title)
+            write_review(rev, pens[0])
+            time.sleep(7)  # let database updates stabilize
         self.response.out.write("Test reviews created")
 
 
