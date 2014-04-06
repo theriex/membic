@@ -388,7 +388,7 @@ app.activity = (function () {
                     break; } }
             startidx = i + 1; } //start after pen who did the last rev
         revref = null;
-        for(i = 0; i < penrefs.length; i += 1) { 
+        for(i = 0; penrefs && i < penrefs.length; i += 1) { 
             penidx = (i + startidx) % penrefs.length;
             pen = penrefs[penidx].pen;
             if(pen.top20s && pen.top20s[topact.type]) {
@@ -427,20 +427,24 @@ app.activity = (function () {
             if(a.pen && b.pen && a.pen.modified > b.pen.modified) {
                 return -1; }
             return 0; });
-        //initialize the topact type if necessary
+        return pens;
+    },
+
+
+    initTopActivityType = function (pens) {
+        var i;
         for(i = 0; !topact.type && i < pens.length; i += 1) {
             if(pens[i].pen && pens[i].pen.top20s 
                && pens[i].pen.top20s.latestrevtype) {
                 topact.type = pens[i].pen.top20s.latestrevtype; } }
         if(!topact.type) {
             topact.type = "book"; }
-        return pens;
     },
 
 
     getTopRevPaginationHTML = function (topdat, lah) {
         var pgh = [];
-        if(topdat.currpg > 0) {
+        if(topdat && topdat.currpg > 0) {
             pgh.push(["a", {href: "#previous", cla: "smalltext",
                             title: "Back to previous top " + topact.type + 
                                    " reviews",
@@ -469,7 +473,10 @@ app.activity = (function () {
             if(topdat.currpg < topdat.pages.length) {
                 html = topdat.pages[topdat.currpg].html; } }
         if(!html) {
-            pens = getFriendPens();  //initializes topact type if needed
+            pens = getFriendPens();
+            if(!pens) {    //pen names are being fetched. Callback returns
+                return; }  //to this method when ready.
+            initTopActivityType(pens);
             topdat = topact[topact.type];
             revs = [];
             while(revs.length < topDispMax + 1) { //lookahead for paging
