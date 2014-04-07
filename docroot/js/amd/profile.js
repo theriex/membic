@@ -1081,7 +1081,7 @@ app.profile = (function () {
                          [["tr",
                            [["td", {align: "left"}, 
                              ["img", {cla: "reviewbadge",
-                                      src: "img/follow.png"}]],
+                                      src: "img/friendresp.png"}]],
                             ["td", {align: "right"}, 
                              ["a", {href: "#helpful",
                                     onclick: jt.fs("app.profile.displayResp('" +
@@ -1119,6 +1119,17 @@ app.profile = (function () {
                           onclick: jt.fs("app.profile.invite()")},
                     [["img", {cla: "reviewbadge", src: "img/follow.png"}],
                      "Send Invite"]]; }
+        return html;
+    },
+
+
+    createGroupHTML = function () {
+        var html = "";
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            html = ["a", {id: "creategroup", href: "#creategroup",
+                          onclick: jt.fs("app.profile.createGroup()")},
+                    [["img", {cla: "reviewbadge", src: "img/group.png"}],
+                     "Create Group"]]; }
         return html;
     },
 
@@ -1188,7 +1199,9 @@ app.profile = (function () {
                  ["div", {id: "profrevimpactdiv"},
                   revimpactHTML(homepen, dispen)],
                  ["div", {id: "profinvitediv"},
-                  inviteHTML()]]];
+                  inviteHTML()],
+                 ["div", {id: "creategroupdiv"},
+                  createGroupHTML()]]];
         jt.out('rightcoldiv', jt.tac2html(html));
         jt.byId('rightcoldiv').style.display = "block";
         displayShout(dispen);
@@ -1746,7 +1759,12 @@ return {
         else {
             src = revTypeSelectorImgSrc(typename); }
         jt.byId("rtsimg" + typename).src = src;
-    }
+    },
+
+
+    createGroup: function () {
+        jt.err("New feature. Not implemented yet. Soon...")
+    },
 
 
 };  //end of returned functions

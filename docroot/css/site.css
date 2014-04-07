@@ -155,7 +155,7 @@ img { border:0px; }
 #profpersonaldiv { padding:0px 0px 0px 10px; }
 #profshoutdiv { padding:0px; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
-#profinvitediv { font-size:small; padding: 0px 10px 5px 10px; }
+#profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
 #wdydfunblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
 #srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
