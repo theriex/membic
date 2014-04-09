@@ -1086,7 +1086,7 @@ app.profile = (function () {
                              ["a", {href: "#helpful",
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "helpful')")},
-                              "helpful:"]],
+                              "Helpful:"]],
                             ["td", {cla: "inbct"},
                              String(linksum.helpsrc) + "/" +
                              String(linksum.helpful)]]],
@@ -1095,7 +1095,7 @@ app.profile = (function () {
                              ["a", {href: "#remembered",
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "remembered')")},
-                              "remembered:"]],
+                              "Remembered:"]],
                             ["td", {cla: "inbct"},
                              String(linksum.remsrc) + "/" + 
                              String(linksum.remembered)]]],
@@ -1104,7 +1104,7 @@ app.profile = (function () {
                              ["a", {href: "#corresponding",
                                     onclick: jt.fs("app.profile.displayResp('" +
                                                    "corresponding')")},
-                              "corresponding:"]],
+                              "Corresponding:"]],
                             ["td", {cla: "inbct"},
                              String(linksum.correspsrc) + "/" + 
                              String(linksum.corresponding)]]]]]]; } }
@@ -1125,11 +1125,11 @@ app.profile = (function () {
 
     createGroupHTML = function () {
         var html = "";
-        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            html = ["a", {id: "creategroup", href: "#creategroup",
-                          onclick: jt.fs("app.profile.createGroup()")},
-                    [["img", {cla: "reviewbadge", src: "img/group.png"}],
-                     "Create Group"]]; }
+        // if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+        //     html = ["a", {id: "creategroup", href: "#creategroup",
+        //                   onclick: jt.fs("app.group.createGroup()")},
+        //             [["img", {cla: "reviewbadge", src: "img/group.png"}],
+        //              "Create Group"]]; }
         return html;
     },
 
@@ -1195,7 +1195,7 @@ app.profile = (function () {
                   ["a", {href: "blogs/" + dispen.name_c,
                          onclick: jt.fs("window.open('blogs/" + 
                                         dispen.name_c + "')")},
-                   "wdydfun blog"]],
+                   "WDYDfun Blog"]],
                  ["div", {id: "profrevimpactdiv"},
                   revimpactHTML(homepen, dispen)],
                  ["div", {id: "profinvitediv"},
@@ -1759,13 +1759,7 @@ return {
         else {
             src = revTypeSelectorImgSrc(typename); }
         jt.byId("rtsimg" + typename).src = src;
-    },
-
-
-    createGroup: function () {
-        jt.err("New feature. Not implemented yet. Soon...")
-    },
-
+    }
 
 };  //end of returned functions
 }());

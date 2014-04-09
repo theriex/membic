@@ -275,6 +275,20 @@ img { border:0px; }
   text-align:center; font-size:14px; font-weight:bold; vertical-align:middle; }
 .inbct { color:#666666; }
 
+/* >> group layout */
+#primgroupdlgdiv { padding:0px 10px; }
+#errmsgdiv { font-size:small; color:red; }
+#primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
+#primgroupbuttonsdiv button { margin:0px 10px; }
+.grpnameval { font-weight:bold; }
+.grpwiztable { padding:10px 0px 0px 0px; }
+.grpwiztable td { padding:0px 3px; vertical-align:top; }
+.tdnowrap { white-space:nowrap; }
+.tdwide { width:99%; }
+.groupdescrtxt { padding:5px 2px 0px 2px; 
+  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
+  font-size:small; }
+
 /* >> review layout */
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }

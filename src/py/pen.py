@@ -42,6 +42,8 @@ class PenName(db.Model):
     followers = db.IntegerProperty()
     # csv of penids flagged for harassment
     abusive = db.TextProperty()
+    # csv of groupids this pen is following
+    groups = db.TextProperty()
 
 
 def authorized(acc, pen):

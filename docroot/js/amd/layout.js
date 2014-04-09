@@ -533,7 +533,19 @@ return {
         jt.byId('centerhdivtd').style.maxHeight = 
             String(jt.byId('centerhdiv').offsetHeight) + "px";
         app.layout.adjust();
-    }
+    },
+
+
+    dlgwrapHTML: function (title, html) {
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.layout.closeDialog()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "floatclear"}],
+                ["div", {cla: "headingtxt"}, title],
+                html];
+        return jt.tac2html(html);
+    },
 
 
 };  //end of returned functions

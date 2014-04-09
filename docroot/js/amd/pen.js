@@ -19,10 +19,17 @@ app.pen = (function () {
     ////////////////////////////////////////
 
     serializeFields = function (penName) {
+        var i;
         if(typeof penName.revmem === 'object') {
             penName.revmem = JSON.stringify(penName.revmem); }
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
+        if(!penName.groups) {
+            penName.groups = ""; }
+        if(typeof penName.groups !== "string") {
+            for(i = 0; i < penName.groups.length; i += 1) {
+                penName.groups[i] = jt.instId(penName.groups[i]); }
+            penName.groups = penName.groups.join(","); }
     },
 
 
