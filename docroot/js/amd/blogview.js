@@ -95,7 +95,12 @@ var blogview = (function () {
                 revitems.push(["li",
                                app.review.staticReviewDisplay(revs[i])]); } }
         html = ["div", {id: "blogcontentdiv"},
-                ["ul", {cla: "revlist"}, revitems]];
+                [["ul", {cla: "revlist"}, revitems],
+                 ["div",
+                  ["Look me up on ",
+                   ["a", {href: "../#view=profile&profid=" + jt.instId(pen)},
+                    "WDYDFun"],
+                   " to see my all time favorites, or search my reviews"]]]];
         html = jt.tac2html(html);
         html = html.replace(/img\//g, "../img/");
         jt.out('revdatadiv', html);

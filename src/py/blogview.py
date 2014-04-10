@@ -73,10 +73,11 @@ def fetch_blog_reviews(pen):
         " ORDER BY modified DESC"
     ckey = "blog" + pen.name_c
     revquery = Review.gql(where, pen.key().id(), dold, nowISO())
-    # Retun enough results to cover an 80 item playlist update,
-    # and normally fill a page.  Client requests more as needed.
-    qres = cached_query(ckey, revquery, "", 100, Review, True)
-    return qres.objects;
+    # Return just enough results for an RSS feed to note updates, but
+    # not so many that it takes any significant time to retrieve,
+    # cache and return the results.  Client requests more to fill.
+    qres = cached_query(ckey, revquery, "", 20, Review, True)
+    return qres;
 
 
 class BlogViewDisplay(webapp2.RequestHandler):
@@ -96,7 +97,7 @@ class BlogViewDisplay(webapp2.RequestHandler):
         pen.ghid = 0
         pen.abusive = ""
         # retrieve reviews
-        revs = fetch_blog_reviews(pen)
+        qres = fetch_blog_reviews(pen)
         # write content
         picurl = "../img/emptyprofpic.png"
         if pen.profpic:
@@ -107,7 +108,8 @@ class BlogViewDisplay(webapp2.RequestHandler):
         content = re.sub('\$PENID', str(pen.key().id()), content)
         content = re.sub('\$PENJSON', obj2JSON(pen), content)
         content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
-        content = re.sub('\$REVDATA', qres2JSON(revs, "", -1, ""), content)
+        content = re.sub('\$REVDATA', qres2JSON(
+                qres.objects, "", -1, ""), content)
         refer = self.request.referer
         if refer:
             refer = "<img src=\"../bytheimg?bloginqref=" +\
