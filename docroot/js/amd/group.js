@@ -43,7 +43,17 @@ app.group = (function () {
 
 
     displayGroup = function () {
+        app.layout.closeDialog();
         jt.err("displayGroup not implemented yet");
+    },
+
+
+    copyGroup = function (group) {
+        var name;
+        wizgrp = {};
+        for(name in group) {
+            if(group.hasOwnProperty(name)) {
+                wizgrp[name] = group[name]; } }
     },
 
 
@@ -280,7 +290,8 @@ app.group = (function () {
                         if(cboxes[j].checked) {
                             if(wizgrp.revtypes) {
                                 wizgrp.revtypes += ","; }
-                            wizgrp.revtypes += cboxes[j].value; } }
+                            wizgrp.revtypes += app.review.getReviewTypeByValue(
+                                cboxes[j].value).type; } }
                     if(!wizgrp.revtypes) {
                         jt.out('errmsgdiv', 
                                "At least one review type must be selected.");
@@ -493,11 +504,7 @@ return {
 
 
     editGroup: function (group) {
-        var name;
-        wizgrp = {};
-        for(name in group) {
-            if(group.hasOwnProperty(name)) {
-                wizgrp[name] = group[name]; } }
+        copyGroup(group);
         promptForPrimaryFields();
     },
 
@@ -513,8 +520,28 @@ return {
 
 
     saveGroup: function () {
-        jt.out('primgroupbuttonsdiv', "Creating " + wizgrp.name + "...");
-        //POST and then displayGroup
+        var data, divid, buttonhtml;
+        if(!jt.instId(wizgrp)) {
+            divid = "primgroupbuttonsdiv";
+            buttonhtml = jt.byId(divid).innerHTML;
+            jt.out(divid, "Creating " + wizgrp.name + "..."); }
+        else {
+            divid = 'editbuttonsdiv';
+            buttonhtml = jt.byId(divid).innerHTML;
+            jt.out(divid, "Saving..."); }
+        //relying on server side validation for detailed checking
+        app.onescapefunc = null;
+        data = jt.objdata(wizgrp) + 
+            "&penid=" + app.pen.currPenRef().penid;
+        jt.call('POST', "grpdesc?" + app.login.authparams(), data,
+                function (groups) {
+                    copyGroup(groups[0]);
+                    displayGroup(); },
+                app.failf(function (code, errtxt) {
+                    jt.out(divid, buttonhtml);
+                    jt.out('errmsgdiv', "Save failed code: " + code + 
+                           " " + errtxt); }),
+                jt.semaphore("group.save"));
     }
 
 

@@ -304,6 +304,16 @@ handlers:
 
 
 ######################################################################
+##        Groups
+
+## Create a new group or update a group description
+## POST params: penid, group, authparams
+- url: /grpdesc.*
+  script: src.py.group.app
+
+
+
+######################################################################
 ##        Connection Services
 
 ## Return a signed OAuth request given the specified parameters
