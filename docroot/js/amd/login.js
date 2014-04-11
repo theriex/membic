@@ -105,13 +105,18 @@ app.login = (function () {
         if(params.anchor === "profile") {
             clearParams();
             return app.profile.display(params.action, params.errmsg); }
-        //no tag redirect so check current state
+        //no tag redirect so check current state.  State may be from history
+        //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(state) {
             if(state.view === "profile") {
                 if(state.profid) {
                     return app.profile.byprofid(state.profid); }
                 return app.profile.display(); }
+            if(state.view === "group") {
+                if(state.groupid) {
+                    return app.group.bygroupid(state.groupid); }
+                return app.group.display(); }
             if(state.view === "activity") {
                 return app.activity.displayActive(); }
             if(state.view === "review" && state.revid) {
@@ -472,14 +477,15 @@ app.login = (function () {
             logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //on home server, clean the location display
             clearParams(); }
-        if(params.view && params.profid) {
+        if(params.view && (params.profid || params.groupid)) {
             setTimeout(function () {
-                jt.call('GET', "/bytheway?clickthrough=profile", null,
+                jt.call('GET', "/bytheway?clickthrough=" + params.view, null,
                         function () {
                             jt.log("noted profile clickthrough"); },
                         app.failf); }, 200);
             app.history.checkpoint({ view: params.view, 
-                                     profid: params.profid }); }
+                                     profid: params.profid,
+                                     groupid: params.groupid }); }
         else if(params.revedit) {
             app.history.checkpoint({ view: "review", mode: "edit",
                                      revid: params.revedit }); }

@@ -542,6 +542,19 @@ return {
                     jt.out('errmsgdiv', "Save failed code: " + code + 
                            " " + errtxt); }),
                 jt.semaphore("group.save"));
+    },
+
+
+    display: function () {
+        displayGroup();
+    },
+
+
+    bygroupid: function (groupid) {
+        app.layout.closeDialog(); //close group search dialog if open
+        // app.lcs.getGroupFull(
+        //     copyGroup
+        //     displayGroup
     }
 
 
