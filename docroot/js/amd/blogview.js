@@ -103,6 +103,7 @@ var blogview = (function () {
                    " to see my all time favorites, or search my reviews"]]]];
         html = jt.tac2html(html);
         html = html.replace(/img\//g, "../img/");
+        html = html.replace(/revpic\?/g, "../revpic?");
         jt.out('revdatadiv', html);
     },
 
