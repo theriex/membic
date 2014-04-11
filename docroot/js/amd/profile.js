@@ -1125,11 +1125,11 @@ app.profile = (function () {
 
     createGroupHTML = function () {
         var html = "";
-        // if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-        //     html = ["a", {id: "creategroup", href: "#creategroup",
-        //                   onclick: jt.fs("app.group.createGroup()")},
-        //             [["img", {cla: "reviewbadge", src: "img/group.png"}],
-        //              "Create Group"]]; }
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            html = ["a", {id: "creategroup", href: "#creategroup",
+                          onclick: jt.fs("app.group.createGroup()")},
+                    [["img", {cla: "reviewbadge", src: "img/group.png"}],
+                     "Create Group"]]; }
         return html;
     },
 

@@ -311,6 +311,10 @@ handlers:
 - url: /grpdesc.*
   script: src.py.group.app
 
+## Return the group for the given id
+## GET params: groupid
+- url: /grpbyid.*
+  script: src.py.group.app
 
 
 ######################################################################

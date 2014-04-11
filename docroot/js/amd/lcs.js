@@ -3,7 +3,7 @@
 /*jslint white: true, maxerr: 50, indent: 4 */
 
 //////////////////////////////////////////////////////////////////////
-// Local Cache Storage for pen names, relationships, and reviews.
+// Local Cache Storage for pen names, relationships, reviews, etc.
 // Objects are indexed by the string value of the Id to avoid any
 // potential object attribute/array index confusion.  The top level
 // closure variables hold the reference objects.  Each reference
@@ -14,24 +14,11 @@
 //     status: "not cached", "ok" or "fetch failure status message"
 //     updtime: time when retrieved from server
 //
-// The core reference object fields should not be modified by
-// functions outside of this module.  Additional decorative fields are
-// managed by other modules for ease of access.
+// These core reference object fields should not be modified by
+// functions outside of this module.  Additional decorative fields may
+// be managed by other modules for ease of access.
 //
-// For access and updates, the lcs supports:
-//  - getXRef: synchronous method takes an X identifier and returns 
-//    the cached reference object.  The contained instance object 
-//    may be null if the instance hasn't been put yet.
-//  - getXFull: asynchronous method takes an identifier and the callback
-//    func. Callback gets an "ok" reference object with the requested
-//    instance object, or some other status and null.  If the instance
-//    is null, then the instance object cannot be retrieved.
-//  - putX: synchronous method takes an instance object and updates
-//    the cache.
-//  - remX: synchronous method takes an instance object and updates
-//    the cache.
-//
-// Decorated object structure:
+// Some known decorated object structures:
 //   PenRef
 //     outrels: array of oubound RelRefs
 //     inrels: array of inbound RelRefs
@@ -56,7 +43,11 @@ app.lcs = (function () {
                fetchend: "revbyid",
                fetchparamf: function (id) {
                    return "revid=" + id; } },
-        group: { refs: {} } },
+        group: { refs: {},
+                 fetchend: "grpbyid",
+                 fetchparamf: function (id) {
+                     return "groupid=" + id; } } },
+
 
 
     ////////////////////////////////////////

@@ -142,5 +142,22 @@ class UpdateDescription(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
-app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription)], debug=True)
+class GetGroupById(webapp2.RequestHandler):
+    def get(self):
+        groupidstr = self.request.get('groupid')
+        groupid = intz(groupidstr)
+        if groupid <= 0:
+            self.error(400)
+            self.response.write("Invalid ID for Group: " + groupidstr)
+            return
+        group = cached_get(groupid, Group)
+        if not group:
+            self.error(404)
+            self.response.write("No Group found for id " + groupidstr)
+            return
+        returnJSON(self.response, [ group ])
+
+
+app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
+                               ('/grpbyid', GetGroupById)], debug=True)
 

@@ -415,6 +415,9 @@ class TokenAndRedirect(webapp2.RequestHandler):
         revid = self.request.get('revid')
         if revid:
             redurl += "&revid=" + revid
+        groupid = self.request.get('groupid')
+        if groupid:
+            redurl += "&groupid=" + groupid
         url = self.request.get('url')
         if url:
             redurl += "&url=" + urllib.quote(url)

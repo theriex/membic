@@ -31,12 +31,12 @@ app.group = (function () {
             pen.groups = pen.groups.split(","); }
         for(i = 0; i < pen.groups.length; i += 1) {
             if(typeof pen.groups[i] === "string") {
-                groupref = app.lcs.getGroupRef(pen.groups[i]);
+                groupref = app.lcs.getRef("group", pen.groups[i]);
                 if(groupref.group) {
                     pen.groups[i] = groupref.group; }
                 else {
-                    app.lcs.getGroupFull(pen.groups[i],
-                                         deserializeAndLoadGroups);
+                    app.lcs.getFull("group", pen.groups[i],
+                                    deserializeAndLoadGroups);
                     return; } } }
         return pen.groups;
     },
@@ -552,9 +552,9 @@ return {
 
     bygroupid: function (groupid) {
         app.layout.closeDialog(); //close group search dialog if open
-        // app.lcs.getGroupFull(
-        //     copyGroup
-        //     displayGroup
+        app.lcs.getFull("group", groupid, function (groupref) {
+            copyGroup(groupref.group);
+            displayGroup(); });
     }
 
 
