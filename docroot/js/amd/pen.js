@@ -120,7 +120,7 @@ app.pen = (function () {
         data = jt.objdata(pen);
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
-                     currpenref = app.lcs.putPen(updpens[0]);
+                     currpenref = app.lcs.put("pen", updpens[0]);
                      callok(currpenref); },
                  app.failf(function (code, errtxt) {
                      app.pen.deserializeFields(pen);  //undo pre-call serialize
@@ -142,7 +142,7 @@ app.pen = (function () {
         data = jt.objdata(newpen);
         jt.call('POST', "newpen?" + app.login.authparams(), data,
                  function (newpens) {
-                     currpenref = app.lcs.putPen(newpens[0]);
+                     currpenref = app.lcs.put("pen", newpens[0]);
                      if(!penNameRefs) {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
@@ -260,7 +260,7 @@ return {
                     penNameRefs = [];
                     for(i = 0; i < pens.length; i += 1) {
                         verifyPenFields(pens[i]);
-                        penNameRefs.push(app.lcs.putPen(pens[i])); }
+                        penNameRefs.push(app.lcs.put("pen", pens[i])); }
                     chooseOrCreatePenName(callback); },
                 app.failf(function (code, errtxt) {
                     jt.out('contentdiv', "Pen name retrieval failed: " + 
@@ -404,7 +404,7 @@ return {
             data = "penid=" + jt.instId(pen) + "&email=" + jt.enc(email);
             jt.call('POST', "penmail?" + app.login.authparams(), data,
                     function (pens) {
-                        currpenref = app.lcs.putPen(pens[0]);
+                        currpenref = app.lcs.put("pen", pens[0]);
                         app.layout.closeDialog(); },
                     app.failf(function (code, errtxt) {
                         jt.err("Email update failure: " + code + "\n" +

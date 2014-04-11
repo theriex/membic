@@ -95,7 +95,7 @@ return {
                 app.layout.updateNavIcons("review");
                 //the review was cached when previously viewed..
                 app.review.setCurrentReview(
-                    app.lcs.getRevRef(state.revid).rev);
+                    app.lcs.getRef("rev", state.revid).rev);
                 app.review.displayRead();
                 break;
             } }

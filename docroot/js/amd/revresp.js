@@ -58,7 +58,7 @@ app.revresp = (function () {
     findCorrespondingReview = function (homepen, contfunc, cacheonly) {
         var params, i, t20, crev, revref, elems, revid, penid;
         crev = app.review.getCurrentReview();
-        revref = app.lcs.getRevRef(crev);
+        revref = app.lcs.getRef("rev", crev);
         if(revref && revref.revlink && revref.revlink.corresponding) {
             elems = revref.revlink.corresponding.split(",");
             for(i = 0; i < elems.length; i += 1) {
@@ -66,7 +66,7 @@ app.revresp = (function () {
                 penid = revid[1];
                 revid = revid[0];
                 if(penid === jt.instId(homepen)) {
-                    revref = app.lcs.getRevRef(revid);
+                    revref = app.lcs.getRef("rev", revid);
                     if(revref.rev) {
                         return contfunc(homepen, revref.rev); } } } }
         if(homepen.top20s) {
@@ -274,9 +274,9 @@ app.revresp = (function () {
                 penlinks.push("You");
                 break; } }
         for(i = 0; i < penids.length; i += 1) {
-            penref = app.lcs.getPenRef(penids[i]);
+            penref = app.lcs.getRef("pen", penids[i]);
             if(penref.status === "not cached") {
-                app.lcs.getPenFull(penids[i], redrawfunc);
+                app.lcs.getFull("pen", penids[i], redrawfunc);
                 break; }
             if(penref.pen && String(penref.penid) !== selfidstr) {
                 html = ["a", {href: "#" + jt.ndq(penref.pen.name),
@@ -312,7 +312,7 @@ app.revresp = (function () {
 
 
     crevlink = function () {
-        return app.lcs.getRevRef(app.review.getCurrentReview()).revlink;
+        return app.lcs.getRef("rev", app.review.getCurrentReview()).revlink;
     },
 
 
@@ -520,8 +520,8 @@ app.revresp = (function () {
               ["td", {cla:"respval", align:"left", valign:"top"},
                commentText(qcmt, acceptable)]]]);
         if(resptxt) {
-            revref = app.lcs.getRevRef(app.review.getCurrentReview());
-            penref = app.lcs.getPenRef(revref.rev.penid);
+            revref = app.lcs.getRef("rev", app.review.getCurrentReview());
+            penref = app.lcs.getRef("pen", revref.rev.penid);
             rows.push(
                 ["tr",
                  [["td", {cla:"respcol", align:"right"},
@@ -540,9 +540,9 @@ app.revresp = (function () {
         for(i = 0; i < qcmts.length; i += 1) {
             qcmt = qcmts[i];
             if(qcmt.revid === revid && !isAbusivePen(qcmt.cmtpenid)) {
-                penref = app.lcs.getPenRef(qcmt.cmtpenid);
+                penref = app.lcs.getRef("pen", qcmt.cmtpenid);
                 if(penref.status === "not cached") {
-                    app.lcs.getPenFull(qcmt.cmtpenid, redrawfunc);
+                    app.lcs.getFull("pen", qcmt.cmtpenid, redrawfunc);
                     break; }
                 if(penref.pen) {
                     appendReviewComment(rows, qcmt, acceptable, penref); } } }
@@ -568,7 +568,7 @@ app.revresp = (function () {
                     jt.semaphore("revresp.queryAndCommentRowsHTML")); }
         else {  //have penref.qcmts
             appendReviewComments(rows, penref.qcmts, redrawfunc);
-            revref = app.lcs.getRevRef(app.review.getCurrentReview());
+            revref = app.lcs.getRef("rev", app.review.getCurrentReview());
             if(!revref.qcmts) {
                 params = "revid=" + revref.revid + "&" + app.login.authparams();
                 revref.qcmts = [];  //if call crashes hard, don't loop
@@ -589,7 +589,7 @@ app.revresp = (function () {
 
     commenterNameHTML = function (qcmt) {
         var penref, html = [];
-        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        penref = app.lcs.getRef("pen", qcmt.cmtpenid);
         if(penref.pen) {
             if(penref.pen.profpic) {
                 html.push(["img", {cla: "smallbadge",
@@ -606,11 +606,11 @@ app.revresp = (function () {
         for(i = 0; i < qcs.length; i += 1) {
             if(!isAbusivePen(qcs[i].cmtpenid)) {
                 nametxt = "";
-                penref = app.lcs.getPenRef(qcs[i].cmtpenid);
+                penref = app.lcs.getRef("pen", qcs[i].cmtpenid);
                 if(penref.pen) {
                     nametxt = " from " + commenterNameHTML(qcs[i]); }
                 else if(penref.status === "not cached") {
-                    app.lcs.getPenFull(qcs[i].cmtpenid, 
+                    app.lcs.getFull("pen", qcs[i].cmtpenid, 
                                        app.revresp.redrawPendingComments); }
                 linktxt = qcs[i].rctype.capitalize() + nametxt + ": " + 
                     qcs[i].comment;
@@ -644,7 +644,7 @@ app.revresp = (function () {
         if(!img) {  //button not displayed, spurious call
             return; }
         crev = app.review.getCurrentReview();
-        revpen = app.lcs.getPenRef(crev.penid).pen;
+        revpen = app.lcs.getRef("pen", crev.penid).pen;
         dismsg = dismsg.replace(/\$REVIEWER/g, revpen.name);
         dismsg = dismsg.replace(/\$REVTITLE/g, crev.title || crev.name);
         if(img.className === "respicodis") {
@@ -715,14 +715,14 @@ app.revresp = (function () {
                 penid = revid[1];
                 revid = revid[0];
                 if(!isAbusivePen(penid)) {
-                    penref = app.lcs.getPenRef(penid);
+                    penref = app.lcs.getRef("pen", penid);
                     if(penref.status === "not cached") {
-                        app.lcs.getPenFull(penid, redrawfunc);
+                        app.lcs.getFull("pen", penid, redrawfunc);
                         cb = true;
                         break; }
-                    revref = app.lcs.getRevRef(revid);
+                    revref = app.lcs.getRef("rev", revid);
                     if(revref.status === "not cached") {
-                        app.lcs.getRevFull(revid, redrawfunc);
+                        app.lcs.getFull("rev", revid, redrawfunc);
                         cb = true;
                         break; }
                     if(penref.pen && revref.rev) {
@@ -735,7 +735,7 @@ app.revresp = (function () {
 
     displayReviewResponses = function () {
         var revref, html;
-        revref = app.lcs.getRevRef(app.review.getCurrentReview());
+        revref = app.lcs.getRef("rev", app.review.getCurrentReview());
         if(!revref.revlink) {
             return app.lcs.verifyReviewLinks(displayReviewResponses); }
         html = ["table",
@@ -774,7 +774,7 @@ app.revresp = (function () {
         if(field === "remembered") {
             //ensure helpful marks for anything remembered are found
             updateCachedReviewTags('helpful', updrevtags); }
-        app.lcs.getRevRef(revtag.revid).revlink = revlink;
+        app.lcs.getRef("rev", revtag.revid).revlink = revlink;
         setTimeout(displayReviewResponses, 50);
     };
 
@@ -831,8 +831,8 @@ return {
     selcorresp: function (revid) {
         var crev, theirrev, ourrev, type, html;
         crev = app.review.getCurrentReview();
-        theirrev = app.lcs.getRevRef(crev.srcrev).rev;
-        ourrev = app.lcs.getRevRef(revid).rev;
+        theirrev = app.lcs.getRef("rev", crev.srcrev).rev;
+        ourrev = app.lcs.getRef("rev", revid).rev;
         type = app.review.getReviewTypeByValue(crev.revtype);
         html = [["div", {id: "csrchconfirmdiv"},
                  ["Which " + type.key + " should be used for your review?",
@@ -863,8 +863,8 @@ return {
     confirmcorresp: function (revid) {
         var crev, theirrev, ourrev, type, radios, i;
         crev = app.review.getCurrentReview();
-        theirrev = app.lcs.getRevRef(crev.srcrev).rev;
-        ourrev = app.lcs.getRevRef(revid).rev;
+        theirrev = app.lcs.getRef("rev", crev.srcrev).rev;
+        ourrev = app.lcs.getRef("rev", revid).rev;
         type = app.review.getReviewTypeByValue(crev.revtype);
         app.review.setCurrentReview(ourrev);
         radios = document.getElementsByName("tgrp");
@@ -1012,7 +1012,7 @@ return {
                 index = i;
                 break; } }
         if(!rc) {
-            qcmts = app.lcs.getRevRef(app.review.getCurrentReview()).qcmts;
+            qcmts = app.lcs.getRef("rev", app.review.getCurrentReview()).qcmts;
             for(i = 0; qcmts && i < qcmts.length; i += 1) {
                 if(jt.instId(qcmts[i]) === rcid) {
                     rc = qcmts[i];
@@ -1138,7 +1138,7 @@ return {
     initPendingQC: function (qcid) {
         var qcmt = findPendingComment(qcid);
         if(qcmt) {
-            app.lcs.getRevFull(qcmt.revid, function (revref) {
+            app.lcs.getFull("rev", qcmt.revid, function (revref) {
                 if(revref.rev) {
                     app.review.setCurrentReview(revref.rev);
                     app.review.displayRead();
@@ -1205,7 +1205,7 @@ return {
     topacceptConfirmed: function (qcid) {
         var qcmt, revref, data;
         jt.out('requestbuttonsdiv', "Accepting...");
-        revref = app.lcs.getRevRef(app.review.getCurrentReview());
+        revref = app.lcs.getRef("rev", app.review.getCurrentReview());
         qcmt = findPendingComment(qcid);
         qcmt.resp = jt.byId('cmtta').value;
         qcmt.rcstat = "accepted";
@@ -1227,7 +1227,7 @@ return {
     topignore: function (qcid) {
         var qcmt, penref, html = "";
         qcmt = findPendingComment(qcid);
-        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        penref = app.lcs.getRef("pen", qcmt.cmtpenid);
         html = [["p", {cla: "qctext"},
                  qcmt.comment],
                 ["div", {cla: "confirmlastline"},
@@ -1267,7 +1267,7 @@ return {
     topreject: function (qcid) {
         var qcmt, penref, html = "";
         qcmt = findPendingComment(qcid);
-        penref = app.lcs.getPenRef(qcmt.cmtpenid);
+        penref = app.lcs.getRef("pen", qcmt.cmtpenid);
         html = [["p", {cla: "qctext"},
                  qcmt.comment],
                 ["div", {cla: "harasscbdiv"},

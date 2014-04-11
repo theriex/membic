@@ -213,7 +213,7 @@ app.activity = (function () {
                     pensearch.cursor = results[i].cursor; }
                 break; }  //if no results, i will be left at zero
             if(!penSearchFiltered(results[i])) {
-                app.lcs.putPen(results[i]);
+                app.lcs.put("pen", results[i]);
                 pensearch.pens.push(results[i]);
                 resitems.push(app.profile.penListItemHTML(results[i])); } }
         if(pensearch.pens.length === 0) {
@@ -282,14 +282,14 @@ app.activity = (function () {
         if(penref.remembered) {
             for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
                 if(!penref.remembered[i].forgotten) {
-                    revref = app.lcs.getRevRef(penref.remembered[i].revid);
+                    revref = app.lcs.getRef("rev", penref.remembered[i].revid);
                     if(revref.status === "not cached") {
                         crid = penref.remembered[i].revid;
                         remitems.push(["li",
                                        "Fetching Review " + crid + "..."]);
                         break; }
                     if(!revref.rev.penNameStr) {
-                        friend = app.lcs.getPenRef(revref.rev.penid).pen;
+                        friend = app.lcs.getRef("pen", revref.rev.penid).pen;
                         if(friend) {
                             revref.rev.penNameStr = friend.name; } }
                     if(!revref.rev.penNameStr) {
@@ -317,9 +317,9 @@ app.activity = (function () {
             jt.out('revactdiv', html);
             app.layout.adjust();
             if(crid) {
-                app.lcs.getRevFull(crid, displayRemembered); }
+                app.lcs.getFull("rev", crid, displayRemembered); }
             if(cfid) {
-                app.lcs.getPenFull(cfid, displayRemembered); } }
+                app.lcs.getFull("pen", cfid, displayRemembered); } }
         else { //!penref.remembered
             jt.out('revactdiv', "Fetching remembered reviews...");
             app.layout.adjust();
@@ -362,7 +362,7 @@ app.activity = (function () {
     findUniqueRev = function (revrefs, revids, topdat) {
         var revref, i;
         for(i = 0; !revref && i < revids.length; i += 1) {
-            revref = app.lcs.getRevRef(revids[i]);
+            revref = app.lcs.getRef("rev", revids[i]);
             if(!revref) {  //might be null if deleted...
                 revref = null; }
             else if(revref.status !== "ok" && revref.status !== "not cached") { 
@@ -403,7 +403,7 @@ app.activity = (function () {
     verifyPenNameStrFromCached = function (revref) {
         var penref;
         if(revref.rev && !revref.rev.penNameStr) {
-            penref = app.lcs.getPenRef(revref.rev.penid);
+            penref = app.lcs.getRef("pen", revref.rev.penid);
             if(penref.pen) {  //should already be cached
                 revref.rev.penNameStr = penref.pen.name; } }
     },
@@ -415,10 +415,10 @@ app.activity = (function () {
         pens = app.rel.outboundids();
         for(i = 0; i < pens.length; i += 1) {
             penid = pens[i];
-            pens[i] = app.lcs.getPenRef(penid);
+            pens[i] = app.lcs.getRef("pen", penid);
             if(pens[i].status === "not cached") {
                 jt.out('revactdiv', "Loading friends..." + (i+1));
-                return app.lcs.getPenFull(penid, 
+                return app.lcs.getFull("pen", penid, 
                                           app.activity.displayTopReviews); } }
         //sort them by modified (last login) with most recent first
         pens.sort(function (a, b) {
@@ -488,7 +488,7 @@ app.activity = (function () {
                     html = ["ul", {cla: "revlist"}, revitems];
                     html = jt.tac2html(html);
                     jt.out('revactdiv', html);
-                    return app.lcs.getRevFull(revref.revid, 
+                    return app.lcs.getFull("rev", revref.revid, 
                                               displayTopReviews); }
                 if(revref.rev && !isLameTopRev(revs, revref)) {
                     verifyPenNameStrFromCached(revref);
@@ -632,12 +632,12 @@ app.activity = (function () {
                     [["img", {cla: "smallbadge", src: "img/" + rtype.img}],
                      "&nbsp;" + reqs[i].revtype]];
             linktxt = "";
-            penref = app.lcs.getPenRef(reqs[i].fromid);
+            penref = app.lcs.getRef("pen", reqs[i].fromid);
             if(penref.pen) {
                 linktxt = getFullRequestLinkHTML(penref, tlnk); }
             else if(penref.status === "not cached") {
                 linktxt = jt.tac2html(tlnk) + " request";
-                app.lcs.getPenFull(reqs[i].fromid, updateReqLinkTxt); }
+                app.lcs.getFull("pen", reqs[i].fromid, updateReqLinkTxt); }
             rows.push(["li", {cla: "reqli"},
                        ["a", {id: "reqlink" + penref.penid,
                               href: "#request", title: "View request",
@@ -733,7 +733,7 @@ app.activity = (function () {
                 break; } }
         if(breakid) {  //need to fetch pen
             setTimeout(function () {
-                app.lcs.getPenFull(breakid, function (penref) {
+                app.lcs.getFull("pen", breakid, function (penref) {
                     app.activity.notePenNameStr(penref.pen); }); },
                        50); }
         else {  //redisplay if any review linkages have changed
@@ -796,7 +796,7 @@ app.activity = (function () {
                     if(results[i].cursor) {
                         actdisp.cursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
-                    revref = app.lcs.putRev(results[i]);
+                    revref = app.lcs.put("rev", results[i]);
                     actdisp.revrefs.unshift(revref); } } }
         else { //append results and track cursor (if any)
             actdisp.cursor = "";
@@ -805,7 +805,7 @@ app.activity = (function () {
                     if(results[i].cursor) {
                         actdisp.cursor = results[i].cursor;  } }
                 else if(!filtered(results[i])) {
-                    revref = app.lcs.putRev(results[i]);
+                    revref = app.lcs.put("rev", results[i]);
                     actdisp.revrefs.push(revref); } } }
         if(actdisp.cursor && actdisp.revrefs.length === 0) {
             //auto find more activity without creating a recursion stack
@@ -1165,7 +1165,7 @@ return {
     showreq: function (index) {
         var req, pen, keywords = "", titlehtml = [], rtype, html;
         req = app.pen.currPenRef().inreqs[index];
-        pen = app.lcs.getPenRef(req.fromid).pen;
+        pen = app.lcs.getRef("pen", req.fromid).pen;
         rtype = app.review.getReviewTypeByValue(req.revtype);
         if(req.keywords) {
             keywords = "(" + req.keywords + ")"; }

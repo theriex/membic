@@ -448,7 +448,7 @@ app.login = (function () {
                         function () {
                             jt.log("noted review clickthrough"); },
                         app.failf); }, 200);
-            app.lcs.getPenFull(params.penid, function (penref) {
+            app.lcs.getFull("pen", params.penid, function (penref) {
                 app.profile.verifyStateVariableValues(penref.pen);
                 app.review.initWithId(params.revid, "read", 
                                       params.command); }); }

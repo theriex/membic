@@ -23,7 +23,7 @@ app.rel = (function () {
 
     getRelRefArray = function (pen, direction, init) {
         var penref, field;
-        penref = app.lcs.getPenRef(pen);
+        penref = app.lcs.getRef("pen", pen);
         field = (direction === "outbound")? "outrels" : "inrels";
         if(!penref[field] && init) {
             penref[field] = []; }
@@ -33,8 +33,8 @@ app.rel = (function () {
 
     pushRel = function (pen, direction, relationship) {
         var penref, field, relref;
-        relref = app.lcs.putRel(relationship);
-        penref = app.lcs.getPenRef(pen);
+        relref = app.lcs.put("rel", relationship);
+        penref = app.lcs.getRef("pen", pen);
         field = (direction === "outbound")? "outrels" : "inrels";
         if(!penref[field]) {
             penref[field] = []; }
@@ -44,7 +44,7 @@ app.rel = (function () {
 
     verifyRelsInitialized = function (pen, direction) {
         var penref, field;
-        penref = app.lcs.getPenRef(pen);
+        penref = app.lcs.getRef("pen", pen);
         field = (direction === "outbound")? "outrels" : "inrels";
         if(!penref[field]) {
             penref[field] = []; }
@@ -113,7 +113,7 @@ app.rel = (function () {
 
     displayRequestDialog = function () {
         var req = dlgreq, html, pen, keyrow = "", revtype;
-        pen = app.lcs.getPenRef(req.toid).pen;
+        pen = app.lcs.getRef("pen", req.toid).pen;
         if(req.revtype) {
             revtype = app.review.getReviewTypeByValue(req.revtype);
             if(!req.keywords) {
@@ -268,13 +268,13 @@ app.rel = (function () {
         var penid, penref;
         if(relref) {  //could get a spurious call if no followers
             penid = relref.rel.relatedid;
-            penref = app.lcs.getPenRef(penid);
+            penref = app.lcs.getRef("pen", penid);
             if(penref.pen) {
                 penid = relref.rel.originid;
-                penref = app.lcs.getPenRef(penid); }
+                penref = app.lcs.getRef("pen", penid); }
             if(penref.pen) {  //both loaded, return directly
                 return callback(); }
-            app.lcs.getPenFull(penid, callback); }
+            app.lcs.getFull("pen", penid, callback); }
     },
 
 
@@ -288,8 +288,8 @@ app.rel = (function () {
             if(a.status !== "ok" && b.status !== "ok") {
                 return 0; }
             idfield = (direction === "outbound")? "relatedid" : "originid";
-            penrefA = app.lcs.getPenRef(a.rel[idfield]);
-            penrefB = app.lcs.getPenRef(b.rel[idfield]);
+            penrefA = app.lcs.getRef("pen", a.rel[idfield]);
+            penrefB = app.lcs.getRef("pen", b.rel[idfield]);
             if(penrefA.status === "ok" && penrefB.status !== "ok") {
                 return -1; }
             if(penrefA.status !== "ok" && penrefB.status === "ok") {
@@ -314,7 +314,7 @@ app.rel = (function () {
         var idfield, penref, temp;
         temp = placeholder;
         idfield = (direction === "outbound")? "relatedid" : "originid";
-        penref = app.lcs.getPenRef(relref.rel[idfield]);
+        penref = app.lcs.getRef("pen", relref.rel[idfield]);
         if(penref.status !== "ok" && penref.status !== "not cached") {
             return ""; }  //skip any deleted or otherwise unresolved refs
         if(penref.pen) {
@@ -437,7 +437,7 @@ app.rel = (function () {
                     break; } }
             if(i < penref.outrels.length) { //found it
                 penref.outrels.splice(i, 1); } }
-        app.lcs.remRel(rel);
+        app.lcs.rem("rel", rel);
     },
 
 
@@ -448,8 +448,8 @@ app.rel = (function () {
                     function (updates) {
                         var orgpen = updates[0],  //originator pen
                             relpen = updates[1];  //related pen
-                        app.lcs.putPen(orgpen);
-                        app.lcs.putPen(relpen);
+                        app.lcs.put("pen", orgpen);
+                        app.lcs.put("pen", relpen);
                         removeOutboundRel(rel);   //relationship
                         app.layout.closeDialog();
                         app.activity.reset();
@@ -461,7 +461,7 @@ app.rel = (function () {
         else { //update
             jt.call('POST', "updrel?" + app.login.authparams(), data,
                      function (updates) {
-                         app.lcs.putRel(updates[0]);
+                         app.lcs.put("rel", updates[0]);
                          app.layout.closeDialog();
                          app.activity.reset();
                          app.profile.byprofid(updates[0].relatedid); },
@@ -532,8 +532,8 @@ app.rel = (function () {
                     var orgpen = newrels[0],  //originator pen
                         relpen = newrels[1];  //related pen
                     newrel = newrels[2];  //new relationship
-                    app.lcs.putPen(orgpen);
-                    app.lcs.putPen(relpen);
+                    app.lcs.put("pen", orgpen);
+                    app.lcs.put("pen", relpen);
                     pushRel(orgpen, "outbound", newrel);
                     contfunc(orgpen, relpen, newrel); },
                 app.failf(function (code, errtxt) {
@@ -601,7 +601,7 @@ app.rel = (function () {
                              if(relationships[i].cursor) {
                                  loadoutcursor = relationships[i].cursor; }
                              break; }
-                         relref = app.lcs.putRel(relationships[i]);
+                         relref = app.lcs.put("rel", relationships[i]);
                          appendOutboundRel(relref); }
                      if(loadoutcursor) {
                          setTimeout(function () {
@@ -788,7 +788,7 @@ return {
 
     followBack: function (followerid) {
         app.pen.getPen(function (homepen) {
-            app.lcs.getPenFull(followerid, function (penref) {
+            app.lcs.getFull("pen", followerid, function (penref) {
                 createOrEditRelationship(homepen, penref.pen); }); });
     },
 

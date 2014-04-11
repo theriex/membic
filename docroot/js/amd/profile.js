@@ -466,7 +466,7 @@ app.profile = (function () {
 
 
     findOrLoadPen = function (penid, callback) {
-        app.lcs.getPenFull(penid, function (penref) {
+        app.lcs.getFull("pen", penid, function (penref) {
             callback(penref.pen); });
     },
 
@@ -490,7 +490,7 @@ app.profile = (function () {
                     if(reviews[i].cursor) {
                         rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
-                app.lcs.putRev(reviews[i]);  //ensure cached
+                app.lcs.put("rev", reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
                 revitems.push(app.profile.reviewItemHTML(reviews[i])); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
@@ -628,7 +628,7 @@ app.profile = (function () {
                 text += " " + app.review.reviewLinkHTML(); }
             revitems.push(["li", text]); }
         for(i = 0; i < revs.length; i += 1) {
-            revref = app.lcs.getRevRef(revs[i]);
+            revref = app.lcs.getRef("rev", revs[i]);
             if(revref.rev) {
                 revitems.push(app.profile.reviewItemHTML(revref.rev)); }
             //if revref.status deleted or other error, then just skip it
@@ -641,7 +641,7 @@ app.profile = (function () {
         jt.out('profcontdiv', jt.tac2html(html));
         app.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
-            app.lcs.getRevFull(revs[i], displayBest); }
+            app.lcs.getFull("rev", revs[i], displayBest); }
         else {
             setTimeout(function () {
                 app.lcs.verifyReviewLinks(app.profile.refresh); }, 250); }
@@ -1278,7 +1278,7 @@ return {
             revitems.push(["li", "No reviews found"]); }
         for(i = 0; inlinks && i < inlinks.length; i += 1) {
             if(inlinks[i][inlinktype]) {
-                revref = app.lcs.getRevRef(inlinks[i].revid);
+                revref = app.lcs.getRef("rev", inlinks[i].revid);
                 if(revref.rev) {
                     revitems.push(app.profile.reviewItemHTML(revref.rev)); }
                 else if(revref.status === "not cached") {
@@ -1298,7 +1298,7 @@ return {
         jt.out('profcontdiv', jt.tac2html(html));
         app.layout.adjust();
         if(inlinks && i < inlinks.length) { //didn't have all revs
-            app.lcs.getRevFull(inlinks[i].revid, app.profile.displayResp); }
+            app.lcs.getFull("rev", inlinks[i].revid, app.profile.displayResp); }
     },
 
 
@@ -1383,7 +1383,7 @@ return {
 
     readReview: function (revid) {
         var revobj;
-        revobj = app.lcs.getRevRef(revid).rev;
+        revobj = app.lcs.getRef("rev", revid).rev;
         //Make some noise if you can't find it rather than being a dead link
         if(!revobj) {
             jt.err("readReview " + revid + " not found");
@@ -1493,7 +1493,7 @@ return {
 
 
     verifyStateVariableValues: function (pen) {
-        profpenref = app.lcs.getPenRef(pen);
+        profpenref = app.lcs.getRef("pen", pen);
         verifyProfileState(profpenref);
     },
 
@@ -1650,7 +1650,7 @@ return {
             "&cursor=" + jt.enc(revsrchstate.cursor);
         jt.call('GET', "srchrevs?" + params, null,
                 function (results) { 
-                    app.lcs.putRevs(results);
+                    app.lcs.putAll("rev", results);
                     displayRevSearchResults(results);
                     monitorRevSearchValue(); },
                 app.failf(function (code, errtxt) {

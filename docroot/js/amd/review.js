@@ -291,7 +291,7 @@ app.review = (function () {
             if(!revid) {
                 mustconfirm = true; }
             else {
-                prev = app.lcs.getRevRef(crev).rev;
+                prev = app.lcs.getRef("rev", crev).rev;
                 if(crev.text.length - prev.text.length > 60) {
                     mustconfirm = true; } } }
         if(!mustconfirm) {
@@ -567,7 +567,7 @@ app.review = (function () {
         var prev;
         if(!crev || !jt.instId(crev)) {
             return true; }
-        prev = app.lcs.getRevRef(crev).rev;
+        prev = app.lcs.getRef("rev", crev).rev;
         if(!prev) {  //nothing to compare against
             jt.log("Seems there should always be a cached version.");
             return false; }
@@ -1254,7 +1254,7 @@ app.review = (function () {
             crev = copyReview(crev); }
         setTimeout(function () {  //refresh headings
             if(crev.penid !== jt.instId(pen)) { 
-                app.lcs.getPenFull(crev.penid, function (revpenref) {
+                app.lcs.getFull("pen", crev.penid, function (revpenref) {
                     app.profile.writeNavDisplay(pen, revpenref.pen,
                                                 "nosettings"); }); }
             else {
@@ -1475,7 +1475,7 @@ return {
 
     linkCountHTML: function (revid) {
         var revref, html;
-        revref = app.lcs.getRevRef(revid);
+        revref = app.lcs.getRef("rev", revid);
         if(!revref.revlink) {
             return ""; }
         html = linkCountBadgeHTML(revref.revlink, 'helpful') +
@@ -1623,7 +1623,7 @@ return {
             autocomptxt = "";
             app.review.display(); }       //and restart
         else {
-            crev = app.lcs.getRevRef(crev).rev;
+            crev = app.lcs.getRef("rev", crev).rev;
             app.review.displayRead(); }
     },
 
@@ -1688,7 +1688,7 @@ return {
         data = jt.objdata(crev);
         jt.call('POST', url + app.login.authparams(), data,
                 function (reviews) {
-                    crev = copyReview(app.lcs.putRev(reviews[0]).rev);
+                    crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
                     app.layout.runMeritDisplay(crev);
                     cacheBustPersonalReviewSearches();
                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
@@ -1725,7 +1725,7 @@ return {
         jt.call('GET', "revbyid?" + params, null,
                 function (revs) {
                     if(revs.length > 0) {
-                        crev = copyReview(app.lcs.putRev(revs[0]).rev);
+                        crev = copyReview(app.lcs.put("rev", revs[0]).rev);
                         if(mode === "edit") {
                             app.review.display(action, errmsg); }
                         else {
