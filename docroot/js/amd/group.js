@@ -42,18 +42,176 @@ app.group = (function () {
     },
 
 
+    membership = function () {
+        var penid;
+        if(wizgrp.membership) {
+            return wizgrp.membership; }
+        wizgrp.membership = "";
+        penid = jt.instId(app.pen.currPenRef().pen);
+        if(jt.idInCSV(penid, wizgrp.founders)) {
+            wizgrp.membership = "Founder"; }
+        else if(jt.idInCSV(penid, wizgrp.seniors)) {
+            wizgrp.membership = "Senior"; }
+        else if(jt.idInCSV(penid, wizgrp.members)) {
+            wizgrp.membership = "Member"; }
+        return wizgrp.membership;
+    },
+
+
+    following = function () {
+        if(jt.idInCSV(jt.instId(wizgrp), app.pen.currPenRef().pen.groups)) {
+            return true; }
+        return false;
+    },
+
+
+    followsetHTML = function () {
+        var html;
+        if(following() || membership()) {
+            html = ["a", {href: "#Settings", cla: "gold",
+                          title: "Membership and follow settings",
+                          onclick: jt.fs("app.group.adjust()")},
+                    [["img", {cla: "followingico",
+                              src: "img/followset.png"}],
+                      ""]]; }
+        else {
+            html = ["a", {href: "#Follow",
+                          title: "Follow " + wizgrp.name,
+                          onclick: jt.fs("app.group.follow()")},
+                    [["img", {cla: "followico", id: "followbimg",
+                              src: "img/follow.png"}],
+                     "Follow"]]; }
+        return jt.tac2html(html);
+    },
+
+
+    groupActionsHTML = function () {
+        var html = "group actions go here";
+        //ATTENTION: if there are things a senior or founding member
+        //should be dealing with, list them here.
+        return html;
+    },
+
+
+    groupReviewsHTML = function () {
+        var html = "reviews go here";
+        //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
+        //like activity display (no "via" here)
+        //will need to include group reviews with "via" into activity
+        //["ul", {cla: "revlist"},
+        return html;
+    },
+
+
+    revTypesDispHTML = function () {
+        var html = [], i, reviewTypes, typename;
+        reviewTypes = app.review.getReviewTypes();
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            if(jt.idInCSV(typename, wizgrp.revtypes)) {
+                html.push(["span", {cla: "badgespan"},
+                           ["img", {cla: "reviewbadge",
+                                    src: "img/" + reviewTypes[i].img}]]); } }
+        return html;
+    },
+
+
+    frequencyName = function () {
+        var i;
+        for(i = 0; i < revfreqs.length; i += 1) {
+            if(wizgrp.revfreq <= revfreqs[i].freq) {
+                return revfreqs[i].name; } }
+        return "";
+    },
+
+
+    displayGroupHeading = function () {
+        var imgsrc, html;
+        imgsrc = "../img/emptyprofpic.png";
+        if(wizgrp.picture) {
+            imgsrc = "../grppic?groupid=" + jt.instId(wizgrp); }
+        html = ["div", {id: "grouphdiv"},
+                ["table",
+                 ["tr",
+                  [["td",
+                    ["div", {id: "gpcdiv"},
+                     [["div", {id: "gpicdiv"},
+                       ["img", {cla: "profpic", src: imgsrc}]],
+                      ["div", {id: "gcitydiv", cla: "groupcity"},
+                       wizgrp.city]]]],
+                   ["td", {cla: "tdwide"},
+                    ["div", {id: "gndbdiv"},
+                     [["div", {id: "grouphdiv"},
+                       ["table",
+                        ["tr",
+                         [["td", {id: "grouphnametd"},
+                           ["span", {id: "penhnamespan"},
+                            wizgrp.name]],
+                          ["td",
+                           ["div", {id: "grouphbuttondiv"},
+                            followsetHTML()]]]]]],
+                      ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
+                        jt.linkify(wizgrp.description)],
+                      ["div", {id: "typefreqdiv"},
+                       ["table",
+                        ["tr",
+                         [["td", {id: "grouprevtypestd"},
+                           ["div", {id: "grouprevtypesdiv"},
+                            revTypesDispHTML()]],
+                          ["td", {id: "groupfreqtd"},
+                           ["div", {id: "groupfreqdispdiv"},
+                            ["span", {cla: "groupcity"},
+                             frequencyName()]]]]]]],
+                      ["div", {id: "groupfreqeditdiv"}],
+                      ["div", {id: "errmsgdiv"}],
+                      ["div", {id: "groupeditbuttonsdiv"},
+                       ""]]]]]]]];
+        app.layout.headingout(jt.tac2html(html));
+    },
+
+
+    displayGroupBody = function () {
+        var html;
+        html = ["div", {id: "groupmaindiv"},
+                [["div", {id: "groupactionsdiv"},
+                  groupActionsHTML()],
+                 ["div", {id: "grouprevsdiv"},
+                  groupReviewsHTML()]]];
+        jt.out('cmain', jt.tac2html(html));
+        app.layout.adjust();
+    },
+
+
     displayGroup = function () {
         app.layout.closeDialog();
-        jt.err("displayGroup not implemented yet");
+        jt.out('rightcoldiv', "");
+        jt.byId('rightcoldiv').style.display = "none";
+        displayGroupHeading();
+        displayGroupBody();
+        //if we are coming in from url parameters, it is possible to end 
+        //up with the profile heading overwriting the group heading.
+        setTimeout(displayGroupHeading, 400);
     },
 
 
     copyGroup = function (group) {
-        var name;
-        wizgrp = {};
-        for(name in group) {
-            if(group.hasOwnProperty(name)) {
-                wizgrp[name] = group[name]; } }
+        var groupid;
+        //set or default all working field values
+        wizgrp = { name: group.name || "",
+                   city: group.city || "",
+                   description: group.description || "",
+                   picture: group.picture || "",
+                   revtypes: group.revtypes || "",
+                   revfreq: group.revfreq || "30",
+                   founders: group.founders || "",
+                   seniors: group.seniors || "",
+                   members: group.members || "",
+                   reviews: group.reviews || "",
+                   modified: group.modified || ""};
+        wizgrp.name_c = group.name_c || jt.canonize(group.name);
+        groupid = jt.instId(group);
+        if(groupid) {
+            jt.setInstId(wizgrp, groupid); }
     },
 
 
@@ -130,7 +288,7 @@ app.group = (function () {
                          [["div", {cla: "secondaryfield"},
                            fdef.printName || fname.capitalize()],
                           app.review.reviewTypeCheckboxesHTML(
-                              "revtypesel")]]]; }
+                              "revtypesel", null, obj[fname])]]]; }
             else {
                 html = ["tr",
                         [["td", {cla: "tdnowrap"},
@@ -147,7 +305,7 @@ app.group = (function () {
             if(fdef.edit) {
                 for(i = 0; i < revfreqs.length; i += 1) {
                     attrs = {id: revfreqs[i].id};
-                    if(obj[fname] === revfreqs[i].freq || 
+                    if(jt.safeint(obj[fname]) === revfreqs[i].freq || 
                        (!obj[fname] && i === 1)) {
                         attrs.selected = "selected"; }
                     opts.push(["option", attrs, revfreqs[i].name]); }
@@ -526,7 +684,7 @@ return {
             buttonhtml = jt.byId(divid).innerHTML;
             jt.out(divid, "Creating " + wizgrp.name + "..."); }
         else {
-            divid = 'editbuttonsdiv';
+            divid = 'groupeditbuttonsdiv';
             buttonhtml = jt.byId(divid).innerHTML;
             jt.out(divid, "Saving..."); }
         //relying on server side validation for detailed checking
@@ -552,9 +710,81 @@ return {
 
     bygroupid: function (groupid) {
         app.layout.closeDialog(); //close group search dialog if open
-        app.lcs.getFull("group", groupid, function (groupref) {
-            copyGroup(groupref.group);
-            displayGroup(); });
+        app.pen.getPen(function (pen) {  //not already loaded if by url param
+            app.lcs.getFull("group", groupid, function (groupref) {
+                //ATTENTION: history needs to support this...
+                app.history.checkpoint({ view: "group", 
+                                         groupid: jt.instId(wizgrp)});
+                copyGroup(groupref.group);
+                displayGroup(); }); });
+    },
+
+
+    adjust: function () {
+        var html = [];
+        if(membership() === "Founder") {
+            html.push(["div", {id: "chgrpdescrdiv"},
+                       ["a", {href: "#changedescription",
+                              onclick: jt.fs("app.group.changedescr()")},
+                        "Change Group Description"]]); }
+        //resign membership (big warning if last founder, esp if seniors)
+        html = ["div", {id: "groupsetdlgdiv"},
+                html];
+        html = app.layout.dlgwrapHTML("Settings: " + wizgrp.name, html);
+        app.layout.openDialog({y:140}, html);
+    },
+
+
+    follow: function () {
+        jt.err("follow not implemented yet");
+    },
+
+
+    changedescr: function () {
+        var divpos, rswidth, lswidth;
+        divpos = jt.geoPos(jt.byId("grouphdiv"));
+        rswidth = String(Math.round((divpos.w - 20) / 2)) + "px";
+        lswidth = String(jt.geoPos(jt.byId("gpicdiv")).w - 4) + "px";
+        app.layout.closeDialog();
+        jt.out('grouphbuttondiv', "");
+        jt.out('gcitydiv', jt.tac2html(
+            ["input", {type: "text", id: "cityin",
+                       style: "width:" + lswidth,
+                       placeholder: "City or region",
+                       value: wizgrp.city}]));
+        jt.out('penhnamespan', jt.tac2html(
+            ["input", {type: "text", id: "namein", 
+                       style: "width:" + rswidth,
+                       value: wizgrp.name}]));
+        jt.out('groupdescdiv', jt.tac2html(
+            ["textarea", {id: "descriptionin", cla: "groupdescrtxt",
+                          style: "height:100px;"},
+             wizgrp.description || ""]));
+        jt.byId('descriptionin').style.width = rswidth;
+        jt.out('grouprevtypesdiv', jt.tac2html(
+            ["table", {cla: "grpwiztable groupdescrtxt"},
+             fieldTableRow(wizgrp, "revtypes", 
+                           {type: "revtypesel", edit: true, 
+                            printName: "Review Types"})]));
+        jt.out('groupfreqdispdiv', "");
+        jt.out('groupfreqeditdiv', jt.tac2html(
+            ["table", {cla: "grpwiztable groupdescrtxt"},
+             fieldTableRow(wizgrp, "revfreq",
+                           {type: "frequency", edit: true,
+                            printName: "Review Frequency"})]));
+        jt.out('groupeditbuttonsdiv', jt.tac2html(
+            [["button", {type: "button", id: "cancelbutton",
+                         onclick: jt.fs("app.group.display()")},
+              "Cancel"],
+             ["button", {type: "button", id: "okbutton",
+                         onclick: jt.fs("app.group.readandsave()")},
+              "Save"]]));
+    },
+
+
+    readandsave: function () {
+        if(readPrimaryFields()) {
+            app.group.saveGroup(); }
     }
 
 

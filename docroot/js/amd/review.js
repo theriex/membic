@@ -168,7 +168,7 @@ app.review = (function () {
                      label: app.review.badgeImageHTML(reviewTypes[i], 
                                                       true, greyed, sing),
                      value: sing ? reviewTypes[i].type : reviewTypes[i].plural,
-                     checked: (typename === selt) };
+                     checked: jt.idInCSV(typename, selt) };
             ts.push(jt.checkrad(intype, gname, tobj.value, tobj.label,
                                 tobj.checked, chgfstr)); }
         if(app.winw < 600) {
@@ -1428,8 +1428,8 @@ return {
     },
 
 
-    reviewTypeCheckboxesHTML: function (cboxgroup, chgfuncstr) {
-        return revTypeChoiceHTML("checkbox", cboxgroup, "", chgfuncstr);
+    reviewTypeCheckboxesHTML: function (cboxgroup, chgfuncstr, selt) {
+        return revTypeChoiceHTML("checkbox", cboxgroup, selt, chgfuncstr);
     },
 
 

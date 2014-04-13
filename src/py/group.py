@@ -26,13 +26,18 @@ class Group(db.Model):
     
 
 def pen_role(penid, group):
-    for pid in group.founders:
+    penid = str(penid)
+    group.founders = group.founders or ""
+    for pid in group.founders.split(","):
+        logging.info("comparing " + penid + " to " + pid)
         if pid == penid:
             return "Founder"
-    for pid in group.seniors:
+    group.seniors = group.seniors or ""
+    for pid in group.seniors.split(","):
         if pid == penid:
             return "Senior"
-    for pid in group.members:
+    group.members = group.members or ""
+    for pid in group.members.split(","):
         if pid == penid:
             return "Member"
     return "NotFound"
@@ -85,6 +90,7 @@ def revtypes_valid(handler, group):
 
 def read_and_validate_descriptive_fields(handler, group):
     # name/name_c field has a value and has been set already
+    group.city = handler.request.get('city')
     if not verify_name_and_city_unique(handler, group):
         return False;
     group.description = handler.request.get('description')
@@ -96,10 +102,11 @@ def read_and_validate_descriptive_fields(handler, group):
     group.revtypes = handler.request.get('revtypes')
     if not revtypes_valid(handler, group):
         return False
-    frequency = intz(handler.request.get('revfreq'))
-    if frequency < 14 or frequency > 365:
+    group.revfreq = intz(handler.request.get('revfreq'))
+    if group.revfreq < 14 or group.revfreq > 365:
         handler.error(400)
-        handler.response.out.write("Review frequency not between 14 and 365.")
+        handler.response.out.write("Review frequency " + str(frequency) + 
+                                   " not between 14 and 365.")
         return False
     # membership fields are handled separately
     # review postings are handled separately
@@ -125,8 +132,8 @@ class UpdateDescription(webapp2.RequestHandler):
                 self.response.out.write("Group " + grpid + " not found")
                 return
             if pen_role(pen.key().id(), group) != "Founder":
-                handler.error(401)
-                handler.response.out.write(
+                self.error(400)
+                self.response.out.write(
                     "Only a Founder can change the group description.")
                 return
             group.name = name

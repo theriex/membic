@@ -306,4 +306,10 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    jt.idInCSV = function (id, csv) {
+        if(csv && (csv.endsWith(id) || csv.indexOf(id + ",") >= 0)) {
+            return true; }
+    };
+
+
 } () );

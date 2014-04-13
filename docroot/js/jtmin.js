@@ -177,6 +177,17 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    uo.safeint = function (val) {
+        if (!val) {
+            val = 0;
+        }
+        if (typeof val !== "number") {
+            val = parseInt(val, 10);
+        }
+        return val
+    };
+
+
     uo.safeget = function (domid, field) {
         var elem = uo.byId(domid);
         if (elem) {

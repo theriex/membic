@@ -90,7 +90,7 @@ img { border:0px; }
  }
 #penhnametd { padding:0px 0px 0px 0px; }
 #penhnamespan { font-size:xx-large; }
-#penhbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
+#penhbuttondiv, #grouphbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #recentacthdiv { float:right; }
 #rememberedhdiv { background:transparent; }
 #homepenhdiv { background:transparent; }
@@ -276,10 +276,12 @@ img { border:0px; }
 .inbct { color:#666666; }
 
 /* >> group layout */
-#primgroupdlgdiv { padding:0px 10px; }
+#primgroupdlgdiv, chgrpdescrdiv { padding:0px 10px; }
 #errmsgdiv { font-size:small; color:red; }
 #primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 #primgroupbuttonsdiv button { margin:0px 10px; }
+#groupeditbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
+#groupeditbuttonsdiv button { margin:0px 10px; }
 .grpnameval { font-weight:bold; }
 .grpwiztable { padding:10px 0px 0px 0px; }
 .grpwiztable td { padding:0px 3px; vertical-align:top; }
@@ -287,7 +289,10 @@ img { border:0px; }
 .tdwide { width:99%; }
 .groupdescrtxt { padding:5px 2px 0px 2px; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
-  font-size:small; }
+  font-size:small; font-weight:normal; }
+#gpcdiv { padding:0px 20px; }
+#groupsetdlgdiv { padding:10px 0px; }
+.groupcity { font-size:small; font-weight:normal; text-align:center; }
 
 /* >> review layout */
 #revfdiv { }
