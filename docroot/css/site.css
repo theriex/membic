@@ -276,7 +276,7 @@ img { border:0px; }
 .inbct { color:#666666; }
 
 /* >> group layout */
-#primgroupdlgdiv, chgrpdescrdiv { padding:0px 10px; }
+#primgroupdlgdiv { padding:0px 10px; }
 #errmsgdiv { font-size:small; color:red; }
 #primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 #primgroupbuttonsdiv button { margin:0px 10px; }
@@ -293,6 +293,8 @@ img { border:0px; }
 #gpcdiv { padding:0px 20px; }
 #groupsetdlgdiv { padding:10px 0px; }
 .groupcity { font-size:small; font-weight:normal; text-align:center; }
+#chgrpdescrdiv { text-align:center; }
+.grpmemlinkspan { font-size:small; padding:0px 10px; }
 
 /* >> review layout */
 #revfdiv { }

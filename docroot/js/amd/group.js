@@ -58,16 +58,29 @@ app.group = (function () {
     },
 
 
-    following = function () {
-        if(jt.idInCSV(jt.instId(wizgrp), app.pen.currPenRef().pen.groups)) {
+    isApplying = function () {
+        var penid = jt.instId(app.pen.currPenRef().pen);
+        if(jt.idInCSV(penid, wizgrp.seeking)) {
             return true; }
+        return false;
+    },
+
+
+    //pen.groups is deserialized when the pen is loaded..
+    isFollowing = function () {
+        var groupid, groups, i;
+        groupid = jt.instId(wizgrp);
+        groups = app.pen.currPenRef().pen.groups;
+        for(i = 0; i < groups.length; i += 1) {
+            if(jt.instId(groups[i]) === groupid) {
+                return true; } }
         return false;
     },
 
 
     followsetHTML = function () {
         var html;
-        if(following() || membership()) {
+        if(isFollowing() || membership()) {
             html = ["a", {href: "#Settings", cla: "gold",
                           title: "Membership and follow settings",
                           onclick: jt.fs("app.group.adjust()")},
@@ -86,9 +99,9 @@ app.group = (function () {
 
 
     groupActionsHTML = function () {
-        var html = "group actions go here";
-        //ATTENTION: if there are things a senior or founding member
-        //should be dealing with, list them here.
+        var html = [];
+        //how long since they last posted?
+        //ATTENTION: list outstanding applications with reject/accept
         return html;
     },
 
@@ -206,6 +219,7 @@ app.group = (function () {
                    founders: group.founders || "",
                    seniors: group.seniors || "",
                    members: group.members || "",
+                   seeking: group.seeking || "",
                    reviews: group.reviews || "",
                    modified: group.modified || ""};
         wizgrp.name_c = group.name_c || jt.canonize(group.name);
@@ -474,6 +488,70 @@ app.group = (function () {
                         return false; }
                     wizgrp[fields[i].name] = input; } } }
         return true;
+    },
+
+
+    membershipManagementHTML = function () {
+        var linkfs, act, html = [], i, fdef;
+        linkfs = {apply: {href: "#apply", fs: "app.group.reqmem()"},
+                  withdraw: {href: "#withdraw", fs: "app.group.withdraw()"},
+                  resign: {href: "#resign", fs: "app.group.resignconf()"}};
+        act = {stat: "", actions: []};
+        switch(membership()) {
+        case "Founder":
+            act.stat = "You are a founding member.";
+            act.actions.push({href: "resign", text: "resign"});
+            break;
+        case "Senior":
+            if(isApplying()) {
+                act.stat = "You are applying to become a Founder.";
+                act.actions.push({href: "withdraw", 
+                                  text: "Withdraw Application"}); }
+            else {
+                act.stat = "You are a senior member.";
+                act.actions.push({href: "apply", text: "Become a Founder"});
+                act.actions.push({href: "resign", text: "resign"}); }
+            break;
+        case "Member":
+            if(isApplying()) {
+                act.stat = "You are applying for senior membership.";
+                act.actions.push({href: "withdraw",
+                                  text: "Withdraw Application"}); }
+            else {
+                act.stat = "You are a member.";
+                act.actions.push({href: "apply", 
+                                  text: "Become a Senior Member"});
+                act.actions.push({href: "resign", text: "resign"}); }
+            break;
+        default:
+            if(isApplying()) {
+                act.stat = "You are applying for membership.";
+                act.actions.push({href: "withdraw",
+                                  text: "Withdraw Application"}); }
+            else {
+                act.stat = "You are not a member yet.";
+                act.actions.push({href: "apply", 
+                                  text: "Become a Member"}); } }
+        for(i = 0; i < act.actions.length; i += 1) {
+            fdef = linkfs[act.actions[i].href];
+            if(fdef.href === "#apply") {
+                html.push(["button", {type: "button",
+                                      onclick: jt.fs(fdef.fs)},
+                           act.actions[i].text]); }
+            else {
+                html.push(["span", {cla: "grpmemlinkspan"},
+                           ["a", {href: fdef.href,
+                                  onclick: jt.fs(fdef.fs)},
+                            act.actions[i].text]]); } }
+        html = ["div", {id: "personalmembershipdiv"},
+                ["table",
+                 ["tr",
+                  [["td",
+                    ["span", {id: "grpmemstatspan"},
+                     act.stat]],
+                   ["td",
+                    html]]]]];
+        return html;
     };
 
 
@@ -727,7 +805,7 @@ return {
                        ["a", {href: "#changedescription",
                               onclick: jt.fs("app.group.changedescr()")},
                         "Change Group Description"]]); }
-        //resign membership (big warning if last founder, esp if seniors)
+        html.push(membershipManagementHTML());
         html = ["div", {id: "groupsetdlgdiv"},
                 html];
         html = app.layout.dlgwrapHTML("Settings: " + wizgrp.name, html);
@@ -785,6 +863,27 @@ return {
     readandsave: function () {
         if(readPrimaryFields()) {
             app.group.saveGroup(); }
+    },
+
+
+    reqmem: function () {
+        //request membership at the next level from current
+        jt.err("reqmem not implemented yet");
+    },
+
+
+    withdraw: function () {
+        //withdraw membership application. Ask for patience in confirmation.
+        jt.err("withdraw not implemented yet");
+    },
+
+
+    resignconf: function () {
+        //delete the group when the last founder leaves.  Need to be able
+        //to re-use the names without it being a hassle.
+        //resign membership (big warning if last founder, esp if seniors)
+        //are you sure, common reasons, have to re-apply etc.
+        jt.err("resignconf not implemented yet");
     }
 
 

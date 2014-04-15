@@ -21,6 +21,7 @@ class Group(db.Model):
     founders = db.TextProperty()    #CSV of founding member penids
     seniors = db.TextProperty()     #CSV of senior member penids
     members = db.TextProperty()     #CSV of regular member penids
+    seeking = db.TextProperty()     #CSV of member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     modified = db.StringProperty()               # iso date
     
