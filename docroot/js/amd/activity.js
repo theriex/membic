@@ -484,7 +484,7 @@ app.activity = (function () {
                 if(!revref) {  //no more reviews found, so done
                     break; }
                 if(revref.status === "not cached") {
-                    revitems.push(["li", "Fetching review " + revref.revid]);
+                    revitems.push(["li", "Fetching Review " + revref.revid]);
                     html = ["ul", {cla: "revlist"}, revitems];
                     html = jt.tac2html(html);
                     jt.out('revactdiv', html);
