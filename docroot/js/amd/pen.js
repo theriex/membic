@@ -20,8 +20,6 @@ app.pen = (function () {
 
     serializeFields = function (penName) {
         var i;
-        if(typeof penName.revmem === 'object') {
-            penName.revmem = JSON.stringify(penName.revmem); }
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
         if(!penName.groups) {
@@ -334,6 +332,7 @@ return {
                             currpenref.pen.accessed = pens[0].accessed;
                             currpenref.pen.modified = pens[0].modified;
                             currpenref.pen.top20s = pens[0].top20s;
+                            currpenref.pen.stash = pens[0].stash;
                             currpenref.pen.following = pens[0].following;
                             currpenref.pen.followers = pens[0].followers;
                             app.profile.resetReviews(); } },
@@ -346,22 +345,6 @@ return {
 
     deserializeFields: function (penName) {
         var text, obj;
-        //reconstitute revmem
-        if(!penName.revmem) {
-            penName.revmem = {}; }
-        else if(typeof penName.revmem !== 'object') {
-            try {  //debug vars here help check for double encoding etc
-                text = penName.revmem;
-                obj = JSON.parse(text);
-                penName.revmem = obj;
-            } catch (e) {
-                jt.log("pen.deserializeFields " + penName.name + ": " + e);
-                penName.revmem = {};
-            } }
-        if(typeof penName.revmem !== 'object') {
-            jt.log("Re-initializing penName revmem.  Deserialized value " +
-                    "was not an object: " + penName.revmem);
-            penName.revmem = {}; }
         //reconstitute settings
         if(!penName.settings) {
             penName.settings = {}; }
@@ -383,6 +366,11 @@ return {
             penName.top20s = {}; }
         else if(typeof penName.top20s === "string") {
             penName.top20s = JSON.parse(penName.top20s); }
+        //reconstitute stash
+        if(!penName.stash) {
+            penName.stash = {}; }
+        else if(typeof penName.stash === "string") {
+            penName.stash = JSON.parse(penName.stash); }
     },
 
 

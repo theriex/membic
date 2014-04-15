@@ -189,9 +189,20 @@ app.hinter = (function () {
                   
 
     remrevActive = function (pen) {
-        if(pen.revmem && pen.revmem.remembered && 
-           pen.revmem.remembered.length > 0) {
+        var penref = app.pen.currPenRef();
+        //penref.remembered is initialized by hitting the remembered
+        //nav link, or when viewing someone else's review.  Neither is
+        //likely to have happened by the time this hint is being
+        //tested, but check anyway for completeness.
+        if(penref.remembered && penref.remembered.length > 0) {
             return false; }
+        //So pretty much this will always return true, and the user is
+        //just going to tell the dialog to go away eventually.
+        //Doesn't seem worth an extra db call to srchremem here,
+        //probably the right thing to do is to record a note after
+        //they have remembered something, but that could be due to a
+        //random click of the remember button without realizing that
+        //it ties to the remembered display.  Just show the hint.
         return true; 
     },
 

@@ -26,24 +26,21 @@ class PenName(db.Model):
     # these bling field values are nice but not required
     shoutout = db.TextProperty()
     profpic = db.BlobProperty()
-    city = db.StringProperty()
+    city = db.StringProperty(indexed=False)
     # track last used pen name chosen to select it by default next time
     accessed = db.StringProperty()  # iso date
     modified = db.StringProperty()  # iso date
-    # accumulated top 20 reviews of each type stored as JSON
-    top20s = db.TextProperty()
-    # remembered or marked reviews stored as JSON
-    revmem = db.TextProperty()
-    # client settings like skin, keyword overrides etc stored as JSON
-    settings = db.TextProperty()
+    # associated JSON data
+    top20s = db.TextProperty()   # accumulated top 20 reviews of each type
+    stash = db.TextProperty()    # precomputed vals, breadcrumbs and such
+    settings = db.TextProperty() # client settings like skin, keyword overrides
+    # associated CSV data
+    abusive = db.TextProperty()  # penids flagged for harassment
+    groups = db.TextProperty()   # groupids this pen is following
     # counts of inbound and outbound relationships are maintained within
     # the relationship transaction processing
     following = db.IntegerProperty()
     followers = db.IntegerProperty()
-    # csv of penids flagged for harassment
-    abusive = db.TextProperty()
-    # csv of groupids this pen is following
-    groups = db.TextProperty()
 
 
 def authorized(acc, pen):
@@ -79,7 +76,7 @@ def set_pen_attrs(pen, request):
     pen.accessed = nowISO()
     pen.modified = nowISO()
     # pen.top20s is maintained separately as part of reviews
-    pen.revmem = request.get('revmem') or ""
+    pen.stash = request.get('stash') or ""
     pen.settings = request.get('settings') or ""
     pen.abusive = request.get('abusive') or ""
     pen.abusive = str(pen.abusive)
@@ -437,6 +434,16 @@ class PenAccessed(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
             
 
+class WalkPens(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/plain'
+        # pens = PenName.all()
+        # pens.order('-modified')
+        # for pen in pens:
+        #     self.response.out.write(pen.name + "\n")
+        self.response.out.write("Walk completed")
+
+
 class MakeTestPens(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
@@ -453,8 +460,8 @@ class MakeTestPens(webapp2.RequestHandler):
             pen.city = "fake city " + str(count)
             pen.accessed = nowISO()
             pen.modified = nowISO()
-            pen.revmem = ""
             pen.settings = ""
+            pen.stash = ""
             pen.following = 0
             pen.followers = 0
             cached_put(pen)
@@ -471,5 +478,6 @@ app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/acctinfo', GetInfoForAccount),
                                ('/penmail', SetEmailFromPen),
                                ('/penacc', PenAccessed),
+                               ('/penwalk', WalkPens),
                                ('/testpens', MakeTestPens)], debug=True)
 

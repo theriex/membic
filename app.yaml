@@ -360,6 +360,8 @@ handlers:
   script: src.py.cluck2.app
 - url: /cluck.*
   script: src.py.cluck.app
+- url: /penwalk
+  script: src.py.pen.app
 - url: /testpens
   script: src.py.pen.app
 - url: /testrevs

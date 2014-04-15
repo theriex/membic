@@ -178,28 +178,6 @@ class SearchRemembered(webapp2.RequestHandler):
         tag_search(self, 'remembered', 'forgotten')
 
 
-class ConvertPenRemember(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("Pen names with remember data:\n")
-        pens = PenName.all()
-        for pen in pens:
-            if pen.revmem:
-                penid = pen.key().id()
-                statline = str(penid) + " " + pen.name + ": " + pen.revmem
-                self.response.out.write(statline)
-                remobj = json.loads(pen.revmem)
-                if "remembered" in remobj:
-                    for revid in remobj["remembered"]:
-                        revid = int(revid)
-                        revtag = fetch_or_create_tag_authorized(penid, revid)
-                        revtag.remembered = nowISO()
-                        revtag.forgotten = None
-                        cached_put(revtag)
-                        self.response.out.write("\n    " + str(revid))
-                    
-
-
 app = webapp2.WSGIApplication([('/notehelpful', NoteHelpful),
                                ('/srchhelpful', SearchHelpful),
                                ('/noteremem', NoteRemember),
