@@ -253,6 +253,15 @@ app.readurl = (function () {
             parseTitle(review); }
         setImageURI(review, html, url);
         setCanonicalURL(review, html, url);
+    },
+
+
+    getPlainURL = function (url) {
+        var result, crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
+        result = crockfordurlregex.exec(url);
+        if(result.length < 4) {
+            return url; }
+        return result[1] + ":" + result[2] + result[3];
     };
 
 
@@ -273,8 +282,16 @@ return {
                      setReviewFields(review, jt.dec(json[0].content), url);
                      app.review.display(); },
                  app.failf(function (code, errtxt) {
-                     jt.err("Could not read URL. Code " + 
-                             code + ": " + errtxt);
+                     var plainurl = getPlainURL(url);
+                     if(url !== plainurl) {
+                         return app.readurl.fetchData(review, plainurl, 
+                                                      params); }
+                     jt.err("Review details were not filled out automatically" +
+                            " because of a problem accessing " + url + "\n\n" +
+                            "You are probably going to have to fill in the " +
+                            "review details manually. Sorry about that.\n\n" +
+                            "Here's what came back in case it helps:\n\n" +
+                            "Error code " + code + ": " + errtxt);
                      app.review.resetAutoURL();
                      app.review.display(); }),
                 jt.semaphore("readurl.fetchData"));

@@ -22,6 +22,8 @@ app.pen = (function () {
         var i;
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
+        if(typeof penName.stash === 'object') {
+            penName.stash = JSON.stringify(penName.stash); }
         if(!penName.groups) {
             penName.groups = ""; }
         if(typeof penName.groups !== "string") {
@@ -370,7 +372,12 @@ return {
         if(!penName.stash) {
             penName.stash = {}; }
         else if(typeof penName.stash === "string") {
-            penName.stash = JSON.parse(penName.stash); }
+            try {
+                penName.stash = JSON.parse(penName.stash);
+            } catch(e) {
+                jt.log("unparseable penName.stash. Reset value.");
+                penName.stash = {};
+            } }
     },
 
 
