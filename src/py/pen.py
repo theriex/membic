@@ -76,6 +76,7 @@ def set_pen_attrs(pen, request):
     pen.accessed = nowISO()
     pen.modified = nowISO()
     # pen.top20s is maintained separately as part of reviews
+    pen.groups = request.get('groups') or ""
     pen.stash = request.get('stash') or ""
     pen.settings = request.get('settings') or ""
     pen.abusive = request.get('abusive') or ""

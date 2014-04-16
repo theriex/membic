@@ -316,6 +316,17 @@ handlers:
 - url: /grpbyid.*
   script: src.py.group.app
 
+## Upload a group pic
+## POST params: picfilein, _id, authparams
+##   _id: Group instance id
+- url: /grppicupload.*
+  script: src.py.group.app
+
+## Retrieve a group pic
+## GET params: groupid
+- url: /grppic.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services

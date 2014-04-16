@@ -1532,45 +1532,21 @@ return {
     //to click for a pic upload, then it might be possible for them to
     //create two instances of the same review.  Protect against that.
     picUploadForm: function () {
-        var odiv, html, revid;
+        var revid;
         readAndValidateFieldValues();
         revid = jt.instId(crev);
         if(!revid || reviewFieldValuesChanged()) {
-            html = jt.byId('revformbuttonsdiv').innerHTML;
-            if(html.indexOf("<button") >= 0) { //not already saving
+            if(jt.byId('revformbuttonsdiv').    //not already saving
+                   innerHTML.indexOf("<button") >= 0) {
                 return app.review.save(false, "uploadpic"); }
             return; }  //already saving, just ignore the pic upload click
-        html = ["form", {action: "/revpicupload",
-                         enctype: "multipart/form-data", method: "post"},
-                [["div", {id: "closeline"},
-                  ["a", {id: "closedlg", href: "#close",
-                         onclick: jt.fs("app.cancelOverlay()")},
-                   "&lt;close&nbsp;&nbsp;X&gt;"]],
-                 jt.paramsToFormInputs(app.login.authparams()),
-                 ["input", {type: "hidden", name: "_id", value: revid}],
-                 ["input", {type: "hidden", name: "penid", value: crev.penid}],
-                 ["input", {type: "hidden", name: "returnto",
-                            value: jt.enc(window.location.href + "#revedit=" + 
-                                          revid)}],
-                 ["table",
-                  [["tr",
-                    ["td", 
-                     "Upload Review Pic"]],
-                   ["tr",
-                    ["td",
-                     ["input", {type: "file", name: "picfilein",
-                                id: "picfilein"}]]],
-                   ["tr",
-                    ["td", {align: "center"},
-                     ["input", {type: "submit", value: "Upload"}]]]]]]];
-        jt.out('overlaydiv', jt.tac2html(html));
-        odiv = jt.byId('overlaydiv');
-        odiv.style.left = "70px";
-        odiv.style.top = "300px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelOverlay;
-        jt.byId('picfilein').focus();
+        app.layout.picUpload({ 
+            endpoint: "/revpicupload",
+            type: "Review",
+            id: revid,
+            penid: crev.penid,
+            rethash: "#revedit=" + revid,
+            left: "70px", top: "300px"});
     },
 
 

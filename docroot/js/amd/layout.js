@@ -548,6 +548,42 @@ return {
     },
 
 
+    picUpload: function (fupl) {
+        var odiv, html;
+        html = ["form", {action: fupl.endpoint,
+                         enctype: "multipart/form-data", method: "post"},
+                [["div", {id: "closeline"},
+                  ["a", {id: "closedlg", href: "#close",
+                         onclick: jt.fs("app.cancelOverlay()")},
+                   "&lt;close&nbsp;&nbsp;X&gt;"]],
+                 jt.paramsToFormInputs(app.login.authparams()),
+                 ["input", {type: "hidden", name: "_id", value: fupl.id}],
+                 ["input", {type: "hidden", name: "penid", value: fupl.penid}],
+                 ["input", {type: "hidden", name: "returnto",
+                            value: jt.enc(window.location.href + 
+                                          fupl.rethash)}],
+                 ["table",
+                  [["tr",
+                    ["td", 
+                     "Upload " + fupl.type + " Pic"]],
+                   ["tr",
+                    ["td",
+                     ["input", {type: "file", name: "picfilein",
+                                id: "picfilein"}]]],
+                   ["tr",
+                    ["td", {align: "center"},
+                     ["input", {type: "submit", value: "Upload"}]]]]]]];
+        jt.out('overlaydiv', jt.tac2html(html));
+        odiv = jt.byId('overlaydiv');
+        odiv.style.left = fupl.left || "70px";
+        odiv.style.top = fupl.top || "300px";
+        odiv.style.visibility = "visible";
+        odiv.style.backgroundColor = app.skinner.lightbg();
+        app.onescapefunc = app.cancelOverlay;
+        jt.byId('picfilein').focus();
+    }
+
+
 };  //end of returned functions
 }());
 

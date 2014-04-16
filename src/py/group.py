@@ -135,7 +135,7 @@ class UpdateDescription(webapp2.RequestHandler):
             if pen_role(pen.key().id(), group) != "Founder":
                 self.error(400)
                 self.response.out.write(
-                    "Only a Founder can change the group description.")
+                    "Only a Founder may change the group description.")
                 return
             group.name = name
             group.name_c = name_c
@@ -166,6 +166,57 @@ class GetGroupById(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
+# This is a form submission endpoint, so always redirect back to the app.
+class UploadGroupPic(webapp2.RequestHandler):
+    def post(self):
+        errmsg = "Could not find group"
+        groupid = self.request.get('_id')
+        group = cached_get(intz(groupid), Group)
+        if group:
+            errmsg = "You are not authorized to update this group pic"
+            pen = review_modification_authorized(self)
+            if pen and pen_role(pen.key().id(), group) == "Founder":
+                errmsg = "Picture file not provided"
+                upfile = self.request.get("picfilein")
+                if upfile:
+                    errmsg = "Picture upload failed"
+                    try:
+                        group.picture = db.Blob(upfile)
+                        group.picture = images.resize(group.picture, 160, 160)
+                        cached_put(group)
+                        errmsg = ""
+                    except Exception as e:
+                        errmsg = "Picture upload failed: " + str(e)
+        redurl = self.request.get('returnto')
+        if not redurl:
+            redurl = "http://www.wdydfun.com#group"
+        redurl = urllib.unquote(redurl)
+        redurl = str(redurl)
+        if errmsg:
+            redurl += "&action=grppicupload&errmsg=" + errmsg
+        logging.info("UploadGroupPic redirecting to " + redurl)
+        self.redirect(redurl)
+
+
+class GetGroupPic(webapp2.RequestHandler):
+    def get(self):
+        groupid = self.request.get('groupid')
+        group = cached_get(intz(groupid), Group)
+        havepic = group and group.picture
+        if not havepic:
+            self.error(404)
+            self.response.out.write("Pic for group " + str(groupid) + 
+                                    " not found.")
+            return
+        img = images.Image(group.picture)
+        img.resize(width=160, height=160)
+        img = img.execute_transforms(output_encoding=images.PNG)
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.out.write(img)
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
-                               ('/grpbyid', GetGroupById)], debug=True)
+                               ('/grpbyid', GetGroupById),
+                               ('/grppicupload', UploadGroupPic),
+                               ('/grppic', GetGroupPic)], debug=True)
 

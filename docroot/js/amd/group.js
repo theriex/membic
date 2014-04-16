@@ -252,22 +252,27 @@ app.group = (function () {
 
 
     displayGroupHeading = function () {
-        var imgsrc, html;
-        imgsrc = "../img/emptyprofpic.png";
+        var imgattrs, html, divpos;
+        imgattrs = { cla: "revimg", src: "../img/emptyprofpic.png" };
         if(wizgrp.picture) {
-            imgsrc = "../grppic?groupid=" + jt.instId(wizgrp); }
+            imgattrs.src = "../grppic?groupid=" + jt.instId(wizgrp); }
+        if(membership() === "Founder") {
+            imgattrs.title = "Click to upload a picture";
+            imgattrs.onclick = jt.fs("app.group.picUploadForm()"); }
+        if(jt.isLowFuncBrowser()) {
+            imgattrs.style = "width:125px;height:auto;"; }
         html = ["div", {id: "grouphdiv"},
                 ["table",
                  ["tr",
-                  [["td",
+                  [["td", {valign: "top"},
                     ["div", {id: "gpcdiv"},
                      [["div", {id: "gpicdiv"},
-                       ["img", {cla: "profpic", src: imgsrc}]],
+                       ["img", imgattrs]],
                       ["div", {id: "gcitydiv", cla: "groupcity"},
                        wizgrp.city]]]],
-                   ["td", {cla: "tdwide"},
+                   ["td", {cla: "tdwide", valign: "top"},
                     ["div", {id: "gndbdiv"},
-                     [["div", {id: "grouphdiv"},
+                     [["div", {id: "groupnamediv"},
                        ["table",
                         ["tr",
                          [["td", {id: "grouphnametd"},
@@ -293,6 +298,9 @@ app.group = (function () {
                       ["div", {id: "groupeditbuttonsdiv"},
                        ""]]]]]]]];
         app.layout.headingout(jt.tac2html(html));
+        divpos = jt.geoPos(jt.byId("grouphdiv"));
+        jt.byId('groupdescdiv').style.width = 
+            String(Math.round((divpos.w - 20) / 2)) + "px";
     },
 
 
@@ -559,13 +567,18 @@ app.group = (function () {
     },
 
 
+    getPrimaryFieldDefs = function () {
+        return [{name: "name", required: true},
+                {name: "city", required: false},
+                {name: "description", required: true},
+                {name: "revtypes", required: true},
+                {name: "revfreq", required: true}];
+    },
+
+
     readPrimaryFields = function () {
         var input, fields, i, cboxes, j, opts;
-        fields = [{name: "name", required: true},
-                  {name: "city", required: false},
-                  {name: "description", required: true},
-                  {name: "revtypes", required: true},
-                  {name: "revfreq", required: true}];
+        fields = getPrimaryFieldDefs();
         for(i = 0; i < fields.length; i += 1) {
             if(fields[i].name === "revtypes") {
                 cboxes = document.getElementsByName("revtypesel");
@@ -601,6 +614,19 @@ app.group = (function () {
                         return false; }
                     wizgrp[fields[i].name] = input; } } }
         return true;
+    },
+
+
+    primaryFieldValuesChanged = function () {
+        var prev = app.lcs.getRef("group", jt.instId(wizgrp)).group,
+            fields = getPrimaryFieldDefs(), i, fieldname, wizval, preval;
+        for(i = 0; i < fields.length; i += 1) {
+            fieldname = fields[i].name;
+            wizval = wizgrp[fieldname];
+            preval = prev[fieldname];
+            if(wizgrp[fieldname] !== prev[fieldname]) {
+                return true; } }
+        return false;
     },
 
 
@@ -868,7 +894,7 @@ return {
     },
 
 
-    saveGroup: function () {
+    saveGroup: function (autostep) {
         var data, divid, buttonhtml;
         if(!jt.instId(wizgrp)) {
             divid = "primgroupbuttonsdiv";
@@ -884,7 +910,10 @@ return {
             "&penid=" + app.pen.currPenRef().penid;
         jt.call('POST', "grpdesc?" + app.login.authparams(), data,
                 function (groups) {
+                    app.lcs.put("group", groups[0]);
                     copyGroup(groups[0]);
+                    if(autostep === "uploadpic") {
+                        setTimeout(app.group.picUploadForm, 200); }
                     displayGroup(); },
                 app.failf(function (code, errtxt) {
                     jt.out(divid, buttonhtml);
@@ -937,15 +966,14 @@ return {
         rswidth = String(Math.round((divpos.w - 20) / 2)) + "px";
         lswidth = String(jt.geoPos(jt.byId("gpicdiv")).w - 4) + "px";
         app.layout.closeDialog();
-        jt.out('grouphbuttondiv', "");
         jt.out('gcitydiv', jt.tac2html(
             ["input", {type: "text", id: "cityin",
                        style: "width:" + lswidth,
                        placeholder: "City or region",
                        value: wizgrp.city}]));
-        jt.out('penhnamespan', jt.tac2html(
+        jt.out('groupnamediv', jt.tac2html(
             ["input", {type: "text", id: "namein", 
-                       style: "width:" + rswidth,
+                       style: "margin:2px;width:" + rswidth,
                        value: wizgrp.name}]));
         jt.out('groupdescdiv', jt.tac2html(
             ["textarea", {id: "descriptionin", cla: "groupdescrtxt",
@@ -997,6 +1025,31 @@ return {
         //resign membership (big warning if last founder, esp if seniors)
         //are you sure, common reasons, have to re-apply etc.
         jt.err("resignconf not implemented yet");
+    },
+
+
+    //Pic upload happens after the initial save from the wizard, so
+    //the group always has an id for the server instance to hold the
+    //pic data.  Since the pic upload is a full form submit requiring
+    //the app to reconstruct its state from scratch on return, any
+    //changed field values also need to be saved.
+    picUploadForm: function () {
+        var groupid;
+        readPrimaryFields();
+        if(primaryFieldValuesChanged()) {
+            if(jt.byId('groupeditbuttonsdiv').   //not already saving
+                   innerHTML.indexOf("<button") >= 0) {
+                return app.group.saveGroup("uploadpic"); }
+            return; }  //already saving, upload pic when done
+        groupid = jt.instId(wizgrp);
+        app.layout.picUpload({ 
+            endpoint: "/grppicupload",
+            type: "Group",
+            id: groupid,
+            penid: app.pen.currPenRef().penid,
+            //not returning in edit mode since cancel not an option
+            rethash: "#view=group&groupid=" + groupid,
+            left: "70px", top: "140px"});
     }
 
 
