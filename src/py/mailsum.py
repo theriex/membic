@@ -213,9 +213,15 @@ def pen_stats():
 
 
 def eligible_pen(acc, thresh):
-    # eventually this will need to track and test bad email addresses also
     if not acc.email:
-        return None
+        return None, "No email address"
+    if acc.mailbounce and "," in acc.mailbounce:
+        bouncedates = acc.mailbounce.split(",")
+        if bouncedates[-1] < acc.modified:
+            #account modified after latest bounce, email might be fixed...
+            acc.mailbounce = ""   #caller writes updated account
+        else:
+            return None, " (" + acc.email + ") bounced " + bouncedates[-1]
     # work off the most recently accessed pen authorized for this account
     latestpen = None
     where = "WHERE mid = :1 LIMIT 20"
@@ -223,10 +229,12 @@ def eligible_pen(acc, thresh):
     for pen in pens:
         if not latestpen or latestpen.accessed < pen.accessed:
             latestpen = pen
+    reason = ""
     if latestpen and latestpen.accessed > thresh:
         if not "sumiflogin" in acc.summaryflags:
+            reason = latestpen.name + " accessed since " + thresh
             latestpen = None
-    return latestpen
+    return latestpen, reason
 
 
 def text_stars(review):
@@ -312,18 +320,12 @@ def mail_summaries(freq, thresh, request, response):
     logsum += "Mail sent for " + freq + " activity since " + tstr + "\n"
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
     accs = MORAccount.gql(where, freq, thresh)
+    processed = 0
     for acc in accs:
+        processed += 1
         logmsg = "username: " + acc.username
-        pen = eligible_pen(acc, thresh)
-        if acc.mailbounce and "," in acc.mailbounce:
-            bouncedates = acc.mailbounce.split(",")
-            if bouncedates[-1] < acc.modified:
-                logmsg += " BOUNCE RESET"
-                acc.mailbounce = ""
-            else:
-                logmsg += " (" + acc.email + ") bounced " + bouncedates[-1] +\
-                    ". No summary sent."
-                pen = None
+        pen, whynot = eligible_pen(acc, thresh)
+        logging.info("whynot: " + whynot)
         if pen:
             logmsg += " (" + acc.email + "), pen: " + pen.name
             relids = outbound_relids_for_penid(pen.key().id())
@@ -346,10 +348,15 @@ def mail_summaries(freq, thresh, request, response):
                         subject=subj,
                         body=content)
                     logmsg += ", mail sent"
+        elif freq == "weekly":  # show details for most common notice freq
+            logmsg += " id:" + str(acc.key().id()) + " " + whynot
         acc.lastsummary = nowISO()
         acc.put()  #nocache
         split_output(response, logmsg)
         logsum += logmsg + "\n"
+    logsum += "SELECT * from MORAccount WHERE summaryfreq = '" + freq +\
+        "' AND lastsummary < '" + thresh + "'\n"
+    logsum += str(processed) + " matching accounts processed\n\n"    
     return logsum
 
 
@@ -372,7 +379,9 @@ class MailSummaries(webapp2.RequestHandler):
                                 dt2ISO(dtnow - datetime.timedelta(14)),
                                 self.request, self.response)
         summary = pen_stats() + "\n" + emsum
-        if not self.request.url.startswith('http://localhost'):
+        if self.request.url.startswith('http://localhost'):
+            self.response.out.write("\n\nsummary:\n" + summary)
+        else:
             mail.send_mail(
                 sender="wdydfun support <theriex@gmail.com>",
                 to="theriex@gmail.com",
@@ -390,7 +399,7 @@ class SummaryForUser(webapp2.RequestHandler):
         thresh = dt2ISO(dtnow - datetime.timedelta(7))
         tstr = ISO2dt(thresh).strftime("%d %B %Y")
         for acc in accs:
-            pen = eligible_pen(acc, "2400-01-01T00:00:00Z")
+            pen, whynot = eligible_pen(acc, "2400-01-01T00:00:00Z")
             self.response.out.write("pen: " + pen.name + "\n")
             self.response.out.write("--------------------------------------")
             self.response.out.write("--------------------------------------")
