@@ -1730,7 +1730,7 @@ return {
     swapTitleAndArtist: function () {
         var titlein = jt.byId('keyin'),
             title = titlein.value,
-            artistin = jt.byId('field0'),
+            artistin = jt.byId('artist0'),
             artist = artistin.value;
         titlein.value = artist;
         artistin.value = title;
