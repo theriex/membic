@@ -152,7 +152,7 @@ app.group = (function () {
 
     //this needs to be called after the current page of reviews are available
     verifyStash = function () {
-        var pen, key, modified = false, posts, penid, i, revref, revid;
+        var pen, key, modified = false, psg, penid, end, i, revref, revid;
         pen = app.pen.currPenRef().pen;
         key = "grp" + jt.instId(wizgrp);
         if(!pen.stash) {
@@ -161,24 +161,35 @@ app.group = (function () {
         if(!pen.stash[key]) {
             modified = true;
             pen.stash[key] = { posts: "" }; }
-        posts = pen.stash[key].posts;
+        psg = pen.stash[key];
         penid = jt.instId(pen);
-        for(i = 0; i < wizgrp.pgsize; i += 1) {
+        end = Math.min(wizgrp.pgsize, wizgrp.revids.length);
+        for(i = 0; i < end; i += 1) {
             revref = app.lcs.getRef("rev", wizgrp.revids[i]);
-            if(revref.rev && revref.rev.pen === penid) {
+            if(revref.rev && revref.rev.penid === penid) {
+                if(!psg.lastpost || revref.rev.modified > psg.lastpost) {
+                    psg.lastpost = revref.rev.modified;
+                    modified = true; }
                 revid = jt.instId(revref.rev);
-                if(!jt.idInCSV(revid, posts)) {
-                    modified = true;
-                    if(posts) {
-                        posts += ","; }
-                    posts += revid; } } }
+                if(!jt.idInCSV(revid, psg.posts)) {
+                    if(psg.posts) {
+                        psg.posts += ","; }
+                    psg.posts += revid;
+                    modified = true; } } }
         if(modified) {
             app.pen.updatePen(pen, app.group.display, app.failf); }
     },
 
 
+    displayReviewList = function (lis) {
+        jt.out('grouprevsdiv', jt.tac2html(
+            ["ul", {cla: "revlist"}, lis]));
+        app.layout.adjust();
+    },
+
+
     displayGroupReviews = function () {
-        var loaded = true, end, i, revref, penref, lis = [], html;
+        var end, i, revref, penref, lis = [];
         wizgrp.pgsize = 20;
         wizgrp.revpage = wizgrp.revpage || 0;
         if(!wizgrp.revids) {
@@ -186,32 +197,31 @@ app.group = (function () {
                 wizgrp.revids = []; }
             else {
                 wizgrp.revids = wizgrp.reviews.split(","); } }
-        end = Math.min((wizgrp.revpage + wizgrp.pgsize), wizgrp.reviews.length);
+        end = Math.min((wizgrp.revpage + wizgrp.pgsize), wizgrp.revids.length);
         if(end === 0) {
             lis.push(["li", "No Reviews posted"]); }
         for(i = wizgrp.revpage; i < end; i += 1) {
             revref = app.lcs.getRef("rev", wizgrp.revids[i]);
             if(revref.status === "not cached") {
                 lis.push(["li", "Fetching Review " + wizgrp.revids[i] + "..."]);
-                loaded = false;
-                break; }
+                displayReviewList(lis);
+                return app.lcs.getFull("rev", wizgrp.revids[i], 
+                                       displayGroupReviews); }
             if(revref.rev) {
                 penref = app.lcs.getRef("pen", revref.rev.penid);
                 if(penref.status === "not cached") {
                     lis.push(["li", "Fetching Pen Name " + revref.rev.penid + 
                               "..."]);
-                    loaded = false;
-                    break; }
+                    displayReviewList(lis);
+                    return app.lcs.getFull("pen", revref.rev.penid,
+                                           displayGroupReviews); }
                 //no "via" byline when displaying within group
                 lis.push(app.profile.reviewItemHTML(revref.rev,
                                                     penref.name)); } }
-        html = ["ul", {cla: "revlist"}, lis];
+        displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
         //ATTENTION: include group reviews with "via" into activity
-        jt.out('grouprevsdiv', jt.tac2html(html));
-        app.layout.adjust();
-        if(loaded) {
-            verifyStash(); }
+        verifyStash();
     },
 
 
@@ -1120,7 +1130,7 @@ return {
 
     postToGroups: function () {
         var groups, revid, i, groupid, cbox;
-        jt.out('primgroupbuttonsdiv', "Processing...")
+        jt.out('primgroupbuttonsdiv', "Processing...");
         groups = groupsForCurrentReview(app.group.postToGroups);
         if(!groups || !groups.length) {
             return; }

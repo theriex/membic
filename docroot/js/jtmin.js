@@ -184,7 +184,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         if (typeof val !== "number") {
             val = parseInt(val, 10);
         }
-        return val
+        return val;
     };
 
 
@@ -767,6 +767,14 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     //Wrapper for ajax call that returns an object from server JSON.
+    //
+    //A: On GAE local, it is possible to get a successful callback
+    //with no data. So xhr.readyState === 4 and xhr.status === 200,
+    //but there is no xhr.responseText.  That is followed by a second
+    //callback with xhr.responseText.  Rather than logging a JSON
+    //parse error for an empty string (and then chasing that down
+    //because it looks like the log is showing a problem) this case is
+    //trapped and ignored.  ep19apr14
     uo.call = function (method, url, data, success, failure,
                         lockobj, setup, timeoutms) {
         var jsonobj = JSON || window.JSON;
@@ -774,6 +782,10 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             uo.err("JSON not supported, please use a modern browser");
         }
         uo.request(method, url, data, function (resp) {
+            if (!resp) {  //See comment A
+                //uo.log("Ignoring interim callback with empty data");
+                return;  //no data but didn't fail.  Wait for second callback.
+            }
             try {
                 resp = jsonobj.parse(resp);
             } catch (exception) {
