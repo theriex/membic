@@ -327,6 +327,11 @@ handlers:
 - url: /grppic.*
   script: src.py.group.app
 
+## Post a review to a group
+## POST params: penid, revid, groupid, authparams
+- url: /grprev.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services

@@ -30,7 +30,6 @@ def pen_role(penid, group):
     penid = str(penid)
     group.founders = group.founders or ""
     for pid in group.founders.split(","):
-        logging.info("comparing " + penid + " to " + pid)
         if pid == penid:
             return "Founder"
     group.seniors = group.seniors or ""
@@ -42,6 +41,13 @@ def pen_role(penid, group):
         if pid == penid:
             return "Member"
     return "NotFound"
+
+
+def is_revtype_match(revtype, group):
+    for gtype in group.revtypes.split(","):
+        if revtype == gtype:
+            return True
+    return false
 
 
 def city_match(grpA, grpB):
@@ -215,8 +221,64 @@ class GetGroupPic(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
+class PostReview(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        # get the review
+        revid = intz(self.request.get('revid'))
+        if not revid:
+            self.error(400)
+            self.response.out.write("No revid specified")
+            return
+        rev = cached_get(revid, Review)
+        if not rev:
+            self.error(404)
+            self.response.out.write("Review " + str(revid) + " not found")
+            return
+        if rev.penid != pen.key().id():
+            self.error(400)
+            self.response.out.write("You may only post your own review")
+            return
+        # get the group
+        groupid = intz(self.request.get('groupid'))
+        if not groupid:
+            self.error(400)
+            self.response.out.write("No groupid specified")
+            return
+        group = cached_get(groupid, Group)
+        if not group:
+            self.error(404)
+            self.response.out.write("Group " + str(groupid) + " not found")
+            return
+        role = pen_role(pen.key().id(), group)
+        if role != "Founder" and role != "Senior" and role != "Member":
+            self.error(400)
+            self.response.out.write("You are not a member of this group")
+            return
+        if not is_revtype_match(rev.revtype, group):
+            self.error(400)
+            self.response.out.write(rev.revtype + " is not an accepted type")
+            return
+        # add the review to the group
+        if not group.reviews or group.reviews == str(revid):
+            group.reviews = str(revid)
+        else:
+            revids = group.reviews.split(",")
+            try: 
+                revids.remove(str(revid))
+            except Exception:
+                pass
+            revids.insert(0, str(revid))    # most recently posted first
+            group.reviews = ",".join(revids)
+        cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
-                               ('/grppic', GetGroupPic)], debug=True)
+                               ('/grppic', GetGroupPic),
+                               ('/grprev', PostReview)], debug=True)
 

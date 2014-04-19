@@ -42,19 +42,21 @@ app.group = (function () {
     },
 
 
-    membership = function () {
+    membership = function (group) {
         var penid;
-        if(wizgrp.membership) {
-            return wizgrp.membership; }
-        wizgrp.membership = "";
+        if(!group) {
+            group = wizgrp; }
+        if(group.membership) {  //already calculated, return that value
+            return group.membership; }
+        group.membership = "";
         penid = jt.instId(app.pen.currPenRef().pen);
-        if(jt.idInCSV(penid, wizgrp.founders)) {
-            wizgrp.membership = "Founder"; }
-        else if(jt.idInCSV(penid, wizgrp.seniors)) {
-            wizgrp.membership = "Senior"; }
-        else if(jt.idInCSV(penid, wizgrp.members)) {
-            wizgrp.membership = "Member"; }
-        return wizgrp.membership;
+        if(jt.idInCSV(penid, group.founders)) {
+            group.membership = "Founder"; }
+        else if(jt.idInCSV(penid, group.seniors)) {
+            group.membership = "Senior"; }
+        else if(jt.idInCSV(penid, group.members)) {
+            group.membership = "Member"; }
+        return group.membership;
     },
 
 
@@ -619,11 +621,9 @@ app.group = (function () {
 
     primaryFieldValuesChanged = function () {
         var prev = app.lcs.getRef("group", jt.instId(wizgrp)).group,
-            fields = getPrimaryFieldDefs(), i, fieldname, wizval, preval;
+            fields = getPrimaryFieldDefs(), i, fieldname;
         for(i = 0; i < fields.length; i += 1) {
             fieldname = fields[i].name;
-            wizval = wizgrp[fieldname];
-            preval = prev[fieldname];
             if(wizgrp[fieldname] !== prev[fieldname]) {
                 return true; } }
         return false;
@@ -691,6 +691,35 @@ app.group = (function () {
                    ["td",
                     html]]]]];
         return html;
+    },
+
+
+    groupsForCurrentReview = function (callback) {
+        var pen, rev, groups = [], grpids, i, ref;
+        pen = app.pen.currPenRef().pen;
+        if(pen.groups) {
+            rev = app.review.getCurrentReview();
+            grpids = pen.groups.split(",");
+            for(i = 0; i < grpids.length; i += 1) {
+                ref = app.lcs.getRef("group", grpids[i]);
+                if(ref.status === "not cached") {
+                    return app.lcs.getFull("group", grpids[i], callback); }
+                if(ref.group && jt.idInCSV(rev.revtype, ref.group.revtypes) &&
+                       membership(ref.group)) {
+                    groups.push(ref.group); } } }
+        return groups;
+    },
+
+
+    postReview = function (revid, groupid) {
+        var data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
+            "&groupid=" + groupid;
+        jt.call('POST', "grprev?" + app.login.authparams(), data,
+                function (groups) {
+                    app.lcs.put("group", groups[0]); },
+                app.failf(function (code, errtxt) {
+                    jt.log("postReview failed " + code + ": " + errtxt); }),
+                jt.semaphore("group.post" + revid + "." + groupid));
     };
 
 
@@ -1050,6 +1079,58 @@ return {
             //not returning in edit mode since cancel not an option
             rethash: "#view=group&groupid=" + groupid,
             left: "70px", top: "140px"});
+    },
+
+
+    currentReviewPostDialog: function () {
+        var groups, i, groupid, trs = [], html;
+        groups = groupsForCurrentReview(app.group.currentReviewPostDialog);
+        if(!groups || !groups.length) {
+            return; }
+        for(i = 0; i < groups.length; i += 1) {
+            groupid = jt.instId(groups[i]);
+            trs.push(["tr",
+                      [["td", {style: "vertical-align:middle;"},
+                        ["div",
+                         ["input", {type: "checkbox", name: "grp" + groupid,
+                                    id: "grp" + groupid,
+                                    value: "grp" + groupid}]]],
+                       ["td", {cla: "tdwide"},
+                        ["span", {id: "penhnamespan"},
+                         ["label", {fo: "grp" + groupid}, 
+                          groups[i].name]]]]]);
+            trs.push(["tr",
+                      [["td"],
+                       ["td", 
+                        ["div", {cla: "groupdescrtext"},
+                         groups[i].description]]]]); }
+        html = ["div", {id: "primgroupdlgdiv"},
+                [["table", {cla: "grpwiztable"}, 
+                  trs],
+                 buttonsHTML(
+                     [{name: "Cancel", fstr: "app.layout.closeDialog()"},
+                      {name: "Post", fstr: "app.group.postToGroups()"}])]];
+        html = app.layout.dlgwrapHTML("Post To Groups?", html);
+        app.layout.openDialog({y:140}, html, null,
+                              function () {
+                                  var elem = jt.byId('post');
+                                  elem.focus(); });
+    },
+            
+
+    postToGroups: function () {
+        var groups, revid, i, groupid, cbox;
+        jt.out('primgroupbuttonsdiv', "Processing...")
+        groups = groupsForCurrentReview(app.group.postToGroups);
+        if(!groups || !groups.length) {
+            return; }
+        revid = jt.instId(app.review.getCurrentReview());
+        for(i = 0; i < groups.length; i += 1) {
+            groupid = jt.instId(groups[i]);
+            cbox = jt.byId("grp" + groupid);
+            if(cbox && cbox.checked) {
+                postReview(revid, groupid); } }
+        app.layout.closeDialog();
     }
 
 
