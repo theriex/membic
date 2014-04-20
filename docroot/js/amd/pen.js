@@ -1,4 +1,4 @@
-/*global JSON: false, app: false, jt: false, setTimeout: false */
+/*global JSON: false, window: false, app: false, jt: false, setTimeout: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -38,6 +38,29 @@ app.pen = (function () {
             pen.following = 0; }
         if(!pen.followers) {
             pen.followers = 0; }
+    },
+
+
+    reconstituteJSONObjectField = function (field, obj) {
+        var text, parsedval, jsonobj = JSON || window.JSON;
+        if (!jsonobj) {
+            jt.err("JSON not supported, please use a modern browser");
+        }
+        if(!obj[field]) {
+            obj[field] = {}; }
+        else if(typeof obj[field] !== 'object') {
+            try {
+                text = obj[field];
+                parsedval = jsonobj.parse(text);
+                obj[field] = parsedval;
+            } catch (e) {
+                jt.log("reconstituteJSONObjectField " + field + ": " + e);
+                obj[field] = {};
+            } }
+        if(typeof obj[field] !== 'object') {
+            jt.log("reconstituteJSONObjectField re-initializing " + field + 
+                   ". \"" + text + "\" not an object");
+            obj[field] = {}; }
     },
 
 
@@ -337,6 +360,7 @@ return {
                             currpenref.pen.stash = pens[0].stash;
                             currpenref.pen.following = pens[0].following;
                             currpenref.pen.followers = pens[0].followers;
+                            app.pen.deserializeFields(pen);
                             app.profile.resetReviews(); } },
                     app.failf(function (code, errtxt) {
                         jt.log("pen.refreshCurrent " + code + " " + 
@@ -346,38 +370,9 @@ return {
 
 
     deserializeFields: function (penName) {
-        var text, obj;
-        //reconstitute settings
-        if(!penName.settings) {
-            penName.settings = {}; }
-        else if(typeof penName.settings !== 'object') {
-            try {  //debug vars here help check for double encoding etc
-                text = penName.settings;
-                obj = JSON.parse(text);
-                penName.settings = obj;
-            } catch (e2) {
-                jt.log("pen.deserializeFields " + penName.name + ": " + e2);
-                penName.settings = {};
-            } }
-        if(typeof penName.settings !== 'object') {
-            jt.log("Re-initializing penName settings.  Deserialized value " +
-                    "was not an object: " + penName.settings);
-            penName.settings = {}; }
-        //reconstitute top20s
-        if(!penName.top20s) {
-            penName.top20s = {}; }
-        else if(typeof penName.top20s === "string") {
-            penName.top20s = JSON.parse(penName.top20s); }
-        //reconstitute stash
-        if(!penName.stash) {
-            penName.stash = {}; }
-        else if(typeof penName.stash === "string") {
-            try {
-                penName.stash = JSON.parse(penName.stash);
-            } catch(e) {
-                jt.log("unparseable penName.stash. Reset value.");
-                penName.stash = {};
-            } }
+        reconstituteJSONObjectField("settings", penName);
+        reconstituteJSONObjectField("top20s", penName);
+        reconstituteJSONObjectField("stash", penName);
     },
 
 

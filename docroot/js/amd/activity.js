@@ -1236,7 +1236,7 @@ return {
         reqs = app.pen.currPenRef().inreqs;
         keepgoingfunc = function (newreqs) {
             app.activity.fulfillRequests(review); };
-        for(i = 0; i < reqs.length; i += 1) {
+        for(i = 0; reqs && i < reqs.length; i += 1) {
             //matches even if the keywords aren't all accounted for.
             //Requestor can resubmit if they want more.
             if(reqs[i].revtype === review.revtype) {

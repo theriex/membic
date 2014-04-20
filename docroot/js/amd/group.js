@@ -150,8 +150,20 @@ app.group = (function () {
     },
 
 
+    verifyWorkingWizVars = function () {
+        if(wizgrp) {  //don't attach temp vars to nothing
+            wizgrp.pgsize = 20;
+            wizgrp.revpage = wizgrp.revpage || 0;
+            if(!wizgrp.revids) {
+                if(!wizgrp.reviews) {
+                    wizgrp.revids = []; }
+                else {
+                    wizgrp.revids = wizgrp.reviews.split(","); } } }
+    },
+
+
     //this needs to be called after the current page of reviews are available
-    verifyStash = function () {
+    verifyStash = function (modf) {
         var pen, key, modified = false, psg, penid, end, i, revref, revid;
         pen = app.pen.currPenRef().pen;
         key = "grp" + jt.instId(wizgrp);
@@ -163,6 +175,7 @@ app.group = (function () {
             pen.stash[key] = { posts: "" }; }
         psg = pen.stash[key];
         penid = jt.instId(pen);
+        verifyWorkingWizVars();
         end = Math.min(wizgrp.pgsize, wizgrp.revids.length);
         for(i = 0; i < end; i += 1) {
             revref = app.lcs.getRef("rev", wizgrp.revids[i]);
@@ -177,7 +190,7 @@ app.group = (function () {
                     psg.posts += revid;
                     modified = true; } } }
         if(modified) {
-            app.pen.updatePen(pen, app.group.display, app.failf); }
+            app.pen.updatePen(pen, modf, app.failf); }
     },
 
 
@@ -190,13 +203,7 @@ app.group = (function () {
 
     displayGroupReviews = function () {
         var end, i, revref, penref, lis = [];
-        wizgrp.pgsize = 20;
-        wizgrp.revpage = wizgrp.revpage || 0;
-        if(!wizgrp.revids) {
-            if(!wizgrp.reviews) {
-                wizgrp.revids = []; }
-            else {
-                wizgrp.revids = wizgrp.reviews.split(","); } }
+        verifyWorkingWizVars();
         end = Math.min((wizgrp.revpage + wizgrp.pgsize), wizgrp.revids.length);
         if(end === 0) {
             lis.push(["li", "No Reviews posted"]); }
@@ -221,7 +228,7 @@ app.group = (function () {
         displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
         //ATTENTION: include group reviews with "via" into activity
-        verifyStash();
+        verifyStash(displayGroupReviews);
     },
 
 
@@ -722,11 +729,14 @@ app.group = (function () {
 
 
     postReview = function (revid, groupid) {
-        var data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
+        var data;
+        data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
             "&groupid=" + groupid;
         jt.call('POST', "grprev?" + app.login.authparams(), data,
                 function (groups) {
-                    app.lcs.put("group", groups[0]); },
+                    copyGroup(app.lcs.put("group", groups[0]).group);
+                    verifyStash(function () {
+                        jt.log("postReview updated pen.stash"); }); },
                 app.failf(function (code, errtxt) {
                     jt.log("postReview failed " + code + ": " + errtxt); }),
                 jt.semaphore("group.post" + revid + "." + groupid));
