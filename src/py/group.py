@@ -120,6 +120,31 @@ def read_and_validate_descriptive_fields(handler, group):
     return True
 
 
+def fetch_group_mod_elements(handler, pen):
+    revid = intz(handler.request.get('revid'))
+    if not revid:
+        handler.error(400)
+        handler.response.out.write("No revid specified")
+        return 0, None, None, ""
+    rev = cached_get(revid, Review)
+    if not rev:
+        handler.error(404)
+        handler.response.out.write("Review " + str(revid) + " not found")
+        return revid, None, None, ""
+    groupid = intz(handler.request.get('groupid'))
+    if not groupid:
+        handler.error(400)
+        handler.response.out.write("No groupid specified")
+        return revid, rev, None, ""
+    group = cached_get(groupid, Group)
+    if not group:
+        handler.error(404)
+        handler.response.out.write("Group " + str(groupid) + " not found")
+        return revid, rev, None, ""
+    role = pen_role(pen.key().id(), group)
+    return revid, rev, group, role
+    
+    
 class UpdateDescription(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -226,33 +251,13 @@ class PostReview(webapp2.RequestHandler):
         pen = review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
-        # get the review
-        revid = intz(self.request.get('revid'))
-        if not revid:
-            self.error(400)
-            self.response.out.write("No revid specified")
-            return
-        rev = cached_get(revid, Review)
-        if not rev:
-            self.error(404)
-            self.response.out.write("Review " + str(revid) + " not found")
-            return
+        revid, rev, group, role = fetch_group_mod_elements(self, pen)
+        if rev is None or group is None:
+            return   #error already reported
         if rev.penid != pen.key().id():
-            self.error(400)
-            self.response.out.write("You may only post your own review")
-            return
-        # get the group
-        groupid = intz(self.request.get('groupid'))
-        if not groupid:
-            self.error(400)
-            self.response.out.write("No groupid specified")
-            return
-        group = cached_get(groupid, Group)
-        if not group:
-            self.error(404)
-            self.response.out.write("Group " + str(groupid) + " not found")
-            return
-        role = pen_role(pen.key().id(), group)
+            handler.error(400)
+            handler.response.out.write("You may only post your own review")
+            return;
         if role != "Founder" and role != "Senior" and role != "Member":
             self.error(400)
             self.response.out.write("You are not a member of this group")
@@ -276,9 +281,50 @@ class PostReview(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
+class RemoveReview(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        revid, rev, group, role = fetch_group_mod_elements(self, pen)
+        if rev is None or group is None:
+            return   #error already reported
+        if role != "Founder" and role != "Senior":
+            if rev.penid != pen.key().id():
+                self.error(400)
+                self.response.out.write("Not authorized to remove reviews")
+                return
+        # leave a comment for owner if not your review
+        if rev.penid != pen.key().id():
+            reason = self.request.get('reason')
+            if not reason or len(reason.strip()) == 0:
+                self.error(400)
+                self.response.out.write("Removal reason required")
+                return
+            rc = ReviewComment(revid=revid)
+            rc.revpenid = rev.penid
+            rc.cmtpenid = pen.key().id()
+            rc.rctype = "comment"
+            rc.rcstat = "pending"
+            rc.comment = reason
+            rc.resp = ""
+            rc.modified = nowISO()
+            rc.put()
+        # remove the revid from the group
+        revids = group.reviews.split(",")
+        try:
+            revids.remove(str(revid))
+        except Exception:
+            pass
+        group.reviews = ",".join(revids)
+        cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
                                ('/grppic', GetGroupPic),
-                               ('/grprev', PostReview)], debug=True)
+                               ('/grprev', PostReview),
+                               ('/grpremrev', RemoveReview)], debug=True)
 

@@ -332,6 +332,11 @@ handlers:
 - url: /grprev.*
   script: src.py.group.app
 
+## Remove a posted review from a group
+## POST params: penid, revid, groupid, reason, authparams
+- url: /grpremrev.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services

@@ -173,6 +173,9 @@ app.group = (function () {
         if(!pen.stash[key]) {
             modified = true;
             pen.stash[key] = { posts: "" }; }
+        if(!pen.stash[key].posts && pen.stash[key].lastpost) {
+            modified = true;  //either initialized, or last rev removed
+            pen.stash[key].lastpost = ""; }
         psg = pen.stash[key];
         penid = jt.instId(pen);
         verifyWorkingWizVars();
@@ -194,10 +197,41 @@ app.group = (function () {
     },
 
 
+    removeReviewFromStash = function (revid, contf) {
+        var pen, key, revids, i, filtered = [];
+        pen = app.pen.currPenRef().pen;
+        key = "grp" + jt.instId(wizgrp);
+        if(jt.idInCSV(revid, pen.stash[key].posts)) {
+            revids = pen.stash[key].posts.split(",");
+            for(i = 0; i < revids.length; i += 1) {
+                if(revids[i] !== revid) {
+                    filtered.push(revids[i]); } }
+            pen.stash[key].posts = filtered.join(",");
+            pen.stash[key].lastpost = "";  //rebuild in verifyStash
+            app.pen.updatePen(pen, contf, app.failf); }
+    },
+
+
     displayReviewList = function (lis) {
         jt.out('grouprevsdiv', jt.tac2html(
             ["ul", {cla: "revlist"}, lis]));
         app.layout.adjust();
+    },
+
+
+    removefstr = function (group, revid) {
+        var authorized = false, role, revref;
+        if(!authorized) {
+            role = membership(group);
+            if(role === "Founder" || role === "Senior") {
+                authorized = true; } }
+        if(!authorized) {
+            revref = app.lcs.getRef("rev", revid);
+            if(revref.rev.penid === jt.instId(app.pen.currPenRef().pen)) {
+                authorized = true; } }
+        if(authorized) {
+            return "app.group.remrev('" + revid + "')"; }
+        return "";
     },
 
 
@@ -223,8 +257,8 @@ app.group = (function () {
                     return app.lcs.getFull("pen", revref.rev.penid,
                                            displayGroupReviews); }
                 //no "via" byline when displaying within group
-                lis.push(app.profile.reviewItemHTML(revref.rev,
-                                                    penref.name)); } }
+                lis.push(app.profile.reviewItemHTML(revref.rev, penref.pen.name,
+                    null, removefstr(wizgrp, wizgrp.revids[i]))); } }
         displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
         //ATTENTION: include group reviews with "via" into activity
@@ -1151,6 +1185,70 @@ return {
             if(cbox && cbox.checked) {
                 postReview(revid, groupid); } }
         app.layout.closeDialog();
+    },
+
+
+    remrev: function (revid) {
+        var revref, penref, html;
+        revref = app.lcs.getRef("rev", revid);
+        if(!revref.rev) {
+            //review should be cached since it was just displayed..
+            jt.err("Could not find review " + revid + ".");
+            return; }
+        if(revref.rev.penid === jt.instId(app.pen.currPenRef().pen)) {
+            html = ["div", {id: "reasondiv"},
+                    ["div", {cla: "dlgprompt"},
+                     "Are you sure you want to remove your review" + 
+                     " from this group?"]]; }
+        else {
+            penref = app.lcs.getRef("pen", revref.rev.penid);
+            html = ["div", {id: "reasondiv"},
+                    ["div", {id: "reasonpromptdiv", cla: "dlgprompt"},
+                     "Please tell " + penref.pen.name + 
+                     " why their review is being removed:"],
+                    ["textarea", {id: "remrevreason", cla: "groupdescrtxt",
+                                  style: "height:50px;"}]]; }
+        html = ["div", {id: "primgroupdlgdiv"},
+                [html,
+                 buttonsHTML(
+                     [{name: "Cancel", fstr: "app.layout.closeDialog()"},
+                      {name: "Remove", 
+                       fstr: "app.group.removeReviewFromGroup('" + 
+                           revid + "')"}])]];
+        html = app.layout.dlgwrapHTML("Remove Review?", html);
+        app.layout.openDialog({y:140}, html, null,
+                              function () {
+                                  var elem = jt.byId('remrevreason');
+                                  if(elem) {
+                                      elem.focus(); }
+                                  else {
+                                      elem = jt.byId('remove');
+                                      elem.focus(); } });
+    },
+
+
+    removeReviewFromGroup: function (revid) {
+        var reason, data, groupid;
+        reason = jt.byId('remrevreason') || "";
+        if(reason) {
+            reason = reason.value;
+            if(!reason) {
+                jt.out('reasonpromptdiv', jt.tac2html(
+                    [["span", {style: "color:red;"},
+                      "*"],
+                     jt.byId('reasonpromptdiv').innerHTML]));
+                return; } }
+        app.layout.closeDialog();
+        groupid = jt.instId(wizgrp);
+        data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
+            "&groupid=" + groupid + "&reason=" + jt.enc(reason);
+        jt.call('POST', "grpremrev?" + app.login.authparams(), data,
+                function (groups) {
+                    copyGroup(app.lcs.put("group", groups[0]).group);
+                    removeReviewFromStash(revid, displayGroupBody); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Remove review failed " + code + ": " + errtxt); }),
+                jt.semaphore("group.remove" + revid + "." + groupid));
     }
 
 

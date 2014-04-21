@@ -630,7 +630,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             if (tac.length > 1) { //have attributes and/or content
                 frame.attrobj = tac[1];
                 //if plain object without length then treat as attributes
-                if (typeof frame.attrobj === 'object' &&
+                if (frame.attrobj && typeof frame.attrobj === 'object' &&
                         !frame.attrobj.length) {
                     for (name in frame.attrobj) {
                         if (frame.attrobj.hasOwnProperty(name)) {

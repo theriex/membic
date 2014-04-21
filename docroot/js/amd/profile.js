@@ -1407,18 +1407,21 @@ return {
     },
 
 
-    reviewItemHTML: function (revobj, penNameStr, liattrobj) {
+    reviewItemHTML: function (revobj, penNameStr, liattrobj, remfstr) {
         var revid = jt.instId(revobj), 
             type = app.review.getReviewTypeByValue(revobj.revtype), 
             linkref = "statrev/" + revid, 
             linkclass = app.revresp.foundHelpful(revid)? "rslcbold" : "rslc",
-            linktxt = app.profile.reviewItemNameHTML(type, revobj),
             divattrs = {cla: "revtextsummary", 
                         style: "padding:0px 0px 0px 97px;"},
-            jump = "", byline = "", keywords = "", revtext = "", html,
-            revclick = jt.fs("app.profile.readReview('" + revid + "')");
+            revclick = jt.fs("app.profile.readReview('" + revid + "')"),
+            jump = "", byline = "", keywords = "", revtext = "", remove = "",
+            html;
         if(app.winw < 700) {
             divattrs.style = "padding:0px 0px 0px 10px;"; }
+        if(remfstr) {
+            remove = ["a", {href: "#remove", onclick: jt.fs(remfstr)},
+                      ["img", {cla: "removeico", src: "img/remove.png"}]]; }
         if(revobj.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(penNameStr) {
@@ -1443,10 +1446,11 @@ return {
                  ["a", {id: "lihr" + revid, cla: linkclass, 
                         href: linkref, title: "See full review",
                         onclick: revclick},
-                  linktxt],
+                  app.profile.reviewItemNameHTML(type, revobj)],
                  jump,
                  ["div", divattrs,
-                  [byline,
+                  [remove,
+                   byline,
                    clickspan(keywords, revclick),
                    clickspan(app.review.linkCountHTML(revid), revclick)]],
                  clickspan(revtext, revclick)]];

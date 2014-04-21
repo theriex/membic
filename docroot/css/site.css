@@ -229,6 +229,7 @@ img { border:0px; }
 .revlist li { padding:4px; }
 .revimg { max-width:125px; height:auto; }
 .revtextsummary { font-size:small; } /* padded in profile.reviewItemHTML */
+.removeico { width:15px; height:15px; vertical-align:middle; }
 .rslc { font-size:medium; }
 .rslcbold { font-size:medium; font-weight:bold; }
 .morerevs { font-size:small; padding: 0px 0px 0px 30px; }
