@@ -302,7 +302,7 @@ img { border:0px; }
 .inbct { color:#666666; }
 
 /* >> group layout */
-#primgroupdlgdiv { padding:0px 10px; }
+#primgroupdlgdiv { padding:0px; }
 #errmsgdiv { font-size:small; color:red; }
 #primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 #primgroupbuttonsdiv button { margin:0px 10px; }
