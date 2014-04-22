@@ -25,14 +25,28 @@ app.hinter = (function () {
     },
 
 
+    notipActive = function (pen) {
+        return true; 
+    },
+
+
+    //This is an empty tip, which is used to avoid having a tip show
+    //up when people first sign up.  They already see the
+    //introductions dialog, which is enough popups happening
+    //initially.  This will cycle through like any other tip, but not
+    //showing a tip every once in a while is probably good.
+    notip = function () {
+        app.hinter.tipok('notip');
+    },
+
+
     looktopActive = function (pen) {
         return true;
     },
 
 
-    //This is the first tip to be displayed, and we don't want to
-    //annoy people by having them expect these tips are going to come
-    //up all the time, so give them the opt out option.
+    //Avoid annoying people with tips coming up all the time, give them the
+    //opt out option immediately when possible.  Like for this tip.
     looktop = function () {
         var html, cboxhtml = "", nothanks;
         nothanks = "I know how to find a friend's top rated reviews. Don't display this message ever again.";
@@ -275,6 +289,7 @@ app.hinter = (function () {
 
     initTips = function () {
         tips = [
+            { name: "notip",    checkf: notipActive,    runf: notip },
             { name: "looktop",  checkf: looktopActive,  runf: looktop },
             { name: "ezlink",   checkf: ezlinkActive,   runf: ezlink },
             { name: "writerev", checkf: writerevActive, runf: writerev },
