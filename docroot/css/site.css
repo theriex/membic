@@ -281,8 +281,8 @@ img { border:0px; }
 #errmsgdiv { font-size:small; color:red; }
 #primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 #primgroupbuttonsdiv button { margin:0px 10px; }
-#groupeditbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
-#groupeditbuttonsdiv button { margin:0px 10px; }
+#groupeditbuttonsdiv { text-align:center; }  /* no pad */
+#groupeditbuttonsdiv button { margin:0px 10px; padding:20px 0px 10px 0px; }
 .grpnameval { font-weight:bold; }
 .grpwiztable { padding:10px 0px 0px 0px; }
 .grpwiztable td { padding:0px 3px; vertical-align:top; }
@@ -293,7 +293,8 @@ img { border:0px; }
   font-size:small; font-weight:normal; }
 #gpcdiv { padding:0px 20px; }
 #groupsetdlgdiv { padding:10px 0px; }
-.groupcity { font-size:small; font-weight:normal; text-align:center; }
+.groupcity { font-size:small; font-weight:normal; text-align:center; 
+  vertical-align:top; }
 #chgrpdescrdiv { text-align:center; }
 .grpmemlinkspan { font-size:small; padding:0px 10px; }
 

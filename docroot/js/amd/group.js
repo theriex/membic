@@ -12,12 +12,12 @@ app.group = (function () {
     //avoiding having any state variables to reset..
     var wizgrp = null,  //holds state until user cleared or written to db
         verifyCityNextFunc = null, //dialog callback 
-        revfreqs = [{name: "2 Weeks", freq: 14, id: "freq14"},
-                    {name: "Monthly", freq: 30, id: "freq30"},
-                    {name: "2 Months", freq: 60, id: "freq60"},
-                    {name: "3 Months", freq: 90, id: "freq90"},
-                    {name: "6 Months", freq: 180, id: "freq180"},
-                    {name: "Yearly", freq: 365, id: "freq365"}],
+        revfreqs = [{name: "every 2 weeks", freq: 14, id: "freq14"},
+                    {name: "monthly", freq: 30, id: "freq30"},
+                    {name: "every 2 months", freq: 60, id: "freq60"},
+                    {name: "quarterly", freq: 90, id: "freq90"},
+                    {name: "every 6 months", freq: 180, id: "freq180"},
+                    {name: "yearly", freq: 365, id: "freq365"}],
 
 
     ////////////////////////////////////////
@@ -106,37 +106,23 @@ app.group = (function () {
             date = jt.ISOString2Day(date); }
         diff = now.getTime() - date.getTime();
         diff = Math.floor(diff / (24 * 60 * 60 * 1000));
+        if(diff < 0) {    //happens if within first hour of next day
+            diff = 0; }
         return diff;
     },
 
 
     postMessageHTML = function () {
-        var key, stash, msg, days, revtypes, i, tds = [], html;
+        var key, stash, days, html;
         key = "grp" + jt.instId(wizgrp);
         stash = app.pen.currPenRef().pen.stash;
-        msg = "You haven't posted yet.";
+        html = "You haven't posted yet.";
         if(stash[key] && stash[key].lastpost) {
             days = daysAgo(stash[key].lastpost);
             switch(days) {
-            case 0: msg = "You posted today."; break;
-            case 1: msg = "You posted yesterday."; break;
-            default: msg = "You posted " + days + " ago."; } }
-        tds.push(msg);
-        tds.push(" Write a ");
-        revtypes = app.review.getReviewTypes();
-        for(i = 0; i < revtypes.length; i += 1) {
-            if(jt.idInCSV(revtypes[i].type, wizgrp.revtypes)) {
-                tds.push(["span", {cla: "badgespan"},
-                          ["a", {href: "#" + revtypes[i].type,
-                                 onclick: jt.fs("app.review.cancelReview(" + 
-                                                "true,'" + revtypes[i].type +
-                                                "')")},
-                           ["img", {cla: "reviewbadge",
-                                    src: "img/" + revtypes[i].img}]]]); } }
-        tds.push(" review.");
-        html = ["table", {cla: "buttontable"},
-                ["tr",
-                 tds]];
+            case 0: html = "You posted today."; break;
+            case 1: html = "You posted yesterday."; break;
+            default: html = "You posted " + days + " ago."; } }
         return html;
     },
 
@@ -288,9 +274,14 @@ app.group = (function () {
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             if(jt.idInCSV(typename, wizgrp.revtypes)) {
-                html.push(["span", {cla: "badgespan"},
-                           ["img", {cla: "reviewbadge",
-                                    src: "img/" + reviewTypes[i].img}]]); } }
+                html.push(
+                    ["span", {cla: "badgespan"},
+                     ["a", {href: "#" + reviewTypes[i].type,
+                            onclick: jt.fs("app.review.cancelReview(" + 
+                                           "true,'" + reviewTypes[i].type +
+                                           "')")},
+                      ["img", {cla: "reviewbadge",
+                               src: "img/" + reviewTypes[i].img}]]]); } }
         return html;
     },
 
@@ -339,13 +330,13 @@ app.group = (function () {
                       ["div", {id: "typefreqdiv"},
                        ["table",
                         ["tr",
-                         [["td", {id: "grouprevtypestd"},
-                           ["div", {id: "grouprevtypesdiv"},
-                            revTypesDispHTML()]],
-                          ["td", {id: "groupfreqtd"},
+                         [["td", {id: "groupfreqtd"},
                            ["div", {id: "groupfreqdispdiv"},
                             ["span", {cla: "groupcity"},
-                             frequencyName()]]]]]]],
+                             "Post " + frequencyName()]]],
+                          ["td", {id: "grouprevtypestd"},
+                           ["div", {id: "grouprevtypesdiv"},
+                            revTypesDispHTML()]]]]]],
                       ["div", {id: "groupfreqeditdiv"}],
                       ["div", {id: "errmsgdiv"}],
                       ["div", {id: "groupeditbuttonsdiv"},
