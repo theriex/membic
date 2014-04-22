@@ -353,7 +353,10 @@ return {
             dlgdiv.style.top = "60px"; }
         app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.closeDialog;
-        jt.out('dlgdiv', html);
+        jt.out('dlgdiv', jt.tac2html(
+            ["div", {id: "dlgborderdiv"},
+             ["div", {id: "dlginsidediv"}, 
+              html]]));
         if(initf) {
             initf(); }
         jt.byId('dlgdiv').style.visibility = "visible";

@@ -101,10 +101,35 @@ img { border:0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
-#dlgdiv { position:absolute; left:20px; top:60px; padding:10px 6px;
-  background:url('../img/topbg.png') repeat, #eeeeee url('../img/dlgtop.png') repeat-x;
-  visibility:hidden; border-radius:10px; max-width:85%;
-  box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
+#dlgdiv { position:absolute; left:20px; top:60px;
+  visibility:hidden; 
+  max-width:85%;
+  padding:1px;
+  background-color: #666;
+  border-top-left-radius: 210px 20px;
+  border-bottom-right-radius: 210px 20px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border: 1px solid #666666; 
+  box-shadow:10px 10px 5px #888888; }
+#dlgborderdiv {
+  padding:4px;
+  background-color: #fff;
+  background-image: url('../img/dlgborder.png');
+  border-top-left-radius: 210px 20px;
+  border-bottom-right-radius: 210px 20px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+#dlginsidediv {
+  padding:4px;
+  background-color: #fff;
+  background-image: url('../img/dlgback.png');
+  border-top-left-radius: 210px 20px;
+  border-bottom-right-radius: 210px 20px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }
