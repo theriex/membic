@@ -712,7 +712,7 @@ app.group = (function () {
                   [["td",
                     ["span", {id: "grpmemstatspan"},
                      act.stat]],
-                   ["td",
+                   ["td", {id: "grpmemacttd"},
                     html]]]]];
         return html;
     },
@@ -985,9 +985,13 @@ return {
                         "Change Group Description"]]); }
         if(!membership() && !isApplying() && isFollowing()) {
             html.push(["div", {id: "stopfollowingdiv", cla: "grpactiondiv"},
-                       ["a", {href: "#stopfollowing",
-                              onclick: jt.fs("app.group.stopfollow()")},
-                        "Stop Following"]]); }
+                       ["You are following. ",
+                        ["a", {href: "#stopfollowing",
+                               onclick: jt.fs("app.group.stopfollow()")},
+                         "Stop Following"]]]); }
+        if(isApplying()) {
+            html.push(["div", {id: "memprocdiv", cla: "groupdescrtxt"},
+                       "Membership processing depends on other people who may not log in every day. Your patience is appreciated."]); }
         html.push(membershipManagementHTML());
         html = ["div", {id: "groupsetdlgdiv"},
                 html];
@@ -1077,14 +1081,36 @@ return {
 
 
     reqmem: function () {
-        //request membership at the next level from current
-        jt.err("reqmem not implemented yet");
+        var data;
+        jt.out('grpmemacttd', "Applying...");
+        data = "penid=" + app.pen.currPenRef().penid + 
+            "&groupid=" + jt.instId(wizgrp);
+        jt.call('POST', "grpmemapply?" + app.login.authparams(), data,
+                function (groups) {
+                    copyGroup(app.lcs.put("group", groups[0]).group);
+                    app.group.settings(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Membership application failed code: " + code + 
+                           " " + errtxt);
+                    app.group.settings(); }),
+                jt.semaphore("group.memapply"));
     },
 
 
     withdraw: function () {
-        //withdraw membership application. Ask for patience in confirmation.
-        jt.err("withdraw not implemented yet");
+        var data;
+        jt.out('grpmemacttd', "Withdrawing...");
+        data = "penid=" + app.pen.currPenRef().penid + 
+            "&groupid=" + jt.instId(wizgrp);
+        jt.call('POST', "grpmemwithdraw?" + app.login.authparams(), data,
+                function (groups) {
+                    copyGroup(app.lcs.put("group", groups[0]).group);
+                    app.group.settings(); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Membership withdrawal failed code: " + code + 
+                           " " + errtxt);
+                    app.group.settings(); }),
+                jt.semaphore("group.memwithdraw"));
     },
 
 

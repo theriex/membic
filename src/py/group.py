@@ -26,20 +26,32 @@ class Group(db.Model):
     modified = db.StringProperty()               # iso date
     
 
+def id_in_csv(idval, csv):
+    idval = str(idval)
+    csv = csv or ""
+    for elem in csv.split(","):
+        if idval == elem:
+            return elem
+    return None
+
+
+def append_id_to_csv(idval, csv):
+    if not csv:
+        return str(idval)
+    return csv + "," + str(idval)
+
+
 def pen_role(penid, group):
     penid = str(penid)
     group.founders = group.founders or ""
-    for pid in group.founders.split(","):
-        if pid == penid:
-            return "Founder"
+    if id_in_csv(penid, group.founders):
+        return "Founder"
     group.seniors = group.seniors or ""
-    for pid in group.seniors.split(","):
-        if pid == penid:
-            return "Senior"
+    if id_in_csv(penid, group.seniors):
+        return "Senior"
     group.members = group.members or ""
-    for pid in group.members.split(","):
-        if pid == penid:
-            return "Member"
+    if id_in_csv(penid, group.members):
+        return "Member"
     return "NotFound"
 
 
@@ -120,28 +132,40 @@ def read_and_validate_descriptive_fields(handler, group):
     return True
 
 
-def fetch_group_mod_elements(handler, pen):
+def fetch_rev_mod_elements(handler, pen):
     revid = intz(handler.request.get('revid'))
     if not revid:
         handler.error(400)
         handler.response.out.write("No revid specified")
-        return 0, None, None, ""
+        return 0, None
     rev = cached_get(revid, Review)
     if not rev:
         handler.error(404)
         handler.response.out.write("Review " + str(revid) + " not found")
-        return revid, None, None, ""
+        return revid, None
+    return revid, rev
+
+
+def fetch_group_and_role(handler, pen):
     groupid = intz(handler.request.get('groupid'))
     if not groupid:
         handler.error(400)
         handler.response.out.write("No groupid specified")
-        return revid, rev, None, ""
+        return None, ""
     group = cached_get(groupid, Group)
     if not group:
         handler.error(404)
         handler.response.out.write("Group " + str(groupid) + " not found")
-        return revid, rev, None, ""
+        return None, ""
     role = pen_role(pen.key().id(), group)
+    return group, role
+
+
+def fetch_group_mod_elements(handler, pen):
+    revid, rev = fetch_rev_mod_elements(handler, pen)
+    if not revid or not rev:
+        return revid, rev, None, ""
+    group, role = fetch_group_and_role(handler, pen)
     return revid, rev, group, role
     
     
@@ -266,7 +290,7 @@ class PostReview(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write(rev.revtype + " is not an accepted type")
             return
-        # add the review to the group
+        # add the review to the group, most recently posted first
         if not group.reviews or group.reviews == str(revid):
             group.reviews = str(revid)
         else:
@@ -321,10 +345,48 @@ class RemoveReview(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
+class ApplyForMembership(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        penid = pen.key().id()
+        if role != "Founder" and not id_in_csv(penid, group.seeking):
+            group.seeking = append_id_to_csv(penid, group.seeking)
+            cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
+class WithdrawMembershipSeek(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        penid = pen.key().id()
+        if id_in_csv(penid, group.seeking):
+            penids = group.seeking.split(",")
+            try:
+                penids.remove(str(penid))
+            except Exception:
+                pass
+            group.seeking = ",".join(penids)
+            cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
                                ('/grppic', GetGroupPic),
                                ('/grprev', PostReview),
-                               ('/grpremrev', RemoveReview)], debug=True)
+                               ('/grpremrev', RemoveReview),
+                               ('/grpmemapply', ApplyForMembership),
+                               ('/grpmemwithdraw', WithdrawMembershipSeek)
+                               ], debug=True)
 

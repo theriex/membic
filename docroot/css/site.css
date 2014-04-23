@@ -320,7 +320,7 @@ img { border:0px; }
 #groupsetdlgdiv { padding:10px 0px; }
 .groupcity { font-size:small; font-weight:normal; text-align:center; 
   vertical-align:top; }
-.grpactiondiv { text-align:center; }
+.grpactiondiv { text-align:center; padding:10px 0px; }
 .grpmemlinkspan { font-size:small; padding:0px 10px; }
 
 /* >> review layout */
