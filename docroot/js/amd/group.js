@@ -24,24 +24,6 @@ app.group = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    deserializeAndLoadGroups = function (pen) {
-        var i, groupref;
-        pen.groups = pen.groups || [];
-        if(typeof pen.pen.groups === "string") {
-            pen.groups = pen.groups.split(","); }
-        for(i = 0; i < pen.groups.length; i += 1) {
-            if(typeof pen.groups[i] === "string") {
-                groupref = app.lcs.getRef("group", pen.groups[i]);
-                if(groupref.group) {
-                    pen.groups[i] = groupref.group; }
-                else {
-                    app.lcs.getFull("group", pen.groups[i],
-                                    deserializeAndLoadGroups);
-                    return; } } }
-        return pen.groups;
-    },
-
-
     membership = function (group) {
         var penid;
         if(!group) {
@@ -68,14 +50,12 @@ app.group = (function () {
     },
 
 
-    //pen.groups is deserialized when the pen is loaded..
     isFollowing = function () {
-        var groupid, groups, i;
+        var groupid, groups;
         groupid = jt.instId(wizgrp);
         groups = app.pen.currPenRef().pen.groups;
-        for(i = 0; groups && i < groups.length; i += 1) {
-            if(jt.instId(groups[i]) === groupid) {
-                return true; } }
+        if(jt.idInCSV(groupid, groups)) {
+            return true; }
         return false;
     },
 
@@ -85,7 +65,7 @@ app.group = (function () {
         if(isFollowing() || membership()) {
             html = ["a", {href: "#Settings", cla: "gold",
                           title: "Membership and follow settings",
-                          onclick: jt.fs("app.group.adjust()")},
+                          onclick: jt.fs("app.group.settings()")},
                     [["img", {cla: "followingico",
                               src: "img/followset.png"}],
                       ""]]; }
@@ -128,10 +108,12 @@ app.group = (function () {
 
 
     groupActionsHTML = function () {
-        var html = [];
-        html.push(["li", postMessageHTML()]);
+        var lis = [], html = "";
+        if(membership()) {
+            html.push(["li", postMessageHTML()]); }
         //ATTENTION: outstanding applications with reject/accept
-        html = ["ul", {cla: "revlist"}, html];
+        if(lis.length > 0) {
+            html = ["ul", {cla: "revlist"}, lis]; }
         return html;
     },
 
@@ -253,18 +235,17 @@ app.group = (function () {
 
 
     //group updates are not transactionally tied to pen updates, so verify
-    //we are following the group if we current or pending member
+    //the pen is following the group if current or pending member.
     verifyPenFollowing = function () {
-        var pen, groupid;
-        groupid = jt.instId(wizgrp);
-        pen = app.pen.currPenRef().pen;
-        if(!jt.idInCSV(groupid, pen.groups) && 
-               (membership() || isApplying())) {
-            pen.groups = pen.groups || "";
-            if(pen.groups) {
-                pen.groups += ","; }
-            pen.groups += groupid;
-            app.pen.updatePen(pen, app.group.display, app.failf); }
+        var pen;
+        if(membership() || isApplying()) {  //need to verify following
+            if(!isFollowing()) {
+                pen = app.pen.currPenRef().pen;
+                pen.groups = pen.groups || "";
+                if(pen.groups) {
+                    pen.groups += ","; }
+                pen.groups += jt.instId(wizgrp);
+                app.pen.updatePen(pen, app.group.display, app.failf); } }
     },
 
 
@@ -365,8 +346,9 @@ app.group = (function () {
         jt.byId('rightcoldiv').style.display = "none";
         displayGroupHeading();
         displayGroupBody();
-        //if we are coming in from url parameters, it is possible to end 
-        //up with the profile heading overwriting the group heading.
+        //If we are coming in from url parameters, it is possible to end 
+        //up with the profile heading overwriting the group heading due
+        //to various startup server call lags.  Redisplay to fix.
         setTimeout(displayGroupHeading, 400);
         verifyPenFollowing();
     },
@@ -773,27 +755,6 @@ app.group = (function () {
     ////////////////////////////////////////
 return {
 
-    loadOutboundGroups: function () {
-        var penref = app.pen.currPenRef();
-        if(!penref || !penref.pen) {
-            setTimeout(function () {
-                jt.log("deserializeAndLoadGroups, no currPenRef yet...");
-                app.pen.getPen(app.group.loadOutboundGroups); }, 100);
-            return; }
-        app.group.loadGroupsForPen(penref.pen);
-    },
-
-
-    loadGroupsForPen: function (pen, callback) {
-        var groups = deserializeAndLoadGroups(pen);
-        if(!groups) {
-            setTimeout(function () {
-                app.group.loadGroupsForPen(pen, callback); }, 200);
-            return; }
-        callback(pen);
-    },
-
-
     promptForCity: function () {
         var heading, descrip;
         heading = "Create Group: City";
@@ -1014,23 +975,57 @@ return {
     },
 
 
-    adjust: function () {
+    settings: function () {
         var html = [];
+        jt.out('grouphbuttondiv', followsetHTML());  //if just followed..
         if(membership() === "Founder") {
-            html.push(["div", {id: "chgrpdescrdiv"},
+            html.push(["div", {id: "chgrpdescrdiv", cla: "grpactiondiv"},
                        ["a", {href: "#changedescription",
                               onclick: jt.fs("app.group.changedescr()")},
                         "Change Group Description"]]); }
+        if(!membership() && !isApplying() && isFollowing()) {
+            html.push(["div", {id: "stopfollowingdiv", cla: "grpactiondiv"},
+                       ["a", {href: "#stopfollowing",
+                              onclick: jt.fs("app.group.stopfollow()")},
+                        "Stop Following"]]); }
         html.push(membershipManagementHTML());
         html = ["div", {id: "groupsetdlgdiv"},
                 html];
-        html = app.layout.dlgwrapHTML("Settings: " + wizgrp.name, html);
+        html = app.layout.dlgwrapHTML(jt.tac2html(
+            ["Settings: ",
+             ["span", {cla: "penfont"},
+              wizgrp.name]]), html);
         app.layout.openDialog({y:140}, html);
     },
 
 
     follow: function () {
-        jt.err("follow not implemented yet");
+        var pen = app.pen.currPenRef().pen;
+        pen.groups = pen.groups || "";
+        if(pen.groups) {
+            pen.groups += ","; }
+        pen.groups += jt.instId(wizgrp);
+        app.pen.updatePen(pen, app.group.settings, app.failf);
+    },
+
+
+    //There is no prompt to stop following if the pen is still a
+    //member, and group display will verifyPenFollowing as needed.
+    stopfollow: function () {
+        var pen, groupid, ids, i;
+        app.layout.closeDialog();
+        pen = app.pen.currPenRef().pen;
+        pen.groups = pen.groups || "";
+        if(pen.groups) {
+            groupid = jt.instId(wizgrp);
+            ids = pen.groups.split(",");
+            pen.groups = "";
+            for(i = 0; i < ids.length; i += 1) {
+                if(ids[i] !== groupid) {
+                    if(pen.groups) {
+                        pen.groups += ","; }
+                    pen.groups += ids[i]; } }
+            app.pen.updatePen(pen, app.group.display, app.failf); }
     },
 
 
@@ -1241,7 +1236,6 @@ return {
                     jt.err("Remove review failed " + code + ": " + errtxt); }),
                 jt.semaphore("group.remove" + revid + "." + groupid));
     }
-
 
 }; //end of returned functions
 }());

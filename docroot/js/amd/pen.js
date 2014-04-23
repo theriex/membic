@@ -18,18 +18,13 @@ app.pen = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    //see also deserializeFields
     serializeFields = function (penName) {
         var i;
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
         if(typeof penName.stash === 'object') {
             penName.stash = JSON.stringify(penName.stash); }
-        if(!penName.groups) {
-            penName.groups = ""; }
-        if(typeof penName.groups !== "string") {
-            for(i = 0; i < penName.groups.length; i += 1) {
-                penName.groups[i] = jt.instId(penName.groups[i]); }
-            penName.groups = penName.groups.join(","); }
     },
 
 
