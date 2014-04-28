@@ -313,6 +313,7 @@ img { border:0px; }
 .grpwiztable td { padding:0px 3px; vertical-align:top; }
 .tdnowrap { white-space:nowrap; }
 .tdwide { width:99%; }
+.tdright { text-align:right; }
 .groupdescrtxt { padding:5px 2px 0px 2px; 
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; font-weight:normal; }
@@ -322,6 +323,25 @@ img { border:0px; }
   vertical-align:top; }
 .grpactiondiv { text-align:center; padding:10px 0px; }
 .grpmemlinkspan { font-size:small; padding:0px 10px; }
+.grprightsdiv { font-size:small; margin:0px 0px 0px 20px; }
+.grprightslist { font-size:medium; margin:0px; }
+.grprightslist li { font-size:small; padding:2px 0px; }
+.grpmsgbuttonsdiv { padding:5px 0px 10px 20px; }
+.grpmsgbuttonsdiv button { margin:0px 6px; }
+.dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
+.dlgbuttonsdiv button { margin:0px 10px; }
+.optionalbuttonsdiv { text-align:center; }  /* no pad */
+.optionalbuttonsdiv button { margin:15px 10px 5px 10px; }
+.memberstypeheadingdiv { padding:0px 10px; 
+  font-size:medium; font-style:italic; }
+.memberslistdiv { font-size:small; }
+.membereditdiv { display:inline-block; padding:12px;
+  border: 1px solid #666666; border-radius:10px; 
+  box-shadow:10px 10px 5px #888888; }
+.grpmembernamediv {
+  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
+  font-size:large; text-align:center; }
+
 
 /* >> review layout */
 #revfdiv { }
@@ -354,8 +374,8 @@ img { border:0px; }
 .actmodesel { color:#ffd100; }
 .actmodeseldis { color:#999999; }
 #rsslink { padding:0px 0px 0px 10px; }
-/* no top or bottom padding on these or the content starts to drift.. */
-#activereqsdiv, #pendingqcsdiv, #announcementdiv { padding:0px 0px 0px 40px; }
+#activereqsdiv, #pendingqcsdiv, #announcementdiv, #groupnoticediv { 
+  padding:0px 0px 0px 40px; } /* no top/bottom pad, content starts to drift.. */
 .announcecontent { padding:5px 0px; font-size:medium; font-style:italic; }
 .reqlist { list-style:none; padding:0; margin:0; font-size:medium; }
 .reqlist li { font-style:italic; }

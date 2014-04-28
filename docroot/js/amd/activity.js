@@ -755,6 +755,8 @@ app.activity = (function () {
         itemhtml = dispRevActItemsHTML(actdisp);
         html = [["div", {id: "announcementdiv"},
                  announcementHTML()],
+                ["div", {id: "groupnoticediv"},
+                 app.group.groupNoticesHTML("groupnoticediv")],
                 ["div", {id: "pendingqcsdiv"},
                  app.revresp.pendingCommentsHTML()],
                 ["div", {id: "activereqsdiv"},

@@ -337,14 +337,34 @@ handlers:
 - url: /grpremrev.*
   script: src.py.group.app
 
-## Apply for next level membership in a group
+## Apply for next level group membership
 ## POST params: penid, groupid, authparams
 - url: /grpmemapply.*
   script: src.py.group.app
 
-## Withdraw application for next level membership in a group
+## Withdraw application for next level group membership
 ## POST params: penid, groupid, authparams
 - url: /grpmemwithdraw.*
+  script: src.py.group.app
+
+## Reject application for next level group membership
+## POST params: penid, groupid, seekerid, authparams
+- url: /grpmemrej.*
+  script: src.py.group.app
+
+## Acknowledge rejection of group membership application
+## POST params: penid, groupid, authparams
+- url: /grprejok.*
+  script: src.py.group.app
+
+## Accept group membership application
+## POST params: penid, groupid, seekerid, authparams
+- url: /grpmemyes.*
+  script: src.py.group.app
+
+## Remove group membership
+## POST params: penid, groupid, removeid, authparams
+- url: /grpmemremove.*
   script: src.py.group.app
 
 

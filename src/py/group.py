@@ -22,6 +22,7 @@ class Group(db.Model):
     seniors = db.TextProperty()     #CSV of senior member penids
     members = db.TextProperty()     #CSV of regular member penids
     seeking = db.TextProperty()     #CSV of member application penids
+    rejects = db.TextProperty()     #CSV of rejected member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     modified = db.StringProperty()               # iso date
     
@@ -39,6 +40,17 @@ def append_id_to_csv(idval, csv):
     if not csv:
         return str(idval)
     return csv + "," + str(idval)
+
+
+def remove_id_from_csv(idval, csv):
+    if not csv:
+        return ""
+    ids = csv.split(",")
+    try:
+        ids.remove(str(idval))
+    except Exception:
+        pass  # not found is fine, as long as it's not in the list now
+    return ",".join(ids)
 
 
 def pen_role(penid, group):
@@ -195,6 +207,7 @@ class UpdateDescription(webapp2.RequestHandler):
             group.name = name
             group.name_c = name_c
         else:
+            #TODO: verify group name/city combo not already used...
             group = Group(name=name, name_c=name_c)
             group.founders = str(pen.key().id())
         if not read_and_validate_descriptive_fields(self, group):
@@ -279,8 +292,8 @@ class PostReview(webapp2.RequestHandler):
         if rev is None or group is None:
             return   #error already reported
         if rev.penid != pen.key().id():
-            handler.error(400)
-            handler.response.out.write("You may only post your own review")
+            self.error(400)
+            self.response.out.write("You may only post your own review")
             return;
         if role != "Founder" and role != "Senior" and role != "Member":
             self.error(400)
@@ -335,12 +348,7 @@ class RemoveReview(webapp2.RequestHandler):
             rc.modified = nowISO()
             rc.put()
         # remove the revid from the group
-        revids = group.reviews.split(",")
-        try:
-            revids.remove(str(revid))
-        except Exception:
-            pass
-        group.reviews = ",".join(revids)
+        group.reviews = remove_id_from_csv(revid, group.reviews)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -368,15 +376,122 @@ class WithdrawMembershipSeek(webapp2.RequestHandler):
         group, role = fetch_group_and_role(self, pen)
         if not group:
             return   #error already reported
-        penid = pen.key().id()
-        if id_in_csv(penid, group.seeking):
-            penids = group.seeking.split(",")
-            try:
-                penids.remove(str(penid))
-            except Exception:
-                pass
-            group.seeking = ",".join(penids)
-            cached_put(group)
+        group.seeking = remove_id_from_csv(pen.key().id(), group.seeking)
+        cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
+class DenyMembershipSeek(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        seekerid = intz(self.request.get('seekerid'))
+        if not seekerid:
+            self.error(400)
+            self.response.out.write("No seekerid specified")
+            return
+        #possible seek was withdrawn or rejected by someone else already
+        #in which case treat as succeeded so the app can continue ok
+        if id_in_csv(seekerid, group.seeking):
+            seekrole = pen_role(seekerid, group)
+            if role == "Founder" or (role == "Senior" and 
+                                     seekrole == "NotFound"):
+                group.seeking = remove_id_from_csv(seekerid, group.seeking)
+                if not id_in_csv(seekerid, group.rejects):
+                    group.rejects = append_id_to_csv(seekerid, group.rejects)
+                cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
+class AcceptMembershipSeek(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        seekerid = intz(self.request.get('seekerid'))
+        if not seekerid:
+            self.error(400)
+            self.response.out.write("No seekerid specified")
+            return
+        #possible the application was withdrawn or accepted by someone else
+        #in the interim, or this is a spurious call. Either way fail.
+        if not id_in_csv(seekerid, group.seeking):
+            self.error(400)
+            self.response.out.write("Pen " + str(seekerid) + 
+                                    " is not seeking membership.")
+            return
+        seekrole = pen_role(seekerid, group)
+        if not (role == "Founder" or (role == "Senior" and 
+                                      seekrole == "NotFound")):
+            self.error(400)
+            self.response.out.write("Not authorized to accept membership")
+            return;
+        group.seeking = remove_id_from_csv(seekerid, group.seeking)
+        if seekrole == "Senior" and not id_in_csv(seekerid, group.founders):
+            group.founders = append_id_to_csv(seekerid, group.founders)
+        elif seekrole == "Member" and not id_in_csv(seekerid, group.seniors):
+            group.seniors = append_id_to_csv(seekerid, group.seniors)
+        elif seekrole == "NotFound" and not id_in_csv(seekerid, group.members):
+            group.members = append_id_to_csv(seekerid, group.members)
+        cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
+
+class MembershipRejectAck(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        group.rejects = remove_id_from_csv(pen.key().id(), group.rejects)
+        cached_put(group)
+        returnJSON(self.response, [ group ])
+
+
+# Resign from a group or remove another member. The group is deleted
+# when the last founder leaves.  Need to be able to re-use the names
+# without it being a hassle.
+class RemoveMember(webapp2.RequestHandler):
+    def post(self):
+        pen = review_modification_authorized(self)
+        if not pen:  #penid did not match a pen the caller controls
+            return   #error already reported
+        group, role = fetch_group_and_role(self, pen)
+        if not group:
+            return   #error already reported
+        removeid = intz(self.request.get('removeid'))
+        if not removeid:
+            self.error(400)
+            self.response.out.write("No removeid specified")
+            return
+        resigning = removeid == pen.key().id()
+        if resigning and role == "Founder" and not "," in group.founders:
+            cached_delete(group.key().id(), Group)
+            returnJSON(self.response, [])
+            return
+        remlev = pen_role(removeid, group)
+        authorized = (remlev != "Founder" and 
+                      (role == "Founder" or 
+                       (role == "Senior" and remlev == "Member")))
+        if not resigning and not authorized:
+            self.error(400)
+            self.response.out.write("Not authorized to remove member")
+            return
+        if remlev == "Senior":
+            group.seniors = remove_id_from_csv(removeid, group.seniors)
+        elif remlev == "Member":
+            group.members = remove_id_from_csv(removeid, group.members)
+        cached_put(group)
         returnJSON(self.response, [ group ])
 
 
@@ -387,6 +502,10 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grprev', PostReview),
                                ('/grpremrev', RemoveReview),
                                ('/grpmemapply', ApplyForMembership),
-                               ('/grpmemwithdraw', WithdrawMembershipSeek)
+                               ('/grpmemwithdraw', WithdrawMembershipSeek),
+                               ('/grpmemrej', DenyMembershipSeek),
+                               ('/grpmemyes', AcceptMembershipSeek),
+                               ('/grprejok', MembershipRejectAck),
+                               ('/grpmemremove', RemoveMember)
                                ], debug=True)
 
