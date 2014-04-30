@@ -510,14 +510,15 @@ app.review = (function () {
 
 
     revFormKeywordsHTML = function (review, type, keyval, mode) {
-        var html = "";
+        var cols, html = "";
         if(!keyval) {
             return html; }
         if(mode === "edit") {
+            cols = app.winw < 750 ? 2 : 3;
             if(!crev.keywords) {
                 crev.keywords = ""; }
             html = [app.review.keywordCheckboxesHTML(
-                        type, crev.keywords, 3, "app.review.toggleKeyword"),
+                        type, crev.keywords, cols, "app.review.toggleKeyword"),
                     [["span", {cla: "secondaryfield"},
                       "Keywords "],
                      ["input", {type: "text", id: "keywordin", size: 30,

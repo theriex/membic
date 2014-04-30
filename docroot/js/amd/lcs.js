@@ -176,6 +176,7 @@ return {
         var tombstone = { status: reason,
                           updtime: new Date() };
         tombstone[type + "id"] = id;
+        jt.setInstId(tombstone, id);
         app.lcs.put(type, tombstone);
         return tombstone;
     },
@@ -186,6 +187,9 @@ return {
         if(cache[type].putprep) {
             cache[type].putprep(obj); }
         ref = app.lcs.getRef(type, obj);
+        if(!idify(obj)) {
+            jt.log("attempt to lcs.put unidentified object");
+            return null; }
         cache[type].refs[idify(obj)] = ref;
         ref[type] = obj;
         ref.status = "ok";

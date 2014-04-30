@@ -927,17 +927,19 @@ app.group = (function () {
 
 
     groupsForCurrentReview = function (callback) {
-        var pen, rev, groups = [], grpids, i, ref;
+        var pen, rev, revid, groups = [], grpids, i, ref;
         pen = app.pen.currPenRef().pen;
         if(pen.groups) {
             rev = app.review.getCurrentReview();
+            revid = jt.instId(rev);
             grpids = pen.groups.split(",");
             for(i = 0; i < grpids.length; i += 1) {
                 ref = app.lcs.getRef("group", grpids[i]);
                 if(ref.status === "not cached") {
                     return app.lcs.getFull("group", grpids[i], callback); }
-                if(ref.group && jt.idInCSV(rev.revtype, ref.group.revtypes) &&
-                       membership(ref.group)) {
+                if(ref.group && membership(ref.group) &&
+                   jt.idInCSV(rev.revtype, ref.group.revtypes) &&
+                   !jt.idInCSV(revid, ref.group.reviews)) {
                     groups.push(ref.group); } } }
         return groups;
     },
@@ -1512,6 +1514,7 @@ return {
                 "&removeid=" + penid;
             jt.call('POST', "grpmemremove?" + app.login.authparams(), data,
                     function (groups) {
+                        app.layout.closeDialog();
                         if(groups && groups.length) {
                             copyGroup(app.lcs.put("group", groups[0]).group);
                             app.group.settings(); }
@@ -1656,6 +1659,7 @@ return {
                 return; } }
         app.layout.closeDialog();
         groupid = jt.instId(wizgrp);
+        reason = "Review rejected from " + wizgrp.name + ": " + reason;
         data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
             "&groupid=" + groupid + "&reason=" + jt.enc(reason);
         jt.call('POST', "grpremrev?" + app.login.authparams(), data,

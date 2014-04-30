@@ -169,6 +169,7 @@ img { border:0px; }
 #logindiv { margin:auto; }
 #loginform { margin:auto; }
 #loginstatdiv { }
+#loginvisualelementsdiv { padding:0px 10px; }
 #makenewaccountdiv { }
 #forgotpassdiv { text-align:center; }
 #altauthinstrdiv { padding:0px 0px 10px 0px; }

@@ -1265,7 +1265,8 @@ return {
 
 
     topreject: function (qcid) {
-        var qcmt, penref, html = "";
+        var qcmt, penref, insize, html = "";
+        insize = app.winw < 600 ? 20 : 50;
         qcmt = findPendingComment(qcid);
         penref = app.lcs.getRef("pen", qcmt.cmtpenid);
         html = [["p", {cla: "qctext"},
@@ -1290,18 +1291,21 @@ return {
                 ["div", {id: "rejcontdiv", cla: "commentform"},
                  ["table",
                   [["tr",
-                    [["td", "Rejection Reason"],
-                     ["td", "Details"]]],
+                    ["td", {colspan: 2},
+                     "Reject Comment"]],
                    ["tr",
-                    [["td",
+                    [["td", "Reason"],
+                     ["td",
                       ["select", {id: "rejreasonsel"},
                        [["option", "Not Helpful"],
                         ["option", "Not Public Appropriate"],
                         ["option", "Not Clear"],
-                        ["option", "Other"]]]],
+                        ["option", "Other"]]]]]],
+                   ["tr",
+                    [["td", "Details"],
                      ["td",
-                      ["input", {type: "text", id: "rejresin", size: 50}]]
-                      ]]]]]];
+                      ["input", {type: "text", id: "rejresin", 
+                                 size: insize}]]]]]]]];
         jt.out('formcontentdiv', jt.tac2html(html));
         jt.out('cmterrdiv', "");
         jt.out('requestbuttonsdiv', toprejectButtonsHTML(qcid));
