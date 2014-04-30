@@ -261,8 +261,9 @@ return {
                          resolveReviewLinks(revids, revlinks);
                          app.lcs.verifyReviewLinks(onchangefunc, true); },
                      app.failf(function (code, errtxt) {
-                         jt.err("verifyReviewLinks revlinks call failed " +
-                                code + " " + errtxt); }),
+                         if(code) {  //chrome reload returns code 0
+                             jt.err("verifyReviewLinks revlinks call failed " +
+                                    code + " " + errtxt); } }),
                     jt.semaphore("lcs.verifyReviewLinks")); }
         else if(revids.length === 0 && changed) {
             onchangefunc(); }

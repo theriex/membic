@@ -1,11 +1,17 @@
-/*global alert: false, setTimeout: false, document: false, app: false, jt: false */
+/*global alert: false, setTimeout: false, document: false, app: false, jt: false, window: false  */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
-//pen.stash use:
-//key: grp + groupid
-//  posts: CSV of revids, most recent first. Not an array.
-//  lastpost: ISO date string when most recent review was posted
+// pen.stash (maintained by client)
+//   key: grp + groupid
+//     posts: CSV of revids, most recent first. Not an array.
+//     lastpost: ISO date string when most recent review was posted
+// group.adminlog (array of entries maintained by server)
+//   when: ISO date
+//   penid: admin that took the action
+//   action: e.g. "Accepted Membership", "Removed Review", "Removed Member"
+//   target: revid or penid of what or was affected
+//   reason: text given as to why (required for removals)
 app.group = (function () {
     "use strict";
 
@@ -182,6 +188,8 @@ app.group = (function () {
             pen.stash[key].posts = filtered.join(",");
             pen.stash[key].lastpost = "";  //rebuild in verifyStash
             app.pen.updatePen(pen, contf, app.failf); }
+        else {  //might have removed someone else's review, rebuild display
+            contf(); }
     },
 
 
@@ -238,7 +246,7 @@ app.group = (function () {
         displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
         //ATTENTION: include group reviews with "via" into activity
-        verifyStash(displayGroupReviews);
+        verifyStash(app.group.display);
     },
 
 
@@ -295,8 +303,8 @@ app.group = (function () {
     },
 
 
-    displayGroupHeading = function () {
-        var imgattrs, html, divpos;
+    grpPicCityHTML = function () {
+        var imgattrs;
         imgattrs = { cla: "revimg", src: "../img/emptyprofpic.png" };
         if(wizgrp.picture) {
             imgattrs.src = "../grppic?groupid=" + jt.instId(wizgrp); }
@@ -305,50 +313,68 @@ app.group = (function () {
             imgattrs.onclick = jt.fs("app.group.picUploadForm()"); }
         if(jt.isLowFuncBrowser()) {
             imgattrs.style = "width:125px;height:auto;"; }
+        return ["div", {id: "gpcdiv"},
+                [["div", {id: "gpicdiv", cla: "centertablediv"},
+                  ["img", imgattrs]],
+                 ["div", {id: "gcitydiv", cla: "groupcity"},
+                  wizgrp.city]]];
+    },
+
+
+    grpNameDescripHTML = function () {
+        return ["div", {id: "gndbdiv"},
+                [["div", {id: "groupnamediv"},
+                  ["table",
+                   ["tr",
+                    [["td", {id: "grouphnametd"},
+                      ["span", {id: "penhnamespan"},
+                       wizgrp.name]],
+                     ["td",
+                      ["div", {id: "grouphbuttondiv"},
+                       followsetHTML()]]]]]],
+                 ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
+                  jt.linkify(wizgrp.description)],
+                 ["div", {id: "typefreqdiv"},
+                  ["table", {cla: "midtable"},
+                   ["tr",
+                    [["td", {id: "groupfreqtd"},
+                      ["div", {id: "groupfreqdispdiv"},
+                       ["span", {cla: "groupcity"},
+                        ["a", {cla: "plainanchor"},
+                         "Post " + frequencyName()]]]],
+                     ["td", {id: "grouprevtypestd"},
+                      ["div", {id: "grouprevtypesdiv"},
+                       revTypesDispHTML()]],
+                     ["td", {id: "memberspoststoggletd"},
+                      ["div", {id: "memberspoststogglediv"},
+                       ["span", {cla: "groupcity"},
+                        dispModeToggleHTML("divmid")]]]]]]],
+                 ["div", {id: "groupfreqeditdiv"}],
+                 ["div", {id: "errmsgdiv"}],
+                 ["div", {id: "groupeditbuttonsdiv",
+                          cla: "optionalbuttonsdiv"},
+                  ""]]];
+    },
+
+
+    displayGroupHeading = function () {
+        var html, divpos;
         html = ["div", {id: "grouphdiv"},
                 ["table",
                  ["tr",
                   [["td", {valign: "top"},
-                    ["div", {id: "gpcdiv"},
-                     [["div", {id: "gpicdiv"},
-                       ["img", imgattrs]],
-                      ["div", {id: "gcitydiv", cla: "groupcity"},
-                       wizgrp.city]]]],
+                    grpPicCityHTML()],
                    ["td", {cla: "tdwide", valign: "top"},
-                    ["div", {id: "gndbdiv"},
-                     [["div", {id: "groupnamediv"},
-                       ["table",
-                        ["tr",
-                         [["td", {id: "grouphnametd"},
-                           ["span", {id: "penhnamespan"},
-                            wizgrp.name]],
-                          ["td",
-                           ["div", {id: "grouphbuttondiv"},
-                            followsetHTML()]]]]]],
-                      ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
-                        jt.linkify(wizgrp.description)],
-                      ["div", {id: "typefreqdiv"},
-                       ["table",
-                        ["tr",
-                         [["td", {id: "groupfreqtd"},
-                           ["div", {id: "groupfreqdispdiv"},
-                            ["span", {cla: "groupcity"},
-                             "Post " + frequencyName()]]],
-                          ["td", {id: "grouprevtypestd"},
-                           ["div", {id: "grouprevtypesdiv"},
-                            revTypesDispHTML()]],
-                          ["td", {id: "memberspoststoggletd"},
-                           ["div", {id: "memberspoststogglediv"},
-                            ["span", {cla: "groupcity"},
-                             dispModeToggleHTML()]]]]]]],
-                      ["div", {id: "groupfreqeditdiv"}],
-                      ["div", {id: "errmsgdiv"}],
-                      ["div", {id: "groupeditbuttonsdiv"},
-                       ""]]]]]]]];
+                    grpNameDescripHTML()]]]]];
+        if(app.winw < 700) {
+            html = ["div", {id: "grouphdiv"},
+                    [["div", grpPicCityHTML()],
+                     ["div", grpNameDescripHTML()]]]; }
         app.layout.headingout(jt.tac2html(html));
-        divpos = jt.geoPos(jt.byId("grouphdiv"));
-        jt.byId('groupdescdiv').style.width = 
-            String(Math.round((divpos.w - 20) / 2)) + "px";
+        if(app.winw >= 700) {
+            divpos = jt.geoPos(jt.byId("grouphdiv"));
+            jt.byId('groupdescdiv').style.width = 
+                String(Math.round((divpos.w - 20) / 2)) + "px"; }
     },
 
 
@@ -417,13 +443,85 @@ app.group = (function () {
     },
 
 
+    logactionHTML = function(log, redrawf) {
+        var penref, text;
+        switch(log.action) {
+        case "Removed Review":
+            return ["a", {href: "#review",
+                          onclick: jt.fs("app.review.initWithId('" +
+                                         log.target + "','read')")},
+                    log.action];
+        case "Denied Membership":
+        case "Accepted Member":
+        case "Removed Member":
+            text = log.action;
+            penref = app.lcs.getRef("pen", log.target);
+            if(penref.status === "not cached") {
+                setTimeout(function () {
+                    app.lcs.getFull("pen", log.target, redrawf); },
+                           700); }  //low priority fill in 
+            if(penref.pen) {
+                text = log.action.split(" ")[0] + " " + penref.pen.name; }
+            return ["a", {href: "#" + jt.objdata({view: "profile",
+                                                  profid: log.target}),
+                          onclick: jt.fs("app.profile.byprofid('" +
+                                         log.target + "')")},
+                    text];
+        default: return log.action; }
+    },
+
+
+    displayAdminLog = function () {
+        var jsonobj, i, log, penref, rows = [];
+        if(wizgrp.adminlog) {
+            if(typeof wizgrp.adminlog === "string") {
+                jsonobj = JSON || window.JSON;
+                try {
+                    wizgrp.adminlog = jsonobj.parse(wizgrp.adminlog);
+                } catch(e) {
+                    jt.log("adminlog not valid JSON.");
+                    return "";
+                } }
+            for(i = 0; i < Math.min(wizgrp.adminlog.length, 20); i += 1) {
+                log = wizgrp.adminlog[i];
+                penref = app.lcs.getRef("pen", log.penid);
+                if(penref.status === "not cached") {
+                    break; }  //stop looping through, fetch and retry
+                if(penref.pen) {
+                    rows.push(
+                        ["tr",
+                         [["td", {cla: "secondaryfield"},
+                           jt.colloquialDate(jt.ISOString2Day(log.when))],
+                          ["td",
+                           ["a", {href: "#" + jt.objdata({view: "profile",
+                                                          profid: log.penid}),
+                                  onclick: jt.fs("app.profile.byprofid('" +
+                                                 log.penid + "')")},
+                            penref.pen.name]],
+                          ["td",
+                           logactionHTML(log, displayAdminLog)],
+                          ["td",  //might have %20 space encoding from server..
+                            jt.dec(log.reason || "")]]]); } }
+            if(penref && penref.status === "not cached") {
+                //all admins will be loaded by the membership display, so
+                //give that a chance to finish first.
+                return setTimeout(function () {
+                    app.lcs.getFull("pen", log.penid, displayAdminLog); },
+                                  400); } }
+        jt.out("groupadminlogdiv", jt.tac2html(
+            ["table", {cla: "logdisptable"}, rows]));
+    },
+
+
     displayGroupBody = function () {
         var html;
         if(wizgrp.dispmode === "members") {
             html = ["div", {id: "groupmaindiv"},
-                    ["div", {id: "groupmembersdiv"}]];
+                    [["div", {id: "groupmembersdiv"}],
+                     ["div", {id: "groupadminlogdiv"}]]];
             jt.out('cmain', jt.tac2html(html));
-            displayGroupMembers(); }
+            displayGroupMembers();
+            displayAdminLog(); }
         else {
             html = ["div", {id: "groupmaindiv"},
                     [["div", {id: "groupactionsdiv"},
@@ -463,7 +561,8 @@ app.group = (function () {
                    seeking: group.seeking || "",
                    rejects: group.rejects || "",
                    reviews: group.reviews || "",
-                   modified: group.modified || ""};
+                   modified: group.modified || "",
+                   adminlog: group.adminlog || ""};
         wizgrp.name_c = group.name_c || jt.canonize(group.name);
         groupid = jt.instId(group);
         if(groupid) {
@@ -748,13 +847,8 @@ app.group = (function () {
         return false;
     },
 
-
-    membershipManagementHTML = function () {
-        var linkfs, act, html = [], i, fdef;
-        linkfs = {apply: {href: "#apply", fs: "app.group.reqmem()"},
-                  withdraw: {href: "#withdraw", fs: "app.group.withdraw()"},
-                  resign: {href: "#resign", fs: "app.group.resignconf()"}};
-        act = {stat: "", actions: []};
+    getMembershipActions = function () {
+        var act = {stat: "", actions: []};
         switch(membership()) {
         case "Founder":
             act.stat = "You are a founding member.";
@@ -790,6 +884,15 @@ app.group = (function () {
                 act.stat = "You are not a member yet.";
                 act.actions.push({href: "apply", 
                                   text: "Become a Member"}); } }
+        return act;
+    },
+
+
+    actionsHTML = function (act) {
+        var linkfs, html = [], i, fdef;
+        linkfs = {apply: {href: "#apply", fs: "app.group.reqmem()"},
+                  withdraw: {href: "#withdraw", fs: "app.group.withdraw()"},
+                  resign: {href: "#resign", fs: "app.group.resignconf()"}};
         for(i = 0; i < act.actions.length; i += 1) {
             fdef = linkfs[act.actions[i].href];
             if(fdef.href === "#apply") {
@@ -801,6 +904,14 @@ app.group = (function () {
                            ["a", {href: fdef.href,
                                   onclick: jt.fs(fdef.fs)},
                             act.actions[i].text]]); } }
+        return html;
+    },
+
+
+    membershipManagementHTML = function () {
+        var act, html;
+        act = getMembershipActions();
+        html = actionsHTML(act);
         html = ["div", {id: "personalmembershipdiv"},
                 [["div", {id: "memstatactdiv"},
                   ["table",
@@ -810,7 +921,7 @@ app.group = (function () {
                        act.stat]],
                      ["td", {id: "grpmemacttd"},
                       html]]]]],
-                 ["div", {id: "resignconfdiv"}]]];
+                 ["div", {id: "memactconfdiv"}]]];
         return html;
     },
 
@@ -867,9 +978,10 @@ app.group = (function () {
                 rights: [
                     "Post reviews", 
                     "Remove innapropriate reviews posted by others",
-                    "Accept or Reject all membership applications",
+                    "Accept or Reject any membership applications",
                     "Remove any members that are not working out",
-                    "Modify the group description"]}; }
+                    "Modify the group description",
+                    "Have permanent membership"]}; }
         return seektype;
     },
 
@@ -880,7 +992,7 @@ app.group = (function () {
         if(role !== "Founder" && role !== "Senior") {
             return ""; }  //can't authorize new members, so no notices
         seekerid = jt.instId(seekerpen);
-        seektype = findSeekType(group, jt.instId(seekerid));
+        seektype = findSeekType(group, seekerid);
         if(role === "Senior" && seektype.title !== "Member") {
             return ""; }  //only founder may accept at higher levels
         for(i = 0; i < seektype.rights.length; i += 1) {
@@ -1321,19 +1433,38 @@ return {
 
 
     reqmem: function () {
-        var data;
-        jt.out('grpmemacttd', "Applying...");
-        data = "penid=" + app.pen.currPenRef().penid + 
-            "&groupid=" + jt.instId(wizgrp);
-        jt.call('POST', "grpmemapply?" + app.login.authparams(), data,
-                function (groups) {
-                    copyGroup(app.lcs.put("group", groups[0]).group);
-                    app.group.settings(); },
-                app.failf(function (code, errtxt) {
-                    jt.err("Membership application failed code: " + code + 
-                           " " + errtxt);
-                    app.group.settings(); }),
-                jt.semaphore("group.memapply"));
+        var memlev, msg, data;
+        memlev = membership();
+        if(!jt.byId("memactconfdiv").innerHTML &&  //no conf displayed yet
+           (memlev === "Member" || memlev === "Senior")) {
+            msg = "As a Senior Member, you are offering to help maintain the group by accepting new members, removing innapropriate reviews, and kicking out spammers. This is a position of trust and responsibility.";
+            if(memlev === "Senior") {
+                msg = "As a Founder, you will become a permanent co-owner of the group, with full privileges and responsibilities for its continued operation. Some founders are comfortable with co-ownership, others are not."; }
+            msg += " Are you sure you want to apply?";
+            jt.out('memstatactdiv', "");
+            jt.out('memactconfdiv', jt.tac2html(
+                ["div", {cla: "grpconfmessage"},
+                 [msg,
+                  ["div", {id: "grpmemacttd", cla: "dlgbuttonsdiv"},
+                   [["button", {type: "button",
+                                onclick: jt.fs("app.group.settings()")},
+                     "Cancel"],
+                    ["button", {type: "button",
+                                onclick: jt.fs("app.group.reqmem()")},
+                     "Apply"]]]]])); }
+        else { //confirmation already displayed if needed. update and redisplay
+            jt.out('grpmemacttd', "Applying...");
+            data = "penid=" + app.pen.currPenRef().penid + 
+                "&groupid=" + jt.instId(wizgrp);
+            jt.call('POST', "grpmemapply?" + app.login.authparams(), data,
+                    function (groups) {
+                        copyGroup(app.lcs.put("group", groups[0]).group);
+                        app.group.settings(); },
+                    app.failf(function (code, errtxt) {
+                        jt.err("Membership application failed code: " + code + 
+                               " " + errtxt);
+                        app.group.settings(); }),
+                    jt.semaphore("group.memapply")); }
     },
 
 
@@ -1357,14 +1488,14 @@ return {
     resignconf: function () {
         var msg, bname = "Resign", penid, data;
         msg = "Are you sure? Resigning your membership cannot be undone. You will have to re-apply to join the group if you want to post to it again in the future.";
-        if(!jt.byId("resignconfdiv").innerHTML) {  //no conf displayed yet
+        if(!jt.byId("memactconfdiv").innerHTML) {  //no conf displayed yet
             if(membership() === "Founder" && wizgrp.founders.indexOf(",") < 0) {
                 msg = "Are you absolutely sure? As the only founder, this group will cease to exist when you leave. This operation cannot be undone.";
                 if(wizgrp.seniors || wizgrp.members) {
                     msg += " If you announce in the group description your intention to dismantle the group, then you could provide an opportunity for others to apply as founders and continue the group."; }
                 bname = "Resign and Delete Group"; }
             jt.out('memstatactdiv', "");
-            jt.out('resignconfdiv', jt.tac2html(
+            jt.out('memactconfdiv', jt.tac2html(
                 ["div", {cla: "grpconfmessage"},
                  [msg,
                   ["div", {id: "resignconfbdiv", cla: "dlgbuttonsdiv"},
@@ -1487,11 +1618,12 @@ return {
         else {
             penref = app.lcs.getRef("pen", revref.rev.penid);
             html = ["div", {id: "reasondiv"},
-                    ["div", {id: "reasonpromptdiv", cla: "dlgprompt"},
-                     "Please tell " + penref.pen.name + 
-                     " why their review is being removed:"],
-                    ["textarea", {id: "remrevreason", cla: "groupdescrtxt",
-                                  style: "height:50px;"}]]; }
+                    [["div", {id: "reasonpromptdiv", cla: "dlgprompt"},
+                      "Please tell " + penref.pen.name + 
+                      " why their review is being removed:"],
+                     ["input", {type: "text", id: "reasonin",
+                                style: "width:90%;",
+                                placeholder: "Reason for rejection"}]]]; }
         html = ["div", {id: "primgroupdlgdiv"},
                 [html,
                  buttonsHTML(
@@ -1502,7 +1634,7 @@ return {
         html = app.layout.dlgwrapHTML("Remove Review?", html);
         app.layout.openDialog({y:140}, html, null,
                               function () {
-                                  var elem = jt.byId('remrevreason');
+                                  var elem = jt.byId('reasonin');
                                   if(elem) {
                                       elem.focus(); }
                                   else {
@@ -1513,7 +1645,7 @@ return {
 
     removeReviewFromGroup: function (revid) {
         var reason, data, groupid;
-        reason = jt.byId('remrevreason') || "";
+        reason = jt.byId('reasonin') || "";
         if(reason) {
             reason = reason.value;
             if(!reason) {
@@ -1574,11 +1706,18 @@ return {
         if(seektype.title === "Founding Member") {
             reason = "Are you sure you want to deny founding membership to " + pen.name + "? A founding member effectively co-owns the group and cannot be removed. They have the same rights as you. If you have any doubts at all you should eny this application. However if dividing ownership responsibilities would help, and you fully trust " + pen.name + ", then you might consider this."; }
         if(!jt.byId("confirmdenydiv" + seekerid).innerHTML) {
-            jt.out("confirmdenydiv" + seekerid, jt.tac2html(reason)); }
+            jt.out("confirmdenydiv" + seekerid, jt.tac2html(
+                [reason,
+                 ["div", {cla: "reasoninputdiv"},
+                  ["input", {type: "text", id: "reasonin",
+                             style: "width:90%;",
+                             placeholder: "Reason for rejection"}]]]));
+            jt.byId('reasonin').focus(); }
         else {
             jt.out("seekarbdiv" + seekerid, "Denying application...");
             data = "penid=" + app.pen.currPenRef().penid +
-                "&groupid=" + groupid + "&seekerid=" + seekerid;
+                "&groupid=" + groupid + "&seekerid=" + seekerid +
+                "&reason=" + jt.enc(jt.byId('reasonin').value.trim());
             jt.call('POST', "grpmemrej?" + app.login.authparams(), data,
                     function (groups) {
                         copyGroup(app.lcs.put("group", groups[0]).group);
@@ -1640,6 +1779,7 @@ return {
                                   onclick: jt.fs("app.group.memedit(true,'" + 
                                                  penid + "')")},
                        "Remove"]; }
+        //show form
         if(!jt.byId("rmcdiv" + penid)) {
             jt.out("memspan" + penid, jt.tac2html(
                 ["div", {cla: "membereditdiv"},
@@ -1660,12 +1800,26 @@ return {
                   ["div", {id: "rmcdiv" + penid}],
                   ["div", {id: "rmbdiv" + penid, cla: "optionalbuttonsdiv"},
                    buttons]]])); }
+        //show confirmation if remove button clicked
         else if(!jt.byId("rmcdiv" + penid).innerHTML) {
-            jt.out("rmcdiv" + penid, "Are you sure? Kicking someone out of the group is not something to be done lightly. " + pen.name + " will probably not appreciate it, and they will have to re-apply for membership before posting in the future. On the other hand if this person is damaging the reputation of the group directly or indirectly, then for the good of the group they should be removed."); }
+            jt.out("rmcdiv" + penid, jt.tac2html(
+                ["Are you sure? Kicking someone out of the group is not something to be done lightly. " + pen.name + " will probably not appreciate it, and they will have to re-apply for membership before posting in the future. On the other hand if this person is damaging the reputation of the group directly or indirectly, then for the good of the group they should be removed.",
+                 ["div", {id: "reasonrequireddiv", cla: "errmsgdiv"}],
+                 ["div", {cla: "reasoninputdiv"},
+                  ["input", {type: "text", id: "reasonin",
+                             style: "width:90%;",
+                             placeholder: "Reason for removal"}]]]));
+            jt.byId('reasonin').focus(); }
+        //make sure a reason is specified
+        else if(!jt.byId('reasonin').value.trim()) {
+            jt.out('reasonrequireddiv', "Please provide a reason");
+            jt.byId('reasonin').focus(); }
+        //remove the member
         else {
             jt.out("rmbdiv" + penid, "Removing...");
             data = "penid=" + app.pen.currPenRef().penid + 
-                "&groupid=" + jt.instId(wizgrp) + "&removeid=" + penid;
+                "&groupid=" + jt.instId(wizgrp) + "&removeid=" + penid +
+                "&reason=" + jt.enc(jt.byId('reasonin').value.trim());
             jt.call('POST', "grpmemremove?" + app.login.authparams(), data,
                     function (groups) {
                         copyGroup(app.lcs.put("group", groups[0]).group);

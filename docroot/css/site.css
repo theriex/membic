@@ -16,6 +16,11 @@ a.gold:visited {text-decoration:none; color:#ffd100; }
 a.gold:active {text-decoration:none; color:#ffd100; }
 a.gold:hover {text-decoration:underline; color:#ffd100; }
 
+a.plainanchor:link {text-decoration:none; color:#111111; }
+a.plainanchor:visited {text-decoration:none; color:#111111; }
+a.plainanchor:active {text-decoration:none; color:#111111; }
+a.plainanchor:hover {text-decoration:none; color:#111111; }
+
 body {
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-style:normal;
@@ -303,11 +308,9 @@ img { border:0px; }
 
 /* >> group layout */
 #primgroupdlgdiv { padding:0px; }
-#errmsgdiv { font-size:small; color:red; }
+.errmsgdiv, #errmsgdiv { font-size:small; color:red; }
 #primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 #primgroupbuttonsdiv button { margin:0px 10px; }
-#groupeditbuttonsdiv { text-align:center; }  /* no pad */
-#groupeditbuttonsdiv button { margin:0px 10px; padding:20px 0px 10px 0px; }
 .grpnameval { font-weight:bold; }
 .grpwiztable { padding:10px 0px 0px 0px; }
 .grpwiztable td { padding:0px 3px; vertical-align:top; }
@@ -318,6 +321,7 @@ img { border:0px; }
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; font-weight:normal; }
 #gpcdiv { padding:0px 20px; }
+#gndbdiv { padding:0px 10px; }
 #groupsetdlgdiv { padding:10px 0px; }
 .groupcity { font-size:small; font-weight:normal; text-align:center; 
   vertical-align:top; }
@@ -341,6 +345,12 @@ img { border:0px; }
 .grpmembernamediv {
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
   font-size:large; text-align:center; }
+.reasoninputdiv { padding:5px 0px; }
+#groupadminlogdiv { font-size:small; }
+.logdisptable { margin:20px 0px; }
+.logdisptable td { padding:2px 5px; }
+.midtable {}
+.midtable td { vertical-align:middle; }
 
 
 /* >> review layout */

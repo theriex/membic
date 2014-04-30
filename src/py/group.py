@@ -8,6 +8,7 @@ from moracct import *
 from morutil import *
 from cacheman import *
 from rev import Review, review_modification_authorized
+from revcmt import ReviewComment
 
 class Group(db.Model):
     """ A group of pen names and reviews they have shared with the group """
@@ -24,6 +25,7 @@ class Group(db.Model):
     seeking = db.TextProperty()     #CSV of member application penids
     rejects = db.TextProperty()     #CSV of rejected member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
+    adminlog = db.TextProperty()    #JSON array of action entries
     modified = db.StringProperty()               # iso date
     
 
@@ -179,6 +181,22 @@ def fetch_group_mod_elements(handler, pen):
         return revid, rev, None, ""
     group, role = fetch_group_and_role(handler, pen)
     return revid, rev, group, role
+
+
+def update_group_admin_log(group, pen, action, targetid, reason):
+    entry = "{\"when\":\"" + nowISO() + "\"," +\
+        "\"penid\":\"" + str(pen.key().id()) + "\"," +\
+        "\"action\":\"" + action + "\"," +\
+        "\"target\":\"" + str(targetid) + "\""
+    if reason:
+        entry += ",\"reason\":\"" + urllib.quote(reason) + "\""
+    entry += "}"
+    if not group.adminlog:
+        group.adminlog = "[]"
+    log = group.adminlog[1:-1].strip()  # strip outer brackets and whitespace
+    if log:
+        entry += ","
+    group.adminlog = "[" + entry + log + "]"
     
     
 class UpdateDescription(webapp2.RequestHandler):
@@ -213,6 +231,7 @@ class UpdateDescription(webapp2.RequestHandler):
         if not read_and_validate_descriptive_fields(self, group):
             return
         group.modified = nowISO()
+        update_group_admin_log(group, pen, "Updated Description", "", "")
         cached_put(group)
         # not storing any precomputed group queries, so no cache keys to bust
         returnJSON(self.response, [ group ])
@@ -251,6 +270,8 @@ class UploadGroupPic(webapp2.RequestHandler):
                     try:
                         group.picture = db.Blob(upfile)
                         group.picture = images.resize(group.picture, 160, 160)
+                        update_group_admin_log(group, pen, "Uploaded Picture", 
+                                               "", "")
                         cached_put(group)
                         errmsg = ""
                     except Exception as e:
@@ -349,6 +370,7 @@ class RemoveReview(webapp2.RequestHandler):
             rc.put()
         # remove the revid from the group
         group.reviews = remove_id_from_csv(revid, group.reviews)
+        update_group_admin_log(group, pen, "Removed Review", revid, reason)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -394,6 +416,7 @@ class DenyMembershipSeek(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write("No seekerid specified")
             return
+        reason = self.request.get("reason")
         #possible seek was withdrawn or rejected by someone else already
         #in which case treat as succeeded so the app can continue ok
         if id_in_csv(seekerid, group.seeking):
@@ -403,6 +426,8 @@ class DenyMembershipSeek(webapp2.RequestHandler):
                 group.seeking = remove_id_from_csv(seekerid, group.seeking)
                 if not id_in_csv(seekerid, group.rejects):
                     group.rejects = append_id_to_csv(seekerid, group.rejects)
+                update_group_admin_log(group, pen, "Denied Membership", 
+                                       seekerid, reason)
                 cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -434,12 +459,17 @@ class AcceptMembershipSeek(webapp2.RequestHandler):
             self.response.out.write("Not authorized to accept membership")
             return;
         group.seeking = remove_id_from_csv(seekerid, group.seeking)
-        if seekrole == "Senior" and not id_in_csv(seekerid, group.founders):
-            group.founders = append_id_to_csv(seekerid, group.founders)
-        elif seekrole == "Member" and not id_in_csv(seekerid, group.seniors):
-            group.seniors = append_id_to_csv(seekerid, group.seniors)
+        if seekrole == "Senior":
+            group.seniors = remove_id_from_csv(seekerid, group.seniors)
+            if not id_in_csv(seekerid, group.founders):
+                group.founders = append_id_to_csv(seekerid, group.founders)
+        elif seekrole == "Member":
+            group.members = remove_id_from_csv(seekerid, group.members)
+            if not id_in_csv(seekerid, group.seniors):
+                group.seniors = append_id_to_csv(seekerid, group.seniors)
         elif seekrole == "NotFound" and not id_in_csv(seekerid, group.members):
             group.members = append_id_to_csv(seekerid, group.members)
+        update_group_admin_log(group, pen, "Accepted Member", seekerid, "")
         cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -487,10 +517,18 @@ class RemoveMember(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write("Not authorized to remove member")
             return
-        if remlev == "Senior":
-            group.seniors = remove_id_from_csv(removeid, group.seniors)
-        elif remlev == "Member":
-            group.members = remove_id_from_csv(removeid, group.members)
+        reason = self.request.get('reason')
+        if not reason and pen.key().id() != removeid:
+            self.error(400)
+            self.response.out.write("A reason is required")
+            return
+        group.founders = remove_id_from_csv(removeid, group.founders)
+        group.seniors = remove_id_from_csv(removeid, group.seniors)
+        group.members = remove_id_from_csv(removeid, group.members)
+        action = "Removed Member"
+        if pen.key().id() == removeid:
+            action = "Resigned"
+        update_group_admin_log(group, pen, action, removeid, reason)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
