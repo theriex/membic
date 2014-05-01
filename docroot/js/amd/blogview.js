@@ -50,7 +50,7 @@ var blogview = (function () {
                         pen.name]],
                       "&nbsp;",
                       ["a", {href: rssurl, id: "rsslink",
-                             title: "RSS feed for " + pen.name,
+                             title: "RSS feed for " + jt.ndq(pen.name),
                              onclick: jt.fs("window.open('" + rssurl + "')")},
                        ["img", {cla: "rssico", src: "../img/rssicon.png"}]]]]]],
                   ["tr",

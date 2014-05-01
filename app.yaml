@@ -418,7 +418,9 @@ handlers:
 - url: /testrevs
   script: src.py.rev.app
 - url: /blogs/.*
-  script: src.py.blogview.app  
+  script: src.py.blogview.app
+- url: /groups/.*
+  script: src.py.groupview.app
 - url: /statrev/\d+
   script: src.py.statrev.app
 - url: /stats.*

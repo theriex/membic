@@ -38,6 +38,8 @@ app.group = (function () {
         var penid;
         if(!group) {
             group = wizgrp; }
+        if(!group) {  //happens if called from static group display
+            return ""; }
         if(group.membership) {  //already calculated, return that value
             return group.membership; }
         group.membership = "";
@@ -303,24 +305,6 @@ app.group = (function () {
     },
 
 
-    grpPicCityHTML = function () {
-        var imgattrs;
-        imgattrs = { cla: "revimg", src: "../img/emptyprofpic.png" };
-        if(wizgrp.picture) {
-            imgattrs.src = "../grppic?groupid=" + jt.instId(wizgrp); }
-        if(membership() === "Founder") {
-            imgattrs.title = "Click to upload a picture";
-            imgattrs.onclick = jt.fs("app.group.picUploadForm()"); }
-        if(jt.isLowFuncBrowser()) {
-            imgattrs.style = "width:125px;height:auto;"; }
-        return ["div", {id: "gpcdiv"},
-                [["div", {id: "gpicdiv", cla: "centertablediv"},
-                  ["img", imgattrs]],
-                 ["div", {id: "gcitydiv", cla: "groupcity"},
-                  wizgrp.city]]];
-    },
-
-
     grpNameDescripHTML = function () {
         return ["div", {id: "gndbdiv"},
                 [["div", {id: "groupnamediv"},
@@ -363,12 +347,12 @@ app.group = (function () {
                 ["table",
                  ["tr",
                   [["td", {valign: "top"},
-                    grpPicCityHTML()],
+                    app.group.grpPicCityHTML(wizgrp)],
                    ["td", {cla: "tdwide", valign: "top"},
                     grpNameDescripHTML()]]]]];
         if(app.winw < 700) {
             html = ["div", {id: "grouphdiv"},
-                    [["div", grpPicCityHTML()],
+                    [["div", app.group.grpPicCityHTML(wizgrp)],
                      ["div", grpNameDescripHTML()]]]; }
         app.layout.headingout(jt.tac2html(html));
         if(app.winw >= 700) {
@@ -1839,6 +1823,25 @@ return {
 
     memeditcancel: function (edit, penid) {
         jt.out("memspan" + penid, memberNameHTML(edit, penid));
+    },
+
+
+    grpPicCityHTML: function (group, divid) {
+        var imgattrs;
+        imgattrs = { cla: "revimg", src: "../img/emptyprofpic.png" };
+        divid = divid || "gpcdiv";
+        if(group.picture) {
+            imgattrs.src = "../grppic?groupid=" + jt.instId(group); }
+        if(membership() === "Founder") {
+            imgattrs.title = "Click to upload a picture";
+            imgattrs.onclick = jt.fs("app.group.picUploadForm()"); }
+        if(jt.isLowFuncBrowser()) {
+            imgattrs.style = "width:125px;height:auto;"; }
+        return ["div", {id: divid},
+                [["div", {id: "gpicdiv", cla: "centertablediv"},
+                  ["img", imgattrs]],
+                 ["div", {id: "gcitydiv", cla: "groupcity"},
+                  group.city]]];
     }
 
 }; //end of returned functions

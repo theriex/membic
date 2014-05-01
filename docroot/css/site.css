@@ -352,6 +352,13 @@ img { border:0px; }
 .logdisptable td { padding:2px 5px; }
 .midtable {}
 .midtable td { vertical-align:middle; }
+.sgrpdiv {}
+.sgpicdiv { float:left; padding:0px 10px 0px 0px; }
+.sjoinrssdiv { padding:20px 0px 0px 0px; }
+#sgrprevsdiv { padding:20px 5px; }
+#sgrptagline { padding:20px 5px; font-size:small; font-style:italic; }
+#sgrpnamedescdiv { padding:0px 5px; }
+#sgrpjoinlink { padding:0px 0px 0px 20px; }
 
 
 /* >> review layout */
