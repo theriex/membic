@@ -104,7 +104,7 @@ class PenNameRSS(webapp2.RequestHandler):
     def get(self):
         penid = intz(self.request.get('pen'))
         pen = PenName.get_by_id(penid);
-        reviews = fetch_blog_reviews(pen);
+        reviews = fetch_blog_reviews(pen).objects;
         title = "wdydfun reviews from " + pen.name
         content = rss_content(penid, title, reviews, 0, 0)
         ctype = "application/xhtml+xml; charset=UTF-8"
