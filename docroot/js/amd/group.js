@@ -22,11 +22,11 @@ app.group = (function () {
     //avoiding having any state variables to reset..
     var wizgrp = null,  //holds state until user cleared or written to db
         verifyCityNextFunc = null, //dialog callback 
-        revfreqs = [{name: "every 2 weeks", freq: 14, id: "freq14"},
+        revfreqs = [{name: "2 weeks", freq: 14, id: "freq14"},
                     {name: "monthly", freq: 30, id: "freq30"},
-                    {name: "every 2 months", freq: 60, id: "freq60"},
+                    {name: "2 months", freq: 60, id: "freq60"},
                     {name: "quarterly", freq: 90, id: "freq90"},
-                    {name: "every 6 months", freq: 180, id: "freq180"},
+                    {name: "6 months", freq: 180, id: "freq180"},
                     {name: "yearly", freq: 365, id: "freq365"}],
 
 
@@ -325,7 +325,7 @@ app.group = (function () {
                       ["div", {id: "groupfreqdispdiv"},
                        ["span", {cla: "groupcity"},
                         ["a", {cla: "plainanchor"},
-                         "Post " + frequencyName()]]]],
+                         "Post " + frequencyName() + ">"]]]],
                      ["td", {id: "grouprevtypestd"},
                       ["div", {id: "grouprevtypesdiv"},
                        revTypesDispHTML()]],
@@ -393,10 +393,37 @@ app.group = (function () {
     },
 
 
+    memberInviteHTML = function (text) {
+        var pen, subj, body;
+        pen = app.pen.currPenRef().pen;
+        subj = "invite for " + wizgrp.name;
+        body = "Hi,\n\n" +
+            "I'd like you to join \"" + wizgrp.name + "\" which is a review group I'm part of. Here's the description:\n\n" +
+            wizgrp.description + "\n\n" +
+            "I'm guessing you would have some great things to share, check it out and join if you can, it would be great to hear from you!\n\n" +
+            "http://www.wdydfun.com/groups/" + wizgrp.name_c + "\n\n" +
+            "cheers,\n" +
+            pen.name;
+        if(!text) {
+            text = ["img", {src: "img/email.png"}]; }
+        return ["a", {href: "mailto:?subject=" + jt.dquotenc(subj) +
+                            "&body=" + jt.dquotenc(body) + "%0A",
+                      title: "Invite a friend to join"},
+                text];
+    },
+
+
     displayGroupMembers = function () {
         jt.out('groupmembersdiv', jt.tac2html(
             ["table", 
              [["tr",
+               [["td", {cla: "tdright"},
+                 ["div", {cla: "memberstypeheadingdiv"},
+                  memberInviteHTML("Invite a friend")]],
+                ["td", 
+                 ["div", {cla: "memberslistdiv"},
+                  memberInviteHTML()]]]],
+              ["tr",
                [["td", {cla: "tdright"}, 
                  ["div", {cla: "memberstypeheadingdiv"},
                   "Founders"]],
