@@ -429,6 +429,8 @@ handlers:
   script: src.py.rssact.app
 - url: /rsspen.*
   script: src.py.rssact.app
+- url: /rssgrp.*
+  script: src.py.rssact.app
 - url: /mailsum.*
   script: src.py.mailsum.app
 - url: /emuser.*

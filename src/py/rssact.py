@@ -6,7 +6,9 @@ from moracct import safestr
 from morutil import *
 from statrev import getTitle, getSubkey
 from blogview import fetch_blog_reviews
+from groupview import recent_group_reviews
 from pen import PenName
+from group import Group
 
 
 def rss_title(review, checked):
@@ -91,7 +93,7 @@ class ActivityRSS(webapp2.RequestHandler):
         penid = intz(self.request.get('pen'))
         relids = outbound_relids_for_penid(penid)
         checked, reviews = review_activity_search("", "", relids)
-        title = "wdydfun reviews from friends"
+        title = "WDYDfun reviews from friends"
         content = rss_content(penid, title, reviews, checked, len(relids))
         #heard there were potential issues with "application/rss+xml"
         #so modeled what craigslist is doing..
@@ -105,13 +107,26 @@ class PenNameRSS(webapp2.RequestHandler):
         penid = intz(self.request.get('pen'))
         pen = PenName.get_by_id(penid);
         reviews = fetch_blog_reviews(pen).objects;
-        title = "wdydfun reviews from " + pen.name
+        title = "WDYDfun reviews from " + pen.name
         content = rss_content(penid, title, reviews, 0, 0)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content);
 
 
+class GroupRSS(webapp2.RequestHandler):
+    def get(self):
+        groupid = intz(self.request.get('group'))
+        group = Group.get_by_id(groupid)
+        reviews = recent_group_reviews(group).objects;
+        title = "WDYDfun reviews for " + group.name
+        content = rss_content(groupid, title, reviews, 0, 0)
+        ctype = "application/xhtml+xml; charset=UTF-8"
+        self.response.headers['Content-Type'] = ctype
+        self.response.out.write(content);
+
+
 app = webapp2.WSGIApplication([('/rssact', ActivityRSS),
-                               ('/rsspen', PenNameRSS)], debug=True)
+                               ('/rsspen', PenNameRSS),
+                               ('/rssgrp', GroupRSS)], debug=True)
 
