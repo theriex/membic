@@ -90,17 +90,18 @@ def city_match(grpA, grpB):
     return False
 
 
-def verify_name_and_city_unique(handler, group):
+def verify_unique_name(handler, group):
+    groupid = 0
+    try:
+        groupid = group.key().id()
+    except Exception:
+        pass  # just compare to zero if no id because not saved yet
     groups = Group.gql("WHERE name_c=:1", group.name_c)
     for sisgrp in groups:
-        if sisgrp.key().id() != group.key().id():
-            if not sisgrp.city or city_match(group, sisgrp):
-                msg = "City conflicts with sister group: " + str(sisgrp.city)
-                if not sisgrp.city:
-                    msg = "Already exists a global group with this name"
-                handler.error(400)
-                handler.response.out.write(msg)
-                return False
+        if sisgrp.key().id() != groupid:
+            handler.error(400)
+            handler.response.out.write("Group name already in use")
+            return False
     return True
 
 
@@ -124,7 +125,7 @@ def revtypes_valid(handler, group):
 def read_and_validate_descriptive_fields(handler, group):
     # name/name_c field has a value and has been set already
     group.city = handler.request.get('city')
-    if not verify_name_and_city_unique(handler, group):
+    if not verify_unique_name(handler, group):
         return False;
     group.description = handler.request.get('description')
     if not group.description:
@@ -225,7 +226,6 @@ class UpdateDescription(webapp2.RequestHandler):
             group.name = name
             group.name_c = name_c
         else:
-            #TODO: verify group name/city combo not already used...
             group = Group(name=name, name_c=name_c)
             group.founders = str(pen.key().id())
         if not read_and_validate_descriptive_fields(self, group):
@@ -533,6 +533,20 @@ class RemoveMember(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
+class GetGroupByName(webapp2.RequestHandler):
+    def get(self):
+        namestr = self.request.get('groupname')
+        if not namestr:
+            self.error(400)
+            self.response.write("groupname required for fetch")
+            return
+        namestr = canonize(namestr)
+        gquery = Group.gql("WHERE name_c=:1", namestr)
+        groups = gquery.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY,
+                              deadline=10)
+        returnJSON(self.response, groups)
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
@@ -544,6 +558,7 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpmemrej', DenyMembershipSeek),
                                ('/grpmemyes', AcceptMembershipSeek),
                                ('/grprejok', MembershipRejectAck),
-                               ('/grpmemremove', RemoveMember)
+                               ('/grpmemremove', RemoveMember),
+                               ('/grpbyname', GetGroupByName)
                                ], debug=True)
 

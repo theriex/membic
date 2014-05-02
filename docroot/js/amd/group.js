@@ -781,7 +781,7 @@ app.group = (function () {
 
 
     readPrimaryFields = function () {
-        var input, fields, i, cboxes, j, opts;
+        var input, fields, i, cboxes, j, opts, namecheck = false;
         fields = getPrimaryFieldDefs();
         for(i = 0; i < fields.length; i += 1) {
             if(fields[i].name === "revtypes") {
@@ -816,7 +816,27 @@ app.group = (function () {
                         jt.out('errmsgdiv', "A " + fields[i].name + 
                                " is required.");
                         return false; }
-                    wizgrp[fields[i].name] = input; } } }
+                    wizgrp[fields[i].name] = input; } }
+            //extra check to see if name already taken
+            if(fields[i].name === "name" && wizgrp.name && 
+                   (!wizgrp.name_c || 
+                    jt.canonize(wizgrp.name) !== wizgrp.name_c)) {
+                namecheck = true;
+                break; } }
+        if(namecheck) {
+            namecheck = jt.canonize(wizgrp.name);
+            jt.call('GET', "grpbyname?groupname=" + namecheck, null,
+                    function (groups) {
+                        if(groups.length > 0) {
+                            jt.out('errmsgdiv', "That name is already taken");
+                            return false; }
+                        wizgrp.name_c = jt.canonize(wizgrp.name);
+                        app.group.createGroup(); },
+                    app.failf(function (code, errtxt) {
+                        jt.out('errmsgdiv', "Name check failed " + code +
+                               ": " + errtxt); }),
+                    jt.semaphore("group.namecheck"));
+            return false; }  //don't continue until callback checks out
         return true;
     },
 
@@ -1131,6 +1151,7 @@ return {
                     {name: "OK", fstr: "app.group.createGroup()"}]);
     },
                    
+
     //This method is used by group setup and new membership
     verifyGroupCityAndProfileMatch: function (group, callback) {
         var city, penc, i, j, backb, html;

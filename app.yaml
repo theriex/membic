@@ -367,6 +367,11 @@ handlers:
 - url: /grpmemremove.*
   script: src.py.group.app
 
+## Fetch groups by name
+## GET params: groupname
+- url: /grpbyname.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services
