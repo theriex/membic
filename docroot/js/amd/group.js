@@ -780,8 +780,8 @@ app.group = (function () {
     },
 
 
-    readPrimaryFields = function () {
-        var input, fields, i, cboxes, j, opts, namecheck = false;
+    readPrimaryFields = function (contf) {
+        var input, fields, i, cboxes, j, opts, k, namecheck = false;
         fields = getPrimaryFieldDefs();
         for(i = 0; i < fields.length; i += 1) {
             if(fields[i].name === "revtypes") {
@@ -802,11 +802,11 @@ app.group = (function () {
                 input = jt.byId("revfreqsel");
                 if(input) {
                     opts = input.options;
-                    for(i = 0; i < opts.length; i += 1) {
-                        if(opts[i].selected) {
-                            for(j = 0; j < revfreqs.length; j += 1) {
-                                if(opts[i].id === revfreqs[j].id) {
-                                    wizgrp.revfreq = revfreqs[j].freq;
+                    for(j = 0; j < opts.length; j += 1) {
+                        if(opts[j].selected) {
+                            for(k = 0; k < revfreqs.length; k += 1) {
+                                if(opts[j].id === revfreqs[k].id) {
+                                    wizgrp.revfreq = revfreqs[k].freq;
                                     break; } } } } } }
             else {
                 input = jt.byId(fields[i].name + "in");
@@ -831,7 +831,7 @@ app.group = (function () {
                             jt.out('errmsgdiv', "That name is already taken");
                             return false; }
                         wizgrp.name_c = jt.canonize(wizgrp.name);
-                        app.group.createGroup(); },
+                        contf(); },
                     app.failf(function (code, errtxt) {
                         jt.out('errmsgdiv', "Name check failed " + code +
                                ": " + errtxt); }),
@@ -1282,7 +1282,7 @@ return {
             wizgrp = { name: "", city: "", description: "", picture: "", 
                        revtypes: "", revfreq: "",
                        founders: "", seniors: "", members: "" }; }
-        if(readPrimaryFields()) {
+        if(readPrimaryFields(app.group.createGroup)) {
             promptForPrimaryFields(); }
     },
 
@@ -1434,7 +1434,7 @@ return {
 
 
     readandsave: function () {
-        if(readPrimaryFields()) {
+        if(readPrimaryFields(app.group.readandsave)) {
             app.group.saveGroup(); }
     },
 
@@ -1541,7 +1541,7 @@ return {
     //changed field values also need to be saved.
     picUploadForm: function () {
         var groupid;
-        readPrimaryFields();
+        readPrimaryFields(app.group.picUploadForm);
         if(primaryFieldValuesChanged()) {
             if(jt.byId('groupeditbuttonsdiv').   //not already saving
                    innerHTML.indexOf("<button") >= 0) {
@@ -1580,7 +1580,8 @@ return {
                       [["td"],
                        ["td", 
                         ["div", {cla: "groupdescrtext"},
-                         groups[i].description]]]]); }
+                         (groups[i].city ? "(" + groups[i].city + ") " : "") +
+                         jt.ellipsis(groups[i].description, 120)]]]]); }
         html = ["div", {id: "primgroupdlgdiv"},
                 [["table", {cla: "grpwiztable"}, 
                   trs],
