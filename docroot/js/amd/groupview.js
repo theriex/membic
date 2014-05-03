@@ -25,7 +25,7 @@ var groupview = (function () {
         if(document.referrer) {
             btwimg = jt.byId('btwimg');
             if(btwimg) {
-                btwimg.src = "../bytheimg?bloginqref=" + 
+                btwimg.src = "../bytheimg?grpinqref=" + 
                     jt.enc(document.referrer); } }
     },
 

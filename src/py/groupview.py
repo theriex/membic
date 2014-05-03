@@ -101,10 +101,10 @@ class GroupViewDisplay(webapp2.RequestHandler):
                 qres.objects, "", -1, ""), content)
         refer = self.request.referer
         if refer:
-            refer = "<img src=\"../bytheimg?bloginqref=" +\
+            refer = "<img src=\"../bytheimg?grpinqref=" +\
                 safeURIEncode(refer) + "\"/>\n"
         else:
-            refer = "<img id=\"btwimg\" src=\"../bytheimg?bloginq=" +\
+            refer = "<img id=\"btwimg\" src=\"../bytheimg?grpinq=" +\
                 str(group.key().id()) + "\"/>\n"
         content = re.sub('\$REFER', refer, content)
         content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse

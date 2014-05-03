@@ -37,7 +37,7 @@ class ActivityStat(db.Model):
 #substrings identifying web crawler agents.  No embedded commas.
 bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "netvibes.com", # not really a bot, but not a really a hit either
-           "AppEngine-Google", "Googlebot", "YandexImages"]
+           "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
 def get_activity_stat(sday):
@@ -96,6 +96,14 @@ def bump_referral(stat, entry, val):
             bump_referral_count(stat, entry + "CLcps")
         else:
             bump_referral_count(stat, entry + "CL")
+    elif "myopenreviews.com" in val:
+        bump_referral_count(stat, entry + "MOR")
+    elif "mail." in val:
+        bump_referral_count(stat, entry + "Mail")
+    elif "youtube." in val:
+        bump_referral_count(stat, entry + "YouTube")
+    elif "ted.com" in val:
+        bump_referral_count(stat, entry + "TED")
     elif "wdydfun" not in val:
         # Write the whole url (without colons) as the identifier, thus
         # causing the activity display to get real ugly.  Then write
@@ -151,13 +159,38 @@ def btw_activity(src, request):
         bump_referral(stat, "rev", val)
     val = request.get("bloginqref")
     if val: # Somebody clicked on a link to a blog.  Helpful to have
-            # some clue on inbound blog links.  Passing blog link info
-            # through to each pen name will be handled separately so
-            # each pen can decide if they want to mention outside
-            # links in their shoutout or review text.
+            # some clue on inbound blog links.  Later on this could
+            # pass blog link info through to each pen name so each pen
+            # can decide if they want to mention outside links in
+            # their shoutout or review text.
         bump_referral(stat, "blog", val)
+    val = request.get("grpinqref")
+    if val: # Somebody clicked on a link to a group. Helpful to know
+            # what level of inbound linkage there is for groups.
+        bump_referral(stat, "grp", val)
     stat.put()  #nocache
             
+
+def rebuild_refers(stat):
+    reftxt = stat.refers
+    if not reftxt:
+        return
+    stat.refers = ""  # reset and then build up from entries
+    entries = reftxt.split(",")
+    for entry in entries:
+        idc = entry.split(":")
+        val = idc[0]
+        count = intz(idc[1])
+        for i in range(count):
+            if val.startswith("core"):
+                bump_referral(stat, "core", val[4:])
+            elif val.startswith("rev"):
+                bump_referral(stat, "rev", val[3:])
+            elif val.startswith("blog"):
+                bump_referral(stat, "blog", val[4:])
+            elif val.starstwith("grp"):
+                bump_referral(stat, "grp", val[3:])
+
 
 def split_output(response, text):
     logging.info("mailsum: " + text)
@@ -459,9 +492,8 @@ class FixReferKeys(webapp2.RequestHandler):
             stat = ActivityStat.get_by_id(intz(statid))
             if stat:
                 text = stat.refers
-                text = re.sub("revhttps_//www.google.com/", "revSE", text)
-                text = re.sub("coreclact", "coreCLact", text)
-                stat.refers = text
+                # text = re.sub("revhttps_//www.google.com/", "revSE", text)
+                rebuild_refers(stat)
                 stat.put()
                 message = "ActivityStat " + statid + " refers field updated."
         self.response.headers['Content-Type'] = 'text/plain'

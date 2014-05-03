@@ -151,8 +151,8 @@ var actstat = (function () {
     displayInquiriesGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeInquirySeries();
-        showColorKeys('inqactdiv', "Inquiries", rowify(series, 3));
-        svg = d3.select('#inqactdiv')
+        showColorKeys('inqactkeysdiv', "Inquiries", rowify(series, 3));
+        svg = d3.select('#inqactgraphdiv')
             .data(data)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -393,10 +393,10 @@ var actstat = (function () {
     displayActivityGraph = function () {
         var svg, xAxis, yAxis, series;
         series = makeActivitySeries();
-        showColorKeys('useractdiv', "Interaction", [[series[0], series[2]],
-                                                    [series[1], series[3]],
-                                                    [null, series[4]]]);
-        svg = d3.select("#useractdiv")
+        showColorKeys('useractkeydiv', "Interaction", [[series[0], series[2]],
+                                                       [series[1], series[3]],
+                                                       [null, series[4]]]);
+        svg = d3.select("#useractgraphdiv")
             .data(data)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -506,14 +506,14 @@ var actstat = (function () {
                     botids = results[0].botids.split(',');
                     displayAccessAgents(); },
                 function (code, errtxt) {
-                    jt.out('useractdiv', "botids failed: " + code + 
+                    jt.out('agentsdiv', "botids failed: " + code + 
                            " " + errtxt); },
                 jt.semaphore("actstat.fetchBotListAndDisplayAgents"));
     },
 
 
     fetchDataAndDisplay = function () {
-        jt.out('useractdiv', "Fetching ActivityStat records");
+        jt.out('averagesdiv', "Fetching ActivityStat records");
         jt.call('GET', "../activity", null,
                 function (actstats) {
                     data = actstats;
@@ -523,7 +523,7 @@ var actstat = (function () {
                     displayActivityGraph();
                     displayUserAverages(); },
                 function (code, errtxt) {
-                    jt.out('useractdiv', "fetch failed: " + code + 
+                    jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },
                 jt.semaphore("actstat.fetchDataAndDisplay"));
     };
