@@ -9,6 +9,7 @@ from morutil import *
 from cacheman import *
 from rev import Review, review_modification_authorized
 from revcmt import ReviewComment
+import json
 
 class Group(db.Model):
     """ A group of pen names and reviews they have shared with the group """
@@ -53,6 +54,13 @@ def remove_id_from_csv(idval, csv):
     except Exception:
         pass  # not found is fine, as long as it's not in the list now
     return ",".join(ids)
+
+
+def elem_count_csv(csv):
+    if not csv:
+        return 0
+    ids = csv.split(",")
+    return len(ids)
 
 
 def pen_role(penid, group):
@@ -547,6 +555,28 @@ class GetGroupByName(webapp2.RequestHandler):
         returnJSON(self.response, groups)
 
 
+class GetGroupStats(webapp2.RequestHandler):
+    def get(self):
+        stat = {'total': 0, 'totalmem': 0, 'totalrev': 0,
+                'memmax': 0, 'memwin': "", 'revmax': 0, 'revwin': ""}
+        groups = Group.all()
+        for group in groups:
+            stat['total'] += 1
+            memcount = elem_count_csv(group.founders) +\
+                elem_count_csv(group.seniors) +\
+                elem_count_csv(group.members)
+            if memcount > stat['memmax']:
+                stat['memmax'] = memcount
+                stat['memwin'] = group.name
+            stat['totalmem'] += memcount
+            revcount = elem_count_csv(group.reviews)
+            stat['totalrev'] += revcount
+            if revcount > stat['revmax']:
+                stat['revmax'] = revcount
+                stat['revwin'] = group.name
+        writeJSONResponse(json.dumps(stat), self.response)        
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
@@ -559,6 +589,7 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpmemyes', AcceptMembershipSeek),
                                ('/grprejok', MembershipRejectAck),
                                ('/grpmemremove', RemoveMember),
-                               ('/grpbyname', GetGroupByName)
+                               ('/grpbyname', GetGroupByName),
+                               ('/grpstats', GetGroupStats)
                                ], debug=True)
 

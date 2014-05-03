@@ -512,6 +512,58 @@ var actstat = (function () {
     },
 
 
+    //Very likely want to limit total membership to a max of 250 so
+    //the group does not get out of hand in terms of moderation,
+    //maintenance and general spew.  At that point there may be a need
+    //to find members not in good standing to be able to remove them,
+    //and/or to enforce max postings per day/week/month.  Waiting for
+    //driving use cases before implementing any of that.
+    displayGroupStats = function (stat) {
+        var mwcn = jt.canonize(stat.memwin),
+            mwurl = "../groups/" + mwcn,
+            rwcn = jt.canonize(stat.revwin),
+            rwurl = "../groups/" + rwcn;
+        jt.out('groupstatsdiv', jt.tac2html(
+            [["span", {cla: "statlabel"}, "Total Groups"],
+             ["span", {cla: "statval"}, stat.total],
+             ["span", {cla: "statlabel"}, "Members"],
+             ["span", {cla: "statlab2"}, "avg"],
+             ["span", {cla: "statval"},
+              Math.round(stat.totalmem / stat.total)],
+             ["span", {cla: "statlab2"}, "max"],
+             ["span", {cla: "statval"}, stat.memmax],
+             ["span", {cla: "statvalkey"},
+              ["(", 
+               ["a", {href: "#" + mwcn, 
+                      onclick: jt.fs("window.open('" + mwurl + "')")},
+                stat.memwin],
+               ")"]],
+             ["span", {cla: "statlabel"}, "Reviews"],
+             ["span", {cla: "statlab2"}, "avg"],
+             ["span", {cla: "statval"},
+              Math.round(stat.totalrev / stat.total)],
+             ["span", {cla: "statlab2"}, "max"],
+             ["span", {cla: "statval"}, stat.revmax],
+             ["span", {cla: "statvalkey"},
+              ["(",
+               ["a", {href: "#" + rwcn,
+                      onclick: jt.fs("window.open('" + rwurl + "')")},
+                stat.revwin],
+               ")"]]]));
+    },
+
+
+    fetchAndDisplayGroupStats = function () {
+        jt.call('GET', "../grpstats", null,
+                function (stat) {
+                    displayGroupStats(stat); },
+                function (code, errtxt) {
+                    jt.out('groupstatsdiv', "grpstats call failed " + code +
+                           ": " + errtxt); },
+                jt.semaphore("actstat.fetchAndDisplayGroupStats"));
+    },
+
+
     fetchDataAndDisplay = function () {
         jt.out('averagesdiv', "Fetching ActivityStat records");
         jt.call('GET', "../activity", null,
@@ -521,7 +573,8 @@ var actstat = (function () {
                     displayInquiriesGraph();
                     fetchBotListAndDisplayAgents();
                     displayActivityGraph();
-                    displayUserAverages(); },
+                    displayUserAverages();
+                    fetchAndDisplayGroupStats(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },

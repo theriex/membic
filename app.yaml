@@ -372,6 +372,11 @@ handlers:
 - url: /grpbyname.*
   script: src.py.group.app
 
+## Fetch general group statistics
+## GET params: none
+- url: /grpstats.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services
