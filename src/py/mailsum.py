@@ -102,6 +102,8 @@ def bump_referral(stat, entry, val):
         bump_referral_count(stat, entry + "Mail")
     elif "youtube." in val:
         bump_referral_count(stat, entry + "YouTube")
+    elif "vimeo." in val:
+        bump_referral_count(stat, entry + "Vimeo")
     elif "ted.com" in val:
         bump_referral_count(stat, entry + "TED")
     elif "wdydfun" not in val:
