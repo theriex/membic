@@ -152,12 +152,16 @@ return {
     },
 
 
-    getFull: function (type, id, callback) {
+    getFull: function (type, id, callback, debugmsg) {
         var ref, url;
-        ref = app.lcs.getRef(type, id);
-        if(ref && ref.status === "ok" && ref[type]) {
-            return callback(ref); }
         id = idify(id);
+        ref = app.lcs.getRef(type, id);
+        if(ref && ref.status !== "not cached") {
+            if(debugmsg) {
+                jt.log("getFull cached " + type + id + " " + debugmsg); }
+            return callback(ref); }
+        if(debugmsg) {
+            jt.log("getFull retrieving " + type + id + " " + debugmsg); }
         url = cache[type].fetchend + "?" + cache[type].fetchparamf(id);
         jt.call('GET', url, null,
                 function (objs) {
@@ -173,11 +177,13 @@ return {
 
 
     tomb: function (type, id, reason) {
-        var tombstone = { status: reason,
-                          updtime: new Date() };
+        var tombstone, ref;
+        tombstone = { status: reason, updtime: new Date() };
         tombstone[type + "id"] = id;
         jt.setInstId(tombstone, id);
-        app.lcs.put(type, tombstone);
+        ref = app.lcs.put(type, tombstone);
+        ref.status = reason;
+        ref[type] = null;  //so caller can just test for ref.type...
         return tombstone;
     },
         

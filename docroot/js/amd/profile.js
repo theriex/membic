@@ -1134,6 +1134,31 @@ app.profile = (function () {
     },
 
 
+    byLineHTML = function (revobj, penNameStr) {
+        var byline = "", vialink = "";
+        if(penNameStr) {
+            if(revobj.viagname) {
+                vialink = 
+                    [" (via ",
+                     ["a", {title: "Show " + jt.ndq(revobj.viagname),
+                            href: "#" + jt.objdata({view: "group",
+                                                    groupid: revobj.viagid}),
+                            onclick: jt.fs("app.group.bygroupid('" +
+                                           revobj.viagid + "')")},
+                      revobj.viagname],
+                     ")"]; }
+            byline = ["review by ",
+                      [["a", {title: "Show profile for " + jt.ndq(penNameStr),
+                              href: "#" + jt.objdata({view: "profile", 
+                                                      profid: revobj.penid }),
+                              onclick: jt.fs("app.profile.byprofid('" +
+                                             revobj.penid + "')")},
+                        penNameStr],
+                       vialink]]; }
+        return byline;
+    },
+
+
     clickspan = function (html, funcstr) {
         html = ["span", {cla: "clickspan", onclick: funcstr},
                 html];
@@ -1415,7 +1440,7 @@ return {
             divattrs = {cla: "revtextsummary", 
                         style: "padding:0px 0px 0px 97px;"},
             revclick = jt.fs("app.profile.readReview('" + revid + "')"),
-            jump = "", byline = "", keywords = "", revtext = "", remove = "",
+            jump = "", keywords = "", revtext = "", remove = "",
             html;
         if(app.winw < 700) {
             divattrs.style = "padding:0px 0px 0px 10px;"; }
@@ -1424,14 +1449,6 @@ return {
                       ["img", {cla: "removeico", src: "img/remove.png"}]]; }
         if(revobj.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
-        if(penNameStr) {
-            byline = ["review by ",
-                      ["a", {title: "Show profile for " + jt.ndq(penNameStr),
-                             href: "#" + jt.objdata({view: "profile", 
-                                                     profid: revobj.penid }),
-                             onclick: jt.fs("app.profile.byprofid('" +
-                                            revobj.penid + "')")},
-                       penNameStr]]; }
         if(revobj.keywords) {
             if(penNameStr) {
                 keywords += ": "; }
@@ -1450,7 +1467,7 @@ return {
                  jump,
                  ["div", divattrs,
                   [remove,
-                   byline,
+                   byLineHTML(revobj, penNameStr),
                    clickspan(keywords, revclick),
                    clickspan(app.review.linkCountHTML(revid), revclick)]],
                  clickspan(revtext, revclick)]];

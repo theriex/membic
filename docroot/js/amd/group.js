@@ -1131,6 +1131,38 @@ app.group = (function () {
         if(!rows.length) {
             return "No posts."; }
         return ["table", rows];
+    },
+
+
+    findInsertionIndex = function (revref, revrefs) {
+        var i;
+        for(i = 0; i < revrefs.length; i += 1) {
+            if(revrefs[i].revid === revref.revid) {
+                return -1; }   //already there, no insertion index
+            if(revrefs[i].rev.modified < revref.rev.modified) {
+                return i; } }  //most recent first
+        return i;  //not found and nothing later, so append
+    },
+
+
+    mergeGroupActivity = function (group, revrefs) {
+        var revids, i, idx, revref, mergetotal = 0;
+        if(!group || !revrefs || !group.reviews) {
+            return; }
+        revids = group.reviews.split(",");
+        for(i = 0; i < Math.min(revids.length, 20); i += 1) {
+            revref = app.lcs.getRef("rev", revids[i]);
+            if(revref.status === "not cached") {
+                app.lcs.getFull("rev", revids[i], app.activity.displayActive);
+                return; }
+            if(revref.rev) {
+                idx = findInsertionIndex(revref, revrefs);
+                if(idx >= 0) {
+                    revref.rev.viagname = group.name;
+                    revref.rev.viagid = jt.instId(group);
+                    mergetotal += 1;
+                    revrefs.splice(idx, 0, revref); } } }
+        return mergetotal;
     };
 
 
@@ -1727,7 +1759,7 @@ return {
                     app.lcs.getFull(fetch.type, fetch.id,
                                     function () {
                                         app.group.groupNoticesHTML(divid); });
-                    }, 200); } }
+                }, 200); } }
         return jt.tac2html(fetch.html);
     },
 
@@ -1891,6 +1923,25 @@ return {
                   ["img", imgattrs]],
                  ["div", {id: "gcitydiv", cla: "groupcity"},
                   group.city]]];
+    },
+
+
+    mergeact: function () {
+        var penref, i, grpids, groupref, mergetotal = 0;
+        penref = app.pen.currPenRef();
+        if(!penref.pen.groups) {
+            return; }  //nothing to do
+        grpids = penref.pen.groups.split(",");
+        for(i = 0; i < grpids.length; i += 1) {
+            groupref = app.lcs.getRef("group", grpids[i]);
+            if(groupref.status === "not cached") {
+                app.lcs.getFull("group", grpids[i], app.group.mergeact);
+                return; }
+            if(groupref.group) {
+                mergetotal += mergeGroupActivity(groupref.group, 
+                                                 penref.actdisp.revrefs); } }
+        if(mergetotal) {
+            app.activity.displayActive(); }
     }
 
 }; //end of returned functions

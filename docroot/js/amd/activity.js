@@ -812,6 +812,8 @@ app.activity = (function () {
         if(actdisp.cursor && actdisp.revrefs.length === 0) {
             //auto find more activity without creating a recursion stack
             setTimeout(app.activity.moreact, 10); }
+        else {  //done searching primary, merge in group activity
+            setTimeout(app.group.mergeact, 200); }
         displayReviewActivity();
     },
 
