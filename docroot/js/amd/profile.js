@@ -502,8 +502,7 @@ app.profile = (function () {
         html = [];
         if(rrs.total > 0) {
             html.push(["div", {cla: "tabcontentheadertext"},
-                       "Reviews from you in the past " + recencyDays + 
-                       " days"]); }
+                       "Reviews in the past " + recencyDays + " days"]); }
         html.push(["ul", {cla: "revlist"}, revitems]);
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
@@ -1135,17 +1134,18 @@ app.profile = (function () {
 
 
     byLineHTML = function (revobj, penNameStr) {
-        var byline = "", vialink = "";
+        var byline = "", revref, vialink = "";
         if(penNameStr) {
-            if(revobj.viagname) {
+            revref = app.lcs.getRef("rev", revobj);
+            if(revref && revref.viagname && !jt.byId('groupnamediv')) {
                 vialink = 
                     [" (via ",
-                     ["a", {title: "Show " + jt.ndq(revobj.viagname),
+                     ["a", {title: "Show " + jt.ndq(revref.viagname),
                             href: "#" + jt.objdata({view: "group",
-                                                    groupid: revobj.viagid}),
+                                                    groupid: revref.viagid}),
                             onclick: jt.fs("app.group.bygroupid('" +
-                                           revobj.viagid + "')")},
-                      revobj.viagname],
+                                           revref.viagid + "')")},
+                      revref.viagname],
                      ")"]; }
             byline = ["review by ",
                       [["a", {title: "Show profile for " + jt.ndq(penNameStr),

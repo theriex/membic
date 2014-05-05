@@ -83,6 +83,11 @@ return {
                     app.layout.updateNavIcons("profile");
                     app.profile.byprofid(state.profid, state.tab); }
                 break; 
+            case "group":
+                if(jt.isId(state.groupid)) {
+                    app.layout.updateNavIcons("activity");
+                    app.group.bygroupid(state.groupid); }
+                break;
             case "activity":
                 app.layout.updateNavIcons("activity");
                 app.activity.displayActive();

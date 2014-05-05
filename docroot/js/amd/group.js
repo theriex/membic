@@ -123,7 +123,10 @@ app.group = (function () {
         var lis = [], html = "";
         if(membership()) {
             lis.push(["li", postMessageHTML()]); }
-        //ATTENTION: outstanding applications with reject/accept
+        //Not duplicating the membership reject/accept notices and
+        //processing here.  Seems better to centralize all notices
+        //requiring attention on the main activity display.  If that
+        //changes, or other notices are needed, this is where...
         if(lis.length > 0) {
             html = ["ul", {cla: "revlist"}, lis]; }
         return html;
@@ -247,7 +250,6 @@ app.group = (function () {
                     null, removefstr(wizgrp, wizgrp.revids[i]))); } }
         displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
-        //ATTENTION: include group reviews with "via" into activity
         verifyStash(app.group.display);
     },
 
@@ -1158,8 +1160,8 @@ app.group = (function () {
             if(revref.rev) {
                 idx = findInsertionIndex(revref, revrefs);
                 if(idx >= 0) {
-                    revref.rev.viagname = group.name;
-                    revref.rev.viagid = jt.instId(group);
+                    revref.viagname = group.name;
+                    revref.viagid = jt.instId(group);
                     mergetotal += 1;
                     revrefs.splice(idx, 0, revref); } } }
         return mergetotal;
@@ -1384,9 +1386,8 @@ return {
         app.layout.closeDialog(); //close group search dialog if open
         app.pen.getPen(function (pen) {  //not already loaded if by url param
             app.lcs.getFull("group", groupid, function (groupref) {
-                //ATTENTION: history needs to support this...
                 app.history.checkpoint({ view: "group", 
-                                         groupid: jt.instId(wizgrp)});
+                                         groupid: jt.instId(groupref.group)});
                 copyGroup(groupref.group);
                 displayGroup(); }); });
     },
