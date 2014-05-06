@@ -1942,7 +1942,54 @@ return {
                 mergetotal += mergeGroupActivity(groupref.group, 
                                                  penref.actdisp.revrefs); } }
         if(mergetotal) {
-            app.activity.displayActive(); }
+            app.activity.displayReviewActivity(); }
+    },
+
+
+    displayGroups: function (pen, divid) {
+        var i, grefs, lis = [];
+        grefs = pen.groups ? pen.groups.split(",") : [];
+        if(!grefs.length) {
+            lis.push(["li", "Not following any groups"]); }
+        for(i = 0; i < grefs.length; i += 1) {
+            grefs[i] = app.lcs.getRef("group", grefs[i]);
+            if(grefs[i].status === "not cached") {
+                lis.push(["li", "Fetching group " + grefs[i].groupid]);
+                break; } }
+        if(i >= grefs.length) {
+            grefs.sort(function (a, b) {
+                if(a.group && !b.group) { return -1; }
+                if(!a.group && b.group) { return 1; }
+                if(a.group.name < b.group.name) { return -1; }
+                if(a.group.name > b.group.name) { return 1; }
+                return 0; });
+            for(i = 0; i < grefs.length; i += 1) {
+                if(grefs[i].group) {
+                    lis.push(
+                        ["li", {cla: "penfont"},
+                         ["a", {title: "Show " + jt.ndq(grefs[i].group.name),
+                                href: "#" + jt.objdata(
+                                    {view: "group", 
+                                     groupid: grefs[i].groupid}),
+                                onclick: jt.fs("app.group.bygroupid('" +
+                                               grefs[i].groupid + "')")},
+                          grefs[i].group.name]]); } } }
+        jt.out(divid, jt.tac2html(
+            [["ul", {cla: "grouplist"}, lis],
+             ["div", {id: "srchgroupslinkdiv"},
+              ["a", {id: "srchgroups", href: "#findgroups",
+                     onclick: jt.fs("app.group.groupSearchDialog()")},
+               [["img", {cla: "reviewbadge", src: "img/group.png"}],
+                "Find groups to follow"]]]]));
+        if(i < grefs.length) {
+                app.lcs.getFull("group", grefs[i].groupid, function () {
+                    app.group.displayGroups(pen, divid); }); }
+    },
+
+
+    groupSearchDialog: function () {
+        //order by most recently updated.
+        jt.err("Not implemented yet");
     }
 
 }; //end of returned functions

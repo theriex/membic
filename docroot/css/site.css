@@ -188,7 +188,8 @@ img { border:0px; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
 #wdydfunblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
-#srchpenslinkdiv { font-size:small; padding: 20px 0px 0px 30px; }
+#srchpenslinkdiv, #srchgroupslinkdiv { 
+  font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
 #profpicdiv { width:130px; text-align:right; }
 #picplaceholderdiv { color:#999999; font-size:small;
@@ -300,6 +301,8 @@ img { border:0px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
 #relctrlsdiv { font-size:small; }
 #followmodelinkdiv { padding:0px 20px; }
+/* #revtypeseltable { border-collapse:collapse; } */
+.tabmodediv { font-size:small; }
 .poststatspan { font-size:small; color:#666; }
 .reqlinkspan { font-size:small; }
 .inlinkspan { background:url('../img/inlinkbg.png') no-repeat center center;
@@ -359,6 +362,7 @@ img { border:0px; }
 #sgrptagline { padding:20px 5px; font-size:small; font-style:italic; }
 #sgrpnamedescdiv { padding:0px 5px; }
 #sgrpjoinlink { padding:0px 0px 0px 20px; }
+.grouplist { list-style:none; padding:10px 0px 5px 10px; margin:0; }
 
 
 /* >> review layout */

@@ -585,7 +585,8 @@ app.profile = (function () {
 
 
     revTypeSelectorHTML = function (clickfuncstr) {
-        var html, i, reviewTypes, typename, label, imgsrc, pen, prefixstr;
+        var html, i, reviewTypes, typename, label, imgsrc, pen, prefixstr,
+            tlink = { tabname: "allrevs", dispname: "All"};
         prefixstr = "Top 20 ";
         if(clickfuncstr && clickfuncstr.indexOf("Top") < 0) {
             prefixstr = "20+ "; }
@@ -612,6 +613,18 @@ app.profile = (function () {
                                                  typename + "','out')"),
                                onclick: jt.fs(clickfuncstr + "('" + 
                                               typename + "')")}]); }
+        if(clickfuncstr && clickfuncstr.indexOf("revsearch") >= 0) {
+            tlink = { tabname: "best", dispname: "Top" }; }
+        html = ["table", {id: "revtypeseltable"},
+                ["tr",
+                 [["td", {cla: (app.winw < 400 ? "tdwide" : "")}, html],
+                  ["td", " | "],
+                  ["td",
+                   ["div", {id: "showalltoplinkdiv", cla: "tabmodediv"},
+                    ["a", {href: "#toggleshowalltop",
+                           onclick: jt.fs("app.profile.tabselect('" +
+                                          tlink.tabname + "')")},
+                     "Show " + tlink.dispname]]]]]];
         return jt.tac2html(html);
     },
 
@@ -797,6 +810,12 @@ app.profile = (function () {
     },
 
 
+    displayGroups = function () {
+        app.group.displayGroups(profpenref.pen, "profcontdiv");
+        app.layout.adjust();
+    },
+
+
     setCurrTabFromString = function (tabstr) {
         var profstate;
         verifyProfileState(profpenref);
@@ -807,6 +826,7 @@ app.profile = (function () {
         case "allrevs": profstate.seltabname = "allrevs"; break;
         case "following": profstate.seltabname = "following"; break;
         case "followers": profstate.seltabname = "followers"; break;
+        case "groups": profstate.seltabname = "groups"; break;
         }
     },
 
@@ -818,6 +838,7 @@ app.profile = (function () {
         case "allrevs": displayAllRevs(); break;
         case "following": displayFollowing(); break;
         case "followers": displayFollowers(); break;
+        case "groups": displayGroups(); break;
         }
     },
 
@@ -843,6 +864,22 @@ app.profile = (function () {
                     [["img", {cla: "tabico", src: "img/follow.png"}],
                      "&nbsp;" + tabtxt]]; }
         jt.out('followli', jt.tac2html(html));
+    },
+
+
+    writeTopTabContent = function (penref) {
+        var html;
+        if(penref.profstate.toptabmode === "all") {
+            html = ["a", {href: "#allreviews",
+                          title: "Click to see all reviews",
+                          onclick: jt.fs("app.profile.tabselect('allrevs')")},
+                    app.winw > 600 ? "All&nbsp;Reviews": "All"]; }
+        else {
+            html = ["a", {href: "#bestreviews",
+                          title: "Click to see top reviews",
+                          onclick: jt.fs("app.profile.tabselect('best')")},
+                    app.winw > 600 ? "Top&nbsp;Rated" : "Top"]; }
+        jt.out('alltopli', jt.tac2html(html));
     },
 
 
@@ -880,18 +917,15 @@ app.profile = (function () {
                             title: "Click to see recent reviews",
                             onclick: jt.fs("app.profile.tabselect('recent')")},
                       "Latest"]],
-                    ["li", {id: "bestli", cla: "unselectedTab"},
-                     ["a", {href: "#bestreviews",
-                            title: "Click to see top rated",
-                            onclick: jt.fs("app.profile.tabselect('best')")},
-                      app.winw > 600 ? "Top&nbsp;Rated" : "Top"]],
-                    ["li", {id: "allrevsli", cla: "unselectedTab"},
-                     ["a", {href: "#allreviews",
-                            title: "Click to see all reviews",
-                            onclick: jt.fs("app.profile.tabselect('allrevs')")},
-                      app.winw > 600 ? "All&nbsp;Reviews": "All"]],
-                    ["li", {id: "followli", cla: "unselectedTab"}]]]]]];
+                    ["li", {id: "alltopli", cla: "unselectedTab"}],
+                    ["li", {id: "followli", cla: "unselectedTab"}],
+                    ["li", {id: "groupsli", cla: "unselectedTab"},
+                     ["a", {href: "#groups",
+                            title: "Click to see group affiliations",
+                            onclick: jt.fs("app.profile.tabselect('groups')")},
+                      "Groups"]]]]]]];
         jt.out('proftabsdiv', jt.tac2html(html));
+        writeTopTabContent(penref);
         writeFollowTabContent(penref);
         app.profile.tabselect();
     },
@@ -1124,11 +1158,11 @@ app.profile = (function () {
 
     createGroupHTML = function () {
         var html = "";
-        // if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-        //     html = ["a", {id: "creategroup", href: "#creategroup",
-        //                   onclick: jt.fs("app.group.createGroup()")},
-        //             [["img", {cla: "reviewbadge", src: "img/group.png"}],
-        //              "Create Group"]]; }
+        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            html = ["a", {id: "creategroup", href: "#creategroup",
+                          onclick: jt.fs("app.group.createGroup()")},
+                    [["img", {cla: "reviewbadge", src: "img/group.png"}],
+                     "Create Group"]]; }
         return html;
     },
 
@@ -1178,6 +1212,14 @@ app.profile = (function () {
             profpenref.profstate.foltabmode = tabname;
             writeFollowTabContent(profpenref);
             li = jt.byId("followli"); }
+        if(!li && tabname.indexOf("best") >= 0) {
+            profpenref.profstate.toptabmode = "top";
+            writeTopTabContent(profpenref);
+            li = jt.byId("alltopli"); }
+        if(!li && tabname.indexOf("allrevs") >= 0) {
+            profpenref.profstate.toptabmode = "all";
+            writeTopTabContent(profpenref);
+            li = jt.byId("alltopli"); }
         li.className = "selectedTab";
         li.style.cssText = noTabStyling();
         li.style.backgroundColor = "transparent";

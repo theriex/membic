@@ -356,7 +356,7 @@ app.rel = (function () {
                 [["tr",
                   [["td", {cla: "headingtxt"}, showing.capitalize()],
                    ["td",
-                    ["div", {id: "followmodelinkdiv"},
+                    ["div", {id: "followmodelinkdiv", cla: "tabmodediv"},
                      ["a", {href:"#followshowtoggle",
                             onclick: jt.fs("app.profile.tabselect('" + 
                                            tab + "')")},
