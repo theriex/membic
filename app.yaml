@@ -377,6 +377,11 @@ handlers:
 - url: /grpstats.*
   script: src.py.group.app
 
+## Return groups whose name contains the qstr text
+## GET params: qstr, cursor, authparams
+- url: /srchgroups.*
+  script: src.py.group.app
+
 
 ######################################################################
 ##        Connection Services

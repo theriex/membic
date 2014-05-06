@@ -28,6 +28,7 @@ app.group = (function () {
                     {name: "quarterly", freq: 90, id: "freq90"},
                     {name: "6 months", freq: 180, id: "freq180"},
                     {name: "yearly", freq: 365, id: "freq365"}],
+        grpsrchmax = 1000,
 
 
     ////////////////////////////////////////
@@ -1165,6 +1166,50 @@ app.group = (function () {
                     mergetotal += 1;
                     revrefs.splice(idx, 0, revref); } } }
         return mergetotal;
+    },
+
+
+    displayGroupSearchResults = function (results) {
+        var pen, groupsearch, i, resitems = [];
+        pen = app.pen.currPenRef().pen;
+        groupsearch = app.pen.currPenRef().groupsearch;
+        for(i = 0; i < groupsearch.groups.length; i += 1) {
+            resitems.push(app.group.groupListItemHTML(groupsearch.groups[i])); }
+        if(!results || results.length === 0) {
+            results = [ { "fetched": 0, "cursor": "" } ]; }
+        groupsearch.cursor = "";
+        for(i = 0; i < results.length; i += 1) {
+            if(typeof results[i].fetched === "number") {
+                groupsearch.total += results[i].fetched;
+                resitems.push(["div", {cla: "sumtotal"},
+                               String(groupsearch.total) + 
+                               " groups searched, " +
+                               (groupsearch.total - groupsearch.groups.length) +
+                               " filtered."]);
+                if(results[i].cursor) {
+                    groupsearch.cursor = results[i].cursor; }
+                break; }  //if no results, i will be left at zero
+            if(!jt.idInCSV(jt.instId(results[i]), pen.groups)) {
+                app.lcs.put("group", results[i]);
+                groupsearch.groups.push(results[i]);
+                resitems.push(app.group.groupListItemHTML(results[i])); } }
+        if(groupsearch.groups.length === 0) {
+            resitems.push(["div", {cla: "sumtotal"},
+                           "No groups found"]); }
+        if(groupsearch.cursor) {
+            if(i === 0 && groupsearch.total < (grpsrchmax * groupsearch.reqs)) {
+                setTimeout(app.group.searchGroups, 10); }  //auto-repeat search
+            else {
+                if(groupsearch.total >= (grpsrchmax * groupsearch.reqs)) {
+                    groupsearch.reqs += 1; }
+                resitems.push(
+                    ["a", {href: "#continuesearch",
+                           onclick: jt.fs("app.group.searchGroups()"),
+                           title: "Continue searching for more groups"},
+                     "continue search..."]); } }
+        jt.out('searchresults', jt.tac2html(
+            ["ul", {cla: "grouplist"}, resitems]));
+        jt.byId("searchbutton").disabled = false;
     };
 
 
@@ -1946,34 +1991,37 @@ return {
     },
 
 
+    groupListItemHTML: function (group) {
+        var groupid = jt.instId(group);
+        return ["li", {cla: "penfont"},
+                ["a", {title: "Show " + jt.ndq(group.name),
+                       href: "#" + jt.objdata({view: "group", 
+                                               groupid: groupid}),
+                       onclick: jt.fs("app.group.bygroupid('" +
+                                      groupid + "')")},
+                 group.name]];
+    },
+
+
     displayGroups: function (pen, divid) {
-        var i, grefs, lis = [];
-        grefs = pen.groups ? pen.groups.split(",") : [];
-        if(!grefs.length) {
-            lis.push(["li", "Not following any groups"]); }
+        var i, grpids, ref, grefs = [], lis = [], fetchid = "";
+        grpids = pen.groups ? pen.groups.split(",") : [];
+        for(i = 0; i < grpids.length; i += 1) {
+            ref = app.lcs.getRef("group", grpids[i]);
+            if(ref.status === "not cached") {
+                fetchid = ref.groupid;
+                lis.push(["li", "Fetching group " + fetchid]);
+                break; }
+            if(ref.group) {
+                grefs.push(ref); } }
+        grefs.sort(function (a, b) {
+            if(a.group.name < b.group.name) { return -1; }
+            if(a.group.name > b.group.name) { return 1; }
+            return 0; });
         for(i = 0; i < grefs.length; i += 1) {
-            grefs[i] = app.lcs.getRef("group", grefs[i]);
-            if(grefs[i].status === "not cached") {
-                lis.push(["li", "Fetching group " + grefs[i].groupid]);
-                break; } }
-        if(i >= grefs.length) {
-            grefs.sort(function (a, b) {
-                if(a.group && !b.group) { return -1; }
-                if(!a.group && b.group) { return 1; }
-                if(a.group.name < b.group.name) { return -1; }
-                if(a.group.name > b.group.name) { return 1; }
-                return 0; });
-            for(i = 0; i < grefs.length; i += 1) {
-                if(grefs[i].group) {
-                    lis.push(
-                        ["li", {cla: "penfont"},
-                         ["a", {title: "Show " + jt.ndq(grefs[i].group.name),
-                                href: "#" + jt.objdata(
-                                    {view: "group", 
-                                     groupid: grefs[i].groupid}),
-                                onclick: jt.fs("app.group.bygroupid('" +
-                                               grefs[i].groupid + "')")},
-                          grefs[i].group.name]]); } } }
+            lis.push(app.group.groupListItemHTML(grefs[i].group)); }
+        if(!lis.length) {
+            lis.push(["li", "Not following any groups"]); }
         jt.out(divid, jt.tac2html(
             [["ul", {cla: "grouplist"}, lis],
              ["div", {id: "srchgroupslinkdiv"},
@@ -1981,15 +2029,59 @@ return {
                      onclick: jt.fs("app.group.groupSearchDialog()")},
                [["img", {cla: "reviewbadge", src: "img/group.png"}],
                 "Find groups to follow"]]]]));
-        if(i < grefs.length) {
-                app.lcs.getFull("group", grefs[i].groupid, function () {
-                    app.group.displayGroups(pen, divid); }); }
+        if(fetchid) {
+            app.lcs.getFull("group", fetchid, function () {
+                app.group.displayGroups(pen, divid); }); }
+    },
+
+
+    searchGroups: function () {
+        var groupsearch, qstr, params;
+        jt.byId("searchbutton").disabled = true;  //working...
+        groupsearch = app.pen.currPenRef().groupsearch;
+        qstr = jt.byId('searchtxt').value;
+        params = app.login.authparams() + "&qstr=" + jt.enc(qstr) +
+            "&cursor=" + jt.enc(groupsearch.cursor);
+        jt.call('GET', "srchgroups?" + params, null,
+                function (results) {
+                    displayGroupSearchResults(results); },
+                app.failf(function (code, errtxt) {
+                    jt.out('searchresults',
+                           "error code: " + code + " " + errtxt); }),
+                jt.semaphore("group.searchGroups"));
+    },
+
+
+    startGroupSearch: function () {
+        app.pen.currPenRef().groupsearch = {
+            params: {},
+            groups: [],
+            cursor: "",
+            total: 0,
+            requests: 1 };
+        app.group.searchGroups();
     },
 
 
     groupSearchDialog: function () {
-        //order by most recently updated.
-        jt.err("Not implemented yet");
+        var html, searchfunc = jt.fs("app.group.startGroupSearch()");
+        html = [["table", {cla: "searchtable"},
+                 [["tr",
+                   [["td", {cla: "formstyle"},
+                     ["input", {type: "text", id: "searchtxt", size: "40",
+                                placeholder: "Group name",
+                                onchange: searchfunc, value: ""}]],
+                    ["td", {cla: "formstyle"},
+                     ["span", {id: "srchbuttonspan"},
+                      ["button", {type: "button", id: "searchbutton",
+                                  onclick: searchfunc},
+                       "Search"]]]]]]],
+                ["div", {id: "searchresults"}]];
+        html = app.layout.dlgwrapHTML("Recommended groups to follow", html);
+        app.layout.openDialog({y:140}, html);
+        jt.byId('searchtxt').focus();
+        //hit the search button for them...
+        setTimeout(app.group.startGroupSearch, 50);
     }
 
 }; //end of returned functions

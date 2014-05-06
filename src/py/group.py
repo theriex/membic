@@ -577,6 +577,37 @@ class GetGroupStats(webapp2.RequestHandler):
         writeJSONResponse(json.dumps(stat), self.response)        
 
 
+class SearchGroups(webapp2.RequestHandler):
+    def get(self):
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        qstr = self.request.get('qstr')
+        qstr_c = canonize(qstr)
+        cursor = self.request.get('cursor')
+        results = []
+        groups = Group.all()
+        groups.order('-modified')
+        if cursor:
+            groups.with_cursor(start_cursor = cursor)
+        maxcheck = 1000
+        checked = 0
+        cursor = ""
+        for group in groups:
+            checked += 1
+            if not qstr or not qstr_c or qstr_c in group.name_c or\
+                    (group.description and qstr in group.description) or\
+                    (group.city and qstr_c in group.city.lower()):
+                results.append(group)
+            if checked >= maxcheck or len(results) >= 20:
+                # hit the max, get return cursor for next fetch
+                cursor = groups.cursor()
+                break
+        returnJSON(self.response, results, cursor, checked)
+
+
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
@@ -590,6 +621,7 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grprejok', MembershipRejectAck),
                                ('/grpmemremove', RemoveMember),
                                ('/grpbyname', GetGroupByName),
-                               ('/grpstats', GetGroupStats)
+                               ('/grpstats', GetGroupStats),
+                               ('/srchgroups', SearchGroups),
                                ], debug=True)
 
