@@ -1165,7 +1165,7 @@ app.group = (function () {
             if(revref.status === "not cached") {
                 app.lcs.getFull("rev", revids[i], app.activity.displayActive);
                 return; }
-            if(revref.rev) {
+            if(revref.rev && revref.rev.penid !== app.pen.currPenId()) {
                 idx = findInsertionIndex(revref, revrefs);
                 if(idx >= 0) {
                     revref.viagname = group.name;
