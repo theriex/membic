@@ -417,9 +417,16 @@ app.group = (function () {
 
 
     displayGroupMembers = function () {
+        var staturl = "http://www.wdydfun.com/groups/" + wizgrp.name_c;
         jt.out('groupmembersdiv', jt.tac2html(
             ["table", 
              [["tr",
+               ["td", {colspan: 2, cla: "permalink"},
+                ["Public site ",
+                 ["a", {href: staturl, 
+                        onclick: jt.fs("window.open('" + staturl + "')")},
+                  staturl]]]],
+              ["tr",
                [["td", {cla: "tdright"},
                  ["div", {cla: "memberstypeheadingdiv"},
                   memberInviteHTML("Invite a friend")]],
