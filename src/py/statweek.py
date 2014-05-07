@@ -5,6 +5,7 @@ import logging
 import json
 from rev import Review
 from morutil import *
+from group import Group
 
 
 class Week(db.Model):
@@ -109,6 +110,22 @@ def get_stats():
     return result
 
 
+def list_groups():
+    result = ""
+    groups = Group.all()
+    groups.order('-modified')
+    checked = 0
+    for group in groups:
+        checked += 1
+        if checked > 100:
+            break
+        result += "<li><a href=\"groups/" + group.name_c + "\">" +\
+            group.name + "</a>\n"
+    if result:
+        result = "<p>Groups:</p><ul>" + result + "</p>"
+    return result
+
+
 def get_stats_html(result):
     html = "<!doctype html>"
     html += "<html itemscope=\"itemscope\""
@@ -121,7 +138,8 @@ def get_stats_html(result):
     html +=   "<title>My Open Reviews Review Activity</title>"
     html += "</head>"
     html += "<body>"
-    html += "stats: <ul>"
+    html += list_groups()
+    html += "<p>Weekly stats:</p><ul>"
     for week in result:
         html += "<li>" + week.start + " (modified " + week.modified + ")<ul>"
         for daystr in days:
