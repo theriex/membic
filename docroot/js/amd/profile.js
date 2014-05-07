@@ -923,7 +923,8 @@ app.profile = (function () {
                      ["a", {href: "#groups",
                             title: "Click to see group affiliations",
                             onclick: jt.fs("app.profile.tabselect('groups')")},
-                      "Groups"]]]]]]];
+                      [["img", {cla: "tabico", src: "img/group.png"}],
+                       (app.winw < 500 ? "" : "&nbsp;Groups")]]]]]]]];
         jt.out('proftabsdiv', jt.tac2html(html));
         writeTopTabContent(penref);
         writeFollowTabContent(penref);

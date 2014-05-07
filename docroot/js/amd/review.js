@@ -639,6 +639,21 @@ app.review = (function () {
     },
 
 
+    permalinkHTML = function (url) {
+        var html = ["a", {href: url, cla: "permalink",
+                          onclick: jt.fs("window.open('" + url + "')")},
+                    "permalink"];
+        if(app.winw < 500) {
+            html = ["div", {id: "permalinkdiv"},
+                    html]; }
+        else {
+            html = ["&nbsp;&nbsp;",
+                    html,
+                    ["br"]]; }
+        return html;
+    },
+
+
     revFormButtonsHTML = function (pen, review, type, keyval, mode) {
         var temp, html = "";
         if(!keyval) {  //user just chose type for editing
@@ -675,15 +690,13 @@ app.review = (function () {
                     [["button", {type: "button", id: "deletebutton",
                                  onclick: jt.fs("app.review.delrev()")},
                       "Delete"],
-                     "&nbsp;",
+                     ["button", {type: "button", id: "postbutton",
+                                 onclick: jt.fs("app.group.crevpost()")},
+                      "Post to Groups"],
                      ["button", {type: "button", id: "editbutton",
                                  onclick: jt.fs("app.review.display()")},
                       "Edit"],
-                     "&nbsp;&nbsp;",
-                     ["a", {href: temp, cla: "permalink",
-                            onclick: jt.fs("window.open('" + temp + "')")},
-                      "permalink"],
-                     ["br"],
+                     permalinkHTML(temp),
                      ["div", {id: "revsavemsg"}]]]; }
         else {  //reading someone else's review
             html = [app.revresp.feedbackActionsHTML(),
@@ -1209,7 +1222,8 @@ app.review = (function () {
                  ["table",
                   ["tr",
                    [["td", {valign: "top"},
-                     ["div", {id: "revformimagediv"},
+                     ["div", {id: "revformimagediv",
+                              style: "min-width:125px;"},  //keep img space
                       revFormImageHTML(review, type, keyval, mode)]],
                     ["td", {valign: "top"},
                      ["div", {id: "revformtranformactionsdiv"},

@@ -1158,13 +1158,13 @@ app.group = (function () {
     mergeGroupActivity = function (group, revrefs) {
         var revids, i, idx, revref, mergetotal = 0;
         if(!group || !revrefs || !group.reviews) {
-            return; }
+            return 0; }
         revids = group.reviews.split(",");
         for(i = 0; i < Math.min(revids.length, 20); i += 1) {
             revref = app.lcs.getRef("rev", revids[i]);
             if(revref.status === "not cached") {
-                app.lcs.getFull("rev", revids[i], app.activity.displayActive);
-                return; }
+                app.lcs.getFull("rev", revids[i], app.group.mergeact);
+                return mergetotal; }
             if(revref.rev && revref.rev.penid !== app.pen.currPenId()) {
                 idx = findInsertionIndex(revref, revrefs);
                 if(idx >= 0) {
@@ -1668,6 +1668,21 @@ return {
             //not returning in edit mode since cancel not an option
             rethash: "#view=group&groupid=" + groupid,
             left: "70px", top: "140px"});
+    },
+
+
+    crevpost: function () {
+        var html;
+        html = ["div", {id: "primgroupdlgdiv"},
+                ["No matching groups found for post.",
+                 buttonsHTML(
+                     [{name: "Ok", fstr: "app.layout.closeDialog()"}])]];
+        html = app.layout.dlgwrapHTML("Post To Groups", html);
+        app.layout.openDialog({y:140}, html, null,
+                              function () {
+                                  var elem = jt.byId('ok');
+                                  elem.focus(); });
+        app.group.currentReviewPostDialog();
     },
 
 

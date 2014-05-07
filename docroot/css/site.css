@@ -244,7 +244,7 @@ img { border:0px; }
 .revdisptable td { padding:2px 5px; }
 #transformactionstd { padding:2px 5px 10px 15px; }
 #revformbuttonstd { }
-#revbuttonsdiv { margin-left:15%; padding:20px; }
+#revbuttonsdiv { padding:20px; }
 #revbuttonsdiv button { margin:0px 10px; }
 #revsavemsg { word-spacing:normal; }
 #requestbuttonsdiv { text-align:center; padding:10px; }
@@ -286,6 +286,7 @@ img { border:0px; }
 .inlinestarsimg { vertical-align:bottom; }
 .starsimg { vertical-align:middle; }
 .permalink { font-size:xx-small; }
+#permalinkdiv { padding:20px 40px 0px 0px; text-align:center; }
 .actbuttons { padding:10px; }
 #chpstatdiv { padding:10px; }
 .buttontable { cursor:pointer; }
