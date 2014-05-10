@@ -283,7 +283,6 @@ img { border:0px; }
 .tagline { font-style:italic; color:#333; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; white-space:nowrap; }
-.inlinestarsimg { vertical-align:bottom; }
 .starsimg { vertical-align:middle; }
 .permalink { font-size:xx-small; }
 #permalinkdiv { padding:20px 40px 0px 0px; text-align:center; }
@@ -310,6 +309,7 @@ img { border:0px; }
   height:19px; width:19px; display:inline-block; 
   text-align:center; font-size:14px; font-weight:bold; vertical-align:middle; }
 .inbct { color:#666666; }
+.prereviewcbspan { padding:0px 0px 0px 40px; }
 
 /* >> group layout */
 #primgroupdlgdiv { padding:0px; }

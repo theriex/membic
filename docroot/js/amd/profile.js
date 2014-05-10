@@ -1500,7 +1500,7 @@ return {
             revtext = ["div", divattrs,
                        jt.ellipsis(revobj.text, 255)]; }
         html = ["li", liattrobj,
-                [clickspan(app.review.starsImageHTML(revobj.rating), revclick),
+                [clickspan(app.review.starsImageHTML(revobj), revclick),
                  clickspan(app.review.badgeImageHTML(type), revclick),
                  "&nbsp;",
                  ["a", {id: "lihr" + revid, cla: linkclass, 

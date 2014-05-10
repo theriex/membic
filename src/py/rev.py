@@ -37,14 +37,13 @@ class Review(db.Model):
     album = db.StringProperty()
     starring = db.StringProperty()
     address = db.StringProperty()
-    # storing year as a string to allow values like "80's"
-    year = db.StringProperty()
+    year = db.StringProperty()  # string allows values like "80's"
     # The canonized key/subkey field value for search match
     cankey = db.StringProperty()
     altkeys = db.TextProperty()
     # Blackboard of connection service processing values in JSON format
     svcdata = db.TextProperty()
-    srcrev = db.IntegerProperty()
+    srcrev = db.IntegerProperty()  # source review id, or -101 if pre-review
     # Duplicated data to make summary reporting easier
     penname = db.StringProperty()
 

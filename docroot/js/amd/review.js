@@ -113,25 +113,29 @@ app.review = (function () {
     //rating is a value from 0 - 100.  Using Math.round to adjust values
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
-    starsImageHTML = function (rating, showblank, imgclassname) {
+    starsImageHTML = function (rating, mode) {
         var imgfile = "img/stars18ptC.png", greyfile = "img/stars18ptCg.png",
-            width, offset, rat, html,
-            cname = imgclassname || "starsimg";
+            width, offset, rat, html;
+        if(typeof rating !== 'number') {
+            mode = mode || (rating.srcrev === -101 ? "prereview" : "read");
+            rating = rating.rating; }
         rat = app.review.starRating(rating);
+        if(mode === "prereview") {
+            return jt.tac2html(
+                ["img", {cla: "starsimg", src: "img/prereview.png",
+                         title: rat.title, alt: rat.title}]); }
         width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = [];
-        html.push(["img", {id: "fillstarsimg", cla: cname, 
-                           src: "img/blank.png",
+        html.push(["img", {cla: "starsimg", src: "img/blank.png",
                            style: "width:" + width + "px;" + 
                                   "height:" + starimgh + "px;" +
                                   "background:url('" + imgfile + "');",
                            title: rat.title, alt: rat.title}]);
-        if(showblank) {
+        if(mode === "edit") {  //add appropriate grey star background on right
             if(rat.step % 2 === 1) {  //odd, use half star display
                 offset = Math.floor(starimgw / rat.maxstep);
                 html.push(
-                    ["img", {id: "greystarsimg", cla: cname,
-                             src: "img/blank.png",
+                    ["img", {cla: "starsimg", src: "img/blank.png",
                              style: "width:" + (starimgw - width) + "px;" + 
                                     "height:" + starimgh + "px;" +
                                     "background:url('" + greyfile + "')" +
@@ -139,17 +143,16 @@ app.review = (function () {
                              title: rat.title, alt: rat.title}]); }
             else { //even, use full star display
                 html.push(
-                    ["img", {id: "greystarsimg", cla: cname,
-                             src: "img/blank.png",
+                    ["img", {cla: "starsimg", src: "img/blank.png",
                              style: "width:" + (starimgw - width) + "px;" + 
                                     "height:" + starimgh + "px;" +
                                     "background:url('" + greyfile + "');",
                              title: rat.title, alt: rat.title}]); } }
-        else if(!imgclassname) { //add right padding for left justified stars
-            html.push(["img", {cla: cname, src: "img/blank.png",
+        else { //add blank space and right padding to left justify stars
+            html.push(["img", {cla: "starsimg", src: "img/blank.png",
                                style: "width:" + (starimgw - width) + "px;" +
                                       "height:" + starimgh + "px;"}]);
-            html.push(["img", {cla: cname, src: "img/blank.png",
+            html.push(["img", {cla: "starsimg", src: "img/blank.png",
                                style: "width:10px;" + 
                                       "height:" + starimgh + "px;"}]); }
         return jt.tac2html(html);
@@ -550,6 +553,7 @@ app.review = (function () {
 
 
     readAndValidateFieldValues = function (type, errors) {
+        var cbprerev;
         if(!type) {
             type = findReviewType(crev.revtype); }
         if(!errors) {
@@ -559,7 +563,12 @@ app.review = (function () {
             keywordsValid(type, errors);
             reviewTextValid(type, errors);
             secondaryFieldsValid(type, errors);
-            noteURLValue(); }
+            noteURLValue();
+            cbprerev = jt.byId("cbprerev");
+            if(cbprerev && cbprerev.checked) {
+                crev.srcrev = -101; }
+            else if(crev.srcrev && crev.srcrev === -101) {
+                crev.srcrev = 0; } }
     },
 
 
@@ -604,7 +613,7 @@ app.review = (function () {
     transformActionsHTML = function (review, type, keyval, mode) {
         var html = "", actions = [];
         if(keyval && mode === "edit") {
-            if(review.srcrev && !jt.instId(review)) {
+            if(review.srcrev > 0 && !jt.instId(review)) {
                 //new corresponding review, allow finding mismatched titles
                 actions.push(makeTransformLink(
                     "app.revresp.searchCorresponding()",
@@ -725,21 +734,28 @@ app.review = (function () {
 
 
     revFormStarsHTML = function (review, type, keyval, mode) {
-        var jumplink, width, html = "";
+        var jumplink, prerevcb, width, html = "";
         if(keyval) {
             width = textTargetWidth() + 20;
-            jumplink = "";
-            if(mode !== "edit") {
-                jumplink = app.review.jumpLinkHTML(review.url || ""); }
+            if(mode === "edit") {
+                jumplink = "";
+                prerevcb = ["span", {cla: "prereviewcbspan"},
+                            jt.checkbox("cbprerev", "cbprerev", "Pre-Review",
+                                        crev.src === -101)]; }
+            else { 
+                jumplink = app.review.jumpLinkHTML(review.url || "");
+                prerevcb = ""; }
             html = ["div", {id: "revformstarscontent",
                             style: "width:" + width + "px;"},
                     [["div", {id: "rfsjumpdiv", style: "float:right;"},
                       jumplink],
                      ["div", {id: "rfsratediv"},
                       [["span", {id: "stardisp"},
-                        starsImageHTML(review.rating, mode === "edit")],
+                        starsImageHTML(review, mode)],
                        "&nbsp;",
-                       app.review.badgeImageHTML(type)]]]]; }
+                       app.review.badgeImageHTML(type),
+                       "&nbsp;",
+                       prerevcb]]]]; }
         else {  //show type 
             html = app.review.badgeImageHTML(type); }
         return html;
@@ -880,7 +896,9 @@ app.review = (function () {
         if(event.changedTouches && event.changedTouches[0]) {
             evtx = jt.geoXY(event.changedTouches[0]).x; }
         relx = Math.max(evtx - spanloc.x, 0);
-        if(relx > 100) {  //normal values for relx range from 0 to ~86
+        if(relx > 130) {  //normal relx values are 0 to ~86
+            return; }     //ignore far out of range events.
+        if(relx > 100) {  //trying to touch to the far right and failing
             setTimeout(function () {  //separate event handling
                 selectRatingByMenu(evtx); }, 20);
             return; }
@@ -890,7 +908,7 @@ app.review = (function () {
         if(roundup) {
             sval = app.review.starRating(sval, true).value; }
         crev.rating = sval;
-        html = starsImageHTML(crev.rating, true);
+        html = starsImageHTML(crev, "edit");
         jt.out('stardisp', html);
     },
 
@@ -1342,7 +1360,7 @@ return {
                 [["div", {cla: "statrevmodkeydiv"},
                   jt.colloquialDate(jt.ISOString2Day(review.modified)) +
                   "&nbsp;" + review.keywords],
-                 app.review.starsImageHTML(review.rating),
+                 app.review.starsImageHTML(review),
                  app.review.badgeImageHTML(type),
                  "&nbsp;",
                  revlink,
@@ -1483,8 +1501,8 @@ return {
     },
 
 
-    starsImageHTML: function (rating, showblank) {
-        return starsImageHTML(rating, showblank);
+    starsImageHTML: function (rating, mode) {
+        return starsImageHTML(rating, mode);
     },
 
 
@@ -1852,7 +1870,7 @@ return {
         var html;
         app.cancelOverlay();
         crev.rating = rating;
-        html = starsImageHTML(crev.rating, true);
+        html = starsImageHTML(crev, "edit");
         jt.out('stardisp', html);
     },
 
@@ -1909,7 +1927,6 @@ return {
     picHTML: function (review, type) {
         return revFormImageHTML(review, type, "defined", "listing");
     }
-
 
 }; //end of returned functions
 }());

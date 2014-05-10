@@ -29,8 +29,7 @@ app.revresp = (function () {
                 app.lcs.verifyCorrespondingLinks(review, 
                                                  app.review.getCurrentReview());
             }, 100);
-            imghtml = app.review.starsImageHTML(review.rating, false, 
-                                                "inlinestarsimg");
+            imghtml = app.review.starsImageHTML(review);
             msghtml = "Your review: " + imghtml; }
         html = jt.imgntxt("writereview.png", msghtml,
                            "app.revresp.respond()", "#respond",
@@ -686,7 +685,7 @@ app.revresp = (function () {
     correspRevHTML = function (penref, revref) {
         return ["tr",
                 [["td", {cla:"respcol", align:"left"},
-                  app.review.starsImageHTML(revref.rev.rating)],
+                  app.review.starsImageHTML(revref.rev)],
                  ["td", {cla:"respval", valign:"top", align:"right"},
                   ["a", {href: "#" + jt.ndq(penref.pen.name),
                          onclick: jt.fs("app.profile.readReview('" +
