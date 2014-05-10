@@ -304,7 +304,7 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
         body += "Done anything fun recently?" +\
             " Your friends would like to hear about it..."
     body += "\n\n" +\
-        "For group activity and top rated reviews," +\
+        "For group activity, top rated, remembered, and pre-reviews" +\
         " go to http://www.wdydfun.com" +\
         "\n\n" + req_summary_text(reqs)
     if not reviews or len(reviews) == 0:
