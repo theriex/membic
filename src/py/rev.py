@@ -526,6 +526,26 @@ class ReviewActivity(webapp2.RequestHandler):
         returnJSON(self.response, reviews, cursor, checked)
 
 
+class FetchPreReviews(webapp2.RequestHandler):
+    def get(self):
+        acc = authenticated(self.request)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        penid = intz(self.request.get('penid'))
+        if not penid:
+            self.error(400)
+            self.response.out.write("penid required")
+            return
+        where = "WHERE penid = :1 AND srcrev = -101 ORDER BY modified DESC"
+        revquery = Review.gql(where, penid)
+        fetchmax = 50
+        reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
+                                 deadline=10)
+        returnJSON(self.response, reviews)
+
+
 class MakeTestReviews(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
@@ -567,5 +587,6 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/revbyid', GetReviewById), 
                                ('/revbykey', GetReviewByKey),
                                ('/revact', ReviewActivity),
+                               ('/fetchprerevs', FetchPreReviews),
                                ('/testrevs', MakeTestReviews)], debug=True)
 

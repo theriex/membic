@@ -197,6 +197,10 @@ handlers:
 - url: /revact.*
   script: src.py.rev.app
 
+## Return pre-reviews for the given pen
+## GET params: penid, authparams
+- url: /fetchprerevs.*
+  script: src.py.rev.app
 
 
 ######################################################################

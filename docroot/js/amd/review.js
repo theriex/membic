@@ -148,12 +148,9 @@ app.review = (function () {
                                     "height:" + starimgh + "px;" +
                                     "background:url('" + greyfile + "');",
                              title: rat.title, alt: rat.title}]); } }
-        else { //add blank space and right padding to left justify stars
+        else { //add blank space to left justify stars
             html.push(["img", {cla: "starsimg", src: "img/blank.png",
                                style: "width:" + (starimgw - width) + "px;" +
-                                      "height:" + starimgh + "px;"}]);
-            html.push(["img", {cla: "starsimg", src: "img/blank.png",
-                               style: "width:10px;" + 
                                       "height:" + starimgh + "px;"}]); }
         return jt.tac2html(html);
     },
@@ -1275,6 +1272,7 @@ app.review = (function () {
         var penref = app.pen.currPenRef();
         if(penref.profstate) {
             penref.profstate.allRevsState = null; }
+        penref.prerevs = null;
     },
 
 

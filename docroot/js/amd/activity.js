@@ -40,6 +40,7 @@ app.activity = (function () {
                    activity: { currpg: 0, pages: [] },
                    other: { currpg: 0, pages: [] } },
         topDispMax = 20,  //max top reviews to display
+        memomode = "Remembered",  //other option is "Pre-Reviews"
         remActivityType = "",  //by default display all remembered reviews
         announcedismiss = false,
 
@@ -84,60 +85,90 @@ app.activity = (function () {
     },
 
 
-    writeNavDisplay = function (dispmode) {
-        var html, recent, top, url, rsslink, remall;
-        if(dispmode === "activity") {
-            if(activityMode === "amnew") {
-                recent = ["span", {cla: "actmodesel"},
-                          "Recent"];
-                if(topModeEnabled) {
-                    top = ["a", {href: "#", title: "Show top reviews",
-                                 onclick: jt.fs("app.activity.switchmode" +
-                                                "('amtop')")},
-                           "Top Rated"]; }
-                else {
-                    top = ["span", {cla: "actmodeseldis"},
-                           "Top Rated"]; } }
-            else { //activityMode === "amtop"
-                recent = ["a", {href: "#", title: "Show recent reviews",
-                                onclick: jt.fs("app.activity.switchmode" + 
-                                               "('amnew')")},
-                          "Recent"];
-                top = ["span", {cla: "actmodesel"},
+    navDisplayActivityHTML = function () {
+        var html, recent, top, url, rsslink;
+        if(activityMode === "amnew") {
+            recent = ["span", {cla: "actmodesel"},
+                      "Recent"];
+            if(topModeEnabled) {
+                top = ["a", {href: "#", title: "Show top reviews",
+                             onclick: jt.fs("app.activity.switchmode" +
+                                            "('amtop')")},
                        "Top Rated"]; }
-            url = "rssact?pen=" + app.pen.currPenId();
-            rsslink = ["a", {href: url, id: "rsslink",
-                             title: "RSS feed for recent friend reviews",
-                             onclick: jt.fs("window.open('" + url + "')")},
-                       ["img", {cla: "rssico", src: "img/rssicon.png"}]];
-            if(app.winw >= app.minSideBySide) {
-                html = ["table",
-                        ["tr",
-                         [["td", {id: "toptd"}, top],
-                          ["td", revTypeSelectorHTML("toptype")],
-                          ["td", "|"],
-                          ["td", recent],
-                          ["td", rsslink]]]]; }
-            else { //too tight, need to go vertical
-                html = ["table", {style: "width:" + (app.winw - 20) + "px;"},
-                        [["tr",
-                          [["td", {id: "toptd", align: "right"}, top],
-                           ["td", revTypeSelectorHTML("toptype")]]],
-                         ["tr",
-                          ["td", {colspan: 2}, 
-                           [recent, rsslink]]]]]; } }
-        else if(dispmode === "memo") {
-            if(!remActivityType) {
-                remall = ["span", {cla: "actmodesel"},
-                          "All"]; }
             else {
-                remall = ["a", {href: "#", title: "Show all remembered reviews",
-                                onclick: jt.fs("app.activity.remtype('')")},
-                          "All"]; }
+                top = ["span", {cla: "actmodeseldis"},
+                       "Top Rated"]; } }
+        else { //activityMode === "amtop"
+            recent = ["a", {href: "#", title: "Show recent reviews",
+                            onclick: jt.fs("app.activity.switchmode" + 
+                                           "('amnew')")},
+                      "Recent"];
+            top = ["span", {cla: "actmodesel"},
+                   "Top Rated"]; }
+        url = "rssact?pen=" + app.pen.currPenId();
+        rsslink = ["a", {href: url, id: "rsslink",
+                         title: "RSS feed for recent friend reviews",
+                         onclick: jt.fs("window.open('" + url + "')")},
+                   ["img", {cla: "rssico", src: "img/rssicon.png"}]];
+        if(app.winw >= app.minSideBySide) {
             html = ["table",
                     ["tr",
-                     [["td", {id: "alltd"}, remall],
-                      ["td", revTypeSelectorHTML("remtype")]]]]; }
+                     [["td", {id: "toptd"}, top],
+                      ["td", revTypeSelectorHTML("toptype")],
+                      ["td", "|"],
+                      ["td", recent],
+                      ["td", rsslink]]]]; }
+        else { //too tight, need to go vertical
+            html = ["table", {style: "width:" + (app.winw - 20) + "px;"},
+                    [["tr",
+                      [["td", {id: "toptd", align: "right"}, top],
+                       ["td", revTypeSelectorHTML("toptype")]]],
+                     ["tr",
+                      ["td", {colspan: 2}, 
+                       [recent, rsslink]]]]]; }
+        return html;
+    },
+
+
+    navDisplayMemoHTML = function () {
+        var html, remem, prerev, remall;
+        if(memomode === "Remembered") {
+            remem = ["span", {cla: "actmodesel"}, "Remembered"];
+            prerev = ["a", {href: "#Pre-Reviews", title: "Show Pre-Reviews",
+                            onclick: jt.fs("app.activity.changeMemoMode('" +
+                                           "Pre-Reviews')")},
+                      "Pre-Reviews"]; }
+        else { //memomode === "Pre-Reviews"
+            remem = ["a", {href: "#Remembered", title: "Show Remembered",
+                           onclick: jt.fs("app.activity.changeMemoMode('" +
+                                          "Remembered')")},
+                     "Remembered"];
+            prerev = ["span", {cla: "actmodesel"}, "Pre-Reviews"]; }
+        if(!remActivityType) {
+            remall = ["span", {cla: "actmodesel"},
+                      "All"]; }
+        else {
+            remall = ["a", {href: "#", title: "Show all remembered reviews",
+                            onclick: jt.fs("app.activity.remtype('')")},
+                      "All"]; }
+        html = [["div", {id: "memomodediv"},
+                 [remem,
+                  " | ",
+                  prerev]],
+                ["table",
+                 ["tr",
+                  [["td", {id: "alltd"}, remall],
+                   ["td", revTypeSelectorHTML("remtype")]]]]];
+        return html;
+    },
+
+
+    writeNavDisplay = function (dispmode) {
+        var html;
+        if(dispmode === "activity") {
+            html = navDisplayActivityHTML(); }
+        else if(dispmode === "memo") {
+            html = navDisplayMemoHTML(); }
         html = jt.tac2html(html);
         app.layout.headingout(html);
         jt.out('rightcoldiv', "");
@@ -275,62 +306,108 @@ app.activity = (function () {
     },
 
 
+    displayPenrefPreReviews = function () {
+        var penref, lis = [], i, revref;
+        penref = app.pen.currPenRef();
+        for(i = 0; i < Math.min(penref.prerevs.length, 50); i += 1) {
+            revref = app.lcs.getRef("rev", penref.prerevs[i]);
+            if(revref.status === "not cached") {
+                revref = app.lcs.put("rev", penref.prerevs[i]); }
+            //possible user changed the prerev to a regular rev
+            if(revref.rev && revref.rev.srcrev === -101 &&
+                   (!remActivityType ||
+                    revref.rev.revtype === remActivityType)) {
+                lis.push(app.profile.reviewItemHTML(revref.rev)); } }
+        if(!lis.length) {
+            lis.push(["li", "You have not written any " +
+                      (remActivityType ? remActivityType + " " : "") +
+                      "Pre-Reviews"]); }
+        jt.out('revactdiv', jt.tac2html(["ul", {cla: "revlist"}, lis]));
+        app.layout.adjust();
+    },
+
+
+    displayPreReviews = function () {
+        var penref, params;
+        penref = app.pen.currPenRef();
+        if(penref.prerevs) {
+            return displayPenrefPreReviews(); }
+        jt.out('revactdiv', "Fetching Pre-Reviews...");
+        app.layout.adjust();
+        params = "penid=" + jt.instId(penref.pen) + 
+            "&" + app.login.authparams();
+        jt.call('GET', "fetchprerevs?" + params, null,
+                function (prerevs) {
+                    penref.prerevs = prerevs;
+                    displayPenrefPreReviews(); },
+                app.failf(),
+                jt.semaphore("activity.displayPreReviews"));
+    },
+
+
+    displayPenrefRemembered = function () {
+        var penref, hint, remitems = [], html, i, revref, crid, friend, cfid;
+        penref = app.pen.currPenRef();
+        for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
+            if(!penref.remembered[i].forgotten) {
+                revref = app.lcs.getRef("rev", penref.remembered[i].revid);
+                if(revref.status === "not cached") {
+                    crid = penref.remembered[i].revid;
+                    remitems.push(["li",
+                                   "Fetching Review " + crid + "..."]);
+                    break; }
+                if(!revref.rev.penNameStr) {
+                    friend = app.lcs.getRef("pen", revref.rev.penid).pen;
+                    if(friend) {
+                        revref.rev.penNameStr = friend.name; } }
+                if(!revref.rev.penNameStr) {
+                    cfid = revref.rev.penid;
+                    remitems.push(["li", 
+                                   "Fetching Pen Name " + cfid + "..."]);
+                    break; }
+                //have review with associated pen name
+                if(!remActivityType || 
+                   revref.rev.revtype === remActivityType) {
+                    remitems.push(app.profile.reviewItemHTML(
+                        revref.rev, revref.rev.penNameStr)); } } }
+        hint = "If you see a review worth remembering, click its " + 
+            "\"Remember\" button to keep a reference to it here.";
+        if(remitems.length === 0) {  //no reviews currently remembered
+            remitems.push(["li", "You have not remembered any " + 
+                           remActivityType +
+                           (remActivityType ? " " : "") +
+                           "reviews. " + hint]); }
+        else if(i < 3) {  //reinforce how to remember reviews
+            remitems.push(["li"]);
+            remitems.push(["li", ["span", {cla: "hintText"}, hint]]); }
+        html = ["ul", {cla: "revlist"}, remitems];
+        html = jt.tac2html(html);
+        jt.out('revactdiv', html);
+        app.layout.adjust();
+        if(crid) {
+            app.lcs.getFull("rev", crid, displayPenrefRemembered); }
+        if(cfid) {
+            app.lcs.getFull("pen", cfid, displayPenrefRemembered); }
+    },
+
+
     displayRemembered = function () {
-        var penref, hint, remitems = [], html, i, revref, crid, friend, cfid, 
-            params;
+        var penref, params;
+        if(memomode === "Pre-Reviews") {
+            return displayPreReviews(); }
         penref = app.pen.currPenRef();
         if(penref.remembered) {
-            for(i = 0; i < penref.remembered.length && i < 50; i += 1) {
-                if(!penref.remembered[i].forgotten) {
-                    revref = app.lcs.getRef("rev", penref.remembered[i].revid);
-                    if(revref.status === "not cached") {
-                        crid = penref.remembered[i].revid;
-                        remitems.push(["li",
-                                       "Fetching Review " + crid + "..."]);
-                        break; }
-                    if(!revref.rev.penNameStr) {
-                        friend = app.lcs.getRef("pen", revref.rev.penid).pen;
-                        if(friend) {
-                            revref.rev.penNameStr = friend.name; } }
-                    if(!revref.rev.penNameStr) {
-                        cfid = revref.rev.penid;
-                        remitems.push(["li", 
-                                       "Fetching Pen Name " + cfid + "..."]);
-                        break; }
-                    //have review with associated pen name
-                    if(!remActivityType || 
-                       revref.rev.revtype === remActivityType) {
-                        remitems.push(app.profile.reviewItemHTML(
-                            revref.rev, revref.rev.penNameStr)); } } }
-            hint = "If you see a review worth remembering, click its " + 
-                "\"Remember\" button to keep a reference to it here.";
-            if(remitems.length === 0) {  //no reviews currently remembered
-                remitems.push(["li", "You have not remembered any " + 
-                               remActivityType +
-                               (remActivityType ? " " : "") +
-                               "reviews. " + hint]); }
-            else if(i < 3) {  //reinforce how to remember reviews
-                remitems.push(["li"]);
-                remitems.push(["li", ["span", {cla: "hintText"}, hint]]); }
-            html = ["ul", {cla: "revlist"}, remitems];
-            html = jt.tac2html(html);
-            jt.out('revactdiv', html);
-            app.layout.adjust();
-            if(crid) {
-                app.lcs.getFull("rev", crid, displayRemembered); }
-            if(cfid) {
-                app.lcs.getFull("pen", cfid, displayRemembered); } }
-        else { //!penref.remembered
-            jt.out('revactdiv', "Fetching remembered reviews...");
-            app.layout.adjust();
-            params = "penid=" + jt.instId(penref.pen) +
-                "&" + app.login.authparams();
-            jt.call('GET', "srchremem?" + params, null,
-                     function (memos) {
-                         penref.remembered = memos;
-                         displayRemembered(); },
-                     app.failf(),
-                    jt.semaphore("activity.displayRemembered")); }
+            return displayPenrefRemembered(); }
+        jt.out('revactdiv', "Fetching remembered reviews...");
+        app.layout.adjust();
+        params = "penid=" + jt.instId(penref.pen) +
+            "&" + app.login.authparams();
+        jt.call('GET', "srchremem?" + params, null,
+                function (memos) {
+                    penref.remembered = memos;
+                    displayRemembered(); },
+                app.failf(),
+                jt.semaphore("activity.displayRemembered"));
     },
 
 
@@ -1115,6 +1192,13 @@ return {
     },
 
 
+    changeMemoMode: function (mode) {
+        memomode = mode;
+        writeNavDisplay("memo");
+        displayRemembered();
+    },
+
+
     startPenSearch: function () {
         app.pen.currPenRef().pensearch = {
             params: {},
@@ -1270,7 +1354,6 @@ return {
         topact[revtype].currpg += pgincr;
         displayTopReviews();
     }
-
 
 }; //end of returned functions
 }());
