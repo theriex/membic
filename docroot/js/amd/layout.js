@@ -27,21 +27,22 @@ app.layout = (function () {
     ////////////////////////////////////////
 
     displayDocContent = function (url, html) {
-        var output = [], bodyidx;
+        var idx;
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
-        bodyidx = html.indexOf("<body>");
-        if(bodyidx > 0) {
-            html = html.slice(bodyidx + "<body>".length,
+        idx = html.indexOf("<body>");
+        if(idx > 0) {
+            html = html.slice(idx + "<body>".length,
                               html.indexOf("</body")); }
-        output.push(["div", {id: "closeline"},
-                     ["a", {id: "closedlg", href: "#close",
-                            onclick: jt.fs("app.layout.closeDialog()")},
-                      "&lt;close&nbsp;&nbsp;X&gt;"]]);
-        output.push(["div", {cla: "documentcontentsdiv"},
-                     html]);
-        html = jt.tac2html(output);
-        jt.out('dlgdiv', html);
+        idx = url.lastIndexOf("/");
+        if(idx > 0) {
+            url = url.slice(idx + 1); }
+        idx = url.indexOf(".");
+        if(idx > 0) {
+            url = url.slice(0, idx); }
+        url = url.capitalize();
+        html = app.layout.dlgwrapHTML(url, html);
+        app.layout.openDialog({x:20, y:60}, html);
     },
 
 
