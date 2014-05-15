@@ -37,6 +37,9 @@ html = """
   </noscript>
 </div>
 
+<div id="groupcontentdiv">
+</div>
+
 <div id="groupdatadiv">
 $GROUPJSON
 </div>

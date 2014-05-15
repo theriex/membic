@@ -76,7 +76,7 @@ var groupview = (function () {
         html = jt.tac2html(html);
         html = html.replace(/img\//g, "../img/");
         html = html.replace(/revpic\?/g, "../revpic?");
-        jt.out('grouprevsdiv', html);
+        jt.out('groupcontentdiv', html);
     },
 
 
