@@ -364,7 +364,7 @@ img { border:0px; }
 #sgrpnamedescdiv { padding:0px 5px; }
 #sgrpjoinlink { padding:0px 0px 0px 20px; }
 .grouplist { list-style:none; padding:10px 0px 5px 10px; margin:0; }
-#groupdatadiv, #grouprevsdiv, #pendatadiv, #revdatadiv { 
+#groupdatadiv, #grouprevdatadiv, #pendatadiv, #revdatadiv { 
   font-size:xx-small; color:white; }
 
 

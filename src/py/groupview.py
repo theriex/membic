@@ -44,7 +44,7 @@ html = """
 $GROUPJSON
 </div>
 
-<div id="grouprevsdiv">
+<div id="grouprevdatadiv">
 $REVDATA
 </div>
 

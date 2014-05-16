@@ -94,8 +94,8 @@ var groupview = (function () {
     readData = function () {
         group = parseEmbeddedJSON(jt.byId('groupdatadiv').innerHTML);
         jt.out('groupdatadiv', "");
-        revs = parseEmbeddedJSON(jt.byId('grouprevsdiv').innerHTML);
-        jt.out('grouprevsdiv', "");
+        revs = parseEmbeddedJSON(jt.byId('grouprevdatadiv').innerHTML);
+        jt.out('grouprevdatadiv', "");
         if(!jt.instId) {
             jt.instId = function (obj) {
                 var idfield = "_id";
