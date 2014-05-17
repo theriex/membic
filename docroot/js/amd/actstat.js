@@ -374,11 +374,11 @@ var actstat = (function () {
 
     makeActivitySeries = function () {
         var series = [
-            {name: "active", color: "yellow",  width: "2px", dashes: "2,2"},
-            {name: "ttlrev", color: "blue", width: "2px", dashes: "3,3"},
-            {name: "onerev", color: "tan", width: "2px", dashes: "5,5"},
-            {name: "tworev", color: "brown", width: "2px", dashes: "10,10"},
-            {name: "morev", color: "black", width: "2px", dashes: "20,20"} ];
+            {name: "active", color: "aqua",  width: "2px", dashes: "1, 0"},
+            {name: "ttlrev", color: "blue", width: "2px", dashes: "1, 0"},
+            {name: "onerev", color: "OrangeRed", width: "2px", dashes: "1, 0"},
+            {name: "tworev", color: "orange", width: "2px", dashes: "1, 0"},
+            {name: "morev", color: "yellow", width: "2px", dashes: "1, 0"} ];
         return series;
     },
 
