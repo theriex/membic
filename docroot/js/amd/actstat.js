@@ -57,8 +57,9 @@ var actstat = (function () {
             rowlayout.forEach(function (seriesdef) {
                 seriesdef = seriesdef || { color: "white", name: "" };
                 rowhtml.push(["td", {style: "padding:5px 20px;"},
-                              [["span", {style: "color:" + seriesdef.color},
-                                " -------- "],
+                              [["span", {style: "background-color:" + 
+                                                seriesdef.color},
+                                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"],
                                ["span", {style: "display:inline-block;" +
                                                 "width:20px;" + 
                                                 "text-align:right;"},
@@ -81,11 +82,15 @@ var actstat = (function () {
 
 
     makeSeriesDef = function (sname) {
-        var scolor, colors = [ "red", "orange", "yellow", "green", "blue", 
-                               "purple", "silver", "tan", "brown" ];
+        var scolor, colors = [ 
+            "Maroon", "Crimson", "red", "Salmon",
+            "OrangeRed", "orange", "GoldenRod", "yellow",
+            "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
+            "blue", "purple", "Indigo", "DarkViolet",
+            "Fuchsia", "silver", "DarkKhaki", "SlateGray" ];
         scolor = colors[sercoloridx % colors.length];
         sercoloridx += 1;
-        return { name: sname, width: "2px", dashes: "1, 1", 
+        return { name: sname, width: "2px", dashes: "1, 0", 
                  color: scolor, total: 0,
                  title: "See mailsum.py bump_referral for key defs" };
     },
