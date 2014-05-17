@@ -37,6 +37,9 @@ html = """
   </noscript>
 </div>
 
+<div id="revcontentdiv">
+</div>
+
 <div id="pendatadiv">
 $PENJSON
 </div>
