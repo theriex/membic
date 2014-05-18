@@ -38,7 +38,10 @@ var groupview = (function () {
                      group.name];
         width = window.innerWidth;  //usually defined..
         html = ["div", {cla: "sgrpdiv"},
-                [["div", {cla: "sgpicdiv"},
+                [["div", {cla: "getyoursdiv"},
+                  ["a", {href: "../#view=profile"},
+                   "Start your own group"]],
+                 ["div", {cla: "sgpicdiv"},
                   app.group.grpPicCityHTML(group, "sgpicdiv")],
                  ["div", {cla: "sjoinrssdiv"},
                   [(width > 700 ? namespan : ""),
