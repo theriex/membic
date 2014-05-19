@@ -71,6 +71,11 @@ img { border:0px; }
 .topnavitemdiv { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
 .documentcontentsdiv { padding:0px 10px 10px 20px; }
+.brandspan { font-family:"Penscript", sans-serif; 
+  font-size:small; font-weight:bold; }
+.aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
+.aboutoverviewdiv { padding:0px 10px; font-size:large; }
+.aboutstatementsdiv { padding:0px 10px; font-size:medium; }
 
 /* >> main display area and contained elements */
 #phonetextzoomfixtable { border-collapse:collapse; }

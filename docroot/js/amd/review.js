@@ -838,7 +838,7 @@ app.review = (function () {
                     "background-color:" + lightbg + ";" +
                     "margin-left:10px;";
             if(mode === "edit") {
-                placetext = ">>What was most noteworthy about this?";
+                placetext = ">>How would you describe this to a friend?";
                 style += "height:100px;";
                 //make background-color semi-transparent if browser supports it
                 style += "background-color:rgba(" + 
