@@ -122,7 +122,7 @@ def list_groups():
         result += "<li><a href=\"groups/" + group.name_c + "\">" +\
             group.name + "</a>\n"
     if result:
-        result = "<p>Groups:</p><ul>" + result + "</p>"
+        result = "<p>Groups:</p><ul>" + result + "</ul>"
     return result
 
 

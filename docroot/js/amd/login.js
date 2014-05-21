@@ -362,6 +362,45 @@ app.login = (function () {
     },
 
 
+    displayTaglineDetails = function (pens) {
+        var displayed = 0, i, html = "";
+        for(i = 0; i < pens.length; i += 1) {
+            if(!pens[i].name_c) {
+                break; }
+            if(displayed > 5) {
+                html += ", and other new friends...";
+                break; }
+            if(pens[i].shoutout.indexOf("DONOTSUGGEST") < 0) {
+                displayed += 1;
+                if(html) {
+                    html += ", "; }
+                else {
+                    html = jt.byId('introverview').innerHTML + 
+                        "<div id=\"taglinedetpensdiv\">Join "; }
+                html += jt.tac2html(
+                    ["a", {href: "blogs/" + pens[i].name_c,
+                           onclick: jt.fs("window.open('blogs/" + 
+                                          pens[i].name_c + "')")},
+                     pens[i].name]); } }
+        html += "</div>";
+        jt.out('introverview', html);
+        app.layout.adjust();
+    },
+
+
+    addTaglineDetails = function () {
+        setTimeout(function () {
+            jt.call('GET', "srchpens", null,
+                    function (pens) {
+                        displayTaglineDetails(pens); },
+                    function (code, errtxt) {
+                        jt.log("addTaglineDetails failed code " + code + 
+                               ": " + errtxt); },
+                    jt.semaphore("login.addTaglineDetails")); },
+                   4000);
+    },
+
+
     //The login form must already exist in index.html for saved passwords
     //to work on some browsers.  But it needs to be tweaked and decorated
     displayLoginForm = function (params) {
@@ -396,6 +435,7 @@ app.login = (function () {
         if(authname) {
             jt.byId('userin').value = authname; }
         expandLoginFormLayoutIfSpace();
+        addTaglineDetails();
         app.layout.adjust();
         setFocusOnUsernameInput();
     },

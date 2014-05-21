@@ -114,6 +114,39 @@ def native_account_for_pen(request):
     return acc, pen
 
 
+def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
+    matched = False
+    # test string match
+    if not qstr_c or \
+            qstr_c in pen.name_c or \
+            (pen.shoutout and qstr in pen.shoutout) or \
+            (pen.city and qstr_c in pen.city.lower()):
+        matched = True
+    # test not self
+    if matched and acc and (acc._id == pen.mid or      #int compare
+                            acc._id == pen.fbid or     #int compare
+                            acc._id == pen.twid or     #int compare
+                            acc._id == pen.ghid or     #int compare
+                            acc._id == pen.gsid):      #string compare
+        matched = False
+    # test recent access constraint
+    if matched and time and pen.accessed < time:
+        matched = False
+    # test they have reviewed something if lurkers not desired
+    if matched and not lurkers and not pen.top20s:
+        matched = False
+    # test required top 20 review types
+    if matched and t20 and not pen.top20s:
+        matched = False
+    if matched and t20:
+        t20s = t20.split(',')
+        for value in t20s:
+            if not has_top_twenty(pen, value):
+                matched = False
+                break
+    return matched
+
+
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
@@ -261,12 +294,8 @@ class GetProfPic(webapp2.RequestHandler):
 class SearchPenNames(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
         qstr = self.request.get('qstr')
-        qstr_c = canonize(qstr)
+        qstr_c = "" or canonize(qstr)
         time = self.request.get('time')
         t20 = self.request.get('t20')
         lurkers = self.request.get('lurkers')
@@ -281,37 +310,8 @@ class SearchPenNames(webapp2.RequestHandler):
         cursor = ""
         for pen in pens:
             checked += 1
-            matched = False
-            # test string match
-            if not qstr or not qstr_c or \
-                    qstr_c in pen.name_c or \
-                    (pen.shoutout and qstr in pen.shoutout) or \
-                    (pen.city and qstr_c in pen.city.lower()):
-                matched = True
-            # test not self
-            if matched and (acc._id == pen.mid or      #int comparison
-                            acc._id == pen.fbid or     #int comparison
-                            acc._id == pen.twid or     #int comparison
-                            acc._id == pen.ghid or     #int comparison
-                            acc._id == pen.gsid):      #string comparison
-                matched = False
-            # test recent access constraint
-            if matched and time and pen.accessed < time:
-                matched = False
-            # test they have reviewed something if lurkers not desired
-            if matched and not lurkers and not pen.top20s:
-                matched = False
-            # test required top 20 review types
-            if matched and t20 and not pen.top20s:
-                matched = False
-            if matched and t20:
-                t20s = t20.split(',')
-                for value in t20s:
-                    if not has_top_twenty(pen, value):
-                        matched = False
-                        break
-            # filter sensitive fields
-            if matched:
+            if matched_pen(acc, pen, qstr_c, time, t20, lurkers):
+                # filter sensitive fields
                 pen.mid = 0
                 pen.gsid = "0"
                 pen.fbid = 0
