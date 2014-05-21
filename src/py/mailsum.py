@@ -98,6 +98,8 @@ def bump_referral(stat, entry, val):
             bump_referral_count(stat, entry + "CL")
     elif "myopenreviews.com" in val:
         bump_referral_count(stat, entry + "MOR")
+    elif "myopenreviews.appspot.com" in val:
+        bump_referral_count(stat, entry + "Home")
     elif "mail." in val:
         bump_referral_count(stat, entry + "Mail")
     elif "youtube." in val:
