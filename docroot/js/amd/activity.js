@@ -43,6 +43,7 @@ app.activity = (function () {
         memomode = "Remembered",  //other option is "Pre-Reviews"
         remActivityType = "",  //by default display all remembered reviews
         announcedismiss = false,
+        bootmon = { tout: null, count: 0 },
 
 
     ////////////////////////////////////////
@@ -918,11 +919,39 @@ app.activity = (function () {
     },
 
 
+    bootMonitor = function () {
+        var revactdiv, html;
+        revactdiv = jt.byId('revactdiv');
+        if(revactdiv) {
+            html = revactdiv.innerHTML;
+            if(html.indexOf("Loading ") === 0) {
+                bootmon.count += 1; 
+                switch(bootmon.count) {
+                case 1:
+                    html += "<br/>Hmmm... Server's kinda slow...";
+                    jt.out('revactdiv', html);
+                    bootmon.tout = setTimeout(bootMonitor, 2000);
+                    return;
+                case 2:
+                    html += "<br/>...Like really slow.";
+                    jt.out('revactdiv', html);
+                    bootmon.tout = setTimeout(bootMonitor, 2000);
+                    return;
+                default:
+                    html += "<br/><br/>Ok, there's no way this should" +
+                        " take this long. <br/>" +
+                        "Try hitting the reload button on your browser.";
+                    jt.out('revactdiv', html); } } }
+    },
+
+
     bootActivityDisplay = function () {
         var penids;
         topModeEnabled = false;
         if(app.layout.currnavmode() === "activity") {  //might have switched
             writeNavDisplay("activity"); }             //while loading...
+        if(!bootmon.tout) {
+            bootmon.tout = setTimeout(bootMonitor, 3000); }
         penids = app.rel.outboundids();
         if(penids.length === 0) {
             jt.out('revactdiv', followMoreHTML(penids));
