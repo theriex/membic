@@ -1,4 +1,4 @@
-/*global document: false, app: false, jt: false */
+/*global document: false, app: false, jt: false, setTimeout: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -36,7 +36,7 @@ app.hinter = (function () {
     //initially.  This will cycle through like any other tip, but not
     //showing a tip every once in a while is probably good.
     notip = function () {
-        app.hinter.tipok('notip');
+        app.hinter.tipok('notip', true);
     },
 
 
@@ -278,6 +278,28 @@ app.hinter = (function () {
     },
 
 
+    displayCodeUpdateDialog = function () {
+        var html = ["p", "Your browser found an older copy of the site to run.<br/>Please reload this page."];
+        html = app.layout.dlgwrapHTML("Get The Latest", html);
+        app.layout.openDialog({y:140}, html);
+    },
+
+
+    //If the version is out of date, clobber any dialog that is up and
+    //ask them to reload to get the latest source.  Better to be
+    //annoying than flaky.
+    runVersionCheck = function () {
+        jt.call('GET', "/buildverstr", null,
+                function (vstr) {
+                    if(vstr !== "BUILDVERSIONSTRING") {
+                        displayCodeUpdateDialog(); } },
+                function (code, errtxt) {
+                    jt.log("buildverstr failed code " + code + 
+                           ": " + errtxt); },
+                jt.semaphore("hinter.runVersionCheck"));
+    },
+
+
     writeUpdatedTipsInfo = function (pen) {
         app.pen.updatePen(pen,
                           function () {
@@ -306,6 +328,7 @@ return {
 
     showStartTip: function () {
         var pen, settings, tipset, i, name, rotips, temp;
+        setTimeout(runVersionCheck, 1000);
         pen = app.pen.currPenRef().pen;
         settings = pen.settings;
         if(!settings.tipset) {
@@ -339,7 +362,7 @@ return {
     },
 
 
-    tipok: function (tipname) {
+    tipok: function (tipname, leaveExistingDialogOpen) {
         var i, checkboxes, pen;
         pen = app.pen.currPenRef().pen;
         checkboxes = document.getElementsByName("cbtip");
@@ -348,7 +371,8 @@ return {
                 pen.settings.tipset[tipname] = "dismissed";
                 writeUpdatedTipsInfo(pen);
                 break; } }
-        app.layout.closeDialog();
+        if(!leaveExistingDialogOpen) {
+            app.layout.closeDialog(); }
     },
 
 

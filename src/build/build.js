@@ -35,11 +35,45 @@ var build = (function () {
     },
 
 
+    writeServerBuildVersion = function (buildstr) {
+        fs.readFile(buildroot + "../py/moracct.py", readopt,
+                    function (err, text) {
+                        if(err) {
+                            throw err; }
+                        text = text.replace(/BUILDVERSIONSTRING/g, buildstr);
+                        fs.writeFile(buildroot + "../py/moracct.py", 
+                                     text, writeopt,
+                                     function (err) {
+                                         if(err) {
+                                             throw err; } }); });
+    },
+
+
+    revertServerBuildVersion = function () {
+        fs.readFile(buildroot + "../py/moracct.py", readopt,
+                    function (err, text) {
+                        if(err) {
+                            throw err; }
+                        text = text.replace(/BUILD....-..-..T..:..:......Z/g,
+                                            "BUILDVERSIONSTRING");
+                        fs.writeFile(buildroot + "../py/moracct.py",
+                                     text, writeopt,
+                                     function (err) {
+                                         if(err) {
+                                             throw err; } }); });
+    },
+
+
     appendSourceFile = function (modefs, index, nextfunc) {
         if(index < modefs.length) {
             fs.readFile(modefs[index].filepath, readopt, function (err, text) {
+                var buildstr;
                 if(err) {
                     throw err; }
+                if(modefs[index].filepath.indexOf("hinter.js") >= 0) {
+                    buildstr = "BUILD" + new Date().toISOString();
+                    writeServerBuildVersion(buildstr);
+                    text = text.replace(/BUILDVERSIONSTRING/g, buildstr); }
                 fs.appendFile(outsrc, text, writeopt, function (err) {
                     if(err) {
                         throw err; }
@@ -149,6 +183,7 @@ var build = (function () {
 
 
     cleanbuild = function () {
+        revertServerBuildVersion();
         fs.writeFile(outcomp, "", writeopt, function (err) {
             if(err) {
                 throw err; }

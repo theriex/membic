@@ -511,11 +511,17 @@ class GetAccount(webapp2.RequestHandler):
             self.response.out.write("Authentication failed")
 
 
+class GetBuildVersion(webapp2.RequestHandler):
+    def get(self):
+        writeTextResponse("BUILDVERSIONSTRING", self.response)
+
+
 app = webapp2.WSGIApplication([('/newacct', WriteAccount),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),
                                ('/chgpwd', ChangePassword),
                                ('/loginid', GetLoginID),
-                               ('/getacct', GetAccount)], debug=True)
+                               ('/getacct', GetAccount),
+                               ('/buildverstr', GetBuildVersion)], debug=True)
 

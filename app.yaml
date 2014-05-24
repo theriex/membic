@@ -64,6 +64,11 @@ handlers:
 - url: /getacct.*
   script: src.py.moracct.app
 
+## Get build version string
+## GET params: none
+- url: /buildverstr.*
+  script: src.py.moracct.app
+
 
 ######################################################################
 ##        Pen Names
