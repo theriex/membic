@@ -48,23 +48,16 @@ app.hinter = (function () {
     //Avoid annoying people with tips coming up all the time, give them the
     //opt out option immediately when possible.  Like for this tip.
     looktop = function () {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "I know how to find a friend's top rated reviews. Don't display this message ever again.";
-        cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Top Rated Reviews"],
-                ["p",
-                 "To see top reviews for a specific person, click their name to go to their profile and then select the \"Top Rated\" tab."],
-                ["div", {cla: "dismissradiodiv"},
-                 cboxhtml],
-                ["div", {cla: "tipsbuttondiv"},
-                 ["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('looktop')")},
-                  "OK"]]];
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "To see someone's top 20 reviews, select the \"Top Rated\" tab on their profile."],
+                 ["div", {cla: "dismissradiodiv"},
+                  jt.checkbox("cbtip", "cbtip", "I know how to find a friend's top rated reviews. Don't display this message ever again.")],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.hinter.tipok('looktop')")},
+                   "OK"]]]];
+        html = app.layout.dlgwrapHTML("Top Rated Reviews", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
@@ -88,19 +81,10 @@ app.hinter = (function () {
     },
 
 
-    ezlink = function (interactive) {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "I already have the extremely handy bookmark link.  Don't display this message ever again.";
-        if(interactive > 1) {
-            cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks); }
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Easy Review Link"],
-                [["p",
-                  "The wdydfun bookmarklet lets you kick off a review from any site.<br/>To install it, \"right click\" this link..."],
+    ezlink = function (displayCount) {
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "The wdydfun bookmarklet lets you kick off a review from any site.<br/>To install it, \"right click\" this link..."],
                  ["p", {style: "padding:5px 40px; font-weight:bold;"},
                   ["&#x2192;&nbsp;",
                    ["a", {href: hideBookmarkletFromJSLint(true)},
@@ -112,15 +96,15 @@ app.hinter = (function () {
                     ["a", {href: "#more", 
                            onclick: jt.fs("app.layout.displayDoc('" + 
                                           "docs/more.html')")},
-                     "Read how it works."]]]]],
-                ["div", {cla: "dismissradiodiv"},
-                 cboxhtml],
-                ["div", {cla: "tipsbuttondiv"},
-                 ["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('ezlink')")},
-                  "OK"]]];
-        html = jt.tac2html(html);
-        app.layout.queueDialog({y:140}, html, null,
+                     "Read how it works."]]]],
+                 ["div", {cla: "dismissradiodiv"},
+                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "I already have the extremely handy bookmark link.  Don't display this message ever again."))],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.hinter.tipok('ezlink')")},
+                   "OK"]]]];
+        html = app.layout.dlgwrapHTML("Easy Review Link", html);
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
     },
@@ -134,29 +118,20 @@ app.hinter = (function () {
 
 
     writerev = function (displayCount) {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "Eventually I'll find something worth mentioning to other people, please don't display this message again.";
-        if(displayCount > 1) {
-            cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks); }
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Write a Review"],
-                ["div",
-                 [["p",
-                   "There are lots of people whose lives might be improved after reading a review of your favorite book, movie or place to go. You don't have to be a professional for your opinion to count here. Want to give it a shot?"],
-                  ["div", {cla: "dismissradiodiv"},
-                   cboxhtml],
-                  ["div", {cla: "tipsbuttondiv"},
-                   [["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('writerev')")},
-                     "Later"],
-                    "&nbsp; &nbsp; &nbsp;",
-                    ["button", {type: "button", id: "writerevbutton",
-                             onclick: jt.fs("app.hinter.writeReview()")},
-                     "Write My First Review"]]]]]];
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "There are lots of people whose lives might be improved by reading a review of your favorite book, movie or place to go. You don't have to be a professional for your opinion to count here. Want to give it a shot?"],
+                 ["div", {cla: "dismissradiodiv"},
+                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "Eventually I'll find something worth mentioning to other people, please don't display this message again."))],
+                 ["div", {cla: "tipsbuttondiv"},
+                  [["button", {type: "button", id: "tipok",
+                               onclick: jt.fs("app.hinter.tipok('writerev')")},
+                    "Later"],
+                   "&nbsp; &nbsp; &nbsp;",
+                   ["button", {type: "button", id: "writerevbutton",
+                               onclick: jt.fs("app.hinter.writeReview()")},
+                    "Write My First Review"]]]]];
+        html = app.layout.dlgwrapHTML("Write a Review", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('writerevbutton').focus(); });
@@ -173,29 +148,20 @@ app.hinter = (function () {
 
 
     fillcity = function (displayCount) {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "I don't want my profile to look more interesting, please don't display this message again.";
-        if(displayCount > 1) {
-            cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks); }
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Profile City"],
-                ["div",
-                 [["p",
-                   "Including the metropolitan area, township or region you are most affiliated with makes your profile more interesting and helps build relationships. Add a city to your profile?"],
-                  ["div", {cla: "dismissradiodiv"},
-                   cboxhtml],
-                  ["div", {cla: "tipsbuttondiv"},
-                   [["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('fillcity')")},
-                     "Later"],
-                    "&nbsp; &nbsp; &nbsp;",
-                    ["button", {type: "button", id: "fillcitybutton",
-                                onclick: jt.fs("app.hinter.fillCity()")},
-                     "Update Profile"]]]]]];
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "Including the metropolitan area, township or region you are most affiliated with makes your profile more interesting and helps build relationships. Add a city to your profile?"],
+                 ["div", {cla: "dismissradiodiv"},
+                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "I don't want my profile to look more interesting, please don't display this message again."))],
+                 ["div", {cla: "tipsbuttondiv"},
+                  [["button", {type: "button", id: "tipok",
+                               onclick: jt.fs("app.hinter.tipok('fillcity')")},
+                    "Later"],
+                   "&nbsp; &nbsp; &nbsp;",
+                   ["button", {type: "button", id: "fillcitybutton",
+                               onclick: jt.fs("app.hinter.fillCity()")},
+                    "Update Profile"]]]]];
+        html = app.layout.dlgwrapHTML("Profile City", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('fillcitybutton').focus(); });
@@ -222,26 +188,78 @@ app.hinter = (function () {
 
 
     remrev = function (displayCount) {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "I know how to remember reviews. Don't display this message ever again.";
-        cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Remembered Reviews"],
-                ["p",
-                 "When you see a review of something that looks interesting, click its \"Remember\" button to keep a link to it. Then anytime you are looking for things to do, you can look through your remembered reviews."],
-                ["div", {cla: "dismissradiodiv"},
-                 cboxhtml],
-                ["div", {cla: "tipsbuttondiv"},
-                 ["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('remrev')")},
-                  "OK"]]];
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "When you see an interesting review of something new, click its \"Remember\" button to keep a link to it in your remembered reviews."],
+                 ["div", {cla: "dismissradiodiv"},
+                  jt.checkbox("cbtip", "cbtip", "I know how to remember reviews. Don't display this message ever again.")],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.hinter.tipok('remrev')")},
+                   "OK"]]]];
+        html = app.layout.dlgwrapHTML("Remembered Reviews", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
+    },
+
+
+    follmoreActive = function (pen) {
+        //by default, people are introduced to 3 others, so if they
+        //are following less than 4 then they have not found anyone to
+        //follow except for their initial introductions.
+        if(pen.following < 4) { 
+            return true; }
+        return false;
+    },
+
+
+    follmore = function (displayCount) {
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "Searching for pen names shows you who is active on the site. Want to meet some more people?"],
+                 ["div", {cla: "dismissradiodiv"},
+                  jt.checkbox("cbtip", "cbtip", "Actually I'm totally happy not following anyone else. Don't display this message ever again.")],
+                 ["div", {cla: "tipsbuttondiv"},
+                  [["button", {type: "button", id: "tipok",
+                               onclick: jt.fs("app.hinter.tipok('follmore')")},
+                    "Later"],
+                   "&nbsp; &nbsp; &nbsp;",
+                   ["button", {type: "button", id: "follmorebutton",
+                         onclick: jt.fs("app.activity.penNameSearchDialog()")},
+                    "Find People"]]]]];
+        html = app.layout.dlgwrapHTML("Follow More People", html);
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
+                               function () {
+                                   jt.byId('follmorebutton').focus(); });
+    },
+
+
+    groupsActive = function (pen) {
+        if(pen.groups) {
+            return false; }
+        return true;
+    },
+
+
+    groups = function (displayCount) {
+        var html;
+        html = ["div", {cla: "hintercontentdiv"},
+                [["p", "Groups are themed collections of reviews. Join or create one from \"Groups\" tab on your profile."],
+                 ["div", {cla: "dismissradiodiv"},
+                  jt.checkbox("cbtip", "cbtip", "I'm not interested in following or joining any groups. Don't display this message ever again.")],
+                 ["div", {cla: "tipsbuttondiv"},
+                  [["button", {type: "button", id: "tipok",
+                               onclick: jt.fs("app.hinter.tipok('groups')")},
+                    "Later"],
+                   "&nbsp; &nbsp; &nbsp;",
+                   ["button", {type: "button", id: "showgroupsbutton",
+                               onclick: jt.fs("app.hinter.groupsTab()")},
+                    "Show My Groups"]]]]];
+        html = app.layout.dlgwrapHTML("Groups", html);
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
+                               function () {
+                                   jt.byId('showgroupsbutton').focus(); });
     },
 
 
@@ -255,23 +273,16 @@ app.hinter = (function () {
 
 
     request = function (displayCount) {
-        var html, cboxhtml = "", nothanks;
-        nothanks = "I know how to request a review from someone I'm following. Don't display this message ever again.";
-        cboxhtml = jt.checkbox("cbtip", "cbtip", nothanks);
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"}, "Request a Review"],
-                ["p",
-                 "If you would like to request a review from someone you are following, you can click the link next to their name on the \"Following\" tab of your profile."],
-                ["div", {cla: "dismissradiodiv"},
-                 cboxhtml],
-                ["div", {cla: "tipsbuttondiv"},
-                 ["button", {type: "button", id: "tipok",
-                             onclick: jt.fs("app.hinter.tipok('request')")},
-                  "OK"]]];
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "If you would like to request a review from someone you are following, click the link next to their name on your profile."],
+                 ["div", {cla: "dismissradiodiv"},
+                  jt.checkbox("cbtip", "cbtip", "I know how to request a review from someone I'm following. Don't display this message ever again.")],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.hinter.tipok('request')")},
+                   "OK"]]]];
+        html = app.layout.dlgwrapHTML("Request a Review", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
@@ -317,6 +328,8 @@ app.hinter = (function () {
             { name: "writerev", checkf: writerevActive, runf: writerev },
             { name: "fillcity", checkf: fillcityActive, runf: fillcity },
             { name: "remrev",   checkf: remrevActive,   runf: remrev },
+            { name: "follmore", checkf: follmoreActive, runf: follmore },
+            { name: "groups",   checkf: groupsActive,   runf: groups },
             { name: "request",  checkf: requestActive,  runf: request } ];
     };
 
@@ -391,6 +404,15 @@ return {
 
     ezlink: function () {
         ezlink(true);
+    },
+
+
+    groupsTab: function () {
+        app.layout.closeDialog();
+        app.pen.getPen(function (pen) {
+            app.profile.verifyStateVariableValues(pen);
+            app.profile.setSelectedTab('groups');
+            app.profile.display(); });
     }
 
 

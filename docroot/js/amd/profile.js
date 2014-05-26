@@ -1320,6 +1320,12 @@ return {
     },
 
 
+    setSelectedTab: function (tabname) {
+        verifyProfileState(profpenref);
+        profpenref.profstate.seltabname = tabname;
+    },
+
+
     tabselect: function (tabname) {
         verifyProfileState(profpenref);
         if(tabname) {
