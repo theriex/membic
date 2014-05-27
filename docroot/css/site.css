@@ -95,6 +95,7 @@ img { border:0px; }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
 #taglinedetpensdiv { font-size:small; }
+#revrolldiv { padding:10px 0px 0px 0px; }
 
 .penfont, #penhnamespan { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;

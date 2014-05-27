@@ -1342,8 +1342,8 @@ return {
     },
 
 
-    staticReviewDisplay: function (review, revlink) {
-        var type, html, revid, jump = "";
+    staticReviewDisplay: function (review, revlink, mode) {
+        var type, html, revid, jump = "", revresp = "";
         revid = jt.instId(review);
         type = app.review.getReviewTypeByValue(review.revtype);
         if(!revlink) {
@@ -1354,6 +1354,12 @@ return {
                        app.profile.reviewItemNameHTML(type, review)]; }
         if(review.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(review.url); }
+        if("noresp" !== mode) {
+            revresp = ["div", {cla: "statrevrespdiv"},
+                       ["a", {href: "../?view=review&penid=" + review.penid +
+                                    "&revid=" + jt.instId(review),
+                              title: "Open in application to see responses"},
+                        "Responses/Comments"]]; }
         html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
                 [["div", {cla: "statrevmodkeydiv"},
                   jt.colloquialDate(jt.ISOString2Day(review.modified)) +
@@ -1368,11 +1374,7 @@ return {
                     app.review.picHTML(review, type)],
                    ["div", {style: "padding:10px;"},
                     jt.linkify(review.text)],
-                   ["div", {cla: "statrevrespdiv"},
-                    ["a", {href: "../?view=review&penid=" + review.penid +
-                                 "&revid=" + jt.instId(review),
-                           title: "Open in application to see responses"},
-                     "Responses/Comments"]]]],
+                   revresp]],
                  ["div", {style: "clear:both;"}]]];
         return jt.tac2html(html);
     },

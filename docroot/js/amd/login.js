@@ -18,6 +18,7 @@ app.login = (function () {
         loginhtml = "",
         sumfreqs = [ "daily", "weekly", "fortnightly", "never" ],
         sumlabels = [ "Daily", "Weekly", "Fortnightly", "Never" ],
+        revroll = { index: 0, revs: [] },
 
 
     ////////////////////////////////////////
@@ -397,7 +398,40 @@ app.login = (function () {
                         jt.log("addTaglineDetails failed code " + code + 
                                ": " + errtxt); },
                     jt.semaphore("login.addTaglineDetails")); },
-                   4000);
+                   2000);
+    },
+
+
+    displayReviewActivityRoll = function (revs) {
+        revroll.revs = revs || revroll.revs;
+        if(revroll.revs.length === 0) {
+            jt.log("no activity roll revs to display");
+            return; }
+        if(revroll.index >= revroll.revs.length ||
+               !jt.instId(revroll.revs[revroll.index])) {
+            revroll.index = 0; }
+        if(!jt.byId('revrolldiv')) {
+            jt.out('introverview', jt.byId('introverview').innerHTML +
+                   "<div id=\"revrolldiv\"></div>"); }
+        jt.out('revrolldiv', app.review.staticReviewDisplay(
+            revroll.revs[revroll.index], null, "noresp"));
+        app.layout.adjust();
+        revroll.index += 1;
+        setTimeout(displayReviewActivityRoll, 2400);
+    },
+
+
+    addReviewActivityRoll = function () {
+        setTimeout(function () {
+            jt.call('GET', "revact", null,
+                    function (revs) {
+                        //shuffleByAuthor(revs);  TODO: implement
+                        displayReviewActivityRoll(revs); },
+                    function (code, errtxt) {
+                        jt.log("addReviewActivityRoll failed code " + code +
+                               ": " + errtxt); },
+                    jt.semaphore("login.addReviewActivityRoll")); },
+                   3000);
     },
 
 
@@ -436,6 +470,7 @@ app.login = (function () {
             jt.byId('userin').value = authname; }
         expandLoginFormLayoutIfSpace();
         addTaglineDetails();
+        addReviewActivityRoll();
         app.layout.adjust();
         setFocusOnUsernameInput();
     },

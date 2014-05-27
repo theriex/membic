@@ -263,7 +263,7 @@ def simple_rev_activity_search(penids):
     for rp in rps:
         checked += 1
         revpen = rp.split(":")
-        if len(revpen) > 1 and revpen[1] in penids:
+        if len(penids) == 0 or (len(revpen) > 1 and revpen[1] in penids):
             rev = cached_get(intz(revpen[0]), Review)
             results.append(rev)
         if len(results) > 200:
@@ -520,7 +520,9 @@ class ReviewActivity(webapp2.RequestHandler):
         since = self.request.get('since')
         cursor = self.request.get('cursor')
         penidstr = self.request.get('penids')
-        penids = penidstr.split(',')
+        penids = []
+        if penidstr:
+            penids = penidstr.split(',')
         # logging.info("penids: " + str(penids))
         checked, reviews = review_activity_search(since, cursor, penids)
         returnJSON(self.response, reviews, cursor, checked)
