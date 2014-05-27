@@ -425,7 +425,6 @@ app.login = (function () {
         setTimeout(function () {
             jt.call('GET', "revact", null,
                     function (revs) {
-                        //shuffleByAuthor(revs);  TODO: implement
                         displayReviewActivityRoll(revs); },
                     function (code, errtxt) {
                         jt.log("addReviewActivityRoll failed code " + code +
