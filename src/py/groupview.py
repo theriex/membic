@@ -35,6 +35,8 @@ html = """
     <p><b>You need to enable Javascript to format this page...
       </b></p>
   </noscript>
+  <p>WDYDFun static group view</p>
+  $GROUPDESCR
 </div>
 
 <div id="groupcontentdiv">
@@ -97,6 +99,7 @@ class GroupViewDisplay(webapp2.RequestHandler):
             picurl = "../grppic?groupid=" + str(group.key().id())
         content = html
         content = re.sub('\$GROUPNAME', group.name, content)
+        content = re.sub('\$GROUPDESCR', group.description, content)
         content = re.sub('\$IMGSRC', picurl, content)
         content = re.sub('\$GROUPID', str(group.key().id()), content)
         content = re.sub('\$GROUPJSON', obj2JSON(group), content)
