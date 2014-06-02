@@ -218,8 +218,10 @@ def update_top20_reviews(pen, review):
         lastid = currid
     t20dict[review.revtype] = t20ids
     t20dict["latestrevtype"] = review.revtype
+    tstamp = nowISO();
+    t20dict["t20lastupdated"] = tstamp
     pen.top20s = json.dumps(t20dict)
-    pen.modified = nowISO();
+    pen.modified = tstamp;
     cached_put(pen)
 
 

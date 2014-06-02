@@ -34,7 +34,7 @@ app.hinter = (function () {
     //up when people first sign up.  They already see the
     //introductions dialog, which is enough popups happening
     //initially.  This will cycle through like any other tip, but not
-    //showing a tip every once in a while is probably good.
+    //showing a tip every once in a while is fine.
     notip = function () {
         app.hinter.tipok('notip', true);
     },
@@ -111,8 +111,14 @@ app.hinter = (function () {
 
 
     writerevActive = function (pen) {
-        if(pen.top20s && pen.top20s.latestrevtype) {
-            return false; }
+        var now, lrd;
+        if(pen.top20s && pen.top20s.t20lastupdated) {
+            lrd = jt.ISOString2Day(pen.top20s.t20lastupdated);
+            now = new Date();
+            //8 days may not seem like much slack, but it is easy to get
+            //out of the weekly review habit if too much time goes by.
+            if(lrd.getTime() - now.getTime() < 8 * 24 * 60 * 60 * 1000) {
+                return false; } }  //wrote a review recently
         return true;
     },
 
@@ -120,9 +126,9 @@ app.hinter = (function () {
     writerev = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "There are lots of people whose lives might be improved by reading a review of your favorite book, movie or place to go. You don't have to be a professional for your opinion to count here. Want to give it a shot?"],
-                 ["div", {cla: "dismissradiodiv"},
-                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "Eventually I'll find something worth mentioning to other people, please don't display this message again."))],
+                [["p", "Reviewing something once a week will get you more followers, and build up a really cool review log.  There are definitely people here who are interested in your impressions.  Want to help them out?"],
+                 ["p", "If the past week was not worth mentioning, don't forget to review your favorite book, movie, album, restaurant or place to visit."],
+                 //no permanent dismiss option. Write a review a week..
                  ["div", {cla: "tipsbuttondiv"},
                   [["button", {type: "button", id: "tipok",
                                onclick: jt.fs("app.hinter.tipok('writerev')")},
@@ -130,7 +136,7 @@ app.hinter = (function () {
                    "&nbsp; &nbsp; &nbsp;",
                    ["button", {type: "button", id: "writerevbutton",
                                onclick: jt.fs("app.hinter.writeReview()")},
-                    "Write My First Review"]]]]];
+                    "Write a Review"]]]]];
         html = app.layout.dlgwrapHTML("Write a Review", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
@@ -141,8 +147,10 @@ app.hinter = (function () {
     fillcityActive = function (pen) {
         if(pen.city) {
             return false; }
-        if(writerevActive(pen)) { //profile not important until they write 
-            return false; }       //at least one review
+        if(!pen.top20s) {
+            //if they haven't written a review yet, then it doesn't make sens
+            //to bother about the finer points of having a decent profile.
+            return false; }
         return true;
     },
 
