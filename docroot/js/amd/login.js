@@ -407,17 +407,21 @@ app.login = (function () {
         if(revroll.revs.length === 0) {
             jt.log("no activity roll revs to display");
             return; }
+        //reset index if past the end
         if(revroll.index >= revroll.revs.length ||
                !jt.instId(revroll.revs[revroll.index])) {
             revroll.index = 0; }
+        //verify the output area is initialized
         if(!jt.byId('revrolldiv')) {
             jt.out('introverview', jt.byId('introverview').innerHTML +
                    "<div id=\"revrolldiv\"></div>"); }
-        jt.out('revrolldiv', app.review.staticReviewDisplay(
-            revroll.revs[revroll.index], null, "noresp"));
-        app.layout.adjust();
+        //display the review if it meets the criteria
+        if(revroll.revs[revroll.index].text.length > 255) {
+            jt.out('revrolldiv', app.review.staticReviewDisplay(
+                revroll.revs[revroll.index], null, "noresp"));
+            app.layout.adjust(); }
         revroll.index += 1;
-        setTimeout(displayReviewActivityRoll, 2400);
+        setTimeout(displayReviewActivityRoll, 7000);
     },
 
 
