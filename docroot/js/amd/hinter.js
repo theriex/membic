@@ -397,6 +397,12 @@ return {
     },
 
 
+    promptToReview: function () {
+        app.layout.closeDialog();
+        writerev(0);
+    },
+
+
     writeReview: function () {
         app.hinter.tipok('writerev');
         app.review.cancelReview(true);

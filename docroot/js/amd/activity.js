@@ -652,7 +652,7 @@ app.activity = (function () {
                  "To help start things off, wdydfun is now introducing you to some active members you might enjoy following. You can change who you are following anytime from your profile page."],
                 ["div", {cla: "headingtxt"},
                  ["button", {type: "button", id: "introduceok",
-                             onclick: jt.fs("app.layout.closeDialog()")},
+                             onclick: jt.fs("app.hinter.promptToReview()")},
                   "OK"]]];
         app.layout.queueDialog({y:140}, jt.tac2html(html), null, 
                                function () {
