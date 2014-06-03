@@ -103,9 +103,8 @@ def get_stats():
     # adjust start to nearest previous Monday
     start = start - datetime.timedelta(start.weekday())
     result.append(get_stats_for_week(start))
-    # add stats for previous weeks
     for i in range(4):
-        start = start + datetime.timedelta(-7 * (i + 1))
+        start = start + datetime.timedelta(-7)
         result.append(get_stats_for_week(start))
     return result
 
@@ -122,24 +121,34 @@ def list_groups():
         result += "<li><a href=\"groups/" + group.name_c + "\">" +\
             group.name + "</a>\n"
     if result:
-        result = "<p>Groups:</p><ul>" + result + "</ul>"
+        result = "\n<div class=\"statsecdiv\">Groups:</div>" +\
+            "<ul class=\"statseclist\">\n" + result + "</ul>\n"
     return result
 
 
+htmlheader = """
+<!doctype html>
+<html itemscope="itemscope" itemtype="https://schema.org/WebPage"
+      xmlns="https://www.w3.org/1999/xhtml" dir="ltr" lang="en-US">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="robots" content="noodp" />
+  <meta name="description" content="WDYDFun groups and weekly review activity" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WDYDFun Groups and Weekly Review Activity</title>
+  <link href="css/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body id="bodyid">
+"""
+
+
 def get_stats_html(result):
-    html = "<!doctype html>"
-    html += "<html itemscope=\"itemscope\""
-    html +=      " itemtype=\"http://schema.org/WebPage\""
-    html +=      " xmlns=\"http://www.w3.org/1999/xhtml\">"
-    html += "<head>"
-    html +=   "<meta http-equiv=\"Content-Type\""
-    html +=        " content=\"text/html; charset=UTF-8\" />"
-    html +=   "<meta name=\"description\" content=\"Review activity\" />"
-    html +=   "<title>My Open Reviews Review Activity</title>"
-    html += "</head>"
-    html += "<body>"
+    html = htmlheader
+    html += "<div id=\"appspacediv\">"
+    html += "<div id=\"contentdiv\">"
     html += list_groups()
-    html += "<p>Weekly stats:</p><ul>"
+    html += "\n<div class=\"statsecdiv\">Weekly stats:</div>\n" +\
+        "<ul class=\"statseclist\">\n"
     for week in result:
         html += "<li>" + week.start + " (modified " + week.modified + ")<ul>"
         for daystr in days:
@@ -147,22 +156,24 @@ def get_stats_html(result):
             dayval = getattr(week, daystr, None)
             if dayval:
                 dayobj = json.loads(dayval)
-            html += "<li>" + daystr
+            html += "\n  <li>" + daystr
             if "total" in dayobj:
                 html += " " + str(dayobj["total"])
             html += "<ul>"
             for blockstr in blocks:
                 if blockstr in dayobj:
-                    html += "<li>" + blockstr + "<ul>"
+                    html += "\n    <li>" + blockstr + "<ul>"
                     for revid in dayobj[blockstr]:
-                        html += "<li><a href=\"statrev/" + revid + "\">"
+                        html += "\n      <li><a href=\"statrev/" + revid + "\">"
                         html += "Review " + revid + "</a></li>"
                     html += "</ul></li>"
             html += "</ul></li>"
         html += "</ul></li>"
-    html += "</ul>"
-    html += "</body>"
-    html += "</html>"
+    html += "\n</ul>"
+    html += "\n</div>"
+    html += "\n</div>"
+    html += "\n</body>"
+    html += "\n</html>\n"
     return html
 
 

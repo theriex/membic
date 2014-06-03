@@ -87,7 +87,6 @@ img { border:0px; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
-#appspacediv { }
 #appspacediv { margin:auto; }
 #bottomnav { font-size:x-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px; }
@@ -440,3 +439,8 @@ img { border:0px; }
 .greytxt { color:#999999; }
 .stdadspacediv { width:170px; height:610px; background:#fffffc; 
   border-radius:5px; padding:8px 0px 0px 8px; margin:20px 0px 0px 0px; }
+
+/* >> stats page layout */
+.statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
+.statseclist { font-size:medium; margin:0px; }
+.statseclist li { font-size:small; padding:2px 0px; }
