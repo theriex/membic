@@ -444,3 +444,5 @@ img { border:0px; }
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
 .statseclist { font-size:medium; margin:0px; }
 .statseclist li { font-size:small; padding:2px 0px; }
+.statblockul { list-style:none; padding:0px 0px 0px 4px; margin:0; }
+.statrevul { list-style:none; padding:0px 0px 0px 8px; margin:0; }

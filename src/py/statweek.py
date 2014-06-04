@@ -51,16 +51,26 @@ def verify_hour_blocks(now, daystart, jsonval):
     if jsonval:
         day = json.loads(jsonval)
     day["total"] = 0  #add it up again
+    # logging.info("verify_hour_blocks " + str(day))
     for index, blockstr in enumerate(blocks):
         start = daystart + datetime.timedelta(0, index * 4 * 60 * 60)
         end = start + datetime.timedelta(0, 4 * 60 * 60)
+        # logging.info(" vhb" + str(index) + " " + blockstr)
         if start < now:  #not a future time block
             revids = getattr(day, blockstr, None)
+            # logging.info("    day " + str(daystart) + ": " + str(revids));
             if revids is None or end > now:
                 revids = fetch_reviews(start, end)
                 day.update({ blockstr: revids })
             day["total"] += len(revids)
     return json.dumps(day, True)
+
+
+def have_hour_blocks(dayjson):
+    for blockstr in blocks:
+        if not blockstr in dayjson:
+            return False
+    return True
 
 
 def verify_day_fields(week):
@@ -72,7 +82,9 @@ def verify_day_fields(week):
         dend = ws + datetime.timedelta(index + 1)
         if dstart < now:  #not a future day...
             dayval = getattr(week, daystr, None)
-            if not dayval or dend > now:  #no value or not ended yet
+            # logging.info("verify_day_fields dayval: " + str(dayval))
+            if not dayval or not have_hour_blocks(dayval) or dend > now:  
+                # rebuld the the dayval and hour blocks
                 updated = True
                 summary = verify_hour_blocks(now, dstart, dayval)
                 setattr(week, daystr, summary)
@@ -85,7 +97,7 @@ def verify_day_fields(week):
 def get_stats_for_week(start):
     startstr = str(start.year) + "-" + str(start.month).rjust(2, '0') +\
         "-" + str(start.day).rjust(2, '0')
-    logging.info("startstr: " + startstr)
+    # logging.info("startstr: " + startstr)
     query = Week.gql("WHERE start = :1", startstr)
     weeks = query.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY,
                         deadline=10)
@@ -150,25 +162,26 @@ def get_stats_html(result):
     html += "\n<div class=\"statsecdiv\">Weekly stats:</div>\n" +\
         "<ul class=\"statseclist\">\n"
     for week in result:
-        html += "<li>" + week.start + " (modified " + week.modified + ")<ul>"
+        html += "<li>" + week.start + " (modified " + week.modified + ")"
+        html += "<table border=\"1\"><tr>"
         for daystr in days:
             dayobj = {}
             dayval = getattr(week, daystr, None)
             if dayval:
                 dayobj = json.loads(dayval)
-            html += "\n  <li>" + daystr
+            html += "\n  <td valign=\"top\"><em>" + daystr + "</em>"
             if "total" in dayobj:
-                html += " " + str(dayobj["total"])
-            html += "<ul>"
+                html += "&nbsp;(" + str(dayobj["total"]) + "&nbsp;reviews)"
+            html += "<ul class=\"statblockul\">"
             for blockstr in blocks:
                 if blockstr in dayobj:
-                    html += "\n    <li>" + blockstr + "<ul>"
+                    html += "\n    <li>" + blockstr + "<ul class=\"statrevul\">"
                     for revid in dayobj[blockstr]:
                         html += "\n      <li><a href=\"statrev/" + revid + "\">"
-                        html += "Review " + revid + "</a></li>"
+                        html += revid + "</a></li>"
                     html += "</ul></li>"
-            html += "</ul></li>"
-        html += "</ul></li>"
+            html += "</ul></td>"
+        html += "</tr></table></li>"
     html += "\n</ul>"
     html += "\n</div>"
     html += "\n</div>"
