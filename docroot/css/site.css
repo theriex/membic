@@ -74,7 +74,7 @@ img { border:0px; }
 .brandspan { font-family:"Penscript", sans-serif; 
   font-size:small; font-weight:bold; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
-.aboutoverviewdiv { padding:0px 10px; font-size:large; }
+.aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutstatementsdiv { padding:0px 10px; font-size:medium; }
 
 /* >> main display area and contained elements */

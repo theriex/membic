@@ -585,16 +585,6 @@ return {
         odiv.style.backgroundColor = app.skinner.lightbg();
         app.onescapefunc = app.cancelOverlay;
         jt.byId('picfilein').focus();
-    },
-
-
-    togglebetterdiv: function () {
-        var div = jt.byId("betterdetaildiv");
-        if(div) {
-            if(div.style.display === "block") {
-                div.style.display = "none"; }
-            else {
-                div.style.display = "block"; } }
     }
 
 
