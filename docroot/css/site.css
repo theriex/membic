@@ -76,6 +76,7 @@ img { border:0px; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
 .aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutstatementsdiv { padding:0px 10px; font-size:medium; }
+.aboutwhatitisdiv { text-align:center; font-size:x-small; }
 
 /* >> main display area and contained elements */
 #phonetextzoomfixtable { border-collapse:collapse; }
