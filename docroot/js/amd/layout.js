@@ -341,17 +341,15 @@ return {
     //clobbers existing dialog if already open
     openDialog: function (coords, html, initf, visf) {
         var dlgdiv = jt.byId('dlgdiv');
-        //window.scrollTo(0,0);  -- makes phone dialogs jump around
-        if(coords) {
-            if(!coords.x) {
-                coords.x = Math.min(Math.round(app.winw * 0.1), 100); }
-            if(coords.x > (app.winw / 2)) {
-                coords.x = 20; }  //display too tight, use default left pos
-            dlgdiv.style.left = String(coords.x) + "px";
-            dlgdiv.style.top = String(coords.y) + "px"; }
-        else {
-            dlgdiv.style.left = "20px";
-            dlgdiv.style.top = "60px"; }
+        //window.scrollTo(0,0);  -- makes phone dialogs jump around. Don't.
+        coords = coords || {};  //default x and y separately
+        coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 100);
+        coords.y = coords.y || 60;  //default y if not specified
+        if(coords.x > (app.winw / 2)) {
+            coords.x = 20; }  //display too tight, use default left pos
+        coords.y = coords.y + jt.byId('bodyid').scrollTop;  //logical height
+        dlgdiv.style.left = String(coords.x) + "px";
+        dlgdiv.style.top = String(coords.y) + "px";
         app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.closeDialog;
         jt.out('dlgdiv', jt.tac2html(
