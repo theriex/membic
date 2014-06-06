@@ -161,7 +161,7 @@ app.layout = (function () {
             if(!slides[slideindex] || slides[slideindex] === "blank.png") {
                 setTimeout(slideshow, 2000); }
             else {
-                setTimeout(slideshow, 2600); } }
+                setTimeout(slideshow, 3600); } }
         else {  //slideshow is over
             if(jt.byId('slidesdiv')) {
                 jt.out('slidesdiv', ""); } }

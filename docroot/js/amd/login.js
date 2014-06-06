@@ -398,7 +398,9 @@ app.login = (function () {
                         jt.log("addTaglineDetails failed code " + code + 
                                ": " + errtxt); },
                     jt.semaphore("login.addTaglineDetails")); },
-                   2000);
+                   //this is a secondary display detail, but don't wait
+                   //too long or it just makes the site look slow
+                   400);
     },
 
 
@@ -421,7 +423,7 @@ app.login = (function () {
                 revroll.revs[revroll.index], null, "noresp"));
             app.layout.adjust(); }
         revroll.index += 1;
-        setTimeout(displayReviewActivityRoll, 7000);
+        setTimeout(displayReviewActivityRoll, 4000);
     },
 
 
@@ -434,7 +436,9 @@ app.login = (function () {
                         jt.log("addReviewActivityRoll failed code " + code +
                                ": " + errtxt); },
                     jt.semaphore("login.addReviewActivityRoll")); },
-                   3000);
+                   //this is a secondary display detail, but don't wait too
+                   //long or it just makes the site look slow.
+                   900);
     },
 
 
