@@ -94,7 +94,8 @@ img { border:0px; }
 #contentdiv { margin:auto; }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
-#introverviewtaglinediv { padding:10px 0px; }
+#introverviewtaglinediv { position:absolute; left:60px; top:227px; 
+ font-size:small; }
 #taglinedetpensdiv { font-size:small; }
 #revrolldiv { padding:10px 0px 0px 0px; height:200px; overflow-y:scroll; }
 

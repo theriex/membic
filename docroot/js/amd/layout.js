@@ -177,6 +177,7 @@ app.layout = (function () {
                      style: "width:" + logodim.w + "px;" + 
                             "height:" + logodim.h + "px;"}]));
         jt.setdims('logodiv', logodim);
+        jt.setdims('introverviewtaglinediv', {y: logodim.h});
         //slides
         slidedim.x = 0;
         if(sep) {

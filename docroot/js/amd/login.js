@@ -915,7 +915,9 @@ return {
         if(!jt.byId('logindiv')) {
             html = ["div", {id: "logindiv"}, loginhtml];
             html = jt.tac2html(html);
-            jt.out('contentdiv', html); }
+            jt.out('contentdiv', html);
+            if(jt.byId('introverviewtaglinediv')) {
+                jt.byId('introverviewtaglinediv').style.display = "none"; } }
         app.login.init();
     },
 
