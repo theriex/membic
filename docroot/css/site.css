@@ -96,7 +96,7 @@ img { border:0px; }
  width:60%; margin:auto; }
 #introverviewtaglinediv { position:absolute; left:60px; top:227px; 
  font-size:small; }
-#taglinedetpensdiv { font-size:small; }
+#taglinedetpensdiv { font-size:small; font-style:italic; }
 #revrolldiv { padding:10px 0px 0px 0px; height:200px; overflow-y:scroll; }
 
 .penfont, #penhnamespan { 
@@ -163,7 +163,7 @@ img { border:0px; }
 .revtypeico { vertical-align:bottom; }
 .respico { vertical-align:bottom; }
 .respicodis { opacity:0.3; filter:alpha(opacity=30); }
-#forgotpw { font-size:small; font-style:italic; }
+#forgotpw { font-size:small; }
 #loginbtd { padding:20px 30px 20px 20px; }
 #signinbuttondiv { background:#70bbe9;
  color:#003; font-size:x-large; font-weight:normal;
@@ -182,7 +182,7 @@ img { border:0px; }
 #makenewaccountdiv { }
 #forgotpassdiv { text-align:center; }
 #altauthinstrdiv { padding:0px 20px 10px 0px; }
-#altauthmethods { padding:0px 0px 0px 30px; }
+#altauthmethods { padding:0px 0px 20px 30px; }
 .liflab { font-size:large; font-weight:normal; padding:10px; }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }

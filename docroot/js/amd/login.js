@@ -456,9 +456,9 @@ app.login = (function () {
             jt.out('altauthinstrdiv', "");
             jt.out('altauthmethods', ""); }
         else {  //regular login
-            jt.out('nativelogintitlediv', "Sign in directly...");
-            jt.out('altauthinstrdiv',  //mind the ipad length here
-                   "&nbsp;&nbsp;...or with your social net");
+            //jt.out('nativelogintitlediv', "Sign in directly...");
+            //jt.out('altauthinstrdiv',  //mind the ipad length here
+            //       "&nbsp;&nbsp;...or with your social net");
             jt.out('altauthmethods', displayAltAuthMethods()); }
         html = ["a", {id: "macc", href: "create new account...",
                       title: "Create new native login",
