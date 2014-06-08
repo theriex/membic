@@ -298,6 +298,7 @@ def req_summary_text(reqs):
 
 
 def write_summary_email_body(pen, reviews, tstr, prs, reqs):
+    sigline = "\nTo change your email preferences, click the main settings button on http://www.wdydfun.com\n\ncheers,\n-WDYDFun\n\n"
     body = "Hi " + pen.name + ",\n\n"
     if prs and len(prs) > 0:
         body += "Thanks for reviewing! Your current and future followers" +\
@@ -306,8 +307,8 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
         body += "Done anything fun recently?" +\
             " Your friends would like to hear about it..."
     body += "\n\n" +\
-        "For group activity, top rated, remembered, and pre-reviews" +\
-        " go to http://www.wdydfun.com" +\
+        "http://www.wdydfun.com to see group activity, top rated, " +\
+        "remembered, pre-reviews, and more." +\
         "\n\n" + req_summary_text(reqs)
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
@@ -315,10 +316,10 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
             " can to help them experience more of life. In the meantime," +\
             " you can find interesting people to follow here:\n" +\
             "\n    http://www.wdydfun.com/?command=penfinder\n\n"
-        return body
+        return body + sigline
     body += "Since " + tstr + ", friends you are following have posted " +\
         str(len(reviews)) + " " +\
-        ("reviews" if len(reviews) > 1 else "review") + ".\n\n"
+        ("reviews" if len(reviews) > 1 else "review") + ":\n\n"
     revtypes = [["book",     "Books"], 
                 ["movie",    "Movies"], 
                 ["video",    "Videos"], 
@@ -347,12 +348,12 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
                     "\n      ".join(textwrap.wrap(safestr(review.text))) + "\n"
                 body += keywords
                 body += "\n"
-    return body
+    return body + sigline
 
 
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
-    subj = "Your wdydfun " + freq + " activity since " + tstr
+    subj = "WDYDFun " + freq + " friend activity since " + tstr
     logsum = "----------------------------------------\n"
     logsum += "Mail sent for " + freq + " activity since " + tstr + "\n"
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
@@ -362,7 +363,6 @@ def mail_summaries(freq, thresh, request, response):
         processed += 1
         logmsg = "username: " + acc.username
         pen, whynot = eligible_pen(acc, thresh)
-        logging.info("whynot: " + whynot)
         if pen:
             logmsg += " (" + acc.email + "), pen: " + pen.name
             relids = outbound_relids_for_penid(pen.key().id())
@@ -376,8 +376,6 @@ def mail_summaries(freq, thresh, request, response):
                 reqs = find_requests(pen.key().id(), 0)
                 content = write_summary_email_body(pen, reviews, tstr, 
                                                    prs, reqs)
-                content += "\nTo change email settings for your account" +\
-                    " go to http://www.wdydfun.com \n\n"
                 if not request.url.startswith('http://localhost'):
                     mail.send_mail(
                         sender="wdydfun support <theriex@gmail.com>",
