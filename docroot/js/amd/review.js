@@ -1358,8 +1358,8 @@ return {
             revresp = ["div", {cla: "statrevrespdiv"},
                        ["a", {href: "../?view=review&penid=" + review.penid +
                                     "&revid=" + jt.instId(review),
-                              title: "Open in application to see responses"},
-                        "Responses/Comments"]]; }
+                              title: "Launch app to respond or comment"},
+                        "Respond/Comment"]]; }
         html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
                 [["div", {cla: "statrevmodkeydiv"},
                   jt.colloquialDate(jt.ISOString2Day(review.modified)) +
