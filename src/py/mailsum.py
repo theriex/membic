@@ -275,12 +275,12 @@ def eligible_pen(acc, thresh):
 
 
 def text_stars(review):
-    stars = ["    - ",
-             "    * ",
-             "   ** ",
-             "  *** ",
-             " **** ",
-             "***** "]
+    stars = ["    -",
+             "    *",
+             "   **",
+             "  ***",
+             " ****",
+             "*****"]
     index = review.rating / 20
     return stars[index]
 
@@ -295,6 +295,25 @@ def req_summary_text(reqs):
                 " review.\n"
         text += "\n\n"
     return text
+
+
+def write_review_email_text_summary(review):
+    val = "$STARS $TITLE\n" +\
+        "      $BYLINE - $KEYWORDS\n" +\
+        "      $REVTEXT\n" +\
+        "      $REVLINK\n"
+    val = val.replace("$STARS", text_stars(review))
+    val = val.replace("$TITLE", getTitle(review) + " " + getSubkey(review))
+    val = val.replace("$BYLINE", "review by " + unicode(review.penname))
+    val = val.replace("$KEYWORDS", safestr(review.keywords))
+    revtxt = safestr(review.text)
+    revtxtmax = 184
+    if revtxt > revtxtmax + 3:
+        revtxt = revtxt[:revtxtmax] + "..."
+    val = val.replace("$REVTEXT", "\n      ".join(textwrap.wrap(revtxt)))
+    val = val.replace("$REVLINK", "http://www.wdydfun.com/statrev/" +
+                      str(review.key().id()))
+    return val
 
 
 def write_summary_email_body(pen, reviews, tstr, prs, reqs):
@@ -336,18 +355,7 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
                 if not wroteHeaderLine:
                     body += tline
                     wroteHeaderLine = True
-                url = "http://www.wdydfun.com/statrev/" + str(review.key().id())
-                keywords = safestr(review.keywords)
-                if keywords:
-                    keywords = "      " + keywords + "\n"
-                body += text_stars(review) + getTitle(review) +\
-                    " " + getSubkey(review) + "\n"
-                body += "      review by " + unicode(review.penname) +\
-                    " " + url + "\n"
-                body += "      " +\
-                    "\n      ".join(textwrap.wrap(safestr(review.text))) + "\n"
-                body += keywords
-                body += "\n"
+                body += write_review_email_text_summary(review)
     return body + sigline
 
 
