@@ -446,6 +446,14 @@ class SummaryForUser(webapp2.RequestHandler):
             reqs = find_requests(pen.key().id(), 0)
             content = write_summary_email_body(pen, reviews, tstr, prs, reqs)
         self.response.out.write(content)
+        # Temporary email sender test code (comment out when not testing)
+        # emaddr = self.request.get('emaddr')
+        # if emaddr:
+        #     mail.send_mail(
+        #         sender="WDYDFun Activity <activity@wdydfun.com>",
+        #         to=emaddr,
+        #         subject="wdydfun sender test email",
+        #         body=content)
 
 
 class ReturnBotIDs(webapp2.RequestHandler):
