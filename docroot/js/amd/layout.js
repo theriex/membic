@@ -34,6 +34,9 @@ app.layout = (function () {
         if(idx > 0) {
             html = html.slice(idx + "<body>".length,
                               html.indexOf("</body")); }
+        html = html.replace(/\.<!-- \$ABOUTCONTACT -->/g,
+            " or <a href=\"mailto:support@wdydfun.com\">email support.");
+        //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
         if(idx > 0) {
             url = url.slice(idx + 1); }
@@ -41,6 +44,7 @@ app.layout = (function () {
         if(idx > 0) {
             url = url.slice(0, idx); }
         url = url.capitalize();
+        //display content
         html = app.layout.dlgwrapHTML(url, html);
         app.layout.openDialog({x:20, y:60}, html);
     },
