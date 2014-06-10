@@ -928,12 +928,12 @@ app.activity = (function () {
                 bootmon.count += 1; 
                 switch(bootmon.count) {
                 case 1:
-                    html += "<br/>Hmmm... Server's kinda slow...";
+                    html += "<br/>Slow server day...";
                     jt.out('revactdiv', html);
                     bootmon.tout = setTimeout(bootMonitor, 2000);
                     return;
                 case 2:
-                    html += "<br/>...Like really slow.";
+                    html += "<br/>...Like really slow...";
                     jt.out('revactdiv', html);
                     bootmon.tout = setTimeout(bootMonitor, 2000);
                     return;
