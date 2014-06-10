@@ -63,19 +63,17 @@ $REFER
   statrev.display();
 </script>
 
-<div class="stdadspacediv">
+<div class="mobileadspacediv">
   <div id="morgoogleads">
     <!-- start of code copied from adsense -->
-<script type="text/javascript"><!--
-google_ad_client = "ca-pub-3945939102920673";
-/* staticrev */
-google_ad_slot = "4121889143";
-google_ad_width = 160;
-google_ad_height = 600;
-//-->
-</script>
-<script type="text/javascript"
-        src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- statrevMobile -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:320px;height:50px"
+     data-ad-client="ca-pub-3945939102920673"
+     data-ad-slot="2057962342"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
 </script>
     <!-- end of code copied from adsense -->
   </div>

@@ -440,8 +440,9 @@ img { border:0px; }
 
 /* >> general classes */
 .greytxt { color:#999999; }
-.stdadspacediv { width:170px; height:610px; background:#fffffc; 
-  border-radius:5px; padding:8px 0px 0px 8px; margin:20px 0px 0px 0px; }
+.mobileadspacediv { padding:0px 0px 0px 5px; }
+.stdadspacediv { display:table; margin-left:5px; margin-right:auto; 
+  background:#fffffc; border-radius:5px; padding:5px; }
 
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
