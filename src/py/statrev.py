@@ -54,30 +54,20 @@ $REFER
 
 <div id="dlgdiv"></div>
 
+<div id="adoutercontainerdiv" class="mobileadspacediv">
+  <div id="morgoogleads">
+  </div>
+</div>
+
 <script src="../js/jtmin.js"></script>
 <script src="../js/amd/statrev.js"></script>
 <script src="../js/amd/layout.js"></script>
 <script src="../js/amd/profile.js"></script>
 <script src="../js/amd/review.js"></script>
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>
 <script>
   statrev.display();
 </script>
-
-<div class="mobileadspacediv">
-  <div id="morgoogleads">
-    <!-- start of code copied from adsense -->
-<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- statrevMobile -->
-<ins class="adsbygoogle"
-     style="display:inline-block;width:320px;height:50px"
-     data-ad-client="ca-pub-3945939102920673"
-     data-ad-slot="2057962342"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-    <!-- end of code copied from adsense -->
-  </div>
-</div>
 
 </body>
 </html>

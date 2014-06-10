@@ -3,6 +3,7 @@
 
 var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
+    adsbygoogle = null;
 
 //This is a degenerate module for the static review display.  Don't model it.
 var statrev = (function () {
@@ -53,6 +54,25 @@ var statrev = (function () {
                 if(obj && obj.hasOwnProperty(idfield)) {
                     return obj[idfield]; }
             }; }
+    },
+
+
+    displayAds = function () {
+        var adinfo, html;
+        adinfo = { w: 320, h: 50, slotid: "2057962342" };
+        if(window.innerWidth > 728) {
+            jt.byId('adoutercontainerdiv').className = "stdadspacediv";
+            adinfo = { w: 728, h: 90, slotid: "9581229144" }; }
+        html = "<!-- statrevWide -->\n" +
+            "<ins class=\"adsbygoogle\"\n" + 
+            "     style=\"display:inline-block;width:$Wpx;height:$Hpx\"\n" +
+            "     data-ad-client=\"ca-pub-3945939102920673\"\n" +
+            "     data-ad-slot=\"$SLOTID\"></ins>\n";
+        html = html.replace(/\$W/g, String(adinfo.w));
+        html = html.replace(/\$H/g, String(adinfo.h));
+        html = html.replace(/\$SLOTID/g, adinfo.slotid);
+        jt.out('morgoogleads', html);
+        (adsbygoogle = window.adsbygoogle || []).push({});
     };
 
 
@@ -88,6 +108,7 @@ return {
         html = html.replace(/img\//g, "../img/");
         html = html.replace(/revpic\?/g, "../revpic?");
         jt.out('revcontentdiv', html);
+        displayAds();  //space available, and helps pay the server bills...
     }
 
 }; //end of returned functions
