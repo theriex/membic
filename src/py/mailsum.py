@@ -301,7 +301,7 @@ def write_review_email_text_summary(review):
     val = "$STARS $TITLE\n" +\
         "      $BYLINE - $KEYWORDS\n" +\
         "      $REVTEXT\n" +\
-        "      $REVLINK\n"
+        "      $REVLINK\n\n"
     val = val.replace("$STARS", text_stars(review))
     val = val.replace("$TITLE", getTitle(review) + " " + getSubkey(review))
     val = val.replace("$BYLINE", "review by " + unicode(review.penname))
