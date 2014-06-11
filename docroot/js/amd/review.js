@@ -738,7 +738,7 @@ app.review = (function () {
                 jumplink = "";
                 prerevcb = ["span", {cla: "prereviewcbspan"},
                             jt.checkbox("cbprerev", "cbprerev", "Pre-Review",
-                                        crev.src === -101)]; }
+                                        review.srcrev === -101)]; }
             else { 
                 jumplink = app.review.jumpLinkHTML(review.url || "");
                 prerevcb = ""; }

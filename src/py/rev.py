@@ -190,6 +190,8 @@ def read_review_values(handler, review):
     srcrevstr = handler.request.get('srcrev')
     if srcrevstr:
         review.srcrev = intz(srcrevstr)
+    else:
+        review.srcrev = 0
 
 
 def update_top20_reviews(pen, review):
