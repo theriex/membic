@@ -426,7 +426,7 @@ class MailSummaries(webapp2.RequestHandler):
             self.response.out.write("\n\nsummary:\n" + summary)
         else:
             mail.send_mail(
-                sender="wdydfun support <theriex@gmail.com>",
+                sender="WDYDFun Activity <wdydfunactivity@gmail.com>",
                 to="theriex@gmail.com",
                 subject="wdydfun mail summaries",
                 body=summary)
@@ -458,7 +458,7 @@ class SummaryForUser(webapp2.RequestHandler):
         # emaddr = self.request.get('emaddr')
         # if emaddr:
         #     mail.send_mail(
-        #         sender="WDYDFun Activity <activity@wdydfun.com>",
+        #         sender="WDYDFun Activity <wdydfunactivity@gmail.com>",
         #         to=emaddr,
         #         subject="wdydfun sender test email",
         #         body=content)
