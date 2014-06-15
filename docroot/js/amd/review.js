@@ -597,39 +597,29 @@ app.review = (function () {
     },
 
 
-    makeTransformLink = function (fstr, title, text) {
-        var html;
-        html = ["div", {cla: "transformlinkdiv",
-                        style: "background:" + app.colors.bodybg + ";"},
-                ["a", {href: "#", onclick: jt.fs(fstr), title: title},
-                 text]];
-        return html;
-    },
-
-
     transformActionsHTML = function (review, type, keyval, mode) {
         var html = "", actions = [];
         if(keyval && mode === "edit") {
             if(review.srcrev > 0 && !jt.instId(review)) {
                 //new corresponding review, allow finding mismatched titles
-                actions.push(makeTransformLink(
+                actions.push(app.review.makeTransformLink(
                     "app.revresp.searchCorresponding()",
                     "Find existing corresponding review",
                     "Find review")); }
             //always be able to change the review type
-            actions.push(makeTransformLink(
+            actions.push(app.review.makeTransformLink(
                 "app.review.changeRevType()",
                 "Change this review type",
                 "Change Review Type"));
             if(review.revtype === "video" && review.title && review.artist) {
                 //video import may have mapped the title and artist backwards
-                actions.push(makeTransformLink(
+                actions.push(app.review.makeTransformLink(
                     "app.review.swapTitleAndArtist()",
                     "Swap the artist and title values",
                     "Swap Title and Artist")); }
             if(review.url) {
                 //Might want to refresh the image link or re-read info
-                actions.push(makeTransformLink(
+                actions.push(app.review.makeTransformLink(
                     "app.review.readURL('" + review.url + "')",
                     "Read the URL to fill out review fields",
                     "Import URL Details")); }
@@ -705,7 +695,7 @@ app.review = (function () {
                      permalinkHTML(temp),
                      ["div", {id: "revsavemsg"}]]]; }
         else {  //reading someone else's review
-            html = [app.revresp.feedbackActionsHTML(),
+            html = ["div", {id: "revbuttonsdiv"},
                     ["div", {id: "revsavemsg"}]]; }
         return html;
     },
@@ -1238,7 +1228,10 @@ app.review = (function () {
                   ["tr",
                    [["td", {valign: "top"},
                      ["div", {id: "revformimagediv",
-                              style: "min-width:125px;"},  //keep img space
+                              //reserve the img space so the form
+                              //maintains a predictable visual layout
+                              //max-width set in css .revimg
+                              style: "min-width:125px;"},
                       revFormImageHTML(review, type, keyval, mode)]],
                     ["td", {valign: "top"},
                      ["div", {id: "revformtranformactionsdiv"},
@@ -1615,6 +1608,7 @@ return {
     cancelReview: function (force, revtype) {
         if(!okToLoseChanges()) {
             return; }
+        app.layout.closeDialog(); //close dialog if previously open
         app.onescapefunc = null; 
         app.layout.updateNavIcons("review");
         if(fullEditDisplayTimeout) {
@@ -1926,6 +1920,16 @@ return {
 
     picHTML: function (review, type) {
         return revFormImageHTML(review, type, "defined", "listing");
+    },
+
+
+    makeTransformLink: function (fstr, title, text, label) {
+        var html;
+        label = label || text;
+        html = ["div", {cla: "transformlinkdiv"},
+                ["a", {href: "#" + label, onclick: jt.fs(fstr), title: title},
+                 text]];
+        return html;
     }
 
 }; //end of returned functions

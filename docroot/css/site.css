@@ -375,10 +375,6 @@ img { border:0px; }
 .grouplist { list-style:none; padding:10px 0px 5px 10px; margin:0; }
 #groupdatadiv, #grouprevdatadiv, #pendatadiv, #revdatadiv { 
   font-size:xx-small; color:white; }
-.getyoursdiv { float:right; font-size:x-small; background:#9cd1a1;
-  margin:2px 10px 0px 0px; padding:4px 10px; 
-  border: 1px solid #666666; border-radius:10px; 
-  box-shadow:5px 5px 2px #888888; }
 
 /* >> review layout */
 #revfdiv { }
@@ -390,11 +386,14 @@ img { border:0px; }
 #csrchbuttonsdiv { padding:20px; text-align:center; }
 .keywordcheckboxtable { padding:10px; }
 .keywordcheckboxtable td { padding:4px; }
-.transformlinkdiv { border: 1px solid #666666; border-radius:5px; 
-  padding:0px 5px; margin:8px; display:table; }
 #earnedmeritbadgegraphicdiv { text-align:center; padding:15px; }
 .tabcontentheadertext { font-size:small; padding:0px 0px 0px 10px; }
+.transformlinkdiv, .getyoursdiv { background:#9cd1a1;
+  border: 1px solid #666666; border-radius:10px; font-size:x-small; }
+.transformlinkdiv { padding:0px 5px; margin:8px; display:table; }
 /* static display elements */
+.getyoursdiv { padding:4px 10px; margin:2px 10px 0px 0px; float:right; 
+  box-shadow:5px 5px 2px #888888; }
 #blogcontentdiv { padding:10px; margin-left:7%; }
 #statrevcontent { padding:10px 20px 0px 20px; }
 #statrevactdiv { text-align:center; padding:10px; }

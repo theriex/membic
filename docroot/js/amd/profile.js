@@ -1298,6 +1298,7 @@ return {
 
 
     display: function (action, errmsg) {
+        app.layout.closeDialog(); //close dialog if previously open
         app.pen.getPen(function (homepen) {
             mainDisplay(homepen, null, action, errmsg); });
     },

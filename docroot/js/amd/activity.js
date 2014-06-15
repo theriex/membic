@@ -1192,11 +1192,13 @@ return {
 
 
     displayActive: function () {
+        app.layout.closeDialog(); //close dialog if previously open
         mainDisplay("activity");
     },
 
 
     displayRemembered: function () {
+        app.layout.closeDialog(); //close dialog if previously open
         mainDisplay("memo");
     },
 

@@ -2,7 +2,7 @@
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 var app = {},  //Global container for application level funcs and values
-    jt = {};   //Global access to general utility methods
+    jt = {},   //Global access to general utility methods
     adsbygoogle = null;
 
 //This is a degenerate module for the static review display.  Don't model it.
@@ -72,7 +72,8 @@ var statrev = (function () {
         html = html.replace(/\$H/g, String(adinfo.h));
         html = html.replace(/\$SLOTID/g, adinfo.slotid);
         jt.out('morgoogleads', html);
-        (adsbygoogle = window.adsbygoogle || []).push({});
+        adsbygoogle = window.adsbygoogle || [];
+        adsbygoogle.push({});
     };
 
 

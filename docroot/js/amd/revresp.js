@@ -785,6 +785,7 @@ return {
 
     respond: function () {
         jt.byId('respondtxttd').style.color = greytxt;
+        app.layout.closeDialog(); //close dialog if open
         setTimeout(function () {
             app.pen.getPen(function (pen) {
                 findCorrespondingReview(pen, copyAndEditCorresponding); }); },
@@ -898,7 +899,6 @@ return {
         if(value === "set") {  //just initializing the display
             img.src = "img/remembered.png";
             tbl.title = "Remove from your remembered reviews";
-            jt.out('memotxttd', "Remembered");
             return; }
         img.className = "respicodis";  //grey out the image
         value = (img.src.indexOf("remembered.png") > 0)? "no" : "yes"; //toggle
@@ -910,12 +910,10 @@ return {
                     updateCachedReviewTags('remembered', updatedrevtags);
                     if(isRemembered(updatedrevtags[0])) {
                         img.src = "img/remembered.png";
-                        tbl.title = "Remove from your remembered reviews";
-                        jt.out('memotxttd', "Remembered"); }
+                        tbl.title = "Remove from your remembered reviews"; }
                     else {
                         img.src = "img/rememberq.png";
-                        tbl.title = "Add to your remembered reviews";
-                        jt.out('memotxttd', "Remember"); }
+                        tbl.title = "Add to your remembered reviews"; }
                     img.className = "respico"; },  //ungrey the image
                 app.failf(function (code, errtxt) {
                     jt.err("toggleMemoButton failed " + code +
@@ -1068,47 +1066,31 @@ return {
     respActionsHTML: function () {
         var html;
         html = ["div", {id: "socialrevactdiv"},
-                [["div", {id: "helpfulbutton", cla: "buttondiv"},
-                  jt.imgntxt("helpfulq.png", "Helpful",
-                             "app.revresp.toggleHelpfulButton()", 
-                             "#helpful", 
-                             "Mark this review as helpful", 
-                             "respico", "helpful")],
-                 ["div", {id: "memobutton", cla: "buttondiv"},
-                  jt.imgntxt("rememberq.png", "Remember",
-                             "app.revresp.toggleMemoButton()", 
-                             "#memo", 
-                             "Add this to remembered reviews", 
-                             "respico", "memo")],
-                 ["div", {id: "respondbutton", cla: "buttondiv"},
-                  jt.imgntxt("writereview.png", "Your review",
-                             "app.revresp.respond()", 
-                             "#respond", 
-                             "Edit your corresponding review", 
-                             "respico", "respond")]]];
-        return html;
-    },
-
-
-    feedbackActionsHTML: function () {
-        var html;
-        html = ["div", {id: "socialrevtalkdiv"},
-                ["table",
-                 ["tr",
-                  [["td",
-                    ["div", {id: "questionbutton", cla: "buttondiv"},
-                     jt.imgntxt("questionb.png", "Question",
-                                "app.revresp.question()",
-                                "#question",
-                                "Ask a question about this review",
-                                "respico", "question")]],
-                   ["td",
-                    ["div", {id: "commentbutton", cla: "buttondiv"},
-                     jt.imgntxt("commentb.png", "Comment",
-                                "app.revresp.comment()",
-                                "#comment",
-                                "Comment on this review",
-                                "respico", "comment")]]]]]];
+                ["table", {cla: "revdisptable"},
+                 [["tr",
+                   [["td", {align:"center"},
+                     ["div", {id: "helpfulbutton", cla: "buttondiv"},
+                      jt.imgntxt("helpfulq.png", "",  //Helpful
+                                 "app.revresp.toggleHelpfulButton()", 
+                                 "#helpful", 
+                                 "Mark this review as helpful", 
+                                 "respico", "helpful")]],
+                    ["td", {align:"center"},
+                     ["div", {id: "memobutton", cla: "buttondiv"},
+                      jt.imgntxt("rememberq.png", "", //Remember
+                                 "app.revresp.toggleMemoButton()", 
+                                 "#memo", 
+                                 "Add this to remembered reviews", 
+                                 "respico", "memo")]]]],
+                  ["tr",
+                   ["td", {colspan: 2, align:"center"},
+                    app.review.makeTransformLink(
+                        "app.revresp.showResponseDialog()",
+                        "Write your review, comment or question",
+                        ["span", {id: "respondtextspan", 
+                                  style: "font-size:large;"}, 
+                         "Respond"], 
+                        "Respond")]]]]];
         return html;
     },
 
@@ -1440,21 +1422,56 @@ return {
     },
 
 
-    activateResponseButtons: function (review) {
+    activateSecondaryResponseButtons: function () {
         disableQuestionButton();
         disableCommentButton();
-        if(jt.byId('helpfulbutton')) {
-            initHelpfulButtonSetting(app.pen.currPenRef(), review); }
-        if(jt.byId('memobutton')) {
-            initMemoButtonSetting(app.pen.currPenRef(), review); }
         if(jt.byId('respondbutton')) {
             updateCorrespondingReviewButton(); }
         if(jt.byId('questionbutton')) {
             testEnableQuestionButton(); }
+        correspcheck = 0;
         if(jt.byId('commentbutton')) {
             testEnableCommentButton(); }
+    },
+
+
+    activateResponseButtons: function (review) {
+        if(jt.byId('helpfulbutton')) {
+            initHelpfulButtonSetting(app.pen.currPenRef(), review); }
+        if(jt.byId('memobutton')) {
+            initMemoButtonSetting(app.pen.currPenRef(), review); }
         if(jt.byId('revcommentsdiv')) {
             displayReviewResponses(); }
+    },
+
+
+    showResponseDialog: function () {
+        var html, pos;
+        html = ["div", {cla: "revrespactionsdiv"},
+                [["div", {id: "respondbutton", cla: "buttondiv"},
+                  jt.imgntxt("writereview.png", "Your review",
+                             "app.revresp.respond()", 
+                             "#respond", 
+                             "Edit your corresponding review", 
+                             "respico", "respond")],
+                 ["div", {id: "questionbutton", cla: "buttondiv"},
+                  jt.imgntxt("questionb.png", "Question",
+                             "app.revresp.question()",
+                             "#question",
+                             "Ask a question about this review",
+                             "respico", "question")],
+                 ["div", {id: "commentbutton", cla: "buttondiv"},
+                  jt.imgntxt("commentb.png", "Comment",
+                             "app.revresp.comment()",
+                             "#comment",
+                             "Comment on this review",
+                             "respico", "comment")]]];
+        html = app.layout.dlgwrapHTML("Respond", html);
+        pos = jt.geoPos(jt.byId('respondtextspan'));
+        pos.x -= 50;
+        pos.y -= 70;
+        app.layout.openDialog(pos, jt.tac2html(html), null,
+                              app.revresp.activateSecondaryResponseButtons);
     }
 
 
