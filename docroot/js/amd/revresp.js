@@ -669,15 +669,7 @@ app.revresp = (function () {
                       bhtmlf()]]];
             visf = function () {
                 jt.byId('cmtta').focus(); }; }
-        //wrap content in standard dialog box
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 bid.capitalize()],
-                html];
+        html = app.layout.dlgwrapHTML(bid.capitalize(), html);
         app.layout.openDialog({x:200, y:370}, jt.tac2html(html), null, visf);
     },
 
@@ -808,19 +800,13 @@ return {
                       app.profile.reviewItemNameHTML(type, review)]]); },
             revtype: app.review.getCurrentReview().revtype,
             srchval: val || "" };
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 "Find your corresponding review"],
-                ["div", {id: "csrchcontentdiv"},
+        html = ["div", {id: "csrchcontentdiv"},
                  [["div", {id: "csrchindiv"},
                    ["input", {type: "text", id: correspsrch.inputId, size: "40",
                               placeholder: "Review title or name",
                               value: correspsrch.srchval}]],
-                  ["div", {id: correspsrch.outdivId}]]]];
+                  ["div", {id: correspsrch.outdivId}]]];
+        html = app.layout.dlgwrapHTML("Find your corresponding review", html);
         app.layout.openDialog({x:200, y:370}, jt.tac2html(html), null,
                               function () {
                                   jt.byId(correspsrch.inputId).focus(); });
@@ -1130,37 +1116,33 @@ return {
     handlePendingQC: function (qcid) {
         var qcmt, html;
         qcmt = findPendingComment(qcid);
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 qcmt.rctype.capitalize() + " from " + commenterNameHTML(qcmt)],
-                ["div", {cla: "commentdiv"},
-                 [["div", {id: "formcontentdiv", cla: "commentform"},
-                   ["p", {cla: "qctext"},
-                    qcmt.comment]],
-                  ["div", {id: "cmterrdiv"}, ""],
-                  ["div", {id: "requestbuttonsdiv"},
-                   [["button", {type: "button", id: "cmtcancelb",
-                                onclick: jt.fs("app.layout.closeDialog()")},
-                     "Cancel"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "cmtaccb",
-                                onclick: jt.fs("app.revresp.topaccept('" +
-                                               qcid + "')")},
-                     "Accept"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "cmtignoreb",
-                                onclick: jt.fs("app.revresp.topignore('" +
-                                               qcid + "')")},
-                     "Ignore Forever"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "cmtrejectb",
-                                onclick: jt.fs("app.revresp.topreject('" +
-                                               qcid + "')")},
-                     "Reject"]]]]]];
+        html = ["div", {cla: "commentdiv"},
+                [["div", {id: "formcontentdiv", cla: "commentform"},
+                  ["p", {cla: "qctext"},
+                   qcmt.comment]],
+                 ["div", {id: "cmterrdiv"}, ""],
+                 ["div", {id: "requestbuttonsdiv"},
+                  [["button", {type: "button", id: "cmtcancelb",
+                               onclick: jt.fs("app.layout.closeDialog()")},
+                    "Cancel"],
+                   "&nbsp;",
+                   ["button", {type: "button", id: "cmtaccb",
+                               onclick: jt.fs("app.revresp.topaccept('" +
+                                              qcid + "')")},
+                    "Accept"],
+                   "&nbsp;",
+                   ["button", {type: "button", id: "cmtignoreb",
+                               onclick: jt.fs("app.revresp.topignore('" +
+                                              qcid + "')")},
+                    "Ignore Forever"],
+                   "&nbsp;",
+                   ["button", {type: "button", id: "cmtrejectb",
+                               onclick: jt.fs("app.revresp.topreject('" +
+                                              qcid + "')")},
+                    "Reject"]]]]];
+        html = app.layout.dlgwrapHTML(
+            qcmt.rctype.capitalize() + " from " + commenterNameHTML(qcmt),
+            html);
         app.layout.openDialog({x:200, y:300}, jt.tac2html(html));
     },
 
@@ -1273,7 +1255,7 @@ return {
                  ["table",
                   [["tr",
                     ["td", {colspan: 2},
-                     "Reject Comment"]],
+                     "Reject " + qcmt.rctype.capitalize()]],
                    ["tr",
                     [["td", "Reason"],
                      ["td",
@@ -1367,34 +1349,28 @@ return {
         if(!flagged) {
             return contf(); }
         abcontf = contf;
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 "Follow " + otherpen.name + "?"],
-                ["div", {cla: "commentdiv"},
-                 [["div", {id: "formcontentdiv", cla: "commentform"},
-                   [["p", {cla: "qctext"},
-                     "You previously reported " + otherpen.name + 
+        html = ["div", {cla: "commentdiv"},
+                [["div", {id: "formcontentdiv", cla: "commentform"},
+                  [["p", {cla: "qctext"},
+                    "You previously reported " + otherpen.name + 
                     " for harassment."],
-                    ["p", {cla: "qctext"},
-                     "Following them could set a bad precedent. " +
-                     "Are you sure?"],
-                    ["div", {cla: "harasscbdiv"},
-                     jt.checkbox("cbclear", "cbclear", "Clear " + 
-                                 otherpen.name + " harassment report.")]]],
-                  ["div", {id: "cmterrdiv"}, ""],
-                  ["div", {id: "requestbuttonsdiv"},
-                   [["button", {type: "button", id: "cancelb",
-                                onclick: jt.fs("app.layout.closeDialog()")},
-                     "Cancel"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "confirmb",
-                                onclick: jt.fs("app.revresp.clearAbuseConf('" +
-                                               abid + "')")},
-                     "OK"]]]]]];
+                   ["p", {cla: "qctext"},
+                    "Following them could set a bad precedent. " +
+                    "Are you sure?"],
+                   ["div", {cla: "harasscbdiv"},
+                    jt.checkbox("cbclear", "cbclear", "Clear " + 
+                                otherpen.name + " harassment report.")]]],
+                 ["div", {id: "cmterrdiv"}, ""],
+                 ["div", {id: "requestbuttonsdiv"},
+                  [["button", {type: "button", id: "cancelb",
+                               onclick: jt.fs("app.layout.closeDialog()")},
+                    "Cancel"],
+                   "&nbsp;",
+                   ["button", {type: "button", id: "confirmb",
+                               onclick: jt.fs("app.revresp.clearAbuseConf('" +
+                                              abid + "')")},
+                    "OK"]]]]];
+        html = app.layout.dlgwrapHTML("Follow " + otherpen.name + "?", html);
         app.layout.openDialog({x:200, y:200}, jt.tac2html(html));
     },
 
@@ -1472,6 +1448,11 @@ return {
         pos.y -= 70;
         app.layout.openDialog(pos, jt.tac2html(html), null,
                               app.revresp.activateSecondaryResponseButtons);
+    },
+
+
+    isAbusivePen: function (penid) {
+        return isAbusivePen(penid);
     }
 
 
