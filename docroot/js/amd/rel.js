@@ -56,6 +56,9 @@ app.rel = (function () {
         srcpen = app.pen.currPenRef().pen;
         refarray = getRelRefArray(srcpen, "outbound");
         penid = jt.instId(pen);
+        if(app.revresp.isAbusivePen(penid)) {
+            html = ["span", {cla: "errmsgdiv"}, "abusive"];
+            return " " + jt.tac2html(html); }
         for(i = 0; refarray && i < refarray.length; i += 1) {
             if(refarray[i].rel.relatedid === penid) {
                 return ""; } }  //already following
