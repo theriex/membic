@@ -523,12 +523,8 @@ app.review = (function () {
                       "Keywords "],
                      ["input", {type: "text", id: "keywordin", size: 30,
                                 value: jt.safestr(review.keywords)}]]]; }
-        else { //not editing
-            if(jt.safestr(review.keywords)) {
-                html = ["div", {cla: "csvstrdiv"},
-                        [["span", {cla: "secondaryfield"},
-                          "Keywords "],
-                         jt.safestr(review.keywords)]]; } }
+        else { //not editing, keywords CSV displayed with the fields
+            html = ""; }
         return html;
     },
 
@@ -803,6 +799,14 @@ app.review = (function () {
             onchange = jt.fs("app.review.urlchg()");
             keyrows.push(makeFieldInputRow(review, mode, "url", "urlin", 
                                            onchange)); }
+        else { //not editing 
+            if(jt.safestr(review.keywords)) {
+                keyrows.push(["tr",
+                              [["td", {id: "keywordslabeltd"},
+                                ["span", {cla: "secondaryfield"},
+                                 "Keywords"]],
+                               ["td", {align: "left"},
+                                jt.safestr(review.keywords)]]]); } }
         if(app.winw < 750) {
             html = ["table", keyrows]; }
         else {
