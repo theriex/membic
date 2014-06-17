@@ -675,6 +675,9 @@ app.revresp = (function () {
 
 
     correspRevHTML = function (penref, revref) {
+        var pname = penref.pen.name;
+        if(penref.penid === app.pen.currPenId()) {
+            pname = "you"; }
         return ["tr",
                 [["td", {cla:"respcol", align:"left"},
                   app.review.starsImageHTML(revref.rev)],
@@ -682,7 +685,7 @@ app.revresp = (function () {
                   ["a", {href: "#" + jt.ndq(penref.pen.name),
                          onclick: jt.fs("app.profile.readReview('" +
                                         revref.revid + "')")},
-                   penref.pen.name]],
+                   pname]],
                  ["td", {cla:"respval", valign:"top", align:"left"},
                   jt.ellipsis(revref.rev.text, 255)]]];
     },
