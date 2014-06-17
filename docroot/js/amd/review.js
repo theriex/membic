@@ -769,12 +769,40 @@ app.review = (function () {
                      valdisp]]; }
         else {
             html = ["tr", 
-                    [["td", {id: inid + "labeltd"},
+                    [["td", {id: inid + "labeltd", cla: "tdnarrow"},
                       ["span", {cla: "secondaryfield"},
                        labval]],
                      ["td", {align: "left"},
                       valdisp]]]; }
         return html;
+    },
+
+
+    appendToRow = function (row, element) {
+        var i;
+        element = element[1];  //skip past "tr" to get contents
+        if(element[0] === "td") {  //single element
+            row.push(element); }
+        else {  //attribute value pair
+            for(i = 0; i < element.length; i += 1) {
+                row.push(element[i]); } }
+    },
+
+
+    sideBySideRows = function (keyrows, secrows) {
+        var row, rows = [];
+        while(keyrows.length || secrows.length) {
+            row = [];
+            if(keyrows && keyrows.length) {
+                appendToRow(row, keyrows.pop()); }
+            if(secrows && secrows.length) {
+                appendToRow(row, secrows.pop()); }
+            //if just single colspan item in row, then expand it so the
+            //table doesn't end up skewed.
+            if(row.length === 1 && row[0][1].colspan) {
+                row[0][1].colspan = 4; }
+            rows.unshift(["tr", row]); }
+        return rows;
     },
 
 
@@ -802,7 +830,7 @@ app.review = (function () {
         else { //not editing 
             if(jt.safestr(review.keywords)) {
                 keyrows.push(["tr",
-                              [["td", {id: "keywordslabeltd"},
+                              [["td", {id: "keywordslabeltd", cla: "tdnarrow"},
                                 ["span", {cla: "secondaryfield"},
                                  "Keywords"]],
                                ["td", {align: "left"},
@@ -812,11 +840,7 @@ app.review = (function () {
         else {
             html = ["div", {id: "revformfieldsdisplaydiv"},
                     ["table",
-                     ["tr",
-                      [["td", {valign: "top"},
-                        ["table", keyrows]],
-                       ["td", {valign: "top"},
-                        ["table", secrows]]]]]]; }
+                     sideBySideRows(keyrows, secrows)]]; }
         return html;
     },
 
