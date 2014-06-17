@@ -1,5 +1,5 @@
 /*global require: false, console: false, process: false */
-/*jslint white: true */
+/*jslint white: true, regexp: true */
 //For info, please see readme.txt
 
 var build = (function () {
@@ -101,12 +101,25 @@ var build = (function () {
     },
 
 
+    deploymentReminders = function () {
+        var textlines = [
+            "Reminders:",
+            "  - It can take two deployments for a new release to stabilize.",
+            "    do a second build/deploy cycle after a few minutes to ensure",
+            "    things are stable.",
+            "  - Until google place info lookup can be stabilized, do a ",
+            "    warmup call by looking up a museum or somesuch."];
+        console.log(textlines.join("\n"));
+    },
+
+
     minifyAndDeploy = function () {
-        var command, args;
+        var command, args, cp;
         command = makeMinCommand(outsrc, outcomp);
         console.log(command);
         args = command.split(" ");
-        childproc.spawn(args[0], args.slice(1));
+        cp = childproc.spawn(args[0], args.slice(1));
+        cp.on('close', deploymentReminders);
     },
 
 
@@ -230,6 +243,4 @@ if(build.setDocroot(process.argv[1])) {
         build.run(); } }
 else {
     console.log("Couldn't figure out docroot"); }
-
-
 
