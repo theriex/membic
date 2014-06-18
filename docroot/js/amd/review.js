@@ -1080,20 +1080,54 @@ app.review = (function () {
     },
 
 
+    noteServiceError = function (retry, problem) {
+        var div, html; 
+        div = jt.byId('lslogdiv');
+        if(!div) {  //div not available anymore, punt.
+            return; }
+        html = div.innerHTML;
+        retry = retry + 1;  //use human counts
+        html += "<br/>Attempt " + retry + ": " + problem;
+        jt.out('lslogdiv', html);
+    },
+
+
+    verifyGeocodingInfoDiv = function (complainIfNotAlreadyThere) {
+        var infodiv, html;
+        infodiv = jt.byId("geocodingInfoDiv");
+        if(!infodiv) {
+            html = ["div", {id: "geocodingInfoDiv"},
+                    [["div", {id: "lslogdiv"}],
+                     ["div", {id: "mapdiv"}]]];
+            html = app.layout.dlgwrapHTML("Geocoded Place Details", html);
+            //the dialog is displayed if processing fails, meanwhile
+            //it serves as a stable place to hold the required map.
+            app.layout.writeDialogContents(html);
+            if(complainIfNotAlreadyThere) {
+                jt.out('lslogdiv', "geocodingInfoDiv was destroyed"); } }
+    },
+
+
     selectLocLatLng = function (latlng, ref, retry, errmsg) {
-        var mapdiv, map, maxretry = 10;
+        var mapdiv, map, maxretry = 10, html;
         retry = retry || 0;
         if(retry > maxretry) {
-            jt.err("Initializing google maps places failed, so the\n" +
-                   "review url and address were not filled out.\n\n" + 
-                   "mapdiv: " + mapdiv + "\n" +
-                   "error: " + errmsg + "\n\n" +
-                   "You can try creating the review again, or fill out\n" +
-                   "the fields manually\n");
+            verifyGeocodingInfoDiv(true);
+            html = jt.byId('geocodingInfoDiv').innerHTML;
+            html = ["div", {id: "geocodingInfoDiv"},
+                    [["div",
+                      "There were problems calling the google.maps service."],
+                     html,
+                     ["p"],
+                     ["div",
+                      "This normally just works. Try reloading the site, " + 
+                      "or send this error to support@wdydfun.com so " + 
+                      "someone can look into it."]]];
+            html = app.layout.dlgwrapHTML("Geocoding Error", html);
+            app.layout.openDialog({y:140}, jt.tac2html(html));
             return; }
         if(!gplacesvc && google && google.maps && google.maps.places) {
-            //this can fail intermittently, restarting the review usually works
-            try {
+            try {  //this can fail if the map is not ready yet
                 mapdiv = jt.byId('mapdiv');
                 map = new google.maps.Map(mapdiv, {
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -1102,9 +1136,10 @@ app.review = (function () {
                 gplacesvc = new google.maps.places.PlacesService(map);
             } catch (problem) {
                 gplacesvc = null;
+                noteServiceError(retry, problem);
                 setTimeout(function () {
                     selectLocLatLng(latlng, ref, retry + 1, problem);
-                    }, 200);
+                    }, 200 + (100 * retry));
                 return;
             } }
         if(gplacesvc && ref) {
@@ -1149,33 +1184,6 @@ app.review = (function () {
                                                            status); }); }
         else {
             setTimeout(acfunc, 400); }
-    },
-
-
-    selectLocVerifyHTML = function (addr, ref, retry) {
-        var mapdiv, maxretry;
-        maxretry = 10;
-        mapdiv = jt.byId('mapdiv');
-        if(!retry) {
-            retry = 0; }
-        if(retry > maxretry) {
-            jt.err("Tried " + maxretry + " times to create a map holder\n" +
-                   "to retrieve location info, but it's not working. Not\n" +
-                   "going to be able to read the review details..."); }
-        if(!mapdiv) {
-            setTimeout(function () {
-                selectLocVerifyHTML(addr, ref, retry + 1);
-                }, 50);
-            return; }
-        try {
-            geoc.geocode({address: addr}, function (results, status) {
-                var ok = google.maps.places.PlacesServiceStatus.OK;
-                if(status === ok) {
-                    selectLocLatLng(results[0].geometry.location, ref); }
-                });
-        } catch (problem) {
-            jt.err("Places service geocode failed: " + problem);
-        }
     },
 
 
@@ -1874,17 +1882,35 @@ return {
 
 
     selectLocation: function (addr, ref) {
-        var html;
+        var errlines = [
+            "Not going to be able to fill out the url and address",
+            "from the location you selected. This normally just works,",
+            "so if you could email this message to support@wdydfun.com",
+            "someone can look into why it.  You can also try reloading",
+            "the site in your browser to see if that helps."];
         if(addr) {  //even if all other calls fail, use the selected name
             jt.byId('keyin').value = jt.dec(addr); }
         if(!geoc && google && google.maps && google.maps.places) {
-            geoc = new google.maps.Geocoder(); }
+            geoc = new google.maps.Geocoder();
+            if(!geoc) {
+                errlines.unshift("Initializing google.maps.Geocoder failed.");
+                jt.err(errlines.join("\n")); } }
         if(geoc && addr) {
             addr = jt.dec(addr);
-            html = [["p", addr],
-                    ["div", {id: "mapdiv"}]];
-            jt.out('revautodiv', jt.tac2html(html));
-            selectLocVerifyHTML(addr, ref); }
+            jt.out('revautodiv', jt.tac2html(["p", addr]));
+            verifyGeocodingInfoDiv();
+            try {
+                geoc.geocode({address: addr}, function (results, status) {
+                    if(status === google.maps.places.PlacesServiceStatus.OK) {
+                        selectLocLatLng(results[0].geometry.location, ref); }
+                    else {
+                        errlines.unshift("PlacesServiceStatus not OK");
+                        jt.err(errlines.join("\n")); }
+                });
+            } catch (problem) {
+                errlines.unshift("Error geocoding: " + problem);
+                jt.err(errlines.join("\n"));
+            } }
     },
 
 

@@ -334,6 +334,14 @@ return {
     },
 
 
+    writeDialogContents: function (html) {
+        jt.out('dlgdiv', jt.tac2html(
+            ["div", {id: "dlgborderdiv"},
+             ["div", {id: "dlginsidediv"}, 
+              html]]));
+    },
+
+
     queueDialog: function (coords, html, initf, visf) {
         if(jt.byId('dlgdiv').style.visibility === "visible") {
             dlgqueue.push({coords: coords, html: html, 
@@ -357,10 +365,7 @@ return {
         dlgdiv.style.top = String(coords.y) + "px";
         app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.closeDialog;
-        jt.out('dlgdiv', jt.tac2html(
-            ["div", {id: "dlgborderdiv"},
-             ["div", {id: "dlginsidediv"}, 
-              html]]));
+        app.layout.writeDialogContents(html);
         if(initf) {
             initf(); }
         jt.byId('dlgdiv').style.visibility = "visible";
