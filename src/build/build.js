@@ -106,9 +106,7 @@ var build = (function () {
             "Reminders:",
             "  - It can take two deployments for a new release to stabilize.",
             "    do a second build/deploy cycle after a few minutes to ensure",
-            "    things are stable.",
-            "  - Until google place info lookup can be stabilized, do a ",
-            "    warmup call by looking up a museum or somesuch."];
+            "    things are stable."];
         console.log(textlines.join("\n"));
     },
 
