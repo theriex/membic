@@ -1733,7 +1733,8 @@ return {
                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                     setTimeout(function () {  //update matching requests
                         app.activity.fulfillRequests(crev); }, 100);
-                    setTimeout(app.group.currentReviewPostDialog, 150);
+                    if(url.indexOf("newrev") >= 0) {
+                        setTimeout(app.group.currentReviewPostDialog, 150); }
                     setTimeout(function () {  //update corresponding links
                         app.lcs.checkAllCorresponding(crev); }, 200);
                     if(doneEditing) {
