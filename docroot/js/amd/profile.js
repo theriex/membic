@@ -1169,7 +1169,9 @@ app.profile = (function () {
 
 
     byLineHTML = function (revobj, penNameStr) {
-        var byline = "", revref, vialink = "";
+        var byline, revref, vialink = "";
+        byline = ["span", {cla: "blrevdate"},
+                  jt.colloquialDate(revobj.modified, true)];
         if(penNameStr) {
             revref = app.lcs.getRef("rev", revobj);
             if(revref && revref.viagname && !jt.byId('groupnamediv')) {
@@ -1182,13 +1184,15 @@ app.profile = (function () {
                                            revref.viagid + "')")},
                       revref.viagname],
                      ")"]; }
-            byline = ["review by ",
+            byline = ["span", {cla: "byline"},
                       [["a", {title: "Show profile for " + jt.ndq(penNameStr),
                               href: "#" + jt.objdata({view: "profile", 
                                                       profid: revobj.penid }),
                               onclick: jt.fs("app.profile.byprofid('" +
                                              revobj.penid + "')")},
                         penNameStr],
+                       " &middot; ",
+                       byline,
                        vialink]]; }
         return byline;
     },
@@ -1502,9 +1506,7 @@ return {
         if(revobj.url) {
             jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(revobj.keywords) {
-            if(penNameStr) {
-                keywords += ": "; }
-            keywords += jt.ellipsis(revobj.keywords, 100); }
+            keywords += ": " + jt.ellipsis(revobj.keywords, 100); }
         if(revobj.text) {
             revtext = ["div", divattrs,
                        jt.ellipsis(revobj.text, 255)]; }

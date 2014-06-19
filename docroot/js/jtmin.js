@@ -312,15 +312,38 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    uo.colloquialDate = function (date) {
+    uo.colloquialDate = function (date, compress) {
         var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday', 'Sunday' ],
             months = [ "January", "February", "March", "April", "May",
                        "June", "July", "August", "September", "October",
-                       "November", "December" ];
-        return String(days[date.getUTCDay()]) +
-            ", " + String(months[date.getMonth()]) +
-            " " + String(date.getUTCDate());
+                       "November", "December" ],
+            now = new Date(),
+            elapsed,
+            dayname,
+            month,
+            retval;
+        if (typeof date === "string") {
+            date = uo.ISOString2Day(date);
+        }
+        elapsed = now.getTime() - date.getTime();
+        if (elapsed < 24 * 60 * 60 * 1000) {
+            return "Today";
+        }
+        if (elapsed < 48 * 60 * 60 * 1000) {
+            return "Yesterday";
+        }
+        dayname = String(days[date.getUTCDay()]);
+        month = String(months[date.getMonth()]);
+        if (compress) {
+            dayname = dayname.slice(0, 3);
+            month = month.slice(0, 3);
+        }
+        retval = dayname + " " + month + " " + String(date.getUTCDate());
+        if (elapsed > 365 * 24 * 60 * 60 * 1000) {
+            retval += " " + String(date.getFullYear());
+        }
+        return retval;
     };
 
 

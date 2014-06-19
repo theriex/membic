@@ -845,6 +845,13 @@ app.review = (function () {
     },
 
 
+    revFormLastModified = function (review, mode) {
+        if(mode === "edit") {
+            return ""; }
+        return jt.colloquialDate(review.modified) + ":";
+    },
+
+
     //This should have a similar look and feel to the shoutout display
     revFormTextAreaHTML = function (review, type, keyval, mode) {
         var area, style, placetext, lightbg;
@@ -1256,6 +1263,8 @@ app.review = (function () {
                   revFormStarsHTML(review, type, keyval, mode)],
                  ["div", {id: "revformfieldsdiv"},
                   revFormFieldsHTML(review, type, keyval, mode)],
+                 ["div", {id: "revmodifieddiv", cla: "blrevdate"},
+                  revFormLastModified(review, mode)],
                  ["div", {id: "revformtextareadiv"},
                   revFormTextAreaHTML(review, type, keyval, mode)],
                  ["div", {id: "revformkeywareadiv"},
@@ -1394,7 +1403,7 @@ return {
         html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
                 [["div", {cla: "statrevmodkeydiv"},
                   jt.colloquialDate(jt.ISOString2Day(review.modified)) +
-                  "&nbsp;" + review.keywords],
+                  ":&nbsp;" + review.keywords],
                  app.review.starsImageHTML(review),
                  app.review.badgeImageHTML(type),
                  "&nbsp;",

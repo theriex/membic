@@ -392,6 +392,7 @@ img { border:0px; }
 .transformlinkdiv, .getyoursdiv { background:#9cd1a1;
   border: 1px solid #666666; border-radius:10px; font-size:x-small; }
 .transformlinkdiv { padding:0px 5px; margin:8px; display:table; }
+#revmodifieddiv { padding:0px 0px 0px 10px; }
 /* static display elements */
 .getyoursdiv { padding:4px 10px; margin:2px 10px 0px 0px; float:right; 
   box-shadow:5px 5px 2px #888888; }
@@ -426,6 +427,7 @@ img { border:0px; }
 .confirmlastline { text-align:center; }
 .qctext { font-size:small; }
 .clickspan { cursor:pointer; }
+.blrevdate { color:#333333; }
 
 /* >> settings dialog */
 #writingas { font-size:medium; font-weight:bold; }
