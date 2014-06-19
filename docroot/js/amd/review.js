@@ -1315,9 +1315,11 @@ app.review = (function () {
         setTimeout(function () {  //refresh headings
             if(crev.penid !== jt.instId(pen)) { 
                 app.lcs.getFull("pen", crev.penid, function (revpenref) {
+                    app.profile.verifyStateVariableValues(revpenref.pen);
                     app.profile.writeNavDisplay(pen, revpenref.pen,
                                                 "nosettings"); }); }
             else {
+                app.profile.verifyStateVariableValues(pen);
                 app.profile.writeNavDisplay(pen, null, "nosettings"); }
             }, 50);
         jt.out('rightcoldiv', "");

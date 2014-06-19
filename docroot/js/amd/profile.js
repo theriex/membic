@@ -1204,6 +1204,8 @@ app.profile = (function () {
     tabswitch = function (tabname) {
         var i, ul, li;
         ul = jt.byId('proftabsul');
+        if(!ul) {  //probably coming from review display or somewhere
+            return app.profile.byprofid(profpenref.penid, tabname); }
         for(i = 0; i < ul.childNodes.length; i += 1) {
             li = ul.childNodes[i];
             li.className = "unselectedTab";
