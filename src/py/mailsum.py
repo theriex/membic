@@ -308,7 +308,7 @@ def write_review_email_text_summary(review):
     val = val.replace("$KEYWORDS", safestr(review.keywords))
     revtxt = safestr(review.text)
     revtxtmax = 184
-    if revtxt > revtxtmax + 3:
+    if len(revtxt) > revtxtmax + 3:
         revtxt = revtxt[:revtxtmax] + "..."
     val = val.replace("$REVTEXT", "\n      ".join(textwrap.wrap(revtxt)))
     val = val.replace("$REVLINK", "http://www.wdydfun.com/statrev/" +
