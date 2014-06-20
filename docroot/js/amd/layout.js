@@ -1,6 +1,6 @@
 /*global window: false, document: false, setTimeout: false, app: false, jt: false */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4, regexp: true */
 
 app.layout = (function () {
     "use strict";
@@ -289,6 +289,24 @@ return {
 
     fixTextureCover: function () {  //for static page support
         fixTextureCover();
+    },
+
+
+    parseEmbeddedJSON: function (text) {  //for static page support
+        var obj = null, jsonobj = JSON || window.JSON;
+        if(!jsonobj) {
+            jt.err("JSON not supported, please use a modern browser"); }
+        text = text.trim();
+        text = text.replace(/\n/g, "\\n");
+        text = text.replace(/<a[^>]*\>/g, "");
+        text = text.replace(/<\/a>/g, "");
+        try {
+            obj = jsonobj.parse(text);
+        } catch(problem) {
+            jt.err("Error parsing JSON: " + problem +
+                   "\nPlease upgrade your browser");
+        }
+        return obj;
     },
 
 

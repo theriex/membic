@@ -32,21 +32,10 @@ var statrev = (function () {
     },
 
 
-    parseEmbeddedJSON = function (text) {
-        var obj, jsonobj = JSON || window.JSON;
-        if(!jsonobj) {
-            jt.err("JSON not supported, please use a modern browser"); }
-        text = text.trim();
-        text = text.replace(/\n/g, "\\n");
-        obj = jsonobj.parse(text);
-        return obj;
-    },
-
-
     readData = function () {
-        pen = parseEmbeddedJSON(jt.byId('pendatadiv').innerHTML);
+        pen = app.layout.parseEmbeddedJSON(jt.byId('pendatadiv').innerHTML);
         jt.out('pendatadiv', "");
-        rev = parseEmbeddedJSON(jt.byId('revdatadiv').innerHTML);
+        rev = app.layout.parseEmbeddedJSON(jt.byId('revdatadiv').innerHTML);
         jt.out('revdatadiv', "");
         if(!jt.instId) {
             jt.instId = function (obj) {

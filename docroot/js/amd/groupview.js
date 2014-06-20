@@ -83,21 +83,12 @@ var groupview = (function () {
     },
 
 
-    parseEmbeddedJSON = function (text) {
-        var obj, jsonobj = JSON || window.JSON;
-        if(!jsonobj) {
-            jt.err("JSON not supported, please use a modern browser"); }
-        text = text.trim();
-        text = text.replace(/\n/g, "\\n");
-        obj = jsonobj.parse(text);
-        return obj;
-    },
-
-
     readData = function () {
-        group = parseEmbeddedJSON(jt.byId('groupdatadiv').innerHTML);
+        group = app.layout.parseEmbeddedJSON(
+            jt.byId('groupdatadiv').innerHTML);
         jt.out('groupdatadiv', "");
-        revs = parseEmbeddedJSON(jt.byId('grouprevdatadiv').innerHTML);
+        revs = app.layout.parseEmbeddedJSON(
+            jt.byId('grouprevdatadiv').innerHTML);
         jt.out('grouprevdatadiv', "");
         if(!jt.instId) {
             jt.instId = function (obj) {
