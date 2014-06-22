@@ -3,7 +3,7 @@ import datetime
 from google.appengine.ext import db
 import logging
 import json
-from rev import Review
+from rev import Review, batch_flag_attrval
 from morutil import *
 from group import Group
 
@@ -42,7 +42,9 @@ def fetch_reviews(start, end):
     reviews = revquery.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
                              deadline = 10)
     for review in reviews:
-        result.append(str(review.key().id()))
+        if (not (review.svcdata and 
+                 batch_flag_attrval(review) in review.svcdata)):
+            result.append(str(review.key().id()))
     return result
 
 
