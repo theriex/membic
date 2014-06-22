@@ -399,9 +399,11 @@ img { border:0px; }
 #blogcontentdiv { padding:10px; margin-left:7%; }
 #statrevcontent { padding:10px 20px 0px 20px; }
 #statrevactdiv { text-align:center; padding:10px; }
-.statrevdiv { padding:0px 0px 15px 0px; }
+.statrevdiv { padding:0px 0px 15px 0px; 
+  background-color:rgba(255, 255, 255, 0.4); }
 .statrevmodkeydiv { font-size:small; color: #666666; }
-.statrevrespdiv { font-size:small; float:right; padding:0px 10px 0px 0px; }
+.statrevrespdiv { font-size:small; font-style:italic;
+  padding-right:40%; float:right; }
 .blogidentdiv { padding:0px 0px 20px 0px; }
 
 /* >> activity layout */

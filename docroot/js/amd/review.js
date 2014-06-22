@@ -1396,10 +1396,11 @@ return {
             jump = " &nbsp;" + app.review.jumpLinkHTML(review.url); }
         if("noresp" !== mode) {
             revresp = ["div", {cla: "statrevrespdiv"},
-                       ["a", {href: "../?view=review&penid=" + review.penid +
-                                    "&revid=" + jt.instId(review),
-                              title: "Launch app to respond or comment"},
-                        "Respond/Comment"]]; }
+                       ["div", {cla: "transformlinkdiv"},
+                        ["a", {href: "../?view=review&penid=" + review.penid +
+                                     "&revid=" + jt.instId(review),
+                               title: "Launch app to respond or comment"},
+                         "Respond/Comment"]]]; }
         html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
                 [["div", {cla: "statrevmodkeydiv"},
                   jt.colloquialDate(jt.ISOString2Day(review.modified)) +
