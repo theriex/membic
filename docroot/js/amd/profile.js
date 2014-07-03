@@ -1269,7 +1269,7 @@ app.profile = (function () {
                   ["a", {href: "blogs/" + dispen.name_c,
                          onclick: jt.fs("window.open('blogs/" + 
                                         dispen.name_c + "')")},
-                   "Review Log"]],
+                   "My RevLog"]],  //discussion 03jul14
                  ["div", {id: "profrevimpactdiv"},
                   revimpactHTML(homepen, dispen)],
                  ["div", {id: "profinvitediv"},
