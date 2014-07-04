@@ -239,6 +239,21 @@ app.revresp = (function () {
     },
 
 
+    haveOpenComment = function () {
+        var rev, penref, revid, i, qcmt;
+        rev = app.review.getCurrentReview();
+        penref = app.pen.currPenRef();
+        if(!penref.qcmts) {
+            return false; }
+        revid = jt.instId(rev);
+        for(i = 0; i < penref.qcmts.length; i += 1) {
+            qcmt = penref.qcmts[i];
+            if(qcmt.revid === revid && qcmt.rcstat !== "accepted") {
+                return true; } }
+        return false;
+    },
+
+
     testEnableCommentButton = function () {
         var now = new Date().getTime();
         if(now - correspcheck < 9000) {
@@ -246,13 +261,12 @@ app.revresp = (function () {
         correspcheck = now;
         disableCommentButton();
         findCorrespondingReview(app.pen.currPenRef().pen, function (pen, rev) {
-            var penref, img, txt;
+            var img, txt;
             if(!rev) {  //no corresponding review, leave disabled
                 return; }
-            penref = app.pen.currPenRef();
-            //if they have pending or rejected comments, those need to
-            //be deleted before any more can be added.
-            if(!penref.qcmts || penref.qcmts.length === 0) { 
+            //Open comments are displayed already, and need to be accepted
+            //or deleted before adding more.
+            if(!haveOpenComment()) {
                 img = jt.byId('commentimg');
                 if(img) {
                     img.className = "respico"; }
@@ -955,10 +969,13 @@ return {
 
 
     comment: function () {
+        var errtxt = 
+            "You must review $REVTITLE before commenting on this review.";
+        if(haveOpenComment) {
+            errtxt = "Your pending comment must be accepted or " +
+                "deleted before writing another comment."; }
         displayQCDialog(
-            "comment",
-            "You must review $REVTITLE before commenting on this review.",
-            commentButtonsHTML);
+            "comment", errtxt, commentButtonsHTML);
     },
 
 
