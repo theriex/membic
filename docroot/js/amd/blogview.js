@@ -39,9 +39,7 @@ var blogview = (function () {
             imgsrc = "../profpic?profileid=" + penid; }
         rssurl = "../rsspen?pen=" + penid;
         html = ["div", {cla: "blogidentdiv"},
-                [["div", {cla: "getyoursdiv"},
-                  ["a", {href: "../#view=profile"},
-                   "Get your own review log"]],
+                [["div", {id: "getyourscontainerdiv"}],
                  ["table",
                   [["tr",
                     [["td",
@@ -65,6 +63,11 @@ var blogview = (function () {
                      ["td",
                       jt.linkify(pen.shoutout)]]]]]]];
         jt.out('siteproflinkdiv', jt.tac2html(html));
+        if(!jt.cookie("myopenreviewauth")) {
+            jt.out('getyourscontainerdiv', jt.tac2html(
+                ["div", {cla: "getyoursdiv"},
+                 ["a", {href: "../#view=profile"},
+                  "Get your own review log"]])); }
     },
 
 

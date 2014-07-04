@@ -77,20 +77,12 @@ return {
         noteRefer();
         app.layout.fixTextureCover();
         html = ["div", {id: "statrevheadingdiv"},
-                [["div", {cla: "getyoursdiv"},
-                  ["a", {href: "../#view=profile"},
-                   "Get your own review log"]],
-                 ["div", {id: "centerhdiv"},
+                [["div", {id: "centerhdiv"},
                   [["span", {id: "penhnamespan"},
                     //no onclick handling, browser back button should work
                     ["a", {href: "../blogs/" + pen.name_c,
                            title: "Show blog for " + pen.name},
-                     pen.name]],
-                   ["span", {id: "penhbuttonspan"},
-                    ["a", {href: "../?view=review&penid=" + rev.penid + 
-                                 "&revid=" + jt.instId(rev),
-                           title: "Switch to application view"},
-                     ["img", {cla: "navico", src: "../img/penname.png"}]]]]]]];
+                     pen.name]]]]]];
         jt.out('siteproflinkdiv', jt.tac2html(html));
         html = ["div", {id: "statrevcontent"},
                 app.review.staticReviewDisplay(rev, "none")];
