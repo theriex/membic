@@ -71,7 +71,7 @@ var statrev = (function () {
     ////////////////////////////////////////
 return {
     display: function () {
-        var html;
+        var html, href;
         jtminjsDecorateWithUtilities(jt);
         readData();
         noteRefer();
@@ -90,7 +90,15 @@ return {
         html = html.replace(/img\//g, "../img/");
         html = html.replace(/revpic\?/g, "../revpic?");
         jt.out('revcontentdiv', html);
-        displayAds();  //space available, and helps pay the server bills...
+        if(jt.cookie("myopenreviewauth")) {
+            href = window.location.href;
+            href = href.slice(0, href.lastIndexOf("/"));
+            href = href.slice(0, href.lastIndexOf("/"));
+            href += "/?view=review&penid=" + rev.penid + 
+                "&revid=" + jt.instId(rev);
+            window.location.href = href; }
+        else {
+            displayAds(); } //space available, and helps pay the server bills...
     }
 
 }; //end of returned functions
