@@ -24,7 +24,7 @@ html = """
   <meta itemprop="image" content="$IMGSRC" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$PENNAME</title>
-  <link href="../css/site.css" rel="stylesheet" type="text/css" />
+  <link href="$OFFBASE/css/site.css" rel="stylesheet" type="text/css" />
   <link rel="image_src" href="$IMGSRC" />
 </head>
 <body id="bodyid">
@@ -54,11 +54,13 @@ $REFER
 
 <div id="dlgdiv"></div>
 
-<script src="../js/jtmin.js"></script>
-<script src="../js/amd/blogview.js"></script>
-<script src="../js/amd/layout.js"></script>
-<script src="../js/amd/profile.js"></script>
-<script src="../js/amd/review.js"></script>
+<script src="$OFFBASE/js/jtmin.js"></script>
+<script src="$OFFBASE/js/amd/blogview.js"></script>
+<script src="$OFFBASE/js/amd/layout.js"></script>
+<script src="$OFFBASE/js/amd/profile.js"></script>
+<script src="$OFFBASE/js/amd/review.js"></script>
+<script src="$OFFBASE/js/amd/pen.js"></script>
+<script src="$OFFBASE/js/amd/lcs.js"></script>
 <script>
   blogview.display();
 </script>
@@ -84,7 +86,7 @@ def fetch_blog_reviews(pen):
 
 
 class BlogViewDisplay(webapp2.RequestHandler):
-    def get(self, cpen):
+    def get(self, cpen, revtype):
         # Same index retrieval already used by pen.py NewPenName
         pens = PenName.gql("WHERE name_c=:1 LIMIT 1", cpen)
         if pens.count() != 1:
@@ -113,6 +115,10 @@ class BlogViewDisplay(webapp2.RequestHandler):
         content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
         content = re.sub('\$REVDATA', qres2JSON(
                 qres.objects, "", -1, ""), content)
+        offbase = ".."
+        if revtype:
+            offbase = "../.."
+        content = re.sub('\$OFFBASE', offbase, content)
         refer = self.request.referer
         if refer:
             refer = "<img src=\"../bytheimg?bloginqref=" +\
@@ -126,6 +132,6 @@ class BlogViewDisplay(webapp2.RequestHandler):
         self.response.out.write(content)
         
 
-app = webapp2.WSGIApplication([('/blogs/(.*)', BlogViewDisplay)],
+app = webapp2.WSGIApplication([('/blogs/([^/]*)/?(.*)', BlogViewDisplay)],
                               debug=True)
 

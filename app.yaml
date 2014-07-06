@@ -428,8 +428,8 @@ handlers:
 
 
 ######################################################################
-# Test endpoints, static displays, data summaries and other crap not
-# really part of the API
+# Test endpoints, static displays, data summaries and other urls not
+# really considered part of the API
 #
 - url: /cluck2.*
   script: src.py.cluck2.app

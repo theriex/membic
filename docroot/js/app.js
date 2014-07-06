@@ -188,6 +188,8 @@ var app = {},  //Global container for application level funcs and values
     // supplemental utility funtions
     ////////////////////////////////////////
 
+    // see also: app.layout.commonUtilExtensions
+
     jt.imgntxt = function (imgfile, text, funcstr, href, 
                            title, cssclass, idbase, mcbfnstr) {
         var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
@@ -244,27 +246,6 @@ var app = {},  //Global container for application level funcs and values
 
     jt.radiobutton = function (name, value, label, checked, chgfstr) {
         return jt.checkrad("radio", name, value, label, checked, chgfstr);
-    };
-
-
-    //Referencing variables starting with an underscore causes jslint
-    //complaints, but it still seems the clearest and safest way to
-    //handle an ID value in the server side Python JSON serialization.
-    //This utility method encapsulates the access, and provides a
-    //single point of adjustment if the server side logic changes.
-    jt.instId = function (obj) {
-        var idfield = "_id";
-        if(obj && obj.hasOwnProperty(idfield)) {
-            return obj[idfield]; }
-    };
-    jt.setInstId = function (obj, idval) {
-        var idfield = "_id";
-        obj[idfield] = idval;
-    };
-    jt.isId = function (idval) {
-        if(idval && typeof idval === 'string' && idval !== "0") {
-            return true; }
-        return false;
     };
 
 

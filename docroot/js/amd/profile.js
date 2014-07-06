@@ -138,31 +138,6 @@ app.profile = (function () {
     },
 
 
-    earnedBadgesHTML = function (pen, clickable) {
-        var html, i, reviewTypes, typename, label, imgsrc, attrobj;
-        html = [];
-        app.pen.deserializeFields(pen);
-        reviewTypes = app.review.getReviewTypes();
-        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
-            typename = reviewTypes[i].type;
-            imgsrc = app.layout.badgeImgSrc(pen, typename);
-            if(imgsrc) {
-                label = "Top 20 " + reviewTypes[i].plural.capitalize();
-                if(pen.top20s[typename].length < 20) {
-                    label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].plural.capitalize(); }
-                attrobj = { cla: "reviewbadge bbk" +
-                                 app.layout.badgeDrawer(pen, typename), 
-                            src: imgsrc, title: label, alt: label};
-                if(clickable) {
-                    attrobj.onclick = jt.fs("app.profile.showTopRated('" +
-                                            typename + "')"); }
-                html.push(["span", {cla: "badgespan"},
-                           ["img", attrobj]]); } }
-        return jt.tac2html(html);
-    },
-
-
     displayProfileHeadingName = function (homepen, dispen, directive) {
         var html, id, name;
         id = jt.instId(dispen);
@@ -177,7 +152,8 @@ app.profile = (function () {
                 ["table",
                  ["tr",
                   [["td", {id: "profbadgestd"},
-                    earnedBadgesHTML(dispen, true)],
+                    app.profile.earnedBadgesHTML(dispen, 
+                                                 "app.profile.showTopRated")],
                    ["td", {id: "penhnametd"},
                     ["span", {id: "penhnamespan"},
                      name]],
@@ -1349,7 +1325,7 @@ return {
 
 
     displayResp: function (inlinktype) {
-        var inlinks, i, revitems = [], revref, html = "";
+        var inlinks, il, i, revitems = [], revref, html = "";
         if(!inlinktype || typeof inlinktype !== "string") {
             inlinktype = lastInLinkType; }
         lastInLinkType = inlinktype;
@@ -1358,7 +1334,8 @@ return {
         if(!inlinks || inlinks.length === 0) {
             revitems.push(["li", "No reviews found"]); }
         for(i = 0; inlinks && i < inlinks.length; i += 1) {
-            if(inlinks[i][inlinktype]) {
+            il = inlinks[i];
+            if(il[inlinktype]) {
                 revref = app.lcs.getRef("rev", inlinks[i].revid);
                 if(revref.rev) {
                     revitems.push(app.profile.reviewItemHTML(revref.rev)); }
@@ -1451,7 +1428,7 @@ return {
                    "&nbsp;",
                    ["span", {cla: "penfont"}, pen.name]]],
                  ["span", {cla: "smalltext"}, city],
-                 earnedBadgesHTML(pen, false)]];
+                 app.profile.earnedBadgesHTML(pen, false)]];
         html = jt.tac2html(html);
         return html;
     },
@@ -1834,6 +1811,31 @@ return {
         else {
             src = revTypeSelectorImgSrc(typename); }
         jt.byId("rtsimg" + typename).src = src;
+    },
+
+
+    earnedBadgesHTML: function (pen, showtopfname) {
+        var html, i, reviewTypes, typename, label, imgsrc, attrobj;
+        html = [];
+        app.pen.deserializeFields(pen);
+        reviewTypes = app.review.getReviewTypes();
+        for(i = 0; pen.top20s && i < reviewTypes.length; i += 1) {
+            typename = reviewTypes[i].type;
+            imgsrc = app.layout.badgeImgSrc(pen, typename);
+            if(imgsrc) {
+                label = "Top 20 " + reviewTypes[i].plural.capitalize();
+                if(pen.top20s[typename].length < 20) {
+                    label = String(pen.top20s[typename].length) + " " + 
+                        reviewTypes[i].plural.capitalize(); }
+                attrobj = { cla: "reviewbadge bbk" +
+                                 app.layout.badgeDrawer(pen, typename), 
+                            src: imgsrc, title: label, alt: label};
+                if(showtopfname) {
+                    attrobj.onclick = jt.fs(showtopfname + "('" +
+                                            typename + "')"); }
+                html.push(["span", {cla: "badgespan"},
+                           ["img", attrobj]]); } }
+        return jt.tac2html(html);
     }
 
 };  //end of returned functions

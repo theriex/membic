@@ -1,4 +1,4 @@
-/*global setTimeout: false, app: false, jt: false */
+/*global setTimeout: false, app: false, jt: false, window: false */
 
 /*jslint white: true, maxerr: 50, indent: 4 */
 
@@ -162,7 +162,10 @@ return {
             return callback(ref); }
         if(debugmsg) {
             jt.log("getFull retrieving " + type + id + " " + debugmsg); }
-        url = cache[type].fetchend + "?" + cache[type].fetchparamf(id);
+        url = "";
+        if(window.location.href.split("/").length > 3) {  //on a sub-page
+            url = "../"; }
+        url += cache[type].fetchend + "?" + cache[type].fetchparamf(id);
         jt.call('GET', url, null,
                 function (objs) {
                     if(objs.length > 0) {

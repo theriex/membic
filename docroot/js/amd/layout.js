@@ -280,10 +280,34 @@ return {
 
     init: function () {
         jt.on(window, 'resize', fullContentHeight);
+        app.layout.commonUtilExtensions();
         localDocLinks();
         fullContentHeight();
         fixTextureCover();
         initSlideshow();
+    },
+
+
+    commonUtilExtensions: function () {
+        //Referencing variables starting with an underscore causes jslint
+        //complaints, but it still seems the clearest and safest way to
+        //handle an ID value in the server side Python JSON serialization.
+        //This utility method encapsulates the access, and provides a
+        //single point of adjustment if the server side logic changes.
+        jt.instId = function (obj) {
+            var idfield = "_id";
+            if(obj && obj.hasOwnProperty(idfield)) {
+                return obj[idfield]; }
+        };
+        jt.setInstId = function (obj, idval) {
+            var idfield = "_id";
+            obj[idfield] = idval;
+        };
+        jt.isId = function (idval) {
+            if(idval && typeof idval === 'string' && idval !== "0") {
+                return true; }
+            return false;
+        };
     },
 
 

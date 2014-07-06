@@ -790,7 +790,7 @@ app.review = (function () {
 
 
     sideBySideRows = function (keyrows, secrows) {
-        var row, rows = [];
+        var row, rows = [], rf;
         while(keyrows.length || secrows.length) {
             row = [];
             if(keyrows && keyrows.length) {
@@ -799,8 +799,10 @@ app.review = (function () {
                 appendToRow(row, secrows.pop()); }
             //if just single colspan item in row, then expand it so the
             //table doesn't end up skewed.
-            if(row.length === 1 && row[0][1].colspan) {
-                row[0][1].colspan = 4; }
+            if(row.length === 1) {
+                rf = row[0];
+                if(rf[1].colspan) {
+                    rf[1].colspan = 4; } }
             rows.unshift(["tr", row]); }
         return rows;
     },
