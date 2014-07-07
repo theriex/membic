@@ -103,6 +103,29 @@ var blogview = (function () {
     },
 
 
+    setHash = function (type) {
+        var url, hashidx;
+        url = window.location.href;
+        hashidx = url.indexOf("#");
+        if(hashidx >= 0) {
+            url = url.slice(0, hashidx); }
+        if(type) {
+            url += "#" + type; }
+        window.location.href = url;
+    },
+
+
+    showTop20IfSpecifiedInHash = function () {
+        var type, hashidx;
+        hashidx = window.location.href.indexOf("#");
+        if(hashidx >= 0) {
+            type = window.location.href.slice(hashidx + 1);
+            type = app.review.getReviewTypeByValue(type);
+            if(type) {
+                blogview.showTop(type.type); } }
+    },
+
+
     displayReviews = function () {
         var i, artists = "", ld, html;
         for(i = 0; i < revs.length; i += 1) {
@@ -162,6 +185,7 @@ return {
         displayName();
         displayReviews();
         app.layout.fixTextureCover();
+        showTop20IfSpecifiedInHash();
     },
 
 
@@ -177,11 +201,13 @@ return {
                     break; }
                 lis.push(["li", app.review.staticReviewDisplay(trevs[i])]); } }
         jt.out('reviewsul', fixImageLinks(jt.tac2html(lis)));
+        setHash(type);
     },
 
 
     showRecent: function () {
         jt.out('reviewsul', fixImageLinks(jt.tac2html(revitems)));
+        setHash();
     }
 
 }; //end of returned functions
