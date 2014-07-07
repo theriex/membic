@@ -35,6 +35,12 @@ var blogview = (function () {
 
     displayName = function () {
         var penid, imgsrc, rssurl, html, badges, grlink;
+        grlink = {href: "/#view=profile&profid=" + jt.instId(pen), 
+                  text: "View Profile"};
+        if(!jt.cookie("myopenreviewauth")) {  //not logged in
+            grlink = {href: "/#view=profile", 
+                      text: "Get your own review log"}; }
+        grlink.href = reloff + grlink.href;
         badges = app.profile.earnedBadgesHTML(pen, "blogview.showTop");
         badges = badges.replace(/img\//g, reloff + "/img/");
         penid = jt.instId(pen);
@@ -43,45 +49,34 @@ var blogview = (function () {
             imgsrc = reloff + "/profpic?profileid=" + penid; }
         rssurl = reloff + "/rsspen?pen=" + penid;
         html = ["div", {cla: "blogidentdiv"},
-                [["div", {id: "getyourscontainerdiv"}],
-                 ["table",
-                  [["tr",
-                    [["td", {rowspan: 2},
-                      ["img", {cla: "profpic", src: imgsrc}]],
-                     ["td", {style: "padding:5px 10px;"},
-                      [["span", {id: "penhnamespan"},
-                        ["a", {href: "#recent",
-                               onclick: jt.fs("blogview.showRecent()"),
-                               title: "Recent reviews"},
-                         pen.name]],
-                       "&nbsp;",
-                       ["a", {href: rssurl, id: "rsslink",
-                              title: "RSS feed for " + jt.ndq(pen.name),
-                              onclick: jt.fs("window.open('" + rssurl + "')")},
-                        ["img", {cla: "rssico", 
-                                 src: reloff + "/img/rssicon.png"}]]]]]],
-                   ["tr",
-                    //img extends into here
-                    ["td", badges]],
-                   ["tr",
-                    [["td", {valign: "top"},
-                      ["div", {id: "profcitydiv"},
-                       ["span", {id: "profcityspan"},
-                        pen.city || ""]]],
-                     ["td",
-                      jt.linkify(pen.shoutout)]]]]]]];
+                [["div", {id: "getyourscontainerdiv"},
+                  ["div", {cla: "getyoursdiv"},
+                   ["a", {href: grlink.href,
+                          onclick: jt.fs("window.open('" + grlink.href + "')")},
+                    grlink.text]]],
+                 ["div", {id: "blogimagecontainerdiv"},
+                  [["img", {cla: "profpic", src: imgsrc}],
+                   ["div", {id: "profcitydiv"},
+                    ["span", {id: "profcityspan"},
+                     pen.city || ""]]]],
+                 ["div", {id: "blogheadingmaindiv"},
+                  [["div", {id: "blognamediv"},
+                    [["span", {id: "penhnamespan"},
+                      ["a", {href: "#recent",
+                             onclick: jt.fs("blogview.showRecent()"),
+                             title: "Recent reviews"},
+                       pen.name]],
+                     "&nbsp;",
+                     ["a", {href: rssurl, id: "rsslink",
+                            title: "RSS feed for " + jt.ndq(pen.name),
+                            onclick: jt.fs("window.open('" + rssurl + "')")},
+                      ["img", {cla: "rssico", 
+                               src: reloff + "/img/rssicon.png"}]]]],
+                   ["div", {id: "blogbadgesdiv"},
+                    badges],
+                   ["div", {id: "blogshoutoutdiv"},
+                    jt.linkify(pen.shoutout)]]]]];
         jt.out('siteproflinkdiv', jt.tac2html(html));
-        grlink = {href: "/#view=profile&profid=" + jt.instId(pen), 
-                  text: "View Profile"};
-        if(!jt.cookie("myopenreviewauth")) {
-            grlink = {href: "/#view=profile", 
-                      text: "Get your own review log"}; }
-        grlink.href = reloff + grlink.href;
-        jt.out('getyourscontainerdiv', jt.tac2html(
-            ["div", {cla: "getyoursdiv"},
-             ["a", {href: grlink.href,
-                    onclick: jt.fs("window.open('" + grlink.href + "')")},
-              grlink.text]]));
     },
 
 
