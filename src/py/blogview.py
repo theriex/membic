@@ -18,13 +18,13 @@ html = """
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
-  <meta name="description" content="WDYDFun Blog for $PENNAME" />
+  <meta name="description" content="$PAGEDESCR" />
   <meta property="og:image" content="$IMGSRC" />
   <meta property="twitter:image" content="$IMGSRC" />
   <meta itemprop="image" content="$IMGSRC" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>$PENNAME</title>
-  <link href="$OFFBASE/css/site.css" rel="stylesheet" type="text/css" />
+  <link href="../css/site.css" rel="stylesheet" type="text/css" />
   <link rel="image_src" href="$IMGSRC" />
 </head>
 <body id="bodyid">
@@ -54,13 +54,13 @@ $REFER
 
 <div id="dlgdiv"></div>
 
-<script src="$OFFBASE/js/jtmin.js"></script>
-<script src="$OFFBASE/js/amd/blogview.js"></script>
-<script src="$OFFBASE/js/amd/layout.js"></script>
-<script src="$OFFBASE/js/amd/profile.js"></script>
-<script src="$OFFBASE/js/amd/review.js"></script>
-<script src="$OFFBASE/js/amd/pen.js"></script>
-<script src="$OFFBASE/js/amd/lcs.js"></script>
+<script src="../js/jtmin.js"></script>
+<script src="../js/amd/blogview.js"></script>
+<script src="../js/amd/layout.js"></script>
+<script src="../js/amd/profile.js"></script>
+<script src="../js/amd/review.js"></script>
+<script src="../js/amd/pen.js"></script>
+<script src="../js/amd/lcs.js"></script>
 <script>
   blogview.display();
 </script>
@@ -85,8 +85,21 @@ def fetch_blog_reviews(pen):
     return qres;
 
 
+def make_page_desc(handler, pen):
+    descr = "Recent reviews from " + pen.name
+    # the hash tag part of the url is not passed to the server
+    t20type = handler.request.get('type')
+    if t20type and t20type != "recent":
+        descr = "Top " + t20type + " reviews from " + pen.name
+    return descr
+
+
 class BlogViewDisplay(webapp2.RequestHandler):
     def get(self, cpen, revtype):
+        if revtype:
+            self.redirect(re.sub("\/" + revtype, "?type=" + revtype,
+                                 self.request.url))
+            return
         # Same index retrieval already used by pen.py NewPenName
         pens = PenName.gql("WHERE name_c=:1 LIMIT 1", cpen)
         if pens.count() != 1:
@@ -109,16 +122,13 @@ class BlogViewDisplay(webapp2.RequestHandler):
             picurl = "../profpic?profileid=" + str(pen.key().id())
         content = html
         content = re.sub('\$PENNAME', pen.name, content)
+        content = re.sub('\$PAGEDESCR', make_page_desc(self, pen), content)
         content = re.sub('\$IMGSRC', picurl, content)
         content = re.sub('\$PENID', str(pen.key().id()), content)
         content = re.sub('\$PENJSON', obj2JSON(pen), content)
         content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
         content = re.sub('\$REVDATA', qres2JSON(
                 qres.objects, "", -1, ""), content)
-        offbase = ".."
-        if revtype:
-            offbase = "../.."
-        content = re.sub('\$OFFBASE', offbase, content)
         refer = self.request.referer
         if refer:
             refer = "<img src=\"../bytheimg?bloginqref=" +\

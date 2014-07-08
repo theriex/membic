@@ -33,21 +33,91 @@ var blogview = (function () {
     },
 
 
-    displayName = function () {
-        var penid, imgsrc, rssurl, html, badges, grlink;
-        grlink = {href: "/#view=profile&profid=" + jt.instId(pen), 
-                  text: "View Profile"};
+    fixImageLinks = function (html) {
+        html = html.replace(/img\//g, reloff + "/img/");
+        html = html.replace(/revpic\?/g, reloff + "/revpic?");
+        return html;
+    },
+
+
+    getGreenLink = function () {
+        var grlink = {href: "/#view=profile&profid=" + jt.instId(pen), 
+                      text: "View Profile"};
         if(!jt.cookie("myopenreviewauth")) {  //not logged in
             grlink = {href: "/#view=profile", 
                       text: "Get your own review log"}; }
         grlink.href = reloff + grlink.href;
-        badges = app.profile.earnedBadgesHTML(pen, "blogview.showTop");
-        badges = badges.replace(/img\//g, reloff + "/img/");
-        penid = jt.instId(pen);
+        return grlink;
+    },
+
+
+    shareServiceHTML = function (divid, url, desc, imgsrc) {
+        var linkattr, html;
+        linkattr = {href: url, title: desc};
+        if(url.indexOf("mailto") < 0) {
+            linkattr.onclick = "window.open('" + url + "');return false;"; }
+        html = ["div", {id: divid, cla: "sharebuttondiv"},
+                ["a", linkattr,
+                 ["img", {cla: "bsico", alt: desc, src: imgsrc}]]];
+        return html;
+    },
+
+
+    blogShareButtonsHTML = function () {
+        var surl, rt, desc, html;
+        surl = window.location.href;
+        if(surl.indexOf("#") >= 0) {
+            rt = surl.slice(surl.indexOf("#") + 1);
+            surl = surl.slice(0, surl.indexOf("#")); }
+        if(surl.indexOf("?") >= 0) {
+            if(!rt) {
+                rt = surl.slice(surl.indexOf("?") + "?type=".length); }
+            surl = surl.slice(0, surl.indexOf("?")); }
+        if(rt === "recent") {
+            rt = ""; }
+        if(rt) {
+            surl += "?type=" + rt; }
+        //lower case on desc values so they can be embedded in a sentence
+        desc = "latest reviews from " + pen.name;
+        if(rt) {
+            desc = "top " + rt + " reviews from " + pen.name; }
+        html = [
+            shareServiceHTML(
+                "facebookdiv", 
+                "http://www.facebook.com/sharer/sharer.php?u=" + 
+                    jt.enc(surl) + "&t=" + jt.enc(desc.capitalize()),
+                "Post " + desc + " to your wall",
+                reloff + "/img/f_logo.png"),
+            shareServiceHTML(
+                "twitterdiv",
+                "https://twitter.com/intent/tweet?text=" + 
+                    jt.enc(desc.capitalize()) + "&url=" + jt.enc(surl),
+                "Tweet " + desc,
+                reloff + "/img/tw_logo.png"),
+            shareServiceHTML(
+                "gplusdiv",
+                "https://plus.google.com/share?url=" + jt.enc(surl),
+                "Plus " + desc,
+                "https://www.gstatic.com/images/icons/gplus-32.png"),
+            shareServiceHTML(
+                "emaildiv",
+                "mailto:?subject=" + jt.dquotenc(desc.capitalize()) +
+                    "&body=" + jt.dquotenc(desc.capitalize() + "\n\n" +
+                                           surl + "\n"),
+                "Email " + desc,
+                reloff + "/img/email.png")];
+        return html;
+    },
+
+
+    displayName = function () {
+        var penid = jt.instId(pen), 
+            grlink = getGreenLink(), 
+            rssurl = reloff + "/rsspen?pen=" + penid,
+            imgsrc, html;
         imgsrc = reloff + "/img/emptyprofpic.png";
         if(pen.profpic) {
             imgsrc = reloff + "/profpic?profileid=" + penid; }
-        rssurl = reloff + "/rsspen?pen=" + penid;
         html = ["div", {cla: "blogidentdiv"},
                 [["div", {id: "getyourscontainerdiv"},
                   ["div", {cla: "getyoursdiv"},
@@ -67,13 +137,16 @@ var blogview = (function () {
                              title: "Recent reviews"},
                        pen.name]],
                      "&nbsp;",
+                     ["span", {id: "blogsharebuttonspan"},
+                      blogShareButtonsHTML()],
                      ["a", {href: rssurl, id: "rsslink",
                             title: "RSS feed for " + jt.ndq(pen.name),
                             onclick: jt.fs("window.open('" + rssurl + "')")},
                       ["img", {cla: "rssico", 
                                src: reloff + "/img/rssicon.png"}]]]],
                    ["div", {id: "blogbadgesdiv"},
-                    badges],
+                    fixImageLinks(app.profile.earnedBadgesHTML(
+                        pen, "blogview.showTop"))],
                    ["div", {id: "blogshoutoutdiv"},
                     jt.linkify(pen.shoutout)]]]]];
         jt.out('siteproflinkdiv', jt.tac2html(html));
@@ -86,13 +159,6 @@ var blogview = (function () {
         if(csv.indexOf(val) === 0 || csv.indexOf(", " + val) > 0) {
             return csv; } //value already there
         return csv + ", " + val;
-    },
-
-
-    fixImageLinks = function (html) {
-        html = html.replace(/img\//g, reloff + "/img/");
-        html = html.replace(/revpic\?/g, reloff + "/revpic?");
-        return html;
     },
 
 
@@ -115,14 +181,22 @@ var blogview = (function () {
     },
 
 
-    showTop20IfSpecifiedInHash = function () {
-        var type, hashidx;
-        hashidx = window.location.href.indexOf("#");
-        if(hashidx >= 0) {
-            type = window.location.href.slice(hashidx + 1);
+    //Top reviews for a given review type can be specified either via
+    //?type=book or #book.  The hash tag takes precedence.
+    showTop20IfSpecified = function () {
+        var type, idx;
+        idx = window.location.href.indexOf("?");
+        if(idx >= 0) {
+            type = window.location.href.slice(idx + "?type=".length);
+            idx = type.indexOf("#");
+            if(idx >= 0) {
+                type = type.slice(0, idx); } }
+        idx = window.location.href.indexOf("#");
+        if(idx >= 0) {
+            type = window.location.href.slice(idx + 1); }
+        if(type && type !== "recent") {
             type = app.review.getReviewTypeByValue(type);
-            if(type) {
-                blogview.showTop(type.type); } }
+            blogview.showTop(type.type); }
     },
 
 
@@ -185,7 +259,7 @@ return {
         displayName();
         displayReviews();
         app.layout.fixTextureCover();
-        showTop20IfSpecifiedInHash();
+        showTop20IfSpecified();
     },
 
 
@@ -202,12 +276,14 @@ return {
                 lis.push(["li", app.review.staticReviewDisplay(trevs[i])]); } }
         jt.out('reviewsul', fixImageLinks(jt.tac2html(lis)));
         setHash(type);
+        jt.out('blogsharebuttonspan', jt.tac2html(blogShareButtonsHTML()));
     },
 
 
     showRecent: function () {
         jt.out('reviewsul', fixImageLinks(jt.tac2html(revitems)));
-        setHash();
+        setHash("recent");
+        jt.out('blogsharebuttonspan', jt.tac2html(blogShareButtonsHTML()));
     }
 
 }; //end of returned functions

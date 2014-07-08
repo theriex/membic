@@ -153,6 +153,8 @@ img { border:0px; }
 .naviconopad { padding:0px; }
 .naviconospace { margin:0px; padding:0px; }
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
+.bsico { height:20px; width:20px; vertical-align:middle; 
+  padding:0px 0px 0px 10px;}
 .svcico, .loginico { margin:0px 0px 0px 20px; border:none; 
   vertical-align:middle; }
 .svcico { height:20px; width:20px; }
