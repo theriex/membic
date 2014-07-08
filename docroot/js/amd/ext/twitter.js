@@ -12,7 +12,7 @@ app.twitter = (function () {
     var svcName = "Twitter",  //no spaces in name, used as an id
         twReqTokURL = "https://api.twitter.com/oauth/request_token",
         twTokCnvURL = "https://api.twitter.com/oauth/access_token",
-        twLoginURL = "http://api.twitter.com/oauth/authenticate",
+        twLoginURL = "https://api.twitter.com/oauth/authenticate",
 
 
     ////////////////////////////////////////
