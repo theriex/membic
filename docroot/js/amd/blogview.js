@@ -45,7 +45,7 @@ var blogview = (function () {
                       text: "View Profile"};
         if(!jt.cookie("myopenreviewauth")) {  //not logged in
             grlink = {href: "/#view=profile", 
-                      text: "Get your own review log"}; }
+                      text: "Get your review log"}; }
         grlink.href = reloff + grlink.href;
         return grlink;
     },
