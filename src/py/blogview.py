@@ -117,9 +117,14 @@ class BlogViewDisplay(webapp2.RequestHandler):
         # retrieve reviews
         qres = fetch_blog_reviews(pen)
         # write content
-        picurl = "../img/emptyprofpic.png"
+        picurl = "img/emptyprofpic.png"
         if pen.profpic:
-            picurl = "../profpic?profileid=" + str(pen.key().id())
+            picurl = "profpic?profileid=" + str(pen.key().id())
+        # facebook doesn't like "../" relative urls
+        if "localhost" in self.request.url:
+            picurl = "../" + picurl
+        else:
+            picurl = "http://www.wdydfun.com/" + picurl
         content = html
         content = re.sub('\$PENNAME', pen.name, content)
         content = re.sub('\$PAGEDESCR', make_page_desc(self, pen), content)
