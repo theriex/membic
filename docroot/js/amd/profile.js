@@ -1473,15 +1473,13 @@ return {
             divattrs = {cla: "revtextsummary", 
                         style: "padding:0px 0px 0px 97px;"},
             revclick = jt.fs("app.profile.readReview('" + revid + "')"),
-            jump = "", keywords = "", revtext = "", remove = "",
+            keywords = "", revtext = "", remove = "",
             html;
         if(app.winw < 700) {
             divattrs.style = "padding:0px 0px 0px 10px;"; }
         if(remfstr) {
             remove = ["a", {href: "#remove", onclick: jt.fs(remfstr)},
                       ["img", {cla: "removeico", src: "img/remove.png"}]]; }
-        if(revobj.url) {
-            jump = " &nbsp;" + app.review.jumpLinkHTML(revobj.url); }
         if(revobj.keywords) {
             keywords += ": " + jt.ellipsis(revobj.keywords, 100); }
         if(revobj.text) {
@@ -1495,7 +1493,7 @@ return {
                         href: linkref, title: "See full review",
                         onclick: revclick},
                   app.profile.reviewItemNameHTML(type, revobj)],
-                 jump,
+                 "&nbsp;" + app.review.jumpLinkHTML(revobj, type),
                  ["div", divattrs,
                   [remove,
                    byLineHTML(revobj, penNameStr),

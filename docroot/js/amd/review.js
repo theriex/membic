@@ -726,7 +726,7 @@ app.review = (function () {
                             jt.checkbox("cbprerev", "cbprerev", "Pre-Review",
                                         review.srcrev === -101)]; }
             else { 
-                jumplink = app.review.jumpLinkHTML(review.url || "");
+                jumplink = app.review.jumpLinkHTML(review, type);
                 prerevcb = ""; }
             html = ["div", {id: "revformstarscontent",
                             style: "width:" + width + "px;"},
@@ -1385,7 +1385,7 @@ return {
 
 
     staticReviewDisplay: function (review, revlink, mode) {
-        var type, html, revid, jump = "", revresp = "";
+        var type, html, revid, revresp = "";
         revid = jt.instId(review);
         type = app.review.getReviewTypeByValue(review.revtype);
         if(!revlink) {
@@ -1394,8 +1394,6 @@ return {
         if(revlink === "none") {
             revlink = ["span", {cla: "rslc"},
                        app.profile.reviewItemNameHTML(type, review)]; }
-        if(review.url) {
-            jump = " &nbsp;" + app.review.jumpLinkHTML(review.url); }
         if("noresp" !== mode) {
             revresp = ["div", {cla: "statrevrespdiv"},
                        ["div", {cla: "transformlinkdiv"},
@@ -1411,7 +1409,7 @@ return {
                  app.review.badgeImageHTML(type),
                  "&nbsp;",
                  revlink,
-                 jump,
+                 "&nbsp;" + app.review.jumpLinkHTML(review, type),
                  ["div", {cla: "revtextsummary"},
                   [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
                     app.review.picHTML(review, type)],
@@ -1795,12 +1793,23 @@ return {
     },
 
 
-    jumpLinkHTML: function (url) {
-        var html;
-        if(!url) {
+    jumpLinkHTML: function (review, type) {
+        var qurl, html;
+        if(!review) {
             return ""; }
-        html = ["a", {href: url, title: url,
-                      onclick: jt.fs("window.open('" + url + "')")},
+        if(!review.url) {
+            qurl = review[type.key];
+            if(type.subkey) { 
+                qurl += " " + review[type.subkey]; }
+            qurl = jt.enc(qurl);
+            qurl = "https://www.google.com/?q=" + qurl + "#q=" + qurl;
+            html = ["a", {href: qurl, 
+                         title: "Search for " + jt.ndq(review[type.key]),
+                         onclick: jt.fs("window.open('" + qurl + "')")},
+                    ["img", {cla: "webjump", src: "img/search.png"}]];
+            return jt.tac2html(html); }
+        html = ["a", {href: review.url, title: review.url,
+                      onclick: jt.fs("window.open('" + review.url + "')")},
                 ["img", {cla: "webjump", src: "img/gotolink.png"}]];
         return jt.tac2html(html);
     },
