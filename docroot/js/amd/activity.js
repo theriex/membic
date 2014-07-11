@@ -1192,8 +1192,9 @@ return {
 
 
     displayActive: function () {
-        app.layout.closeDialog(); //close dialog if previously open
-        mainDisplay("activity");
+        if(app.pen.currPenRef()) {
+            app.layout.closeDialog(); //close dialog if previously open
+            mainDisplay("activity"); }
     },
 
 
