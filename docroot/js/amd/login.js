@@ -463,7 +463,7 @@ app.login = (function () {
         html = ["a", {id: "macc", href: "create new account...",
                       title: "Create new native login",
                       onclick: jt.fs("app.login.displayNewAccountForm()")},
-                "Create a new account"];
+                "&#x25b6; Create a new account"];
         jt.out('makenewaccountdiv', jt.tac2html(html));
         html = ["a", {id: "forgotpw", href: "forgot credentials...",
                       title: "Retrieve your credentials using the email" + 
