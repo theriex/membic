@@ -1192,7 +1192,7 @@ return {
 
 
     displayActive: function () {
-        if(app.pen.currPenRef()) {
+        if(app.login.isLoggedIn()) {
             app.layout.closeDialog(); //close dialog if previously open
             mainDisplay("activity"); }
     },
