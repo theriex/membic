@@ -94,9 +94,14 @@ class GroupViewDisplay(webapp2.RequestHandler):
             return
         group = groups[0];
         qres = recent_group_reviews(group)
-        picurl = "../img/emptyprofpic.png"
+        picurl = "img/emptyprofpic.png"
         if group.picture:
-            picurl = "../grppic?groupid=" + str(group.key().id())
+            picurl = "grppic?groupid=" + str(group.key().id())
+        # facebook doesn't like "../" relative urls
+        if "localhost" in self.request.url:
+            picurl = "../" + picurl
+        else:
+            picurl = "http://www.wdydfun.com/" + picurl
         content = html
         content = re.sub('\$GROUPNAME', group.name, content)
         content = re.sub('\$GROUPDESCR', group.description, content)
