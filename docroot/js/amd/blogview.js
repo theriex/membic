@@ -51,18 +51,6 @@ var blogview = (function () {
     },
 
 
-    shareServiceHTML = function (divid, url, desc, imgsrc) {
-        var linkattr, html;
-        linkattr = {href: url, title: desc};
-        if(url.indexOf("mailto") < 0) {
-            linkattr.onclick = "window.open('" + url + "');return false;"; }
-        html = ["div", {id: divid, cla: "sharebuttondiv"},
-                ["a", linkattr,
-                 ["img", {cla: "bsico", alt: desc, src: imgsrc}]]];
-        return html;
-    },
-
-
     blogShareButtonsHTML = function () {
         var surl, rt, desc, html;
         surl = window.location.href;
@@ -77,35 +65,10 @@ var blogview = (function () {
             rt = ""; }
         if(rt) {
             surl += "?type=" + rt; }
-        //lower case on desc values so they can be embedded in a sentence
-        desc = "latest reviews from " + pen.name;
+        desc = "latest reviews from " + pen.name;  //text gets embedded
         if(rt) {
             desc = "top " + rt + " reviews from " + pen.name; }
-        html = [
-            shareServiceHTML(
-                "facebookdiv", 
-                "http://www.facebook.com/sharer/sharer.php?u=" + 
-                    jt.enc(surl) + "&t=" + jt.enc(desc.capitalize()),
-                "Post " + desc + " to your wall",
-                reloff + "/img/f_logo.png"),
-            shareServiceHTML(
-                "twitterdiv",
-                "https://twitter.com/intent/tweet?text=" + 
-                    jt.enc(desc.capitalize()) + "&url=" + jt.enc(surl),
-                "Tweet " + desc,
-                reloff + "/img/tw_logo.png"),
-            shareServiceHTML(
-                "gplusdiv",
-                "https://plus.google.com/share?url=" + jt.enc(surl),
-                "Plus " + desc,
-                "https://www.gstatic.com/images/icons/gplus-32.png"),
-            shareServiceHTML(
-                "emaildiv",
-                "mailto:?subject=" + jt.dquotenc(desc.capitalize()) +
-                    "&body=" + jt.dquotenc(desc.capitalize() + "\n\n" +
-                                           surl + "\n"),
-                "Email " + desc,
-                reloff + "/img/email.png")];
+        html = app.layout.shareLinksHTML(surl, desc, reloff + "/");
         return html;
     },
 

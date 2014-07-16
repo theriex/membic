@@ -4,7 +4,7 @@
 var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
 
-//This is a degenerate module used for the static blog view.  Don't model it.
+//This is a degenerate module used for the static view.  Don't model it.
 var groupview = (function () {
     "use strict";
 
@@ -31,23 +31,28 @@ var groupview = (function () {
 
 
     displayGroup = function () {
-        var groupid, rssurl, namespan, width, html;
-        groupid = jt.instId(group);
-        rssurl = "../rssgrp?group=" + groupid;
-        namespan = ["span", {id: "penhnamespan"},
-                     group.name];
-        width = window.innerWidth;  //usually defined..
+        var groupid = jt.instId(group),
+            rssurl = "../rssgrp?group=" + groupid,
+            iswide = window.innerWidth && window.innerWidth > 700,
+            njspan, html;
+        njspan = ["span", {id: "namejoinlinkspan"},
+                  [["span", {id: "penhnamespan"},
+                    group.name],
+                   ["a", {href: "../#view=group&groupid=" + groupid,
+                          title: "WDYDFun Group", id: "sgrpjoinlink"},
+                    "Join"]]];
         html = ["div", {cla: "sgrpdiv"},
                 [["div", {cla: "getyoursdiv"},
                   ["a", {href: "../#view=profile"},
-                   "Start your own group"]],
+                   "Start a group"]],
                  ["div", {cla: "sgpicdiv"},
                   app.group.grpPicCityHTML(group, "sgpicdiv")],
                  ["div", {cla: "sjoinrssdiv"},
-                  [(width > 700 ? namespan : ""),
-                   ["a", {href: "../#view=group&groupid=" + groupid,
-                          title: "WDYDFun Group", id: "sgrpjoinlink"},
-                    "Join"],
+                  [(iswide? njspan : ""),
+                   app.layout.shareLinksHTML(
+                       window.location.href, 
+                       "latest posts from " + group.name, //text gets embedded
+                       "../"),
                    ["a", {href: rssurl, id: "rsslink",
                           title: "RSS feed for " + jt.ndq(group.name),
                           onclick: jt.fs("window.open('" + rssurl + "')")},
@@ -56,7 +61,7 @@ var groupview = (function () {
                  ["div", {cla: "floatclear"}],
                  ["div", {id: "sgrpnamedescdiv"},
                   [["div",
-                    (!(width > 700) ? namespan : "")],
+                    (iswide? "" : njspan)],
                    ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
                     jt.linkify(group.description)]]]]];
         jt.out('groupdescrdiv', jt.tac2html(html));
