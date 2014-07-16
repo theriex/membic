@@ -79,6 +79,15 @@ def bump_referral_count(stat, bumpref):
         stat.refers += bumpref + ":1"
 
 
+def is_content_linkback(val):
+    csids = ["youtube.", "vimeo.", "ted.com", "simonsfoundation.org",
+             "blueman.com" ]
+    for csid in csids:
+        if csid in val:
+            return True
+    return False
+
+
 # Translate and group referral URLs into bite size series identifiers
 def bump_referral(stat, entry, val):
     if "facebook" in val:
@@ -102,12 +111,10 @@ def bump_referral(stat, entry, val):
         bump_referral_count(stat, entry + "Home")
     elif "mail." in val:
         bump_referral_count(stat, entry + "Mail")
-    elif "youtube." in val:
-        bump_referral_count(stat, entry + "YouTube")
-    elif "vimeo." in val:
-        bump_referral_count(stat, entry + "Vimeo")
-    elif "ted.com" in val:
-        bump_referral_count(stat, entry + "TED")
+    elif "sandservices.com" in val:
+        bump_referral_count(stat, entry + "SSI")
+    elif is_content_linkback(val):
+        bump_referral_count(stat, entry + "ContLB")
     elif "wdydfun" not in val:
         # Write the whole url (without colons) as the identifier, thus
         # causing the activity display to get real ugly.  Then write
@@ -192,7 +199,7 @@ def rebuild_refers(stat):
                 bump_referral(stat, "rev", val[3:])
             elif val.startswith("blog"):
                 bump_referral(stat, "blog", val[4:])
-            elif val.starstwith("grp"):
+            elif val.startswith("grp"):
                 bump_referral(stat, "grp", val[3:])
 
 
