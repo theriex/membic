@@ -3,6 +3,7 @@ from google.appengine.ext import db
 import logging
 from rev import Review
 from pen import PenName
+from group import Group
 from moracct import obj2JSON, qres2JSON, safestr, safeURIEncode
 from morutil import *
 import re
@@ -38,6 +39,7 @@ html = """
 </div>
 
 <div id="revcontentdiv">
+$GRPLINKS
 </div>
 
 <div id="pendatadiv">
@@ -46,6 +48,10 @@ $PENJSON
 
 <div id="revdatadiv">
 $REVJSON
+</div>
+
+<div id="groupdatadiv">
+$GRPSJSON
 </div>
 
 <div id="referdiv">
@@ -171,6 +177,36 @@ def descrip(rev):
     return text
 
 
+def extract_array_field_value(field, datastr):
+    field = field + "\":["
+    if not datastr or not field in datastr:
+        return []
+    datastr = datastr[datastr.index(field) + len(field):]
+    datastr = datastr[:datastr.index("]")]
+    if "," in datastr:
+        datastr = datastr.split(",")
+    else:
+        datastr = [ datastr ]
+    return datastr
+
+
+def write_group_content(content, review):
+    groups = []
+    gids = extract_array_field_value("postedgroups", review.svcdata)
+    for idx, grpid in enumerate(gids):
+        grpid = grpid[1:len(grpid) - 1]  # strip quotes
+        group = cached_get(intz(grpid), Group)
+        if group:
+            groups.append(group)
+    content = re.sub('\$GRPSJSON', qres2JSON(groups, "", -1, ""), content)
+    linkhtml = ""
+    for group in groups:
+        linkhtml += "<a href=\"../groups/" + canonize(group.name) + "\">" +\
+            group.name + "</a>\n"
+    content = re.sub('\$GRPLINKS', linkhtml, content)
+    return content
+
+
 class StaticReviewDisplay(webapp2.RequestHandler):
     def get(self, revid):
         review = cached_get(intz(revid), Review)
@@ -199,6 +235,7 @@ class StaticReviewDisplay(webapp2.RequestHandler):
         timg = "../img/" + typeImage(review.revtype)
         simg = timg[0:-6] + "Pic2.png"
         content = html
+        content = write_group_content(content, review)
         content = re.sub('\$REVDESC', rdesc, content)
         content = re.sub('\$IMGSRC', simg, content)
         content = re.sub('\$PENNAME', pen.name, content)

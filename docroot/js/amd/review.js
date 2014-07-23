@@ -855,8 +855,9 @@ app.review = (function () {
 
 
     postline = function (review, redispf) {
-        var i, grpids, grpref, pt = "";
+        var i, grpids, grpref, prefix, pt = "";
         if(review.svcdata && review.svcdata.postedgroups) {
+            prefix = redispf ? "" : "../";
             grpids = review.svcdata.postedgroups;
             for(i = 0; i < grpids.length; i += 1) {
                 grpref = app.lcs.getRef("group", grpids[i]);
@@ -867,7 +868,8 @@ app.review = (function () {
                     if(pt) {
                         pt += ", "; }
                     pt += jt.tac2html(
-                        ["a", {href: "groups/" + jt.canonize(grpref.group.name),
+                        ["a", {href: prefix + "groups/" + 
+                                   jt.canonize(grpref.group.name),
                                onclick: jt.fs("app.group.bygroupid('" + 
                                               grpids[i] + "')")},
                          grpref.group.name]); } }

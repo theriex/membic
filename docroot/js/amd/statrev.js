@@ -33,6 +33,7 @@ var statrev = (function () {
 
 
     readData = function () {
+        var pgs, i;
         pen = app.layout.parseEmbeddedJSON(jt.byId('pendatadiv').innerHTML);
         jt.out('pendatadiv', "");
         rev = app.layout.parseEmbeddedJSON(jt.byId('revdatadiv').innerHTML);
@@ -44,6 +45,10 @@ var statrev = (function () {
                 if(obj && obj.hasOwnProperty(idfield)) {
                     return obj[idfield]; }
             }; }
+        pgs = app.layout.parseEmbeddedJSON(jt.byId('groupdatadiv').innerHTML);
+        for(i = 0; pgs && pgs.length && i < pgs.length; i += 1) {
+            app.lcs.put("group", pgs[i]); }
+        jt.out('groupdatadiv', "");
     },
 
 
