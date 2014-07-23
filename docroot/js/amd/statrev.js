@@ -36,6 +36,7 @@ var statrev = (function () {
         pen = app.layout.parseEmbeddedJSON(jt.byId('pendatadiv').innerHTML);
         jt.out('pendatadiv', "");
         rev = app.layout.parseEmbeddedJSON(jt.byId('revdatadiv').innerHTML);
+        app.review.deserializeFields(rev);
         jt.out('revdatadiv', "");
         if(!jt.instId) {
             jt.instId = function (obj) {

@@ -64,6 +64,7 @@ $REFER
 <script src="../js/amd/layout.js"></script>
 <script src="../js/amd/profile.js"></script>
 <script src="../js/amd/review.js"></script>
+<script src="../js/amd/lcs.js"></script>
 <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>
 <script>
   statrev.display();

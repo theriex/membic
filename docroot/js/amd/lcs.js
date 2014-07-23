@@ -42,7 +42,9 @@ app.lcs = (function () {
         rev: { refs: {},
                fetchend: "revbyid",
                fetchparamf: function (id) {
-                   return "revid=" + id; } },
+                   return "revid=" + id; },
+               putprep: function (revobj) {
+                   app.review.deserializeFields(revobj); } },
         group: { refs: {},
                  fetchend: "grpbyid",
                  fetchparamf: function (id) {
@@ -231,6 +233,29 @@ return {
         for(name in cache) {
             if(cache.hasOwnProperty(name)) {
                 cache[name].refs = {}; } }
+    },
+
+
+    reconstituteJSONObjectField: function (field, obj) {
+        var text, parsedval, jsonobj = JSON || window.JSON;
+        if (!jsonobj) {
+            jt.err("JSON not supported, please use a modern browser");
+        }
+        if(!obj[field]) {
+            obj[field] = {}; }
+        else if(typeof obj[field] !== 'object') {
+            try {
+                text = obj[field];
+                parsedval = jsonobj.parse(text);
+                obj[field] = parsedval;
+            } catch (e) {
+                jt.log("reconstituteJSONObjectField " + field + ": " + e);
+                obj[field] = {};
+            } }
+        if(typeof obj[field] !== 'object') {
+            jt.log("reconstituteJSONObjectField re-initializing " + field + 
+                   ". \"" + text + "\" not an object");
+            obj[field] = {}; }
     },
 
 

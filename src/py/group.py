@@ -360,6 +360,7 @@ class RemoveReview(webapp2.RequestHandler):
                 self.error(400)
                 self.response.out.write("Not authorized to remove reviews")
                 return
+        reason = ""
         # leave a comment for owner if not your review
         if rev.penid != pen.key().id():
             reason = self.request.get('reason')

@@ -493,7 +493,7 @@ app.review = (function () {
         var input, i;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
-            input = jt.byId("field" + i);
+            input = jt.byId(type.fields[i] + i);
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
     },
@@ -854,6 +854,33 @@ app.review = (function () {
     },
 
 
+    postline = function (review, redispf) {
+        var i, grpids, grpref, pt = "";
+        if(review.svcdata && review.svcdata.postedgroups) {
+            grpids = review.svcdata.postedgroups;
+            for(i = 0; i < grpids.length; i += 1) {
+                grpref = app.lcs.getRef("group", grpids[i]);
+                if(grpref.status === "not cached" && redispf) {
+                    app.lcs.getFull("group", grpids[i], redispf);
+                    break; }
+                if(grpref.group) {
+                    if(pt) {
+                        pt += ", "; }
+                    pt += jt.tac2html(
+                        ["a", {href: "groups/" + jt.canonize(grpref.group.name),
+                               onclick: jt.fs("app.group.bygroupid('" + 
+                                              grpids[i] + "')")},
+                         grpref.group.name]); } }
+            if(pt) {
+                pt = ["p", {cla: "grpostline"},
+                      [["span", {cla: "grpostlinehead"},
+                        "Posted to "],
+                       pt]];
+                pt = jt.tac2html(pt); } }
+        return pt;
+    },
+
+
     //This should have a similar look and feel to the shoutout display
     revFormTextAreaHTML = function (review, type, keyval, mode) {
         var area, style, placetext, lightbg;
@@ -882,7 +909,8 @@ app.review = (function () {
                     jt.hex2rgb(lightbg) + ",0.3);";
                 area = ["div", {id: "reviewtext", cla: "shoutout",
                                 style: style},
-                        jt.linkify(review.text || "")]; } }
+                        jt.linkify(review.text || "") + 
+                        postline(review, app.review.displayRead)]; } }
         else {  //keyval for review not set yet, provide autocomplete area
             area = ["div", {id: "revautodiv", cla: "autocomplete",
                             style: "width:" + textTargetWidth() + "px;"}]; }
@@ -1414,7 +1442,8 @@ return {
                   [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
                     app.review.picHTML(review, type)],
                    ["div", {style: "padding:10px;"},
-                    jt.linkify(review.text)],
+                    jt.linkify(review.text) + 
+                    postline(review)],
                    revresp]],
                  ["div", {style: "clear:both;"}]]];
         return jt.tac2html(html);
@@ -1734,9 +1763,10 @@ return {
         app.onescapefunc = null;
         url = "updrev?";
         if(!jt.instId(crev)) {
-            url = "newrev?";
-            crev.svcdata = ""; }
+            url = "newrev?"; }
+        app.review.serializeFields(crev);
         data = jt.objdata(crev);
+        app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', url + app.login.authparams(), data,
                 function (reviews) {
                     crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
@@ -2008,6 +2038,19 @@ return {
                 ["a", {href: "#" + label, onclick: jt.fs(fstr), title: title},
                  text]];
         return html;
+    },
+
+
+    serializeFields: function (rev) {
+        if(typeof rev.svcdata === 'object') {
+            rev.svcdata = JSON.stringify(rev.svcdata); }
+        else {
+            rev.svcdata = ""; }
+    },
+
+
+    deserializeFields: function (rev) {
+        app.lcs.reconstituteJSONObjectField("svcdata", rev);
     }
 
 }; //end of returned functions

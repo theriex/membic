@@ -1,4 +1,4 @@
-/*global alert: false, setTimeout: false, document: false, app: false, jt: false, window: false  */
+/*global alert: false, document: false, app: false, jt: false, window: false  */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -29,6 +29,7 @@ app.group = (function () {
                     {name: "6 months", freq: 180, id: "freq180"},
                     {name: "yearly", freq: 365, id: "freq365"}],
         grpsrchmax = 1000,
+        revPostTimeout = null,  //review group ref update write timer
 
 
     ////////////////////////////////////////
@@ -478,7 +479,7 @@ app.group = (function () {
             text = log.action;
             penref = app.lcs.getRef("pen", log.target);
             if(penref.status === "not cached") {
-                setTimeout(function () {
+                window.setTimeout(function () {
                     app.lcs.getFull("pen", log.target, redrawf); },
                            700); }  //low priority fill in 
             if(penref.pen) {
@@ -526,7 +527,7 @@ app.group = (function () {
             if(penref && penref.status === "not cached") {
                 //all admins will be loaded by the membership display, so
                 //give that a chance to finish first.
-                return setTimeout(function () {
+                return window.setTimeout(function () {
                     app.lcs.getFull("pen", log.penid, displayAdminLog); },
                                   400); } }
         jt.out("groupadminlogdiv", jt.tac2html(
@@ -562,7 +563,7 @@ app.group = (function () {
         //If we are coming in from url parameters, it is possible to end 
         //up with the profile heading overwriting the group heading due
         //to various startup server call lags.  Redisplay to fix.
-        setTimeout(displayGroupHeading, 400);
+        window.setTimeout(displayGroupHeading, 400);
         verifyPenFollowing();
     },
 
@@ -986,6 +987,25 @@ app.group = (function () {
     },
 
 
+    updateReviewGroupReference = function (revid, groupid) {
+        var crev = app.review.getCurrentReview();
+        if(jt.instId(crev) !== revid) {
+            jt.log("updateReviewGroupReferences called with wrong review");
+            return; }
+        if(revPostTimeout) {
+            window.clearTimeout(revPostTimeout);
+            revPostTimeout = null; }
+        crev.svcdata = crev.svcdata || {};
+        crev.svcdata.postedgroups = crev.svcdata.postedgroups || [];
+        if(crev.svcdata.postedgroups.indexOf(groupid) < 0) {
+            crev.svcdata.postedgroups.push(groupid); }
+        //Might be posting to several groups, so wait a few seconds before
+        //writing the review again to try collect all of them.
+        revPostTimeout = window.setTimeout(function () {
+            app.review.save(true, "", true); }, 3000);
+    },
+
+
     postReview = function (revid, groupid) {
         var data;
         data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
@@ -993,6 +1013,7 @@ app.group = (function () {
         jt.call('POST', "grprev?" + app.login.authparams(), data,
                 function (groups) {
                     copyGroup(app.lcs.put("group", groups[0]).group);
+                    updateReviewGroupReference(revid, groupid);
                     verifyStash(function () {
                         jt.log("postReview updated pen.stash"); }); },
                 app.failf(function (code, errtxt) {
@@ -1205,7 +1226,8 @@ app.group = (function () {
                            "No groups found"]); }
         if(groupsearch.cursor) {
             if(i === 0 && groupsearch.total < (grpsrchmax * groupsearch.reqs)) {
-                setTimeout(app.group.searchGroups, 10); }  //auto-repeat search
+                window.setTimeout(app.group.searchGroups, 
+                                  10); }  //auto-repeat search
             else {
                 if(groupsearch.total >= (grpsrchmax * groupsearch.reqs)) {
                     groupsearch.reqs += 1; }
@@ -1419,7 +1441,7 @@ return {
                     app.lcs.put("group", groups[0]);
                     copyGroup(groups[0]);
                     if(autostep === "uploadpic") {
-                        setTimeout(app.group.picUploadForm, 200); }
+                        window.setTimeout(app.group.picUploadForm, 200); }
                     displayGroup(); },
                 app.failf(function (code, errtxt) {
                     jt.out(divid, buttonhtml);
@@ -1823,7 +1845,7 @@ return {
                         fetch.field = "seeking";
                         groupFieldNoticesHTML(fetch, pen, groupref.group); } } }
             if(fetch.cacheMiss) {
-                setTimeout(function () {
+                window.setTimeout(function () {
                     app.lcs.getFull(fetch.type, fetch.id,
                                     function () {
                                         app.group.groupNoticesHTML(divid); });
@@ -2017,8 +2039,7 @@ return {
         var groupid = jt.instId(group);
         return ["li", {cla: "penfont"},
                 ["a", {title: "Show " + jt.ndq(group.name),
-                       href: "#" + jt.objdata({view: "group", 
-                                               groupid: groupid}),
+                       href: "groups/" + jt.canonize(group.name),
                        onclick: jt.fs("app.group.bygroupid('" +
                                       groupid + "')")},
                  group.name]];
@@ -2103,7 +2124,7 @@ return {
         app.layout.openDialog({y:140}, html);
         jt.byId('searchtxt').focus();
         //hit the search button for them...
-        setTimeout(app.group.startGroupSearch, 50);
+        window.setTimeout(app.group.startGroupSearch, 50);
     }
 
 }; //end of returned functions

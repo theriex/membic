@@ -18,44 +18,11 @@ app.pen = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    //see also deserializeFields
-    serializeFields = function (penName) {
-        var i;
-        if(typeof penName.settings === 'object') {
-            penName.settings = JSON.stringify(penName.settings); }
-        if(typeof penName.stash === 'object') {
-            penName.stash = JSON.stringify(penName.stash); }
-    },
-
-
     verifyPenFields = function (pen) {
         if(!pen.following) {  //may be null
             pen.following = 0; }
         if(!pen.followers) {
             pen.followers = 0; }
-    },
-
-
-    reconstituteJSONObjectField = function (field, obj) {
-        var text, parsedval, jsonobj = JSON || window.JSON;
-        if (!jsonobj) {
-            jt.err("JSON not supported, please use a modern browser");
-        }
-        if(!obj[field]) {
-            obj[field] = {}; }
-        else if(typeof obj[field] !== 'object') {
-            try {
-                text = obj[field];
-                parsedval = jsonobj.parse(text);
-                obj[field] = parsedval;
-            } catch (e) {
-                jt.log("reconstituteJSONObjectField " + field + ": " + e);
-                obj[field] = {};
-            } }
-        if(typeof obj[field] !== 'object') {
-            jt.log("reconstituteJSONObjectField re-initializing " + field + 
-                   ". \"" + text + "\" not an object");
-            obj[field] = {}; }
     },
 
 
@@ -134,14 +101,14 @@ app.pen = (function () {
 
     updatePenName = function (pen, callok, callfail) {
         var data;
-        serializeFields(pen);
+        app.pen.serializeFields(pen);
         data = jt.objdata(pen);
+        app.pen.deserializeFields(pen);  //in case update fail or interim use
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
                      currpenref = app.lcs.put("pen", updpens[0]);
                      callok(currpenref); },
                  app.failf(function (code, errtxt) {
-                     app.pen.deserializeFields(pen);  //undo pre-call serialize
                      callfail(code, errtxt); }),
                 jt.semaphore("pen.updatePenName"));
     },
@@ -156,7 +123,7 @@ app.pen = (function () {
         newpen.name = name;
         if(currpenref && currpenref.settings) {
             newpen.settings = currpenref.settings;
-            serializeFields(newpen); }
+            app.pen.serializeFields(newpen); }
         data = jt.objdata(newpen);
         jt.call('POST', "newpen?" + app.login.authparams(), data,
                  function (newpens) {
@@ -364,10 +331,18 @@ return {
     },
 
 
+    serializeFields: function (penName) {
+        if(typeof penName.settings === 'object') {
+            penName.settings = JSON.stringify(penName.settings); }
+        if(typeof penName.stash === 'object') {
+            penName.stash = JSON.stringify(penName.stash); }
+    },
+
+
     deserializeFields: function (penName) {
-        reconstituteJSONObjectField("settings", penName);
-        reconstituteJSONObjectField("top20s", penName);
-        reconstituteJSONObjectField("stash", penName);
+        app.lcs.reconstituteJSONObjectField("settings", penName);
+        app.lcs.reconstituteJSONObjectField("top20s", penName);
+        app.lcs.reconstituteJSONObjectField("stash", penName);
     },
 
 

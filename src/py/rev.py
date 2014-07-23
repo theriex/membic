@@ -41,11 +41,10 @@ class Review(db.Model):
     # The canonized key/subkey field value for search match
     cankey = db.StringProperty()
     altkeys = db.TextProperty()
-    # Blackboard of connection service processing values in JSON format
-    svcdata = db.TextProperty()
+    # Supporting linkage fields
+    svcdata = db.TextProperty()    # service processing values in JSON format
     srcrev = db.IntegerProperty()  # source review id, or -101 if pre-review
-    # Duplicated data to make summary reporting easier
-    penname = db.StringProperty()
+    penname = db.StringProperty()  # dupe data for easier reporting
 
 
 def review_modification_authorized(handler):
