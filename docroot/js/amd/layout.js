@@ -614,15 +614,11 @@ return {
     },
 
 
-    picUpload: function (fupl) {
-        var odiv, html;
+    picUploadHTML: function (fupl) {
+        var html;
         html = ["form", {action: fupl.endpoint,
                          enctype: "multipart/form-data", method: "post"},
-                [["div", {id: "closeline"},
-                  ["a", {id: "closedlg", href: "#close",
-                         onclick: jt.fs("app.cancelOverlay()")},
-                   "&lt;close&nbsp;&nbsp;X&gt;"]],
-                 jt.paramsToFormInputs(app.login.authparams()),
+                [jt.paramsToFormInputs(app.login.authparams()),
                  ["input", {type: "hidden", name: "_id", value: fupl.id}],
                  ["input", {type: "hidden", name: "penid", value: fupl.penid}],
                  ["input", {type: "hidden", name: "returnto",
@@ -631,22 +627,53 @@ return {
                  ["table",
                   [["tr",
                     ["td", 
-                     "Upload " + fupl.type + " Pic"]],
+                     (fupl.notitle ? "" : "Upload " + fupl.type + " Pic")]],
                    ["tr",
                     ["td",
                      ["input", {type: "file", name: "picfilein",
                                 id: "picfilein"}]]],
                    ["tr",
                     ["td", {align: "center"},
-                     ["input", {type: "submit", value: "Upload"}]]]]]]];
+                     ["input", {type: "submit", id: "picfilesubmit",
+                                value: "Upload"}]]]]]]];
+        return html;
+    },
+
+
+    openOverlay: function (coords, html, initf, visf) {
+        var odiv = jt.byId('overlaydiv');
+        coords = coords || {};
+        coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
+        coords.y = coords.y || 200;
+        if(coords.x > (app.winw / 2)) {
+            coords.x = 20; }  //display too tight, just indent a bit
+        coords.y = coords.y + jt.byId('bodyid').scrollTop;  //logical height
+        odiv.style.left = String(coords.x) + "px";
+        odiv.style.top = String(coords.y) + "px";
+        app.escapefuncstack.push(app.onescapefunc);
+        app.onescapefunc = app.cancelOverlay;  //move into layout???
+        html = [["div", {id: "closeline"},
+                 ["a", {id: "closedlg", href: "#close",
+                        onclick: jt.fs("app.cancelOverlay()")},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                html];
         jt.out('overlaydiv', jt.tac2html(html));
-        odiv = jt.byId('overlaydiv');
-        odiv.style.left = fupl.left || "70px";
-        odiv.style.top = fupl.top || "300px";
-        odiv.style.visibility = "visible";
+        if(initf) {
+            initf(); }
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelOverlay;
-        jt.byId('picfilein').focus();
+        odiv.style.visibility = "visible";
+        if(visf) {
+            visf(); }
+    },
+
+
+    picUpload: function (fupl) {
+        var html;
+        html = app.layout.picUploadHTML(fupl);
+        app.layout.openOverlay({x: fupl.x || 70, y: fupl.y || 300},
+                               html, null, 
+                               function () {
+                                   jt.byId('picfilein').focus(); });
     },
 
 

@@ -402,41 +402,52 @@ app.review = (function () {
     },
 
 
-    haveRevpic = function (review) {
-        if(review.revpic && review.revpic !== "DELETED") {
-            return true; }
+    verifyReviewImageDisplayType = function (review) {
+        var dt = "guess";
+        if(review.svcdata && review.svcdata.picdisp) {
+            dt = review.svcdata.picdisp; }
+        if(dt !== "nopic" && dt !== "sitepic" && dt !== "upldpic") {
+            dt = "guess"; }
+        if(dt === "guess") {
+            if(review.imguri) {
+                dt = "sitepic"; }
+            else if(review.revpic) {
+                dt = "upldpic"; }
+            else {
+                dt = "nopic"; } }
+        review.svcdata = review.svcdata || {};
+        review.svcdata.picdisp = dt;
+        return dt;
     },
 
 
     revFormImageHTML = function (review, type, keyval, mode) {
-        var imgstyle, imgattr = {}, html = [];
+        var html;
         if(!keyval) {
             return ""; }
-        imgstyle = "";
+        html = {id: "revimg", cla: "revimg", src: "img/emptyprofpic.png"};
         if(jt.isLowFuncBrowser()) {
-            imgstyle = " style=\"width:125px;height:auto;\""; }
-        if(review.imguri) {  //use auto-generated link if avail. No direct edit.
-            html.push(["a", {href: review.url,
-                             onclick: jt.fs("window.open('" + review.url + 
-                                            "')")},
-                       ["img", {cla: "revimg" + imgstyle,
-                                src: review.imguri}]]); }
-        else {  //no auto-generated link image, allow personal pic upload
-            imgattr.src = "img/blank.png"; 
-            if(mode === "edit") {  //for editing, default is outline pic
-                imgattr.src = "img/emptyprofpic.png"; }
-            if(haveRevpic(review)) {  //use uploaded pic if available
-                imgattr.src = "revpic?revid=" + jt.instId(review); }
-            imgattr.cla = "revimg" + imgstyle;
-            if(mode === "edit") {
-                imgattr.title = "Click to upload a picture";
-                imgattr.onclick = jt.fs("app.review.picUploadForm()"); }
-            html.push(["img", imgattr]); }
-        if(mode === "edit" && (review.imguri || haveRevpic(review))) {
-            html.push(["br"]);
-            html.push(["a", {href: "#remove image link",
-                             onclick: jt.fs("app.review.removeImageLink()")},
-                       "remove image"]); }
+            html.style = "width:125px;height:auto;"; }
+        switch(verifyReviewImageDisplayType(review)) {
+        case "sitepic":
+            html.src = review.imguri;
+            break;
+        case "upldpic":
+            html.src = "revpic?revid=" + jt.instId(review);
+            break;
+        case "nopic":
+            if(mode !== "edit") {
+                html.src = "img/blank.png"; }
+            break; }
+        html = ["img", html];
+        if(mode === "edit") {
+            html = ["a", {href: "#changepic", 
+                          onclick: jt.fs("app.review.picDialog()")},
+                    html]; }
+        else if(review.url) {
+            html = ["a", {href: review.url,
+                          onclick: jt.fs("window.open('" + review.url + "')")},
+                    html]; }
         html = jt.tac2html(html);
         return html;
     },
@@ -1284,6 +1295,23 @@ app.review = (function () {
     },
 
 
+    prepPicDialogElements = function () {
+        var pictype = crev.svcdata.picdisp, elem;
+        if(!crev.imguri) {
+            jt.byId('sitepiclabel').style.color = "#999999";
+            jt.byId('sitepic').disabled = true; }
+        else {  //have crev.imguri
+            if(pictype !== "sitepic") {
+                jt.byId('sitepicimg').className = "revimgdis"; } }
+        if(pictype !== "upldpic") {
+            elem = jt.byId("upimg");
+            if(elem) {
+                elem.className = "revimgdis"; }
+            jt.byId('picfilein').disabled = true;
+            jt.byId('picfilesubmit').disabled = true; }
+    },
+
+
     displayReviewForm = function (pen, review, mode, errmsg) {
         var type = findReviewType(review.revtype),
             keyval = review[type.key],
@@ -1382,7 +1410,7 @@ app.review = (function () {
             displayTypeSelect(); }
         else if(action === "uploadpic") {
             displayReviewForm(pen, crev, "edit");
-            app.review.picUploadForm(); }
+            app.review.picDialog(); }
         else {
             displayReviewForm(pen, crev, "edit", errmsg); }
     };
@@ -1629,32 +1657,6 @@ return {
     },
 
 
-    //The review must have an id so the server can find the instance
-    //to hold the associated revpic data.  Since the pic upload is a
-    //form submit requiring the app to reconstruct its state
-    //afterwards, any changed field values also need to be saved.  If
-    //a user clicks the save button for a new review, and also manages
-    //to click for a pic upload, then it might be possible for them to
-    //create two instances of the same review.  Protect against that.
-    picUploadForm: function () {
-        var revid;
-        readAndValidateFieldValues();
-        revid = jt.instId(crev);
-        if(!revid || reviewFieldValuesChanged()) {
-            if(jt.byId('revformbuttonsdiv').    //not already saving
-                   innerHTML.indexOf("<button") >= 0) {
-                return app.review.save(false, "uploadpic"); }
-            return; }  //already saving, just ignore the pic upload click
-        app.layout.picUpload({ 
-            endpoint: "/revpicupload",
-            type: "Review",
-            id: revid,
-            penid: crev.penid,
-            rethash: "#revedit=" + revid,
-            left: "70px", top: "300px"});
-    },
-
-
     keywordcsv: function (kwid, keycsv) {
         var cbox = jt.byId(kwid), 
             text = "", kw, i,
@@ -1762,6 +1764,7 @@ return {
                 jt.out('revsavemsg', errtxt);
                 return; } }
         jt.out('revformbuttonsdiv', "Saving...");
+        app.cancelOverlay();  //in case it is still up
         app.onescapefunc = null;
         url = "updrev?";
         if(!jt.instId(crev)) {
@@ -1881,6 +1884,66 @@ return {
                 break; } }
         app.layout.closeDialog();
         app.review.display();
+    },
+
+
+    pictype: function (pictype) {
+        crev.svcdata.picdisp = pictype;
+        app.review.picDialog();
+    },
+
+
+    picDialog: function () {
+        var pictype = crev.svcdata.picdisp, revid, html;
+        //If no review ID, then save first.  The review needs to have
+        //an ID so the upload form submit processing can find where to
+        //save the picture data.  Also need to save any changes since
+        //the upload form submit triggers a full reload of the app.
+        readAndValidateFieldValues();
+        revid = jt.instId(crev);
+        if(!revid || reviewFieldValuesChanged()) {
+            //Verify the review is not already being saved.  If a user
+            //could click the save button and upload at the same time,
+            //it could result in two identical reviews being created.
+            if(jt.byId('revformbuttonsdiv').innerHTML.indexOf("<button") < 0) {
+                return; }  //already saving, ignore the stray click
+            return app.review.save(false, "uploadpic"); }
+        html = ["div", {id: "revpicdlgdiv"},
+                [["ul", {cla: "revpictypelist"},
+                  [["li",
+                    [jt.radiobutton("upt", "sitepic", "Website Pic",
+                                    (pictype === "sitepic"),
+                                    jt.fs("app.review.pictype('sitepic')")),
+                     ["div", {id: "sitepicdetaildiv", cla: "ptddiv"},
+                      (crev.imguri ? ["img", {id: "sitepicimg", cla: "revimg",
+                                              src: crev.imguri}] : "")]]],
+                   ["li",
+                    [jt.radiobutton("upt", "upldpic", "Uploaded Pic",
+                                    (pictype === "upldpic"),
+                                    jt.fs("app.review.pictype('upldpic')")),
+                     ["div", {id: "upldpicdetaildiv", cla: "ptddiv"},
+                      ["table",
+                       ["tr",
+                        [["td",
+                          (crev.revpic ? ["img", {id: "upimg", cla: "revimg",
+                                                  src: "revpic?revid=" +
+                                                       jt.instId(crev)}]
+                                       : "")],
+                         ["td",
+                          app.layout.picUploadHTML(
+                              {endpoint: "/revpicupload", type: "Review", 
+                               id: revid, penid: crev.penid, notitle: true,
+                               rethash: "#revedit=" + revid})]]]]]]],
+                   ["li",
+                    [jt.radiobutton("upt", "nopic", "No Pic",
+                                    (pictype === "nopic"),
+                                    jt.fs("app.review.pictype('nopic')"))]]]],
+                 ["div", {cla: "dlgbuttonsdiv"},
+                  ["button", {type: "button", id: "okbutton",
+                              onclick: jt.fs("app.review.save(false,'',true)")},
+                   "Ok"]]]];
+        app.layout.openOverlay(jt.geoPos("revimg"), html, 
+                               null, prepPicDialogElements);
     },
 
 

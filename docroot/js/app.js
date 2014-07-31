@@ -230,7 +230,7 @@ var app = {},  //Global container for application level funcs and values
         html = [["input", {type: type, name: name, value: value, id: value,
                            checked: jt.toru(checked, "checked"), 
                            onchange: jt.fs(chgfstr)}],
-                ["label", {fo: value}, label]];
+                ["label", {fo: value, id: value + "label"}, label]];
         html = jt.tac2html(html);
         return html;
     };

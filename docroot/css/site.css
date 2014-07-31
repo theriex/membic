@@ -273,7 +273,8 @@ img { border:0px; }
 .secondaryfield { font-style:italic; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revlist li { padding:4px; }
-.revimg { max-width:125px; height:auto; }
+.revimg, .revimgdis { max-width:125px; height:auto; }
+.revimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .revtextsummary { font-size:small; } /* padded in profile.reviewItemHTML */
 .removeico { width:15px; height:15px; vertical-align:middle; }
 .rslc { font-size:medium; }
@@ -413,6 +414,8 @@ img { border:0px; }
 .statrevrespdiv { font-size:small; font-style:italic;
   padding-right:40%; float:right; }
 .blogidentdiv { padding:0px 0px 20px 0px; }
+.revpictypelist { list-style:none; padding:0px 0px 10px 0px; margin:0; }
+.ptddiv { padding:0px 0px 0px 20px; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
