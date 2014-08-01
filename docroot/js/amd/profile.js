@@ -1031,7 +1031,7 @@ app.profile = (function () {
                          enctype: "multipart/form-data", method: "post"},
                 [["div", {id: "closeline"},
                   ["a", {id: "closedlg", href: "#close",
-                         onclick: jt.fs("app.cancelOverlay()")},
+                         onclick: jt.fs("app.layout.cancelOverlay()")},
                    "&lt;close&nbsp;&nbsp;X&gt;"]],
                  inputs,
                  ["table",
@@ -1051,7 +1051,7 @@ app.profile = (function () {
         odiv.style.top = "130px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelOverlay;
+        app.onescapefunc = app.layout.cancelOverlay;
         jt.byId('picfilein').focus();
     },
 

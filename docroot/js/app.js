@@ -43,13 +43,6 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
-    app.cancelOverlay = function () {
-        jt.out('overlaydiv', "");
-        jt.byId('overlaydiv').style.visibility = "hidden";
-        app.onescapefunc = null;
-    };
-
-
     app.redirectToSecureServer = function (params) {
         var href, state;
         state = {};

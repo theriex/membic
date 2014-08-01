@@ -948,7 +948,7 @@ app.review = (function () {
         odiv.style.left = String(Math.round(evtx + 50)) + "px";
         odiv.style.visibility = "visible";
         odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.cancelOverlay;
+        app.onescapefunc = app.layout.cancelOverlay;
     },
 
 
@@ -1764,7 +1764,7 @@ return {
                 jt.out('revsavemsg', errtxt);
                 return; } }
         jt.out('revformbuttonsdiv', "Saving...");
-        app.cancelOverlay();  //in case it is still up
+        app.layout.cancelOverlay();  //in case it is still up
         app.onescapefunc = null;
         url = "updrev?";
         if(!jt.instId(crev)) {
@@ -2035,7 +2035,7 @@ return {
 
     ratingMenuSelect: function (rating) {
         var html;
-        app.cancelOverlay();
+        app.layout.cancelOverlay();
         crev.rating = rating;
         html = starsImageHTML(crev, "edit");
         jt.out('stardisp', html);
