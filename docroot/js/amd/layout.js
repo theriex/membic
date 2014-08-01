@@ -408,6 +408,7 @@ return {
     //clobbers existing dialog if already open
     openDialog: function (coords, html, initf, visf) {
         var dlgdiv = jt.byId('dlgdiv');
+        app.cancelOverlay();  //close overlay if it happens to be up
         //window.scrollTo(0,0);  -- makes phone dialogs jump around. Don't.
         coords = coords || {};  //default x and y separately
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 100);

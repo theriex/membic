@@ -114,6 +114,7 @@ img { border:0px; }
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; border-radius:10px; max-width:85%;
+  background-image: url('../img/dlgback.png');
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #dlgdiv { position:absolute; left:20px; top:60px;
   visibility:hidden; 
