@@ -185,8 +185,10 @@ app.revresp = (function () {
         var review, penref, i, following;
         review = app.review.getCurrentReview();
         penref = app.pen.currPenRef();
-        //outbound relationships are loaded already so just walk them
-        for(i = 0; i < penref.outrels.length; i += 1) {
+        //outbound relationships are loaded already except in degenerate
+        //circumstances like returning from a review pic upload where
+        //it doesn't matter.
+        for(i = 0; penref.outrels && i < penref.outrels.length; i += 1) {
             if(penref.outrels[i].rel.relatedid === review.penid) {
                 following = true;
                 break; } }
