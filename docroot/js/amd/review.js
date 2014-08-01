@@ -1942,8 +1942,8 @@ return {
                   ["button", {type: "button", id: "okbutton",
                               onclick: jt.fs("app.review.save(false,'',true)")},
                    "Ok"]]]];
-        app.layout.openOverlay(jt.geoPos("revimg"), html, 
-                               null, prepPicDialogElements);
+        app.layout.openOverlay(app.layout.placerel("revimg", -5, -20), 
+                               html, null, prepPicDialogElements);
     },
 
 

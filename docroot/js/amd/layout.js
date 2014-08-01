@@ -640,6 +640,18 @@ return {
     },
 
 
+    placerel: function (domid, xadj, yadj) {
+        var coords = null, elem = jt.byId(domid);
+        if(elem) {
+            coords = jt.geoPos(elem);
+            if(xadj) {
+                coords.x += xadj; }
+            if(yadj) {
+                coords.y += yadj; } }
+        return coords;
+    },
+
+
     openOverlay: function (coords, html, initf, visf) {
         var odiv = jt.byId('overlaydiv');
         coords = coords || {};
@@ -651,7 +663,7 @@ return {
         odiv.style.left = String(coords.x) + "px";
         odiv.style.top = String(coords.y) + "px";
         app.escapefuncstack.push(app.onescapefunc);
-        app.onescapefunc = app.cancelOverlay;  //move into layout???
+        app.onescapefunc = app.cancelOverlay;
         html = [["div", {id: "closeline"},
                  ["a", {id: "closedlg", href: "#close",
                         onclick: jt.fs("app.cancelOverlay()")},
