@@ -143,10 +143,10 @@ app.readurl = (function () {
                     val = valueForField(elem, "alt");
                     review.title = val;
                     return; } } }
-        //groping in the dark for some kind of logo
-        index = html.search(/src=.*logo.png/i);
-        if(index < 0) {
-            index = unescape(html).search(/src=.*logo.png/i);
+        //try groping in the dark for some kind of logo...
+        index = html.search(/src=[A-Za-z0-9\'\"\/]*logo\.png/i);
+        if(index < 0) {  //try same regex again, but unescape the html
+            index = unescape(html).search(/src=[A-Za-z0-9\'\"\/]*logo\.png/i);
             if(index >= 0) {
                 html = unescape(html); } }
         if(index > 0) {
