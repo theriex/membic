@@ -1947,15 +1947,6 @@ return {
     },
 
 
-    removeImageLink: function () {
-        readAndValidateFieldValues();
-        crev.imguri = "";
-        crev.oldrevpic = crev.revpic;
-        crev.revpic = "DELETED";
-        app.review.display();
-    },
-
-
     setAttribution: function (html) {
         attribution = html;
     },
