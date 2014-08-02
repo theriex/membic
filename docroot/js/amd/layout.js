@@ -521,9 +521,9 @@ return {
 
     //The current pen top20s have NOT been updated to reflect this
     //review yet.  The overlaydiv is available for use.
-    runMeritDisplay: function (rev) {
+    runMeritDisplay: function (rev, isnew) {
         var pen, top, revcount, msg, psrc, nsrc, html, odiv;
-        if(meritactive) {
+        if(meritactive || !isnew) {
             return; }
         meritactive = true;
         pen = app.pen.currPenRef().pen;

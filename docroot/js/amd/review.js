@@ -1775,7 +1775,7 @@ return {
         jt.call('POST', url + app.login.authparams(), data,
                 function (reviews) {
                     crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
-                    app.layout.runMeritDisplay(crev);
+                    app.layout.runMeritDisplay(crev, url === "newrev?");
                     cacheBustPersonalReviewSearches();
                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                     setTimeout(function () {  //update matching requests
