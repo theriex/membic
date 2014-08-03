@@ -44,6 +44,9 @@ app.layout = (function () {
         if(idx > 0) {
             url = url.slice(0, idx); }
         url = url.capitalize();
+        //title overrides
+        if(url === "About") {
+            url = ""; }
         //display content
         html = app.layout.dlgwrapHTML(url, html);
         app.layout.openDialog({x:20, y:60}, html);
