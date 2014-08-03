@@ -405,24 +405,27 @@ app.login = (function () {
 
 
     displayReviewActivityRoll = function (revs) {
+        var i, rev, displayed = false;
         revroll.revs = revs || revroll.revs;
-        if(revroll.revs.length === 0) {
+        if(!revroll.revs || revroll.revs.length === 0) {
             jt.log("no activity roll revs to display");
             return; }
-        //reset index if past the end
-        if(revroll.index >= revroll.revs.length ||
-               !jt.instId(revroll.revs[revroll.index])) {
-            revroll.index = 0; }
         //verify the output area is initialized
         if(!jt.byId('revrolldiv')) {
             jt.out('introverview', jt.byId('introverview').innerHTML +
                    "<div id=\"revrolldiv\"></div>"); }
-        //display the review if it meets the criteria
-        if(revroll.revs[revroll.index].text.length > 255) {
-            jt.out('revrolldiv', app.review.staticReviewDisplay(
-                revroll.revs[revroll.index], null, "noresp"));
-            app.layout.adjust(); }
-        revroll.index += 1;
+        for(i = 0; i < revroll.revs.length && !displayed; i += 1) {
+            //reset index if past end
+            if(revroll.index >= revroll.revs.length) {
+                revroll.index = 0; }
+            //display review if it meeds the criteria
+            rev = revroll.revs[revroll.index];
+            if(jt.instId(rev) && rev.text.length > 255) {
+                jt.out('revrolldiv', app.review.staticReviewDisplay(
+                    revroll.revs[revroll.index], null, "noresp"));
+                app.layout.adjust();
+                displayed = true; }
+            revroll.index += 1; }
         setTimeout(displayReviewActivityRoll, 4000);
     },
 
