@@ -229,8 +229,9 @@ on copyMatchingTracks(plen, tids, pldef)
 	-- display dialog "copyMatchingTracks start..."
 	set dstart to current date
 	set toff to (toff of wdconf)
-	set skipquantum to 30 -- approximately one selection per double album
-	set skipping to skipquantum
+	set skipquantum to 20 -- don't just play all tracks in order
+	set skipping to random number from 0 to skipquantum
+	set prevartist to "nobody"
 	set tcnt to 0
 	set tcopied to 0
 	set plname to (plname of pldef)
@@ -244,7 +245,7 @@ on copyMatchingTracks(plen, tids, pldef)
 				-- display dialog "tcnt: " & tcnt & ", toff: " & toff & ", skipping: " & skipping
 				set toff to toff + 1
 				set skipping to skipping - 1
-				if skipping is less than or equal to 0 then
+				if skipping is less than or equal to 0 and artist of ct is not equal to prevartist then
 					-- display dialog (name of ct) & " - " & (artist of ct) & ", min: " & minrat & ", rating: " & (rating of ct)
 					if (rating of ct) is greater than or equal to minrat then
 						set cmt to (comment of ct)
@@ -273,6 +274,7 @@ on copyMatchingTracks(plen, tids, pldef)
 										set end of tids to (id of ct)
 										set tcopied to tcopied + 1
 										set skipping to skipquantum
+										set prevartist to (artist of ct)
 									end if
 								end if
 							end if
@@ -292,14 +294,16 @@ on copyMatchingTracks(plen, tids, pldef)
 end copyMatchingTracks
 
 
-on verifyDefaultFrequency(pldef)
+on verifyDefaultsAndNoteSelected(pldef)
 	tell application "iTunes"
 		repeat with ct in every track of user playlist (plname of pldef)
 			set tdata to revscript's parseTrackData(comment of ct)
 			set comment of ct to revscript's assembleTrackData(tdata)
+			-- avoid selecting this track for a different list
+			set played date of ct to current date
 		end repeat
 	end tell
-end verifyDefaultFrequency
+end verifyDefaultsAndNoteSelected
 
 
 on updatePlaylistTracks(pldef)
@@ -321,7 +325,7 @@ on updatePlaylistTracks(pldef)
 	end if
 	-- display dialog "Writing updated config, toff: " & (toff of wdconf)
 	confscript's writeConfig() -- note updated toff
-	verifyDefaultFrequency(pldef)
+	verifyDefaultsAndNoteSelected(pldef)
 end updatePlaylistTracks
 
 
