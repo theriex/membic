@@ -9,7 +9,7 @@ set itsdir to (POSIX path of ((path to home folder as text) & "Library:iTunes:Sc
 display dialog "Installing to " & itsdir
 set command to "mkdir -p " & (quoted form of itsdir)
 do shell script command
-set filenames to {"WDYDFunExport.scpt", "WDYDFunPlaylist.scpt", "WDYDFunReview.scpt"}
+set filenames to {"WDYDFunExport.scpt", "WDYDFunPlaylist.scpt", "WDYDFunReview.scpt", "WDYDFunSettings.scpt"}
 repeat with fname in filenames
 	set cfile to (quoted form of (locdir & fname))
 	set command to "cp " & cfile & " " & itsdir

@@ -1,5 +1,6 @@
 property wdtitle : "WDYDFunPlaylist"
 property revscript : null
+property confscript : null
 property wdconf : null
 property newline : "
 "
@@ -11,59 +12,6 @@ on loadScript(scrname)
 	set scrobj to load script (alias (locpath & scrname & ".scpt"))
 	return scrobj
 end loadScript
-
-
-on getConfigFileMacName()
-	tell application "Finder"
-		set macpathstr to (container of (path to me) as text) & "WDYDFun.conf"
-	end tell
-	return macpathstr
-end getConfigFileMacName
-
-
-on defaultConfig()
-	set filtopts1 to {"Social", "Dining"}
-	set notopts1 to {"Heavy", "Attention"}
-	set pl1 to {plname:"WDYDFun Living Room", filtopts:filtopts1, notopts:notopts1, minrat:50}
-	set filtopts2 to {"Travel", "Attention"}
-	set notopts2 to {"Dining", "Social"}
-	set pl2 to {plname:"WDYDFun Phone", filtopts:filtopts2, notopts:notopts2, minrat:70}
-	set filtopts3 to {"Dance", "Social"}
-	set notopts3 to {"Attention"}
-	set pl3 to {plname:"WDYDFun Party", filtopts:filtopts3, notopts:notopts3, minrat:40}
-	set defplists to {pl1, pl2, pl3}
-	set defconf to {username:"", token:"", penid:"", toff:0, plists:defplists}
-	return defconf
-end defaultConfig
-
-
-on loadConfig()
-	set wdconf to defaultConfig()
-	try
-		set fname to getConfigFileMacName()
-		set wdconf to (read file fname as list)
-		-- writing as list creates an extra list level
-		set wdconf to item 1 of wdconf
-	end try
-end loadConfig
-
-
-on writeConfig()
-	try
-		set fname to getConfigFileMacName()
-		set wf to open for access fname with write permission
-		set eof wf to 0
-		write wdconf to wf starting at eof as list
-		close access wf
-		-- display dialog "wdconf written to " & fname
-	on error errStr number errorNumber
-		try
-			close access wf
-		end try
-		error errStr number errorNumber
-		return false
-	end try
-end writeConfig
 
 
 on selectOptions(pldef)
@@ -172,110 +120,9 @@ on selectPlaylist()
 		end if
 		verifyPlaylistDefinition(currpldef)
 	end if
-	writeConfig()
+	confscript's writeConfig()
 	return currpldef
 end selectPlaylist
-
-
-on verifyUsername()
-	if (username of wdconf) is equal to "" then
-		set ptxt to "Username to connect to WDYDFun.com?"
-		set dlgres to display dialog ptxt default answer ""
-		set username of wdconf to text returned of dlgres
-		set token of wdconf to ""
-		set penid of wdconf to ""
-	end if
-end verifyUsername
-
-
-on getAccessToken()
-	set ptxt to "WDYDFun.com password for " & (username of wdconf) & "?"
-	set result to display dialog ptxt default answer "" with hidden answer
-	set pass to text returned of result
-	set pdat to "user=" & (username of wdconf) & "&pass=" & pass & "&format=record"
-	set purl to "https://myopenreviews.appspot.com/login"
-	set command to "curl --data \"" & pdat & "\" " & purl
-	set rdata to do shell script command
-	set AppleScript's text item delimiters to ": "
-	set result to text item 2 of rdata
-	return result
-end getAccessToken
-
-
-on fetchPenNames()
-	if ((token of wdconf) is "") then
-		return ""
-	end if
-	set command to Â
-		"curl \"http://www.wdydfun.com/mypens?am=mid" & "&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&format=record\""
-	set rdata to do shell script command
-	return rdata
-end fetchPenNames
-
-
-on idOfPenRecord(penrec)
-	set idstr to text 8 thru ((offset of "," in penrec) - 1) of penrec
-	return idstr
-end idOfPenRecord
-
-
-on nameOfPenRecord(penrec)
-	set namestr to text ((offset of "," in penrec) + 7) thru (length of penrec) in penrec
-	return namestr
-end nameOfPenRecord
-
-
-on verifyTokenAndPen()
-	set pendata to fetchPenNames()
-	if ((pendata is "") or (pendata starts with "Authentication failed")) then
-		set logintoken to getAccessToken()
-		set (token of wdconf) to logintoken
-	end if
-	set pendata to fetchPenNames()
-	set srchtxt to "penid: " & (penid of wdconf) & ", "
-	if pendata does not contain srchtxt then
-		set penrecs to paragraphs of pendata
-		if length of penrecs is equal to 1 then
-			set (penid of wdconf) to idOfPenRecord(item 1 of penrecs)
-		else
-			set pns to {}
-			repeat with penrec in penrecs
-				set end of pns to nameOfPenRecord(penrec)
-			end repeat
-			set ptxt to "Which pen name do you want to use for reviews?"
-			set pname to choose from list pns with prompt ptxt with title wdtitle
-			if pname is false then
-				return false
-			end if
-			set pname to pname as text
-			repeat with penrec in penrecs
-				if nameOfPenRecord(penrec) is equal to pname then
-					set (penid of wdconf) to idOfPenRecord(penrec)
-				end if
-			end repeat
-		end if
-	end if
-	if (penid of wdconf) is equal to "" then
-		display dialog "Pen name verification failed. Not able to upload review information for playlist tracks."
-		return false
-	end if
-	return true
-end verifyTokenAndPen
-
-
-on verifyServerAccess()
-	verifyUsername()
-	set tokenAndPenVerified to false
-	try
-		set tokenAndPenVerified to verifyTokenAndPen()
-	end try
-	if not tokenAndPenVerified then
-		return false
-	end if
-	-- display dialog "username: " & (username of wdconf) & ", penid: " & (penid of wdconf) & ", token: " & (token of wdconf)
-	writeConfig()
-	return true
-end verifyServerAccess
 
 
 on writePlaylistUploadScript(plname, fname)
@@ -343,7 +190,7 @@ on uploadPlaylistReviewData(pldef)
 		tell application "iTunes"
 			make new user playlist with properties tprops
 		end tell
-	else if not verifyServerAccess() then
+	else if not confscript's verifyServerAccess("Not able to upload playlist review information") then
 		return false
 	end if
 	-- at the time of this comment, ~/Library/Caches/TemporaryItems/
@@ -382,7 +229,7 @@ on copyMatchingTracks(plen, tids, pldef)
 	-- display dialog "copyMatchingTracks start..."
 	set dstart to current date
 	set toff to (toff of wdconf)
-	set skipquantum to 30 -- one selection per double album
+	set skipquantum to 30 -- approximately one selection per double album
 	set skipping to skipquantum
 	set tcnt to 0
 	set tcopied to 0
@@ -445,6 +292,16 @@ on copyMatchingTracks(plen, tids, pldef)
 end copyMatchingTracks
 
 
+on verifyDefaultFrequency(pldef)
+	tell application "iTunes"
+		repeat with ct in every track of user playlist (plname of pldef)
+			set tdata to revscript's parseTrackData(comment of ct)
+			set comment of ct to revscript's assembleTrackData(tdata)
+		end repeat
+	end tell
+end verifyDefaultFrequency
+
+
 on updatePlaylistTracks(pldef)
 	set tids to {}
 	tell application "iTunes"
@@ -463,7 +320,8 @@ on updatePlaylistTracks(pldef)
 		copyMatchingTracks(plrem, tids, pldef)
 	end if
 	-- display dialog "Writing updated config, toff: " & (toff of wdconf)
-	writeConfig() -- note updated toff
+	confscript's writeConfig() -- note updated toff
+	verifyDefaultFrequency(pldef)
 end updatePlaylistTracks
 
 
@@ -480,5 +338,8 @@ end updatePlaylist
 
 -- Main script
 set revscript to loadScript("WDYDFunReview")
-loadConfig()
+set confscript to loadScript("WDYDFunSettings")
+confscript's loadConfig()
+set revscript's defreq to defreq of confscript's wdconf
+set wdconf to confscript's wdconf
 updatePlaylist(selectPlaylist())

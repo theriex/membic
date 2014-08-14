@@ -56,7 +56,7 @@ on cleanExisting()
 end cleanExisting
 
 
--- copy the playlist files, renumbering as we go
+-- copy the playlist files. Earlier versions of this function attempted to renumber the tracks as they were copied over, the intention being that the resulting playlist would be played in order even on platforms that ignored the .m3u playlist file. The problem with renumbering is that it can lead to multiple copies of the same track with different names being copied over (if the previous folder contents was not deleted, or if multiple subfolders) and that gets really confusing on devices that only display the mp3 metadata for track identification. Basically it looked like the same song was comingup repeatedly for no reason. In general it seems best not to mess with the track filenames when copying.
 on copyFiles()
 	display dialog "Exporting source files from " & (name of wdlist) & " to " & (POSIX path of wdfolder) & ". Watch the iTunes volume knob for progress." with title wdtitle
 	tell application "iTunes"
@@ -68,31 +68,8 @@ on copyFiles()
 			set sound volume to ((curriter * 100) div ttliter)
 			set curriter to (curriter + 1)
 			set fsource to (location of currtrack)
-			set renumbered to false
 			tell application "Finder"
 				set fdup to duplicate file fsource to wdfolder with replacing
-				set pad to ""
-				if curriter < 10 then
-					set pad to "0"
-				end if
-				set fname to name of fdup
-				set char1 to text 1 thru 1 of fname
-				set char2 to text 2 thru 2 of fname
-				set char3 to text 3 thru 3 of fname
-				try
-					set num1 to char1 as number
-					set num2 to char2 as number
-					if char3 is equal to " " or char3 is equal to "-" then
-						set fcore to text 4 thru (length of fname) of fname
-						set fname to pad & curriter & " " & fcore
-						set name of fdup to fname
-						set renumbered to true
-					end if
-				end try
-				if not renumbered then
-					set fname to pad & " " & fname
-					set name of fdup to fname
-				end if
 			end tell
 		end repeat
 		set sound volume to userVolume

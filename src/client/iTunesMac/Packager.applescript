@@ -8,7 +8,7 @@ do shell script "rm -f " & uld & "*.scpt"
 do shell script "rm -f " & uld & "WDYDFun.conf"
 do shell script "rm -f " & uld & "*~"
 -- compile the source script files so (path to me) etc evaluates properly
-set sfnames to {"WDYDFunExport", "WDYDFunPlaylist", "WDYDFunReview", "Install", "Uninstall"}
+set sfnames to {"WDYDFunExport", "WDYDFunPlaylist", "WDYDFunReview", "WDYDFunSettings", "Install", "Uninstall"}
 repeat with sfname in sfnames
 	set cmd to "osacompile -o " & uld & sfname & ".scpt " & uld & sfname & ".applescript"
 	do shell script cmd

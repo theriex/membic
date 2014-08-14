@@ -26,11 +26,13 @@ Supporting script files:
   - Uninstall: removes core script files from iTunes
 
 Other script files are from general hacking and are kept around for
-example code.  To edit an applescript file, double click it in the
-Finder to bring it up in the AppleScript editor.  Edit, compile and
-run.
+example code.
 
-To test locally:
+To develop, double click an applescript file in the Finder to bring it
+up in the AppleScript editor.  Make changes, compile and export to
+.scpt format to run locally.  Save as text.
+
+To test:
  1. Run Packager.applescript to zip things up for release
  2. cp ../../../docroot/downloads/iTunesMac.zip ~/Downloads/
  3. double click iTunesMac.zip in ~/Downloads to expand it
