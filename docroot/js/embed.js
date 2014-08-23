@@ -1,4 +1,4 @@
-/*global window: false, jtminjsDecorateWithUtilities: false, document: false, wdydfunBlogview: false */
+/*global window: false, jtminjsDecorateWithUtilities: false, document: false, wdydfunBlogview: false, jt: false, WDYDFunEmbeddedBlogHTML: false */
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 var wdydfunEmbed = (function () {
