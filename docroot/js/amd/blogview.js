@@ -37,6 +37,7 @@ var wdydfunBlogview = (function () {
     fixImageLinks = function (html) {
         html = html.replace(/img\//g, reloff + "/img/");
         html = html.replace(/revpic\?/g, reloff + "/revpic?");
+        html = html.replace(/profpic\?/g, reloff + "/profpic?");
         if(!siteroot) {
             siteroot = "http://www.wdydfun.com";
             if(window.location.href.indexOf("http://localhost:8080") === 0) {
