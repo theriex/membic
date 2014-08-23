@@ -9,6 +9,7 @@ from morutil import *
 import re
 import json
 from cacheman import *
+from google.appengine.api import urlfetch
 
 
 html = """
@@ -29,6 +30,24 @@ html = """
 </head>
 <body id="bodyid">
 
+$CONTENT
+
+<script src="../js/jtmin.js"></script>
+<script src="../js/amd/blogview.js"></script>
+<script src="../js/amd/layout.js"></script>
+<script src="../js/amd/profile.js"></script>
+<script src="../js/amd/review.js"></script>
+<script src="../js/amd/pen.js"></script>
+<script src="../js/amd/lcs.js"></script>
+<script>
+  wdydfunBlogview.display();
+</script>
+
+</body>
+</html>
+"""
+
+bodycontent = """
 <div id="siteproflinkdiv">
   <a href="../#view=profile&profid=$PENID">$PENNAME</a>
   <noscript>
@@ -53,20 +72,6 @@ $REFER
 </div>
 
 <div id="dlgdiv"></div>
-
-<script src="../js/jtmin.js"></script>
-<script src="../js/amd/blogview.js"></script>
-<script src="../js/amd/layout.js"></script>
-<script src="../js/amd/profile.js"></script>
-<script src="../js/amd/review.js"></script>
-<script src="../js/amd/pen.js"></script>
-<script src="../js/amd/lcs.js"></script>
-<script>
-  blogview.display();
-</script>
-
-</body>
-</html>
 """
 
 
@@ -94,59 +99,90 @@ def make_page_desc(handler, pen):
     return descr
 
 
+def prepare_content(handler, cpen, content):
+    # Same index retrieval already used by pen.py NewPenName
+    pens = PenName.gql("WHERE name_c=:1 LIMIT 1", cpen)
+    if pens.count() != 1:
+        handler.error(404)
+        handler.response.out.write("Blog identifier " + cpen + " not found")
+        return
+    pen = pens[0];
+    # filter sensitive PenName fields
+    pen.mid = 0
+    pen.gsid = "0"
+    pen.fbid = 0
+    pen.twid = 0
+    pen.ghid = 0
+    pen.abusive = ""
+    # retrieve reviews
+    qres = fetch_blog_reviews(pen)
+    # write content
+    picurl = "img/emptyprofpic.png"
+    if pen.profpic:
+        picurl = "profpic?profileid=" + str(pen.key().id())
+    # facebook doesn't like "../" relative urls
+    if "localhost" in handler.request.url:
+        picurl = "../" + picurl
+    else:
+        picurl = "http://www.wdydfun.com/" + picurl
+    content = re.sub('\$PENNAME', pen.name, content)
+    content = re.sub('\$PAGEDESCR', make_page_desc(handler, pen), content)
+    content = re.sub('\$IMGSRC', picurl, content)
+    content = re.sub('\$PENID', str(pen.key().id()), content)
+    content = re.sub('\$PENJSON', obj2JSON(pen), content)
+    content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
+    content = re.sub('\$REVDATA', qres2JSON(
+            qres.objects, "", -1, ""), content)
+    refer = handler.request.referer
+    if refer:
+        refer = "<img src=\"../bytheimg?bloginqref=" +\
+            safeURIEncode(refer) + "\"/>\n"
+    else:
+        refer = "<img id=\"btwimg\" src=\"../bytheimg?bloginq=" +\
+            str(pen.key().id()) + "\"/>\n"
+    content = re.sub('\$REFER', refer, content)
+    content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
+    return content
+
+
 class BlogViewDisplay(webapp2.RequestHandler):
     def get(self, cpen, revtype):
         if revtype:
             self.redirect(re.sub("\/" + revtype, "?type=" + revtype,
                                  self.request.url))
             return
-        # Same index retrieval already used by pen.py NewPenName
-        pens = PenName.gql("WHERE name_c=:1 LIMIT 1", cpen)
-        if pens.count() != 1:
-            self.error(404)
-            self.response.out.write("Blog identifier " + cpen + " not found")
-            return
-        pen = pens[0];
-        # filter sensitive PenName fields
-        pen.mid = 0
-        pen.gsid = "0"
-        pen.fbid = 0
-        pen.twid = 0
-        pen.ghid = 0
-        pen.abusive = ""
-        # retrieve reviews
-        qres = fetch_blog_reviews(pen)
-        # write content
-        picurl = "img/emptyprofpic.png"
-        if pen.profpic:
-            picurl = "profpic?profileid=" + str(pen.key().id())
-        # facebook doesn't like "../" relative urls
-        if "localhost" in self.request.url:
-            picurl = "../" + picurl
-        else:
-            picurl = "http://www.wdydfun.com/" + picurl
         content = html
-        content = re.sub('\$PENNAME', pen.name, content)
-        content = re.sub('\$PAGEDESCR', make_page_desc(self, pen), content)
-        content = re.sub('\$IMGSRC', picurl, content)
-        content = re.sub('\$PENID', str(pen.key().id()), content)
-        content = re.sub('\$PENJSON', obj2JSON(pen), content)
-        content = re.sub(', "abusive": ""', '', content)  #bad SEO :-)
-        content = re.sub('\$REVDATA', qres2JSON(
-                qres.objects, "", -1, ""), content)
-        refer = self.request.referer
-        if refer:
-            refer = "<img src=\"../bytheimg?bloginqref=" +\
-                safeURIEncode(refer) + "\"/>\n"
-        else:
-            refer = "<img id=\"btwimg\" src=\"../bytheimg?bloginq=" +\
-                str(pen.key().id()) + "\"/>\n"
-        content = re.sub('\$REFER', refer, content)
-        content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
+        content = re.sub('\$CONTENT', bodycontent, content)
+        content = prepare_content(self, cpen, content)
         self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write(content)
-        
 
-app = webapp2.WSGIApplication([('/blogs/([^/]*)/?(.*)', BlogViewDisplay)],
+
+class EmbedBlogScript(webapp2.RequestHandler):
+    def get(self, pname):
+        pname = pname[0:pname.index(".")]  #strip ".js" suffix
+        try:
+            result = urlfetch.fetch("http://www.wdydfun.com/css/site.css",
+                                    method="GET",
+                                    allow_truncated=False, 
+                                    follow_redirects=True, 
+                                    deadline=10, 
+                                    validate_certificate=False)
+            content = "<style scoped>" + result.content + "</style>"
+        except Exception as e:
+            logging.info("EmbedBlogScript site.css fetch failed: " + str(e))
+            content = "<!-- error fetching site.css -->"
+        content += bodycontent
+        content = prepare_content(self, pname, content)
+        content = content.replace("\\\"", "\\\\\"")
+        content = content.replace("\"", "\\\"")
+        content = re.sub('\n', '', content)
+        content = "var WDYDFunEmbeddedBlogHTML = \"" + content + "\""
+        self.response.headers['Content-Type'] = 'application/javascript; charset=UTF-8'
+        self.response.out.write(content)
+
+
+app = webapp2.WSGIApplication([('/blogs/([^/]*)/?(.*)', BlogViewDisplay),
+                               ('/emblog/([^/]*)', EmbedBlogScript)],
                               debug=True)
 

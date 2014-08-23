@@ -1,11 +1,11 @@
 /*global window: false, jtminjsDecorateWithUtilities: false, document: false */
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint unparam: true, white: true, maxerr: 50, indent: 4, regexp: true */
 
 var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
 
 //This is a degenerate module used for the static blog view.  Don't model it.
-var blogview = (function () {
+var wdydfunBlogview = (function () {
     "use strict";
 
 
@@ -16,6 +16,7 @@ var blogview = (function () {
     var pen = null,
         revs = [],
         reloff = "..",
+        siteroot = "",
         revitems = [],
 
 
@@ -36,6 +37,19 @@ var blogview = (function () {
     fixImageLinks = function (html) {
         html = html.replace(/img\//g, reloff + "/img/");
         html = html.replace(/revpic\?/g, reloff + "/revpic?");
+        if(!siteroot) {
+            siteroot = "http://www.wdydfun.com";
+            if(window.location.href.indexOf("http://localhost:8080") === 0) {
+                siteroot = "http://localhost:8080"; }
+            if(window.location.href.indexOf(siteroot) === 0) {
+                siteroot = reloff; } } 
+        html = html.replace(/src="(http)?([^"]*)/g, function (a, b, c) { 
+            if(!b) {
+                return "src=\"" + siteroot + c.slice(reloff.length); }
+            return "src=\"" + b + c; });
+        if(siteroot) { //fix specific problematic non-img references
+            html = html.replace(/..\/statrev/g, siteroot + "/statrev");
+            html = html.replace(/..\/\?/g, siteroot + "?"); }
         return html;
     },
 
@@ -68,7 +82,7 @@ var blogview = (function () {
         desc = "latest reviews from " + pen.name;  //text gets embedded
         if(rt) {
             desc = "top " + rt + " reviews from " + pen.name; }
-        html = app.layout.shareLinksHTML(surl, desc, reloff + "/");
+        html = app.layout.shareLinksHTML(surl, desc);
         return html;
     },
 
@@ -78,9 +92,9 @@ var blogview = (function () {
             grlink = getGreenLink(), 
             rssurl = reloff + "/rsspen?pen=" + penid,
             imgsrc, html;
-        imgsrc = reloff + "/img/emptyprofpic.png";
+        imgsrc = "img/emptyprofpic.png";
         if(pen.profpic) {
-            imgsrc = reloff + "/profpic?profileid=" + penid; }
+            imgsrc = "profpic?profileid=" + penid; }
         html = ["div", {cla: "blogidentdiv"},
                 [["div", {id: "getyourscontainerdiv"},
                   ["div", {cla: "getyoursdiv"},
@@ -96,7 +110,7 @@ var blogview = (function () {
                   [["div", {id: "blognamediv"},
                     [["span", {id: "penhnamespan"},
                       ["a", {href: "#recent",
-                             onclick: jt.fs("blogview.showRecent()"),
+                             onclick: jt.fs("wdydfunBlogview.showRecent()"),
                              title: "Recent reviews"},
                        pen.name]],
                      "&nbsp;",
@@ -106,13 +120,13 @@ var blogview = (function () {
                             title: "RSS feed for " + jt.ndq(pen.name),
                             onclick: jt.fs("window.open('" + rssurl + "')")},
                       ["img", {cla: "rssico", 
-                               src: reloff + "/img/rssicon.png"}]]]],
+                               src: "img/rssicon.png"}]]]],
                    ["div", {id: "blogbadgesdiv"},
-                    fixImageLinks(app.profile.earnedBadgesHTML(
-                        pen, "blogview.showTop"))],
+                    app.profile.earnedBadgesHTML(
+                        pen, "wdydfunBlogview.showTop")],
                    ["div", {id: "blogshoutoutdiv"},
                     jt.linkify(pen.shoutout)]]]]];
-        jt.out('siteproflinkdiv', jt.tac2html(html));
+        jt.out('siteproflinkdiv', fixImageLinks(jt.tac2html(html)));
     },
 
 
@@ -128,7 +142,7 @@ var blogview = (function () {
     fetchAndInstantiate = function (type, trevs, i) {
         app.lcs.getFull("rev", trevs[i], function (revref) {
             trevs[i] = revref.rev;
-            blogview.showTop(type); });
+            wdydfunBlogview.showTop(type); });
     },
 
 
@@ -159,7 +173,7 @@ var blogview = (function () {
             type = window.location.href.slice(idx + 1); }
         if(type && type !== "recent") {
             type = app.review.getReviewTypeByValue(type);
-            blogview.showTop(type.type); }
+            wdydfunBlogview.showTop(type.type); }
     },
 
 
@@ -184,11 +198,14 @@ var blogview = (function () {
                     artists = ""; }
                 revitems.push(["li",
                                app.review.staticReviewDisplay(revs[i])]); } }
+        html = "../#view=profile&profid=" + jt.instId(pen);
+        if(siteroot && siteroot.indexOf("..") < 0) {
+            html = siteroot + "/blogs/" + pen.name_c; }
         html = ["div", {id: "blogcontentdiv"},
                 [["ul", {id: "reviewsul", cla: "revlist"}, revitems],
                  ["div",
                   ["Follow me on ",
-                   ["a", {href: "../#view=profile&profid=" + jt.instId(pen)},
+                   ["a", {href: html},
                     "WDYDFun"],
                    "!"]]]];
         jt.out('profcontentdiv', fixImageLinks(jt.tac2html(html)));
@@ -213,16 +230,26 @@ var blogview = (function () {
     // published functions
     ////////////////////////////////////////
 return {
-    display: function () {
+
+    setSiteRoot: function (val) {
+        siteroot = val; },
+
+
+    display: function (headless) {
         jtminjsDecorateWithUtilities(jt);
         if(window.location.href.split("/").length > 3) {
             reloff = "../.."; }
         readData();
-        noteRefer();
-        displayName();
+        if(!headless) {
+            noteRefer();
+            displayName(); }
         displayReviews();
         app.layout.fixTextureCover();
         showTop20IfSpecified();
+        if(headless) {
+            jt.out('siteproflinkdiv', "");
+            jt.out('referdiv', "");
+            jt.byId('blogcontentdiv').style.marginLeft = "0px"; }
     },
 
 
@@ -239,14 +266,16 @@ return {
                 lis.push(["li", app.review.staticReviewDisplay(trevs[i])]); } }
         jt.out('reviewsul', fixImageLinks(jt.tac2html(lis)));
         setHash(type);
-        jt.out('blogsharebuttonspan', jt.tac2html(blogShareButtonsHTML()));
+        jt.out('blogsharebuttonspan', 
+               fixImageLinks(jt.tac2html(blogShareButtonsHTML())));
     },
 
 
     showRecent: function () {
         jt.out('reviewsul', fixImageLinks(jt.tac2html(revitems)));
         setHash("recent");
-        jt.out('blogsharebuttonspan', jt.tac2html(blogShareButtonsHTML()));
+        jt.out('blogsharebuttonspan', 
+               fixImageLinks(jt.tac2html(blogShareButtonsHTML())));
     }
 
 }; //end of returned functions

@@ -443,6 +443,8 @@ handlers:
   script: src.py.rev.app
 - url: /blogs/.*
   script: src.py.blogview.app
+- url: /emblog/.*
+  script: src.py.blogview.app
 - url: /groups/.*
   script: src.py.groupview.app
 - url: /statrev/\d+
