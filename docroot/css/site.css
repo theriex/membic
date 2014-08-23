@@ -425,7 +425,8 @@ img { border:0px; }
 #alltd { padding:0px 10px 0px 20px; }
 .actmodesel { color:#ffd100; }
 .actmodeseldis { color:#999999; }
-#rsslink { padding:0px 0px 0px 10px; }
+#rsslink { padding:0px 0px 0px 5px; }
+.embedlinktext { font-size:small; }
 #activereqsdiv, #pendingqcsdiv, #announcementdiv, #groupnoticediv { 
   padding:0px 0px 0px 40px; } /* no top/bottom pad, content starts to drift.. */
 .announcecontent { padding:5px 0px; font-size:medium; font-style:italic; }

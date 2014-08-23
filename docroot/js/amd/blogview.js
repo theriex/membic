@@ -66,7 +66,7 @@ var wdydfunBlogview = (function () {
 
 
     blogShareButtonsHTML = function () {
-        var surl, rt, desc, html;
+        var surl, rt, desc, html, rssurl;
         surl = window.location.href;
         if(surl.indexOf("#") >= 0) {
             rt = surl.slice(surl.indexOf("#") + 1);
@@ -83,18 +83,29 @@ var wdydfunBlogview = (function () {
         if(rt) {
             desc = "top " + rt + " reviews from " + pen.name; }
         html = app.layout.shareLinksHTML(surl, desc);
+        if(!rt) {
+            rssurl = reloff + "/rsspen?pen=" + jt.instId(pen);
+            html += jt.tac2html(
+                ["&nbsp;",
+                 ["a", {href: "#embed", id: "embedlink",
+                        title: "Embed dynamic blog elements into another site",
+                        onclick: jt.fs("wdydfunBlogview.showEmbed")},
+                  ["span", {cla: "embedlinktext"}, "{embed}"]],
+                 ["a", {href: rssurl, id: "rsslink",
+                        title: "RSS feed for " + jt.ndq(pen.name),
+                        onclick: jt.fs("window.open('" + rssurl + "')")},
+                  ["img", {cla: "rssico", 
+                           src: "img/rssicon.png"}]]]); }
         return html;
     },
 
 
     displayName = function () {
-        var penid = jt.instId(pen), 
-            grlink = getGreenLink(), 
-            rssurl = reloff + "/rsspen?pen=" + penid,
+        var grlink = getGreenLink(), 
             imgsrc, html;
         imgsrc = "img/emptyprofpic.png";
         if(pen.profpic) {
-            imgsrc = "profpic?profileid=" + penid; }
+            imgsrc = "profpic?profileid=" + jt.instId(pen); }
         html = ["div", {cla: "blogidentdiv"},
                 [["div", {id: "getyourscontainerdiv"},
                   ["div", {cla: "getyoursdiv"},
@@ -115,12 +126,7 @@ var wdydfunBlogview = (function () {
                        pen.name]],
                      "&nbsp;",
                      ["span", {id: "blogsharebuttonspan"},
-                      blogShareButtonsHTML()],
-                     ["a", {href: rssurl, id: "rsslink",
-                            title: "RSS feed for " + jt.ndq(pen.name),
-                            onclick: jt.fs("window.open('" + rssurl + "')")},
-                      ["img", {cla: "rssico", 
-                               src: "img/rssicon.png"}]]]],
+                      blogShareButtonsHTML()]]],
                    ["div", {id: "blogbadgesdiv"},
                     app.profile.earnedBadgesHTML(
                         pen, "wdydfunBlogview.showTop")],
@@ -276,6 +282,32 @@ return {
         setHash("recent");
         jt.out('blogsharebuttonspan', 
                fixImageLinks(jt.tac2html(blogShareButtonsHTML())));
+    },
+
+
+    showEmbed: function () {
+        var embedtxt, html;
+        embedtxt = "<div id=\"wdydfunblog\" style=\"background:#ddd;width:70%;margin-left:10%;\"></div>\n" +
+            "<script src=\"http://www.wdydfun.com/emblog/" + pen.name_c + "\"></script>\n" +
+            "<script src=\"http://www.wdydfun.com/js/embed.js\"></script>\n" +
+            "<script>\n" +
+            "  wdydfunEmbed.displayBlog();\n" +
+            "</script>\n";
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "To embed this review blog content into another web page, copy and paste this code:"],
+                 ["textarea", {id: "tascr", cla: "shoutout"}],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.layout.closeDialog()")},
+                   "OK"]]]];
+        app.layout.openDialog({y:140}, jt.tac2html(html), null,
+                              function () {
+                                  var tascr = jt.byId('tascr');
+                                  tascr.style.width = "95%";
+                                  tascr.style.marginLeft = "2%";
+                                  tascr.value = embedtxt;
+                                  jt.byId('tipok').focus(); });
+        
     }
 
 }; //end of returned functions

@@ -421,6 +421,8 @@ return {
         coords.y = coords.y + jt.byId('bodyid').scrollTop;  //logical height
         dlgdiv.style.left = String(coords.x) + "px";
         dlgdiv.style.top = String(coords.y) + "px";
+        if(!app.escapefuncstack) {
+            app.escapefuncstack = []; }
         app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.closeDialog;
         app.layout.writeDialogContents(html);
@@ -657,8 +659,10 @@ return {
 
 
     cancelOverlay: function () {
-        jt.out('overlaydiv', "");
-        jt.byId('overlaydiv').style.visibility = "hidden";
+        var odiv = jt.byId('overlaydiv');
+        if(odiv) {
+            jt.out('overlaydiv', "");
+            odiv.style.visibility = "hidden"; }
         app.onescapefunc = null;
     },
 
