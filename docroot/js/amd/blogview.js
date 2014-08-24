@@ -289,7 +289,7 @@ return {
     showEmbed: function () {
         var embedtxt, html;
         embedtxt = "<div id=\"wdydfunblog\" style=\"background:#ddd;width:70%;margin-left:10%;\"></div>\n" +
-            "<script src=\"http://www.wdydfun.com/emblog/" + pen.name_c + "\"></script>\n" +
+            "<script src=\"http://www.wdydfun.com/emblog/" + pen.name_c + ".js\"></script>\n" +
             "<script src=\"http://www.wdydfun.com/js/embed.js\"></script>\n" +
             "<script>\n" +
             "  wdydfunEmbed.displayBlog();\n" +

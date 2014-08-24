@@ -39,7 +39,7 @@ return {
             siteroot = obj.siteroot; }
         allLoaded = true;
         for(i = 0; i < scrnames.length; i += 1) {
-            src = "http://localhost:8080/js/" + scrnames[i];
+            src = siteroot + "/js/" + scrnames[i];
             if(!scriptLoaded(src)) {
                 allLoaded = false;
                 elem = document.createElement("script");
