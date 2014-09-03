@@ -146,11 +146,11 @@ var app = {},  //Global container for application level funcs and values
             ["div", {id: "cmain"},
              [["p", "The server just bonked."],
               ["p", 
-               ["Sometimes this sort of thing can be fixed by hitting the " +
-                "reload button in your browser.  If that doesn't work, " + 
-                "then it would awesome if would please ",
-                ["a", {href: emref},
-                 "email support so we can fix it."]]]]]];
+               [["Sometimes this sort of thing can be fixed by hitting the " +
+                 "reload button in your browser.  If that doesn't work, " + 
+                 "then it would awesome if would please ",
+                 ["a", {href: emref},
+                  "email support so we can fix it."]]]]]]];
         html = jt.tac2html(html);
         jt.out('contentdiv', html);
     };
