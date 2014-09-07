@@ -3,14 +3,14 @@
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 //////////////////////////////////////////////////////////////////////
-// Display of recent reviews from friends, remembered reviews, and
+// Display of recent posts from friends, remembered posts, and
 // searching for pen names to follow.  Cached data off the current pen:
 //
 //   penref.actdisp:
-//     revrefs: array of cached reviews, most recent first
-//     lastChecked: timestamp when recent reviews were last fetched
+//     revrefs: array of cached posts, most recent first
+//     lastChecked: timestamp when recent posts were last fetched
 //     cursor: cursor for continuing to load more activity
-//     reps: obj for tracking display of extra reviews per person per day
+//     reps: obj for tracking display of extra posts per person per day
 //
 //   penref.pensearch:
 //     params: parameters for search
@@ -39,9 +39,9 @@ app.activity = (function () {
                    drink: { currpg: 0, pages: [] },
                    activity: { currpg: 0, pages: [] },
                    other: { currpg: 0, pages: [] } },
-        topDispMax = 20,  //max top reviews to display
+        topDispMax = 20,  //max top posts to display
         memomode = "Remembered",  //other option is "Pre-Reviews"
-        remActivityType = "",  //by default display all remembered reviews
+        remActivityType = "",  //by default display all remembered posts
         announcedismiss = false,
         bootmon = { tout: null, count: 0 },
 
@@ -68,7 +68,7 @@ app.activity = (function () {
         reviewTypes = app.review.getReviewTypes();
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
-            title = typename.capitalize() + " reviews";
+            title = typename.capitalize() + " posts";
             if(funcname === "toptype") {
                 title = "Top " + title; }
             imgsrc = revTypeSelectorImgSrc(typename);
@@ -92,7 +92,7 @@ app.activity = (function () {
             recent = ["span", {cla: "actmodesel"},
                       "Recent"];
             if(topModeEnabled) {
-                top = ["a", {href: "#", title: "Show top reviews",
+                top = ["a", {href: "#", title: "Show top posts",
                              onclick: jt.fs("app.activity.switchmode" +
                                             "('amtop')")},
                        "Top Rated"]; }
@@ -100,7 +100,7 @@ app.activity = (function () {
                 top = ["span", {cla: "actmodeseldis"},
                        "Top Rated"]; } }
         else { //activityMode === "amtop"
-            recent = ["a", {href: "#", title: "Show recent reviews",
+            recent = ["a", {href: "#", title: "Show recent posts",
                             onclick: jt.fs("app.activity.switchmode" + 
                                            "('amnew')")},
                       "Recent"];
@@ -108,7 +108,7 @@ app.activity = (function () {
                    "Top Rated"]; }
         url = "rssact?pen=" + app.pen.currPenId();
         rsslink = ["a", {href: url, id: "rsslink",
-                         title: "RSS feed for recent friend reviews",
+                         title: "RSS feed for recent friend posts",
                          onclick: jt.fs("window.open('" + url + "')")},
                    ["img", {cla: "rssico", src: "img/rssicon.png"}]];
         if(app.winw >= app.minSideBySide) {
@@ -149,7 +149,7 @@ app.activity = (function () {
             remall = ["span", {cla: "actmodesel"},
                       "All"]; }
         else {
-            remall = ["a", {href: "#", title: "Show all remembered reviews",
+            remall = ["a", {href: "#", title: "Show all remembered posts",
                             onclick: jt.fs("app.activity.remtype('')")},
                       "All"]; }
         html = [["div", {id: "memomodediv"},
@@ -373,12 +373,12 @@ app.activity = (function () {
                         revref.rev, revref.rev.penNameStr)); } } }
         hint = "If you see a review worth remembering, click its " + 
             "\"Remember\" button to keep a reference to it here.";
-        if(remitems.length === 0) {  //no reviews currently remembered
+        if(remitems.length === 0) {  //no posts currently remembered
             remitems.push(["li", "You have not remembered any " + 
                            remActivityType +
                            (remActivityType ? " " : "") +
-                           "reviews. " + hint]); }
-        else if(i < 3) {  //reinforce how to remember reviews
+                           "posts. " + hint]); }
+        else if(i < 3) {  //reinforce how to remember posts
             remitems.push(["li"]);
             remitems.push(["li", ["span", {cla: "hintText"}, hint]]); }
         html = ["ul", {cla: "revlist"}, remitems];
@@ -399,7 +399,7 @@ app.activity = (function () {
         penref = app.pen.currPenRef();
         if(penref.remembered) {
             return displayPenrefRemembered(); }
-        jt.out('revactdiv', "Fetching remembered reviews...");
+        jt.out('revactdiv', "Fetching remembered posts...");
         app.layout.adjust();
         params = "penid=" + jt.instId(penref.pen) +
             "&" + app.login.authparams();
@@ -525,14 +525,14 @@ app.activity = (function () {
         if(topdat && topdat.currpg > 0) {
             pgh.push(["a", {href: "#previous", cla: "smalltext",
                             title: "Back to previous top " + topact.type + 
-                                   " reviews",
+                                   " posts",
                             onclick: jt.fs("app.activity.pgtop('" +
                                            topact.type + "',-1)")},
                       "&larr;&nbsp;Previous"]); }
         if(lah) { //lookahead shows more available
             pgh.push("&nbsp;&nbsp;&nbsp;");
             pgh.push(["a", {href: "#more", cla: "smalltext",
-                            title: "More top " + topact.type + " reviews",
+                            title: "More top " + topact.type + " posts",
                             onclick: jt.fs("app.activity.pgtop('" +
                                            topact.type + "',1)")},
                       "More&nbsp;&rarr;"]); }
@@ -559,7 +559,7 @@ app.activity = (function () {
             revs = [];
             while(revs.length < topDispMax + 1) { //lookahead for paging
                 revref = nextTopRev(revs, pens, topdat);
-                if(!revref) {  //no more reviews found, so done
+                if(!revref) {  //no more posts found, so done
                     break; }
                 if(revref.status === "not cached") {
                     revitems.push(["li", "Fetching Review " + revref.revid]);
@@ -575,7 +575,7 @@ app.activity = (function () {
                                                    revref.rev.penNameStr)]); } }
             if(revs.length === 0) {
                 revitems.push(["li", "No " + topact.type + 
-                               " reviews found"]); }
+                               " posts found"]); }
             if(revs.length > topDispMax) {
                 lah = revs.pop();  //note lookahead revref
                 revitems.pop(); }
@@ -601,7 +601,7 @@ app.activity = (function () {
                             onclick: jt.fs("app.activity.toggleExtraRevs('" +
                                            key + "')"),
                             id: "toga" + key},
-                      "+ more reviews by " + jt.ndq(rev.penNameStr) + 
+                      "+ more posts by " + jt.ndq(rev.penNameStr) + 
                       " from " + 
                       jt.colloquialDate(jt.ISOString2Day(rev.modified))]]];
         html = jt.tac2html(html);
@@ -666,7 +666,7 @@ app.activity = (function () {
             text = "You are currently following " + penids.length +
                 " pen names. <br/>Recommend following at least 3..."; }
         else {
-            text = "To see more reviews, <br/>follow more pen names."; }
+            text = "To see more posts, <br/>follow more pen names."; }
         if(text) {
             html = ["table", {id: "followmore", cla: "formstyle"},
                     [["tr",
@@ -784,7 +784,7 @@ app.activity = (function () {
         revrefs = actdisp.revrefs;
         if(revrefs.length === 0) {
             html.push(["li", "None of the people you are following have" + 
-                            " posted any reviews recently."]); }
+                            " posted recently."]); }
         for(i = 0; i < revrefs.length; i += 1) {
             rev = revrefs[i].rev;
             key = repkey(rev, rsq);
@@ -1135,7 +1135,7 @@ return {
                 jt.imgntxt(imgsrc, "",
                            "app.activity.displayActive()",
                            "#Activity",
-                           "Show reviews from friends",
+                           "Posts from friends",
                            "navico", "navact", "app.activity.mrolla")];
         html = jt.tac2html(html);
         return html;
@@ -1163,7 +1163,7 @@ return {
                 jt.imgntxt(imgsrc, "",
                            "app.activity.displayRemembered()",
                            "#Remembered",
-                           "Show reviews you have remembered",
+                           "Posts you've remembered",
                            "navico", "navrem", "app.activity.mrollr")];
         html = jt.tac2html(html);
         return html;

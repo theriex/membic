@@ -296,7 +296,7 @@ app.review = (function () {
                     mustconfirm = true; } } }
         if(!mustconfirm) {
             return true; }
-        cmsg = "You've added some review text. OK to throw it away?";
+        cmsg = "You've added some text. OK to throw it away?";
         return window.confirm(cmsg);
     },
 
@@ -308,7 +308,7 @@ app.review = (function () {
                     [["tr",
                       ["td", {colspan: 2},
                        ["div", {cla: "bigoverlabel"},
-                        "Choose a review type"]]],
+                        "Posting type"]]],
                      ["tr",
                        [["td", ts[0]],
                         ["td", ts[1]]]],
@@ -326,7 +326,7 @@ app.review = (function () {
                     [["tr",
                       ["td", {colspan: 4},
                        ["div", {cla: "bigoverlabel"},
-                        "Choose a review type"]]],
+                        "Posting type"]]],
                      ["tr",
                       [["td", ts[0]],
                        ["td", ts[1]],
@@ -350,7 +350,7 @@ app.review = (function () {
         var html;
         html = ["a", {href: "#ezlink", cla: "permalink",
                       onclick: jt.fs("app.hinter.ezlink()"),
-                      title: "Write a review from any site"},
+                      title: "Post from any site"},
                 [["img", {cla: "webjump", src: "img/gotolink.png"}],
                  "ezlink"]];
         return html;
@@ -367,7 +367,7 @@ app.review = (function () {
                  jt.imgntxt(reviewTypes[i].img, captype,
                             "app.review.setType('" + typename + "')",
                             "#" + captype,
-                            "Create a " + typename + " review",
+                            "Create a " + typename + " post",
                             "revtypeico", typename, "app.review.mrollwr")]); }
         if(autourl) {
             urlh = ["a", {href: autourl}, autourl]; }
@@ -611,13 +611,13 @@ app.review = (function () {
                 //new corresponding review, allow finding mismatched titles
                 actions.push(app.review.makeTransformLink(
                     "app.revresp.searchCorresponding()",
-                    "Find existing corresponding review",
-                    "Find review")); }
+                    "Find existing corresponding post",
+                    "Find Post")); }
             //always be able to change the review type
             actions.push(app.review.makeTransformLink(
                 "app.review.changeRevType()",
-                "Change this review type",
-                "Change Review Type"));
+                "Change this posting type",
+                "Change Post Type"));
             if(review.revtype === "video" && review.title && review.artist) {
                 //video import may have mapped the title and artist backwards
                 actions.push(app.review.makeTransformLink(
@@ -628,7 +628,7 @@ app.review = (function () {
                 //Might want to refresh the image link or re-read info
                 actions.push(app.review.makeTransformLink(
                     "app.review.readURL('" + review.url + "')",
-                    "Read the URL to fill out review fields",
+                    "Read the URL to fill out descriptive fields",
                     "Import URL Details")); }
             html = jt.tac2html(actions); }
         else if(mode !== "edit") { 
@@ -669,7 +669,7 @@ app.review = (function () {
                      "&nbsp;",
                      ["button", {type: "button", id: "savebutton",
                                  onclick: jt.fs("app.review.validate()")},
-                      "Create Review"],
+                      "Create Post"],
                      ["br"],
                      ["div", {id: "revsavemsg"}]]]; }
         else if(mode === "edit") {  //have key fields and editing full review
@@ -711,7 +711,7 @@ app.review = (function () {
     ezlink = function () {
         return ["a", {href: "#ezlink", cla: "permalink",
                       onclick: jt.fs("app.hinter.ezlink()"),
-                      title: "Write a review from any site"},
+                      title: "Post from any site"},
                 "ezlink"];
     },
 
@@ -1483,16 +1483,16 @@ return {
     delrev: function () {
         var data;
         if(!crev || 
-           !window.confirm("Are you sure you want to delete this review?")) {
+           !window.confirm("Are you sure you want to delete this post?")) {
             return; }
-        jt.out('cmain', "Deleting review...");
+        jt.out('cmain', "Deleting post...");
         data = jt.objdata(crev);
         jt.call('POST', "delrev?" + app.login.authparams(), data,
                  function (reviews) {
-                     var html = "<p>Review deleted.  If this review was one" +
+                     var html = "<p>Post deleted.  If this post was one" +
                          " of your top 20 best, then you may see an id" +
-                         " reference message until the next time you review" +
-                         " something.  Recalculating your recent reviews..." +
+                         " reference message until the next time you post" +
+                         " something.  Recalculating your recent posts..." +
                          "</p>";
                      jt.out('cmain', html);
                      cacheBustPersonalReviewSearches();
@@ -1524,9 +1524,9 @@ return {
             style = "color:#FFD100";
             imgsrc = "writereviewsel.png"; }
         html = ["div", {cla: "topnavitemdiv", style: style },
-                jt.imgntxt(imgsrc, "Review and Share",
+                jt.imgntxt(imgsrc, "Post and Share",
                            "app.review.cancelReview(true)", "#Write",
-                           "Write a review and share it with your friends",
+                           "Post something you've experienced and share it with friends",
                            "navico", "navrev", "app.review.mroll")];
         return jt.tac2html(html);
     },
@@ -1718,7 +1718,7 @@ return {
         if(!crev.url) {
             html = ezlink(); }
         else {
-            html = ["a", {href: "#", title: "Read review details from URL",
+            html = ["a", {href: "#", title: "Read description fields from URL",
                           onclick: jt.fs("app.review.readURL()")},
                     "Read URL"]; }
         jt.out('ezlinkspan', jt.tac2html(html));
@@ -1753,7 +1753,7 @@ return {
             type = findReviewType(crev.revtype);
             if(!type) {
                 jt.out('revformbuttonsdiv', html);
-                jt.out('revsavemsg', "Unknown review type");
+                jt.out('revsavemsg', "Unknown posting type");
                 return; }
             readAndValidateFieldValues(type, errors);
             verifyRatingStars(type, errors, actionstr);

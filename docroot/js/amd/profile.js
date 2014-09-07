@@ -1765,14 +1765,14 @@ return {
                 jt.imgntxt(imgsrc, "",
                            "app.profile.display()",
                            "#view=profile&profid=" + jt.instId(pen),
-                           "Show profile for " + pen.name + " (you)",
+                           "Profile for " + pen.name + " (you)",
                            "naviconospace", "navprof", 
                            "app.profile.mrollp")];
         jt.out('homepenhdiv', jt.tac2html(html));
         html = jt.imgntxt("settings.png", "", 
                           "app.profile.settings()",
                           "#Settings",
-                          "Adjust your profile settings",
+                          "Profile settings",
                           "naviconospace", "settingsnav",
                           "app.profile.mrollset");
         jt.out('settingsbuttondiv', html);
