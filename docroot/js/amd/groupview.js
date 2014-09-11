@@ -14,6 +14,7 @@ var groupview = (function () {
 
     var group = null,
         revs = [],
+        reloff = "..",
 
 
     ////////////////////////////////////////
@@ -25,14 +26,39 @@ var groupview = (function () {
         if(document.referrer) {
             btwimg = jt.byId('btwimg');
             if(btwimg) {
-                btwimg.src = "../bytheimg?grpinqref=" + 
+                btwimg.src = reloff + "/bytheimg?grpinqref=" + 
                     jt.enc(document.referrer); } }
     },
 
 
+    groupShareButtonsHTML = function () {
+        var surl, rssurl, desc, html;
+        surl = window.location.href;
+        if(surl.indexOf("#") >= 0) {
+            surl = surl.slice(0, surl.indexOf("#")); }
+        if(surl.indexOf("?") >= 0) {
+            surl = surl.slice(0, surl.indexOf("?")); }
+        rssurl = "../rssgrp?group=" + jt.instId(group);
+        desc = "latest posts from " + group.name;   //text gets embedded
+        html = app.layout.shareLinksHTML(surl, desc);
+        html += jt.tac2html(
+            ["&nbsp;",
+             ["a", {href: "#embed", id: "embedlink",
+                    title: "Embed dynamic group elements into another site",
+                    onclick: jt.fs("wdydfunGroupview.showEmbed")},
+              ["span", {cla: "embedlinktext"}, "{embed}"]],
+             ["a", {href: rssurl, id: "rsslink",
+                    title: "RSS feed for " + jt.ndq(group.name),
+                    onclick: jt.fs("window.open('" + rssurl + "')")},
+              ["img", {cla: "rssico", 
+                       src: "../img/rssicon.png"}]]]);
+        return html;
+    },
+
+
+
     displayGroup = function () {
         var groupid = jt.instId(group),
-            rssurl = "../rssgrp?group=" + groupid,
             iswide = window.innerWidth && window.innerWidth > 700,
             njspan, html;
         njspan = ["span", {id: "namejoinlinkspan"},
@@ -49,15 +75,8 @@ var groupview = (function () {
                   app.group.grpPicCityHTML(group, "sgpicdiv")],
                  ["div", {cla: "sjoinrssdiv"},
                   [(iswide? njspan : ""),
-                   app.layout.shareLinksHTML(
-                       window.location.href, 
-                       "latest posts from " + group.name, //text gets embedded
-                       "../"),
-                   ["a", {href: rssurl, id: "rsslink",
-                          title: "RSS feed for " + jt.ndq(group.name),
-                          onclick: jt.fs("window.open('" + rssurl + "')")},
-                    ["img", {cla: "rssico", 
-                             src: "../img/rssicon.png"}]]]],
+                   ["span", {id: "groupsharebuttonspan"},
+                    groupShareButtonsHTML()]]],
                  ["div", {cla: "floatclear"}],
                  ["div", {id: "sgrpnamedescdiv"},
                   [["div",
@@ -110,11 +129,20 @@ var groupview = (function () {
 return {
     display: function () {
         jtminjsDecorateWithUtilities(jt);
+        if(window.location.href.split("/").length > 3) {
+            reloff = "../.."; }
         readData();
         noteRefer();
         displayGroup();
         displayReviews();
         app.layout.fixTextureCover();
+    },
+
+
+    showEmbed: function () {
+        app.layout.showEmbed("emgroup/" + jt.canonize(group.name) + ".js",
+                             "wdydfungroup",
+                             "displayGroup()");
     }
 
 }; //end of returned functions

@@ -1,5 +1,8 @@
-/*global window: false, jtminjsDecorateWithUtilities: false, document: false, wdydfunBlogview: false, jt: false, WDYDFunEmbeddedBlogHTML: false */
+/*global window: false, jtminjsDecorateWithUtilities: false, document: false, wdydfunBlogview: false, jt: false, app: false, WDYDFunEmbeddedBlogHTML: false */
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+
+//Stub module for including static blog or group content into any page.
+//app, jt globals declared by blogview.js or groupview.js
 
 var wdydfunEmbed = (function () {
     "use strict";
@@ -50,7 +53,7 @@ return {
         if(allLoaded) {
             jtminjsDecorateWithUtilities(jt);
             jt.out("wdydfunblog", WDYDFunEmbeddedBlogHTML);
-            wdydfunBlogview.setSiteRoot(siteroot);
+            app.layout.setSiteRoot(siteroot);
             wdydfunBlogview.display("headless"); }
     }
 

@@ -20,6 +20,7 @@ app.layout = (function () {
         slideslot = -1,
         meritactive = false,
         navmode = "activity",
+        siteroot = "",
 
 
     ////////////////////////////////////////
@@ -733,6 +734,66 @@ return {
                 "Email " + desc,
                 reloff + "img/email.png")];
         return jt.tac2html(html);
+    },
+
+
+    setSiteRoot: function (sr) {
+        siteroot = sr;
+    },
+    getSiteRoot: function () {
+        return siteroot;
+    },
+
+
+    //Prepends the site root to image and other resource links in the
+    //given html.  Image links in the given html are relative to the
+    //actual site root, do not start with a "/", and do not have any
+    //".."  relative addressing in them. 
+    rootLink: function (html) {
+        var idx;
+        if(!siteroot) {
+            siteroot = "http://www.wdydfun.com";
+            idx = window.location.href.search(/:\d080/);
+            if(idx >= 0) {
+                siteroot = window.location.href.slice(idx);  //:8080...
+                idx = siteroot.indexOf("/");
+                if(idx >= 0) {
+                    siteroot = siteroot.slice(0, idx); }     //:8080
+                siteroot = "localhost" + siteroot; } }       //localhost:8080
+        html = html.replace(/img\//g, siteroot + "/img/");
+        html = html.replace(/revpic\?/g, siteroot + "/revpic?");
+        html = html.replace(/profpic\?/g, siteroot + "/profpic?");
+        //fix other known relative cases
+        html = html.replace(/..\/statrev/g, siteroot + "/statrev");
+        html = html.replace(/..\/\?/g, siteroot + "?");
+        return html;
+    },
+
+
+    showEmbed: function (scripturl, divid, embfuncallstr) {
+        var embedtxt, html;
+        embedtxt = "<div id=\"" + divid + "\"" + 
+            " style=\"background:#ddd;width:70%;margin-left:10%;\"></div>\n" +
+            "<script src=\"" + siteroot + "/" + scripturl + "\"></script>\n" +
+            "<script src=\"" + siteroot + "/js/embed.js\"></script>\n" +
+            "<script>\n" +
+            "  wdydfunEmbed." + embfuncallstr + ";\n" +
+            "</script>\n";
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "To embed this content into another web page," + 
+                  " copy and paste this code:"],
+                 ["textarea", {id: "tascr", cla: "shoutout"}],
+                 ["div", {cla: "tipsbuttondiv"},
+                  ["button", {type: "button", id: "tipok",
+                              onclick: jt.fs("app.layout.closeDialog()")},
+                   "OK"]]]];
+        app.layout.openDialog({y:140}, jt.tac2html(html), null,
+                              function () {
+                                  var tascr = jt.byId('tascr');
+                                  tascr.style.width = "95%";
+                                  tascr.style.marginLeft = "2%";
+                                  tascr.value = embedtxt;
+                                  jt.byId('tipok').focus(); });
     }
 
 

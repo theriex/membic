@@ -16,7 +16,6 @@ var wdydfunBlogview = (function () {
     var pen = null,
         revs = [],
         reloff = "..",
-        siteroot = "",
         revitems = [],
 
 
@@ -31,27 +30,6 @@ var wdydfunBlogview = (function () {
             if(btwimg) {
                 btwimg.src = reloff + "/bytheimg?bloginqref=" + 
                     jt.enc(document.referrer); } }
-    },
-
-
-    fixImageLinks = function (html) {
-        html = html.replace(/img\//g, reloff + "/img/");
-        html = html.replace(/revpic\?/g, reloff + "/revpic?");
-        html = html.replace(/profpic\?/g, reloff + "/profpic?");
-        if(!siteroot) {
-            siteroot = "http://www.wdydfun.com";
-            if(window.location.href.indexOf("http://localhost:8080") === 0) {
-                siteroot = "http://localhost:8080"; }
-            if(window.location.href.indexOf(siteroot) === 0) {
-                siteroot = reloff; } } 
-        html = html.replace(/src="(http)?([^"]*)/g, function (a, b, c) { 
-            if(!b) {
-                return "src=\"" + siteroot + c.slice(reloff.length); }
-            return "src=\"" + b + c; });
-        if(siteroot) { //fix specific problematic non-img references
-            html = html.replace(/..\/statrev/g, siteroot + "/statrev");
-            html = html.replace(/..\/\?/g, siteroot + "?"); }
-        return html;
     },
 
 
@@ -133,7 +111,7 @@ var wdydfunBlogview = (function () {
                         pen, "wdydfunBlogview.showTop")],
                    ["div", {id: "blogshoutoutdiv"},
                     jt.linkify(pen.shoutout)]]]]];
-        jt.out('siteproflinkdiv', fixImageLinks(jt.tac2html(html)));
+        jt.out('siteproflinkdiv', app.layout.rootLinks(jt.tac2html(html)));
     },
 
 
@@ -185,7 +163,7 @@ var wdydfunBlogview = (function () {
 
 
     displayReviews = function () {
-        var i, artists = "", ld, html;
+        var i, artists = "", ld, sroot, profurl, html;
         for(i = 0; i < revs.length; i += 1) {
             if(revs[i].revtype === "music" && revs[i].svcdata &&
                revs[i].svcdata.indexOf("\"batchUpdated\":\"" + 
@@ -205,17 +183,18 @@ var wdydfunBlogview = (function () {
                     artists = ""; }
                 revitems.push(["li",
                                app.review.staticReviewDisplay(revs[i])]); } }
-        html = "../#view=profile&profid=" + jt.instId(pen);
-        if(siteroot && siteroot.indexOf("..") < 0) {
-            html = siteroot + "/blogs/" + pen.name_c; }
+        profurl = "../#view=profile&profid=" + jt.instId(pen);
+        sroot = app.layout.getSiteRoot();
+        if(sroot && sroot.indexOf("..") < 0) {
+            profurl = sroot + "/blogs/" + pen.name_c; }
         html = ["div", {id: "blogcontentdiv"},
                 [["ul", {id: "reviewsul", cla: "revlist"}, revitems],
                  ["div",
                   ["Follow me on ",
-                   ["a", {href: html},
+                   ["a", {href: profurl},
                     "WDYDFun"],
                    "!"]]]];
-        jt.out('profcontentdiv', fixImageLinks(jt.tac2html(html)));
+        jt.out('profcontentdiv', app.layout.rootLink(jt.tac2html(html)));
     },
 
 
@@ -237,10 +216,6 @@ var wdydfunBlogview = (function () {
     // published functions
     ////////////////////////////////////////
 return {
-
-    setSiteRoot: function (val) {
-        siteroot = val; },
-
 
     display: function (headless) {
         jtminjsDecorateWithUtilities(jt);
@@ -271,44 +246,25 @@ return {
                     fetchAndInstantiate(type, trevs, i);
                     break; }
                 lis.push(["li", app.review.staticReviewDisplay(trevs[i])]); } }
-        jt.out('reviewsul', fixImageLinks(jt.tac2html(lis)));
+        jt.out('reviewsul', app.layout.rootLink(jt.tac2html(lis)));
         setHash(type);
         jt.out('blogsharebuttonspan', 
-               fixImageLinks(jt.tac2html(blogShareButtonsHTML())));
+               app.layout.rootLink(jt.tac2html(blogShareButtonsHTML())));
     },
 
 
     showRecent: function () {
-        jt.out('reviewsul', fixImageLinks(jt.tac2html(revitems)));
+        jt.out('reviewsul', app.layout.rootLink(jt.tac2html(revitems)));
         setHash("recent");
         jt.out('blogsharebuttonspan', 
-               fixImageLinks(jt.tac2html(blogShareButtonsHTML())));
+               app.layout.rootLink(jt.tac2html(blogShareButtonsHTML())));
     },
 
 
     showEmbed: function () {
-        var embedtxt, html;
-        embedtxt = "<div id=\"wdydfunblog\" style=\"background:#ddd;width:70%;margin-left:10%;\"></div>\n" +
-            "<script src=\"http://www.wdydfun.com/emblog/" + pen.name_c + ".js\"></script>\n" +
-            "<script src=\"http://www.wdydfun.com/js/embed.js\"></script>\n" +
-            "<script>\n" +
-            "  wdydfunEmbed.displayBlog();\n" +
-            "</script>\n";
-        html = ["div", {cla: "hintcontentdiv"},
-                [["p", "To embed this review blog content into another web page, copy and paste this code:"],
-                 ["textarea", {id: "tascr", cla: "shoutout"}],
-                 ["div", {cla: "tipsbuttondiv"},
-                  ["button", {type: "button", id: "tipok",
-                              onclick: jt.fs("app.layout.closeDialog()")},
-                   "OK"]]]];
-        app.layout.openDialog({y:140}, jt.tac2html(html), null,
-                              function () {
-                                  var tascr = jt.byId('tascr');
-                                  tascr.style.width = "95%";
-                                  tascr.style.marginLeft = "2%";
-                                  tascr.value = embedtxt;
-                                  jt.byId('tipok').focus(); });
-        
+        app.layout.showEmbed("emblog/" + pen.name_c + ".js", 
+                             "wdydfunblog",
+                             "displayBlog()");
     }
 
 }; //end of returned functions
