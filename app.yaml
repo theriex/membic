@@ -447,6 +447,8 @@ handlers:
   script: src.py.blogview.app
 - url: /groups/.*
   script: src.py.groupview.app
+- url: /emgroup/.*
+  script: src.py.groupview.app
 - url: /statrev/\d+
   script: src.py.statrev.app
 - url: /stats.*

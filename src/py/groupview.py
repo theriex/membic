@@ -9,6 +9,7 @@ from morutil import *
 import re
 import json
 from cacheman import *
+from google.appengine.api import urlfetch
 
 
 html = """
@@ -29,6 +30,23 @@ html = """
 </head>
 <body id="bodyid">
 
+$CONTENT
+
+<script src="../js/jtmin.js"></script>
+<script src="../js/amd/groupview.js"></script>
+<script src="../js/amd/layout.js"></script>
+<script src="../js/amd/profile.js"></script>
+<script src="../js/amd/review.js"></script>
+<script src="../js/amd/group.js"></script>
+<script>
+  wdydfunGroupview.display();
+</script>
+
+</body>
+</html>
+"""
+
+bodycontent = """
 <div id="groupdescrdiv">
   <a href="../#view=group&groupid=$GROUPID">$GROUPNAME</a>
   <noscript>
@@ -55,19 +73,6 @@ $REFER
 </div>
 
 <div id="dlgdiv"></div>
-
-<script src="../js/jtmin.js"></script>
-<script src="../js/amd/groupview.js"></script>
-<script src="../js/amd/layout.js"></script>
-<script src="../js/amd/profile.js"></script>
-<script src="../js/amd/review.js"></script>
-<script src="../js/amd/group.js"></script>
-<script>
-  groupview.display();
-</script>
-
-</body>
-</html>
 """
 
 
@@ -84,45 +89,77 @@ def recent_group_reviews(group):
     return qres
 
 
+def prepare_content(handler, gcname, content):
+    # Same index retrieval used for unique group name checking
+    groups = Group.gql("WHERE name_c=:1 LIMIT 1", gcname)
+    if groups.count() != 1:
+        handler.error(404)
+        handler.response.out.write("Group identifier " + gcname + " not found")
+        return
+    group = groups[0];
+    qres = recent_group_reviews(group)
+    picurl = "img/emptyprofpic.png"
+    if group.picture:
+        picurl = "grppic?groupid=" + str(group.key().id())
+    # facebook doesn't like "../" relative urls
+    if "localhost" in handler.request.url:
+        picurl = "../" + picurl
+    else:
+        picurl = "http://www.wdydfun.com/" + picurl
+    content = re.sub('\$GROUPNAME', group.name, content)
+    content = re.sub('\$GROUPDESCR', group.description, content)
+    content = re.sub('\$IMGSRC', picurl, content)
+    content = re.sub('\$GROUPID', str(group.key().id()), content)
+    content = re.sub('\$GROUPJSON', obj2JSON(group), content)
+    content = re.sub('\$REVDATA', qres2JSON(
+            qres.objects, "", -1, ""), content)
+    refer = handler.request.referer
+    if refer:
+        refer = "<img src=\"../bytheimg?grpinqref=" +\
+            safeURIEncode(refer) + "\"/>\n"
+    else:
+        refer = "<img id=\"btwimg\" src=\"../bytheimg?grpinq=" +\
+            str(group.key().id()) + "\"/>\n"
+    content = re.sub('\$REFER', refer, content)
+    content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
+    return content
+
+
 class GroupViewDisplay(webapp2.RequestHandler):
     def get(self, gcname):
-        # Same index retrieval used for unique group name checking
-        groups = Group.gql("WHERE name_c=:1 LIMIT 1", gcname)
-        if groups.count() != 1:
-            self.error(404)
-            self.response.out.write("Group identifier " + gcname + " not found")
-            return
-        group = groups[0];
-        qres = recent_group_reviews(group)
-        picurl = "img/emptyprofpic.png"
-        if group.picture:
-            picurl = "grppic?groupid=" + str(group.key().id())
-        # facebook doesn't like "../" relative urls
-        if "localhost" in self.request.url:
-            picurl = "../" + picurl
-        else:
-            picurl = "http://www.wdydfun.com/" + picurl
         content = html
-        content = re.sub('\$GROUPNAME', group.name, content)
-        content = re.sub('\$GROUPDESCR', group.description, content)
-        content = re.sub('\$IMGSRC', picurl, content)
-        content = re.sub('\$GROUPID', str(group.key().id()), content)
-        content = re.sub('\$GROUPJSON', obj2JSON(group), content)
-        content = re.sub('\$REVDATA', qres2JSON(
-                qres.objects, "", -1, ""), content)
-        refer = self.request.referer
-        if refer:
-            refer = "<img src=\"../bytheimg?grpinqref=" +\
-                safeURIEncode(refer) + "\"/>\n"
-        else:
-            refer = "<img id=\"btwimg\" src=\"../bytheimg?grpinq=" +\
-                str(group.key().id()) + "\"/>\n"
-        content = re.sub('\$REFER', refer, content)
-        content = re.sub('\&quot;', "\\\"", content)  #browser interp pre-parse
+        content = re.sub('\$CONTENT', bodycontent, content)
+        content = prepare_content(self, gcname, content)
         self.response.headers['Content-Type'] = 'text/html; charset=UTF-8'
         self.response.out.write(content)
 
 
-app = webapp2.WSGIApplication([('/groups/(.*)', GroupViewDisplay)],
+class EmbedGroupScript(webapp2.RequestHandler):
+    def get(self, gcname):
+        gcname = gcname[0:gcname.index(".")]  #strip ".js" suffix
+        try:
+            result = urlfetch.fetch("http://www.wdydfun.com/css/site.css",
+                                    method="GET",
+                                    allow_truncated=False, 
+                                    follow_redirects=True, 
+                                    deadline=10, 
+                                    validate_certificate=False)
+            content = "<style scoped>" + result.content + "</style>"
+        except Exception as e:
+            logging.info("EmbedGroupScript site.css fetch failed: " + str(e))
+            content = "<!-- error fetching site.css -->"
+        content += bodycontent
+        content = prepare_content(self, gcname, content)
+        content = content.replace("\\\"", "\\\\\"")
+        content = content.replace("\"", "\\\"")
+        content = re.sub('\n', '', content)
+        content = "var WDYDFunEmbeddedGroupHTML = \"" + content + "\""
+        self.response.headers['Content-Type'] = 'application/javascript; charset=UTF-8'
+        self.response.out.write(content)
+
+
+
+app = webapp2.WSGIApplication([('/groups/(.*)', GroupViewDisplay),
+                               ('/emgroup/([^/]*)', EmbedGroupScript)],
                               debug=True)
 

@@ -5,7 +5,7 @@ var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
 
 //This is a degenerate module used for the static view.  Don't model it.
-var groupview = (function () {
+var wdydfunGroupview = (function () {
     "use strict";
 
     ////////////////////////////////////////
@@ -83,7 +83,7 @@ var groupview = (function () {
                     (iswide? "" : njspan)],
                    ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
                     jt.linkify(group.description)]]]]];
-        jt.out('groupdescrdiv', jt.tac2html(html));
+        jt.out('groupdescrdiv', app.layout.rootLink(jt.tac2html(html)));
     },
 
 
@@ -100,10 +100,7 @@ var groupview = (function () {
                    ["a", {href: "../#view=group&groupid=" + jt.instId(group)},
                     "WDYDFun"],
                    " for membership information"]]]];
-        html = jt.tac2html(html);
-        html = html.replace(/img\//g, "../img/");
-        html = html.replace(/revpic\?/g, "../revpic?");
-        jt.out('groupcontentdiv', html);
+        jt.out('groupcontentdiv', app.layout.rootLink(jt.tac2html(html)));
     },
 
 
@@ -127,15 +124,20 @@ var groupview = (function () {
     // published functions
     ////////////////////////////////////////
 return {
-    display: function () {
+    display: function (headless) {
         jtminjsDecorateWithUtilities(jt);
         if(window.location.href.split("/").length > 3) {
             reloff = "../.."; }
         readData();
-        noteRefer();
-        displayGroup();
+        if(!headless) {
+            noteRefer();
+            displayGroup(); }
         displayReviews();
         app.layout.fixTextureCover();
+        if(headless) {
+            jt.out('groupdescrdiv', "");
+            jt.out('referdiv', "");
+            jt.byId('groupcontentdiv').style.marginLeft = "0px"; }
     },
 
 

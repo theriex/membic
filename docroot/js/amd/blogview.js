@@ -111,7 +111,7 @@ var wdydfunBlogview = (function () {
                         pen, "wdydfunBlogview.showTop")],
                    ["div", {id: "blogshoutoutdiv"},
                     jt.linkify(pen.shoutout)]]]]];
-        jt.out('siteproflinkdiv', app.layout.rootLinks(jt.tac2html(html)));
+        jt.out('siteproflinkdiv', app.layout.rootLink(jt.tac2html(html)));
     },
 
 

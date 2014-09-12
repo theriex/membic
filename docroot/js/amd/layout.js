@@ -755,11 +755,11 @@ return {
             siteroot = "http://www.wdydfun.com";
             idx = window.location.href.search(/:\d080/);
             if(idx >= 0) {
-                siteroot = window.location.href.slice(idx);  //:8080...
+                siteroot = window.location.href.slice(idx);    //:8080/blah
                 idx = siteroot.indexOf("/");
                 if(idx >= 0) {
-                    siteroot = siteroot.slice(0, idx); }     //:8080
-                siteroot = "localhost" + siteroot; } }       //localhost:8080
+                    siteroot = siteroot.slice(0, idx); }       //:8080
+                siteroot = "http://localhost" + siteroot; } }
         html = html.replace(/img\//g, siteroot + "/img/");
         html = html.replace(/revpic\?/g, siteroot + "/revpic?");
         html = html.replace(/profpic\?/g, siteroot + "/profpic?");
