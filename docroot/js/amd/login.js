@@ -1,4 +1,5 @@
-/*global alert: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
+/*global alert: false, setTimeout: false, window: false, document:
+ * false, history: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -648,7 +649,7 @@ return {
             jt.setdims('topsectiondiv', {h: 130});  //better with space
             if(!jt.byId('logoimg')) {
                 jt.out('logodiv', jt.tac2html(
-                    ["img", {src: "img/wdydfun.png", id: "logoimg"}])); }
+                    ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
             if(app.winw >= app.minSideBySide) {
                 jt.byId('topworkdiv').style.marginLeft = "280px";
                 jt.setdims('logoimg', {w: 243, h: 120});
@@ -1027,7 +1028,7 @@ return {
     loginInfoHTML: function (pen) {
         var html, iconurl;
         switch(authmethod) {
-            case "mid": iconurl = "img/iconwdydfun.png"; break;
+            case "mid": iconurl = "img/iconfgfweb.png"; break;
             case "fbid": iconurl = app.facebook.iconurl; break;
             case "twid": iconurl = app.twitter.iconurl; break;
             case "gsid": iconurl = app.googleplus.iconurl; break;

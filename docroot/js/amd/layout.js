@@ -181,7 +181,7 @@ app.layout = (function () {
             String(Math.max(logodim.h, slidedim.h)) + "px";
         //#logodiv position:absolute
         jt.out('logodiv', jt.tac2html(
-            ["img", {src: "img/wdydfun.png", id: "logoimg",
+            ["img", {src: "img/fgfweb.png", id: "logoimg",
                      style: "width:" + logodim.w + "px;" + 
                             "height:" + logodim.h + "px;"}]));
         jt.setdims('logodiv', logodim);
