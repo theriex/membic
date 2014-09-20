@@ -9,10 +9,10 @@ set itsdir to (POSIX path of ((path to home folder as text) & "Library:iTunes:Sc
 display dialog "Installing to " & itsdir
 set command to "mkdir -p " & (quoted form of itsdir)
 do shell script command
-set filenames to {"WDYDFunExport.scpt", "WDYDFunPlaylist.scpt", "WDYDFunReview.scpt", "WDYDFunSettings.scpt"}
+set filenames to {"FGFwebExport.scpt", "FGFwebPlaylist.scpt", "FGFwebReview.scpt", "FGFwebSettings.scpt"}
 repeat with fname in filenames
 	set cfile to (quoted form of (locdir & fname))
 	set command to "cp " & cfile & " " & itsdir
 	do shell script command
 end repeat
-display dialog "Script files installed." & newline & newline & "WDYDFunExport: copy all playlist files to another folder." & newline & newline & "WDYDFunPlaylist: create or refresh a playlist." & newline & newline & "WDYDFunReview: review the currently playing track." & newline & newline & "You might want to set up option-; as a key binding for WDYDFunReview so you can quickly review the currently playing track."
+display dialog "Script files installed." & newline & newline & "FGFwebExport: copy all playlist files to another folder." & newline & newline & "FGFwebPlaylist: create or refresh a playlist." & newline & newline & "FGFwebReview: review the currently playing track." & newline & newline & "You might want to set up option-; as a key binding for FGFwebReview so you can quickly review the currently playing track."

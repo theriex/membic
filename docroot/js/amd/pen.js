@@ -42,7 +42,7 @@ app.pen = (function () {
                 ["div", {cla: "headingtxt"},
                  "Contact email"],
                 ["p",
-                 "Wdydfun is a low noise site, and a lot of folks only check in about once a week or so.  To stay in touch, it's recommended that you have a weekly summary of your friend's reviews mailed to you."],
+                 "FGFweb is a low noise site, and a lot of folks only check in about once a week or so.  To stay in touch, it's recommended that you have a weekly summary of your friend's reviews mailed to you."],
                 ["ul", {cla: "revlist"},
                  [["li",
                    ["div", {cla: "errtxt"},

@@ -9,7 +9,7 @@ whose tastes you trust.  Privacy is respected through use of pen names.
 The source and API is provided so you can see how things work, and
 help improve it.
 
-The main web app is http://www.wdydfun.com (what did you do fun).  It
+The main web app is http://www.fgfweb.com (what did you do fun).  It
 consists of a javascript web application communicating with a Python Google App
 Engine server.
 

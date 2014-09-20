@@ -36,7 +36,7 @@ app.layout = (function () {
             html = html.slice(idx + "<body>".length,
                               html.indexOf("</body")); }
         html = html.replace(/\.<!-- \$ABOUTCONTACT -->/g,
-            " or <a href=\"mailto:support@wdydfun.com\">email support.");
+            " or <a href=\"mailto:support@fgfweb.com\">email support.");
         //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
         if(idx > 0) {
@@ -752,7 +752,7 @@ return {
     rootLink: function (html) {
         var idx;
         if(!siteroot) {
-            siteroot = "http://www.wdydfun.com";
+            siteroot = "http://www.fgfweb.com";
             idx = window.location.href.search(/:\d080/);
             if(idx >= 0) {
                 siteroot = window.location.href.slice(idx);    //:8080/blah
@@ -777,7 +777,7 @@ return {
             "<script src=\"" + siteroot + "/" + scripturl + "\"></script>\n" +
             "<script src=\"" + siteroot + "/js/embed.js\"></script>\n" +
             "<script>\n" +
-            "  wdydfunEmbed." + embfuncallstr + ";\n" +
+            "  fgfwebEmbed." + embfuncallstr + ";\n" +
             "</script>\n";
         html = ["div", {cla: "hintcontentdiv"},
                 [["p", "To embed this content into another web page," + 

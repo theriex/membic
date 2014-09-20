@@ -147,9 +147,9 @@ htmlheader = """
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
-  <meta name="description" content="WDYDFun groups and weekly review activity" />
+  <meta name="description" content="FGFweb groups and weekly review activity" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WDYDFun Groups and Weekly Review Activity</title>
+  <title>FGFweb Groups and Weekly Review Activity</title>
   <link href="css/site.css" rel="stylesheet" type="text/css" />
 </head>
 <body id="bodyid">

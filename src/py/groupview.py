@@ -39,7 +39,7 @@ $CONTENT
 <script src="../js/amd/review.js"></script>
 <script src="../js/amd/group.js"></script>
 <script>
-  wdydfunGroupview.display();
+  fgfwebGroupview.display();
 </script>
 
 </body>
@@ -53,7 +53,7 @@ bodycontent = """
     <p><b>You need to enable Javascript to format this page...
       </b></p>
   </noscript>
-  <p>WDYDFun static group view</p>
+  <p>FGFweb static group view</p>
   $GROUPDESCR
 </div>
 
@@ -105,7 +105,7 @@ def prepare_content(handler, gcname, content):
     if "localhost" in handler.request.url:
         picurl = "../" + picurl
     else:
-        picurl = "http://www.wdydfun.com/" + picurl
+        picurl = "http://www.fgfweb.com/" + picurl
     content = re.sub('\$GROUPNAME', group.name, content)
     content = re.sub('\$GROUPDESCR', group.description, content)
     content = re.sub('\$IMGSRC', picurl, content)
@@ -138,7 +138,7 @@ class EmbedGroupScript(webapp2.RequestHandler):
     def get(self, gcname):
         gcname = gcname[0:gcname.index(".")]  #strip ".js" suffix
         try:
-            result = urlfetch.fetch("http://www.wdydfun.com/css/site.css",
+            result = urlfetch.fetch("http://www.fgfweb.com/css/site.css",
                                     method="GET",
                                     allow_truncated=False, 
                                     follow_redirects=True, 
@@ -153,7 +153,7 @@ class EmbedGroupScript(webapp2.RequestHandler):
         content = content.replace("\\\"", "\\\\\"")
         content = content.replace("\"", "\\\"")
         content = re.sub('\n', '', content)
-        content = "var WDYDFunEmbeddedGroupHTML = \"" + content + "\""
+        content = "var FGFwebEmbeddedGroupHTML = \"" + content + "\""
         self.response.headers['Content-Type'] = 'application/javascript; charset=UTF-8'
         self.response.out.write(content)
 

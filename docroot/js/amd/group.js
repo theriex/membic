@@ -405,7 +405,7 @@ app.group = (function () {
             "I'd like you to join \"" + wizgrp.name + "\" which is a review group I'm part of. Here's the description:\n\n" +
             wizgrp.description + "\n\n" +
             "I'm guessing you would have some great things to share, check it out and join if you can, it would be great to hear from you!\n\n" +
-            "http://www.wdydfun.com/groups/" + wizgrp.name_c + "\n\n" +
+            "http://www.fgfweb.com/groups/" + wizgrp.name_c + "\n\n" +
             "cheers,\n" +
             pen.name;
         if(!text) {
@@ -418,7 +418,7 @@ app.group = (function () {
 
 
     displayGroupMembers = function () {
-        var staturl = "http://www.wdydfun.com/groups/" + wizgrp.name_c;
+        var staturl = "http://www.fgfweb.com/groups/" + wizgrp.name_c;
         jt.out('groupmembersdiv', jt.tac2html(
             ["table", 
              [["tr",

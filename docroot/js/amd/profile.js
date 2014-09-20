@@ -35,7 +35,7 @@ app.profile = (function () {
         unspecifiedCityText = "City not specified",
         profeditfield = "",
         profpenref,
-        authtypes = { mid: "wdydfun",
+        authtypes = { mid: "fgfweb",
                       gsid: "Google+",
                       fbid: "Facebook",
                       twid: "Twitter",
@@ -276,7 +276,7 @@ app.profile = (function () {
 
 
     addMORAuth = function (domid, pen) {
-        jt.out(domid, "Logging in via wdydfun...");
+        jt.out(domid, "Logging in via fgfweb...");
         app.redirectToSecureServer({special: "nativeonly"});
     },
 
@@ -402,7 +402,7 @@ app.profile = (function () {
         mepen = app.pen.currPenRef().pen;
         subj = "Sharing experiences through reviews";
         body = "Hi,\n\n" +
-            "Please join wdydfun so I can read reviews from you";
+            "Please join FGFweb so I can read reviews from you";
         revchecks = document.getElementsByName("invrevcb");
         types = "";
         for(i = 0; i < revchecks.length; i += 1) {
@@ -1241,7 +1241,7 @@ app.profile = (function () {
                    ["span", {id: "profeditbspan"}]]],
                  ["div", {id: "profshoutdiv"},
                   ["div", {id: "shoutdiv", cla: "shoutout"}]],
-                 ["div", {id: "wdydfunblogdiv"},
+                 ["div", {id: "fgfweblogdiv"},
                   ["a", {href: "blogs/" + dispen.name_c,
                          onclick: jt.fs("window.open('blogs/" + 
                                         dispen.name_c + "')")},

@@ -372,7 +372,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
             return
         redurl = self.request.get('returnto')
         if not redurl:
-            redurl = "http://www.wdydfun.com"
+            redurl = "http://www.fgfweb.com"
         if "http%3A" in redurl:
             redurl = urllib.unquote(redurl)
         redurl += "#"
@@ -432,7 +432,7 @@ class GetLoginID(webapp2.RequestHandler):
         userlcase = username.lower()
         where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
         accounts = MORAccount.gql(where, userlcase, password)
-        redurl = "http://www.wdydfun.com?mid="
+        redurl = "http://www.fgfweb.com?mid="
         for account in accounts:
             redurl += str(account.key().id())
         self.redirect(redurl)
@@ -457,12 +457,12 @@ class MailCredentials(webapp2.RequestHandler):
             logging.info("mailing credentials to " + eaddr +
                          " usernames: " + usernames)
             # sender needs to be a valid email address.  This should
-            # change to noreply@wdydfun.com if traffic gets bad
+            # change to noreply@fgfweb.com if traffic gets bad
             if not ":8080" in self.request.url:
                 mail.send_mail(
-                    sender="wdydfun support <theriex@gmail.com>",
+                    sender="FGFweb support <theriex@gmail.com>",
                     to=eaddr,
-                    subject="wdydfun account login",
+                    subject="FGFweb account login",
                     body=content)
         writeJSONResponse("[]", self.response)
 

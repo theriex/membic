@@ -50,14 +50,14 @@ app.hinter = (function () {
     looktop = function () {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "To see someone's top 20 reviews, select the \"Top Rated\" tab on their profile."],
+                [["p", "To see someone's top 20 posts, select the \"Top Rated\" tab on their profile."],
                  ["div", {cla: "dismissradiodiv"},
-                  jt.checkbox("cbtip", "cbtip", "I know how to find a friend's top rated reviews. Don't display this message ever again.")],
+                  jt.checkbox("cbtip", "cbtip", "I know how to find a friend's top rated posts. Don't display this message ever again.")],
                  ["div", {cla: "tipsbuttondiv"},
                   ["button", {type: "button", id: "tipok",
                               onclick: jt.fs("app.hinter.tipok('looktop')")},
                    "OK"]]]];
-        html = app.layout.dlgwrapHTML("Top Rated Reviews", html);
+        html = app.layout.dlgwrapHTML("Top Rated Posts", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
@@ -76,19 +76,19 @@ app.hinter = (function () {
         var prefix = "javascript";
         prefix += ":";
         if(newwindow) {
-            return prefix + "(function(){window.open('http://www.wdydfun.com?newrev=&url='+encodeURIComponent(window.location.href));})();"; }
-        return prefix + "(function(){window.location.href='http://www.wdydfun.com?newrev=&url='+encodeURIComponent(window.location.href);})();";
+            return prefix + "(function(){window.open('http://www.fgfweb.com?newrev=&url='+encodeURIComponent(window.location.href));})();"; }
+        return prefix + "(function(){window.location.href='http://www.fgfweb.com?newrev=&url='+encodeURIComponent(window.location.href);})();";
     },
 
 
     ezlink = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "The wdydfun bookmarklet lets you kick off a review from any site.<br/>To install it, \"right click\" this link..."],
+                [["p", "The FGFweb bookmarklet lets you kick off a post from any site.<br/>To install it, \"right click\" this link..."],
                  ["p", {style: "padding:5px 40px; font-weight:bold;"},
                   ["&#x2192;&nbsp;",
                    ["a", {href: hideBookmarkletFromJSLint(true)},
-                    "wdydfun review"],
+                    "Post to FGFweb"],
                    "&nbsp;&#x2190;"]],
                  ["p",
                   ["...and add it to your bookmarks. ",
@@ -103,7 +103,7 @@ app.hinter = (function () {
                   ["button", {type: "button", id: "tipok",
                               onclick: jt.fs("app.hinter.tipok('ezlink')")},
                    "OK"]]]];
-        html = app.layout.dlgwrapHTML("Easy Review Link", html);
+        html = app.layout.dlgwrapHTML("Easy Posting Link", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
@@ -126,8 +126,8 @@ app.hinter = (function () {
     writerev = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "Reviewing something once a week will get you more followers, and build up a really cool review log.  There are definitely people here who are interested in your impressions.  Want to help them out?"],
-                 ["p", "If the past week was not worth mentioning, don't forget to review your favorite book, movie, album, restaurant or place to visit."],
+                [["p", "Posting once a week will get you more followers, and build up a really cool blog.  There are definitely people here who are interested in your impressions.  Want to help them out?"],
+                 ["p", "If the past week was not worth mentioning, don't forget to post your favorite book, movie, song, or place."],
                  //no permanent dismiss option. Write a review a week..
                  ["div", {cla: "tipsbuttondiv"},
                   [["button", {type: "button", id: "tipok",
@@ -136,8 +136,8 @@ app.hinter = (function () {
                    "&nbsp; &nbsp; &nbsp;",
                    ["button", {type: "button", id: "writerevbutton",
                                onclick: jt.fs("app.hinter.writeReview()")},
-                    "Write a Review"]]]]];
-        html = app.layout.dlgwrapHTML("Write a Review", html);
+                    "Post Something"]]]]];
+        html = app.layout.dlgwrapHTML("Post Something", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('writerevbutton').focus(); });
@@ -198,14 +198,14 @@ app.hinter = (function () {
     remrev = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "When you see an interesting review of something new, click its \"Remember\" button to keep a link to it in your remembered reviews."],
+                [["p", "When you see an interesting post, click its \"Remember\" button to keep a link to it in your remembered posts."],
                  ["div", {cla: "dismissradiodiv"},
-                  jt.checkbox("cbtip", "cbtip", "I know how to remember reviews. Don't display this message ever again.")],
+                  jt.checkbox("cbtip", "cbtip", "I know how to remember posts. Don't display this message ever again.")],
                  ["div", {cla: "tipsbuttondiv"},
                   ["button", {type: "button", id: "tipok",
                               onclick: jt.fs("app.hinter.tipok('remrev')")},
                    "OK"]]]];
-        html = app.layout.dlgwrapHTML("Remembered Reviews", html);
+        html = app.layout.dlgwrapHTML("Remembered Posts", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });
@@ -253,7 +253,7 @@ app.hinter = (function () {
     groups = function (displayCount) {
         var html;
         html = ["div", {cla: "hintercontentdiv"},
-                [["p", "Groups are themed collections of reviews. Join or create one from \"Groups\" tab on your profile."],
+                [["p", "Groups are themed collections of posts. Join or create one from \"Groups\" tab on your profile."],
                  ["div", {cla: "dismissradiodiv"},
                   jt.checkbox("cbtip", "cbtip", "I'm not interested in following or joining any groups. Don't display this message ever again.")],
                  ["div", {cla: "tipsbuttondiv"},
@@ -283,14 +283,14 @@ app.hinter = (function () {
     request = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "If you would like to request a review from someone you are following, click the link next to their name on your profile."],
+                [["p", "If you would like to request a post from someone you are following, click the link next to their name on your profile."],
                  ["div", {cla: "dismissradiodiv"},
-                  jt.checkbox("cbtip", "cbtip", "I know how to request a review from someone I'm following. Don't display this message ever again.")],
+                  jt.checkbox("cbtip", "cbtip", "I know how to request a post from someone I'm following. Don't display this message ever again.")],
                  ["div", {cla: "tipsbuttondiv"},
                   ["button", {type: "button", id: "tipok",
                               onclick: jt.fs("app.hinter.tipok('request')")},
                    "OK"]]]];
-        html = app.layout.dlgwrapHTML("Request a Review", html);
+        html = app.layout.dlgwrapHTML("Request a Post", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
                                function () {
                                    jt.byId('tipok').focus(); });

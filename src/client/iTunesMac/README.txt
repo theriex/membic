@@ -12,12 +12,12 @@ Description of files:
 --------------------
 
 Core script files:
-  - WDYDFunExport:
+  - FGFwebExport:
     Copy source songs for any playlist to another directory.
-  - WDYDFunPlaylist:
+  - FGFwebPlaylist:
     Upload ratings for songs in the list, Create/Update/Merge a
     playlist from specified keywords and rating level.
-  - WDYDFunReview:
+  - FGFwebReview:
     Keywords, comments, and star rating for current track
 
 Supporting script files:

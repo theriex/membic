@@ -112,7 +112,7 @@ return {
             jt.cookie("githubAuthState", state, 2);
             url = "https://github.com/login/oauth/authorize" +
                 "?client_id=be02d0691db630ee69c7" +
-                "&redirect_uri=" + jt.enc("http://www.wdydfun.com/") +
+                "&redirect_uri=" + jt.enc("http://www.fgfweb.com/") +
                 //no scope (public read-only access)
                 "&state=" + state;
             window.location.href = url; }

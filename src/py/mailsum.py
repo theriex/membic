@@ -115,7 +115,7 @@ def bump_referral(stat, entry, val):
         bump_referral_count(stat, entry + "SSI")
     elif is_content_linkback(val):
         bump_referral_count(stat, entry + "ContLB")
-    elif "wdydfun" not in val:
+    elif "fgfweb" not in val:
         # Write the whole url (without colons) as the identifier, thus
         # causing the activity display to get real ugly.  Then write
         # more logic in this method and fix the data to match.
@@ -318,34 +318,34 @@ def write_review_email_text_summary(review):
     if len(revtxt) > revtxtmax + 3:
         revtxt = revtxt[:revtxtmax] + "..."
     val = val.replace("$REVTEXT", "\n      ".join(textwrap.wrap(revtxt)))
-    val = val.replace("$REVLINK", "http://www.wdydfun.com/statrev/" +
+    val = val.replace("$REVLINK", "http://www.fgfweb.com/statrev/" +
                       str(review.key().id()))
     return val
 
 
 def write_summary_email_body(pen, reviews, tstr, prs, reqs):
-    sigline = "\nTo change your email preferences, click the main settings button on http://www.wdydfun.com\n\ncheers,\n-WDYDFun\n\n"
+    sigline = "\nTo change your mail preferences, click the settings button on http://www.fgfweb.com\n\ncheers,\n-FGFweb\n\n"
     body = "Hi " + pen.name + ",\n\n"
     if prs and len(prs) > 0:
-        body += "Thanks for reviewing! Your current and future followers" +\
+        body += "Thanks for posting! Your current and future followers" +\
             " appreciate it."
     else:
-        body += "Done anything fun recently?" +\
-            " Your friends would like to hear about it..."
+        body += "Experienced anything recently that you would tell a" +\
+            " friend about?"
     body += "\n\n" +\
-        "http://www.wdydfun.com to see group activity, top rated, " +\
-        "remembered, pre-reviews, and more." +\
+        "Go to http://www.fgfweb.com for group activity, messages" +\
+        " and top rated posts from friends." +\
         "\n\n" + req_summary_text(reqs)
     if not reviews or len(reviews) == 0:
         body += "Tragically, none of the people you are following have" +\
-            " posted any reviews since " + tstr + ". Please do what you" +\
+            " posted anything since " + tstr + ". Please do what you" +\
             " can to help them experience more of life. In the meantime," +\
-            " you can find interesting people to follow here:\n" +\
-            "\n    http://www.wdydfun.com/?command=penfinder\n\n"
+            " you can find other interesting people to follow here:\n" +\
+            "\n    http://www.fgfweb.com/?command=penfinder\n\n"
         return body + sigline
-    body += "Since " + tstr + ", friends you are following have posted " +\
-        str(len(reviews)) + " " +\
-        ("reviews" if len(reviews) > 1 else "review") + ":\n\n"
+    body += str(len(reviews)) + " " +\
+        ("post" if len(reviews) == 1 else "posts") +\
+        " from friends since " + tstr + ":\n\n"
     revtypes = [["book",     "Books"], 
                 ["movie",    "Movies"], 
                 ["video",    "Videos"], 
@@ -368,7 +368,7 @@ def write_summary_email_body(pen, reviews, tstr, prs, reqs):
 
 def mail_summaries(freq, thresh, request, response):
     tstr = ISO2dt(thresh).strftime("%d %B %Y")
-    subj = "WDYDFun " + freq + " friend activity since " + tstr
+    subj = "FGFweb " + freq + " friend activity since " + tstr
     logsum = "----------------------------------------\n"
     logsum += "Mail sent for " + freq + " activity since " + tstr + "\n"
     where = "WHERE summaryfreq = :1 AND lastsummary < :2"
@@ -393,7 +393,7 @@ def mail_summaries(freq, thresh, request, response):
                                                    prs, reqs)
                 if not request.url.startswith('http://localhost'):
                     mail.send_mail(
-                        sender="wdydfun support <theriex@gmail.com>",
+                        sender="FGFweb support <theriex@gmail.com>",
                         to=acc.email,
                         subject=subj,
                         body=content)
@@ -433,9 +433,9 @@ class MailSummaries(webapp2.RequestHandler):
             self.response.out.write("\n\nsummary:\n" + summary)
         else:
             mail.send_mail(
-                sender="WDYDFun Activity <wdydfunactivity@gmail.com>",
+                sender="FGFweb Activity <fgfwebactivity@gmail.com>",
                 to="theriex@gmail.com",
-                subject="wdydfun mail summaries",
+                subject="FGFweb mail summaries",
                 body=summary)
 
 
@@ -465,9 +465,9 @@ class SummaryForUser(webapp2.RequestHandler):
         # emaddr = self.request.get('emaddr')
         # if emaddr:
         #     mail.send_mail(
-        #         sender="WDYDFun Activity <wdydfunactivity@gmail.com>",
+        #         sender="FGFweb Activity <fgfwebactivity@gmail.com>",
         #         to=emaddr,
-        #         subject="wdydfun sender test email",
+        #         subject="FGFweb sender test email",
         #         body=content)
 
 

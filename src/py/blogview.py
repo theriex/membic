@@ -40,7 +40,7 @@ $CONTENT
 <script src="../js/amd/pen.js"></script>
 <script src="../js/amd/lcs.js"></script>
 <script>
-  wdydfunBlogview.display();
+  fgfwebLogview.display();
 </script>
 
 </body>
@@ -124,7 +124,7 @@ def prepare_content(handler, cpen, content):
     if "localhost" in handler.request.url:
         picurl = "../" + picurl
     else:
-        picurl = "http://www.wdydfun.com/" + picurl
+        picurl = "http://www.fgfweb.com/" + picurl
     content = re.sub('\$PENNAME', pen.name, content)
     content = re.sub('\$PAGEDESCR', make_page_desc(handler, pen), content)
     content = re.sub('\$IMGSRC', picurl, content)
@@ -162,7 +162,7 @@ class EmbedBlogScript(webapp2.RequestHandler):
     def get(self, pname):
         pname = pname[0:pname.index(".")]  #strip ".js" suffix
         try:
-            result = urlfetch.fetch("http://www.wdydfun.com/css/site.css",
+            result = urlfetch.fetch("http://www.fgfweb.com/css/site.css",
                                     method="GET",
                                     allow_truncated=False, 
                                     follow_redirects=True, 
@@ -177,7 +177,7 @@ class EmbedBlogScript(webapp2.RequestHandler):
         content = content.replace("\\\"", "\\\\\"")
         content = content.replace("\"", "\\\"")
         content = re.sub('\n', '', content)
-        content = "var WDYDFunEmbeddedBlogHTML = \"" + content + "\""
+        content = "var FGFwebEmbeddedBlogHTML = \"" + content + "\""
         self.response.headers['Content-Type'] = 'application/javascript; charset=UTF-8'
         self.response.out.write(content)
 

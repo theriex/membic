@@ -3,7 +3,7 @@
 -- also provide an m3u file
 
 -- working data
-property wdtitle : "WDYDFunExport"
+property wdtitle : "FGFwebExport"
 property wdlist : null
 property wdfolder : null
 property newline : "

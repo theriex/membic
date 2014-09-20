@@ -5,7 +5,7 @@ var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
 
 //This is a degenerate module used for the static blog view.  Don't model it.
-var wdydfunBlogview = (function () {
+var fgfwebLogview = (function () {
     "use strict";
 
 
@@ -68,7 +68,7 @@ var wdydfunBlogview = (function () {
                 ["&nbsp;",
                  ["a", {href: "#embed", id: "embedlink",
                         title: "Embed dynamic blog elements into another site",
-                        onclick: jt.fs("wdydfunBlogview.showEmbed")},
+                        onclick: jt.fs("fgfwebLogview.showEmbed")},
                   ["span", {cla: "embedlinktext"}, "{embed}"]],
                  ["a", {href: rssurl, id: "rsslink",
                         title: "RSS feed for " + jt.ndq(pen.name),
@@ -100,7 +100,7 @@ var wdydfunBlogview = (function () {
                   [["div", {id: "blognamediv"},
                     [["span", {id: "penhnamespan"},
                       ["a", {href: "#recent",
-                             onclick: jt.fs("wdydfunBlogview.showRecent()"),
+                             onclick: jt.fs("fgfwebLogview.showRecent()"),
                              title: "Recent reviews"},
                        pen.name]],
                      "&nbsp;",
@@ -108,7 +108,7 @@ var wdydfunBlogview = (function () {
                       blogShareButtonsHTML()]]],
                    ["div", {id: "blogbadgesdiv"},
                     app.profile.earnedBadgesHTML(
-                        pen, "wdydfunBlogview.showTop")],
+                        pen, "fgfwebLogview.showTop")],
                    ["div", {id: "blogshoutoutdiv"},
                     jt.linkify(pen.shoutout)]]]]];
         jt.out('siteproflinkdiv', app.layout.rootLink(jt.tac2html(html)));
@@ -127,7 +127,7 @@ var wdydfunBlogview = (function () {
     fetchAndInstantiate = function (type, trevs, i) {
         app.lcs.getFull("rev", trevs[i], function (revref) {
             trevs[i] = revref.rev;
-            wdydfunBlogview.showTop(type); });
+            fgfwebLogview.showTop(type); });
     },
 
 
@@ -158,7 +158,7 @@ var wdydfunBlogview = (function () {
             type = window.location.href.slice(idx + 1); }
         if(type && type !== "recent") {
             type = app.review.getReviewTypeByValue(type);
-            wdydfunBlogview.showTop(type.type); }
+            fgfwebLogview.showTop(type.type); }
     },
 
 
@@ -192,7 +192,7 @@ var wdydfunBlogview = (function () {
                  ["div",
                   ["Follow me on ",
                    ["a", {href: profurl},
-                    "WDYDFun"],
+                    "FGFweb"],
                    "!"]]]];
         jt.out('profcontentdiv', app.layout.rootLink(jt.tac2html(html)));
     },
@@ -263,7 +263,7 @@ return {
 
     showEmbed: function () {
         app.layout.showEmbed("emblog/" + pen.name_c + ".js", 
-                             "wdydfunblog",
+                             "fgfweblog",
                              "displayBlog()");
     }
 

@@ -259,7 +259,7 @@ return {
 
     getRevTypeImage: function (review) {
         var type = app.review.getReviewTypeByValue(review.revtype);
-        return "http://www.wdydfun.com/img/" + type.img;
+        return "http://www.fgfweb.com/img/" + type.img;
     },
 
 
@@ -285,7 +285,7 @@ return {
 
 
     getRevPermalink: function (review) {
-        return "http://www.wdydfun.com/statrev/" + 
+        return "http://www.fgfweb.com/statrev/" + 
             jt.instId(review);
     },
 

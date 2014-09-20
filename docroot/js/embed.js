@@ -1,17 +1,17 @@
-/*global window: false, jtminjsDecorateWithUtilities: false, document: false, jt: false, app: false, wdydfunBlogview: false, WDYDFunEmbeddedBlogHTML: false, wdydfunGroupview: false, WDYDFunEmbeddedGroupHTML: false */
+/*global window: false, jtminjsDecorateWithUtilities: false, document: false, jt: false, app: false, fgfwebLogview: false, FGFwebEmbeddedBlogHTML: false, fgfwebGroupview: false, FGFwebEmbeddedGroupHTML: false */
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 //Stub module for including static blog or group content into any page.
 //app, jt globals declared by blogview.js or groupview.js
 
-var wdydfunEmbed = (function () {
+var fgfwebEmbed = (function () {
     "use strict";
 
     ////////////////////////////////////////
     // closure variables
     ////////////////////////////////////////
 
-    var siteroot = "http://www.wdydfun.com",
+    var siteroot = "http://www.fgfweb.com",
 
 
     ////////////////////////////////////////
@@ -55,11 +55,11 @@ return {
             siteroot = obj.siteroot; }
         if(loadScripts(["jtmin.js", "amd/blogview.js", "amd/layout.js",
                         "amd/profile.js", "amd/review.js", "amd/pen.js",
-                        "amd/lcs.js"], wdydfunEmbed.displayBlog)) {
+                        "amd/lcs.js"], fgfwebEmbed.displayBlog)) {
             jtminjsDecorateWithUtilities(jt);
-            jt.out("wdydfunblog", WDYDFunEmbeddedBlogHTML);
+            jt.out("fgfweblog", FGFwebEmbeddedBlogHTML);
             app.layout.setSiteRoot(siteroot);
-            wdydfunBlogview.display("headless"); }
+            fgfwebLogview.display("headless"); }
     },
 
 
@@ -68,11 +68,11 @@ return {
             siteroot = obj.siteroot; }
         if(loadScripts(["jtmin.js", "amd/groupview.js", "amd/layout.js",
                         "amd/profile.js", "amd/review.js", "amd/pen.js",
-                        "amd/lcs.js"], wdydfunEmbed.displayGroup)) {
+                        "amd/lcs.js"], fgfwebEmbed.displayGroup)) {
             jtminjsDecorateWithUtilities(jt);
-            jt.out("wdydfungroup", WDYDFunEmbeddedGroupHTML);
+            jt.out("fgfwebgroup", FGFwebEmbeddedGroupHTML);
             app.layout.setSiteRoot(siteroot);
-            wdydfunGroupview.display("headless"); }
+            fgfwebGroupview.display("headless"); }
     }
 
 };  //end of returned functions

@@ -1,4 +1,4 @@
-property wdtitle : "WDYDFunSettings"
+property wdtitle : "FGFwebSettings"
 property wdconf : null
 property revscript : null
 property newline : "
@@ -15,7 +15,7 @@ end loadScript
 
 on getConfigFileMacName()
 	tell application "Finder"
-		set macpathstr to (container of (path to me) as text) & "WDYDFun.conf"
+		set macpathstr to (container of (path to me) as text) & "FGFweb.conf"
 	end tell
 	return macpathstr
 end getConfigFileMacName
@@ -24,13 +24,13 @@ end getConfigFileMacName
 on defaultConfig()
 	set filtopts1 to {"Social", "Dining"}
 	set notopts1 to {"Heavy", "Attention"}
-	set pl1 to {plname:"WDYDFun Living Room", filtopts:filtopts1, notopts:notopts1, minrat:50}
+	set pl1 to {plname:"FGFweb Living Room", filtopts:filtopts1, notopts:notopts1, minrat:50}
 	set filtopts2 to {"Travel", "Attention"}
 	set notopts2 to {"Dining", "Social"}
-	set pl2 to {plname:"WDYDFun Phone", filtopts:filtopts2, notopts:notopts2, minrat:70}
+	set pl2 to {plname:"FGFweb Phone", filtopts:filtopts2, notopts:notopts2, minrat:70}
 	set filtopts3 to {"Dance", "Social"}
 	set notopts3 to {"Attention"}
-	set pl3 to {plname:"WDYDFun Party", filtopts:filtopts3, notopts:notopts3, minrat:40}
+	set pl3 to {plname:"FGFweb Party", filtopts:filtopts3, notopts:notopts3, minrat:40}
 	set defplists to {pl1, pl2, pl3}
 	set defconf to {username:"", token:"", pname:"", penid:"", defreq:7, toff:0, plists:defplists}
 	return defconf
@@ -76,7 +76,7 @@ end resetLoginInfo
 
 on verifyUsername()
 	if (username of wdconf) is equal to "" then
-		set ptxt to "Username to connect to WDYDFun.com?"
+		set ptxt to "Username to connect to fgfweb.com?"
 		set dlgres to display dialog ptxt default answer ""
 		resetLoginInfo()
 		set username of wdconf to text returned of dlgres
@@ -85,7 +85,7 @@ end verifyUsername
 
 
 on getAccessToken()
-	set ptxt to "WDYDFun.com password for " & (username of wdconf) & "?"
+	set ptxt to "fgfweb.com password for " & (username of wdconf) & "?"
 	set result to display dialog ptxt default answer "" with hidden answer
 	set pass to text returned of result
 	set pdat to "user=" & (username of wdconf) & "&pass=" & pass & "&format=record"
@@ -103,7 +103,7 @@ on fetchPenNames()
 		return ""
 	end if
 	set command to Â
-		"curl \"http://www.wdydfun.com/mypens?am=mid" & "&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&format=record\""
+		"curl \"http://www.fgfweb.com/mypens?am=mid" & "&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&format=record\""
 	set rdata to do shell script command
 	return rdata
 end fetchPenNames
@@ -217,7 +217,7 @@ on describeConfig()
 		writeConfig()
 		verifyServerAccess("")
 	end try
-	set revscript to loadScript("WDYDFunReview")
+	set revscript to loadScript("FGFwebReview")
 	verifyDefaultFrequency()
 end describeConfig
 

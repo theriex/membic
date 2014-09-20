@@ -37,7 +37,7 @@ app.facebook = (function () {
                                          okfstr, cancelfstr) {
         var msg, canceltd = "", html;
         if(loginResponse.status === "not_authorized") {
-            msg = "You have not yet authorized wdydfun," +
+            msg = "You have not yet authorized FGFweb," +
                 " click to authorize..."; }
         else {
             msg = "You are not currently logged into Facebook," +
@@ -149,24 +149,11 @@ app.facebook = (function () {
     },
 
 
-    revaction = function (revtype) {
-        switch(revtype) {
-        case 'book': return "I read...";
-        case 'movie': return "I watched...";
-        case 'video': return "I watched...";
-        case 'music': return "I listened to...";
-        case 'food': return "I ate...";
-        case 'drink': return "I drank...";
-        case 'activity': return "I checked out...";
-        default: return "I ..."; }
-    },
-
-
     getFacebookReviewImage = function (review) {
         var fbimage = app.services.getRevTypeImage(review);
         fbimage = fbimage.slice(0, fbimage.length - 6) + "Pic2.png";
         if(review.revpic) {  //overrides default image
-            fbimage = "http://www.wdydfun.com/revpic?revid=" + 
+            fbimage = "http://www.fgfweb.com/revpic?revid=" + 
                 jt.instId(review); }
         if(review.imguri) {  //overrides manual image
             fbimage = review.imguri; }
@@ -176,7 +163,7 @@ app.facebook = (function () {
 
     //People on facebook expect to go directly through to the video or
     //whatever that is being posted.  Making them do an extra click
-    //off the statrev page eliminates wdydfun as a viable option for
+    //off the statrev page eliminates FGFweb as a viable option for
     //sharing the way facebook users are accustomed to.  If there is a
     //URL to click through to, then use that as the main link
     //regardless of the review type.
@@ -194,14 +181,14 @@ app.facebook = (function () {
         fbacturl = fblinkurl = app.services.getRevPermalink(review);
         if(useDirectLinkToContent(review)) {
             fblinkurl = review.url; }
-        fblinktext = "wdydfun this week? " + revaction(review.revtype);
+        fblinktext = "FGFweb " + review.revtype + " post";
         fbtitle = app.services.getRevStarsTxt(review, "unicode") + " " +
             app.services.getRevTitleTxt(review);
         fbtext = review.text;
         if(review.keywords) {
             fbtext += " [" + review.keywords + "]"; }
-        fbmessage = "wdydfun " + review.revtype + " review";
-        fbprompt = "Check this out if...";
+        fbmessage = "FGFweb " + review.revtype + " post";
+        fbprompt = "For those of you not following me on FGFweb...";
         FB.ui({ method: 'feed',  //use the feed dialog...
                 message: fbmessage,  //not part of final post
                 name: fblinktext,
@@ -209,7 +196,7 @@ app.facebook = (function () {
                 description: fbtext,
                 link: fblinkurl,
                 picture: fbimage,
-                actions: [ { name: 'See My Review', link: fbacturl } ],
+                actions: [ { name: 'See My Post', link: fbacturl } ],
                 user_message_prompt: fbprompt },
               function (response) {
                   if(response && response.post_id) {

@@ -400,7 +400,7 @@ class UploadReviewPic(webapp2.RequestHandler):
                         errmsg = "Picture upload failed: " + str(e)
         redurl = self.request.get('returnto')
         if not redurl:
-            redurl = "http://www.wdydfun.com#review"
+            redurl = "http://www.fgfweb.com#review"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
         if errmsg:

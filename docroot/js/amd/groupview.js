@@ -5,7 +5,7 @@ var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
 
 //This is a degenerate module used for the static view.  Don't model it.
-var wdydfunGroupview = (function () {
+var fgfwebGroupview = (function () {
     "use strict";
 
     ////////////////////////////////////////
@@ -45,7 +45,7 @@ var wdydfunGroupview = (function () {
             ["&nbsp;",
              ["a", {href: "#embed", id: "embedlink",
                     title: "Embed dynamic group elements into another site",
-                    onclick: jt.fs("wdydfunGroupview.showEmbed")},
+                    onclick: jt.fs("fgfwebGroupview.showEmbed")},
               ["span", {cla: "embedlinktext"}, "{embed}"]],
              ["a", {href: rssurl, id: "rsslink",
                     title: "RSS feed for " + jt.ndq(group.name),
@@ -65,7 +65,7 @@ var wdydfunGroupview = (function () {
                   [["span", {id: "penhnamespan"},
                     group.name],
                    ["a", {href: "../#view=group&groupid=" + groupid,
-                          title: "WDYDFun Group", id: "sgrpjoinlink"},
+                          title: "FGFweb Group", id: "sgrpjoinlink"},
                     "Join"]]];
         html = ["div", {cla: "sgrpdiv"},
                 [["div", {cla: "getyoursdiv"},
@@ -98,7 +98,7 @@ var wdydfunGroupview = (function () {
                  ["div", {id: "sgrptagline"},
                   ["Go to ",
                    ["a", {href: "../#view=group&groupid=" + jt.instId(group)},
-                    "WDYDFun"],
+                    "FGFweb"],
                    " for membership information"]]]];
         jt.out('groupcontentdiv', app.layout.rootLink(jt.tac2html(html)));
     },
@@ -143,7 +143,7 @@ return {
 
     showEmbed: function () {
         app.layout.showEmbed("emgroup/" + jt.canonize(group.name) + ".js",
-                             "wdydfungroup",
+                             "fgfwebgroup",
                              "displayGroup()");
     }
 

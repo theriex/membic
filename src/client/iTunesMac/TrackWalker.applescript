@@ -18,7 +18,7 @@ end loadScript
 
 -- Main script
 display dialog "This script walks all the tracks in iTunes and syncs up track rating info with the rating info saved in the comments. If you open up a new iTunes with all the files in your collection, this will get the iTunes ratings filled out for you with whatever was previously saved in the comment text.  If you have ratings in iTunes, they will overwrite what is saved in the comment text. The standard comment structure looks like" & newline & newline & "[rating:60][keyw1,key2...] Additional comment text" & newline & newline & "This walks all the tracks in iTunes which can take a while, and there is no progress indicator."
-set revscript to loadScript("WDYDFunReview")
+set revscript to loadScript("FGFwebReview")
 tell application "iTunes"
 	repeat with ct in every track
 		set td to revscript's parseTrackData(comment of ct)

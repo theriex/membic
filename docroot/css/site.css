@@ -71,8 +71,7 @@ img { border:0px; }
 .topnavitemdiv { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
 .documentcontentsdiv { padding:0px 10px 10px 20px; }
-.brandspan { font-family:"Penscript", sans-serif; 
-  font-size:small; font-weight:bold; }
+.brandspan { sans-serif; font-size:small; font-weight:bold; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
 .aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutstatementsdiv { padding:0px 10px; font-size:medium; }
@@ -199,7 +198,7 @@ img { border:0px; }
 #profshoutdiv { padding:0px; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
-#wdydfunblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
+#fgfweblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
 #srchpenslinkdiv, #srchgroupslinkdiv { 
   font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }

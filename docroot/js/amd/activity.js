@@ -649,7 +649,7 @@ app.activity = (function () {
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"},"Making Introductions For You"],
                 ["p",
-                 "To help start things off, wdydfun is now introducing you to some active members you might enjoy following. You can change who you are following anytime from your profile page."],
+                 "To help start things off, FGFweb is now introducing you to some active members you might enjoy following. You can change who you are following anytime from your profile page."],
                 ["div", {cla: "headingtxt"},
                  ["button", {type: "button", id: "introduceok",
                              onclick: jt.fs("app.hinter.promptToReview()")},

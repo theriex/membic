@@ -1,5 +1,4 @@
-/*global alert: false, setTimeout: false, window: false, document:
- * false, history: false, app: false, jt: false */
+/*global alert: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -150,7 +149,7 @@ app.login = (function () {
     emailStatementsRow = function () {
         var html = ["tr",
                     ["td", {colspan: 3, align: "center"},
-                     ["p", "wdydfun will <em>not</em> share your email " +
+                     ["p", "FGFweb will <em>not</em> share your email " +
                        " or spam you."]]];
         html = jt.tac2html(html);
         return html;
@@ -456,7 +455,7 @@ app.login = (function () {
         if(params.loginerr) {
             jt.out('loginstatdiv', fixServerText(params.loginerr)); }
         if(params.special === "nativeonly") {
-            jt.out('nativelogintitlediv', "Native wdydfun login:");
+            jt.out('nativelogintitlediv', "Native FGFweb login:");
             jt.out('altauthinstrdiv', "");
             jt.out('altauthmethods', ""); }
         else {  //regular login
@@ -1008,7 +1007,7 @@ return {
                     "Account settings"]; }
         else {  //not logged in natively
             if(pen.mid && pen.mid !== "0") {  //have native login authorization
-                msgtxt = "You need to sign in to wdydfun directly to change" +
+                msgtxt = "You need to sign in to FGFweb directly to change" +
                     " your account settings.\\n" + 
                     "Pardon the inconvenience, it\\'s a security thing...";
                 html = ["a", {href: "#AccountSettings", id: "accset",
@@ -1017,7 +1016,7 @@ return {
             else {
                 msgtxt = "To access cool features like a weekly activity" +
                     " summary, you first\\n" + 
-                    "need to authorize wdydfun access for " + pen.name + ".";
+                    "need to authorize FGFweb access for " + pen.name + ".";
                 html = ["a", {href: "#AccountSettings", id: "accset",
                               onclick: jt.fs("alert('" + msgtxt + "')")},
                         "Account settings"]; } }

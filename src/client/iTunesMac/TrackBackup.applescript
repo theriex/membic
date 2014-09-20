@@ -1,14 +1,14 @@
--- choose to backup (write) or restore (read) rating info from flat file
+FGFweb-- choose to backup (write) or restore (read) rating info from flat file
 
 -- working data
-property wdtitle : "WDYDFunBackup"
+property wdtitle : "FGFwebBackup"
 property wdaction : null
 property wdfolder : null
-property titledelim : "[WDYDFunTitle]"
-property artistdelim : "[WDYDFunArtist]"
-property albumdelim : "[WDYDFunAlbum]"
-property ratingdelim : "[WDYDFunRating]"
-property commentdelim : "[WDYDFunComment]"
+property titledelim : "[FGFwebTitle]"
+property artistdelim : "[FGFwebArtist]"
+property albumdelim : "[FGFwebAlbum]"
+property ratingdelim : "[FGFwebRating]"
+property commentdelim : "[FGFwebComment]"
 property wdttl : 0
 property newline : "
 "

@@ -19,13 +19,13 @@ def rss_title(review, checked):
     return title
 
 def item_url(review):
-    url = "http://www.wdydfun.com/statrev/" + str(review.key().id())
+    url = "http://www.fgfweb.com/statrev/" + str(review.key().id())
     return url
 
 
 def rss_content(penid, title, reviews, checked, following):
-    url = "http://www.wdydfun.com/rssact?pen=" + str(penid)
-    email = "robot@wdydfun.com"
+    url = "http://www.fgfweb.com/rssact?pen=" + str(penid)
+    email = "robot@fgfweb.com"
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
     # claimed by the site to avoid unintended content distribution.
@@ -93,7 +93,7 @@ class ActivityRSS(webapp2.RequestHandler):
         penid = intz(self.request.get('pen'))
         relids = outbound_relids_for_penid(penid)
         checked, reviews = review_activity_search("", "", relids)
-        title = "WDYDfun reviews from friends"
+        title = "FGFweb reviews from friends"
         content = rss_content(penid, title, reviews, checked, len(relids))
         #heard there were potential issues with "application/rss+xml"
         #so modeled what craigslist is doing..
@@ -107,7 +107,7 @@ class PenNameRSS(webapp2.RequestHandler):
         penid = intz(self.request.get('pen'))
         pen = PenName.get_by_id(penid);
         reviews = fetch_blog_reviews(pen).objects;
-        title = "WDYDfun reviews from " + pen.name
+        title = "FGFweb reviews from " + pen.name
         content = rss_content(penid, title, reviews, 0, 0)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
@@ -119,7 +119,7 @@ class GroupRSS(webapp2.RequestHandler):
         groupid = intz(self.request.get('group'))
         group = Group.get_by_id(groupid)
         reviews = recent_group_reviews(group).objects;
-        title = "WDYDfun reviews for " + group.name
+        title = "FGFweb reviews for " + group.name
         content = rss_content(groupid, title, reviews, 0, 0)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype

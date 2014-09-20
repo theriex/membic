@@ -265,7 +265,7 @@ class UploadProfPic(webapp2.RequestHandler):
         redurl = self.request.get('returnto')
         if not redurl:
             logging.info("UploadProfPic using default returnto");
-            redurl = "http://www.wdydfun.com#profile"
+            redurl = "http://www.fgfweb.com#profile"
         redurl = urllib.unquote(redurl)
         redurl = str(redurl)
         if errmsg:

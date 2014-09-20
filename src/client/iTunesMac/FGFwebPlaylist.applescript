@@ -1,4 +1,4 @@
-property wdtitle : "WDYDFunPlaylist"
+property wdtitle : "FGFwebPlaylist"
 property revscript : null
 property confscript : null
 property wdconf : null
@@ -66,7 +66,7 @@ end verifyPlaylistDefinition
 
 
 on selectRemovePlaylists()
-	set ptxt to "Choose WDYDFun playlist to delete"
+	set ptxt to "Choose FGFweb playlist to delete"
 	set plnames to {}
 	repeat with pldef in (plists of wdconf)
 		set end of plnames to (plname of pldef)
@@ -97,7 +97,7 @@ on selectPlaylist()
 		set end of plnames to (plname of pldef)
 	end repeat
 	set end of plnames to clearlistname
-	set ptxt to "Choose WDYDFun playlist to update"
+	set ptxt to "Choose FGFweb playlist to update"
 	set plname to choose from list plnames with prompt ptxt with title wdtitle
 	if plname is false then
 		return false
@@ -154,7 +154,7 @@ on writePlaylistUploadScript(plname, fname)
 					end if
 					write datline & newline to wf
 					write "print data" & newline to wf
-					write "conn = httplib.HTTPConnection(\"www.wdydfun.com\")" & newline to wf
+					write "conn = httplib.HTTPConnection(\"www.fgfweb.com\")" & newline to wf
 					write "conn.request(\"POST\", \"/newrev\", data, headers)" & newline to wf
 					write "response = conn.getresponse()" & newline to wf
 					write "print response.status, response.reason" & newline to wf
@@ -195,9 +195,9 @@ on uploadPlaylistReviewData(pldef)
 	end if
 	-- at the time of this comment, ~/Library/Caches/TemporaryItems/
 	set tempfolderstr to ((path to temporary items from user domain) as string)
-	set ups to tempfolderstr & "WDYDFunUpload.py"
+	set ups to tempfolderstr & "FGFwebUpload.py"
 	writePlaylistUploadScript((plname of pldef), ups)
-	set outfile to tempfolderstr & "WDYDFunUpload.out"
+	set outfile to tempfolderstr & "FGFwebUpload.out"
 	-- run the upload script in the background
 	set command to "/usr/bin/python " & (quoted form of (POSIX path of ups)) & " &> " & (quoted form of (POSIX path of outfile)) & " &"
 	set sorted to do shell script command
@@ -341,8 +341,8 @@ end updatePlaylist
 
 
 -- Main script
-set revscript to loadScript("WDYDFunReview")
-set confscript to loadScript("WDYDFunSettings")
+set revscript to loadScript("FGFwebReview")
+set confscript to loadScript("FGFwebSettings")
 confscript's loadConfig()
 set revscript's defreq to defreq of confscript's wdconf
 set wdconf to confscript's wdconf
