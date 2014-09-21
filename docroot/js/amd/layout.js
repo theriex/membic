@@ -300,7 +300,8 @@ return {
         localDocLinks();
         fullContentHeight();
         fixTextureCover();
-        initSlideshow();
+        //The slideshow is no longer a great intro description
+        //initSlideshow();
     },
 
 

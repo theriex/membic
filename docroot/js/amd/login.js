@@ -376,15 +376,14 @@ app.login = (function () {
                 if(html) {
                     html += ", "; }
                 else {
-                    html = jt.byId('introverview').innerHTML + 
-                        "<div id=\"taglinedetpensdiv\">Join "; }
+                    html = "Join "; }
                 html += jt.tac2html(
                     ["a", {href: "blogs/" + pens[i].name_c,
                            onclick: jt.fs("window.open('blogs/" + 
                                           pens[i].name_c + "')")},
                      pens[i].name]); } }
         html += "</div>";
-        jt.out('introverview', html);
+        jt.out('taglinedetpensdiv', html);
         app.layout.adjust();
     },
 
@@ -410,23 +409,20 @@ app.login = (function () {
         if(!revroll.revs || revroll.revs.length === 0) {
             jt.log("no activity roll revs to display");
             return; }
-        //verify the output area is initialized
-        if(!jt.byId('revrolldiv')) {
-            jt.out('introverview', jt.byId('introverview').innerHTML +
-                   "<div id=\"revrolldiv\"></div>"); }
-        for(i = 0; i < revroll.revs.length && !displayed; i += 1) {
-            //reset index if past end
-            if(revroll.index >= revroll.revs.length) {
-                revroll.index = 0; }
-            //display review if it meeds the criteria
-            rev = revroll.revs[revroll.index];
-            if(jt.instId(rev) && rev.text.length > 255) {
-                jt.out('revrolldiv', app.review.staticReviewDisplay(
-                    revroll.revs[revroll.index], null, "noresp"));
-                app.layout.adjust();
-                displayed = true; }
-            revroll.index += 1; }
-        setTimeout(displayReviewActivityRoll, 4000);
+        if(jt.byId('revrolldiv')) {  //stop id div goes away
+            for(i = 0; i < revroll.revs.length && !displayed; i += 1) {
+                //reset index if past end
+                if(revroll.index >= revroll.revs.length) {
+                    revroll.index = 0; }
+                //display review if it meeds the criteria
+                rev = revroll.revs[revroll.index];
+                if(jt.instId(rev) && rev.text.length > 255) {
+                    jt.out('revrolldiv', app.review.staticReviewDisplay(
+                        revroll.revs[revroll.index], null, "noresp"));
+                    app.layout.adjust();
+                    displayed = true; }
+                revroll.index += 1; }
+            setTimeout(displayReviewActivityRoll, 4000); }
     },
 
 
@@ -442,6 +438,19 @@ app.login = (function () {
                    //this is a secondary display detail, but don't wait too
                    //long or it just makes the site look slow.
                    900);
+    },
+
+
+    addReviewRollIfSpace = function () {
+        var logodim = {w: 303}, revdim = {w: 400}, minsep = 40;
+        if(!jt.byId('enticediv')) {
+            if(app.winw > logodim.w + revdim.w + minsep) {  //space available
+                jt.out('slidesdiv', jt.tac2html(
+                    ["div", {id:"enticediv"},
+                     [["div", {id:"taglinedetpensdiv"}],
+                      ["div", {id:"revrolldiv"}]]]));
+                addTaglineDetails();
+                addReviewActivityRoll(); } }
     },
 
 
@@ -479,8 +488,7 @@ app.login = (function () {
         if(authname) {
             jt.byId('userin').value = authname; }
         expandLoginFormLayoutIfSpace();
-        addTaglineDetails();
-        addReviewActivityRoll();
+        addReviewRollIfSpace();
         app.layout.adjust();
         setFocusOnUsernameInput();
     },

@@ -54,7 +54,7 @@ img { border:0px; }
 .mascotimg { vertical-align:middle; width:29px; height:14px; }
 #topsectiondiv { padding:0px 10px;
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
-#logodiv { position:absolute; left:0px; top:0px; }
+#logodiv { position:absolute; left:50px; top:0px; }
 #topworkdiv { }
 #slidesdiv { }
 .slideimglowfuncb { position:absolute; left:500px; }
@@ -96,8 +96,9 @@ img { border:0px; }
 #introverviewtaglinediv { position:absolute; left:60px; top:227px; 
  font-size:small; }
 #taglinedetpensdiv { font-size:small; font-style:italic; }
+#enticediv { position:absolute; left:350px; top:0px; }
+#taglinedetpensdiv { padding:10px 10px 0px 0px; }
 #revrolldiv { padding:10px 0px 0px 0px; height:200px; overflow-y:scroll; }
-
 .penfont, #penhnamespan { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
  }
