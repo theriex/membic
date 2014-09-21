@@ -442,7 +442,7 @@ app.login = (function () {
 
 
     addReviewRollIfSpace = function () {
-        var logodim = {w: 303}, revdim = {w: 400}, minsep = 40;
+        var logodim = {w: 247+50}, revdim = {w: 400}, minsep = 40;
         if(!jt.byId('enticediv')) {
             if(app.winw > logodim.w + revdim.w + minsep) {  //space available
                 jt.out('slidesdiv', jt.tac2html(
@@ -659,8 +659,8 @@ return {
                     ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
             if(app.winw >= app.minSideBySide) {
                 jt.byId('topworkdiv').style.marginLeft = "280px";
-                jt.setdims('logoimg', {w: 243, h: 120});
-                jt.setdims('logodiv', {w: 243, h: 120}); }
+                jt.setdims('logoimg', {w: 128, h: 120});
+                jt.setdims('logodiv', {w: 128, h: 120}); }
             else { 
                 //small 100x49 logo just makes things crowded and confused.
                 //move logodiv out of the way of clicks
