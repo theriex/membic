@@ -1524,9 +1524,9 @@ return {
             style = "color:#FFD100";
             imgsrc = "writereviewsel.png"; }
         html = ["div", {cla: "topnavitemdiv", style: style },
-                jt.imgntxt(imgsrc, "Post and Share",
+                jt.imgntxt(imgsrc, "",  //Post and Share...
                            "app.review.cancelReview(true)", "#Write",
-                           "Post something you've experienced and share it with friends",
+                           "Post an experience and share with friends",
                            "navico", "navrev", "app.review.mroll")];
         return jt.tac2html(html);
     },
