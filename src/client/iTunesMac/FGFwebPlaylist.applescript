@@ -140,7 +140,7 @@ on writePlaylistUploadScript(plname, fname)
 				if (rating of currtrack) > 0 then
 					set tdata to revscript's parseTrackData(comment of currtrack)
 					set keycsv to (ptdkeys of tdata)
-					set datline to "data = \"am=mid&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&penid=" & (penid of wdconf) & "&revtype=music&title=\" + urllib.quote(\"" & (name of currtrack) & "\") + \"&artist=\" + urllib.quote(\"" & (artist of currtrack) & "\") + \"&rating=" & (rating of currtrack) & "&keywords=\" + urllib.quote(\"" & keycsv & "\") + \"&mode=batch\""
+					set datline to "data = \"am=mid&an=" & (email of wdconf) & "&at=" & (token of wdconf) & "&penid=" & (penid of wdconf) & "&revtype=music&title=\" + urllib.quote(\"" & (name of currtrack) & "\") + \"&artist=\" + urllib.quote(\"" & (artist of currtrack) & "\") + \"&rating=" & (rating of currtrack) & "&keywords=\" + urllib.quote(\"" & keycsv & "\") + \"&mode=batch\""
 					-- text may contain newlines so have to triple quote
 					-- empty string triple quotes work badly, so check first
 					if (((ptdcmt of tdata) is not missing value) and (length of (ptdcmt of tdata) > 0)) then

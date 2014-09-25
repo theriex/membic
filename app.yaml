@@ -24,7 +24,7 @@ handlers:
 ## authparams:
 ##   am: authentication method: "mid", "gsid", "fbid", "twid"
 ##   at: authentication token (from local or supported external source)
-##   an: authentication name (username if native auth, whatever otherwise)
+##   an: authentication name (email if native auth, or 3rd party id info)
 ##
 ## Queries may return a base64 cursor value as the last element.
 ## Optional parameters are listed in parentheses
@@ -40,7 +40,7 @@ handlers:
   script: src.py.moracct.app
 
 ## Read native credentials and redirect back
-## POST params: userin, passin (,returnto, command, view, prof/pen/revid)
+## POST params: emailin, passin (,returnto, command, view, prof/pen/revid)
 - url: /redirlogin.*
   script: src.py.moracct.app
 

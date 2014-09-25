@@ -108,9 +108,11 @@ def native_account_for_pen(request):
     if pen.mid:
         acc = MORAccount.get_by_id(pen.mid)  #nocache
     else:
-        uname = acc.username
-        passw = gen_password()
-        acc = MORAccount(username=uname, password=passw)
+        where = "WHERE authsrc=:1 LIMIT 1"
+        accounts = MORAccount.gql(where, acc.authsrc)
+        found = accounts.count()
+        if found:
+            acc = accounts[0]
     return acc, pen
 
 
@@ -149,7 +151,9 @@ def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
 
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
+        logging.info("pen.py AuthPenNames start...")
         acc = authenticated(self.request)
+        logging.info("pen.py AuthPenNames acc: " + str(acc))
         if not acc:
             # Eventual consistency means it is possible to create a new
             # account but not have it available for authorization yet.
@@ -159,6 +163,7 @@ class AuthPenNames(webapp2.RequestHandler):
             self.response.out.write("Authentication failed")
             return
         where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
+        logging.info("pen.py AuthPenNames " + where)
         pens = PenName.gql(where, acc._id)
         if self.request.get('format') == "record":
             result = ""
@@ -376,18 +381,17 @@ class SetEmailFromPen(webapp2.RequestHandler):
             return
         if acc.email:
             self.error(409)  #Conflict
-            self.response.out.write("Existing email cannot be overwritten")
+            self.response.out.write("Existing email may not be overwritten")
+            # edit the native account and set the email there, this is only
+            # for filling out email where there wasn't any previously
             return
         emaddr = self.request.get('email')
         if not emaddr:
             self.error(401)
             self.response.out.write("No email address specified")
             return
-        acc.email = emaddr
-        # if the generated account username already exists, or something
-        # else goes wrong transactionally then this could fail.  Unlikely
-        # and not automatically recoverable so just error out.
-        try:
+        acc.email = emaddr.lower()
+        try:  # just in case anything goes wrong in the transaction
             acc.put()  #nocache
             pen.mid = acc.key().id()
             pen.modified = nowISO()

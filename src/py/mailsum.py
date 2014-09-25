@@ -376,7 +376,8 @@ def mail_summaries(freq, thresh, request, response):
     processed = 0
     for acc in accs:
         processed += 1
-        logmsg = "username: " + acc.username
+        ident = acc.email or acc.authsrc
+        logmsg = "account: " + ident
         pen, whynot = eligible_pen(acc, thresh)
         if pen:
             logmsg += " (" + acc.email + "), pen: " + pen.name
@@ -441,10 +442,10 @@ class MailSummaries(webapp2.RequestHandler):
 
 class SummaryForUser(webapp2.RequestHandler):
     def get(self):
-        username = self.request.get('username')
+        emaddr = self.request.get('email')
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("username: " + username + "\n")
-        accs = MORAccount.gql("WHERE username = :1", username)
+        self.response.out.write("email: " + emaddr + "\n")
+        accs = MORAccount.gql("WHERE email = :1", emaddr)
         dtnow = datetime.datetime.utcnow()
         thresh = dt2ISO(dtnow - datetime.timedelta(7))
         tstr = ISO2dt(thresh).strftime("%d %B %Y")

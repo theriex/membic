@@ -27,10 +27,9 @@ app.login = (function () {
 
     secureURL = function (endpoint) {
         var url = window.location.href;
-        if(url.indexOf(":8080") > 0 ||           //local dev or
-           url.indexOf("https://") === 0) {      //secure server
+        if(url.indexOf("https://") === 0 || url.search(/:\d080/) >= 0) {
             url = endpoint; }  //relative path url ok, data is encrypted
-        else {  //not secured, try via XDR although it may not work
+        else {  //return secured URL for endpoint
             url = app.secsvr + "/" + endpoint; }
         return url;
     },
@@ -57,7 +56,7 @@ app.login = (function () {
 
 
     logoutWithNoDisplayUpdate = function () {
-        //remove the cookie
+        //remove the cookie and reset the app vars
         jt.cookie(app.authcookname, "", -1);
         authmethod = "";
         authtoken = "";
@@ -156,7 +155,7 @@ app.login = (function () {
     },
 
 
-    dispEmailSent = function () {
+    displayEmailSent = function () {
         var html;
         html = [["p", 
                  [["Your account information has been emailed to "],
@@ -168,15 +167,14 @@ app.login = (function () {
                   ["li", "Check your spam folder"],
                   ["li", "Confirm the email address you entered is the same" +
                         " one you used when you created your account."]]],
-                ["p", "If your account does not have an email address," +
-                     " then your username and password cannot be retrieved."],
-                ["p",
-                 ["a", {id: "retlogin", href: "return to login",
-                        onclick: jt.fs("app.login.init()")},
-                  "return to login"]]];
-        html = jt.tac2html(html);
-        jt.out('logindiv', html);
-        app.layout.adjust();
+                ["div", {cla: "dlgbuttonsdiv"},
+                 ["button", {type: "button", id: "okbutton",
+                             onclick: jt.fs("app.layout.closeDialog()")},
+                  "OK"]]];
+        html = app.layout.dlgwrapHTML("Email Account Password", html);
+        app.layout.openDialog({y:90}, jt.tac2html(html), null,
+                              function () {
+                                  jt.byId('okbutton').focus(); });
     },
 
 
@@ -240,7 +238,7 @@ app.login = (function () {
     },
 
 
-    onLoginUserNameChange = function (e) {
+    onLoginEmailChange = function (e) {
         var passin;
         jt.evtend(e); 
         passin = jt.byId('passin');
@@ -253,20 +251,16 @@ app.login = (function () {
 
 
     //Need to have automatic form submission so you can hit return
-    //after the password to trigger the login.  The default form
-    //button is too small on a phone, so we have the div with an
-    //anchor in it that submits when you click it.  Safari is going to
-    //continue to fill out the form automatically if the password is
-    //saved and that can cause an infinite loop.
+    //after the password to trigger the login.
     onLoginPasswordChange = function (e) {
-        var signinlink, userin, passin;
+        var signinlink, emailin, passin;
         jt.evtend(e);
         signinlink = jt.byId('signinlink');
-        userin = jt.byId('userin');
+        emailin = jt.byId('emailin');
         passin = jt.byId('passin');
-        if(signinlink && userin && passin) {
-            if(userin.value && userin.value.length > 1 &&
-               passin.value && passin.value.length > 5) {
+        if(signinlink && emailin && passin) {
+            if(jt.isProbablyEmail(emailin.value) && passin.value && 
+               passin.value.length > 5) {
                 jt.byId('loginform').submit(); } }
     },
 
@@ -282,16 +276,16 @@ app.login = (function () {
     },
 
 
-    setFocusOnUsernameInput = function () {
+    setFocusOnEmailInput = function () {
         jt.retry(function () {  //setting the focus is not reliable
             var actel = document.activeElement;
-            if(!actel || actel.id !== 'userin') {
-                actel = jt.byId('userin');
+            if(!actel || actel.id !== 'emailin') {
+                actel = jt.byId('emailin');
                 if(actel) {
                     actel.focus();
-                    jt.log("Set userin focus..."); } }
+                    jt.log("Set emailin focus..."); } }
             else {
-                jt.log("userin focus set already."); }
+                jt.log("emailin focus set already."); }
         }, [200, 400, 600]);
     },
 
@@ -305,10 +299,6 @@ app.login = (function () {
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out('contentdiv', html); }
-        //Change the form target back to a relative url so that
-        //hitting return works properly for local testing.  It is set
-        //to an https url originally to avoid firebug security warnings.
-        jt.byId('loginform').action = "/redirlogin";
         jt.byId('loginform').style.display = "block";
     },
 
@@ -321,8 +311,8 @@ app.login = (function () {
                 html.push(["input", {type: "hidden", name: name,
                                      value: params[name]}]); } }
         if(!params.returnto) {
-            //window.location.origin is webkit only
             html.push(["input", {type: "hidden", name: "returnto",
+                                 //window.location.origin is webkit only
                                  value: window.location.protocol + "//" + 
                                         window.location.host}]); }
         jt.out('loginparaminputs', jt.tac2html(html));
@@ -355,7 +345,6 @@ app.login = (function () {
                 html = "...or sign in from a social net";
                 jt.out('altauthinstrdiv', html); }
             minw('nativelogintitlediv');
-            minw('makenewaccountdiv');
             minw('forgotpassdiv');
             minw('altauthinstrdiv');
             minw('altauthmethods');
@@ -455,7 +444,7 @@ app.login = (function () {
 
 
     //The login form must already exist in index.html for saved passwords
-    //to work on some browsers.  But it needs to be tweaked and decorated
+    //to work on some browsers.  This adds the detail.
     displayLoginForm = function (params) {
         var html;
         verifyCoreLoginForm();
@@ -472,25 +461,27 @@ app.login = (function () {
             //jt.out('altauthinstrdiv',  //mind the ipad length here
             //       "&nbsp;&nbsp;...or with your social net");
             jt.out('altauthmethods', displayAltAuthMethods()); }
-        html = ["a", {id: "macc", href: "create new account...",
-                      title: "Create new native login",
-                      onclick: jt.fs("app.login.displayNewAccountForm()")},
-                "&#x25b6; Create a new account"];
-        jt.out('makenewaccountdiv', jt.tac2html(html));
-        html = ["a", {id: "forgotpw", href: "forgot credentials...",
-                      title: "Retrieve your credentials using the email" + 
-                            " address you set for your account",
-                      onclick: jt.fs("app.login.displayEmailCredForm()")},
+        if(!jt.byId('createAccountButton')) {
+            html = ["button", {type: "button", id: "createAccountButton",
+                               onclick: jt.fs("app.login.createAccount()")},
+                    "Create Account"];
+            html = jt.tac2html(html) + jt.byId('loginbuttonsdiv').innerHTML;
+            jt.out('loginbuttonsdiv', html); }
+        html = ["a", {id: "forgotpw", href: "#forgotpassword",
+                      title: "Email my password, I spaced it",
+                      onclick: jt.fs("app.login.forgotPassword()")},
                 "forgot my password..."];
         jt.out('forgotpassdiv', jt.tac2html(html));
-        jt.on('userin', 'change', onLoginUserNameChange);
-        jt.on('passin', 'change', onLoginPasswordChange);
+        expandLoginFormLayoutIfSpace(); //might redraw contents
         if(authname) {
-            jt.byId('userin').value = authname; }
-        expandLoginFormLayoutIfSpace();
+            jt.byId('emailin').value = authname; }
+        if(params.emailin) {
+            jt.byId('emailin').value = params.emailin; }
+        jt.on('emailin', 'change', onLoginEmailChange);
+        jt.on('passin', 'change', onLoginPasswordChange);
         addReviewRollIfSpace();
         app.layout.adjust();
-        setFocusOnUsernameInput();
+        setFocusOnEmailInput();
     },
 
 
@@ -558,21 +549,24 @@ app.login = (function () {
     },
 
 
-    handleRedirectOrStartWork = function () {
-        var idx, params = jt.parseParams();
-        //set synonyms
+    standardizeAuthParams = function (params) {
         if(params.authmethod) { params.am = params.authmethod; }
         if(params.authtoken) { params.at = params.authtoken; }
         if(params.authname) { params.an = params.authname; }
-        //do data directed side effects
+    },
+
+
+    handleInitialParamSideEffects = function (params) {
         if(params.am && params.at && params.an && !params.special) {
             params.at = jt.enc(params.at);  //restore token encoding 
             setAuthentication(params.am, params.at, params.an); }
         if(params.logout) {
             logoutWithNoDisplayUpdate(); }
-        if(!params.returnto) {  //on home server, clean the location display
+        if(!params.returnto) {  //clean up the URL display
             clearParams(); }
+        //handle specific context requests
         if(params.view && (params.profid || params.groupid)) {
+            //Note who requested a specific profile or group
             setTimeout(function () {
                 jt.call('GET', "/bytheway?clickthrough=" + params.view, null,
                         function () {
@@ -584,6 +578,13 @@ app.login = (function () {
         else if(params.revedit) {
             app.history.checkpoint({ view: "review", mode: "edit",
                                      revid: params.revedit }); }
+    },
+
+
+    handleRedirectOrStartWork = function () {
+        var idx, params = jt.parseParams();
+        standardizeAuthParams(params);
+        handleInitialParamSideEffects(params);
         //figure out what to do next
         if(params.command && params.command.indexOf("AltAuth") === 0) {
             idx = params.command.slice("AltAuth".length);
@@ -606,9 +607,9 @@ app.login = (function () {
 return {
 
     init: function () {
+        logLoadTimes();
         if(!loginhtml) {  //save original html in case needed later
             loginhtml = jt.byId('logindiv').innerHTML; }
-        logLoadTimes();
         //do not change this ordering. Some auths leverage their index
         altauths = [ app.facebook, app.twitter, app.googleplus, app.github ];
         handleRedirectOrStartWork();
@@ -717,7 +718,7 @@ return {
 
 
     displayUpdAccForm: function (account) {
-        var rows = [], html, title = "Account settings for $USERNAME";
+        var rows = [], html, title = "Account settings for $USEREMAIL";
         if(account) {
             if(secureURL("chgpwd") !== "chgpwd") { //redirect if needed
                 window.location.href = app.secsvr + 
@@ -725,7 +726,7 @@ return {
                     "&command=chgpwd&" + authparams(); }
             app.profile.cancelPenNameSettings();  //close dialog if up
             app.login.updateAuthentDisplay("hide");
-            title = title.replace("$USERNAME", authname);
+            title = title.replace("$USEREMAIL", authname);
             jt.out('centerhdiv', title);
             rows.push(["tr",
                        ["td", {colspan: 3},
@@ -741,14 +742,14 @@ return {
                                          onclick: jt.fs("app.login.updacc()")},
                               "Change Password"]]]]); }
             rows.push(["tr",
-                       [["td", {align: "right"}, "E-mail"],
+                       [["td", {align: "right"}, "Email"],
                         ["td", {align: "left"}, 
                          ["input", {type: "email", id: "emailin", 
                                     size: 25, value: (account.email || "")}]],
                         ["td", {align: "left"},
                          ["button", {type: "button", id: "updembutton",
                                      onclick: jt.fs("app.login.updacc()")},
-                          "Update E-mail"]]]]);
+                          "Update Email"]]]]);
             rows.push(["tr",
                        [["td", {align: "right"}, "Offline Summary"],
                         ["td", {align: "left"}, 
@@ -785,109 +786,6 @@ return {
                         jt.err("Account details retrieval failed: " + code + 
                                " " + errtxt); }),
                     jt.semaphore("login.displayUpdAccForm")); }
-    },
-
-
-    //Some people habitually use their email address as their username,
-    //but if they forget their password it still has to be searched via
-    //the email field, so copy it over.  They can fix it if not right.
-    onUserNameChange: function () {
-        var uname;
-        uname = jt.byId('userin').value;
-        if(jt.isProbablyEmail(uname)) {
-            jt.byId('emailin').value = uname; }
-        jt.byId('passin').focus();
-    },
-
-
-    onPasswordChange: function () {
-        jt.byId('emailin').focus();
-    },
-
-
-    onEmailChange: function () {
-        app.login.createAccount();
-    },
-
-
-    displayNewAccountForm: function () {
-        var username, password, html;
-        username = jt.safestr(jt.safeget('userin', "value"));
-        password = jt.safestr(jt.safeget('passin', "value"));
-        jt.out('centerhdiv', "Creating Your New Account");
-        html = ["table", {id: "loginform", cla: "formstyle"},
-                [["tr",
-                  ["td", {colspan: 2, align: "center"},
-                   ["div", {id: "maccstatdiv"}]]],
-                 ["tr",
-                  [["td", {align: "right", cla: "liflabtd"},
-                    ["label", {fo: "userin", cla: "liflab"}, "username"]],
-                   ["td", {align: "left"},
-                    ["input", {type: "text", name: "username", id: "userin",
-                               onchange: jt.fs("app.login.onUserNameChange()"),
-                               size: 20, value: username}]]]],
-                 ["tr",
-                  [["td", {align: "right", cla: "liflabtd"},
-                    ["label", {fo: "passin", cla: "liflab"}, "password"]],
-                   ["td", {align: "left"},
-                    ["input", {type: "password", name: "password", id: "passin",
-                               onchange: jt.fs("app.login.onPasswordChange()"),
-                               size: 20, value: password}]]]],
-                 ["tr",
-                  [["td", {align: "right", cla: "liflabtd"},
-                    ["label", {fo: "emailin", cla: "liflab"}, "email"]],
-                   ["td", {align: "left"},
-                    ["input", {type: "email", name: "emailin", id: "emailin", 
-                               onchange: jt.fs("app.login.onEmailChange()"),
-                               size: 22}]]]],  //fits on a phone
-                 ["tr",
-                  ["td", {colspan: 2, align: "center", cla: "actbuttons",
-                          id: "newaccbuttonstd"},
-                   [["button", {type: "button", id: "cancelbutton",
-                                onclick: jt.fs("app.login.clearinit()")},
-                     "Cancel"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "createbutton",
-                                onclick: jt.fs("app.login.createAccount()")},
-                     "Create"]]]],
-                 emailStatementsRow()]];
-        html = jt.tac2html(html);
-        jt.out('logindiv', html);
-        app.layout.adjust();
-        jt.byId('userin').focus();
-    },
-
-
-    displayEmailCredForm: function () {
-        var html;
-        jt.out('centerhdiv', "Forgot Password");
-        html = ["table", {id: "loginform", cla: "formstyle"},
-                [["tr", 
-                  ["td", {colspan: 2},
-                   ["div", {id: "emcrediv"},
-                    ["Enter the email address for your account",
-                     ["br"],
-                     "to have your username and password emailed to you."]]]],
-                 ["tr",
-                  [["td", {align: "right", cla: "liflabtd"},
-                    ["label", {fo: "emailin", cla: "liflab"}, "email"]],
-                   ["td", {align: "left"},
-                    ["input", {type: "email", name: "emailin", id: "emailin",
-                               onchange: jt.fs("app.login.emailCredentials()"),
-                               size: 30}]]]],
-                 ["tr",
-                  ["td", {colspan: 2, align: "center", id: "sendbuttons"},
-                   [["button", {type: "button", id: "cancelbutton",
-                                onclick: jt.fs("app.login.clearinit()")},
-                     "Cancel"],
-                    "&nbsp;",
-                    ["button", {type: "button", id: "sendbutton",
-                                onclick: jt.fs("app.login.emailCredentials()")},
-                     "Send"]]]]]];
-        html = jt.tac2html(html);
-        jt.out('logindiv', html);
-        app.layout.adjust();
-        jt.byId('emailin').focus();
     },
 
 
@@ -938,32 +836,6 @@ return {
     },
 
 
-    upwlogin: function () {
-        var username = jt.byId('userin').value,
-            password = jt.byId('passin').value,
-            url, data;
-        if(!username || !password || !username.trim() || !password.trim()) {
-            jt.out('loginstatdiv', "Please specify a username and password");
-            return; }
-        jt.out('loginbspan', "Signing in...");
-        url = secureURL("login");
-        data = jt.objdata({ user: username, pass: password });
-        jt.call('POST', url, data,
-                 function (objs) {
-                     //same flow here as createAccount
-                     setAuthentication("mid", objs[0].token, username);
-                     doneWorkingWithAccount(); },
-                 //no app.failf because need to handle 401 here
-                 function (code, errtxt) {
-                     var html;
-                     jt.out('loginstatdiv', "Login failed: " + errtxt);
-                     html = ["input", {type: "submit", cla: "loginbutton",
-                                       value: "Sign in"}];
-                     jt.out('loginbspan', jt.tac2html(html)); },
-                jt.semaphore("login.upwlogin"));
-    },
-
-
     setAuth: function (method, token, name) {
         setAuthentication(method, token, name);
     },
@@ -975,29 +847,30 @@ return {
 
 
     createAccount: function () {
-        var username = jt.byId('userin').value,
-            password = jt.byId('passin').value,
-            maddr = jt.byId('emailin').value || "",
-            data = "", url, buttonhtml;
-        if(!username || !password || !username.trim() || !password.trim()) {
-            jt.out('maccstatdiv', "Please specify a username and password");
+        var emaddr, password, data, url, buttonhtml;
+        emaddr = jt.byId('emailin').value;
+        password = jt.byId('passin').value;
+        if(!emaddr || !password || !emaddr.trim() || !password.trim()) {
+            jt.out('loginstatdiv', "Please specify an email and password");
             return; }
+        jt.out('loginstatdiv', "&nbsp;");  //clear any previous message
+        buttonhtml = jt.byId('loginbuttonsdiv').innerHTML;
+        jt.out('loginbuttonsdiv', "Creating new account...");
+        emaddr = emaddr.toLowerCase();
+        data = jt.objdata({ emailin: emaddr, passin: password });
         url = secureURL("newacct");
-        buttonhtml = jt.byId('newaccbuttonstd').innerHTML;
-        jt.out('newaccbuttonstd', "Creating new account...");
-        data = jt.objdata({ user: username, pass: password, email: maddr });
         jt.call('POST', url, data, 
                  function (objs) {
-                     var html = "<p>Welcome " + username + "! Your account " +
-                         "has been created. </p>" +
-                         "<p>Signing in...</p>";
+                     var html = "<p>Your account has been created." + 
+                         " Welcome to FGFweb!</p>" +
+                         "<p>Signing you in for the first time now...</p>";
                      jt.out('logindiv', html);
-                     //same flow here as upwlogin, but db stable wait..
-                     setAuthentication("mid", objs[0].token, username);
+                     setAuthentication("mid", objs[0].token, emaddr);
+                     //wait briefly to give the db a chance to stabilize
                      setTimeout(doneWorkingWithAccount, 3000); },
                  app.failf(function (code, errtxt) {
-                     jt.out('maccstatdiv', errtxt);
-                     jt.out('newaccbuttonstd', buttonhtml); }),
+                     jt.out('loginstatdiv', errtxt);
+                     jt.out('loginbuttonsdiv', buttonhtml); }),
                 jt.semaphore("login.createAccount"));
     },
 
@@ -1051,21 +924,23 @@ return {
     },
 
 
-    emailCredentials: function () {
-        var eaddr = jt.byId('emailin').value,
-            data = "";
-        if(!eaddr || !eaddr.trim() || !jt.isProbablyEmail(eaddr)) {
-            jt.out('emcrediv', "Please enter your email address");
-            return; }  //nothing to send to
-        jt.out('sendbuttons', "Sending...");
-        data = "email=" + jt.enc(eaddr);
+    forgotPassword: function () {
+        var emaddr, data;
+        emaddr = jt.byId('emailin').value;
+        if(!jt.isProbablyEmail(emaddr)) {
+            jt.out('loginstatdiv', "Please fill in your email address...");
+            return; }
+        jt.out('loginstatdiv', "Sending...");
+        data = "emailin=" + jt.enc(emaddr);
         jt.call('POST', "mailcred", data,
                 function (objs) {
-                    dispEmailSent(); },
+                    jt.out('loginstatdiv', "&nbsp;");
+                    displayEmailSent(); },
                 app.failf(function (code, errtxt) {
-                    jt.out('emcrediv', errtxt); }),
-                jt.semaphore("emailCredentials"));
+                    jt.out('loginstatdiv', errtxt); }),
+                jt.semaphore("forgotPassword"));
     }
+
 
 
 };  //end of returned functions

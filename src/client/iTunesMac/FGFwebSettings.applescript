@@ -32,7 +32,7 @@ on defaultConfig()
 	set notopts3 to {"Attention"}
 	set pl3 to {plname:"FGFweb Party", filtopts:filtopts3, notopts:notopts3, minrat:40}
 	set defplists to {pl1, pl2, pl3}
-	set defconf to {username:"", token:"", pname:"", penid:"", defreq:7, toff:0, plists:defplists}
+	set defconf to {email:"", token:"", pname:"", penid:"", defreq:7, toff:0, plists:defplists}
 	return defconf
 end defaultConfig
 
@@ -67,28 +67,28 @@ end writeConfig
 
 
 on resetLoginInfo()
-	set username of wdconf to ""
+	set email of wdconf to ""
 	set token of wdconf to ""
 	set pname of wdconf to ""
 	set penid of wdconf to ""
 end resetLoginInfo
 
 
-on verifyUsername()
-	if (username of wdconf) is equal to "" then
-		set ptxt to "Username to connect to fgfweb.com?"
+on verifyEmail()
+	if (email of wdconf) is equal to "" then
+		set ptxt to "Email of FGFweb account to connect?"
 		set dlgres to display dialog ptxt default answer ""
 		resetLoginInfo()
-		set username of wdconf to text returned of dlgres
+		set email of wdconf to text returned of dlgres
 	end if
-end verifyUsername
+end verifyEmail
 
 
 on getAccessToken()
-	set ptxt to "fgfweb.com password for " & (username of wdconf) & "?"
+	set ptxt to "fgfweb.com password for " & (email of wdconf) & "?"
 	set result to display dialog ptxt default answer "" with hidden answer
 	set pass to text returned of result
-	set pdat to "user=" & (username of wdconf) & "&pass=" & pass & "&format=record"
+	set pdat to "emailin=" & (email of wdconf) & "&passin=" & pass & "&format=record"
 	set purl to "https://myopenreviews.appspot.com/login"
 	set command to "curl --data \"" & pdat & "\" " & purl
 	set rdata to do shell script command
@@ -103,7 +103,7 @@ on fetchPenNames()
 		return ""
 	end if
 	set command to Â
-		"curl \"http://www.fgfweb.com/mypens?am=mid" & "&an=" & (username of wdconf) & "&at=" & (token of wdconf) & "&format=record\""
+		"curl \"http://www.fgfweb.com/mypens?am=mid" & "&an=" & (email of wdconf) & "&at=" & (token of wdconf) & "&format=record\""
 	set rdata to do shell script command
 	return rdata
 end fetchPenNames
@@ -160,7 +160,7 @@ end verifyTokenAndPen
 
 
 on verifyServerAccess(errdetail)
-	verifyUsername()
+	verifyEmail()
 	set tokenAndPenVerified to false
 	try
 		set tokenAndPenVerified to verifyTokenAndPen(errdetail)
@@ -168,7 +168,7 @@ on verifyServerAccess(errdetail)
 	if not tokenAndPenVerified then
 		return false
 	end if
-	-- display dialog "username: " & (username of wdconf) & ", penid: " & (penid of wdconf) & ", token: " & (token of wdconf)
+	-- display dialog "email: " & (email of wdconf) & ", penid: " & (penid of wdconf) & ", token: " & (token of wdconf)
 	writeConfig()
 	return true
 end verifyServerAccess
@@ -206,7 +206,7 @@ on describeConfig()
 	set fname to getConfigFileMacName()
 	loadConfig()
 	try
-		set confprompt to "Settings file: " & fname & newline & "username: " & (username of wdconf) & newline & "pen name: " & (pname of wdconf) & newline & "pen id: " & (penid of wdconf) & newline & "token: " & (token of wdconf) & newline & newline & "Rebuild settings?"
+		set confprompt to "Settings file: " & fname & newline & "email: " & (email of wdconf) & newline & "pen name: " & (pname of wdconf) & newline & "pen id: " & (penid of wdconf) & newline & "token: " & (token of wdconf) & newline & newline & "Rebuild settings?"
 		set doconf to display dialog confprompt buttons {"No", "Yes"} default button 1 with title wdtitle
 		if button returned of result is equal to "Yes" then
 			resetLoginInfo()

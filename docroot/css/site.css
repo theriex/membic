@@ -180,9 +180,10 @@ img { border:0px; }
   padding:0px 0px 0px 40px;}
 #logindiv { margin:auto; }
 #loginform { margin:auto; }
-#loginstatdiv { }
+#loginstatdiv { font-size:small; }
 #loginvisualelementsdiv { padding:0px 10px; }
-#makenewaccountdiv { }
+#loginbuttonsdiv { padding:20px; }
+#loginbuttonsdiv button { margin:0px 20px; }
 #forgotpassdiv { text-align:center; }
 #altauthinstrdiv { padding:0px 20px 10px 0px; }
 #altauthmethods { padding:0px 0px 20px 30px; }
@@ -295,7 +296,7 @@ img { border:0px; }
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
 .searchtable td { padding:5px 10px; }
-#userin, #passin { width:152px; }
+#emailin, #passin { width:152px; }
 .tagline { font-style:italic; color:#333; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; white-space:nowrap; }

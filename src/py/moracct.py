@@ -16,12 +16,11 @@ from morutil import *
 
 
 class MORAccount(db.Model):
-    """ An account used for local (as opposed to 3rd party) authentication """
-    username = db.StringProperty(required=True)
+    """ An account used for settings and native authentication """
+    email = db.EmailProperty()          # required unless 3rd party auth
     password = db.StringProperty(required=True)
-    email = db.EmailProperty()
+    authsrc = db.StringProperty()       # AA:id or empty if native
     modified = db.StringProperty()      # iso date
-    userlcase = db.StringProperty()     # lowercase username for case ins login
     lastsummary = db.StringProperty()   # iso date last summary run
     summaryfreq = db.StringProperty()   # daily, weekly, fortnightly, never
     summaryflags = db.StringProperty()  # sumiflogin, sumifnoact
@@ -43,10 +42,10 @@ def pwd2key(password):
     return key
 
 
-def newtoken(username, password):
+def newtoken(emaddr, password):
     """ Make a new token value and return it """
     key = pwd2key(password)
-    token = ":" + str(int(round(time.time()))) + ":" + asciienc(username)
+    token = ":" + str(int(round(time.time()))) + ":" + asciienc(emaddr)
     token = token.rjust(32, 'X')
     token = AES.new(key, AES.MODE_CBC).encrypt(token)
     token = base64.b64encode(token)
@@ -101,28 +100,26 @@ def call_server(url, meth, params):
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
-    username = request.get('an')
+    emaddr = request.get('an')  # may be alternate value for 3rd party auth
     token = request.get('at')
     toksec = request.get('as')
+    logging.info("moracct.py authenticated acctype: " + acctype + ", emaddr: " +
+                 emaddr + ", token: " + token + ", toksec: " + toksec)
     if acctype == "mid":
-        userlcase = username.lower()
-        where = "WHERE userlcase=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, userlcase)
+        emaddr = emaddr.lower()
+        where = "WHERE email=:1 LIMIT 1"
+        accounts = MORAccount.gql(where, emaddr)
+        logging.info("moracct.py authenticated found " + str(accounts.count()) +
+                     " accounts for emaddr: " + emaddr)
         for account in accounts:
             key = pwd2key(account.password)
             token = decodeToken(key, token)
             if not token:
                 return False
             try:
-                unidx = token.index(asciienc(username))
+                unidx = token.index(asciienc(emaddr))
             except:
-                try:
-                    unidx = token.index(asciienc(userlcase))
-                except:
-                    try:
-                        unidx = token.index(asciienc(account.username))
-                    except:
-                        unidx = -1
+                unidx = -1
             if unidx <= 2:
                 return False
             secs = int(token[(token.index(":") + 1) : (unidx - 1)])
@@ -134,21 +131,23 @@ def authenticated(request):
             account._id = account.key().id() # normalized id access
             return account  # True
     elif acctype == "fbid":
-        usertoks = username.split(' ')
+        usertoks = emaddr.split(' ')
         useridstr = str(usertoks[0])
         data = call_server("https://graph.facebook.com/me?access_token=" +
                            token, 'GET', None)
         if data and str(data["id"]) == useridstr:
-            account = MORAccount(username=useridstr, password=token)
+            source = "fb:" + useridstr
+            account = MORAccount(authsrc=source, password=token)
             account._id = intz(useridstr)
             return account 
     elif acctype == "twid":
         svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
         result = doOAuthGet("Twitter", svc, token, toksec)
         if result and result.status_code == 200:
-            usertoks = username.split(' ')
+            usertoks = emaddr.split(' ')
             useridstr = str(usertoks[0])
-            account = MORAccount(username=useridstr, password=token)
+            source = "tw:" + useridstr
+            account = MORAccount(authsrc=source, password=token)
             account._id = intz(useridstr)
             return account
     elif acctype == "gsid":
@@ -164,9 +163,10 @@ def authenticated(request):
         ok = result and result.status_code == 200
         ok = ok and "1009259210423.apps.googleusercontent.com" in result.content
         if ok:
-            usertoks = username.split(' ')
+            usertoks = emaddr.split(' ')
             useridstr = str(usertoks[0])
-            account = MORAccount(username=useridstr, password=token)
+            source = "gs:" + useridstr
+            account = MORAccount(authsrc=source, password=token)
             #Google ID is too big for an int, so use the string value
             #equality comparison tests should still work consistently
             account._id = useridstr
@@ -182,9 +182,10 @@ def authenticated(request):
                                 deadline=10, 
                                 validate_certificate=False)
         if result and result.status_code == 200:
-            usertoks = username.split(' ')
+            usertoks = emaddr.split(' ')
             useridstr = str(usertoks[0])
-            account = MORAccount(username=useridstr, password=token)
+            source = "gh:" + useridstr
+            account = MORAccount(authsrc=source, password=token)
             account._id = intz(useridstr)
             return account
     else:
@@ -296,62 +297,63 @@ def safeURIEncode(stringval, stripnewlines = False):
     return urllib.quote(stringval.encode("utf-8"))
 
 
-class WriteAccount(webapp2.RequestHandler):
+def verify_secure_comms(handler, url):
+    if url.startswith('https') or re.search("\:[0-9][0-9]80", url):
+        return True
+    handler.error(405)
+    handler.response.out.write("request must be over https")
+    return False
+
+
+class CreateAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or ":8080" in url):
-            self.error(405)
-            self.response.out.write("request must be over https")
+        if not verify_secure_comms(self, url):
             return
-        user = self.request.get('user')
-        if len(user) > 18:
+        emaddr = self.request.get('emailin') or ""
+        emaddr = emaddr.lower()
+        # something @ something . something
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
             self.error(412)
-            self.response.out.write("username must be 18 characters or less")
+            self.response.out.write("invalid email address")
             return
-        lcase = user.lower()
-        where = "WHERE userlcase=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, lcase)
+        where = "WHERE email=:1 LIMIT 1"
+        accounts = MORAccount.gql(where, emaddr)
         found = accounts.count()
-        if found:
+        if found:  # return error. Client can choose to try login if they want
             self.error(412)
-            self.response.out.write("The account name " + user + 
-                                    " is already taken")
+            self.response.out.write("Account exists already")
             return
-        pwd = self.request.get('pass')
+        pwd = self.request.get('passin')
         if not pwd or len(pwd) < 6:
             self.error(412)
             self.response.out.write("Password must be at least 6 characters")
             return
-        acct = MORAccount(username=user, password=pwd)
-        acct.userlcase = lcase
-        email = self.request.get('email')
-        if email:
-            acct.email = email.lower()
-        acct.modified = nowISO()
-        acct.lastsummary = nowISO()
-        acct.summaryfreq = "weekly"
-        acct.summaryflags = ""
-        acct.put()  #nocache
-        token = newtoken(user, pwd)
+        account = MORAccount(email=emaddr, password=pwd)
+        account.authsrc = ""
+        account.modified = nowISO()
+        account.lastsummary = nowISO()
+        account.summaryfreq = "weekly"
+        account.summaryflags = ""
+        account.mailbounce = ""
+        account.put()  #nocache
+        token = newtoken(emaddr, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
 
 
 class GetToken(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or ":8080" in url):
-            self.error(405)
-            self.response.out.write("request must be over https")
+        if not verify_secure_comms(self, url):
             return
-        username = self.request.get('user')
-        password = self.request.get('pass')
-        userlcase = username.lower()
-        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, userlcase, password)
+        emaddr = self.request.get('emailin') or ""
+        emaddr = emaddr.lower()
+        password = self.request.get('passin')
+        where = "WHERE email=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, emaddr, password)
         found = accounts.count()
-        # logging.info("GetToken found " + str(found) + " for " + username)
         if found:
-            token = newtoken(userlcase, password)
+            token = newtoken(emaddr, password)
             if self.request.get('format') == "record":
                 writeTextResponse("token: " + token + "\n", 
                                   self.response)
@@ -366,34 +368,37 @@ class GetToken(webapp2.RequestHandler):
 class TokenAndRedirect(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
-        if not (url.startswith('https') or ":8080" in url):
-            self.error(405)
-            self.response.out.write("request must be over https")
+        if not verify_secure_comms(self, url):
             return
         redurl = self.request.get('returnto')
         if not redurl:
-            redurl = "http://www.fgfweb.com"
-        if "http%3A" in redurl:
+            redurl = url
+            if redurl.find("?") >= 0:
+                redurl = redurl[0:redurl.find("?")]
+            if redurl.rfind("/") > 8:  #https://...
+                redurl = redurl[0:redurl.rfind("/")]
+        if "%3A" in redurl:
             redurl = urllib.unquote(redurl)
         redurl += "#"
-        username = self.request.get('userin')
-        if not username or len(username) < 1:
-            self.error(401)
-            self.response.out.write("No username specified");
-            return;
-        password = self.request.get('passin')
-        userlcase = username.lower()
-        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, userlcase, password)
-        found = accounts.count()
-        if found:
-            token = newtoken(username, password)
-            redurl += "authmethod=mid&authtoken=" + token
-            redurl += "&authname=" + urllib.quote(asciienc(username))
+        email = self.request.get('emailin')
+        if not email or len(email) < 1:
+            redurl += "loginerr=" + "No email address specified"
         else:
-            redurl += "loginerr=" + "No match for those credentials"
-            logging.info("self.request.params: " + str(self.request.params))
-        # if changing these params, also check login.doneWorkingWithAccount
+            email = email.lower()
+            password = self.request.get('passin')
+            where = "WHERE email=:1 AND password=:2 LIMIT 1"
+            accounts = MORAccount.gql(where, email, password)
+            found = accounts.count()
+            if found:
+                token = newtoken(email, password)
+                redurl += "authmethod=mid&authtoken=" + token
+                redurl += "&authname=" + urllib.quote(asciienc(email))
+            else:
+                redurl += "emailin=" + email + "&loginerr=" +\
+                    "No match for those credentials"
+        # preserve any state information passed in the params so they can
+        # continue on their way after ultimately loggin in.  If changing
+        # these params, also check login.doneWorkingWithAccount
         command = self.request.get('command')
         if command and command != "chgpwd":
             redurl += "&command=" + command
@@ -427,11 +432,11 @@ class TokenAndRedirect(webapp2.RequestHandler):
 
 class GetLoginID(webapp2.RequestHandler):
     def post(self):
-        username = self.request.get('userin')
+        emaddr = self.request.get('emailin') or ""
+        emaddr = emaddr.lower()
         password = self.request.get('passin')
-        userlcase = username.lower()
-        where = "WHERE userlcase=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, userlcase, password)
+        where = "WHERE email=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, emaddr, password)
         redurl = "http://www.fgfweb.com?mid="
         for account in accounts:
             redurl += str(account.key().id())
@@ -440,27 +445,31 @@ class GetLoginID(webapp2.RequestHandler):
 
 class MailCredentials(webapp2.RequestHandler):
     def post(self):
-        eaddr = self.request.get('email')
+        eaddr = self.request.get('emailin')
         if eaddr:
-            content = ""
-            usernames = ""
+            content = "You requested your password be mailed to you..."
+            content += "\n\nFGFweb has looked up " + eaddr + " "
             eaddr = eaddr.lower()
             where = "WHERE email=:1 LIMIT 9"
             accounts = MORAccount.gql(where, eaddr)
-            for account in accounts:  # might not be any if bad email..
-                usernames += " " + account.username
-                content += "\nUsername: " + account.username
-                content += "\nPassword: " + account.password + "\n"
-            if not content:
-                content = "No accounts found for this email address.\n\n" +\
-                    "Perhaps you logged in via a social net before?\n"
-            logging.info("mailing credentials to " + eaddr +
-                         " usernames: " + usernames)
-            # sender needs to be a valid email address.  This should
-            # change to noreply@fgfweb.com if traffic gets bad
-            if not ":8080" in self.request.url:
+            found = accounts.count()
+            if found:
+                content += "and your password is " + accounts[0].password
+            else:
+                content += "but found no matching accounts." +\
+                    "\nEither you have not signed up yet, or you signed in" +\
+                    " via a social net before and did not provide an" +\
+                    " email address."
+            content += "\n\nhttps://www.fgfweb.com\n\n"
+            if re.search("\:[0-9][0-9]80", self.request.url):
+                logging.info("Mail not sent to " + eaddr + " from local dev" +
+                             "\n\n" + content)
+            else:
+                logging.info("mailing password to " + eaddr)
+                # sender needs to be a valid email address.  This should
+                # change to noreply@fgfweb.com if traffic gets bad
                 mail.send_mail(
-                    sender="FGFweb support <theriex@gmail.com>",
+                    sender="FGFweb support <admin@fgfweb.com>",
                     to=eaddr,
                     subject="FGFweb account login",
                     body=content)
@@ -493,7 +502,7 @@ class ChangePassword(webapp2.RequestHandler):
             account.summaryflags = self.request.get('sumflags') or ""
             account.modified = nowISO()
             account.put()  #nocache
-            token = newtoken(account.username, account.password)
+            token = newtoken(account.email, account.password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:
             self.error(401)
@@ -516,7 +525,7 @@ class GetBuildVersion(webapp2.RequestHandler):
         writeTextResponse("BUILDVERSIONSTRING", self.response)
 
 
-app = webapp2.WSGIApplication([('/newacct', WriteAccount),
+app = webapp2.WSGIApplication([('/newacct', CreateAccount),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),

@@ -136,7 +136,7 @@ app.layout = (function () {
     slideshow = function (firstrun) {
         var sdiv, html, previmg, img;
         sdiv = jt.byId('slidesdiv');
-        if(sdiv && jt.byId('userin') && jt.byId('passin')) {
+        if(sdiv && jt.byId('emailin') && jt.byId('passin')) {
             if(jt.isLowFuncBrowser()) {
                 jt.log("slideshow isLowFuncBrowser so no fades");
                 if(firstrun) {
@@ -176,49 +176,49 @@ app.layout = (function () {
     },
 
 
-    adjustLogoAndSlides = function (logodim, slidedim, sep) {
-        jt.byId('topsectiondiv').style.height = 
-            String(Math.max(logodim.h, slidedim.h)) + "px";
-        //#logodiv position:absolute
-        jt.out('logodiv', jt.tac2html(
-            ["img", {src: "img/fgfweb.png", id: "logoimg",
-                     style: "width:" + logodim.w + "px;" + 
-                            "height:" + logodim.h + "px;"}]));
-        jt.setdims('logodiv', logodim);
-        jt.setdims('introverviewtaglinediv', {y: logodim.h});
-        //slides
-        slidedim.x = 0;
-        if(sep) {
-            slidedim.x = logodim.w + sep; }
-        else { //adjust slides down to cover the bottom loop of the 'y'
-            slidedim.y = 11; }
-        jt.setdims('slidesdiv', slidedim);
-        jt.setdims('introslide0', slidedim);
-        jt.setdims('introslide1', slidedim);
-        //remove smooth slide opacity transitions if transitions not supported
-        if(!jt.isLowFuncBrowser()) {
-            jt.byId('introslide0').style.opacity = 0;
-            jt.byId('introslide1').style.opacity = 0; }
-    },
+    // adjustLogoAndSlides = function (logodim, slidedim, sep) {
+    //     jt.byId('topsectiondiv').style.height = 
+    //         String(Math.max(logodim.h, slidedim.h)) + "px";
+    //     //#logodiv position:absolute
+    //     jt.out('logodiv', jt.tac2html(
+    //         ["img", {src: "img/fgfweb.png", id: "logoimg",
+    //                  style: "width:" + logodim.w + "px;" + 
+    //                         "height:" + logodim.h + "px;"}]));
+    //     jt.setdims('logodiv', logodim);
+    //     jt.setdims('introverviewtaglinediv', {y: logodim.h});
+    //     //slides
+    //     slidedim.x = 0;
+    //     if(sep) {
+    //         slidedim.x = logodim.w + sep; }
+    //     else { //adjust slides down to cover the bottom loop of the 'y'
+    //         slidedim.y = 11; }
+    //     jt.setdims('slidesdiv', slidedim);
+    //     jt.setdims('introslide0', slidedim);
+    //     jt.setdims('introslide1', slidedim);
+    //     //remove smooth opacity transitions if transitions not supported
+    //     if(!jt.isLowFuncBrowser()) {
+    //         jt.byId('introslide0').style.opacity = 0;
+    //         jt.byId('introslide1').style.opacity = 0; }
+    // },
 
 
-    initSlideshow = function () {
-        var logodim = {w: 460, h: 227}, slidedim = {w: 522, h: 250},
-            minsep = 40;
-        if(app.winw > logodim.w + slidedim.w + minsep) {  //space available
-            adjustLogoAndSlides(logodim, slidedim,
-                Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
-        else {  //go with mobile size images
-            logodim = {w: 320, h: 158};
-            slidedim = {w: 320, h: 153};
-            if(app.winw > logodim.w + slidedim.w + minsep) {
-                adjustLogoAndSlides(logodim, slidedim,
-                    Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
-            else {
-                slides.unshift("blank.png");  //reveal logo in slide cycles
-                adjustLogoAndSlides(logodim, slidedim, 0); } }
-        slideshow(true);
-    },
+    // initSlideshow = function () {
+    //     var logodim = {w: 460, h: 227}, slidedim = {w: 522, h: 250},
+    //         minsep = 40;
+    //     if(app.winw > logodim.w + slidedim.w + minsep) {  //space available
+    //         adjustLogoAndSlides(logodim, slidedim,
+    //             Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
+    //     else {  //go with mobile size images
+    //         logodim = {w: 320, h: 158};
+    //         slidedim = {w: 320, h: 153};
+    //         if(app.winw > logodim.w + slidedim.w + minsep) {
+    //             adjustLogoAndSlides(logodim, slidedim,
+    //                 Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
+    //         else {
+    //             slides.unshift("blank.png");  //reveal logo in slide cycles
+    //             adjustLogoAndSlides(logodim, slidedim, 0); } }
+    //     slideshow(true);
+    // },
 
 
     setSoftFocus = function () {

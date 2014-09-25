@@ -47,37 +47,35 @@
     </div>
     <!-- login has to be an actual form to enable remembered passwords -->
     <div id="logindiv">
-      <form id="loginform" method="post" 
-            action="https://myopenreviews.appspot.com/redirlogin">
-        <div id="loginstatdiv">&nbsp;</div>
+      <form id="loginform" method="post" action="redirlogin">
         <div id="loginparaminputs"></div>
         <div id="loginvisualelementsdiv">
           <div id="userpassdiv">
             <div id="nativelogintitlediv" class="instructional"></div>
             <table id="loginformtable" border="0">
+              <tr><td colspan="2"><div id="loginstatdiv">&nbsp;</div></td></tr>
               <tr>
                 <td align="right">
-                  <label for="userin" class="liflab">username</label></td>
+                  <label for="emailin" class="liflab">Email</label></td>
                 <td align="left">
-                  <input type="text" name="userin" 
-                         id="userin" size="20" autofocus/></td>
+                  <input type="text" name="emailin" id="emailin" 
+                         size="20" autofocus/></td>
               </tr><tr>
                 <td align="right">
-                  <label for="passin" class="liflab">password</label></td>
+                  <label for="passin" class="liflab">Password</label></td>
                 <td align="left">
                   <!-- no onchange submit here, safari pw autofill breaks -->
-                  <input type="password" name="passin" 
-                         id="passin" size="20"/></td>
+                  <input type="password" name="passin" id="passin" 
+                         size="20"/></td>
               </tr><tr>
                 <td colspan="2" align="right" id="loginbtd">
-                  <span id="secexp"></span>&nbsp;&nbsp;&nbsp;
-                  <span id="loginbspan">
+                  <div id="loginbuttonsdiv" class="formbuttonsdiv">
                     <input value="Sign in" type="submit" class=\"loginbutton\"/>
-                </span></td>
+                  </div>
+                  <div id="forgotpassdiv"></div>
+                </td>
               </tr>
             </table>
-            <div id="makenewaccountdiv"></div>
-            <div id="forgotpassdiv"></div>
           </div> <!-- userpassdiv -->
           <div id="altauthlogindiv">
             <div id="altauthoffsetdiv" class="instructional">&nbsp;</div>
