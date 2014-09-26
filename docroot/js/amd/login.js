@@ -326,6 +326,14 @@ app.login = (function () {
     },
 
 
+    smallLogo = function () {
+        jt.setdims('logoimg', {w: 128, h: 120});
+        jt.setdims('logodiv', {w: 128, h: 120});
+        jt.setdims('topsectiondiv', {h: 140});
+        jt.setdims('introverviewtaglinediv', {x: 40, y: 125});
+    },
+
+
     expandLoginFormLayoutIfSpace = function () {
         var lh, rh, html;
         if(app.winw >= app.minSideBySide) {
@@ -340,6 +348,7 @@ app.login = (function () {
                        ["div", {id: "altauthlogindiv"}, rh]]]]];
             jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
         else {  //not side by side, make sure nothing is too shrunken
+            smallLogo();
             html = jt.byId('altauthinstrdiv').innerHTML;
             if(html.indexOf("or with") > 0) {
                 html = "...or sign in from a social net";
@@ -660,8 +669,7 @@ return {
                     ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
             if(app.winw >= app.minSideBySide) {
                 jt.byId('topworkdiv').style.marginLeft = "280px";
-                jt.setdims('logoimg', {w: 128, h: 120});
-                jt.setdims('logodiv', {w: 128, h: 120}); }
+                smallLogo(); }
             else { 
                 //small 100x49 logo just makes things crowded and confused.
                 //move logodiv out of the way of clicks
