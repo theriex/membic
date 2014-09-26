@@ -25,7 +25,7 @@ var app = {},  //Global container for application level funcs and values
     app.introtext = "";
     app.authcookname = "myopenreviewauth";
     app.secsvr = "https://www.fgfweb.com";
-    app.mainsvr = "http://www.fgfweb.com";
+    app.mainsvr = "https://www.fgfweb.com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
 
@@ -104,10 +104,6 @@ var app = {},  //Global container for application level funcs and values
                         "js/amd/ext/googleplus", "js/amd/ext/github",
                         "js/amd/ext/amazon", "js/amd/ext/email",
                         "js/amd/ext/readurl" ];
-        if(href.indexOf("http://www.fgfweb.com") >= 0) {
-            app.mainsvr = "http://www.fgfweb.com"; }
-        if(href.indexOf("http://www.myopenreviews.com") >= 0) {
-            app.mainsvr = "http://www.myopenreviews.com"; }
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
