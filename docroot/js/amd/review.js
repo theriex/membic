@@ -421,6 +421,19 @@ app.review = (function () {
     },
 
 
+    sslSafeRef = function (url) {
+        //Amazon images are not available over https, so things look
+        //pretty barren if you make the URL safe.  Looking for
+        //options, but for now I'd rather have a mixed content warning
+        //than a bunch of busted images...
+        // var i, prots = ["http:", "https:"];
+        // for(i = 0; i < prots.length; i += 1) {
+        //     if(url && url.indexOf(prots[i]) === 0) {
+        //         url = url.slice(prots[i].length); } }
+        return url;
+    },
+
+
     revFormImageHTML = function (review, type, keyval, mode) {
         var html;
         if(!keyval) {
@@ -430,7 +443,7 @@ app.review = (function () {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
         case "sitepic":
-            html.src = review.imguri;
+            html.src = sslSafeRef(review.imguri);
             break;
         case "upldpic":
             html.src = "revpic?revid=" + jt.instId(review);
