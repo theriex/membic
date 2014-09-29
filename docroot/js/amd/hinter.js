@@ -297,8 +297,12 @@ app.hinter = (function () {
     },
 
 
-    displayCodeUpdateDialog = function () {
-        var html = ["p", "Your browser found an older copy of the site to run.<br/>Please reload this page."];
+    displayCodeUpdateDialog = function (vstr, locstr) {
+        var html = [["p", "Your browser found an older copy of the site to run.<br/>Please reload this page."],
+                    ["p", 
+                     ["Server version: " + vstr,
+                      ["br"],
+                      "Script version: " + locstr]]]
         html = app.layout.dlgwrapHTML("Get The Latest", html);
         app.layout.openDialog({y:140}, html);
     },
@@ -310,8 +314,9 @@ app.hinter = (function () {
     runVersionCheck = function () {
         jt.call('GET', "/buildverstr", null,
                 function (vstr) {
-                    if(vstr !== "BUILDVERSIONSTRING") {
-                        displayCodeUpdateDialog(); } },
+                    var locstr = "BUILDVERSIONSTRING";
+                    if(vstr !== locstr) {
+                        displayCodeUpdateDialog(vstr, locstr); } },
                 function (code, errtxt) {
                     jt.log("buildverstr failed code " + code + 
                            ": " + errtxt); },
