@@ -253,12 +253,11 @@ app.login = (function () {
     //Need to have automatic form submission so you can hit return
     //after the password to trigger the login.
     onLoginPasswordChange = function (e) {
-        var signinlink, emailin, passin;
+        var emailin, passin;
         jt.evtend(e);
-        signinlink = jt.byId('signinlink');
         emailin = jt.byId('emailin');
         passin = jt.byId('passin');
-        if(signinlink && emailin && passin) {
+        if(emailin && passin) {
             if(jt.isProbablyEmail(emailin.value) && passin.value && 
                passin.value.length > 5) {
                 jt.byId('loginform').submit(); } }
@@ -305,9 +304,11 @@ app.login = (function () {
 
     addParamValuesToLoginForm = function (params) {
         var name, html = [];
-        //add url parameters to pass through on form submit
+        //add url parameters to pass through on form submit.  Except for
+        //emailin, which should always be read from the form even if it
+        //is passed back from the server for use in error handling.
         for(name in params) {
-            if(params.hasOwnProperty(name)) {
+            if(params.hasOwnProperty(name) && name !== "emailin") {
                 html.push(["input", {type: "hidden", name: name,
                                      value: params[name]}]); } }
         if(!params.returnto) {
