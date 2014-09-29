@@ -5,6 +5,7 @@
   <meta name="robots" content="noodp" />
   <meta name="description" content="Friends guiding friends is about sharing thoughts on books, movies, videos, music, food, drinks, activities and other experiences between friends. FGFweb is the opposite of automated recommendations. FGFweb strives to be low noise and well organized. Free and open source." />
   <title>about FGFweb</title>
+  <link href="../css/site.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
 
@@ -65,10 +66,13 @@ false">GitHub project</a>.<!-- $ABOUTCONTACT --> </p>
 
 </div>
 
+<div id="returnlinkdiv" style="text-align:center; display:none;">
+  <a href="https://www.fgfweb.com">Return to FGFweb</a>
+</div>
+
 <script>
-  if(window.location.href.indexOf("/docs/") > 0) {
-      setTimeout(function () {
-          window.location.href = "https://www.fgfweb.com"; }, 1200); }
+    if(window.location.href.indexOf("/docs/") > 0) {
+        document.getElementById('returnlinkdiv').style.display = "block"; }
 </script>
 </body>
 </html>
