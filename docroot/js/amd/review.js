@@ -421,20 +421,19 @@ app.review = (function () {
     },
 
 
+    //Many images (including everything from smaller websites to
+    //Amazon) are not easily available over https, so removing the
+    //protocol and letting the browser attempt https just results in a
+    //lot of broken images.  Don't mess with the images unless you
+    //have to because imagerelay eats server resources.
     sslSafeRef = function (url) {
-        //Amazon images are not available over https, so things look
-        //pretty barren if you make the URL safe.  Looking for
-        //options, but for now I'd rather have a mixed content warning
-        //than a bunch of busted images...
-        // var i, prots = ["http:", "https:"];
-        // for(i = 0; i < prots.length; i += 1) {
-        //     if(url && url.indexOf(prots[i]) === 0) {
-        //         url = url.slice(prots[i].length); } }
+        if(window.location.href.indexOf("https://") === 0) {
+            url = "imagerelay?url=" + jt.enc(url); }
         return url;
     },
 
 
-    revFormImageHTML = function (review, type, keyval, mode) {
+    revFormImageHTML = function (review, type, keyval, mode, extra) {
         var html;
         if(!keyval) {
             return ""; }
@@ -443,7 +442,9 @@ app.review = (function () {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
         case "sitepic":
-            html.src = sslSafeRef(review.imguri);
+            html.src = review.imguri;
+            if(extra === "revroll") {
+                html.src = sslSafeRef(review.imguri); }
             break;
         case "upldpic":
             html.src = "revpic?revid=" + jt.instId(review);
@@ -1465,7 +1466,7 @@ return {
         if(revlink === "none") {
             revlink = ["span", {cla: "rslc"},
                        app.profile.reviewItemNameHTML(type, review)]; }
-        if("noresp" !== mode) {
+        if("revroll" !== mode) {
             revresp = ["div", {cla: "statrevrespdiv"},
                        ["div", {cla: "transformlinkdiv"},
                         ["a", {href: "../?view=review&penid=" + review.penid +
@@ -1483,7 +1484,7 @@ return {
                  "&nbsp;" + app.review.jumpLinkHTML(review, type),
                  ["div", {cla: "revtextsummary"},
                   [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
-                    app.review.picHTML(review, type)],
+                    app.review.picHTML(review, type, mode)],
                    ["div", {style: "padding:10px;"},
                     jt.linkify(review.text) + 
                     postline(review)],
@@ -2095,8 +2096,8 @@ return {
     },
 
 
-    picHTML: function (review, type) {
-        return revFormImageHTML(review, type, "defined", "listing");
+    picHTML: function (review, type, mode) {
+        return revFormImageHTML(review, type, "defined", "listing", mode);
     },
 
 

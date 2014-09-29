@@ -416,7 +416,7 @@ app.login = (function () {
                 rev = revroll.revs[revroll.index];
                 if(jt.instId(rev) && rev.text.length > 255) {
                     jt.out('revrolldiv', app.review.staticReviewDisplay(
-                        revroll.revs[revroll.index], null, "noresp"));
+                        revroll.revs[revroll.index], null, "revroll"));
                     app.layout.adjust();
                     displayed = true; }
                 revroll.index += 1; }

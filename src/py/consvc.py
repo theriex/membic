@@ -13,6 +13,7 @@ import urllib
 import datetime
 from base64 import b64encode
 from cacheman import *
+from google.appengine.api import memcache
 
 
 class ConnectionService(db.Model):
@@ -184,6 +185,47 @@ def callAmazon(handler, svc, params):
         handler.response.out.write(result.content)
 
 
+def simple_fetchurl(handler, geturl):
+    if not geturl:
+        handler.error(400)
+        handler.response.out.write("No URL specified")
+        return None
+    headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    try: 
+        result = urlfetch.fetch(geturl, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+    except:
+        handler.error(400)
+        handler.response.out.write("URL fetch failure")
+        return None
+    if not result or result.status_code != 200:
+        handler.error(result.status_code)
+        handler.response.out.write(result.content)
+        return None
+    return result
+
+
+# Returning an image directly to a browser doesn't work unless it is
+# transformed first, and if transforming anyway, may as well dump it
+# out in PNG format.  If the image is being cached, then it is subject
+# to the 1mb max cacheable string length, and in general it doesn't
+# make any sense to be passing large images around so restricting to
+# 125px wide.
+def prepare_image(img):
+    maxwidth = 125
+    if img.width > maxwidth:
+        img.resize(width=maxwidth)  # height adjusted automatically to match
+    else:
+        # at least one transform required so do a dummy crop
+        img.crop(0.0, 0.0, 1.0, 1.0)
+    img = img.execute_transforms(output_encoding=images.PNG)
+    return img
+
+
 # params: name, oauth_callback, oauth_verifier
 class OAuth1Call(webapp2.RequestHandler):
     def post(self):
@@ -221,18 +263,9 @@ class JSONGet(webapp2.RequestHandler):
             self.error(403)
             self.response.out.write("Not a recognized ok endpoint")
             return
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        result = urlfetch.fetch(geturl, payload=None, method="GET",
-                                headers=headers,
-                                allow_truncated=False, 
-                                follow_redirects=True, 
-                                deadline=10, 
-                                validate_certificate=False)
-        if result.status_code == 200:
+        result = simple_fetchurl(self, url)
+        if result:
             self.response.headers['Content-Type'] = 'application/json'
-            self.response.out.write(result.content)
-        else:
-            self.error(result.status_code)
             self.response.out.write(result.content)
 
 
@@ -334,26 +367,44 @@ class URLContents(webapp2.RequestHandler):
         #     return
         logging.info("referer: " + self.request.referer)
         logging.info("request: " + str(self.request))
-        url = self.request.get('url')
-        headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-        try:
-            result = urlfetch.fetch(url, payload=None, method="GET",
-                                    headers=headers,
-                                    allow_truncated=False, 
-                                    follow_redirects=True, 
-                                    deadline=10, 
-                                    validate_certificate=False)
-        except:
-            self.error(400)
-            self.response.out.write("URL fetch failure")
-            return
-        if result.status_code == 200:
+        result = simple_fetchurl(self, self.request.get('url'))
+        if result:
             json = "[{\"content\":\"" + enc(result.content) + "\"}]"
             self.response.headers['Content-Type'] = 'application/json'
             self.response.out.write(json)
+
+
+class ImageRelay(webapp2.RequestHandler):
+    def get(self):
+        # acc = authenticated(self.request)
+        # if not acc:
+        #     self.error(401)
+        #     self.response.out.write("Authentication failed")
+        #     return
+        logging.info("ImageRelay referer: " + (self.request.referer or ""))
+        logging.info("ImageRelay request: " + str(self.request))
+        url = self.request.get('url')
+        if not url:
+            self.error(400)
+            self.response.out.write("No URL specified")
+            return
+        logging.info("ImageRelay url: " + url)
+        img = memcache.get(url)
+        if img:
+            img = pickle.loads(img)
+            logging.info("ImageRelay retrieved from cache")
         else:
-            self.error(result.status_code)
-            self.response.out.write(result.content)
+            result = simple_fetchurl(self, url)
+            if result:
+                logging.info("ImageRelay urlfetch successful")
+                img = images.Image(result.content)
+                logging.info("ImageRelay image constructed")
+                img = prepare_image(img)
+                memcache.set(url, pickle.dumps(img))
+        if img:
+            self.response.headers['Content-Type'] = "image/png"
+            self.response.out.write(img)
+
 
 
 app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
@@ -361,6 +412,7 @@ app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/githubtok', GitHubToken),
                                ('/amazoninfo', AmazonInfo),
                                ('/amazonsearch', AmazonSearch),
-                               ('/urlcontents', URLContents)], 
+                               ('/urlcontents', URLContents),
+                               ('/imagerelay', ImageRelay)], 
                               debug=True)
 

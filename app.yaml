@@ -425,6 +425,10 @@ handlers:
 - url: /urlcontents.*
   script: src.py.consvc.app
 
+## Fetch the given image url and return it.
+## GET params: url, authparams
+- url: /imagerelay.*
+  script: src.py.consvc.app
 
 
 ######################################################################
