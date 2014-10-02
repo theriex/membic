@@ -429,6 +429,7 @@ app.login = (function () {
         setTimeout(function () {
             jt.call('GET', "revact", null,
                     function (revs) {
+                        app.lcs.putAll("rev", revs);  //deserialize
                         displayReviewActivityRoll(revs); },
                     function (code, errtxt) {
                         jt.log("addReviewActivityRoll failed code " + code +

@@ -71,7 +71,7 @@ img { border:0px; }
 .topnavitemdiv { 
   font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
 .documentcontentsdiv { padding:0px 10px 10px 20px; }
-.brandspan { sans-serif; font-size:small; font-weight:bold; }
+.brandspan { font-size:small; font-weight:bold; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
 .aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutstatementsdiv { padding:0px 10px; font-size:medium; }
