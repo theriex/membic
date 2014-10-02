@@ -104,6 +104,9 @@ var app = {},  //Global container for application level funcs and values
                         "js/amd/ext/googleplus", "js/amd/ext/github",
                         "js/amd/ext/amazon", "js/amd/ext/email",
                         "js/amd/ext/readurl" ];
+        if(href.indexOf("https://") !== 0 && href.search(/:\d080/) < 0) {
+            window.location.href = "https" + href.slice(4);   //switch to SSL
+            return; }  //don't fire anything else off.
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
