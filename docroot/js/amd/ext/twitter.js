@@ -13,7 +13,8 @@ app.twitter = (function () {
         twReqTokURL = "https://api.twitter.com/oauth/request_token",
         twTokCnvURL = "https://api.twitter.com/oauth/access_token",
         twLoginURL = "https://api.twitter.com/oauth/authenticate",
-
+        //Should match the app declaration at apps.twitter.com:
+        twTokRetURL = "http://www.fgfweb.com/twtok",
 
     ////////////////////////////////////////
     // helper functions
@@ -128,8 +129,7 @@ return {
         else {  //initial login or authorization call
             jt.out(outputdiv, "Setting up call to Twitter...");
             data = "name=Twitter&url=" + jt.enc(twReqTokURL) + 
-                "&oauth_callback=" +
-                jt.enc("http://www.fgfweb.com#command=AltAuth1");
+                "&oauth_callback=" + jt.enc(twTokRetURL);
             jt.call('POST', "oa1call", data,
                      function (callresults) {
                          redirectForLogin(callresults[0]); },

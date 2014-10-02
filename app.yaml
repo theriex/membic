@@ -405,6 +405,11 @@ handlers:
 - url: /jsonget.*
   script: src.py.consvc.app
 
+## Undecorated return endpoint for Twitter to callback
+## GET params: oauth token info
+- url: /twtok
+  script: src.py.consvc.app
+
 ## Fetch an access token for GitHub
 ## GET params: code, state
 - url: /githubtok.*

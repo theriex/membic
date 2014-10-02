@@ -269,6 +269,17 @@ class JSONGet(webapp2.RequestHandler):
             self.response.out.write(result.content)
 
 
+class TwitterTokenCallback(webapp2.RequestHandler):
+    def get(self):
+        params = ["oauth_token", "oauth_token_secret", 
+                  "oauth_callback_confirmed", "oauth_verifier"]
+        url = "https://www.fgfweb.com/#command=AltAuth1"
+        for param in params:
+            url += "&" + param + "=" + self.request.get(param)
+        logging.info("TwitterTokenCallback url: " + url);
+        self.redirect(str(url))
+
+
 class GitHubToken(webapp2.RequestHandler):
     def get(self):
         code = self.request.get('code')
@@ -409,6 +420,7 @@ class ImageRelay(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/jsonget', JSONGet),
+                               ('/twtok', TwitterTokenCallback),
                                ('/githubtok', GitHubToken),
                                ('/amazoninfo', AmazonInfo),
                                ('/amazonsearch', AmazonSearch),
