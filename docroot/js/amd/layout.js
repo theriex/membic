@@ -129,98 +129,6 @@ app.layout = (function () {
     },
 
 
-    //Set the src of the current img to the next slide and change its
-    //opacity to 1.  Then change the opacity of the prev img to 0.  If
-    //someone is logging in automatically (the most common case), then
-    //preloading images is extra overhead so not doing that.
-    slideshow = function (firstrun) {
-        var sdiv, html, previmg, img;
-        sdiv = jt.byId('slidesdiv');
-        if(sdiv && jt.byId('emailin') && jt.byId('passin')) {
-            if(jt.isLowFuncBrowser()) {
-                jt.log("slideshow isLowFuncBrowser so no fades");
-                if(firstrun) {
-                    slideindex = 0; }
-                html = ["img", {src: "img/slides/" + slides[slideindex],
-                                cla: "slideimglowfuncb"}];
-                jt.out('slidesdiv', jt.tac2html(html));
-                slideindex = (slideindex + 1) % slides.length; }
-            else {  //use nice opacity transitions
-                if(!firstrun) {
-                    jt.log("    fading introslide" + slideslot + ": " + 
-                            "img/slides/" + slides[slideindex]);
-                    previmg = jt.byId("introslide" + slideslot);
-                    if(!previmg) {  //probably logged in in the interim
-                        return; }
-                    setTimeout(function () {
-                        jt.log("displaying blank to avoid flashing previous");
-                        //timeout value must be > css transition time
-                        previmg.src = "img/slides/blank.png"; }, 1200);
-                    previmg.style.opacity = 0; }  //fade out
-                slideslot = (slideslot + 1) % 2;
-                slideindex = (slideindex + 1) % slides.length;
-                jt.log("displaying introslide" + slideslot + ": " + 
-                        "img/slides/" + slides[slideindex]);
-                img = jt.byId("introslide" + slideslot);
-                if(!img) {  //probably logged in in the interim
-                    return; }
-                img.src = "img/slides/" + slides[slideindex];
-                img.style.opacity = 1; }
-            if(!slides[slideindex] || slides[slideindex] === "blank.png") {
-                setTimeout(slideshow, 2000); }
-            else {
-                setTimeout(slideshow, 3600); } }
-        else {  //slideshow is over
-            if(jt.byId('slidesdiv')) {
-                jt.out('slidesdiv', ""); } }
-    },
-
-
-    // adjustLogoAndSlides = function (logodim, slidedim, sep) {
-    //     jt.byId('topsectiondiv').style.height = 
-    //         String(Math.max(logodim.h, slidedim.h)) + "px";
-    //     //#logodiv position:absolute
-    //     jt.out('logodiv', jt.tac2html(
-    //         ["img", {src: "img/fgfweb.png", id: "logoimg",
-    //                  style: "width:" + logodim.w + "px;" + 
-    //                         "height:" + logodim.h + "px;"}]));
-    //     jt.setdims('logodiv', logodim);
-    //     jt.setdims('introverviewtaglinediv', {y: logodim.h});
-    //     //slides
-    //     slidedim.x = 0;
-    //     if(sep) {
-    //         slidedim.x = logodim.w + sep; }
-    //     else { //adjust slides down to cover the bottom loop of the 'y'
-    //         slidedim.y = 11; }
-    //     jt.setdims('slidesdiv', slidedim);
-    //     jt.setdims('introslide0', slidedim);
-    //     jt.setdims('introslide1', slidedim);
-    //     //remove smooth opacity transitions if transitions not supported
-    //     if(!jt.isLowFuncBrowser()) {
-    //         jt.byId('introslide0').style.opacity = 0;
-    //         jt.byId('introslide1').style.opacity = 0; }
-    // },
-
-
-    // initSlideshow = function () {
-    //     var logodim = {w: 460, h: 227}, slidedim = {w: 522, h: 250},
-    //         minsep = 40;
-    //     if(app.winw > logodim.w + slidedim.w + minsep) {  //space available
-    //         adjustLogoAndSlides(logodim, slidedim,
-    //             Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
-    //     else {  //go with mobile size images
-    //         logodim = {w: 320, h: 158};
-    //         slidedim = {w: 320, h: 153};
-    //         if(app.winw > logodim.w + slidedim.w + minsep) {
-    //             adjustLogoAndSlides(logodim, slidedim,
-    //                 Math.round((app.winw - (logodim.w + slidedim.w)) / 2)); }
-    //         else {
-    //             slides.unshift("blank.png");  //reveal logo in slide cycles
-    //             adjustLogoAndSlides(logodim, slidedim, 0); } }
-    //     slideshow(true);
-    // },
-
-
     setSoftFocus = function () {
         var revid, focobj;
         if(app.review.getCurrentReview()) {
@@ -300,8 +208,6 @@ return {
         localDocLinks();
         fullContentHeight();
         fixTextureCover();
-        //The slideshow is no longer a great intro description
-        //initSlideshow();
     },
 
 

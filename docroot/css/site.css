@@ -50,21 +50,11 @@ img { border:0px; }
  */
 
 /* >> topsectiondiv and contained elements */
-#mascotdiv { position:absolute; left:10px; top:265px; }
-.mascotimg { vertical-align:middle; width:29px; height:14px; }
 #topsectiondiv { padding:0px 10px;
   height:250px; }  /* height adjusted by login.updateAuthentDisplay */
 #logodiv { position:absolute; left:50px; top:0px; }
 #topworkdiv { }
 #slidesdiv { }
-.slideimglowfuncb { position:absolute; left:500px; }
-/* left recalculated in layout.initSlideshow */
-.slideimg { position:absolute; left:0px; 
-  -webkit-transition: opacity 1s ease-in-out;
-  -moz-transition: opacity 1s ease-in-out;
-  -o-transition: opacity 1s ease-in-out;
-  transition: opacity 1s ease-in-out;
-}
 #topactionsdiv { font-size:x-large; }
 #topactionstable { margin:0px; padding:0px; }
 #topactionstable td { padding:0px; }
