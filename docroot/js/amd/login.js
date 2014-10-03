@@ -298,7 +298,6 @@ app.login = (function () {
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out('contentdiv', html); }
-        jt.byId('loginform').style.display = "block";
     },
 
 
