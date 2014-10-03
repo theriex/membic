@@ -343,7 +343,7 @@ app.login = (function () {
             html = ["table", {id: "sidebysideloginvistable",
                               style: "width:" + (app.winw - 20) + "px;"},
                     ["tr",
-                     [["td", {valign: "top", align: "right"},
+                     [["td", {valign: "top", align: "right", cla: "tdnarrow"},
                        ["div", {id: "userpassdiv"}, lh]],
                       ["td", {valign: "top", align: "left"},
                        ["div", {id: "altauthlogindiv"}, rh]]]]];

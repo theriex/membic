@@ -78,7 +78,7 @@ img { border:0px; }
 .aboutwhatitisdiv { text-align:center; font-size:x-small; }
 
 /* >> main display area and contained elements */
-#phonetextzoomfixtable { border-collapse:collapse; }
+#phonetextzoomfixtable, #loginformtable { border-collapse:collapse; }
 #centerhdivtd { }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
@@ -187,7 +187,7 @@ img { border:0px; }
 #forgotpassdiv { text-align:center; }
 #altauthinstrdiv { padding:0px 20px 10px 0px; }
 #altauthmethods { padding:0px 0px 20px 30px; }
-.liflab { font-size:large; font-weight:normal; padding:10px; }
+.liflab { font-size:medium; font-weight:normal; padding:10px; }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
