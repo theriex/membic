@@ -335,9 +335,18 @@ app.login = (function () {
     },
 
 
+    growLogo = function () {
+        jt.setdims('topsectiondiv', {h: 250});
+        jt.setdims('logodiv', {w: 247, h: 231});
+        jt.setdims('logoimg', {w: 247, h: 231});
+        jt.setdims('introverviewtaglinediv', {x: 60, y: 227});
+    },
+
+
     expandLoginFormLayoutIfSpace = function () {
         var lh, rh, html;
         if(app.winw >= app.minSideBySide) {
+            growLogo();
             lh = jt.byId('userpassdiv').innerHTML;
             rh = jt.byId('altauthlogindiv').innerHTML;
             html = ["table", {id: "sidebysideloginvistable",
@@ -349,7 +358,6 @@ app.login = (function () {
                        ["div", {id: "altauthlogindiv"}, rh]]]]];
             jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
         else {  //not side by side, make sure nothing is too shrunken
-            smallLogo();
             html = jt.byId('altauthinstrdiv').innerHTML;
             if(html.indexOf("or with") > 0) {
                 html = "...or sign in from a social net";
@@ -671,7 +679,7 @@ return {
                     ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
             if(app.winw >= app.minSideBySide) {
                 jt.byId('topworkdiv').style.marginLeft = "280px";
-                smallLogo(); }
+                smallLogo(); }  //shrink so top area is reasonable
             else { 
                 //small 100x49 logo just makes things crowded and confused.
                 //move logodiv out of the way of clicks

@@ -50,9 +50,9 @@ img { border:0px; }
  */
 
 /* >> topsectiondiv and contained elements */
-#topsectiondiv { padding:0px 10px;
-  height:250px; }  /* height adjusted by login.updateAuthentDisplay */
-#logodiv { position:absolute; left:50px; top:0px; }
+#topsectiondiv { padding:0px 10px; height:140px; } 
+#logodiv { position:absolute; left:50px; top:0px; } 
+#logodiv, #logoimg { width:128px; height:120px; }
 #topworkdiv { }
 #slidesdiv { }
 #topactionsdiv { font-size:x-large; }
@@ -83,7 +83,7 @@ img { border:0px; }
 #contentdiv { margin:auto; }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
-#introverviewtaglinediv { position:absolute; left:60px; top:227px; 
+#introverviewtaglinediv { position:absolute; left:40px; top:125px; 
  font-size:small; }
 #taglinedetpensdiv { font-size:small; font-style:italic; }
 #enticediv { position:absolute; left:350px; top:0px; }
@@ -157,7 +157,6 @@ img { border:0px; }
 .respico { vertical-align:bottom; }
 .respicodis { opacity:0.3; filter:alpha(opacity=30); }
 #forgotpw { font-size:small; }
-#loginbtd { padding:20px 30px 20px 20px; }
 #signinbuttondiv { background:#70bbe9;
  color:#003; font-size:x-large; font-weight:normal;
  padding:5px 10px; display:table; cursor:pointer; 
