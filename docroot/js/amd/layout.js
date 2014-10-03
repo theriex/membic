@@ -13,11 +13,6 @@ app.layout = (function () {
         topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
         dndState = null,
         dlgqueue = [],
-        slides = [ "promo_cycle.png",
-                   "promo_balloons2.png",
-                   "promo_list.png" ],
-        slideindex = -1,
-        slideslot = -1,
         meritactive = false,
         navmode = "activity",
         siteroot = "",
