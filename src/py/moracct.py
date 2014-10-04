@@ -97,6 +97,14 @@ def call_server(url, meth, params):
     return data
 
 
+# Apparently on some devices/browsers it is possible for the email
+# address used for login to be sent encoded.  Decode and lowercase.
+def normalize_email(emaddr):
+    emaddr = emaddr.lower()
+    emaddr = re.sub('%40', '@', emaddr)
+    return emaddr
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
@@ -106,7 +114,7 @@ def authenticated(request):
     logging.info("moracct.py authenticated acctype: " + acctype + ", emaddr: " +
                  emaddr + ", token: " + token + ", toksec: " + toksec)
     if acctype == "mid":
-        emaddr = emaddr.lower()
+        emaddr = normalize_email(emaddr)
         where = "WHERE email=:1 LIMIT 1"
         accounts = MORAccount.gql(where, emaddr)
         logging.info("moracct.py authenticated found " + str(accounts.count()) +
@@ -311,7 +319,7 @@ class CreateAccount(webapp2.RequestHandler):
         if not verify_secure_comms(self, url):
             return
         emaddr = self.request.get('emailin') or ""
-        emaddr = emaddr.lower()
+        emaddr = normalize_email(emaddr)
         # something @ something . something
         if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
             self.error(412)
@@ -347,7 +355,7 @@ class GetToken(webapp2.RequestHandler):
         if not verify_secure_comms(self, url):
             return
         emaddr = self.request.get('emailin') or ""
-        emaddr = emaddr.lower()
+        emaddr = normalize_email(emaddr)
         password = self.request.get('passin')
         where = "WHERE email=:1 AND password=:2 LIMIT 1"
         accounts = MORAccount.gql(where, emaddr, password)
@@ -433,7 +441,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
 class GetLoginID(webapp2.RequestHandler):
     def post(self):
         emaddr = self.request.get('emailin') or ""
-        emaddr = emaddr.lower()
+        emaddr = emaddr.normalize_email(emaddr)
         password = self.request.get('passin')
         where = "WHERE email=:1 AND password=:2 LIMIT 1"
         accounts = MORAccount.gql(where, emaddr, password)
