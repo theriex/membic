@@ -326,6 +326,13 @@ app.login = (function () {
     },
 
 
+    maxw = function (elem, maxwidth) {
+        if(typeof elem === "string") {
+            elem = jt.byId(elem); }
+        elem.style.width = String(Math.min(elem.offsetWidth, maxwidth)) + "px";
+    },
+
+
     smallLogo = function () {
         jt.setdims('logoimg', {w: 128, h: 120});
         jt.setdims('logodiv', {w: 128, h: 120});
@@ -357,14 +364,10 @@ app.login = (function () {
                        ["div", {id: "altauthlogindiv"}, rh]]]]];
             jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
         else {  //not side by side, make sure nothing is too shrunken
-            html = jt.byId('altauthinstrdiv').innerHTML;
-            if(html.indexOf("or with") > 0) {
-                html = "...or sign in from a social net";
-                jt.out('altauthinstrdiv', html); }
             minw('nativelogintitlediv');
             minw('forgotpassdiv');
-            minw('altauthinstrdiv');
             minw('altauthmethods');
+            maxw('altauthmethods', 260);  //reserve padding
             minw('introverview'); }
     },
 
@@ -472,12 +475,8 @@ app.login = (function () {
             jt.out('loginstatdiv', fixServerText(params.loginerr)); }
         if(params.special === "nativeonly") {
             jt.out('nativelogintitlediv', "Native FGFweb login:");
-            jt.out('altauthinstrdiv', "");
             jt.out('altauthmethods', ""); }
         else {  //regular login
-            //jt.out('nativelogintitlediv', "Sign in directly...");
-            //jt.out('altauthinstrdiv',  //mind the ipad length here
-            //       "&nbsp;&nbsp;...or with your social net");
             jt.out('altauthmethods', displayAltAuthMethods()); }
         if(!jt.byId('createAccountButton')) {
             html = ["button", {type: "button", id: "createAccountButton",
