@@ -95,8 +95,10 @@ def gen_password():
 def native_account_for_pen(request):
     """ Get the authorized pen, then return the native account for it """
     acc = authenticated(request)
-    if not acc:
+    if not acc:  # authentication failed
         return None, None
+    # If 3rd party auth, acc is a newly minted account instance with the
+    # id filled out to a temporary value. 
     penid = request.get('penid')
     pen = cached_get(intz(penid), PenName)
     if not pen:
@@ -104,6 +106,7 @@ def native_account_for_pen(request):
     authok = authorized(acc, pen)
     if not authok:
         return None, None
+    acc._id = None  # reset to differentiate between new and existing instance
     # They are authorized for the given pen.  Good enough to fill out email.
     if pen.mid:
         acc = MORAccount.get_by_id(pen.mid)  #nocache
@@ -390,7 +393,7 @@ class SetEmailFromPen(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("No email address specified")
             return
-        acc.email = emaddr.lower()
+        acc.email = normalize_email(emaddr)
         try:  # just in case anything goes wrong in the transaction
             acc.put()  #nocache
             pen.mid = acc.key().id()

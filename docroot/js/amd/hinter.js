@@ -10,6 +10,7 @@ app.hinter = (function () {
     ////////////////////////////////////////
 
     var tips = null,
+        accountInfo = null,
 
 
     ////////////////////////////////////////
@@ -25,21 +26,55 @@ app.hinter = (function () {
     },
 
 
-    notipActive = function (pen) {
-        return true; 
+    emailActive = function (pen) {
+        var params;
+        if(app.login.getAuthMethod === "mid") {
+            return false; }
+        if(accountInfo) {
+            if(accountInfo.hasEmail) {
+                return false; }
+            return "run"; }
+        params = app.login.authparams() + "&penid=" + jt.instId(pen);
+        jt.call('GET', "acctinfo?" + params, null,
+                function (infos) {
+                    accountInfo = infos[0];
+                    app.hinter.showStartTip(); },
+                app.failf(function (code, errtxt) {
+                    jt.log("emailActive call failed: " + 
+                           code + ": " + errtxt); }),
+                jt.semaphore("hinter.emailActive"));
+        return "halt";  //stop processing while fetching account info
     },
 
 
-    //This is an empty tip, which is used to avoid having a tip show
-    //up when people first sign up.  They already see the
-    //introductions dialog, which is enough popups happening
-    //initially.  This will cycle through like any other tip, but not
-    //showing a tip every once in a while is fine.
-    notip = function () {
-        app.hinter.tipok('notip', true);
+    email = function (displayCount) {
+        var html;
+        html = ["div", {cla: "hintcontentdiv"},
+                [["p", "FGFweb is a low noise site. You are going to want the weekly summary to track what your friends have been up to."],
+                 ["div", {id: "formstatdiv"}, "&nbsp;"],
+                 ["div", {id: "emlabdiv"},
+                  ["label", {fo: "emailin", cla: "liflab"},
+                   "Email Address (private):"]],
+                 ["div", {id: "emindiv"},
+                  ["input", {type: "email", id: "emailin", size: 25,
+                             onchange: jt.fs("app.hinter.setEmail()")}]],
+                 ["div", {cla: "dismissradiodiv"},
+                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "I'll remember to check back each week. Don't display this message ever again."))],
+                 ["div", {cla: "tipsbuttondiv"},
+                  [["button", {type: "button", id: "tipok",
+                               onclick: jt.fs("app.hinter.tipok('email')")},
+                    "Skip"],
+                   "&nbsp; &nbsp; &nbsp;",
+                   ["button", {type: "button", id: "setemailbutton",
+                               onclick: jt.fs("app.hinter.setEmail()")},
+                    "Save"]]]]];
+        html = app.layout.dlgwrapHTML("Email Address", html);
+        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
+                               function () {
+                                   jt.byId('tipok').focus(); });
     },
-
-
+        
+                  
     looktopActive = function (pen) {
         return true;
     },
@@ -302,7 +337,7 @@ app.hinter = (function () {
                     ["p", 
                      ["Server version: " + vstr,
                       ["br"],
-                      "Script version: " + locstr]]]
+                      "Script version: " + locstr]]];
         html = app.layout.dlgwrapHTML("Get The Latest", html);
         app.layout.openDialog({y:140}, html);
     },
@@ -333,9 +368,60 @@ app.hinter = (function () {
     },
 
 
+    runTip = function (pen, tip, tipset, name) {
+        if(!tipset[name]) {
+            tipset[name] = 1; }
+        else {
+            tipset[name] += 1; }
+        tip.runf(tipset[name]);  //pass the count for content logic
+        tipset.prevtip = name;
+        tipset.lastprompt = new Date().toISOString();
+        writeUpdatedTipsInfo(pen);
+    },
+
+
+    showPriorityTip = function (pen) {
+        var tipset, i, name;
+        tipset = pen.settings.tipset;
+        for(i = 0; i < tips.length; i += 1) {
+            name = tips[i].name;
+            if(tips[i].priority && tipset[name] !== "dismissed" && 
+                   tips[i].checkf(pen)) {
+                if(tips[i].checkf(pen)  === "run") {
+                    runTip(pen, tips[i], tipset, name); }
+                return true; } }
+        return false;
+    },
+
+
+    findAndShowNextTip = function (pen) {
+        var tipset, i, name, rotips, temp;
+        tipset = pen.settings.tipset;
+        if(promptedRecently(tipset)) {
+            return false; }
+        if(tipset.prevtip) {  //rotate previous tip to bottom of list
+            rotips = tips;
+            for(i = 0; i < tips.length; i += 1) {
+                temp = rotips[rotips.length - 1];
+                if(temp.name === tipset.prevtip) {
+                    break; } //previous tip now at the end
+                temp = rotips[0];
+                rotips = rotips.slice(1);
+                rotips.push(temp); }
+            tips = rotips; }
+        for(i = 0; i < tips.length; i += 1) {
+            name = tips[i].name;
+            if(tipset[name] !== "dismissed" && tips[i].checkf(pen)) {
+                runTip(pen, tips[i], tipset, name);
+                break; } }
+        
+    },
+
+
     initTips = function () {
         tips = [
-            { name: "notip",    checkf: notipActive,    runf: notip },
+            { name: "email",    checkf: emailActive,    runf: email,
+              priority: true },
             { name: "looktop",  checkf: looktopActive,  runf: looktop },
             { name: "ezlink",   checkf: ezlinkActive,   runf: ezlink },
             { name: "writerev", checkf: writerevActive, runf: writerev },
@@ -353,38 +439,14 @@ app.hinter = (function () {
 return {
 
     showStartTip: function () {
-        var pen, settings, tipset, i, name, rotips, temp;
-        setTimeout(runVersionCheck, 1000);
+        var pen;
+        setTimeout(runVersionCheck, 1000);  //preempts everything if broken
         pen = app.pen.currPenRef().pen;
-        settings = pen.settings;
-        if(!settings.tipset) {
-            settings.tipset = {}; }
-        tipset = settings.tipset;
-        if(promptedRecently(tipset)) {
-            return; }
+        if(!pen.settings.tipset) {
+            pen.settings.tipset = {}; }
         initTips();
-        if(tipset.prevtip) {  //rotate previous tip to bottom of list
-            rotips = tips;
-            for(i = 0; i < tips.length; i += 1) {
-                temp = rotips[rotips.length - 1];
-                if(temp.name === tipset.prevtip) {
-                    break; } //previous tip now at the end
-                temp = rotips[0];
-                rotips = rotips.slice(1);
-                rotips.push(temp); }
-            tips = rotips; }
-        for(i = 0; i < tips.length; i += 1) {
-            name = tips[i].name;
-            if(tipset[name] !== "dismissed" && tips[i].checkf(pen)) {
-                if(!tipset[name]) {
-                    tipset[name] = 1; }
-                else {
-                    tipset[name] += 1; }
-                tips[i].runf(tipset[name]);  //pass the count for processing
-                tipset.prevtip = name;
-                tipset.lastprompt = new Date().toISOString();
-                writeUpdatedTipsInfo(pen);
-                break; } }
+        if(!showPriorityTip(pen)) {
+            findAndShowNextTip(pen); }
     },
 
 
@@ -432,6 +494,38 @@ return {
             app.profile.verifyStateVariableValues(pen);
             app.profile.setSelectedTab('groups');
             app.profile.display(); });
+    },
+
+
+    //Check the email address provided in the form, then update.  If
+    //the email address was not used yet, then a new native account is
+    //created using the specified email.  If a native account exists
+    //with the specified email, then it probably belongs to the user,
+    //and the easiest thing is just to hook it up.  Of course if it
+    //isn't their email, then they just gave someone else full control
+    //over their pen name, which is the one they access automatically
+    //when logging in via that 3rd party auth.  Fixing that kind of a
+    //screwup is not possible via the site. It requires going into the
+    //db directly and unsetting the "mid" value for the given pen.
+    //Not expecting that to be a common problem.  If it does happen,
+    //then support would first verify access by having the user change
+    //the pen shoutout text.
+    setEmail: function () {
+        var data, emaddr = jt.byId('emailin').value;
+        if(!emaddr) {
+            return jt.out('formstatdiv', "No email address found"); }
+        if(!jt.isProbablyEmail(emaddr)) {
+            return jt.out('formstatdiv', "Need a valid email address"); }
+        data = "penid=" + jt.instId(app.pen.currPenRef().pen) +
+            "&email=" + jt.enc(emaddr);
+        jt.call('POST', "penmail?" + app.login.authparams(), data,
+                function (pens) {
+                    app.pen.setCurrentPenReference(pens[0]);
+                    app.hinter.tipok('email'); },
+                app.failf(function (code, errtxt) {
+                    jt.out('formstatdiv', "Email update failure " + code +
+                           ": " + errtxt); }),
+                jt.semaphore("hinter.setEmail"));
     }
 
 

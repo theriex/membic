@@ -26,70 +26,6 @@ app.pen = (function () {
     },
 
 
-    askForEmailAddress = function (errmsg) {
-        var html, askcount, nothanks, mailval;
-        mailval = jt.safeget('emailin', 'value');
-        askcount = Number(currpenref.pen.settings.askedemail || 0);
-        nothanks = "I'll remember to check back in a week myself";
-        if(askcount >= 1) {
-            nothanks = "I'll drop by occasionally, stop asking for email"; }
-        errmsg = errmsg || "";
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 "Contact email"],
-                ["p",
-                 "FGFweb is a low noise site, and a lot of folks only check in about once a week or so.  To stay in touch, it's recommended that you have a weekly summary of your friend's reviews mailed to you."],
-                ["ul", {cla: "revlist"},
-                 [["li",
-                   ["div", {cla: "errtxt"},
-                    errmsg]],
-                  ["li",
-                   [jt.radiobutton("mailsel", "yesmail", 
-                                   "Email address (private) &nbsp;", true),
-                    ["input", {type: "email", id: "emailin", size: 25,
-                               onchange: jt.fs("app.pen.processEmailForm()"),
-                               value: mailval}]]],
-                  ["li",
-                   [jt.radiobutton("mailsel", "nomail",
-                                   nothanks)]]]],
-                ["div", {cla: "headingtxt"},
-                 ["button", {type: "button", id: "emailpromptok",
-                             onclick: jt.fs("app.pen.processEmailForm()")},
-                  "OK"]]];
-        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
-                               function () {
-                                   jt.byId('emailin').focus(); });
-    },
-
-
-    promptForEmailIfNeeded = function () {
-        var yesterday, settings, lastprompt, ttlprompts, params;
-        app.pen.deserializeFields(currpenref.pen);
-        settings = currpenref.pen.settings;
-        lastprompt = settings.emailprompt || "2012-01-01T00:00:00Z";
-        yesterday = new Date((new Date().getTime()) - (24*60*60*1000))
-            .toISOString();
-        if(lastprompt > yesterday) {
-            return; }  //already asked recently
-        ttlprompts = Number(settings.askedemail || 0);
-        if(ttlprompts >= 2) {
-            return; }  //don't be too pesky. See form verbiage.
-        params = app.login.authparams() + "&penid=" + jt.instId(currpenref.pen);
-        jt.call('GET', "acctinfo?" + params, null,
-                function (infos) {
-                    if(!infos[0].hasEmail) {
-                        askForEmailAddress(); } },
-                app.failf(function (code, errtxt) {
-                    jt.log("promptForEmailIfNeeded call failed: " + 
-                           code + " " + errtxt); }),
-                jt.semaphore("pen.promptForEmailIfNeeded"));
-    },
-
-
     returnCall = function (callback) {
         if(!callback) {
             callback = returnFuncMemo; }
@@ -132,7 +68,6 @@ app.pen = (function () {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
                      app.rel.resetStateVars("new");  //updates header display
-                     setTimeout(promptForEmailIfNeeded, 200);
                      setTimeout(app.hinter.showStartTip, 4000);
                      returnCall(); },
                  app.failf(function (code, errtxt) {
@@ -205,7 +140,6 @@ app.pen = (function () {
         if(!penNameRefs || penNameRefs.length === 0) {
             return newPenNameDisplay(callback); }
         currpenref = findHomePenRef();
-        setTimeout(promptForEmailIfNeeded, 200);
         app.skinner.setColorsFromPen(currpenref.pen);
         returnCall(callback);
     };
@@ -262,6 +196,11 @@ return {
 
     currPenRef: function () {
         return currpenref;
+    },
+
+
+    setCurrentPenReference: function (pen) {
+        currpenref = app.lcs.put("pen", pen);
     },
 
 
@@ -343,34 +282,6 @@ return {
         app.lcs.reconstituteJSONObjectField("settings", penName);
         app.lcs.reconstituteJSONObjectField("top20s", penName);
         app.lcs.reconstituteJSONObjectField("stash", penName);
-    },
-
-
-    processEmailForm: function () {
-        var email = jt.safeget('emailin', 'value'),
-            rejected = jt.safeget('nomail', 'checked'),
-            pen = currpenref.pen, data;
-        if(rejected) {
-            pen.settings.emailprompt = new Date().toISOString();
-            pen.settings.askedemail = pen.settings.askedemail || 0;
-            pen.settings.askedemail += 1;
-            updatePenName(pen, 
-                          function () {
-                              app.layout.closeDialog(); },
-                          app.failf(app.layout.closeDialog)); }
-        else {  //adding email
-            if(!jt.isProbablyEmail(email)) {
-                return askForEmailAddress("Please enter your email address"); }
-            data = "penid=" + jt.instId(pen) + "&email=" + jt.enc(email);
-            jt.call('POST', "penmail?" + app.login.authparams(), data,
-                    function (pens) {
-                        currpenref = app.lcs.put("pen", pens[0]);
-                        app.layout.closeDialog(); },
-                    app.failf(function (code, errtxt) {
-                        jt.err("Email update failure: " + code + "\n" +
-                               "Please login natively to update your email.\n" +
-                               errtxt); }),
-                    jt.semaphore("pen.processEmailForm")); }
     },
 
 
