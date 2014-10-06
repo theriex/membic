@@ -151,7 +151,9 @@ def authenticated(request):
     elif acctype == "twid":
         svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
         result = doOAuthGet("Twitter", svc, token, toksec)
-        if result and result.status_code == 200:
+        if result and (result.status_code == 200 or
+                       result.status_code == 429 or 
+                       result.status_code == 420):
             usertoks = emaddr.split(' ')
             useridstr = str(usertoks[0])
             source = "tw:" + useridstr

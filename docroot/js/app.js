@@ -167,12 +167,16 @@ var app = {},  //Global container for application level funcs and values
             //then it's most likely because their session has expired
             //or they logged out and are trying to resubmit an old
             //form.  The appropriate thing is to redo the login.
-            case 401: return app.login.logout();
+            case 401: 
+                jt.log("app.failf 401, calling logout...");
+                return app.login.logout();
             //   404 (not found) -> general error handling
             //   405 (GET instead of POST) -> general error handling
             //   412 (precondition failed) -> general error handling
-            case 500: return app.crash(code, errtxt, method, url, data);
-            default: failfunc(code, errtxt, method, url, data); } };
+            case 500: 
+                return app.crash(code, errtxt, method, url, data);
+            default: 
+                failfunc(code, errtxt, method, url, data); } };
     };
 
 

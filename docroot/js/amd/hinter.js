@@ -50,14 +50,13 @@ app.hinter = (function () {
     email = function (displayCount) {
         var html;
         html = ["div", {cla: "hintcontentdiv"},
-                [["p", "FGFweb is a low noise site. You are going to want the weekly summary to track what your friends have been up to."],
+                [["p", "FGFweb is a low noise site. You are going to want the weekly summary to track what your friends have been up to. Your email address is not shared with anyone."],
                  ["div", {id: "formstatdiv"}, "&nbsp;"],
-                 ["div", {id: "emlabdiv"},
-                  ["label", {fo: "emailin", cla: "liflab"},
-                   "Email Address (private):"]],
-                 ["div", {id: "emindiv"},
-                  ["input", {type: "email", id: "emailin", size: 25,
-                             onchange: jt.fs("app.hinter.setEmail()")}]],
+                 ["div", {id: "eminputdiv"},
+                  [["label", {fo: "emailin", cla: "liflab"},
+                    "Email"],
+                   ["input", {type: "email", id: "emailin", size: 25,
+                              onchange: jt.fs("app.hinter.setEmail()")}]]],
                  ["div", {cla: "dismissradiodiv"},
                   (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "I'll remember to check back each week. Don't display this message ever again."))],
                  ["div", {cla: "tipsbuttondiv"},
@@ -70,8 +69,12 @@ app.hinter = (function () {
                     "Save"]]]]];
         html = app.layout.dlgwrapHTML("Email Address", html);
         app.layout.queueDialog({y:140}, jt.tac2html(html), null,
+                               //logically emailin should have the
+                               //focus, but that doesn't work on ipad,
+                               //and having "Skip" show up as the
+                               //default button is not good.
                                function () {
-                                   jt.byId('tipok').focus(); });
+                                   jt.byId('setemailbutton').focus(); });
     },
         
                   

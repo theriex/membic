@@ -215,6 +215,8 @@ app.login = (function () {
                 window.location.href = redurl; 
             }, 20); }
         else {  //we are on app.mainsvr at this point
+            if(typeof idx !== "number") {
+                idx = parseInt(idx, 10); }
             altauths[idx].authenticate(params); }
     },
 
@@ -857,8 +859,14 @@ return {
     },
 
 
+    //Return point for 3rd party auth completion
     authComplete: function () {
-        doneWorkingWithAccount();
+        var params;
+        //any original params probably didn't make it through the 3rd
+        //party auth calls, but capture them in case they did.
+        params = jt.parseParams();
+        //kick off the pen access time update, hinter etc.
+        loggedInDoNextStep(params);
     },
 
 

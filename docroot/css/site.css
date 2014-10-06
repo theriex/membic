@@ -169,7 +169,7 @@ img { border:0px; }
   padding:0px 0px 0px 40px;}
 #logindiv { margin:auto; }
 #loginform { margin:auto; }
-#loginstatdiv { font-size:small; }
+#loginstatdiv, #formstatdiv { font-size:small; }
 #loginvisualelementsdiv { padding:0px 10px; }
 #loginbuttonsdiv { padding:20px; }
 #loginbuttonsdiv button { margin:0px 20px; }
