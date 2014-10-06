@@ -296,7 +296,8 @@ return {
 
 
     queueDialog: function (coords, html, initf, visf) {
-        if(jt.byId('dlgdiv').style.visibility === "visible") {
+        var dlgdiv = jt.byId('dlgdiv');
+        if(dlgdiv.style.visibility === "visible") {
             dlgqueue.push({coords: coords, html: html, 
                            initf: initf, visf: visf}); }
         else {

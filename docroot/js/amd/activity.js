@@ -1193,13 +1193,16 @@ return {
 
     displayActive: function () {
         if(app.login.isLoggedIn()) {
-            app.layout.closeDialog(); //close dialog if previously open
+            //Do not close the "making introductions" dialog automatically
+            //or it gets replaced by the next hint, which looks bad.
+            //app.layout.closeDialog();
             mainDisplay("activity"); }
     },
 
 
     displayRemembered: function () {
-        app.layout.closeDialog(); //close dialog if previously open
+        //Mirror the behavior of displayActive.
+        //app.layout.closeDialog();
         mainDisplay("memo");
     },
 
