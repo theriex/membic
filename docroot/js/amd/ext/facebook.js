@@ -79,7 +79,7 @@ app.facebook = (function () {
     loadFacebook = function (nextfunc, msgdivid) {
         var js, id = 'facebook-jssdk', firstscript, html;
         window.fbAsyncInit = function () {
-            FB.init({ appId: 661315260568822,
+            FB.init({ appId: '1514840648756921',
                       status: true, //check login status
                       cookie: true, //enable server to access the session
                       xfbml: true });
