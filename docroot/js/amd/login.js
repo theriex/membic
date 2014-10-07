@@ -252,20 +252,6 @@ app.login = (function () {
     },
 
 
-    //Need to have automatic form submission so you can hit return
-    //after the password to trigger the login.
-    onLoginPasswordChange = function (e) {
-        var emailin, passin;
-        jt.evtend(e);
-        emailin = jt.byId('emailin');
-        passin = jt.byId('passin');
-        if(emailin && passin) {
-            if(jt.isProbablyEmail(emailin.value) && passin.value && 
-               passin.value.length > 5) {
-                jt.byId('loginform').submit(); } }
-    },
-
-
     //safari displays "No%20match%20for%20those%20credentials"
     //and even "No%2520match%2520for%2520those%2520credentials"
     fixServerText = function (text) {
@@ -480,12 +466,6 @@ app.login = (function () {
             jt.out('altauthmethods', ""); }
         else {  //regular login
             jt.out('altauthmethods', displayAltAuthMethods()); }
-        if(!jt.byId('createAccountButton')) {
-            html = ["button", {type: "button", id: "createAccountButton",
-                               onclick: jt.fs("app.login.createAccount()")},
-                    "Create Account"];
-            html = jt.tac2html(html) + jt.byId('loginbuttonsdiv').innerHTML;
-            jt.out('loginbuttonsdiv', html); }
         html = ["a", {id: "forgotpw", href: "#forgotpassword",
                       title: "Email my password, I spaced it",
                       onclick: jt.fs("app.login.forgotPassword()")},
@@ -497,7 +477,10 @@ app.login = (function () {
         if(params.emailin) {
             jt.byId('emailin').value = params.emailin; }
         jt.on('emailin', 'change', onLoginEmailChange);
-        jt.on('passin', 'change', onLoginPasswordChange);
+        //Since this is an actual form, the default form action is
+        //already triggered on return, and setting a handler
+        //interferes with the Create Account button press.
+        //jt.on('passin', 'change', onLoginPasswordChange);
         addReviewRollIfSpace();
         app.layout.adjust();
         setFocusOnEmailInput();
@@ -705,7 +688,7 @@ return {
 
     updacc: function () {
         var sel, i, cboxes, csv, data, url;
-        data = "email=" + jt.enc(jt.safeget('emailin', 'value'));
+        data = "emailin=" + jt.enc(jt.safeget('emailin', 'value'));
         if(authmethod === "mid") {
             data += "&pass=" + jt.enc(jt.safeget('npin', 'value')); }
         sel = jt.byId('offsumsel');

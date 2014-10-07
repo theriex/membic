@@ -172,7 +172,7 @@ img { border:0px; }
 #loginstatdiv, #formstatdiv { font-size:small; }
 #loginvisualelementsdiv { padding:0px 10px; }
 #loginbuttonsdiv { padding:20px; }
-#loginbuttonsdiv button { margin:0px 20px; }
+#loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #forgotpassdiv { text-align:center; }
 #altauthmethods { padding:0px 0px 20px 30px; }
 .liflab { font-size:medium; font-weight:normal; padding:10px; }

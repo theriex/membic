@@ -105,6 +105,22 @@ def normalize_email(emaddr):
     return emaddr
 
 
+def valid_new_email_address(handler, emaddr):
+    # something @ something . something
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
+        handler.error(412)
+        handler.response.out.write("Invalid email address")
+        return
+    where = "WHERE email=:1 LIMIT 1"
+    accounts = MORAccount.gql(where, emaddr)
+    found = accounts.count()
+    if found:  # return error. Client can choose to try login if they want
+        handler.error(412)  # precondition failed
+        handler.response.out.write("Email address used already")
+        return False
+    return emaddr
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
@@ -322,17 +338,7 @@ class CreateAccount(webapp2.RequestHandler):
             return
         emaddr = self.request.get('emailin') or ""
         emaddr = normalize_email(emaddr)
-        # something @ something . something
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
-            self.error(412)
-            self.response.out.write("invalid email address")
-            return
-        where = "WHERE email=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr)
-        found = accounts.count()
-        if found:  # return error. Client can choose to try login if they want
-            self.error(412)
-            self.response.out.write("Account exists already")
+        if not valid_new_email_address(self, emaddr):
             return
         pwd = self.request.get('passin')
         if not pwd or len(pwd) < 6:
@@ -495,17 +501,19 @@ class ChangePassword(webapp2.RequestHandler):
             return
         pwd = self.request.get('pass')
         if pwd and len(pwd) < 6:
-            self.error(412)
+            self.error(412)  # precondition failed
             self.response.out.write("Password must be at least 6 characters")
             return
         account = authenticated(self.request)
         if account:
             if pwd:
                 account.password = pwd
-            mailval = (self.request.get('email') or "").lower()
-            if not mailval:
-                mailval = None
-            account.email = mailval
+            emaddr = self.request.get('emailin') or account.email
+            emaddr = normalize_email(emaddr)
+            if emaddr != account.email:
+                if not valid_new_email_address(self, emaddr):
+                    return
+                account.email = emaddr
             if not account.lastsummary:
                 account.lastsummary = nowISO()
             account.summaryfreq = self.request.get('sumfreq') or "weekly"

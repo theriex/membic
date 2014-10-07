@@ -35,7 +35,7 @@ app.profile = (function () {
         unspecifiedCityText = "City not specified",
         profeditfield = "",
         profpenref,
-        authtypes = { mid: "fgfweb",
+        authtypes = { mid: "FGFweb",
                       gsid: "Google+",
                       fbid: "Facebook",
                       twid: "Twitter",
