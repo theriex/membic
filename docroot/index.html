@@ -118,6 +118,10 @@
 <script src="js/compiled.js"></script>
 
 <script>
+  googlePlusAuthCallback = function (authResult) {
+      app.googleplus.signinCallback(authResult);
+  };
+
   app.init();
 </script>
 

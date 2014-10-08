@@ -121,6 +121,21 @@ def valid_new_email_address(handler, emaddr):
     return emaddr
 
 
+# This only does numeric values.  If you need string vals then the value
+# processing needs to be extended to handle embedded quotes
+def extract_json_value(key, json):
+    key = "\"" + key + "\":"
+    idx = json.find(key)
+    val = None
+    if idx >= 0:
+        val = json[idx + len(key):]
+        val = val.strip(" ")
+        val = val[1:]  # remove opening quote
+        idx = val.find("\"")
+        val = val[0:idx]
+    return val
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
@@ -177,7 +192,7 @@ def authenticated(request):
             account._id = intz(useridstr)
             return account
     elif acctype == "gsid":
-        svc = "https://www.googleapis.com/oauth2/v1/tokeninfo"
+        svc = "https://www.googleapis.com/plus/v1/people/me"
         svc += "?access_token=" + token
         headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
         result = urlfetch.fetch(svc, payload=None, method="GET",
@@ -186,15 +201,12 @@ def authenticated(request):
                                 follow_redirects=True, 
                                 deadline=10, 
                                 validate_certificate=False)
-        ok = result and result.status_code == 200
-        ok = ok and "1009259210423.apps.googleusercontent.com" in result.content
-        if ok:
-            usertoks = emaddr.split(' ')
-            useridstr = str(usertoks[0])
+        if result and result.status_code == 200:
+            useridstr = extract_json_value("id", result.content)
             source = "gs:" + useridstr
             account = MORAccount(authsrc=source, password=token)
-            #Google ID is too big for an int, so use the string value
-            #equality comparison tests should still work consistently
+            #Google ID is too big for an int, so use the string value.
+            #Equality comparison tests should still work consistently
             account._id = useridstr
             return account
     elif acctype == "ghid":
