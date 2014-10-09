@@ -415,6 +415,11 @@ handlers:
 - url: /githubtok.*
   script: src.py.consvc.app
 
+## GitHub authentication callback endpoint
+## GET params: code, state
+- url: /githubcb.*
+  script: src.py.consvc.app
+
 ## Fetch info from Amazon
 ## GET params: asin, authparams
 - url: /amazoninfo.*

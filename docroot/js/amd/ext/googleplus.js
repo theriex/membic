@@ -93,6 +93,7 @@ return {
 
 
     addProfileAuth: function (domid, pen) {
+        jt.cookie("addAuthOutDiv", domid, 2);
         app.googleplus.authenticate( {} );
     },
 

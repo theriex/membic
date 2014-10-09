@@ -198,9 +198,10 @@ def simple_fetchurl(handler, geturl):
                                 follow_redirects=True, 
                                 deadline=10, 
                                 validate_certificate=False)
-    except:
+    except Exception as e:
         handler.error(400)
-        handler.response.out.write("URL fetch failure")
+        handler.response.out.write("simple_fetchurl " + str(e) + 
+                                   " fetching " + geturl)
         return None
     if not result or result.status_code != 200:
         handler.error(result.status_code)
@@ -249,6 +250,7 @@ class OAuth1Call(webapp2.RequestHandler):
 
 
 class JSONGet(webapp2.RequestHandler):
+    # basically this is a server endpoint to enable cross-site calls
     def get(self):
         geturl = self.request.get('geturl')
         whitelist = [ "https://www.googleapis.com",
@@ -263,7 +265,7 @@ class JSONGet(webapp2.RequestHandler):
             self.error(403)
             self.response.out.write("Not a recognized ok endpoint")
             return
-        result = simple_fetchurl(self, url)
+        result = simple_fetchurl(self, geturl)
         if result:
             self.response.headers['Content-Type'] = 'application/json'
             self.response.out.write(result.content)
@@ -306,6 +308,19 @@ class GitHubToken(webapp2.RequestHandler):
         else:
             self.error(result.status_code)
             self.response.out.write(result.content)
+
+
+# The GitHub OAuth callback requires a subdirectory off the main site.
+# This provides that endpoint, translating the parameters and calling
+# back into the main site.
+class GitHubCallback(webapp2.RequestHandler):
+    def get(self):
+        code = self.request.get('code')
+        state = self.request.get('state')
+        logging.info("GitHubCallback state: " + state + ", code: " + code)
+        url = "https://www.fgfweb.com/#command=AltAuth3" +\
+            "&state=" + state + "&code=" + code
+        self.redirect(str(url))
 
 
 class AmazonInfo(webapp2.RequestHandler):
@@ -422,6 +437,7 @@ app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
                                ('/jsonget', JSONGet),
                                ('/twtok', TwitterTokenCallback),
                                ('/githubtok', GitHubToken),
+                               ('/githubcb', GitHubCallback),
                                ('/amazoninfo', AmazonInfo),
                                ('/amazonsearch', AmazonSearch),
                                ('/urlcontents', URLContents),

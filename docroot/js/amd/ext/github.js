@@ -10,7 +10,6 @@ app.github = (function () {
     ////////////////////////////////////////
 
     var svcName = "GitHub",
-        iconurl = "img/blacktocat-32.png",
 
 
     ////////////////////////////////////////
@@ -62,6 +61,7 @@ app.github = (function () {
         var addAuthOutDiv, url;
         addAuthOutDiv = jt.cookie("addAuthOutDiv");
         url = "https://api.github.com/user?access_token=" + token;
+        jt.log("github.convertToken " + url);
         url = jt.enc(url);
         url = "jsonget?geturl=" + url;
         jt.call('GET', url, null,
@@ -85,14 +85,15 @@ return {
 
     loginurl: "https://github.com",
     name: svcName, //ascii with no spaces, used as an id
-    iconurl: iconurl,
+    iconurl: "img/blacktocat-32.png",
 
-    //This function gets called when you click "Login via GitHub", and
-    //when adding authentication, and on return from GitHub.
+    //This function gets called when you click "Login via GitHub", when
+    //adding authentication, and on return from GitHub.
     authenticate: function (params) {
         var url, state;
-        if(params.code) {  //back from github
-            jt.out("contentdiv", "Returned from GitHub...");
+        //first return from github with state and code params
+        if(params.code) {  //back from github with state and code params
+            jt.out('contentdiv', "Returned from GitHub...");
             state = jt.cookie("githubAuthState");
             if(state !== params.state) {
                 jt.log("Bad state returned from GitHub. Sent " + state +
@@ -101,18 +102,20 @@ return {
             url = "githubtok?code=" + params.code + "&state=" + state;
             jt.call('GET', url, null,
                      function (json) {
+                         jt.out('contentdiv', "Retrieved token from GitHub...");
                          convertToken(json.access_token); },
                      app.failf(function (code, errtxt) {
                          jt.log("GitHub token retrieval failed code " + 
                                  code + ": " + errtxt);
                          backToParentDisplay(); }),
                     jt.semaphore("github.authenticate")); }
-        else {  //initial login or authorization call
+        //initial login or authorization call
+        else {  
             state = "AltAuth3" + Math.random().toString(36).slice(2);
             jt.cookie("githubAuthState", state, 2);
             url = "https://github.com/login/oauth/authorize" +
-                "?client_id=be02d0691db630ee69c7" +
-                "&redirect_uri=" + jt.enc("http://www.fgfweb.com/") +
+                "?client_id=fcb395979621007028b8" +
+                "&redirect_uri=" + jt.enc("https://www.fgfweb.com/githubcb") +
                 //no scope (public read-only access)
                 "&state=" + state;
             window.location.href = url; }
@@ -120,10 +123,6 @@ return {
 
 
     addProfileAuth: function (domid, pen) {
-        if(window.location.href.indexOf(app.mainsvr) !== 0) {
-            alert("GitHub authentication is only supported from ",
-                  app.mainsvr);
-            return app.profile.displayAuthSettings(domid, pen); }
         jt.cookie("addAuthOutDiv", domid, 2);
         app.github.authenticate( {} );
     }
