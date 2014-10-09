@@ -46,7 +46,8 @@ def newtoken(emaddr, password):
     """ Make a new token value and return it """
     key = pwd2key(password)
     token = ":" + str(int(round(time.time()))) + ":" + asciienc(emaddr)
-    token = token.rjust(32, 'X')
+    token = token.rjust(48, 'X')
+    token = token[:48]
     token = AES.new(key, AES.MODE_CBC).encrypt(token)
     token = base64.b64encode(token)
     # logging.info("newtoken post base64encode: " + token)
