@@ -11,8 +11,34 @@ app.googleplus = (function () {
 
     var svcName = "GooglePlus",   //ascii with no spaces, used as an id
         dispName = "Google+",     //what should actually be displayed
-        svcIconURL = "https://www.gstatic.com/images/icons/gplus-32.png",
-        gauth = null;
+        gauth = null,
+
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
+
+    returnToSettings = function (success) {
+        jt.out('contentdiv', "");
+        if(success) {
+            jt.out('contentdiv', "Google+ access added."); }
+        app.profile.settings();
+    },
+
+
+    recordGoogleAuthorization = function (gsid, outdivid) {
+        jt.out(outdivid, "Updating pen access...");
+        app.pen.getPen(function (pen) {
+            pen.gsid = gsid;
+            app.pen.updatePen(pen,
+                              function (updpen) {
+                                  returnToSettings("success"); },
+                              function (code, errtxt) {
+                                  jt.err("recordGoogleAuthorization error " +
+                                         code + ": " + errtxt);
+                                  pen.gsid = 0;
+                                  returnToSettings(); }); });
+    };
 
 
     ////////////////////////////////////////
@@ -25,7 +51,6 @@ return {
     loginDispName: dispName,
     svcDispName: "Google+ Share",
     svcDesc: "Posts a review to your Google+ Stream",
-    svcIconURL: svcIconURL,
     iconurl: "img/g_logo.png",
 
 
@@ -36,16 +61,20 @@ return {
             return; }
         if(authResult.status.signed_in) {
             gauth = authResult;
-            jt.out('gsitd', "Google+ sign-in success");
-            jt.out('gpromptdiv', "Fetching authentication ID and name...");
+            jt.out('gpromptdiv', "");  //clear prompt contents if logging in
+            jt.out('gsitd', "Signed in, fetching ID and name...");
             identurl = "https://www.googleapis.com/plus/v1/people/me";
             identurl += "?access_token=" + gauth.access_token;
             jt.call('GET', identurl, null,
                     function (resp) {
-                        jt.out('gpromptdiv', "Google+ authentication success.");
-                        app.login.setAuth("gsid", gauth.access_token,
-                                          resp.id + " " + resp.displayName);
-                        app.login.authComplete(); },
+                        if(jt.cookie("addAuthOutDiv")) {
+                            jt.cookie("addAuthOutDiv", "", -1);
+                            recordGoogleAuthorization(resp.id, 'gsitd'); }
+                        else {
+                            jt.out('gsitd', "Google+ authentication success");
+                            app.login.setAuth("gsid", gauth.access_token,
+                                              resp.id + " " + resp.displayName);
+                            app.login.authComplete(); } },
                     function (code, errtxt) {
                         jt.out('gsitd', "error " + code + ": " + errtxt); },
                     jt.semaphore("login.signinCallback")); }
@@ -56,10 +85,11 @@ return {
     },
 
 
-    //You get to this function from a direct call when you click the
-    //"Login via Google+" href.  A redirect to Google results in a
-    //callback with "AltAuth2" returned in the hash fragment, which
-    //leads back to this method again.
+    //The google login button calls here, which loads the google
+    //authentication javascript, which makes an authentication button.
+    //Clicking google sign in button triggers google authentication,
+    //which calls back to the global googlePlusAuthCallback function
+    //which calls signinCallback.
     authenticate: function (params) {
         var gisdef, html, gscript, firstscript;
         //Callback requires a top level function.
@@ -94,6 +124,7 @@ return {
 
     addProfileAuth: function (domid, pen) {
         jt.cookie("addAuthOutDiv", domid, 2);
+        app.layout.closeDialog();  //use main space for interim interaction
         app.googleplus.authenticate( {} );
     },
 
