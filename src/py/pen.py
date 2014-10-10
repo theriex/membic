@@ -398,6 +398,7 @@ class SetEmailFromPen(webapp2.RequestHandler):
             # error 422
             return;
         try:  # just in case anything goes wrong in the transaction
+            acc.password = gen_password()  # replace previous token value
             acc.put()  #nocache
             pen.mid = acc.key().id()
             pen.modified = nowISO()
