@@ -76,6 +76,20 @@ app.hinter = (function () {
                                function () {
                                    jt.byId('setemailbutton').focus(); });
     },
+
+
+    emailConflictNoticeHTML = function (emaddr) {
+        var method, html;
+        method = app.login.getAuthMethodPrint();
+        html = ["div", {id: "emconflictdiv"},
+                [["p", "There is already an account for " + emaddr + "." +
+                  "To access those pen names from " + method + " you need to"],
+                 ["ol",
+                  [["li", "Sign out (click settings, then click the link)"],
+                   ["li", "Log in directly using " + emaddr],
+                   ["li", "Click settings and add " + method]]]]];
+        return jt.tac2html(html);
+    },
         
                   
     looktopActive = function (pen) {
@@ -502,17 +516,12 @@ return {
 
     //Check the email address provided in the form, then update.  If
     //the email address was not used yet, then a new native account is
-    //created using the specified email.  If a native account exists
-    //with the specified email, then it probably belongs to the user,
-    //and the easiest thing is just to hook it up.  Of course if it
-    //isn't their email, then they just gave someone else full control
-    //over their pen name, which is the one they access automatically
-    //when logging in via that 3rd party auth.  Fixing that kind of a
-    //screwup is not possible via the site. It requires going into the
-    //db directly and unsetting the "mid" value for the given pen.
-    //Not expecting that to be a common problem.  If it does happen,
-    //then support would first verify access by having the user change
-    //the pen shoutout text.
+    //created using the specified email.  If the email address is
+    //already in use, then they probably want to access their old pen
+    //via 3rd party auth.  Explain that they need to log in natively
+    //using existing email address, then provide access to their
+    //current pen from whichever 3rd party auth provider.  Additional
+    //pen access authorization is always off the native account.
     setEmail: function () {
         var data, emaddr = jt.byId('emailin').value;
         if(!emaddr) {
@@ -526,8 +535,10 @@ return {
                     app.pen.setCurrentPenReference(pens[0]);
                     app.hinter.tipok('email'); },
                 app.failf(function (code, errtxt) {
-                    jt.out('formstatdiv', "Email update failure " + code +
-                           ": " + errtxt); }),
+                    var tx = "Email update failure " + code + ": " + errtxt;
+                    if(String(code) === "422") {
+                        tx = emailConflictNoticeHTML(emaddr); }
+                    jt.out('formstatdiv', tx); }),
                 jt.semaphore("hinter.setEmail"));
     }
 

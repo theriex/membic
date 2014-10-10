@@ -109,14 +109,14 @@ def normalize_email(emaddr):
 def valid_new_email_address(handler, emaddr):
     # something @ something . something
     if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
-        handler.error(412)
+        handler.error(412)  # precondition failed
         handler.response.out.write("Invalid email address")
         return
     where = "WHERE email=:1 LIMIT 1"
     accounts = MORAccount.gql(where, emaddr)
     found = accounts.count()
     if found:  # return error. Client can choose to try login if they want
-        handler.error(412)  # precondition failed
+        handler.error(422)  # Unprocessable Entity
         handler.response.out.write("Email address used already")
         return False
     return emaddr

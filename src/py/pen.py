@@ -394,6 +394,9 @@ class SetEmailFromPen(webapp2.RequestHandler):
             self.response.out.write("No email address specified")
             return
         acc.email = normalize_email(emaddr)
+        if not valid_new_email_address(self, emaddr):
+            # error 422
+            return;
         try:  # just in case anything goes wrong in the transaction
             acc.put()  #nocache
             pen.mid = acc.key().id()
@@ -403,7 +406,10 @@ class SetEmailFromPen(webapp2.RequestHandler):
             returnJSON(self.response, [ pen ])
         except Exception as e:
             self.error(409)  #Conflict
-            self.response.out.write("Update conflict: " + str(e))
+            self.response.out.write("Update conflict: " + str(e) + 
+                                    "\nPlease contact support." +
+                                    "\naccount: " + str(acc._id) +
+                                    "\npen: " + str(pen.key().id()))
             return
 
 

@@ -882,8 +882,19 @@ return {
     },
 
 
-    getAuthMethod: function () { 
+    getAuthMethod: function () {
         return authmethod; 
+    },
+
+
+    getAuthMethodPrint: function () {
+        switch(authmethod) {
+        case "mid": return "Native";
+        case "gsid": return "Google+";
+        case "fbid": return "Facebook";
+        case "twid": return "Twitter";
+        case "ghid": return "GitHub";
+        default: return "Unknown"; }
     },
 
 
