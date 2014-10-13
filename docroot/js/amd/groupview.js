@@ -51,7 +51,7 @@ var fgfwebGroupview = (function () {
                     title: "RSS feed for " + jt.ndq(group.name),
                     onclick: jt.fs("window.open('" + rssurl + "')")},
               ["img", {cla: "rssico", 
-                       src: "../img/rssicon.png"}]]]);
+                       src: "img/rssicon.png"}]]]);
         return html;
     },
 

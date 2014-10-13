@@ -284,13 +284,13 @@ class UploadProfPic(webapp2.RequestHandler):
 
 class GetProfPic(webapp2.RequestHandler):
     def get(self):
-        profid = self.request.get('profileid');
+        profid = self.request.get('profileid')
         pen = cached_get(intz(profid), PenName)
         havepic = pen and pen.profpic
         if not havepic:
             self.error(404)
-            self.response.write("Profile pic for PenName: " + str(profid) + 
-                                " not found.")
+            self.response.out.write("Profile pic for PenName: " + str(profid) + 
+                                    " not found.")
             return
         img = images.Image(pen.profpic)
         img.resize(width=160, height=160)
