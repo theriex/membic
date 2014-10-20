@@ -270,11 +270,15 @@ on copyMatchingTracks(plen, tids, pldef)
 								if not rp then
 									set tid to (id of ct)
 									if tids does not contain tid then
-										duplicate ct to user playlist plname
-										set end of tids to (id of ct)
-										set tcopied to tcopied + 1
-										set skipping to skipquantum
-										set prevartist to (artist of ct)
+										try
+											duplicate ct to user playlist plname
+											set end of tids to (id of ct)
+											set tcopied to tcopied + 1
+											set skipping to skipquantum
+											set prevartist to (artist of ct)
+											-- on error errStr number errorNumber
+											--	display dialog "Error: " & errStr
+										end try
 									end if
 								end if
 							end if
