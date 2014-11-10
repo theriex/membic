@@ -414,9 +414,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
         password = self.request.get('passin') or ""
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             redurl += "loginerr=" + "Please enter a valid email address"
-        elif len(password) < 6:
-            redurl += "loginerr=" + "Password must be at least 6 characters"
-        else:  # have valid email and password
+        else:  # have valid email
             where = "WHERE email=:1 AND password=:2 LIMIT 1"
             accounts = MORAccount.gql(where, email, password)
             found = accounts.count()
@@ -427,21 +425,11 @@ class TokenAndRedirect(webapp2.RequestHandler):
             else:  # email and password did not match
                 where = "WHERE email=:1 LIMIT 1"
                 accounts = MORAccount.gql(where, email)
+                found = accounts.count()
                 if found:  # account exists, must have been wrong password
-                    redurl += "emailin=" + email + "&loginerr=" +\
-                        "No match for those credentials"
-                else: # account doesn't exist, create it for them
-                    account = MORAccount(email=email, password=password)
-                    account.authsrc = ""
-                    account.modified = nowISO()
-                    account.lastsummary = nowISO()
-                    account.summaryfreq = "weekly"
-                    account.summaryflags = ""
-                    account.mailbounce = ""
-                    account.put()  #nocache
-                    token = newtoken(email, password)
-                    redurl += "authmethod=mid&authtoken=" + token
-                    redurl += "&authname=" + urllib.quote(asciienc(email))
+                    redurl += "emailin=" + email + "&loginerr=Wrong password"
+                else: # account doesn't exist
+                    redurl += "emailin=" + email + "&loginerr=Not registered"
         # preserve any state information passed in the params so they can
         # continue on their way after ultimately logging in.  If changing
         # these params, also check login.doneWorkingWithAccount
