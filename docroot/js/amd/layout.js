@@ -9,9 +9,7 @@ app.layout = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var topextra = 12 + 20,  //topsectiondiv shadow + appspacediv padding
-        topPaddingAndScroll = 250 + topextra,   //topsectiondiv height
-        dndState = null,
+    var dndState = null,
         dlgqueue = [],
         meritactive = false,
         navmode = "activity",
@@ -118,61 +116,6 @@ app.layout = (function () {
     },
 
 
-    setSoftFocus = function () {
-        var revid, focobj;
-        if(app.review.getCurrentReview()) {
-            revid = "lihr" + jt.instId(app.review.getCurrentReview());
-            focobj = jt.byId(revid);
-            if(focobj) {
-                focobj.focus(); } }
-    },
-
-
-    currentContentHeight = function () {
-        var ch, content, centerh, bottomnav;
-        content = jt.byId("contentdiv").offsetHeight;
-        centerh = jt.byId("centerhdiv").offsetHeight;
-        bottomnav = jt.byId("bottomnav").offsetHeight;
-        ch = content + centerh + bottomnav;
-        return ch;
-    },
-
-
-    fullContentHeight = function () {
-        var ch, filldiv, topdiv, contentdiv, target, leftmargin;
-        findDisplayHeightAndWidth();
-        //fill the bottom content so the footer text isn't too high up
-        filldiv = jt.byId("contentfill");
-        ch = currentContentHeight();
-        target = app.winh - topPaddingAndScroll; 
-        if(ch < target) {
-            filldiv.style.height = (target - ch) + "px"; }
-        else {  //not filling, just leave a little separator space
-            filldiv.style.height = "16px"; }
-        //adjust the topdiv and content width so it looks reasonable
-        target = app.winw;
-        if(target > 850) {
-            target -= 120; }  //margin padding
-        topdiv = jt.byId('topdiv');
-        if(topdiv) {
-            topdiv.style.width = target + "px"; }
-        contentdiv = jt.byId('contentdiv');
-        if(contentdiv) {
-            target = app.winw - jt.byId('rightcoldiv').offsetWidth;
-            leftmargin = 0;
-            if(target <= 320) {  //hard minimum phone size
-                target = 316; }  //fudge pixels to avoid side scrolling
-            if(target > 600) { //enough space to play with
-                target -= 4;  //fudge pixels to avoid side scrolling
-                leftmargin = Math.round(target * 0.1);
-                leftmargin = Math.min(leftmargin, 100); }
-            target -= leftmargin;
-            contentdiv.style.width = target + "px";
-            contentdiv.style.marginLeft = leftmargin + "px"; }
-        setSoftFocus();
-    },
-
-
     shareServiceHTML = function (divid, url, desc, imgsrc) {
         var linkattr, html;
         linkattr = {href: url, title: desc};
@@ -191,10 +134,9 @@ app.layout = (function () {
 return {
 
     init: function () {
-        jt.on(window, 'resize', fullContentHeight);
+        findDisplayHeightAndWidth();
         app.layout.commonUtilExtensions();
         localDocLinks();
-        fullContentHeight();
         fixTextureCover();
     },
 
@@ -268,11 +210,6 @@ return {
     },
 
 
-    adjust: function () {
-        fullContentHeight();
-    },
-
-
     displayDoc: function (url) {
         var html = "Fetching " + url + " ...";
         app.layout.openDialog(null, html);
@@ -341,16 +278,10 @@ return {
         else {
             navmode = state.view; }
         app.layout.updateNavIcons();
-        app.layout.adjust();
         app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();
             app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }
-    },
-
-
-    setTopPaddingAndScroll: function (val) {
-        topPaddingAndScroll = val + topextra;
     },
 
 
@@ -501,7 +432,6 @@ return {
             String(jt.byId('centerhdiv').offsetHeight) + "px";
         jt.byId('centerhdivtd').style.maxHeight = 
             String(jt.byId('centerhdiv').offsetHeight) + "px";
-        app.layout.adjust();
     },
 
 

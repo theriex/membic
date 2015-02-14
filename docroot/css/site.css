@@ -21,6 +21,10 @@ a.plainanchor:visited {text-decoration:none; color:#111111; }
 a.plainanchor:active {text-decoration:none; color:#111111; }
 a.plainanchor:hover {text-decoration:none; color:#111111; }
 
+html {
+  min-height: 100%; margin:0; padding:0;
+}
+
 body {
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-style:normal;
@@ -29,15 +33,11 @@ body {
   word-spacing:normal;
   margin:0px;
   color:#111111;
-  background-color: #fefefd;
-  background-image: url('../img/texturePaper.png');
+  height: 100%;
   background-repeat: no-repeat;
-  background-position: center center;
   background-attachment: fixed;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
+  background-color: #f7f7f9;
+  background: linear-gradient(#f7f7f9 60%, #dcdce0);
 }
 
 img { border:0px; }
@@ -51,9 +51,9 @@ img { border:0px; }
 
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { padding:0px 10px; height:140px; } 
-#logodiv { position:absolute; left:50px; top:0px; } 
-#logodiv, #logoimg { width:128px; height:120px; }
-#topworkdiv { }
+#logodiv { position:absolute; left:0px; top:0px; } 
+#logodiv, #logoimg { width:80px; height:80px; }
+#topworkdiv { float:right; }
 #slidesdiv { }
 #topactionsdiv { font-size:x-large; }
 #topactionstable { margin:0px; padding:0px; }
@@ -78,8 +78,10 @@ img { border:0px; }
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
 #appspacediv { margin:auto; }
-#bottomnav { font-size:x-small; text-align:center; 
-  word-spacing:20px; padding:0px 20px 5px 20px; }
+#bottomnav { font-size:xx-small; text-align:center; 
+  word-spacing:20px; padding:0px 20px 5px 20px;
+  position:fixed; left:0px; bottom:0px; height:15px; width:100%; }
+.footerlink { background:#f7f7f9; padding:1px 3px; border-radius:3px; }
 #contentdiv { margin:auto; }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
@@ -167,16 +169,13 @@ img { border:0px; }
 .bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
 .bookmarkletdescr { font-size:small; text-align:right; 
   padding:0px 0px 0px 40px;}
-#logindiv { margin:auto; }
-#loginform { margin:auto; }
 #loginstatdiv, #formstatdiv { font-size:small; }
-#loginvisualelementsdiv { padding:0px 10px; }
-#loginbuttonsdiv { padding:20px; }
+#loginbuttonsdiv { padding:10px; }
 #loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #gsitd { padding: 10px; }
 #forgotpassdiv { text-align:center; }
 #altauthmethods { padding:0px 0px 20px 30px; }
-.liflab { font-size:medium; font-weight:normal; padding:10px; }
+.liflab { font-size:medium; font-weight:normal; padding:0px; }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
@@ -285,7 +284,7 @@ img { border:0px; }
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
 .searchtable td { padding:5px 10px; }
-#emailin, #passin { width:152px; }
+#emailin, #passin { width:148px; }
 .tagline { font-style:italic; color:#333; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; white-space:nowrap; }

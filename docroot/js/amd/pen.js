@@ -120,7 +120,6 @@ app.pen = (function () {
         jt.out('contentdiv', html);
         jt.on('pnamein', 'change', onCreatePenRequest);
         jt.on('createbutton', 'click', onCreatePenRequest);
-        app.layout.adjust();
         jt.byId('pnamein').focus();
     },
 
@@ -164,7 +163,6 @@ return {
         if(penNameRefs) {
             return chooseOrCreatePenName(callback); }
         jt.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
-        app.layout.adjust();
         url = "mypens?" + app.login.authparams();
         //no semaphore on this call.  During startup and reset,
         //multiple functions might be needing access to the current

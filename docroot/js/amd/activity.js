@@ -324,7 +324,6 @@ app.activity = (function () {
                       (remActivityType ? remActivityType + " " : "") +
                       "Pre-Reviews"]); }
         jt.out('revactdiv', jt.tac2html(["ul", {cla: "revlist"}, lis]));
-        app.layout.adjust();
     },
 
 
@@ -334,7 +333,6 @@ app.activity = (function () {
         if(penref.prerevs) {
             return displayPenrefPreReviews(); }
         jt.out('revactdiv', "Fetching Pre-Reviews...");
-        app.layout.adjust();
         params = "penid=" + jt.instId(penref.pen) + 
             "&" + app.login.authparams();
         jt.call('GET', "fetchprerevs?" + params, null,
@@ -384,7 +382,6 @@ app.activity = (function () {
         html = ["ul", {cla: "revlist"}, remitems];
         html = jt.tac2html(html);
         jt.out('revactdiv', html);
-        app.layout.adjust();
         if(crid) {
             app.lcs.getFull("rev", crid, displayPenrefRemembered); }
         if(cfid) {
@@ -400,7 +397,6 @@ app.activity = (function () {
         if(penref.remembered) {
             return displayPenrefRemembered(); }
         jt.out('revactdiv', "Fetching remembered posts...");
-        app.layout.adjust();
         params = "penid=" + jt.instId(penref.pen) +
             "&" + app.login.authparams();
         jt.call('GET', "srchremem?" + params, null,
@@ -589,7 +585,6 @@ app.activity = (function () {
             topdat.pages.push({revs: revs, html: html}); }
         html = jt.tac2html(html);
         jt.out('revactdiv', html);
-        app.layout.adjust();
         writeNavDisplay("activity");  //reflect the selected type
     },
 
@@ -849,7 +844,6 @@ app.activity = (function () {
         else if(itemhtml.length < 3) {
             html.push(followMoreHTML(null, true)); }
         jt.out('revactdiv', jt.tac2html(html));
-        app.layout.adjust();
     },
 
 
@@ -954,17 +948,14 @@ app.activity = (function () {
             bootmon.tout = setTimeout(bootMonitor, 3000); }
         penids = app.rel.outboundids();
         if(penids.length === 0) {
-            jt.out('revactdiv', followMoreHTML(penids));
-            app.layout.adjust(); }
+            jt.out('revactdiv', followMoreHTML(penids)); }
         else if((penids[penids.length - 1] === "waiting") ||
                 (penids[penids.length - 1] === "loading")) {
             jt.out('revactdiv', "Loading relationships...");
-            app.layout.adjust();
             setTimeout(bootActivityDisplay, 100);
             return; }
         if(!app.pen.currPenRef().helpful) {
             jt.out('revactdiv', "Loading helpful...");
-            app.layout.adjust();
             app.revresp.loadHelpful(bootActivityDisplay);
             return; }
         app.pen.currPenRef().actdisp = {
@@ -973,7 +964,6 @@ app.activity = (function () {
             reps: {} };
         if(penids.length > 0) {
             jt.out('revactdiv', "Loading activity...");
-            app.layout.adjust();
             doActivitySearch(); }
         else { //not following anyone, make introductions
             displayIntroductionsNotice();
@@ -1121,7 +1111,6 @@ return {
             else {
                 jt.out('srchoptstogglehref', "show advanced search options");
                 sod.style.display = "none"; } }
-        app.layout.adjust();
     },
 
 

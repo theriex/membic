@@ -53,7 +53,7 @@ var app = {},  //Global container for application level funcs and values
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
         href += "&" + jt.objdata(params);
-        jt.out('contentfill', "Redirecting to secure server...");
+        jt.out('contentdiv', "Redirecting to secure server...");
         window.location.href = href;
     };
 
@@ -75,7 +75,7 @@ var app = {},  //Global container for application level funcs and values
         var cdiv, ref;
         app.amdtimer.load.end = new Date();
         cdiv = jt.byId('contentdiv');
-        jt.out('contentfill', " &nbsp; ");
+        jt.out('contentdiv', " &nbsp; ");
         if(!app.introtext) {  //capture original so we can revert as needed
             app.introtext = cdiv.innerHTML; }
         app.layout.init();
@@ -112,7 +112,7 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
-        jt.out('contentfill', "loading modules...");
+        jt.out('contentdiv', "loading modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
         jt.loadAppModules(app, modules, href, app.init2, "?v=141109");

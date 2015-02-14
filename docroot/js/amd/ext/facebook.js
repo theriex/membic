@@ -60,8 +60,6 @@ app.facebook = (function () {
                      [["img", {cla: "loginico", src: "img/f_logo.png"}],
                       " Log in to Facebook"]]]]]]];
         jt.out(domid, jt.tac2html(html));
-        if(cancelfstr) {  //not already in a dialog...
-            app.layout.adjust(); }
     },
 
 
@@ -99,7 +97,6 @@ app.facebook = (function () {
             html = [["p", "&nbsp;"],
                     ["p", "Loading Facebook API..."]];
             jt.out(msgdivid, jt.tac2html(html)); }
-        app.layout.adjust();
     },
 
 

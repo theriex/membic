@@ -203,7 +203,6 @@ app.group = (function () {
     displayReviewList = function (lis) {
         jt.out('grouprevsdiv', jt.tac2html(
             ["ul", {cla: "revlist"}, lis]));
-        app.layout.adjust();
     },
 
 
@@ -1880,8 +1879,7 @@ return {
             jt.call('POST', "grpmemrej?" + app.login.authparams(), data,
                     function (groups) {
                         copyGroup(app.lcs.put("group", groups[0]).group);
-                        jt.out("seekdiv" + seekerid, "");
-                        app.layout.adjust(); },
+                        jt.out("seekdiv" + seekerid, ""); },
                     app.failf(function (code, errtxt) {
                         jt.err("Deny application failed " + code + 
                                ": " + errtxt); }),
@@ -1897,8 +1895,7 @@ return {
         jt.call('POST', "grpmemyes?" + app.login.authparams(), data,
                 function (groups) {
                     copyGroup(app.lcs.put("group", groups[0]).group);
-                    jt.out("seekdiv" + seekerid, "");
-                    app.layout.adjust(); },
+                    jt.out("seekdiv" + seekerid, ""); },
                 app.failf(function (code, errtxt) {
                     jt.err("Application acceptance failed " + code + 
                                ": " + errtxt); }),
@@ -1914,8 +1911,7 @@ return {
         jt.call('POST', "grprejok?" + app.login.authparams(), data,
                 function (groups) {
                     copyGroup(app.lcs.put("group", groups[0]).group);
-                    jt.out("seekdiv" + groupid, "");
-                    app.layout.adjust(); },
+                    jt.out("seekdiv" + groupid, ""); },
                 app.failf(function (code, errtxt) {
                     jt.err("Ackknowledgement failed " + code + 
                            ": " + errtxt); }),

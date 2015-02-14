@@ -397,7 +397,6 @@ app.review = (function () {
         //type buttons don't get displayed.  Entering a URL is not the 
         //primary path forward so don't set focus here.
         //jt.byId('urlin').focus();
-        app.layout.adjust();
         app.onescapefunc = app.activity.displayActive;
     },
 
@@ -1132,14 +1131,12 @@ app.review = (function () {
         jt.call('GET', url, null,
                 function (json) {
                     writeAutocompLinks(jt.dec(json[0].content));
-                    setTimeout(acfunc, 400);
-                    app.layout.adjust(); },
+                    setTimeout(acfunc, 400); },
                 app.failf(function (code, errtxt) {
                     jt.out('revautodiv', "");
                     jt.log("Amazon info retrieval failed code " +
                            code + ": " + errtxt);
-                    setTimeout(acfunc, 400);
-                    app.layout.adjust(); }),
+                    setTimeout(acfunc, 400); }),
                 jt.semaphore("review.callAmazonForAutocomplete"));
     },
 
@@ -1234,7 +1231,6 @@ app.review = (function () {
                 ["img", {src: "img/poweredbygoogle.png"}]];
         jt.out('revautodiv', jt.tac2html(html));
         setTimeout(acfunc, 400);
-        app.layout.adjust();
     },
 
 
@@ -1364,7 +1360,6 @@ app.review = (function () {
         jt.out('cmain', html);
         if(mode === "edit") {
             activateStarsAndFocus(type, review, keyval); }
-        app.layout.adjust();
         if(errmsg) {
             jt.out('revsavemsg', errmsg); }
         startReviewFormDynamicElements(pen, review);

@@ -221,25 +221,6 @@ app.login = (function () {
     },
 
 
-    displayAltAuthMethods = function () {
-        var i, viadisp, html, hrefs = [];
-        for(i = 0; i < altauths.length; i += 1) {
-            viadisp = altauths[i].loginDispName || altauths[i].name;
-            html = [["a", {href: altauths[i].loginurl,
-                           title: "Sign in via " + viadisp,
-                           onclick: jt.fs("app.login.altLogin(" + i + ")")},
-                     ["img", {cla: "loginico", src: altauths[i].iconurl}]],
-                    " "];
-            hrefs.push(jt.tac2html(html)); }
-        hrefs.shuffle();
-        html = [];
-        for(i = 0; i < hrefs.length; i += 1) {
-            html.push(["span", {cla: "altauthspan"}, hrefs[i]]); }
-        html = jt.tac2html(html);
-        return html;
-    },
-
-
     onLoginEmailChange = function (e) {
         var passin;
         jt.evtend(e); 
@@ -298,12 +279,9 @@ app.login = (function () {
 
     verifyCoreLoginForm = function () {
         var html;
-        jt.out('centerhdiv', "");
-        jt.out('rightcoldiv', "");
-        jt.byId('rightcoldiv').style.display = "none";
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
-            jt.out('contentdiv', html); }
+            jt.out('topworkdiv', html); }
     },
 
 
@@ -325,99 +303,6 @@ app.login = (function () {
     },
 
 
-    minw = function (elem) {
-        if(typeof elem === "string") {
-            elem = jt.byId(elem); }
-        elem.style.width = String(Math.max(elem.offsetWidth, 300)) + "px";
-    },
-
-
-    maxw = function (elem, maxwidth) {
-        if(typeof elem === "string") {
-            elem = jt.byId(elem); }
-        elem.style.width = String(Math.min(elem.offsetWidth, maxwidth)) + "px";
-    },
-
-
-    smallLogo = function () {
-        jt.setdims('logoimg', {w: 128, h: 120});
-        jt.setdims('logodiv', {w: 128, h: 120});
-        jt.setdims('topsectiondiv', {h: 140});
-        jt.setdims('introverviewtaglinediv', {x: 40, y: 125});
-    },
-
-
-    growLogo = function () {
-        jt.setdims('topsectiondiv', {h: 250});
-        jt.setdims('logodiv', {w: 247, h: 231});
-        jt.setdims('logoimg', {w: 247, h: 231});
-        jt.setdims('introverviewtaglinediv', {x: 60, y: 227});
-    },
-
-
-    expandLoginFormLayoutIfSpace = function () {
-        var lh, rh, html;
-        if(app.winw >= app.minSideBySide) {
-            growLogo();
-            lh = jt.byId('userpassdiv').innerHTML;
-            rh = jt.byId('altauthlogindiv').innerHTML;
-            html = ["table", {id: "sidebysideloginvistable",
-                              style: "width:" + (app.winw - 20) + "px;"},
-                    ["tr",
-                     [["td", {valign: "top", align: "right", cla: "tdnarrow"},
-                       ["div", {id: "userpassdiv"}, lh]],
-                      ["td", {valign: "top", align: "left"},
-                       ["div", {id: "altauthlogindiv"}, rh]]]]];
-            jt.out('loginvisualelementsdiv', jt.tac2html(html)); }
-        else {  //not side by side, make sure nothing is too shrunken
-            minw('nativelogintitlediv');
-            minw('forgotpassdiv');
-            minw('altauthmethods');
-            maxw('altauthmethods', 260);  //reserve padding
-            minw('introverview'); }
-    },
-
-
-    displayTaglineDetails = function (pens) {
-        var displayed = 0, i, html = "";
-        for(i = 0; i < pens.length; i += 1) {
-            if(!pens[i].name_c) {
-                break; }
-            if(displayed > 5) {
-                html += ", and other new friends...";
-                break; }
-            if(pens[i].shoutout.indexOf("DONOTSUGGEST") < 0) {
-                displayed += 1;
-                if(html) {
-                    html += ", "; }
-                else {
-                    html = "Join "; }
-                html += jt.tac2html(
-                    ["a", {href: "blogs/" + pens[i].name_c,
-                           onclick: jt.fs("window.open('blogs/" + 
-                                          pens[i].name_c + "')")},
-                     pens[i].name]); } }
-        html += "</div>";
-        jt.out('taglinedetpensdiv', html);
-        app.layout.adjust();
-    },
-
-
-    addTaglineDetails = function () {
-        setTimeout(function () {
-            jt.call('GET', "srchpens", null,
-                    function (pens) {
-                        displayTaglineDetails(pens); },
-                    function (code, errtxt) {
-                        jt.log("addTaglineDetails failed code " + code + 
-                               ": " + errtxt); },
-                    jt.semaphore("login.addTaglineDetails")); },
-                   //this is a secondary display detail, but don't wait
-                   //too long or it just makes the site look slow
-                   400);
-    },
-
-
     displayReviewActivityRoll = function (revs) {
         var i, rev, displayed = false;
         revroll.revs = revs || revroll.revs;
@@ -434,39 +319,9 @@ app.login = (function () {
                 if(jt.instId(rev) && rev.text.length > 255) {
                     jt.out('revrolldiv', app.review.staticReviewDisplay(
                         revroll.revs[revroll.index], null, "revroll"));
-                    app.layout.adjust();
                     displayed = true; }
                 revroll.index += 1; }
             setTimeout(displayReviewActivityRoll, 4000); }
-    },
-
-
-    addReviewActivityRoll = function () {
-        setTimeout(function () {
-            jt.call('GET', "revact", null,
-                    function (revs) {
-                        app.lcs.putAll("rev", revs);  //deserialize
-                        displayReviewActivityRoll(revs); },
-                    function (code, errtxt) {
-                        jt.log("addReviewActivityRoll failed code " + code +
-                               ": " + errtxt); },
-                    jt.semaphore("login.addReviewActivityRoll")); },
-                   //this is a secondary display detail, but don't wait too
-                   //long or it just makes the site look slow.
-                   900);
-    },
-
-
-    addReviewRollIfSpace = function () {
-        var logodim = {w: 247+50}, revdim = {w: 400}, minsep = 40;
-        if(!jt.byId('enticediv')) {
-            if(app.winw > logodim.w + revdim.w + minsep) {  //space available
-                jt.out('slidesdiv', jt.tac2html(
-                    ["div", {id:"enticediv"},
-                     [["div", {id:"taglinedetpensdiv"}],
-                      ["div", {id:"revrolldiv"}]]]));
-                addTaglineDetails();
-                addReviewActivityRoll(); } }
     },
 
 
@@ -479,17 +334,11 @@ app.login = (function () {
         //decorate contents and connect additional actions
         if(params.loginerr) {
             jt.out('loginstatdiv', fixServerText(params.loginerr)); }
-        if(params.special === "nativeonly") {
-            jt.out('nativelogintitlediv', "Native FGFweb login:");
-            jt.out('altauthmethods', ""); }
-        else {  //regular login
-            jt.out('altauthmethods', displayAltAuthMethods()); }
         html = ["a", {id: "forgotpw", href: "#forgotpassword",
                       title: "Email my password, I spaced it",
                       onclick: jt.fs("app.login.forgotPassword()")},
                 "forgot my password..."];
         jt.out('forgotpassdiv', jt.tac2html(html));
-        expandLoginFormLayoutIfSpace(); //might redraw contents
         if(authname) {
             jt.byId('emailin').value = authname; }
         if(params.emailin) {
@@ -499,8 +348,6 @@ app.login = (function () {
         //already triggered on return, and setting a handler
         //interferes with the Create Account button press.
         //jt.on('passin', 'change', onLoginPasswordChange);
-        addReviewRollIfSpace();
-        app.layout.adjust();
         setFocusOnEmailInput();
     },
 
@@ -679,15 +526,13 @@ return {
                 jt.out('logodiv', jt.tac2html(
                     ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
             if(app.winw >= app.minSideBySide) {
-                jt.byId('topworkdiv').style.marginLeft = "280px";
-                smallLogo(); }  //shrink so top area is reasonable
+                jt.byId('topworkdiv').style.marginLeft = "280px"; }
             else { 
                 //small 100x49 logo just makes things crowded and confused.
                 //move logodiv out of the way of clicks
                 jt.setdims('logoimg', {w: 2, h: 2});
                 jt.setdims('logodiv', {w: 2, h: 2});
-                jt.out('logodiv', ""); }
-            app.layout.setTopPaddingAndScroll(130); }  //matches topsectiondiv
+                jt.out('logodiv', ""); } }
         else if(override === "hide") { 
             jt.out('topworkdiv', ""); }
         else {  //restore whatever was in index.html to begin with
@@ -792,7 +637,6 @@ return {
             html = ["table", {id: "loginform", cla: "formstyle"}, rows];
             html = jt.tac2html(html);
             jt.out('contentdiv', html);
-            app.layout.adjust();
             jt.byId('emailin').focus(); }
         else {  //no account given, go get it.
             jt.call('GET', "getacct?" + authparams(), null,

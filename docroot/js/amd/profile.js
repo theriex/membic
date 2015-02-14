@@ -493,7 +493,6 @@ app.profile = (function () {
                                  title: "More reviews"},
                            "more reviews..."]); } }
         jt.out('profcontdiv', jt.tac2html(html));
-        app.layout.adjust();
         setTimeout(function () {
             app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
@@ -536,7 +535,6 @@ app.profile = (function () {
             return displayRecentReviews(profpenref.profstate.recentRevState); }
         html = "Retrieving recent activity for " + profpenref.pen.name + "...";
         jt.out('profcontdiv', html);
-        app.layout.adjust();
         profpenref.profstate.recentRevState = rrs = { 
             params: {},
             cursor: "",
@@ -627,7 +625,6 @@ app.profile = (function () {
                  revTypeSelectorHTML("app.profile.showTopRated")],
                 ["ul", {cla: "revlist"}, revitems]];
         jt.out('profcontdiv', jt.tac2html(html));
-        app.layout.adjust();
         if(i < revs.length) { //didn't make it through, fetch and redisplay
             app.lcs.getFull("rev", revs[i], displayBest); }
         else {
@@ -776,19 +773,16 @@ app.profile = (function () {
 
     displayFollowing = function () {
         app.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
-        app.layout.adjust();
     },
 
 
    displayFollowers = function () {
         app.rel.displayRelations(profpenref.pen, "inbound", "profcontdiv");
-        app.layout.adjust();
     },
 
 
     displayGroups = function () {
         app.group.displayGroups(profpenref.pen, "profcontdiv");
-        app.layout.adjust();
     },
 
 
@@ -1258,7 +1252,6 @@ app.profile = (function () {
         displayCity(dispen);
         displayPic(dispen);
         displayTabs(profpenref);
-        app.layout.adjust();
         if(errmsg) {
             jt.err("Previous processing failed: " + errmsg); }
         if(profeditfield === "city") {
@@ -1320,7 +1313,6 @@ return {
                                  profid: jt.instId(profpenref.pen),
                                  tab: tabname });
         refreshContentDisplay();
-        app.layout.adjust();
     },
 
 
@@ -1354,7 +1346,6 @@ return {
                  html],
                 ["ul", {cla: "revlist"}, revitems]];
         jt.out('profcontdiv', jt.tac2html(html));
-        app.layout.adjust();
         if(inlinks && i < inlinks.length) { //didn't have all revs
             app.lcs.getFull("rev", inlinks[i].revid, app.profile.displayResp); }
     },
