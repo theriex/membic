@@ -36,3 +36,38 @@ def intz(val):
     return int(val)
 
 
+def csv_elem_count(csv):
+    if not csv:
+        return 0
+    return csv.count(",") + 1
+
+
+def csv_list(csv):
+    if not csv:
+        return []
+    return csv.split(",")
+
+
+def remove_from_csv(val, csv):
+    if not csv or csv == val:
+        return ""
+    if csv.startswith(val + ","):
+        return csv[len(val) + 1:]
+    val = "," + val
+    index = csv.find(val)
+    if index >= 0:
+        return csv[0:index] + csv[index + len(val):]
+    return csv
+
+
+# CSV strings longer than 1000 elements are cumbersome to the point of
+# being useless, so roll previous elements off the end to reasonably
+# bound the length.
+def prepend_to_csv(val, csv, upperbound=1000):
+    if not csv:
+        return val
+    if csv_elem_count(csv) >= upperbound:
+        csv = csv[0:csv.rfind(",")]
+    return val + "," + csv
+
+

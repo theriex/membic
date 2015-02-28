@@ -15,29 +15,10 @@ indexes:
   - name: summaryfreq
   - name: lastsummary
 
-- kind: Relationship
+- kind: Review
   properties:
-  - name: originid
-  - name: modified
-    direction: desc
-
-- kind: Relationship
-  properties:
-  - name: relatedid
-  - name: modified
-    direction: desc
-
-- kind: Request
-  properties:
-  - name: fromid
-  - name: status
-  - name: modified
-
-- kind: Request
-  properties:
-  - name: status
-  - name: toid
-  - name: modified
+  - name: cankey
+  - name: modhist
 
 - kind: Review
   properties:
@@ -57,11 +38,6 @@ indexes:
   properties:
   - name: penid
   - name: modified
-
-- kind: Review
-  properties:
-  - name: penid
-  - name: modified
     direction: desc
 
 - kind: Review
@@ -69,55 +45,4 @@ indexes:
   - name: penid
   - name: revtype
   - name: modified
-
-- kind: Review
-  properties:
-  - name: penid
-  - name: revtype
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: penid
-  - name: srcrev
-  - name: modified
-    direction: desc
-
-- kind: ReviewComment
-  properties:
-  - name: cmtpenid
-  - name: rcstat
-
-- kind: ReviewComment
-  properties:
-  - name: rcstat
-  - name: revid
-  - name: modified
-    direction: desc
-
-- kind: ReviewComment
-  properties:
-  - name: rcstat
-  - name: revpenid
-  - name: modified
-    direction: desc
-
-- kind: ReviewLink
-  properties:
-  - name: revpenid
-  - name: modified
-
-- kind: ReviewTag
-  properties:
-  - name: forgotten
-  - name: penid
-  - name: remembered
-    direction: desc
-
-- kind: ReviewTag
-  properties:
-  - name: nothelpful
-  - name: penid
-  - name: helpful
     direction: desc

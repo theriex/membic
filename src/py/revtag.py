@@ -5,7 +5,7 @@ import logging
 from moracct import *
 from morutil import *
 from pen import PenName, authorized
-from revlink import ReviewLink, verify_review_link_revpenid, make_review_link
+# from revlink import ReviewLink, verify_review_link_revpenid, make_review_link
 import json
 from cacheman import *
 
@@ -14,6 +14,7 @@ class ReviewTag(db.Model):
     """ Markings for a review written by someone else """
     penid = db.IntegerProperty(required=True)
     revid = db.IntegerProperty(required=True)
+    converted = db.IntegerProperty()  # temporary data conversion flag
     remembered = db.StringProperty()  # iso date when "remember" toggled on
     forgotten = db.StringProperty()  # iso date when "remember" toggled off
     helpful = db.StringProperty()  # iso date when "helpful" toggled on

@@ -80,9 +80,9 @@ img { border:0px; }
 #appspacediv { margin:auto; }
 #bottomnav { font-size:xx-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px;
-  position:fixed; left:0px; bottom:0px; height:15px; width:100%; }
+  position:fixed; left:0px; bottom:0px; height:15px; width:90%; }
 .footerlink { background:#f7f7f9; padding:1px 3px; border-radius:3px; }
-#contentdiv { margin:auto; }
+#contentdiv { display:table; margin:auto; }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
 #introverviewtaglinediv { position:absolute; left:40px; top:125px; 
@@ -408,6 +408,7 @@ img { border:0px; }
 .ptddiv { padding:0px 0px 0px 20px; }
 
 /* >> activity layout */
+#revtypesdiv { padding:0px 0px 8px 0px; }
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #revtypeseldiv { }
 #toptd { padding:0px 20px 0px 0px; }

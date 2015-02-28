@@ -27,7 +27,8 @@ app.activity = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var pensearchmax = 1000,  //max records to read through automatically
+    var feeds = {},
+        pensearchmax = 1000,  //max records to read through automatically
         activityMode = "amnew",  //other option is "amtop"
         topModeEnabled = false,   //need to finish loading basics first
         topact = { type: "", dispmax: 20,
@@ -49,6 +50,24 @@ app.activity = (function () {
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
+
+    feedItemHTML = function (item) {
+    },
+
+
+    displayFeedItems = function (feedtype, feeditems) {
+        var type, i, html = [];
+        if(!feeditems || feeditems.length === 0) {
+            if(feedtype === "all") {
+                html = "No items found."; }
+            else {
+                type = app.review.getReviewTypeByValue(feedtype);
+                html = "No " + type.plural + " found."; } }
+        for(i = 0; i < feeditems.length; i += 1) {
+            html.push(feedItemHTML(feeditems[i])); }
+        jt.out('feeditemsdiv', jt.tac2html(html));
+    },
+
 
     revTypeSelectorImgSrc = function (typename, selected) {
         var type, mode;
@@ -1011,6 +1030,41 @@ app.activity = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    displayFeed: function (feedtype) {
+        var revtypes, i, rt, html = [], params, time;
+        revtypes = app.review.getReviewTypes();
+        for(i = 0; i < revtypes.length; i += 1) {
+            rt = revtypes[i];
+            html.push(["a", {href: "#" + rt.type,
+                             onclick: jt.fs("app.activity.displayFeed('" + 
+                                            rt.type + "')")},
+                       ["img", {cla: "reviewbadge",
+                                src: "img/" + rt.img}]]); }
+        html = [["div", {cla: "revtypesdiv", id: "revtypesdiv"},
+                 html],
+                ["div", {id: "feeditemsdiv"}]];
+        jt.out("contentdiv", jt.tac2html(html));
+        if(feeds[rt.type]) {
+            return displayFeedItems(feedtype, feeds[rt.type]); }
+        jt.out('feeditemsdiv', "Fetching items...");
+        params = app.login.authparams();
+        if(params) {
+            params += "&"; }
+        params += "revtype=" + feedtype;
+        time = new Date().getTime();
+        jt.call('GET', "revfeed?" + params, null,
+                function (reviews) {
+                    time = new Date().getTime() - time;
+                    jt.log("feeditems returned in " + time/1000 + " seconds.");
+                    feeds[feedtype] = feeditems;
+                    displayFeedItems(feedtype, feeditems); },
+                app.failf(function (code, errtxt) {
+                    jt.out('feeditemsdiv', "error code: " + code + 
+                           " " + errtxt); }),
+                jt.semaphore("activity.displayFeed"));
+    },
+
 
     updateHeading: function (mode) {
         writeNavDisplay(mode || "activity");

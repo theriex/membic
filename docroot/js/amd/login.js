@@ -462,7 +462,8 @@ app.login = (function () {
         else if(authtoken || app.login.readAuthCookie()) {
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
-            displayLoginForm(params); }
+            displayLoginForm(params);
+            app.activity.displayFeed("all"); }
         else { 
             app.redirectToSecureServer(params); }
     };

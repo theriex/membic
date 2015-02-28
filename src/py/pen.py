@@ -31,12 +31,13 @@ class PenName(db.Model):
     accessed = db.StringProperty()  # iso date
     modified = db.StringProperty()  # iso date
     # associated JSON data
-    top20s = db.TextProperty()   # accumulated top 20 reviews of each type
-    stash = db.TextProperty()    # precomputed vals, breadcrumbs and such
-    settings = db.TextProperty() # client settings like skin, keyword overrides
+    remembered = db.TextProperty()  # CSV of revids for reference
+    top20s = db.TextProperty()      # accumulated top 20 reviews of each type
+    stash = db.TextProperty()       # precomputed vals, breadcrumbs and such
+    settings = db.TextProperty()    # client skin, keyword overrides etc
     # associated CSV data
-    abusive = db.TextProperty()  # penids flagged for harassment
-    groups = db.TextProperty()   # groupids this pen is following
+    abusive = db.TextProperty()     # penids flagged for harassment
+    groups = db.TextProperty()      # groupids this pen is following
     # counts of inbound and outbound relationships are maintained within
     # the relationship transaction processing
     following = db.IntegerProperty()

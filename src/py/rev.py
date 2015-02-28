@@ -13,38 +13,41 @@ from operator import attrgetter
 import re
 from cacheman import *
 import time
+from revtag import ReviewTag
 
 
 class Review(db.Model):
     """ A review of something """
-    penid = db.IntegerProperty(required=True)
-    revtype = db.StringProperty(required=True)
-    rating = db.IntegerProperty()
-    keywords = db.TextProperty()
-    text = db.TextProperty()
-    revpic = db.BlobProperty()
-    imguri = db.TextProperty()
-    # The time any of the above fields was last changed.  Changes to
-    # item identification and agent service data is not tracked
-    modified = db.StringProperty()  # iso date
-    # Fields used to describe the item being reviewed
-    name = db.StringProperty()
-    title = db.StringProperty()
-    url = db.StringProperty()
-    artist = db.StringProperty()
-    author = db.StringProperty()
-    publisher = db.StringProperty()
-    album = db.StringProperty()
-    starring = db.StringProperty()
-    address = db.StringProperty()
-    year = db.StringProperty()  # string allows values like "80's"
-    # The canonized key/subkey field value for search match
-    cankey = db.StringProperty()
-    altkeys = db.TextProperty()
-    # Supporting linkage fields
-    svcdata = db.TextProperty()    # service processing values in JSON format
-    srcrev = db.IntegerProperty()  # source review id, or -101 if pre-review
-    penname = db.StringProperty()  # dupe data for easier reporting
+    revtype = db.StringProperty(required=True)   # book, movie, music...
+    penid = db.IntegerProperty(required=True)    # who wrote the review
+    grpid = db.IntegerProperty()                 # 0 if source review
+    rating = db.IntegerProperty()                # 0-100
+    srcrev = db.IntegerProperty()                # revid or -101 if future
+    cankey = db.StringProperty()                 # canonized key/subkey value
+    modified = db.StringProperty()               # ISO date
+    modhist = db.StringProperty()                # creation date, mod count
+    # non-indexed fields:
+    keywords = db.TextProperty()                 # human readable CSV
+    text = db.TextProperty()                     # review text
+    revpic = db.BlobProperty()                   # uploaded pic for review
+    imguri = db.TextProperty()                   # linked review pic URL
+    altkeys = db.TextProperty()                  # known equivalent cankey vals
+    svcdata = db.TextProperty()                  # ad hoc client data JSON
+    penname = db.StringProperty(indexed=False)   # for ease of reporting
+    orids = db.TextProperty()                    # other revids CSV
+    helpful = db.TextProperty()                  # penids CSV
+    remembered = db.TextProperty()               # penids CSV
+    # type-specific non-indexed fields
+    name = db.StringProperty(indexed=False)      # food, drink, activity, other
+    title = db.StringProperty(indexed=False)     # book, movie, video, music
+    url = db.StringProperty(indexed=False)       # source URL of item
+    artist = db.StringProperty(indexed=False)    # video, music
+    author = db.StringProperty(indexed=False)    # book
+    publisher = db.StringProperty(indexed=False) # book
+    album = db.StringProperty(indexed=False)     # music
+    starring = db.StringProperty(indexed=False)  # movie
+    address = db.StringProperty(indexed=False)   # food, drink, activity
+    year = db.StringProperty(indexed=False)      # values like "80's" ok
 
 
 def review_modification_authorized(handler):
@@ -332,6 +335,32 @@ def write_review(review, pen):
     update_top20_reviews(pen, review)
 
 
+def creation_compare(revA, revB):
+    createA = revA.modhist.split(";")[0]
+    createB = revB.modhist.split(";")[0]
+    if createA < createB:
+        return -1
+    if createA > createB:
+        return 1
+    return 0
+
+
+def find_source_review(cankey, modhist):
+    source = None
+    # strict less-than match to avoid finding the same thing being checked
+    where = "WHERE cankey = :1 AND modhist < :2 ORDER BY modhist ASC"
+    rq = Review.gql(where, cankey, modhist)
+    revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    for rev in revs:
+        if source and creation_compare(source, rev) < 0:
+            break  # have the earliest, done
+        if rev.orids:
+            source = rev
+            break  # found the currently used reference root for this cankey
+        source = rev  # assign as candidate reference root
+    return source
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -518,6 +547,91 @@ class GetReviewByKey(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
+class ReviewDataInit(webapp2.RequestHandler):
+    def get(self):
+        revs = Review.all()
+        count = 0
+        for rev in revs:
+            rev.modhist = rev.modified + ";1"
+            rev.grpid = 0
+            rev.srcrev = -1    # set to proper revid or 0 later
+            rev.orids = ""
+            rev.helpful = ""
+            rev.remembered = ""
+            rev.put()
+            count += 1
+        self.response.out.write(str(count) + " Reviews initialized<br>\n")
+        rts = ReviewTag.all()
+        count = 0
+        for rt in rts:
+            rt.converted = 0
+            rt.put()
+            count += 1
+        self.response.out.write(str(count) + " ReviewTags initialized<br>\n")
+        pens = PenName.all()
+        count = 0
+        for pen in pens:
+            pen.remembered = ""
+            pen.put()
+            count += 1
+        self.response.out.write(str(count) + " Pens initialized<br>\n")
+
+
+class VerifyAllReviews(webapp2.RequestHandler):
+    def get(self):
+        # fix up any initialized srcrev values
+        rq = Review.gql("WHERE srcrev = -1")
+        revs = rq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+        count = 0
+        for rev in revs:
+            src = find_source_review(rev.cankey, rev.modhist)
+            if src:
+                src = Review.get_by_id(src.key().id())  # verify latest data
+                rev.srcrev = src.key().id()
+                revidstr = str(rev.key().id())
+                src.orids = remove_from_csv(revidstr, src.orids)
+                src.orids = prepend_to_csv(revidstr, src.orids, 200)
+                src.put()
+            else:
+                rev.srcrev = 0
+            rev.put()
+            count += 1
+        self.response.out.write(str(count) + " srcrev values verified<br>\n")
+        count = 0
+        rtq = ReviewTag.gql("WHERE converted = 0")
+        rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+        for rt in rts:
+            rev = Review.get_by_id(rt.revid)
+            pen = PenName.get_by_id(rt.penid)
+            if rev and pen:
+                spid = str(rt.penid)
+                rid = str(rt.revid)
+                if not rt.nothelpful or rt.helpful > rt.nothelpful:
+                    rev.helpful = remove_from_csv(spid, rev.helpful)
+                    rev.helpful = prepend_to_csv(spid, rev.helpful, 120)
+                if not rt.forgotten or rt.remembered > rt.forgotten:
+                    rev.remembered = remove_from_csv(spid, rev.remembered)
+                    rev.remembered = prepend_to_csv(spid, rev.remembered, 120)
+                    pen.remembered = remove_from_csv(rid, pen.remembered)
+                    pen.remembered = prepend_to_csv(rid, pen.remembered, 1000)
+                    pen.put()
+                rev.put()
+            rt.converted = 1
+            rt.put()
+            count += 1
+        self.response.out.write(str(count) + " ReviewTags converted<br>\n")
+        # TODO: convert group revid lists into separate review entries
+
+
+class GetReviewFeed(webapp2.RequestHandler):
+    # If revtype is specified, restrict to that type. If an authorized
+    # account was given, then filter and sort based on blocking and
+    # preferences. Maximally leverage cache to avoid db overhead.
+    def get(self):
+        self.error(404)
+        self.response.out.write("GetReviewFeed not implemented yet")
+
+
 class ReviewActivity(webapp2.RequestHandler):
     def get(self):
         since = self.request.get('since')
@@ -591,6 +705,9 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/srchrevs', SearchReviews),
                                ('/revbyid', GetReviewById), 
                                ('/revbykey', GetReviewByKey),
+                               ('/revdatainit', ReviewDataInit),
+                               ('/revcheckall', VerifyAllReviews),
+                               ('/revfeed', GetReviewFeed),
                                ('/revact', ReviewActivity),
                                ('/fetchprerevs', FetchPreReviews),
                                ('/testrevs', MakeTestReviews)], debug=True)
