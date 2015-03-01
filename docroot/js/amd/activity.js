@@ -51,21 +51,25 @@ app.activity = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    feedItemHTML = function (item) {
+    feedReviewHTML = function (rev) {
+        var html;
+        html = ["div", {cla: "feedrevdiv"},
+                rev.name]
+        return html;
     },
 
 
-    displayFeedItems = function (feedtype, feeditems) {
+    displayFeedReviews = function (feedtype, feedrevs) {
         var type, i, html = [];
-        if(!feeditems || feeditems.length === 0) {
+        if(!feedrevs || feedrevs.length === 0) {
             if(feedtype === "all") {
                 html = "No items found."; }
             else {
                 type = app.review.getReviewTypeByValue(feedtype);
                 html = "No " + type.plural + " found."; } }
-        for(i = 0; i < feeditems.length; i += 1) {
-            html.push(feedItemHTML(feeditems[i])); }
-        jt.out('feeditemsdiv', jt.tac2html(html));
+        for(i = 0; i < feedrevs.length; i += 1) {
+            html.push(feedReviewHTML(feedrevs[i])); }
+        jt.out('feedrevsdiv', jt.tac2html(html));
     },
 
 
@@ -1043,24 +1047,24 @@ return {
                                 src: "img/" + rt.img}]]); }
         html = [["div", {cla: "revtypesdiv", id: "revtypesdiv"},
                  html],
-                ["div", {id: "feeditemsdiv"}]];
+                ["div", {id: "feedrevsdiv"}]];
         jt.out("contentdiv", jt.tac2html(html));
         if(feeds[rt.type]) {
-            return displayFeedItems(feedtype, feeds[rt.type]); }
-        jt.out('feeditemsdiv', "Fetching items...");
+            return displayFeedReviews(feedtype, feeds[rt.type]); }
+        jt.out('feedrevsdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {
-            params += "&"; }
+            params += "&penid=" + app.pen.currPenId() + "&"; }
         params += "revtype=" + feedtype;
         time = new Date().getTime();
         jt.call('GET', "revfeed?" + params, null,
                 function (reviews) {
                     time = new Date().getTime() - time;
-                    jt.log("feeditems returned in " + time/1000 + " seconds.");
-                    feeds[feedtype] = feeditems;
-                    displayFeedItems(feedtype, feeditems); },
+                    jt.log("revfeed returned in " + time/1000 + " seconds.");
+                    feeds[feedtype] = reviews;
+                    displayFeedReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
-                    jt.out('feeditemsdiv', "error code: " + code + 
+                    jt.out('feedrevsdiv', "error code: " + code + 
                            " " + errtxt); }),
                 jt.semaphore("activity.displayFeed"));
     },

@@ -140,6 +140,8 @@ def extract_json_value(key, json):
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
+    if not acctype:
+        return None
     emaddr = request.get('an')  # may be alternate value for 3rd party auth
     token = request.get('at')
     toksec = request.get('as')

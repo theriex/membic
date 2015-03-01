@@ -16,13 +16,23 @@ import time
 from revtag import ReviewTag
 
 
+# srcrev is heavily utilized in different contexts:
+#   - if there is a source review with the same cankey where
+#     references are being tracked, srcrev holds that source review id.
+#   - if this is a group posted review (grpid is filled in), then
+#     srcrev holds the revid of the original review.
+#   - negative srcrev values indicate special handling:
+#       -101: Future review (placeholder for later writeup)
+#       -202: Batch update (e.g. iTunes upload or similar)
+#     Special handling reviews may not be posted to groups
 class Review(db.Model):
     """ A review of something """
     revtype = db.StringProperty(required=True)   # book, movie, music...
     penid = db.IntegerProperty(required=True)    # who wrote the review
     grpid = db.IntegerProperty()                 # 0 if source review
     rating = db.IntegerProperty()                # 0-100
-    srcrev = db.IntegerProperty()                # revid or -101 if future
+    srcrev = db.IntegerProperty()                # see class comment
+    mainfeed = db.IntegerProperty()              # 0 if ineligible, 1 if ok
     cankey = db.StringProperty()                 # canonized key/subkey value
     modified = db.StringProperty()               # ISO date
     modhist = db.StringProperty()                # creation date, mod count
@@ -48,6 +58,10 @@ class Review(db.Model):
     starring = db.StringProperty(indexed=False)  # movie
     address = db.StringProperty(indexed=False)   # food, drink, activity
     year = db.StringProperty(indexed=False)      # values like "80's" ok
+
+
+known_rev_types = ['book', 'movie', 'video', 'music', 
+                   'food', 'drink', 'activity', 'other']
 
 
 def review_modification_authorized(handler):
@@ -328,8 +342,36 @@ def filter_reviews(reviews, qstr):
     return results
 
 
+def set_review_mainfeed(rev):
+    # Not looking forward to dealing with bots and trolls, but if that
+    # becomes necessary this is the hook point.  ep:28feb15
+    rev.mainfeed = 1
+    if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
+        rev.svcdata = -202
+        rev.mainfeed = 0
+    if rev.svcdata < 0:  # future review, batch update etc.
+        rev.mainfeed = 0
+    if rev.grpid != 0:   # group posting, not source review
+        rev.mainfeed = 0
+
+
+def prepend_to_main_feeds(review, pen):
+    feedentry = str(review.key().id()) + ":" + str(review.penid)
+    allrevs = memcache.get("all") or ""
+    allrevs = remove_from_csv(feedentry, allrevs)
+    allrevs = prepend_to_csv(feedentry, allrevs)
+    memcache.set("all", allrevs)
+    typerevs = memcache.get(review.revtype) or ""
+    typerevs = remove_from_csv(feedentry, typerevs)
+    typerevs = prepend_to_csv(feedentry, typerevs)
+    memcache.set(review.revtype, typerevs)
+
+
 def write_review(review, pen):
     cached_put(review)
+    set_review_mainfeed(review)
+    if review.mainfeed:
+        prepend_to_main_feeds(review, pen)
     bust_cache_key("recentrevs")
     bust_cache_key("blog" + pen.name_c)
     update_top20_reviews(pen, review)
@@ -359,6 +401,31 @@ def find_source_review(cankey, modhist):
             break  # found the currently used reference root for this cankey
         source = rev  # assign as candidate reference root
     return source
+
+
+def sort_filter_feed(feedcsv, pen, maxret):
+    preferred = []
+    normal = []
+    background = []
+    feedelems = csv_list(feedcsv)
+    for elem in feedelems:
+        ela = elem.split(":")
+        if pen:
+            if csv_contains(ela[1], pen.blocked):
+                continue
+            if csv_contains(ela[1], pen.preferred):
+                preferred.append(int(ela[0]))
+            elif csv_contains(ela[1], pen.background):
+                background.append(int(ela[0]))
+            else:
+                normal.append(int(ela[0]))
+        else:
+            preferred.append(int(ela[0]))
+        if len(preferred) >= maxret:
+            break
+    feedids = preferred[:maxret] + normal[:maxret] + background[:maxret]
+    feedids = feedids[:maxret]
+    return feedids
 
 
 class NewReview(webapp2.RequestHandler):
@@ -554,7 +621,9 @@ class ReviewDataInit(webapp2.RequestHandler):
         for rev in revs:
             rev.modhist = rev.modified + ";1"
             rev.grpid = 0
-            rev.srcrev = -1    # set to proper revid or 0 later
+            set_review_mainfeed(rev)
+            if rev.srcrev >= 0:    # not some reserved special handling value
+                rev.srcrev = -1    # set to proper revid or 0 later
             rev.orids = ""
             rev.helpful = ""
             rev.remembered = ""
@@ -572,6 +641,9 @@ class ReviewDataInit(webapp2.RequestHandler):
         count = 0
         for pen in pens:
             pen.remembered = ""
+            pen.preferred = ""
+            pen.background = ""
+            pen.blocked = ""
             pen.put()
             count += 1
         self.response.out.write(str(count) + " Pens initialized<br>\n")
@@ -579,6 +651,9 @@ class ReviewDataInit(webapp2.RequestHandler):
 
 class VerifyAllReviews(webapp2.RequestHandler):
     def get(self):
+        memcache.delete("all")
+        for revtype in known_rev_types:
+            memcache.delete(revtype)
         # fix up any initialized srcrev values
         rq = Review.gql("WHERE srcrev = -1")
         revs = rq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
@@ -586,7 +661,7 @@ class VerifyAllReviews(webapp2.RequestHandler):
         for rev in revs:
             src = find_source_review(rev.cankey, rev.modhist)
             if src:
-                src = Review.get_by_id(src.key().id())  # verify latest data
+                src = Review.get_by_id(src.key().id())  # read latest data
                 rev.srcrev = src.key().id()
                 revidstr = str(rev.key().id())
                 src.orids = remove_from_csv(revidstr, src.orids)
@@ -596,7 +671,7 @@ class VerifyAllReviews(webapp2.RequestHandler):
                 rev.srcrev = 0
             rev.put()
             count += 1
-        self.response.out.write(str(count) + " srcrev values verified<br>\n")
+        self.response.out.write(str(count) + " Reviews verified<br>\n")
         count = 0
         rtq = ReviewTag.gql("WHERE converted = 0")
         rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
@@ -628,8 +703,35 @@ class GetReviewFeed(webapp2.RequestHandler):
     # account was given, then filter and sort based on blocking and
     # preferences. Maximally leverage cache to avoid db overhead.
     def get(self):
-        self.error(404)
-        self.response.out.write("GetReviewFeed not implemented yet")
+        revtype = self.request.get('revtype')
+        if revtype not in known_rev_types:
+            revtype = ""
+        feedcsv = memcache.get(revtype or "all")
+        if not feedcsv:  # rebuild and save in cache
+            logging.info("rebuilding feedcsv for " + (revtype or "all"))
+            feedcsv = ""
+            where = "WHERE mainfeed = 1"
+            if revtype:
+                where += " AND revtype = '" + revtype + "'"
+            where += " ORDER BY modified DESC"
+            rq = Review.gql(where)
+            revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
+                            deadline=60)
+            for rev in revs:
+                if feedcsv:
+                    feedcsv += ","
+                feedcsv += str(rev.key().id()) + ":" + str(rev.penid)
+            memcache.set(revtype or "all", feedcsv)
+        pen = None
+        acc = authenticated(self.request)
+        if acc:
+            pen = review_modification_authorized(self)
+        feedids = sort_filter_feed(feedcsv, pen, 200)
+        revs = []
+        for revid in feedids:
+            rev = cached_get(intz(revid), Review)
+            revs.append(rev)
+        returnJSON(self.response, revs)
 
 
 class ReviewActivity(webapp2.RequestHandler):

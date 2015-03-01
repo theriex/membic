@@ -18,28 +18,27 @@ class PenName(db.Model):
     name_c = db.StringProperty(required=True)
     # one or more id values must be specified for authorized access
     mid = db.IntegerProperty()
-    #Google IDs are too big to fit in an int64
-    gsid = db.StringProperty()
+    gsid = db.StringProperty()      # Google IDs are too big to fit in an int64
     fbid = db.IntegerProperty()
     twid = db.IntegerProperty()
     ghid = db.IntegerProperty()
-    # these bling field values are nice but not required
+    # detail fields
     shoutout = db.TextProperty()
     profpic = db.BlobProperty()
     city = db.StringProperty(indexed=False)
-    # track last used pen name chosen to select it by default next time
-    accessed = db.StringProperty()  # iso date
-    modified = db.StringProperty()  # iso date
-    # associated JSON data
+    accessed = db.StringProperty()  # ISO date when last logged in
+    modified = db.StringProperty()  # ISO date when last changed
     remembered = db.TextProperty()  # CSV of revids for reference
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     stash = db.TextProperty()       # precomputed vals, breadcrumbs and such
     settings = db.TextProperty()    # client skin, keyword overrides etc
-    # associated CSV data
-    abusive = db.TextProperty()     # penids flagged for harassment
+    preferred = db.TextProperty()   # CSV of penids given priority
+    background = db.TextProperty()  # CSV of penids with reduced priority
+    blocked = db.TextProperty()     # CSV of penids to be avoided
+    abusive = db.TextProperty()     # penids flagged for harassment (old)
     groups = db.TextProperty()      # groupids this pen is following
     # counts of inbound and outbound relationships are maintained within
-    # the relationship transaction processing
+    # the relationship transaction processing.  These are going away
     following = db.IntegerProperty()
     followers = db.IntegerProperty()
 

@@ -48,6 +48,19 @@ def csv_list(csv):
     return csv.split(",")
 
 
+def csv_contains(val, csv):
+    if not csv:
+        return False
+    if csv == val:
+        return True
+    if csv.startswith(val + ","):
+        return True
+    index = csv.find("," + val)
+    if index >= 0:
+        return True
+    return False
+
+
 def remove_from_csv(val, csv):
     if not csv or csv == val:
         return ""

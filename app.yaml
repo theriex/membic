@@ -167,7 +167,7 @@ handlers:
 
 
 ## Return the review feed for the given type
-## GET params: revtype, authparams
+## GET params: revtype, authparams, penid
 - url: /revfeed
   script: src.py.rev.app
 

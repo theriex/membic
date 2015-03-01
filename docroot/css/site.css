@@ -77,7 +77,7 @@ img { border:0px; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
-#appspacediv { margin:auto; }
+#appspacediv { margin:0px 5px; }
 #bottomnav { font-size:xx-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:15px; width:90%; }
@@ -408,7 +408,7 @@ img { border:0px; }
 .ptddiv { padding:0px 0px 0px 20px; }
 
 /* >> activity layout */
-#revtypesdiv { padding:0px 0px 8px 0px; }
+#revtypesdiv { display:table; margin:auto; padding:0px 0px 8px 0px; }
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #revtypeseldiv { }
 #toptd { padding:0px 20px 0px 0px; }
