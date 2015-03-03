@@ -353,6 +353,8 @@ def set_review_mainfeed(rev):
         rev.mainfeed = 0
     if rev.grpid != 0:   # group posting, not source review
         rev.mainfeed = 0
+    if not rev.text or len(rev.text) < 180:  # not substantive
+        rev.mainfeed = 0
 
 
 def prepend_to_main_feeds(review, pen):

@@ -52,9 +52,21 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     feedReviewHTML = function (rev) {
-        var html;
-        html = ["div", {cla: "feedrevdiv"},
-                rev.name]
+        var revid, prefix, revdivid, html;
+        revid = jt.instId(rev);
+        prefix = "rdd"
+        revdivid = prefix + revid
+        html = ["div", {cla: "fpdiv"},
+                [["div", {cla: "fpprofdiv"},
+                  ["a", {href: "#view=profile&profid=" + rev.penid,
+                         onclick: jt.fs("app.profile.byprofid('" + 
+                                        rev.penid + "')")},
+                   ["img", {cla: "fpprofpic", 
+                            src: "profpic?profileid=" + rev.penid,
+                            title: jt.ndq(rev.penname),
+                            alt: jt.ndq(rev.penname)}]]],
+                 ["div", {cla: "fprevdiv", id: revdivid},
+                  app.review.revdispHTML(prefix, revid, rev)]]];
         return html;
     },
 
@@ -1061,6 +1073,7 @@ return {
                 function (reviews) {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
+                    app.lcs.putAll("rev", reviews);
                     feeds[feedtype] = reviews;
                     displayFeedReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {

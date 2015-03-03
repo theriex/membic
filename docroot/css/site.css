@@ -36,8 +36,8 @@ body {
   height: 100%;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-color: #f7f7f9;
-  background: linear-gradient(#f7f7f9 60%, #dcdce0);
+  background-color: #ccdad9;
+  /* background: linear-gradient(#f7f7f9 60%, #dcdce0); */
 }
 
 img { border:0px; }
@@ -68,7 +68,8 @@ img { border:0px; }
 .aboutwhatitisdiv { text-align:center; font-size:x-small; }
 
 /* >> main display area and contained elements */
-#phonetextzoomfixtable, #loginformtable { border-collapse:collapse; }
+#phonetextzoomfixtable, #loginformtable, .collapse { 
+  border-collapse:collapse; }
 #centerhdivtd { }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
@@ -263,7 +264,7 @@ img { border:0px; }
 .secondaryfield { font-style:italic; }
 .revlist { list-style:none; padding:0; margin:0; }
 .revlist li { padding:4px; }
-.revimg, .revimgdis { max-width:125px; height:auto; }
+.revimg, .revimgdis { max-width:125px; max-height:125px; }
 .revimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .revtextsummary { font-size:small; } /* padded in profile.reviewItemHTML */
 .removeico { width:15px; height:15px; vertical-align:middle; }
@@ -433,6 +434,34 @@ img { border:0px; }
 .qctext { font-size:small; }
 .clickspan { cursor:pointer; }
 .blrevdate { color:#333333; }
+
+/* >> feed post review layout */
+.fpdiv { clear:both; margin:0px 0px 20px 0px; }
+.fpprofdiv { display:inline-block; width:50px; height:60px; 
+  overflow:scroll; float:left; }
+.fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
+.fprevdiv { margin: 0px 0px 0px 50px; }
+.fpinrevdiv { background-color:#f9f9fc; margin:0px 0px 0px 5px; }
+.fpbodydiv { overflow:auto; }
+.fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
+.fpbuttonsdiv { margin-left:40px; padding-top:2px; }
+.fpbuttondiv { display:inline-block; margin:0px 10px; }
+.fpotherrevsdiv { display:inline-block; }
+.fpbuttonimg { max-height:40px; max-width:40px; vertical-align:middle; }
+.fpotherrevsdiv { }
+.fptitlediv { display:inline-block; padding:0px 10px 0px 5px; }
+.fpstarsdiv { display:inline-block; }
+.fptypediv { display:inline-block; }
+.fpsecfieldsdiv { margin-left:35px; /* reviewbadge + fptitlediv */
+  font-size:x-small; }
+.fpdatediv { margin-left:5px; font-size: xx-small; }
+.fpdescrdiv, .fpkeywrdsdiv, .fpgrpsdiv { 
+  font-size:small; padding: 0px 10px 0px 2px;
+  font-family:"Verdana", "Arial", "Helvetica", sans-serif; }
+.fpkeywrdsdiv { font-style:italic; }
+.fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }
+.togglemoretextspan { background:#ccc; }
+
 
 /* >> settings dialog */
 #writingas { font-size:medium; font-weight:bold; }

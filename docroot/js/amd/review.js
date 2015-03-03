@@ -729,6 +729,144 @@ app.review = (function () {
     },
 
 
+    abbreviatedReviewText = function (prefix, revid, rev) {
+        var maxchars = 400, rtxt, morehtml;
+        rtxt = jt.linkify(rev.text || "");
+        if(rtxt.length > maxchars) {
+            rtxt = rev.text;  //start with raw text
+            morehtml = ["a", {href: "#expand",
+                              onclick: jt.fs("app.review.toggleExpansion('" +
+                                             prefix + "','" + revid + "')")},
+                        ["span", {cla: "togglemoretextspan"},
+                         "more"]];
+            //truncated text could result in a busted link if embedded
+            //in the description.  Fixed on toggle.
+            rtxt = jt.linkify(rtxt.slice(0, maxchars)) + "... " + 
+                jt.tac2html(morehtml); }
+        return rtxt;
+    },
+
+
+    fpbHelpfulButtonSource = function (revid) {
+        var rev, penid;
+        rev = app.lcs.getRef("rev", revid).rev;
+        penid = app.pen.currPenId();
+        //rev.helpful should never contain 0. helpfuldis logic is public
+        if(!rev.helpful || !rev.helpful.csvcontains(penid)) {
+            return "img/helpfulq.png"; }
+        if(rev.helpful.csvarray().length > 100) {
+            return "img/helpfuldis.png"; }
+        return "img/helpful.png";
+    },
+
+
+    fpbRememberButtonSource = function (revid) {
+        var penref;
+        penref = app.pen.currPenRef();
+        if(!penref || !penref.pen || 
+               !penref.pen.remembered.csvcontains(revid)) {
+            return "img/rememberq.png"; }
+        return "img/remembered.png";
+    },
+
+
+    fpOtherRevsLinkHTML = function (revid) {
+        var rev, src, html = "";
+        rev = app.lcs.getRef("rev", revid).rev;
+        if(rev.srcrev) {
+            //source review is included with the feed but display filtered.
+            src = app.lcs.getRef("rev", rev.srcrev).rev; }
+        else if(rev.orids) {
+            src = rev; }
+        if(src) {
+            html = ["a", {href: "#others",
+                          title: "Other posts about this",
+                          onclick: jt.fs("window.open('?view=revlist&srcid=" + 
+                                         jt.instId(src) + "')")},
+                    src.orids.csvarray().length + "+"]; }
+        return html;
+    },
+
+
+    //Not worth the overhead and potential miss of querying to find
+    //whether you have already written a review of something.  Just
+    //click to write and be pleasantly surprised that your previous
+    //review was found (if the cankey matches), or search your reviews
+    //to find the matching one and add it to the altkeys.
+    revpostButtonsHTML = function (prefix, revid) {
+        var rev, html;
+        rev = app.lcs.getRef("rev", revid).rev;
+        if(rev.penid !== app.pen.currPenId()) {
+            html = [["div", {cla: "fpotherrevsdiv"},
+                     fpOtherRevsLinkHTML(revid)],
+                    ["div", {cla: "fpbuttondiv"},
+                     ["a", {href: "#helpful",
+                            title: "Note this post was helpful",
+                            onclick: jt.fs("app.review.fpbToggleHelpful('" +
+                                           prefix + "','" + revid + "')")},
+                      ["img", {cla: "fpbuttonimg",
+                               id: prefix + revid + "helpfulbutton",
+                               src: fpbHelpfulButtonSource(revid)}]]],
+                    ["div", {cla: "fpbuttondiv"},
+                     ["a", {href: "#remember",
+                            title: "Remember this post",
+                            onclick: jt.fs("app.review.fpbToggleRemember('" +
+                                           prefix + "','" + revid + "')")},
+                      ["img", {cla: "fpbuttonimg",
+                               id: prefix + revid + "rememberbutton",
+                               src: fpbRememberButtonSource(revid)}]]],
+                    ["div", {cla: "fpbuttondiv"},
+                     ["a", {href: "#write",
+                            title: "Record your own impressions",
+                            onclick: jt.fs("app.review.fpbWrite('" +
+                                           prefix + "','" + revid + "')")},
+                      ["img", {cla: "fpbuttonimg",
+                               id: prefix + revid + "writebutton",
+                               src: "img/writereview.png"}]]]]; }
+        else { //your own review
+            html = [["div", {cla: "fpotherrevsdiv"},
+                     fpOtherRevsLinkHTML(revid)],
+                    ["div", {cla: "fpbuttondiv", 
+                             style: "background:url('../img/helpfuldis.png') no-repeat center center;"},
+                     rev.helpful.csvarray().length],
+                    ["div", {cla: "fpbuttondiv",
+                             style: "background:url('../img/rememberdis.png') no-repeat center center;"},
+                     rev.remembered.csvarray().length],
+                    ["div", {cla: "fpbuttondiv"},
+                     ["a", {href: "#edit",
+                            title: "Edit your review",
+                            onclick: jt.fs("app.review.fpbWrite('" +
+                                           prefix + "','" + revid + "')")},
+                      ["img", {cla: "fpbuttonimg",
+                               id: prefix + revid + "writebutton",
+                               src: "img/writereview.png"}]]]]; }
+        return jt.tac2html(html);
+    },
+
+
+    fpSecondaryFieldsHTML = function (rev) {
+        var type, i, field, value, mapurl, html = [];
+        type = findReviewType(rev.revtype);
+        for(i = 0; i < type.fields.length; i += 1) {
+            field = type.fields[i];
+            value = jt.ndq(rev[field]);
+            if(value) {
+                if(field === "address") {
+                    mapurl = "http://maps.google.com/?q=" + value;
+                    value = ["a", {href: mapurl,
+                                   onclick: jt.fs("window.open('" + 
+                                                  mapurl + "')")},
+                             value]; }
+                html.push(["tr",
+                           [["td", {cla: "tdnarrow"},
+                             ["span", {cla: "secondaryfield"},
+                              field]],
+                            ["td", {align: "left"},
+                             value]]]); } }
+        return jt.tac2html(["table", {cla: "collapse"}, html]);
+    },
+
+
     //return a good width for a text entry area
     textTargetWidth = function () {
         var targetwidth = app.winw - 40;
@@ -2102,6 +2240,79 @@ return {
         html = ["div", {cla: "transformlinkdiv"},
                 ["a", {href: "#" + label, onclick: jt.fs(fstr), title: title},
                  text]];
+        return html;
+    },
+
+
+    fpbToggleHelpful: function (prefix, revid) {
+        //prompt to login if needed
+        jt.err("fpbToggleHelpful not implemented yet");
+    },
+
+
+    fpbToggleRemember: function (prefix, revid) {
+        //prompt to login if needed
+        jt.err("fpbToggleRemember not implemented yet");
+    },
+
+
+    fpbWrite: function (prefix, revid) {
+        //prompt to login if needed
+        jt.err("fpbWrite not implemented yet");
+    },
+
+
+    toggleExpansion: function (prefix, revid) {
+        var rev, revdivid, buttondivid;
+        rev = app.lcs.getRef("rev", revid).rev;
+        revdivid = prefix + revid;
+        buttondivid = revdivid + "buttonsdiv";
+        if(jt.byId(buttondivid).innerHTML) {  //shrink
+            jt.out(buttondivid, "");
+            jt.out(revdivid + "secdiv", "");
+            jt.out(revdivid + "datediv", "");
+            jt.out(revdivid + "descrdiv", 
+                   abbreviatedReviewText(prefix, revid, rev));
+            jt.out(revdivid + "keysdiv", ""); }
+        else {  //expand
+            jt.out(buttondivid, revpostButtonsHTML(prefix, revid));
+            jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
+            jt.out(revdivid + "datediv", 
+                   jt.colloquialDate(jt.ISOString2Day(rev.modified)));
+            jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
+            jt.out(revdivid + "keysdiv", rev.keywords); }
+        //ATTENTION: list links to groups rev was posted to in grpsdiv
+    },
+
+
+    revdispHTML: function (prefix, revid, rev) {
+        var revdivid, type, html;
+        revdivid = prefix + revid;
+        type = app.review.getReviewTypeByValue(rev.revtype);
+        html = ["div", {cla: "fpinrevdiv"},
+                [["div", {cla: "fpbuttonsdiv", 
+                          id: revdivid + "buttonsdiv"}],
+                 ["div", {cla: "fptypediv"},
+                  ["img", {cla: "reviewbadge", src: "img/" + type.img,
+                           title: type.type, alt: type.type}]],
+                 ["div", {cla: "fptitlediv"},
+                  ["a", {href: "#statrev/" + jt.instId(rev),
+                         onclick: jt.fs("app.review.toggleExpansion('" +
+                                        prefix + "','" + revid + "')")},
+                   app.profile.reviewItemNameHTML(type, rev)]],
+                 ["div", {cla: "fpstarsdiv"},
+                  app.review.starsImageHTML(rev)],
+                 ["div", {cla: "fpjumpdiv"},
+                  app.review.jumpLinkHTML(rev, type)],
+                 ["div", {cla: "fpsecfieldsdiv", id: revdivid + "secdiv"}],
+                 ["div", {cla: "fpdatediv", id: revdivid + "datediv"}],
+                 ["div", {cla: "fpbodydiv"},
+                  [["div", {cla: "fprevpicdiv"},
+                    app.review.picHTML(rev, type)],
+                   ["div", {cla: "fpdescrdiv", id: revdivid + "descrdiv"},
+                    abbreviatedReviewText(prefix, revid, rev)],
+                   ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
+                   ["div", {cla: "fpgrpsdiv", id: revdivid + "grpsdiv"}]]]]];
         return html;
     },
 
