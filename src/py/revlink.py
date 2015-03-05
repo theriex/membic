@@ -48,6 +48,9 @@ def make_review_link(revid):
 # count you see on your own profile display.
 class FetchLinkActivity(webapp2.RequestHandler):
     def get(self):
+        self.error(403)
+        self.ressponse.out.write("FetchLinkActivity is going away")
+        return
         # not looking up account info since no real authorization needed...
         penid = intz(self.request.get('penid'))
         if not penid:
@@ -65,6 +68,9 @@ class FetchLinkActivity(webapp2.RequestHandler):
 # Find linkages via the review IDs to provide info per review
 class FetchReviewLinks(webapp2.RequestHandler):
     def get(self):
+        self.error(403)
+        self.ressponse.out.write("FetchReviewLinks is going away")
+        return
         # not looking up account info, nothing really to authorize...
         revidcsv = self.request.get('revids')
         if not revidcsv:
@@ -82,6 +88,9 @@ class FetchReviewLinks(webapp2.RequestHandler):
 # data fields are updated from revtag.py
 class UpdateReviewLink(webapp2.RequestHandler):
     def post(self):
+        self.error(403)
+        self.ressponse.out.write("UpdateReviewLink is going away")
+        return
         acc = authenticated(self.request)
         if not acc:
             self.error(401)

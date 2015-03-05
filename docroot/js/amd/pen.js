@@ -29,8 +29,6 @@ app.pen = (function () {
     returnCall = function (callback) {
         if(!callback) {
             callback = returnFuncMemo; }
-        app.layout.initContent();  //may call for pen name retrieval...
-        app.rel.loadoutbound();
         callback(currpenref.pen);
     },
 
@@ -68,7 +66,6 @@ app.pen = (function () {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
                      app.rel.resetStateVars("new");  //updates header display
-                     setTimeout(app.hinter.showStartTip, 4000);
                      returnCall(); },
                  app.failf(function (code, errtxt) {
                      jt.out('penformstat', errtxt);
@@ -139,7 +136,6 @@ app.pen = (function () {
         if(!penNameRefs || penNameRefs.length === 0) {
             return newPenNameDisplay(callback); }
         currpenref = findHomePenRef();
-        app.skinner.setColorsFromPen(currpenref.pen);
         returnCall(callback);
     };
 

@@ -348,11 +348,7 @@ app.review = (function () {
 
     urlLabel = function () {
         var html;
-        html = ["a", {href: "#ezlink", cla: "permalink",
-                      onclick: jt.fs("app.hinter.ezlink()"),
-                      title: "Post from any site"},
-                [["img", {cla: "webjump", src: "img/gotolink.png"}],
-                 "ezlink"]];
+        html = ["img", {cla: "webjump", src: "img/gotolink.png"}]
         return html;
     },
 
@@ -2245,19 +2241,26 @@ return {
 
 
     fpbToggleHelpful: function (prefix, revid) {
-        //prompt to login if needed
+        var penref;
+        penref = app.pen.currPenRef();
+        if(!penref.pen) {
+            return jt.err("Please sign in"); }
         jt.err("fpbToggleHelpful not implemented yet");
     },
 
 
     fpbToggleRemember: function (prefix, revid) {
-        //prompt to login if needed
+        penref = app.pen.currPenRef();
+        if(!penref.pen) {
+            return jt.err("Please sign in"); }
         jt.err("fpbToggleRemember not implemented yet");
     },
 
 
     fpbWrite: function (prefix, revid) {
-        //prompt to login if needed
+        penref = app.pen.currPenRef();
+        if(!penref.pen) {
+            return jt.err("Please sign in"); }
         jt.err("fpbWrite not implemented yet");
     },
 

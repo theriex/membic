@@ -73,6 +73,10 @@ def review_modification_authorized(handler):
         handler.response.out.write("Authentication failed")
         return False
     penid = intz(handler.request.get('penid'))
+    if not penid:
+        handler.error(401)
+        handler.response.out.write("No penid specified")
+        return False
     pen = cached_get(penid, PenName)
     if not pen:
         handler.error(404)
@@ -726,7 +730,7 @@ class GetReviewFeed(webapp2.RequestHandler):
             memcache.set(revtype or "all", feedcsv)
         pen = None
         acc = authenticated(self.request)
-        if acc:
+        if acc and intz(self.request.get('penid')):
             pen = review_modification_authorized(self)
         feedids = sort_filter_feed(feedcsv, pen, 200)
         revs = []

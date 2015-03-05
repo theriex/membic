@@ -1024,21 +1024,11 @@ app.activity = (function () {
                     mainDisplay(dispmode); }); }, 100);
             return; }
         app.history.checkpoint({ view: dispmode });
-        writeNavDisplay(dispmode);
-        verifyCoreDisplayElements();
+        app.login.updateAuthentDisplay();
         if(dispmode === "memo") {
-            app.layout.updateNavIcons("memo");
             displayRemembered(); }
-        else {  //dispmode === "activity"
-            app.layout.updateNavIcons("activity");
-            if(activityMode === "amtop") {
-                displayTopReviews(); }
-            else {  //activityMode === "amnew"
-                if(penref.actdisp) {
-                    displayReviewActivity();
-                    doActivitySearch(); }
-                else {
-                    bootActivityDisplay(); } } }
+        else {  //dispmode === "activity", activityMode === "amnew"
+            app.activity.displayFeed("all"); }
     };
 
 

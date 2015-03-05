@@ -105,8 +105,8 @@ return {
                 break;
             } }
         else if(app.login.isLoggedIn()) { 
-            jt.log("historyPop: no state, so displaying activity by default");
-            app.activity.displayActive(); }
+            jt.log("historyPop: no state, so displaying main feed by default");
+            app.activity.displayFeed("all"); }
         //no default action if not logged in.  A browser may pop the
         //history to attempt to return to the raw site in the event of
         //an autologin failure.

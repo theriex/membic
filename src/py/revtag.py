@@ -139,6 +139,9 @@ def tag_search(handler, posfield, negfield):
 
 class NoteHelpful(webapp2.RequestHandler):
     def post(self):
+        self.error(403)
+        self.ressponse.out.write("NoteHelpful is going away")
+        return
         revtag = fetch_or_create_tag(self)
         if not revtag:
             return
@@ -155,6 +158,9 @@ class NoteHelpful(webapp2.RequestHandler):
 
 class NoteRemember(webapp2.RequestHandler):
     def post(self):
+        self.error(403)
+        self.ressponse.out.write("NoteRemember is going away")
+        return
         revtag = fetch_or_create_tag(self)
         if not revtag:
             return
@@ -171,11 +177,17 @@ class NoteRemember(webapp2.RequestHandler):
 
 class SearchHelpful(webapp2.RequestHandler):
     def get(self):
+        self.error(403)
+        self.ressponse.out.write("SearchHelpful is going away")
+        return
         tag_search(self, 'helpful', 'nothelpful')
 
 
 class SearchRemembered(webapp2.RequestHandler):
     def get(self):
+        self.error(403)
+        self.ressponse.out.write("SearchRemembered is going away")
+        return
         tag_search(self, 'remembered', 'forgotten')
 
 

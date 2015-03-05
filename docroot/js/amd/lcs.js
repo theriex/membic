@@ -249,7 +249,8 @@ return {
                 parsedval = jsonobj.parse(text);
                 obj[field] = parsedval;
             } catch (e) {
-                jt.log("reconstituteJSONObjectField " + field + ": " + e);
+                jt.log("reconstituteJSONObjectField " + e + ". Found " + 
+                       field + ": " + text + ". Reset to empty object.");
                 obj[field] = {};
             } }
         if(typeof obj[field] !== 'object') {

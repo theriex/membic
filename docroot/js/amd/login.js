@@ -376,6 +376,41 @@ app.login = (function () {
     },
 
 
+    loggedInAuthentDisplay = function () {
+        var penref, nml, remb, wrib, html;
+        penref = app.pen.currPenRef();
+        nml = ["a", {href: "#view=profile",
+                     onclick: jt.fs("app.login.usermenu()")},
+                authname];
+        remb = ["a", {href: "#setUpPenNameToRemember",
+                      onclick: jt.fs("app.profile.display()")},
+                ["img", {cla: "topbuttonimg", 
+                         src: "img/rememberdis.png"}]];
+        wrib = ["a", {href: "#setUpPenNameToWrite",
+                      onclick: jt.fs("app.profile.display()")},
+                ["img", {cla: "topbuttonimg",
+                         src: "img/writereviewdis.png"}]];
+        if(penref && penref.pen) {
+            nml = ["a", {href: "#view=profile&profid=" + jt.instId(penref.pen),
+                         onclick: jt.fs("app.login.usermenu()")},
+                   penref.pen.name];
+            remb = ["a", {href: "#remembered",
+                          onclick: jt.fs("app.activity.displayRemembered()")},
+                    [penref.pen.remembered.csvarray().length || "",
+                     ["img", {cla: "topbuttonimg",
+                              src: "img/remembered.png"}]]];
+            wrib = ["a", {href: "#write",
+                          onclick: jt.fs("app.review.display()")},
+                    ["img", {cla: "topbuttonimg",
+                             src: "img/writereview.png"}]]; }
+        html = ["div", {id: "topactionsdiv"},
+                [["div", {id: "tasnamediv"}, nml],
+                 ["div", {id: "tasbuttonsdiv"},
+                  [remb, wrib]]]];
+        jt.out('topworkdiv', jt.tac2html(html));
+    },
+
+
     //On localhost, params are lost when the login form is displayed.
     //On the server, they are passed to the secure host and returned
     //post-login.  These are separate flows.  Not supporting a
@@ -384,12 +419,12 @@ app.login = (function () {
         //Need to note login, but definitely don't hold up display work
         setTimeout(function () {
             var data = "penid=" + app.pen.currPenId();
-            jt.call('POST', "penacc?" + app.login.authparams(), data,
-                    function () {
-                        jt.log("Pen access time updated");
-                        app.hinter.showStartTip(); },
-                    app.failf(),
-                    jt.semaphore("login.loggedInDoNextStep")); }, 4000);
+            if(app.pen.currPenId()) {
+                jt.call('POST', "penacc?" + app.login.authparams(), data,
+                        function () {
+                            jt.log("Pen access time updated"); },
+                        app.failf(),
+                        jt.semaphore("login.loggedInDoNextStep")); }}, 4000);
         if(params.command === "chgpwd") {
             app.login.displayUpdAccForm(); }
         else if(params.command === "helpful" ||
@@ -493,47 +528,10 @@ return {
 
     //create the logged-in display areas
     updateAuthentDisplay: function (override) {
-        var html;
         if(!topworkdivcontents) {
             topworkdivcontents = jt.byId('topworkdiv').innerHTML; }
-        if(authtoken && override !== "hide") {  //logged in, standard display
-            html = ["div", {id: "topactionsdiv"},
-                    ["table", {id: "topactionstable"},
-                     [["tr",  //See also layout.updateNavIcons
-                       [["td",
-                         ["div", {id: "recentacthdiv"},
-                          app.activity.activityLinkHTML()]],
-                        ["td", {colspan: 2},
-                         ["div", {id: "rememberedhdiv"},
-                          app.activity.rememberedLinkHTML()]],
-                        ["td"],
-                        ["td", {rowspan: 2},
-                         //div filled by profile.updateTopActionDisplay
-                         ["div", {id: "settingsbuttondiv"}, ""]]]],
-                      ["tr",
-                       [["td",
-                         ["div", {id: "writerevhdiv"},
-                          app.review.reviewLinkHTML()]],
-                        ["td", {align: "right"}, 
-                         //div filled by profile.updateTopActionDisplay
-                         ["div", {id: "homepenhdiv"}, ""]],
-                        ["td",
-                         //div filled by profile.updateTopActionDisplay
-                         ["div", {id: "profstarhdiv"}, ""]]]]]]];
-            html = jt.tac2html(html);
-            jt.out('topworkdiv', html);  //min height: 45 + 43 + 2*(2*4): 104
-            jt.setdims('topsectiondiv', {h: 130});  //better with space
-            if(!jt.byId('logoimg')) {
-                jt.out('logodiv', jt.tac2html(
-                    ["img", {src: "img/fgfweb.png", id: "logoimg"}])); }
-            if(app.winw >= app.minSideBySide) {
-                jt.byId('topworkdiv').style.marginLeft = "280px"; }
-            else { 
-                //small 100x49 logo just makes things crowded and confused.
-                //move logodiv out of the way of clicks
-                jt.setdims('logoimg', {w: 2, h: 2});
-                jt.setdims('logodiv', {w: 2, h: 2});
-                jt.out('logodiv', ""); } }
+        if(authtoken && override !== "hide") {
+            loggedInAuthentDisplay(); }
         else if(override === "hide") { 
             jt.out('topworkdiv', ""); }
         else {  //restore whatever was in index.html to begin with

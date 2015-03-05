@@ -50,12 +50,12 @@ img { border:0px; }
  */
 
 /* >> topsectiondiv and contained elements */
-#topsectiondiv { padding:0px 10px; height:140px; } 
+#topsectiondiv { }
 #logodiv { position:absolute; left:0px; top:0px; } 
 #logodiv, #logoimg { width:80px; height:80px; }
 #topworkdiv { float:right; }
 #slidesdiv { }
-#topactionsdiv { font-size:x-large; }
+#topactionsdiv { }
 #topactionstable { margin:0px; padding:0px; }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { 
@@ -66,6 +66,8 @@ img { border:0px; }
 .aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutstatementsdiv { padding:0px 10px; font-size:medium; }
 .aboutwhatitisdiv { text-align:center; font-size:x-small; }
+#tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
+.topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }
 
 /* >> main display area and contained elements */
 #phonetextzoomfixtable, #loginformtable, .collapse { 
@@ -78,7 +80,7 @@ img { border:0px; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #accountdiv { font-size:small; }
-#appspacediv { margin:0px 5px; }
+#appspacediv { margin:0px 5px; clear:both; }
 #bottomnav { font-size:xx-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:15px; width:90%; }
@@ -409,7 +411,7 @@ img { border:0px; }
 .ptddiv { padding:0px 0px 0px 20px; }
 
 /* >> activity layout */
-#revtypesdiv { display:table; margin:auto; padding:0px 0px 8px 0px; }
+#revtypesdiv { display:table; margin:auto; padding:10px 0px 14px 0px; }
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #revtypeseldiv { }
 #toptd { padding:0px 20px 0px 0px; }
@@ -434,6 +436,7 @@ img { border:0px; }
 .qctext { font-size:small; }
 .clickspan { cursor:pointer; }
 .blrevdate { color:#333333; }
+#feedrevsdiv { padding:0px 0px 50px 0px; }
 
 /* >> feed post review layout */
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
