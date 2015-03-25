@@ -63,8 +63,10 @@ img { border:0px; }
 .documentcontentsdiv { padding:0px 10px 10px 20px; }
 .brandspan { font-size:small; font-weight:bold; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
-.aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
-.aboutstatementsdiv { padding:0px 10px; font-size:medium; }
+.aboutoverviewdiv { padding:10px 10px 10px 10px; font-size:large; }
+.aboutdetailsheading { font-size:small; font-weight:bold; }
+.aboutstatementsdiv { padding:0px 10px; font-size:small; }
+.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
 .aboutwhatitisdiv { text-align:center; font-size:x-small; }
 #tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
 .topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }

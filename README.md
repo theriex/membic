@@ -1,17 +1,9 @@
 myopenreviews
 =============
 
-MyOpenReviews is a platform for social review sharing.  Easily create
-a nice review and post it through to your social networks, while
-keeping all your reviews organized and following reviews from others
-whose tastes you trust.  Privacy is respected through use of pen names.
-
-The source and API is provided so you can see how things work, and
-help improve it.
-
-The main web app is http://www.fgfweb.com (what did you do fun).  It
-consists of a javascript web application communicating with a Python Google App
-Engine server.
+MyOpenReviews is a platform for social review sharing.  It consists of
+a Javascript web application supported by a REST API coded in Python
+and hosted on Google App Engine.
 
 
 Getting involved:
@@ -21,21 +13,24 @@ All comments, questions, suggestions, requests are welcome.  This is a
 community site that wants your input, whether you are coming from a
 technical background or not.
 
-Currently the best way to get involved is to contact theriex over at gmail.
+To get involved, or to say hello, contact theriex via github or gmail.
 
 
 Code organization:
 -----------------
 
-For the javascript web app, you can trace the flow from `index.html`
-into `app.js` and/or search the codebase for points of interest.  The
-app is written in pure javascript following the functional javascript
-architecture: http://sandservices.com/docs/funcjsarch.html
+For the web app, you can trace the flow from `index.html` into
+`app.js` and/or search the codebase for text that drew your attention.
+The app is pure Javascript.  For an architecture overview, see
+http://sandservices.com/docs/funcjsarch.html
 
-For the server side REST API, start from `app.yaml` and then reference the
-corresponding `.py` file in `src/py`. 
+To get into things from the server side REST API, start from
+`app.yaml` to see what the endpoints are, then reference the
+corresponding `.py` file in `src/py` for the implementation.
 
 For local development, you will need to install the Google App Engine SDK.
+
+Directory structure:
 
         docroot
           css: site.css
@@ -103,6 +98,6 @@ described above.  Please identify your app in the HTTP headers when
 calling the API.  
 
 It would be great to hear about anything you are working on.  Ideas
-are welcome also, feel free to post those on the issues board.
+are welcome.  Feel free to post issues.
 
 
