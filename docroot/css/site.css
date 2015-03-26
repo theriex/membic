@@ -52,7 +52,7 @@ img { border:0px; }
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { }
 #logodiv { position:absolute; left:0px; top:0px; } 
-#logodiv, #logoimg { width:90px; height:90px; }
+#logodiv, #logoimg { width:80px; height:80px; }
 #topworkdiv { float:right; }
 #slidesdiv { }
 #topactionsdiv { }
