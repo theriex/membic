@@ -26,41 +26,30 @@
       <form id="loginform" method="post" action="redirlogin">
         <div id="loginparaminputs"></div>
         <div id="loginvisualelementsdiv">
-          <div id="userpassdiv">
-            <div id="nativelogintitlediv" class="instructional"></div>
-            <table id="loginformtable">
-              <tr><td colspan="2"><div id="loginstatdiv"></div></td></tr>
-              <tr>
-                <td align="right" class="tdnarrow">
-                  <label for="emailin" class="liflab">Email</label></td>
-                <td align="left">
-                  <input type="email" name="emailin" id="emailin" 
-                         placeholder="nospam@example.com"
-                         size="20" autofocus/></td>
-              </tr><tr>
-                <td align="right" class="tdnarrow">
-                  <label for="passin" class="liflab">Password</label></td>
-                <td align="left">
-                  <!-- no onchange submit here, safari pw autofill breaks -->
-                  <input type="password" name="passin" id="passin" 
-                         size="20"/></td>
-              </tr><tr>
-                <td colspan="2" id="loginbtd">
-                  <div id="loginbuttonsdiv" class="formbuttonsdiv">
-                    <button type="button" id="createAccountButton"
-                            onclick="app.login.createAccount();return false;">
-                      Create Account</button>
-                    <input value="Sign in" type="submit" class=\"loginbutton\"/>
-                  </div>
-                  <div id="forgotpassdiv"></div>
-                </td>
-              </tr>
-            </table>
-          </div> <!-- userpassdiv -->
+          <label for="emailin" class="liflab">Email</label>
+          <input type="email" class="lifin" name="emailin" id="emailin" 
+                 placeholder="nospam@example.com"
+                 size="20" autofocus/>
+          <div class="lifsep"></div>
+          <label for="passin" class="liflab">Password</label>
+          <!-- no onchange submit for password. breaks autoforms on safari -->
+          <input type="password" class="lifin" name="passin" id="passin" 
+                 size="20"/> 
+          <div id="loginbuttonsdiv" class="lifbuttonsdiv">
+            <button type="button" id="createAccountButton"
+                    onclick="app.login.createAccount();return false;">
+              Create Account</button>
+            <input value="Sign in" type="submit" class=\"loginbutton\"/>
+          </div>
+          <div id="forgotpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->
       </form>
     </div> <!-- logindiv -->
-  </div>
+  </div> <!-- topworkdiv -->
+</div>
+
+<div id="headingdiv">
+  <div id="headingdivcontent"></div>
 </div>
 
 <div id="appspacediv">

@@ -1047,9 +1047,10 @@ return {
                                             rt.type + "')")},
                        ["img", {cla: "reviewbadge",
                                 src: "img/" + rt.img}]]); }
-        html = [["div", {cla: "revtypesdiv", id: "revtypesdiv"},
-                 html],
-                ["div", {id: "feedrevsdiv"}]];
+        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv"}, 
+                html];
+        jt.out("headingdivcontent", jt.tac2html(html));
+        html = ["div", {id: "feedrevsdiv"}];
         jt.out("contentdiv", jt.tac2html(html));
         if(feeds[rt.type]) {
             return displayFeedReviews(feedtype, feeds[rt.type]); }

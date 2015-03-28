@@ -51,8 +51,11 @@ img { border:0px; }
 
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { }
-#logodiv { position:absolute; left:0px; top:0px; } 
+#logodiv { float:left; } 
 #logodiv, #logoimg { width:80px; height:80px; }
+#headingdiv { min-height:80px; }
+#headingdivcontent { width:240px; margin:auto; padding:30px 0px 0px 0px; }
+#revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
 #topworkdiv { float:right; }
 #slidesdiv { }
 #topactionsdiv { }
@@ -163,7 +166,6 @@ img { border:0px; }
 .revtypeico { vertical-align:bottom; }
 .respico { vertical-align:bottom; }
 .respicodis { opacity:0.3; filter:alpha(opacity=30); }
-#forgotpw { font-size:small; }
 #signinbuttondiv { background:#70bbe9;
  color:#003; font-size:x-large; font-weight:normal;
  padding:5px 10px; display:table; cursor:pointer; 
@@ -175,12 +177,17 @@ img { border:0px; }
 .bookmarkletdescr { font-size:small; text-align:right; 
   padding:0px 0px 0px 40px;}
 #loginstatdiv, #formstatdiv { font-size:small; }
-#loginbuttonsdiv { padding:10px; }
-#loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #gsitd { padding: 10px; }
-#forgotpassdiv { text-align:center; }
 #altauthmethods { padding:0px 0px 20px 30px; }
-.liflab { font-size:medium; font-weight:normal; padding:0px; }
+.liflab { font-size:medium; font-weight:normal; padding:4px 2px 0px 0px;
+  display:block; float:left; width:80px; text-align:right; 
+}
+.lifin { padding:0px; }
+.lifsep { clear:both; }
+.lifbuttonsdiv { text-align:center; }
+#loginbuttonsdiv button { margin:0px 0px 0px 20px; }
+#forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
+#forgotpw { }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }
@@ -413,7 +420,6 @@ img { border:0px; }
 .ptddiv { padding:0px 0px 0px 20px; }
 
 /* >> activity layout */
-#revtypesdiv { display:table; margin:auto; padding:10px 0px 14px 0px; }
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }
 #revtypeseldiv { }
 #toptd { padding:0px 20px 0px 0px; }
