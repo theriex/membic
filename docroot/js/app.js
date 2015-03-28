@@ -145,7 +145,7 @@ var app = {},  //Global container for application level funcs and values
             ["div", {id: "cmain"},
              [["p", "The server just bonked."],
               ["p", 
-               [["It would be awesome if you would ",
+               [["It would be awesome if you could ",
                  ["a", {href: emref},
                   "email support to get this fixed."]]]]]]];
         html = jt.tac2html(html);
