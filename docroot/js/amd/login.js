@@ -396,9 +396,10 @@ app.login = (function () {
                    penref.pen.name];
             remb = ["a", {href: "#remembered",
                           onclick: jt.fs("app.activity.displayRemembered()")},
-                    [penref.pen.remembered.csvarray().length || "",
-                     ["img", {cla: "topbuttonimg",
-                              src: "img/remembered.png"}]]];
+                    [["img", {cla: "topbuttonimg",
+                              src: "img/remembered.png"}],
+                     ["span", {id: "rememberedcountspan"},
+                      penref.pen.remembered.csvarray().length || ""]]];
             wrib = ["a", {href: "#write",
                           onclick: jt.fs("app.review.display()")},
                     ["img", {cla: "topbuttonimg",
