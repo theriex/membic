@@ -73,7 +73,7 @@ img { border:0px; }
 .aboutstatementsdiv { padding:0px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
 .aboutwhatitisdiv { text-align:center; font-size:x-small; }
-#tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
+.tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
 .topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }
 
 /* >> main display area and contained elements */
@@ -190,6 +190,9 @@ img { border:0px; }
 #loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #forgotpw { }
+#accsetdiv { position:absolute; top:0px; right:0; width:300px; 
+  visibilty:hidden; }
+#accountsettingsformdiv { background:#ffae50; border:2px solid #666; }
 .liflabtd { height:30px; }
 .centertablediv { display:table; margin:auto; }
 .altauthspan { display:inline-block; padding:0px; width:60px; }

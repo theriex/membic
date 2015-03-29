@@ -272,12 +272,6 @@ return {
         var state, dlg;
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
-        state = app.history.currState();
-        if(!state || !state.view) {
-            navmode = "activity"; }
-        else {
-            navmode = state.view; }
-        app.layout.updateNavIcons();
         app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();

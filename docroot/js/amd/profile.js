@@ -1540,7 +1540,6 @@ return {
 
 
     cancelPenNameSettings: function (actionTxt) {
-        app.skinner.cancel();
         app.layout.closeDialog();
         if(actionTxt && typeof actionTxt === "string") {
             //nuke the main display as we are about to rebuild contents

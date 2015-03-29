@@ -405,7 +405,7 @@ app.login = (function () {
                     ["img", {cla: "topbuttonimg",
                              src: "img/writereview.png"}]]; }
         html = ["div", {id: "topactionsdiv"},
-                [["div", {id: "tasnamediv"}, nml],
+                [["div", {cla: "tasnamediv"}, nml],
                  ["div", {id: "tasbuttonsdiv"},
                   [remb, wrib]]]];
         jt.out('topworkdiv', jt.tac2html(html));
@@ -520,10 +520,42 @@ return {
     },
 
 
-    clearinit: function () {
-        jt.out('centerhdiv', "");
-        jt.out('logindiv', "");
-        app.login.init();
+    usermenu: function () {
+        var html;
+        html = ["div", {id: "accountsettingsformdiv"},
+                [["div", {cla: "tasnamediv"}, 
+                  ["a", {href: "logout", id: "logout",
+                         onclick: jt.fs("app.login.logout()")},
+                   "Sign out"]],
+                 ["label", {fo: "emailin", cla: "liflab"}, "Email"],
+                 ["input", {type: "email", cla: "lifin",
+                            name: "emailin", id: "emailin",
+                            placeholder: "nospam@example.com",
+                            size: "20"}], //see also index.html
+                 ["div", {cla: "lifsep"}],
+                 ["div", {cla: "dlgbuttonsdiv"},
+                  [["button", {type: "button", id: "cancelbutton",
+                               onclick: jt.fs("app.login.closeupdate()")},
+                    "Cancel"],
+                   ["button", {type: "button", id: "okbutton",
+                               onclick: jt.fs("app.login.userupdate()")},
+                    "Ok"]]]]];
+        app.layout.cancelOverlay();
+        app.layout.closeDialog();
+        app.onescapefunc = app.login.closeupdate;
+        jt.byId('accsetdiv').style.visibility = "visible";
+        jt.out('accsetdiv', jt.tac2html(html));
+    },
+
+
+    closeupdate: function () {
+        jt.out('accsetdiv', "");
+        jt.byId('accsetdiv').style.visibility = "hidden";
+    },
+
+
+    userupdate: function () {
+        jt.err("login.userupdate not implemented yet");
     },
 
 
@@ -679,17 +711,11 @@ return {
 
     logout: function () {
         var html;
+        app.login.closeupdate();
         logoutWithNoDisplayUpdate();
         app.profile.cancelPenNameSettings();  //close the dialog if it is up
         app.history.checkpoint({ view: "profile", profid: 0 });
-        topworkdivcontents = "&nbsp;";  //clear out slideshow, won't fit.
         app.login.updateAuthentDisplay();
-        if(!jt.byId('logindiv')) {
-            html = ["div", {id: "logindiv"}, loginhtml];
-            html = jt.tac2html(html);
-            jt.out('contentdiv', html);
-            if(jt.byId('introverviewtaglinediv')) {
-                jt.byId('introverviewtaglinediv').style.display = "none"; } }
         app.login.init();
     },
 
