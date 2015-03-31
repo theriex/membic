@@ -13,18 +13,23 @@ from google.appengine.api.datastore_types import Blob
 from consvc import doOAuthGet
 from google.appengine.api import urlfetch
 from morutil import *
+import string
+import random
 
 
 class MORAccount(db.Model):
     """ An account used for settings and native authentication """
     email = db.EmailProperty()          # required unless 3rd party auth
     password = db.StringProperty(required=True)
+    status = db.StringProperty()        # Pending|Active|Inactive|Unreachable
     authsrc = db.StringProperty()       # AA:id or empty if native
     modified = db.StringProperty()      # iso date
     lastsummary = db.StringProperty()   # iso date last summary run
     summaryfreq = db.StringProperty()   # daily, weekly, fortnightly, never
-    summaryflags = db.StringProperty()  # sumiflogin, sumifnoact
-    mailbounce = db.TextProperty()      # isodate1, isodate2...
+    summaryflags = db.StringProperty(indexed=False)  # sumiflogin, sumifnoact
+    mailbounce = db.TextProperty()      # isodate1,isodate2...
+    actsends = db.TextProperty()        # isodate;emaddr,isodate;emaddr...
+    actcode = db.StringProperty(indexed=False)  # account activation code
     
 
 def asciienc(val):
@@ -552,10 +557,76 @@ class GetAccount(webapp2.RequestHandler):
         account = authenticated(self.request)
         if account:
             account.password = "WriteOnlyFieldCannotBeEmptySoUsePlaceholder"
+            account.actcode = ""  # don't show activation code to client
             returnJSON(self.response, [ account ])
         else:
             self.error(401)
             self.response.out.write("Authentication failed")
+
+
+class SendActivationCode(webapp2.RequestHandler):
+    def post(self):
+        account = authenticated(self.request)
+        if not account:
+            self.error(401)
+            self.response.out.write("SendActivationCode authentication failed")
+            return
+        chars = string.ascii_letters + string.digits
+        account.actcode = "".join(random.choice(chars) for _ in range(30))
+        if account.actsends:
+            account.actsends += ","
+        else:
+            account.actsends = ""
+        account.actsends += nowISO() + ";" + account.email
+        account.put()
+        url = "https://www.membic.com/activate?key=" +\
+            str(account.key().id()) + "&code=" + account.actcode
+        logging.info("Activate " + account.email + ": " + url)
+        if not self.request.url.startswith('http://localhost'):
+            mailtxt = "Hello,\n\nThanks for joining membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
+            mail.send_mail("membic.com administrator <admin@membic.com>",
+                           to=account.email,
+                           subject="Account activation",
+                           body=mailtxt)
+        returnJSON(self.response, [ account ])
+
+
+class ActivateAccount(webapp2.RequestHandler):
+    def get(self):
+        key = self.request.get('key')
+        if key:
+            key = int(key)
+            code = self.request.get('code')
+            if not code:
+                self.error(412)
+                self.response.out.write("No activation code given")
+                return
+            account = MORAccount.get_by_id(key)
+            if not account:
+                self.error(404)
+                self.response.out.write("Account " + key + " not found")
+                return
+            if account.actcode != code:
+                self.error(412)
+                self.response.out.write("Activation code does not match")
+                return
+            account.status = "Active"
+            account.put()
+            self.response.headers['Content-Type'] = 'text/html'
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.com Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../\"><h2>Return to membic.com site</h2></a></p>\n</body></html>")
+            return
+        # no key, retrieve authenticated account
+        account = authenticated(self.request)
+        status = self.request.get('status')
+        if not account or status != "Inactive":
+            self.error(412)
+            self.response.out.write("Invalid account deactivation")
+            return
+        account.status = "Inactive"
+        account.actcode = ""
+        account.actsends = ""
+        account.put()
+        returnJSON(self.response, [ account ])
 
 
 class GetBuildVersion(webapp2.RequestHandler):
@@ -570,5 +641,7 @@ app = webapp2.WSGIApplication([('/newacct', CreateAccount),
                                ('/chgpwd', ChangePassword),
                                ('/loginid', GetLoginID),
                                ('/getacct', GetAccount),
+                               ('/sendcode', SendActivationCode),
+                               ('/activate', ActivateAccount),
                                ('/buildverstr', GetBuildVersion)], debug=True)
 

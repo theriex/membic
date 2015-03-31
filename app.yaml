@@ -64,6 +64,16 @@ handlers:
 - url: /getacct.*
   script: src.py.moracct.app
 
+## Send account activation code
+## POST params: authparams
+- url: /sendcode.*
+  script: src.py.moracct.app
+
+## Activate or deactivate the account
+## GET params: key, code, command, authparams
+- url: /activate.*
+  script: src.py.moracct.app
+
 ## Get build version string
 ## GET params: none
 - url: /buildverstr.*
@@ -463,10 +473,6 @@ handlers:
 # Test endpoints, static displays, data summaries and other urls not
 # really considered part of the API
 #
-- url: /cluck2.*
-  script: src.py.cluck2.app
-- url: /cluck.*
-  script: src.py.cluck.app
 - url: /penwalk
   script: src.py.pen.app
 - url: /testpens

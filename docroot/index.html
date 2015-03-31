@@ -29,17 +29,16 @@
           <label for="emailin" class="liflab">Email</label>
           <input type="email" class="lifin" name="emailin" id="emailin" 
                  placeholder="nospam@example.com"
-                 size="20" autofocus/>
+                 autofocus/>
           <div class="lifsep"></div>
           <label for="passin" class="liflab">Password</label>
           <!-- no onchange submit for password. breaks autoforms on safari -->
-          <input type="password" class="lifin" name="passin" id="passin" 
-                 size="20"/> 
+          <input type="password" class="lifin" name="passin" id="passin"/> 
           <div id="loginbuttonsdiv" class="lifbuttonsdiv">
             <button type="button" id="createAccountButton"
                     onclick="app.login.createAccount();return false;">
               Create Account</button>
-            <input value="Sign in" type="submit" class=\"loginbutton\"/>
+            <input value="Sign in" type="submit" class="loginbutton"/>
           </div>
           <div id="forgotpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->

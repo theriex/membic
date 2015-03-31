@@ -1,4 +1,4 @@
-/*global alert: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
+/*global alert: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -12,6 +12,7 @@ app.login = (function () {
     var authmethod = "",
         authtoken = "",
         authname = "",
+        moracct = null,
         cookdelim = "..morauth..",
         topworkdivcontents = "",
         altauths = [],
@@ -61,6 +62,7 @@ app.login = (function () {
         authmethod = "";
         authtoken = "";
         authname = "";
+        moracct = null;
         app.review.resetStateVars();
         app.profile.resetStateVars();
         app.pen.resetStateVars();
@@ -141,6 +143,8 @@ app.login = (function () {
         authmethod = method;
         authtoken = token;
         authname = name;
+        if(authname) {
+            authname = authname.replace("%40", "@"); }
         app.login.updateAuthentDisplay();
     },
 
@@ -178,7 +182,7 @@ app.login = (function () {
     },
 
 
-    freqopts = function (sumfreqs, account) {
+    freqopts = function (account) {
         var opts = [], i, selected, html;
         if(!account.summaryfreq) {
             account.summaryfreq = "weekly"; }
@@ -349,6 +353,66 @@ app.login = (function () {
         //interferes with the Create Account button press.
         //jt.on('passin', 'change', onLoginPasswordChange);
         setFocusOnEmailInput();
+    },
+
+
+    activateButtonOrNoticeHTML = function (moracct) {
+        var html, acts, i, ta, sent = false;
+        html = ["button", {type: "button", id: "activatebutton",
+                           onclick: jt.fs("app.login.sendActivation()")},
+                "Activate"];
+        if(moracct.actsends) {
+            acts = moracct.actsends.split(",");
+            for(i = 0; i < acts.length; i += 1) {
+                ta = acts[i].split(";");
+                if(ta[1] === moracct.email && 
+                   jt.timewithin(ta[0], 'hours', 4)) {
+                    sent = jt.tz2loc(jt.ISOString2Time(ta[0]));
+                    break; } } }
+        if(sent) {
+            html = ["sent " + sent,
+                    ["p", {cla: "activationsentdet"},
+                     "Expedited email service is not available, so delivery may take up to 4 hrs (please also check spam folders). Click the link in the email to activate your account."]];
+            jt.out("accstatdetaildiv", jt.tac2html(html));
+            html = ["span", {cla: "actmailtext"},
+                    ["a", {href: "#activationmaildetails",
+                           onclick: jt.fs("app.login.toggleactmaildet()")},
+                     "mail sent"]]; }
+        return html;
+    },
+
+
+    writeUsermenuAccountFormElements = function (moracct) {
+        var html;
+        if(moracct.status === "Active") {
+            html = [["span", {cla: "accstatvalspan"}, "Active"],
+                    ["button", {type: "button", id: "deactivatebutton",
+                                onclick: jt.fs("app.login.deactivateAcct()")},
+                     "Deactivate"]]; }
+        else { //Pending|Inactive|Unreachable
+            html = [["span", {cla: "accstatvalspan"}, 
+                     moracct.status || "Pending"],
+                    activateButtonOrNoticeHTML(moracct)]; }
+        html = [["label", {fo: "emptyspace", cla: "liflab"}, ""],
+                ["span", {id: "buttonornotespan"},
+                 html]];
+        jt.out('accstatusupdatediv', jt.tac2html(html));
+        //You can request your password be mailed to you, so simple
+        //entry seems best here.
+        html = [["label", {fo: "passin", cla: "liflab"}, "Password"],
+                ["input", {type: "password", cla: "lifin", 
+                           name: "passin", id: "passin"}]];
+        jt.out('accpassupdatediv', jt.tac2html(html));
+        html = [["label", {fo: "freqsel", cla: "liflab"}, "Summary"],
+                freqopts(moracct)];
+        jt.out('accsumfrequpdatediv', jt.tac2html(html));
+        html = [["input", {type: "checkbox", name: "summaryflags",
+                           value: "sumiflogin", id: "sumiflogin",
+                           cla: "accsetcbox",
+                           checked: jt.toru(hasflag(moracct, "sumiflogin"))}],
+                ["label", {fo: "sumiflogin", cla: "accsetcboxlab"},
+                 "Send even if site visited"]];
+        jt.out('accsumflagsupdatediv', jt.tac2html(html));
     },
 
 
@@ -523,16 +587,29 @@ return {
     usermenu: function () {
         var html;
         html = ["div", {id: "accountsettingsformdiv"},
-                [["div", {cla: "tasnamediv"}, 
+                [["div", {cla: "tasnamediv"},
+                  ["a", {href: "#myprofile", id: "myprof",
+                         onclick: jt.fs("app.login.closeupdate('profile')")},
+                   "Show My Profile"]],
+                 ["div", {cla: "tasnamediv"}, 
                   ["a", {href: "logout", id: "logout",
-                         onclick: jt.fs("app.login.logout()")},
+                         onclick: jt.fs("app.login.closeupdate('logout')")},
                    "Sign out"]],
-                 ["label", {fo: "emailin", cla: "liflab"}, "Email"],
-                 ["input", {type: "email", cla: "lifin",
-                            name: "emailin", id: "emailin",
-                            placeholder: "nospam@example.com",
-                            size: "20"}], //see also index.html
-                 ["div", {cla: "lifsep"}],
+                 ["div", {cla: "lifsep", id: "accemailupdatediv"},
+                  [["label", {fo: "emailin", cla: "liflab"}, "Email"],
+                   ["input", {type: "email", cla: "lifin",
+                              name: "emailin", id: "emailin",
+                              value: authname,
+                              placeholder: "nospam@example.com"}]]],
+                 ["div", {cla: "lifsep", id: "accstatusupdatediv"}],
+                 ["div", {cla: "lifsep", id: "accstatdetaildiv"}],
+                 ["div", {cla: "lifsep", id: "accpenupdatediv"},
+                  [["label", {fo: "accpenin", cla: "liflab"}, "Pen&nbsp;Name"],
+                   ["input", {type: "text", cla: "lifin", 
+                              name: "accpenin", id: "accpenin"}]]],
+                 ["div", {cla: "lifsep", id: "accpassupdatediv"}],
+                 ["div", {cla: "lifsep", id: "accsumfrequpdatediv"}],
+                 ["div", {cla: "lifsep", id: "accsumflagsupdatediv"}],
                  ["div", {cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "cancelbutton",
                                onclick: jt.fs("app.login.closeupdate()")},
@@ -545,17 +622,87 @@ return {
         app.onescapefunc = app.login.closeupdate;
         jt.byId('accsetdiv').style.visibility = "visible";
         jt.out('accsetdiv', jt.tac2html(html));
+        jt.byId('accstatdetaildiv').style.display = "none";
+        if(moracct) {
+            writeUsermenuAccountFormElements(moracct); }
+        else {
+            jt.call('GET', "getacct?" + authparams(), null,
+                    function (accarr) {
+                        if(accarr.length > 0) {
+                            moracct = accarr[0];
+                            writeUsermenuAccountFormElements(moracct); }
+                        else {
+                            jt.err("Account details unavailable"); } },
+                    app.failf(function (code, errtxt) {
+                        jt.err("Account details retrieval failed: " + code + 
+                               " " + errtxt); }),
+                    jt.semaphore("login.usermenu")); }
+        app.pen.getPen(function (pen) {
+            var accpenin = jt.byId("accpenin");
+            if(accpenin) {
+                accpenin.value = pen.name; }});
     },
 
 
-    closeupdate: function () {
+    closeupdate: function (next) {
         jt.out('accsetdiv', "");
         jt.byId('accsetdiv').style.visibility = "hidden";
+        switch(next) {
+        case 'profile': return app.profile.display();
+        case 'logout': return app.login.logout(); }
+    },
+
+
+    toggleactmaildet: function () {
+        var detdiv = jt.byId("accstatdetaildiv");
+        if(detdiv) {
+            if(detdiv.style.display === "block") {
+                detdiv.style.display = "none"; }
+            else {
+                detdiv.style.display = "block"; } }
+    },
+
+
+    deactivateAcct: function () {
+        var params, emaddr = jt.byId('emailin').value;
+        if(emaddr !== authname) {
+            jt.err("Please ok your email address change before deactivating.");
+            return; }
+        if(confirm("If you want to re-activate your account after deactivating, you will need to confirm your email address again.")) {
+            jt.out('buttonornotespan', "Deactivating...");
+            params = app.login.authparams() + "&status=Inactive";
+            jt.call('GET', "activate?" + params, null,
+                    function (accounts) {
+                        moracct = accounts[0];
+                        writeUsermenuAccountFormElements(moracct); },
+                    app.failf(function (code, errtxt) {
+                        jt.err("Deactivation failed " + code + ": " + errtxt);
+                        writeUsermenuAccountFormElements(moracct); }),
+                    jt.semaphore("login.deactivateAcct")); }
+    },
+
+
+    sendActivation: function (status) {
+        var emaddr = jt.byId('emailin').value;
+        if(emaddr !== authname) {
+            jt.err("Please ok your email address change before activating.");
+            return; }
+        jt.out('buttonornotespan', "Sending...");
+        jt.call('POST', "sendcode?" + app.login.authparams(), "",
+                function (accounts) {
+                    moracct = accounts[0];
+                    writeUsermenuAccountFormElements(moracct); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Sending failed " + code + ": " + errtxt);
+                    writeUsermenuAccountFormElements(moracct); }),
+                jt.semaphore("login.sendActivation"));
     },
 
 
     userupdate: function () {
-        jt.err("login.userupdate not implemented yet");
+        jt.err("TODO: login.userupdate not implemented yet");
+        //disallow changing pen name together with anything else.
+        //confirm email address if changed, warn unrecoverable if wrong
     },
 
 
@@ -649,7 +796,7 @@ return {
             rows.push(["tr",
                        [["td", {align: "right"}, "Offline Summary"],
                         ["td", {align: "left"}, 
-                         freqopts(sumfreqs, account)]]]);
+                         freqopts(account)]]]);
             rows.push(["tr",
                        [["td"],
                         ["td", {colspan: 2},
@@ -710,7 +857,6 @@ return {
 
 
     logout: function () {
-        var html;
         app.login.closeupdate();
         logoutWithNoDisplayUpdate();
         app.profile.cancelPenNameSettings();  //close the dialog if it is up
@@ -846,8 +992,6 @@ return {
                     jt.out('loginstatdiv', errtxt); }),
                 jt.semaphore("forgotPassword"));
     }
-
-
 
 };  //end of returned functions
 }());

@@ -42,6 +42,9 @@ body {
 
 img { border:0px; }
 
+button, .loginbutton { border:1px solid #271400; border-radius:5px; 
+ background:#ffd2a4; box-shadow:1px 1px 1px #999999; }
+
 /*
  ************************************************************
  * general class and id formatting
@@ -181,12 +184,17 @@ img { border:0px; }
 #loginstatdiv, #formstatdiv { font-size:small; }
 #gsitd { padding: 10px; }
 #altauthmethods { padding:0px 0px 20px 30px; }
-.liflab { font-size:medium; font-weight:normal; padding:4px 2px 0px 0px;
-  display:block; float:left; width:80px; text-align:right; 
+.liflab { font-size:medium; font-weight:normal; padding:4px 2px 0px 2px;
+  display:block; float:left; width:85px; text-align:right; 
 }
-.lifin { padding:0px; }
+.lifin { padding:0px; font-size:small; width:150px; }
 .lifsep { clear:both; }
 .lifbuttonsdiv { text-align:center; }
+.accstatvalspan { font-size:small; font-style:italic; padding:0px 4px 0px 0px; }
+#accstatdetaildiv { font-size:small; padding:5px 5px 0px 5px; }
+.accsetcbox { margin:0px 0px 0px 20px; }
+.accsetcboxlab { font-size:small; padding:0px 0px 0px 4px; }
+#buttonornotespan { font-size:small; }
 #loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #forgotpw { }
@@ -301,7 +309,6 @@ img { border:0px; }
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
 .searchtable td { padding:5px 10px; }
-#emailin, #passin { width:148px; }
 .tagline { font-style:italic; color:#333; }
 /* width: ratstar: 60, type: 50, nbsp separator and padding */
 #starstd { text-align:right; width:150px; white-space:nowrap; }

@@ -379,13 +379,35 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     uo.ISOString2Day = function (str) {
         var date, year, month, day;
         if (!str) {
-            return new Date();
+            str = new Date().toISOString();
         }
         year = parseInt(str.slice(0, 4), 10);
         month = parseInt(str.slice(5, 7), 10);
         day = parseInt(str.slice(8, 10), 10);
         date = new Date(year, (month - 1), day, 0, 0, 0, 0);
         return date;
+    };
+
+
+    uo.ISOString2Time = function (str) {
+        var date, year, month, day, hours, minutes, seconds;
+        if (!str) {
+            str = new Date().toISOString();
+        }
+        year = parseInt(str.slice(0, 4), 10);
+        month = parseInt(str.slice(5, 7), 10);
+        day = parseInt(str.slice(8, 10), 10);
+        hours = parseInt(str.slice(11, 13), 10);
+        minutes = parseInt(str.slice(14, 16), 10);
+        seconds = parseInt(str.slice(17, 19), 10);
+        date = new Date(year, (month - 1), day, hours, minutes, seconds, 0);
+        return date;
+    };
+
+
+    uo.tz2loc = function (date) {
+        var offset = new Date().getTimezoneOffset() * 60 * 1000 * -1;
+        return new Date(date.getTime() + offset);
     };
 
 
@@ -427,6 +449,24 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     ////////////////////////////////////////
     // value testing and manipulation
     ////////////////////////////////////////
+
+    uo.timewithin = function (timeval, units, count, comptime) {
+        var incr, deadline, testval;
+        incr = 60 * 60 * 1000;  //'hours'
+        if (units === 'days') {
+            incr *= 24;
+        }
+        if (!timeval || typeof timeval === "string") {
+            timeval = uo.ISOString2Time(timeval);
+        }
+        if (!comptime || typeof comptime === "string") {
+            comptime = uo.ISOString2Time(comptime);
+        }
+        deadline = timeval.getTime() + (incr * count);
+        testval = comptime.getTime();
+        return deadline > testval;
+    };
+
 
     //return true if the given text can be reasonably construed to be an
     //email address.
