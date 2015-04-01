@@ -54,8 +54,8 @@ app.activity = (function () {
     feedReviewHTML = function (rev) {
         var revid, prefix, revdivid, html;
         revid = jt.instId(rev);
-        prefix = "rdd"
-        revdivid = prefix + revid
+        prefix = "rdd";
+        revdivid = prefix + revid;
         html = ["div", {cla: "fpdiv"},
                 [["div", {cla: "fpprofdiv"},
                   ["a", {href: "#view=profile&profid=" + rev.penid,
@@ -1003,16 +1003,6 @@ app.activity = (function () {
         else { //not following anyone, make introductions
             displayIntroductionsNotice();
             autofollow(); }
-    },
-
-
-    verifyCoreDisplayElements = function () {
-        var html, domelem = jt.byId('revactdiv');
-        if(!domelem) {
-            html = "<div id=\"revactdiv\"></div>";
-            if(!jt.byId('cmain')) {
-                app.layout.initContent(); }
-            jt.out('cmain', html); }
     },
 
 

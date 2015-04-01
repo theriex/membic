@@ -351,6 +351,27 @@ def verify_secure_comms(handler, url):
     return False
 
 
+def send_activation_code(handler, account):
+    chars = string.ascii_letters + string.digits
+    account.actcode = "".join(random.choice(chars) for _ in range(30))
+    if account.actsends:
+        account.actsends += ","
+    else:
+        account.actsends = ""
+    account.actsends += nowISO() + ";" + account.email
+    account.put()
+    url = "https://www.membic.com/activate?key=" +\
+        str(account.key().id()) + "&code=" + account.actcode
+    logging.info("Activate " + account.email + ": " + url)
+    if not handler.request.url.startswith('http://localhost'):
+        mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
+        mail.send_mail("membic.com administrator <admin@membic.com>",
+                       to=account.email,
+                       subject="Account activation",
+                       body=mailtxt)
+    return account
+
+
 class CreateAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
@@ -471,19 +492,6 @@ class TokenAndRedirect(webapp2.RequestHandler):
         self.redirect(str(redurl))
 
 
-class GetLoginID(webapp2.RequestHandler):
-    def post(self):
-        emaddr = self.request.get('emailin') or ""
-        emaddr = emaddr.normalize_email(emaddr)
-        password = self.request.get('passin')
-        where = "WHERE email=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr, password)
-        redurl = "http://www.fgfweb.com?mid="
-        for account in accounts:
-            redurl += str(account.key().id())
-        self.redirect(redurl)
-            
-
 class MailCredentials(webapp2.RequestHandler):
     def post(self):
         eaddr = self.request.get('emailin')
@@ -517,34 +525,42 @@ class MailCredentials(webapp2.RequestHandler):
         writeJSONResponse("[]", self.response)
 
 
-class ChangePassword(webapp2.RequestHandler):
+class UpdateAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
         if not (url.startswith('https') or ":8080" in url):
             self.error(405)
             self.response.out.write("request must be over https")
             return
-        pwd = self.request.get('pass')
+        pwd = self.request.get('password')
         if pwd and len(pwd) < 6:
             self.error(412)  # precondition failed
             self.response.out.write("Password must be at least 6 characters")
             return
         account = authenticated(self.request)
         if account:
+            mailaddresschanged = False
             if pwd:
                 account.password = pwd
-            emaddr = self.request.get('emailin') or account.email
+            emaddr = self.request.get('email') or account.email
             emaddr = normalize_email(emaddr)
             if emaddr != account.email:
                 if not valid_new_email_address(self, emaddr):
                     return
                 account.email = emaddr
+                account.status = "Pending"
+                account.actsends = ""
+                account.actcode = ""
+                mailaddresschanged = True
             if not account.lastsummary:
                 account.lastsummary = nowISO()
-            account.summaryfreq = self.request.get('sumfreq') or "weekly"
-            account.summaryflags = self.request.get('sumflags') or ""
+            account.summaryfreq = self.request.get('summaryfreq') or "weekly"
+            account.summaryflags = self.request.get('summaryflags') or ""
             account.modified = nowISO()
             account.put()  #nocache
+            if mailaddresschanged:
+                account = MORAccount.get_by_id(account.key().id())
+                account = send_activation_code(self, account)
             token = newtoken(account.email, account.password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:
@@ -571,23 +587,7 @@ class SendActivationCode(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("SendActivationCode authentication failed")
             return
-        chars = string.ascii_letters + string.digits
-        account.actcode = "".join(random.choice(chars) for _ in range(30))
-        if account.actsends:
-            account.actsends += ","
-        else:
-            account.actsends = ""
-        account.actsends += nowISO() + ";" + account.email
-        account.put()
-        url = "https://www.membic.com/activate?key=" +\
-            str(account.key().id()) + "&code=" + account.actcode
-        logging.info("Activate " + account.email + ": " + url)
-        if not self.request.url.startswith('http://localhost'):
-            mailtxt = "Hello,\n\nThanks for joining membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
-            mail.send_mail("membic.com administrator <admin@membic.com>",
-                           to=account.email,
-                           subject="Account activation",
-                           body=mailtxt)
+        account = send_activation_code(self, account)
         returnJSON(self.response, [ account ])
 
 
@@ -638,8 +638,7 @@ app = webapp2.WSGIApplication([('/newacct', CreateAccount),
                                ('/login', GetToken),
                                ('/redirlogin', TokenAndRedirect),
                                ('/mailcred', MailCredentials),
-                               ('/chgpwd', ChangePassword),
-                               ('/loginid', GetLoginID),
+                               ('/updacc', UpdateAccount),
                                ('/getacct', GetAccount),
                                ('/sendcode', SendActivationCode),
                                ('/activate', ActivateAccount),

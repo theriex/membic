@@ -22,7 +22,6 @@ app.googleplus = (function () {
         jt.out('contentdiv', "");
         if(success) {
             jt.out('contentdiv', "Google+ access added."); }
-        app.profile.settings();
     },
 
 

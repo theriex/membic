@@ -56,7 +56,7 @@ handlers:
 
 ## Change native account password
 ## POST params: password, authparams
-- url: /chgpwd.*
+- url: /updacc.*
   script: src.py.moracct.app
 
 ## Get login account details
@@ -514,8 +514,6 @@ handlers:
 - url: /_ah/bounce
   script: src.py.mailsum.app
   login: admin
-- url: /loginid.*
-  script: src.py.moracct.app
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/

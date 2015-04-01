@@ -96,8 +96,6 @@ app.login = (function () {
                 redurl += "&special=nativeonly"; }
             if(params.reqprof) {
                 redurl += "&view=profile&profid=" + params.reqprof; }
-            if(params.command === "chgpwd") {
-                params.command = ""; }
             xpara = jt.objdata(params, ["logout", "returnto"]);
             if(xpara) {
                 redurl += "&" + xpara; }
@@ -146,16 +144,6 @@ app.login = (function () {
         if(authname) {
             authname = authname.replace("%40", "@"); }
         app.login.updateAuthentDisplay();
-    },
-
-
-    emailStatementsRow = function () {
-        var html = ["tr",
-                    ["td", {colspan: 3, align: "center"},
-                     ["p", "FGFweb will <em>not</em> share your email " +
-                       " or spam you."]]];
-        html = jt.tac2html(html);
-        return html;
     },
 
 
@@ -413,6 +401,38 @@ app.login = (function () {
                 ["label", {fo: "sumiflogin", cla: "accsetcboxlab"},
                  "Send even if site visited"]];
         jt.out('accsumflagsupdatediv', jt.tac2html(html));
+        app.pen.getPen(function (pen) {
+            var accpenin = jt.byId("accpenin");
+            if(accpenin) {
+                accpenin.value = pen.name;
+                moracct.penName = pen.name; }});
+    },
+
+
+    readUsermenuAccountForm = function () {
+        var ua, cboxes, i;
+        ua = { email: moracct.email,
+               summaryfreq: moracct.summaryfreq,
+               summaryflags: moracct.summaryflags,
+               penName: moracct.penName };
+        ua.email = jt.byId('emailin').value.trim();
+        if(!jt.isProbablyEmail(ua.email)) {
+            return jt.out('usermenustat', "Invalid email address"); }
+        if(ua.email !== moracct.email &&
+           (!confirm("You will need to re-activate your account from your new email address. Double check your new email address is correct for login recovery. Activation mail will be sent to " + ua.email))) {
+            return; }
+        if(jt.byId('passin').value) {
+            ua.password = jt.byId('passin').value.trim(); }
+        ua.summaryfreq = sumfreqs[jt.byId('offsumsel').selectedIndex];
+        ua.summaryflags = "";
+        cboxes = document.getElementsByName("summaryflags");
+        for(i = 0; i < cboxes.length; i += 1) {
+            if(cboxes[i].checked) {
+                if(ua.summaryflags) {
+                    ua.summaryflags += ","; }
+                ua.summaryflags += cboxes[i].value; } }
+        ua.penName = jt.byId('accpenin').value;
+        return ua;
     },
 
 
@@ -490,12 +510,10 @@ app.login = (function () {
                             jt.log("Pen access time updated"); },
                         app.failf(),
                         jt.semaphore("login.loggedInDoNextStep")); }}, 4000);
-        if(params.command === "chgpwd") {
-            app.login.displayUpdAccForm(); }
-        else if(params.command === "helpful" ||
-                params.command === "remember" ||
-                params.command === "respond" ||
-                (params.view === "review" && params.revid)) {
+        if(params.command === "helpful" ||
+           params.command === "remember" ||
+           params.command === "respond" ||
+           (params.view === "review" && params.revid)) {
             setTimeout(function () {
                 jt.call('GET', "/bytheway?clickthrough=review", null,
                         function () {
@@ -610,12 +628,13 @@ return {
                  ["div", {cla: "lifsep", id: "accpassupdatediv"}],
                  ["div", {cla: "lifsep", id: "accsumfrequpdatediv"}],
                  ["div", {cla: "lifsep", id: "accsumflagsupdatediv"}],
+                 ["div", {cla: "lifsep", id: "usermenustat"}],
                  ["div", {cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "cancelbutton",
                                onclick: jt.fs("app.login.closeupdate()")},
                     "Cancel"],
                    ["button", {type: "button", id: "okbutton",
-                               onclick: jt.fs("app.login.userupdate()")},
+                               onclick: jt.fs("app.login.updateAccount()")},
                     "Ok"]]]]];
         app.layout.cancelOverlay();
         app.layout.closeDialog();
@@ -637,10 +656,6 @@ return {
                         jt.err("Account details retrieval failed: " + code + 
                                " " + errtxt); }),
                     jt.semaphore("login.usermenu")); }
-        app.pen.getPen(function (pen) {
-            var accpenin = jt.byId("accpenin");
-            if(accpenin) {
-                accpenin.value = pen.name; }});
     },
 
 
@@ -699,13 +714,6 @@ return {
     },
 
 
-    userupdate: function () {
-        jt.err("TODO: login.userupdate not implemented yet");
-        //disallow changing pen name together with anything else.
-        //confirm email address if changed, warn unrecoverable if wrong
-    },
-
-
     //create the logged-in display areas
     updateAuthentDisplay: function (override) {
         if(!topworkdivcontents) {
@@ -728,106 +736,38 @@ return {
     },
 
 
-    updacc: function () {
-        var sel, i, cboxes, csv, data, url;
-        data = "emailin=" + jt.enc(jt.safeget('emailin', 'value'));
-        if(authmethod === "mid") {
-            data += "&pass=" + jt.enc(jt.safeget('npin', 'value')); }
-        sel = jt.byId('offsumsel');
-        for(i = 0; i < sumfreqs.length; i += 1) {
-            if(sel.options[i].selected) {
-                data += "&sumfreq=" + sumfreqs[i];
-                break; } }
-        csv = "";
-        cboxes = document.getElementsByName("summaryflags");
-        for(i = 0; i < cboxes.length; i += 1) {
-            if(cboxes[i].checked) {
-                if(csv) {
-                    csv += ","; }
-                csv += cboxes[i].value; } }
-        data += "&sumflags=" + jt.enc(csv);
-        data += "&" + authparams();
-        url = secureURL("chgpwd");
-        jt.call('POST', url, data,
-                 function (objs) {
-                     if(authmethod === "mid") {
-                         setAuthentication("mid", objs[0].token, authname); }
-                     doneWorkingWithAccount(); },
-                 app.failf(function (code, errtxt) {
-                     jt.out('setstatdiv', "Account settings update failed: " +
-                             errtxt); }),
-                jt.semaphore("login.updacc"));
-    },
-
-
-    displayUpdAccForm: function (account) {
-        var rows = [], html, title = "Account settings for $USEREMAIL";
-        if(account) {
-            if(secureURL("chgpwd") !== "chgpwd") { //redirect if needed
-                window.location.href = app.secsvr + 
-                    "#returnto=" + jt.enc(app.mainsvr) +
-                    "&command=chgpwd&" + authparams(); }
-            app.profile.cancelPenNameSettings();  //close dialog if up
-            app.login.updateAuthentDisplay("hide");
-            title = title.replace("$USEREMAIL", authname);
-            jt.out('centerhdiv', title);
-            rows.push(["tr",
-                       ["td", {colspan: 3},
-                        ["div", {id: "setstatdiv"}]]]);
-            if(authmethod === "mid") {
-                rows.push(["tr",
-                           [["td", {align: "right"}, "New Password"],
-                            ["td", {align: "left"}, 
-                             ["input", {type: "password", id: "npin", 
-                                        size: 25}]],
-                            ["td", {align: "left"},
-                             ["button", {type: "button", id: "chgpwbutton",
-                                         onclick: jt.fs("app.login.updacc()")},
-                              "Change Password"]]]]); }
-            rows.push(["tr",
-                       [["td", {align: "right"}, "Email"],
-                        ["td", {align: "left"}, 
-                         ["input", {type: "email", id: "emailin", 
-                                    size: 25, value: (account.email || "")}]],
-                        ["td", {align: "left"},
-                         ["button", {type: "button", id: "updembutton",
-                                     onclick: jt.fs("app.login.updacc()")},
-                          "Update Email"]]]]);
-            rows.push(["tr",
-                       [["td", {align: "right"}, "Offline Summary"],
-                        ["td", {align: "left"}, 
-                         freqopts(account)]]]);
-            rows.push(["tr",
-                       [["td"],
-                        ["td", {colspan: 2},
-                         jt.checkbox("summaryflags", "sumiflogin",
-                                     "Send summary even if site visited",
-                                     hasflag(account, 'sumiflogin'))]]]);
-            rows.push(["tr",
-                       ["td", {colspan: 2, align: "center", cla: "actbuttons"},
-                        [["button", {type: "button", id: "cancelbutton",
-                                     onclick: jt.fs("app.login.redirhome()")},
-                          "Cancel"],
-                         "&nbsp;",
-                         ["button", {type: "button", id: "savebutton",
-                                     onclick: jt.fs("app.login.updacc()")},
-                          "Save"]]]]);
-            rows.push(emailStatementsRow());
-            html = ["table", {id: "loginform", cla: "formstyle"}, rows];
-            html = jt.tac2html(html);
-            jt.out('contentdiv', html);
-            jt.byId('emailin').focus(); }
-        else {  //no account given, go get it.
-            jt.call('GET', "getacct?" + authparams(), null,
-                    function (accarr) {
-                        if(accarr.length > 0) {
-                            app.login.displayUpdAccForm(accarr[0]); }
-                        else {
-                            jt.err("No account details available"); } },
+    updateAccount: function () {
+        var ua, data, contf = app.login.closeupdate;
+        ua = readUsermenuAccountForm();
+        if(ua.penName !== moracct.penName) {
+            contf = function () {
+                app.pen.getPen(function (pen) {
+                    pen.name = ua.penName;
+                    app.pen.updatePen(
+                        pen,
+                        function (penref) {
+                            app.login.closeupdate();
+                            app.login.updateAuthentDisplay(); },
+                        function (code, errtxt) {
+                            jt.out('usermenustat', "Pen name update failed " + 
+                                   code + ": " + errtxt); }); }); }; }
+        if(ua.email === moracct.email &&
+           !ua.password &&
+           ua.summaryfreq === moracct.summaryfreq &&
+           ua.summaryflags === moracct.summaryflags) {
+            contf(); }
+        else {  //account info changed
+            data = jt.objdata(ua) + "&" + authparams();
+            jt.call('POST', secureURL("updacc"), data,
+                    function (objs) {
+                        if(authmethod === "mid") {
+                            setAuthentication("mid", objs[0].token, authname); }
+                        moracct = null;
+                        contf(); },
                     app.failf(function (code, errtxt) {
-                        jt.err("Account details retrieval failed: " + code + 
-                               " " + errtxt); }),
-                    jt.semaphore("login.displayUpdAccForm")); }
+                        jt.out('setstatdiv', "Account update failed " +
+                               code + ": " + errtxt); }),
+                    jt.semaphore("login.updateAccount")); }
     },
 
 
@@ -929,31 +869,6 @@ return {
         case "twid": return "Twitter";
         case "ghid": return "GitHub";
         default: return "Unknown"; }
-    },
-
-
-    accountSettingsLinkHTML: function (pen) {
-        var html, msgtxt;
-        if(authmethod === "mid") {
-            html = ["a", {href: "#AccountSettings", id: "accset",
-                          onclick: jt.fs("app.login.displayUpdAccForm()")},
-                    "Account settings"]; }
-        else {  //not logged in natively
-            if(pen.mid && pen.mid !== "0") {  //have native login authorization
-                msgtxt = "You need to sign in to FGFweb directly to change" +
-                    " your account settings.\\n" + 
-                    "Pardon the inconvenience, it\\'s a security thing...";
-                html = ["a", {href: "#AccountSettings", id: "accset",
-                              onclick: jt.fs("alert('" + msgtxt + "')")},
-                        "Account settings"]; }
-            else {
-                msgtxt = "To access cool features like a weekly activity" +
-                    " summary, you first\\n" + 
-                    "need to authorize FGFweb access for " + pen.name + ".";
-                html = ["a", {href: "#AccountSettings", id: "accset",
-                              onclick: jt.fs("alert('" + msgtxt + "')")},
-                        "Account settings"]; } }
-        return jt.tac2html(html);
     },
 
 

@@ -348,7 +348,7 @@ app.review = (function () {
 
     urlLabel = function () {
         var html;
-        html = ["img", {cla: "webjump", src: "img/gotolink.png"}]
+        html = ["img", {cla: "webjump", src: "img/gotolink.png"}];
         return html;
     },
 
@@ -1834,7 +1834,6 @@ return {
             return; }
         app.layout.closeDialog(); //close dialog if previously open
         app.onescapefunc = null; 
-        app.layout.updateNavIcons("review");
         if(fullEditDisplayTimeout) {
             clearTimeout(fullEditDisplayTimeout);
             fullEditDisplayTimeout = null; }
@@ -2250,7 +2249,7 @@ return {
 
 
     fpbToggleRemember: function (prefix, revid) {
-        penref = app.pen.currPenRef();
+        var penref = app.pen.currPenRef();
         if(!penref.pen) {
             return jt.err("Please sign in"); }
         jt.err("fpbToggleRemember not implemented yet");
@@ -2258,7 +2257,7 @@ return {
 
 
     fpbWrite: function (prefix, revid) {
-        penref = app.pen.currPenRef();
+        var penref = app.pen.currPenRef();
         if(!penref.pen) {
             return jt.err("Please sign in"); }
         jt.err("fpbWrite not implemented yet");

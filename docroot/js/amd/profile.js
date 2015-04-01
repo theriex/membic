@@ -204,7 +204,6 @@ app.profile = (function () {
     writeNavDisplay = function (homepen, dispen, directive) {
         if(!dispen) {
             dispen = homepen; }
-        app.profile.updateTopActionDisplay(homepen);
         displayProfileHeading(homepen, dispen, directive);
     },
 
@@ -238,9 +237,7 @@ app.profile = (function () {
                              checked: jt.toru(jt.isId(pen.mid), "checked"),
                              onchange: jt.fs("app.profile.toggleAuth('" +
                                              "mid','" + domid + "')")}],
-                  ["label", {fo: "aamid"}, authtypes.mid]]],
-                ["td",  //Account settings link
-                 app.login.accountSettingsLinkHTML(pen)]]],
+                  ["label", {fo: "aamid"}, authtypes.mid]]]]],
               ["tr",
                [["td", {cla: "authcbtd"},  //Facebook
                  [["input", {type: "checkbox", name: "aafbid", id: "aafbid",
@@ -1215,7 +1212,6 @@ app.profile = (function () {
                                  tab: profpenref.profstate.seltabname });
         //redisplay the heading in case we just switched pen names
         writeNavDisplay(homepen, dispen);
-        app.layout.updateNavIcons("profile");
         //reset the colors in case that work got dropped in the
         //process of updating the persistent state
         app.skinner.setColorsFromPen(homepen);
@@ -1288,11 +1284,6 @@ return {
     refresh: function () {
         app.pen.getPen(function (homepen) {
             mainDisplay(homepen, profpenref.pen); });
-    },
-
-
-    settings: function () {
-        app.pen.getPen(changeSettings);
     },
 
 
@@ -1439,7 +1430,6 @@ return {
             return; }
         app.history.checkpoint({ view: "review", mode: "display",
                                  revid: revid });
-        app.layout.updateNavIcons("review");
         app.review.setCurrentReview(revobj);
         app.review.displayRead();
     },
@@ -1740,33 +1730,6 @@ return {
 
     getProfilePenReference: function () {
         return profpenref;
-    },
-
-
-    updateTopActionDisplay: function (pen, mode) {
-        var html, imgsrc = "profile.png";
-        if(!jt.byId('homepenhdiv')) {
-            app.login.updateAuthentDisplay(); }
-        if(!mode) {
-            mode = app.layout.currnavmode(); }
-        if(mode === "profile") {
-            imgsrc = "profilesel.png"; }
-        html = ["div", {cla: "topnavitemdiv"},
-                jt.imgntxt(imgsrc, "",
-                           "app.profile.display()",
-                           "#view=profile&profid=" + jt.instId(pen),
-                           "Profile for " + pen.name + " (you)",
-                           "naviconospace", "navprof", 
-                           "app.profile.mrollp")];
-        jt.out('homepenhdiv', jt.tac2html(html));
-        html = jt.imgntxt("settings.png", "", 
-                          "app.profile.settings()",
-                          "#Settings",
-                          "Profile settings",
-                          "naviconospace", "settingsnav",
-                          "app.profile.mrollset");
-        jt.out('settingsbuttondiv', html);
-        displayInboundLinkIndicator();
     },
 
 

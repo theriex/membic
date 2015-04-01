@@ -269,7 +269,7 @@ return {
 
 
     closeDialog: function () {
-        var state, dlg;
+        var dlg;
         jt.out('dlgdiv', "");
         jt.byId('dlgdiv').style.visibility = "hidden";
         app.onescapefunc = app.escapefuncstack.pop();
@@ -403,18 +403,6 @@ return {
     },
 
 
-    updateNavIcons: function (mode) {
-        var penref = app.pen.currPenRef();
-        if(mode) {
-            navmode = mode; }
-        jt.out('recentacthdiv', app.activity.activityLinkHTML(navmode));
-        jt.out('rememberedhdiv', app.activity.rememberedLinkHTML(navmode));
-        jt.out('writerevhdiv', app.review.reviewLinkHTML(navmode));
-        if(penref && penref.pen) {
-            app.profile.updateTopActionDisplay(penref.pen, navmode); }
-    },
-
-
     currnavmode: function () {
         return navmode;
     },
@@ -422,10 +410,6 @@ return {
 
     headingout: function (html) {
         jt.out('centerhdiv', html);
-        jt.byId('centerhdivtd').style.height = 
-            String(jt.byId('centerhdiv').offsetHeight) + "px";
-        jt.byId('centerhdivtd').style.maxHeight = 
-            String(jt.byId('centerhdiv').offsetHeight) + "px";
     },
 
 
