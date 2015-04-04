@@ -555,7 +555,6 @@ app.rel = (function () {
             alert("Still loading relationships, try again in a few seconds"); }
         else {
             addFollow(originator, related, function (orgpen, relpen, newrel) {
-                //profile.writeNavDisplay is not enough if followBack,
                 //have to redraw follow tab counts also.
                 app.profile.refresh();
                 displayRelationshipDialog(newrel, relpen, true); }); }
@@ -563,7 +562,6 @@ app.rel = (function () {
 
 
     relationshipsLoadFinished = function (pen) {
-        app.profile.updateHeading();
     },
 
 
@@ -634,8 +632,7 @@ return {
             //a new pen name has no outbound relationships yet.  Just
             //init the outrels in the cache PenRef to an empty array.
             app.pen.currPenRef().outrels = [];
-            asyncLoadStarted = true;  //started and finished..
-            app.profile.updateHeading(); }
+            asyncLoadStarted = true; } //started and finished..
         else if(relstate !== "logout") {
             //start the async load of the outrels.  relstate === "reload" 
             //is ignored since the relationships are cached with each pen

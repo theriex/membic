@@ -1042,8 +1042,8 @@ return {
         jt.out("headingdivcontent", jt.tac2html(html));
         html = ["div", {id: "feedrevsdiv"}];
         jt.out("contentdiv", jt.tac2html(html));
-        if(feeds[rt.type]) {
-            return displayFeedReviews(feedtype, feeds[rt.type]); }
+        if(feeds[feedtype]) {
+            return displayFeedReviews(feedtype, feeds[feedtype]); }
         jt.out('feedrevsdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {

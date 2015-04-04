@@ -31,17 +31,13 @@ app.profile = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var greytxt = "#999999",
-        unspecifiedCityText = "City not specified",
-        profeditfield = "",
-        profpenref,
+    var profpenref,
         authtypes = { mid: "FGFweb",
                       gsid: "Google+",
                       fbid: "Facebook",
                       twid: "Twitter",
                       ghid: "GitHub" },
         revsrchstate = null,
-        lastInLinkType = "helpful",
         recencyDays = 30,
         dayMillis = 24 * 60 * 60 * 1000,
 
@@ -56,12 +52,10 @@ app.profile = (function () {
         if(penref.pen && typeof penref.pen.top20s === "string") {
             penref.pen.top20s = JSON.parse(penref.pen.top20s); }
         if(!penref.profstate) {
-            penref.profstate = { seltabname: 'recent',
+            penref.profstate = { seltabname: 'latest',
                                  revtype: "" }; }
-        if(!penref.profstate.revtype && penref.pen && penref.pen.top20s) {
-            penref.profstate.revtype = penref.pen.top20s.latestrevtype; }
         if(!penref.profstate.revtype) {
-            penref.profstate.revtype = 'book'; }
+            penref.profstate.revtype = 'all'; }
     },
 
 
@@ -135,76 +129,6 @@ app.profile = (function () {
                     String(count)]];
             html = jt.tac2html(html); }
         jt.out('profstarhdiv', html);
-    },
-
-
-    displayProfileHeadingName = function (homepen, dispen, directive) {
-        var html, id, name;
-        id = jt.instId(dispen);
-        name = dispen.name;
-        if(directive === "nosettings") {
-            name = ["a", {href: "#view=profile&profid=" + id,
-                          title: "Show profile for " + name,
-                          onclick: jt.fs("app.profile.byprofid('" + id + 
-                                         "')")},
-                    name]; }
-        html = ["div", {id: "profhdiv"},
-                ["table",
-                 ["tr",
-                  [["td", {id: "profbadgestd"},
-                    app.profile.earnedBadgesHTML(dispen, 
-                                                 "app.profile.showTopRated")],
-                   ["td", {id: "penhnametd"},
-                    ["span", {id: "penhnamespan"},
-                     name]],
-                   ["td",
-                    ["div", {id: "penhbuttondiv"},
-                     " "]]]]]];
-        html = jt.tac2html(html);
-        app.layout.headingout(html);
-    },
-
-
-    displayProfileHeading = function (homepen, dispen, directive) {
-        var html, id, name, relationship;
-        displayProfileHeadingName(homepen, dispen, directive);
-        if(directive === "nosettings") {
-            return; }
-        id = jt.instId(dispen);
-        name = dispen.name;
-        html = "";
-        if(jt.instId(homepen) !== jt.instId(dispen)) {
-            if(app.rel.relsLoaded()) {
-                relationship = app.rel.outbound(id);
-                app.profile.verifyStateVariableValues(dispen);
-                if(relationship) {
-                    html = ["a", {href: "#Settings", cla: "gold", 
-                                  title: "Adjust follow settings for " + name,
-                                  onclick: jt.fs("app.profile.relationship()")},
-                            [["img", {cla: "followingico", 
-                                      src: "img/followset.png"}],
-                             ""]]; }
-                else {
-                    html = ["a", {href: "#Follow",
-                                  title: "Follow " + name + " reviews",
-                                  onclick: jt.fs("app.profile.relationship()")},
-                            [["img", {cla: "followico", id: "followbimg",
-                                      src: "img/follow.png"}],
-                             "Follow"]]; }
-                html = jt.tac2html(html); }
-            else {  
-                //Happens if you go directly to someone's profile via url
-                //and rels are loading slowly.  Not known if you are following
-                //them yet.  The heading updates after the rels are loaded.
-                html = "..."; } }
-        jt.out('penhbuttondiv', html);
-    },
-
-
-    writeNavDisplay = function (homepen, dispen, directive) {
-        if(!dispen) {
-            dispen = homepen; }
-        displayProfileHeading(homepen, dispen, directive);
     },
 
 
@@ -394,53 +318,17 @@ app.profile = (function () {
     },
 
 
-    mailButtonHTML = function () {
-        var html, href, subj, body, types, revchecks, i, ts, mepen;
-        mepen = app.pen.currPenRef().pen;
-        subj = "Sharing experiences through reviews";
-        body = "Hi,\n\n" +
-            "Please join FGFweb so I can read reviews from you";
-        revchecks = document.getElementsByName("invrevcb");
-        types = "";
-        for(i = 0; i < revchecks.length; i += 1) {
-            if(revchecks[i].checked) {
-                if(types) {
-                    types += ","; }
-                types += revchecks[i].value; } }
-        if(types) {
-            ts = types.split(",");
-            types = "";
-            for(i = 0; i < ts.length; i += 1) {
-                if(i > 0) {
-                    if(i === ts.length - 1) {
-                        types += " and "; }
-                    else {
-                        types += ", "; } }
-                types += ts[i]; }
-            body += ", especially about " + types + "."; }
-        else {
-            body += "!"; }
-        body += "\n\n" +
-            "Here's a direct link to my profile:\n\n" +
-            "    " + app.mainsvr + "/#view=profile&profid=" +
-            jt.instId(mepen) + "\n\n" +
-            "After you have a pen name, click the follow link on my " + 
-            "profile so I can find you and follow back. " + 
-            "\n\n" +
-            "cheers,\n" +
-            mepen.name;
-        href = "mailto:?subject=" + jt.dquotenc(subj) + 
-            "&body=" + jt.dquotenc(body) + "%0A";
-        html = app.services.serviceLinkHTML(href, "", "shareico", 
-                                            "Invite via eMail",
-                                            "img/email.png");
-        return html;
-    },
-
-
     findOrLoadPen = function (penid, callback) {
         app.lcs.getFull("pen", penid, function (penref) {
             callback(penref.pen); });
+    },
+
+
+    profileItemHTML = function (rev) {
+        var html, revid = jt.instId(rev), prefix = "prd";
+        html = ["div", {cla: "profrevdiv", id: prefix + revid},
+                app.review.revdispHTML(prefix, revid, rev)];
+        return html;
     },
 
 
@@ -449,7 +337,7 @@ app.profile = (function () {
         if(!rrs.results) {
             rrs.results = []; }
         for(i = 0; i < rrs.results.length; i += 1) {
-            revitems.push(app.profile.reviewItemHTML(rrs.results[i])); }
+            revitems.push(profileItemHTML(rrs.results[i])); }
         if(reviews) {  //have fresh search results
             rrs.cursor = "";
             for(i = 0; i < reviews.length; i += 1) {
@@ -459,39 +347,37 @@ app.profile = (function () {
                         rrs.total += reviews[i].fetched;
                         revitems.push(["div", {cla: "sumtotal"},
                                        String(rrs.total) + 
-                                       " reviews searched"]); }
+                                       " membics searched"]); }
                     if(reviews[i].cursor) {
                         rrs.cursor = reviews[i].cursor; }
                     break; }  //if no reviews, i will be left at zero
                 app.lcs.put("rev", reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
-                revitems.push(app.profile.reviewItemHTML(reviews[i])); } }
+                revitems.push(profileItemHTML(reviews[i])); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
-            text = "No recent reviews.";
+            text = "No recent membics.";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 text += " " + app.review.reviewLinkHTML(); }
-            revitems.push(["li", text]); }
+            revitems.push(["div", {cla: "fpinlinetextdiv"}, text]); }
         html = [];
         if(rrs.total > 0) {
             html.push(["div", {cla: "tabcontentheadertext"},
-                       "Reviews in the past " + recencyDays + " days"]); }
-        html.push(["ul", {cla: "revlist"}, revitems]);
+                       "Membics in the past " + recencyDays + " days"]); }
+        html.push(["div", {cla: "profilereviewsdiv"}, revitems]);
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
                 if(rrs.total < 2000) {  //auto-repeat search
                     setTimeout(app.profile.revsmore, 10); } 
                 else {
-                    html.push("No recent reviews found" + 
-                              ", only batch updates."); } }
+                    html.push(["div", {cla: "fpinlinetextdiv"},
+                               "No recent membics, only batch updates."]); } }
             else {
                 html.push(["a", {href: "#continuesearch",
                                  onclick: jt.fs("app.profile.revsmore()"),
-                                 title: "More reviews"},
-                           "more reviews..."]); } }
+                                 title: "More membics"},
+                           "more membics..."]); } }
         jt.out('profcontdiv', jt.tac2html(html));
-        setTimeout(function () {
-            app.lcs.verifyReviewLinks(app.profile.refresh); }, 250);
     },
 
 
@@ -513,7 +399,7 @@ app.profile = (function () {
             params += "&cursor=" + jt.enc(rrs.cursor); }
         jt.call('GET', "srchrevs?" + params, null,
                 function (revs) {
-                    if(profpenref.profstate.seltabname !== "recent") {
+                    if(profpenref.profstate.seltabname !== "latest") {
                         //switched tabs before we came back. Bail out.
                         profpenref.profstate.recentRevState = null;
                         return; }
@@ -568,14 +454,14 @@ app.profile = (function () {
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             imgsrc = revTypeSelectorImgSrc(typename);
-            label = "No " + reviewTypes[i].type.capitalize() + " reviews.";
+            label = "No " + reviewTypes[i].type.capitalize() + " membics.";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
                     label = prefixstr + reviewTypes[i].type.capitalize() +
-                        " reviews."; }
+                        " membics."; }
                 else if(pen.top20s[typename].length >= 1) {
                     label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].type.capitalize() + " reviews."; } }
+                        reviewTypes[i].type.capitalize() + " membics."; } }
             html.push(["img", {cla: "reviewbadge", id: "rtsimg" + typename,
                                src: imgsrc, title: label, alt: label,
                                onmouseover: jt.fs("app.profile.mrollrts('" +
@@ -593,40 +479,84 @@ app.profile = (function () {
                   ["td",
                    ["div", {id: "showalltoplinkdiv", cla: "tabmodediv"},
                     ["a", {href: "#toggleshowalltop",
-                           onclick: jt.fs("app.profile.tabselect('" +
+                           onclick: jt.fs("app.profile.tabsel('" +
                                           tlink.tabname + "')")},
                      "Show " + tlink.dispname]]]]]];
         return jt.tac2html(html);
     },
 
 
-    displayBest = function () {
+    typeOrBlank = function (typename) {
+        if(typename && typename !== "all") {
+            return typename; }
+        return "";
+    },
+
+
+    fetchAllFavorites = function () {
+        var t20, params;
+        t20 = profpenref.pen.top20s || {};
+        t20.all = t20.all || [];
+        t20.all = t20.all.concat(t20.book || []);
+        t20.all = t20.all.concat(t20.movie || []);
+        t20.all = t20.all.concat(t20.video || []);
+        t20.all = t20.all.concat(t20.music || []);
+        t20.all = t20.all.concat(t20.food || []);
+        t20.all = t20.all.concat(t20.drink || []);
+        t20.all = t20.all.concat(t20.activity || []);
+        t20.all = t20.all.concat(t20.other || []);
+        profpenref.pen.top20s = t20;
+        params = "revids=" + t20.all.join(",") + "&" + app.login.authparams();
+        jt.call('GET', "revbyid?" + params, null,
+                function (revs) {
+                    app.lcs.putAll("rev", revs);
+                    profpenref.pen.top20s.all.sort(function (a, b) {
+                        var rra, rrb;
+                        rra = app.lcs.getRef("rev", a);
+                        rrb = app.lcs.getRef("rev", b);
+                        if(rra.rev && !rrb.rev) { return -1; }
+                        if(rrb.rev && !rra.rev) { return 1; }
+                        if(rra.rev.modified > rrb.rev.modified) { return -1; }
+                        if(rra.rev.modified < rrb.rev.modified) { return 1; }
+                        return 0; });
+                    app.profile.refresh(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('profcontdiv', "fetchAllFavorites failed code " +
+                           code + ": " + errtxt); }),
+                jt.semaphore("profile.fetchAllFavorites"));
+    },
+
+
+    displayFavorites = function () {
         var state, revs = [], text, revitems = [], html, i, revref;
         state = profpenref.profstate;
+        if(!profpenref.pen.top20s || !profpenref.pen.top20s.all) {
+            html = ["div", {cla: "profilereviewsdiv"},
+                    ["div", {cla: "fpinlinetextdiv"}, "Fetching favorites..."]];
+            jt.out('profcontdiv', jt.tac2html(html));
+            return fetchAllFavorites(); }
         if(profpenref.pen.top20s) {
             revs = profpenref.pen.top20s[state.revtype] || []; }
         if(revs.length === 0) {
-            text = "No top rated " + state.revtype + " reviews.";
+            text = "No top " + typeOrBlank(state.revtype) + " membics.";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-                text += " " + app.review.reviewLinkHTML(); }
-            revitems.push(["li", text]); }
+                text += " " + app.review.reviewLinkHTML(); } }
+        else { //have at least one membic
+            text = "Favorite " + typeOrBlank(state.revtype) + " membics."; }
+        revitems.push(["div", {cla: "fpinlinetextdiv"}, text]);
         for(i = 0; i < revs.length; i += 1) {
             revref = app.lcs.getRef("rev", revs[i]);
             if(revref.rev) {
-                revitems.push(app.profile.reviewItemHTML(revref.rev)); }
+                revitems.push(profileItemHTML(revref.rev)); }
             //if revref.status deleted or other error, then just skip it
             else if(revref.status === "not cached") {
-                revitems.push(["li", "Fetching review " + revs[i] + "..."]);
+                revitems.push(["div", {cla: "fpinlinetextdiv"},
+                               "Fetching membic " + revs[i] + "..."]);
                 break; } }
-        html = [["div", {id: "revTypeSelectorDiv"},
-                 revTypeSelectorHTML("app.profile.showTopRated")],
-                ["ul", {cla: "revlist"}, revitems]];
+        html = ["div", {cla: "profilereviewsdiv"}, revitems];
         jt.out('profcontdiv', jt.tac2html(html));
         if(i < revs.length) { //didn't make it through, fetch and redisplay
-            app.lcs.getFull("rev", revs[i], displayBest); }
-        else {
-            setTimeout(function () {
-                app.lcs.verifyReviewLinks(app.profile.refresh); }, 250); }
+            app.lcs.getFull("rev", revs[i], displayFavorites); }
     },
 
 
@@ -684,7 +614,7 @@ app.profile = (function () {
                  revTypeSelectorHTML("app.profile.revsearchIfTypeChange")],
                 ["div", {id: "allrevsrchdiv"},
                  ["input", {type: "text", id: state.inputId, size: 40,
-                            placeholder: "Review title or name",
+                            placeholder: "Membic title or name",
                             value: state.srchval}]],
                 ["div", {id: state.outdivId}]];
         jt.out('profcontdiv', jt.tac2html(html));
@@ -733,7 +663,7 @@ app.profile = (function () {
                 html.push(["a", {id: "contlinkhref", href: "#continuesearch",
                                  onclick: jt.fs("app.profile.revsearch()"),
                                  title: "Continue searching for more " + 
-                                        "matching reviews"},
+                                        "matching membics"},
                            "continue search..."]); } }
         jt.out(revsrchstate.outdivId, jt.tac2html(html));
     },
@@ -768,134 +698,8 @@ app.profile = (function () {
     },
 
 
-    displayFollowing = function () {
-        app.rel.displayRelations(profpenref.pen, "outbound", "profcontdiv");
-    },
-
-
-   displayFollowers = function () {
-        app.rel.displayRelations(profpenref.pen, "inbound", "profcontdiv");
-    },
-
-
     displayGroups = function () {
         app.group.displayGroups(profpenref.pen, "profcontdiv");
-    },
-
-
-    setCurrTabFromString = function (tabstr) {
-        var profstate;
-        verifyProfileState(profpenref);
-        profstate = profpenref.profstate;
-        switch(tabstr) {
-        case "recent": profstate.seltabname = "recent"; break;
-        case "best": profstate.seltabname = "best"; break;
-        case "allrevs": profstate.seltabname = "allrevs"; break;
-        case "following": profstate.seltabname = "following"; break;
-        case "followers": profstate.seltabname = "followers"; break;
-        case "groups": profstate.seltabname = "groups"; break;
-        }
-    },
-
-
-    refreshContentDisplay = function () {
-        switch(profpenref.profstate.seltabname) {
-        case "recent": displayRecent(); break;
-        case "best": displayBest(); break;
-        case "allrevs": displayAllRevs(); break;
-        case "following": displayFollowing(); break;
-        case "followers": displayFollowers(); break;
-        case "groups": displayGroups(); break;
-        }
-    },
-
-
-    writeFollowTabContent = function (penref) {
-        var tabtxt, html;
-        if(penref.profstate.foltabmode === "following") {
-            tabtxt = "Following&nbsp;(" + penref.pen.following + ")";
-            if(app.winw < 600) {
-                tabtxt = String(penref.pen.following); }
-            html = ["a", {href: "#following",
-                          title: "Click to see who you are following",
-                          onclick: jt.fs("app.profile.tabselect('following')")},
-                    [["img", {cla: "tabico", src: "img/following.png"}],
-                     "&nbsp;" + tabtxt]]; }
-        else {
-            tabtxt = "Followers&nbsp;(" + penref.pen.followers + ")";
-            if(app.winw < 600) {
-                tabtxt = String(penref.pen.followers); }
-            html = ["a", {href: "#followers",
-                          title: "Click to see who is following you",
-                          onclick: jt.fs("app.profile.tabselect('followers')")},
-                    [["img", {cla: "tabico", src: "img/follow.png"}],
-                     "&nbsp;" + tabtxt]]; }
-        jt.out('followli', jt.tac2html(html));
-    },
-
-
-    writeTopTabContent = function (penref) {
-        var html;
-        if(penref.profstate.toptabmode === "all") {
-            html = ["a", {href: "#allreviews",
-                          title: "Click to see all reviews",
-                          onclick: jt.fs("app.profile.tabselect('allrevs')")},
-                    app.winw > 600 ? "All&nbsp;Reviews": "All"]; }
-        else {
-            html = ["a", {href: "#bestreviews",
-                          title: "Click to see top reviews",
-                          onclick: jt.fs("app.profile.tabselect('best')")},
-                    app.winw > 600 ? "Top&nbsp;Rated" : "Top"]; }
-        jt.out('alltopli', jt.tac2html(html));
-    },
-
-
-    niceTabStyling = function () {
-        var css = "background:#CCCCCC;";
-        if(jt.isLowFuncBrowser()) {
-            return css; }
-        css = "background:" + app.skinner.darkbg() + "px;" +
-            " background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgba(255, 255, 255, .15)), to(rgba(0, 0, 0, .25))), -webkit-gradient(linear, left top, right bottom, color-stop(0, rgba(255, 255, 255, 0)), color-stop(0.5, rgba(255, 255, 255, .1)), color-stop(0.501, rgba(255, 255, 255, 0)), color-stop(1, rgba(255, 255, 255, 0)));" +
-            " background: -moz-linear-gradient(top, rgba(255, 255, 255, .15), rgba(0, 0, 0, .25)), -moz-linear-gradient(left top, rgba(255, 255, 255, 0), rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0));" +
-            " background: linear-gradient(top, rgba(255, 255, 255, .15), rgba(0, 0, 0, .25)), linear-gradient(left top, rgba(255, 255, 255, 0), rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0));";
-        return css;
-    },
-
-
-    noTabStyling = function () {
-        var css = "background: 0;";
-        return css;
-    },
-
-
-    displayTabs = function (penref) {
-        var html;
-        verifyProfileState(penref);
-        if(!penref.profstate.foltabmode) {
-            penref.profstate.foltabmode = "following";
-            if(app.pen.currPenRef() === penref) {
-                penref.profstate.foltabmode = "followers"; } }
-        html = ["table",  //hiding in a table to avoid phone text autozoom
-                ["tr",
-                 ["td",
-                  ["ul", {id: "proftabsul"},
-                   [["li", {id: "recentli", cla: "selectedTab"},
-                     ["a", {href: "#recentreviews",
-                            title: "Click to see recent reviews",
-                            onclick: jt.fs("app.profile.tabselect('recent')")},
-                      "Latest"]],
-                    ["li", {id: "alltopli", cla: "unselectedTab"}],
-                    ["li", {id: "followli", cla: "unselectedTab"}],
-                    ["li", {id: "groupsli", cla: "unselectedTab"},
-                     ["a", {href: "#groups",
-                            title: "Click to see group affiliations",
-                            onclick: jt.fs("app.profile.tabselect('groups')")},
-                      [["img", {cla: "tabico", src: "img/group.png"}],
-                       (app.winw < 500 ? "" : "&nbsp;Groups")]]]]]]]];
-        jt.out('proftabsdiv', jt.tac2html(html));
-        writeTopTabContent(penref);
-        writeFollowTabContent(penref);
-        app.profile.tabselect();
     },
 
 
@@ -965,50 +769,6 @@ app.profile = (function () {
     },
 
 
-    displayShout = function (pen) {
-        var html, shout, text;
-        text = "No profile details";
-        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            text = "Your website(s), Twitter handle, shoutouts..."; }
-        text = ["span", {style: "color:" + greytxt + ";"}, text];
-        text = jt.tac2html(text);
-        html = ["div", {id: "shoutdiv", cla: "shoutout"}];
-        jt.out('profshoutdiv', jt.tac2html(html));
-        shout = jt.byId('shoutdiv');
-        styleShout(shout);
-        shout.style.overflow = "auto";
-        if(!jt.isLowFuncBrowser()) {
-            shout.style.backgroundColor = "rgba(" + 
-                jt.hex2rgb(app.skinner.lightbg()) + ",0.3)"; }
-        //the textarea has a default border, so adding an invisible
-        //border here to keep things from jumping around.
-        shout.style.border = "1px solid " + app.colors.bodybg;
-        text = jt.linkify(pen.shoutout) || text;
-        jt.out('shoutdiv', text);
-        if(profileModAuthorized(pen)) {
-            jt.on('shoutdiv', 'click', function (e) {
-                jt.evtend(e);
-                editShout(pen); }); }
-    },
-
-
-
-    displayCity = function (pen) {
-        var html;
-        if(!pen.city) { 
-            jt.byId('profcityspan').style.color = greytxt; }
-        html = pen.city || unspecifiedCityText;
-        if(profileModAuthorized(pen)) {
-            html = ["a", {href: "#edit city", title: "Edit city",
-                          id: "profcitya",
-                          onclick: jt.fs("app.profile.editCity()"),
-                          style: jt.toru(!pen.city, 
-                                         "color:" + greytxt + ";")},
-                    html]; }
-        jt.out('profcityspan', jt.tac2html(html));
-    },
-
-
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
         var inputs, html, odiv;
@@ -1072,69 +832,6 @@ app.profile = (function () {
     },
 
 
-    revimpactHTML = function (homepen, dispen) {
-        var linksum, html = "";
-        if(jt.instId(homepen) === jt.instId(dispen)) {
-            linksum = app.pen.currPenRef().linksummary;
-            if(linksum) {
-                html = ["div", {id: "inlinkdiv"},
-                        ["table",
-                         [["tr",
-                           [["td", {align: "left"}, 
-                             ["img", {cla: "reviewbadge",
-                                      src: "img/friendresp.png"}]],
-                            ["td", {align: "right"}, 
-                             ["a", {href: "#helpful",
-                                    onclick: jt.fs("app.profile.displayResp('" +
-                                                   "helpful')")},
-                              "Helpful:"]],
-                            ["td", {cla: "inbct"},
-                             String(linksum.helpsrc) + "/" +
-                             String(linksum.helpful)]]],
-                          ["tr",
-                           [["td", {colspan: 2, align: "right"}, 
-                             ["a", {href: "#remembered",
-                                    onclick: jt.fs("app.profile.displayResp('" +
-                                                   "remembered')")},
-                              "Remembered:"]],
-                            ["td", {cla: "inbct"},
-                             String(linksum.remsrc) + "/" + 
-                             String(linksum.remembered)]]],
-                          ["tr",
-                           [["td", {colspan: 2, align: "right"},
-                             ["a", {href: "#corresponding",
-                                    onclick: jt.fs("app.profile.displayResp('" +
-                                                   "corresponding')")},
-                              "Corresponding:"]],
-                            ["td", {cla: "inbct"},
-                             String(linksum.correspsrc) + "/" + 
-                             String(linksum.corresponding)]]]]]]; } }
-        return html;
-    },
-
-
-    inviteHTML = function () {
-        var html = "";
-        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            html = ["a", {id: "commbuild", href: "#invite",
-                          onclick: jt.fs("app.profile.invite()")},
-                    [["img", {cla: "reviewbadge", src: "img/follow.png"}],
-                     "Send Invite"]]; }
-        return html;
-    },
-
-
-    createGroupHTML = function () {
-        var html = "";
-        if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
-            html = ["a", {id: "creategroup", href: "#creategroup",
-                          onclick: jt.fs("app.group.createGroup()")},
-                    [["img", {cla: "reviewbadge", src: "img/group.png"}],
-                     "Create Group"]]; }
-        return html;
-    },
-
-
     byLineHTML = function (revobj, penNameStr) {
         var byline, revref, vialink = "";
         byline = ["span", {cla: "blrevdate"},
@@ -1172,31 +869,37 @@ app.profile = (function () {
     },
 
 
-    tabswitch = function (tabname) {
-        var i, ul, li;
-        ul = jt.byId('proftabsul');
-        if(!ul) {  //probably coming from review display or somewhere
-            return app.profile.byprofid(profpenref.penid, tabname); }
-        for(i = 0; i < ul.childNodes.length; i += 1) {
-            li = ul.childNodes[i];
-            li.className = "unselectedTab";
-            li.style.cssText = niceTabStyling(); }
-        li = jt.byId(tabname + "li");
-        if(!li && tabname.indexOf("follow") >= 0) {
-            profpenref.profstate.foltabmode = tabname;
-            writeFollowTabContent(profpenref);
-            li = jt.byId("followli"); }
-        if(!li && tabname.indexOf("best") >= 0) {
-            profpenref.profstate.toptabmode = "top";
-            writeTopTabContent(profpenref);
-            li = jt.byId("alltopli"); }
-        if(!li && tabname.indexOf("allrevs") >= 0) {
-            profpenref.profstate.toptabmode = "all";
-            writeTopTabContent(profpenref);
-            li = jt.byId("alltopli"); }
-        li.className = "selectedTab";
-        li.style.cssText = noTabStyling();
-        li.style.backgroundColor = "transparent";
+    displayTab = function (tabname) {
+        tabname = tabname || profpenref.profstate.seltabname || "latest";
+        profpenref.profstate.seltabname = tabname;
+        jt.byId('latestli').className = "unselectedTab";
+        jt.byId('favoritesli').className = "unselectedTab";
+        jt.byId('groupsli').className = "unselectedTab";
+        jt.byId('searchli').className = "unselectedTab";
+        jt.byId(tabname + "li").className = "selectedTab";
+        switch(tabname) {
+        case "latest": return displayRecent();
+        case "favorites": return displayFavorites();
+        case "groups": return displayGroups();
+        case "search": return displayAllRevs(); }
+    },
+
+
+    profPicImageHTML = function (pen) {
+        var attrs = { cla: "profpic", src: "img/emptyprofpic.png" };
+        if(pen.profpic) {
+            attrs.src = "profpic?profileid=" + jt.instId(pen); }
+        if(profileModAuthorized(pen)) {
+            attrs.onclick = jt.fs("app.profile.uploadProfPic()"); }
+        return ["img", attrs];
+    },
+
+
+    shoutoutHTML = function (pen) {
+        var text = pen.shoutout || "";
+        if(!text && profileModAuthorized(pen)) {
+            text = "Links to other pages you have, a favorite saying, or anything else you would like to share..."; }
+        return ["span", {cla: "shoutspan"}, jt.linkify(text)];
     },
 
 
@@ -1205,55 +908,44 @@ app.profile = (function () {
         if(!dispen) {
             dispen = homepen; }
         app.profile.verifyStateVariableValues(dispen);  //sets profpenref
-        if(action === "penfinder") {
-            profpenref.profstate.seltabname = "following"; }
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: profpenref.profstate.seltabname });
-        //redisplay the heading in case we just switched pen names
-        writeNavDisplay(homepen, dispen);
-        //reset the colors in case that work got dropped in the
-        //process of updating the persistent state
-        app.skinner.setColorsFromPen(homepen);
-        if(!app.layout.haveContentDivAreas()) { //change pw kills it
-            app.layout.initContentDivAreas(); }
-        html = ["div", {id: "proftopdiv"},
-                [["div", {id: "profparticipatediv"},
-                  [["div", {id: "sysnotice"}],
-                   ["div", {id: "proftabsdiv"}],
-                   ["div", {id: "profcontdiv"}]]]]];
-        jt.out('cmain', jt.tac2html(html));
-        html = ["div", {id: "profpersonaldiv"},
-                [["div", {id: "profpicdiv"},
-                  ["img", {cla: "profpic", src: "img/emptyprofpic.png"}]],
-                 ["div", {id: "profcitydiv"},
-                  [["span", {id: "profcityspan"}],
-                   ["span", {id: "profeditbspan"}]]],
-                 ["div", {id: "profshoutdiv"},
-                  ["div", {id: "shoutdiv", cla: "shoutout"}]],
-                 ["div", {id: "fgfweblogdiv"},
-                  ["a", {href: "blogs/" + dispen.name_c,
-                         onclick: jt.fs("window.open('blogs/" + 
-                                        dispen.name_c + "')")},
-                   "My RevLog"]],  //discussion 03jul14
-                 ["div", {id: "profrevimpactdiv"},
-                  revimpactHTML(homepen, dispen)],
-                 ["div", {id: "profinvitediv"},
-                  inviteHTML()],
-                 ["div", {id: "creategroupdiv"},
-                  createGroupHTML()]]];
-        jt.out('rightcoldiv', jt.tac2html(html));
-        jt.byId('rightcoldiv').style.display = "block";
-        displayShout(dispen);
-        displayCity(dispen);
-        displayPic(dispen);
-        displayTabs(profpenref);
+        html = ["div", {id: "profilediv"},
+                [["div", {id: "profupperdiv"},
+                  [["div", {id: "profpicdiv"},
+                    profPicImageHTML(dispen)],
+                   ["div", {id: "profdescrdiv"},
+                    [["div", {id: "profnamediv"},
+                      ["a", {href: "#view=profile&profid=" + jt.instId(dispen),
+                             onclick: jt.fs("app.profile.blogconf()")},
+                       ["span", {cla: "penfont"}, dispen.name]]],
+                     ["div", {id: "profshoutdiv"},
+                      shoutoutHTML(dispen)]]]]],
+                 ["div", {id: "workstatdiv"}],  //save button, update status
+                 ["div", {id: "tabsdiv"},
+                  ["ul", {id: "tabsul"},
+                   [["li", {id: "latestli", cla: "unselectedTab"},
+                     ["a", {href: "#latestmembics",
+                            onclick: jt.fs("app.profile.tabsel('latest')")},
+                      ["img", {cla: "tabico", src: "img/tablatest.png"}]]],
+                    ["li", {id: "favoritesli", cla: "unselectedTab"},
+                     ["a", {href: "#favoritemembics",
+                            onclick: jt.fs("app.profile.tabsel('favorites')")},
+                      ["img", {cla: "tabico", src: "img/helpfulq.png"}]]],
+                    ["li", {id: "groupsli", cla: "unselectedTab"},
+                     ["a", {href: "#groupsfollowing",
+                            onclick: jt.fs("app.profile.tabsel('groups')")},
+                      ["img", {cla: "tabico", src: "img/tabgrps.png"}]]],
+                    ["li", {id: "searchli", cla: "unselectedTab"},
+                     ["a", {href: "#searchmembics",
+                            onclick: jt.fs("app.profile.tabsel('search')")},
+                      ["img", {cla: "tabico", src: "img/search.png"}]]]]]],
+                 ["div", {id: "profcontdiv"}]]];
+        jt.out('contentdiv', jt.tac2html(html));
+        displayTab();
         if(errmsg) {
             jt.err("Previous processing failed: " + errmsg); }
-        if(profeditfield === "city") {
-            app.profile.editCity(); }
-        else if(action === "penfinder") {
-            app.activity.penNameSearchDialog(); }
     };
 
 
@@ -1275,12 +967,6 @@ return {
     },
 
 
-    updateHeading: function () {  //called during startup
-        app.pen.getPen(function (homepen) {
-            writeNavDisplay(homepen, profpenref && profpenref.pen); });
-    },
-
-
     refresh: function () {
         app.pen.getPen(function (homepen) {
             mainDisplay(homepen, profpenref.pen); });
@@ -1293,52 +979,12 @@ return {
     },
 
 
-    tabselect: function (tabname) {
+    tabsel: function (tabname) {
         verifyProfileState(profpenref);
-        if(tabname) {
-            profpenref.profstate.seltabname = tabname; }
-        else {
-            tabname = profpenref.profstate.seltabname; }
-        tabswitch(tabname);
         app.history.checkpoint({ view: "profile", 
                                  profid: jt.instId(profpenref.pen),
                                  tab: tabname });
-        refreshContentDisplay();
-    },
-
-
-    displayResp: function (inlinktype) {
-        var inlinks, il, i, revitems = [], revref, html = "";
-        if(!inlinktype || typeof inlinktype !== "string") {
-            inlinktype = lastInLinkType; }
-        lastInLinkType = inlinktype;
-        tabswitch('recent');
-        inlinks = app.pen.currPenRef().inlinks;
-        if(!inlinks || inlinks.length === 0) {
-            revitems.push(["li", "No reviews found"]); }
-        for(i = 0; inlinks && i < inlinks.length; i += 1) {
-            il = inlinks[i];
-            if(il[inlinktype]) {
-                revref = app.lcs.getRef("rev", inlinks[i].revid);
-                if(revref.rev) {
-                    revitems.push(app.profile.reviewItemHTML(revref.rev)); }
-                else if(revref.status === "not cached") {
-                    revitems.push(["li", "Fetching review " +
-                                   inlinks[i].revid + "..."]);
-                    break; } } }
-        switch(inlinktype) {
-          case 'helpful': 
-            html = "Reviews that have been helpful to other people"; break;
-          case 'remembered':
-            html = "Reviews other people have remembered"; break;
-          case 'corresponding':
-            html = "Reviews of things other people also reviewed"; break; }
-        html = [["div", {cla: "tabcontentheadertext"},
-                 html],
-                ["ul", {cla: "revlist"}, revitems]];
-        jt.out('profcontdiv', jt.tac2html(html));
-        if(inlinks && i < inlinks.length) { //didn't have all revs
-            app.lcs.getFull("rev", inlinks[i].revid, app.profile.displayResp); }
+        displayTab(tabname);
     },
 
 
@@ -1348,7 +994,6 @@ return {
 
 
     save: function () {
-        profeditfield = "";
         app.pen.getPen(saveEditedProfile);
     },
 
@@ -1359,9 +1004,13 @@ return {
         findOrLoadPen(id, function (dispen) {
             if(tabname) {
                 app.profile.verifyStateVariableValues(dispen);
-                setCurrTabFromString(tabname); }
-            app.pen.getPen(function (homepen) {
-                mainDisplay(homepen, dispen); }); });
+                verifyProfileState(profpenref);
+                profpenref.profstate.seltabname = tabname; }
+            if(app.login.isLoggedIn()) {
+                app.pen.getPen(function (homepen) {
+                    mainDisplay(homepen, dispen); }); }
+            else {
+                mainDisplay(null, dispen); } });
     },
 
 
@@ -1471,7 +1120,7 @@ return {
                  clickspan(app.review.badgeImageHTML(type), revclick),
                  "&nbsp;",
                  ["a", {id: "lihr" + revid, cla: linkclass, 
-                        href: linkref, title: "See full review",
+                        href: linkref, title: "See full membic",
                         onclick: revclick},
                   app.profile.reviewItemNameHTML(type, revobj)],
                  "&nbsp;" + app.review.jumpLinkHTML(revobj, type),
@@ -1518,11 +1167,6 @@ return {
     },
 
 
-    writeNavDisplay: function (homepen, dispen, directive) {
-        writeNavDisplay(homepen, dispen, directive);
-    },
-
-
     verifyStateVariableValues: function (pen) {
         profpenref = app.lcs.getRef("pen", pen);
         verifyProfileState(profpenref);
@@ -1541,75 +1185,6 @@ return {
     saveIfNotShoutEdit: function () {
         if(jt.byId('shoutdiv')) {
             app.profile.save(); }
-    },
-
-
-    editCity: function () {
-        var val, html, elem;
-        elem = jt.byId('profcityin');
-        if(elem) {
-            return; }  //already editing
-        val = jt.byId('profcityspan').innerHTML;
-        //IE8 actually capitalizes the the HTML for you. Sheesh.
-        if(val.indexOf("<a") === 0 || val.indexOf("<A") === 0) {
-            val = jt.byId('profcitya').innerHTML; }
-        if(val === unspecifiedCityText) {
-            val = ""; }
-        html = ["input", {type: "text", id: "profcityin", size: 16,
-                          placeholder: "City, township, or region", value: val,
-                          onchange: jt.fs("app.profile.saveIfNotShoutEdit()")}];
-        jt.out('profcityspan', jt.tac2html(html));
-        displayProfEditButtons();
-        jt.byId('profcityin').focus();
-    },
-
-
-    invitecboxchange: function () {
-        jt.out('mailbspan', mailButtonHTML());
-    },
-
-
-    //Reading people's email contacts feels creepy to me. Saving email
-    //entered by friends seems presumptuous. Automatically creating an
-    //account might seem nice the first time, but not if they already
-    //have an account (or the click the setup link more than
-    //once). The invitee might want to use a different email address
-    //than the one for the invite.
-    invite: function () {
-        var html;
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["div", {cla: "headingtxt"},
-                 "Invite a friend... build your community!"],
-                ["table", {cla: "formstyle"},
-                 [["tr",
-                   ["td", {style: "width:400px;"},
-                    [["p",
-                      ["span", {cla: "secondaryfield"},
-                       "Use this form to generate an email you can " +
-                       "edit and send..."]]]]],
-                  ["tr",
-                   ["td", 
-                      "Particularly interested in reviews of"]],
-                  ["tr",
-                   ["td", {id: "invtypestd"},
-                    app.review.reviewTypeCheckboxesHTML("invrevcb",
-                        jt.fs("app.profile.invitecboxchange()"))]],
-                  ["tr",
-                   ["td", {align: "center"},
-                    ["span", {id: "mailbspan"},
-                     mailButtonHTML()]]]]]];
-        app.layout.openDialog({x:220, y:140}, jt.tac2html(html));
-    },
-
-
-    showTopRated: function (typename) {
-        verifyProfileState(profpenref);
-        profpenref.profstate.revtype = typename;
-        app.profile.tabselect("best");
     },
 
 
@@ -1708,14 +1283,7 @@ return {
     },
 
 
-    setEditField: function (fieldname) {
-        profeditfield = fieldname;
-    },
-
-
     cancelProfileEdit: function () {
-        profeditfield = "";
-        app.profile.updateHeading();
         app.profile.display();
     },
 
@@ -1787,6 +1355,20 @@ return {
                 html.push(["span", {cla: "badgespan"},
                            ["img", attrobj]]); } }
         return jt.tac2html(html);
+    },
+
+
+    uploadProfPic: function () {
+        //display the form with an iframe target and monitor upload
+        jt.err("uploadProfPic not implemented yet.");
+    },
+
+
+    blogconf: function () {
+        //confirm we should open a new page with their blog view which
+        //they can share publicly.  The href should also be that URL
+        //since you have to be signed in to see someone's profile.
+        jt.err("blogconf not implemented yet.");
     }
 
 };  //end of returned functions

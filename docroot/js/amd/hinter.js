@@ -196,38 +196,6 @@ app.hinter = (function () {
     },
 
 
-    fillcityActive = function (pen) {
-        if(pen.city) {
-            return false; }
-        if(!pen.top20s) {
-            //if they haven't written a review yet, then it doesn't make sens
-            //to bother about the finer points of having a decent profile.
-            return false; }
-        return true;
-    },
-
-
-    fillcity = function (displayCount) {
-        var html;
-        html = ["div", {cla: "hintcontentdiv"},
-                [["p", "Including the metropolitan area, township or region you are most affiliated with makes your profile more interesting and helps build relationships. Add a city to your profile?"],
-                 ["div", {cla: "dismissradiodiv"},
-                  (displayCount <= 1 ? "" : jt.checkbox("cbtip", "cbtip", "I don't want my profile to look more interesting, please don't display this message again."))],
-                 ["div", {cla: "tipsbuttondiv"},
-                  [["button", {type: "button", id: "tipok",
-                               onclick: jt.fs("app.hinter.tipok('fillcity')")},
-                    "Later"],
-                   "&nbsp; &nbsp; &nbsp;",
-                   ["button", {type: "button", id: "fillcitybutton",
-                               onclick: jt.fs("app.hinter.fillCity()")},
-                    "Update Profile"]]]]];
-        html = app.layout.dlgwrapHTML("Profile City", html);
-        app.layout.queueDialog({y:140}, jt.tac2html(html), null,
-                               function () {
-                                   jt.byId('fillcitybutton').focus(); });
-    },
-                  
-
     remrevActive = function (pen) {
         var penref = app.pen.currPenRef();
         //penref.remembered is initialized by hitting the remembered
@@ -442,7 +410,6 @@ app.hinter = (function () {
             { name: "looktop",  checkf: looktopActive,  runf: looktop },
             { name: "ezlink",   checkf: ezlinkActive,   runf: ezlink },
             { name: "writerev", checkf: writerevActive, runf: writerev },
-            { name: "fillcity", checkf: fillcityActive, runf: fillcity },
             { name: "remrev",   checkf: remrevActive,   runf: remrev },
             { name: "follmore", checkf: follmoreActive, runf: follmore },
             { name: "groups",   checkf: groupsActive,   runf: groups },
@@ -490,13 +457,6 @@ return {
     writeReview: function () {
         app.hinter.tipok('writerev');
         app.review.cancelReview(true);
-    },
-
-
-    fillCity: function () {
-        app.hinter.tipok('fillcity');
-        app.profile.setEditField("city");
-        app.profile.display();
     },
 
 

@@ -1527,12 +1527,9 @@ app.review = (function () {
         setTimeout(function () {  //refresh headings
             if(crev.penid !== jt.instId(pen)) { 
                 app.lcs.getFull("pen", crev.penid, function (revpenref) {
-                    app.profile.verifyStateVariableValues(revpenref.pen);
-                    app.profile.writeNavDisplay(pen, revpenref.pen,
-                                                "nosettings"); }); }
+                    app.profile.verifyStateVariableValues(revpenref.pen); }); }
             else {
-                app.profile.verifyStateVariableValues(pen);
-                app.profile.writeNavDisplay(pen, null, "nosettings"); }
+                app.profile.verifyStateVariableValues(pen); }
             }, 50);
         jt.out('rightcoldiv', "");
         jt.byId('rightcoldiv').style.display = "none";
@@ -2242,7 +2239,7 @@ return {
     fpbToggleHelpful: function (prefix, revid) {
         var penref;
         penref = app.pen.currPenRef();
-        if(!penref.pen) {
+        if(!penref || !penref.pen) {
             return jt.err("Please sign in"); }
         jt.err("fpbToggleHelpful not implemented yet");
     },
@@ -2250,7 +2247,7 @@ return {
 
     fpbToggleRemember: function (prefix, revid) {
         var penref = app.pen.currPenRef();
-        if(!penref.pen) {
+        if(!penref || !penref.pen) {
             return jt.err("Please sign in"); }
         jt.err("fpbToggleRemember not implemented yet");
     },
@@ -2258,7 +2255,7 @@ return {
 
     fpbWrite: function (prefix, revid) {
         var penref = app.pen.currPenRef();
-        if(!penref.pen) {
+        if(!penref || !penref.pen) {
             return jt.err("Please sign in"); }
         jt.err("fpbWrite not implemented yet");
     },

@@ -204,7 +204,6 @@ return {
     initContent: function () {
         if(!app.layout.haveContentDivAreas()) {
             app.layout.initContentDivAreas();
-            app.profile.updateHeading();
             app.activity.updateHeading();
             app.review.updateHeading(); }
     },
@@ -396,8 +395,6 @@ return {
         setTimeout(function () {
             jt.byId("meritimg").src = nsrc; }, 450);
         setTimeout(function () {
-            app.profile.writeNavDisplay(app.pen.currPenRef().pen,
-                                        null, "nosettings");
             meritactive = false;
             app.layout.cancelOverlay(); }, 2800);
     },

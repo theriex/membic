@@ -54,7 +54,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { }
-#logodiv { float:left; } 
+#logodiv { float:left; cursor:pointer; } 
 #logodiv, #logoimg { width:80px; height:80px; }
 #headingdiv { min-height:80px; }
 #headingdivcontent { width:240px; margin:auto; padding:30px 0px 0px 0px; }
@@ -94,8 +94,11 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 #bottomnav { font-size:xx-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:15px; width:90%; }
-.footerlink { background:#789897; padding:1px 3px; border-radius:3px; }
-#contentdiv { display:table; margin:auto; }
+.footerlink, .unselectedTab { background:#789897; 
+  background:-moz-linear-gradient(left top, #789897 0%, #8cb3b2 100%);
+  background:-webkit-linear-gradient(left top, #789897 0%, #8cb3b2 100%); }
+.footerlink { padding:1px 3px; border-radius:3px; }
+#contentdiv { }
 #introverview { padding:10px 0px; color:#666; font-size:medium; 
  width:60%; margin:auto; }
 #introverviewtaglinediv { position:absolute; left:40px; top:125px; 
@@ -210,14 +213,15 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 #proftopdiv { font-size:large; }
 #profparticipatediv { }
 #profpersonaldiv { padding:0px 0px 0px 10px; }
-#profshoutdiv { padding:0px; }
+#profshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
 #fgfweblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
 #srchpenslinkdiv, #srchgroupslinkdiv { 
   font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }
-#profpicdiv { width:130px; text-align:right; }
+#profpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
+#profdescrdiv { height:125px; overflow:auto; }
 #picplaceholderdiv { color:#999999; font-size:small;
   height:125px; width:110px; padding:10px; text-align:left; }
 /* fixed width and height on srchpic so the summary lines line up */
@@ -247,16 +251,16 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 .grpostline { padding: 0px 0px 0px 0px; margin: 4px 0px 0px 0px; 
   font-size:x-small; }
 .grpostlinehead { font-style:italic; }
-#proftabsdiv { }
-#proftabsul { }
-#proftabsdiv ul { list-style:none; padding:0; margin:0; }
-#proftabsdiv ul li { display:inline; 
+#tabsdiv { clear:both; }
+#tabsul { }
+#tabsdiv ul { list-style:none; padding:0; margin:0; }
+#tabsdiv ul li { display:inline; 
   border-top-left-radius:5px; border-top-right-radius:5px;
   border-top:  1px solid #666;
   border-left: 1px solid #666;
   border-right: 1px solid #666;
  }
-#proftabsdiv a { padding: 0 15px; }
+#tabsdiv a { padding: 0 15px; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
 #profdisptable { }
@@ -460,6 +464,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 
 /* >> feed post review layout */
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
+.profrevdiv { clear:both; margin:0px 0px 10px 0px; }
 .fpprofdiv { display:inline-block; width:50px; height:60px; 
   overflow:scroll; float:left; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
@@ -484,6 +489,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 .fpkeywrdsdiv { font-style:italic; }
 .fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }
 .togglemoretextspan { background:#ccc; }
+.fpinlinetextdiv { font-size:small; }
 
 
 /* >> settings dialog */

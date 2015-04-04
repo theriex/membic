@@ -796,13 +796,15 @@ return {
     },
 
 
-    logout: function () {
+    logout: function (errprompt) {
         app.login.closeupdate();
         logoutWithNoDisplayUpdate();
         app.profile.cancelPenNameSettings();  //close the dialog if it is up
         app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateAuthentDisplay();
         app.login.init();
+        if(errprompt) {
+            jt.err(errprompt); }
     },
 
 

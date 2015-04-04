@@ -583,12 +583,23 @@ class SearchReviews(webapp2.RequestHandler):
 class GetReviewById(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = cached_get(intz(revid), Review)
-        if not review:
-            self.error(404)
-            self.response.write("No Review found for id " + revid)
+        if revid:
+            review = cached_get(intz(revid), Review)
+            if not review:
+                self.error(404)
+                self.response.write("No Review found for id " + revid)
+                return
+            returnJSON(self.response, [ review ])
             return
-        returnJSON(self.response, [ review ])
+        revs = []
+        revids = self.request.get('revids')
+        if revids:
+            rids = revids.split(",")
+            for rid in rids:
+                review = cached_get(intz(rid), Review)
+                if review:
+                    revs.append(review)
+        returnJSON(self.response, revs)
 
 
 # If penid is specified, then this returns the first few matching
