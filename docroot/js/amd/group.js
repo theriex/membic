@@ -2066,8 +2066,7 @@ return {
              ["div", {id: "srchgroupslinkdiv"},
               ["a", {id: "srchgroups", href: "#findgroups",
                      onclick: jt.fs("app.group.groupSearchDialog()")},
-               [["img", {cla: "reviewbadge", src: "img/group.png"}],
-                "Find groups to follow"]]]]));
+               "Find groups to follow"]]]));
         if(fetchid) {
             app.lcs.getFull("group", fetchid, function () {
                 app.group.displayGroups(pen, divid); }); }

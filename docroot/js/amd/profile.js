@@ -8,8 +8,8 @@
 //
 //   penref.profstate:
 //     seltabname: name of selected display tab
-//     revtype: name of selected review type (shared by best and allrevs)
-//     allRevsState:
+//     revtype: name of selected review type
+//     searchState:
 //       srchval: the search query value
 //       cursor: cursor for continuing to load more matching reviews
 //       total: count of reviews searched
@@ -64,7 +64,7 @@ app.profile = (function () {
     //updated.  It does not yet make sense to attempt to recompute
     //things locally in addition to on the server.  Ultimately saving
     //a review might insert/replace the newrev from the recent
-    //reviews, insert into allrevs if matched, and reload the top20s
+    //reviews, insert into state if matched, and reload the top20s
     //(if the pen wasn't just loaded).  For now this just clears the
     //local cache to trigger a rebuild.
     resetReviewDisplays = function (penref) {
@@ -595,24 +595,20 @@ app.profile = (function () {
     },
 
 
-    displayAllRevs = function () {
+    displaySearch = function () {
         var html, state;
-        state = profpenref.profstate.allRevsState;
-        if(!state) {
-            state = profpenref.profstate.allRevsState = {
-                inputId: "allrevsrchin",
-                outdivId: "allrevdispdiv",
-                revrendf: function (state, type, review) {
-                    return app.profile.reviewItemHTML(review); },
-                revtype: profpenref.profstate.revtype,
-                srchval: "",
-                preserve: true }; }
+        state = profpenref.profstate.searchState || {
+            inputId: "profsrchin",
+            outdivId: "profsrchdispdiv",
+            revrendf: function (state, type, review) {
+                return profileItemHTML(review); },
+            revtype: profpenref.profstate.revtype,
+            srchval: "",
+            preserve: true };
         if(state.revtype !== profpenref.profstate.revtype) {
             resetSearchStateInterimResults(state);
             state.revtype = profpenref.profstate.revtype; }
-        html = [["div", {id: "revTypeSelectorDiv"},
-                 revTypeSelectorHTML("app.profile.revsearchIfTypeChange")],
-                ["div", {id: "allrevsrchdiv"},
+        html = [["div", {id: "profsrchdiv"},
                  ["input", {type: "text", id: state.inputId, size: 40,
                             placeholder: "Membic title or name",
                             value: state.srchval}]],
@@ -642,7 +638,7 @@ app.profile = (function () {
                 revsrchstate.total += results[i].fetched;
                 revitems.push(
                     ["div", {id: "revsrchcountdiv", cla: "sumtotal"},
-                     String(revsrchstate.total) + " reviews searched"]);
+                     String(revsrchstate.total) + " membics searched"]);
                 if(results[i].cursor) {
                     revsrchstate.cursor = results[i].cursor; }
                 break; }  //leave i at its current value
@@ -881,7 +877,7 @@ app.profile = (function () {
         case "latest": return displayRecent();
         case "favorites": return displayFavorites();
         case "groups": return displayGroups();
-        case "search": return displayAllRevs(); }
+        case "search": return displaySearch(); }
     },
 
 
@@ -933,14 +929,14 @@ app.profile = (function () {
                      ["a", {href: "#favoritemembics",
                             onclick: jt.fs("app.profile.tabsel('favorites')")},
                       ["img", {cla: "tabico", src: "img/helpfulq.png"}]]],
-                    ["li", {id: "groupsli", cla: "unselectedTab"},
-                     ["a", {href: "#groupsfollowing",
-                            onclick: jt.fs("app.profile.tabsel('groups')")},
-                      ["img", {cla: "tabico", src: "img/tabgrps.png"}]]],
                     ["li", {id: "searchli", cla: "unselectedTab"},
                      ["a", {href: "#searchmembics",
                             onclick: jt.fs("app.profile.tabsel('search')")},
-                      ["img", {cla: "tabico", src: "img/search.png"}]]]]]],
+                      ["img", {cla: "tabico", src: "img/search.png"}]]],
+                    ["li", {id: "groupsli", cla: "unselectedTab"},
+                     ["a", {href: "#groupsfollowing",
+                            onclick: jt.fs("app.profile.tabsel('groups')")},
+                      ["img", {cla: "tabico", src: "img/tabgrps.png"}]]]]]],
                  ["div", {id: "profcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         displayTab();
@@ -1216,7 +1212,7 @@ return {
 
     revsearch: function (srchstate) {
         var penid, params;
-        if(srchstate) {
+        if(srchstate) {  //clear work and init revsrchstate
             app.profile.clearRevSearch();  //clear any outstanding timeouts
             revsrchstate = srchstate;
             app.profile.clearRevSearch();  //reset and init as needed
@@ -1226,12 +1222,12 @@ return {
             else {
                 setTimeout(app.profile.revsearch, 50); }
             return; }
-        //verify not already searching what is being requested
-        if(revsrchstate.inprog &&
+        if(revsrchstate.inprog &&  //verify not already searching...
                revsrchstate.inprog.revtype === revsrchstate.revtype &&
                revsrchstate.inprog.srchval === revsrchstate.srchval &&
                revsrchstate.inprog.cursor === revsrchstate.cursor) {
             return; }
+        //ready to start search
         revsrchstate.inprog = { revtype: revsrchstate.revtype,
                                 srchval: revsrchstate.srchval,
                                 cursor: revsrchstate.cursor };
@@ -1248,7 +1244,7 @@ return {
             penid = jt.instId(profpenref.pen); }
         params = app.login.authparams() +
             "&qstr=" + jt.enc(jt.canonize(revsrchstate.srchval)) +
-            "&revtype=" + revsrchstate.revtype +
+            "&revtype=" + typeOrBlank(revsrchstate.revtype) +
             "&penid=" + penid +
             "&maxdate=" + revsearchMaxDate() + 
             "&mindate=1970-01-01T00:00:00Z" + 
@@ -1257,6 +1253,7 @@ return {
                 function (results) { 
                     app.lcs.putAll("rev", results);
                     displayRevSearchResults(results);
+                    profpenref.profstate.searchState = revsrchstate;
                     monitorRevSearchValue(); },
                 app.failf(function (code, errtxt) {
                     jt.err("revsearch call died code: " + code + " " +
@@ -1270,7 +1267,7 @@ return {
             profpenref.profstate.revtype = revtype;
             jt.out('revTypeSelectorDiv', 
                    revTypeSelectorHTML("app.profile.revsearchIfTypeChange"));
-            displayAllRevs(); }
+            displaySearch(); }
     },
 
 
