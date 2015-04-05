@@ -1018,7 +1018,7 @@ app.activity = (function () {
         if(dispmode === "memo") {
             displayRemembered(); }
         else {  //dispmode === "activity", activityMode === "amnew"
-            app.activity.displayFeed("all"); }
+            app.activity.displayFeed(); }
     };
 
 
@@ -1028,18 +1028,8 @@ app.activity = (function () {
 return {
 
     displayFeed: function (feedtype) {
-        var revtypes, i, rt, html = [], params, time;
-        revtypes = app.review.getReviewTypes();
-        for(i = 0; i < revtypes.length; i += 1) {
-            rt = revtypes[i];
-            html.push(["a", {href: "#" + rt.type,
-                             onclick: jt.fs("app.activity.displayFeed('" + 
-                                            rt.type + "')")},
-                       ["img", {cla: "reviewbadge",
-                                src: "img/" + rt.img}]]); }
-        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv"}, 
-                html];
-        jt.out("headingdivcontent", jt.tac2html(html));
+        var html, params, time;
+        app.layout.displayTypes(app.activity.displayFeed, feedtype);
         html = ["div", {id: "feedrevsdiv"}];
         jt.out("contentdiv", jt.tac2html(html));
         if(feeds[feedtype]) {

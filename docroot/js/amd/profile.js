@@ -332,12 +332,28 @@ app.profile = (function () {
     },
 
 
+    typematchProfileItemHTML = function (rev) {
+        var revtype = app.layout.getType();
+        if(revtype === "all" || revtype === rev.revtype) {
+            return profileItemHTML(rev); }
+        return "";
+    },
+
+
+    typeOrBlank = function (typename) {
+        if(typename && typename !== "all") {
+            return typename; }
+        return "";
+    },
+
+
     displayRecentReviews = function (rrs, reviews) {
-        var revitems = [], i, text, html, fetched;
+        var revtype, revitems = [], i, text, html, fetched;
+        revtype = app.layout.getType();
         if(!rrs.results) {
             rrs.results = []; }
         for(i = 0; i < rrs.results.length; i += 1) {
-            revitems.push(profileItemHTML(rrs.results[i])); }
+            revitems.push(typematchProfileItemHTML(rrs.results[i])); }
         if(reviews) {  //have fresh search results
             rrs.cursor = "";
             for(i = 0; i < reviews.length; i += 1) {
@@ -353,10 +369,10 @@ app.profile = (function () {
                     break; }  //if no reviews, i will be left at zero
                 app.lcs.put("rev", reviews[i]);  //ensure cached
                 rrs.results.push(reviews[i]);
-                revitems.push(profileItemHTML(reviews[i])); } }
+                revitems.push(typematchProfileItemHTML(reviews[i])); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
-            text = "No recent membics.";
+            text = "No recent " + typeOrBlank(revtype) + " membics";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 text += " " + app.review.reviewLinkHTML(); }
             revitems.push(["div", {cla: "fpinlinetextdiv"}, text]); }
@@ -382,10 +398,15 @@ app.profile = (function () {
 
 
     //It is possible have created a new review and not have it be
-    //found by the search processing due to database lag.  Walk the 
-    //cache to make sure there is nothing newer there.
+    //found by the search processing due to database lag.  Walk the
+    //cache to make sure there is nothing newer there.  Do not fault
+    //in anything older than a day since the db should have been
+    //stable by then and pulling older stuff from the cache ends up
+    //displaying things that aren't actually recent.
     sanityCompleteRevsViaCache = function(rrs, revs) {
-        var modified = "2012-10-10T00:00:00Z";
+        var modified = new Date().getTime();
+        modified -= dayMillis;
+        modified = new Date(modified).toISOString();
         if(revs && revs.length > 0) {
             modified = revs[0].modified; }
         rrs.results = app.lcs.findNewerReviews(rrs.params.penid, modified);
@@ -414,6 +435,7 @@ app.profile = (function () {
 
     displayRecent = function () {
         var rrs, html, maxdate, mindate;
+        app.layout.displayTypes(displayRecent);
         if(profpenref.profstate.recentRevState) {
             return displayRecentReviews(profpenref.profstate.recentRevState); }
         html = "Retrieving recent activity for " + profpenref.pen.name + "...";
@@ -454,14 +476,14 @@ app.profile = (function () {
         for(i = 0; i < reviewTypes.length; i += 1) {
             typename = reviewTypes[i].type;
             imgsrc = revTypeSelectorImgSrc(typename);
-            label = "No " + reviewTypes[i].type.capitalize() + " membics.";
+            label = "No " + reviewTypes[i].type.capitalize() + " membics";
             if(pen.top20s[typename]) {
                 if(pen.top20s[typename].length >= 20) {
                     label = prefixstr + reviewTypes[i].type.capitalize() +
-                        " membics."; }
+                        " membics"; }
                 else if(pen.top20s[typename].length >= 1) {
                     label = String(pen.top20s[typename].length) + " " + 
-                        reviewTypes[i].type.capitalize() + " membics."; } }
+                        reviewTypes[i].type.capitalize() + " membics"; } }
             html.push(["img", {cla: "reviewbadge", id: "rtsimg" + typename,
                                src: imgsrc, title: label, alt: label,
                                onmouseover: jt.fs("app.profile.mrollrts('" +
@@ -483,13 +505,6 @@ app.profile = (function () {
                                           tlink.tabname + "')")},
                      "Show " + tlink.dispname]]]]]];
         return jt.tac2html(html);
-    },
-
-
-    typeOrBlank = function (typename) {
-        if(typename && typename !== "all") {
-            return typename; }
-        return "";
     },
 
 
@@ -528,21 +543,22 @@ app.profile = (function () {
 
 
     displayFavorites = function () {
-        var state, revs = [], text, revitems = [], html, i, revref;
-        state = profpenref.profstate;
+        var revtype, revs = [], text, revitems = [], html, i, revref;
+        app.layout.displayTypes(displayFavorites);
+        revtype = app.layout.getType();
         if(!profpenref.pen.top20s || !profpenref.pen.top20s.all) {
             html = ["div", {cla: "profilereviewsdiv"},
                     ["div", {cla: "fpinlinetextdiv"}, "Fetching favorites..."]];
             jt.out('profcontdiv', jt.tac2html(html));
             return fetchAllFavorites(); }
         if(profpenref.pen.top20s) {
-            revs = profpenref.pen.top20s[state.revtype] || []; }
+            revs = profpenref.pen.top20s[revtype] || []; }
         if(revs.length === 0) {
-            text = "No top " + typeOrBlank(state.revtype) + " membics.";
+            text = "No top " + typeOrBlank(revtype) + " membics";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 text += " " + app.review.reviewLinkHTML(); } }
         else { //have at least one membic
-            text = "Favorite " + typeOrBlank(state.revtype) + " membics."; }
+            text = "Favorite " + typeOrBlank(revtype) + " membics"; }
         revitems.push(["div", {cla: "fpinlinetextdiv"}, text]);
         for(i = 0; i < revs.length; i += 1) {
             revref = app.lcs.getRef("rev", revs[i]);
@@ -597,17 +613,18 @@ app.profile = (function () {
 
     displaySearch = function () {
         var html, state;
+        app.layout.displayTypes(displaySearch);
         state = profpenref.profstate.searchState || {
             inputId: "profsrchin",
             outdivId: "profsrchdispdiv",
             revrendf: function (state, type, review) {
                 return profileItemHTML(review); },
-            revtype: profpenref.profstate.revtype,
+            revtype: app.layout.getType(),
             srchval: "",
             preserve: true };
-        if(state.revtype !== profpenref.profstate.revtype) {
+        if(state.revtype !== app.layout.getType()) {
             resetSearchStateInterimResults(state);
-            state.revtype = profpenref.profstate.revtype; }
+            state.revtype = app.layout.getType(); }
         html = [["div", {id: "profsrchdiv"},
                  ["input", {type: "text", id: state.inputId, size: 40,
                             placeholder: "Membic title or name",
@@ -876,8 +893,8 @@ app.profile = (function () {
         switch(tabname) {
         case "latest": return displayRecent();
         case "favorites": return displayFavorites();
-        case "groups": return displayGroups();
-        case "search": return displaySearch(); }
+        case "search": return displaySearch();
+        case "groups": return displayGroups(); }
     },
 
 

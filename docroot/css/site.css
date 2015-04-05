@@ -227,8 +227,12 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
 .badgespan { display:inline-block; width:36px; height:36px; padding:1px; }
-.reviewbadge, .reviewbadgedis { 
+.reviewbadge, .reviewbadgesel, .reviewbadgedis { 
   width:30px; height:30px; vertical-align:middle; }
+.reviewbadgesel { background:#ffae50; border-radius:8px; 
+  background:-moz-linear-gradient(left top, #ffae50 0%, #ffceb0 100%);
+  background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
+}
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
 .bbk1, .bbk5, .bbk10, .bbk20 { padding:4px; }
 .bbk1  { background:url('../img/bbk1.png') no-repeat center center; }

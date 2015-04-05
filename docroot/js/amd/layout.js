@@ -10,6 +10,7 @@ app.layout = (function () {
     ////////////////////////////////////////
 
     var dndState = null,
+        typestate = {callback: null, typename: "all"},
         dlgqueue = [],
         meritactive = false,
         navmode = "activity",
@@ -161,6 +162,38 @@ return {
                 return true; }
             return false;
         };
+    },
+
+
+    getType: function () {
+        return typestate.typename;
+    },
+
+
+    displayTypes: function (callbackf, typename) {
+        var revtypes, i, rt, clt, html = [];
+        if(typeof callbackf === "function") {
+            typestate.callbackf = callbackf; }
+        if(typename) {
+            if(typename === typestate.typename && callbackf === -1) {
+                typestate.typename = "all"; }  //toggle selection off...
+            else {
+                typestate.typename = typename; } }
+        revtypes = app.review.getReviewTypes();
+        for(i = 0; i < revtypes.length; i += 1) {
+            rt = revtypes[i];
+            clt = "reviewbadge";
+            if(rt.type === typestate.typename) {
+                clt = "reviewbadgesel"; }
+            html.push(["a", {href: "#" + rt.type,
+                             onclick: jt.fs("app.layout.displayTypes(-1,'" + 
+                                            rt.type + "')")},
+                       ["img", {cla: clt, src: "img/" + rt.img}]]); }
+        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv"}, 
+                html];
+        jt.out("headingdivcontent", jt.tac2html(html));
+        if(callbackf === -1) {
+            typestate.callbackf(typestate.typename); }
     },
 
 
