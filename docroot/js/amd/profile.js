@@ -741,47 +741,6 @@ app.profile = (function () {
     },
 
 
-    displayProfEditButtons = function () {
-        var html;
-        if(jt.byId('profcancelb')) {
-            return; }  //already have buttons
-        html = ["&nbsp;",
-                ["button", {type: "button", id: "profcancelb",
-                            onclick: jt.fs("app.profile.cancelProfileEdit()")},
-                 "Cancel"],
-                "&nbsp;",
-                ["button", {type: "button", id: "profsaveb",
-                            onclick: jt.fs("app.profile.save()")},
-                 "Save"]];
-        jt.out('profeditbspan', jt.tac2html(html));
-    },
-
-
-    styleShout = function (shout) {
-        shout.style.color = app.colors.text;
-        shout.style.backgroundColor = app.skinner.lightbg();
-        //rightcoldiv - profpersonaldiv - profshoutdiv - 2*shoutdiv|shoutout
-        shout.style.width = "130px";
-        shout.style.padding = "5px 8px";
-    },
-
-
-    editShout = function (pen) {
-        var html, shout;
-        html = ["textarea", {id: "shouttxt", cla: "shoutout"}];
-        jt.out('profshoutdiv', jt.tac2html(html));
-        shout = jt.byId('shouttxt');
-        styleShout(shout);
-        if(!jt.isLowFuncBrowser()) {
-            shout.style.backgroundColor = "rgba(" + 
-                jt.hex2rgb(app.skinner.lightbg()) + ",0.6)"; }
-        shout.readOnly = false;
-        shout.value = pen.shoutout;
-        shout.focus();
-        displayProfEditButtons();
-    },
-
-
     //actual submitted form, so triggers full reload
     displayUploadPicForm = function (pen) {
         var inputs, html, odiv;
@@ -898,21 +857,43 @@ app.profile = (function () {
     },
 
 
-    profPicImageHTML = function (pen) {
-        var attrs = { cla: "profpic", src: "img/emptyprofpic.png" };
+    picImgSrc = function (pen) {
+        var src = "img/emptyprofpic.png"
         if(pen.profpic) {
-            attrs.src = "profpic?profileid=" + jt.instId(pen); }
-        if(profileModAuthorized(pen)) {
-            attrs.onclick = jt.fs("app.profile.uploadProfPic()"); }
-        return ["img", attrs];
+            //fetch with mild cachebust in case modified
+            src = "profpic?profileid=" + jt.instId(pen) +
+                "&modified=" + pen.modified; }
+        return src;
     },
 
 
-    shoutoutHTML = function (pen) {
-        var text = pen.shoutout || "";
-        if(!text && profileModAuthorized(pen)) {
-            text = "Links to other pages you have, a favorite saying, or anything else you would like to share..."; }
-        return ["span", {cla: "shoutspan"}, jt.linkify(text)];
+    profSettingsHTML = function (pen) {
+        var html;
+        if(!profileModAuthorized(pen)) {
+            return ""; }
+        html = ["a", {id: "profsettingslink", href: "#profilesettings",
+                      onclick: jt.fs("app.profile.settings()")},
+                ["img", {cla: "reviewbadge",
+                         src: "img/settings.png"}]];
+        return jt.tac2html(html);
+    },
+
+
+    monitorPicUpload = function () {
+        var tgif, txt;
+        tgif = jt.byId('tgif');
+        if(tgif) {
+            txt = tgif.contentDocument || tgif.contentWindow.document;
+            if(txt) {
+                txt = txt.body.innerHTML;
+                if(txt.indexOf("Done: ") === 0) {
+                    profpenref.pen.profpic = jt.instId(profpenref.pen);
+                    profpenref.pen.modified = txt.slice("Done: ".length);
+                    app.profile.display();
+                    return; }
+                if(txt.indexOf("Error: ") === 0) {
+                    jt.out('imgupstatdiv', txt); } }
+            setTimeout(monitorPicUpload, 800); }
     },
 
 
@@ -927,14 +908,16 @@ app.profile = (function () {
         html = ["div", {id: "profilediv"},
                 [["div", {id: "profupperdiv"},
                   [["div", {id: "profpicdiv"},
-                    profPicImageHTML(dispen)],
+                    ["img", {cla: "profpic", src: picImgSrc(dispen)}]],
                    ["div", {id: "profdescrdiv"},
                     [["div", {id: "profnamediv"},
-                      ["a", {href: "#view=profile&profid=" + jt.instId(dispen),
-                             onclick: jt.fs("app.profile.blogconf()")},
-                       ["span", {cla: "penfont"}, dispen.name]]],
+                      [["a", {href: "#view=profile&profid=" + jt.instId(dispen),
+                              onclick: jt.fs("app.profile.blogconf()")},
+                        ["span", {cla: "penfont"}, dispen.name]],
+                       profSettingsHTML(dispen)]],
                      ["div", {id: "profshoutdiv"},
-                      shoutoutHTML(dispen)]]]]],
+                      ["span", {cla: "shoutspan"}, 
+                       jt.linkify(dispen.shoutout || "")]]]]]],
                  ["div", {id: "workstatdiv"}],  //save button, update status
                  ["div", {id: "tabsdiv"},
                   ["ul", {id: "tabsul"},
@@ -1383,6 +1366,65 @@ return {
         //they can share publicly.  The href should also be that URL
         //since you have to be signed in to see someone's profile.
         jt.err("blogconf not implemented yet.");
+    },
+
+
+    settings: function () {
+        var html;
+        html = ["div", {id: "profsettingsdlgdiv"},
+                [["div", {id: "topspacer"}, "&nbsp;"],
+                 ["label", {fo: "picuploadform", cla: "overlab"},
+                  "Profile Picture"],
+                 ["form", {action: "/profpicupload", method: "post",
+                           enctype: "multipart/form-data", target: "tgif",
+                           id: "picuploadform"},
+                  [["input", {type: "hidden", name: "_id", 
+                              value: jt.instId(profpenref.pen)}],
+                   jt.paramsToFormInputs(app.login.authparams()),
+                   ["div", {cla: "tablediv"},
+                    [["div", {cla: "fileindiv"},
+                      [["input", {type: "file", name: "picfilein", 
+                                  id: "picfilein"}],
+                       ["div", {id: "uploadbuttonsdiv"},
+                        ["input", {type: "submit", 
+                                   value: "Upload&nbsp;Picture"}]]]],
+                     ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
+                 ["iframe", {id: "tgif", name: "tgif", src: "/profpicupload",
+                             style: "display:none"}],
+                 ["div", {cla: "formline"},
+                  ["label", {fo: "shouteditbox", cla: "overlab"},
+                   "Shoutout"]],
+                 ["textarea", {id: "shouteditbox", cla: "dlgta"}],
+                 ["div", {cla: "formstatdiv"}],
+                 ["div", {cla: "dlgbuttonsdiv"},
+                  ["button", {type: "button", id: "okbutton",
+                              onclick: jt.fs("app.profile.saveSettings()")},
+                   "Ok"]]]];
+        html = app.layout.dlgwrapHTML("Profile Settings", html);
+        app.layout.openDialog({x:10, y:80}, html, null,
+                              function () {
+                                  var shout = jt.byId('shouteditbox');
+                                  shout.readOnly = false;
+                                  shout.value = profpenref.pen.shoutout;
+                                  shout.placeholder = "Links to other public pages you have, favorite sayings, etc...";
+                                  shout.focus();
+                                  monitorPicUpload(); });
+    },
+
+
+    saveSettings: function () {
+        var elem, pen = profpenref.pen, changed = false;
+        elem = jt.byId('shouteditbox');
+        if(elem && elem.value !== pen.shoutout) {
+            pen.shoutout = elem.value;
+            changed = true; }
+        if(changed) {
+            app.pen.updatePen(pen, app.profile.display,
+                              function (code, errtxt) {
+                                  jt.out('formstatdiv', "Update failed code " +
+                                         code + ": " + errtxt); }); }
+        else {
+            app.layout.closeDialog(); }
     }
 
 };  //end of returned functions

@@ -246,40 +246,43 @@ class UpdatePenName(webapp2.RequestHandler):
         
 
 class UploadProfPic(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write('Ready')
     def post(self):
         errmsg = "You are not authorized to update this profile pic"
         acc = authenticated(self.request)
-        if acc:
-            errmsg = "Could not find pen name for pic attachment"
-            profid = self.request.get('_id')
-            logging.info("UploadProfPic profid: " + profid)
-            pen = cached_get(intz(profid), PenName)
-            if pen:
-                errmsg = "You may only update your own pen name"
-                authok = authorized(acc, pen)
-                if authok:
-                    errmsg = "Profile picture file not found"
-                    upfile = self.request.get("picfilein")
-                    if upfile:
-                        errmsg = "Profile picture upload failure"
-                        try:
-                            pen.profpic = db.Blob(upfile)
-                            # change profpic to max 160x160 png...
-                            pen.profpic = images.resize(pen.profpic, 160, 160)
-                            cached_put(pen)
-                            errmsg = ""
-                        except Exception as e:
-                            errmsg = "Profile picture upload failed: " + str(e)
-        redurl = self.request.get('returnto')
-        if not redurl:
-            logging.info("UploadProfPic using default returnto");
-            redurl = "http://www.fgfweb.com#profile"
-        redurl = urllib.unquote(redurl)
-        redurl = str(redurl)
-        if errmsg:
-            redurl += "&action=profpicupload&errmsg=" + errmsg
-        logging.info("UploadProfPic redirecting to " + redurl);
-        self.redirect(redurl)
+        if not acc:
+            self.error(401)
+            self.response.out.write("Authentication failed")
+            return
+        profid = self.request.get('_id')
+        pen = cached_get(intz(profid), PenName)
+        if not pen:
+            self.error(404)
+            self.response.out.write("Error: Could not find pen " + profid)
+            return
+        if not authorized(acc, pen):
+            self.error(403)
+            self.response.out.write("Error: Not your pen")
+            return
+        upfile = self.request.get("picfilein")
+        if not upfile:
+            self.error(400)
+            self.response.out.write("Error: No picture file sent")
+            return
+        try:
+            pen.profpic = db.Blob(upfile)
+            # change profpic to max 160x160 png...
+            pen.profpic = images.resize(pen.profpic, 160, 160)
+            pen.modified = nowISO()
+            cached_put(pen)
+        except Exception as e:
+            self.error(500)
+            self.response.out.write("Profile picture upload failed: " + str(e))
+            return
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write("Done: " + pen.modified)
 
 
 class GetProfPic(webapp2.RequestHandler):

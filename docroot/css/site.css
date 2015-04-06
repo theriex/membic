@@ -126,7 +126,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
   box-shadow:10px 10px 5px #888888; border: 1px solid #666666; }
 #dlgdiv { position:absolute; left:20px; top:60px;
   visibility:hidden; 
-  max-width:85%;
+  max-width:95%;
   padding:1px;
   background-color: #666;
   border-top-left-radius: 210px 20px;
@@ -190,6 +190,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 .liflab { font-size:medium; font-weight:normal; padding:4px 2px 0px 2px;
   display:block; float:left; width:80px; text-align:right; 
 }
+.overlab { font-size:small; padding:10px 0px 0px 2px; }
 .lifin { padding:0px; font-size:small; width:145px; }
 .lifsep { clear:both; }
 .lifbuttonsdiv { text-align:center; }
@@ -224,6 +225,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 #profdescrdiv { height:125px; overflow:auto; }
 #picplaceholderdiv { color:#999999; font-size:small;
   height:125px; width:110px; padding:10px; text-align:left; }
+#profsettingslink { padding:0px 0px 0px 10px; }
 /* fixed width and height on srchpic so the summary lines line up */
 .srchpic { width:30px; height:30px; vertical-align:middle; }
 .badgespan { display:inline-block; width:36px; height:36px; padding:1px; }
@@ -247,7 +249,7 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 }
 /* width dynamically modified in profile.styleShout */
 .textareatd { }
-.shoutout, .shoutoutstatic { text-align:left;
+#shouteditbox, .shoutout, .shoutoutstatic { text-align:left;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
 .shoutout { width:160px; min-height:100px; }
@@ -377,6 +379,8 @@ button, .loginbutton { border:1px solid #271400; border-radius:5px;
 .grpmsgbuttonsdiv button { margin:0px 6px; }
 .dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 .dlgbuttonsdiv button { margin:0px 10px; }
+.dlgta { width:260px; padding:5px 2px; }
+#uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .optionalbuttonsdiv { text-align:center; }  /* no pad */
 .optionalbuttonsdiv button { margin:15px 10px 5px 10px; }
 .memberstypeheadingdiv { padding:0px 10px; 
