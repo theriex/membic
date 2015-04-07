@@ -443,23 +443,6 @@ app.login = (function () {
     },
 
 
-    addNativeAuthToPen = function (params) {
-        var url;
-        jt.out('contentdiv', "Verifying account");
-        url = "getacct?am=" + params.am + "&at=" + params.at +
-            "&an=" + jt.enc(params.an);
-        jt.call('GET', url, null,
-                function (accarr) {
-                    var mid;
-                    if(accarr.length > 0) {
-                        mid = jt.instId(accarr[0]); }
-                    app.profile.addMORAuthId(mid); },
-                app.failf(function (code, errtxt) {
-                    jt.out('contentdiv', "Account verification failed"); }),
-                jt.semaphore("login.addNativaAuthToPen"));
-    },
-
-
     loggedInAuthentDisplay = function () {
         var penref, nml, remb, wrib, html;
         penref = app.pen.currPenRef();
@@ -527,8 +510,6 @@ app.login = (function () {
             app.profile.display("penfinder"); }
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
-        else if(params.special === "nativeonly") {
-            addNativeAuthToPen(params); }
         else {  //pass parameters along to the general processing next step
             doneWorkingWithAccount(params); }
     },
@@ -799,7 +780,6 @@ return {
     logout: function (errprompt) {
         app.login.closeupdate();
         logoutWithNoDisplayUpdate();
-        app.profile.cancelPenNameSettings();  //close the dialog if it is up
         app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateAuthentDisplay();
         app.login.init();

@@ -132,21 +132,6 @@ app.profile = (function () {
     },
 
 
-    savePenNameSettings = function (e) {
-        var pen;
-        jt.evtend(e);
-        pen = app.pen.currPenRef().pen;
-        app.profile.readPenNameIn(pen);
-        app.skinner.save(pen);
-        app.pen.updatePen(pen,
-                          function () {
-                              app.layout.closeDialog();
-                              app.profile.display(); },
-                          function (code, errtxt) {
-                              jt.out('settingsmsgtd', errtxt); });
-    },
-
-
     displayAuthSettings = function (domid, pen) {
         var html;
         if(pen.pen) {  //got a penref, adjust accordingly
@@ -249,72 +234,6 @@ app.profile = (function () {
             case "ghid":
                 app.github.addProfileAuth(domid, pen); break;
             } }
-    },
-
-
-    penSelectHTML = function (pen) {
-        var opts = [], html, pens = app.pen.getPenNames(), i;
-        for(i = 0; i < pens.length; i += 1) {
-            opts.push(["option", {id: jt.instId(pens[i]),
-                                  selected: jt.toru((pens[i].name === pen.name),
-                                                    "selected")},
-                       pens[i].name]); }
-        opts.push(["option", {id: "newpenopt"}, "New Pen Name"]);
-        html = ["div", {id: "penseldiv"},
-                [["span", {id: "writingas"}, 
-                  ["Writing as ",
-                   ["select", {id: "penselect",
-                               onchange: jt.fs("app.profile.switchPen()")},
-                    opts]]],
-                 "&nbsp;",
-                 ["button", {type: "button", id: "penselectok",
-                             onclick: jt.fs("app.profile.switchPen()")},
-                  "go"]]];
-        return jt.tac2html(html);
-    },
-
-
-    changeSettings = function (pen) {
-        var html;
-        html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.profile.cancelPenNameSettings()")},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                ["div", {cla: "floatclear"}],
-                ["table", {id: "pensettingstable"},
-                 [["tr",
-                   ["td", {colspan: 2, align: "left", id: "pensettitletd"},
-                    penSelectHTML(pen)]],
-                  ["tr",
-                   ["td", {colspan: 2, id: "settingsmsgtd"}]],
-                  ["tr",
-                   [["td", {rowspan: 2, align: "right", valign: "top"},
-                     ["img", {src: "img/penname.png", alt: "Pen Name"}]],
-                    ["td", {align: "left"},
-                     ["input", {type: "text", id: "pennamein", size: 25,
-                                onchange: jt.fs("app.profile.readPenNameIn()"),
-                                value: pen.name}]]]],
-                  ["tr",
-                   //td from previous row extends into here
-                   ["td", 
-                    ["div", {id: "accountdiv"},
-                     app.login.loginInfoHTML(pen)]]],
-                  ["tr",
-                   ["td", {colspan: 2, id: "settingsauthtd"}]],
-                  ["tr",
-                   ["td", {colspan: 2, id: "settingsskintd"}]],
-                  ["tr",
-                   ["td", {colspan: 2, id: "consvcstd"}]],
-                  ["tr",
-                   ["td", {colspan: 2, align: "center", id: "settingsbuttons"},
-                    ["button", {type: "button", id: "savebutton"},
-                     "Save"]]]]]];
-        app.layout.openDialog({x:280, y:20}, jt.tac2html(html), function () {
-            jt.on('savebutton', 'click', savePenNameSettings);
-            jt.byId('settingsnavimg').src = "img/settingsel.png";
-            displayAuthSettings('settingsauthtd', pen);
-            app.services.display('consvcstd', pen);
-            app.skinner.init('settingsskintd', pen); });
     },
 
 
@@ -741,69 +660,6 @@ app.profile = (function () {
     },
 
 
-    //actual submitted form, so triggers full reload
-    displayUploadPicForm = function (pen) {
-        var inputs, html, odiv;
-        inputs = [
-            jt.paramsToFormInputs(app.login.authparams()),
-            ["input", {type: "hidden", name: "_id", 
-                       value: jt.instId(pen)}],
-            ["input", {type: "hidden", name: "returnto", 
-                       value: jt.enc(window.location.href) + "#profile"}]];
-        html = ["form", {action: "/profpicupload",
-                         enctype: "multipart/form-data", method: "post"},
-                [["div", {id: "closeline"},
-                  ["a", {id: "closedlg", href: "#close",
-                         onclick: jt.fs("app.layout.cancelOverlay()")},
-                   "&lt;close&nbsp;&nbsp;X&gt;"]],
-                 inputs,
-                 ["table",
-                  [["tr", 
-                    ["td", 
-                     "Upload New Profile Pic"]],
-                   ["tr", 
-                    ["td", 
-                     ["input", {type: "file", name: "picfilein", 
-                                id: "picfilein"}]]],
-                   ["tr", 
-                    ["td", {align: "center"},
-                     ["input", {type: "submit", value: "Upload"}]]]]]]];
-        jt.out('overlaydiv', jt.tac2html(html));
-        odiv = jt.byId('overlaydiv');
-        odiv.style.left = jt.byId('contentdiv').offsetWidth + "px";
-        odiv.style.top = "130px";
-        odiv.style.visibility = "visible";
-        odiv.style.backgroundColor = app.skinner.lightbg();
-        app.onescapefunc = app.layout.cancelOverlay;
-        jt.byId('picfilein').focus();
-    },
-
-
-    displayPic = function (pen) {
-        var modauth, imgsrc, html, picdiv;
-        modauth = profileModAuthorized(pen);
-        imgsrc = "img/emptyprofpic.png";
-        if(modauth && !pen.profpic) {
-            picdiv = jt.byId('profpicdiv');
-            picdiv.style.background = "url('" + imgsrc + "') no-repeat";
-            picdiv.style.backgroundSize = "125px 125px";
-            html = ["div", {id: "picplaceholderdiv"},
-                    "Click to upload a pic of you, your avatar," +
-                    " your goldfish..."]; }
-        else { //have pic, or not authorized to upload
-            if(pen.profpic) {
-                imgsrc = "profpic?profileid=" + jt.instId(pen); }
-            html = ["img", {cla: "profpic", src: imgsrc}]; }
-        jt.out('profpicdiv', jt.tac2html(html));
-        if(modauth) {
-            jt.on('profpicdiv', 'click', function (e) {
-                jt.evtend(e);
-                if(jt.byId('profcancelb')) {  //save other field edits so
-                    saveEditedProfile(pen); }  //they aren't lost on reload
-                displayUploadPicForm(pen); }); }
-    },
-
-
     byLineHTML = function (revobj, penNameStr) {
         var byline, revref, vialink = "";
         byline = ["span", {cla: "blrevdate"},
@@ -858,7 +714,7 @@ app.profile = (function () {
 
 
     picImgSrc = function (pen) {
-        var src = "img/emptyprofpic.png"
+        var src = "img/emptyprofpic.png";
         if(pen.profpic) {
             //fetch with mild cachebust in case modified
             src = "profpic?profileid=" + jt.instId(pen) +
@@ -957,7 +813,7 @@ return {
 
 
     display: function (action, errmsg) {
-        app.layout.closeDialog(); //close dialog if previously open
+        app.layout.cancelOverlay();
         app.pen.getPen(function (homepen) {
             mainDisplay(homepen, null, action, errmsg); });
     },
@@ -1013,23 +869,6 @@ return {
     relationship: function () {
         app.revresp.clearAbuse(profpenref.pen, function () {
             app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen); });
-    },
-
-
-    switchPen: function () {
-        var i, sel = jt.byId('penselect'), temp = "";
-        for(i = 0; i < sel.options.length; i += 1) {
-            if(sel.options[i].selected) {
-                //do not call cancelPenNameSettings before done accessing
-                //the selection elementobjects or IE8 has issues.
-                if(sel.options[i].id === 'newpenopt') {
-                    app.profile.cancelPenNameSettings("Creating pen name...");
-                    app.pen.newPenName(app.profile.display); }
-                else {
-                    temp = sel.options[i].value;
-                    app.profile.cancelPenNameSettings("Switching pen names...");
-                    app.pen.selectPenByName(temp); }
-                break; } }
     },
 
 
@@ -1142,39 +981,9 @@ return {
     },
 
 
-    addMORAuthId: function(mid) {
-        app.pen.getPen(function (pen) {
-            var previd;
-            if(!mid) {
-                jt.err("No account ID received.");
-                app.profile.display(); }
-            else {
-                previd = pen.mid;
-                pen.mid = mid;
-                app.pen.updatePen(pen,
-                                  function (updpen) {
-                                      changeSettings(updpen); },
-                                  function (code, errtxt) {
-                                      jt.err("addMORAuthId error " +
-                                             code + ": " + errtxt);
-                                      pen.mid = previd;
-                                      app.profile.display(); }); }
-        });
-    },
-
-
     verifyStateVariableValues: function (pen) {
         profpenref = app.lcs.getRef("pen", pen);
         verifyProfileState(profpenref);
-    },
-
-
-    cancelPenNameSettings: function (actionTxt) {
-        app.layout.closeDialog();
-        if(actionTxt && typeof actionTxt === "string") {
-            //nuke the main display as we are about to rebuild contents
-            jt.out('centerhdiv', "");
-            jt.out('cmain', actionTxt); }
     },
 
 
@@ -1372,8 +1181,7 @@ return {
     settings: function () {
         var html;
         html = ["div", {id: "profsettingsdlgdiv"},
-                [["div", {id: "topspacer"}, "&nbsp;"],
-                 ["label", {fo: "picuploadform", cla: "overlab"},
+                [["label", {fo: "picuploadform", cla: "overlab"},
                   "Profile Picture"],
                  ["form", {action: "/profpicupload", method: "post",
                            enctype: "multipart/form-data", target: "tgif",
@@ -1383,10 +1191,10 @@ return {
                    jt.paramsToFormInputs(app.login.authparams()),
                    ["div", {cla: "tablediv"},
                     [["div", {cla: "fileindiv"},
-                      [["input", {type: "file", name: "picfilein", 
-                                  id: "picfilein"}],
+                      [["input", {type: "file", 
+                                  name: "picfilein", id: "picfilein"}],
                        ["div", {id: "uploadbuttonsdiv"},
-                        ["input", {type: "submit", 
+                        ["input", {type: "submit", cla: "formbutton",
                                    value: "Upload&nbsp;Picture"}]]]],
                      ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                  ["iframe", {id: "tgif", name: "tgif", src: "/profpicupload",
@@ -1399,16 +1207,15 @@ return {
                  ["div", {cla: "dlgbuttonsdiv"},
                   ["button", {type: "button", id: "okbutton",
                               onclick: jt.fs("app.profile.saveSettings()")},
-                   "Ok"]]]];
-        html = app.layout.dlgwrapHTML("Profile Settings", html);
-        app.layout.openDialog({x:10, y:80}, html, null,
-                              function () {
-                                  var shout = jt.byId('shouteditbox');
-                                  shout.readOnly = false;
-                                  shout.value = profpenref.pen.shoutout;
-                                  shout.placeholder = "Links to other public pages you have, favorite sayings, etc...";
-                                  shout.focus();
-                                  monitorPicUpload(); });
+                   "Update Text"]]]];
+        app.layout.openOverlay({x:10, y:80}, html, null,
+                               function () {
+                                   var shout = jt.byId('shouteditbox');
+                                   shout.readOnly = false;
+                                   shout.value = profpenref.pen.shoutout;
+                                   shout.placeholder = "Links to other public pages you have, favorite sayings, etc...";
+                                   shout.focus();
+                                   monitorPicUpload(); });
     },
 
 
@@ -1424,7 +1231,7 @@ return {
                                   jt.out('formstatdiv', "Update failed code " +
                                          code + ": " + errtxt); }); }
         else {
-            app.layout.closeDialog(); }
+            app.layout.cancelOverlay(); }
     }
 
 };  //end of returned functions

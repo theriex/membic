@@ -422,7 +422,6 @@ return {
         odiv = jt.byId('overlaydiv');
         odiv.style.left ="300px";
         odiv.style.top = "190px";
-        odiv.style.backgroundColor = app.skinner.lightbg();
         odiv.style.visibility = "visible";
         app.onescapefunc = app.layout.cancelOverlay;
         setTimeout(function () {
@@ -522,7 +521,6 @@ return {
         jt.out('overlaydiv', jt.tac2html(html));
         if(initf) {
             initf(); }
-        odiv.style.backgroundColor = app.skinner.lightbg();
         odiv.style.visibility = "visible";
         if(visf) {
             visf(); }
