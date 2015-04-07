@@ -3,8 +3,6 @@
  * HTML tag level settings
  ************************************************************
  */
-@font-face { font-family: "Penscript"; 
-             src: url('../Pacifico.ttf'); }
 
 A:link {text-decoration:none; color:#521919; }
 A:visited {text-decoration:none; color:#521919; }
@@ -68,7 +66,7 @@ button, .loginbutton, .formbutton {
 #topactionstable { margin:0px; padding:0px; }
 #topactionstable td { padding:0px; }
 .topnavitemdiv { 
-  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif; }
+  font-family:"Satisfy", cursive }
 .documentcontentsdiv { padding:0px 10px 10px 20px; }
 .brandspan { font-size:small; font-weight:bold; }
 .aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
@@ -109,8 +107,7 @@ button, .loginbutton, .formbutton {
 #taglinedetpensdiv { padding:10px 10px 0px 0px; }
 #revrolldiv { padding:10px 0px 0px 0px; height:200px; overflow-y:scroll; }
 .penfont, #penhnamespan { 
-  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
- }
+  font-family:"Satisfy", cursive; font-size:x-large; font-weight:bold; }
 #penhnametd { padding:0px 0px 0px 0px; }
 #penhnamespan { font-size:xx-large; }
 #penhbuttondiv, #grouphbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
@@ -251,8 +248,7 @@ button, .loginbutton, .formbutton {
 .followingico { width:20px; height:20px; vertical-align:middle; }
 #profbadgestd { padding: 0px 10px 5px 10px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; 
-  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
-}
+  font-family:"Satisfy", cursive; }
 /* width dynamically modified in profile.styleShout */
 .textareatd { }
 #shouteditbox, .shoutout, .shoutoutstatic { text-align:left;
@@ -396,7 +392,7 @@ button, .loginbutton, .formbutton {
   border: 1px solid #666666; border-radius:10px; 
   box-shadow:10px 10px 5px #888888; }
 .grpmembernamediv {
-  font-family:"Penscript", "Verdana", "Arial", "Helvetica", sans-serif;
+  font-family:"Satisfy", cursive;
   font-size:large; text-align:center; }
 .reasoninputdiv { padding:5px 0px; }
 #groupadminlogdiv { font-size:small; }
