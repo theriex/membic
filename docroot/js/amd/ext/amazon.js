@@ -151,17 +151,17 @@ return {
 
     fetchData: function (review, url, params) {
         var asin = extractASIN(url);
-        jt.out('contentdiv', "Reading details from Amazon...");
+        jt.out('revautodiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;
         jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content));
                      app.review.setAttribution(attribution);
-                     app.review.display(); },
+                     app.review.updatedlg(); },
                  app.failf(function (code, errtxt) {
                      jt.err("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
-                     app.review.display(); }),
+                     app.review.updatedlg(); }),
                 jt.semaphore("amazon.fetchData"));
     }
 

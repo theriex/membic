@@ -57,7 +57,7 @@ button, .loginbutton, .formbutton {
 #logodiv, #logoimg { width:80px; height:80px; }
 #headingdiv { min-height:80px; }
 #headingdivcontent { width:240px; margin:auto; padding:30px 0px 0px 0px; }
-#revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
+.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
 #topworkdiv { float:right; padding:0px 2px 2px 0px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
@@ -412,6 +412,22 @@ button, .loginbutton, .formbutton {
   font-size:xx-small; color:white; }
 
 /* >> review layout */
+#readurlbuttonspan { font-size:x-small; }
+#readurlbutton { margin:0px 0px 0px 3px; }
+#rdtypesdiv { width:240px; margin:auto; padding:0px 0px 0px 0px; }
+#rdacdiv { float:right; width:50px; height:30px; 
+  background:url('../img/rdaclab.png'); }
+#rdaccb { margin:0px 0px 0px 5px; }
+#rdaccblab { font-size:xx-small; width:50px; }
+#rdkeyindiv { padding:0px 0px 5px 0px; }
+#rdstarsdiv { display:inline-block; }
+#rdfutcbdiv { float:right; width:50px; height:30px; 
+  background:url('../img/rdfuture.png'); }
+.rdfindiv { padding:0px 0px 7px 0px; }
+#rdtextdiv { clear:both; }
+#revautodiv { font-size:small; }
+#revautodiv ul { list-style-image:url('../img/acbullet.png'); }
+#rdpicdiv { float:left; margin:0px 5px 0px 0px; }
 #revfdiv { }
 .linksdiv { padding:10px; text-align:center; }
 .commentform { padding:20px 0px 0px 0px; font-size:small; }

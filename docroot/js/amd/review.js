@@ -1,4 +1,4 @@
-/*global setTimeout: false, clearTimeout: false, window: false, document: false, app: false, jt: false, google: false */
+/*global setTimeout: false, clearTimeout: false, window: false, document: false, confirm: false, app: false, jt: false, google: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -379,7 +379,7 @@ app.review = (function () {
                         [["input", {type: "url", id: "urlin", size: 32,
                                     onchange: jt.fs("app.review.readURL()")}],
                          "&nbsp;",
-                         ["span", {id: "readurlbuttoncontainer"},
+                         ["span", {id: "readurlbuttonspan"},
                           ["button", {type: "button", id: "readurlbutton",
                                       onclick: jt.fs("app.review.readURL()"),
                                       title: "Read review form fields" + 
@@ -1126,7 +1126,7 @@ app.review = (function () {
 
 
     starPointing = function (event) {
-        //jt.out('keyinlabeltd', "star pointing");  //debug
+        //jt.out('rdokstatdiv', "star pointing");  //debug
         starPointingActive = true;
         starDisplayAdjust(event, true);
     },
@@ -1134,15 +1134,15 @@ app.review = (function () {
 
     starStopPointing = function (event) {
         //var pos = jt.geoXY(event);  //debug
-        //jt.out('keyinlabeltd', "star NOT pointing" + event.target);  //debug
         //jt.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
+        //jt.out('rdokstatdiv', "star NOT pointing" + event.target);  //debug
         starPointingActive = false;
     },
 
 
     starStopPointingBoundary = function (event) {
         var td, tdpos, xypos, evtx, evty;
-        td = jt.byId('revformstarsdiv');
+        td = jt.byId('rdstarsdiv');
         tdpos = jt.geoPos(td);
         xypos = jt.geoXY(event);
         evtx = xypos.x;
@@ -1154,14 +1154,14 @@ app.review = (function () {
         //jt.out('starslabeltd', " " + evtx + ", " + evty);  //debug
         if(evtx < tdpos.x || evtx > tdpos.x + tdpos.w ||
            evty < tdpos.y || evty > tdpos.y + tdpos.h) {
-            //jt.out('keyinlabeltd', "star NOT pointing (bounds)"); //debug
+            //jt.out('rdokdiv', "star NOT pointing (bounds)"); //debug
             starPointingActive = false; }
     },
 
 
     starPointAdjust = function (event) {
         if(starPointingActive) {
-            //jt.out('keyinlabeltd', "star point adjust...");  //debug
+            //jt.out('rdokdiv', "star point adjust...");  //debug
             starDisplayAdjust(event); }
     },
 
@@ -1383,7 +1383,7 @@ app.review = (function () {
 
     autocompletion = function (event) {
         var srchtxt;
-        if(jt.byId('revautodiv') && jt.byId('keyin')) {
+        if(crev.autocomp && jt.byId('revautodiv') && jt.byId('keyin')) {
             srchtxt = jt.byId('keyin').value;
             if(jt.byId('subkeyin')) {
                 srchtxt += " " + jt.byId('subkeyin').value; }
@@ -1509,6 +1509,24 @@ app.review = (function () {
     },
 
 
+    makeMine = function (review, srcrevId) {
+        var now = new Date().toISOString();
+        review.penid = app.pen.currPenId();
+        review.grpid = 0;
+        review.rating = 0;
+        review.srcrev = srcrevId;
+        review.modified = now;
+        review.modhist = "";
+        review.keywords = "";
+        review.text = "";
+        review.revpic = "";
+        review.svcdata = "";
+        review.penname = app.pen.currPenRef().pen.name;
+        review.helpful = "";
+        review.remembered = "";
+    },
+
+
     cacheBustPersonalReviewSearches = function () {
         var penref = app.pen.currPenRef();
         if(penref.profstate) {
@@ -1553,6 +1571,183 @@ app.review = (function () {
             app.review.picDialog(); }
         else {
             displayReviewForm(pen, crev, "edit", errmsg); }
+    },
+
+
+    dlgReadButtonHTML = function () {
+        return ["button", {type: "button", id: "readurlbutton",
+                           onclick: jt.fs("app.review.readURL()")},
+                "Read"];
+    },
+
+
+    dlgRevTypeSelection = function () {
+        var i, rt, clt, html = [];
+        for(i = 0; i < reviewTypes.length; i += 1) {
+            rt = reviewTypes[i];
+            clt = (crev.revtype === rt.type) ? "reviewbadgesel" : "reviewbadge";
+            html.push(["a", {href: "#" + rt.type,
+                             onclick: jt.fs("app.review.updatedlg('" + 
+                                            rt.type + "')")},
+                       ["img", {cla: clt, src: "img/" + rt.img}]]); }
+        html = ["div", {cla: "revtypesdiv", id: "revdlgtypesdiv"}, 
+                html];
+        jt.out("rdtypesdiv", jt.tac2html(html));
+        jt.byId("urlin").value = crev.url || "";
+        jt.out("readurlbuttonspan", jt.tac2html(dlgReadButtonHTML()));
+    },
+
+
+    dlgKeyFieldEntry = function () {
+        var rt, html = "";
+        rt = findReviewType(crev.revtype);
+        if(!rt) {  //no type selected yet, so no key field entry yet.
+            return; }
+        if(!jt.byId("rdkeyindiv").innerHTML) {
+            html = [["label", {fo: "keyin", cla: "liflab", id: "keylab"}, 
+                     rt.key],
+                    ["input", {id: "keyin", cla: "lifin", type: "text"}],
+                    ["div", {id: "rdacdiv"},
+                     ["input", {type: "checkbox", id: "rdaccb",
+                                name: "autocompleteactivationcheckbox",
+                                //<IE8 onchange only fires after onblur.
+                                //check action nullified if return false.
+                                onclick: jt.fsd("app.review.runAutoComp()"),
+                                checked: jt.toru(crev.autocomp)}]],
+                    ["div", {id: "revautodiv"}]];
+            jt.out("rdkeyindiv", jt.tac2html(html)); }
+        jt.out("keylab", rt.key.capitalize());  //update label if type changed
+        jt.byId("keyin").value = crev[rt.key] || "";
+        jt.byId("rdaccb").checked = crev.autocomp;
+        if(html) {  //just initialized the key input, set for entry
+            jt.byId('keyin').focus(); }
+        app.review.runAutoComp();
+    },
+
+
+    dlgPicHTML = function () {
+        var src, type, html;
+        src = "img/emptyprofpic.png";
+        type = verifyReviewImageDisplayType(crev);
+        if(type === "upldpic") {
+            src = "revpic?revid=" + jt.instId(crev); }
+        else if(type === "sitepic") {
+            src = crev.imguri;
+            if(window.location.href.indexOf("https://") === 0) {
+                src = "imagerelay?url=" + jt.enc(src); } }
+        html = ["a", {href: "#changepic",
+                      onclick: jt.fs("app.review.picDialog()")},
+                ["img", {id: "revimg", cla: "revimg", src: src}]];
+        return jt.tac2html(html);
+    },
+
+
+    dlgStarsHTML = function () {
+        var imgfile, greyfile, rat, width, offset, html;
+        imgfile = "img/stars18ptC.png"; 
+        greyfile = "img/stars18ptCg.png";
+        rat = app.review.starRating(crev.rating) || 0;
+        if(crev.srcrev === -101) {
+            return jt.tac2html(
+                ["img", {cla: "starsimg", src: "img/future.png",
+                         title: rat.title, alt: rat.title}]); }
+        width = Math.floor(rat.step * (starimgw / rat.maxstep));
+        html = [];
+        html.push(["img", {cla: "starsimg", src: "img/blank.png",
+                           style: "width:" + width + "px;" + 
+                                  "height:" + starimgh + "px;" +
+                                  "background:url('" + imgfile + "');",
+                           title: rat.title, alt: rat.title}]);
+        if(rat.step % 2 === 1) {  //odd, use half star display
+            offset = Math.floor(starimgw / rat.maxstep);
+            html.push(
+                ["img", {cla: "starsimg", src: "img/blank.png",
+                         style: "width:" + (starimgw - width) + "px;" + 
+                                "height:" + starimgh + "px;" +
+                                "background:url('" + greyfile + "')" +
+                                    " -" + offset + "px 0;",
+                         title: rat.title, alt: rat.title}]); }
+        else { //even, use full star display
+            html.push(
+                ["img", {cla: "starsimg", src: "img/blank.png",
+                         style: "width:" + (starimgw - width) + "px;" + 
+                                "height:" + starimgh + "px;" +
+                                "background:url('" + greyfile + "');",
+                         title: rat.title, alt: rat.title}]); }
+        html = ["span", {id: "stardisp"}, html];
+        return jt.tac2html(html);
+    },
+
+
+    dlgStarsActivate = function () {
+        jt.on('rdstarsdiv', 'mousedown',   starPointing);
+        jt.on('rdstarsdiv', 'mouseup',     starStopPointing);
+        jt.on('rdstarsdiv', 'mouseout',    starStopPointingBoundary);
+        jt.on('rdstarsdiv', 'mousemove',   starPointAdjust);
+        jt.on('rdstarsdiv', 'click',       starClick);
+        jt.on('rdstarsdiv', 'touchstart',  starPointing);
+        jt.on('rdstarsdiv', 'touchend',    starStopPointing);
+        jt.on('rdstarsdiv', 'touchcancel', starStopPointing);
+        jt.on('rdstarsdiv', 'touchmove',   starPointAdjust);
+        return true;
+    },
+
+
+    dlgStarsDeactivate = function () {
+        jt.off('rdstarsdiv', 'mousedown',   starPointing);
+        jt.off('rdstarsdiv', 'mouseup',     starStopPointing);
+        jt.off('rdstarsdiv', 'mouseout',    starStopPointingBoundary);
+        jt.off('rdstarsdiv', 'mousemove',   starPointAdjust);
+        jt.off('rdstarsdiv', 'click',       starClick);
+        jt.off('rdstarsdiv', 'touchstart',  starPointing);
+        jt.off('rdstarsdiv', 'touchend',    starStopPointing);
+        jt.off('rdstarsdiv', 'touchcancel', starStopPointing);
+        jt.off('rdstarsdiv', 'touchmove',   starPointAdjust);
+        return true;
+    },
+
+
+    dlgFieldInputHTML = function (fldn) {
+        return ["div", {id: fldn + "div", cla: "rdfindiv"},
+                ["input", {id: fldn + "in", type: "text", 
+                           cla: "lifin", placeholder: fldn.capitalize()}]];
+    },
+
+
+    dlgDetailsEntry = function () {
+        var rt, html, i;
+        rt = findReviewType(crev.revtype);
+        if(!rt) {  //no type selected yet, so no key field entry yet.
+            return; }
+        if(!jt.byId("rdpfdiv").innerHTML) {
+            html = [["div", {id: "rdstarsdiv"}, dlgStarsHTML()],
+                    ["div", {id: "rdfutcbdiv"}, 
+                     ["input", {type: "checkbox", id: "rdfutcb",
+                                name: "futuremembicmarkercheckbox",
+                                onclick: jt.fsd("app.review.togglefuture()"),
+                                checked: jt.toru(crev.srcrev === -101)}]]];
+            if(rt.subkey) {
+                html.push(dlgFieldInputHTML(rt.subkey)); }
+            for(i = 0; i < rt.fields.length; i += 1) {
+                html.push(dlgFieldInputHTML(rt.fields[i])); }
+            html = [["div", {id: "rdpicdiv"}, dlgPicHTML()],
+                    ["div", {id: "rddetsdiv"}, html]];
+            jt.out("rdpfdiv", jt.tac2html(html));
+            dlgStarsActivate(); }
+        jt.out('rdpicdiv', dlgPicHTML());
+        if(rt.subkey) {
+            jt.byId(rt.subkey + "in").value = crev[rt.subkey] || ""; }
+        for(i = 0; i < rt.fields.length; i += 1) {
+            jt.byId(rt.fields[i] + "in").value = crev[rt.fields[i]] || ""; }
+    },
+
+
+    updateReviewDialogContents = function () {
+        dlgRevTypeSelection();
+        dlgKeyFieldEntry();
+        dlgDetailsEntry();
+                 // ["div", {id: "rdtextdiv"}],
+                 // ["div", {id: "rdkwdiv"}],
     };
 
 
@@ -1563,10 +1758,109 @@ return {
 
     resetStateVars: function () {
         autourl = "";
-        crev = {};
+        crev = { autocomp: true };
         attribution = "";
     },
 
+
+    start: function (source) {
+        var html;
+        app.review.resetStateVars();
+        if(typeof source === 'string') {  //passed in a url
+            autourl = source; }
+        if(typeof source === 'object') {  //passed in another review
+            crev = makeMine(copyReview(source), jt.instId(source)); }
+        html = ["div", {id: "revdlgdiv"},
+                [["div", {id: "rdurldiv"},
+                  [["label", {fo: "urlin", cla: "liflab"}, "URL"],
+                   ["input", {id: "urlin", cla: "lifin", type: "url"}],
+                   ["span", {id: "readurlbuttonspan"}, dlgReadButtonHTML()],
+                   ["div", {id: "rdstat1"}]]],
+                 ["div", {id: "rdtypesdiv"}],
+                 ["div", {id: "rdkeyindiv"}],
+                 ["div", {id: "rdpfdiv"}],     //pic, stars, fields
+                 ["div", {id: "rdtextdiv"}],
+                 ["div", {id: "rdkwdiv"}],
+                 ["div", {id: "rdokdiv"},
+                  [["div", {id: "rdokstatdiv"}],
+                   ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
+                    ["button", {type: "button", id: "okbutton",
+                                onclick: jt.fs("app.review.save()")},
+                     "Ok"]]]]]];
+        html = app.layout.dlgwrapHTML("", html);
+        app.layout.openDialog(
+            {x: jt.byId("headingdivcontent").offsetLeft - 34, y:22},
+            jt.tac2html(html), updateReviewDialogContents);
+    },
+
+
+    updatedlg: function (typename) {
+        if(typename) {
+            if(jt.byId('rdstarsdiv') && crev.srcrev !== -101) {
+                dlgStarsDeactivate();
+                jt.out('rdpfdiv', ""); }
+            crev.revtype = typename; }
+        updateReviewDialogContents();
+    },
+
+    
+    runAutoComp: function () {
+        if(!crev.autocomp) {
+            jt.out('revautodiv', ""); }
+        else {
+            autocompletion(); }
+    },
+
+
+    togglefuture: function () {
+        if(crev.srcrev === -101) {
+            crev.srcrev = 0;
+            jt.out('rdstarsdiv', jt.tac2html(dlgStarsHTML()));
+            dlgStarsActivate(); }
+        else {
+            crev.srcrev = -101;
+            dlgStarsDeactivate();
+            jt.out('rdstarsdiv', jt.tac2html(dlgStarsHTML())); }
+    },
+
+
+    readURL: function (url, params) {
+        var urlin, errs = [], rbc;
+        if(!params) {
+            params = {}; }
+        if(!url) {
+            urlin = jt.byId('urlin');
+            if(urlin) {
+                url = urlin.value; } }
+        if(!url) {
+            return; }
+        if(crev.title && !crev.autocomp &&
+           !confirm("Re-read title and other fields?")) {
+            return; }
+        //If the title or other key fields are not valid, that's ok because
+        //we are about to read them. But don't lose comment text.
+        reviewTextValid(null, errs);
+        if(errs.length > 0) {
+            return; }
+        url = url.trim();
+        if(url) {
+            rbc = jt.byId('readurlbuttonspan');
+            if(rbc) {
+                rbc.innerHTML = "reading..."; }
+            if(url.toLowerCase().indexOf("http") !== 0) {
+                url = "http://" + url; }
+            crev.url = autourl = url;
+            crev.autocomp = false;
+            readParameters(params);
+            getURLReader(autourl, function (reader) {
+                reader.fetchData(crev, url, params); }); }
+        else {
+            app.review.updatedlg(); }
+    },
+
+
+    ////////////////////
+    //Everything below here might be able to be cleaned up...
 
     display: function (action, errmsg) {
         app.pen.getPen(function (pen) {
@@ -1757,37 +2051,6 @@ return {
         if(html) {
             html = "&nbsp;" + html; }
         return html;
-    },
-
-
-    readURL: function (url, params) {
-        var urlin, errs = [], rbc;
-        if(!params) {
-            params = {}; }
-        if(!url) {
-            urlin = jt.byId('urlin');
-            if(urlin) {
-                url = urlin.value; } }
-        //If the title or other key fields are not valid, that's ok because
-        //we are about to read them. But don't lose comment text.
-        reviewTextValid(null, errs);
-        if(errs.length > 0) {
-            return; }
-        if(!url) {  //bail out, but reflect any updates so far
-            return app.review.display(); }
-        rbc = jt.byId('readurlbuttoncontainer');
-        if(rbc) {
-            rbc.innerHTML = "reading..."; }
-        if(url) {
-            url = url.trim();
-            if(url.toLowerCase().indexOf("http") !== 0) {
-                url = "http://" + url; }
-            crev.url = autourl = url;
-            readParameters(params);
-            getURLReader(autourl, function (reader) {
-                reader.fetchData(crev, url, params); }); }
-        else {
-            app.review.display(); }
     },
 
 

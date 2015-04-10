@@ -468,7 +468,7 @@ app.login = (function () {
                      ["span", {id: "rememberedcountspan"},
                       penref.pen.remembered.csvarray().length || ""]]];
             wrib = ["a", {href: "#write",
-                          onclick: jt.fs("app.review.display()")},
+                          onclick: jt.fs("app.review.start()")},
                     ["img", {cla: "topbuttonimg",
                              src: "img/writereview.png"}]]; }
         html = ["div", {id: "topactionsdiv"},
