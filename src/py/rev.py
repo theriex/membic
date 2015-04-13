@@ -91,11 +91,13 @@ def review_modification_authorized(handler):
 
 
 def safe_get_review_for_update(handler):
-    id = handler.request.get('_id')
-    review = cached_get(intz(id), Review)
+    revid = intz(handler.request.get('_id'))
+    if not revid:
+        revid = intz(handler.request.get('revid'))
+    review = cached_get(revid, Review)
     if not review:
         handler.error(404)
-        handler.response.out.write("Review id: " + str(id) + " not found.")
+        handler.response.out.write("Review id: " + str(revid) + " not found.")
         return
     penid = intz(handler.request.get('penid'))
     if penid != review.penid:
@@ -174,6 +176,16 @@ def set_if_param_given(review, fieldname, handler, paramname):
         setattr(review, fieldname, val)
 
 
+def note_modified(review):
+    review.modified = nowISO()
+    if review.modhist:
+        elems = review.modhist.split(";")
+        elems[1] = str(int(elems[1]) + 1)
+        review.modhist = ";".join(elems)
+    else:
+        review.modhist = review.modified + ";1"
+
+
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
     review.penid = intz(handler.request.get('penid'))
@@ -188,7 +200,7 @@ def read_review_values(handler, review):
     if val == "DELETED":
         review.revpic = None
     set_if_param_given(review, "imguri", handler, "imguri")
-    review.modified = nowISO()
+    note_modified(review)
     review.name = onelinestr(handler.request.get('name'))
     review.title = onelinestr(handler.request.get('title'))
     set_if_param_given(review, "url", handler, "url")
@@ -483,32 +495,42 @@ class DeleteReview(webapp2.RequestHandler):
 
 # This is a form submission endpoint, so always redirect back to the app.
 class UploadReviewPic(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write('Ready')
     def post(self):
-        errmsg = "You are not authorized to update this review pic"
-        if review_modification_authorized(self):
-            errmsg = "Could not find review for pic attachment"
+        pen = review_modification_authorized(self)
+        if not pen:
+            return
+        review = None
+        revid = intz(self.request.get("revid"))
+        if revid:
             review = safe_get_review_for_update(self)
-            if review:
-                errmsg = "Picture file not found"
-                upfile = self.request.get("picfilein")
-                if upfile:
-                    errmsg = "Picture upload failure"
-                    try:
-                        review.revpic = db.Blob(upfile)
-                        review.revpic = images.resize(review.revpic, 160, 160)
-                        cached_put(review)
-                        errmsg = ""
-                    except Exception as e:
-                        errmsg = "Picture upload failed: " + str(e)
-        redurl = self.request.get('returnto')
-        if not redurl:
-            redurl = "http://www.fgfweb.com#review"
-        redurl = urllib.unquote(redurl)
-        redurl = str(redurl)
-        if errmsg:
-            redurl += "&action=revpicupload&errmsg=" + errmsg
-        logging.info("UploadReviewPic redirecting to " + redurl)
-        self.redirect(redurl)
+            if not review:
+                return
+        else:
+            revtype = self.request.get("revtype")
+            if not revtype:
+                self.error(406)  # Not Acceptable
+                self.response.out.write("No revtype recieved")
+                return
+            review = Review(penid=penid, revtype=revtype)
+        upfile = self.request.get("picfilein")
+        if not upfile:
+            self.error(406)  # Not Acceptable
+            self.response.out.write("No picfilein received")
+            return
+        try:
+            review.revpic = db.Blob(upfile)
+            review.revpic = images.resize(review.revpic, 160, 160)
+            note_modified(review)
+            cached_put(review)
+        except Exception as e:
+            self.error(409)  # Conflict
+            self.response.out.write("Pic upload processing failed: " + str(e))
+            return
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write("revid: " + str(review.key().id()))
 
 
 class GetReviewPic(webapp2.RequestHandler):

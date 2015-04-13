@@ -412,20 +412,26 @@ button, .loginbutton, .formbutton {
   font-size:xx-small; color:white; }
 
 /* >> review layout */
-#readurlbuttonspan { font-size:x-small; }
-#readurlbutton { margin:0px 0px 0px 3px; }
+#rdurlbuttonspan { font-size:x-small; }
+#rdurlbutton { margin:0px 0px 0px 3px; }
 #rdtypesdiv { width:240px; margin:auto; padding:0px 0px 0px 0px; }
 #rdacdiv { float:right; width:50px; height:30px; 
   background:url('../img/rdaclab.png'); }
 #rdaccb { margin:0px 0px 0px 5px; }
 #rdaccblab { font-size:xx-small; width:50px; }
 #rdkeyindiv { padding:0px 0px 5px 0px; }
-#rdstarsdiv { display:inline-block; }
-#rdfutcbdiv { float:right; width:50px; height:30px; 
-  background:url('../img/rdfuture.png'); }
-.rdfindiv { padding:0px 0px 7px 0px; }
+#rdstfudiv { height:32px; position:relative; }
+#rdstarsdiv { display:inline-block; width:90px; }
+#rdfutcbdiv { position:absolute; right:0px; top:0px; 
+  width:50px; height:30px; background:url('../img/rdfuture.png'); }
+.rdfindiv { padding:0px 0px 10px 0px; }
 #rdtextdiv { clear:both; }
-#revautodiv { font-size:small; }
+#rdta { width:290px; height:80px; padding:3px; overflow:auto;
+  background-color:#e8e8ed; }
+#rdkwcbsdiv { width:260px; margin:auto; overflow:auto; }
+.rdkwcbdiv { display:inline-block; width:130px; font-size:small; 
+  padding:0px 0px 10px 0px; }
+#revautodiv { font-size:small; width:300px; }
 #revautodiv ul { list-style-image:url('../img/acbullet.png'); }
 #rdpicdiv { float:left; margin:0px 5px 0px 0px; }
 #revfdiv { }
@@ -458,8 +464,14 @@ button, .loginbutton, .formbutton {
 .statrevrespdiv { font-size:small; font-style:italic;
   padding-right:40%; float:right; }
 .blogidentdiv { padding:0px 0px 20px 0px; }
+#revpicdlgdiv { width:220px; }
 .revpictypelist { list-style:none; padding:0px 0px 10px 0px; margin:0; }
-.ptddiv { padding:0px 0px 0px 20px; }
+.ptddiv { display:inline-block; position:relative; vertical-align:top;
+  width:125px; height:125px; margin:5px; background:#ffeac2; }
+.overform { position:absolute; top:0px; left:0px; width:125px; }
+.ptdlabspan { font-size:medium; }
+#ptdfdiv { padding:5px; }
+#ptduploadbuttonsdiv { text-align:center; padding:20px 0px 5px 0px; }
 
 /* >> activity layout */
 #switchmodebutton { vertical-align:middle; margin:10px 20px; }

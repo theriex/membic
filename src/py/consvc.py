@@ -170,19 +170,26 @@ def callAmazon(handler, svc, params):
     url = "http://webservices.amazon.com/onca/xml?" + params
     url += "&Signature=" + enc(sig)
     headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    result = urlfetch.fetch(url, payload=None, method="GET",
-                            headers=headers,
-                            allow_truncated=False, 
-                            follow_redirects=True, 
-                            deadline=10, 
-                            validate_certificate=False)
-    if result.status_code == 200:
-        json = "[{\"content\":\"" + enc(result.content) + "\"}]"
-        handler.response.headers['Content-Type'] = 'application/json'
-        handler.response.out.write(json)
-    else:
-        handler.error(result.status_code)
-        handler.response.out.write(result.content)
+    try:
+        result = urlfetch.fetch(url, payload=None, method="GET",
+                                headers=headers,
+                                allow_truncated=False, 
+                                follow_redirects=True, 
+                                deadline=10, 
+                                validate_certificate=False)
+        if result.status_code == 200:
+            json = "[{\"content\":\"" + enc(result.content) + "\"}]"
+            handler.response.headers['Content-Type'] = 'application/json'
+            handler.response.out.write(json)
+        else:
+            handler.error(result.status_code)
+            handler.response.out.write(result.content)
+    except Exception as e:
+        code = 409      # conflict
+        if "Deadline" in str(e):
+            code = 408  # request timeout
+        handler.error(code)
+        handler.response.out.write(str(e))
 
 
 def simple_fetchurl(handler, geturl):

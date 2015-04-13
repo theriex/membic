@@ -501,7 +501,7 @@ return {
     },
 
 
-    openOverlay: function (coords, html, initf, visf) {
+    openOverlay: function (coords, html, initf, visf, closefstr) {
         var odiv = jt.byId('overlaydiv');
         coords = coords || {};
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
@@ -513,9 +513,10 @@ return {
         odiv.style.top = String(coords.y) + "px";
         app.escapefuncstack.push(app.onescapefunc);
         app.onescapefunc = app.layout.cancelOverlay;
+        closefstr = closefstr || jt.fs("app.layout.cancelOverlay()");
         html = [["div", {id: "closeline"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.cancelOverlay()")},
+                 ["a", {id: "closeoverlay", href: "#close",
+                        onclick: closefstr},
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 html];
         jt.out('overlaydiv', jt.tac2html(html));

@@ -102,6 +102,8 @@ app.amazon = (function () {
                 (review.revtype.indexOf("video") >= 0)) {
             review.revtype = "movie"; }
         review.imguri = extractField("URL", extractField("MediumImage", xml));
+        if(review.imguri && review.svcdata) {
+            review.svcdata.picdisp = "sitepic"; }
         review.url = extractField("DetailPageURL", xml);
         review.title = extractField("Title", xml);
         ////////////////////////////////////////

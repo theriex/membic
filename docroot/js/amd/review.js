@@ -95,7 +95,7 @@ app.review = (function () {
             key: "name", //subkey
             fields: [ "address" ],
             dkwords: [ "Indoor", "Outdoor", "Educational", "Artistic", 
-                       "Live Performance", "Kid Ok", "Inexpensive", 
+                       "Performance", "Kid Ok", "Inexpensive", 
                        "Expensive" ] },
           { type: "other", plural: "other", img: "TypeOther50.png",
             keyprompt: "Name or title", 
@@ -379,8 +379,8 @@ app.review = (function () {
                         [["input", {type: "url", id: "urlin", size: 32,
                                     onchange: jt.fs("app.review.readURL()")}],
                          "&nbsp;",
-                         ["span", {id: "readurlbuttonspan"},
-                          ["button", {type: "button", id: "readurlbutton",
+                         ["span", {id: "rdurlbuttonspan"},
+                          ["button", {type: "button", id: "rdurlbutton",
                                       onclick: jt.fs("app.review.readURL()"),
                                       title: "Read review form fields" + 
                                             " from pasted URL"},
@@ -432,7 +432,8 @@ app.review = (function () {
         var html;
         if(!keyval) {
             return ""; }
-        html = {id: "revimg", cla: "revimg", src: "img/emptyprofpic.png"};
+        html = {id: "revimg" + jt.instId(review), cla: "revimg", 
+                src: "img/emptyprofpic.png"};
         if(jt.isLowFuncBrowser()) {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
@@ -451,7 +452,7 @@ app.review = (function () {
         html = ["img", html];
         if(mode === "edit") {
             html = ["a", {href: "#changepic", 
-                          onclick: jt.fs("app.review.picDialog()")},
+                          onclick: jt.fs("app.review.picdlg()")},
                     html]; }
         else if(review.url) {
             html = ["a", {href: review.url,
@@ -648,6 +649,33 @@ app.review = (function () {
             else { //reading someone else's review
                 html = app.revresp.respActionsHTML(); } }
         return html;
+    },
+
+
+    displayUploadedPicLabel = function () {
+        var html = ["div", {cla: "ptdvdiv"}, 
+                    ["span", {cla: "ptdlabspan"}, "Uploaded Pic"]];
+        jt.out('upldpicform', jt.tac2html(html));
+    },
+
+
+    monitorPicUpload = function () {
+        var ptdif, txt, revid;
+        ptdif = jt.byId('ptdif');
+        if(ptdif) {
+            txt = ptdif.contentDocument || ptdif.contentWindow.document;
+            if(txt) {
+                txt = txt.body.innerHTML;
+                if(txt.indexOf("revid: ") === 0) {
+                    revid = txt.slice("revid: ".length);
+                    jt.setInstId(crev, revid);
+                    crev.revpic = revid;
+                    jt.byId('upldpicimg').src = "revpic?revid=" + revid;
+                    displayUploadedPicLabel();
+                    return; }
+                if(txt.indexOf("Error: ") === 0) {
+                    jt.out('imgupstatdiv', txt); } }
+            setTimeout(monitorPicUpload, 800); }
     },
 
 
@@ -1110,10 +1138,6 @@ app.review = (function () {
         relx = Math.max(evtx - spanloc.x, 0);
         if(relx > 130) {  //normal relx values are 0 to ~86
             return; }     //ignore far out of range events.
-        if(relx > 100) {  //trying to touch to the far right and failing
-            setTimeout(function () {  //separate event handling
-                selectRatingByMenu(evtx); }, 20);
-            return; }
         //jt.out('keyinlabeltd', "starDisplayAdjust relx: " + relx);  //debug
         sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
         //jt.out('keyinlabeltd', "starDisplayAdjust sval: " + sval);  //debug
@@ -1456,6 +1480,54 @@ app.review = (function () {
     },
 
 
+    overlay = function (base, over) {
+        var pos;
+        base = jt.byId(base);
+        over = jt.byId(over);
+        pos = jt.geoPos(base);
+        over.style.left = String(pos.x) + "px";
+        over.style.top = String(pos.y) + "px";
+        over.style.height = String(pos.h) + "px";
+        over.style.width = String(pos.w) + "px";
+    },
+
+
+    picdlgModForm = function () {
+        var html;
+        html = ["div", {cla: "ptdvdiv"}, 
+                ["span", {cla: "ptdlabspan"}, "Site Pic"]];
+        if(crev.svcdata.picdisp === "sitepic") {
+            html = "Site Form"; }
+        jt.out('sitepicform', jt.tac2html(html));
+        if(crev.svcdata.picdisp === "upldpic") {
+            html = ["div", {id: "ptdfdiv"},
+                    [["form", {action: "/revpicupload", method: "post",
+                               enctype: "multipart/form-data", target: "ptdif"},
+                      [["input", {type: "hidden", name: "penid",
+                                  value: app.pen.currPenId()}],
+                       ["input", {type: "hidden", name: "revid",
+                                  value: jt.instId(crev)}],
+                       ["input", {type: "hidden", name: "revtype",
+                                  value: crev.revtype}],
+                       jt.paramsToFormInputs(app.login.authparams()),
+                       ["div", {cla: "tablediv"},
+                        [["div", {cla: "fileindiv"},
+                          [["input", {type: "file", 
+                                      name: "picfilein", id: "picfilein"}],
+                           ["div", {id: "ptduploadbuttonsdiv"},
+                            ["input", {type: "submit", cla: "formbutton",
+                                       value: "Upload&nbsp;Pic"}]]]],
+                         ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
+                     ["iframe", {id: "ptdif", name: "ptdif", 
+                                 src: "/revpicupload", 
+                                 style: "display:none"}]]];
+            jt.out('upldpicform', jt.tac2html(html));
+            monitorPicUpload(); }
+        else {  //not upldpic
+            displayUploadedPicLabel(); }
+    },
+
+
     displayReviewForm = function (pen, review, mode, errmsg) {
         var type = findReviewType(review.revtype),
             keyval = review[type.key],
@@ -1568,14 +1640,19 @@ app.review = (function () {
             displayTypeSelect(); }
         else if(action === "uploadpic") {
             displayReviewForm(pen, crev, "edit");
-            app.review.picDialog(); }
+            app.review.picdlg(); }
         else {
             displayReviewForm(pen, crev, "edit", errmsg); }
     },
 
 
+    revfs = function (callstr) {
+        return jt.fs("app.review." + callstr);
+    },
+
+
     dlgReadButtonHTML = function () {
-        return ["button", {type: "button", id: "readurlbutton",
+        return ["button", {type: "button", id: "rdurlbutton",
                            onclick: jt.fs("app.review.readURL()")},
                 "Read"];
     },
@@ -1594,7 +1671,7 @@ app.review = (function () {
                 html];
         jt.out("rdtypesdiv", jt.tac2html(html));
         jt.byId("urlin").value = crev.url || "";
-        jt.out("readurlbuttonspan", jt.tac2html(dlgReadButtonHTML()));
+        jt.out("rdurlbuttonspan", jt.tac2html(dlgReadButtonHTML()));
     },
 
 
@@ -1636,7 +1713,7 @@ app.review = (function () {
             if(window.location.href.indexOf("https://") === 0) {
                 src = "imagerelay?url=" + jt.enc(src); } }
         html = ["a", {href: "#changepic",
-                      onclick: jt.fs("app.review.picDialog()")},
+                      onclick: jt.fs("app.review.picdlg()")},
                 ["img", {id: "revimg", cla: "revimg", src: src}]];
         return jt.tac2html(html);
     },
@@ -1720,12 +1797,13 @@ app.review = (function () {
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
         if(!jt.byId("rdpfdiv").innerHTML) {
-            html = [["div", {id: "rdstarsdiv"}, dlgStarsHTML()],
-                    ["div", {id: "rdfutcbdiv"}, 
-                     ["input", {type: "checkbox", id: "rdfutcb",
-                                name: "futuremembicmarkercheckbox",
-                                onclick: jt.fsd("app.review.togglefuture()"),
-                                checked: jt.toru(crev.srcrev === -101)}]]];
+            html = [["div", {id: "rdstfudiv"},
+                     [["div", {id: "rdstarsdiv"}, dlgStarsHTML()],
+                      ["div", {id: "rdfutcbdiv"},
+                       ["input", {type: "checkbox", id: "rdfutcb",
+                                  name: "futuremembicmarkercheckbox",
+                                  onclick: jt.fsd("app.review.togglefuture()"),
+                                  checked: jt.toru(crev.srcrev === -101)}]]]]];
             if(rt.subkey) {
                 html.push(dlgFieldInputHTML(rt.subkey)); }
             for(i = 0; i < rt.fields.length; i += 1) {
@@ -1742,12 +1820,51 @@ app.review = (function () {
     },
 
 
+    dlgTextEntry = function () {
+        var rt, ptxt, html;
+        rt = findReviewType(crev.revtype);
+        if(!rt) {  //no type selected yet, so no text entry yet.
+            return; }
+        if(!jt.byId("rdtextdiv").innerHTML) {
+            ptxt = "What was the most memorable thing for you?";
+            html = ["textarea", {id: "rdta", placeholder: ptxt},
+                    crev.text || ""];
+            jt.out('rdtextdiv', jt.tac2html(html)); }
+        //text is not dynamically updated
+    },
+
+
+    dlgKeywordEntry = function () {
+        var rt, html, i, chk;
+        rt = findReviewType(crev.revtype);
+        if(!rt) {  //no type selected yet, so no keyword entry yet
+            return; }
+        crev.keywords = crev.keywords || "";
+        html = [];
+        for(i = 0; i < rt.dkwords.length; i += 1) {
+            chk = jt.toru(crev.keywords.indexOf(rt.dkwords[i]) >= 0, "checked");
+            html.push(["div", {cla: "rdkwcbdiv"},
+                       [["input", {type: "checkbox", id: "dkw" + i,
+                                   value: rt.dkwords[i], checked: chk,
+                                   //onchange only fires onblur if <IE8
+                                   onclick: jt.fsd("app.review.togkey('dkw" + 
+                                                   i + "')")}],
+                        ["label", {fo: "dkw" + i}, rt.dkwords[i]]]]); }
+        html = [["div", {id: "rdkwcbsdiv"}, html]];
+        html.push(["div", {id: "rdkwindiv"},
+                   [["label", {fo: "rdkwin", cla: "liflab", id: "rdkwlab"},
+                     "Keywords"],
+                    ["input", {id: "rdkwin", cla: "lifin", type: "text"}]]]);
+        jt.out('rdkwdiv', jt.tac2html(html));
+    },
+
+
     updateReviewDialogContents = function () {
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
         dlgDetailsEntry();
-                 // ["div", {id: "rdtextdiv"}],
-                 // ["div", {id: "rdkwdiv"}],
+        dlgTextEntry();
+        dlgKeywordEntry();
     };
 
 
@@ -1769,12 +1886,14 @@ return {
         if(typeof source === 'string') {  //passed in a url
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review
-            crev = makeMine(copyReview(source), jt.instId(source)); }
+            crev = copyReview(source);
+            if(source.penid !== app.pen.currPenId()) {
+                crev = makeMine(crev, jt.instId(source)); } }
         html = ["div", {id: "revdlgdiv"},
                 [["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
                    ["input", {id: "urlin", cla: "lifin", type: "url"}],
-                   ["span", {id: "readurlbuttonspan"}, dlgReadButtonHTML()],
+                   ["span", {id: "rdurlbuttonspan"}, dlgReadButtonHTML()],
                    ["div", {id: "rdstat1"}]]],
                  ["div", {id: "rdtypesdiv"}],
                  ["div", {id: "rdkeyindiv"}],
@@ -1787,7 +1906,7 @@ return {
                     ["button", {type: "button", id: "okbutton",
                                 onclick: jt.fs("app.review.save()")},
                      "Ok"]]]]]];
-        html = app.layout.dlgwrapHTML("", html);
+        html = app.layout.dlgwrapHTML("Make Membic", html);
         app.layout.openDialog(
             {x: jt.byId("headingdivcontent").offsetLeft - 34, y:22},
             jt.tac2html(html), updateReviewDialogContents);
@@ -1795,6 +1914,7 @@ return {
 
 
     updatedlg: function (typename) {
+        app.layout.cancelOverlay();  //close if already open or done
         if(typename) {
             if(jt.byId('rdstarsdiv') && crev.srcrev !== -101) {
                 dlgStarsDeactivate();
@@ -1844,7 +1964,7 @@ return {
             return; }
         url = url.trim();
         if(url) {
-            rbc = jt.byId('readurlbuttonspan');
+            rbc = jt.byId('rdurlbuttonspan');
             if(rbc) {
                 rbc.innerHTML = "reading..."; }
             if(url.toLowerCase().indexOf("http") !== 0) {
@@ -2081,6 +2201,14 @@ return {
     },
 
 
+    togkey: function (kwid) {
+        var rdkwin, keycsv;
+        rdkwin = jt.byId('rdkwin');
+        keycsv = app.review.keywordcsv(kwid, rdkwin.value);
+        rdkwin.value = keycsv;
+    },
+
+
     toggleKeyword: function (kwid) {
         var keyin = jt.byId('keywordin'),
             keycsv = keyin.value;
@@ -2291,61 +2419,46 @@ return {
 
     pictype: function (pictype) {
         crev.svcdata.picdisp = pictype;
-        app.review.picDialog();
+        app.review.picdlg();
     },
 
 
-    picDialog: function () {
-        var pictype = crev.svcdata.picdisp, revid, html;
-        //If no review ID, then save first.  The review needs to have
-        //an ID so the upload form submit processing can find where to
-        //save the picture data.  Also need to save any changes since
-        //the upload form submit triggers a full reload of the app.
-        readAndValidateFieldValues();
+    picdlg: function (picdisp) {
+        var dt, revid, html;
+        if(picdisp) {
+            crev.scvdata = crev.svcdata || {};
+            crev.svcdata.picdisp = picdisp; }
+        dt = verifyReviewImageDisplayType(crev);
         revid = jt.instId(crev);
-        if(!revid || reviewFieldValuesChanged()) {
-            //Verify the review is not already being saved.  If a user
-            //could click the save button and upload at the same time,
-            //it could result in two identical reviews being created.
-            if(jt.byId('revformbuttonsdiv').innerHTML.indexOf("<button") < 0) {
-                return; }  //already saving, ignore the stray click
-            return app.review.save(false, "uploadpic"); }
         html = ["div", {id: "revpicdlgdiv"},
                 [["ul", {cla: "revpictypelist"},
                   [["li",
-                    [jt.radiobutton("upt", "sitepic", "Website Pic",
-                                    (pictype === "sitepic"),
-                                    jt.fs("app.review.pictype('sitepic')")),
+                    [["input", { type: "radio", name: "upt", value: "sitepic",
+                                 checked: jt.toru(dt === "sitepic"),
+                                 onchange: revfs("picdlg('sitepic')")}],
                      ["div", {id: "sitepicdetaildiv", cla: "ptddiv"},
-                      (crev.imguri ? ["img", {id: "sitepicimg", cla: "revimg",
-                                              src: crev.imguri}] : "")]]],
+                      [["img", {id: "sitepicimg", cla: "revimgdis",
+                                src: crev.imguri || "img/emptyprofpic.png",
+                                onclick: revfs("picdlg('sitepic')")}],
+                       ["div", {id: "sitepicform", cla: "overform"}]]]]],
                    ["li",
-                    [jt.radiobutton("upt", "upldpic", "Uploaded Pic",
-                                    (pictype === "upldpic"),
-                                    jt.fs("app.review.pictype('upldpic')")),
+                    [["input", {type: "radio", name: "upt", value: "upldpic",
+                                checked: jt.toru(dt === "upldpic"),
+                                onchange: revfs("picdlg('upldpic')")}],
                      ["div", {id: "upldpicdetaildiv", cla: "ptddiv"},
-                      ["table",
-                       ["tr",
-                        [["td",
-                          (crev.revpic ? ["img", {id: "upimg", cla: "revimg",
-                                                  src: "revpic?revid=" +
-                                                       jt.instId(crev)}]
-                                       : "")],
-                         ["td",
-                          app.layout.picUploadHTML(
-                              {endpoint: "/revpicupload", type: "Review", 
-                               id: revid, penid: crev.penid, notitle: true,
-                               rethash: "#revedit=" + revid})]]]]]]],
+                      [["img", {id: "upldpicimg", cla: "revimgdis",
+                                src: (crev.revpic ? "revpic?revid=" + revid
+                                                  : "img/emptyprofpic.png"),
+                                onclick: revfs("picdlg('upldpic')")}],
+                       ["div", {id: "upldpicform", cla: "overform"}]]]]],
                    ["li",
-                    [jt.radiobutton("upt", "nopic", "No Pic",
-                                    (pictype === "nopic"),
-                                    jt.fs("app.review.pictype('nopic')"))]]]],
-                 ["div", {cla: "dlgbuttonsdiv"},
-                  ["button", {type: "button", id: "okbutton",
-                              onclick: jt.fs("app.review.save(false,'',true)")},
-                   "Ok"]]]];
-        app.layout.openOverlay(app.layout.placerel("revimg", -5, -20), 
-                               html, null, prepPicDialogElements);
+                    [["input", {type: "radio", name: "upt", value: "nopic",
+                                checked: jt.toru(dt === "nopic"),
+                                onchange: revfs("picdlg('nopic')")}],
+                     ["span", {cla: "ptdlabspan"}, "No Pic"]]]]]]];
+        app.layout.openOverlay(app.layout.placerel("revimg", -5, -80), 
+                               html, null, picdlgModForm,
+                               jt.fs("app.review.updatedlg()"));
     },
 
 
@@ -2520,7 +2633,8 @@ return {
         var penref = app.pen.currPenRef();
         if(!penref || !penref.pen) {
             return jt.err("Please sign in"); }
-        jt.err("fpbWrite not implemented yet");
+        app.lcs.getFull("rev", revid, function (revref) {
+            app.review.start(revref.rev); });
     },
 
 
