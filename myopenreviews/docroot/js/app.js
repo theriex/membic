@@ -95,13 +95,10 @@ var app = {},  //Global container for application level funcs and values
     app.init = function () {
         var href = window.location.href,
             modules = [ "js/amd/layout", "js/amd/login", 
-                        "js/amd/review", "js/amd/revresp", 
+                        "js/amd/review",
                         "js/amd/profile", "js/amd/activity", "js/amd/pen", 
-                        "js/amd/rel", "js/amd/skinner", "js/amd/services", 
-                        "js/amd/lcs", "js/amd/history", "js/amd/hinter",
+                        "js/amd/lcs", "js/amd/history",
                         "js/amd/group",
-                        "js/amd/ext/facebook", "js/amd/ext/twitter", 
-                        "js/amd/ext/googleplus", "js/amd/ext/github",
                         "js/amd/ext/amazon", "js/amd/ext/email",
                         "js/amd/ext/readurl" ];
         if(href.indexOf("https://") !== 0 && href.search(/:\d080/) < 0) {
