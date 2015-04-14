@@ -1001,7 +1001,7 @@ app.group = (function () {
         //Might be posting to several groups, so wait a few seconds before
         //writing the review again to try collect all of them.
         revPostTimeout = window.setTimeout(function () {
-            app.review.save(true, "", true); }, 3000);
+            app.review.save(true); }, 3000);
     },
 
 

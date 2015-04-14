@@ -1029,6 +1029,7 @@ return {
 
     displayFeed: function (feedtype) {
         var html, params, time;
+        feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         html = ["div", {id: "feedrevsdiv"}];
         jt.out("contentdiv", jt.tac2html(html));
@@ -1051,6 +1052,18 @@ return {
                     jt.out('feedrevsdiv', "error code: " + code + 
                            " " + errtxt); }),
                 jt.semaphore("activity.displayFeed"));
+    },
+
+
+    updateFeeds: function (rev) {
+        var revid, tname, revs, i;
+        revid = jt.instId(rev);
+        for(tname in feeds) {
+            if(feeds.hasOwnProperty(tname)) {
+                revs = feeds[tname];
+                for(i = 0; i < revs.length; i += 1) {
+                    if(jt.instId(revs[i]) === revid) {
+                        revs[i] = rev; } } } }
     },
 
 

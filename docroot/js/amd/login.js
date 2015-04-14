@@ -84,51 +84,6 @@ app.login = (function () {
     },
 
 
-    doneWorkingWithAccount = function (params) {
-        var state, redurl, xpara;
-        if(!params) {
-            params = jt.parseParams(); }
-        if(params.returnto) {
-            //if changing here, also check /redirlogin
-            redurl = decodeURIComponent(params.returnto) + "#" +
-                authparamsfull();
-            if(params.special === "nativeonly") {
-                redurl += "&special=nativeonly"; }
-            if(params.reqprof) {
-                redurl += "&view=profile&profid=" + params.reqprof; }
-            xpara = jt.objdata(params, ["logout", "returnto"]);
-            if(xpara) {
-                redurl += "&" + xpara; }
-            window.location.href = redurl;
-            return; }
-        //no explicit redirect, so check if directed by anchor tag
-        if(params.anchor === "profile") {
-            clearParams();
-            return app.profile.display(params.action, params.errmsg); }
-        //no tag redirect so check current state.  State may be from history
-        //pop or set by handleRedirectOrStartWork
-        state = app.history.currState();
-        if(state) {
-            if(state.view === "profile") {
-                if(state.profid) {
-                    return app.profile.byprofid(state.profid); }
-                return app.profile.display(); }
-            if(state.view === "group") {
-                if(state.groupid) {
-                    return app.group.bygroupid(state.groupid); }
-                return app.group.display(); }
-            if(state.view === "activity") {
-                return app.activity.displayActive(); }
-            if(state.view === "review" && state.revid) {
-                return app.review.initWithId(state.revid, state.mode,
-                                             params.action, params.errmsg); } }
-        if(params.view === "profile") {
-            return app.profile.display(); }
-        //go with default display
-        app.activity.displayActive();
-    },
-
-
     //Cookie timeout is enforced both by the expiration setting here,
     //and by the server (moracct.py authenticated).  On FF14 with
     //noscript installed, the cookie gets written as a session cookie
@@ -511,7 +466,7 @@ app.login = (function () {
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
         else {  //pass parameters along to the general processing next step
-            doneWorkingWithAccount(params); }
+            app.login.doNextStep(params); }
     },
 
 
@@ -830,11 +785,56 @@ return {
                      jt.out('logindiv', html);
                      setAuthentication("mid", objs[0].token, emaddr);
                      //wait briefly to give the db a chance to stabilize
-                     setTimeout(doneWorkingWithAccount, 3000); },
+                     setTimeout(app.login.doNextStep, 3000); },
                  app.failf(function (code, errtxt) {
                      jt.out('loginstatdiv', errtxt);
                      jt.out('loginbuttonsdiv', buttonhtml); }),
                 jt.semaphore("login.createAccount"));
+    },
+
+
+    doNextStep: function (params) {
+        var state, redurl, xpara;
+        if(!params) {
+            params = jt.parseParams(); }
+        if(params.returnto) {
+            //if changing here, also check /redirlogin
+            redurl = decodeURIComponent(params.returnto) + "#" +
+                authparamsfull();
+            if(params.special === "nativeonly") {
+                redurl += "&special=nativeonly"; }
+            if(params.reqprof) {
+                redurl += "&view=profile&profid=" + params.reqprof; }
+            xpara = jt.objdata(params, ["logout", "returnto"]);
+            if(xpara) {
+                redurl += "&" + xpara; }
+            window.location.href = redurl;
+            return; }
+        //no explicit redirect, so check if directed by anchor tag
+        if(params.anchor === "profile") {
+            clearParams();
+            return app.profile.display(params.action, params.errmsg); }
+        //no tag redirect so check current state.  State may be from history
+        //pop or set by handleRedirectOrStartWork
+        state = app.history.currState();
+        if(state) {
+            if(state.view === "profile") {
+                if(state.profid) {
+                    return app.profile.byprofid(state.profid); }
+                return app.profile.display(); }
+            if(state.view === "group") {
+                if(state.groupid) {
+                    return app.group.bygroupid(state.groupid); }
+                return app.group.display(); }
+            if(state.view === "activity") {
+                return app.activity.displayActive(); }
+            if(state.view === "review" && state.revid) {
+                return app.review.initWithId(state.revid, state.mode,
+                                             params.action, params.errmsg); } }
+        if(params.view === "profile") {
+            return app.profile.display(); }
+        //go with default display
+        app.activity.displayActive();
     },
 
 

@@ -277,7 +277,7 @@ app.review = (function () {
 
 
     reviewTextValid = function (type, errors) {
-        var input = jt.byId('reviewtext');
+        var input = jt.byId('rdta');
         if(input) {
             crev.text = input.value; }
     },
@@ -493,7 +493,7 @@ app.review = (function () {
         var cankey, input = jt.byId('keyin');
         if(!input || !input.value) {
             errlabel('keyinlabeltd');
-            errors.push("Please specify a value for " + type.key); }
+            errors.push("Need a " + type.key); }
         else {
             crev[type.key] = input.value;
             cankey = crev[type.key]; }
@@ -501,7 +501,7 @@ app.review = (function () {
             input = jt.byId('subkeyin');
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
-                errors.push("Please specify a value for " + type.subkey); }
+                errors.push("Need to fill in the " + type.subkey); }
             else {
                 crev[type.subkey] = input.value;
                 cankey += crev[type.subkey]; } }
@@ -514,18 +514,16 @@ app.review = (function () {
         var input, i;
         //none of the secondary fields are required, so just note the values
         for(i = 0; i < type.fields.length; i += 1) {
-            input = jt.byId(type.fields[i] + i);
+            input = jt.byId(type.fields[i] + "in");
             if(input) {  //input field was displayed
                 crev[type.fields[i]] = input.value; } }
     },
 
 
-    verifyRatingStars = function (type, errors, actionstr) {
+    verifyRatingStars = function (type, errors) {
         var txt;
-        if(!crev.rating) {
+        if(!crev.rating && crev.srcrev !== -101) {
             txt = "Please set a star rating";
-            if(actionstr === "uploadpic") {
-                txt += " before uploading a picture"; }
             errors.push(txt); }
     },
 
@@ -567,7 +565,7 @@ app.review = (function () {
 
 
     readAndValidateFieldValues = function (type, errors) {
-        var cbprerev;
+        var futcb;
         if(!type) {
             type = findReviewType(crev.revtype); }
         if(!errors) {
@@ -578,8 +576,8 @@ app.review = (function () {
             reviewTextValid(type, errors);
             secondaryFieldsValid(type, errors);
             noteURLValue();
-            cbprerev = jt.byId("cbprerev");
-            if(cbprerev && cbprerev.checked) {
+            futcb = jt.byId("rdfutcb");
+            if(futcb && futcb.checked) {
                 crev.srcrev = -101; }
             else if(crev.srcrev && crev.srcrev === -101) {
                 crev.srcrev = 0; } }
@@ -1510,6 +1508,7 @@ app.review = (function () {
             html = ["div", {id: "ptdfdiv"},
                     [["label", {fo: "pdturlin"}, "Pic URL"],
                      ["input", {id: "pdturlin", type: "url", size: 26,
+                                value: crev.imguri || "",
                                 placeholder: "http://example.com/pic.png"}],
                      ["div", {id: "pdtsustatdiv"}],
                      ["div", {id: "pdtsbuttondiv", cla: "dlgbuttonsdiv"},
@@ -2291,27 +2290,27 @@ return {
     },
 
 
-    save: function (doneEditing, actionstr, skipvalidation) {
-        var errors = [], i, errtxt = "", type, url, data, html;
+    save: function (skipvalidation) {
+        var errors = [], i, errtxt = "", rt, url, data, html;
         //remove save button immediately to avoid double click dupes...
-        html = jt.byId('revformbuttonsdiv').innerHTML;
+        html = jt.byId('rdokbuttondiv').innerHTML;
         if(!skipvalidation) {
-            jt.out('revformbuttonsdiv', "Verifying...");
-            type = findReviewType(crev.revtype);
-            if(!type) {
-                jt.out('revformbuttonsdiv', html);
-                jt.out('revsavemsg', "Unknown posting type");
+            jt.out('rdokbuttondiv', "Verifying...");
+            rt = findReviewType(crev.revtype);
+            if(!rt) {
+                jt.out('rdokbuttondiv', html);
+                jt.out('rdokstatdiv', "Need to choose a type");
                 return; }
-            readAndValidateFieldValues(type, errors);
-            verifyRatingStars(type, errors, actionstr);
+            readAndValidateFieldValues(rt, errors);
+            verifyRatingStars(rt, errors);
             if(errors.length > 0) {
-                jt.out('revformbuttonsdiv', html);
+                jt.out('rdokbuttondiv', html);
                 for(i = 0; i < errors.length; i += 1) {
                     errtxt += errors[i] + "<br/>"; }
-                jt.out('revsavemsg', errtxt);
+                jt.out('rdokstatdiv', errtxt);
                 return; } }
-        jt.out('revformbuttonsdiv', "Saving...");
-        app.layout.cancelOverlay();  //in case it is still up
+        jt.out('rdokbuttondiv', "Saving...");
+        app.layout.cancelOverlay();  //just in case it is still up
         app.onescapefunc = null;
         url = "updrev?";
         if(!jt.instId(crev)) {
@@ -2321,26 +2320,19 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', url + app.login.authparams(), data,
                 function (reviews) {
+                    jt.out('rdokbuttondiv', "Saved.");
                     crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
-                    app.layout.runMeritDisplay(crev, url === "newrev?");
+                    app.activity.updateFeeds(reviews[0]);
                     cacheBustPersonalReviewSearches();
                     setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
-                    setTimeout(function () {  //update matching requests
-                        app.activity.fulfillRequests(crev); }, 100);
                     if(url.indexOf("newrev") >= 0) {
                         setTimeout(app.group.currentReviewPostDialog, 150); }
-                    setTimeout(function () {  //update corresponding links
-                        app.lcs.checkAllCorresponding(crev); }, 200);
-                    if(doneEditing) {
-                        attribution = "";
-                        app.revresp.pollForUpdates();
-                        app.review.displayRead(actionstr); }
-                    else {
-                        app.review.display(actionstr); } },
+                    attribution = "";
+                    app.layout.closeDialog();
+                    app.login.doNextStep({}); },
                 app.failf(function (code, errtxt) {
-                    jt.log("saveReview failed code: " + code + " " +
-                           errtxt);
-                    app.review.display(); }),
+                    jt.out('rdokstatdiv', "Save fail " + code + ": " + errtxt);
+                    jt.out('rdokbuttondiv', html); }),
                 jt.semaphore("review.save"));
     },
 
