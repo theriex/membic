@@ -103,6 +103,20 @@ app.layout = (function () {
     },
 
 
+    closeModalSeparator = function () {
+        var mdiv = jt.byId('modalseparatordiv');
+        mdiv.style.width = "1px";
+        mdiv.style.height = "1px";
+    },
+
+
+    openModalSeparator = function () {
+        var mdiv = jt.byId('modalseparatordiv');
+        mdiv.style.width = String(app.winw) + "px";
+        mdiv.style.height = String(app.winh) + "px";
+    },
+
+
     fixTextureCover = function () {
         var altimg;
         if(jt.isLowFuncBrowser()) { //decent css support is missing, fall back
@@ -493,7 +507,9 @@ return {
 
 
     cancelOverlay: function () {
-        var odiv = jt.byId('overlaydiv');
+        var odiv;
+        closeModalSeparator();
+        odiv = jt.byId('overlaydiv');
         if(odiv) {
             jt.out('overlaydiv', "");
             odiv.style.visibility = "hidden"; }
@@ -502,7 +518,9 @@ return {
 
 
     openOverlay: function (coords, html, initf, visf, closefstr) {
-        var odiv = jt.byId('overlaydiv');
+        var odiv;
+        openModalSeparator();
+        odiv = jt.byId('overlaydiv');
         coords = coords || {};
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
         coords.y = coords.y || 200;

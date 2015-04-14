@@ -652,6 +652,13 @@ app.review = (function () {
     },
 
 
+    displaySitePicLabel = function () {
+        var html = ["div", {cla: "ptdvdiv"}, 
+                    ["span", {cla: "ptdlabspan"}, "Site Pic"]];
+        jt.out('sitepicform', jt.tac2html(html));
+    },
+
+
     displayUploadedPicLabel = function () {
         var html = ["div", {cla: "ptdvdiv"}, 
                     ["span", {cla: "ptdlabspan"}, "Uploaded Pic"]];
@@ -1492,13 +1499,26 @@ app.review = (function () {
     },
 
 
+    revfs = function (callstr) {
+        return jt.fs("app.review." + callstr);
+    },
+
+
     picdlgModForm = function () {
         var html;
-        html = ["div", {cla: "ptdvdiv"}, 
-                ["span", {cla: "ptdlabspan"}, "Site Pic"]];
         if(crev.svcdata.picdisp === "sitepic") {
-            html = "Site Form"; }
-        jt.out('sitepicform', jt.tac2html(html));
+            html = ["div", {id: "ptdfdiv"},
+                    [["label", {fo: "pdturlin"}, "Pic URL"],
+                     ["input", {id: "pdturlin", type: "url", size: 26,
+                                placeholder: "http://example.com/pic.png"}],
+                     ["div", {id: "pdtsustatdiv"}],
+                     ["div", {id: "pdtsbuttondiv", cla: "dlgbuttonsdiv"},
+                      ["button", {type: "button", id: "pdtsupdbutton",
+                                  onclick: revfs("sitepicupd()")},
+                       "Update"]]]];
+            jt.out('sitepicform', jt.tac2html(html)); }
+        else {
+            displaySitePicLabel(); }
         if(crev.svcdata.picdisp === "upldpic") {
             html = ["div", {id: "ptdfdiv"},
                     [["form", {action: "/revpicupload", method: "post",
@@ -1646,11 +1666,6 @@ app.review = (function () {
     },
 
 
-    revfs = function (callstr) {
-        return jt.fs("app.review." + callstr);
-    },
-
-
     dlgReadButtonHTML = function () {
         return ["button", {type: "button", id: "rdurlbutton",
                            onclick: jt.fs("app.review.readURL()")},
@@ -1712,9 +1727,7 @@ app.review = (function () {
             src = crev.imguri;
             if(window.location.href.indexOf("https://") === 0) {
                 src = "imagerelay?url=" + jt.enc(src); } }
-        html = ["a", {href: "#changepic",
-                      onclick: jt.fs("app.review.picdlg()")},
-                ["img", {id: "revimg", cla: "revimg", src: src}]];
+        html = ["img", {id: "revimg", cla: "revimg", src: src}];
         return jt.tac2html(html);
     },
 
@@ -1797,19 +1810,22 @@ app.review = (function () {
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
         if(!jt.byId("rdpfdiv").innerHTML) {
-            html = [["div", {id: "rdstfudiv"},
-                     [["div", {id: "rdstarsdiv"}, dlgStarsHTML()],
-                      ["div", {id: "rdfutcbdiv"},
-                       ["input", {type: "checkbox", id: "rdfutcb",
-                                  name: "futuremembicmarkercheckbox",
-                                  onclick: jt.fsd("app.review.togglefuture()"),
-                                  checked: jt.toru(crev.srcrev === -101)}]]]]];
+            html = [["div", {id: "rdstarsdiv"}, dlgStarsHTML()]];
             if(rt.subkey) {
                 html.push(dlgFieldInputHTML(rt.subkey)); }
             for(i = 0; i < rt.fields.length; i += 1) {
                 html.push(dlgFieldInputHTML(rt.fields[i])); }
-            html = [["div", {id: "rdpicdiv"}, dlgPicHTML()],
-                    ["div", {id: "rddetsdiv"}, html]];
+            //onclick the div in case the enclosing image is broken
+            //and can't function as a link to bring up the dialog
+            html = [["div", {id: "rdpicdiv",
+                             onclick: jt.fs("app.review.picdlg()")}, 
+                     dlgPicHTML()],
+                    ["div", {id: "rdfutcbdiv"},
+                     ["input", {type: "checkbox", id: "rdfutcb",
+                                name: "futuremembicmarkercheckbox",
+                                onclick: jt.fsd("app.review.togglefuture()"),
+                                checked: jt.toru(crev.srcrev === -101)}]],
+                    html];
             jt.out("rdpfdiv", jt.tac2html(html));
             dlgStarsActivate(); }
         jt.out('rdpicdiv', dlgPicHTML());
@@ -1865,6 +1881,7 @@ app.review = (function () {
         dlgDetailsEntry();
         dlgTextEntry();
         dlgKeywordEntry();
+        //jt.err("rdkeyindiv offsetWidth: " + jt.byId('rdkeyindiv').offsetWidth);
     };
 
 
@@ -2459,6 +2476,19 @@ return {
         app.layout.openOverlay(app.layout.placerel("revimg", -5, -80), 
                                html, null, picdlgModForm,
                                jt.fs("app.review.updatedlg()"));
+    },
+
+
+    sitepicupd: function () {
+        var url;
+        jt.out('pdtsustatdiv', "");
+        url = jt.byId('pdturlin').value;
+        if(!url) {
+            jt.out('pdtsustatdiv', "Need URL value");
+            return; }
+        crev.imguri = url;
+        jt.byId('sitepicimg').src = url;
+        displaySitePicLabel();
     },
 
 
