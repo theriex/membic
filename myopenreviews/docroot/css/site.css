@@ -302,7 +302,7 @@ button, .loginbutton, .formbutton {
 .revlist li { padding:4px; }
 .revimg, .revimgdis { max-width:125px; max-height:125px; }
 .revimgdis { opacity:0.3; filter:alpha(opacity=30); }
-.revtextsummary { font-size:small; } /* padded in profile.reviewItemHTML */
+.revtextsummary { font-size:small; } /* padded in profile reviewItemHTML */
 .removeico { width:15px; height:15px; vertical-align:middle; }
 .rslc { font-size:medium; }
 .rslcbold { font-size:medium; font-weight:bold; }

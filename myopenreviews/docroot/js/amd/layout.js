@@ -250,9 +250,7 @@ return {
     //contentdiv is subdivided into chead and cmain.
     initContent: function () {
         if(!app.layout.haveContentDivAreas()) {
-            app.layout.initContentDivAreas();
-            app.activity.updateHeading();
-            app.review.updateHeading(); }
+            app.layout.initContentDivAreas(); }
     },
 
 

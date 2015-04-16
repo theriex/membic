@@ -800,7 +800,7 @@ class FetchPreReviews(webapp2.RequestHandler):
             return
         where = "WHERE penid = :1 AND srcrev = -101 ORDER BY modified DESC"
         revquery = Review.gql(where, penid)
-        fetchmax = 50
+        fetchmax = 20
         reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
                                  deadline=10)
         returnJSON(self.response, reviews)

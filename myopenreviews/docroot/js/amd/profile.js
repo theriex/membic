@@ -962,8 +962,7 @@ return {
                  ["div", divattrs,
                   [remove,
                    byLineHTML(revobj, penNameStr),
-                   clickspan(keywords, revclick),
-                   clickspan(app.review.linkCountHTML(revid), revclick)]],
+                   clickspan(keywords, revclick)]],
                  clickspan(revtext, revclick)]];
         html = jt.tac2html(html);
         return html;

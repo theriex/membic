@@ -279,9 +279,7 @@ app.group = (function () {
                 html.push(
                     ["span", {cla: "badgespan"},
                      ["a", {href: "#" + reviewTypes[i].type,
-                            onclick: jt.fs("app.review.cancelReview(" + 
-                                           "true,'" + reviewTypes[i].type +
-                                           "')")},
+                            onclick: jt.fs("app.review.start()")},
                       ["img", {cla: "reviewbadge",
                                src: "img/" + reviewTypes[i].img}]]]); } }
         return html;
@@ -658,21 +656,8 @@ app.group = (function () {
                           obj[fname]]]]; }
             break;
         case "revtypesel":
-            if(fdef.edit) {
-                html = ["tr",
-                        ["td", {colspan: 2},
-                         [["div", {cla: "secondaryfield"},
-                           fdef.printName || fname.capitalize()],
-                          app.review.reviewTypeCheckboxesHTML(
-                              "revtypesel", null, obj[fname])]]]; }
-            else {
-                html = ["tr",
-                        [["td", {cla: "tdnowrap"},
-                          ["span", {cla: "secondaryfield"},
-                           fdef.printName || fname.capitalize()]],
-                         ["td", {cla: "tdwide"},
-                          ["span", {cla: fdef.valclass || ""},
-                           niceCSV(obj[fname])]]]]; }
+            //type selection is off the main display now
+            html = "";
             break;
         case "frequency":
             tds.push(["td", {cla: "tdnowrap"},
@@ -2026,8 +2011,7 @@ return {
             if(groupref.group) {
                 mergetotal += mergeGroupActivity(groupref.group, 
                                                  penref.actdisp.revrefs); } }
-        if(mergetotal) {
-            app.activity.displayReviewActivity(); }
+        //if have merged, display it somehow?
     },
 
 

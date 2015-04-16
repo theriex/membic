@@ -92,12 +92,6 @@ return {
             case "memo":
                 app.activity.displayRemembered();
                 break;
-            case "review":
-                //the review was cached when previously viewed..
-                app.review.setCurrentReview(
-                    app.lcs.getRef("rev", state.revid).rev);
-                app.review.displayRead();
-                break;
             } }
         else if(app.login.isLoggedIn()) { 
             jt.log("historyPop: no state, so displaying main feed by default");

@@ -10,9 +10,6 @@ app.amazon = (function () {
     ////////////////////////////////////////
 
     var svcName = "Amazon",    //ascii with no spaces, used as an id
-        attribution = "<a href=\"http://www.amazon.com\"" + 
-                        " title=\"Review details retrieved from Amazon\"" +
-                      ">delivered by Amazon</a>",
 
 
     ////////////////////////////////////////
@@ -158,7 +155,6 @@ return {
         jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content));
-                     app.review.setAttribution(attribution);
                      app.review.updatedlg(); },
                  app.failf(function (code, errtxt) {
                      jt.err("Amazon data retrieval failed code " + 

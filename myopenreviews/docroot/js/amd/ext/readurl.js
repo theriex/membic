@@ -280,7 +280,7 @@ return {
         jt.call('GET', geturl, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content), url);
-                     app.review.display(); },
+                     app.review.updatedlg(); },
                  app.failf(function (code, errtxt) {
                      var plainurl = getPlainURL(url);
                      if(url !== plainurl) {
@@ -292,8 +292,7 @@ return {
                             "review details manually. Sorry about that.\n\n" +
                             "Here's what came back in case it helps:\n\n" +
                             "Error code " + code + ": " + errtxt);
-                     app.review.resetAutoURL();
-                     app.review.display(); }),
+                     app.review.resetAutoURL(); }),
                 jt.semaphore("readurl.fetchData"));
     }
 
