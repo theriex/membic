@@ -73,65 +73,6 @@ app.profile = (function () {
     },
 
 
-    tallyInLinks = function (penref) {
-        var linksummary, inlinks, i;
-        linksummary = { helpful: 0, helpsrc: 0, 
-                        remembered: 0, remsrc: 0,
-                        corresponding: 0, correspsrc: 0 };
-        inlinks = penref.inlinks;
-        for(i = 0; i < inlinks.length; i += 1) {
-            if(inlinks[i].helpful) {
-                linksummary.helpful += inlinks[i].helpful.
-                    split(",").length;
-                linksummary.helpsrc += 1; }
-            if(inlinks[i].remembered) {
-                linksummary.remembered += inlinks[i].remembered.
-                    split(",").length;
-                linksummary.remsrc += 1; }
-            if(inlinks[i].corresponding) {
-                linksummary.corresponding += inlinks[i].corresponding.
-                    split(",").length;
-                linksummary.correspsrc += 1; } }
-        return linksummary;
-    },
-
-
-    displayInboundLinkIndicator = function () {
-        var penref, html = "", count;
-        penref = app.pen.currPenRef();
-        if(!penref.linksummary) {
-            if(!penref.inlinks) {
-                //fetch is low prio, don't compete with startup processing
-                setTimeout(function () {
-                    var params;
-                    params = "penid=" + jt.instId(penref.pen) + "&" + 
-                        app.login.authparams();
-                    jt.call('GET', "inlinks?" + params, null,
-                            function (inlinks) {
-                                penref.inlinks = inlinks;
-                                displayInboundLinkIndicator(); },
-                            app.failf,
-                            jt.semaphore("profile.dispInbLinkInd")); }, 1200);
-                return; }
-            penref.linksummary = tallyInLinks(penref); }
-        count = penref.linksummary.helpful + penref.linksummary.remembered +
-            penref.linksummary.corresponding;
-        if(count) {
-            html = ["a", {href: "#profile",
-                          onclick: jt.fs("app.profile.display()")},
-                    ["span", {cla: "inlinkspan",
-                              title: "helpful: " + 
-                                  penref.linksummary.helpful +
-                                  ", remembered: " + 
-                                  penref.linksummary.remembered + 
-                                  ", corresponding: " +
-                                  penref.linksummary.corresponding},
-                    String(count)]];
-            html = jt.tac2html(html); }
-        jt.out('profstarhdiv', html);
-    },
-
-
     displayAuthSettings = function (domid, pen) {
         var html;
         if(pen.pen) {  //got a penref, adjust accordingly

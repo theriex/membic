@@ -137,31 +137,6 @@ handlers:
 
 
 ######################################################################
-##        Relationships
-
-## Find relationships matching the source or target pen id
-## GET params: originid, relatedid, offset, cursor, authparams
-- url: /findrels.*
-  script: src.py.rel.app
-
-## Create new relationship
-## POST params: rel, authparams
-- url: /newrel.*
-  script: src.py.rel.app
-
-## Delete relationship
-## POST params: rel, authparams
-- url: /delrel.*
-  script: src.py.rel.app
-
-## Update relationship
-## POST params: rel, authparams
-- url: /updrel.*
-  script: src.py.rel.app
-
-
-
-######################################################################
 ##        Reviews
 
 ## Initialize review reference fields
@@ -188,17 +163,20 @@ handlers:
 - url: /newrev.*
   script: src.py.rev.app
 
+
 ## Update review for authorized pen name
 ## POST params: rev, authparams
 ##   _id of rev required
 - url: /updrev.*
   script: src.py.rev.app
 
+
 ## Delete review for authorized pen name
 ## POST params: rev, authparams
 - url: /delrev.*
   script: src.py.rev.app
   
+
 ## Upload a review pic
 ## POST params: picfilein, _id, authparams
 ##   _id: The Review instance id
@@ -210,134 +188,35 @@ handlers:
 - url: /revpic.*
   script: src.py.rev.app
 
+
 ## Return reviews for a given pen within the given date range
 ## GET params: penid, mindate, maxdate, qstr, authparams (,revtype, oldfirst)
 - url: /srchrevs.*
   script: src.py.rev.app
+
 
 ## Return the review for the given id.
 ## GET params: revid
 - url: /revbyid.*
   script: src.py.rev.app
 
+
 ## Return the review looking up by revtype and cankey
 ## GET params: penid, revtype, cankey, authparams
 - url: /revbykey
   script: src.py.rev.app
+
 
 ## Return reviews from any pen name ids in the given csv
 ## GET params: penids, since, cursor
 - url: /revact.*
   script: src.py.rev.app
 
+
 ## Return pre-reviews for the given pen
 ## GET params: penid, authparams
 - url: /fetchprerevs.*
   script: src.py.rev.app
-
-
-######################################################################
-##        Review Tags
-
-## Note the specified review was helpful. helpful: "yes" or "no"
-## POST params: penid, revid, helpful, authparams
-- url: /notehelpful.*
-  script: src.py.revtag.app
-
-## Search the review tags for helpful marks, returning most recent first.
-## Specify either penid or revid.  If revid, then penids is a CSV of one
-## or more penid values to match.
-## GET params: penid, revid, penids, authparams
-- url: /srchhelpful.*
-  script: src.py.revtag.app
-
-## Note the specified review should be remembered.  remember: "yes" or "no"
-## POST params: penid, revid, remember, authparams
-- url: /noteremem.*
-  script: src.py.revtag.app
-
-## Search the review tags for remember marks, returning most recent first
-## penids is a CSV of one or more penid values to match.
-## GET params: penid, revid, penids, authparams
-- url: /srchremem.*
-  script: src.py.revtag.app
-
-
-
-######################################################################
-##        Review Links
-
-## Return all ReviewLink entries for the given penid modified in the
-## past 30 days
-## GET params: penid, authparams
-- url: /inlinks.*
-  script: src.py.revlink.app
-
-
-## Search the ReviewLink entries returning any that are in the given
-## csv of review ids.
-## GET params: revids, authparams
-- url: /revlinks.*
-  script: src.py.revlink.app
-
-
-## Update the given ReviewLink
-## POST params: revlink, authparams
-- url: /updlink.*
-  script: src.py.revlink.app
-
-
-######################################################################
-##        ReviewComments
-
-## Fetch pending questions/comments from others
-## GET params: penid, authparams
-- url: /pendincmt.*
-  script: src.py.revcmt.app
-
-
-## Fetch pending questions/comments you have written
-## GET params: penid, authparams
-- url: /pendoutcmt.*
-  script: src.py.revcmt.app
-
-
-## Fetch accepted questions/comments for a specific review
-## GET params: revid, authparams
-- url: /revcmt.*
-  script: src.py.revcmt.app
-
-
-## Update a question/comment (reviewer)
-## POST params: revcmt, authparams
-- url: /updcmt.*
-  script: src.py.revcmt.app
-
-
-## Create a new question/comment (commenter)
-## POST params: revcmt, authparams
-- url: /crecmt.*
-  script: src.py.revcmt.app
-
-
-## Delete a comment you previously wrote (commenter)
-## POST params: revcmt, authparams
-- url: /delcmt.*
-  script: src.py.revcmt.app
-
-
-######################################################################
-##        Requests
-
-## Create or update a request
-## POST params: request, authparams
-- url: /updreq.*
-  script: src.py.req.app
-
-## Return requests matching the fromid or toid
-## GET params: fromid or toid, authparams
-- url: /findreqs.*
-  script: src.py.req.app
 
 
 ######################################################################

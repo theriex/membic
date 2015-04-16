@@ -139,23 +139,6 @@ app.activity = (function () {
     },
 
 
-    followNewTipstersAndRedisplay = function (tries, pens) {
-        var i, contfunc, outrels = app.rel.outboundids();
-        if(outrels.length >= 3 || tries >= 20) {  //done adding new followers
-            app.activity.displayActive(); }
-        else {  //follow someone
-            contfunc = function (orgpen, relpen, newrel) {
-                followNewTipstersAndRedisplay(tries + 1, pens); };
-            for(i = 0; i < pens.length; i += 1) {
-                if(jt.instId(pens[i]) && !penSearchFiltered(pens[i])) {
-                    jt.out('revactdiv', "Following " + pens[i].name + "...");
-                    app.rel.follow(pens[i], contfunc);
-                    break; } }
-            if(i === pens.length) {  //did not find anyone to follow
-                app.activity.displayActive(); } }
-    },
-
-
     bootMonitor = function () {
         var revactdiv, html;
         revactdiv = jt.byId('revactdiv');

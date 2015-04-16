@@ -8,7 +8,6 @@ from moracct import *
 from morutil import *
 from cacheman import *
 from rev import Review, review_modification_authorized
-from revcmt import ReviewComment
 import json
 
 class Group(db.Model):
@@ -361,22 +360,7 @@ class RemoveReview(webapp2.RequestHandler):
                 self.response.out.write("Not authorized to remove reviews")
                 return
         reason = ""
-        # leave a comment for owner if not your review
-        if rev.penid != pen.key().id():
-            reason = self.request.get('reason')
-            if not reason or len(reason.strip()) == 0:
-                self.error(400)
-                self.response.out.write("Removal reason required")
-                return
-            rc = ReviewComment(revid=revid)
-            rc.revpenid = rev.penid
-            rc.cmtpenid = pen.key().id()
-            rc.rctype = "comment"
-            rc.rcstat = "pending"
-            rc.comment = reason
-            rc.resp = ""
-            rc.modified = nowISO()
-            rc.put()
+        # ATTENTION notify the owner as to why? Somehow?
         # remove the revid from the group
         group.reviews = remove_id_from_csv(revid, group.reviews)
         update_group_admin_log(group, pen, "Removed Review", revid, reason)

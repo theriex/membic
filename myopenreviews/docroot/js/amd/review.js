@@ -481,7 +481,7 @@ app.review = (function () {
                      fpOtherRevsLinkHTML(revid)],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#helpful",
-                            title: "Note this post was helpful",
+                            title: "Note this membic was helpful",
                             onclick: jt.fs("app.review.fpbToggleHelpful('" +
                                            prefix + "','" + revid + "')")},
                       ["img", {cla: "fpbuttonimg",
@@ -489,7 +489,7 @@ app.review = (function () {
                                src: fpbHelpfulButtonSource(revid)}]]],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#remember",
-                            title: "Remember this post",
+                            title: "Remember this membic",
                             onclick: jt.fs("app.review.fpbToggleRemember('" +
                                            prefix + "','" + revid + "')")},
                       ["img", {cla: "fpbuttonimg",
@@ -497,7 +497,7 @@ app.review = (function () {
                                src: fpbRememberButtonSource(revid)}]]],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#write",
-                            title: "Record your own impressions",
+                            title: "Note your impressions",
                             onclick: jt.fs("app.review.fpbWrite('" +
                                            prefix + "','" + revid + "')")},
                       ["img", {cla: "fpbuttonimg",
@@ -1196,7 +1196,7 @@ return {
         if(typeof source === 'object') {  //passed in another review
             crev = copyReview(source);
             if(source.penid !== app.pen.currPenId()) {
-                crev = makeMine(crev, jt.instId(source)); } }
+                makeMine(crev, jt.instId(source)); } }
         html = ["div", {id: "revdlgdiv"},
                 [["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
