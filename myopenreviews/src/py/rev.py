@@ -13,7 +13,6 @@ from operator import attrgetter
 import re
 from cacheman import *
 import time
-from revtag import ReviewTag
 
 
 # srcrev is heavily utilized in different contexts:
@@ -773,17 +772,26 @@ class GetReviewFeed(webapp2.RequestHandler):
         returnJSON(self.response, revs)
 
 
-class ReviewActivity(webapp2.RequestHandler):
+class ToggleHelpful(webapp2.RequestHandler):
     def get(self):
-        since = self.request.get('since')
-        cursor = self.request.get('cursor')
-        penidstr = self.request.get('penids')
-        penids = []
-        if penidstr:
-            penids = penidstr.split(',')
-        # logging.info("penids: " + str(penids))
-        checked, reviews = review_activity_search(since, cursor, penids)
-        returnJSON(self.response, reviews, cursor, checked)
+        pen = review_modification_authorized(self)
+        if not pen:
+            return
+        revid = intz(self.request.get('revid'))
+        review = cached_get(revid, Review)
+        if not review:
+            self.error(404)
+            self.response.out.write("Review: " + str(revid) + " not found.")
+            return
+        if csv_elem_count(review.helpful) < 123:
+            penid = str(pen.key().id())
+            if csv_contains(penid, review.helpful):
+                review.helpful = remove_from_csv(penid, review.helpful)
+            else:
+                review.helpful = prepend_to_csv(penid, review.helpful)
+            cached_put(review)
+            # do not redo the main feeds. too much churn
+        returnJSON(self.response, [ review ])
 
 
 class FetchPreReviews(webapp2.RequestHandler):
@@ -849,7 +857,7 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/revdatainit', ReviewDataInit),
                                ('/revcheckall', VerifyAllReviews),
                                ('/revfeed', GetReviewFeed),
-                               ('/revact', ReviewActivity),
+                               ('/toghelpful', ToggleHelpful),
                                ('/fetchprerevs', FetchPreReviews),
                                ('/testrevs', MakeTestReviews)], debug=True)
 

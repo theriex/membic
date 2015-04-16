@@ -152,6 +152,28 @@ def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
     return matched
 
 
+def updateable_pen(handler):
+    acc = authenticated(handler.request)
+    if not acc:
+        handler.error(401)
+        handler.response.out.write("Authentication failed")
+        return False
+    penid = intz(handler.request.get('_id'))
+    if not penid:
+        penid = intz(handler.request.get('penid'))
+    pen = cached_get(penid, PenName)
+    if not pen:
+        handler.error(404)
+        handler.response.out.write("PenName id: " + str(penid) + " not found.")
+        return False
+    authok = authorized(acc, pen)
+    if not authok:
+        handler.error(401)
+        handler.response.out.write("You may only update your own pen name.")
+        return False
+    return pen
+
+
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
         logging.info("pen.py AuthPenNames start...")
@@ -208,10 +230,8 @@ class NewPenName(webapp2.RequestHandler):
 
 class UpdatePenName(webapp2.RequestHandler):
     def post(self):
-        acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
+        pen = updateable_pen(self)
+        if not pen:
             return
         name = self.request.get('name')
         name_c = canonize(name)
@@ -219,23 +239,14 @@ class UpdatePenName(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Invalid value for name")
             return
-        penid = self.request.get('_id')
-        logging.info("UpdatePenName id: " + penid)
-        pen = cached_get(intz(penid), PenName)
-        if not pen:
-            self.error(404)
-            self.response.out.write("PenName id: " + str(penid) + " not found.")
-            return
-        authok = authorized(acc, pen)
-        if not authok:
-            self.error(401)
-            self.response.out.write("You may only update your own pen name.")
-            return
+        logging.info("UpdatePenName id: " + str(pen.key().id()))
         set_pen_attrs(pen, self.request)
         pen.name = name;
         pen.name_c = name_c;
         # pen.following is NOT modified here.  Don't collide with rel trans
         # pen.followers ditto
+        # possible authorization was changed in the params
+        acc = authenticated(self.request)
         authok = authorized(acc, pen)
         if not authok:
             self.error(401)
@@ -300,6 +311,33 @@ class GetProfPic(webapp2.RequestHandler):
         img = img.execute_transforms(output_encoding=images.PNG)
         self.response.headers['Content-Type'] = "image/png"
         self.response.out.write(img)
+
+
+class ToggleRemember(webapp2.RequestHandler):
+    def get(self):
+        pen = updateable_pen(self)
+        if not pen:
+            return
+        revid = self.request.get('revid')
+        if not revid:
+            self.error(401)
+            self.response.out.write("Review: " + revid + " not found.")
+            return
+        if csv_contains(revid, pen.remembered):
+            pen.remembered = remove_from_csv(revid, pen.remembered)
+        else:
+            pen.remembered = prepend_to_csv(revid, pen.remembered)
+            try:
+                review = cached_get(int(revid), Review)
+                penid = str(pen.key().id())
+                if not csv_contains(penid, review.remembered):
+                    review.remembered = prepend_to_csv(penid, review.remembered)
+                    cached_put(review)
+            except Exception as e:
+                logging.info("Failed remembered backlink from Review " + revid +
+                             " to PenName " + str(pen.key().id()))
+        cached_put(pen)
+        returnJSON(self.response, [ pen ])
 
 
 class SearchPenNames(webapp2.RequestHandler):
@@ -491,6 +529,7 @@ app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/updpen', UpdatePenName),
                                ('/profpicupload', UploadProfPic),
                                ('/profpic', GetProfPic),
+                               ('/togremember', ToggleRemember),
                                ('/srchpens', SearchPenNames),
                                ('/penbyid', GetPenById),
                                ('/acctinfo', GetInfoForAccount),

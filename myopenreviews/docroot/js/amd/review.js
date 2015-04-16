@@ -427,26 +427,78 @@ app.review = (function () {
     },
 
 
-    fpbHelpfulButtonSource = function (revid) {
-        var rev, penid;
+    fpbHelpfulButtonHTML = function (prefix, revid, processing) {
+        var rev, penid, title = "", alt = "", src = "", html;
         rev = app.lcs.getRef("rev", revid).rev;
         penid = app.pen.currPenId();
-        //rev.helpful should never contain 0. helpfuldis logic is public
-        if(!rev.helpful || !rev.helpful.csvcontains(penid)) {
-            return "img/helpfulq.png"; }
-        if(rev.helpful.csvarray().length > 100) {
-            return "img/helpfuldis.png"; }
-        return "img/helpful.png";
+        rev.helpful = rev.helpful || "";
+        if(rev.helpful.csvarray().length >= 123) {
+            processing = true;  //permanently suspended
+            title = "Helpful to lots of people";
+            alt = "Maxed helpful";
+            src = "img/helpfuldis.png"; }
+        else if(rev.helpful.csvcontains(penid)) {
+            if(processing) {
+                title = "Unmarking...";
+                alt = "Processing unset helpful";
+                src = "img/helpfuldis.png"; }
+            else {
+                title = "Unset helpful mark";
+                alt = "Helpful mark";
+                src = "img/helpful.png"; } }
+        else { //not at max and not marked as helpful
+            if(processing) {
+                title = "Marking...";
+                alt = "Processing mark helpful";
+                src = "img/helpfulqdis.png"; }
+            else {
+                title = "Mark as helpful";
+                alt = "Mark helpful";
+                src = "img/helpfulq.png"; } }
+        html = ["img", {cla: "fpbuttonimg",
+                        id: prefix + revid + "helpfulbutton",
+                        src: src, alt: alt}];
+        if(!processing) {
+            html = ["a", {href: "#" + alt, title: title,
+                          onclick: jt.fs("app.review.fpbToggleHelpful('" +
+                                         prefix + "','" + revid + "')")},
+                    html]; }
+        return jt.tac2html(html);
     },
 
 
-    fpbRememberButtonSource = function (revid) {
-        var penref;
+    fpbRememberButtonHTML = function (prefix, revid, processing) {
+        var penref, title = "", alt = "", src = "", html;
         penref = app.pen.currPenRef();
-        if(!penref || !penref.pen || 
-               !penref.pen.remembered.csvcontains(revid)) {
-            return "img/rememberq.png"; }
-        return "img/remembered.png";
+        if(penref && penref.pen) {
+            penref.pen.remembered = penref.pen.remembered || ""; }
+        if(penref && penref.pen && penref.pen.remembered.csvcontains(revid)) {
+            if(processing) {
+                title = "Forgetting...";
+                alt = "Forgetting...";
+                src = "img/rememberdis.png"; }
+            else {
+                title = "Forget";
+                alt = "Remembered";
+                src = "img/remembered.png"; } }
+        else {  //not remembered
+            if(processing) {
+                title = "Remembering...";
+                alt = "Remembering...";
+                src = "img/rememberqdis.png"; }
+            else {
+                title = "Remember";
+                alt = "Not remembered";
+                src = "img/rememberq.png"; } }
+        html = ["img", {cla: "fpbuttonimg",
+                        id: prefix + revid + "rememberbutton",
+                        src: src, alt: alt}];
+        if(!processing) {
+            html = ["a", {href: "#" + alt, title: title,
+                          onclick: jt.fs("app.review.fpbToggleRemember('" +
+                                         prefix + "','" + revid + "')")},
+                    html]; }
+        return jt.tac2html(html);
     },
 
 
@@ -479,22 +531,12 @@ app.review = (function () {
         if(rev.penid !== app.pen.currPenId()) {
             html = [["div", {cla: "fpotherrevsdiv"},
                      fpOtherRevsLinkHTML(revid)],
-                    ["div", {cla: "fpbuttondiv"},
-                     ["a", {href: "#helpful",
-                            title: "Note this membic was helpful",
-                            onclick: jt.fs("app.review.fpbToggleHelpful('" +
-                                           prefix + "','" + revid + "')")},
-                      ["img", {cla: "fpbuttonimg",
-                               id: prefix + revid + "helpfulbutton",
-                               src: fpbHelpfulButtonSource(revid)}]]],
-                    ["div", {cla: "fpbuttondiv"},
-                     ["a", {href: "#remember",
-                            title: "Remember this membic",
-                            onclick: jt.fs("app.review.fpbToggleRemember('" +
-                                           prefix + "','" + revid + "')")},
-                      ["img", {cla: "fpbuttonimg",
-                               id: prefix + revid + "rememberbutton",
-                               src: fpbRememberButtonSource(revid)}]]],
+                    ["div", {cla: "fpbuttondiv", 
+                             id: prefix + revid + "helpfuldiv"},
+                     fpbHelpfulButtonHTML(prefix, revid)],
+                    ["div", {cla: "fpbuttondiv",
+                             id: prefix + revid + "rememberdiv"},
+                     fpbRememberButtonHTML(prefix, revid)],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#write",
                             title: "Note your impressions",
@@ -1663,27 +1705,61 @@ return {
     },
 
 
-    fpbToggleHelpful: function (prefix, revid) {
-        var penref;
+    fpbToggleHelpful: function (prefix, revid, retries) {
+        var penref, rev, url;
         penref = app.pen.currPenRef();
         if(!penref || !penref.pen) {
-            return jt.err("Please sign in"); }
-        jt.err("fpbToggleHelpful not implemented yet");
+            return jt.err("Sign in to mark this membic as helpful."); }
+        rev = app.lcs.getRef("rev", revid).rev;
+        if(rev.helpful && rev.helpful.csvarray().length >= 123) {
+            return jt.err("Enough people found this helpful already."); }
+        jt.out(prefix + revid + "helpfuldiv", 
+               fpbHelpfulButtonHTML(prefix, revid, true));
+        url = "toghelpful?" + app.login.authparams() + 
+            "&penid=" + app.pen.currPenId() + "&revid=" + revid;
+        jt.call('GET', url, null,
+                function (reviews) {
+                    app.lcs.put("rev", reviews[0]);
+                    app.activity.updateFeeds(reviews[0]);
+                    jt.out(prefix + revid + "helpfuldiv",
+                           fpbHelpfulButtonHTML(prefix, revid)); },
+                app.failf(function (code, errtxt) {
+                    if(!retries || retries < 3) {
+                        retries = retries || 0;
+                        return app.review.fpbToggleHelpful(prefix, revid, 
+                                                           retries + 1); }
+                    jt.err("Toggle helpful call failed " + code + 
+                           ": " + errtxt); }),
+                jt.semaphore("review.toggleHelpful"));
     },
 
 
     fpbToggleRemember: function (prefix, revid) {
-        var penref = app.pen.currPenRef();
+        var penref, url;
+        penref = app.pen.currPenRef();
         if(!penref || !penref.pen) {
-            return jt.err("Please sign in"); }
-        jt.err("fpbToggleRemember not implemented yet");
+            return jt.err("Sign in to remember this membic."); }
+        jt.out(prefix + revid + "rememberdiv",
+               fpbRememberButtonHTML(prefix, revid, true));
+        url = "togremember?" + app.login.authparams() +
+            "&penid=" + app.pen.currPenId() + "&revid=" + revid;
+        jt.call('GET', url, null,
+                function (pens) {
+                    app.pen.setCurrentPenReference(pens[0]);
+                    app.login.updateAuthentDisplay();
+                    jt.out(prefix + revid + "rememberdiv",
+                           fpbRememberButtonHTML(prefix, revid)); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Toggle remember call failed " + code +
+                           ": " + errtxt); }),
+                jt.semaphore("review.toggleRemember"));
     },
 
 
     fpbWrite: function (prefix, revid) {
         var penref = app.pen.currPenRef();
         if(!penref || !penref.pen) {
-            return jt.err("Please sign in"); }
+            return jt.err("Sign in to note your impressions."); }
         app.lcs.getFull("rev", revid, function (revref) {
             app.review.start(revref.rev); });
     },

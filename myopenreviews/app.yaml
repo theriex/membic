@@ -109,6 +109,11 @@ handlers:
 - url: /profpic.*
   script: src.py.pen.app
 
+## Toggle remembering a review
+## GET params: revid, penid, authparams
+- url: /togremember.*
+  script: src.py.pen.app
+
 ## Return pen names containing the qstr text.
 ## GET params: qstr, cursor, authparams
 - url: /srchpens.*
@@ -135,7 +140,6 @@ handlers:
   script: src.py.pen.app
 
 
-
 ######################################################################
 ##        Reviews
 
@@ -154,6 +158,12 @@ handlers:
 ## Return the review feed for the given type
 ## GET params: revtype, authparams, penid
 - url: /revfeed
+  script: src.py.rev.app
+
+
+## Toggle the helpful mark on the specified review from the specified pen
+## GET params: revid, penid, authparams
+- url: /toghelpful.*
   script: src.py.rev.app
 
 
@@ -204,12 +214,6 @@ handlers:
 ## Return the review looking up by revtype and cankey
 ## GET params: penid, revtype, cankey, authparams
 - url: /revbykey
-  script: src.py.rev.app
-
-
-## Return reviews from any pen name ids in the given csv
-## GET params: penids, since, cursor
-- url: /revact.*
   script: src.py.rev.app
 
 
