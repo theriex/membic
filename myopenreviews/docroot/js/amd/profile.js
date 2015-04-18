@@ -185,7 +185,12 @@ app.profile = (function () {
 
 
     profileItemHTML = function (rev) {
-        var html, revid = jt.instId(rev), prefix = "prd";
+        var html, cacheref, revid = jt.instId(rev), prefix = "prd";
+        cacheref = app.lcs.getRef("rev", revid);
+        if(cacheref.rev && cacheref.rev.modified > rev.modified) {
+            rev = cacheref.rev; }
+        else if(!cacheref.rev || cacheref.modified < rev.modified) {
+            app.lcs.put("rev", rev); }
         html = ["div", {cla: "profrevdiv", id: prefix + revid},
                 app.review.revdispHTML(prefix, revid, rev)];
         return html;
@@ -239,7 +244,7 @@ app.profile = (function () {
         html = [];
         if(rrs.total > 0) {
             html.push(["div", {cla: "tabcontentheadertext"},
-                       "Membics in the past " + recencyDays + " days"]); }
+                       "Most recent membics (max " + recencyDays + " days)"]); }
         html.push(["div", {cla: "profilereviewsdiv"}, revitems]);
         if(rrs.cursor) {
             if(i === 0 && rrs.results.length === 0) {
@@ -804,12 +809,6 @@ return {
                     mainDisplay(homepen, dispen); }); }
             else {
                 mainDisplay(null, dispen); } });
-    },
-
-
-    relationship: function () {
-        app.revresp.clearAbuse(profpenref.pen, function () {
-            app.rel.reledit(app.pen.currPenRef().pen, profpenref.pen); });
     },
 
 

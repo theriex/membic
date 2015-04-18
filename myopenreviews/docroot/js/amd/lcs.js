@@ -193,13 +193,32 @@ return {
     ////////////////////////////////////////
 
     findNewerReviews: function (penid, modified) {
-        var revcache = cache.rev.refs, revid, revref, results = [];
+        var revcache, revid, revref, results = [];
+        revcache = cache.rev.refs;
         for(revid in revcache) {
             if(revcache.hasOwnProperty(revid)) {
                 revref = revcache[revid];
                 if(revref && revref.rev && revref.rev.penid === penid &&
                    revref.rev.modified > modified) {
                     results.push(revref.rev); } } }
+        return results;
+    },
+
+
+    getCachedRecentReviews: function (revtype, penid) {
+        var revcache, revid, revref, rev, results = [];
+        revcache = cache.rev.refs;
+        if(revtype === "all") {
+            revtype = ""; }
+        for(revid in revcache) {
+            if(revcache.hasOwnProperty(revid)) {
+                revref = revcache[revid];
+                if(revref && revref.rev) {
+                    rev = revref.rev;
+                    if((!revtype || rev.revtype === revtype) &&
+                       (!penid || rev.penid === penid) && 
+                       rev.srcrev >= 0 && !rev.grpid) {
+                        results.push(rev); } } } }
         return results;
     }
 

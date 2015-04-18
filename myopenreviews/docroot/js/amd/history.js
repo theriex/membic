@@ -71,28 +71,35 @@ return {
     },
 
 
+    dispatchState: function (state) {
+        switch(state.view) {
+        case "profile":
+            if(jt.isId(state.profid)) {
+                return app.profile.byprofid(state.profid, state.tab); }
+            return app.profile.display();
+        case "group":
+            if(jt.isId(state.groupid)) {
+                return app.group.bygroupid(state.groupid); }
+            return app.group.display();
+        case "activity":
+            return app.activity.displayActive();
+        case "memo":
+            return app.activity.displayRemembered();
+        case "review":
+            if(state.revid) {
+                return app.review.initWithId(state.revid, state.mode); }
+            break;
+        }
+    },
+
+
     pop: function (event) {
         var state;
         if(event) {
             state = event.state; }
         jt.log("historyPop: " + JSON.stringify(state));
-        if(state) {
-            switch(state.view) {
-            case "profile":
-                if(jt.isId(state.profid)) {
-                    app.profile.byprofid(state.profid, state.tab); }
-                break; 
-            case "group":
-                if(jt.isId(state.groupid)) {
-                    app.group.bygroupid(state.groupid); }
-                break;
-            case "activity":
-                app.activity.displayActive();
-                break;
-            case "memo":
-                app.activity.displayRemembered();
-                break;
-            } }
+        if(state && state.view) {
+            app.history.dispatchState(state); }
         else if(app.login.isLoggedIn()) { 
             jt.log("historyPop: no state, so displaying main feed by default");
             app.activity.displayFeed("all"); }

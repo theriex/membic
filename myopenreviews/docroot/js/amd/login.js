@@ -66,7 +66,6 @@ app.login = (function () {
         app.review.resetStateVars();
         app.profile.resetStateVars();
         app.pen.resetStateVars();
-        app.rel.resetStateVars("logout");
     },
 
 
@@ -817,20 +816,8 @@ return {
         //no tag redirect so check current state.  State may be from history
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
-        if(state) {
-            if(state.view === "profile") {
-                if(state.profid) {
-                    return app.profile.byprofid(state.profid); }
-                return app.profile.display(); }
-            if(state.view === "group") {
-                if(state.groupid) {
-                    return app.group.bygroupid(state.groupid); }
-                return app.group.display(); }
-            if(state.view === "activity") {
-                return app.activity.displayActive(); }
-            if(state.view === "review" && state.revid) {
-                return app.review.initWithId(state.revid, state.mode,
-                                             params.action, params.errmsg); } }
+        if(state && state.view) {
+            return app.history.dispatchState(state); }
         if(params.view === "profile") {
             return app.profile.display(); }
         //go with default display

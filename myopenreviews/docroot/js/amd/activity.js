@@ -69,29 +69,9 @@ app.activity = (function () {
     },
 
 
-    //When searching pen names, the server handles the "active since"
-    //restriction by checking the "accessed" field, and the "top 20"
-    //restriction by looking through those, however it does not
-    //handle joins across relationships due to indexing overhead, so
-    //those are filtered out here.
-    penSearchFiltered = function (searchitem) {
-        var pensearch, params, pen, rel;
-        pensearch = app.pen.currPenRef().pensearch || {};
-        params = pensearch.params || {};
-        pen = searchitem;
-        rel = app.rel.outbound(jt.instId(pen));
-        if(rel) {
-            if(params.includeFollowing && rel.status === "following") {
-                return false; }
-            if(params.includeBlocked && rel.status === "blocked") {
-                return false; }
-            return true; }
-        return false;
-    },
-
-
     displayRemembered = function (filtertype) {
         var params, revs, revids, i, revref;
+        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         filtertype = filtertype || app.layout.getType();
         if(!feeds.remembered) {
             if(!feeds.future) {
@@ -136,6 +116,28 @@ app.activity = (function () {
                 if(feeds.remembered[i].revtype === filtertype) {
                     revs.push(feeds.remembered[i]); } } }
         displayFeedReviews(filtertype, revs);
+    },
+
+
+    mergePersonalRecent = function (feedtype, feedrevs) {
+        var cached, revs, revid, haveAlready, i, j;
+        revs = [];
+        cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.currPenId());
+        for(i = 0; i < cached.length; i += 1) {
+            revid = jt.instId(cached[i]);
+            haveAlready = false;
+            for(j = 0; j < feedrevs.length; j += 1) {
+                if(jt.instId(feedrevs[j]) === revid) {
+                    haveAlready = true;
+                    break; } }
+            if(!haveAlready) {
+                revs.push(cached[i]); } }
+        revs = revs.concat(feedrevs);
+        revs.sort(function (a, b) {
+            if(a.modhist < b.modhist) { return 1; }
+            if(a.modhist > b.modhist) { return -1; }
+            return 0; });
+        return revs;
     },
 
 
@@ -187,13 +189,14 @@ app.activity = (function () {
 return {
 
     displayFeed: function (feedtype) {
-        var html, params, time;
+        var revs, params, time;
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
-        html = ["div", {id: "feedrevsdiv"}];
-        jt.out("contentdiv", jt.tac2html(html));
+        app.history.checkpoint({ view: "activity" });
+        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         if(feeds[feedtype]) {
-            return displayFeedReviews(feedtype, feeds[feedtype]); }
+            revs = mergePersonalRecent(feedtype, feeds[feedtype]);
+            return displayFeedReviews(feedtype, revs); }
         jt.out('feedrevsdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {
@@ -206,7 +209,8 @@ return {
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
                     feeds[feedtype] = reviews;
-                    displayFeedReviews(feedtype, reviews); },
+                    revs = mergePersonalRecent(feedtype, feeds[feedtype]);
+                    displayFeedReviews(feedtype, revs); },
                 app.failf(function (code, errtxt) {
                     jt.out('feedrevsdiv', "error code: " + code + 
                            " " + errtxt); }),
@@ -215,14 +219,51 @@ return {
 
 
     updateFeeds: function (rev) {
-        var revid, tname, revs, i;
+        var revid, tname, revs, i, inserted, processed;
         revid = jt.instId(rev);
+        //review might have changed types, so remove all first
         for(tname in feeds) {
             if(feeds.hasOwnProperty(tname)) {
-                revs = feeds[tname];
+                if(feeds[tname]) {  //extended tnames like memo may be null
+                    revs = feeds[tname];
+                    processed = [];
+                    for(i = 0; i < revs.length; i += 1) {
+                        if(jt.instId(revs[i]) !== revid) {
+                            processed.push(revs[i]); } }
+                    feeds[tname] = processed; } } }
+        //insert rev appropriately based on creation time
+        if(rev.srcrev >= 0 && !rev.grpid) {  //not future/batch or group copy
+            for(tname in feeds) {
+                if(feeds.hasOwnProperty(tname)) {
+                    if(tname === "all" || tname === rev.revtype) {
+                        revs = feeds[tname];
+                        processed = [];
+                        inserted = false;
+                        for(i = 0; i < revs.length; i += 1) {
+                            if(rev.modhist >= revs[i].modhist && !inserted) {
+                                processed.push(rev);
+                                inserted = true; }
+                            processed.push(revs[i]); }
+                        feeds[tname] = processed; } } } }
+        //might have been future before, or is future now.  Rebuild.
+        if(feeds.future) {  //don't modify unless already initialized
+            revs = feeds.future;
+            processed = [];
+            for(i = 0; i < revs.length; i += 1) {
+                if(jt.instId(revs[i]) !== revid) {
+                    processed.push(revs[i]); } }
+            feeds.future = processed;
+            if(rev.srcrev === -101) {
+                revs = feeds.future;
+                processed = [];
+                inserted = false;
                 for(i = 0; i < revs.length; i += 1) {
-                    if(jt.instId(revs[i]) === revid) {
-                        revs[i] = rev; } } } }
+                    if(rev.modhist >= revs[i].modhist && !inserted) {
+                        processed.push(rev);
+                        inserted = true; }
+                    processed.push(revs[i]); }
+                feeds.future = processed; }
+            feeds.remembered = null; } //trigger remerge and sort
     },
 
 
@@ -239,6 +280,12 @@ return {
         //Mirror the behavior of displayActive.
         //app.layout.closeDialog();
         mainDisplay("memo");
+    },
+
+
+    resetRememberedFeed: function () {
+        feeds.remembered = null;
+        feeds.memo = null;
     }
 
 

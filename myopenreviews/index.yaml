@@ -37,6 +37,12 @@ indexes:
 - kind: Review
   properties:
   - name: mainfeed
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: mainfeed
   - name: modified
     direction: desc
 

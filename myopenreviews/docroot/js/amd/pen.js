@@ -65,7 +65,6 @@ app.pen = (function () {
                      if(!penNameRefs) {
                          penNameRefs = []; }
                      penNameRefs.push(currpenref);
-                     app.rel.resetStateVars("new");  //updates header display
                      returnCall(); },
                  app.failf(function (code, errtxt) {
                      jt.out('penformstat', errtxt);
@@ -222,8 +221,6 @@ return {
             if(penNameRefs[i].pen.name === name) {
                 currpenref = penNameRefs[i];
                 app.skinner.setColorsFromPen(currpenref.pen);
-                //reload relationships and activity
-                app.rel.resetStateVars("reload", currpenref.pen);
                 //update the accessed time so that the latest pen name is
                 //chosen by default next time. 
                 updatePenName(penNameRefs[i].pen, 
@@ -234,10 +231,8 @@ return {
 
     //Update changed fields for currpen so anything referencing it
     //gets the latest field values from the db.  Only updates public
-    //fields.  Explicitely does not update the settings, since that
-    //can lead to race conditions if the app is dealing with that
-    //while this call is going on.  The cached pen ref is modified
-    //directly so the updated info is globally available.
+    //fields.  The cached pen ref is modified directly to leave cached
+    //information attached to the penref intact.
     refreshCurrent: function () {
         var pen, params;
         pen = currpenref && currpenref.pen;
@@ -247,16 +242,21 @@ return {
                     function (pens) {
                         if(pens.length > 0) {
                             currpenref.pen.name = pens[0].name;
+                            currpenref.pen.name_c = pens[0].name_c;
                             currpenref.pen.shoutout = pens[0].shoutout;
+                            currpenref.pen.profpic = pens[0].profpic;
                             currpenref.pen.city = pens[0].city;
                             currpenref.pen.accessed = pens[0].accessed;
                             currpenref.pen.modified = pens[0].modified;
+                            currpenref.pen.remembered = pens[0].remembered;
                             currpenref.pen.top20s = pens[0].top20s;
                             currpenref.pen.stash = pens[0].stash;
-                            currpenref.pen.following = pens[0].following;
-                            currpenref.pen.followers = pens[0].followers;
-                            app.pen.deserializeFields(pen);
-                            app.profile.resetReviews(); } },
+                            //settings not updated, pre-membic race condition
+                            currpenref.pen.preferred = pens[0].preferred;
+                            currpenref.pen.background = pens[0].background;
+                            currpenref.pen.blocked = pens[0].blocked;
+                            currpenref.pen.groups = pens[0].groups;
+                            app.pen.deserializeFields(pen); } },
                     app.failf(function (code, errtxt) {
                         jt.log("pen.refreshCurrent " + code + " " + 
                                errtxt); }),

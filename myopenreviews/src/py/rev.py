@@ -370,6 +370,8 @@ def set_review_mainfeed(rev):
         rev.mainfeed = 0
     if not rev.text or len(rev.text) < 180:  # not substantive
         rev.mainfeed = 0
+    if not rev.rating or rev.rating < 0:  # rating required
+        rev.mainfeed = 0
 
 
 def prepend_to_main_feeds(review, pen):
@@ -751,7 +753,7 @@ class GetReviewFeed(webapp2.RequestHandler):
             where = "WHERE mainfeed = 1"
             if revtype:
                 where += " AND revtype = '" + revtype + "'"
-            where += " ORDER BY modified DESC"
+            where += " ORDER BY modhist DESC"
             rq = Review.gql(where)
             revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
                             deadline=60)

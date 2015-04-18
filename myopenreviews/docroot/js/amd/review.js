@@ -116,7 +116,7 @@ app.review = (function () {
         rat = app.review.starRating(rating);
         if(mode === "prereview") {
             return jt.tac2html(
-                ["img", {cla: "starsimg", src: "img/prereview.png",
+                ["img", {cla: "starsimg", src: "img/future.png",
                          title: rat.title, alt: rat.title}]); }
         width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = [];
@@ -309,7 +309,7 @@ app.review = (function () {
             crev[type.key] = input.value;
             cankey = crev[type.key]; }
         if(type.subkey) {
-            input = jt.byId('subkeyin');
+            input = jt.byId(type.subkey + "in");
             if(!input || !input.value) {
                 errlabel('subkeyinlabeltd');
                 errors.push("Need to fill in the " + type.subkey); }
@@ -546,6 +546,8 @@ app.review = (function () {
                                id: prefix + revid + "writebutton",
                                src: "img/writereview.png"}]]]]; }
         else { //your own review
+            rev.helpful = rev.helpful || "";
+            rev.remembered = rev.remembered || "";
             html = [["div", {cla: "fpotherrevsdiv"},
                      fpOtherRevsLinkHTML(revid)],
                     ["div", {cla: "fpbuttondiv", 
@@ -976,6 +978,7 @@ app.review = (function () {
 
     makeMine = function (review, srcrevId) {
         var now = new Date().toISOString();
+        jt.setInstId(review, undefined);
         review.penid = app.pen.currPenId();
         review.grpid = 0;
         review.rating = 0;
@@ -1258,7 +1261,8 @@ return {
                      "Ok"]]]]]];
         html = app.layout.dlgwrapHTML("Make Membic", html);
         app.layout.openDialog(
-            {x: jt.byId("headingdivcontent").offsetLeft - 34, y:22},
+            {x: jt.byId("headingdivcontent").offsetLeft - 34, 
+             y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents);
     },
 
@@ -1747,6 +1751,7 @@ return {
                 function (pens) {
                     app.pen.setCurrentPenReference(pens[0]);
                     app.login.updateAuthentDisplay();
+                    app.activity.resetRememberedFeed();
                     jt.out(prefix + revid + "rememberdiv",
                            fpbRememberButtonHTML(prefix, revid)); },
                 app.failf(function (code, errtxt) {
