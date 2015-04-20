@@ -175,6 +175,13 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.typeOrBlank = function (typename) {
+        if(typename && typename !== "all") {
+            return typename; }
+        return "";
+    };
+
+
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////

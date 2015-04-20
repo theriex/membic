@@ -13,6 +13,9 @@ from operator import attrgetter
 import re
 from cacheman import *
 import time
+# for conversion only...
+from revtag import ReviewTag
+from group import Group
 
 
 # srcrev is heavily utilized in different contexts:
@@ -447,6 +450,53 @@ def sort_filter_feed(feedcsv, pen, maxret):
     return feedids
 
 
+def create_or_update_grouprev(revid, grpid):
+    srcrev = Review.get_by_id(revid)
+    if not srcrev:
+        logging.info("create_or_update_grouprev Review " + str(revid) +
+                     " not found. Ignoring.")
+        return
+    logging.info("Found srcrev " + str(revid) + " " + srcrev.name)
+    grprev = Review(penid=srcrev.penid, revtype=srcrev.revtype)
+    gql = Review.gql("WHERE grpid = :1 AND srcrev = :2", grpid, revid)
+    revs = gql.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+    if len(revs) > 0:
+        logging.info("Found existing instance")
+        grprev = revs[0]
+    else:
+        logging.info("Creating new instance")
+    grprev.revtype = srcrev.revtype
+    grprev.penid = srcrev.penid
+    grprev.grpid = grpid
+    grprev.rating = srcrev.rating
+    grprev.srcrev = revid
+    grprev.mainfeed = srcrev.mainfeed
+    grprev.cankey = srcrev.cankey
+    grprev.modified = srcrev.modified
+    grprev.modhist = srcrev.modhist
+    grprev.keywords = srcrev.keywords
+    grprev.text = srcrev.text
+    grprev.revpic = srcrev.revpic
+    grprev.imguri = srcrev.imguri
+    grprev.altkeys = srcrev.altkeys
+    grprev.svcdata = srcrev.svcdata
+    grprev.penname = srcrev.penname
+    grprev.orids = srcrev.orids
+    grprev.helpful = srcrev.helpful
+    grprev.remembered = srcrev.remembered
+    grprev.name = srcrev.name
+    grprev.title = srcrev.title
+    grprev.url = srcrev.url
+    grprev.artist = srcrev.artist
+    grprev.author = srcrev.author
+    grprev.publisher = srcrev.publisher
+    grprev.album = srcrev.album
+    grprev.starring = srcrev.starring
+    grprev.address = srcrev.address
+    grprev.year = srcrev.year
+    cached_put(grprev)
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pen = review_modification_authorized(self)
@@ -558,25 +608,26 @@ class SearchReviews(webapp2.RequestHandler):
             self.response.out.write("Authentication failed")
             return
         penid = intz(self.request.get('penid'))
-        mindate = self.request.get('mindate')
-        maxdate = self.request.get('maxdate')
+        grpid = intz(self.request.get('grpid'))
+        mindate = self.request.get('mindate') or "2012-10-04T00:00:00Z"
+        maxdate = self.request.get('maxdate') or nowISO()
         qstr = self.request.get('qstr')
         revtype = self.request.get('revtype')
-        oldfirst = self.request.get('oldfirst')
         cursor = self.request.get('cursor')
         fetchmax = 100
-        where = "WHERE penid = :1 AND modified >= :2 AND modified <= :3"
-        ckey = "SearchReviews" + str(penid) + mindate + maxdate
-        if revtype:
+        ckey = "SearchReviewsG" + str(grpid) + "P" + str(penid) +\
+            "D" + mindate + "M" + maxdate
+        where = "WHERE grpid = " + str(grpid)
+        if penid:
+            where += " AND penid = " + str(penid)
+        where += " AND modified >= :1 AND modified <= :2"
+        if revtype and revtype != "all":
             where += " AND revtype = '" + revtype + "'"
             ckey += revtype
-        if oldfirst:
-            where += " ORDER BY modified ASC"
-            ckey += "ASC"
-        else:
-            where += " ORDER BY modified DESC"
-            ckey += "DESC"
-        revquery = Review.gql(where, penid, mindate, maxdate)
+        where += " ORDER BY modified DESC"
+        logging.info("SearchReviews query: " + where + " " + 
+                     mindate + " - " + maxdate)
+        revquery = Review.gql(where, mindate, maxdate)
         qres = cached_query(ckey, revquery, cursor, fetchmax, Review, True)
         checked = len(qres.objects)
         logging.info("SearchReviews checked: " + str(checked))
@@ -712,6 +763,7 @@ class VerifyAllReviews(webapp2.RequestHandler):
             rev.put()
             count += 1
         self.response.out.write(str(count) + " Reviews verified<br>\n")
+        # convert helpful and remembered to new new data representation
         count = 0
         rtq = ReviewTag.gql("WHERE converted = 0")
         rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
@@ -735,7 +787,16 @@ class VerifyAllReviews(webapp2.RequestHandler):
             rt.put()
             count += 1
         self.response.out.write(str(count) + " ReviewTags converted<br>\n")
-        # TODO: convert group revid lists into separate review entries
+        # convert group revid lists into separate review entries
+        groups = Group.all()
+        count = 0
+        for group in groups:
+            logging.info("Converting " + group.name)
+            revids = csv_list(group.reviews)
+            for revid in revids:
+                count += 1
+                create_or_update_grouprev(int(revid), group.key().id())
+        self.response.out.write(str(count) + " group reviews converted<br>\n")
 
 
 class GetReviewFeed(webapp2.RequestHandler):

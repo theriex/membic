@@ -200,7 +200,7 @@ handlers:
 
 
 ## Return reviews for a given pen within the given date range
-## GET params: penid, mindate, maxdate, qstr, authparams (,revtype, oldfirst)
+## GET params: penid, mindate, maxdate, qstr, authparams (,revtype)
 - url: /srchrevs.*
   script: src.py.rev.app
 

@@ -205,13 +205,6 @@ app.profile = (function () {
     },
 
 
-    typeOrBlank = function (typename) {
-        if(typename && typename !== "all") {
-            return typename; }
-        return "";
-    },
-
-
     displayRecentReviews = function (rrs, reviews) {
         var revtype, revitems = [], i, text, html, fetched;
         revtype = app.layout.getType();
@@ -237,7 +230,7 @@ app.profile = (function () {
                 revitems.push(typematchProfileItemHTML(reviews[i])); } }
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
-            text = "No recent " + typeOrBlank(revtype) + " membics";
+            text = "No recent " + app.typeOrBlank(revtype) + " membics";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 text += " " + app.review.reviewLinkHTML(); }
             revitems.push(["div", {cla: "fpinlinetextdiv"}, text]); }
@@ -419,11 +412,11 @@ app.profile = (function () {
         if(profpenref.pen.top20s) {
             revs = profpenref.pen.top20s[revtype] || []; }
         if(revs.length === 0) {
-            text = "No top " + typeOrBlank(revtype) + " membics";
+            text = "No top " + app.typeOrBlank(revtype) + " membics";
             if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
                 text += " " + app.review.reviewLinkHTML(); } }
         else { //have at least one membic
-            text = "Favorite " + typeOrBlank(revtype) + " membics"; }
+            text = "Favorite " + app.typeOrBlank(revtype) + " membics"; }
         revitems.push(["div", {cla: "fpinlinetextdiv"}, text]);
         for(i = 0; i < revs.length; i += 1) {
             revref = app.lcs.getRef("rev", revs[i]);
@@ -992,7 +985,7 @@ return {
             penid = jt.instId(profpenref.pen); }
         params = app.login.authparams() +
             "&qstr=" + jt.enc(jt.canonize(revsrchstate.srchval)) +
-            "&revtype=" + typeOrBlank(revsrchstate.revtype) +
+            "&revtype=" + app.typeOrBlank(revsrchstate.revtype) +
             "&penid=" + penid +
             "&maxdate=" + revsearchMaxDate() + 
             "&mindate=1970-01-01T00:00:00Z" + 

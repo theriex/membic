@@ -79,7 +79,7 @@ return {
             return app.profile.display();
         case "group":
             if(jt.isId(state.groupid)) {
-                return app.group.bygroupid(state.groupid); }
+                return app.group.bygroupid(state.groupid, state.tab); }
             return app.group.display();
         case "activity":
             return app.activity.displayActive();

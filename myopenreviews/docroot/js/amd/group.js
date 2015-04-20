@@ -20,7 +20,8 @@ app.group = (function () {
     ////////////////////////////////////////
 
     //avoiding having any state variables to reset..
-    var wizgrp = null,  //holds state until user cleared or written to db
+    var currgrpid = 0,
+        wizgrp = null,  //going away...
         verifyCityNextFunc = null, //dialog callback 
         revfreqs = [{name: "2 weeks", freq: 14, id: "freq14"},
                     {name: "monthly", freq: 30, id: "freq30"},
@@ -35,6 +36,131 @@ app.group = (function () {
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
+
+    currGroupRef = function (grpref, tabname) {
+        if(grpref) {
+            currgrpid = jt.instId(grpref.group); }
+        grpref = grpref || app.lcs.getRef("group", currgrpid);
+        grpref.dispstate = grpref.dispstate || { seltabname: 'latest',
+                                                 revtype: "" };
+        if(tabname) {
+            grpref.dispstate.seltabname = tabname; }
+        return grpref;
+    },
+
+
+    picImgSrc = function (group) {
+        var src = "img/emptyprofpic.png";
+        if(group.picture) {
+            //fetch with mild cachebust in case recently modified
+            src = "grppic?groupid=" + jt.instId(group) +
+                "&modified=" + group.modified; }
+        return src;
+    },
+
+
+    groupCalendarHTML = function (group) {
+        //if the group has an associated calendar, provide a jump link
+        //to it.  Best if the icon actually displays the current day,
+        //so this will be some kind of overlay with clipped overflow.
+        return "";
+    },
+
+
+    isFollowing = function (group) {
+        var pen = app.pen.currPenRef().pen;
+        if(pen.groups && pen.groups.csvcontains(jt.instId(pen))) {
+            return true; }
+        return false;
+    },
+
+
+    penBelongsToGroup = function (group, penid) {
+        if(group.founders && group.founder.csvcontains(penid)) {
+            return true; }
+        if(group.seniors && group.seniors.csvcontains(penid)) {
+            return true; }
+        if(group.members && group.members.csvcontains(penid)) {
+            return true; }
+        return false;
+    },
+
+
+    groupSettingsHTML = function (group) {
+        var html;
+        if(!isFollowing(group) && !penBelongsToGroup(app.pen.currPenId())) {
+            return ""; }
+        html = ["a", {id: "profsettingslink", href: "#groupsettings",
+                      onclick: jt.fs("app.group.settings()")},
+                ["img", {cla: "reviewbadge",
+                         src: "img/settings.png"}]];
+        return jt.tac2html(html);
+    },
+
+
+    displayRecent = function (grpref) {
+        var rt, ids, html, text, i, revid, rev, params, prefix = "grd";
+        grpref = grpref || currGroupRef();
+        app.layout.displayTypes(displayRecent);
+        rt = app.layout.getType();
+        if(grpref.dispstate.recentids) {
+            ids = grpref.dispstate.recentids;
+            html = [];
+            if(!ids.length) {
+                text = "No recent " + app.typeOrBlank(rt) + " membics";
+                html.push(["div", {cla: "fpinlinetextdiv"}, text]); }
+            for(i = 0; i < ids.length; i += 1) {
+                revid = ids[i];
+                rev = app.lcs.getRef("rev", revid).rev;
+                if(rev && (rt === "all" || rt === rev.revtype)) {
+                    html.push(["div", {cla: "profrevdiv", id: prefix + revid},
+                               app.review.revdispHTML(prefix, revid, rev)]); } }
+            jt.out('profcontdiv', jt.tac2html(html));
+            return; }
+        jt.out('profcontdiv', "Retrieving recent group membics");
+        params = app.login.authparams() + "&grpid=" + jt.instId(grpref.group) +
+            "&revtype=" + rt;
+        jt.call('GET', "srchrevs?" + params, null,
+                function (revs) {
+                    if(grpref.dispstate.seltabname !== "latest") {
+                        //switched tabs before data returned. Bail out.
+                        return; }
+                    grpref.dispstate.recentids = [];
+                    for(i = 0; i < revs.length; i += 1) {
+                        grpref.dispstate.recentids.push(jt.instId(revs[i]));
+                        app.lcs.put("rev", revs[i]); }
+                    displayRecent(grpref); },
+                app.failf(function (code, errtxt) {
+                    jt.out('profcontdiv', "Group displayRecent failed code " +
+                           code + ": " + errtxt); }),
+                jt.semaphore("group.displayRecent"));
+    },
+
+
+    displayFavorites = function (grpref) {
+        jt.out('profcontdiv', "Group displayFavorites not implemented yet.");
+    },
+
+
+    displaySearch = function (grpref) {
+        jt.out('profcontdiv', "Group displaySearch not implemented yet.");
+    },
+
+
+    displayTab = function (tabname) {
+        var grpref = currGroupRef();
+        tabname = tabname || grpref.dispstate.seltabname || "latest";
+        grpref.dispstate.seltabname = tabname;
+        jt.byId('latestli').className = "unselectedTab";
+        jt.byId('favoritesli').className = "unselectedTab";
+        jt.byId('searchli').className = "unselectedTab";
+        jt.byId(tabname + "li").className = "selectedTab";
+        switch(tabname) {
+        case "latest": return displayRecent(grpref);
+        case "favorites": return displayFavorites(grpref);
+        case "search": return displaySearch(grpref); }
+    },
+
 
     membership = function (group) {
         var penid;
@@ -59,16 +185,6 @@ app.group = (function () {
     isApplying = function () {
         var penid = jt.instId(app.pen.currPenRef().pen);
         if(jt.idInCSV(penid, wizgrp.seeking)) {
-            return true; }
-        return false;
-    },
-
-
-    isFollowing = function () {
-        var groupid, groups;
-        groupid = jt.instId(wizgrp);
-        groups = app.pen.currPenRef().pen.groups;
-        if(jt.idInCSV(groupid, groups)) {
             return true; }
         return false;
     },
@@ -551,17 +667,42 @@ app.group = (function () {
     },
 
 
-    displayGroup = function () {
-        app.layout.closeDialog();
-        jt.out('rightcoldiv', "");
-        jt.byId('rightcoldiv').style.display = "none";
-        displayGroupHeading();
-        displayGroupBody();
-        //If we are coming in from url parameters, it is possible to end 
-        //up with the profile heading overwriting the group heading due
-        //to various startup server call lags.  Redisplay to fix.
-        window.setTimeout(displayGroupHeading, 400);
-        verifyPenFollowing();
+    displayGroup = function (groupref) {
+        var html, group;
+        group = groupref.group;
+        //same exact layout as a profile, so same css classes if possible
+        html = ["div", {id: "profilediv"},
+                [["div", {id: "profupperdiv"},
+                  [["div", {id: "profpicdiv"},
+                    ["img", {cla: "profpic", src: picImgSrc(group)}]],
+                   ["div", {id: "profdescrdiv"},
+                    [["div", {id: "profnamediv"},
+                      [["a", {href: "#view=group&groupid=" + jt.instId(group),
+                              onclick: jt.fs("app.group.blogconf()")},
+                        ["span", {cla: "penfont"}, group.name]],
+                       groupCalendarHTML(group),
+                       groupSettingsHTML(group)]],
+                     ["div", {id: "profshoutdiv"},
+                      ["span", {cla: "shoutspan"}, 
+                       jt.linkify(group.description || "")]]]]]],
+                 ["div", {id: "workstatdiv"}],  //save button, update status
+                 ["div", {id: "tabsdiv"},
+                  ["ul", {id: "tabsul"},
+                   [["li", {id: "latestli", cla: "unselectedTab"},
+                     ["a", {href: "#latestmembics",
+                            onclick: jt.fs("app.group.tabsel('latest')")},
+                      ["img", {cla: "tabico", src: "img/tablatest.png"}]]],
+                    ["li", {id: "favoritesli", cla: "unselectedTab"},
+                     ["a", {href: "#favoritemembics",
+                            onclick: jt.fs("app.group.tabsel('favorites')")},
+                      ["img", {cla: "tabico", src: "img/helpfulq.png"}]]],
+                    ["li", {id: "searchli", cla: "unselectedTab"},
+                     ["a", {href: "#searchmembics",
+                            onclick: jt.fs("app.group.tabsel('search')")},
+                      ["img", {cla: "tabico", src: "img/search.png"}]]]]]],
+                 ["div", {id: "profcontdiv"}]]];
+        jt.out('contentdiv', jt.tac2html(html));
+        displayTab();
     },
 
 
@@ -1231,6 +1372,28 @@ app.group = (function () {
     ////////////////////////////////////////
 return {
 
+    bygroupid: function (groupid, tabname) {
+        app.layout.closeDialog(); //close group search dialog if open
+        app.pen.getPen(function (pen) {  //not already loaded if by url param
+            app.lcs.getFull("group", groupid, function (groupref) {
+                currGroupRef(groupref, tabname);
+                app.history.checkpoint({ view: "group", 
+                                         groupid: currgrpid,
+                                         tab: groupref.dispstate.seltabname });
+                displayGroup(groupref); }); });
+    },
+
+
+    tabsel: function (tabname) {
+        app.history.checkpoint({ view: "group", 
+                                 groupid: currgrpid,
+                                 tab: tabname });
+        displayTab(tabname);
+    },
+
+
+    //check everything below here to see if it can be removed
+
     promptForCity: function () {
         var heading, descrip;
         heading = "Create Group: City";
@@ -1437,17 +1600,6 @@ return {
 
     display: function () {
         displayGroup();
-    },
-
-
-    bygroupid: function (groupid) {
-        app.layout.closeDialog(); //close group search dialog if open
-        app.pen.getPen(function (pen) {  //not already loaded if by url param
-            app.lcs.getFull("group", groupid, function (groupref) {
-                app.history.checkpoint({ view: "group", 
-                                         groupid: jt.instId(groupref.group)});
-                copyGroup(groupref.group);
-                displayGroup(); }); });
     },
 
 

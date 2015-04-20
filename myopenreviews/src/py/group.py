@@ -7,16 +7,20 @@ import logging
 from moracct import *
 from morutil import *
 from cacheman import *
-from rev import Review, review_modification_authorized
+import rev
 import json
 
 class Group(db.Model):
     """ A group of pen names and reviews they have shared with the group """
     name = db.StringProperty(required=True)
     name_c = db.StringProperty(required=True)
-    city = db.StringProperty(indexed=False)      #loose CSV of city names
+    modified = db.StringProperty()               # iso date
+    modhist = db.StringProperty()                # creation date, mod count
+    # non-indexed fields
+    city = db.StringProperty(indexed=False)      #not used anymore
     description = db.TextProperty()
     picture = db.BlobProperty()
+    top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     revtypes = db.StringProperty(indexed=False)  #CSV of review types
     revfreq = db.IntegerProperty(indexed=False)  #review every N days
     founders = db.TextProperty()    #CSV of founding member penids
@@ -26,7 +30,6 @@ class Group(db.Model):
     rejects = db.TextProperty()     #CSV of rejected member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     adminlog = db.TextProperty()    #JSON array of action entries
-    modified = db.StringProperty()               # iso date
     
 
 def id_in_csv(idval, csv):
@@ -160,12 +163,12 @@ def fetch_rev_mod_elements(handler, pen):
         handler.error(400)
         handler.response.out.write("No revid specified")
         return 0, None
-    rev = cached_get(revid, Review)
-    if not rev:
+    review = cached_get(revid, rev.Review)
+    if not review:
         handler.error(404)
         handler.response.out.write("Review " + str(revid) + " not found")
         return revid, None
-    return revid, rev
+    return revid, review
 
 
 def fetch_group_and_role(handler, pen):
@@ -184,11 +187,11 @@ def fetch_group_and_role(handler, pen):
 
 
 def fetch_group_mod_elements(handler, pen):
-    revid, rev = fetch_rev_mod_elements(handler, pen)
-    if not revid or not rev:
-        return revid, rev, None, ""
+    revid, review = fetch_rev_mod_elements(handler, pen)
+    if not revid or not review:
+        return revid, review, None, ""
     group, role = fetch_group_and_role(handler, pen)
-    return revid, rev, group, role
+    return revid, review, group, role
 
 
 def update_group_admin_log(group, pen, action, targetid, reason):
@@ -209,7 +212,7 @@ def update_group_admin_log(group, pen, action, targetid, reason):
     
 class UpdateDescription(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:
             return
         name = self.request.get('name')
@@ -268,7 +271,7 @@ class UploadGroupPic(webapp2.RequestHandler):
         group = cached_get(intz(groupid), Group)
         if group:
             errmsg = "You are not authorized to update this group pic"
-            pen = review_modification_authorized(self)
+            pen = rev.review_modification_authorized(self)
             if pen and pen_role(pen.key().id(), group) == "Founder":
                 errmsg = "Picture file not provided"
                 upfile = self.request.get("picfilein")
@@ -313,13 +316,13 @@ class GetGroupPic(webapp2.RequestHandler):
 
 class PostReview(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
-        revid, rev, group, role = fetch_group_mod_elements(self, pen)
-        if rev is None or group is None:
+        revid, review, group, role = fetch_group_mod_elements(self, pen)
+        if review is None or group is None:
             return   #error already reported
-        if rev.penid != pen.key().id():
+        if review.penid != pen.key().id():
             self.error(400)
             self.response.out.write("You may only post your own review")
             return;
@@ -327,9 +330,9 @@ class PostReview(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write("You are not a member of this group")
             return
-        if not is_revtype_match(rev.revtype, group):
+        if not is_revtype_match(review.revtype, group):
             self.error(400)
-            self.response.out.write(rev.revtype + " is not an accepted type")
+            self.response.out.write(review.revtype + " is not an accepted type")
             return
         # add the review to the group, most recently posted first
         if not group.reviews or group.reviews == str(revid):
@@ -348,14 +351,14 @@ class PostReview(webapp2.RequestHandler):
 
 class RemoveReview(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
-        revid, rev, group, role = fetch_group_mod_elements(self, pen)
-        if rev is None or group is None:
+        revid, review, group, role = fetch_group_mod_elements(self, pen)
+        if review is None or group is None:
             return   #error already reported
         if role != "Founder" and role != "Senior":
-            if rev.penid != pen.key().id():
+            if review.penid != pen.key().id():
                 self.error(400)
                 self.response.out.write("Not authorized to remove reviews")
                 return
@@ -370,7 +373,7 @@ class RemoveReview(webapp2.RequestHandler):
 
 class ApplyForMembership(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
@@ -385,7 +388,7 @@ class ApplyForMembership(webapp2.RequestHandler):
 
 class WithdrawMembershipSeek(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
@@ -398,7 +401,7 @@ class WithdrawMembershipSeek(webapp2.RequestHandler):
 
 class DenyMembershipSeek(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
@@ -427,7 +430,7 @@ class DenyMembershipSeek(webapp2.RequestHandler):
 
 class AcceptMembershipSeek(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
@@ -470,7 +473,7 @@ class AcceptMembershipSeek(webapp2.RequestHandler):
 
 class MembershipRejectAck(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
@@ -486,7 +489,7 @@ class MembershipRejectAck(webapp2.RequestHandler):
 # without it being a hassle.
 class RemoveMember(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
+        pen = rev.review_modification_authorized(self)
         if not pen:  #penid did not match a pen the caller controls
             return   #error already reported
         group, role = fetch_group_and_role(self, pen)
