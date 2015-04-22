@@ -99,8 +99,8 @@ app.group = (function () {
 
 
     displayRecent = function (grpref) {
-        var rt, ids, html, text, i, revid, rev, params, prefix = "grd";
-        grpref = grpref || currGroupRef();
+        var rt, ids, html, text, i, revid, pr, rev, params;
+        grpref = currGroupRef(grpref);
         app.layout.displayTypes(displayRecent);
         rt = app.layout.getType();
         if(grpref.dispstate.recentids) {
@@ -109,12 +109,15 @@ app.group = (function () {
             if(!ids.length) {
                 text = "No recent " + app.typeOrBlank(rt) + " membics";
                 html.push(["div", {cla: "fpinlinetextdiv"}, text]); }
+            pr = null;
             for(i = 0; i < ids.length; i += 1) {
                 revid = ids[i];
                 rev = app.lcs.getRef("rev", revid).rev;
                 if(rev && (rt === "all" || rt === rev.revtype)) {
-                    html.push(["div", {cla: "profrevdiv", id: prefix + revid},
-                               app.review.revdispHTML(prefix, revid, rev)]); } }
+                    html.push(app.activity.feedReviewHTML(
+                        "grd", rev, app.review.isDupeRev(rev, pr), 
+                        "app.group.toggleExpansion"));
+                    pr = rev; } }
             jt.out('profcontdiv', jt.tac2html(html));
             return; }
         jt.out('profcontdiv', "Retrieving recent group membics");
@@ -125,6 +128,7 @@ app.group = (function () {
                     if(grpref.dispstate.seltabname !== "latest") {
                         //switched tabs before data returned. Bail out.
                         return; }
+                    revs = app.review.collateDupes(revs);
                     grpref.dispstate.recentids = [];
                     for(i = 0; i < revs.length; i += 1) {
                         grpref.dispstate.recentids.push(jt.instId(revs[i]));
@@ -1389,6 +1393,11 @@ return {
                                  groupid: currgrpid,
                                  tab: tabname });
         displayTab(tabname);
+    },
+
+
+    toggleExpansion: function (prefix, revid) {
+        jt.err("This should have been factored away");
     },
 
 

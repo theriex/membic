@@ -811,7 +811,7 @@ class GetReviewFeed(webapp2.RequestHandler):
         if not feedcsv:  # rebuild and save in cache
             logging.info("rebuilding feedcsv for " + (revtype or "all"))
             feedcsv = ""
-            where = "WHERE mainfeed = 1"
+            where = "WHERE grpid = 0 AND mainfeed = 1"
             if revtype:
                 where += " AND revtype = '" + revtype + "'"
             where += " ORDER BY modhist DESC"
@@ -819,9 +819,12 @@ class GetReviewFeed(webapp2.RequestHandler):
             revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
                             deadline=60)
             for rev in revs:
-                if feedcsv:
-                    feedcsv += ","
-                feedcsv += str(rev.key().id()) + ":" + str(rev.penid)
+                fv = str(rev.key().id()) + ":" + str(rev.penid)
+                feedcsv = append_to_csv(fv, feedcsv)
+                if rev.srcrev:
+                    fv = str(rev.srcrev) + ":0"
+                    if not csv_contains(fv, feedcsv):
+                        feedcsv = append_to_csv(fv, feedcsv)
             memcache.set(revtype or "all", feedcsv)
         pen = None
         acc = authenticated(self.request)

@@ -37,6 +37,21 @@ indexes:
 - kind: Review
   properties:
   - name: grpid
+  - name: mainfeed
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: grpid
+  - name: mainfeed
+  - name: revtype
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: grpid
   - name: modified
     direction: desc
 

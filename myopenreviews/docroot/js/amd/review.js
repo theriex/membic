@@ -502,24 +502,6 @@ app.review = (function () {
     },
 
 
-    fpOtherRevsLinkHTML = function (revid) {
-        var rev, src, html = "";
-        rev = app.lcs.getRef("rev", revid).rev;
-        if(rev.srcrev) {
-            //source review is included with the feed but display filtered.
-            src = app.lcs.getRef("rev", rev.srcrev).rev; }
-        else if(rev.orids) {
-            src = rev; }
-        if(src) {
-            html = ["a", {href: "#others",
-                          title: "Other posts about this",
-                          onclick: jt.fs("window.open('?view=revlist&srcid=" + 
-                                         jt.instId(src) + "')")},
-                    src.orids.csvarray().length + "+"]; }
-        return html;
-    },
-
-
     //Not worth the overhead and potential miss of querying to find
     //whether you have already written a review of something.  Just
     //click to write and be pleasantly surprised that your previous
@@ -529,9 +511,7 @@ app.review = (function () {
         var rev, html;
         rev = app.lcs.getRef("rev", revid).rev;
         if(rev.penid !== app.pen.currPenId()) {
-            html = [["div", {cla: "fpotherrevsdiv"},
-                     fpOtherRevsLinkHTML(revid)],
-                    ["div", {cla: "fpbuttondiv", 
+            html = [["div", {cla: "fpbuttondiv", 
                              id: prefix + revid + "helpfuldiv"},
                      fpbHelpfulButtonHTML(prefix, revid)],
                     ["div", {cla: "fpbuttondiv",
@@ -548,9 +528,7 @@ app.review = (function () {
         else { //your own review
             rev.helpful = rev.helpful || "";
             rev.remembered = rev.remembered || "";
-            html = [["div", {cla: "fpotherrevsdiv"},
-                     fpOtherRevsLinkHTML(revid)],
-                    ["div", {cla: "fpbuttondiv", 
+            html = [["div", {cla: "fpbuttondiv", 
                              style: "background:url('../img/helpfuldis.png') no-repeat center center;"},
                      rev.helpful.csvarray().length],
                     ["div", {cla: "fpbuttondiv",
@@ -1770,31 +1748,17 @@ return {
     },
 
 
-    toggleExpansion: function (prefix, revid) {
-        var rev, revdivid, buttondivid;
-        rev = app.lcs.getRef("rev", revid).rev;
-        revdivid = prefix + revid;
-        buttondivid = revdivid + "buttonsdiv";
-        if(jt.byId(buttondivid).innerHTML) {  //shrink
-            jt.out(buttondivid, "");
-            jt.out(revdivid + "secdiv", "");
-            jt.out(revdivid + "datediv", "");
-            jt.out(revdivid + "descrdiv", 
-                   abbreviatedReviewText(prefix, revid, rev));
-            jt.out(revdivid + "keysdiv", ""); }
-        else {  //expand
-            jt.out(buttondivid, revpostButtonsHTML(prefix, revid));
-            jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
-            jt.out(revdivid + "datediv", 
-                   jt.colloquialDate(jt.ISOString2Day(rev.modified)));
-            jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
-            jt.out(revdivid + "keysdiv", rev.keywords); }
-        //ATTENTION: list links to groups rev was posted to in grpsdiv
+    displayingExpandedView: function (prefix, revid) {
+        var buttondivid = prefix + revid + "buttonsdiv";
+        if(jt.byId(buttondivid).innerHTML) {
+            return true; }
+        return false;
     },
 
 
-    revdispHTML: function (prefix, revid, rev) {
+    revdispHTML: function (prefix, revid, rev, togfname) {
         var revdivid, type, html;
+        togfname = togfname || "app.review.toggleExpansion";
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
         html = ["div", {cla: "fpinrevdiv"},
@@ -1805,7 +1769,7 @@ return {
                            title: type.type, alt: type.type}]],
                  ["div", {cla: "fptitlediv"},
                   ["a", {href: "#statrev/" + jt.instId(rev),
-                         onclick: jt.fs("app.review.toggleExpansion('" +
+                         onclick: jt.fs(togfname + "('" +
                                         prefix + "','" + revid + "')")},
                    app.profile.reviewItemNameHTML(type, rev)]],
                  ["div", {cla: "fpstarsdiv"},
@@ -1825,6 +1789,113 @@ return {
     },
 
 
+    isDupeRev: function (rev, pr) {
+        if(rev && pr && ((rev.srcrev && rev.srcrev === pr.srcrev) || 
+                         (rev.cankey === pr.cankey) ||
+                         (rev.url && rev.url === pr.url))) {
+            return true; }
+        return false;
+    },
+
+
+    collateDupes: function (revs) {
+        var i, j, rev, result = [];
+        for(i = 0; i < revs.length; i += 1) {
+            rev = revs[i];
+            if(rev) {  //not previously set to null
+                result.push(rev);
+                for(j = i + 1; j < revs.length; j += 1) {
+                    if(app.review.isDupeRev(revs[j], rev)) {
+                        result.push(revs[j]);
+                        revs[j] = null; } } } }
+        return result;
+    },
+
+
+    filterByRevtype: function (revs, rt) {
+        var filtered, i;
+        if(rt && rt !== "all") {
+            filtered = [];
+            for(i = 0; i < revs.length; i += 1) {
+                if(revs[i].revtype === rt) {
+                    filtered.push(revs[i]); } }
+            revs = filtered; }
+        return revs;
+    },
+
+
+    displayReviews: function (divid, prefix, revs, togcbn, author) {
+        var rt, i, html, rev, pr, maindivattrs, authlink, revdivid;
+        rt = app.layout.getType();
+        if(!revs || revs.length === 0) {
+            if(rt === "all") {
+                html = "No membics found."; }
+            else {
+                rt = app.review.getReviewTypeByValue(rt);
+                html = "No " + rt.plural + " found."; } }
+        else {
+            html = []; }
+        for(i = 0; i < revs.length; i += 1) {
+            rev = revs[i];
+            revdivid = prefix + jt.instId(rev);
+            pr = (i > 0)? revs[i - 1] : null;
+            maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
+            if(app.review.isDupeRev(rev, pr)) {
+                maindivattrs.style = "display:none"; }
+            authlink = "";
+            if(author) {
+                authlink = 
+                    ["div", {cla: "fpprofdiv"},
+                     ["a", {href: "#view=profile&profid=" + rev.penid,
+                            onclick: jt.fs("app.profile.byprofid('" + 
+                                           rev.penid + "')")},
+                      ["img", {cla: "fpprofpic", 
+                               src: "profpic?profileid=" + rev.penid,
+                               title: jt.ndq(rev.penname),
+                               alt: jt.ndq(rev.penname)}]]]; }
+            html.push(["div", maindivattrs,
+                       [authlink,
+                        ["div", {cla: "fprevdiv", id: revdivid},
+                         app.review.revdispHTML(prefix, jt.instId(rev), 
+                                                rev, togcbn)]]]); }
+        jt.out(divid, jt.tac2html(html));
+    },
+
+
+    toggleExpansion: function (revs, prefix, revid) {
+        var i, rev, elem, revdivid;
+        for(i = 0; i < revs.length; i += 1) {
+            if(jt.instId(revs[i]) === revid) {
+                rev = revs[i];
+                break; } }
+        if(i === 0 || !app.review.isDupeRev(revs[i - 1], rev)) {  //primary rev
+            for(i += 1; i < revs.length; i += 1) {
+                if(!app.review.isDupeRev(rev, revs[i])) {  //no more children
+                    break; }
+                elem = jt.byId(prefix + jt.instId(revs[i]) + "fpdiv");
+                if(app.review.displayingExpandedView(prefix, revid)) {
+                    elem.style.display = "none"; }
+                else {
+                    elem.style.display = "block"; } } }
+        revdivid = prefix + revid;
+        if(app.review.displayingExpandedView(prefix, revid)) {
+            jt.out(revdivid + "buttonsdiv", "");
+            jt.out(revdivid + "secdiv", "");
+            jt.out(revdivid + "datediv", "");
+            jt.out(revdivid + "descrdiv", 
+                   abbreviatedReviewText(prefix, revid, rev));
+            jt.out(revdivid + "keysdiv", ""); }
+        else {  //expand
+            jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
+            jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
+            jt.out(revdivid + "datediv", 
+                   jt.colloquialDate(jt.ISOString2Day(rev.modified)));
+            jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
+            jt.out(revdivid + "keysdiv", rev.keywords); }
+        //ATTENTION: list links to groups rev was posted to in grpsdiv
+    },
+
+
     serializeFields: function (rev) {
         if(typeof rev.svcdata === 'object') {
             rev.svcdata = JSON.stringify(rev.svcdata); }
@@ -1839,5 +1910,4 @@ return {
 
 }; //end of returned functions
 }());
-
 

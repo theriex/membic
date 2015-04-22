@@ -33,6 +33,8 @@ def intz(val):
         return 0
     if isinstance(val, basestring) and val.startswith("\""):
         val = val[1:len(val) - 1]
+    if val == "undefined":
+        return 0
     return int(val)
 
 
@@ -82,5 +84,11 @@ def prepend_to_csv(val, csv, upperbound=1000):
     if csv_elem_count(csv) >= upperbound:
         csv = csv[0:csv.rfind(",")]
     return val + "," + csv
+
+
+def append_to_csv(val, csv):
+    if not csv:
+        return val
+    return csv + "," + val
 
 

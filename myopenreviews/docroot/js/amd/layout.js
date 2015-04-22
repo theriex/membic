@@ -44,7 +44,7 @@ app.layout = (function () {
             url = ""; }
         //display content
         html = app.layout.dlgwrapHTML(url, html);
-        app.layout.openDialog({x:20, y:60}, html);
+        app.layout.openDialog({x: 20, y: window.pageYOffset + 40}, html);
     },
 
 

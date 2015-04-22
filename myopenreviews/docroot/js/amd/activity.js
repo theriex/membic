@@ -35,40 +35,6 @@ app.activity = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    feedReviewHTML = function (rev) {
-        var revid, prefix, revdivid, html;
-        revid = jt.instId(rev);
-        prefix = "rdd";
-        revdivid = prefix + revid;
-        html = ["div", {cla: "fpdiv"},
-                [["div", {cla: "fpprofdiv"},
-                  ["a", {href: "#view=profile&profid=" + rev.penid,
-                         onclick: jt.fs("app.profile.byprofid('" + 
-                                        rev.penid + "')")},
-                   ["img", {cla: "fpprofpic", 
-                            src: "profpic?profileid=" + rev.penid,
-                            title: jt.ndq(rev.penname),
-                            alt: jt.ndq(rev.penname)}]]],
-                 ["div", {cla: "fprevdiv", id: revdivid},
-                  app.review.revdispHTML(prefix, revid, rev)]]];
-        return html;
-    },
-
-
-    displayFeedReviews = function (feedtype, feedrevs) {
-        var type, i, html = [];
-        if(!feedrevs || feedrevs.length === 0) {
-            if(feedtype === "all") {
-                html = "No items found."; }
-            else {
-                type = app.review.getReviewTypeByValue(feedtype);
-                html = "No " + type.plural + " found."; } }
-        for(i = 0; i < feedrevs.length; i += 1) {
-            html.push(feedReviewHTML(feedrevs[i])); }
-        jt.out('feedrevsdiv', jt.tac2html(html));
-    },
-
-
     displayRemembered = function (filtertype) {
         var params, revs, revids, i, revref;
         jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
@@ -107,15 +73,11 @@ app.activity = (function () {
                 if(a.modified < b.modified) { return 1; }
                 if(a.modified > b.modified) { return -1; }
                 return 0; });
-            feeds.remembered = revs; }
+            feeds.remembered = app.review.collateDupes(revs); }
         app.layout.displayTypes(displayRemembered, filtertype);
-        revs = feeds.remembered;
-        if(filtertype && filtertype !== "all") {
-            revs = [];
-            for(i = 0; i < feeds.remembered.length; i += 1) {
-                if(feeds.remembered[i].revtype === filtertype) {
-                    revs.push(feeds.remembered[i]); } } }
-        displayFeedReviews(filtertype, revs);
+        revs = app.review.filterByRevtype(feeds.remembered, filtertype);
+        app.review.displayReviews("feedrevsdiv", "rdd", revs,
+                                  "app.activity.toggleExpansion", "author");
     },
 
 
@@ -189,14 +151,18 @@ app.activity = (function () {
 return {
 
     displayFeed: function (feedtype) {
-        var revs, params, time;
+        var params, time;
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
         jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         if(feeds[feedtype]) {
-            revs = mergePersonalRecent(feedtype, feeds[feedtype]);
-            return displayFeedReviews(feedtype, revs); }
+            feeds[feedtype] = mergePersonalRecent(feedtype, feeds[feedtype]);
+            feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
+            return app.review.displayReviews("feedrevsdiv", "afd", 
+                                             feeds[feedtype],
+                                             "app.activity.toggleExpansion",
+                                             "author"); }
         jt.out('feedrevsdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {
@@ -208,9 +174,12 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
-                    feeds[feedtype] = reviews;
-                    revs = mergePersonalRecent(feedtype, feeds[feedtype]);
-                    displayFeedReviews(feedtype, revs); },
+                    feeds[feedtype] = mergePersonalRecent(feedtype, reviews);
+                    feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
+                    app.review.displayReviews("feedrevsdiv", "afd", 
+                                              feeds[feedtype],
+                                              "app.activity.toggleExpansion",
+                                              "author"); },
                 app.failf(function (code, errtxt) {
                     jt.out('feedrevsdiv', "error code: " + code + 
                            " " + errtxt); }),
@@ -280,6 +249,39 @@ return {
         //Mirror the behavior of displayActive.
         //app.layout.closeDialog();
         mainDisplay("memo");
+    },
+
+
+    feedReviewHTML: function (prefix, rev, hide, togcbn) {
+        var revid, revdivid, maindivattrs, html;
+        revid = jt.instId(rev);
+        revdivid = prefix + revid;
+        maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
+        if(hide) {
+            maindivattrs.style = "display:none"; }
+        html = ["div", maindivattrs,
+                [["div", {cla: "fpprofdiv"},
+                  ["a", {href: "#view=profile&profid=" + rev.penid,
+                         onclick: jt.fs("app.profile.byprofid('" + 
+                                        rev.penid + "')")},
+                   ["img", {cla: "fpprofpic", 
+                            src: "profpic?profileid=" + rev.penid,
+                            title: jt.ndq(rev.penname),
+                            alt: jt.ndq(rev.penname)}]]],
+                 ["div", {cla: "fprevdiv", id: revdivid},
+                  app.review.revdispHTML(prefix, revid, rev, togcbn)]]];
+        return html;
+    },
+
+
+    toggleExpansion: function (prefix, revid) {
+        var revs;
+        if(prefix === "afd") {  //activity feed display
+            revs = feeds[app.layout.getType()]; }
+        else if(prefix === "rrd") {  //remembered reviews display
+            revs = app.review.filterByRevtype(feeds.remembered, 
+                                              app.layout.getType()); }
+        app.review.toggleExpansion(revs, prefix, revid);
     },
 
 
