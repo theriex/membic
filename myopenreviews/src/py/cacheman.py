@@ -31,6 +31,16 @@ def cached_put(instance):
     key = instance.key().kind() + str(instance.key().id())
     memcache.set(key, pickle.dumps(instance))
 
+# If the given instance is not already cached, then cache it, but do
+# not overwrite an existing cache entry.  Useful when you want to
+# verify an instance is cached, but you might have an older copy.
+def cache_verify(instance):
+    key = instance.key().kind() + str(instance.key().id())
+    entry = memcache.get(key)
+    if not entry:
+        memcache.set(key, pickle.dumps(instance))
+    return entry or instance
+
 
 # Read the given instance from memcache if available, otherwise fetch
 # it from the database

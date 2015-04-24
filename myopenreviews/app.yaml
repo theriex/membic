@@ -223,6 +223,12 @@ handlers:
   script: src.py.rev.app
 
 
+## Return recent and top reviews for a group or pen
+## GET params: grpid or penid or authparams
+- url: /blockfetch.*
+  script: src.py.rev.app
+
+
 ######################################################################
 ##        Groups
 

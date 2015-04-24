@@ -7,7 +7,8 @@ import logging
 import urllib
 from moracct import *
 from morutil import *
-from pen import PenName, authorized
+import pen
+import group
 import json
 from operator import attrgetter
 import re
@@ -15,7 +16,6 @@ from cacheman import *
 import time
 # for conversion only...
 from revtag import ReviewTag
-from group import Group
 
 
 # srcrev is heavily utilized in different contexts:
@@ -79,17 +79,17 @@ def review_modification_authorized(handler):
         handler.error(401)
         handler.response.out.write("No penid specified")
         return False
-    pen = cached_get(penid, PenName)
-    if not pen:
+    pnm = cached_get(penid, pen.PenName)
+    if not pnm:
         handler.error(404)
         handler.response.out.write("Pen " + str(penid) + " not found.")
         return False
-    authok = authorized(acc, pen)
+    authok = pen.authorized(acc, pnm)
     if not authok:
         handler.error(401)
         handler.response.out.write("Pen name not authorized.")
         return False
-    return pen
+    return pnm
 
 
 def safe_get_review_for_update(handler):
@@ -228,10 +228,10 @@ def read_review_values(handler, review):
         review.srcrev = 0
 
 
-def update_top20_reviews(pen, review):
+def update_top20_reviews(pnm, review):
     t20dict = {}
-    if pen.top20s:
-        t20dict = json.loads(pen.top20s)
+    if pnm.top20s:
+        t20dict = json.loads(pnm.top20s)
     t20ids = []
     if review.revtype in t20dict:
         t20ids = t20dict[review.revtype]
@@ -256,9 +256,9 @@ def update_top20_reviews(pen, review):
     t20dict["latestrevtype"] = review.revtype
     tstamp = nowISO();
     t20dict["t20lastupdated"] = tstamp
-    pen.top20s = json.dumps(t20dict)
-    pen.modified = tstamp;
-    cached_put(pen)
+    pnm.top20s = json.dumps(t20dict)
+    pnm.modified = tstamp;
+    cached_put(pnm)
 
 
 def fetch_review_by_cankey(handler):
@@ -377,7 +377,7 @@ def set_review_mainfeed(rev):
         rev.mainfeed = 0
 
 
-def prepend_to_main_feeds(review, pen):
+def prepend_to_main_feeds(review, pnm):
     feedentry = str(review.key().id()) + ":" + str(review.penid)
     allrevs = memcache.get("all") or ""
     allrevs = remove_from_csv(feedentry, allrevs)
@@ -389,14 +389,14 @@ def prepend_to_main_feeds(review, pen):
     memcache.set(review.revtype, typerevs)
 
 
-def write_review(review, pen):
+def write_review(review, pnm):
     cached_put(review)
     set_review_mainfeed(review)
     if review.mainfeed:
-        prepend_to_main_feeds(review, pen)
+        prepend_to_main_feeds(review, pnm)
     bust_cache_key("recentrevs")
-    bust_cache_key("blog" + pen.name_c)
-    update_top20_reviews(pen, review)
+    bust_cache_key("blog" + pnm.name_c)
+    update_top20_reviews(pnm, review)
 
 
 def creation_compare(revA, revB):
@@ -425,19 +425,19 @@ def find_source_review(cankey, modhist):
     return source
 
 
-def sort_filter_feed(feedcsv, pen, maxret):
+def sort_filter_feed(feedcsv, pnm, maxret):
     preferred = []
     normal = []
     background = []
     feedelems = csv_list(feedcsv)
     for elem in feedelems:
         ela = elem.split(":")
-        if pen:
-            if csv_contains(ela[1], pen.blocked):
+        if pnm:
+            if csv_contains(ela[1], pnm.blocked):
                 continue
-            if csv_contains(ela[1], pen.preferred):
+            if csv_contains(ela[1], pnm.preferred):
                 preferred.append(int(ela[0]))
-            elif csv_contains(ela[1], pen.background):
+            elif csv_contains(ela[1], pnm.background):
                 background.append(int(ela[0]))
             else:
                 normal.append(int(ela[0]))
@@ -497,10 +497,101 @@ def create_or_update_grouprev(revid, grpid):
     cached_put(grprev)
 
 
+def retrieve_pen_or_group(handler):
+    grpid = intz(handler.request.get('grpid'))
+    if grpid:
+        group = cached_get(grpid, group.Group)
+        if not group:
+            handler.error(404)
+            handler.response.out.write("Group " + grpid + " not found.")
+            return
+        return group, "grpid"
+    penid = intz(handler.request.get('penid'))
+    if penid:
+        pnm = pen.fetch_pen_by_id(handler)
+        if not pnm:
+            return
+        return pnm, "penid"
+    pens = pen.find_auth_pens(handler)
+    if pens and len(pens) > 0:
+        return pens[0], "penid"
+    handler.error(404)
+    handler.response.out.write("No authorized pen found")
+
+
+def rev_in_list(revid, revs):
+    revid = int(revid)
+    for rev in revs:
+        if rev.key().id() == revid:
+            return rev
+
+
+def strids_from_list(revs):
+    strids = []
+    for rev in revs:
+        strids.append(str(rev.key().id()))
+    return strids
+
+
+def update_top20s(pgo, recentrevs):
+    maxpertype = 50  # 20 is not quite enough
+    topdict = {}
+    if pgo.top20s:
+        topdict = json.loads(pgo.top20s)
+    changed = False
+    alltopids = []
+    for rt in known_rev_types:
+        if not rt in topdict:
+            topdict[rt] = []
+        orgtids = topdict[rt] or []
+        toprevs = [];
+        for rev in recentrevs:
+            if rev.revtype == rt:
+                toprevs.append(rev)
+        for orgtid in orgtids:
+            if not rev_in_list(orgtid, toprevs):
+                orgrev = cached_get(intz(orgtid), Review)
+                if orgrev and orgrev.revtype == rt:
+                    toprevs.append(orgrev)
+        toprevs = sorted(toprevs, key=attrgetter('rating', 'modified'),
+                         reverse=True)
+        if len(toprevs) > maxpertype:
+            toprevs = toprevs[0:maxpertype]
+        newtids = strids_from_list(toprevs)
+        alltopids = alltopids + newtids
+        if newtids != orgtids:
+            changed = True
+            topdict[rt] = newtids
+    if changed:
+        topdict["latestrevtype"] = recentrevs[0].revtype
+        tstamp = nowISO();
+        topdict["t20lastupdated"] = tstamp
+        pgo.top20s = json.dumps(topdict)
+        pgo.modified = tstamp;
+        cached_put(pgo)
+    return pgo, list_to_csv(alltopids)
+
+
+def fetch_revs_for_pg(idfield, pgo):
+    where = "WHERE " + idfield + " = :1 ORDER BY modified DESC"
+    rq = Review.gql(where, pgo.key().id())
+    recent = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    recentcsv = ""
+    for rev in recent:
+        recentcsv = append_to_csv(str(rev.key().id()), recentcsv)
+        cache_verify(rev)
+    pgo, topcsv = update_top20s(pgo, recent)
+    resultcsv = recentcsv
+    for idstr in csv_list(topcsv):
+        if not csv_contains(idstr, recentcsv):
+            resultcsv = append_to_csv(idstr, resultcsv)
+    return pgo, resultcsv
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
-        if not pen:
+        pnm = review_modification_authorized(self)
+        if not pnm:
             return
         review = fetch_review_by_cankey(self)
         if not review:
@@ -508,33 +599,33 @@ class NewReview(webapp2.RequestHandler):
             revtype = self.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
         read_review_values(self, review)
-        review.penname = pen.name
+        review.penname = pnm.name
         if self.request.get('mode') == "batch":
             # Might be better to unpack the existing svcdata value and 
             # update rather than rewriting, but maybe not. Change if needed
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
-        write_review(review, pen)
+        write_review(review, pnm)
         returnJSON(self.response, [ review ])
 
 
 class UpdateReview(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
-        if not pen:
+        pnm = review_modification_authorized(self)
+        if not pnm:
             return
         review = safe_get_review_for_update(self)
         if not review:
             return
         read_review_values(self, review)
-        review.penname = pen.name
-        write_review(review, pen)
+        review.penname = pnm.name
+        write_review(review, pnm)
         returnJSON(self.response, [ review ])
 
 
 class DeleteReview(webapp2.RequestHandler):
     def post(self):
-        pen = review_modification_authorized(self)
-        if not pen:
+        pnm = review_modification_authorized(self)
+        if not pnm:
             return
         review = safe_get_review_for_update(self)
         if not review:
@@ -550,8 +641,8 @@ class UploadReviewPic(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write('Ready')
     def post(self):
-        pen = review_modification_authorized(self)
-        if not pen:
+        pnm = review_modification_authorized(self)
+        if not pnm:
             return
         review = None
         revid = intz(self.request.get("revid"))
@@ -728,14 +819,14 @@ class ReviewDataInit(webapp2.RequestHandler):
             rt.put()
             count += 1
         self.response.out.write(str(count) + " ReviewTags initialized<br>\n")
-        pens = PenName.all()
+        pens = pen.PenName.all()
         count = 0
-        for pen in pens:
-            pen.remembered = ""
-            pen.preferred = ""
-            pen.background = ""
-            pen.blocked = ""
-            pen.put()
+        for pnm in pens:
+            pnm.remembered = ""
+            pnm.preferred = ""
+            pnm.background = ""
+            pnm.blocked = ""
+            pnm.put()
             count += 1
         self.response.out.write(str(count) + " Pens initialized<br>\n")
 
@@ -769,8 +860,8 @@ class VerifyAllReviews(webapp2.RequestHandler):
         rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
         for rt in rts:
             rev = Review.get_by_id(rt.revid)
-            pen = PenName.get_by_id(rt.penid)
-            if rev and pen:
+            pnm = pen.PenName.get_by_id(rt.penid)
+            if rev and pnm:
                 spid = str(rt.penid)
                 rid = str(rt.revid)
                 if not rt.nothelpful or rt.helpful > rt.nothelpful:
@@ -779,16 +870,16 @@ class VerifyAllReviews(webapp2.RequestHandler):
                 if not rt.forgotten or rt.remembered > rt.forgotten:
                     rev.remembered = remove_from_csv(spid, rev.remembered)
                     rev.remembered = prepend_to_csv(spid, rev.remembered, 120)
-                    pen.remembered = remove_from_csv(rid, pen.remembered)
-                    pen.remembered = prepend_to_csv(rid, pen.remembered, 1000)
-                    pen.put()
+                    pnm.remembered = remove_from_csv(rid, pnm.remembered)
+                    pnm.remembered = prepend_to_csv(rid, pnm.remembered, 1000)
+                    pnm.put()
                 rev.put()
             rt.converted = 1
             rt.put()
             count += 1
         self.response.out.write(str(count) + " ReviewTags converted<br>\n")
         # convert group revid lists into separate review entries
-        groups = Group.all()
+        groups = group.Group.all()
         count = 0
         for group in groups:
             logging.info("Converting " + group.name)
@@ -826,11 +917,11 @@ class GetReviewFeed(webapp2.RequestHandler):
                     if not csv_contains(fv, feedcsv):
                         feedcsv = append_to_csv(fv, feedcsv)
             memcache.set(revtype or "all", feedcsv)
-        pen = None
+        pnm = None
         acc = authenticated(self.request)
         if acc and intz(self.request.get('penid')):
-            pen = review_modification_authorized(self)
-        feedids = sort_filter_feed(feedcsv, pen, 200)
+            pnm = review_modification_authorized(self)
+        feedids = sort_filter_feed(feedcsv, pnm, 200)
         revs = []
         for revid in feedids:
             rev = cached_get(intz(revid), Review)
@@ -840,8 +931,8 @@ class GetReviewFeed(webapp2.RequestHandler):
 
 class ToggleHelpful(webapp2.RequestHandler):
     def get(self):
-        pen = review_modification_authorized(self)
-        if not pen:
+        pnm = review_modification_authorized(self)
+        if not pnm:
             return
         revid = intz(self.request.get('revid'))
         review = cached_get(revid, Review)
@@ -850,7 +941,7 @@ class ToggleHelpful(webapp2.RequestHandler):
             self.response.out.write("Review: " + str(revid) + " not found.")
             return
         if csv_elem_count(review.helpful) < 123:
-            penid = str(pen.key().id())
+            penid = str(pnm.key().id())
             if csv_contains(penid, review.helpful):
                 review.helpful = remove_from_csv(penid, review.helpful)
             else:
@@ -858,6 +949,30 @@ class ToggleHelpful(webapp2.RequestHandler):
             cached_put(review)
             # do not redo the main feeds. too much churn
         returnJSON(self.response, [ review ])
+
+
+class FetchAllReviews(webapp2.RequestHandler):
+    def get(self):
+        pgo, idfield = retrieve_pen_or_group(self)
+        if not pgo:
+            return
+        ckey = "revs" + str(pgo.key().id())
+        idcsv = memcache.get(ckey)
+        if not idcsv:
+            pgo, idcsv = fetch_revs_for_pg(idfield, pgo)
+        objs = [ pgo ];
+        mostrecent = None
+        for revidstr in csv_list(idcsv):
+            rev = cached_get(int(revidstr), Review)
+            mostrecent = mostrecent or rev.modified
+            if rev.modified > mostrecent:
+                logging.error("cache invalidation " + ckey)
+                memcache.delete(key)
+                self.error(409)  # Conflict
+                self.response.out.write("Outdated cache data detected")
+                return
+            objs.append(rev)
+        returnJSON(self.response, objs)
 
 
 class FetchPreReviews(webapp2.RequestHandler):
@@ -894,7 +1009,7 @@ class MakeTestReviews(webapp2.RequestHandler):
         for i in range(20):
             # PenName top20 updated with each write, so refetch each time
             # Same index retrieval already used by pen.py NewPenName
-            pens = PenName.gql("WHERE name_c=:1 LIMIT 1", pencname)
+            pens = pen.PenName.gql("WHERE name_c=:1 LIMIT 1", pencname)
             if pens.count() != 1:
                 self.error(404)
                 self.response.out.write("PenName name_c " + pencname + 
@@ -924,6 +1039,7 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/revcheckall', VerifyAllReviews),
                                ('/revfeed', GetReviewFeed),
                                ('/toghelpful', ToggleHelpful),
+                               ('/blockfetch', FetchAllReviews),
                                ('/fetchprerevs', FetchPreReviews),
                                ('/testrevs', MakeTestReviews)], debug=True)
 

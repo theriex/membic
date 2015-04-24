@@ -174,22 +174,50 @@ def updateable_pen(handler):
     return pen
 
 
+def fetch_pen_by_penid(handler):
+    penidstr = handler.request.get('penid')
+    penid = intz(penidstr)
+    if penid <= 0:
+        handler.error(400)
+        handler.response.write("Invalid ID for Pen Name: " + penidstr)
+        return
+    pen = cached_get(intz(penid), PenName)
+    if not pen:
+        handler.error(404)
+        handler.response.write("No Pen Name found for id " + str(penid))
+        return
+    # filter sensitive fields
+    pen.mid = 0
+    pen.gsid = "0"
+    pen.fbid = 0
+    pen.twid = 0
+    pen.ghid = 0
+    pen.abusive = ""
+    return pen
+
+
+def find_auth_pens(handler):
+    # logging.info("pen.py AuthPenNames start...")
+    acc = authenticated(handler.request)
+    # logging.info("pen.py AuthPenNames acc: " + str(acc))
+    if not acc:
+        # Eventual consistency means it is possible to create a new
+        # account but not have it available for authorization yet.
+        # Other than that, the most common case is that a token has
+        # expired, in which case a 401 error is exactly appropriate.
+        handler.error(401)
+        handler.response.out.write("Authentication failed")
+        return
+    where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
+    # logging.info("pen.py AuthPenNames " + where)
+    pq = PenName.gql(where, acc._id)
+    pens = pq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    return pens
+
+
 class AuthPenNames(webapp2.RequestHandler):
     def get(self):
-        logging.info("pen.py AuthPenNames start...")
-        acc = authenticated(self.request)
-        logging.info("pen.py AuthPenNames acc: " + str(acc))
-        if not acc:
-            # Eventual consistency means it is possible to create a new
-            # account but not have it available for authorization yet.
-            # Other than that, the most common case is that a token has
-            # expired, in which case a 401 error is exactly appropriate.
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
-        where = "WHERE " + self.request.get('am') + "=:1 LIMIT 20"
-        logging.info("pen.py AuthPenNames " + where)
-        pens = PenName.gql(where, acc._id)
+        find_auth_pens(self)
         if self.request.get('format') == "record":
             result = ""
             for pen in pens:
@@ -377,24 +405,9 @@ class SearchPenNames(webapp2.RequestHandler):
 
 class GetPenById(webapp2.RequestHandler):
     def get(self):
-        penidstr = self.request.get('penid')
-        penid = intz(penidstr)
-        if penid <= 0:
-            self.error(400)
-            self.response.write("Invalid ID for Pen Name: " + penidstr)
-            return
-        pen = cached_get(intz(penid), PenName)
+        pen = fetch_pen_by_penid(self)
         if not pen:
-            self.error(404)
-            self.response.write("No Pen Name found for id " + str(penid))
             return
-        # filter sensitive fields
-        pen.mid = 0
-        pen.gsid = "0"
-        pen.fbid = 0
-        pen.twid = 0
-        pen.ghid = 0
-        pen.abusive = ""
         returnJSON(self.response, [ pen ])
 
 

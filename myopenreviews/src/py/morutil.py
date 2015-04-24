@@ -87,8 +87,15 @@ def prepend_to_csv(val, csv, upperbound=1000):
 
 
 def append_to_csv(val, csv):
+    val = str(val)
     if not csv:
         return val
     return csv + "," + val
 
+
+def list_to_csv(values):
+    csv = ""
+    for val in values:
+        csv = append_to_csv(val, csv)
+    return csv
 

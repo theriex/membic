@@ -157,26 +157,24 @@ return {
             return callback(currpenref.pen); }
         if(penNameRefs) {
             return chooseOrCreatePenName(callback); }
-        jt.out('contentdiv', "<p>Retrieving your pen name(s)...</p>");
-        url = "mypens?" + app.login.authparams();
-        //no semaphore on this call.  During startup and reset,
-        //multiple functions might be needing access to the current
-        //pen, and it is not reasonable to ignore a secondary call
-        //because that leads to a line of processing being ignored.
-        //With no semaphore, the log may show multiple server calls
-        //for the same pen in some situations, but it is better than
-        //unexplained lack of display updates.
-        jt.call('GET', url, null,
-                function (pens) {
-                    var i;
-                    penNameRefs = [];
-                    for(i = 0; i < pens.length; i += 1) {
-                        verifyPenFields(pens[i]);
-                        penNameRefs.push(app.lcs.put("pen", pens[i])); }
+        jt.out('contentdiv', "<p>Retrieving your pen name...</p>");
+        jt.call('GET', "blockfetch?" + app.login.authparams(), null,
+                function (objs) {  // pen and recent/top reviews
+                    var pen, revs;
+                    pen = objs[0];
+                    revs = objs.slice(1);
+                    revs.sort(function (a, b) {
+                        if(a.modified < b.modified) { return 1; }
+                        if(a.modified > b.modified) { return -1; }
+                        return 0; });
+                    app.lcs.putAll("rev", revs);
+                    pen.recent = revs;
+                    penNameRefs = [ app.lcs.put("pen", pen) ]
                     chooseOrCreatePenName(callback); },
                 app.failf(function (code, errtxt) {
-                    jt.out('contentdiv', "Pen name retrieval failed: " + 
-                           code + " " + errtxt); }));
+                    jt.out('contentdiv', "Pen name retrieval failed: " +
+                           code + ": " + errtxt); }),
+                jt.semaphore("pen.getPen"));
     },
 
 
