@@ -156,7 +156,7 @@ app.login = (function () {
         if(window.location.href.indexOf(app.mainsvr) !== 0) {
             redurl = app.mainsvr + "#command=AltAuth" + (+idx);
             if(params.reqprof) {
-                redurl += "&view=profile&profid=" + params.reqprof; }
+                redurl += "&view=pen&penid=" + params.reqprof; }
             setTimeout(function () {
                 window.location.href = redurl; 
             }, 20); }
@@ -355,7 +355,7 @@ app.login = (function () {
                 ["label", {fo: "sumiflogin", cla: "accsetcboxlab"},
                  "Send even if site visited"]];
         jt.out('accsumflagsupdatediv', jt.tac2html(html));
-        app.pen.getPen(function (pen) {
+        app.pen.getPen("", function (pen) {
             var accpenin = jt.byId("accpenin");
             if(accpenin) {
                 accpenin.value = pen.name;
@@ -398,38 +398,29 @@ app.login = (function () {
 
 
     loggedInAuthentDisplay = function () {
-        var penref, nml, remb, wrib, html;
-        penref = app.pen.currPenRef();
-        nml = ["a", {href: "#view=profile",
-                     onclick: jt.fs("app.login.usermenu()")},
-                authname];
-        remb = ["a", {href: "#setUpPenNameToRemember",
-                      onclick: jt.fs("app.profile.display()")},
-                ["img", {cla: "topbuttonimg", 
-                         src: "img/rememberdis.png"}]];
-        wrib = ["a", {href: "#setUpPenNameToWrite",
-                      onclick: jt.fs("app.profile.display()")},
-                ["img", {cla: "topbuttonimg",
-                         src: "img/writereviewdis.png"}]];
-        if(penref && penref.pen) {
-            nml = ["a", {href: "#view=profile&profid=" + jt.instId(penref.pen),
+        var mypen, nml, remb, wrib, html;
+        mypen = app.pen.myPenName();
+        //if no pen name, then the app is prompting for that and there
+        //is no authenticated menu displayed.
+        if(mypen) {
+            nml = ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
                          onclick: jt.fs("app.login.usermenu()")},
-                   penref.pen.name];
+                   mypen.name];
             remb = ["a", {href: "#remembered",
                           onclick: jt.fs("app.activity.displayRemembered()")},
                     [["img", {cla: "topbuttonimg",
                               src: "img/remembered.png"}],
                      ["span", {id: "rememberedcountspan"},
-                      penref.pen.remembered.csvarray().length || ""]]];
+                      mypen.remembered.csvarray().length || ""]]];
             wrib = ["a", {href: "#write",
                           onclick: jt.fs("app.review.start()")},
                     ["img", {cla: "topbuttonimg",
-                             src: "img/writereview.png"}]]; }
-        html = ["div", {id: "topactionsdiv"},
-                [["div", {cla: "tasnamediv"}, nml],
-                 ["div", {id: "tasbuttonsdiv"},
-                  [remb, wrib]]]];
-        jt.out('topworkdiv', jt.tac2html(html));
+                             src: "img/writereview.png"}]];
+            html = ["div", {id: "topactionsdiv"},
+                    [["div", {cla: "tasnamediv"}, nml],
+                     ["div", {id: "tasbuttonsdiv"},
+                      [remb, wrib]]]];
+            jt.out('topworkdiv', jt.tac2html(html)); }
     },
 
 
@@ -440,8 +431,8 @@ app.login = (function () {
     loggedInDoNextStep = function (params) {
         //Need to note login, but definitely don't hold up display work
         setTimeout(function () {
-            var data = "penid=" + app.pen.currPenId();
-            if(app.pen.currPenId()) {
+            var data = "penid=" + app.pen.myPenId();
+            if(app.pen.myPenId()) {
                 jt.call('POST', "penacc?" + app.login.authparams(), data,
                         function () {
                             jt.log("Pen access time updated"); },
@@ -541,9 +532,9 @@ return {
         var html;
         html = ["div", {id: "accountsettingsformdiv"},
                 [["div", {cla: "tasnamediv"},
-                  ["a", {href: "#myprofile", id: "myprof",
-                         onclick: jt.fs("app.login.closeupdate('profile')")},
-                   "Show My Profile"]],
+                  ["a", {href: "#mypen", id: "mypen",
+                         onclick: jt.fs("app.login.closeupdate('pen')")},
+                   "My Pen Name"]],
                  ["div", {cla: "tasnamediv"}, 
                   ["a", {href: "logout", id: "logout",
                          onclick: jt.fs("app.login.closeupdate('logout')")},
@@ -598,7 +589,7 @@ return {
         jt.out('accsetdiv', "");
         jt.byId('accsetdiv').style.visibility = "hidden";
         switch(next) {
-        case 'profile': return app.profile.display();
+        case 'pen': return app.pgd.display("pen");
         case 'logout': return app.login.logout(); }
     },
 
@@ -676,7 +667,7 @@ return {
         ua = readUsermenuAccountForm();
         if(ua.penName !== moracct.penName) {
             contf = function () {
-                app.pen.getPen(function (pen) {
+                app.pen.getPen("", function (pen) {
                     pen.name = ua.penName;
                     app.pen.updatePen(
                         pen,
@@ -803,7 +794,7 @@ return {
             if(params.special === "nativeonly") {
                 redurl += "&special=nativeonly"; }
             if(params.reqprof) {
-                redurl += "&view=profile&profid=" + params.reqprof; }
+                redurl += "&view=pen&penid=" + params.reqprof; }
             xpara = jt.objdata(params, ["logout", "returnto"]);
             if(xpara) {
                 redurl += "&" + xpara; }

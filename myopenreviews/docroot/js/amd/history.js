@@ -73,18 +73,19 @@ return {
 
     dispatchState: function (state) {
         switch(state.view) {
-        case "profile":
-            if(jt.isId(state.profid)) {
-                return app.profile.byprofid(state.profid, state.tab); }
-            return app.profile.display();
-        case "group":
-            if(jt.isId(state.groupid)) {
-                return app.group.bygroupid(state.groupid, state.tab); }
-            return app.group.display();
         case "activity":
             return app.activity.displayActive();
         case "memo":
             return app.activity.displayRemembered();
+        //ATTENTION: all group or pen checkpoints will specify the id...
+        case "group":
+            if(jt.isId(state.groupid)) {
+                return app.group.bygroupid(state.groupid, state.tab); }
+            return app.group.display();
+        case "profile":
+            if(jt.isId(state.profid)) {
+                return app.profile.byprofid(state.profid, state.tab); }
+            return app.profile.display();
         case "review":
             if(state.revid) {
                 return app.review.initWithId(state.revid, state.mode); }

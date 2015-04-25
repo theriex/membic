@@ -231,7 +231,7 @@ app.profile = (function () {
         rrs.total = Math.max(rrs.total, rrs.results.length);
         if(rrs.total === 0) {
             text = "No recent " + app.typeOrBlank(revtype) + " membics";
-            if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            if(jt.instId(profpenref.pen) === app.pen.myPenId()) {
                 text += " " + app.review.reviewLinkHTML(); }
             revitems.push(["div", {cla: "fpinlinetextdiv"}, text]); }
         html = [];
@@ -413,7 +413,7 @@ app.profile = (function () {
             revs = profpenref.pen.top20s[revtype] || []; }
         if(revs.length === 0) {
             text = "No top " + app.typeOrBlank(revtype) + " membics";
-            if(jt.instId(profpenref.pen) === app.pen.currPenId()) {
+            if(jt.instId(profpenref.pen) === app.pen.myPenId()) {
                 text += " " + app.review.reviewLinkHTML(); } }
         else { //have at least one membic
             text = "Favorite " + app.typeOrBlank(revtype) + " membics"; }
@@ -706,7 +706,7 @@ app.profile = (function () {
                     ["img", {cla: "profpic", src: picImgSrc(dispen)}]],
                    ["div", {id: "profdescrdiv"},
                     [["div", {id: "profnamediv"},
-                      [["a", {href: "#view=profile&profid=" + jt.instId(dispen),
+                      [["a", {href: "#view=pen&penid=" + jt.instId(dispen),
                               onclick: jt.fs("app.profile.blogconf()")},
                         ["span", {cla: "penfont"}, dispen.name]],
                        profSettingsHTML(dispen)]],
@@ -753,13 +753,13 @@ return {
 
     display: function (action, errmsg) {
         app.layout.cancelOverlay();
-        app.pen.getPen(function (homepen) {
+        app.pen.getPen("", function (homepen) {
             mainDisplay(homepen, null, action, errmsg); });
     },
 
 
     refresh: function () {
-        app.pen.getPen(function (homepen) {
+        app.pen.getPen("", function (homepen) {
             mainDisplay(homepen, profpenref.pen); });
     },
 
@@ -780,12 +780,12 @@ return {
 
 
     resetReviews: function () {
-        resetReviewDisplays(app.pen.currPenRef());
+        resetReviewDisplays(app.pen.myPenRef());
     },
 
 
     save: function () {
-        app.pen.getPen(saveEditedProfile);
+        app.pen.getPen("", saveEditedProfile);
     },
 
 
@@ -798,7 +798,7 @@ return {
                 verifyProfileState(profpenref);
                 profpenref.profstate.seltabname = tabname; }
             if(app.login.isLoggedIn()) {
-                app.pen.getPen(function (homepen) {
+                app.pen.getPen("", function (homepen) {
                     mainDisplay(homepen, dispen); }); }
             else {
                 mainDisplay(null, dispen); } });
@@ -903,7 +903,7 @@ return {
 
 
     toggleAuth: function (authtype, domid) {
-        app.pen.getPen(function (pen) { 
+        app.pen.getPen("", function (pen) { 
             handleAuthChangeToggle(pen, authtype, domid); });
     },
 
@@ -980,7 +980,7 @@ return {
             jt.byId("contlinkhref").onclick = "";
             jt.out("contlinkhref", "continuing..."); }
         //make the call
-        penid = jt.instId(app.pen.currPenRef().pen);
+        penid = jt.instId(app.pen.myPenName());
         if(profpenref && profpenref.pen) {
             penid = jt.instId(profpenref.pen); }
         params = app.login.authparams() +
@@ -1027,8 +1027,8 @@ return {
 
 
     displayingSelf: function () {
-        var cpr = app.pen.currPenRef();
-        if(profpenref && profpenref.pen && cpr && cpr.pen === profpenref.pen) {
+        var mypen = app.pen.myPenName();
+        if(profpenref && profpenref.pen && profpenref.pen === mypen) {
             return true; }
         return false;
     },

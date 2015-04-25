@@ -469,7 +469,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
             redurl += "&special=" + special
         reqprof = self.request.get('reqprof')
         if reqprof:
-            redurl += "&view=profile&profid=" + reqprof
+            redurl += "&view=pen&penid=" + reqprof
         view = self.request.get('view')
         if view:
             redurl += "&view=" + view

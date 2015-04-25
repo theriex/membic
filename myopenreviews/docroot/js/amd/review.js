@@ -409,13 +409,13 @@ app.review = (function () {
     },
 
 
-    abbreviatedReviewText = function (prefix, revid, rev) {
+    abbreviatedReviewText = function (prefix, revid, rev, togfname) {
         var maxchars = 400, rtxt, morehtml;
         rtxt = jt.linkify(rev.text || "");
         if(rtxt.length > maxchars) {
             rtxt = rev.text;  //start with raw text
             morehtml = ["a", {href: "#expand",
-                              onclick: jt.fs("app.review.toggleExpansion('" +
+                              onclick: jt.fs(togfname + "('" +
                                              prefix + "','" + revid + "')")},
                         ["span", {cla: "togglemoretextspan"},
                          "more"]];
@@ -430,7 +430,7 @@ app.review = (function () {
     fpbHelpfulButtonHTML = function (prefix, revid, processing) {
         var rev, penid, title = "", alt = "", src = "", html;
         rev = app.lcs.getRef("rev", revid).rev;
-        penid = app.pen.currPenId();
+        penid = app.pen.myPenId();
         rev.helpful = rev.helpful || "";
         if(rev.helpful.csvarray().length >= 123) {
             processing = true;  //permanently suspended
@@ -469,7 +469,7 @@ app.review = (function () {
 
     fpbRememberButtonHTML = function (prefix, revid, processing) {
         var penref, title = "", alt = "", src = "", html;
-        penref = app.pen.currPenRef();
+        penref = app.pen.myPenRef();
         if(penref && penref.pen) {
             penref.pen.remembered = penref.pen.remembered || ""; }
         if(penref && penref.pen && penref.pen.remembered.csvcontains(revid)) {
@@ -510,7 +510,7 @@ app.review = (function () {
     revpostButtonsHTML = function (prefix, revid) {
         var rev, html;
         rev = app.lcs.getRef("rev", revid).rev;
-        if(rev.penid !== app.pen.currPenId()) {
+        if(rev.penid !== app.pen.myPenId()) {
             html = [["div", {cla: "fpbuttondiv", 
                              id: prefix + revid + "helpfuldiv"},
                      fpbHelpfulButtonHTML(prefix, revid)],
@@ -921,7 +921,7 @@ app.review = (function () {
                     [["form", {action: "/revpicupload", method: "post",
                                enctype: "multipart/form-data", target: "ptdif"},
                       [["input", {type: "hidden", name: "penid",
-                                  value: app.pen.currPenId()}],
+                                  value: app.pen.myPenId()}],
                        ["input", {type: "hidden", name: "revid",
                                   value: jt.instId(crev)}],
                        ["input", {type: "hidden", name: "revtype",
@@ -957,7 +957,7 @@ app.review = (function () {
     makeMine = function (review, srcrevId) {
         var now = new Date().toISOString();
         jt.setInstId(review, undefined);
-        review.penid = app.pen.currPenId();
+        review.penid = app.pen.myPenId();
         review.grpid = 0;
         review.rating = 0;
         review.srcrev = srcrevId;
@@ -967,14 +967,14 @@ app.review = (function () {
         review.text = "";
         review.revpic = "";
         review.svcdata = "";
-        review.penname = app.pen.currPenRef().pen.name;
+        review.penname = app.pen.myPenName().name;
         review.helpful = "";
         review.remembered = "";
     },
 
 
     cacheBustPersonalReviewSearches = function () {
-        var penref = app.pen.currPenRef();
+        var penref = app.pen.myPenRef();
         if(penref.profstate) {
             penref.profstate.allRevsState = null; }
         penref.prerevs = null;
@@ -1218,7 +1218,7 @@ return {
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review
             crev = copyReview(source);
-            if(source.penid !== app.pen.currPenId()) {
+            if(source.penid !== app.pen.myPenId()) {
                 makeMine(crev, jt.instId(source)); } }
         html = ["div", {id: "revdlgdiv"},
                 [["div", {id: "rdurldiv"},
@@ -1468,6 +1468,7 @@ return {
         jt.out('rdokbuttondiv', "Saving...");
         app.layout.cancelOverlay();  //just in case it is still up
         app.onescapefunc = null;
+        //ATTENTION: combine these into a single endpoint
         url = "updrev?";
         if(!jt.instId(crev)) {
             url = "newrev?"; }
@@ -1475,12 +1476,13 @@ return {
         data = jt.objdata(crev);
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', url + app.login.authparams(), data,
+                //ATTENTION: call will now return the pen/group + review
+                //and pen will have top20s updated
                 function (reviews) {
                     jt.out('rdokbuttondiv', "Saved.");
                     crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
                     app.activity.updateFeeds(reviews[0]);
                     cacheBustPersonalReviewSearches();
-                    setTimeout(app.pen.refreshCurrent, 50); //refetch top 20
                     if(url.indexOf("newrev") >= 0) {
                         setTimeout(app.group.currentReviewPostDialog, 150); }
                     app.layout.closeDialog();
@@ -1688,9 +1690,8 @@ return {
 
 
     fpbToggleHelpful: function (prefix, revid, retries) {
-        var penref, rev, url;
-        penref = app.pen.currPenRef();
-        if(!penref || !penref.pen) {
+        var rev, url;
+        if(!app.pen.myPenName()) {
             return jt.err("Sign in to mark this membic as helpful."); }
         rev = app.lcs.getRef("rev", revid).rev;
         if(rev.helpful && rev.helpful.csvarray().length >= 123) {
@@ -1698,7 +1699,7 @@ return {
         jt.out(prefix + revid + "helpfuldiv", 
                fpbHelpfulButtonHTML(prefix, revid, true));
         url = "toghelpful?" + app.login.authparams() + 
-            "&penid=" + app.pen.currPenId() + "&revid=" + revid;
+            "&penid=" + app.pen.myPenId() + "&revid=" + revid;
         jt.call('GET', url, null,
                 function (reviews) {
                     app.lcs.put("rev", reviews[0]);
@@ -1717,17 +1718,16 @@ return {
 
 
     fpbToggleRemember: function (prefix, revid) {
-        var penref, url;
-        penref = app.pen.currPenRef();
-        if(!penref || !penref.pen) {
+        var url;
+        if(!app.pen.myPenName()) {
             return jt.err("Sign in to remember this membic."); }
         jt.out(prefix + revid + "rememberdiv",
                fpbRememberButtonHTML(prefix, revid, true));
         url = "togremember?" + app.login.authparams() +
-            "&penid=" + app.pen.currPenId() + "&revid=" + revid;
+            "&penid=" + app.pen.myPenId() + "&revid=" + revid;
         jt.call('GET', url, null,
                 function (pens) {
-                    app.pen.setCurrentPenReference(pens[0]);
+                    app.lcs.put("pen", pens[0]);
                     app.login.updateAuthentDisplay();
                     app.activity.resetRememberedFeed();
                     jt.out(prefix + revid + "rememberdiv",
@@ -1740,8 +1740,7 @@ return {
 
 
     fpbWrite: function (prefix, revid) {
-        var penref = app.pen.currPenRef();
-        if(!penref || !penref.pen) {
+        if(!app.pen.myPenName()) {
             return jt.err("Sign in to note your impressions."); }
         app.lcs.getFull("rev", revid, function (revref) {
             app.review.start(revref.rev); });
@@ -1782,7 +1781,7 @@ return {
                   [["div", {cla: "fprevpicdiv"},
                     app.review.picHTML(rev, type)],
                    ["div", {cla: "fpdescrdiv", id: revdivid + "descrdiv"},
-                    abbreviatedReviewText(prefix, revid, rev)],
+                    abbreviatedReviewText(prefix, revid, rev, togfname)],
                    ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
                    ["div", {cla: "fpgrpsdiv", id: revdivid + "grpsdiv"}]]]]];
         return html;
@@ -1846,7 +1845,7 @@ return {
             if(author) {
                 authlink = 
                     ["div", {cla: "fpprofdiv"},
-                     ["a", {href: "#view=profile&profid=" + rev.penid,
+                     ["a", {href: "#view=pen&penid=" + rev.penid,
                             onclick: jt.fs("app.profile.byprofid('" + 
                                            rev.penid + "')")},
                       ["img", {cla: "fpprofpic", 
@@ -1855,7 +1854,8 @@ return {
                                alt: jt.ndq(rev.penname)}]]]; }
             html.push(["div", maindivattrs,
                        [authlink,
-                        ["div", {cla: "fprevdiv", id: revdivid},
+                        ["div", {cla: (author? "fparevdiv" : "fpnarevdiv"),
+                                 id: revdivid},
                          app.review.revdispHTML(prefix, jt.instId(rev), 
                                                 rev, togcbn)]]]); }
         jt.out(divid, jt.tac2html(html));

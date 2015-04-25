@@ -31,7 +31,7 @@ html = """
 <body id="bodyid">
 
 <div id="siteproflinkdiv">
-  <a href="../#view=profile&profid=$PENID">$PENNAME</a>
+  <a href="../#view=pen&penid=$PENID">$PENNAME</a>
   <noscript>
     <p><b>You need to enable Javascript to format this page...
       </b></p>

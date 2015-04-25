@@ -68,7 +68,7 @@ app.group = (function () {
 
 
     isFollowing = function (group) {
-        var pen = app.pen.currPenRef().pen;
+        var pen = app.pen.myPenName();
         if(pen.groups && pen.groups.csvcontains(jt.instId(pen))) {
             return true; }
         return false;
@@ -88,7 +88,7 @@ app.group = (function () {
 
     groupSettingsHTML = function (group) {
         var html;
-        if(!isFollowing(group) && !penBelongsToGroup(app.pen.currPenId())) {
+        if(!isFollowing(group) && !penBelongsToGroup(app.pen.myPenId())) {
             return ""; }
         html = ["a", {id: "profsettingslink", href: "#groupsettings",
                       onclick: jt.fs("app.group.settings()")},
@@ -175,7 +175,7 @@ app.group = (function () {
         if(group.membership) {  //already calculated, return that value
             return group.membership; }
         group.membership = "";
-        penid = jt.instId(app.pen.currPenRef().pen);
+        penid = jt.instId(app.pen.myPenName());
         if(jt.idInCSV(penid, group.founders)) {
             group.membership = "Founder"; }
         else if(jt.idInCSV(penid, group.seniors)) {
@@ -187,7 +187,7 @@ app.group = (function () {
 
 
     isApplying = function () {
-        var penid = jt.instId(app.pen.currPenRef().pen);
+        var penid = jt.instId(app.pen.myPenName());
         if(jt.idInCSV(penid, wizgrp.seeking)) {
             return true; }
         return false;
@@ -229,7 +229,7 @@ app.group = (function () {
     postMessageHTML = function () {
         var key, stash, days, html;
         key = "grp" + jt.instId(wizgrp);
-        stash = app.pen.currPenRef().pen.stash;
+        stash = app.pen.myPenName().stash;
         html = "You haven't posted yet.";
         if(stash[key] && stash[key].lastpost) {
             days = daysAgo(stash[key].lastpost);
@@ -271,7 +271,7 @@ app.group = (function () {
     //checks the pen.stash values against what's available in the group.
     verifyStash = function (modf) {
         var pen, key, modified = false, psg, penid, end, i, revref, revid;
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         key = "grp" + jt.instId(wizgrp);
         if(!pen.stash) {
             modified = true;
@@ -305,7 +305,7 @@ app.group = (function () {
 
     removeReviewFromStash = function (revid, contf) {
         var pen, key, revids, i, filtered = [];
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         key = "grp" + jt.instId(wizgrp);
         if(jt.idInCSV(revid, pen.stash[key].posts)) {
             revids = pen.stash[key].posts.split(",");
@@ -334,7 +334,7 @@ app.group = (function () {
                 authorized = true; } }
         if(!authorized) {
             revref = app.lcs.getRef("rev", revid);
-            if(revref.rev.penid === jt.instId(app.pen.currPenRef().pen)) {
+            if(revref.rev.penid === jt.instId(app.pen.myPenName())) {
                 authorized = true; } }
         if(authorized) {
             return "app.group.remrev('" + revid + "')"; }
@@ -365,7 +365,7 @@ app.group = (function () {
                                            displayGroupReviews); }
                 //no "via" byline when displaying within group
                 pname = penref.pen.name;
-                if(penref.penid === app.pen.currPenRef().penid) {
+                if(penref.penid === app.pen.myPenId()) {
                     pname = "you"; }
                 lis.push(app.profile.reviewItemHTML(revref.rev, pname,
                     null, removefstr(wizgrp, wizgrp.revids[i]))); } }
@@ -381,7 +381,7 @@ app.group = (function () {
         var pen;
         if(membership() || isApplying()) {  //need to verify following
             if(!isFollowing()) {
-                pen = app.pen.currPenRef().pen;
+                pen = app.pen.myPenName();
                 pen.groups = pen.groups || "";
                 if(pen.groups) {
                     pen.groups += ","; }
@@ -516,7 +516,7 @@ app.group = (function () {
 
     memberInviteHTML = function (text) {
         var pen, subj, body;
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         subj = "invite for " + wizgrp.name;
         body = "Hi,\n\n" +
             "I'd like you to join \"" + wizgrp.name + "\" which is a review group I'm part of. Here's the description:\n\n" +
@@ -1099,7 +1099,7 @@ app.group = (function () {
 
     groupsForCurrentReview = function (callback) {
         var pen, rev, revid, groups = [], grpids, i, ref;
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         if(pen.groups) {
             rev = app.review.getCurrentReview();
             revid = jt.instId(rev);
@@ -1137,7 +1137,7 @@ app.group = (function () {
 
     postReview = function (revid, groupid) {
         var data;
-        data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
+        data = "penid=" + app.pen.myPenId() + "&revid=" + revid + 
             "&groupid=" + groupid;
         jt.call('POST', "grprev?" + app.login.authparams(), data,
                 function (groups) {
@@ -1226,7 +1226,7 @@ app.group = (function () {
 
     seekRejectHTML = function (group) {
         var groupid = jt.instId(group),
-            seektype = findSeekType(group, app.pen.currPenRef().penid),
+            seektype = findSeekType(group, app.pen.myPenId()),
             reason = "Some groups may be reluctant to admit you as a new member if they don't have an idea of the sorts of reviews you might be posting. You might try writing some reviews matching the group criteria and then re-apply. You can always go back and post your reviews to the group later after you are accepted.";
         if(seektype.title === "Senior Member") {
             reason = "Granting privileges to manage other members and remove reviews from other people requires careful consideration. The founding members are not ready to grant these powers to you yet, but feel free to re-apply in the future."; }
@@ -1315,7 +1315,7 @@ app.group = (function () {
             if(revref.status === "not cached") {
                 app.lcs.getFull("rev", revids[i], app.group.mergeact);
                 return mergetotal; }
-            if(revref.rev && revref.rev.penid !== app.pen.currPenId()) {
+            if(revref.rev && revref.rev.penid !== app.pen.myPenId()) {
                 idx = findInsertionIndex(revref, revrefs);
                 if(idx >= 0) {
                     revref.viagname = group.name;
@@ -1328,8 +1328,8 @@ app.group = (function () {
 
     displayGroupSearchResults = function (results) {
         var pen, groupsearch, i, resitems = [];
-        pen = app.pen.currPenRef().pen;
-        groupsearch = app.pen.currPenRef().groupsearch;
+        pen = app.pen.myPenName();
+        groupsearch = app.pen.myPenRef().groupsearch;
         for(i = 0; i < groupsearch.groups.length; i += 1) {
             resitems.push(app.group.groupListItemHTML(groupsearch.groups[i])); }
         if(!results || results.length === 0) {
@@ -1378,7 +1378,7 @@ return {
 
     bygroupid: function (groupid, tabname) {
         app.layout.closeDialog(); //close group search dialog if open
-        app.pen.getPen(function (pen) {  //not already loaded if by url param
+        app.pen.getPen("", function (pen) {  //not loaded yet if via url param
             app.lcs.getFull("group", groupid, function (groupref) {
                 currGroupRef(groupref, tabname);
                 app.history.checkpoint({ view: "group", 
@@ -1454,7 +1454,7 @@ return {
             city = city.split(","); }
         else {
             city = [ city ]; }
-        penc = app.pen.currPenRef().pen.city;
+        penc = app.pen.myPenName().city;
         if(penc) {
             if(penc.indexOf(",") >= 0) {
                 penc = penc.split(","); }
@@ -1502,7 +1502,7 @@ return {
     setPenCity: function () {
         var pen, city;
         city = jt.byId('hcityin').value;
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         pen.city = pen.city || "";
         if(pen.city) {
             pen.city += ", "; }
@@ -1591,7 +1591,7 @@ return {
         //relying on server side validation for detailed checking
         app.onescapefunc = null;
         data = jt.objdata(wizgrp, ["revids"]) + 
-            "&penid=" + app.pen.currPenRef().penid;
+            "&penid=" + app.pen.myPenId();
         jt.call('POST', "grpdesc?" + app.login.authparams(), data,
                 function (groups) {
                     app.lcs.put("group", groups[0]);
@@ -1641,7 +1641,7 @@ return {
 
 
     follow: function () {
-        var pen = app.pen.currPenRef().pen;
+        var pen = app.pen.myPenName();
         pen.groups = pen.groups || "";
         if(pen.groups) {
             pen.groups += ","; }
@@ -1655,7 +1655,7 @@ return {
     stopfollow: function () {
         var pen, groupid, ids, i;
         app.layout.closeDialog();
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         pen.groups = pen.groups || "";
         if(pen.groups) {
             groupid = jt.instId(wizgrp);
@@ -1740,7 +1740,7 @@ return {
                      "Apply"]]]]])); }
         else { //confirmation already displayed if needed. update and redisplay
             jt.out('grpmemacttd', "Applying...");
-            data = "penid=" + app.pen.currPenRef().penid + 
+            data = "penid=" + app.pen.myPenId() + 
                 "&groupid=" + jt.instId(wizgrp);
             jt.call('POST', "grpmemapply?" + app.login.authparams(), data,
                     function (groups) {
@@ -1757,7 +1757,7 @@ return {
     withdraw: function () {
         var data;
         jt.out('grpmemacttd', "Withdrawing...");
-        data = "penid=" + app.pen.currPenRef().penid + 
+        data = "penid=" + app.pen.myPenId() + 
             "&groupid=" + jt.instId(wizgrp);
         jt.call('POST', "grpmemwithdraw?" + app.login.authparams(), data,
                 function (groups) {
@@ -1793,7 +1793,7 @@ return {
                      bname]]]]])); }
         else { //confirmation already displayed, update and return to profile
             jt.out('resignconfbdiv', "Resigning...");
-            penid = app.pen.currPenRef().penid;
+            penid = app.pen.myPenId();
             data = "penid=" + penid + "&groupid=" + jt.instId(wizgrp) + 
                 "&removeid=" + penid;
             jt.call('POST', "grpmemremove?" + app.login.authparams(), data,
@@ -1831,7 +1831,7 @@ return {
             endpoint: "/grppicupload",
             type: "Group",
             id: groupid,
-            penid: app.pen.currPenRef().penid,
+            penid: app.pen.myPenId(),
             //not returning in edit mode since cancel not an option
             rethash: "#view=group&groupid=" + groupid,
             left: "70px", top: "140px"});
@@ -1913,7 +1913,7 @@ return {
             //review should be cached since it was just displayed..
             jt.err("Could not find review " + revid + ".");
             return; }
-        if(revref.rev.penid === jt.instId(app.pen.currPenRef().pen)) {
+        if(revref.rev.penid === jt.instId(app.pen.myPenName())) {
             html = ["div", {id: "reasondiv"},
                     ["div", {cla: "dlgprompt"},
                      "Are you sure you want to remove your review" + 
@@ -1960,7 +1960,7 @@ return {
         app.layout.closeDialog();
         groupid = jt.instId(wizgrp);
         reason = "Review rejected from " + wizgrp.name + ": " + reason;
-        data = "penid=" + app.pen.currPenRef().penid + "&revid=" + revid + 
+        data = "penid=" + app.pen.myPenId() + "&revid=" + revid + 
             "&groupid=" + groupid + "&reason=" + jt.enc(reason);
         jt.call('POST', "grpremrev?" + app.login.authparams(), data,
                 function (groups) {
@@ -1974,7 +1974,7 @@ return {
 
     groupNoticesHTML: function (divid) {
         var pen, grpids, i, groupref, fetch = {cacheMiss: false, html: []};
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         if(pen.groups) {
             grpids = pen.groups.split(",");
             for(i = 0; !fetch.cacheMiss && i < grpids.length; i += 1) {
@@ -2019,7 +2019,7 @@ return {
             jt.byId('reasonin').focus(); }
         else {
             jt.out("seekarbdiv" + seekerid, "Denying application...");
-            data = "penid=" + app.pen.currPenRef().penid +
+            data = "penid=" + app.pen.myPenId() +
                 "&groupid=" + groupid + "&seekerid=" + seekerid +
                 "&reason=" + jt.enc(jt.byId('reasonin').value.trim());
             jt.call('POST', "grpmemrej?" + app.login.authparams(), data,
@@ -2036,7 +2036,7 @@ return {
     acceptseek: function (groupid, seekerid) {
         var data;
         jt.out("seekarbdiv" + seekerid, "Accepting application...");
-        data = "penid=" + app.pen.currPenRef().penid +
+        data = "penid=" + app.pen.myPenId() +
             "&groupid=" + groupid + "&seekerid=" + seekerid;
         jt.call('POST', "grpmemyes?" + app.login.authparams(), data,
                 function (groups) {
@@ -2052,7 +2052,7 @@ return {
     rejectok: function (groupid) {
         var data;
         jt.out("seekarbdiv" + groupid, "");
-        data = "penid=" + app.pen.currPenRef().penid +
+        data = "penid=" + app.pen.myPenId() +
             "&groupid=" + groupid;
         jt.call('POST', "grprejok?" + app.login.authparams(), data,
                 function (groups) {
@@ -2118,7 +2118,7 @@ return {
         //remove the member
         else {
             jt.out("rmbdiv" + penid, "Removing...");
-            data = "penid=" + app.pen.currPenRef().penid + 
+            data = "penid=" + app.pen.myPenId() + 
                 "&groupid=" + jt.instId(wizgrp) + "&removeid=" + penid +
                 "&reason=" + jt.enc(jt.byId('reasonin').value.trim());
             jt.call('POST', "grpmemremove?" + app.login.authparams(), data,
@@ -2160,7 +2160,7 @@ return {
 
     mergeact: function () {
         var penref, i, grpids, groupref, mergetotal = 0;
-        penref = app.pen.currPenRef();
+        penref = app.pen.myPenRef();
         if(!penref.pen.groups) {
             return; }  //nothing to do
         grpids = penref.pen.groups.split(",");
@@ -2221,7 +2221,7 @@ return {
     searchGroups: function () {
         var groupsearch, qstr, params;
         jt.byId("searchbutton").disabled = true;  //working...
-        groupsearch = app.pen.currPenRef().groupsearch;
+        groupsearch = app.pen.myPenRef().groupsearch;
         qstr = jt.byId('searchtxt').value;
         params = app.login.authparams() + "&qstr=" + jt.enc(qstr) +
             "&cursor=" + jt.enc(groupsearch.cursor);
@@ -2236,7 +2236,7 @@ return {
 
 
     startGroupSearch: function () {
-        app.pen.currPenRef().groupsearch = {
+        app.pen.myPenRef().groupsearch = {
             params: {},
             groups: [],
             cursor: "",

@@ -69,7 +69,7 @@ var fgfwebGroupview = (function () {
                     "Join"]]];
         html = ["div", {cla: "sgrpdiv"},
                 [["div", {cla: "getyoursdiv"},
-                  ["a", {href: "../#view=profile"},
+                  ["a", {href: "../#view=group"},
                    "Start a group"]],
                  ["div", {cla: "sgpicdiv"},
                   app.group.grpPicCityHTML(group, "sgpicdiv")],

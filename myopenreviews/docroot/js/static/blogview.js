@@ -34,11 +34,11 @@ var fgfwebLogview = (function () {
 
 
     getGreenLink = function () {
-        var grlink = {href: "/#view=profile&profid=" + jt.instId(pen), 
+        var grlink = {href: "/#view=pen&penid=" + jt.instId(pen), 
                       text: "View Profile"};
         if(!jt.cookie("myopenreviewauth")) {  //not logged in
-            grlink = {href: "/#view=profile", 
-                      text: "Get your review log"}; }
+            grlink = {href: "/#view=pen", 
+                      text: "Get your own membic log"}; }
         grlink.href = reloff + grlink.href;
         return grlink;
     },
@@ -183,7 +183,7 @@ var fgfwebLogview = (function () {
                     artists = ""; }
                 revitems.push(["li",
                                app.review.staticReviewDisplay(revs[i])]); } }
-        profurl = "../#view=profile&profid=" + jt.instId(pen);
+        profurl = "../#view=pen&penid=" + jt.instId(pen);
         sroot = app.layout.getSiteRoot();
         if(sroot && sroot.indexOf("..") < 0) {
             profurl = sroot + "/blogs/" + pen.name_c; }

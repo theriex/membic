@@ -39,7 +39,7 @@ app.email = (function () {
             "If you want to remember this review for later, just click " +
             "the link off the full review page: " +
             app.services.getRevPermalink(review) + 
-            "\n\ncheers,\n" + app.pen.currPenRef().pen.name + "\n";
+            "\n\ncheers,\n" + app.pen.myPenName().name + "\n";
         return text;
     };
 

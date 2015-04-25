@@ -397,7 +397,7 @@ return {
         if(meritactive || !isnew) {
             return; }
         meritactive = true;
-        pen = app.pen.currPenRef().pen;
+        pen = app.pen.myPenName();
         top = [];
         if(pen.top20s && pen.top20s[rev.revtype]) {
             top = pen.top20s[rev.revtype]; }

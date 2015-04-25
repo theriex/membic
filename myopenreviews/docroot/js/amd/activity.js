@@ -43,7 +43,7 @@ app.activity = (function () {
             if(!feeds.future) {
                 jt.out('feedrevsdiv', "Fetching future reviews...");
                 params = app.login.authparams() + "&penid=" + 
-                    app.pen.currPenId();
+                    app.pen.myPenId();
                 jt.call('GET', "fetchprerevs?" + params, null,
                         function (reviews) {
                             app.lcs.putAll("rev", reviews);
@@ -57,7 +57,7 @@ app.activity = (function () {
             if(!feeds.memo) { //resolve remembered reviews
                 jt.out('feedrevsdiv', "Resolving remembered reviews...");
                 revs = [];
-                revids = app.pen.currPenRef().pen.remembered.csvarray();
+                revids = app.pen.myPenName().remembered.csvarray();
                 for(i = 0; i < revids.length; i += 1) {
                     revref = app.lcs.getRef("rev", revids[i]);
                     if(revref.status === "not cached") {
@@ -84,7 +84,7 @@ app.activity = (function () {
     mergePersonalRecent = function (feedtype, feedrevs) {
         var cached, revs, revid, haveAlready, i, j;
         revs = [];
-        cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.currPenId());
+        cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
         for(i = 0; i < cached.length; i += 1) {
             revid = jt.instId(cached[i]);
             haveAlready = false;
@@ -130,10 +130,9 @@ app.activity = (function () {
 
 
     mainDisplay = function (dispmode) {
-        var penref = app.pen.currPenRef();
-        if(!penref) {
+        if(!app.pen.myPenName()) {
             setTimeout(function () {
-                app.pen.getPen(function (pen) {
+                app.pen.getPen("", function (pen) {
                     mainDisplay(dispmode); }); }, 100);
             return; }
         app.history.checkpoint({ view: dispmode });
@@ -166,7 +165,7 @@ return {
         jt.out('feedrevsdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {
-            params += "&penid=" + app.pen.currPenId() + "&"; }
+            params += "&penid=" + app.pen.myPenId() + "&"; }
         params += "revtype=" + feedtype;
         time = new Date().getTime();
         jt.call('GET', "revfeed?" + params, null,
@@ -261,7 +260,7 @@ return {
             maindivattrs.style = "display:none"; }
         html = ["div", maindivattrs,
                 [["div", {cla: "fpprofdiv"},
-                  ["a", {href: "#view=profile&profid=" + rev.penid,
+                  ["a", {href: "#view=pen&penid=" + rev.penid,
                          onclick: jt.fs("app.profile.byprofid('" + 
                                         rev.penid + "')")},
                    ["img", {cla: "fpprofpic", 

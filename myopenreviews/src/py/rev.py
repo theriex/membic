@@ -501,22 +501,15 @@ def retrieve_pen_or_group(handler):
     grpid = intz(handler.request.get('grpid'))
     if grpid:
         group = cached_get(grpid, group.Group)
-        if not group:
-            handler.error(404)
-            handler.response.out.write("Group " + grpid + " not found.")
-            return
         return group, "grpid"
     penid = intz(handler.request.get('penid'))
     if penid:
-        pnm = pen.fetch_pen_by_id(handler)
-        if not pnm:
-            return
+        pnm = pen.fetch_pen_by_penid(handler)
         return pnm, "penid"
     pens = pen.find_auth_pens(handler)
     if pens and len(pens) > 0:
         return pens[0], "penid"
-    handler.error(404)
-    handler.response.out.write("No authorized pen found")
+    return None, penid
 
 
 def rev_in_list(revid, revs):
@@ -954,24 +947,24 @@ class ToggleHelpful(webapp2.RequestHandler):
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
         pgo, idfield = retrieve_pen_or_group(self)
-        if not pgo:
-            return
-        ckey = "revs" + str(pgo.key().id())
-        idcsv = memcache.get(ckey)
-        if not idcsv:
-            pgo, idcsv = fetch_revs_for_pg(idfield, pgo)
-        objs = [ pgo ];
-        mostrecent = None
-        for revidstr in csv_list(idcsv):
-            rev = cached_get(int(revidstr), Review)
-            mostrecent = mostrecent or rev.modified
-            if rev.modified > mostrecent:
-                logging.error("cache invalidation " + ckey)
-                memcache.delete(key)
-                self.error(409)  # Conflict
-                self.response.out.write("Outdated cache data detected")
-                return
-            objs.append(rev)
+        objs = []
+        if pgo:
+            ckey = "revs" + str(pgo.key().id())
+            idcsv = memcache.get(ckey)
+            if not idcsv:
+                pgo, idcsv = fetch_revs_for_pg(idfield, pgo)
+            objs.append(pgo)
+            mostrecent = None
+            for revidstr in csv_list(idcsv):
+                rev = cached_get(int(revidstr), Review)
+                mostrecent = mostrecent or rev.modified
+                if rev.modified > mostrecent:
+                    logging.error("cache invalidation " + ckey)
+                    memcache.delete(key)
+                    self.error(409)  # Conflict
+                    self.response.out.write("Outdated cache data detected")
+                    return
+                objs.append(rev)
         returnJSON(self.response, objs)
 
 
