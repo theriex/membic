@@ -1,4 +1,4 @@
-/*global app: false, jt: false */
+/*global app: false, jt: false, setTimeout: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -31,6 +31,8 @@ app.pgd = (function () {
                                    img: "img/search.png" }, 
                       groups:    { href: "#groupsfollowing",
                                    img: "img/tabgrps.png" } },
+        searchstate = { revtype: "all", qstr: "", 
+                        init: false, inprog: false, revids: [] },
 
 
     ////////////////////////////////////////
@@ -86,13 +88,39 @@ app.pgd = (function () {
     },
 
 
+    getFavoriteReviews = function () {
+        var revids, rt, tops, types, i;
+        tops = dst.obj.top20s || {};
+        if(!tops.all) {
+            tops.all = [];
+            types = app.review.getReviewTypes();
+            for(i = 0; i < types.length; i += 1) {
+                rt = types[i].type;
+                tops.all = tops.all.concat(tops[rt] || []); } }
+        rt = app.layout.getType();
+        revids = tops[rt] || [];
+        return app.lcs.resolveIdArrayToCachedObjs("rev", revids);
+    },
+
+
     displayFavorites = function () {
-        jt.out('pgdcontdiv', "displayFavorites not implemented yet...");
+        var revs = getFavoriteReviews();
+        app.review.displayReviews('pgdcontdiv', "pgd", revs, 
+                                  "app.pgd.toggleRevExpansion", 
+                                  (dst.type === "group"));
     },
 
 
     displaySearch = function () {
-        jt.out('pgdcontdiv', "displaySearch not implemented yet...");
+        var html;
+        html = [["div", {id: "pgdsrchdiv"},
+                 ["input", {type: "text", id: "pgdsrchin", size: 40,
+                            placeholder: "Membic title or name",
+                            value: searchstate.qstr}]],
+                ["div", {id: "pgdsrchdispdiv"}]];
+        jt.out('pgdcontdiv', jt.tac2html(html));
+        searchstate.init = true;
+        app.pgd.searchReviews();
     },
 
 
@@ -189,11 +217,53 @@ return {
     },
 
 
+    searchReviews: function () {
+        var srchin, params;
+        srchin = jt.byId("pgdsrchin");
+        if(!srchin) {  //query input no longer displayed
+            return; }
+        if(!searchstate.inprog && 
+              (searchstate.init ||
+               searchstate.revtype !== app.layout.getType() ||
+               searchstate.qstr !== srchin.value)) {
+            searchstate.qstr = srchin.value;
+            searchstate.revtype = app.layout.getType();
+            searchstate.inprog = true;
+            searchstate.init = false;
+            params = app.login.authparams() + 
+                "&qstr=" + jt.enc(jt.canonize(searchstate.qstr)) +
+                "&revtype=" + app.typeOrBlank(searchstate.revtype) +
+                "&" + dst.type + "id=" + jt.instId(dst.obj);
+            jt.call('GET', "srchrevs?" + params, null,
+                    function (revs) {
+                        app.lcs.putAll("rev", revs);
+                        searchstate.revs = revs;
+                        searchstate.inprog = false;
+                        app.review.displayReviews(
+                            'pgdsrchdispdiv', "pgd", searchstate.revs, 
+                            "app.pgd.toggleRevExpansion", 
+                            (dst.type === "group"));
+                        setTimeout(app.pgd.searchReviews, 400); },
+                    app.failf(function (code, errtxt) {
+                        jt.out('pgdsrchdispdiv', "searchReviews failed: " + 
+                               code + " " + errtxt); }),
+                    jt.semaphore("pgd.searchReviews")); }
+        else {  //no change to search parameters yet, monitor
+            setTimeout(app.pgd.searchReviews, 400); }
+    },
+
+
     toggleRevExpansion: function (prefix, revid) {
         var revs;
         switch(dst.tab) {
         case "latest":
             revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
+            break;
+        case "favorites":
+            revs = getFavoriteReviews();
+            break;
+        case "search":
+            revs = searchstate.revs;
             break;
         default:
             jt.err("pgd.toggleRevExpansion unknown tab " + dst.tab); }

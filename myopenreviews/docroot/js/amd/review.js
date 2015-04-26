@@ -91,7 +91,7 @@ app.review = (function () {
             dkwords: [ "Indoor", "Outdoor", "Educational", "Artistic", 
                        "Performance", "Kid Ok", "Inexpensive", 
                        "Expensive" ] },
-          { type: "other", plural: "other", img: "TypeOther50.png",
+          { type: "other", plural: "others", img: "TypeOther50.png",
             keyprompt: "Name or title", 
             key: "name", //subkey
             fields: [],
@@ -153,6 +153,7 @@ app.review = (function () {
     findReviewType = function (type) {
         var i;
         if(!type) {
+            jt.log("review.findReviewType asked to find falsy type");
             return null; }
         type = type.toLowerCase();
         for(i = 0; i < reviewTypes.length; i += 1) {

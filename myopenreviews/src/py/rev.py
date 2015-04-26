@@ -344,28 +344,12 @@ def batch_flag_attrval(review):
     return "\"batchUpdated\":\"" + review.modified + "\""
 
 
-def filter_reviews(reviews, qstr):
-    results = [] 
-    for review in reviews:
-        filtered = False
-        if not review.cankey:
-            review.cankey = create_cankey_for_review(review)
-            cached_put(review)
-        if qstr and not qstr in review.cankey:
-            filtered = True
-        elif review.svcdata and batch_flag_attrval(review) in review.svcdata:
-            filtered = True
-        if not filtered:
-            results.append(review)
-    return results
-
-
 def set_review_mainfeed(rev):
     # Not looking forward to dealing with bots and trolls, but if that
     # becomes necessary this is the hook point.  ep:28feb15
     rev.mainfeed = 1
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
-        rev.svcdata = -202
+        rev.srcrev = -202
         rev.mainfeed = 0
     if rev.svcdata < 0:  # future review, batch update etc.
         rev.mainfeed = 0
@@ -698,10 +682,9 @@ class SearchReviews(webapp2.RequestHandler):
         qstr = self.request.get('qstr')
         revtype = self.request.get('revtype')
         cursor = self.request.get('cursor')
-        fetchmax = 100
         ckey = "SearchReviewsG" + str(grpid) + "P" + str(penid) +\
             "D" + mindate + "M" + maxdate
-        where = "WHERE grpid = " + str(grpid)
+        where = "WHERE grpid = " + str(grpid)  # matches on zero if penid
         if penid:
             where += " AND penid = " + str(penid)
         where += " AND modified >= :1 AND modified <= :2"
@@ -712,30 +695,15 @@ class SearchReviews(webapp2.RequestHandler):
         logging.info("SearchReviews query: " + where + " " + 
                      mindate + " - " + maxdate)
         revquery = Review.gql(where, mindate, maxdate)
-        qres = cached_query(ckey, revquery, cursor, fetchmax, Review, True)
-        checked = len(qres.objects)
-        logging.info("SearchReviews checked: " + str(checked))
-        reviews = filter_reviews(qres.objects, qstr)
-        if self.request.get('format') == "record":
-            result = ""
-            for review in reviews:
-                record = "revid: " + str(review.key().id()) +\
-                    ", title: " + safeURIEncode(review.title) +\
-                    ", artist: " + safeURIEncode(review.artist) +\
-                    ", album: " + safeURIEncode(review.album) +\
-                    ", year: " + safeURIEncode(review.year) +\
-                    ", rating: " + str(review.rating) +\
-                    ", modified: " + review.modified +\
-                    ", keywords: " + safeURIEncode(review.keywords) +\
-                    ", text: " + safeURIEncode(review.text, True)
-                result += record + "\n"
-            result += "fetched: " + str(checked)
-            if qres.cursor:
-                result += ", cursor: " + qres.cursor
-            result += "\n"
-            writeTextResponse(result, self.response)
-        else:
-            returnJSON(self.response, reviews, qres.cursor, checked)
+        qres = []
+        reviter = revquery.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=30,
+                               batch_size=1000)
+        for review in reviter:
+            if not qstr or qstr in review.cankey:
+                qres.append(review)
+            if len(qres) >= 20:
+                break
+        returnJSON(self.response, qres)
 
 
 class GetReviewById(webapp2.RequestHandler):
