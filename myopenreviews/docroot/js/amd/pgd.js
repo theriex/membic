@@ -124,8 +124,35 @@ app.pgd = (function () {
     },
 
 
-    displayGroups = function () {
-        jt.out('pgdcontdiv', "displayGroups not implemented yet...");
+    displayGroups = function (groupnames) {
+        var html, gid, gname;
+        if(!groupnames) {
+            return app.pen.groupNames(dst.obj, "pgdcontdiv", displayGroups); }
+        html = [];
+        for(gid in groupnames) {
+            if(groupnames.hasOwnProperty(gid)) {
+                gname = groupnames[gid];
+                html.push(["div", {cla: "grouplinkdiv"},
+                           [["div", {cla: "fpprofdiv"},
+                             ["img", {cla: "fpprofpic",
+                                      src: dst.group.picsrc + gid}]],
+                            ["a", {href: "groups/" + jt.canonize(gname),
+                                   onclick: jt.fs("app.group.bygroupid('" +
+                                                  gid + "')")},
+                             ["span", {cla: "penfont"}, gname]]]]); } }
+        html.push(["div", {cla: "pgdtext"},
+                   [["div", {cla: "pgdtoggle"},
+                     ["a", {href: "#findgroups",
+                            onclick: jt.fs("app.pgd.toggleFindGroups()")},
+                      "Find groups to follow"]],
+                    ["div", {id: "findgrpdiv"}]]]);
+        html.push(["div", {cla: "pgdtext"},
+                   [["div", {cla: "pgdtoggle"},
+                     ["a", {href: "#creategroup",
+                            onclick: jt.fs("app.pgd.toggleCreateGroup()")},
+                      "Create Group"]],
+                    ["div", {id: "creategrpdiv"}]]]);
+        jt.out('pgdcontdiv', jt.tac2html(html));
     },
 
 
@@ -268,6 +295,34 @@ return {
         default:
             jt.err("pgd.toggleRevExpansion unknown tab " + dst.tab); }
         app.review.toggleExpansion(revs, prefix, revid);
+    },
+
+
+    toggleFindGroups: function () {
+        var html;
+        html = ["The best way to find groups is from the ",
+                ["a", {href: "#home",
+                       onclick: jt.fs("app.activity.displayFeed()")},
+                 "main feed display."],
+                " If a notable membic was posted to a group, click through and check it out.  If the group looks interesting, you can follow to prefer content posted from the group, then optionally apply for membership if you want to contribute."];
+        if(!jt.byId("findgrpdiv").innerHTML) {
+            jt.out('findgrpdiv', jt.tac2html(html)); }
+        else {
+            jt.out('findgrpdiv', ""); }
+    },
+
+
+    toggleCreateGroup: function () {
+        var html;
+        html = ["A group is a collection of membics related to a theme.  After creating a group, you can post any membic you write that matches the group criteria.  As the founder of a group, you have full privileges to accept other members and manage posts as you want.",
+                ["div", {cla: "formbuttonsdiv"},
+                 ["button", {type: "button", id: "creategroupbutton",
+                             onclick: jt.fs("app.pgd.display('group')")},
+                  "Create New Group"]]];
+        if(!jt.byId("creategrpdiv").innerHTML) {
+            jt.out('creategrpdiv', jt.tac2html(html)); }
+        else {
+            jt.out('creategrpdiv', ""); }
     },
 
 

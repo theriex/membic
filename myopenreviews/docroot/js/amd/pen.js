@@ -17,6 +17,13 @@ app.pen = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    fetchGroupAndRetry = function (groupid, penid, divid, callback) {
+        jt.out(divid, "Fetching group " + groupid + "...");
+        app.lcs.getFull("group", groupid, function (groupref) {
+            app.pen.groupNames(penid, divid, callback); });
+    },
+
+
     returnCall = function (callback) {
         if(!callback) {
             callback = returnFuncMemo; }
@@ -132,6 +139,26 @@ return {
     },
 
 
+    groupNames: function (pen, divid, callback) {
+        var ids, i, groupid, groupref, ret = {};
+        pen.groups = pen.groups || "";
+        ids = pen.groups.csvarray();
+        for(i = 0; i < ids.length; i += 1) {
+            groupid = ids[i];
+            if(!ret[groupid]) {  //try cache lookup
+                groupref = app.lcs.getRef("group", groupid);
+                if(groupref.group) {
+                    ret[groupid] = groupref.group.name; } }
+            if(!ret[groupid]) {  //try stashed value
+                if(pen.stash && pen.stash["grp" + groupid] &&
+                   pen.stash["grp" + groupid].name) {
+                    ret[groupid] = pen.stash["grp" + groupid].name; } }
+            if(!ret[groupid] && groupref.status === "not cached") {
+                return fetchGroupAndRetry(groupid, pen, divid, callback); } }
+        callback(ret);
+    },
+
+
     myPenId: function () {
         return loginpenid;
     },
@@ -156,6 +183,12 @@ return {
     },
 
 
+    cancelNewPen: function () {
+        app.login.updateAuthentDisplay();
+        app.profile.display();
+    },
+
+
     serializeFields: function (penName) {
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
@@ -174,12 +207,6 @@ return {
         app.lcs.reconstituteJSONObjectField("top20s", penName);
         app.lcs.reconstituteJSONObjectField("stash", penName);
         app.lcs.reconstituteJSONObjectField("settings", penName);
-    },
-
-
-    cancelNewPen: function () {
-        app.login.updateAuthentDisplay();
-        app.profile.display();
     }
 
 

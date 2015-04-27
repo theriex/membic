@@ -41,7 +41,7 @@ body {
 img { border:0px; }
 
 button, .loginbutton, .formbutton { 
-  border:1px solid #271400; border-radius:5px; 
+  border:1px solid #271400; border-radius:5px; cursor:pointer;
   background:#ffd2a4; box-shadow:1px 1px 1px #999999; }
 
 /*
@@ -238,6 +238,12 @@ button, .loginbutton, .formbutton {
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
 #pgdsrchdiv { padding: 0px 0px 10px 5px; }
+.grouplinkdiv { clear:both; padding: 0px 0px 5px 0px; }
+.grouplinkdiv a { margin-left:10px; }
+.pgdtext { clear:both; padding:0px 0px 10px 20px; }
+.pgdtoggle { padding:0px 0px 5px 0px; }
+#findgrpdiv, #creategrpdiv { font-size:medium; background-color:#f9f9fc; }
+.formbuttonsdiv { text-align:center; padding:10px; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }

@@ -283,6 +283,9 @@ app.group = (function () {
             modified = true;  //either initialized, or last rev removed
             pen.stash[key].lastpost = ""; }
         psg = pen.stash[key];
+        if(!psg.name || psg.name !== wizgrp.name) {
+            psg.name = wizgrp.name;
+            modified = true; }
         penid = jt.instId(pen);
         verifyWorkingWizVars();
         end = Math.min(wizgrp.pgsize, wizgrp.revids.length);
