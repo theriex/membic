@@ -1320,10 +1320,10 @@ return {
         type = app.review.getReviewTypeByValue(review.revtype);
         if(!revlink) {
             revlink = ["a", {cla: "rslc", href: "../statrev/" + revid},
-                       app.profile.reviewItemNameHTML(type, review)]; }
+                       app.pgd.reviewItemNameHTML(type, review)]; }
         if(revlink === "none") {
             revlink = ["span", {cla: "rslc"},
-                       app.profile.reviewItemNameHTML(type, review)]; }
+                       app.pgd.reviewItemNameHTML(type, review)]; }
         if("revroll" !== mode) {
             revresp = ["div", {cla: "statrevrespdiv"},
                        ["div", {cla: "transformlinkdiv"},
@@ -1517,7 +1517,7 @@ return {
                             app.review.displayRead(action); } }
                     else {
                         jt.err("initWithId found no review id " + revid);
-                        app.profile.display(); } },
+                        app.pgd.display(); } },
                 app.failf(function (code, errtxt) {
                     jt.err("initWithId failed code " + code + ": " +
                            errtxt); }),
@@ -1771,7 +1771,7 @@ return {
                   ["a", {href: "#statrev/" + jt.instId(rev),
                          onclick: jt.fs(togfname + "('" +
                                         prefix + "','" + revid + "')")},
-                   app.profile.reviewItemNameHTML(type, rev)]],
+                   app.pgd.reviewItemNameHTML(type, rev)]],
                  ["div", {cla: "fpstarsdiv"},
                   app.review.starsImageHTML(rev)],
                  ["div", {cla: "fpjumpdiv"},
@@ -1847,7 +1847,7 @@ return {
                 authlink = 
                     ["div", {cla: "fpprofdiv"},
                      ["a", {href: "#view=pen&penid=" + rev.penid,
-                            onclick: jt.fs("app.profile.byprofid('" + 
+                            onclick: jt.fs("app.pen.bypenid('" + 
                                            rev.penid + "')")},
                       ["img", {cla: "fpprofpic", 
                                src: "profpic?profileid=" + rev.penid,

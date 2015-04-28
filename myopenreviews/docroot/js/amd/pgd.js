@@ -15,11 +15,17 @@ app.pgd = (function () {
 
     var //see verifyFunctionConnections for procesing switches
         dst = { type: "", id: "", tab: "", obj: null,
-                pen: { descfield: "shoutout", 
+                pen: { desclabel: "About Me",
+                       descplace: "Links to other public pages you have, favorite sayings...",
+                       descfield: "shoutout",
+                       piclabel: "Profile Pic",
                        picfield: "profpic",
                        picsrc: "profpic?profileid=",
                        accsrc: "#view=pen&penid=" },
-                group: { descfield: "description", 
+                group: { desclabel: "Description",
+                         descplace: "What this group is about, what's appropriate to post...",
+                         descfield: "description", 
+                         piclabel: "Group Pic",
                          picfield: "picture",
                          picsrc: "grppic?groupid=",
                          accsrc: "#view=group&groupid=" } },
@@ -54,11 +60,114 @@ app.pgd = (function () {
         var html = "";
         if(dst.type === "pen" && jt.instId(obj) === app.pen.myPenId()) {
             html = ["a", {id: "pgdsettingslink", href: "#pensettings",
-                          onclick: jt.fs("app.pgp.settings()")},
+                          onclick: jt.fs("app.pgd.settings()")},
                     ["img", {cla: "reviewbadge",
                              src: "img/settings.png"}]]; }
         //ATTENTION: group mod allowed? follow...
         return jt.tac2html(html);
+    },
+
+
+    membershipSettingsHTML = function () {
+        var html;
+        if(dst.type === "pen") {
+            return ""; }
+        html = "membershipSettings not implemented yet";
+        return html;
+    },
+
+
+    monitorPicUpload = function () {
+        var tgif, txt, defs;
+        tgif = jt.byId('tgif');
+        if(tgif) {
+            txt = tgif.contentDocument || tgif.contentWindow.document;
+            if(txt) {
+                txt = txt.body.innerHTML;
+                if(txt.indexOf("Done: ") === 0) {
+                    defs = dst[dst.type];
+                    dst.obj[defs.picfield] = dst.id;
+                    dst.obj.modified = txt.slice("Done: ".length);
+                    app.pgd.display(dst.type, dst.id, dst.tab, dst.obj);
+                    return; }
+                if(txt.indexOf("Error: ") === 0) {
+                    jt.out('imgupstatdiv', txt); } }
+            setTimeout(monitorPicUpload, 800); }
+    },
+    picSettingsHTML = function () {
+        var html;
+        //ATTENTION: only allow pic upload call if group founder
+        html = [["label", {fo: "picuploadform", cla: "overlab"},
+                  "Display Picture"],
+                ["form", {action: "/picupload", method: "post",
+                          enctype: "multipart/form-data", target: "tgif",
+                          id: "picuploadform"},
+                 [jt.paramsToFormInputs(app.login.authparams()),
+                  jt.paramsToFormInputs("picfor=" + dst.type + 
+                                        "&_id=" + dst.id +
+                                        "&penid=" + app.pen.myPenId()),
+                  ["div", {cla: "tablediv"},
+                   [["div", {cla: "fileindiv"},
+                     [["input", {type: "file", 
+                                 name: "picfilein", id: "picfilein"}],
+                      ["div", {id: "uploadbuttonsdiv"},
+                       ["input", {type: "submit", cla: "formbutton",
+                                  value: "Upload&nbsp;Picture"}]]]],
+                    ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
+                ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
+                            style: "display:none"}]];
+        return html;
+    },
+    picSettingsInit = function () {
+        monitorPicUpload();
+    },
+
+
+    descripSettingsHTML = function () {
+        var nh = "", defs, html;
+        if(dst.type === "group") {
+            nh = ["div", {cla: "formline"},
+                  [["label", {fo: "namein", cla: "liflab", id: "namelab"},
+                    "Name"],
+                   ["input", {id: "namein", cla: "lifin", type: "text"}]]]; }
+        defs = dst[dst.type];
+        html = [nh,
+                ["div", {cla: "formline"},
+                 ["label", {fo: "shouteditbox", cla: "overlab"}, 
+                  defs.desclabel]],
+                ["textarea", {id: "shouteditbox", cla: "dlgta"}],
+                ["div", {cla: "formstatdiv"}],
+                ["div", {cla: "dlgbuttonsdiv"},
+                 ["button", {type: "button", id: "okbutton",
+                             onclick: jt.fs("app.pgd.saveDescription()")},
+                  "Update Description"]]];
+        return html;
+    },
+    descripSettingsInit = function () {
+        var defs, namein, shout;
+        defs = dst[dst.type];
+        shout = jt.byId('shouteditbox');
+        shout.readOnly = false;
+        shout.value = dst.obj[defs.descfield];
+        shout.placeholder = defs.descplace;
+        //set the focus only if not already filled in
+        namein = jt.byId('namein');
+        if(namein && !namein.value) {
+            namein.focus(); }
+        else if(!shout.value) {
+            shout.focus(); }
+    },
+
+
+    calendarSettingsHTML = function () {
+        if(dst.type === "pen") {
+            return ""; }
+        return "Calendar stuff goes here";
+    },
+
+
+    reminderSettingsHTML = function () {
+        return "Reminder settings go here";
     },
 
 
@@ -79,10 +188,22 @@ app.pgd = (function () {
     },
 
 
-    displayRecent = function () {
-        var revs;
+    getRecentReviews = function () {
+        var revs, rt, all, i;
         revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
-        app.review.displayReviews('pgdcontdiv', "pgd", revs, 
+        rt = app.layout.getType();
+        if(rt !== "all") {
+            all = revs;
+            revs = [];
+            for(i = 0; i < all.length; i += 1) {
+                if(all[i].revtype === rt) {
+                    revs.push(all[i]); } } }
+        return revs;
+    },
+
+
+    displayRecent = function () {
+        app.review.displayReviews('pgdcontdiv', "pgd", getRecentReviews(), 
                                   "app.pgd.toggleRevExpansion", 
                                   (dst.type === "group"));
     },
@@ -104,8 +225,7 @@ app.pgd = (function () {
 
 
     displayFavorites = function () {
-        var revs = getFavoriteReviews();
-        app.review.displayReviews('pgdcontdiv', "pgd", revs, 
+        app.review.displayReviews('pgdcontdiv', "pgd", getFavoriteReviews(),
                                   "app.pgd.toggleRevExpansion", 
                                   (dst.type === "group"));
     },
@@ -217,7 +337,9 @@ app.pgd = (function () {
     verifyFunctionConnections = function () {
         if(!dst.pen.objfetch) {
             dst.pen.objfetch = app.pen.getPen;
-            dst.group.objfetch = app.group.getGroup; }
+            dst.pen.objupdate = app.pen.updatePen;
+            dst.group.objfetch = app.group.getGroup;
+            dst.group.objupdate = app.group.updateGroup; }
         if(!knowntabs.latest.dispfunc) {
             knowntabs.latest.dispfunc = displayRecent;
             knowntabs.favorites.dispfunc = displayFavorites;
@@ -232,7 +354,51 @@ app.pgd = (function () {
 return {
 
     settings: function () {
-        jt.err("pgd.settings not implemented yet");
+        var html;
+        html = ["div", {id: "pgdsettingsdlgdiv"},
+                [["div", {cla: "pgdsectiondiv"},
+                   membershipSettingsHTML()],
+                 ["div", {cla: "pgdsectiondiv"},
+                  picSettingsHTML()],
+                 ["div", {cla: "pgdsectiondiv"},
+                  descripSettingsHTML()],
+                 ["div", {cla: "pgdsectiondiv"},
+                  calendarSettingsHTML()],
+                 ["div", {cla: "pgdsectiondiv"},
+                  reminderSettingsHTML()]]];
+        app.layout.openOverlay({x:10, y:80}, html, null,
+                               function () {
+                                   picSettingsInit();
+                                   descripSettingsInit(); });
+    },
+
+
+    saveDescription: function () {
+        var changed = false, defs, elem, val, okfunc, failfunc;
+        jt.byId('okbutton').disabled = true;
+        defs = dst[dst.type];
+        elem = jt.byId("namein");
+        if(elem && elem.value && elem.value.trim()) {
+            val = elem.value.trim();
+            if(dst.obj.name !== val) {
+                dst.obj.name = val;
+                changed = true; } }
+        elem = jt.byId('shouteditbox');
+        if(elem && elem.value !== dst.obj[defs.descfield]) {
+            dst.obj[defs.descfield] = elem.value;
+            changed = true; }
+        if(!changed) {
+            return app.layout.cancelOverlay(); }
+        if(changed) {
+            okfunc = function (updobj) {
+                dst.obj = updobj;
+                app.layout.cancelOverlay();
+                app.pgd.display(dst.type, dst.id, dst.tab, dst.obj); };
+            failfunc = function (code, errtxt) {
+                jt.byId('okbutton').disabled = false;
+                jt.out('formstatdiv', "Update failed code " + code + 
+                       ": " + errtxt); };
+            defs.objupdate(dst.obj, okfunc, failfunc); }
     },
 
 
@@ -241,6 +407,17 @@ return {
         //they can share publicly.  The href should also be that URL
         //since you have to be signed in to see someone's profile.
         jt.err("blogconf not implemented yet.");
+    },
+
+
+    reviewItemNameHTML: function (type, revobj) {
+        var linktxt = "";
+        if(type.subkey) {
+            linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
+                jt.ellipsis(revobj[type.subkey], 40); }
+        else {
+            linktxt = jt.ellipsis(revobj[type.key], 60); }
+        return linktxt;
     },
 
 
@@ -284,7 +461,7 @@ return {
         var revs;
         switch(dst.tab) {
         case "latest":
-            revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
+            revs = getRecentReviews();
             break;
         case "favorites":
             revs = getFavoriteReviews();

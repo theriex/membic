@@ -261,7 +261,7 @@ return {
         html = ["div", maindivattrs,
                 [["div", {cla: "fpprofdiv"},
                   ["a", {href: "#view=pen&penid=" + rev.penid,
-                         onclick: jt.fs("app.profile.byprofid('" + 
+                         onclick: jt.fs("app.pen.bypenid('" + 
                                         rev.penid + "')")},
                    ["img", {cla: "fpprofpic", 
                             src: "profpic?profileid=" + rev.penid,

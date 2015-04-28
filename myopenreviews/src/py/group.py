@@ -174,6 +174,8 @@ def fetch_rev_mod_elements(handler, pen):
 def fetch_group_and_role(handler, pen):
     groupid = intz(handler.request.get('groupid'))
     if not groupid:
+        groupid = intz(handler.request.get('_id'))
+    if not groupid:
         handler.error(400)
         handler.response.out.write("No groupid specified")
         return None, ""

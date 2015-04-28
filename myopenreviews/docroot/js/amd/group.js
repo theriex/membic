@@ -370,7 +370,7 @@ app.group = (function () {
                 pname = penref.pen.name;
                 if(penref.penid === app.pen.myPenId()) {
                     pname = "you"; }
-                lis.push(app.profile.reviewItemHTML(revref.rev, pname,
+                lis.push(app.pgd.reviewItemHTML(revref.rev, pname,
                     null, removefstr(wizgrp, wizgrp.revids[i]))); } }
         displayReviewList(lis);
         //ATTENTION: paginate using wizgrp.revpage, 20 reviews at a time
@@ -606,7 +606,7 @@ app.group = (function () {
                 text = log.action.split(" ")[0] + " " + penref.pen.name; }
             return ["a", {href: "#" + jt.objdata({view: "profile",
                                                   profid: log.target}),
-                          onclick: jt.fs("app.profile.byprofid('" +
+                          onclick: jt.fs("app.pen.bypenid('" +
                                          log.target + "')")},
                     text];
         default: return log.action; }
@@ -637,7 +637,7 @@ app.group = (function () {
                           ["td",
                            ["a", {href: "#" + jt.objdata({view: "profile",
                                                           profid: log.penid}),
-                                  onclick: jt.fs("app.profile.byprofid('" +
+                                  onclick: jt.fs("app.pen.bypenid('" +
                                                  log.penid + "')")},
                             penref.pen.name]],
                           ["td",
@@ -1198,7 +1198,7 @@ app.group = (function () {
              [["a", {title: "Show profile for " + jt.ndq(seekerpen.name),
                      href: "#" + jt.objdata({view: "profile", 
                                              profid: seekerid}),
-                     onclick: jt.fs("app.profile.byprofid('" +
+                     onclick: jt.fs("app.pen.bypenid('" +
                                     seekerid + "')")},
                seekerpen.name],
               " is applying to become a " + seektype.title.toLowerCase() + 
@@ -1807,7 +1807,7 @@ return {
                             app.group.settings(); }
                         else {
                             app.lcs.rem("group", wizgrp);
-                            app.profile.display(); } },
+                            app.pgd.display(); } },
                     app.failf(function (code, errtxt) {
                         jt.err("Resignation failed code: " + code + 
                                " " + errtxt);
@@ -2097,7 +2097,7 @@ return {
                    ["a", {title: "Show profile for " + jt.ndq(pen.name),
                           href: "#" + jt.objdata({view: "profile", 
                                                   profid: penid}),
-                          onclick: jt.fs("app.profile.byprofid('" + 
+                          onclick: jt.fs("app.pen.bypenid('" + 
                                          penid + "')")},
                     pen.name]],
                   ["div", {cla: "memberstatsdiv"}, statsHTML(pen)],

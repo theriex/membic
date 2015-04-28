@@ -190,6 +190,9 @@ return {
 
     resolveIdArrayToCachedObjs: function (type, ids) {
         var i, ref, objs = [];
+        if(!ids) {
+            jt.log("lcs.resolveIdArrayToCachedObjs undefined ids");
+            return objs; }
         for(i = 0; i < ids.length; i += 1) {
             ref = cache[type].refs[ids[i]];
             if(ref[type]) {

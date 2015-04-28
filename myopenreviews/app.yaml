@@ -101,7 +101,7 @@ handlers:
 ## Upload a profile pic
 ## POST params: picfilein, _id, authparams
 ##   _id: The PenName instance id
-- url: /profpicupload.*
+- url: /picupload.*
   script: src.py.pen.app
 
 ## Retrieve a profile pic

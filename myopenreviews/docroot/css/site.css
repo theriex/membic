@@ -244,6 +244,9 @@ button, .loginbutton, .formbutton {
 .pgdtoggle { padding:0px 0px 5px 0px; }
 #findgrpdiv, #creategrpdiv { font-size:medium; background-color:#f9f9fc; }
 .formbuttonsdiv { text-align:center; padding:10px; }
+.pgdsectiondiv { background-image: url('../img/whitewash.png'); 
+  margin:0px 0px 10px 0px; padding:0px 4px; }
+.formline { clear:both; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }

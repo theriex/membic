@@ -38,6 +38,7 @@ app.pen = (function () {
         app.pen.deserializeFields(pen);  //in case update fail or interim use
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
+                     updpens[0].recent = pen.recent;
                      app.lcs.put("pen", updpens[0]);
                      callok(updpens[0]); },
                  app.failf(function (code, errtxt) {
@@ -139,6 +140,12 @@ return {
     },
 
 
+    bypenid: function (penid, tabname) {
+        app.lcs.getFull("pen", penid, function (penref) {
+            app.pgd.display("pen", penid, tabname || "", penref.pen); });
+    },
+
+
     groupNames: function (pen, divid, callback) {
         var ids, i, groupid, groupref, ret = {};
         pen.groups = pen.groups || "";
@@ -185,7 +192,7 @@ return {
 
     cancelNewPen: function () {
         app.login.updateAuthentDisplay();
-        app.profile.display();
+        app.pgd.display();
     },
 
 

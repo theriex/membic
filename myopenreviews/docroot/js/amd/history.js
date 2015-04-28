@@ -83,9 +83,12 @@ return {
                 return app.group.bygroupid(state.groupid, state.tab); }
             return app.group.display();
         case "profile":
+        case "pen":
             if(jt.isId(state.profid)) {
-                return app.profile.byprofid(state.profid, state.tab); }
-            return app.profile.display();
+                return app.pen.bypenid(state.profid, state.tab); }
+            if(jt.isId(state.penid)) {
+                return app.pen.bypenid(state.penid, state.tab); }
+            return app.pgd.display();
         case "review":
             if(state.revid) {
                 return app.review.initWithId(state.revid, state.mode); }

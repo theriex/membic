@@ -64,7 +64,6 @@ app.login = (function () {
         authname = "";
         moracct = null;
         app.review.resetStateVars();
-        app.profile.resetStateVars();
         app.pen.resetStateVars();
     },
 
@@ -448,11 +447,8 @@ app.login = (function () {
                             jt.log("noted review clickthrough"); },
                         app.failf); }, 200);
             app.lcs.getFull("pen", params.penid, function (penref) {
-                app.profile.verifyStateVariableValues(penref.pen);
                 app.review.initWithId(params.revid, "read", 
                                       params.command); }); }
-        else if(params.command === "penfinder") {
-            app.profile.display("penfinder"); }
         else if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
         else {  //pass parameters along to the general processing next step
@@ -800,17 +796,13 @@ return {
                 redurl += "&" + xpara; }
             window.location.href = redurl;
             return; }
-        //no explicit redirect, so check if directed by anchor tag
-        if(params.anchor === "profile") {
-            clearParams();
-            return app.profile.display(params.action, params.errmsg); }
         //no tag redirect so check current state.  State may be from history
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(state && state.view) {
             return app.history.dispatchState(state); }
         if(params.view === "profile") {
-            return app.profile.display(); }
+            return app.pgd.display(); }
         //go with default display
         app.activity.displayActive();
     },

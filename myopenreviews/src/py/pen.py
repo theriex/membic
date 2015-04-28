@@ -10,6 +10,7 @@ import json
 import string
 import random
 from cacheman import *
+import group
 
 
 class PenName(db.Model):
@@ -155,7 +156,7 @@ def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
 def updateable_pen(handler):
     acc = authenticated(handler.request)
     if not acc:
-        handler.error(401)
+        handler.error(401)  # unauthorized
         handler.response.out.write("Authentication failed")
         return False
     penid = intz(handler.request.get('_id'))
@@ -163,13 +164,13 @@ def updateable_pen(handler):
         penid = intz(handler.request.get('penid'))
     pen = cached_get(penid, PenName)
     if not pen:
-        handler.error(404)
+        handler.error(404)  # not found
         handler.response.out.write("PenName id: " + str(penid) + " not found.")
         return False
     authok = authorized(acc, pen)
     if not authok:
-        handler.error(401)
-        handler.response.out.write("You may only update your own pen name.")
+        handler.error(403)  # forbidden
+        handler.response.out.write("Not your Pen Name.")
         return False
     return pen
 
@@ -284,38 +285,42 @@ class UpdatePenName(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
         
 
-class UploadProfPic(webapp2.RequestHandler):
+class UploadPic(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write('Ready')
     def post(self):
-        errmsg = "You are not authorized to update this profile pic"
-        acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
-        profid = self.request.get('_id')
-        pen = cached_get(intz(profid), PenName)
+        pen = updateable_pen(self)
         if not pen:
-            self.error(404)
-            self.response.out.write("Error: Could not find pen " + profid)
             return
-        if not authorized(acc, pen):
-            self.error(403)
-            self.response.out.write("Error: Not your pen")
-            return
+        updobj = pen
+        picfor = self.request.get('picfor')
+        if picfor == "group":
+            grp, role = group.fetch_group_and_role(self, pen)
+            if not grp:
+                return
+            if not role or role != "Founder":
+                self.error(403)  #forbidden
+                self.response.out.write("Only founders may upload a group pic")
+                return
+            updobj = grp
         upfile = self.request.get("picfilein")
         if not upfile:
-            self.error(400)
-            self.response.out.write("Error: No picture file sent")
+            self.error(400)  # bad request
+            self.response.out.write("No picture file received")
             return
         try:
-            pen.profpic = db.Blob(upfile)
-            # change profpic to max 160x160 png...
-            pen.profpic = images.resize(pen.profpic, 160, 160)
-            pen.modified = nowISO()
-            cached_put(pen)
+            # resize images to max 160 x 160 px
+            if picfor == "group":
+                grp.picture = db.Blob(upfile)
+                grp.picture = images.resize(pen.profpic, 160, 160)
+                grp.modified = nowISO()
+                cached_put(grp)
+            else:
+                pen.profpic = db.Blob(upfile)
+                pen.profpic = images.resize(pen.profpic, 160, 160)
+                pen.modified = nowISO()
+                cached_put(pen)
         except Exception as e:
             self.error(500)
             self.response.out.write("Profile picture upload failed: " + str(e))
@@ -540,7 +545,7 @@ class MakeTestPens(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
                                ('/newpen', NewPenName),
                                ('/updpen', UpdatePenName),
-                               ('/profpicupload', UploadProfPic),
+                               ('/picupload', UploadPic),
                                ('/profpic', GetProfPic),
                                ('/togremember', ToggleRemember),
                                ('/srchpens', SearchPenNames),
