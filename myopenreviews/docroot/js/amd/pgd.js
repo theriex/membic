@@ -39,6 +39,46 @@ app.pgd = (function () {
                                    img: "img/tabgrps.png" } },
         searchstate = { revtype: "all", qstr: "", 
                         init: false, inprog: false, revids: [] },
+        grpmsgs = [
+            {name: "Following",
+             levtxt: "Following a group shows you are interested.",
+             uptxt: "Only members may post to the group.",
+             upbtn: "Apply for membership",
+             cantxt: "You are applying for membership.",
+             canbtn: "Withdraw membership application",
+             restxt: "",
+             resbtn: "Stop following",
+             resconf: ""},
+
+            {name: "Membership",
+             levtxt: "As a member, you may post to the group.",
+             uptxt: "If you would like to help make sure posted membics are relevant, and help approve new members, you can apply to become a Moderator.",
+             upbtn: "Apply to become a Moderator",
+             cantxt: "You are applying to become a Moderator.",
+             canbtn: "Withdraw Moderator application",
+             restxt: "If you no longer wish to contribute, you can resign your membership and go back to just following the group.",
+             resbtn: "Resign membership",
+             resconf: "Are you sure you want to resign your membership?"},
+
+            {name: "Moderator",
+             levtxt: "As a Moderator, you can post to the group, remove membics that don't belong, and approve membership applications.",
+             uptxt: "If you think it would be appropriate for you to be recognized as a permanent co-owner of the group, you can apply to become a Founder.",
+             upbtn: "Apply to become a Founder",
+             cantxt: "You are applying to become a Founder.",
+             canbtn: "Withdraw your Founder application",
+             restxt: "If you no longer wish to help moderate the group, you can resign as a Moderator and go back to being a regular member.",
+             resbtn: "Resign as Moderator",
+             resconf: "Are you sure you want to resign as moderator?"},
+
+            {name: "Founder",
+             levtxt: "As a Founder, you permanently have all group privileges available.",
+             uptxt: "",
+             upbtn: "",
+             cantxt: "",
+             canbtn: "",
+             restxt: "If you want to relinquish ownership of this group, you can resign as a Founder and allow others to continue the group.",
+             resbtn: "Resign as Founder",
+             rescnf: "Are you sure you want to resign as Founder?"}],
 
 
     ////////////////////////////////////////
@@ -57,22 +97,70 @@ app.pgd = (function () {
 
 
     modButtonsHTML = function (obj) {
-        var html = "";
-        if(dst.type === "pen" && jt.instId(obj) === app.pen.myPenId()) {
+        var mypenid, mypen, html = "";
+        mypenid = app.pen.myPenId();
+        mypen = app.pen.myPenName();
+        if(dst.type === "pen" && jt.instId(obj) === mypenid) {
             html = ["a", {id: "pgdsettingslink", href: "#pensettings",
                           onclick: jt.fs("app.pgd.settings()")},
                     ["img", {cla: "reviewbadge",
                              src: "img/settings.png"}]]; }
-        //ATTENTION: group mod allowed? follow...
+        if(dst.type === "group" && mypen) {
+            if(!mypen.groups || !mypen.groups.csvcontains(jt.instId(obj))) {
+                html = ["span", {id: "followbuttonspan"},
+                        ["button", {type: "button", id: "followbutton",
+                                    onclick: jt.fs("app.group.follow()")},
+                         "Follow"]]; }
+            else {
+                html = ["a", {id: "pgdsettingslink", href: "#groupsettings",
+                              onclick: jt.fs("app.pgd.settings()")},
+                        ["img", {cla: "reviewbadge",
+                                 src: "img/settings.png"}]]; } }
         return jt.tac2html(html);
     },
 
 
     membershipSettingsHTML = function () {
-        var html;
+        var html, mlev, seeking;
         if(dst.type === "pen") {
             return ""; }
-        html = "membershipSettings not implemented yet";
+        mlev = app.group.membershipLevel(dst.obj);
+        seeking = app.group.isSeeking(dst.obj);
+        html = [];
+        if(grpmsgs[mlev].uptxt && !seeking) {
+            html.push(["div", {cla: "formline"},
+                       [["div", {cla: "grplevtxt"},
+                         grpmsgs[mlev].uptxt],
+                        ["div", {cla: "formbuttonsdiv"},
+                         ["button", {type: "button", id: "uplevelbutton",
+                                     onclick: jt.fs("app.group.apply()")},
+                          grpmsgs[mlev].upbtn]]]]); }
+        if(seeking) {
+            html.push(["div", {cla: "formline"},
+                       [["div", {cla: "grplevtxt"},
+                         grpmsgs[mlev].cantxt],
+                        ["div", {cla: "formbuttonsdiv"},
+                         ["button", {type: "button", id: "withdrawbutton",
+                                     onclick: jt.fs("app.group.withdraw()")},
+                          grpmsgs[mlev].canbtn]]]]); }
+        else { //not seeking, show downlevel button
+            html.push(["div", {cla: "formline"},
+                       [["div", {cla: "grplevtxt"},
+                         grpmsgs[mlev].restxt],
+                        ["div", {cla: "formbuttonsdiv"},
+                         ["button", {type: "button", id: "downlevelbutton",
+                                     onclick: jt.fs("app.pgd.grpdownlev()")},
+                          grpmsgs[mlev].resbtn]]]]); }
+        html = [["div", {cla: "formline"},
+                 [["label", {fo: "statval", cla: "liflab"}, "Status"],
+                  ["a", {href: "#togglegroupstat",
+                         onclick: jt.fs("app.layout.togdisp('grpstatdetdiv')")},
+                   ["span", {id: "memlevspan"}, grpmsgs[mlev].name]]]],
+                ["div", {cla: "formline", id: "grpstatdetdiv",
+                         style: "display:none;"},
+                 [["div", {cla: "formline"},
+                   grpmsgs[mlev].levtxt],
+                  html]]];
         return html;
     },
 
@@ -98,7 +186,7 @@ app.pgd = (function () {
         var html;
         //ATTENTION: only allow pic upload call if group founder
         html = [["label", {fo: "picuploadform", cla: "overlab"},
-                  "Display Picture"],
+                  "Change Picture"],
                 ["form", {action: "/picupload", method: "post",
                           enctype: "multipart/form-data", target: "tgif",
                           id: "picuploadform"},
@@ -255,6 +343,7 @@ app.pgd = (function () {
                 html.push(["div", {cla: "grouplinkdiv"},
                            [["div", {cla: "fpprofdiv"},
                              ["img", {cla: "fpprofpic",
+                                      alt: "no pic",
                                       src: dst.group.picsrc + gid}]],
                             ["a", {href: "groups/" + jt.canonize(gname),
                                    onclick: jt.fs("app.group.bygroupid('" +
@@ -334,11 +423,22 @@ app.pgd = (function () {
     },
 
 
+    displayRetrievalWaitMessage = function (divid, dtype, id) {
+        var mpi, msg;
+        mpi = app.pen.myPenId();
+        msg = "Retrieving " + dtype.capitalize() + " " + id + "...";
+        if(dtype === "pen") {
+            if((!id && !mpi) || (id && id === mpi)) {
+                msg = "Retrieving your Pen Name..."; }
+            else {
+                msg = "Retriving Pen Name " + id + "..."; } }
+        jt.out(divid, msg);
+    },
+
+
     verifyFunctionConnections = function () {
-        if(!dst.pen.objfetch) {
-            dst.pen.objfetch = app.pen.getPen;
+        if(!dst.pen.objupdate) {
             dst.pen.objupdate = app.pen.updatePen;
-            dst.group.objfetch = app.group.getGroup;
             dst.group.objupdate = app.group.updateGroup; }
         if(!knowntabs.latest.dispfunc) {
             knowntabs.latest.dispfunc = displayRecent;
@@ -366,7 +466,7 @@ return {
                   calendarSettingsHTML()],
                  ["div", {cla: "pgdsectiondiv"},
                   reminderSettingsHTML()]]];
-        app.layout.openOverlay({x:10, y:80}, html, null,
+        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    picSettingsInit();
                                    descripSettingsInit(); });
@@ -402,6 +502,13 @@ return {
     },
 
 
+    grpdownlev: function () {
+        //confirm the action if needed
+        //call group.resign or stop following depending on level.
+        jt.err("pgd.grpdownlev not implemented yet");
+    },
+
+
     blogconf: function () {
         //confirm we should open a new page with their blog view that
         //they can share publicly.  The href should also be that URL
@@ -424,8 +531,8 @@ return {
     searchReviews: function () {
         var srchin, params;
         srchin = jt.byId("pgdsrchin");
-        if(!srchin) {  //query input no longer displayed
-            return; }
+        if(!srchin) {  //query input no longer on screen.  probably switched
+            return; }  //tabs so just quit
         if(!searchstate.inprog && 
               (searchstate.init ||
                searchstate.revtype !== app.layout.getType() ||
@@ -437,7 +544,8 @@ return {
             params = app.login.authparams() + 
                 "&qstr=" + jt.enc(jt.canonize(searchstate.qstr)) +
                 "&revtype=" + app.typeOrBlank(searchstate.revtype) +
-                "&" + dst.type + "id=" + jt.instId(dst.obj);
+                "&" + (dst.type === "group"? "grpid=" : "penid=") +
+                jt.instId(dst.obj);
             jt.call('GET', "srchrevs?" + params, null,
                     function (revs) {
                         app.lcs.putAll("rev", revs);
@@ -518,8 +626,60 @@ return {
         if(obj) {
             return displayObject(obj); }
         if(dst.id) {
-            return dst[dst.type].objfetch(dst.id, displayObject); }
+            return app.pgd.fetchAndDisplay(dst.type, dst.id, dst.tab); }
         jt.log("pgd.display called without an obj or id");
+    },
+
+
+    blockfetch: function (dtype, id, callback) {
+        var objref, url, time;
+        if(dtype === "pen" && !id) {
+            id = app.pen.myPenId(); }
+        objref = app.lcs.getRef(dtype, id);
+        if(objref && objref[dtype] && objref[dtype].recent) {
+            return callback(objref[dtype]); }
+        displayRetrievalWaitMessage('contentdiv', dtype, id);
+        url = "blockfetch?" + app.login.authparams();
+        if(dtype === "pen" && id !== app.pen.myPenId()) {
+            url += "&penid=" + id; }  //penid not specified if retrieving self
+        if(dtype === "group") {
+            url += "&grpid=" + id; }
+        time = new Date().getTime();
+        jt.call('GET', url, null,
+                function (objs) {  // main obj + recent/top reviews
+                    var obj, revs, i;
+                    time = new Date().getTime() - time;
+                    jt.log("blockfetch " + dtype + " " + id  + 
+                           " returned in " + time/1000 + " seconds.");
+                    if(!objs.length || !objs[0]) {
+                        if(dtype === "pen") {
+                            return app.pen.newPenName(callback); }
+                        return app.crash(404, dtype.capitalize() + " " + id + 
+                                         " not returned.", "GET", url); }
+                    obj = objs[0];
+                    if(dtype === "pen" && !app.pen.myPenId()) {
+                        app.pen.setMyPenId(jt.instId(obj)); }
+                    revs = objs.slice(1);
+                    revs.sort(function (a, b) {
+                        if(a.modified < b.modified) { return 1; }
+                        if(a.modified > b.modified) { return -1; }
+                        return 0; });
+                    app.lcs.putAll("rev", revs);
+                    for(i = 0; i < revs.length; i += 1) {
+                        revs[i] = jt.instId(revs[i]); }
+                    obj.recent = revs;  //ids resolved as needed for display
+                    app.lcs.put(dtype, obj);
+                    jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
+                    callback(obj); },
+                app.failf(function (code, errtxt) {
+                    app.crash(code, errtxt, "GET", url, ""); }),
+                jt.semaphore("pgd.fetchAndDisplay" + dtype + id));
+    },
+
+
+    fetchAndDisplay: function (dtype, id, tab) {
+        app.pgd.blockfetch(dtype, id, function (obj) {
+            app.pgd.display(dtype, id, tab || "", obj); });
     }
 
 };  //end of returned functions

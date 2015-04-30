@@ -48,8 +48,9 @@ app.lcs = (function () {
         group: { refs: {},
                  fetchend: "grpbyid",
                  fetchparamf: function (id) {
-                     return "groupid=" + id; } } },
-
+                     return "groupid=" + id; },
+                 putprep: function (grpobj) {
+                     app.group.deserializeFields(grpobj); } } },
 
 
     ////////////////////////////////////////

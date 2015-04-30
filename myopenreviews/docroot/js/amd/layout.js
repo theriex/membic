@@ -544,6 +544,16 @@ return {
     },
 
 
+    togdisp: function (divid) {
+        var div = jt.byId(divid);
+        if(div) {
+            if(div.style.display === "none") {
+                div.style.display = "block"; }
+            else {
+                div.style.display = "none"; } }
+    },
+
+
     picUpload: function (fupl) {
         var html;
         html = app.layout.picUploadHTML(fupl);

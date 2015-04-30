@@ -24,7 +24,7 @@ class Group(db.Model):
     revtypes = db.StringProperty(indexed=False)  #CSV of review types
     revfreq = db.IntegerProperty(indexed=False)  #review every N days
     founders = db.TextProperty()    #CSV of founding member penids
-    seniors = db.TextProperty()     #CSV of senior member penids
+    moderators = db.TextProperty()  #CSV of moderator member penids
     members = db.TextProperty()     #CSV of regular member penids
     seeking = db.TextProperty()     #CSV of member application penids
     rejects = db.TextProperty()     #CSV of rejected member application penids

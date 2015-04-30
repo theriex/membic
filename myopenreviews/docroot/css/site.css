@@ -247,6 +247,9 @@ button, .loginbutton, .formbutton {
 .pgdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
 .formline { clear:both; }
+#followbuttonspan { padding:0px 0px 0px 10px; }
+#memlevspan { font-size:medium; font-weight:bold;
+  padding:4px 7px 0px 2px; display:inline-block; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }

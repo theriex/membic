@@ -484,8 +484,8 @@ def create_or_update_grouprev(revid, grpid):
 def retrieve_pen_or_group(handler):
     grpid = intz(handler.request.get('grpid'))
     if grpid:
-        group = cached_get(grpid, group.Group)
-        return group, "grpid"
+        grp = cached_get(grpid, group.Group)
+        return grp, "grpid"
     penid = intz(handler.request.get('penid'))
     if penid:
         pnm = pen.fetch_pen_by_penid(handler)
@@ -842,12 +842,12 @@ class VerifyAllReviews(webapp2.RequestHandler):
         # convert group revid lists into separate review entries
         groups = group.Group.all()
         count = 0
-        for group in groups:
-            logging.info("Converting " + group.name)
-            revids = csv_list(group.reviews)
+        for grp in groups:
+            logging.info("Converting " + grp.name)
+            revids = csv_list(grp.reviews)
             for revid in revids:
                 count += 1
-                create_or_update_grouprev(int(revid), group.key().id())
+                create_or_update_grouprev(int(revid), grp.key().id())
         self.response.out.write(str(count) + " group reviews converted<br>\n")
 
 

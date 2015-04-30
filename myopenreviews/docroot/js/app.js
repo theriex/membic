@@ -119,9 +119,9 @@ var app = {},  //Global container for application level funcs and values
         support = "theriex";
         support += "@gmail.com";
         now = new Date();
-        subj = "Server crash";
+        subj = "App crash";
         body = "Hey,\n\n" +
-            "The server crashed.  Here are some details:\n\n" +
+            "The app crashed.  Here are some details:\n\n" +
             "local time: " + now + "\n" +
             "method: " + method + "\n" +
             "url: " + url + "\n" +
@@ -138,7 +138,7 @@ var app = {},  //Global container for application level funcs and values
         html = [
             ["div", {id: "chead"}],
             ["div", {id: "cmain"},
-             [["p", "The server just bonked."],
+             [["p", "The app just bonked."],
               ["p", 
                [["It would be awesome if you could ",
                  ["a", {href: emref},

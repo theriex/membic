@@ -78,7 +78,7 @@ app.group = (function () {
     penBelongsToGroup = function (group, penid) {
         if(group.founders && group.founder.csvcontains(penid)) {
             return true; }
-        if(group.seniors && group.seniors.csvcontains(penid)) {
+        if(group.moderators && group.moderators.csvcontains(penid)) {
             return true; }
         if(group.members && group.members.csvcontains(penid)) {
             return true; }
@@ -175,11 +175,11 @@ app.group = (function () {
         if(group.membership) {  //already calculated, return that value
             return group.membership; }
         group.membership = "";
-        penid = jt.instId(app.pen.myPenName());
+        penid = jt.instId(app.pen.myPenId());
         if(jt.idInCSV(penid, group.founders)) {
             group.membership = "Founder"; }
-        else if(jt.idInCSV(penid, group.seniors)) {
-            group.membership = "Senior"; }
+        else if(jt.idInCSV(penid, group.moderators)) {
+            group.membership = "Moderator"; }
         else if(jt.idInCSV(penid, group.members)) {
             group.membership = "Member"; }
         return group.membership;
@@ -333,7 +333,7 @@ app.group = (function () {
         var authorized = false, role, revref;
         if(!authorized) {
             role = membership(group);
-            if(role === "Founder" || role === "Senior") {
+            if(role === "Founder" || role === "Moderator") {
                 authorized = true; } }
         if(!authorized) {
             revref = app.lcs.getRef("rev", revid);
@@ -465,27 +465,6 @@ app.group = (function () {
     },
 
 
-    displayGroupHeading = function () {
-        var html, divpos;
-        html = ["div", {id: "grouphdiv"},
-                ["table",
-                 ["tr",
-                  [["td", {valign: "top"},
-                    app.group.grpPicCityHTML(wizgrp)],
-                   ["td", {cla: "tdwide", valign: "top"},
-                    grpNameDescripHTML()]]]]];
-        if(app.winw < 700) {
-            html = ["div", {id: "grouphdiv"},
-                    [["div", app.group.grpPicCityHTML(wizgrp)],
-                     ["div", grpNameDescripHTML()]]]; }
-        app.layout.headingout(jt.tac2html(html));
-        if(app.winw >= 700) {
-            divpos = jt.geoPos(jt.byId("grouphdiv"));
-            jt.byId('groupdescdiv').style.width = 
-                String(Math.round((divpos.w - 20) / 2)) + "px"; }
-    },
-
-
     memberNameHTML = function (edit, penid) {
         var penref = app.lcs.getRef("pen", penid);
         return jt.tac2html(
@@ -566,10 +545,10 @@ app.group = (function () {
               ["tr",
                [["td", {cla: "tdright"}, 
                  ["div", {cla: "memberstypeheadingdiv"},
-                  "Senior Members"]],
+                  "Moderators"]],
                 ["td", 
                  ["div", {cla: "memberslistdiv"},
-                  membersHTML(wizgrp.seniors, 
+                  membersHTML(wizgrp.moderators, 
                               membership() === "Founder",
                               displayGroupMembers)]]]],
               ["tr",
@@ -580,7 +559,7 @@ app.group = (function () {
                  ["div", {cla: "memberslistdiv"},
                   membersHTML(wizgrp.members, 
                               (membership() === "Founder" ||
-                               membership() === "Senior"),
+                               membership() === "Moderator"),
                               displayGroupMembers)]]]]]]));
     },
 
@@ -723,7 +702,7 @@ app.group = (function () {
                    revtypes: group.revtypes || "",
                    revfreq: group.revfreq || "30",
                    founders: group.founders || "",
-                   seniors: group.seniors || "",
+                   moderators: group.moderators || "",
                    members: group.members || "",
                    seeking: group.seeking || "",
                    rejects: group.rejects || "",
@@ -1028,7 +1007,7 @@ app.group = (function () {
             act.stat = "You are a founding member.";
             act.actions.push({href: "resign", text: "resign"});
             break;
-        case "Senior":
+        case "Moderator":
             if(isApplying()) {
                 act.stat = "You are applying to become a Founder.";
                 act.actions.push({href: "withdraw", 
@@ -1046,7 +1025,7 @@ app.group = (function () {
             else {
                 act.stat = "You are a member.";
                 act.actions.push({href: "apply", 
-                                  text: "Become a Senior Member"});
+                                  text: "Become a Moderator"});
                 act.actions.push({href: "resign", text: "resign"}); }
             break;
         default:
@@ -1162,15 +1141,15 @@ app.group = (function () {
                          "Remove their own reviews"] };
         if(jt.idInCSV(seekerid, group.members)) {
             seektype = { 
-                title: "Senior Member",
+                title: "Moderator",
                 rights: [
                     "Post reviews", 
                     "Remove innapropriate reviews posted by others",
                     "Accept or Reject new membership applications",
                     "Remove regular members that are not working out"]}; }
-        else if(jt.idInCSV(seekerid, group.seniors)) {
+        else if(jt.idInCSV(seekerid, group.moderators)) {
             seektype = {
-                title: "Founding Member",
+                title: "Founder",
                 rights: [
                     "Post reviews", 
                     "Remove innapropriate reviews posted by others",
@@ -1185,11 +1164,11 @@ app.group = (function () {
     seekNoticeHTML = function (group, seekerpen) {
         var role, seektype, seekerid, i, groupid = jt.instId(group);
         role = membership(group);
-        if(role !== "Founder" && role !== "Senior") {
+        if(role !== "Founder" && role !== "Moderator") {
             return ""; }  //can't authorize new members, so no notices
         seekerid = jt.instId(seekerpen);
         seektype = findSeekType(group, seekerid);
-        if(role === "Senior" && seektype.title !== "Member") {
+        if(role === "Moderator" && seektype.title !== "Member") {
             return ""; }  //only founder may accept at higher levels
         for(i = 0; i < seektype.rights.length; i += 1) {
             seektype.rights[i] = ["li", seektype.rights[i]]; }
@@ -1231,9 +1210,9 @@ app.group = (function () {
         var groupid = jt.instId(group),
             seektype = findSeekType(group, app.pen.myPenId()),
             reason = "Some groups may be reluctant to admit you as a new member if they don't have an idea of the sorts of reviews you might be posting. You might try writing some reviews matching the group criteria and then re-apply. You can always go back and post your reviews to the group later after you are accepted.";
-        if(seektype.title === "Senior Member") {
+        if(seektype.title === "Moderator") {
             reason = "Granting privileges to manage other members and remove reviews from other people requires careful consideration. The founding members are not ready to grant these powers to you yet, but feel free to re-apply in the future."; }
-        if(seektype.title === "Founding Member") {
+        if(seektype.title === "Founder") {
             reason = "Becoming a founding member of the group essentially gives you full control over it. Some founders may not be comfortable with that at first, but over time might appreciate the help. Feel free to re-apply in the future."; }
         return jt.tac2html(
             ["div", {id: "seekdiv" + groupid, cla: "grpmemseekdiv"},
@@ -1305,72 +1284,6 @@ app.group = (function () {
             if(revrefs[i].rev.modified < revref.rev.modified) {
                 return i; } }  //most recent first
         return i;  //not found and nothing later, so append
-    },
-
-
-    mergeGroupActivity = function (group, revrefs) {
-        var revids, i, idx, revref, mergetotal = 0;
-        if(!group || !revrefs || !group.reviews) {
-            return 0; }
-        revids = group.reviews.split(",");
-        for(i = 0; i < Math.min(revids.length, 20); i += 1) {
-            revref = app.lcs.getRef("rev", revids[i]);
-            if(revref.status === "not cached") {
-                app.lcs.getFull("rev", revids[i], app.group.mergeact);
-                return mergetotal; }
-            if(revref.rev && revref.rev.penid !== app.pen.myPenId()) {
-                idx = findInsertionIndex(revref, revrefs);
-                if(idx >= 0) {
-                    revref.viagname = group.name;
-                    revref.viagid = jt.instId(group);
-                    mergetotal += 1;
-                    revrefs.splice(idx, 0, revref); } } }
-        return mergetotal;
-    },
-
-
-    displayGroupSearchResults = function (results) {
-        var pen, groupsearch, i, resitems = [];
-        pen = app.pen.myPenName();
-        groupsearch = app.pen.myPenRef().groupsearch;
-        for(i = 0; i < groupsearch.groups.length; i += 1) {
-            resitems.push(app.group.groupListItemHTML(groupsearch.groups[i])); }
-        if(!results || results.length === 0) {
-            results = [ { "fetched": 0, "cursor": "" } ]; }
-        groupsearch.cursor = "";
-        for(i = 0; i < results.length; i += 1) {
-            if(typeof results[i].fetched === "number") {
-                groupsearch.total += results[i].fetched;
-                resitems.push(["div", {cla: "sumtotal"},
-                               String(groupsearch.total) + 
-                               " groups searched, " +
-                               (groupsearch.total - groupsearch.groups.length) +
-                               " filtered."]);
-                if(results[i].cursor) {
-                    groupsearch.cursor = results[i].cursor; }
-                break; }  //if no results, i will be left at zero
-            if(!jt.idInCSV(jt.instId(results[i]), pen.groups)) {
-                app.lcs.put("group", results[i]);
-                groupsearch.groups.push(results[i]);
-                resitems.push(app.group.groupListItemHTML(results[i])); } }
-        if(groupsearch.groups.length === 0) {
-            resitems.push(["div", {cla: "sumtotal"},
-                           "No groups found"]); }
-        if(groupsearch.cursor) {
-            if(i === 0 && groupsearch.total < (grpsrchmax * groupsearch.reqs)) {
-                window.setTimeout(app.group.searchGroups, 
-                                  10); }  //auto-repeat search
-            else {
-                if(groupsearch.total >= (grpsrchmax * groupsearch.reqs)) {
-                    groupsearch.reqs += 1; }
-                resitems.push(
-                    ["a", {href: "#continuesearch",
-                           onclick: jt.fs("app.group.searchGroups()"),
-                           title: "Continue searching for more groups"},
-                     "continue search..."]); } }
-        jt.out('searchresults', jt.tac2html(
-            ["ul", {cla: "grouplist"}, resitems]));
-        jt.byId("searchbutton").disabled = false;
     };
 
 
@@ -1380,14 +1293,7 @@ app.group = (function () {
 return {
 
     bygroupid: function (groupid, tabname) {
-        app.layout.closeDialog(); //close group search dialog if open
-        app.pen.getPen("", function (pen) {  //not loaded yet if via url param
-            app.lcs.getFull("group", groupid, function (groupref) {
-                currGroupRef(groupref, tabname);
-                app.history.checkpoint({ view: "group", 
-                                         groupid: currgrpid,
-                                         tab: groupref.dispstate.seltabname });
-                displayGroup(groupref); }); });
+        app.pgd.fetchAndDisplay("group", groupid, tabname);
     },
 
 
@@ -1575,7 +1481,7 @@ return {
         if(!wizgrp) {
             wizgrp = { name: "", city: "", description: "", picture: "", 
                        revtypes: "", revfreq: "",
-                       founders: "", seniors: "", members: "" }; }
+                       founders: "", moderators: "", members: "" }; }
         if(readPrimaryFields(app.group.createGroup)) {
             promptForPrimaryFields(); }
     },
@@ -1725,9 +1631,9 @@ return {
         var memlev, msg, data;
         memlev = membership();
         if(!jt.byId("memactconfdiv").innerHTML &&  //no conf displayed yet
-           (memlev === "Member" || memlev === "Senior")) {
-            msg = "As a Senior Member, you are offering to help maintain the group by accepting new members, removing innapropriate reviews, and kicking out spammers. This is a position of trust and responsibility.";
-            if(memlev === "Senior") {
+           (memlev === "Member" || memlev === "Moderator")) {
+            msg = "As a Moderator, you are offering to help maintain the group by accepting new members, removing innapropriate reviews, and kicking out spammers. This is a position of trust and responsibility.";
+            if(memlev === "Moderator") {
                 msg = "As a Founder, you will become a permanent co-owner of the group, with full privileges and responsibilities for its continued operation. Some founders are comfortable with co-ownership, others are not."; }
             msg += " Are you sure you want to apply?";
             jt.out('memstatactdiv', "");
@@ -1780,7 +1686,7 @@ return {
         if(!jt.byId("memactconfdiv").innerHTML) {  //no conf displayed yet
             if(membership() === "Founder" && wizgrp.founders.indexOf(",") < 0) {
                 msg = "Are you absolutely sure? As the only founder, this group will cease to exist when you leave. This operation cannot be undone.";
-                if(wizgrp.seniors || wizgrp.members) {
+                if(wizgrp.moderators || wizgrp.members) {
                     msg += " If you announce in the group description your intention to dismantle the group, then you could provide an opportunity for others to apply as founders and continue the group."; }
                 bname = "Resign and Delete Group"; }
             jt.out('memstatactdiv', "");
@@ -2008,7 +1914,7 @@ return {
         pen = app.lcs.getRef("pen", seekerid).pen;
         seektype = findSeekType(group, seekerid);
         reason = "Are you sure you want to deny basic membership to " + pen.name + "? If " + pen.name + " hasn't posted any helpful reviews, then you are probably right to deny their application. But if they have some decent reviews, you might want to give them a chance. Remember that you are authorized to remove any reviews they post, and you can terminate their membership if they don't work out.";
-        if(seektype.title === "Senior Member") {
+        if(seektype.title === "Moderator") {
             reason = "Are you sure you want to deny senior membership to " + pen.name + "? If you don't know who this is, or you don't trust them to help manage members and moderate reviews, then you should deny their application. However, if you trust this person, they might be able to help process new membership applications and filter out innapropriate reviews."; }
         if(seektype.title === "Founding Member") {
             reason = "Are you sure you want to deny founding membership to " + pen.name + "? A founding member effectively co-owns the group and cannot be removed. They have the same rights as you. If you have any doubts at all you should eny this application. However if dividing ownership responsibilities would help, and you fully trust " + pen.name + ", then you might consider this."; }
@@ -2142,132 +2048,43 @@ return {
     },
 
 
-    grpPicCityHTML: function (group, divid) {
-        var imgattrs;
-        imgattrs = { cla: "revimg", src: "../img/emptyprofpic.png" };
-        divid = divid || "gpcdiv";
-        if(group.picture) {
-            imgattrs.src = "../grppic?groupid=" + jt.instId(group); }
-        if(membership() === "Founder") {
-            imgattrs.title = "Click to upload a picture";
-            imgattrs.onclick = jt.fs("app.group.picUploadForm()"); }
-        if(jt.isLowFuncBrowser()) {
-            imgattrs.style = "width:125px;height:auto;"; }
-        return ["div", {id: divid},
-                [["div", {id: "gpicdiv", cla: "centertablediv"},
-                  ["img", imgattrs]],
-                 ["div", {id: "gcitydiv", cla: "groupcity"},
-                  group.city]]];
+    membershipLevel: function (group, penid) {
+        if(!group) {
+            return 0; }
+        group.members = group.members || "";
+        group.moderators = group.moderators || "";
+        penid = penid || app.pen.myPenId();
+        if(group.members.csvcontains(penid)) {
+            return 1; }
+        if(group.moderators.csvcontains(penid)) {
+            return 2; }
+        if(group.founders.csvcontains(penid)) {
+            return 3; }
+        return 0;
     },
 
 
-    mergeact: function () {
-        var penref, i, grpids, groupref, mergetotal = 0;
-        penref = app.pen.myPenRef();
-        if(!penref.pen.groups) {
-            return; }  //nothing to do
-        grpids = penref.pen.groups.split(",");
-        for(i = 0; i < grpids.length; i += 1) {
-            groupref = app.lcs.getRef("group", grpids[i]);
-            if(groupref.status === "not cached") {
-                app.lcs.getFull("group", grpids[i], app.group.mergeact);
-                return; }
-            if(groupref.group) {
-                mergetotal += mergeGroupActivity(groupref.group, 
-                                                 penref.actdisp.revrefs); } }
-        //if have merged, display it somehow?
+    isSeeking: function (group, penid) {
+        if(!group) {
+            return 0; }
+        penid = penid || app.pen.myPenId();
+        if(group.seeking.csvcontains(penid)) {
+            return true; }
+        return false;
     },
 
 
-    groupListItemHTML: function (group) {
-        var groupid = jt.instId(group);
-        return ["li", {cla: "penfont"},
-                ["a", {title: "Show " + jt.ndq(group.name),
-                       href: "groups/" + jt.canonize(group.name),
-                       onclick: jt.fs("app.group.bygroupid('" +
-                                      groupid + "')")},
-                 group.name]];
+    serializeFields: function (grp) {
+        //top20s are maintained and rebuilt by the server, so
+        //serializing is not strictly necessary, but better to have
+        //the field reflect the state of the other serialized fields.
+        if(typeof grp.top20s === 'object') {
+            grp.top20s = JSON.stringify(grp.top20s); }
     },
 
 
-    displayGroups: function (pen, divid) {
-        var i, grpids, ref, grefs = [], lis = [], fetchid = "";
-        grpids = pen.groups ? pen.groups.split(",") : [];
-        for(i = 0; i < grpids.length; i += 1) {
-            ref = app.lcs.getRef("group", grpids[i]);
-            if(ref.status === "not cached") {
-                fetchid = ref.groupid;
-                lis.push(["li", "Fetching group " + fetchid]);
-                break; }
-            if(ref.group) {
-                grefs.push(ref); } }
-        grefs.sort(function (a, b) {
-            if(a.group.name < b.group.name) { return -1; }
-            if(a.group.name > b.group.name) { return 1; }
-            return 0; });
-        for(i = 0; i < grefs.length; i += 1) {
-            lis.push(app.group.groupListItemHTML(grefs[i].group)); }
-        if(!lis.length) {
-            lis.push(["li", "Not following any groups"]); }
-        jt.out(divid, jt.tac2html(
-            [["ul", {cla: "grouplist"}, lis],
-             ["div", {id: "srchgroupslinkdiv"},
-              ["a", {id: "srchgroups", href: "#findgroups",
-                     onclick: jt.fs("app.group.groupSearchDialog()")},
-               "Find groups to follow"]]]));
-        if(fetchid) {
-            app.lcs.getFull("group", fetchid, function () {
-                app.group.displayGroups(pen, divid); }); }
-    },
-
-
-    searchGroups: function () {
-        var groupsearch, qstr, params;
-        jt.byId("searchbutton").disabled = true;  //working...
-        groupsearch = app.pen.myPenRef().groupsearch;
-        qstr = jt.byId('searchtxt').value;
-        params = app.login.authparams() + "&qstr=" + jt.enc(qstr) +
-            "&cursor=" + jt.enc(groupsearch.cursor);
-        jt.call('GET', "srchgroups?" + params, null,
-                function (results) {
-                    displayGroupSearchResults(results); },
-                app.failf(function (code, errtxt) {
-                    jt.out('searchresults',
-                           "error code: " + code + " " + errtxt); }),
-                jt.semaphore("group.searchGroups"));
-    },
-
-
-    startGroupSearch: function () {
-        app.pen.myPenRef().groupsearch = {
-            params: {},
-            groups: [],
-            cursor: "",
-            total: 0,
-            requests: 1 };
-        app.group.searchGroups();
-    },
-
-
-    groupSearchDialog: function () {
-        var html, searchfunc = jt.fs("app.group.startGroupSearch()");
-        html = [["table", {cla: "searchtable"},
-                 [["tr",
-                   [["td", {cla: "formstyle"},
-                     ["input", {type: "text", id: "searchtxt", size: "40",
-                                placeholder: "Group name",
-                                onchange: searchfunc, value: ""}]],
-                    ["td", {cla: "formstyle"},
-                     ["span", {id: "srchbuttonspan"},
-                      ["button", {type: "button", id: "searchbutton",
-                                  onclick: searchfunc},
-                       "Search"]]]]]]],
-                ["div", {id: "searchresults"}]];
-        html = app.layout.dlgwrapHTML("Recommended groups to follow", html);
-        app.layout.openDialog({y:140}, html);
-        jt.byId('searchtxt').focus();
-        //hit the search button for them...
-        window.setTimeout(app.group.startGroupSearch, 50);
+    deserializeFields: function (grp) {
+        app.lcs.reconstituteJSONObjectField("top20s", grp);
     }
 
 }; //end of returned functions
