@@ -34,7 +34,7 @@ app.pen = (function () {
     updatePenName = function (pen, callok, callfail) {
         var data;
         app.pen.serializeFields(pen);
-        data = jt.objdata(pen);
+        data = jt.objdata(pen, ["recent", "top20s"]);
         app.pen.deserializeFields(pen);  //in case update fail or interim use
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {

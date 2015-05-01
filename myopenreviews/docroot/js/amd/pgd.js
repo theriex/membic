@@ -36,7 +36,9 @@ app.pgd = (function () {
                       search:    { href: "#searchmembics",
                                    img: "img/search.png" }, 
                       groups:    { href: "#groupsfollowing",
-                                   img: "img/tabgrps.png" } },
+                                   img: "img/tabgrps.png" },
+                      calendar:  { href: "#groupcalendar",
+                                   img: "calico" } },
         searchstate = { revtype: "all", qstr: "", 
                         init: false, inprog: false, revids: [] },
         grpmsgs = [
@@ -50,9 +52,9 @@ app.pgd = (function () {
              resbtn: "Stop following",
              resconf: ""},
 
-            {name: "Membership",
+            {name: "Member",
              levtxt: "As a member, you may post to the group.",
-             uptxt: "If you would like to help make sure posted membics are relevant, and help approve new members, you can apply to become a Moderator.",
+             uptxt: "If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
              upbtn: "Apply to become a Moderator",
              cantxt: "You are applying to become a Moderator.",
              canbtn: "Withdraw Moderator application",
@@ -184,7 +186,8 @@ app.pgd = (function () {
     },
     picSettingsHTML = function () {
         var html;
-        //ATTENTION: only allow pic upload call if group founder
+        if(dst.type === "group" && app.group.membershipLevel(dst.obj) < 3) {
+            return ""; }
         html = [["label", {fo: "picuploadform", cla: "overlab"},
                   "Change Picture"],
                 ["form", {action: "/picupload", method: "post",
@@ -214,17 +217,20 @@ app.pgd = (function () {
     descripSettingsHTML = function () {
         var nh = "", defs, html;
         if(dst.type === "group") {
+            if(app.group.membershipLevel(dst.obj) < 3) {
+                return ""; }
             nh = ["div", {cla: "formline"},
                   [["label", {fo: "namein", cla: "liflab", id: "namelab"},
                     "Name"],
-                   ["input", {id: "namein", cla: "lifin", type: "text"}]]]; }
+                   ["input", {id: "namein", cla: "lifin", type: "text",
+                              value: dst.obj.name}]]]; }
         defs = dst[dst.type];
         html = [nh,
                 ["div", {cla: "formline"},
                  ["label", {fo: "shouteditbox", cla: "overlab"}, 
                   defs.desclabel]],
                 ["textarea", {id: "shouteditbox", cla: "dlgta"}],
-                ["div", {cla: "formstatdiv"}],
+                ["div", {id: "formstatdiv"}],
                 ["div", {cla: "dlgbuttonsdiv"},
                  ["button", {type: "button", id: "okbutton",
                              onclick: jt.fs("app.pgd.saveDescription()")},
@@ -248,9 +254,31 @@ app.pgd = (function () {
 
 
     calendarSettingsHTML = function () {
-        if(dst.type === "pen") {
-            return ""; }
-        return "Calendar stuff goes here";
+        var html;
+        if(dst.type !== "group" || app.group.membershipLevel(dst.obj) < 3) {
+            return; }
+        html = ["div", {cla: "formline"},
+                [["a", {href: "#togglecalembed",
+                        onclick: jt.fs("app.layout.togdisp('grpcalembdiv')")},
+                  ["span", {cla: "settingsexpandlinkspan"},
+                   "Embedded Calendar"]],
+                 ["div", {cla: "formline", id: "grpcalembdiv",
+                          style: "display:none;"},
+                  [["div", {cla: "formline"},
+                    "If your group has an embeddable public calendar, paste the embed code below"],
+                   ["textarea", {id: "calembedta", cla: "dlgta"}],
+                   ["div", {cla: "dlgbuttonsdiv"},
+                    ["button", {type: "button", id: "savecalbutton",
+                                onclick: jt.fs("app.pgd.saveCalEmbed()")},
+                     "Update Embed"]]]]]];
+        return html;
+    },
+    calSettingsInit = function () {
+        var ceta = jt.byId('calembedta');
+        if(ceta) {
+            ceta.readOnly = false;
+            ceta.value = dst.obj.calembed;
+            ceta.placeholder = "<iframe src=... code"; }
     },
 
 
@@ -267,11 +295,17 @@ app.pgd = (function () {
 
 
     tabHTMLFromDef = function (tabname) {
-        var html;
+        var ico, html;
+        ico = ["img", {cla: "tabico", src: knowntabs[tabname].img}];
+        if(knowntabs[tabname].img === "calico") {
+            ico = ["div", {id: "calicodiv", cla: "tabico"},
+                    [["div", {id: "calicoheaddiv"}],
+                     ["div", {id: "caliconumdiv"},
+                      new Date().getDate()]]]; }
         html = ["li", {id: tabname + "li", cla: "unselectedTab"},
                 ["a", {href: knowntabs[tabname].href,
                        onclick: jt.fs("app.pgd.tabsel('" + tabname + "')")},
-                 ["img", {cla: "tabico", src: knowntabs[tabname].img}]]];
+                 ico]];
         return html;
     },
 
@@ -365,6 +399,11 @@ app.pgd = (function () {
     },
 
 
+    displayCalendar = function () {
+        jt.out('pgdcontdiv', dst.obj.calembed);
+    },
+
+
     tabsHTML = function (obj) {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
@@ -372,8 +411,8 @@ app.pgd = (function () {
         html.push(tabHTMLFromDef("search"));
         if(dst.type === "pen") {  //find or create group
             html.push(tabHTMLFromDef("groups")); }
-        //ATTENTION: if a group has a google calendar, and we can
-        //embed the contents in agenda form, then that's worth a tab
+        if(dst.type === "group") {
+            html.push(tabHTMLFromDef("calendar")); }
         return html;
     },
 
@@ -444,7 +483,8 @@ app.pgd = (function () {
             knowntabs.latest.dispfunc = displayRecent;
             knowntabs.favorites.dispfunc = displayFavorites;
             knowntabs.search.dispfunc = displaySearch;
-            knowntabs.groups.dispfunc = displayGroups; }
+            knowntabs.groups.dispfunc = displayGroups;
+            knowntabs.calendar.dispfunc = displayCalendar; }
     };
 
 
@@ -469,7 +509,8 @@ return {
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    picSettingsInit();
-                                   descripSettingsInit(); });
+                                   descripSettingsInit();
+                                   calSettingsInit(); });
     },
 
 
@@ -497,6 +538,25 @@ return {
             failfunc = function (code, errtxt) {
                 jt.byId('okbutton').disabled = false;
                 jt.out('formstatdiv', "Update failed code " + code + 
+                       ": " + errtxt); };
+            defs.objupdate(dst.obj, okfunc, failfunc); }
+    },
+
+
+    saveCalEmbed: function () {
+        var defs, elem, okfunc, failfunc;
+        jt.byId('savecalbutton').disabled = true;
+        defs = dst[dst.type];
+        elem = jt.byId("calembedta");
+        if(elem && elem.value !== dst.obj.calembed) {
+            dst.obj.calembed = elem.value;
+            okfunc = function (upobj) {
+                dst.obj = upobj;
+                app.layout.cancelOverlay();
+                app.pgd.display(dst.type, dst.id, dst.tab, dst.obj); };
+            failfunc = function (code, errtxt) {
+                jt.byId('savecalbutton').disabled = false;
+                jt.out('imgupstatdiv', "Update failed code " + code +
                        ": " + errtxt); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
     },

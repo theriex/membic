@@ -1516,6 +1516,20 @@ return {
     },
 
 
+    updateGroup: function (group, callok, callfail) {
+        var data = jt.objdata(group, ["recent", "top20s", "revids"]) +
+            "&penid=" + app.pen.myPenId();
+        jt.call('POST', "grpdesc?" + app.login.authparams(), data,
+                function (updgroups) {
+                    updgroups[0].recent = group.recent;
+                    app.lcs.put("group", updgroups[0]);
+                    callok(updgroups[0]); },
+                app.failf(function (code, errtxt) {
+                    callfail(code, errtxt); }),
+                jt.semaphore("group.updateGroup"));
+    },
+
+
     display: function () {
         displayGroup();
     },

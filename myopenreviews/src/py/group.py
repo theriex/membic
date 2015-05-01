@@ -17,12 +17,10 @@ class Group(db.Model):
     modified = db.StringProperty()               # iso date
     modhist = db.StringProperty()                # creation date, mod count
     # non-indexed fields
-    city = db.StringProperty(indexed=False)      #not used anymore
     description = db.TextProperty()
     picture = db.BlobProperty()
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
-    revtypes = db.StringProperty(indexed=False)  #CSV of review types
-    revfreq = db.IntegerProperty(indexed=False)  #review every N days
+    calembed = db.TextProperty()    # embedded calendar html
     founders = db.TextProperty()    #CSV of founding member penids
     moderators = db.TextProperty()  #CSV of moderator member penids
     members = db.TextProperty()     #CSV of regular member penids
@@ -30,6 +28,9 @@ class Group(db.Model):
     rejects = db.TextProperty()     #CSV of rejected member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     adminlog = db.TextProperty()    #JSON array of action entries
+    city = db.StringProperty(indexed=False)      #not used anymore
+    revtypes = db.StringProperty(indexed=False)  #CSV of review types
+    revfreq = db.IntegerProperty(indexed=False)  #review every N days
     
 
 def id_in_csv(idval, csv):
@@ -134,13 +135,17 @@ def revtypes_valid(handler, group):
 
 def read_and_validate_descriptive_fields(handler, group):
     # name/name_c field has a value and has been set already
-    group.city = handler.request.get('city')
     if not verify_unique_name(handler, group):
         return False;
     group.description = handler.request.get('description')
     if not group.description:
         handler.error(400)
         handler.response.out.write("A description is required")
+        return False
+    group.calembed = handler.request.get('calembed')
+    if group.calembed and not group.calembed.startswith("<iframe "):
+        handler.error(400)
+        handler.response.out.write("Embed code must be an iframe")
         return False
     # picture is uploaded separately
     group.revtypes = handler.request.get('revtypes')

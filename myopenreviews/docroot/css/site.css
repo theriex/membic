@@ -184,7 +184,7 @@ button, .loginbutton, .formbutton {
 .bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
 .bookmarkletdescr { font-size:small; text-align:right; 
   padding:0px 0px 0px 40px;}
-#loginstatdiv, #formstatdiv { font-size:small; }
+#loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #gsitd { padding: 10px; }
 #altauthmethods { padding:0px 0px 20px 30px; }
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
@@ -246,10 +246,13 @@ button, .loginbutton, .formbutton {
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pgdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
-.formline { clear:both; }
+.formline { clear:both; font-size:medium; }
 #followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold;
   padding:4px 7px 0px 2px; display:inline-block; }
+#calicodiv { display:inline-block; border:2px solid #333; border-radius:4px; margin:1px; width:17px; height:17px; }
+#calicoheaddiv { background:#333; height:5px; }
+#caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }
