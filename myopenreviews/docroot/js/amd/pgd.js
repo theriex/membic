@@ -1,4 +1,4 @@
-/*global app: false, jt: false, setTimeout: false */
+/*global app: false, jt: false, setTimeout: false, window: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -265,7 +265,7 @@ app.pgd = (function () {
                  ["div", {cla: "formline", id: "grpcalembdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    "If your group has an embeddable public calendar, paste the embed code below"],
+                    "If your group has an embeddable public calendar, paste the embed code here:"],
                    ["textarea", {id: "calembedta", cla: "dlgta"}],
                    ["div", {cla: "dlgbuttonsdiv"},
                     ["button", {type: "button", id: "savecalbutton",
@@ -282,8 +282,49 @@ app.pgd = (function () {
     },
 
 
-    reminderSettingsHTML = function () {
-        return "Reminder settings go here";
+    rssEmbedSettingsHTML = function () {
+        var html;
+        if(dst.type !== "group") {
+            return; }
+        html = ["div", {cla: "formline"},
+                [["a", {href: "#toggletools",
+                        onclick: jt.fs("app.layout.togdisp('grptoolsdiv')")},
+                  ["span", {cla: "settingsexpandlinkspan"},
+                   "RSS and Site Embed"]],
+                 ["div", {cla: "formline", id: "grptoolsdiv",
+                          style: "display:none;"},
+                  [["div", {cla: "formline"},
+                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this group in an RSS reader, use this URL:"],
+                     ["div", {cla: "formline"}, 
+                      ["textarea", {id: "rssurlta", cla: "dlgta"}]]]],
+                   ["div", {cla: "formline"},
+                    [["To embed group posts in your own website, add the following html to your web page:"],
+                     ["div", {cla: "formline"},
+                      ["textarea", {id: "grpembedta", cla: "dlgta"}]]]]]]]];
+        return html;
+    },
+    rssEmbedSettingsInit = function () {
+        var site, ta;
+        site = window.location.href;
+        if(site.endsWith("/")) {
+            site = site.slice(0, -1); }
+        ta = jt.byId('rssurlta');
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = site + "/rssgroup?group=" + 
+                jt.instId(dst.obj); }
+        ta = jt.byId('grpembedta');
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = "<div id=\"membicgroup\"" + 
+                " style=\"background:#ddd;width:70%;margin-left:10%;\">" + 
+                "</div>\n" +
+                "<script src=\"" + site + "/emgroup/" + dst.obj.name_c + 
+                ".js" + "\"></script>\n" +
+                "<script src=\"" + site + "/js/embed.js\"></script>\n" +
+                "<script>\n" +
+                "  membicEmbed." + "displayGroup()" + ";\n" +
+                "</script>\n"; }
     },
 
 
@@ -505,12 +546,13 @@ return {
                  ["div", {cla: "pgdsectiondiv"},
                   calendarSettingsHTML()],
                  ["div", {cla: "pgdsectiondiv"},
-                  reminderSettingsHTML()]]];
+                  rssEmbedSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    picSettingsInit();
                                    descripSettingsInit();
-                                   calSettingsInit(); });
+                                   calSettingsInit();
+                                   rssEmbedSettingsInit(); });
     },
 
 

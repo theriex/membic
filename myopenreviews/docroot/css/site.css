@@ -246,13 +246,15 @@ button, .loginbutton, .formbutton {
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pgdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
-.formline { clear:both; font-size:medium; }
+.formline { clear:both; font-size:medium; padding:5px 0px 0px 0px; 
+  width:260px; } /* balance dlgta width */
 #followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold;
   padding:4px 7px 0px 2px; display:inline-block; }
-#calicodiv { display:inline-block; border:2px solid #333; border-radius:4px; margin:1px; width:17px; height:17px; }
+#calicodiv { display:inline-block; border:1px solid #333; border-radius:4px; margin:1px; width:17px; height:18px; }
 #calicoheaddiv { background:#333; height:5px; }
 #caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
+#grpembedta { height:100px; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }
@@ -410,7 +412,7 @@ button, .loginbutton, .formbutton {
 .grpmsgbuttonsdiv button { margin:0px 6px; }
 .dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 .dlgbuttonsdiv button { margin:0px 10px; }
-.dlgta { width:260px; padding:5px 2px; }
+.dlgta { width:260px; padding:5px 2px; overflow:auto; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .optionalbuttonsdiv { text-align:center; }  /* no pad */
 .optionalbuttonsdiv button { margin:15px 10px 5px 10px; }
