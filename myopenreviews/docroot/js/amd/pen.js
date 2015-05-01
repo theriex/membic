@@ -19,8 +19,8 @@ app.pen = (function () {
 
     fetchGroupAndRetry = function (groupid, penid, divid, callback) {
         jt.out(divid, "Fetching group " + groupid + "...");
-        app.lcs.getFull("group", groupid, function (groupref) {
-            app.pen.groupNames(penid, divid, callback); });
+        app.pgd.blockfetch("group", groupid, function (group) {
+            app.pen.groupNames(penid, divid, callback); }, divid);
     },
 
 

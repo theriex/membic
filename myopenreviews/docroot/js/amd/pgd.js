@@ -283,7 +283,8 @@ app.pgd = (function () {
 
 
     rssEmbedSettingsHTML = function () {
-        var html;
+        var sr, html;
+        sr = "https://www.commafeed.com";
         if(dst.type !== "group") {
             return; }
         html = ["div", {cla: "formline"},
@@ -294,7 +295,11 @@ app.pgd = (function () {
                  ["div", {cla: "formline", id: "grptoolsdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this group in an RSS reader, use this URL:"],
+                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this group in ",
+                      ["a", {href: "#sampleRSSReader",
+                             onclick: jt.fs("window.open('" + sr + "')")},
+                       "an RSS reader"],
+                      " use this URL:"],
                      ["div", {cla: "formline"}, 
                       ["textarea", {id: "rssurlta", cla: "dlgta"}]]]],
                    ["div", {cla: "formline"},
@@ -733,14 +738,15 @@ return {
     },
 
 
-    blockfetch: function (dtype, id, callback) {
+    blockfetch: function (dtype, id, callback, divid) {
         var objref, url, time;
+        divid = divid || 'contentdiv';
         if(dtype === "pen" && !id) {
             id = app.pen.myPenId(); }
         objref = app.lcs.getRef(dtype, id);
         if(objref && objref[dtype] && objref[dtype].recent) {
             return callback(objref[dtype]); }
-        displayRetrievalWaitMessage('contentdiv', dtype, id);
+        displayRetrievalWaitMessage(divid, dtype, id);
         url = "blockfetch?" + app.login.authparams();
         if(dtype === "pen" && id !== app.pen.myPenId()) {
             url += "&penid=" + id; }  //penid not specified if retrieving self
@@ -756,8 +762,8 @@ return {
                     if(!objs.length || !objs[0]) {
                         if(dtype === "pen") {
                             return app.pen.newPenName(callback); }
-                        return app.crash(404, dtype.capitalize() + " " + id + 
-                                         " not returned.", "GET", url); }
+                        app.lcs.tomb(dtype, id, "blockfetch failed");
+                        return callback(null); }
                     obj = objs[0];
                     if(dtype === "pen" && !app.pen.myPenId()) {
                         app.pen.setMyPenId(jt.instId(obj)); }
@@ -772,6 +778,8 @@ return {
                     obj.recent = revs;  //ids resolved as needed for display
                     app.lcs.put(dtype, obj);
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
+                    if(dtype === "group") {
+                        app.group.verifyPenStash(obj); }
                     callback(obj); },
                 app.failf(function (code, errtxt) {
                     app.crash(code, errtxt, "GET", url, ""); }),

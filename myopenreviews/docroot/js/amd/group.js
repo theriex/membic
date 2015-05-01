@@ -2088,6 +2088,46 @@ return {
     },
 
 
+    verifyPenStash: function (group) {
+        var penid, pen, key, pso, i, revref, revid, modified = false;
+        penid = app.pen.myPenId();
+        pen = app.pen.myPenName();
+        if(!pen) {
+            return; }
+        key = "grp" + jt.instId(group);
+        if(!pen.stash) {
+            pen.stash = {};
+            modified = true; }
+        if(!pen.stash[key]) {
+            pen.stash[key] = { posts: "", lastpost: "" };
+            modified = true; }
+        pso = pen.stash[key];
+        if(!pso.posts && pso.lastpost) {
+            pso.lastpost = "";
+            modified = true; }
+        if(!pso.name || pso.name !== group.name) {
+            pso.name = group.name;
+            modified = true; }
+        for(i = 0; group.recent && i < group.recent.length; i += 1) {
+            revref = app.lcs.getRef("rev", group.recent[i]);
+            if(revref.rev && revref.rev.penid === penid) {
+                if(!pso.lastpost || revref.rev.modified > pso.lastpost) {
+                    pso.lastpost = revref.rev.modified;
+                    modified = true; }
+                revid = jt.instId(revref.rev);
+                if(!pso.posts.csvcontains(revid)) {
+                    pso.posts = pso.posts.csvappend(revid);
+                    modified = true; } } }
+        if(modified) {
+            app.pen.updatePen(
+                pen,
+                function (pen) {
+                    jt.log("Pen stash updated for " + group.name); },
+                function (code, errtxt) {
+                    jt.log("group.verifyStash " + code + ": " + errtxt); }); }
+    },
+
+
     serializeFields: function (grp) {
         //top20s are maintained and rebuilt by the server, so
         //serializing is not strictly necessary, but better to have
