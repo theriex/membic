@@ -181,6 +181,12 @@ handlers:
   script: src.py.rev.app
 
 
+## Write the given review and associated group reviews
+## POST params: authparams, rev, grpids
+- url: /saverev.*
+  script: src.py.rev.app
+
+
 ## Delete review for authorized pen name
 ## POST params: rev, authparams
 - url: /delrev.*

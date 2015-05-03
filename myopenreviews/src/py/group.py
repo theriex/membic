@@ -80,6 +80,20 @@ def pen_role(penid, group):
     return "NotFound"
 
 
+def member_level(penid, group):
+    penid = str(penid)
+    group.founders = group.founders or ""
+    if id_in_csv(penid, group.founders):
+        return 3
+    group.seniors = group.seniors or ""
+    if id_in_csv(penid, group.seniors):
+        return 2
+    group.members = group.members or ""
+    if id_in_csv(penid, group.members):
+        return 1
+    return 0
+
+
 def is_revtype_match(revtype, group):
     for gtype in group.revtypes.split(","):
         if revtype == gtype:

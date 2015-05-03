@@ -2089,7 +2089,7 @@ return {
 
 
     verifyPenStash: function (group) {
-        var penid, pen, key, pso, i, revref, revid, modified = false;
+        var penid, pen, key, pso, i, revref, revid, memlev, modified = false;
         penid = app.pen.myPenId();
         pen = app.pen.myPenName();
         if(!pen) {
@@ -2107,6 +2107,10 @@ return {
             modified = true; }
         if(!pso.name || pso.name !== group.name) {
             pso.name = group.name;
+            modified = true; }
+        memlev = app.group.membershipLevel(group, penid);
+        if(!pso.memlev || pso.memlev !== memlev) {
+            pso.memlev = memlev;
             modified = true; }
         for(i = 0; group.recent && i < group.recent.length; i += 1) {
             revref = app.lcs.getRef("rev", group.recent[i]);

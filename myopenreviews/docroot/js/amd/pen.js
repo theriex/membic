@@ -129,6 +129,29 @@ return {
     },
 
 
+    postableGroups: function (pen) {
+        var grps, key, obj;
+        pen = pen || app.pen.myPenName();
+        if(!pen.stash) {
+            return []; }
+        grps = [];
+        for(key in pen.stash) {
+            if(pen.stash.hasOwnProperty(key)) {
+                if(key.startsWith("grp")) {
+                    obj = pen.stash[key];
+                    if(obj.memlev >= 1) {
+                        obj.grpid = key.slice(3);
+                        grps.push(obj); } } } }
+        grps.sort(function (a, b) {
+            if(a.lastpost && !b.lastpost) { return -1; }
+            if(!a.lastpost && b.lastpost) { return 1; }
+            if(a.lastpost < b.lastpost) { return 1; }
+            if(a.lastpost > b.lastpost) { return -1; }
+            return 0; });
+        return grps;
+    },
+
+
     setMyPenId: function (penid) {
         loginpenid = penid;
     },

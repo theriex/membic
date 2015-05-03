@@ -49,53 +49,56 @@ app.review = (function () {
             keyprompt: "Title",
             key: "title", subkey: "author",
             fields: [ "publisher", "year" ],
-            dkwords: [ "Fluff", "Heavy", "Kid Ok", "Educational", 
-                       "Funny", "Suspenseful", "Gripping", "Emotional",
-                       "Complex", "Historical" ] },
+            dkwords: [ "Fluff", "Kid Ok", 
+                       "Funny", "Emotional", 
+                       "Gripping", "Informational" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
             keyprompt: "Movie name",
             key: "title", //subkey
             fields: [ "year", "starring" ],
-            dkwords: [ "Fluff", "Light", "Heavy", "Kid Ok", 
-                       "Educational", "Cult", "Classic", 
-                       "Drama", "Escapism", "Funny", "Suspenseful" ] },
+            dkwords: [ "Classic", "Kid Ok",
+                       "Escapism", "Emotional",
+                       "Stunning", "Informational" ] },
           { type: "video", plural: "videos", img: "TypeVideo50.png",
             keyprompt: "Title",
             key: "title", //subkey
             fields: [ "artist" ],
-            dkwords: [ "Light", "Heavy", "Kid Ok", "Educational", 
-                       "Funny", "Cute", "Artistic", "Disturbing" ] },
+            dkwords: [ "Uplifting", "Kid Ok",
+                       "Funny", "Emotional",
+                       "Artistic", "Educational" ] },
           { type: "music", plural: "music", img: "TypeSong50.png",
             keyprompt: "Title",
             key: "title", subkey: "artist",
             fields: [ "album", "year" ],
-            dkwords: [ "Light", "Heavy", "Wakeup", "Travel", "Office", 
-                       "Workout", "Dance", "Social", "Sex" ] },
+            dkwords: [ "Chill", "Social",
+                       "Office", "Travel",
+                       "Workout", "Dance" ] },
           { type: "food", plural: "food", img: "TypeFood50.png",
             keyprompt: "Name of restaurant or dish",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Breakfast", "Brunch", "Lunch", "Dinner", "Desert",
-                       "Late Night", "Snack", "Inexpensive", "Expensive", 
-                       "Fast", "Slow", "Outdoor", "Quiet", "Loud" ] },
+            dkwords: [ "Traditional", "Innovative",
+                       "Inexpensive", "Expensive", 
+                       "Quiet", "Loud" ] },
           { type: "drink", plural: "drinks", img: "TypeDrink50.png",
             keyprompt: "Name and where from",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Traditional", "Innovative", "Inexpensive", "Expensive",
-                       "Essential", "Special", "Quiet", "Loud", "Outdoor" ] },
+            dkwords: [ "Traditional", "Innovative", 
+                       "Inexpensive", "Expensive",
+                       "Quiet", "Loud" ] },
           { type: "activity", plural: "activities", img: "TypeActivity50.png",
             keyprompt: "Name of place or event",
             key: "name", //subkey
             fields: [ "address" ],
-            dkwords: [ "Indoor", "Outdoor", "Educational", "Artistic", 
-                       "Performance", "Kid Ok", "Inexpensive", 
-                       "Expensive" ] },
+            dkwords: [ "Indoor", "Outdoor", 
+                       "Artistic", "Athletic",
+                       "Educational", "Kid Ok" ] },
           { type: "other", plural: "others", img: "TypeOther50.png",
             keyprompt: "Name or title", 
             key: "name", //subkey
             fields: [],
-            dkwords: [ "Specialized", "General", "Professional", "Personal",
+            dkwords: [ "Professional", "Personal",
                        "Hobby", "Research" ] }
           ],
 
@@ -342,7 +345,7 @@ app.review = (function () {
 
     keywordsValid = function (type, errors) {
         var input, words, word, i, csv = "";
-        input = jt.byId('keywordin');
+        input = jt.byId('rdkwin');
         if(input) {
             words = input.value || "";
             words = words.split(",");
@@ -353,6 +356,17 @@ app.review = (function () {
                         csv += ", "; }
                     csv += word; } }
             crev.keywords = csv; }
+    },
+
+
+    notePostingGroups = function (type, errors) {
+        var grps, i, gcb;
+        crev.grpids = "";
+        grps = app.pen.postableGroups();
+        for(i = 0; i < grps.length; i += 1) {
+            gcb = jt.byId("dgrpcb" + i);
+            if(gcb && gcb.checked) {
+                crev.grpids = crev.grpids.csvappend(grps[i].grpid); } }
     },
 
 
@@ -372,7 +386,8 @@ app.review = (function () {
             if(futcb && futcb.checked) {
                 crev.srcrev = -101; }
             else if(crev.srcrev && crev.srcrev === -101) {
-                crev.srcrev = 0; } }
+                crev.srcrev = 0; }
+            notePostingGroups(); }
     },
 
 
@@ -567,6 +582,27 @@ app.review = (function () {
                             ["td", {align: "left"},
                              value]]]); } }
         return jt.tac2html(["table", {cla: "collapse"}, html]);
+    },
+
+
+    postedGroupLinksHTML = function (rev) {
+        var postnotes, links, html, i, pn;
+        if(!rev.svcdata || !rev.svcdata.postgrps) {
+            return ""; }
+        postnotes = rev.svcdata.postgrps;
+        if(!postnotes.length) {
+            return ""; }
+        links = [];
+        for(i = 0; i < postnotes.length; i += 1) {
+            pn = postnotes[i];
+            links.push(jt.tac2html(
+                ["a", {href: "groups/" + jt.canonize(pn.name),
+                       onclick: jt.fs("app.group.bygroupid('" +
+                                      pn.grpid + "')")},
+                 pn.name])); }
+        html = ["span", {cla: "fpgrplinkslab"}, 
+                "Posted to: " + links.join(", ")];
+        return jt.tac2html(html);
     },
 
 
@@ -974,6 +1010,15 @@ app.review = (function () {
     },
 
 
+    cacheBustGroups = function (grpids) {
+        var i;
+        grpids = grpids || "";
+        grpids = grpids.csvarray();
+        for(i = 0; i < grpids.length; i += 1) {
+            app.lcs.uncache("group", grpids[i]); }
+    },
+
+
     cacheBustPersonalReviewSearches = function () {
         var penref = app.pen.myPenRef();
         if(penref.profstate) {
@@ -1121,7 +1166,7 @@ app.review = (function () {
 
 
     dlgDetailsEntry = function () {
-        var rt, html, i;
+        var rt, html, i, fldttl;
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
@@ -1149,6 +1194,11 @@ app.review = (function () {
             jt.byId(rt.subkey + "in").value = crev[rt.subkey] || ""; }
         for(i = 0; i < rt.fields.length; i += 1) {
             jt.byId(rt.fields[i] + "in").value = crev[rt.fields[i]] || ""; }
+        fldttl = (rt.subkey? 1 : 0) + rt.fields.length;
+        if(fldttl <= 1) {
+            jt.byId('rdpicdiv').style.height = "80px"; }
+        else if(fldttl <= 2) {
+            jt.byId('rdpicdiv').style.height = "100px"; }
     },
 
 
@@ -1186,8 +1236,43 @@ app.review = (function () {
         html.push(["div", {id: "rdkwindiv"},
                    [["label", {fo: "rdkwin", cla: "liflab", id: "rdkwlab"},
                      "Keywords"],
-                    ["input", {id: "rdkwin", cla: "lifin", type: "text"}]]]);
+                    ["input", {id: "rdkwin", cla: "lifin", type: "text", 
+                               value: crev.keywords}]]]);
         jt.out('rdkwdiv', jt.tac2html(html));
+    },
+
+
+    postedGroupRevId = function (grpid, rev) {
+        var grps, i;
+        rev = rev || crev;
+        if(!rev.svcdata || !rev.svcdata.postgrps) {
+            return 0; }
+        grps = rev.svcdata.postgrps;
+        for(i = 0; i < grps.length; i += 1) {
+            if(grps[i].grpid === grpid) {
+                return grps[i].revid; } }
+        return 0;
+    },
+
+
+    dlgGroupPostSelection = function () {
+        var grps, i, grp, posted, html = [];
+        grps = app.pen.postableGroups();  //sorted memberships from pen.stash
+        for(i = 0; i < grps.length; i += 1) {
+            grp = grps[i];
+            posted = jt.toru(postedGroupRevId(grp.grpid));
+            html.push(["div", {cla: "rdgrpdiv"},
+                       [["div", {cla: "rdglpicdiv"},
+                         ["img", {cla: "rdglpic", alt: "",
+                                  src: "grppic?groupid=" + grp.grpid}]],
+                        ["input", {type: "checkbox", id: "dgrpcb" + i,
+                                   value: grp.grpid, checked: posted}],
+                        ["label", {fo: "dgrp" + i, cla: "penflist"}, 
+                         grp.name]]]); }
+        if(html.length > 0) {
+            html.unshift(["div", {cla: "formline"}]);
+            html.unshift(["div", {cla: "liflab"}, "Post To"]); }
+        jt.out('rdgdiv', jt.tac2html(html));
     },
 
 
@@ -1197,7 +1282,7 @@ app.review = (function () {
         dlgDetailsEntry();
         dlgTextEntry();
         dlgKeywordEntry();
-        //jt.err("rdkeyindiv offsetWidth: " + jt.byId('rdkeyindiv').offsetWidth);
+        dlgGroupPostSelection();
     };
 
 
@@ -1232,6 +1317,7 @@ return {
                  ["div", {id: "rdpfdiv"}],     //pic, stars, fields
                  ["div", {id: "rdtextdiv"}],
                  ["div", {id: "rdkwdiv"}],
+                 ["div", {id: "rdgdiv"}],
                  ["div", {id: "rdokdiv"},
                   [["div", {id: "rdokstatdiv"}],
                    ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
@@ -1448,7 +1534,7 @@ return {
 
 
     save: function (skipvalidation) {
-        var errors = [], i, errtxt = "", rt, url, data, html;
+        var errors = [], i, errtxt = "", rt, data, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('rdokbuttondiv').innerHTML;
         if(!skipvalidation) {
@@ -1469,23 +1555,20 @@ return {
         jt.out('rdokbuttondiv', "Saving...");
         app.layout.cancelOverlay();  //just in case it is still up
         app.onescapefunc = null;
-        //ATTENTION: combine these into a single endpoint
-        url = "updrev?";
-        if(!jt.instId(crev)) {
-            url = "newrev?"; }
         app.review.serializeFields(crev);
         data = jt.objdata(crev);
         app.review.deserializeFields(crev); //in case update fail or interim use
-        jt.call('POST', url + app.login.authparams(), data,
-                //ATTENTION: call will now return the pen/group + review
-                //and pen will have top20s updated
-                function (reviews) {
+        jt.call('POST', "saverev?" + app.login.authparams(), data,
+                function (updobjs) {
+                    var updpen = updobjs[0], updrev = updobjs[1];
                     jt.out('rdokbuttondiv', "Saved.");
-                    crev = copyReview(app.lcs.put("rev", reviews[0]).rev);
-                    app.activity.updateFeeds(reviews[0]);
+                    updpen.recent = app.pen.myPenName().recent || [];
+                    updpen.recent.unshift(jt.instId(updrev));
+                    app.lcs.put("pen", updpen);
+                    cacheBustGroups(crev.grpids);
+                    crev = copyReview(app.lcs.put("rev", updrev));
+                    app.activity.updateFeeds(updrev);
                     cacheBustPersonalReviewSearches();
-                    if(url.indexOf("newrev") >= 0) {
-                        setTimeout(app.group.currentReviewPostDialog, 150); }
                     app.layout.closeDialog();
                     app.login.doNextStep({}); },
                 app.failf(function (code, errtxt) {
@@ -1885,15 +1968,16 @@ return {
             jt.out(revdivid + "datediv", "");
             jt.out(revdivid + "descrdiv", 
                    abbreviatedReviewText(prefix, revid, rev));
-            jt.out(revdivid + "keysdiv", ""); }
+            jt.out(revdivid + "keysdiv", "");
+            jt.out(revdivid + "grpsdiv", ""); }
         else {  //expand
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
                    jt.colloquialDate(jt.ISOString2Day(rev.modified)));
             jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
-            jt.out(revdivid + "keysdiv", rev.keywords); }
-        //ATTENTION: list links to groups rev was posted to in grpsdiv
+            jt.out(revdivid + "keysdiv", rev.keywords);
+            jt.out(revdivid + "grpsdiv", postedGroupLinksHTML(rev)); }
     },
 
 

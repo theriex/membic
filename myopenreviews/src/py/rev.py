@@ -109,6 +109,24 @@ def safe_get_review_for_update(handler):
     return review
 
 
+def get_review_for_save(handler):
+    revid = intz(handler.request.get('_id'))
+    if not revid:
+        revid = intz(handler.request.get('revid'))
+    review = cached_get(revid, Review)
+    penid = intz(handler.request.get('penid'))
+    if not review:
+        review = fetch_review_by_cankey(handler)
+        if not review:
+            revtype = handler.request.get('revtype')
+            review = Review(penid=penid, revtype=revtype)
+    if penid != review.penid:
+        handler.error(401)
+        handler.response.out.write("Not your review")
+        return
+    return review
+
+
 def canonize_cankey(cankey):
     # whitespace and generally problematic characters
     cankey = re.sub(r'\s', '', cankey)
@@ -228,10 +246,11 @@ def read_review_values(handler, review):
         review.srcrev = 0
 
 
-def update_top20_reviews(pnm, review):
+def update_top20_reviews(pgo, review):
+    retmax = 30
     t20dict = {}
-    if pnm.top20s:
-        t20dict = json.loads(pnm.top20s)
+    if pgo.top20s:
+        t20dict = json.loads(pgo.top20s)
     t20ids = []
     if review.revtype in t20dict:
         t20ids = t20dict[review.revtype]
@@ -243,8 +262,8 @@ def update_top20_reviews(pnm, review):
             t20revs.append(resolved)
     t20revs = sorted(t20revs, key=attrgetter('rating', 'modified'), 
                      reverse=True)
-    if len(t20revs) > 20:
-        t20revs = t20revs[0:20]
+    if len(t20revs) > retmax:
+        t20revs = t20revs[0:retmax]
     t20ids = []
     lastid = -1     # trap any dupes just in case
     for rev in t20revs:
@@ -254,11 +273,11 @@ def update_top20_reviews(pnm, review):
         lastid = currid
     t20dict[review.revtype] = t20ids
     t20dict["latestrevtype"] = review.revtype
-    tstamp = nowISO();
+    tstamp = nowISO()
     t20dict["t20lastupdated"] = tstamp
-    pnm.top20s = json.dumps(t20dict)
-    pnm.modified = tstamp;
-    cached_put(pnm)
+    pgo.top20s = json.dumps(t20dict)
+    pgo.modified = tstamp;
+    cached_put(pgo)
 
 
 def fetch_review_by_cankey(handler):
@@ -381,6 +400,83 @@ def write_review(review, pnm):
     bust_cache_key("recentrevs")
     bust_cache_key("blog" + pnm.name_c)
     update_top20_reviews(pnm, review)
+
+
+def copy_source_review(fromrev, torev, grpid):
+    torev.revtype = fromrev.revtype
+    torev.penid = fromrev.penid
+    torev.grpid = int(grpid)
+    torev.rating = fromrev.rating
+    torev.srcrev = fromrev.srcrev
+    torev.mainfeed = fromrev.mainfeed
+    torev.cankey = fromrev.cankey
+    torev.keywords = fromrev.keywords
+    torev.text = fromrev.text
+    torev.revpic = fromrev.revpic
+    torev.imguri = fromrev.imguri
+    torev.altkeys = fromrev.altkeys
+    # torev.svcdata = fromrev.svcdata
+    torev.penname = fromrev.penname
+    torev.orids = fromrev.orids
+    torev.helpful = fromrev.helpful
+    torev.remembered = fromrev.remembered
+    torev.name = fromrev.name
+    torev.title = fromrev.title
+    torev.url = fromrev.url
+    torev.artist = fromrev.artist
+    torev.author = fromrev.author
+    torev.publisher = fromrev.publisher
+    torev.album = fromrev.album
+    torev.starring = fromrev.starring
+    torev.address = fromrev.address
+    torev.year = fromrev.year
+    note_modified(torev)
+
+
+def group_post_note(grp, grprev):
+    postnote = {}
+    postnote["grpid"] = str(grp.key().id())
+    postnote["name"] = grp.name
+    postnote["revid"] = str(grprev.key().id())
+    return postnote
+
+
+def write_group_post_notes_to_svcdata(review, postnotes):
+    svcdict = {}
+    if review.svcdata:
+        svcdict = json.loads(review.svcdata)
+    svcdict["postgrps"] = postnotes
+    review.svcdata = json.dumps(svcdict)
+    review.modified = nowISO()
+    cached_put(review)
+
+
+def write_group_reviews(review, pnm, grpidscsv):
+    if not grpidscsv:
+        return
+    postnotes = []
+    for grpid in csv_list(grpidscsv):
+        grp = cached_get(int(grpid), group.Group)
+        if not grp:
+            logging.info("write_group_reviews: no group " + grpid)
+            continue
+        penid = pnm.key().id()
+        if not group.member_level(penid, grp):
+            logging.info("write_group_reviews: not member of " + grpid)
+            continue
+        where = "WHERE grpid = :1 AND srcrev = :2"
+        gql = Review.gql(where, grpid, review.key().id())
+        revs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+        grprev = None
+        if len(revs) > 0:
+            grprev = revs[0]
+        else:
+            grprev = Review(penid=penid, revtype=review.revtype)
+        copy_source_review(review, grprev, grpid)
+        cached_put(grprev)
+        update_top20_reviews(grp, grprev)
+        postnotes.append(group_post_note(grp, grprev))
+    write_group_post_notes_to_svcdata(review, postnotes)
 
 
 def creation_compare(revA, revB):
@@ -597,6 +693,25 @@ class UpdateReview(webapp2.RequestHandler):
         review.penname = pnm.name
         write_review(review, pnm)
         returnJSON(self.response, [ review ])
+
+
+class SaveReview(webapp2.RequestHandler):
+    def post(self):
+        pnm = review_modification_authorized(self)
+        if not pnm:
+            return
+        review = get_review_for_save(self)
+        if not review:
+            return
+        read_review_values(self, review)
+        review.penname = pnm.name
+        if self.request.get('mode') == "batch":
+            review.srcrev = -202
+            # not bothering to unpack and rewrite existing value unless needed
+            review.svcdata = "{" + batch_flag_attrval(review) + "}"
+        write_review(review, pnm) # updates pen top20s
+        write_group_reviews(review, pnm, self.request.get('grpids'))
+        returnJSON(self.response, [ pnm, review ])
 
 
 class DeleteReview(webapp2.RequestHandler):
@@ -990,6 +1105,7 @@ class MakeTestReviews(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/updrev', UpdateReview),
+                               ('/saverev', SaveReview),
                                ('/delrev', DeleteReview),
                                ('/revpicupload', UploadReviewPic),
                                ('/revpic', GetReviewPic),

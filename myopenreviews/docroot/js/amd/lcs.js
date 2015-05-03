@@ -148,6 +148,14 @@ return {
     },
 
 
+    uncache: function (type, id) {
+        var ref = app.lcs.getRef(type, id);
+        ref.status = "not cached";
+        ref.updtime = new Date();
+        ref[type] = null;
+    },
+
+
     rem: function (type, obj) {
         var ref;
         ref = app.lcs.getRef(type, obj);
