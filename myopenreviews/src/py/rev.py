@@ -71,24 +71,16 @@ def review_modification_authorized(handler):
         authorized to modify, otherwise return False """
     acc = authenticated(handler.request)
     if not acc:
-        handler.error(401)
-        handler.response.out.write("Authentication failed")
-        return False
+        return srverr(handler, 401, "Authentication failed")
     penid = intz(handler.request.get('penid'))
     if not penid:
-        handler.error(401)
-        handler.response.out.write("No penid specified")
-        return False
+        return srverr(handler, 401, "No penid specified")
     pnm = cached_get(penid, pen.PenName)
     if not pnm:
-        handler.error(404)
-        handler.response.out.write("Pen " + str(penid) + " not found.")
-        return False
+        return srverr(handler, 404, "Pen " + str(penid) + " not found.")
     authok = pen.authorized(acc, pnm)
     if not authok:
-        handler.error(401)
-        handler.response.out.write("Pen name not authorized.")
-        return False
+        return srverr(handler, 401, "Pen name not authorized.")
     return pnm
 
 
@@ -98,14 +90,10 @@ def safe_get_review_for_update(handler):
         revid = intz(handler.request.get('revid'))
     review = cached_get(revid, Review)
     if not review:
-        handler.error(404)
-        handler.response.out.write("Review id: " + str(revid) + " not found.")
-        return
+        return srverr(handler, 404, "Review id: " + str(revid) + " not found.")
     penid = intz(handler.request.get('penid'))
     if penid != review.penid:
-        handler.error(401)
-        handler.response.out.write("Review pen does not match")
-        return
+        return srverr(handler, 401, "Review pen does not match")
     return review
 
 
@@ -121,9 +109,7 @@ def get_review_for_save(handler):
             revtype = handler.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
     if penid != review.penid:
-        handler.error(401)
-        handler.response.out.write("Not your review")
-        return
+        return srverr(handler, 401, "Not your review")
     return review
 
 
@@ -407,7 +393,7 @@ def copy_source_review(fromrev, torev, grpid):
     torev.penid = fromrev.penid
     torev.grpid = int(grpid)
     torev.rating = fromrev.rating
-    torev.srcrev = fromrev.srcrev
+    torev.srcrev = fromrev.key().id()
     torev.mainfeed = fromrev.mainfeed
     torev.cankey = fromrev.cankey
     torev.keywords = fromrev.keywords
@@ -719,12 +705,35 @@ class DeleteReview(webapp2.RequestHandler):
         pnm = review_modification_authorized(self)
         if not pnm:
             return
+        logging.info("DeleteReview authorized PenName " + pnm.name)
         review = safe_get_review_for_update(self)
         if not review:
             return
-        cached_delete(review.key().id(), Review)
-        ## there may be a tombstone reference in the top20s.  That's ok.
-        returnJSON(self.response, [])
+        if not review.grpid:
+            return srverr(self, 400, "Only group posts may be deleted")
+        grp = group.Group.get_by_id(int(review.grpid))
+        if not grp:
+            return srverr(self, 404, "Group " + review.grpid + " not found")
+        penid = str(pnm.key().id())
+        reason = self.request.get('reason') or ""
+        if review.penid != penid:
+            if group.member_level(penid, grp) < 2:
+                return srverr(self, 400, "You may only remove your own review")
+            if not reason:
+                return srverr(self, 400, "Reason required")
+        rt = review.revtype
+        revid = str(review.key().id())
+        topdict = {}
+        if grp.top20s:
+            topdict = json.loads(grp.top20s)
+        if rt in topdict and topdict[rt] and revid in topdict[rt]:
+            topdict[rt].remove(revid)
+        grp.top20s = json.dumps(topdict)
+        group.update_group_admin_log(grp, pnm, "Removed", review.srcrev, reason)
+        grp.modified = nowISO()
+        cached_put(grp)
+        cached_delete(revid, Review)
+        returnJSON(self.response, [ grp ])
 
 
 # This is a form submission endpoint, so always redirect back to the app.
@@ -745,24 +754,18 @@ class UploadReviewPic(webapp2.RequestHandler):
         else:
             revtype = self.request.get("revtype")
             if not revtype:
-                self.error(406)  # Not Acceptable
-                self.response.out.write("No revtype recieved")
-                return
+                return srverr(self, 406, "No revtype recieved")
             review = Review(penid=penid, revtype=revtype)
         upfile = self.request.get("picfilein")
         if not upfile:
-            self.error(406)  # Not Acceptable
-            self.response.out.write("No picfilein received")
-            return
+            return srverr(self, 406, "No picfilein received")
         try:
             review.revpic = db.Blob(upfile)
             review.revpic = images.resize(review.revpic, 160, 160)
             note_modified(review)
             cached_put(review)
         except Exception as e:
-            self.error(409)  # Conflict
-            self.response.out.write("Pic upload processing failed: " + str(e))
-            return
+            return srverr(self, 409, "Pic upload processing failed: " + str(e))
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write("revid: " + str(review.key().id()))
 
@@ -773,9 +776,8 @@ class GetReviewPic(webapp2.RequestHandler):
         review = cached_get(intz(revid), Review)
         havepic = review and review.revpic
         if not havepic:
-            self.error(404)
-            self.response.write("Pic for review " + str(revid) + " not found.")
-            return
+            return srverr(self, 404, 
+                          "Pic for review " + str(revid) + " not found.")
         img = images.Image(review.revpic)
         img.resize(width=160, height=160)
         img = img.execute_transforms(output_encoding=images.PNG)
@@ -787,9 +789,7 @@ class SearchReviews(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
         if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
+            return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
         grpid = intz(self.request.get('grpid'))
         mindate = self.request.get('mindate') or "2012-10-04T00:00:00Z"
@@ -827,9 +827,7 @@ class GetReviewById(webapp2.RequestHandler):
         if revid:
             review = cached_get(intz(revid), Review)
             if not review:
-                self.error(404)
-                self.response.write("No Review found for id " + revid)
-                return
+                return srverr(self, 404, "No Review found for id " + revid)
             returnJSON(self.response, [ review ])
             return
         revs = []
@@ -851,9 +849,7 @@ class GetReviewByKey(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
         if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
+            return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
         revtype = self.request.get('revtype')
         cankey = self.request.get('cankey')
@@ -1013,9 +1009,7 @@ class ToggleHelpful(webapp2.RequestHandler):
         revid = intz(self.request.get('revid'))
         review = cached_get(revid, Review)
         if not review:
-            self.error(404)
-            self.response.out.write("Review: " + str(revid) + " not found.")
-            return
+            return srverr(self, 404, "Review: " + str(revid) + " not found.")
         if csv_elem_count(review.helpful) < 123:
             penid = str(pnm.key().id())
             if csv_contains(penid, review.helpful):
@@ -1044,9 +1038,7 @@ class FetchAllReviews(webapp2.RequestHandler):
                 if rev.modified > mostrecent:
                     logging.error("cache invalidation " + ckey)
                     memcache.delete(key)
-                    self.error(409)  # Conflict
-                    self.response.out.write("Outdated cache data detected")
-                    return
+                    return srverr(self, 409, "Outdated cache data detected")
                 objs.append(rev)
         returnJSON(self.response, objs)
 
@@ -1055,14 +1047,10 @@ class FetchPreReviews(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
         if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
+            return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
         if not penid:
-            self.error(400)
-            self.response.out.write("penid required")
-            return
+            return srverr(self, 400, "penid required")
         where = "WHERE penid = :1 AND srcrev = -101 ORDER BY modified DESC"
         revquery = Review.gql(where, penid)
         fetchmax = 20
@@ -1074,23 +1062,17 @@ class FetchPreReviews(webapp2.RequestHandler):
 class MakeTestReviews(webapp2.RequestHandler):
     def get(self):
         if not self.request.url.startswith('http://localhost'):
-            self.error(405)
-            self.response.out.write("Test reviews are only for local testing")
-            return
+            return srverr(self, 405, "Test reviews are only for local testing")
         pencname = self.request.get('pencname')
         if not pencname:
-            self.error(400)
-            self.response.out.write("pencname required")
-            return
+            return srverr(self, 400, "pencname required")
         for i in range(20):
             # PenName top20 updated with each write, so refetch each time
             # Same index retrieval already used by pen.py NewPenName
             pens = pen.PenName.gql("WHERE name_c=:1 LIMIT 1", pencname)
             if pens.count() != 1:
-                self.error(404)
-                self.response.out.write("PenName name_c " + pencname + 
-                                        " not found")
-                return
+                return srverr(self, 404, 
+                              "PenName name_c " + pencname + " not found")
             rev = Review(penid=pens[0].key().id(), revtype="movie")
             rev.rating = 75
             rev.text = "dummy movie review " + str(i)

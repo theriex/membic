@@ -558,6 +558,16 @@ app.review = (function () {
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
                                src: "img/writereview.png"}]]]]; }
+        if(app.group.mayRemove(app.lcs.getRef("group", rev.grpid).group, rev)) {
+            html.push(["div", {cla: "fpbuttondiv", id: "rbd" + revid},
+                       ["a", {href: "#remove",
+                              title: "Remove review",
+                              onclick: jt.fs("app.group.remove('" + 
+                                             rev.grpid + "','" +
+                                             revid + "')")},
+                        ["img", {cla: "fpbuttonimg",
+                                 id: prefix + revid + "removebutton",
+                                 src: "img/trash.png"}]]]); }
         return jt.tac2html(html);
     },
 

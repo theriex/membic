@@ -38,6 +38,14 @@ def intz(val):
     return int(val)
 
 
+# 400 Bad Request, 401 Not Authorized, 403 Forbidden, 404 Not Found, 
+# 405 Method Not Allowed, 406 Not Acceptable, 409 Conflict
+def srverr(handler, code, errtxt):
+    handler.error(code)
+    handler.response.out.write(errtxt)
+    return False
+
+
 def csv_elem_count(csv):
     if not csv:
         return 0

@@ -2132,6 +2132,65 @@ return {
     },
 
 
+    mayRemove: function (grp, rev) {
+        var penid;
+        if(!rev || !grp) {
+            return false; }
+        penid = app.pen.myPenId();
+        if(rev.penid === penid || app.group.membershipLevel(grp, penid) > 1) {
+            return true; }
+        return false;
+    },
+
+
+    remove: function (grpid, revid) {
+        var removebutton, html, pos, rev, grp, reason, data;
+        removebutton = jt.byId('rdremb');
+        if(removebutton) {
+            removebutton.disabled = true;
+            jt.out('rdremstatdiv', ""); }
+        else {
+            html = ["div", {id: "revdlgdiv"},
+                    [["div", {id: "rdremstatdiv"}],
+                     ["label", {fo: "reasonin", cla: "liflab"}, "Reason"],
+                     ["input", {id: "reasonin", cla: "lifin", type: "text"}],
+                     ["div", {id: "rdrembdiv", cla: "dlgbuttonsdiv"},
+                      ["button", {type: "button", id: "rdremb",
+                                  onclick: jt.fs("app.group.remove('" + 
+                                                 grpid + "','" + revid + "')")},
+                       "Remove"]]]];
+            html = app.layout.dlgwrapHTML("Remove Group Post", html);
+            pos = jt.geoPos(jt.byId("rbd" + revid));
+            return app.layout.openDialog(
+                {x: pos.x - 40 , y: pos.y - 30},
+                jt.tac2html(html), null, function() {
+                    jt.byId('reasonin').focus(); }); }
+        rev = app.lcs.getRef("rev", revid).rev;
+        reason = jt.byId('reasonin').value.trim();
+        if(!reason && rev.penid !== app.pen.myPenId()) {
+            return jt.out('rdremstatdiv', "Reason required"); }
+        jt.out('rdremstatdiv', "Removing...");
+        data = "penid=" + app.pen.myPenId() + "&revid=" + revid + 
+            "&reason=" + jt.enc(reason);
+        jt.call('POST', "delrev?" + app.login.authparams(), data,
+                function (groups) {
+                    grp = app.lcs.getRef("group", grpid).group;
+                    if(grp.recent && grp.recent.indexOf(revid) >= 0) {
+                        grp.recent.splice(grp.recent.indexOf(revid), 1); }
+                    groups[0].recent = grp.recent;
+                    //top20s updated by server, rebuilt for display as needed
+                    app.lcs.put("group", groups[0]);
+                    app.lcs.uncache("rev", revid);
+                    app.layout.closeDialog();
+                    app.pgd.display("group", grpid, "", groups[0]); },
+                function (code, errtxt) {
+                    removebutton.disabled = false;
+                    jt.out('rdremstatdiv', "Removal failed code " + code +
+                           ": " + errtxt); },
+                jt.semaphore("group.remove"));
+    },
+
+
     serializeFields: function (grp) {
         //top20s are maintained and rebuilt by the server, so
         //serializing is not strictly necessary, but better to have

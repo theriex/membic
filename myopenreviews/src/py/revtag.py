@@ -4,7 +4,7 @@ from google.appengine.ext import db
 import logging
 from moracct import *
 from morutil import *
-from pen import PenName, authorized
+# from pen import PenName, authorized
 # from revlink import ReviewLink, verify_review_link_revpenid, make_review_link
 import json
 from cacheman import *

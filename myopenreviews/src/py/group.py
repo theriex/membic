@@ -71,9 +71,9 @@ def pen_role(penid, group):
     group.founders = group.founders or ""
     if id_in_csv(penid, group.founders):
         return "Founder"
-    group.seniors = group.seniors or ""
-    if id_in_csv(penid, group.seniors):
-        return "Senior"
+    group.moderators = group.moderators or ""
+    if id_in_csv(penid, group.moderators):
+        return "Moderator"
     group.members = group.members or ""
     if id_in_csv(penid, group.members):
         return "Member"
@@ -85,8 +85,8 @@ def member_level(penid, group):
     group.founders = group.founders or ""
     if id_in_csv(penid, group.founders):
         return 3
-    group.seniors = group.seniors or ""
-    if id_in_csv(penid, group.seniors):
+    group.moderators = group.moderators or ""
+    if id_in_csv(penid, group.moderators):
         return 2
     group.members = group.members or ""
     if id_in_csv(penid, group.members):
@@ -347,7 +347,7 @@ class PostReview(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write("You may only post your own review")
             return;
-        if role != "Founder" and role != "Senior" and role != "Member":
+        if role != "Founder" and role != "Moderator" and role != "Member":
             self.error(400)
             self.response.out.write("You are not a member of this group")
             return
@@ -378,7 +378,7 @@ class RemoveReview(webapp2.RequestHandler):
         revid, review, group, role = fetch_group_mod_elements(self, pen)
         if review is None or group is None:
             return   #error already reported
-        if role != "Founder" and role != "Senior":
+        if role != "Founder" and role != "Moderator":
             if review.penid != pen.key().id():
                 self.error(400)
                 self.response.out.write("Not authorized to remove reviews")
@@ -438,7 +438,7 @@ class DenyMembershipSeek(webapp2.RequestHandler):
         #in which case treat as succeeded so the app can continue ok
         if id_in_csv(seekerid, group.seeking):
             seekrole = pen_role(seekerid, group)
-            if role == "Founder" or (role == "Senior" and 
+            if role == "Founder" or (role == "Moderator" and 
                                      seekrole == "NotFound"):
                 group.seeking = remove_id_from_csv(seekerid, group.seeking)
                 if not id_in_csv(seekerid, group.rejects):
@@ -470,20 +470,20 @@ class AcceptMembershipSeek(webapp2.RequestHandler):
                                     " is not seeking membership.")
             return
         seekrole = pen_role(seekerid, group)
-        if not (role == "Founder" or (role == "Senior" and 
+        if not (role == "Founder" or (role == "Moderator" and 
                                       seekrole == "NotFound")):
             self.error(400)
             self.response.out.write("Not authorized to accept membership")
             return;
         group.seeking = remove_id_from_csv(seekerid, group.seeking)
-        if seekrole == "Senior":
-            group.seniors = remove_id_from_csv(seekerid, group.seniors)
+        if seekrole == "Moderator":
+            group.moderators = remove_id_from_csv(seekerid, group.moderators)
             if not id_in_csv(seekerid, group.founders):
                 group.founders = append_id_to_csv(seekerid, group.founders)
         elif seekrole == "Member":
             group.members = remove_id_from_csv(seekerid, group.members)
-            if not id_in_csv(seekerid, group.seniors):
-                group.seniors = append_id_to_csv(seekerid, group.seniors)
+            if not id_in_csv(seekerid, group.moderators):
+                group.moderators = append_id_to_csv(seekerid, group.moderators)
         elif seekrole == "NotFound" and not id_in_csv(seekerid, group.members):
             group.members = append_id_to_csv(seekerid, group.members)
         update_group_admin_log(group, pen, "Accepted Member", seekerid, "")
@@ -529,7 +529,7 @@ class RemoveMember(webapp2.RequestHandler):
         remlev = pen_role(removeid, group)
         authorized = (remlev != "Founder" and 
                       (role == "Founder" or 
-                       (role == "Senior" and remlev == "Member")))
+                       (role == "Moderator" and remlev == "Member")))
         if not resigning and not authorized:
             self.error(400)
             self.response.out.write("Not authorized to remove member")
@@ -540,7 +540,7 @@ class RemoveMember(webapp2.RequestHandler):
             self.response.out.write("A reason is required")
             return
         group.founders = remove_id_from_csv(removeid, group.founders)
-        group.seniors = remove_id_from_csv(removeid, group.seniors)
+        group.moderators = remove_id_from_csv(removeid, group.moderators)
         group.members = remove_id_from_csv(removeid, group.members)
         action = "Removed Member"
         if pen.key().id() == removeid:
@@ -572,7 +572,7 @@ class GetGroupStats(webapp2.RequestHandler):
         for group in groups:
             stat['total'] += 1
             memcount = elem_count_csv(group.founders) +\
-                elem_count_csv(group.seniors) +\
+                elem_count_csv(group.moderators) +\
                 elem_count_csv(group.members)
             if memcount > stat['memmax']:
                 stat['memmax'] = memcount
