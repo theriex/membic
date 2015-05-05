@@ -451,7 +451,7 @@ def write_group_reviews(review, pnm, grpidscsv):
             logging.info("write_group_reviews: not member of " + grpid)
             continue
         where = "WHERE grpid = :1 AND srcrev = :2"
-        gql = Review.gql(where, grpid, review.key().id())
+        gql = Review.gql(where, int(grpid), review.key().id())
         revs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         grprev = None
         if len(revs) > 0:
@@ -705,7 +705,7 @@ class DeleteReview(webapp2.RequestHandler):
         pnm = review_modification_authorized(self)
         if not pnm:
             return
-        logging.info("DeleteReview authorized PenName " + pnm.name)
+        # logging.info("DeleteReview authorized PenName " + pnm.name)
         review = safe_get_review_for_update(self)
         if not review:
             return
