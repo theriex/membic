@@ -76,7 +76,7 @@ app.activity = (function () {
             feeds.remembered = app.review.collateDupes(revs); }
         app.layout.displayTypes(displayRemembered, filtertype);
         revs = app.review.filterByRevtype(feeds.remembered, filtertype);
-        app.review.displayReviews("feedrevsdiv", "rdd", revs,
+        app.review.displayReviews("feedrevsdiv", "rrd", revs,
                                   "app.activity.toggleExpansion", "author");
     },
 
@@ -200,10 +200,11 @@ return {
                             processed.push(revs[i]); } }
                     feeds[tname] = processed; } } }
         //insert rev appropriately based on creation time
-        if(rev.srcrev >= 0 && !rev.grpid) {  //not future/batch or group copy
+        if(rev.srcrev >= 0 && !jt.isId(rev.grpid)) {  //not futbatch or grp copy
             for(tname in feeds) {
                 if(feeds.hasOwnProperty(tname)) {
-                    if(tname === "all" || tname === rev.revtype) {
+                    if(tname === "all" || tname === "memo" ||
+                           tname === rev.revtype ) {
                         revs = feeds[tname];
                         processed = [];
                         inserted = false;
