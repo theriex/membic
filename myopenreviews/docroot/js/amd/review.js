@@ -541,7 +541,8 @@ app.review = (function () {
                      ["a", {href: "#write",
                             title: "Note your impressions",
                             onclick: jt.fs("app.review.fpbWrite('" +
-                                           prefix + "','" + revid + "')")},
+                                           prefix + "','" + revid + "','" +
+                                           updrevid + "')")},
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
                                src: "img/writereview.png"}]]]]; }
@@ -558,7 +559,8 @@ app.review = (function () {
                      ["a", {href: "#edit",
                             title: "Edit your review",
                             onclick: jt.fs("app.review.fpbWrite('" +
-                                           prefix + "','" + revid + "')")},
+                                           prefix + "','" + revid + "','" +
+                                           updrevid + "')")},
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
                                src: "img/writereview.png"}]]]]; }
@@ -1843,10 +1845,10 @@ return {
     },
 
 
-    fpbWrite: function (prefix, revid) {
+    fpbWrite: function (prefix, disprevid, updrevid) {
         if(!app.pen.myPenName()) {
             return jt.err("Sign in to note your impressions."); }
-        app.lcs.getFull("rev", revid, function (revref) {
+        app.lcs.getFull("rev", updrevid, function (revref) {
             app.review.start(revref.rev); });
     },
 
