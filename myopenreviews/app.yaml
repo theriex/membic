@@ -279,19 +279,14 @@ handlers:
 - url: /grpmemwithdraw.*
   script: src.py.group.app
 
-## Reject application for next level group membership
-## POST params: penid, groupid, seekerid, authparams
-- url: /grpmemrej.*
+## Process membership application: reject, ignore, accept
+## POST params: action, penid, groupid, seekerid, authparams
+- url: /grpmemprocess.*
   script: src.py.group.app
 
 ## Acknowledge rejection of group membership application
 ## POST params: penid, groupid, authparams
 - url: /grprejok.*
-  script: src.py.group.app
-
-## Accept group membership application
-## POST params: penid, groupid, seekerid, authparams
-- url: /grpmemyes.*
   script: src.py.group.app
 
 ## Remove group membership

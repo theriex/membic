@@ -9,8 +9,10 @@
 // group.adminlog (array of entries maintained by server)
 //   when: ISO date
 //   penid: admin that took the action
+//   pname: name of admin that took the action
 //   action: e.g. "Accepted Membership", "Removed Review", "Removed Member"
 //   target: revid or penid of what or was affected
+//   tname: name of pen or review that was affected
 //   reason: text given as to why (required for removals)
 app.group = (function () {
     "use strict";
@@ -29,7 +31,6 @@ app.group = (function () {
                     {name: "quarterly", freq: 90, id: "freq90"},
                     {name: "6 months", freq: 180, id: "freq180"},
                     {name: "yearly", freq: 365, id: "freq365"}],
-        grpsrchmax = 1000,
         revPostTimeout = null,  //review group ref update write timer
 
 
@@ -378,93 +379,6 @@ app.group = (function () {
     },
 
 
-    //group updates are not transactionally tied to pen updates, so verify
-    //the pen is following the group if current or pending member.
-    verifyPenFollowing = function () {
-        var pen;
-        if(membership() || isApplying()) {  //need to verify following
-            if(!isFollowing()) {
-                pen = app.pen.myPenName();
-                pen.groups = pen.groups || "";
-                if(pen.groups) {
-                    pen.groups += ","; }
-                pen.groups += jt.instId(wizgrp);
-                app.pen.updatePen(pen, app.group.display, app.failf); } }
-    },
-
-
-    revTypesDispHTML = function () {
-        var html = [], i, reviewTypes, typename;
-        reviewTypes = app.review.getReviewTypes();
-        for(i = 0; i < reviewTypes.length; i += 1) {
-            typename = reviewTypes[i].type;
-            if(jt.idInCSV(typename, wizgrp.revtypes)) {
-                html.push(
-                    ["span", {cla: "badgespan"},
-                     ["a", {href: "#" + reviewTypes[i].type,
-                            onclick: jt.fs("app.review.start()")},
-                      ["img", {cla: "reviewbadge",
-                               src: "img/" + reviewTypes[i].img}]]]); } }
-        return html;
-    },
-
-
-    frequencyName = function () {
-        var i;
-        for(i = 0; i < revfreqs.length; i += 1) {
-            if(wizgrp.revfreq <= revfreqs[i].freq) {
-                return revfreqs[i].name; } }
-        return "";
-    },
-
-
-    dispModeToggleHTML = function () {
-        if(wizgrp.dispmode === "members") {
-            return ["a", {href: "#showposts",
-                          onclick: jt.fs("app.group.dispmode('posts')")},
-                    "Show Posts"]; }
-        return ["a", {href: "#showposts",
-                      onclick: jt.fs("app.group.dispmode('members')")},
-                "Show Members"];
-    },
-
-
-    grpNameDescripHTML = function () {
-        return ["div", {id: "gndbdiv"},
-                [["div", {id: "groupnamediv"},
-                  ["table",
-                   ["tr",
-                    [["td", {id: "grouphnametd"},
-                      ["span", {id: "penhnamespan"},
-                       wizgrp.name]],
-                     ["td",
-                      ["div", {id: "grouphbuttondiv"},
-                       followsetHTML()]]]]]],
-                 ["div", {id: "groupdescdiv", cla: "groupdescrtxt"},
-                  jt.linkify(wizgrp.description)],
-                 ["div", {id: "typefreqdiv"},
-                  ["table", {cla: "midtable"},
-                   ["tr",
-                    [["td", {id: "groupfreqtd"},
-                      ["div", {id: "groupfreqdispdiv"},
-                       ["span", {cla: "groupcity"},
-                        ["a", {cla: "plainanchor"},
-                         "Post " + frequencyName() + ">"]]]],
-                     ["td", {id: "grouprevtypestd"},
-                      ["div", {id: "grouprevtypesdiv"},
-                       revTypesDispHTML()]],
-                     ["td", {id: "memberspoststoggletd"},
-                      ["div", {id: "memberspoststogglediv"},
-                       ["span", {cla: "groupcity"},
-                        dispModeToggleHTML("divmid")]]]]]]],
-                 ["div", {id: "groupfreqeditdiv"}],
-                 ["div", {id: "errmsgdiv"}],
-                 ["div", {id: "groupeditbuttonsdiv",
-                          cla: "optionalbuttonsdiv"},
-                  ""]]];
-    },
-
-
     memberNameHTML = function (edit, penid) {
         var penref = app.lcs.getRef("pen", penid);
         return jt.tac2html(
@@ -733,17 +647,6 @@ app.group = (function () {
                            value: cityvals[0].trim()}],
                 html];
         return html;
-    },
-
-
-    niceCSV = function (csv) {
-        var nice = "", elems, i;
-        elems = csv.split(",");
-        for(i = 0; i < elems.length; i += 1) {
-            if(nice) {
-                nice += ", "; }
-            nice += elems[i].capitalize(); }
-        return nice;
     },
 
 
@@ -1273,17 +1176,6 @@ app.group = (function () {
         if(!rows.length) {
             return "No posts."; }
         return ["table", rows];
-    },
-
-
-    findInsertionIndex = function (revref, revrefs) {
-        var i;
-        for(i = 0; i < revrefs.length; i += 1) {
-            if(revrefs[i].revid === revref.revid) {
-                return -1; }   //already there, no insertion index
-            if(revrefs[i].rev.modified < revref.rev.modified) {
-                return i; } }  //most recent first
-        return i;  //not found and nothing later, so append
     };
 
 
@@ -1573,8 +1465,6 @@ return {
     },
 
 
-    //There is no prompt to stop following if the pen is still a
-    //member, and group display will verifyPenFollowing as needed.
     stopfollow: function () {
         var pen, groupid, ids, i;
         app.layout.closeDialog();
@@ -2062,6 +1952,24 @@ return {
     },
 
 
+    processMembership: function (group, action, seekerid, reason, contf) {
+        var data;
+        data = jt.objdata({action: action, penid: app.pen.myPenId(), 
+                           groupid: jt.instId(group), seekerid: seekerid,
+                           reason: reason});
+        jt.call('POST', "grpmemprocess?" + app.login.authparams(), data,
+                function (updgroups) {
+                    updgroups[0].recent = group.recent;
+                    app.lcs.put("group", updgroups[0]);
+                    contf(updgroups[0]); },
+                function (code, errtxt) {
+                    jt.err("Membership processing failed code: " + code +
+                           ": " + errtxt);
+                    contf(); },
+                jt.semaphore("group.processMembership"));
+    },
+
+
     membershipLevel: function (group, penid) {
         if(!group) {
             return 0; }
@@ -2193,15 +2101,21 @@ return {
 
     serializeFields: function (grp) {
         //top20s are maintained and rebuilt by the server, so
-        //serializing is not strictly necessary, but better to have
-        //the field reflect the state of the other serialized fields.
+        //serializing is not strictly necessary, but it doesn't hurt.
+        //ditto for adminlog and people
         if(typeof grp.top20s === 'object') {
             grp.top20s = JSON.stringify(grp.top20s); }
+        if(typeof grp.adminlog === 'object') {
+            grp.adminlog = JSON.stringify(grp.adminlog); }
+        if(typeof grp.people === 'object') {
+            grp.people = JSON.stringify(grp.people); }
     },
 
 
     deserializeFields: function (grp) {
         app.lcs.reconstituteJSONObjectField("top20s", grp);
+        app.lcs.reconstituteJSONObjectField("adminlog", grp);
+        app.lcs.reconstituteJSONObjectField("people", grp);
     }
 
 }; //end of returned functions

@@ -41,42 +41,50 @@ app.pgd = (function () {
                                    img: "calico" } },
         searchstate = { revtype: "all", qstr: "", 
                         init: false, inprog: false, revids: [] },
+        setdispstate = { infomode: "" },
         grpmsgs = [
             {name: "Following",
              levtxt: "Following a group shows you are interested.",
              uptxt: "Only members may post to the group.",
              upbtn: "Apply for membership",
              cantxt: "You are applying for membership.",
+             rejtxt: "Your membership application was rejected.",
              canbtn: "Withdraw membership application",
              restxt: "",
              resbtn: "Stop following",
-             resconf: ""},
+             resconf: "",
+             notice: "is applying for membership" },
 
             {name: "Member",
              levtxt: "As a member, you may post to the group.",
              uptxt: "If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
              upbtn: "Apply to become a Moderator",
              cantxt: "You are applying to become a Moderator.",
+             rejtxt: "Your Moderator application was rejected.",
              canbtn: "Withdraw Moderator application",
              restxt: "If you no longer wish to contribute, you can resign your membership and go back to just following the group.",
              resbtn: "Resign membership",
-             resconf: "Are you sure you want to resign your membership?"},
+             resconf: "Are you sure you want to resign your membership?",
+             notice: "is applying to become a Moderator" },
 
             {name: "Moderator",
              levtxt: "As a Moderator, you can post to the group, remove membics that don't belong, and approve membership applications.",
              uptxt: "If you think it would be appropriate for you to be recognized as a permanent co-owner of the group, you can apply to become a Founder.",
              upbtn: "Apply to become a Founder",
              cantxt: "You are applying to become a Founder.",
+             rejtxt: "Your Founder application was rejected.",
              canbtn: "Withdraw your Founder application",
              restxt: "If you no longer wish to help moderate the group, you can resign as a Moderator and go back to being a regular member.",
              resbtn: "Resign as Moderator",
-             resconf: "Are you sure you want to resign as moderator?"},
+             resconf: "Are you sure you want to resign as moderator?",
+             notice: "is applying to become a Founder" },
 
             {name: "Founder",
              levtxt: "As a Founder, you permanently have all group privileges available.",
              uptxt: "",
              upbtn: "",
              cantxt: "",
+             rejtxt: "",
              canbtn: "",
              restxt: "If you want to relinquish ownership of this group, you can resign as a Founder and allow others to continue the group.",
              resbtn: "Resign as Founder",
@@ -163,6 +171,149 @@ app.pgd = (function () {
                  [["div", {cla: "formline"},
                    grpmsgs[mlev].levtxt],
                   html]]];
+        return html;
+    },
+
+
+    outstandingApplicationsHTML = function () {
+        var html, sids, i, penid, name, mlev;
+        if(!dst.obj.seeking) {
+            return ""; }
+        html = [];
+        sids = dst.obj.seeking.csvarray();
+        for(i = 0; i < sids.length; i += 1) {
+            penid = sids[i];
+            name = (dst.obj.people || {})[penid] || penid;
+            mlev = app.group.membershipLevel(dst.obj);
+            html.push(["div", {cla: "grpmemdiv"},
+                       [["div", {cla: "fpprofdiv"},
+                         ["img", {cla: "fpprofpic",
+                                  src: "profpic?profileid=" + penid,
+                                  title: jt.ndq(name),
+                                  alt: "prof pic"}]],
+                        ["span", {cla: "penflist"}, name],
+                        ["div", {cla: "formline"},
+                         grpmsgs[mlev].notice],
+                        ["div", {cla: "formline", id: "reasondiv" + penid,
+                                 style: "display:none;"},
+                         [["label", {fo: "reasonin" + penid, cla: "liflab",
+                                     id: "reasonlab" + penid},
+                           "Reason"],
+                          ["input", {id: "reasonin" + penid, cla: "lifin",
+                                     type: "text"}]]],
+                        ["div", {cla: "formline formbuttonsdiv", 
+                                 id: "abdiv" + penid},
+                         [["button", {type: "button", id: "rejectb" + penid,
+                                      onclick: jt.fs("app.pgd.memapp('reject" +
+                                                     "','" + penid + "')")},
+                           "Reject"],
+                          ["button", {type: "button", id: "acceptb" + penid,
+                                      onclick: jt.fs("app.pgd.memapp('accept" +
+                                                     "','" + penid + "')")},
+                           "Accept"]]]]]); }
+        return html;
+    },
+
+
+    adminLogTargetHTML = function (logentry) {
+        var penid;
+        if(logentry.action === "Removed Review") {
+            return logentry.tname; }
+        penid = logentry.targid;
+        return ["a", {href: "view=pen&penid=" + penid,
+                      onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
+                logentry.tname];
+    },
+
+
+    groupLogHTML = function () {
+        var les, i, html, penid;
+        les = dst.obj.adminlog;
+        if(!les || !les.length) {
+            return "No log entries"; }
+        html = [];
+        for(i = 0; i < les.length; i += 1) {
+            penid = les[i].penid;
+            html.push(
+                ["div", {cla: "adminlogentrydiv"},
+                 [les[i].when.slice(0, 10) + ": ",
+                  ["a", {href: "view=pen&penid=" + penid,
+                         onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
+                   les[i].pname || penid],
+                  " " + les[i].action + " ",
+                  adminLogTargetHTML(les[i]),
+                  les[i].reason]]); }
+        return jt.tac2html(html);
+    },
+
+
+    groupMembershipHTML = function () {
+        var html, fields, i, field, penids, j, penid, pname, line, mlev;
+        html = [];
+        fields = ["founders", "moderators", "members"];
+        for(i = 0; i < fields.length; i += 1) {
+            field = fields[i];
+            penids = dst.obj[field].csvarray();
+            if(penids.length) {
+                html.push(["div", {cla: "formline"}, field.capitalize()]); }
+            for(j = 0; j < penids.length; j += 1) {
+                penid = penids[j];
+                pname = (dst.obj.people || {})[penid] || penid;
+                mlev = app.group.membershipLevel(dst.obj);
+                line = ["div", {cla: "formline", id: "memlistdiv" + penid},
+                        [["div", {cla: "fpprofdivsp"},
+                          ["img", {cla: "fpprofpic",
+                                   src: "profpic?profileid=" + penid,
+                                   alt: "prof pic"}]],
+                         ["a", {href: "#demote",
+                                onclick: jt.fs("app.layout.togdisp('memdemdiv" +
+                                               penid + "')")},
+                          ["span", {cla: "penflist"}, pname]],
+                         ["div", {cla: "formline", id: "memdemdiv" + penid,
+                                  style: "display:none;"},
+                          [["label", {fo: "reasonin" + penid, cla: "liflab",
+                                      id: "reasonlab" + penid},
+                            "Reason"],
+                           ["input", {id: "reasonin" + penid, cla: "lifin",
+                                      placeholder: "Reason required",
+                                      type: "text"}],
+                           ["div", {cla: "formline formbuttonsdiv", 
+                                    id: "memdembuttondiv" + penid},
+                            ["button", {type: "button", id: "demoteb" + penid,
+                                        onclick: jt.fs("app.pgd.memdem('" + 
+                                                       penid + "')")},
+                             "Demote"]]]]]];
+                if(field === "founders" || 
+                       (field === "moderators" && mlev < 3) ||
+                       (field === "members" && mlev <= 1)) {
+                    line = ["div", {cla: "memlistdiv"},
+                            [["div", {cla: "fpprofdivsp"},
+                              ["img", {cla: "fpprofpic",
+                                       src: "profpic?profileid=" + penid,
+                                       alt: "prof pic"}]],
+                             ["span", {cla: "penflist"}, pname]]]; }
+                html.push(line); } }
+        html.push(["div", {cla: "formline"}, "&nbsp;"]); //final clear
+        return jt.tac2html(html);
+    },
+
+
+    adminSettingsHTML = function () {
+        var memsel = "", html;
+        if(app.group.membershipLevel(dst.obj) >= 2) {
+            memsel = ["a", {href: "#memberinfo",
+                            onclick: jt.fs("app.pgd.toggleGrpDet('members')")},
+                      "Membership"]; }
+        html = [["div", {cla: "formline"},
+                 outstandingApplicationsHTML()],
+                ["div", {cla: "formline"},
+                 [["div", {id: "grpinfoseldiv"},
+                   ["a", {href: "#groupinfo",
+                          onclick: jt.fs("app.pgd.toggleGrpDet('info')")},
+                    ["img", {cla: "grpsetimg", src: "img/info.png"}]]],
+                  ["div", {id: "meminfoseldiv"}, memsel]]],
+                ["div", {cla: "formline", id: "midispdiv",
+                         style: "display:none;"}]];
         return html;
     },
 
@@ -539,11 +690,15 @@ app.pgd = (function () {
     ////////////////////////////////////////
 return {
 
-    settings: function () {
+    settings: function (obj) {
         var html;
+        if(obj) {
+            dst.obj = obj; }
         html = ["div", {id: "pgdsettingsdlgdiv"},
                 [["div", {cla: "pgdsectiondiv"},
-                   membershipSettingsHTML()],
+                  membershipSettingsHTML()],
+                 ["div", {cla: "pgdsectiondiv"},
+                  adminSettingsHTML()],
                  ["div", {cla: "pgdsectiondiv"},
                   picSettingsHTML()],
                  ["div", {cla: "pgdsectiondiv"},
@@ -715,6 +870,58 @@ return {
             jt.out('creategrpdiv', jt.tac2html(html)); }
         else {
             jt.out('creategrpdiv', ""); }
+    },
+
+
+    toggleGrpDet: function (ctype) {
+        if(ctype === "info" && setdispstate.infomode !== "info") {
+            setdispstate.infomode = "info";
+            jt.byId('midispdiv').style.display = "block";
+            jt.out('midispdiv', groupLogHTML()); }
+        else if(ctype === "members" && setdispstate.infomode !== "members") {
+            setdispstate.infomode = "members";
+            jt.byId('midispdiv').style.display = "block";
+            jt.out('midispdiv', groupMembershipHTML()); }
+        else {
+            app.layout.togdisp("midispdiv"); }
+    },
+
+
+    memapp: function (verb, penid) {
+        var elem;
+        switch(verb) {
+        case "reject":
+            elem = jt.byId("reasondiv" + penid);
+            if(elem.style.display !== "block") {
+                elem.style.display = "block"; }
+            else {
+                elem = jt.byId("reasonin" + penid);
+                if(!elem.value || !elem.value.trim()) {
+                    jt.byId("reasonlab" + penid).style.color = "red"; }
+                else { //have reason
+                    jt.out("abdiv" + penid, "Rejecting...");
+                    app.group.processMembership(dst.obj, verb, penid, 
+                                                elem.value.trim(),
+                                                app.pgd.settings); } }
+            break;
+        case "accept":
+            jt.out("abdiv" + penid, "Accepting...");
+            app.group.processMembership(dst.obj, verb, penid, "", 
+                                        app.pgd.settings);
+            break;
+        default:
+            jt.log("pgd.memapp unknown verb: " + verb); }
+    },
+
+
+    memdem: function (penid) {
+        var elem;
+        elem = jt.byId("reasonin" + penid);
+        if(elem && elem.value.trim()) {
+            jt.out("memdembuttondiv" + penid, "Demoting...");
+            app.group.processMembership(dst.obj, "demote", penid, 
+                                        elem.value.trim(),
+                                        app.pgd.settings); }
     },
 
 

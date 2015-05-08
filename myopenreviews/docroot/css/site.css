@@ -247,7 +247,7 @@ button, .loginbutton, .formbutton {
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pgdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
-.formline { clear:both; font-size:medium; padding:5px 0px 0px 0px; 
+.formline { clear:both; font-size:medium; /* no padding empty formlines */
   width:260px; } /* balance dlgta width */
 #followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold;
@@ -256,6 +256,9 @@ button, .loginbutton, .formbutton {
 #calicoheaddiv { background:#333; height:5px; }
 #caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
 #grpembedta { height:100px; }
+#grpinfoseldiv { display:inline-block; margin-left:20px; width:50px; }
+#meminfoseldiv { display:inline-block; }
+.grpsetimg { vertical-align:middle; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }
@@ -548,8 +551,9 @@ button, .loginbutton, .formbutton {
 /* >> feed post review layout */
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
 .profrevdiv { clear:both; margin:0px 0px 10px 0px; }
-.fpprofdiv { display:inline-block; width:50px; height:60px; 
+.fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:60px; 
   overflow:scroll; float:left; }
+.fpprofdivsp { margin-right:5px; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }

@@ -7,6 +7,7 @@ import logging
 from moracct import *
 from morutil import *
 from cacheman import *
+import pen
 import rev
 import json
 
@@ -28,6 +29,7 @@ class Group(db.Model):
     rejects = db.TextProperty()     #CSV of rejected member application penids
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     adminlog = db.TextProperty()    #JSON array of action entries
+    people = db.TextProperty()      #JSON map of penids to display names
     city = db.StringProperty(indexed=False)      #not used anymore
     revtypes = db.StringProperty(indexed=False)  #CSV of review types
     revfreq = db.IntegerProperty(indexed=False)  #review every N days
@@ -176,7 +178,7 @@ def read_and_validate_descriptive_fields(handler, group):
     return True
 
 
-def fetch_rev_mod_elements(handler, pen):
+def fetch_rev_mod_elements(handler, pnm):
     revid = intz(handler.request.get('revid'))
     if not revid:
         handler.error(400)
@@ -190,7 +192,7 @@ def fetch_rev_mod_elements(handler, pen):
     return revid, review
 
 
-def fetch_group_and_role(handler, pen):
+def fetch_group_and_role(handler, pnm):
     groupid = intz(handler.request.get('groupid'))
     if not groupid:
         groupid = intz(handler.request.get('_id'))
@@ -203,26 +205,31 @@ def fetch_group_and_role(handler, pen):
         handler.error(404)
         handler.response.out.write("Group " + str(groupid) + " not found")
         return None, ""
-    role = pen_role(pen.key().id(), group)
+    role = pen_role(pnm.key().id(), group)
     return group, role
 
 
-def fetch_group_mod_elements(handler, pen):
-    revid, review = fetch_rev_mod_elements(handler, pen)
+def fetch_group_mod_elements(handler, pnm):
+    revid, review = fetch_rev_mod_elements(handler, pnm)
     if not revid or not review:
         return revid, review, None, ""
-    group, role = fetch_group_and_role(handler, pen)
+    group, role = fetch_group_and_role(handler, pnm)
     return revid, review, group, role
 
 
-def update_group_admin_log(group, pen, action, targetid, reason):
-    entry = "{\"when\":\"" + nowISO() + "\"," +\
-        "\"penid\":\"" + str(pen.key().id()) + "\"," +\
-        "\"action\":\"" + action + "\"," +\
-        "\"target\":\"" + str(targetid) + "\""
-    if reason:
-        entry += ",\"reason\":\"" + urllib.quote(reason) + "\""
-    entry += "}"
+def update_group_admin_log(group, pnm, action, target, reason):
+    edict = {}
+    edict["when"] = nowISO()
+    edict["penid"] = str(pnm.key().id())
+    edict["pname"] = pnm.name
+    edict["action"] = action
+    edict["targid"] = ""
+    edict["tname"] = ""
+    if(target):
+        edict["targid"] = str(target.key().id())
+        edict["tname"] = target.name
+    edict["reason"] = reason or ""
+    entry = json.dumps(edict)
     if not group.adminlog:
         group.adminlog = "[]"
     log = group.adminlog[1:-1].strip()  # strip outer brackets and whitespace
@@ -231,10 +238,63 @@ def update_group_admin_log(group, pen, action, targetid, reason):
     group.adminlog = "[" + entry + log + "]"
     
     
+def verify_people(group):
+    pdict = {}
+    if group.people:
+        pdict = json.loads(group.people)
+    penidcsvs = [group.founders, group.moderators, group.members,
+                 group.seeking, group.rejects]
+    for penidcsv in penidcsvs:
+        for penid in csv_list(penidcsv):
+            if not penid in pdict:
+                pnm = pen.PenName.get_by_id(int(penid))
+                if pnm:
+                    pdict[penid] = pnm.name
+    group.people = json.dumps(pdict)
+
+
+def process_membership_action(group, action, pnm, seekerpen, seekrole, reason):
+    seekerid = str(seekerpen.key().id());
+    if action == "reject":
+        group.seeking = remove_from_csv(seekerid, group.seeking)
+        if not csv_contains(seekerid, group.rejects):
+            group.rejects = append_to_csv(seekerid, group.rejects)
+            update_group_admin_log(group, pnm, "Denied Membership", 
+                                   seekerpen, reason)
+        elif action == "accept":
+            msg = "Accepted new "
+            group.seeking = remove_from_csv(seekerid, group.seeking)
+            if seekrole == "Moderator":
+                group.moderators = remove_from_csv(seekerid, group.moderators)
+                group.founders = append_to_csv(seekerid, group.founders)
+                msg = msg + "Founder"
+            elif seekrole == "Member":
+                group.members = remove_from_csv(seekerid, group.members)
+                group.moderators = append_to_csv(seekerid, group.moderators)
+                msg = msg + "Moderator"
+            elif seekrole == "NotFound":
+                group.members = append_to_csv(seekerid, group.members)
+                msg = msg + "Member"
+            update_group_admin_log(group, pnm, msg, seekerpen, "")
+        elif action == "demote":
+            if csv_contains(seekerid, group.moderators):
+                group.moderators = remove_from_csv(seekerid, group.moderators)
+                group.members = append_to_csv(seekerid, group.members)
+            elif csv_contains(seekerid, group.members):
+                group.members = remove_from_csv(seekerid, group.members)
+            update_group_admin_log(group, pnm, "Demoted Member", 
+                                   seekerpen, reason)
+        else:
+            logging.info("process_membership_action unknown action: " + action)
+            return
+        verify_people(group)
+        cached_put(group)
+
+
 class UpdateDescription(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:
             return
         name = self.request.get('name')
         name_c = canonize(name)
@@ -249,7 +309,7 @@ class UpdateDescription(webapp2.RequestHandler):
                 self.error(404)
                 self.response.out.write("Group " + grpid + " not found")
                 return
-            if pen_role(pen.key().id(), group) != "Founder":
+            if pen_role(pnm.key().id(), group) != "Founder":
                 self.error(400)
                 self.response.out.write(
                     "Only a Founder may change the group description.")
@@ -258,11 +318,13 @@ class UpdateDescription(webapp2.RequestHandler):
             group.name_c = name_c
         else:
             group = Group(name=name, name_c=name_c)
-            group.founders = str(pen.key().id())
+            group.founders = str(pnm.key().id())
         if not read_and_validate_descriptive_fields(self, group):
             return
         group.modified = nowISO()
-        update_group_admin_log(group, pen, "Updated Description", "", "")
+        update_group_admin_log(group, pnm, "Updated Description", "", "")
+        group.people = ""   # have to rebuild sometime and this is a good time
+        verify_people(group)
         cached_put(group)
         # not storing any precomputed group queries, so no cache keys to bust
         returnJSON(self.response, [ group ])
@@ -292,8 +354,8 @@ class UploadGroupPic(webapp2.RequestHandler):
         group = cached_get(intz(groupid), Group)
         if group:
             errmsg = "You are not authorized to update this group pic"
-            pen = rev.review_modification_authorized(self)
-            if pen and pen_role(pen.key().id(), group) == "Founder":
+            pnm = rev.review_modification_authorized(self)
+            if pnm and pen_role(pnm.key().id(), group) == "Founder":
                 errmsg = "Picture file not provided"
                 upfile = self.request.get("picfilein")
                 if upfile:
@@ -301,8 +363,9 @@ class UploadGroupPic(webapp2.RequestHandler):
                     try:
                         group.picture = db.Blob(upfile)
                         group.picture = images.resize(group.picture, 160, 160)
-                        update_group_admin_log(group, pen, "Uploaded Picture", 
+                        update_group_admin_log(group, pnm, "Uploaded Picture", 
                                                "", "")
+                        verify_people(group)
                         cached_put(group)
                         errmsg = ""
                     except Exception as e:
@@ -337,13 +400,13 @@ class GetGroupPic(webapp2.RequestHandler):
 
 class PostReview(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        revid, review, group, role = fetch_group_mod_elements(self, pen)
+        revid, review, group, role = fetch_group_mod_elements(self, pnm)
         if review is None or group is None:
             return   #error already reported
-        if review.penid != pen.key().id():
+        if review.penid != pnm.key().id():
             self.error(400)
             self.response.out.write("You may only post your own review")
             return;
@@ -366,20 +429,21 @@ class PostReview(webapp2.RequestHandler):
                 pass
             revids.insert(0, str(revid))    # most recently posted first
             group.reviews = ",".join(revids)
+        verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
 
 class RemoveReview(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        revid, review, group, role = fetch_group_mod_elements(self, pen)
+        revid, review, group, role = fetch_group_mod_elements(self, pnm)
         if review is None or group is None:
             return   #error already reported
         if role != "Founder" and role != "Moderator":
-            if review.penid != pen.key().id():
+            if review.penid != pnm.key().id():
                 self.error(400)
                 self.response.out.write("Not authorized to remove reviews")
                 return
@@ -387,120 +451,83 @@ class RemoveReview(webapp2.RequestHandler):
         # ATTENTION notify the owner as to why? Somehow?
         # remove the revid from the group
         group.reviews = remove_id_from_csv(revid, group.reviews)
-        update_group_admin_log(group, pen, "Removed Review", revid, reason)
+        update_group_admin_log(group, pnm, "Removed Review", review, reason)
+        verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
 
 class ApplyForMembership(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
+        group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
-        penid = pen.key().id()
+        penid = pnm.key().id()
         if role != "Founder" and not id_in_csv(penid, group.seeking):
             group.seeking = append_id_to_csv(penid, group.seeking)
+            verify_people(group)
             cached_put(group)
         returnJSON(self.response, [ group ])
 
 
-class WithdrawMembershipSeek(webapp2.RequestHandler):
+class WithdrawApplication(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
+        group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
-        group.seeking = remove_id_from_csv(pen.key().id(), group.seeking)
+        group.seeking = remove_id_from_csv(pnm.key().id(), group.seeking)
+        verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
 
-class DenyMembershipSeek(webapp2.RequestHandler):
+class ProcessMembership(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
+        group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
-        seekerid = intz(self.request.get('seekerid'))
+        seekerid = self.request.get('seekerid')
         if not seekerid:
-            self.error(400)
-            self.response.out.write("No seekerid specified")
-            return
-        reason = self.request.get("reason")
-        #possible seek was withdrawn or rejected by someone else already
-        #in which case treat as succeeded so the app can continue ok
-        if id_in_csv(seekerid, group.seeking):
-            seekrole = pen_role(seekerid, group)
-            if role == "Founder" or (role == "Moderator" and 
-                                     seekrole == "NotFound"):
-                group.seeking = remove_id_from_csv(seekerid, group.seeking)
-                if not id_in_csv(seekerid, group.rejects):
-                    group.rejects = append_id_to_csv(seekerid, group.rejects)
-                update_group_admin_log(group, pen, "Denied Membership", 
-                                       seekerid, reason)
-                cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
-class AcceptMembershipSeek(webapp2.RequestHandler):
-    def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
-            return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
-        if not group:
-            return   #error already reported
-        seekerid = intz(self.request.get('seekerid'))
-        if not seekerid:
-            self.error(400)
-            self.response.out.write("No seekerid specified")
-            return
-        #possible the application was withdrawn or accepted by someone else
-        #in the interim, or this is a spurious call. Either way fail.
-        if not id_in_csv(seekerid, group.seeking):
-            self.error(400)
-            self.response.out.write("Pen " + str(seekerid) + 
-                                    " is not seeking membership.")
-            return
+            return srverr(self, 400, "No seekerid specified")
         seekrole = pen_role(seekerid, group)
-        if not (role == "Founder" or (role == "Moderator" and 
+        if not (role == "Founder" or (role == "Moderator" and
                                       seekrole == "NotFound")):
-            self.error(400)
-            self.response.out.write("Not authorized to accept membership")
-            return;
-        group.seeking = remove_id_from_csv(seekerid, group.seeking)
-        if seekrole == "Moderator":
-            group.moderators = remove_id_from_csv(seekerid, group.moderators)
-            if not id_in_csv(seekerid, group.founders):
-                group.founders = append_id_to_csv(seekerid, group.founders)
-        elif seekrole == "Member":
-            group.members = remove_id_from_csv(seekerid, group.members)
-            if not id_in_csv(seekerid, group.moderators):
-                group.moderators = append_id_to_csv(seekerid, group.moderators)
-        elif seekrole == "NotFound" and not id_in_csv(seekerid, group.members):
-            group.members = append_id_to_csv(seekerid, group.members)
-        update_group_admin_log(group, pen, "Accepted Member", seekerid, "")
-        cached_put(group)
+            return srverr(self, 400, "Processing not authorized")
+        action = self.request.get('action')
+        if not action or action not in ['reject', 'accept']:
+            return srverr(self, 400, "Valid action required")
+        reason = self.request.get('reason')
+        if not reason and (action == "reject" or action == "demote"):
+            return srverr(self, 400, "Rejection reason required")
+        seekerpen = pen.PenName.get_by_id(int(seekerid))
+        if not seekerpen:
+            return srverr(self, 400, "No seeker PenName " + seekerid)
+        #if seeker not found, treat as already processed rather than error
+        if csv_contains(seekerid, group.seeking):
+            process_membership_action(group, action, pnm, 
+                                      seekerpen, seekrole, reason)
         returnJSON(self.response, [ group ])
-
 
 
 class MembershipRejectAck(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
+        group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
-        group.rejects = remove_id_from_csv(pen.key().id(), group.rejects)
+        group.rejects = remove_id_from_csv(pnm.key().id(), group.rejects)
+        verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -510,10 +537,10 @@ class MembershipRejectAck(webapp2.RequestHandler):
 # without it being a hassle.
 class RemoveMember(webapp2.RequestHandler):
     def post(self):
-        pen = rev.review_modification_authorized(self)
-        if not pen:  #penid did not match a pen the caller controls
+        pnm = rev.review_modification_authorized(self)
+        if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
-        group, role = fetch_group_and_role(self, pen)
+        group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
         removeid = intz(self.request.get('removeid'))
@@ -521,7 +548,7 @@ class RemoveMember(webapp2.RequestHandler):
             self.error(400)
             self.response.out.write("No removeid specified")
             return
-        resigning = removeid == pen.key().id()
+        resigning = removeid == pnm.key().id()
         if resigning and role == "Founder" and not "," in group.founders:
             cached_delete(group.key().id(), Group)
             returnJSON(self.response, [])
@@ -535,7 +562,7 @@ class RemoveMember(webapp2.RequestHandler):
             self.response.out.write("Not authorized to remove member")
             return
         reason = self.request.get('reason')
-        if not reason and pen.key().id() != removeid:
+        if not reason and pnm.key().id() != removeid:
             self.error(400)
             self.response.out.write("A reason is required")
             return
@@ -543,9 +570,10 @@ class RemoveMember(webapp2.RequestHandler):
         group.moderators = remove_id_from_csv(removeid, group.moderators)
         group.members = remove_id_from_csv(removeid, group.members)
         action = "Removed Member"
-        if pen.key().id() == removeid:
+        if pnm.key().id() == removeid:
             action = "Resigned"
-        update_group_admin_log(group, pen, action, removeid, reason)
+        update_group_admin_log(group, pnm, action, removeid, reason)
+        verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
 
@@ -624,9 +652,8 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grprev', PostReview),
                                ('/grpremrev', RemoveReview),
                                ('/grpmemapply', ApplyForMembership),
-                               ('/grpmemwithdraw', WithdrawMembershipSeek),
-                               ('/grpmemrej', DenyMembershipSeek),
-                               ('/grpmemyes', AcceptMembershipSeek),
+                               ('/grpmemwithdraw', WithdrawApplication),
+                               ('/grpmemprocess', ProcessMembership),
                                ('/grprejok', MembershipRejectAck),
                                ('/grpmemremove', RemoveMember),
                                ('/grpbyname', GetGroupByName),
