@@ -901,6 +901,11 @@ class ReviewDataInit(webapp2.RequestHandler):
             pnm.put()
             count += 1
         self.response.out.write(str(count) + " Pens initialized<br>\n")
+        groups = group.Group.all()
+        count = 0
+        for grp in groups:
+            grp.adminlog = ""
+        self.response.out.write(str(count) + " Groups initialized<br>\n")
 
 
 class VerifyAllReviews(webapp2.RequestHandler):

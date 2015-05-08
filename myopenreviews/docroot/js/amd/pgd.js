@@ -411,8 +411,9 @@ app.pgd = (function () {
         html = ["div", {cla: "formline"},
                 [["a", {href: "#togglecalembed",
                         onclick: jt.fs("app.layout.togdisp('grpcalembdiv')")},
-                  ["span", {cla: "settingsexpandlinkspan"},
-                   "Embedded Calendar"]],
+                  [calendarIconHTML(),
+                   ["span", {cla: "settingsexpandlinkspan"},
+                    "Embedded Calendar"]]],
                  ["div", {cla: "formline", id: "grpcalembdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
@@ -441,8 +442,9 @@ app.pgd = (function () {
         html = ["div", {cla: "formline"},
                 [["a", {href: "#toggletools",
                         onclick: jt.fs("app.layout.togdisp('grptoolsdiv')")},
-                  ["span", {cla: "settingsexpandlinkspan"},
-                   "RSS and Site Embed"]],
+                  [["img", {cla: "grpsetimg", src: "img/rssicon.png"}],
+                   ["span", {cla: "settingsexpandlinkspan"},
+                    "RSS and Site Embed"]]],
                  ["div", {cla: "formline", id: "grptoolsdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
@@ -454,7 +456,7 @@ app.pgd = (function () {
                      ["div", {cla: "formline"}, 
                       ["textarea", {id: "rssurlta", cla: "dlgta"}]]]],
                    ["div", {cla: "formline"},
-                    [["To embed group posts in your own website, add the following html to your web page:"],
+                    [["To embed this group in your own website, add this html to your web page:"],
                      ["div", {cla: "formline"},
                       ["textarea", {id: "grpembedta", cla: "dlgta"}]]]]]]]];
         return html;
@@ -491,14 +493,21 @@ app.pgd = (function () {
     },
 
 
+    calendarIconHTML = function () {
+        var html;
+        html = ["div", {id: "calicodiv", cla: "tabico"},
+                [["div", {id: "calicoheaddiv"}],
+                 ["div", {id: "caliconumdiv"},
+                  new Date().getDate()]]];
+        return jt.tac2html(html);
+    },
+
+
     tabHTMLFromDef = function (tabname) {
         var ico, html;
         ico = ["img", {cla: "tabico", src: knowntabs[tabname].img}];
         if(knowntabs[tabname].img === "calico") {
-            ico = ["div", {id: "calicodiv", cla: "tabico"},
-                    [["div", {id: "calicoheaddiv"}],
-                     ["div", {id: "caliconumdiv"},
-                      new Date().getDate()]]]; }
+            ico = calendarIconHTML(); }
         html = ["li", {id: tabname + "li", cla: "unselectedTab"},
                 ["a", {href: knowntabs[tabname].href,
                        onclick: jt.fs("app.pgd.tabsel('" + tabname + "')")},
