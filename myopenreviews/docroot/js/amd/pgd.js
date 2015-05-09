@@ -107,16 +107,18 @@ app.pgd = (function () {
 
 
     modButtonsHTML = function (obj) {
-        var mypenid, mypen, html = "";
+        var mypenid, mypen, objectid, html = "";
         mypenid = app.pen.myPenId();
         mypen = app.pen.myPenName();
-        if(dst.type === "pen" && jt.instId(obj) === mypenid) {
+        objectid = jt.instId(obj);
+        if(dst.type === "pen" && objectid === mypenid) {
             html = ["a", {id: "pgdsettingslink", href: "#pensettings",
                           onclick: jt.fs("app.pgd.settings()")},
                     ["img", {cla: "reviewbadge",
                              src: "img/settings.png"}]]; }
         if(dst.type === "group" && mypen) {
-            if(!mypen.groups || !mypen.groups.csvcontains(jt.instId(obj))) {
+            if(jt.isId(objectid) && (!mypen.groups || 
+                                     !mypen.groups.csvcontains(objectid))) {
                 html = ["span", {id: "followbuttonspan"},
                         ["button", {type: "button", id: "followbutton",
                                     onclick: jt.fs("app.group.follow()")},
@@ -337,7 +339,8 @@ app.pgd = (function () {
     },
     picSettingsHTML = function () {
         var html;
-        if(dst.type === "group" && app.group.membershipLevel(dst.obj) < 3) {
+        if(dst.type === "group" && app.group.membershipLevel(dst.obj) < 3 ||
+              !jt.isId(jt.instId(dst.obj))) {
             return ""; }
         html = [["label", {fo: "picuploadform", cla: "overlab"},
                   "Change Picture"],
@@ -374,6 +377,7 @@ app.pgd = (function () {
                   [["label", {fo: "namein", cla: "liflab", id: "namelab"},
                     "Name"],
                    ["input", {id: "namein", cla: "lifin", type: "text",
+                              placeholder: "Group name required",
                               value: dst.obj.name}]]]; }
         defs = dst[dst.type];
         html = [nh,
@@ -406,8 +410,9 @@ app.pgd = (function () {
 
     calendarSettingsHTML = function () {
         var html;
-        if(dst.type !== "group" || app.group.membershipLevel(dst.obj) < 3) {
-            return; }
+        if(dst.type !== "group" || app.group.membershipLevel(dst.obj) < 3 ||
+               !jt.isId(jt.instId(dst.obj))) {
+            return ""; }
         html = ["div", {cla: "formline"},
                 [["a", {href: "#togglecalembed",
                         onclick: jt.fs("app.layout.togdisp('grpcalembdiv')")},
@@ -437,8 +442,8 @@ app.pgd = (function () {
     rssEmbedSettingsHTML = function () {
         var sr, html;
         sr = "https://www.commafeed.com";
-        if(dst.type !== "group") {
-            return; }
+        if(dst.type !== "group" || !jt.isId(jt.instId(dst.obj))) {
+            return ""; }
         html = ["div", {cla: "formline"},
                 [["a", {href: "#toggletools",
                         onclick: jt.fs("app.layout.togdisp('grptoolsdiv')")},
@@ -593,13 +598,13 @@ app.pgd = (function () {
                    [["div", {cla: "pgdtoggle"},
                      ["a", {href: "#findgroups",
                             onclick: jt.fs("app.pgd.toggleFindGroups()")},
-                      "Find groups to follow"]],
+                      "Follow groups"]],
                     ["div", {id: "findgrpdiv"}]]]);
         html.push(["div", {cla: "pgdtext"},
                    [["div", {cla: "pgdtoggle"},
                      ["a", {href: "#creategroup",
                             onclick: jt.fs("app.pgd.toggleCreateGroup()")},
-                      "Create Group"]],
+                      "Create group"]],
                     ["div", {id: "creategrpdiv"}]]]);
         jt.out('pgdcontdiv', jt.tac2html(html));
     },
@@ -635,7 +640,10 @@ app.pgd = (function () {
         dst.tab = tabname;
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
-        dispfunc();
+        if(jt.isId(jt.instId(dst.obj))) {
+            return dispfunc(); }
+        jt.out('pgdcontdiv', dst.type.capitalize() + " settings required");
+        app.pgd.settings();
     },
 
 
@@ -664,7 +672,7 @@ app.pgd = (function () {
                    tabsHTML(obj)]],
                  ["div", {id: "pgdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
-        displayTab();
+        displayTab(dst.tab);
     },
 
 
@@ -676,7 +684,7 @@ app.pgd = (function () {
             if((!id && !mpi) || (id && id === mpi)) {
                 msg = "Retrieving your Pen Name..."; }
             else {
-                msg = "Retriving Pen Name " + id + "..."; } }
+                msg = "Retrieving Pen Name " + id + "..."; } }
         jt.out(divid, msg);
     },
 
@@ -774,6 +782,10 @@ return {
 
 
     grpdownlev: function () {
+        if(!jt.isId(jt.instId(dst.obj))) {
+            app.layout.cancelOverlay();
+            return app.pgd.display("pen", app.pen.myPenId(), "groups", 
+                                   app.pen.myPenName()); }
         //confirm the action if needed
         //call group.resign or stop following depending on level.
         jt.err("pgd.grpdownlev not implemented yet");
@@ -856,11 +868,11 @@ return {
 
     toggleFindGroups: function () {
         var html;
-        html = ["The best way to find groups is from the ",
+        html = ["If you see something good in the ",
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
-                 "main feed display."],
-                " If a notable membic was posted to a group, click through and check it out.  If the group looks interesting, you can follow to prefer content posted from the group, then optionally apply for membership if you want to contribute."];
+                 "main feed display,"],
+                " click the title to expand the details. If the membic was posted to a group, you can click the group name to check out related posts. If the group looks interesting, you can follow it to prefer content posted there. You can also apply for membership if you want to contribute."];
         if(!jt.byId("findgrpdiv").innerHTML) {
             jt.out('findgrpdiv', jt.tac2html(html)); }
         else {
@@ -950,7 +962,12 @@ return {
             return displayObject(obj); }
         if(dst.id) {
             return app.pgd.fetchAndDisplay(dst.type, dst.id, dst.tab); }
-        jt.log("pgd.display called without an obj or id");
+        if(dtype === "group") {  //creating new group
+            dst.obj = { name: "", description: "", 
+                        people: {}, founders: app.pen.myPenId() };
+            dst.obj.people[app.pen.myPenId()] = app.pen.myPenName().name;
+            return displayObject(dst.obj); }
+        jt.err("pgd.display called with inadequate data");
     },
 
 
@@ -975,6 +992,7 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("blockfetch " + dtype + " " + id  + 
                            " returned in " + time/1000 + " seconds.");
+                    jt.out(divid, "");
                     if(!objs.length || !objs[0]) {
                         if(dtype === "pen") {
                             return app.pen.newPenName(callback); }

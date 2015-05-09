@@ -55,8 +55,10 @@ button, .loginbutton, .formbutton {
 #topsectiondiv { }
 #logodiv { float:left; cursor:pointer; } 
 #logodiv, #logoimg { width:80px; height:80px; }
+#loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
+#loginstatdiv { height:30px; text-align:right; }
 #headingdiv { min-height:80px; }
-#headingdivcontent { width:240px; margin:auto; padding:30px 0px 0px 0px; }
+#headingdivcontent { width:240px; margin:auto; }
 .revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
 #topworkdiv { float:right; padding:0px 2px 2px 0px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
@@ -185,7 +187,6 @@ button, .loginbutton, .formbutton {
 .bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
 .bookmarkletdescr { font-size:small; text-align:right; 
   padding:0px 0px 0px 40px;}
-#loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #gsitd { padding: 10px; }
 #altauthmethods { padding:0px 0px 20px 30px; }
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 

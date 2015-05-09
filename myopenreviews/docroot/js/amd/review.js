@@ -1310,6 +1310,7 @@ return {
     resetStateVars: function () {
         autourl = "";
         crev = { autocomp: true };
+        autocomptxt = "";
     },
 
 
@@ -1929,7 +1930,7 @@ return {
     },
 
 
-    displayReviews: function (divid, prefix, revs, togcbn, author) {
+    displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
         var rt, i, html, rev, pr, maindivattrs, authlink, revdivid;
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
@@ -1937,7 +1938,9 @@ return {
                 html = "No membics found."; }
             else {
                 rt = app.review.getReviewTypeByValue(rt);
-                html = "No " + rt.plural + " found."; } }
+                html = "No " + rt.plural + " found."; }
+            if(xem) {
+                html += " " + xem; } }
         else {
             html = []; }
         for(i = 0; i < revs.length; i += 1) {

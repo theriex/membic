@@ -198,11 +198,8 @@ app.login = (function () {
             if(emailin && emailin.value) {
                 text = fixEmailAddress(emailin.value); }
             else {
-                text = "That account"; }
-            text += " is not registered yet.<br/>" +
-                "If you want to create it, verify your<br/>" + 
-                "password is entered correctly and<br/>" + 
-                "click \"Create Account\"."; }
+                text = "Account"; }
+            text += " not registered yet."; }
         return text;
     },
 
@@ -358,7 +355,7 @@ app.login = (function () {
             var accpenin = jt.byId("accpenin");
             if(accpenin) {
                 accpenin.value = pen.name;
-                moracct.penName = pen.name; }});
+                moracct.penName = pen.name; }}, "usermenustat");
     },
 
 

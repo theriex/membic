@@ -51,6 +51,7 @@ app.pen = (function () {
         var html;
         returnFuncMemo = callback;
         app.login.updateAuthentDisplay("hide");
+        jt.out('headingdivcontent', "");
         html = ["div", {id: "createpndiv"},
                 [["div", {id: "createpnintrodiv"},
                   "Your pen name is a unique public identifier for membics you write. Use your real name or get creative."],
@@ -59,7 +60,7 @@ app.pen = (function () {
                     "Pen Name"],
                    ["input", {id: "pnamein", cla: "lifin", type: "text",
                               onchange: jt.fs("app.pen.createPenName()")}],
-                   ["div", {id: "penformstat"}],
+                   ["div", {id: "penformstat", cla: "formline"}],
                    ["div", {id: "pncbuttondiv", cla: "dlgbuttonsdiv"},
                     ["button", {type: "button", id: "createbutton",
                                 onclick: jt.fs("app.pen.createPenName()")},
@@ -75,6 +76,7 @@ app.pen = (function () {
 return {
 
     resetStateVars: function () {
+        loginpenid = 0;
         returnFuncMemo = null;
     },
 
@@ -94,13 +96,13 @@ return {
                      returnCall(); },
                  app.failf(function (code, errtxt) {
                      jt.out('penformstat', errtxt);
-                     jt.out('formbuttons', buttonhtml); }),
+                     jt.out('pncbuttondiv', buttonhtml); }),
                 jt.semaphore("pen.createPenName"));
     },
 
 
-    getPen: function (penid, callback) {
-        app.pgd.blockfetch("pen", penid, callback);
+    getPen: function (penid, callback, divid) {
+        app.pgd.blockfetch("pen", penid, callback, divid);
     },
 
 

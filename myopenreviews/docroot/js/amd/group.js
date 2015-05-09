@@ -1990,7 +1990,7 @@ return {
         if(!group) {
             return 0; }
         penid = penid || app.pen.myPenId();
-        if(group.seeking.csvcontains(penid)) {
+        if(group.seeking && group.seeking.csvcontains(penid)) {
             return true; }
         return false;
     },

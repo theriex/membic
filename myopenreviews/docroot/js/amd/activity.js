@@ -77,7 +77,8 @@ app.activity = (function () {
         app.layout.displayTypes(displayRemembered, filtertype);
         revs = app.review.filterByRevtype(feeds.remembered, filtertype);
         app.review.displayReviews("feedrevsdiv", "rrd", revs,
-                                  "app.activity.toggleExpansion", "author");
+                                  "app.activity.toggleExpansion", "author",
+                                  "Click the main icon, then click the remember button for any membic you want to keep in your memory.");
     },
 
 
