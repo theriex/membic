@@ -341,16 +341,6 @@ app.login = (function () {
                 ["input", {type: "password", cla: "lifin", 
                            name: "passin", id: "passin"}]];
         jt.out('accpassupdatediv', jt.tac2html(html));
-        html = [["label", {fo: "freqsel", cla: "liflab"}, "Summary"],
-                freqopts(moracct)];
-        jt.out('accsumfrequpdatediv', jt.tac2html(html));
-        html = [["input", {type: "checkbox", name: "summaryflags",
-                           value: "sumiflogin", id: "sumiflogin",
-                           cla: "accsetcbox",
-                           checked: jt.toru(hasflag(moracct, "sumiflogin"))}],
-                ["label", {fo: "sumiflogin", cla: "accsetcboxlab"},
-                 "Send even if site visited"]];
-        jt.out('accsumflagsupdatediv', jt.tac2html(html));
         app.pen.getPen("", function (pen) {
             var accpenin = jt.byId("accpenin");
             if(accpenin) {
@@ -369,20 +359,19 @@ app.login = (function () {
         if(!jt.isProbablyEmail(ua.email)) {
             return jt.out('usermenustat', "Invalid email address"); }
         if(ua.email !== moracct.email &&
-           (!confirm("You will need to re-activate your account from your new email address. Double check your new email address is correct for login recovery. Activation mail will be sent to " + ua.email))) {
+           (!confirm("You will need to login again and re-activate your account from your new email address. Setting your email address to " + ua.email))) {
             return; }
         if(jt.byId('passin').value) {
             ua.password = jt.byId('passin').value.trim(); }
-        ua.summaryfreq = sumfreqs[jt.byId('offsumsel').selectedIndex];
-        ua.summaryflags = "";
-        cboxes = document.getElementsByName("summaryflags");
-        for(i = 0; i < cboxes.length; i += 1) {
-            if(cboxes[i].checked) {
-                if(ua.summaryflags) {
-                    ua.summaryflags += ","; }
-                ua.summaryflags += cboxes[i].value; } }
         ua.penName = jt.byId('accpenin').value;
         return ua;
+    },
+
+
+    getAccountInfoFromPenStash = function () {
+        var mypen = app.pen.myPenName();
+        if(mypen && mypen.stash && mypen.stash.account) {
+            moracct = mypen.stash.account; }
     },
 
 
@@ -426,14 +415,14 @@ app.login = (function () {
     //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
         //Need to note login, but definitely don't hold up display work
-        setTimeout(function () {
-            var data = "penid=" + app.pen.myPenId();
-            if(app.pen.myPenId()) {
-                jt.call('POST', "penacc?" + app.login.authparams(), data,
-                        function () {
-                            jt.log("Pen access time updated"); },
-                        app.failf(),
-                        jt.semaphore("login.loggedInDoNextStep")); }}, 4000);
+        // setTimeout(function () {
+        //     var data = "penid=" + app.pen.myPenId();
+        //     if(app.pen.myPenId()) {
+        //         jt.call('POST', "penacc?" + app.login.authparams(), data,
+        //                 function () {
+        //                     jt.log("Pen access time updated"); },
+        //                 app.failf(),
+        //                 jt.semaphore("login.loggedInDoNextStep")); }}, 4000);
         if(params.command === "helpful" ||
            params.command === "remember" ||
            params.command === "respond" ||
@@ -540,13 +529,11 @@ return {
                               placeholder: "nospam@example.com"}]]],
                  ["div", {cla: "lifsep", id: "accstatusupdatediv"}],
                  ["div", {cla: "lifsep", id: "accstatdetaildiv"}],
+                 ["div", {cla: "lifsep", id: "accpassupdatediv"}],
                  ["div", {cla: "lifsep", id: "accpenupdatediv"},
                   [["label", {fo: "accpenin", cla: "liflab"}, "Pen&nbsp;Name"],
                    ["input", {type: "text", cla: "lifin", 
                               name: "accpenin", id: "accpenin"}]]],
-                 ["div", {cla: "lifsep", id: "accpassupdatediv"}],
-                 ["div", {cla: "lifsep", id: "accsumfrequpdatediv"}],
-                 ["div", {cla: "lifsep", id: "accsumflagsupdatediv"}],
                  ["div", {cla: "lifsep", id: "usermenustat"}],
                  ["div", {cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "cancelbutton",
@@ -561,6 +548,8 @@ return {
         jt.byId('accsetdiv').style.visibility = "visible";
         jt.out('accsetdiv', jt.tac2html(html));
         jt.byId('accstatdetaildiv').style.display = "none";
+        if(!moracct) {
+            getAccountInfoFromPenStash(); }
         if(moracct) {
             writeUsermenuAccountFormElements(moracct); }
         else {
@@ -676,7 +665,10 @@ return {
            ua.summaryflags === moracct.summaryflags) {
             contf(); }
         else {  //account info changed
+            if(ua.email !== moracct.email) {
+                contf = app.login.logout; }
             data = jt.objdata(ua) + "&" + authparams();
+            jt.log("updacc data: " + data);
             jt.call('POST', secureURL("updacc"), data,
                     function (objs) {
                         if(authmethod === "mid") {

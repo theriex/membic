@@ -1086,7 +1086,7 @@ app.review = (function () {
                     ["div", {id: "revautodiv"}]];
             jt.out("rdkeyindiv", jt.tac2html(html)); }
         jt.out("keylab", rt.key.capitalize());  //update label if type changed
-        jt.byId("keyin").value = crev[rt.key] || "";
+        jt.byId("keyin").value = jt.byId("keyin").value || crev[rt.key] || "";
         jt.byId("rdaccb").checked = crev.autocomp;
         if(html) {  //just initialized the key input, set for entry
             jt.byId('keyin').focus(); }
@@ -1096,7 +1096,7 @@ app.review = (function () {
 
     dlgPicHTML = function () {
         var src, type, html;
-        src = "img/emptyprofpic.png";
+        src = "img/emptyrevpic.png";
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
             src = "revpic?revid=" + jt.instId(crev); }
@@ -1272,7 +1272,10 @@ app.review = (function () {
 
 
     dlgGroupPostSelection = function () {
-        var grps, i, grp, posted, html = [];
+        var rt, grps, i, grp, posted, html = [];
+        rt = findReviewType(crev.revtype);
+        if(!rt) {  //no type selected yet, so no keyword entry yet
+            return; }
         grps = app.pen.postableGroups();  //sorted memberships from pen.stash
         for(i = 0; i < grps.length; i += 1) {
             grp = grps[i];
@@ -1317,6 +1320,9 @@ return {
     start: function (source) {
         var html;
         app.review.resetStateVars();
+        if(app.pen.myAccountStatus() !== "Active") {
+            jt.err("You need to activate your account before posting");
+            return app.login.usermenu(); }
         if(typeof source === 'string') {  //passed in a url
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review
@@ -1631,6 +1637,8 @@ return {
             return ""; }
         if(!review.url) {
             qurl = review[type.key];
+            if(!qurl) {
+                return ""; }
             if(type.subkey) { 
                 qurl += " " + review[type.subkey]; }
             qurl = jt.enc(qurl);
@@ -1863,20 +1871,22 @@ return {
 
 
     revdispHTML: function (prefix, revid, rev, togfname) {
-        var revdivid, type, html;
+        var revdivid, type, html, togclick;
         togfname = togfname || "app.review.toggleExpansion";
+        togclick = jt.fs(togfname + "('" + prefix + "','" + revid + "')");
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
         html = ["div", {cla: "fpinrevdiv"},
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
                  ["div", {cla: "fptypediv"},
-                  ["img", {cla: "reviewbadge", src: "img/" + type.img,
-                           title: type.type, alt: type.type}]],
+                  ["a", {href: "#statrev/" + jt.instId(rev),
+                         onclick: togclick},
+                   ["img", {cla: "reviewbadge", src: "img/" + type.img,
+                            title: type.type, alt: type.type}]]],
                  ["div", {cla: "fptitlediv"},
                   ["a", {href: "#statrev/" + jt.instId(rev),
-                         onclick: jt.fs(togfname + "('" +
-                                        prefix + "','" + revid + "')")},
+                         onclick: togclick},
                    app.pgd.reviewItemNameHTML(type, rev)]],
                  ["div", {cla: "fpstarsdiv"},
                   app.review.starsImageHTML(rev)],

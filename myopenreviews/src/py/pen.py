@@ -197,6 +197,17 @@ def fetch_pen_by_penid(handler):
     return pen
 
 
+def add_account_info_to_pen_stash(acc, pen):
+    ad = {}
+    ad["email"] = acc.email
+    ad["status"] = acc.status
+    stash = {}
+    if pen.stash:
+        stash = json.loads(pen.stash)
+    stash["account"] = ad
+    pen.stash = json.dumps(stash)
+
+
 def find_auth_pens(handler):
     # logging.info("pen.py AuthPenNames start...")
     acc = authenticated(handler.request)
@@ -213,6 +224,11 @@ def find_auth_pens(handler):
     # logging.info("pen.py AuthPenNames " + where)
     pq = PenName.gql(where, acc._id)
     pens = pq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    for pen in pens:
+        try:
+            add_account_info_to_pen_stash(acc, pen)
+        except Exception as e:
+            logging.info("Unable to add account info to pen " + str(e))
     return pens
 
 

@@ -360,10 +360,11 @@ def send_activation_code(handler, account):
         account.actsends = ""
     account.actsends += nowISO() + ";" + account.email
     account.put()
-    url = "https://www.membic.com/activate?key=" +\
+    # host_url is a field that Request inherits from WebOb
+    url = handler.request.host_url + "/activate?key=" +\
         str(account.key().id()) + "&code=" + account.actcode
     logging.info("Activate " + account.email + ": " + url)
-    if not handler.request.url.startswith('http://localhost'):
+    if not handler.request.host_url.startswith('http://localhost'):
         mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
         mail.send_mail("membic.com administrator <admin@membic.com>",
                        to=account.email,
@@ -546,21 +547,16 @@ class UpdateAccount(webapp2.RequestHandler):
             emaddr = normalize_email(emaddr)
             if emaddr != account.email:
                 if not valid_new_email_address(self, emaddr):
-                    return
+                    return srverr(self, 400, "Invalid email address")
                 account.email = emaddr
                 account.status = "Pending"
                 account.actsends = ""
                 account.actcode = ""
                 mailaddresschanged = True
-            if not account.lastsummary:
-                account.lastsummary = nowISO()
-            account.summaryfreq = self.request.get('summaryfreq') or "weekly"
-            account.summaryflags = self.request.get('summaryflags') or ""
             account.modified = nowISO()
             account.put()  #nocache
-            if mailaddresschanged:
-                account = MORAccount.get_by_id(account.key().id())
-                account = send_activation_code(self, account)
+            # retrieve updated version so all calls from here on will find it
+            account = MORAccount.get_by_id(account.key().id())
             token = newtoken(account.email, account.password)
             writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
         else:

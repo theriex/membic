@@ -171,6 +171,14 @@ return {
     },
 
 
+    myAccountStatus: function () {
+        var pen = app.pen.myPenName();
+        if(!pen || !pen.stash || !pen.stash.account) {
+            return "Unknown"; }
+        return pen.stash.account.status;
+    },
+
+
     updatePen: function (pen, callbackok, callbackfail) {
         updatePenName(pen, callbackok, callbackfail);
     },

@@ -574,7 +574,13 @@ def retrieve_pen_or_group(handler):
         return pnm, "penid"
     pens = pen.find_auth_pens(handler)
     if pens and len(pens) > 0:
-        return pens[0], "penid"
+        mypen = pens[0]
+        mypen.accessed = nowISO()
+        try:
+            cached_put(mypen)
+        except Exception as e:
+            logging.info("Update of pen.accessed failed: " + str(e))
+        return mypen, "penid"
     return None, penid
 
 
@@ -714,7 +720,7 @@ class DeleteReview(webapp2.RequestHandler):
         grp = group.Group.get_by_id(int(review.grpid))
         if not grp:
             return srverr(self, 404, "Group " + review.grpid + " not found")
-        penid = str(pnm.key().id())
+        penid = pnm.key().id()
         reason = self.request.get('reason') or ""
         if review.penid != penid:
             if group.member_level(penid, grp) < 2:
@@ -755,7 +761,7 @@ class UploadReviewPic(webapp2.RequestHandler):
             revtype = self.request.get("revtype")
             if not revtype:
                 return srverr(self, 406, "No revtype recieved")
-            review = Review(penid=penid, revtype=revtype)
+            review = Review(penid=pnm.key().id(), revtype=revtype)
         upfile = self.request.get("picfilein")
         if not upfile:
             return srverr(self, 406, "No picfilein received")
