@@ -1975,6 +1975,7 @@ return {
             return 0; }
         group.members = group.members || "";
         group.moderators = group.moderators || "";
+        group.founders = group.founders || "";
         penid = penid || app.pen.myPenId();
         if(group.members.csvcontains(penid)) {
             return 1; }

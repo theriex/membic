@@ -125,27 +125,9 @@ def verify_unique_name(handler, group):
         pass  # just compare to zero if no id because not saved yet
     groups = Group.gql("WHERE name_c=:1", group.name_c)
     for sisgrp in groups:
-        if sisgrp.key().id() != groupid:
-            handler.error(400)
-            handler.response.out.write("Group name already in use")
-            return False
-    return True
-
-
-def revtypes_valid(handler, group):
-    if not group.revtypes:
-        handler.error(400)
-        handler.response.out.write("One or more review types are required")
-        return False
-    vts = ["book", "movie", "video", "music", 
-           "food", "drink", "activity", "other"]
-    rts = group.revtypes.split(",")
-    for rt in rts:
-        if not rt in vts:
-            handler.error(400)
-            handler.response.out.write(
-                "\"" + rt + "\" is not a valid review type.")
-            return False
+        sid = sisgrp.key().id()
+        if sid != groupid:
+            return srverr(handler, 409, "Name already in use group " + str(sid))
     return True
 
 
@@ -164,15 +146,8 @@ def read_and_validate_descriptive_fields(handler, group):
         handler.response.out.write("Embed code must be an iframe")
         return False
     # picture is uploaded separately
-    group.revtypes = handler.request.get('revtypes')
-    if not revtypes_valid(handler, group):
-        return False
-    group.revfreq = intz(handler.request.get('revfreq'))
-    if group.revfreq < 14 or group.revfreq > 365:
-        handler.error(400)
-        handler.response.out.write("Review frequency " + str(frequency) + 
-                                   " not between 14 and 365.")
-        return False
+    # revtypes not used anymore
+    # frequency not used anymore
     # membership fields are handled separately
     # review postings are handled separately
     return True

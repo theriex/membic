@@ -1323,6 +1323,9 @@ return {
         if(app.pen.myAccountStatus() !== "Active") {
             jt.err("You need to activate your account before posting");
             return app.login.usermenu(); }
+        if(!app.pen.myPenName().profpic) {
+            jt.err("You need a profile picture to identify your membics");
+            return app.pgd.display("pen"); }
         if(typeof source === 'string') {  //passed in a url
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review

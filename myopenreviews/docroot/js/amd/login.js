@@ -489,7 +489,7 @@ app.login = (function () {
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
             displayLoginForm(params);
-            app.activity.displayFeed("all"); }
+            app.login.doNextStep(); }
         else { 
             app.redirectToSecureServer(params); }
     };
@@ -788,12 +788,17 @@ return {
         //no tag redirect so check current state.  State may be from history
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
-        if(state && state.view) {
-            return app.history.dispatchState(state); }
-        if(params.view === "profile") {
-            return app.pgd.display(); }
-        //go with default display
-        app.activity.displayActive();
+        if(!state || !state.view) {
+            if(params.view === "profile") {
+                state = {view: "profile"}; }
+            else {  //default initialization
+                state = {view: "activity"}; } }
+        if(app.login.isLoggedIn()) {
+            app.pen.getPen("", function (pen) {
+                app.login.updateAuthentDisplay();
+                app.history.dispatchState(state); }); }
+        else {
+            app.history.dispatchState(state); }
     },
 
 

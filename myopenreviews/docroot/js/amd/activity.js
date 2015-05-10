@@ -131,13 +131,7 @@ app.activity = (function () {
 
 
     mainDisplay = function (dispmode) {
-        if(!app.pen.myPenName()) {
-            setTimeout(function () {
-                app.pen.getPen("", function (pen) {
-                    mainDisplay(dispmode); }); }, 100);
-            return; }
         app.history.checkpoint({ view: dispmode });
-        app.login.updateAuthentDisplay();
         if(dispmode === "memo") {
             displayRemembered(); }
         else {  //dispmode === "activity", activityMode === "amnew"
@@ -238,17 +232,11 @@ return {
 
 
     displayActive: function () {
-        if(app.login.isLoggedIn()) {
-            //Do not close the "making introductions" dialog automatically
-            //or it gets replaced by the next hint, which looks bad.
-            //app.layout.closeDialog();
-            mainDisplay("activity"); }
+        mainDisplay("activity");
     },
 
 
     displayRemembered: function () {
-        //Mirror the behavior of displayActive.
-        //app.layout.closeDialog();
         mainDisplay("memo");
     },
 

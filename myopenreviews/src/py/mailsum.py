@@ -3,7 +3,6 @@ import datetime
 from google.appengine.ext import db
 import logging
 from pen import PenName
-from rel import outbound_relids_for_penid
 from rev import Review, review_activity_search
 from req import Request, find_requests
 from moracct import MORAccount, safestr, returnJSON, writeJSONResponse

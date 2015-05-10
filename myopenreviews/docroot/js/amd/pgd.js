@@ -302,6 +302,8 @@ app.pgd = (function () {
 
     adminSettingsHTML = function () {
         var memsel = "", html;
+        if(dst.type !== "group") {
+            return ""; }
         if(app.group.membershipLevel(dst.obj) >= 2) {
             memsel = ["a", {href: "#memberinfo",
                             onclick: jt.fs("app.pgd.toggleGrpDet('members')")},
@@ -756,8 +758,7 @@ return {
                 app.pgd.display(dst.type, dst.id, dst.tab, dst.obj); };
             failfunc = function (code, errtxt) {
                 jt.byId('okbutton').disabled = false;
-                jt.out('formstatdiv', "Update failed code " + code + 
-                       ": " + errtxt); };
+                jt.out('formstatdiv', jt.errhtml("Update", code, errtxt)); },
             defs.objupdate(dst.obj, okfunc, failfunc); }
     },
 
@@ -872,7 +873,7 @@ return {
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
                  "main feed display,"],
-                " click the title to expand the details. If the membic was posted to a group, you can click the group name to check out related posts. If the group looks interesting, you can follow it to prefer content posted there. You can also apply for membership if you want to contribute."];
+                " click the title to expand the details. If the membic was posted to a group, you can click the group name to see related posts. If the group looks interesting, you can follow it to prefer content posted there. You can also apply for membership if you want to contribute."];
         if(!jt.byId("findgrpdiv").innerHTML) {
             jt.out('findgrpdiv', jt.tac2html(html)); }
         else {
@@ -882,7 +883,7 @@ return {
 
     toggleCreateGroup: function () {
         var html;
-        html = ["A group is a collection of membics related to a theme.  After creating a group, you can post any membic you write that matches the group criteria.  As the founder of a group, you have full privileges to accept other members and manage posts as you want.",
+        html = ["A group is a collection of membics related to a theme.  After creating a group, you can post related membics.  As the founder of a group, you have full privileges to manage other members and posts as you want.",
                 ["div", {cla: "formbuttonsdiv"},
                  ["button", {type: "button", id: "creategroupbutton",
                              onclick: jt.fs("app.pgd.display('group')")},
