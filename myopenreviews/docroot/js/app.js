@@ -162,7 +162,7 @@ var app = {},  //Global container for application level funcs and values
             //form.  The appropriate thing is to redo the login.
             case 401: 
                 jt.log("app.failf 401, calling logout...");
-                return app.login.logout("Please sign in");
+                return app.login.logout(errtxt || "Please sign in");
             //   404 (not found) -> general error handling
             //   405 (GET instead of POST) -> general error handling
             //   412 (precondition failed) -> general error handling

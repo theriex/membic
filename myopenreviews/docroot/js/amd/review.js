@@ -1332,6 +1332,7 @@ return {
             crev = copyReview(source);
             if(source.penid !== app.pen.myPenId()) {
                 makeMine(crev, jt.instId(source)); } }
+        crev.penid = app.pen.myPenId();
         html = ["div", {id: "revdlgdiv"},
                 [["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],

@@ -98,11 +98,13 @@ def safe_get_review_for_update(handler):
 
 
 def get_review_for_save(handler):
+    penid = intz(handler.request.get('penid'))
     revid = intz(handler.request.get('_id'))
     if not revid:
         revid = intz(handler.request.get('revid'))
-    review = cached_get(revid, Review)
-    penid = intz(handler.request.get('penid'))
+    review = None
+    if revid:
+        review = cached_get(revid, Review)
     if not review:
         review = fetch_review_by_cankey(handler)
         if not review:

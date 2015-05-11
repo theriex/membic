@@ -624,7 +624,7 @@ app.pgd = (function () {
         html.push(tabHTMLFromDef("search"));
         if(dst.type === "pen") {  //find or create group
             html.push(tabHTMLFromDef("groups")); }
-        if(dst.type === "group") {
+        if(dst.type === "group" && dst.obj.calembed) {
             html.push(tabHTMLFromDef("calendar")); }
         return html;
     },
