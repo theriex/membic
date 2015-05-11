@@ -121,7 +121,7 @@ app.pgd = (function () {
                                      !mypen.groups.csvcontains(objectid))) {
                 html = ["span", {id: "followbuttonspan"},
                         ["button", {type: "button", id: "followbutton",
-                                    onclick: jt.fs("app.group.follow()")},
+                                    onclick: jt.fs("app.pgd.follow()")},
                          "Follow"]]; }
             else {
                 html = ["a", {id: "pgdsettingslink", href: "#groupsettings",
@@ -649,8 +649,19 @@ app.pgd = (function () {
     },
 
 
+    backgroundVerifyObjectData = function () {
+        var pen;
+        if(dst.type === "group" && jt.hasId(dst.obj)) {
+            pen = app.pen.myPenName();
+            if(app.group.membershipLevel(dst.obj, app.pen.myPenId()) > 0 &&
+               !(pen.groups && pen.groups.csvcontains(jt.instId(dst.obj)))) {
+                app.pgd.follow(); } }
+    },
+
+
     displayObject = function (obj) {
         var defs, html;
+        obj = obj || dst.obj;
         dst.obj = obj;
         app.layout.cancelOverlay();  //close user menu if open
         app.layout.closeDialog();    //close search dialog if open
@@ -674,6 +685,7 @@ app.pgd = (function () {
                    tabsHTML(obj)]],
                  ["div", {id: "pgdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
+        setTimeout(backgroundVerifyObjectData, 100);
         displayTab(dst.tab);
     },
 
@@ -732,6 +744,18 @@ return {
                                    descripSettingsInit();
                                    calSettingsInit();
                                    rssEmbedSettingsInit(); });
+    },
+
+
+    follow: function () {
+        var pen, grpid;
+        if(dst.type === "group" && jt.hasId(dst.obj)) {
+            grpid = jt.instId(dst.obj);
+            pen = app.pen.myPenName();
+            pen.groups = pen.groups || "";
+            if(!pen.groups.csvcontains(grpid)) {
+                pen.groups = pen.groups.csvappend(grpid);
+                app.pen.updatePen(pen, app.pgd.redisplay, app.failf); } }
     },
 
 
@@ -969,6 +993,11 @@ return {
             dst.obj.people[app.pen.myPenId()] = app.pen.myPenName().name;
             return displayObject(dst.obj); }
         jt.err("pgd.display called with inadequate data");
+    },
+
+
+    redisplay: function () {
+        app.pgd.display(dst.type, dst.id, dst.tab, dst.obj);
     },
 
 

@@ -176,6 +176,11 @@ return {
                 return true; }
             return false;
         };
+        jt.hasId = function (obj) {
+            if(obj && jt.isId(jt.instId(obj))) {
+                return true; }
+            return false;
+        };
         jt.errhtml = function (actverb, code, errtxt) {
             if(code === 409) {
                 errtxt = errtxt.replace(/group \d+/g, function (grpref) {
