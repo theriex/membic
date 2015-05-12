@@ -111,7 +111,7 @@ app.pgd = (function () {
         mypenid = app.pen.myPenId();
         mypen = app.pen.myPenName();
         objectid = jt.instId(obj);
-        if(dst.type === "pen" && objectid === mypenid) {
+        if(dst.type === "pen" && mypenid && objectid === mypenid) {
             html = ["a", {id: "pgdsettingslink", href: "#pensettings",
                           onclick: jt.fs("app.pgd.settings()")},
                     ["img", {cla: "reviewbadge",
@@ -1041,8 +1041,6 @@ return {
                         app.lcs.tomb(dtype, id, "blockfetch failed");
                         return callback(null); }
                     obj = objs[0];
-                    if(dtype === "pen" && !app.pen.myPenId()) {
-                        app.pen.setMyPenId(jt.instId(obj)); }
                     revs = objs.slice(1);
                     revs.sort(function (a, b) {
                         if(a.modified < b.modified) { return 1; }
@@ -1053,6 +1051,9 @@ return {
                         revs[i] = jt.instId(revs[i]); }
                     obj.recent = revs;  //ids resolved as needed for display
                     app.lcs.put(dtype, obj);
+                    if(dtype === "pen" && !app.pen.myPenId() &&
+                           obj.stash && obj.stash.account) {
+                        app.pen.setMyPenId(jt.instId(obj)); }
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
                     if(dtype === "group") {
                         app.group.verifyPenStash(obj); }
