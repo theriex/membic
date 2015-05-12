@@ -1,4 +1,4 @@
-/*global alert: false, confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
+/*global confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -414,15 +414,6 @@ app.login = (function () {
     //post-login.  These are separate flows.  Not supporting a
     //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
-        //Need to note login, but definitely don't hold up display work
-        // setTimeout(function () {
-        //     var data = "penid=" + app.pen.myPenId();
-        //     if(app.pen.myPenId()) {
-        //         jt.call('POST', "penacc?" + app.login.authparams(), data,
-        //                 function () {
-        //                     jt.log("Pen access time updated"); },
-        //                 app.failf(),
-        //                 jt.semaphore("login.loggedInDoNextStep")); }}, 4000);
         if(params.command === "helpful" ||
            params.command === "remember" ||
            params.command === "respond" ||
@@ -458,7 +449,7 @@ app.login = (function () {
         if(!params.returnto) {  //clean up the URL display
             clearParams(); }
         //handle specific context requests
-        if(params.view && (params.profid || params.groupid)) {
+        if(params.view && (params.penid || params.profid || params.groupid)) {
             //Note who requested a specific profile or group
             setTimeout(function () {
                 jt.call('GET', "/bytheway?clickthrough=" + params.view, null,
@@ -466,6 +457,7 @@ app.login = (function () {
                             jt.log("noted profile clickthrough"); },
                         app.failf); }, 200);
             app.history.checkpoint({ view: params.view, 
+                                     penid: params.penid,
                                      profid: params.profid,
                                      groupid: params.groupid }); }
         else if(params.revedit) {
@@ -489,7 +481,7 @@ app.login = (function () {
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
             displayLoginForm(params);
-            app.login.doNextStep(); }
+            app.login.doNextStep(params); }
         else { 
             app.redirectToSecureServer(params); }
     };

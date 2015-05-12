@@ -260,6 +260,8 @@ button, .loginbutton, .formbutton {
 #grpinfoseldiv { display:inline-block; margin-left:20px; width:50px; }
 #meminfoseldiv { display:inline-block; }
 .grpsetimg { vertical-align:middle; }
+#shurlspan { font-size:small; font-family:monospace;
+  background-image: url('../img/whitewash.png'); }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }

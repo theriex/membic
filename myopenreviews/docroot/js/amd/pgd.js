@@ -21,14 +21,14 @@ app.pgd = (function () {
                        piclabel: "Profile Pic",
                        picfield: "profpic",
                        picsrc: "profpic?profileid=",
-                       accsrc: "#view=pen&penid=" },
+                       accsrc: "?view=pen&penid=" },
                 group: { desclabel: "Description",
                          descplace: "What this group is about, what's appropriate to post...",
                          descfield: "description", 
                          piclabel: "Group Pic",
                          picfield: "picture",
                          picsrc: "grppic?groupid=",
-                         accsrc: "#view=group&groupid=" } },
+                         accsrc: "?view=group&groupid=" } },
         knowntabs = { latest:    { href: "#latestmembics", 
                                    img: "img/tablatest.png" },
                       favorites: { href: "#favoritemembics",
@@ -674,7 +674,7 @@ app.pgd = (function () {
                    ["div", {id: "pgddescrdiv"},
                     [["div", {id: "pgdnamediv"},
                       [["a", {href: defs.accsrc + jt.instId(obj),
-                              onclick: jt.fs("app.pgd.blogconf()")},
+                              onclick: jt.fs("app.pgd.share()")},
                         ["span", {cla: "penfont"}, obj.name]],
                        modButtonsHTML(obj)]],
                      ["div", {id: "ppgdshoutdiv"},
@@ -817,11 +817,23 @@ return {
     },
 
 
-    blogconf: function () {
-        //confirm we should open a new page with their blog view that
-        //they can share publicly.  The href should also be that URL
-        //since you have to be signed in to see someone's profile.
-        jt.err("blogconf not implemented yet.");
+    share: function () {
+        var descrdiv, shurlspan, defs, html;
+        descrdiv = jt.byId("ppgdshoutdiv");
+        if(descrdiv) {
+            defs = dst[dst.type];
+            shurlspan = jt.byId("shurlspan");
+            if(shurlspan) {
+                jt.out("ppgdshoutdiv", jt.tac2html(
+                    ["span", {cla: "shoutspan"}, 
+                     jt.linkify(dst.obj[defs.descfield] || "")])); }
+            else {
+                html = [["span", {cla: "shoutspan"},
+                         "To share this " + dst.type + " via social media, email or text, use the following URL:"],
+                        ["br"],
+                        ["span", {id: "shurlspan"},
+                         window.location.href + defs.accsrc + dst.id]];
+                jt.out("ppgdshoutdiv", jt.tac2html(html)); } }
     },
 
 
