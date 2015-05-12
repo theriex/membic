@@ -159,9 +159,10 @@ def updateable_pen(handler):
         handler.error(401)  # unauthorized
         handler.response.out.write("Authentication failed")
         return False
-    penid = intz(handler.request.get('_id'))
+    # penid lookup takes precedence so you can find the pen for a group
+    penid = intz(handler.request.get('penid'))
     if not penid:
-        penid = intz(handler.request.get('penid'))
+        penid = intz(handler.request.get('_id'))
     pen = cached_get(penid, PenName)
     if not pen:
         handler.error(404)  # not found
@@ -309,27 +310,24 @@ class UploadPic(webapp2.RequestHandler):
         pen = updateable_pen(self)
         if not pen:
             return
-        updobj = pen
-        picfor = self.request.get('picfor')
+        updobj = pen  # default is uploading a pic for your profile
+        picfor = self.request.get('picfor') or "pen"
         if picfor == "group":
             grp, role = group.fetch_group_and_role(self, pen)
             if not grp:
-                return
+                return  # error already reported
             if not role or role != "Founder":
-                self.error(403)  #forbidden
-                self.response.out.write("Only founders may upload a group pic")
-                return
+                return srverr(self, 403, "Only founders may upload a group pic")
             updobj = grp
         upfile = self.request.get("picfilein")
         if not upfile:
-            self.error(400)  # bad request
-            self.response.out.write("No picture file received")
-            return
+            return srverr(self, 400, "No picture file received")
+        logging.info("Pic upload for " + picfor + " " + str(updobj.key().id()))
         try:
             # resize images to max 160 x 160 px
             if picfor == "group":
                 grp.picture = db.Blob(upfile)
-                grp.picture = images.resize(pen.profpic, 160, 160)
+                grp.picture = images.resize(grp.picture, 160, 160)
                 grp.modified = nowISO()
                 cached_put(grp)
             else:
@@ -338,9 +336,7 @@ class UploadPic(webapp2.RequestHandler):
                 pen.modified = nowISO()
                 cached_put(pen)
         except Exception as e:
-            self.error(500)
-            self.response.out.write("Profile picture upload failed: " + str(e))
-            return
+            return srverr(self, 500, "Profile picture upload failed: " + str(e))
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write("Done: " + pen.modified)
 

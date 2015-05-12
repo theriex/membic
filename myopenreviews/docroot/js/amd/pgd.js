@@ -335,7 +335,7 @@ app.pgd = (function () {
                     dst.obj.modified = txt.slice("Done: ".length);
                     app.pgd.display(dst.type, dst.id, dst.tab, dst.obj);
                     return; }
-                if(txt.indexOf("Error: ") === 0) {
+                if(txt && txt.trim()) {  //something other than Done
                     jt.out('imgupstatdiv', txt); } }
             setTimeout(monitorPicUpload, 800); }
     },
