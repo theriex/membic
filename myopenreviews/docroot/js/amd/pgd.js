@@ -1,4 +1,4 @@
-/*global app: false, jt: false, setTimeout: false, window: false */
+/*global app: false, jt: false, setTimeout: false, window: false, confirm: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -44,8 +44,8 @@ app.pgd = (function () {
         setdispstate = { infomode: "" },
         grpmsgs = [
             {name: "Following",
-             levtxt: "Following a group shows you are interested.",
-             uptxt: "Only members may post to the group.",
+             levtxt: "Following shows you are interested in reading content posted to the group.",
+             uptxt: "Only members may post.",
              upbtn: "Apply for membership",
              cantxt: "You are applying for membership.",
              rejtxt: "Your membership application was rejected.",
@@ -143,23 +143,23 @@ app.pgd = (function () {
             html.push(["div", {cla: "formline"},
                        [["div", {cla: "grplevtxt"},
                          grpmsgs[mlev].uptxt],
-                        ["div", {cla: "formbuttonsdiv"},
+                        ["div", {cla: "formbuttonsdiv", id: "memappbdiv"},
                          ["button", {type: "button", id: "uplevelbutton",
-                                     onclick: jt.fs("app.group.apply()")},
+                                     onclick: jt.fs("app.pgd.grpmem('apply')")},
                           grpmsgs[mlev].upbtn]]]]); }
         if(seeking) {
             html.push(["div", {cla: "formline"},
                        [["div", {cla: "grplevtxt"},
                          grpmsgs[mlev].cantxt],
-                        ["div", {cla: "formbuttonsdiv"},
+                        ["div", {cla: "formbuttonsdiv", id: "memappbdiv"},
                          ["button", {type: "button", id: "withdrawbutton",
-                                     onclick: jt.fs("app.group.withdraw()")},
+                                  onclick: jt.fs("app.pgd.grpmem('withdraw')")},
                           grpmsgs[mlev].canbtn]]]]); }
         else { //not seeking, show downlevel button
             html.push(["div", {cla: "formline"},
                        [["div", {cla: "grplevtxt"},
                          grpmsgs[mlev].restxt],
-                        ["div", {cla: "formbuttonsdiv"},
+                        ["div", {cla: "formbuttonsdiv", id: "rsbdiv"},
                          ["button", {type: "button", id: "downlevelbutton",
                                      onclick: jt.fs("app.pgd.grpdownlev()")},
                           grpmsgs[mlev].resbtn]]]]); }
@@ -167,7 +167,8 @@ app.pgd = (function () {
                  [["label", {fo: "statval", cla: "liflab"}, "Status"],
                   ["a", {href: "#togglegroupstat",
                          onclick: jt.fs("app.layout.togdisp('grpstatdetdiv')")},
-                   ["span", {id: "memlevspan"}, grpmsgs[mlev].name]]]],
+                   ["span", {id: "memlevspan"}, 
+                    (seeking? "Applying" : grpmsgs[mlev].name)]]]],
                 ["div", {cla: "formline", id: "grpstatdetdiv",
                          style: "display:none;"},
                  [["div", {cla: "formline"},
@@ -180,6 +181,8 @@ app.pgd = (function () {
     outstandingApplicationsHTML = function () {
         var html, sids, i, penid, name, mlev;
         if(!dst.obj.seeking) {
+            return ""; }
+        if(app.group.membershipLevel(dst.obj) < 2) {
             return ""; }
         html = [];
         sids = dst.obj.seeking.csvarray();
@@ -203,7 +206,7 @@ app.pgd = (function () {
                            "Reason"],
                           ["input", {id: "reasonin" + penid, cla: "lifin",
                                      type: "text"}]]],
-                        ["div", {cla: "formline formbuttonsdiv", 
+                        ["div", {cla: "formline dlgbuttonsdiv", 
                                  id: "abdiv" + penid},
                          [["button", {type: "button", id: "rejectb" + penid,
                                       onclick: jt.fs("app.pgd.memapp('reject" +
@@ -341,8 +344,9 @@ app.pgd = (function () {
     },
     picSettingsHTML = function () {
         var html;
-        if(dst.type === "group" && app.group.membershipLevel(dst.obj) < 3 ||
-              !jt.isId(jt.instId(dst.obj))) {
+        if(!jt.hasId(dst.obj) ||
+               (dst.type === "group" && 
+                app.group.membershipLevel(dst.obj) < 3)) {
             return ""; }
         html = [["label", {fo: "picuploadform", cla: "overlab"},
                   "Change Picture"],
@@ -398,15 +402,26 @@ app.pgd = (function () {
         var defs, namein, shout;
         defs = dst[dst.type];
         shout = jt.byId('shouteditbox');
-        shout.readOnly = false;
-        shout.value = dst.obj[defs.descfield];
-        shout.placeholder = defs.descplace;
+        if(shout) {
+            shout.readOnly = false;
+            shout.value = dst.obj[defs.descfield];
+            shout.placeholder = defs.descplace; }
         //set the focus only if not already filled in
         namein = jt.byId('namein');
         if(namein && !namein.value) {
             namein.focus(); }
-        else if(!shout.value) {
+        else if(shout && !shout.value) {
             shout.focus(); }
+    },
+
+
+    calendarIconHTML = function () {
+        var html;
+        html = ["div", {id: "calicodiv", cla: "tabico"},
+                [["div", {id: "calicoheaddiv"}],
+                 ["div", {id: "caliconumdiv"},
+                  new Date().getDate()]]];
+        return jt.tac2html(html);
     },
 
 
@@ -455,7 +470,7 @@ app.pgd = (function () {
                  ["div", {cla: "formline", id: "grptoolsdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this group in ",
+                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this group with ",
                       ["a", {href: "#sampleRSSReader",
                              onclick: jt.fs("window.open('" + sr + "')")},
                        "an RSS reader"],
@@ -463,7 +478,7 @@ app.pgd = (function () {
                      ["div", {cla: "formline"}, 
                       ["textarea", {id: "rssurlta", cla: "dlgta"}]]]],
                    ["div", {cla: "formline"},
-                    [["To embed this group in your own website, add this html to your web page:"],
+                    [["To embed this group, add this html to your web page:"],
                      ["div", {cla: "formline"},
                       ["textarea", {id: "grpembedta", cla: "dlgta"}]]]]]]]];
         return html;
@@ -497,16 +512,6 @@ app.pgd = (function () {
         var histrec = { view: dst.type, tab: dst.tab };
         histrec[dst.type + "id"] = dst.id;
         app.history.checkpoint(histrec);
-    },
-
-
-    calendarIconHTML = function () {
-        var html;
-        html = ["div", {id: "calicodiv", cla: "tabico"},
-                [["div", {id: "calicoheaddiv"}],
-                 ["div", {id: "caliconumdiv"},
-                  new Date().getDate()]]];
-        return jt.tac2html(html);
     },
 
 
@@ -782,7 +787,7 @@ return {
                 app.pgd.display(dst.type, dst.id, dst.tab, dst.obj); };
             failfunc = function (code, errtxt) {
                 jt.byId('okbutton').disabled = false;
-                jt.out('formstatdiv', jt.errhtml("Update", code, errtxt)); },
+                jt.out('formstatdiv', jt.errhtml("Update", code, errtxt)); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
     },
 
@@ -806,14 +811,34 @@ return {
     },
 
 
+    grpmem: function (action) {
+        if(action === "apply") {
+            jt.out("memappbdiv", "Applying..."); }
+        else if(action === "withdraw") {
+            jt.out("memappbdiv", "Withdrawing..."); }
+        app.group.applyForMembership(dst.obj, action, app.pgd.settings);
+    },
+
+
     grpdownlev: function () {
-        if(!jt.isId(jt.instId(dst.obj))) {
+        var mlev, confmsg, pen;
+        if(!jt.hasId(dst.obj)) {  //creating new group and not instantiated yet
             app.layout.cancelOverlay();
             return app.pgd.display("pen", app.pen.myPenId(), "groups", 
                                    app.pen.myPenName()); }
-        //confirm the action if needed
-        //call group.resign or stop following depending on level.
-        jt.err("pgd.grpdownlev not implemented yet");
+        mlev = app.group.membershipLevel(dst.obj);
+        confmsg = grpmsgs[mlev].resconf;
+        if(confmsg && !confirm(confmsg)) {
+            return; }
+        if(mlev > 0) {
+            jt.out('rsbdiv', "Resigning");
+            app.group.processMembership(dst.obj, "demote", app.pen.myPenId(),
+                                        "", app.pgd.settings); }
+        else {
+            jt.out('rsbdiv', "Stopping");
+            pen = app.pen.myPenName();
+            pen.groups = pen.groups.csvremove(dst.id);
+            app.pen.updatePen(pen, app.pgd.redisplay, app.failf); }
     },
 
 
@@ -829,6 +854,9 @@ return {
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
                 html = [["span", {cla: "shoutspan"},
+                         (app.login.isLoggedIn()? "" : 
+                          "Sign in to follow or join.<br/>")],
+                        ["span", {cla: "shoutspan"},
                          "To share this " + dst.type + " via social media, email or text, use the following URL:"],
                         ["br"],
                         ["span", {id: "shurlspan"},

@@ -17,8 +17,6 @@ app.login = (function () {
         topworkdivcontents = "",
         altauths = [],
         loginhtml = "",
-        sumfreqs = [ "daily", "weekly", "fortnightly", "never" ],
-        sumlabels = [ "Daily", "Weekly", "Fortnightly", "Never" ],
         revroll = { index: 0, revs: [] },
 
 
@@ -120,27 +118,6 @@ app.login = (function () {
         app.layout.openDialog({y:90}, jt.tac2html(html), null,
                               function () {
                                   jt.byId('okbutton').focus(); });
-    },
-
-
-    freqopts = function (account) {
-        var opts = [], i, selected, html;
-        if(!account.summaryfreq) {
-            account.summaryfreq = "weekly"; }
-        for(i = 0; i < sumfreqs.length; i += 1) {
-            selected = jt.toru((account.summaryfreq === sumfreqs[i]),
-                               "selected");
-            opts.push(["option", {id: sumfreqs[i], selected: selected},
-                       sumlabels[i]]); }
-        html = ["select", {id: "offsumsel"}, opts];
-        html = jt.tac2html(html);
-        return html;
-    },
-
-
-    hasflag = function (account, flag) {
-        return (account.summaryflags &&
-                account.summaryflags.indexOf(flag) >= 0);
     },
 
 
@@ -350,7 +327,7 @@ app.login = (function () {
 
 
     readUsermenuAccountForm = function () {
-        var ua, cboxes, i;
+        var ua;
         ua = { email: moracct.email,
                summaryfreq: moracct.summaryfreq,
                summaryflags: moracct.summaryflags,
@@ -737,6 +714,7 @@ return {
         password = jt.byId('passin').value;
         if(!emaddr || !password || !emaddr.trim() || !password.trim()) {
             jt.out('loginstatdiv', "Please specify an email and password");
+            jt.byId('emailin').focus();
             return; }
         jt.out('loginstatdiv', "&nbsp;");  //clear any previous message
         buttonhtml = jt.byId('loginbuttonsdiv').innerHTML;

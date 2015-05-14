@@ -441,24 +441,16 @@ class ApplyForMembership(webapp2.RequestHandler):
         if not group:
             return   #error already reported
         penid = pnm.key().id()
-        if role != "Founder" and not id_in_csv(penid, group.seeking):
-            group.seeking = append_id_to_csv(penid, group.seeking)
+        action = self.request.get('action')
+        if action == "apply":
+            if role != "Founder" and not id_in_csv(penid, group.seeking):
+                group.seeking = append_id_to_csv(penid, group.seeking)
+                verify_people(group)
+                cached_put(group)
+        if action == "withdraw":
+            group.seeking = remove_id_from_csv(pnm.key().id(), group.seeking)
             verify_people(group)
             cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
-class WithdrawApplication(webapp2.RequestHandler):
-    def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        group, role = fetch_group_and_role(self, pnm)
-        if not group:
-            return   #error already reported
-        group.seeking = remove_id_from_csv(pnm.key().id(), group.seeking)
-        verify_people(group)
-        cached_put(group)
         returnJSON(self.response, [ group ])
 
 
@@ -627,7 +619,6 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grprev', PostReview),
                                ('/grpremrev', RemoveReview),
                                ('/grpmemapply', ApplyForMembership),
-                               ('/grpmemwithdraw', WithdrawApplication),
                                ('/grpmemprocess', ProcessMembership),
                                ('/grprejok', MembershipRejectAck),
                                ('/grpmemremove', RemoveMember),

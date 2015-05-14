@@ -77,22 +77,15 @@ return {
             return app.activity.displayActive();
         case "memo":
             return app.activity.displayRemembered();
-        //ATTENTION: all group or pen checkpoints will specify the id...
         case "group":
-            if(jt.isId(state.groupid)) {
-                return app.group.bygroupid(state.groupid, state.tab); }
-            return app.group.display();
-        case "profile":
+            return app.group.bygroupid(state.groupid, state.tab);
+        case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
                 return app.pen.bypenid(state.profid, state.tab); }
             if(jt.isId(state.penid)) {
                 return app.pen.bypenid(state.penid, state.tab); }
             return app.pgd.display();
-        case "review":
-            if(state.revid) {
-                return app.review.initWithId(state.revid, state.mode); }
-            break;
         }
     },
 

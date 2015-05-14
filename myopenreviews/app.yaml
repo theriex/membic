@@ -270,13 +270,8 @@ handlers:
   script: src.py.group.app
 
 ## Apply for next level group membership
-## POST params: penid, groupid, authparams
+## POST params: action (apply/withdraw), penid, groupid, authparams
 - url: /grpmemapply.*
-  script: src.py.group.app
-
-## Withdraw application for next level group membership
-## POST params: penid, groupid, authparams
-- url: /grpmemwithdraw.*
   script: src.py.group.app
 
 ## Process membership application: reject, ignore, accept

@@ -145,6 +145,8 @@ var app = {},  //Global container for application level funcs and values
                   "email support to get this fixed."]]]]]]];
         html = jt.tac2html(html);
         jt.out('contentdiv', html);
+        app.layout.closeDialog();
+        app.layout.cancelOverlay();
     };
 
 
