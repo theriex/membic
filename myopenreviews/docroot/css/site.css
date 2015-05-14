@@ -259,9 +259,12 @@ button, .loginbutton, .formbutton {
 #grpembedta { height:100px; }
 #grpinfoseldiv { display:inline-block; margin-left:20px; width:50px; }
 #meminfoseldiv { display:inline-block; }
-.grpsetimg { vertical-align:middle; }
+.grpsetimg, .myinfoimg { vertical-align:middle; }
+.myinfoimg { width:18px; height:18px; margin-right:5px; }
 #shurlspan { font-size:small; font-family:monospace;
   background-image: url('../img/whitewash.png'); }
+.adminlogentrydiv { font-sie: medium; }
+.logdatestampspan { font-size:small; font-family:monospace; }
 
 /* >> profile layout */
 #proftopdiv { font-size:large; }
@@ -419,6 +422,8 @@ button, .loginbutton, .formbutton {
 .grpmsgbuttonsdiv button { margin:0px 6px; }
 .dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 .dlgbuttonsdiv button { margin:0px 10px; }
+.inlinebuttonsdiv { text-align:center; padding:0px 0px 10px 0px; }
+.inlinebuttonsdiv button { margin:0px 10px; }
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .optionalbuttonsdiv { text-align:center; }  /* no pad */

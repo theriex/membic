@@ -236,34 +236,34 @@ def process_membership_action(group, action, pnm, seekerpen, seekrole, reason):
             group.rejects = append_to_csv(seekerid, group.rejects)
             update_group_admin_log(group, pnm, "Denied Membership", 
                                    seekerpen, reason)
-        elif action == "accept":
-            msg = "Accepted new "
-            group.seeking = remove_from_csv(seekerid, group.seeking)
-            if seekrole == "Moderator":
-                group.moderators = remove_from_csv(seekerid, group.moderators)
-                group.founders = append_to_csv(seekerid, group.founders)
-                msg = msg + "Founder"
-            elif seekrole == "Member":
-                group.members = remove_from_csv(seekerid, group.members)
-                group.moderators = append_to_csv(seekerid, group.moderators)
-                msg = msg + "Moderator"
-            elif seekrole == "NotFound":
-                group.members = append_to_csv(seekerid, group.members)
-                msg = msg + "Member"
+    elif action == "accept":
+        msg = "Accepted new "
+        group.seeking = remove_from_csv(seekerid, group.seeking)
+        if seekrole == "Moderator":
+            group.moderators = remove_from_csv(seekerid, group.moderators)
+            group.founders = append_to_csv(seekerid, group.founders)
+            msg = msg + "Founder"
+        elif seekrole == "Member":
+            group.members = remove_from_csv(seekerid, group.members)
+            group.moderators = append_to_csv(seekerid, group.moderators)
+            msg = msg + "Moderator"
+        elif seekrole == "NotFound":
+            group.members = append_to_csv(seekerid, group.members)
+            msg = msg + "Member"
             update_group_admin_log(group, pnm, msg, seekerpen, "")
-        elif action == "demote":
-            if csv_contains(seekerid, group.moderators):
-                group.moderators = remove_from_csv(seekerid, group.moderators)
-                group.members = append_to_csv(seekerid, group.members)
-            elif csv_contains(seekerid, group.members):
-                group.members = remove_from_csv(seekerid, group.members)
+    elif action == "demote":
+        if csv_contains(seekerid, group.moderators):
+            group.moderators = remove_from_csv(seekerid, group.moderators)
+            group.members = append_to_csv(seekerid, group.members)
+        elif csv_contains(seekerid, group.members):
+            group.members = remove_from_csv(seekerid, group.members)
             update_group_admin_log(group, pnm, "Demoted Member", 
                                    seekerpen, reason)
-        else:
-            logging.info("process_membership_action unknown action: " + action)
-            return
-        verify_people(group)
-        cached_put(group)
+    else:
+        logging.info("process_membership_action unknown action: " + action)
+        return
+    verify_people(group)
+    cached_put(group)
 
 
 class UpdateDescription(webapp2.RequestHandler):

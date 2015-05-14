@@ -132,6 +132,32 @@ app.pgd = (function () {
     },
 
 
+    isMyMembershipAction = function (entry) {
+        if(entry.targid === app.pen.myPenId() &&
+           (entry.action.indexOf("Denied") >= 0 ||
+            entry.action.indexOf("Accepted") >= 0 ||
+            entry.action.indexOf("Demoted") >= 0)) {
+            return true; }
+        return false;
+    },
+
+
+    personalInfoButtonHTML = function () {
+        var les, i, html;
+        les = dst.obj.adminlog;
+        if(!les || !les.length) {
+            return ""; }
+        html = "";
+        for(i = 0; i < les.length; i += 1) {
+            if(isMyMembershipAction(les[i])) {
+                html = ["a", {href: "#myloginfo",
+                              onclick: jt.fs("app.pgd.toggleGrpDet('mbinfo')")},
+                        ["img", {cla: "myinfoimg", src: "img/info.png"}]];
+                break; } }
+        return html;
+    },
+
+
     membershipSettingsHTML = function () {
         var html, mlev, seeking;
         if(dst.type === "pen") {
@@ -144,9 +170,10 @@ app.pgd = (function () {
                        [["div", {cla: "grplevtxt"},
                          grpmsgs[mlev].uptxt],
                         ["div", {cla: "formbuttonsdiv", id: "memappbdiv"},
-                         ["button", {type: "button", id: "uplevelbutton",
-                                     onclick: jt.fs("app.pgd.grpmem('apply')")},
-                          grpmsgs[mlev].upbtn]]]]); }
+                         [personalInfoButtonHTML(),
+                          ["button", {type: "button", id: "uplevelbutton",
+                                   onclick: jt.fs("app.pgd.grpmem('apply')")},
+                          grpmsgs[mlev].upbtn]]]]]); }
         if(seeking) {
             html.push(["div", {cla: "formline"},
                        [["div", {cla: "grplevtxt"},
@@ -189,16 +216,19 @@ app.pgd = (function () {
         for(i = 0; i < sids.length; i += 1) {
             penid = sids[i];
             name = (dst.obj.people || {})[penid] || penid;
-            mlev = app.group.membershipLevel(dst.obj);
+            mlev = app.group.membershipLevel(dst.obj, penid);
             html.push(["div", {cla: "grpmemdiv"},
-                       [["div", {cla: "fpprofdiv"},
+                       [["div", {cla: "fpprofdivsp"},
                          ["img", {cla: "fpprofpic",
                                   src: "profpic?profileid=" + penid,
                                   title: jt.ndq(name),
                                   alt: "prof pic"}]],
-                        ["span", {cla: "penflist"}, name],
-                        ["div", {cla: "formline"},
-                         grpmsgs[mlev].notice],
+                        ["a", {href: "view=pen&penid=" + penid,
+                               onclick: jt.fs("app.pen.bypenid('" + penid +
+                                              "')")},
+                         ["span", {cla: "penflist"}, name]],
+                        "&nbsp;" + grpmsgs[mlev].notice,
+                        ["div", {cla: "formline"}],
                         ["div", {cla: "formline", id: "reasondiv" + penid,
                                  style: "display:none;"},
                          [["label", {fo: "reasonin" + penid, cla: "liflab",
@@ -206,7 +236,7 @@ app.pgd = (function () {
                            "Reason"],
                           ["input", {id: "reasonin" + penid, cla: "lifin",
                                      type: "text"}]]],
-                        ["div", {cla: "formline dlgbuttonsdiv", 
+                        ["div", {cla: "formline inlinebuttonsdiv", 
                                  id: "abdiv" + penid},
                          [["button", {type: "button", id: "rejectb" + penid,
                                       onclick: jt.fs("app.pgd.memapp('reject" +
@@ -231,23 +261,28 @@ app.pgd = (function () {
     },
 
 
-    groupLogHTML = function () {
+    groupLogHTML = function (filter) {
         var les, i, html, penid;
         les = dst.obj.adminlog;
         if(!les || !les.length) {
             return "No log entries"; }
         html = [];
         for(i = 0; i < les.length; i += 1) {
-            penid = les[i].penid;
-            html.push(
-                ["div", {cla: "adminlogentrydiv"},
-                 [les[i].when.slice(0, 10) + ": ",
-                  ["a", {href: "view=pen&penid=" + penid,
-                         onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
-                   les[i].pname || penid],
-                  " " + les[i].action + " ",
-                  adminLogTargetHTML(les[i]),
-                  les[i].reason]]); }
+            if(!filter || (filter === "membership" &&
+                           isMyMembershipAction(les[i]))) {
+                penid = les[i].penid;
+                html.push(
+                    ["div", {cla: "adminlogentrydiv"},
+                     [["span", {cla: "logdatestampspan"}, 
+                       les[i].when.slice(0, 10) + ": "],
+                      ["a", {href: "view=pen&penid=" + penid,
+                             onclick: jt.fs("app.pen.bypenid('" + penid + 
+                                            "')")},
+                       ["span", {cla: "logdatestampspan"},
+                        les[i].pname || penid]],
+                      " " + les[i].action + " ",
+                      adminLogTargetHTML(les[i]),
+                      (les[i].reason? ": " + les[i].reason : "")]]); } }
         return jt.tac2html(html);
     },
 
@@ -959,12 +994,20 @@ return {
     },
 
 
-    toggleGrpDet: function (ctype) {
-        if(ctype === "info" && setdispstate.infomode !== "info") {
+    toggleGrpDet: function (ctype, filter) {
+        var midispdiv = jt.byId('midispdiv');
+        if(ctype === "info" && (setdispstate.infomode !== "info" ||
+                                !midispdiv.innerHTML)) {
             setdispstate.infomode = "info";
             jt.byId('midispdiv').style.display = "block";
             jt.out('midispdiv', groupLogHTML()); }
-        else if(ctype === "members" && setdispstate.infomode !== "members") {
+        else if(ctype === "mbinfo" && (setdispstate.infomode !== "finfo" ||
+                                       !midispdiv.innerHTML)) {
+            setdispstate.infomode = "finfo";
+            jt.byId('midispdiv').style.display = "block";
+            jt.out('midispdiv', groupLogHTML("membership")); }
+        else if(ctype === "members" && (setdispstate.infomode !== "members" ||
+                                        !midispdiv.innerHTML)) {
             setdispstate.infomode = "members";
             jt.byId('midispdiv').style.display = "block";
             jt.out('midispdiv', groupMembershipHTML()); }
@@ -979,7 +1022,8 @@ return {
         case "reject":
             elem = jt.byId("reasondiv" + penid);
             if(elem.style.display !== "block") {
-                elem.style.display = "block"; }
+                elem.style.display = "block";
+                jt.byId("reasonin" + penid).focus(); }
             else {
                 elem = jt.byId("reasonin" + penid);
                 if(!elem.value || !elem.value.trim()) {
