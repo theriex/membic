@@ -71,16 +71,20 @@ def review_modification_authorized(handler):
         authorized to modify, otherwise return False """
     acc = authenticated(handler.request)
     if not acc:
-        return srverr(handler, 401, "Authentication failed")
+        srverr(handler, 401, "Authentication failed")
+        return False
     penid = intz(handler.request.get('penid'))
     if not penid:
-        return srverr(handler, 401, "No penid specified")
+        srverr(handler, 401, "No penid specified")
+        return False
     pnm = cached_get(penid, pen.PenName)
     if not pnm:
-        return srverr(handler, 404, "Pen " + str(penid) + " not found.")
+        srverr(handler, 404, "Pen " + str(penid) + " not found.")
+        return False
     authok = pen.authorized(acc, pnm)
     if not authok:
-        return srverr(handler, 401, "Pen name not authorized.")
+        srverr(handler, 401, "Pen name not authorized.")
+        return False
     return pnm
 
 
@@ -90,10 +94,12 @@ def safe_get_review_for_update(handler):
         revid = intz(handler.request.get('revid'))
     review = cached_get(revid, Review)
     if not review:
-        return srverr(handler, 404, "Review id: " + str(revid) + " not found.")
+        srverr(handler, 404, "Review id: " + str(revid) + " not found.")
+        return False
     penid = intz(handler.request.get('penid'))
     if penid != review.penid:
-        return srverr(handler, 401, "Review pen does not match")
+        srverr(handler, 401, "Review pen does not match")
+        return False
     return review
 
 
@@ -111,7 +117,8 @@ def get_review_for_save(handler):
             revtype = handler.request.get('revtype')
             review = Review(penid=penid, revtype=revtype)
     if penid != review.penid:
-        return srverr(handler, 401, "Not your review")
+        srverr(handler, 401, "Not your review")
+        return False
     return review
 
 
@@ -1047,11 +1054,19 @@ class FetchAllReviews(webapp2.RequestHandler):
             mostrecent = None
             for revidstr in csv_list(idcsv):
                 rev = cached_get(int(revidstr), Review)
+                # verify cache is still intact
                 mostrecent = mostrecent or rev.modified
                 if rev.modified > mostrecent:
                     logging.error("cache invalidation " + ckey)
                     memcache.delete(key)
                     return srverr(self, 409, "Outdated cache data detected")
+                # also append group srcrevs for client cache reference
+                if rev.grpid:
+                    srcrev = cached_get(int(rev.srcrev), Review)
+                    if not srcrev:
+                        logging.error("Missing srcrev for Review " + revidstr)
+                        continue
+                    objs.append(srcrev)
                 objs.append(rev)
         returnJSON(self.response, objs)
 

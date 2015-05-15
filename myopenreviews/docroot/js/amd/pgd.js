@@ -743,6 +743,16 @@ app.pgd = (function () {
     },
 
 
+    sourceRevIds = function (revs, dtype, id) {
+        var revids, i;
+        revids = [];
+        for(i = 0; i < revs.length; i += 1) {
+            if(dtype !== "group" || revs[i].grpid === id) {
+                revids.push(jt.instId(revs[i])); } }
+        return revids;
+    },
+
+
     verifyFunctionConnections = function () {
         if(!dst.pen.objupdate) {
             dst.pen.objupdate = app.pen.updatePen;
@@ -916,6 +926,9 @@ return {
         srchin = jt.byId("pgdsrchin");
         if(!srchin) {  //query input no longer on screen.  probably switched
             return; }  //tabs so just quit
+        if(!app.login.isLoggedIn()) {
+            jt.out('pgdsrchdispdiv', "Sign in to search");
+            return; }
         if(!searchstate.inprog && 
               (searchstate.init ||
                searchstate.revtype !== app.layout.getType() ||
@@ -1119,9 +1132,7 @@ return {
                         if(a.modified > b.modified) { return -1; }
                         return 0; });
                     app.lcs.putAll("rev", revs);
-                    for(i = 0; i < revs.length; i += 1) {
-                        revs[i] = jt.instId(revs[i]); }
-                    obj.recent = revs;  //ids resolved as needed for display
+                    obj.recent = sourceRevIds(revs, dtype, id)
                     app.lcs.put(dtype, obj);
                     if(dtype === "pen" && !app.pen.myPenId() &&
                            obj.stash && obj.stash.account) {

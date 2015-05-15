@@ -1,7 +1,6 @@
 import datetime
 import re
 
-
 def nowISO():
     """ Return the current time as an ISO string """
     return dt2ISO(datetime.datetime.utcnow())
@@ -38,12 +37,13 @@ def intz(val):
     return int(val)
 
 
+# You can't return a value from a webapp2.RequestHandler, so this method
+# does not return a value.  Common error codes:
 # 400 Bad Request, 401 Not Authorized, 403 Forbidden, 404 Not Found, 
 # 405 Method Not Allowed, 406 Not Acceptable, 409 Conflict
 def srverr(handler, code, errtxt):
     handler.error(code)
     handler.response.out.write(errtxt)
-    return False
 
 
 def csv_elem_count(csv):

@@ -127,7 +127,8 @@ def verify_unique_name(handler, group):
     for sisgrp in groups:
         sid = sisgrp.key().id()
         if sid != groupid:
-            return srverr(handler, 409, "Name already in use group " + str(sid))
+            srverr(handler, 409, "Name already in use group " + str(sid))
+            return False
     return True
 
 
