@@ -373,7 +373,7 @@ app.pgd = (function () {
                     dst.obj.modified = txt.slice("Done: ".length);
                     app.pgd.display(dst.type, dst.id, dst.tab, dst.obj);
                     return; }
-                if(txt && txt.trim()) {  //something other than Done
+                if(txt && txt.trim() && txt.trim() !== "Ready") {
                     jt.out('imgupstatdiv', txt); } }
             setTimeout(monitorPicUpload, 800); }
     },

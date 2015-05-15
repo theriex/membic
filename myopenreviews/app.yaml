@@ -264,11 +264,6 @@ handlers:
 - url: /grprev.*
   script: src.py.group.app
 
-## Remove a posted review from a group
-## POST params: penid, revid, groupid, reason, authparams
-- url: /grpremrev.*
-  script: src.py.group.app
-
 ## Apply for next level group membership
 ## POST params: action (apply/withdraw), penid, groupid, authparams
 - url: /grpmemapply.*
@@ -282,11 +277,6 @@ handlers:
 ## Acknowledge rejection of group membership application
 ## POST params: penid, groupid, authparams
 - url: /grprejok.*
-  script: src.py.group.app
-
-## Remove group membership
-## POST params: penid, groupid, removeid, authparams
-- url: /grpmemremove.*
   script: src.py.group.app
 
 ## Fetch groups by name

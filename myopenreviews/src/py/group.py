@@ -203,7 +203,7 @@ def update_group_admin_log(group, pnm, action, target, reason):
     edict["tname"] = ""
     if(target):
         edict["targid"] = str(target.key().id())
-        edict["tname"] = target.name
+        edict["tname"] = target.name or target.title
     edict["reason"] = reason or ""
     entry = json.dumps(edict)
     if not group.adminlog:
@@ -410,29 +410,6 @@ class PostReview(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
-class RemoveReview(webapp2.RequestHandler):
-    def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        revid, review, group, role = fetch_group_mod_elements(self, pnm)
-        if review is None or group is None:
-            return   #error already reported
-        if role != "Founder" and role != "Moderator":
-            if review.penid != pnm.key().id():
-                self.error(400)
-                self.response.out.write("Not authorized to remove reviews")
-                return
-        reason = ""
-        # ATTENTION notify the owner as to why? Somehow?
-        # remove the revid from the group
-        group.reviews = remove_id_from_csv(revid, group.reviews)
-        update_group_admin_log(group, pnm, "Removed Review", review, reason)
-        verify_people(group)
-        cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
 class ApplyForMembership(webapp2.RequestHandler):
     def post(self):
         pnm = rev.review_modification_authorized(self)
@@ -463,24 +440,26 @@ class ProcessMembership(webapp2.RequestHandler):
         group, role = fetch_group_and_role(self, pnm)
         if not group:
             return   #error already reported
-        seekerid = self.request.get('seekerid')
-        if not seekerid:
-            return srverr(self, 400, "No seekerid specified")
-        seekrole = pen_role(seekerid, group)
-        if not (role == "Founder" or (role == "Moderator" and
-                                      seekrole == "NotFound")):
-            return srverr(self, 400, "Processing not authorized")
         action = self.request.get('action')
-        if not action or action not in ['reject', 'accept']:
+        if not action or action not in ['reject', 'accept', 'demote']:
             return srverr(self, 400, "Valid action required")
         reason = self.request.get('reason')
         if not reason and (action == "reject" or action == "demote"):
             return srverr(self, 400, "Rejection reason required")
+        seekerid = self.request.get('seekerid')
+        if not seekerid:
+            return srverr(self, 400, "No seekerid specified")
+        seekrole = pen_role(seekerid, group)
+        if not (role == "Founder" or 
+                (role == "Moderator" and 
+                 ((action == "accept" and seekrole == "NotFound") or
+                  (action != "accept" and seekrole == "Member")))):
+            return srverr(self, 400, "Processing not authorized")
         seekerpen = pen.PenName.get_by_id(int(seekerid))
         if not seekerpen:
             return srverr(self, 400, "No seeker PenName " + seekerid)
         #if seeker not found, treat as already processed rather than error
-        if csv_contains(seekerid, group.seeking):
+        if action == "demote" or csv_contains(seekerid, group.seeking):
             process_membership_action(group, action, pnm, 
                                       seekerpen, seekrole, reason)
         returnJSON(self.response, [ group ])
@@ -495,52 +474,6 @@ class MembershipRejectAck(webapp2.RequestHandler):
         if not group:
             return   #error already reported
         group.rejects = remove_id_from_csv(pnm.key().id(), group.rejects)
-        verify_people(group)
-        cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
-# Resign from a group or remove another member. The group is deleted
-# when the last founder leaves.  Need to be able to re-use the names
-# without it being a hassle.
-class RemoveMember(webapp2.RequestHandler):
-    def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        group, role = fetch_group_and_role(self, pnm)
-        if not group:
-            return   #error already reported
-        removeid = intz(self.request.get('removeid'))
-        if not removeid:
-            self.error(400)
-            self.response.out.write("No removeid specified")
-            return
-        resigning = removeid == pnm.key().id()
-        if resigning and role == "Founder" and not "," in group.founders:
-            cached_delete(group.key().id(), Group)
-            returnJSON(self.response, [])
-            return
-        remlev = pen_role(removeid, group)
-        authorized = (remlev != "Founder" and 
-                      (role == "Founder" or 
-                       (role == "Moderator" and remlev == "Member")))
-        if not resigning and not authorized:
-            self.error(400)
-            self.response.out.write("Not authorized to remove member")
-            return
-        reason = self.request.get('reason')
-        if not reason and pnm.key().id() != removeid:
-            self.error(400)
-            self.response.out.write("A reason is required")
-            return
-        group.founders = remove_id_from_csv(removeid, group.founders)
-        group.moderators = remove_id_from_csv(removeid, group.moderators)
-        group.members = remove_id_from_csv(removeid, group.members)
-        action = "Removed Member"
-        if pnm.key().id() == removeid:
-            action = "Resigned"
-        update_group_admin_log(group, pnm, action, removeid, reason)
         verify_people(group)
         cached_put(group)
         returnJSON(self.response, [ group ])
@@ -618,11 +551,9 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grppicupload', UploadGroupPic),
                                ('/grppic', GetGroupPic),
                                ('/grprev', PostReview),
-                               ('/grpremrev', RemoveReview),
                                ('/grpmemapply', ApplyForMembership),
                                ('/grpmemprocess', ProcessMembership),
                                ('/grprejok', MembershipRejectAck),
-                               ('/grpmemremove', RemoveMember),
                                ('/grpbyname', GetGroupByName),
                                ('/grpstats', GetGroupStats),
                                ('/srchgroups', SearchGroups),

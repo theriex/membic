@@ -88,13 +88,20 @@ def review_modification_authorized(handler):
     return pnm
 
 
-def safe_get_review_for_update(handler):
+def noauth_get_review_for_update(handler):
     revid = intz(handler.request.get('_id'))
     if not revid:
         revid = intz(handler.request.get('revid'))
     review = cached_get(revid, Review)
     if not review:
         srverr(handler, 404, "Review id: " + str(revid) + " not found.")
+        return False
+    return review
+
+
+def safe_get_review_for_update(handler):
+    review = noauth_get_review_for_update(handler)
+    if not review:
         return False
     penid = intz(handler.request.get('penid'))
     if penid != review.penid:
@@ -721,7 +728,7 @@ class DeleteReview(webapp2.RequestHandler):
         if not pnm:
             return
         # logging.info("DeleteReview authorized PenName " + pnm.name)
-        review = safe_get_review_for_update(self)
+        review = noauth_get_review_for_update(self)
         if not review:
             return
         if not review.grpid:
@@ -736,6 +743,10 @@ class DeleteReview(webapp2.RequestHandler):
                 return srverr(self, 400, "You may only remove your own review")
             if not reason:
                 return srverr(self, 400, "Reason required")
+        srcrev = Review.get_by_id(int(review.srcrev))
+        if not srcrev:
+            return srverr(self, 400, "Source review " + str(review.srcrev) +
+                          " not found")
         rt = review.revtype
         revid = str(review.key().id())
         topdict = {}
@@ -744,7 +755,9 @@ class DeleteReview(webapp2.RequestHandler):
         if rt in topdict and topdict[rt] and revid in topdict[rt]:
             topdict[rt].remove(revid)
         grp.top20s = json.dumps(topdict)
-        group.update_group_admin_log(grp, pnm, "Removed", review.srcrev, reason)
+        # The reason here must be exactly "Removed Review" so the client can
+        # differentiate between removing a review and removing a member.
+        group.update_group_admin_log(grp, pnm, "Removed Review", srcrev, reason)
         grp.modified = nowISO()
         cached_put(grp)
         cached_delete(revid, Review)
