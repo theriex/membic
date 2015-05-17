@@ -19,6 +19,7 @@ var app = {},  //Global container for application level funcs and values
                    text: "#111111",
                    link: "#3150b2",
                    hover: "#3399cc" };
+    app.embedded = false;
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
     app.minSideBySide = (320 + 320 + 10);  //smallest possible expanded display
@@ -102,11 +103,17 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("https://") !== 0 && href.search(/:\d080/) < 0) {
             window.location.href = "https" + href.slice(4);   //switch to SSL
             return; }  //don't fire anything else off.
+        if(href.indexOf("site=") > 0) {
+            app.embedded = true; }
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
+        if(app.embedded) {
+            jt.byId('headingdiv').style.display = "none";
+            jt.byId('bottomnav').style.display = "none";
+            jt.byId('topsectiondiv').style.display = "none"; }
         jt.out('contentdiv', "loading modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };

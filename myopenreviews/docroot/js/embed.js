@@ -1,17 +1,18 @@
-/*global window: false, jtminjsDecorateWithUtilities: false, document: false, jt: false, app: false, fgfwebLogview: false, FGFwebEmbeddedBlogHTML: false, fgfwebGroupview: false, FGFwebEmbeddedGroupHTML: false */
+/*global window: false, jtminjsDecorateWithUtilities: false, document: false, jt: false, app: false, membicFrameDimensionsOverride: false */
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
-//Stub module for including static blog or group content into any page.
-//app, jt globals declared by blogview.js or groupview.js
-
-var fgfwebEmbed = (function () {
+var membicEmbed = (function () {
     "use strict";
 
     ////////////////////////////////////////
     // closure variables
     ////////////////////////////////////////
 
-    var siteroot = "http://www.fgfweb.com",
+    var siteroot = "",
+        jt = {},
+        embparams = {},
+        mdivs = {},
+        framedim = {width: 320, height: 533},  //min cell phone display
 
 
     ////////////////////////////////////////
@@ -42,6 +43,44 @@ var fgfwebEmbed = (function () {
                 document.getElementsByTagName("body")[0].appendChild(elem);
                 break; } }
         return allLoaded;
+    },
+
+
+    readMembicDivs = function () {
+        var div;
+        div = jt.byId('membiccssoverride');
+        if(div) {
+            mdivs.css = div.innerHTML;
+            div.innerHTML = ""; }
+    },
+
+
+    computeFrameDimensions = function (mdiv) {
+        var pos, contheight, height, width;
+        pos = jt.geoPos(mdiv);
+        contheight = document.body.scrollHeight + pos.x;
+        contheight += 50;  //extra padding to help things work out
+        height = window.innerHeight - contheight;
+        width = document.body.offsetWidth;
+        framedim.width = Math.max(framedim.width, width);
+        framedim.height = Math.max(framedim.height, height);
+        if(typeof membicFrameDimensionsOverride === "function") {
+            membicFrameDimensionsOverride(framedim); }
+    },
+
+
+    writeEmbeddedContent = function () {
+        var mdiv, src, html = [];
+        mdiv = jt.byId('membicgroupdiv');
+        computeFrameDimensions(mdiv);
+        src = siteroot + "?" + jt.objdata(embparams);
+        src += "&site=" + jt.enc(window.location.href);
+        if(mdivs.css) {
+            src += "&css=" + jt.enc(mdivs.css); }
+        html.push(["iframe", {id: "membiciframe", src: src,
+                              width: framedim.width,
+                              height: framedim.height}]);
+        jt.out('membicgroupdiv', jt.tac2html(html));
     };
 
 
@@ -50,30 +89,21 @@ var fgfwebEmbed = (function () {
     ////////////////////////////////////////
 return {
 
-    displayBlog: function (obj) {
-        if(obj && obj.siteroot) {
-            siteroot = obj.siteroot; }
-        if(loadScripts(["jtmin.js", "amd/blogview.js", "amd/layout.js",
-                        "amd/profile.js", "amd/review.js", "amd/pen.js",
-                        "amd/lcs.js"], fgfwebEmbed.displayBlog)) {
+    createGroupDisplay: function (obj) {
+        var href = document.getElementById('membicgroupdiv').innerHTML;
+        href = href.slice(href.indexOf("href=") + 6);
+        href = href.slice(0, href.indexOf('"'));
+        siteroot = href.slice(0, href.indexOf("?"));
+        if(loadScripts(["jtmin.js"], membicEmbed.createGroupDisplay)) {
             jtminjsDecorateWithUtilities(jt);
-            jt.out("fgfweblog", FGFwebEmbeddedBlogHTML);
-            app.layout.setSiteRoot(siteroot);
-            fgfwebLogview.display("headless"); }
-    },
-
-
-    displayGroup: function (obj) {
-        if(obj && obj.siteroot) {
-            siteroot = obj.siteroot; }
-        if(loadScripts(["jtmin.js", "amd/groupview.js", "amd/layout.js",
-                        "amd/profile.js", "amd/review.js", "amd/pen.js",
-                        "amd/lcs.js"], fgfwebEmbed.displayGroup)) {
-            jtminjsDecorateWithUtilities(jt);
-            jt.out("fgfwebgroup", FGFwebEmbeddedGroupHTML);
-            app.layout.setSiteRoot(siteroot);
-            fgfwebGroupview.display("headless"); }
+            embparams = jt.paramsToObj(href.slice(href.indexOf("?") + 1),
+                                       embparams, "String");
+            readMembicDivs();
+            writeEmbeddedContent(); }
     }
 
 };  //end of returned functions
 }());
+
+membicEmbed.createGroupDisplay();
+

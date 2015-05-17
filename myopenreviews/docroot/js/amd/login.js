@@ -417,6 +417,15 @@ app.login = (function () {
     },
 
 
+    applyCSSOverride = function (cssurl) {
+        var csselem = document.createElement('link');
+        csselem.rel = "stylesheet";
+        csselem.type = "text/css";
+        csselem.href = jt.dec(cssurl);
+        document.head.appendChild(csselem);
+    },
+
+
     handleInitialParamSideEffects = function (params) {
         if(params.am && params.at && params.an && !params.special) {
             params.at = jt.enc(params.at);  //restore token encoding 
@@ -425,6 +434,8 @@ app.login = (function () {
             logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //clean up the URL display
             clearParams(); }
+        if(params.css) {
+            applyCSSOverride(params.css); }
         //handle specific context requests
         if(params.view && (params.penid || params.profid || params.groupid)) {
             //Note who requested a specific profile or group

@@ -531,15 +531,12 @@ app.pgd = (function () {
         ta = jt.byId('grpembedta');
         if(ta) {
             ta.readOnly = true;
-            ta.value = "<div id=\"membicgroup\"" + 
-                " style=\"background:#ddd;width:70%;margin-left:10%;\">" + 
-                "</div>\n" +
-                "<script src=\"" + site + "/emgroup/" + dst.obj.name_c + 
-                ".js" + "\"></script>\n" +
-                "<script src=\"" + site + "/js/embed.js\"></script>\n" +
-                "<script>\n" +
-                "  membicEmbed." + "displayGroup()" + ";\n" +
-                "</script>\n"; }
+            ta.value = "<div id=\"membiccssoverride\">" + site + 
+                "/css/embedsample.css</div>\n" +
+                "<div id=\"membicgroupdiv\"><a href=\"" + site + 
+                "?view=group&groupid=5724830628315136\">" + dst.obj.name + 
+                "</a></div>\n" +
+                "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
     },
 
 
@@ -661,7 +658,8 @@ app.pgd = (function () {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
-        html.push(tabHTMLFromDef("search"));
+        if(!app.embedded) {
+            html.push(tabHTMLFromDef("search")); }
         if(dst.type === "pen") {  //find or create group
             html.push(tabHTMLFromDef("groups")); }
         if(dst.type === "group" && dst.obj.calembed) {
@@ -1115,7 +1113,7 @@ return {
         time = new Date().getTime();
         jt.call('GET', url, null,
                 function (objs) {  // main obj + recent/top reviews
-                    var obj, revs, i;
+                    var obj, revs;
                     time = new Date().getTime() - time;
                     jt.log("blockfetch " + dtype + " " + id  + 
                            " returned in " + time/1000 + " seconds.");
@@ -1132,7 +1130,7 @@ return {
                         if(a.modified > b.modified) { return -1; }
                         return 0; });
                     app.lcs.putAll("rev", revs);
-                    obj.recent = sourceRevIds(revs, dtype, id)
+                    obj.recent = sourceRevIds(revs, dtype, id);
                     app.lcs.put(dtype, obj);
                     if(dtype === "pen" && !app.pen.myPenId() &&
                            obj.stash && obj.stash.account) {
