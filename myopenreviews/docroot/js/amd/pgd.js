@@ -534,7 +534,7 @@ app.pgd = (function () {
             ta.value = "<div id=\"membiccssoverride\">" + site + 
                 "/css/embedsample.css</div>\n" +
                 "<div id=\"membicgroupdiv\"><a href=\"" + site + 
-                "?view=group&groupid=5724830628315136\">" + dst.obj.name + 
+                "?view=group&groupid=" + dst.id + "\">" + dst.obj.name + 
                 "</a></div>\n" +
                 "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
     },
@@ -574,10 +574,12 @@ app.pgd = (function () {
     },
 
 
-    displayRecent = function () {
+    displayRecent = function (expid) {
         app.review.displayReviews('pgdcontdiv', "pgd", getRecentReviews(), 
                                   "app.pgd.toggleRevExpansion", 
                                   (dst.type === "group"));
+        if(expid) {
+            app.pgd.toggleRevExpansion("pgd", expid); }
     },
 
 
@@ -668,7 +670,7 @@ app.pgd = (function () {
     },
 
 
-    displayTab = function (tabname) {
+    displayTab = function (tabname, expid) {
         var kt, elem, dispfunc;
         tabname = tabname || "latest";
         for(kt in knowntabs) {
@@ -681,7 +683,7 @@ app.pgd = (function () {
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.isId(jt.instId(dst.obj))) {
-            return dispfunc(); }
+            return dispfunc(expid); }
         jt.out('pgdcontdiv', dst.type.capitalize() + " settings required");
         app.pgd.settings();
     },
@@ -697,7 +699,7 @@ app.pgd = (function () {
     },
 
 
-    displayObject = function (obj) {
+    displayObject = function (obj, expid) {
         var defs, html;
         obj = obj || dst.obj;
         dst.obj = obj;
@@ -724,7 +726,7 @@ app.pgd = (function () {
                  ["div", {id: "pgdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         setTimeout(backgroundVerifyObjectData, 100);
-        displayTab(dst.tab);
+        displayTab(dst.tab, expid);
     },
 
 
@@ -961,6 +963,9 @@ return {
 
     toggleRevExpansion: function (prefix, revid) {
         var revs;
+        if(app.embedded) {
+            return window.open("?view=group&groupid=" + dst.id +
+                               "&tab=" + dst.tab + "&expid=" + revid); }
         switch(dst.tab) {
         case "latest":
             revs = getRecentReviews();
@@ -1072,14 +1077,14 @@ return {
     },
 
 
-    display: function (dtype, id, tab, obj) {
+    display: function (dtype, id, tab, obj, expid) {
         verifyFunctionConnections();
         dst.type = dtype || "pen";
         dst.id = id || (obj? jt.instId(obj) : "") || 
             (dst.type === "pen"? app.pen.myPenId() : "") || "";
         dst.tab = tab || "latest";
         if(obj) {
-            return displayObject(obj); }
+            return displayObject(obj, expid); }
         if(dst.id) {
             return app.pgd.fetchAndDisplay(dst.type, dst.id, dst.tab); }
         if(dtype === "group") {  //creating new group
@@ -1145,9 +1150,9 @@ return {
     },
 
 
-    fetchAndDisplay: function (dtype, id, tab) {
+    fetchAndDisplay: function (dtype, id, tab, expid) {
         app.pgd.blockfetch(dtype, id, function (obj) {
-            app.pgd.display(dtype, id, tab || "", obj); });
+            app.pgd.display(dtype, id, tab || "", obj, expid); });
     }
 
 };  //end of returned functions

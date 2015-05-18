@@ -78,7 +78,7 @@ return {
         case "memo":
             return app.activity.displayRemembered();
         case "group":
-            return app.group.bygroupid(state.groupid, state.tab);
+            return app.group.bygroupid(state.groupid, state.tab, state.expid);
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {

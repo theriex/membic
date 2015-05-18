@@ -516,6 +516,16 @@ return {
     },
 
 
+    scrollToVisible: function (domid) {
+        var elem, pos;
+        elem = jt.byId(domid);
+        if(elem) {
+            pos = jt.geoPos(elem);
+            if(pos.y > 0.8 * app.winh) {
+                window.scroll(0, pos.y); } }
+    },
+
+
     cancelOverlay: function () {
         var odiv;
         closeModalSeparator();

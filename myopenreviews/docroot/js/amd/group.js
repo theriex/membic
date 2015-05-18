@@ -22,8 +22,8 @@ app.group = (function () {
     ////////////////////////////////////////
 return {
 
-    bygroupid: function (groupid, tabname) {
-        app.pgd.fetchAndDisplay("group", groupid, tabname);
+    bygroupid: function (groupid, tabname, expid) {
+        app.pgd.fetchAndDisplay("group", groupid, tabname, expid);
     },
 
 

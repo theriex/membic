@@ -1295,6 +1295,15 @@ app.review = (function () {
     },
 
 
+    revurl = function (rev) {
+        if(rev.grpid) {
+            return "?view=group&groupid=" + rev.grpid + "&tab=recent&expid=" +
+                jt.instId(rev); }
+        return "?view=pen&penid=" + rev.penid + "&tab=recent&expid=" +
+            jt.instId(rev);
+    },
+
+
     updateReviewDialogContents = function () {
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
@@ -1884,13 +1893,11 @@ return {
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
                  ["div", {cla: "fptypediv"},
-                  ["a", {href: "statrev/" + jt.instId(rev),
-                         onclick: togclick},
+                  ["a", {href: revurl(rev), onclick: togclick},
                    ["img", {cla: "reviewbadge", src: "img/" + type.img,
                             title: type.type, alt: type.type}]]],
                  ["div", {cla: "fptitlediv"},
-                  ["a", {href: "statrev/" + jt.instId(rev),
-                         onclick: togclick},
+                  ["a", {href: revurl(rev), onclick: togclick},
                    app.pgd.reviewItemNameHTML(type, rev)]],
                  ["div", {cla: "fpstarsdiv"},
                   app.review.starsImageHTML(rev)],
@@ -2010,6 +2017,7 @@ return {
             jt.out(revdivid + "keysdiv", "");
             jt.out(revdivid + "grpsdiv", ""); }
         else {  //expand
+            app.layout.scrollToVisible(revdivid + "buttonsdiv");
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 

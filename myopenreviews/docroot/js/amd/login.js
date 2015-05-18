@@ -447,7 +447,9 @@ app.login = (function () {
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
                                      profid: params.profid,
-                                     groupid: params.groupid }); }
+                                     groupid: params.groupid,
+                                     tab: params.tab,
+                                     expid: params.expid }); }
         else if(params.revedit) {
             app.history.checkpoint({ view: "review", mode: "edit",
                                      revid: params.revedit }); }
