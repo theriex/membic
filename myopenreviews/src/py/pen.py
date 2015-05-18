@@ -195,6 +195,7 @@ def fetch_pen_by_penid(handler):
     pen.twid = 0
     pen.ghid = 0
     pen.abusive = ""
+    pen.stash = ""
     return pen
 
 
