@@ -899,7 +899,7 @@ return {
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
                 html = [["span", {cla: "shoutspan"},
-                         (app.login.isLoggedIn()? "" : 
+                         (app.login.isLoggedIn() || dst.type !== "group"? "" : 
                           "Sign in to follow or join.<br/>")],
                         ["span", {cla: "shoutspan"},
                          "To share this " + dst.type + " via social media, email or text, use the following URL:"],
