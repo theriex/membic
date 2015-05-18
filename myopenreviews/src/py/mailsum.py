@@ -4,7 +4,6 @@ from google.appengine.ext import db
 import logging
 from pen import PenName
 from rev import Review, review_activity_search
-from req import Request, find_requests
 from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
 from morutil import *
 from statrev import getTitle, getSubkey

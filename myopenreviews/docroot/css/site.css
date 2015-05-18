@@ -35,7 +35,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-color: #d8d8dd;
-  /* background: linear-gradient(#f7f7f9 60%, #dcdce0); */
+  background: linear-gradient(#e9e9ee 60%, #d8d8dd);
 }
 
 img { border:0px; }
@@ -425,6 +425,7 @@ button, .loginbutton, .formbutton {
 .inlinebuttonsdiv { text-align:center; padding:0px 0px 10px 0px; }
 .inlinebuttonsdiv button { margin:0px 10px; }
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
+#rssurlta { height:40px; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .optionalbuttonsdiv { text-align:center; }  /* no pad */
 .optionalbuttonsdiv button { margin:15px 10px 5px 10px; }

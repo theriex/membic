@@ -366,11 +366,7 @@ handlers:
   script: src.py.statrev.app
 - url: /stats.*
   script: src.py.statweek.app
-- url: /rssact.*
-  script: src.py.rssact.app
-- url: /rsspen.*
-  script: src.py.rssact.app
-- url: /rssgrp.*
+- url: /rssgroup.*
   script: src.py.rssact.app
 - url: /mailsum.*
   script: src.py.mailsum.app

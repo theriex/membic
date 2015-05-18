@@ -1,39 +1,34 @@
 import webapp2
 import logging
-from rel import outbound_relids_for_penid
-from rev import review_activity_search
 from moracct import safestr
 from morutil import *
 from statrev import getTitle, getSubkey
-from blogview import fetch_blog_reviews
-from groupview import recent_group_reviews
-from pen import PenName
-from group import Group
+import rev
+import group
+from cacheman import *
 
 
-def rss_title(review, checked):
+def rss_title(review):
     title = str(review.rating / 20) + " star " + review.revtype + ": " +\
         getTitle(review) + " " + getSubkey(review)
-    if checked:
-        title = unicode(review.penname) + " reviewed a " + title
     return title
 
-def item_url(review):
-    url = "http://www.fgfweb.com/statrev/" + str(review.key().id())
+
+def item_url(handler, review):
+    url = handler.request.host_url + "?view=group&amp;groupid=" +\
+        str(review.grpid) + "&amp;tab=latest&amp;expid=" +\
+        str(review.key().id())
     return url
 
 
-def rss_content(penid, title, reviews, checked, following):
-    url = "http://www.fgfweb.com/rssact?pen=" + str(penid)
-    email = "robot@fgfweb.com"
+def rss_content(handler, grpid, title, reviews):
+    url = "?view=group&amp;groupid=" + str(grpid)
+    email = "robot@membic.com"
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
-    # claimed by the site to avoid unintended content distribution.
+    # claimed by the site to avoid unwanted content distribution.
     copy = "Copyright SAND Services Inc."
-    desc = str(len(reviews)) + " reviews"
-    if checked:
-        desc = "Following " + str(following) + ", " + desc + ", " +\
-            str(checked) + " checked."
+    desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"
     txt += "<rdf:RDF\n"
@@ -65,21 +60,22 @@ def rss_content(penid, title, reviews, checked, following):
     txt += "<items>\n"
     txt += " <rdf:Seq>\n"
     for review in reviews:
-        txt += "<rdf:li rdf:resource=\"" + item_url(review) + "\" />\n"
+        txt += "<rdf:li rdf:resource=\"" + item_url(handler, review) + "\" />\n"
     txt += " </rdf:Seq>\n"
     txt += "</items>\n"
     txt += "</channel>\n"
     for review in reviews:
-        revtitle = rss_title(review, checked)
-        txt += "<item rdf:about=\"" + item_url(review) + "\">\n"
+        revtitle = rss_title(review)
+        revurl = item_url(handler, review)
+        txt += "<item rdf:about=\"" + revurl + "\">\n"
         txt += "<title><![CDATA[" + revtitle + "]]></title>\n"
-        txt += "<link>" + item_url(review) + "</link>\n"
+        txt += "<link>" + revurl + "</link>\n"
         txt += "<description><![CDATA[" + safestr(review.keywords) + " | "
         txt += safestr(review.text) + "]]></description>\n"
         txt += "<dc:date>" + review.modified + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
         txt += "<dc:rights>" + copy + "</dc:rights>\n"
-        txt += "<dc:source>" + item_url(review) + "</dc:source>\n"
+        txt += "<dc:source>" + revurl + "</dc:source>\n"
         txt += "<dc:title><![CDATA[" + revtitle + "]]></dc:title>\n"
         txt += "<dc:type>text</dc:type>\n"
         txt += "<dcterms:issued>" + review.modified + "</dcterms:issued>\n"
@@ -88,45 +84,24 @@ def rss_content(penid, title, reviews, checked, following):
     return txt;
 
 
-class ActivityRSS(webapp2.RequestHandler):
-    def get(self):
-        penid = intz(self.request.get('pen'))
-        relids = outbound_relids_for_penid(penid)
-        checked, reviews = review_activity_search("", "", relids)
-        title = "FGFweb reviews from friends"
-        content = rss_content(penid, title, reviews, checked, len(relids))
-        #heard there were potential issues with "application/rss+xml"
-        #so modeled what craigslist is doing..
-        ctype = "application/xhtml+xml; charset=UTF-8"
-        self.response.headers['Content-Type'] = ctype
-        self.response.out.write(content);
-
-
-class PenNameRSS(webapp2.RequestHandler):
-    def get(self):
-        penid = intz(self.request.get('pen'))
-        pen = PenName.get_by_id(penid);
-        reviews = fetch_blog_reviews(pen).objects;
-        title = "FGFweb reviews from " + pen.name
-        content = rss_content(penid, title, reviews, 0, 0)
-        ctype = "application/xhtml+xml; charset=UTF-8"
-        self.response.headers['Content-Type'] = ctype
-        self.response.out.write(content);
-
-
 class GroupRSS(webapp2.RequestHandler):
     def get(self):
-        groupid = intz(self.request.get('group'))
-        group = Group.get_by_id(groupid)
-        reviews = recent_group_reviews(group).objects;
-        title = "FGFweb reviews for " + group.name
-        content = rss_content(groupid, title, reviews, 0, 0)
+        grpid = intz(self.request.get('group'))
+        grp = group.Group.get_by_id(grpid)
+        # Similar to FetchAllReviews except but without extra data checks
+        reviews = []
+        ckey = "revs" + str(grpid)
+        idcsv = memcache.get(ckey)
+        if not idcsv:
+            grp, idcsv = rev.fetch_revs_for_pg("grpid", grp)
+        for revidstr in csv_list(idcsv):
+            reviews.append(cached_get(int(revidstr), rev.Review))
+        title = grp.name
+        content = rss_content(self, grpid, title, reviews)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content);
 
 
-app = webapp2.WSGIApplication([('/rssact', ActivityRSS),
-                               ('/rsspen', PenNameRSS),
-                               ('/rssgrp', GroupRSS)], debug=True)
+app = webapp2.WSGIApplication([('/rssgroup', GroupRSS)], debug=True)
 
