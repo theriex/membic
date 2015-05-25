@@ -842,10 +842,7 @@ app.review = (function () {
             html = ["div", {id: "geocodingInfoDiv"},
                     [["div", {id: "lslogdiv"}],
                      ["div", {id: "mapdiv"}]]];
-            html = app.layout.dlgwrapHTML("Geocoded Place Details", html);
-            //the dialog is displayed if processing fails, meanwhile
-            //it serves as a stable place to hold the required map.
-            app.layout.writeDialogContents(html);
+            jt.out('rdextradiv', jt.tac2html(html));
             if(complainIfNotAlreadyThere) {
                 jt.out('lslogdiv', "geocodingInfoDiv was destroyed"); } }
     },
@@ -1359,7 +1356,8 @@ return {
                    ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
                     ["button", {type: "button", id: "okbutton",
                                 onclick: jt.fs("app.review.save()")},
-                     "Ok"]]]]]];
+                     "Ok"]]]],
+                 ["div", {id: "rdextradiv"}]]];
         html = app.layout.dlgwrapHTML("Make Membic", html);
         app.layout.openDialog(
             {x: jt.byId("headingdivcontent").offsetLeft - 34, 

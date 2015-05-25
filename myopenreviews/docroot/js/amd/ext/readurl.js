@@ -275,7 +275,7 @@ return {
 
     fetchData: function (review, url, params) {
         var geturl;
-        jt.out('contentdiv', "Reading details from " + url + " ...");
+        jt.out('revautodiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + jt.enc(url);
         jt.call('GET', geturl, null,
                  function (json) {
