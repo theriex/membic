@@ -1891,7 +1891,8 @@ return {
         togclick = jt.fs(togfname + "('" + prefix + "','" + revid + "')");
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
-        html = ["div", {cla: "fpinrevdiv"},
+        html = ["div", {cla: (prefix === "rrd"? "fpmeminrevdiv"
+                                              : "fpinrevdiv")},
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
                  ["div", {cla: "fptypediv"},

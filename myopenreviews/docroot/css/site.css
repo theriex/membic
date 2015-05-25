@@ -136,7 +136,7 @@ button, .loginbutton, .formbutton {
   border-bottom-right-radius: 210px 20px;
   border-top-right-radius: 10px;
   border-bottom-left-radius: 10px;
-  border: 1px solid #666666; 
+  border: 1px solid #999; 
   box-shadow:10px 10px 5px #888888; }
 #dlgborderdiv {
   padding:4px;
@@ -149,8 +149,9 @@ button, .loginbutton, .formbutton {
 }
 #dlginsidediv {
   padding:4px;
-  background-color: #fff;
-  background-image: url('../img/dlgback.png');
+  background: #ffe8ce;
+  background:-moz-linear-gradient(left top, #ffecd7 0%, #ffad51 100%);
+  background:-webkit-linear-gradient(left top, #ffecd7 0%, #ffad51 100%);
   border-top-left-radius: 210px 20px;
   border-bottom-right-radius: 210px 20px;
   border-top-right-radius: 10px;
@@ -567,7 +568,9 @@ button, .loginbutton, .formbutton {
 .fpprefstatdiv { height:12px; font-size:12px; text-align:center; }
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }
-.fpinrevdiv { background-color:#f9f9fc; margin:0px 0px 0px 5px; }
+.fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
+.fpinrevdiv { background-color:#f9f9fc; }
+.fpmeminrevdiv { background-color:#ffbe74; }
 .fpbodydiv { overflow:auto; }
 .fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
 .fpbuttonsdiv { margin-left:40px; padding-top:2px; }
