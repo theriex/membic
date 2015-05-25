@@ -259,11 +259,6 @@ handlers:
 - url: /grppic.*
   script: src.py.group.app
 
-## Post a review to a group
-## POST params: penid, revid, groupid, authparams
-- url: /grprev.*
-  script: src.py.group.app
-
 ## Apply for next level group membership
 ## POST params: action (apply/withdraw), penid, groupid, authparams
 - url: /grpmemapply.*

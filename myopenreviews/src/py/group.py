@@ -31,7 +31,7 @@ class Group(db.Model):
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
     city = db.StringProperty(indexed=False)      #not used anymore
-    revtypes = db.StringProperty(indexed=False)  #CSV of review types
+    revtypes = db.StringProperty(indexed=False)  #not used anymore
     revfreq = db.IntegerProperty(indexed=False)  #review every N days
     
 
@@ -96,13 +96,6 @@ def member_level(penid, group):
     return 0
 
 
-def is_revtype_match(revtype, group):
-    for gtype in group.revtypes.split(","):
-        if revtype == gtype:
-            return True
-    return false
-
-
 def city_match(grpA, grpB):
     acs = grpA.city.split(",")
     bcs = grpB.city.split(",")
@@ -147,7 +140,6 @@ def read_and_validate_descriptive_fields(handler, group):
         handler.response.out.write("Embed code must be an iframe")
         return False
     # picture is uploaded separately
-    # revtypes not used anymore
     # frequency not used anymore
     # membership fields are handled separately
     # review postings are handled separately
@@ -374,42 +366,6 @@ class GetGroupPic(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
-class PostReview(webapp2.RequestHandler):
-    def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        revid, review, group, role = fetch_group_mod_elements(self, pnm)
-        if review is None or group is None:
-            return   #error already reported
-        if review.penid != pnm.key().id():
-            self.error(400)
-            self.response.out.write("You may only post your own review")
-            return;
-        if role != "Founder" and role != "Moderator" and role != "Member":
-            self.error(400)
-            self.response.out.write("You are not a member of this group")
-            return
-        if not is_revtype_match(review.revtype, group):
-            self.error(400)
-            self.response.out.write(review.revtype + " is not an accepted type")
-            return
-        # add the review to the group, most recently posted first
-        if not group.reviews or group.reviews == str(revid):
-            group.reviews = str(revid)
-        else:
-            revids = group.reviews.split(",")
-            try: 
-                revids.remove(str(revid))
-            except Exception:
-                pass
-            revids.insert(0, str(revid))    # most recently posted first
-            group.reviews = ",".join(revids)
-        verify_people(group)
-        cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
 class ApplyForMembership(webapp2.RequestHandler):
     def post(self):
         pnm = rev.review_modification_authorized(self)
@@ -550,7 +506,6 @@ app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppicupload', UploadGroupPic),
                                ('/grppic', GetGroupPic),
-                               ('/grprev', PostReview),
                                ('/grpmemapply', ApplyForMembership),
                                ('/grpmemprocess', ProcessMembership),
                                ('/grprejok', MembershipRejectAck),
