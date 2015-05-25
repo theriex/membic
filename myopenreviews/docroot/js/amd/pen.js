@@ -1,4 +1,4 @@
-/*global JSON: false, window: false, app: false, jt: false, setTimeout: false */
+/*global JSON: false, window: false, app: false, jt: false, setTimeout: false, confirm: false */
 
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
@@ -11,6 +11,15 @@ app.pen = (function () {
 
     var loginpenid,
         returnFuncMemo,  //function to return to after dialog completed
+        visprefvals = [
+            { ident: "blocked", code: "x", name: "Block",
+              description: "Permanently block everything from $PEN" },
+            { ident: "background", code: "z", name: "Background",
+              description: "Prefer others over $PEN" },
+            { ident: "normal", code: "&#x2022;", name: "Normal",
+              description: "" },
+            { ident: "prefer", code: "&#x2605;", name: "Prefer",
+              description: "Prefer posts from $PEN over others" }],
 
 
     ////////////////////////////////////////
@@ -176,6 +185,84 @@ return {
         if(!pen || !pen.stash || !pen.stash.account) {
             return "Unknown"; }
         return pen.stash.account.status;
+    },
+
+
+    visprefs: function (revdivid, penid, penname) {
+        var pen, html, pcode, i, pv;
+        penname = penname || "pen " + penid;
+        pen = app.pen.myPenName();
+        if(!pen) {
+            return jt.err("Sign in to prefer, background or block posts from " +
+                          penname); }
+        html = [];
+        pcode = app.pen.prefcode(penid);
+        for(i = visprefvals.length - 1; i >= 0; i -= 1) {
+            pv = visprefvals[i];
+            html.push(["div", {cla: "visprefseldiv"},
+                       [["input", {type: "radio", name: "vpr", value: pv.name,
+                                   id: "vprin" + i,
+                                   checked: jt.toru(pv.code === pcode)}],
+                        ["span", {cla: "vispreflabspan"}, pv.name],
+                        ["span", {cla: "visprefdescrspan"}, 
+                         pv.description.replace(/\$PEN/g, penname)]]]); }
+        html = ["div", {id: "vpdlgdiv"},
+                [html,
+                 ["div", {cla: "dlgbuttonsdiv"},
+                  [["button", {type: "button", id: "cancelbutton",
+                               onclick: jt.fs("app.layout.cancelOverlay()")},
+                    "Cancel"],
+                   ["button", {type: "button", id: "okbutton",
+                               onclick: jt.fs("app.pen.updateVisPrefs('" +
+                                              penid + "')")},
+                    "Ok"]]]]];
+        app.layout.openOverlay(app.layout.placerel("fppsdiv" + revdivid, 
+                                                   5, -30), 
+                               html);
+    },
+
+
+    updateVisPrefs: function (penid) {
+        var i, cb, vp = null, pen;
+        for(i = 0; i < visprefvals.length; i += 1) {
+            cb = jt.byId("vprin" + i);
+            if(cb && cb.checked) {
+                vp = visprefvals[i]; } }
+        if(vp && vp.ident === "blocked" && 
+               !confirm("Blocking cannot be undone. Permanently block?")) {
+            return; }
+        app.layout.cancelOverlay();
+        if(vp) {
+            pen = app.pen.myPenName();
+            pen.preferred = pen.preferred || "";
+            pen.preferred = pen.preferred.csvremove(penid);
+            pen.background = pen.background || "";
+            pen.background = pen.background.csvremove(penid);
+            pen.blocked = pen.blocked || "";
+            pen.blocked = pen.blocked.csvremove(penid);
+            switch(vp.ident) {
+            case "blocked":
+                pen.blocked = pen.blocked.csvappend(penid); break;
+            case "background":
+                pen.background = pen.background.csvappend(penid); break;
+            case "prefer":
+                pen.preferred = pen.preferred.csvappend(penid); break; }
+            app.pen.updatePen(pen, app.activity.redisplay, app.failf); }
+    },
+
+
+    prefcode: function (penid) {
+        var pen;
+        if(penid === app.pen.myPenId()) {
+            return ""; }
+        pen = app.pen.myPenName();
+        if(pen && pen.preferred && pen.preferred.csvcontains(penid)) {
+            return visprefvals[3].code; }
+        if(pen && pen.background && pen.background.csvcontains(penid)) {
+            return visprefvals[1].code; }
+        if(pen && pen.blocked && pen.blocked.csvcontains(penid)) {
+            return visprefvals[0].code; }
+        return visprefvals[2].code; 
     },
 
 

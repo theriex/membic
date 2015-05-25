@@ -66,6 +66,7 @@ def has_top_twenty(pen, revtype):
 
 def set_pen_attrs(pen, request):
     """ Set pen attributes handled the same way for both create and modify """
+    # pen.name handled separately on update only
     pen.mid = intz(request.get('mid'))
     pen.gsid = request.get('gsid') or ""
     pen.fbid = intz(request.get('fbid'))
@@ -76,12 +77,15 @@ def set_pen_attrs(pen, request):
     pen.city = request.get('city') or ""
     pen.accessed = nowISO()
     pen.modified = nowISO()
+    # pen.remembered handled separately
     # pen.top20s is maintained separately as part of reviews
-    pen.groups = request.get('groups') or ""
     pen.stash = request.get('stash') or ""
     pen.settings = request.get('settings') or ""
-    pen.abusive = request.get('abusive') or ""
-    pen.abusive = str(pen.abusive)
+    pen.preferred = str(request.get('preferred')) or ""
+    pen.background = str(request.get('background')) or ""
+    pen.blocked = str(request.get('blocked')) or ""
+    pen.abusive = str(request.get('abusive')) or ""
+    pen.groups = str(request.get('groups')) or ""
 
 
 def gen_password():

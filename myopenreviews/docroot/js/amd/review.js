@@ -1952,7 +1952,7 @@ return {
 
 
     displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
-        var rt, i, html, rev, pr, maindivattrs, authlink, revdivid;
+        var rt, i, html, rev, pr, maindivattrs, authlink, vp, revdivid;
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
             if(rt === "all") {
@@ -1973,15 +1973,26 @@ return {
                 maindivattrs.style = "display:none"; }
             authlink = "";
             if(author) {
+                vp = "";
+                if(prefix === "afd") {  //activity feed display only
+                    vp = ["div", {cla: "fpprefstatdiv", 
+                                  id: "fppsdiv" + revdivid},
+                          ["a", {href: "#visprefs",
+                                 onclick: jt.fs("app.pen.visprefs('" + 
+                                                revdivid + "','" + 
+                                                rev.penid + "','" + 
+                                                rev.penname + "')")},
+                           app.pen.prefcode(rev.penid)]]; }
                 authlink = 
                     ["div", {cla: "fpprofdiv"},
-                     ["a", {href: "#view=pen&penid=" + rev.penid,
-                            onclick: jt.fs("app.pen.bypenid('" + 
-                                           rev.penid + "')")},
-                      ["img", {cla: "fpprofpic", 
-                               src: "profpic?profileid=" + rev.penid,
-                               title: jt.ndq(rev.penname),
-                               alt: jt.ndq(rev.penname)}]]]; }
+                     [["a", {href: "#view=pen&penid=" + rev.penid,
+                             onclick: jt.fs("app.pen.bypenid('" + 
+                                            rev.penid + "')")},
+                       ["img", {cla: "fpprofpic", 
+                                src: "profpic?profileid=" + rev.penid,
+                                title: jt.ndq(rev.penname),
+                                alt: jt.ndq(rev.penname)}]],
+                      vp]]; }
             html.push(["div", maindivattrs,
                        [authlink,
                         ["div", {cla: (author? "fparevdiv" : "fpnarevdiv"),

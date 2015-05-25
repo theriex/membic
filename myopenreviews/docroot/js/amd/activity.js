@@ -83,24 +83,20 @@ app.activity = (function () {
 
 
     mergePersonalRecent = function (feedtype, feedrevs) {
-        var cached, revs, revid, haveAlready, i, j;
-        revs = [];
+        var cached, myrev, revid, i, j;
         cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
+        //non-destructively merge in recent stuff without negatively
+        //impacting the existing server sort order.
         for(i = 0; i < cached.length; i += 1) {
+            myrev = cached[i];
             revid = jt.instId(cached[i]);
-            haveAlready = false;
             for(j = 0; j < feedrevs.length; j += 1) {
                 if(jt.instId(feedrevs[j]) === revid) {
-                    haveAlready = true;
-                    break; } }
-            if(!haveAlready) {
-                revs.push(cached[i]); } }
-        revs = revs.concat(feedrevs);
-        revs.sort(function (a, b) {
-            if(a.modhist < b.modhist) { return 1; }
-            if(a.modhist > b.modhist) { return -1; }
-            return 0; });
-        return revs;
+                    break; }  //already have it
+                if(feedrevs[j].modhist < myrev.modhist) {
+                    feedrevs.splice(i, 0, myrev);
+                    break; } } }
+        return feedrevs;
     },
 
 
@@ -181,6 +177,17 @@ return {
     },
 
 
+    redisplay: function () {
+        var rts, i, rt;
+        rts = app.review.getReviewTypes();
+        for(i = 0; i < rts.length; i += 1) {
+            rt = rts[i];
+            feeds[rt.type] = null; }
+        feeds.all = null;
+        app.activity.displayFeed();
+    },
+
+
     updateFeeds: function (rev) {
         var revid, tname, revs, i, inserted, processed;
         revid = jt.instId(rev);
@@ -238,28 +245,6 @@ return {
 
     displayRemembered: function () {
         mainDisplay("memo");
-    },
-
-
-    feedReviewHTML: function (prefix, rev, hide, togcbn) {
-        var revid, revdivid, maindivattrs, html;
-        revid = jt.instId(rev);
-        revdivid = prefix + revid;
-        maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
-        if(hide) {
-            maindivattrs.style = "display:none"; }
-        html = ["div", maindivattrs,
-                [["div", {cla: "fpprofdiv"},
-                  ["a", {href: "#view=pen&penid=" + rev.penid,
-                         onclick: jt.fs("app.pen.bypenid('" + 
-                                        rev.penid + "')")},
-                   ["img", {cla: "fpprofpic", 
-                            src: "profpic?profileid=" + rev.penid,
-                            title: jt.ndq(rev.penname),
-                            alt: jt.ndq(rev.penname)}]]],
-                 ["div", {cla: "fprevdiv", id: revdivid},
-                  app.review.revdispHTML(prefix, revid, rev, togcbn)]]];
-        return html;
     },
 
 

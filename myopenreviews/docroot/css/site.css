@@ -560,10 +560,11 @@ button, .loginbutton, .formbutton {
 /* >> feed post review layout */
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
 .profrevdiv { clear:both; margin:0px 0px 10px 0px; }
-.fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:60px; 
+.fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:72px; 
   overflow:scroll; float:left; }
 .fpprofdivsp { margin-right:5px; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
+.fpprefstatdiv { height:12px; font-size:12px; text-align:center; }
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }
 .fpinrevdiv { background-color:#f9f9fc; margin:0px 0px 0px 5px; }
@@ -587,6 +588,9 @@ button, .loginbutton, .formbutton {
 .fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }
 .togglemoretextspan { background:#ccc; }
 .fpinlinetextdiv { font-size:small; }
+.visprefseldiv { font-size:medium; }
+.vispreflabspan { display:inline-block; width:100px; }
+.visprefdescrspan { padding-left:5px; font-size:small; }
 
 
 /* >> settings dialog */

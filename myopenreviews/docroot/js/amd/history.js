@@ -72,6 +72,7 @@ return {
 
 
     dispatchState: function (state) {
+        state = state || app.history.currState();
         switch(state.view) {
         case "activity":
             return app.activity.displayActive();
