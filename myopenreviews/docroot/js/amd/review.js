@@ -927,7 +927,11 @@ app.review = (function () {
 
 
     autocompletion = function (event) {
-        var srchtxt;
+        var cb, srchtxt;
+        cb = jt.byId("rdaccb");
+        if(!cb || !cb.checked) {
+            jt.out('revautodiv', "");
+            return; }
         if(crev.autocomp && jt.byId('revautodiv') && jt.byId('keyin')) {
             srchtxt = jt.byId('keyin').value;
             if(jt.byId('subkeyin')) {
