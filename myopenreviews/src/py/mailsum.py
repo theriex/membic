@@ -290,18 +290,6 @@ def text_stars(review):
     return stars[index]
 
 
-def req_summary_text(reqs):
-    text = ""
-    if reqs and len(reqs) > 0:
-        text += "You have review requests from your followers:\n"
-        for req in reqs:
-            pen = cached_get(req.fromid, PenName)
-            text += "    " + pen.name + " has requested a " + req.revtype +\
-                " review.\n"
-        text += "\n\n"
-    return text
-
-
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)

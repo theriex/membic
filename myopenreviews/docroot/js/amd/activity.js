@@ -3,21 +3,7 @@
 /*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
 
 //////////////////////////////////////////////////////////////////////
-// Display of recent posts from friends, remembered posts, and
-// searching for pen names to follow.  Cached data off the current pen:
-//
-//   penref.actdisp:
-//     revrefs: array of cached posts, most recent first
-//     lastChecked: timestamp when recent posts were last fetched
-//     cursor: cursor for continuing to load more activity
-//     reps: obj for tracking display of extra posts per person per day
-//
-//   penref.pensearch:
-//     params: parameters for search
-//     pens: found pens 
-//     cursor: cursor for continuing to load more matching pens
-//     total: count of records searched so far
-//     reqs: count of times the search was manually requested
+// Display of recent posts from friends, remembered posts.  
 //
 
 app.activity = (function () {

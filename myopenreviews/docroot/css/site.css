@@ -297,8 +297,6 @@ button, .loginbutton, .formbutton {
 .bbk5  { background:url('../img/bbk5.png') no-repeat center center; }
 .bbk10 { background:url('../img/bbk10.png') no-repeat center center; }
 .bbk20 { background:url('../img/bbk20.png') no-repeat center center; }
-.followico { width:30px; height:30px; vertical-align:bottom; }
-.followingico { width:20px; height:20px; vertical-align:middle; }
 #profbadgestd { padding: 0px 10px 5px 10px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; 
   font-family:"Satisfy", cursive; }
@@ -382,7 +380,6 @@ button, .loginbutton, .formbutton {
 #fstatdescr { padding: 0px 0px 5px 60px; }
 .hintText { font-size:small; font-style:italic; padding:20px; }
 #relctrlsdiv { font-size:small; }
-#followmodelinkdiv { padding:0px 20px; }
 /* #revtypeseltable { border-collapse:collapse; } */
 .tabmodediv { font-size:small; }
 .poststatspan { font-size:small; color:#666; }
