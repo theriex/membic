@@ -4,56 +4,47 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
   <meta name="description" content="Friends Guiding Friends Additional Features" />
-  <title>more FGFweb</title>
+  <title>Membic System Extensions</title>
 </head>
 <body>
 
+<p><b>Membic bookmarklet:</b></p>
+
+<p>To create a membic in one click from any site, "right click" the
+following link and add it to your bookmarks:</p>
+
   <div id="bookslidediv">
-    <p class="tagline">For easy posts, "right click" the following link and add it to your bookmarks:</p>
-
     <div class="bookmarkletlinkdiv">
-      <a href="javascript:(function(){window.open('http://www.fgfweb.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
-         style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">FGFweb&nbsp;post</a>
+      <a href="javascript:(function(){window.open('http://www.membic.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
+         style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">Make&nbsp;Membic</a>
     </div>
+  </div>
 
-    <p class="tagline">This magic link is called a "bookmarklet",
-    which is a fancy name for a line of javascript that opens up
-    FGFweb in a new browser window, passing along the url of the site
-    you were just on.  Voila, instant posting details! </p>
-
-<p>If you prefer to open FGFweb using the same window, add this bookmarklet instead: 
-<a href="javascript:(function(){window.location.href='http://www.fgfweb.com?newrev=&url='+encodeURIComponent(window.location.href);})();">
-FGFweb&nbsp;same&nbsp;window</a>
-</p>
-
-<!-- Haven't seen this be a problem of late...
-<p class="smalltext">You might need to allow popup windows from FGFweb
-depending on your browser. </p>  -->
-
-</div>
+<p>Then whenever you are on a site you want to create a membic for,
+select "Make Membic" from your bookmarks and the script will open a
+new browser window passing along the url. </p>
 
 
+<p><b>--------------------</b></p>
 
-<p><b>------------------------------------------------------------</b></p>
-
-<p><b>Connect to FGFweb directly from iTunes!</b></p>
+<p><b>iTunes playlist generator:</b></p>
 
 <p>These 3 AppleScript files enable to you to characterize your tracks
 and automatically build situational playlists: <p>
 
 <ul>
 
-<li><b>FGFwebReview</b> is run anytime you are listening to a track.
+<li><b>MembicReview</b> is run anytime you are listening to a track.
 It prompts you to select appropriate keywords, provide an overall
 rating, decide how often the track should be selected, and add any
 other comments you want.
 
-<li><b>FGFwebPlaylist</b> creates or updates a playlist built from
+<li><b>MembicPlaylist</b> creates or updates a playlist built from
 keyword values and a minimum quality rating, not including anything
 that has been selected too recently.
 
-<li><b>FGFwebExport</b> copies the playlist and source tracks out to
-another folder.  Handy for putting music on an Android phone.
+<li><b>MembicExport</b> copies the playlist and source tracks out to
+another folder.  Handy for copying music to an Android phone.
 
 </ul>
 
@@ -61,7 +52,7 @@ another folder.  Handy for putting music on an Android phone.
 comment fields.  No modifications are required, and existing field
 values are preserved. <p>
 
-<p>To get your FGFweb script support for iTunes: </p>
+<p>To get Membic script support for iTunes: </p>
 <ol>
 
 <li><a href="../downloads/iTunesMac.zip">Download iTunesMac.zip</a>
@@ -78,7 +69,7 @@ the top menu bar.
 </ol>
 
 <p>You might find it handy to set up a keyboard shortcut for
-FGFwebReview: </p>
+MembicReview: </p>
 
 <ol>
 
@@ -86,22 +77,22 @@ FGFwebReview: </p>
 
 <li>Click '+' to add a new shortcut
 
-<li>Select "iTunes" as the application, <code>FGFwebReview</code> as
+<li>Select "iTunes" as the application, <code>MembicReview</code> as
 the menu title, and <code>command-;</code> as the keyboard shortcut
 (iTunes already has default keybindings for most other keys).
 
 </ol>
 
 
-<p><b>------------------------------------------------------------</b></p>
+<p><b>--------------------</b></p>
 
 <!-- Had this set with "../stats" as the href and 'stats" as the
 window to open onclick. That works great for testing, but breaks search.
 Using the fully qualified url instead. -->
 
 <p>
-<a href="http://www.fgfweb.com/stats" 
-   onclick="window.open('http://www.fgfweb.com/stats');return false">stats</a>
+<a href="http://www.membic.com/stats" 
+   onclick="window.open('http://www.membic.com/stats');return false">stats</a>
 </p>
 
 </body>

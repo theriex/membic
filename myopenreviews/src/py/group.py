@@ -314,41 +314,6 @@ class GetGroupById(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
-# This is a form submission endpoint, so always redirect back to the app.
-class UploadGroupPic(webapp2.RequestHandler):
-    def post(self):
-        errmsg = "Could not find group"
-        groupid = self.request.get('_id')
-        group = cached_get(intz(groupid), Group)
-        if group:
-            errmsg = "You are not authorized to update this group pic"
-            pnm = rev.review_modification_authorized(self)
-            if pnm and pen_role(pnm.key().id(), group) == "Founder":
-                errmsg = "Picture file not provided"
-                upfile = self.request.get("picfilein")
-                if upfile:
-                    errmsg = "Picture upload failed"
-                    try:
-                        group.picture = db.Blob(upfile)
-                        group.picture = images.resize(group.picture, 160, 160)
-                        update_group_admin_log(group, pnm, "Uploaded Picture", 
-                                               "", "")
-                        verify_people(group)
-                        cached_put(group)
-                        errmsg = ""
-                    except Exception as e:
-                        errmsg = "Picture upload failed: " + str(e)
-        redurl = self.request.get('returnto')
-        if not redurl:
-            redurl = "http://www.fgfweb.com#group"
-        redurl = urllib.unquote(redurl)
-        redurl = str(redurl)
-        if errmsg:
-            redurl += "&action=grppicupload&errmsg=" + errmsg
-        logging.info("UploadGroupPic redirecting to " + redurl)
-        self.redirect(redurl)
-
-
 class GetGroupPic(webapp2.RequestHandler):
     def get(self):
         groupid = self.request.get('groupid')
@@ -504,7 +469,6 @@ class SearchGroups(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
-                               ('/grppicupload', UploadGroupPic),
                                ('/grppic', GetGroupPic),
                                ('/grpmemapply', ApplyForMembership),
                                ('/grpmemprocess', ProcessMembership),

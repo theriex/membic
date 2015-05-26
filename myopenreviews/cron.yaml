@@ -1,5 +1,0 @@
-cron:
-- description: mail summaries
-  url: /mailsum
-  schedule: every day 10:00
-  timezone: America/New_York

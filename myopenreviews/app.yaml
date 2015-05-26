@@ -248,12 +248,6 @@ handlers:
 - url: /grpbyid.*
   script: src.py.group.app
 
-## Upload a group pic
-## POST params: picfilein, _id, authparams
-##   _id: Group instance id
-- url: /grppicupload.*
-  script: src.py.group.app
-
 ## Retrieve a group pic
 ## GET params: groupid
 - url: /grppic.*
@@ -363,10 +357,6 @@ handlers:
   script: src.py.statweek.app
 - url: /rssgroup.*
   script: src.py.rssact.app
-- url: /mailsum.*
-  script: src.py.mailsum.app
-- url: /emuser.*
-  script: src.py.mailsum.app
 - url: /activity.*
   script: src.py.mailsum.app
 - url: /bytheway.*

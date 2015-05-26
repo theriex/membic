@@ -113,7 +113,7 @@ def bump_referral(stat, entry, val):
         bump_referral_count(stat, entry + "SSI")
     elif is_content_linkback(val):
         bump_referral_count(stat, entry + "ContLB")
-    elif "fgfweb" not in val:
+    elif "membic" not in val:
         # Write the whole url (without colons) as the identifier, thus
         # causing the activity display to get real ugly.  Then write
         # more logic in this method and fix the data to match.
@@ -302,174 +302,6 @@ def req_summary_text(reqs):
     return text
 
 
-def write_review_email_text_summary(review):
-    val = "$STARS $TITLE\n" +\
-        "      $BYLINE - $KEYWORDS\n" +\
-        "      $REVTEXT\n" +\
-        "      $REVLINK\n\n"
-    val = val.replace("$STARS", text_stars(review))
-    val = val.replace("$TITLE", getTitle(review) + " " + getSubkey(review))
-    val = val.replace("$BYLINE", "review by " + unicode(review.penname))
-    val = val.replace("$KEYWORDS", safestr(review.keywords))
-    revtxt = safestr(review.text)
-    revtxtmax = 184
-    if len(revtxt) > revtxtmax + 3:
-        revtxt = revtxt[:revtxtmax] + "..."
-    val = val.replace("$REVTEXT", "\n      ".join(textwrap.wrap(revtxt)))
-    val = val.replace("$REVLINK", "http://www.fgfweb.com/statrev/" +
-                      str(review.key().id()))
-    return val
-
-
-def write_summary_email_body(pen, reviews, tstr, prs, reqs):
-    sigline = "\nTo change your mail preferences, click the settings button on http://www.fgfweb.com\n\ncheers,\n-FGFweb\n\n"
-    body = "Hi " + pen.name + ",\n\n"
-    if prs and len(prs) > 0:
-        body += "Thanks for posting! Your current and future followers" +\
-            " appreciate it."
-    else:
-        body += "Experienced anything recently that you would tell a" +\
-            " friend about?"
-    body += "\n\n" +\
-        "Go to http://www.fgfweb.com for group activity, messages" +\
-        " and top rated posts from friends." +\
-        "\n\n" + req_summary_text(reqs)
-    if not reviews or len(reviews) == 0:
-        body += "Tragically, none of the people you are following have" +\
-            " posted anything since " + tstr + ". Please do what you" +\
-            " can to help them experience more of life. In the meantime," +\
-            " you can find other interesting people to follow here:\n" +\
-            "\n    http://www.fgfweb.com/?command=penfinder\n\n"
-        return body + sigline
-    body += str(len(reviews)) + " " +\
-        ("post" if len(reviews) == 1 else "posts") +\
-        " from friends since " + tstr + ":\n\n"
-    revtypes = [["book",     "Books"], 
-                ["movie",    "Movies"], 
-                ["video",    "Videos"], 
-                ["music",    "Music"],
-                ["food",     "Food"], 
-                ["drink",    "Drinks"], 
-                ["activity", "Activities"], 
-                ["other",    "Other"]]
-    for revtype in revtypes:
-        tline = "\n      ------------( " + revtype[1] + " )------------\n\n"
-        wroteHeaderLine = False
-        for review in reviews:
-            if review.revtype == revtype[0]:
-                if not wroteHeaderLine:
-                    body += tline
-                    wroteHeaderLine = True
-                body += write_review_email_text_summary(review)
-    return body + sigline
-
-
-def mail_summaries(freq, thresh, request, response):
-    tstr = ISO2dt(thresh).strftime("%d %B %Y")
-    subj = "FGFweb " + freq + " friend activity since " + tstr
-    logsum = "----------------------------------------\n"
-    logsum += "Mail sent for " + freq + " activity since " + tstr + "\n"
-    where = "WHERE summaryfreq = :1 AND lastsummary < :2"
-    accs = MORAccount.gql(where, freq, thresh)
-    processed = 0
-    for acc in accs:
-        processed += 1
-        ident = acc.email or acc.authsrc
-        logmsg = "account: " + ident
-        pen, whynot = eligible_pen(acc, thresh)
-        if pen:
-            logmsg += " (" + acc.email + "), pen: " + pen.name
-            relids = outbound_relids_for_penid(pen.key().id())
-            if len(relids) > 0:
-                logmsg += ", following: " + str(len(relids))
-                checked, reviews = review_activity_search(thresh, "", relids)
-                logmsg += ", reviews: " + str(len(reviews))
-                checked, prs = review_activity_search(
-                    thresh, "", [ str(pen.key().id()) ])
-                logmsg += ", reviewed: " + str(len(prs))
-                reqs = find_requests(pen.key().id(), 0)
-                content = write_summary_email_body(pen, reviews, tstr, 
-                                                   prs, reqs)
-                if not request.url.startswith('http://localhost'):
-                    mail.send_mail(
-                        sender="FGFweb support <theriex@gmail.com>",
-                        to=acc.email,
-                        subject=subj,
-                        body=content)
-                    logmsg += ", mail sent"
-        elif freq == "weekly":  # show details for most common notice freq
-            logmsg += " id:" + str(acc.key().id()) + " " + whynot
-        acc.lastsummary = nowISO()
-        acc.put()  #nocache
-        split_output(response, logmsg)
-        logsum += logmsg + "\n"
-    logsum += "SELECT * from MORAccount WHERE summaryfreq = '" + freq +\
-        "' AND lastsummary < '" + thresh + "'\n"
-    logsum += str(processed) + " matching accounts processed\n\n"    
-    return logsum
-
-
-class MailSummaries(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        split_output(self.response, "MailSummaries")
-        emsum = "Email summary send processing summary:\n"
-        dtnow = datetime.datetime.utcnow()
-        split_output(self.response, "---------- daily: ----------")
-        emsum += mail_summaries("daily", 
-                                dt2ISO(dtnow - datetime.timedelta(hours=24)),
-                                self.request, self.response)
-        split_output(self.response, "---------- weekly: ----------")
-        emsum += mail_summaries("weekly", 
-                                dt2ISO(dtnow - datetime.timedelta(7)),
-                                self.request, self.response)
-        split_output(self.response, "---------- fortnightly: ----------")
-        emsum += mail_summaries("fortnightly", 
-                                dt2ISO(dtnow - datetime.timedelta(14)),
-                                self.request, self.response)
-        summary = pen_stats() + "\n" + emsum
-        if self.request.url.startswith('http://localhost'):
-            self.response.out.write("\n\nsummary:\n" + summary)
-        else:
-            mail.send_mail(
-                sender="FGFweb Activity <fgfwebactivity@gmail.com>",
-                to="theriex@gmail.com",
-                subject="FGFweb mail summaries",
-                body=summary)
-
-
-class SummaryForUser(webapp2.RequestHandler):
-    def get(self):
-        emaddr = self.request.get('email')
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("email: " + emaddr + "\n")
-        accs = MORAccount.gql("WHERE email = :1", emaddr)
-        dtnow = datetime.datetime.utcnow()
-        thresh = dt2ISO(dtnow - datetime.timedelta(7))
-        tstr = ISO2dt(thresh).strftime("%d %B %Y")
-        for acc in accs:
-            pen, whynot = eligible_pen(acc, "2400-01-01T00:00:00Z")
-            self.response.out.write("pen: " + pen.name + "\n")
-            self.response.out.write("--------------------------------------")
-            self.response.out.write("--------------------------------------")
-            self.response.out.write("\n\n")
-            relids = outbound_relids_for_penid(pen.key().id())
-            checked, reviews = review_activity_search(thresh, "", relids)
-            checked, prs = review_activity_search(thresh, "", 
-                                                  [ str(pen.key().id()) ])
-            reqs = find_requests(pen.key().id(), 0)
-            content = write_summary_email_body(pen, reviews, tstr, prs, reqs)
-        self.response.out.write(content)
-        # Temporary email sender test code (comment out when not testing)
-        # emaddr = self.request.get('emaddr')
-        # if emaddr:
-        #     mail.send_mail(
-        #         sender="FGFweb Activity <fgfwebactivity@gmail.com>",
-        #         to=emaddr,
-        #         subject="FGFweb sender test email",
-        #         body=content)
-
-
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
@@ -540,9 +372,7 @@ class BounceHandler(BounceNotificationHandler):
           account.put()
 
 
-app = webapp2.WSGIApplication([('/mailsum', MailSummaries),
-                               ('/emuser', SummaryForUser),
-                               ('/botids', ReturnBotIDs),
+app = webapp2.WSGIApplication([('/botids', ReturnBotIDs),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
                                ('/bytheimg', ByTheImg),

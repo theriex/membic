@@ -498,7 +498,7 @@ class MailCredentials(webapp2.RequestHandler):
         eaddr = self.request.get('emailin')
         if eaddr:
             content = "You requested your password be mailed to you..."
-            content += "\n\nFGFweb has looked up " + eaddr + " "
+            content += "\n\nThe membic system has looked up " + eaddr + " "
             eaddr = eaddr.lower()
             where = "WHERE email=:1 LIMIT 9"
             accounts = MORAccount.gql(where, eaddr)
@@ -510,18 +510,17 @@ class MailCredentials(webapp2.RequestHandler):
                     "\nEither you have not signed up yet, or you signed in" +\
                     " via a social net before and did not provide an" +\
                     " email address."
-            content += "\n\nhttps://www.fgfweb.com\n\n"
+            content += "\n\nhttps://www.membic.com\n\n"
             if re.search("\:[0-9][0-9]80", self.request.url):
                 logging.info("Mail not sent to " + eaddr + " from local dev" +
                              "\n\n" + content)
             else:
                 logging.info("mailing password to " + eaddr)
-                # sender needs to be a valid email address.  This should
-                # change to noreply@fgfweb.com if traffic gets bad
+                # sender needs to be a valid email address.
                 mail.send_mail(
-                    sender="FGFweb support <admin@fgfweb.com>",
+                    sender="Membic System <membicsystem@gmail.com>",
                     to=eaddr,
-                    subject="FGFweb account login",
+                    subject="Membic.com account login",
                     body=content)
         writeJSONResponse("[]", self.response)
 

@@ -274,7 +274,6 @@ button, .loginbutton, .formbutton {
 #profshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
 #profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
-#fgfweblogdiv { font-size:small; padding: 5px 10px 0px 20px; }
 #srchpenslinkdiv, #srchgroupslinkdiv { 
   font-size:small; padding: 20px 0px 0px 30px; }
 .profpic { max-width:125px; max-height:125px; }

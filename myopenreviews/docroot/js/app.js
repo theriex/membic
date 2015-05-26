@@ -24,9 +24,9 @@ var app = {},  //Global container for application level funcs and values
     app.winh = 0;
     app.minSideBySide = (320 + 320 + 10);  //smallest possible expanded display
     app.introtext = "";
+    app.secsvr = "https://" + window.location.hostname;
+    app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "myopenreviewauth";
-    app.secsvr = "https://www.fgfweb.com";
-    app.mainsvr = "https://www.fgfweb.com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
 
@@ -49,7 +49,7 @@ var app = {},  //Global container for application level funcs and values
         state = {};
         if(history && history.state) {
             state = history.state; }
-        href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
+        href = app.secvsr + "#returnto=" + jt.enc(app.mainsvr) + 
             "&logout=true";
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }

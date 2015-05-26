@@ -147,9 +147,9 @@ htmlheader = """
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
-  <meta name="description" content="FGFweb groups and weekly review activity" />
+  <meta name="description" content="Membic groups and weekly activity" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FGFweb Groups and Weekly Review Activity</title>
+  <title>Membic Groups and Weekly Review Activity</title>
   <link href="css/site.css" rel="stylesheet" type="text/css" />
 </head>
 <body id="bodyid">

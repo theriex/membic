@@ -282,7 +282,7 @@ class TwitterTokenCallback(webapp2.RequestHandler):
     def get(self):
         params = ["oauth_token", "oauth_token_secret", 
                   "oauth_callback_confirmed", "oauth_verifier"]
-        url = "https://www.fgfweb.com/#command=AltAuth1"
+        url = "https://www.membic.com/#command=AltAuth1"
         for param in params:
             url += "&" + param + "=" + self.request.get(param)
         logging.info("TwitterTokenCallback url: " + url);
@@ -325,7 +325,7 @@ class GitHubCallback(webapp2.RequestHandler):
         code = self.request.get('code')
         state = self.request.get('state')
         logging.info("GitHubCallback state: " + state + ", code: " + code)
-        url = "https://www.fgfweb.com/#command=AltAuth3" +\
+        url = "https://www.membic.com/#command=AltAuth3" +\
             "&state=" + state + "&code=" + code
         self.redirect(str(url))
 
@@ -343,7 +343,7 @@ class AmazonInfo(webapp2.RequestHandler):
         svc = getConnectionService("Amazon")
         # Note the parameters must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
-        params += "&AssociateTag=fgfweb-20"
+        params += "&AssociateTag=membic-20"
         params += "&Condition=All"
         params += "&IdType=ASIN"
         params += "&ItemId=" + asin
@@ -381,7 +381,7 @@ class AmazonSearch(webapp2.RequestHandler):
         svc = getConnectionService("Amazon")
         # Params must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
-        params += "&AssociateTag=fgfweb-20"
+        params += "&AssociateTag=membic-20"
         params += "&Keywords=" + enc(srchtxt)
         params += "&Operation=ItemSearch"
         params += "&SearchIndex=" + amznidx

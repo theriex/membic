@@ -738,7 +738,7 @@ return {
         jt.call('POST', url, data, 
                  function (objs) {
                      var html = "<p>Your account has been created." + 
-                         " Welcome to FGFweb!</p>" +
+                         " Welcome to the Membic community!</p>" +
                          "<p>Signing you in for the first time now...</p>";
                      jt.out('logindiv', html);
                      setAuthentication("mid", objs[0].token, emaddr);
@@ -804,7 +804,7 @@ return {
     loginInfoHTML: function (pen) {
         var html, iconurl;
         switch(authmethod) {
-            case "mid": iconurl = "img/iconfgfweb.png"; break;
+            case "mid": iconurl = "img/iconMOR.png"; break;
             case "fbid": iconurl = app.facebook.iconurl; break;
             case "twid": iconurl = app.twitter.iconurl; break;
             case "gsid": iconurl = app.googleplus.iconurl; break;
