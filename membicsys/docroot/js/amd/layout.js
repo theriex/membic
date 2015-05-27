@@ -117,20 +117,6 @@ app.layout = (function () {
     },
 
 
-    fixTextureCover = function () {
-        var altimg;
-        if(jt.isLowFuncBrowser()) { //decent css support is missing, fall back
-            //texturePaper.png is 256x192
-            //setting backgroundSize to a scaled up fixed size has no effect
-            //jt.byId('bodyid').style.backgroundSize = "2048px 1536px;";
-            //scaled up image either too large or too pixelated for use
-            //altimg = "url('../img/texturePaperBig.png')";
-            altimg = "url('../img/blank.png')";
-            jt.byId('bodyid').style.backgroundImage = altimg;
-            jt.byId('dlgdiv').style.backgroundColor = "#EEEEEE"; }
-    },
-
-
     shareServiceHTML = function (divid, url, desc, imgsrc) {
         var linkattr, html;
         linkattr = {href: url, title: desc};
@@ -152,7 +138,6 @@ return {
         findDisplayHeightAndWidth();
         app.layout.commonUtilExtensions();
         localDocLinks();
-        fixTextureCover();
     },
 
 
@@ -220,11 +205,6 @@ return {
         jt.out("headingdivcontent", jt.tac2html(html));
         if(callbackf === -1) {
             typestate.callbackf(typestate.typename); }
-    },
-
-
-    fixTextureCover: function () {  //for static page support
-        fixTextureCover();
     },
 
 
@@ -332,50 +312,6 @@ return {
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();
             app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }
-    },
-
-
-    dragstart: function (event) {
-        if(event) {
-            dndState = { domobj: event.target,
-                         screenX: event.screenX,
-                         screenY: event.screenY };
-            jt.log("dragstart " + dndState.domobj + " " + 
-                    dndState.screenX + "," + dndState.screenY);
-            if(event.dataTransfer && event.dataTransfer.setData) {
-                event.dataTransfer.setData("text/plain", "general drag"); } }
-    },
-
-
-    dragend: function (event) {
-        if(event && dndState) {
-            jt.log("dragend called");
-            dndState.ended = true; }
-    },
-
-
-    bodydragover: function (event) {
-        if(event && dndState && (!dndState.ended || dndState.dropped)) {
-            //jt.log("dndOver preventing default cancel");
-            event.preventDefault(); }
-    },
-
-
-    bodydrop: function (event) {
-        var diffX, diffY, domobj, currX, currY;
-        jt.log("bodydrop called");
-        if(event && dndState) {
-            dndState.dropped = true;
-            diffX = event.screenX - dndState.screenX;
-            diffY = event.screenY - dndState.screenY;
-            domobj = dndState.domobj;
-            jt.log("dropping " + domobj + " moved " + diffX + "," + diffY);
-            currX = domobj.offsetLeft;
-            currY = domobj.offsetTop;
-            domobj.style.left = String(currX + diffX) + "px";
-            domobj.style.top = String(currY + diffY) + "px";
-            event.preventDefault();
-            event.stopPropagation(); }
     },
 
 
@@ -526,14 +462,15 @@ return {
     },
 
 
-    cancelOverlay: function () {
+    cancelOverlay: function (preserveEscape) {
         var odiv;
         closeModalSeparator();
         odiv = jt.byId('overlaydiv');
         if(odiv) {
             jt.out('overlaydiv', "");
             odiv.style.visibility = "hidden"; }
-        app.onescapefunc = null;
+        if(!preserveEscape) {
+            app.onescapefunc = null; }
     },
 
 

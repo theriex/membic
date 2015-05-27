@@ -368,18 +368,26 @@ def batch_flag_attrval(review):
 def set_review_mainfeed(rev):
     # Not looking forward to dealing with bots and trolls, but if that
     # becomes necessary this is the hook point.  ep:28feb15
+    # rev.key().id() is not defined at this point
     rev.mainfeed = 1
+    logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
+        logging.info(logmsg + "is batch.")
         rev.srcrev = -202
         rev.mainfeed = 0
     if rev.svcdata < 0:  # future review, batch update etc.
+        logging.info(logmsg + "is future or batch.")
         rev.mainfeed = 0
-    if rev.grpid != 0:   # group posting, not source review
+    if rev.grpid > 0:   # group posting, not source review
+        logging.info(logmsg + "is group posting.")
         rev.mainfeed = 0
-    if not rev.text or len(rev.text) < 180:  # not substantive
+    if not rev.text or len(rev.text) < 90:  # not substantive
+        logging.info(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 0:  # rating required
+        logging.info(logmsg + "is unrated.")
         rev.mainfeed = 0
+    logging.info("set_review_mainfeed: " + str(rev.mainfeed))
 
 
 def prepend_to_main_feeds(review, pnm):
@@ -395,8 +403,8 @@ def prepend_to_main_feeds(review, pnm):
 
 
 def write_review(review, pnm):
-    cached_put(review)
     set_review_mainfeed(review)
+    cached_put(review)
     if review.mainfeed:
         prepend_to_main_feeds(review, pnm)
     bust_cache_key("recentrevs")

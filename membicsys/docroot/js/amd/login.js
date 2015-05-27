@@ -222,28 +222,6 @@ app.login = (function () {
     },
 
 
-    displayReviewActivityRoll = function (revs) {
-        var i, rev, displayed = false;
-        revroll.revs = revs || revroll.revs;
-        if(!revroll.revs || revroll.revs.length === 0) {
-            jt.log("no activity roll revs to display");
-            return; }
-        if(jt.byId('revrolldiv')) {  //stop id div goes away
-            for(i = 0; i < revroll.revs.length && !displayed; i += 1) {
-                //reset index if past end
-                if(revroll.index >= revroll.revs.length) {
-                    revroll.index = 0; }
-                //display review if it meeds the criteria
-                rev = revroll.revs[revroll.index];
-                if(jt.instId(rev) && rev.text.length > 255) {
-                    jt.out('revrolldiv', app.review.staticReviewDisplay(
-                        revroll.revs[revroll.index], null, "revroll"));
-                    displayed = true; }
-                revroll.index += 1; }
-            setTimeout(displayReviewActivityRoll, 4000); }
-    },
-
-
     //The login form must already exist in index.html for saved passwords
     //to work on some browsers.  This adds the detail.
     displayLoginForm = function (params) {

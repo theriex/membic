@@ -177,9 +177,9 @@ def get_stats_html(result):
             html += "<ul class=\"statblockul\">"
             for blockstr in blocks:
                 if blockstr in dayobj:
-                    html += "\n    <li>" + blockstr + "<ul class=\"statrevul\">"
+                    html += "\n    <li>" + blockstr + "<ul class=\"statidul\">"
                     for revid in dayobj[blockstr]:
-                        html += "\n      <li><a href=\"statrev/" + revid + "\">"
+                        html += "\n      <li><a href=\"revdisp/" + revid + "\">"
                         html += revid + "</a></li>"
                     html += "</ul></li>"
             html += "</ul></td>"
@@ -200,5 +200,18 @@ class GetStats(webapp2.RequestHandler):
         self.response.out.write(html);
 
 
-app = webapp2.WSGIApplication([('/stats', GetStats)], debug=True)
+class DisplayReview(webapp2.RequestHandler):
+    def get(self, revid):
+        review = cached_get(intz(revid), Review)
+        if not review:
+            self.error(404)
+            self.response.out.write("Review " + revid + " not found")
+            return
+        url = "?view=pen&penid=" + str(review.penid) +\
+            "&tab=recent&expid=" + str(revid)
+        self.redirect(url)
+
+
+app = webapp2.WSGIApplication([('/stats', GetStats),
+                               ('/revdisp/(\d+)', DisplayReview)], debug=True)
 

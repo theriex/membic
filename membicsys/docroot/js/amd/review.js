@@ -16,7 +16,7 @@ app.review = (function () {
         //The current review being displayed or edited.
         crev = {},
         //If changing the width or height of the stars img, also change
-        //profile.reviewItemHTML indent and statrev.py
+        //profile.reviewItemHTML indent
         starimgw = 85,
         starimgh = 15,
         starPointingActive = false,  //true if star sliding active
@@ -1371,7 +1371,7 @@ return {
 
 
     updatedlg: function (typename) {
-        app.layout.cancelOverlay();  //close if already open or done
+        app.layout.cancelOverlay(true);  //close if already open or done
         if(typename) {  
             //rebuild the pic and details area
             if(jt.byId('rdstarsdiv') && crev.srcrev !== -101) {
@@ -1435,44 +1435,6 @@ return {
                 reader.fetchData(crev, url, params); }); }
         else {
             app.review.updatedlg(); }
-    },
-
-
-    staticReviewDisplay: function (review, revlink, mode) {
-        var type, html, revid, revresp = "";
-        revid = jt.instId(review);
-        type = app.review.getReviewTypeByValue(review.revtype);
-        if(!revlink) {
-            revlink = ["a", {cla: "rslc", href: "../statrev/" + revid},
-                       app.pgd.reviewItemNameHTML(type, review)]; }
-        if(revlink === "none") {
-            revlink = ["span", {cla: "rslc"},
-                       app.pgd.reviewItemNameHTML(type, review)]; }
-        if("revroll" !== mode) {
-            revresp = ["div", {cla: "statrevrespdiv"},
-                       ["div", {cla: "transformlinkdiv"},
-                        ["a", {href: "../?view=review&penid=" + review.penid +
-                                     "&revid=" + jt.instId(review),
-                               title: "Launch app to respond or comment"},
-                         "Respond/Comment"]]]; }
-        html = ["div", {id: "statrevdiv" + revid, cla: "statrevdiv"},
-                [["div", {cla: "statrevmodkeydiv"},
-                  jt.colloquialDate(jt.ISOString2Day(review.modified)) +
-                  ":&nbsp;" + review.keywords],
-                 app.review.starsImageHTML(review),
-                 app.review.badgeImageHTML(type),
-                 "&nbsp;",
-                 revlink,
-                 "&nbsp;" + app.review.jumpLinkHTML(review, type),
-                 ["div", {cla: "revtextsummary"},
-                  [["div", {style:"float:left;padding:0px 10px 0px 0px;"}, 
-                    app.review.picHTML(review, type, mode)],
-                   ["div", {style: "padding:10px;"},
-                    jt.linkify(review.text) + 
-                    postline(review)],
-                   revresp]],
-                 ["div", {style: "clear:both;"}]]];
-        return jt.tac2html(html);
     },
 
 
@@ -1591,7 +1553,7 @@ return {
                 jt.out('rdokstatdiv', errtxt);
                 return; } }
         jt.out('rdokbuttondiv', "Saving...");
-        app.layout.cancelOverlay();  //just in case it is still up
+        app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;
         app.review.serializeFields(crev);
         data = jt.objdata(crev);

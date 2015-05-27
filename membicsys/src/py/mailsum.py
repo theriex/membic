@@ -6,7 +6,6 @@ from pen import PenName
 from rev import Review, review_activity_search
 from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
 from morutil import *
-from statrev import getTitle, getSubkey
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
 from google.appengine.api import images
@@ -103,10 +102,10 @@ def bump_referral(stat, entry, val):
             bump_referral_count(stat, entry + "CLcps")
         else:
             bump_referral_count(stat, entry + "CL")
-    elif "myopenreviews.com" in val:
-        bump_referral_count(stat, entry + "MOR")
-    elif "myopenreviews.appspot.com" in val:
-        bump_referral_count(stat, entry + "Home")
+    elif "membic.com" in val:
+        bump_referral_count(stat, entry + "Mbic")
+    elif "membicsys.appspot.com" in val:
+        bump_referral_count(stat, entry + "Spot")
     elif "mail." in val:
         bump_referral_count(stat, entry + "Mail")
     elif "sandservices.com" in val:

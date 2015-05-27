@@ -149,9 +149,9 @@ button, .loginbutton, .formbutton {
 }
 #dlginsidediv {
   padding:4px;
-  background: #ffe8ce;
-  background:-moz-linear-gradient(left top, #ffecd7 0%, #ffad51 100%);
-  background:-webkit-linear-gradient(left top, #ffecd7 0%, #ffad51 100%);
+  background: #fcf4eb;
+  background:-moz-linear-gradient(left top, #fcf4eb 0%, #ffdbb3 100%);
+  background:-webkit-linear-gradient(left top, #fcf4eb 0%, #ffdbb3 100%);
   border-top-left-radius: 210px 20px;
   border-bottom-right-radius: 210px 20px;
   border-top-right-radius: 10px;
@@ -292,11 +292,6 @@ button, .loginbutton, .formbutton {
   background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
 }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
-.bbk1, .bbk5, .bbk10, .bbk20 { padding:4px; }
-.bbk1  { background:url('../img/bbk1.png') no-repeat center center; }
-.bbk5  { background:url('../img/bbk5.png') no-repeat center center; }
-.bbk10 { background:url('../img/bbk10.png') no-repeat center center; }
-.bbk20 { background:url('../img/bbk20.png') no-repeat center center; }
 #profbadgestd { padding: 0px 10px 5px 10px; }
 .revtypeselectiondiv { padding:15px; font-size:x-large; 
   font-family:"Satisfy", cursive; }
@@ -384,9 +379,6 @@ button, .loginbutton, .formbutton {
 .tabmodediv { font-size:small; }
 .poststatspan { font-size:small; color:#666; }
 .reqlinkspan { font-size:small; }
-.inlinkspan { background:url('../img/inlinkbg.png') no-repeat center center;
-  height:19px; width:19px; display:inline-block; 
-  text-align:center; font-size:14px; font-weight:bold; vertical-align:middle; }
 .inbct { color:#666666; }
 .prereviewcbspan { padding:0px 0px 0px 40px; }
 
@@ -508,13 +500,6 @@ button, .loginbutton, .formbutton {
 #blogimagecontainerdiv { float:left; padding:0px 10px 0px 0px; }
 #blogheadingmaindiv { padding:0px 10px; } /* pad kicks in after float */
 #blogcontentdiv { padding:10px; margin-left:7%; }
-#statrevcontent { padding:10px 20px 0px 20px; }
-#statrevactdiv { text-align:center; padding:10px; }
-.statrevdiv { padding:0px 0px 15px 0px; 
-  background-color:rgba(255, 255, 255, 0.4); }
-.statrevmodkeydiv { font-size:small; color: #666666; }
-.statrevrespdiv { font-size:small; font-style:italic;
-  padding-right:40%; float:right; }
 .blogidentdiv { padding:0px 0px 20px 0px; }
 #modalseparatordiv { position:absolute; left:0px; top:0px; 
   background-color:#666666; opacity:0.3; filter:alpha(opacity=30); }
@@ -614,4 +599,4 @@ button, .loginbutton, .formbutton {
 .statseclist { font-size:medium; margin:0px; }
 .statseclist li { font-size:small; padding:2px 0px; }
 .statblockul { list-style:none; padding:0px 0px 0px 4px; margin:0; }
-.statrevul { list-style:none; padding:0px 0px 0px 8px; margin:0; }
+.statidul { list-style:none; padding:0px 0px 0px 8px; margin:0; }

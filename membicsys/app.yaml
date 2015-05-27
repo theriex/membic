@@ -1,4 +1,4 @@
-application: myopenreviews
+application: membicsys
 version: 1
 runtime: python27
 api_version: 1
@@ -351,8 +351,8 @@ handlers:
   script: src.py.groupview.app
 - url: /emgroup/.*
   script: src.py.groupview.app
-- url: /statrev/\d+
-  script: src.py.statrev.app
+- url: /revdisp/\d+
+  script: src.py.statweek.app
 - url: /stats.*
   script: src.py.statweek.app
 - url: /rssgroup.*

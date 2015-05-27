@@ -81,7 +81,9 @@ app.activity = (function () {
                     break; }  //already have it
                 if(feedrevs[j].modhist < myrev.modhist) {
                     feedrevs.splice(i, 0, myrev);
-                    break; } } }
+                    break; } }
+            if(!feedrevs.length) {
+                feedrevs.splice(0, 0, myrev); } }
         return feedrevs;
     },
 

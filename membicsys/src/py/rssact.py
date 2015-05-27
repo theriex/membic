@@ -2,10 +2,38 @@ import webapp2
 import logging
 from moracct import safestr
 from morutil import *
-from statrev import getTitle, getSubkey
 import rev
 import group
 from cacheman import *
+
+
+def getTitle(rev):
+    if rev.revtype == "book":
+        return rev.title
+    if rev.revtype == "movie":
+        return rev.title
+    if rev.revtype == "video":
+        return rev.title
+    if rev.revtype == "music":
+        return rev.title
+    if rev.revtype == "food":
+        return rev.name
+    if rev.revtype == "drink":
+        return rev.name
+    if rev.revtype == "activity":
+        return rev.name
+    if rev.revtype == "other":
+        return rev.name
+    return "unknown review type"
+
+
+def getSubkey(rev):
+    subkey = ""
+    if rev.revtype == "book":
+        subkey = rev.author
+    if rev.revtype == "music":
+        subkey = rev.artist
+    return subkey
 
 
 def rss_title(review):

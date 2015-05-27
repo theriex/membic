@@ -26,7 +26,7 @@ var app = {},  //Global container for application level funcs and values
     app.introtext = "";
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
-    app.authcookname = "myopenreviewauth";
+    app.authcookname = "membicauth";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
 
@@ -137,7 +137,7 @@ var app = {},  //Global container for application level funcs and values
             errtxt + "\n\n" +
             "Please fix this so it doesn't happen again.  If it is " +
             "anything more than a minor bug, open an issue on " +
-            "https://github.com/theriex/myopenreviews/issues for " +
+            "https://github.com/theriex/membic/issues for " +
             "tracking purposes.\n\n" +
             "thanks,\n";
         emref = "mailto:" + support + "?subject=" + jt.dquotenc(subj) + 

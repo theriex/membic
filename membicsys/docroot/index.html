@@ -15,8 +15,7 @@
   <link rel="image_src" href="img/membiclogo.png" />
   <link href="//fonts.googleapis.com/css?family=Satisfy" rel="stylesheet" type="text/css">
 </head>
-<body id="bodyid" ondragover="app.layout.bodydragover(event);" 
-      ondrop="app.layout.bodydrop(event);">
+<body id="bodyid">
 
 <div id="topsectiondiv">
   <div id="logodiv" onclick="app.activity.displayFeed('all');return false;">
@@ -74,8 +73,7 @@
 <div id="topdiv">  
 </div>
 <!-- dialog -->
-<div id="dlgdiv" draggable="true" ondragstart="app.layout.dragstart(event);"
-     ondragend="app.layout.dragend(event);"></div>
+<div id="dlgdiv"></div>
 <!-- limited popup form can appear over dialog -->
 <div id="modalseparatordiv"></div>
 <div id="overlaydiv"></div>
