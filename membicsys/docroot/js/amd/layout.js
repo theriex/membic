@@ -9,11 +9,8 @@ app.layout = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var dndState = null,
-        typestate = {callback: null, typename: "all"},
+    var typestate = {callback: null, typename: "all"},
         dlgqueue = [],
-        meritactive = false,
-        navmode = "activity",
         siteroot = "",
 
 
@@ -208,44 +205,6 @@ return {
     },
 
 
-    parseEmbeddedJSON: function (text) {  //for static page support
-        var obj = null, jsonobj = JSON || window.JSON;
-        if(!jsonobj) {
-            jt.err("JSON not supported, please use a modern browser"); }
-        text = text.trim();
-        text = text.replace(/\n/g, "\\n");
-        text = text.replace(/<a[^>]*\>/g, "");
-        text = text.replace(/<\/a>/g, "");
-        try {
-            obj = jsonobj.parse(text);
-        } catch(problem) {
-            jt.err("Error parsing JSON: " + problem +
-                   "\nPlease upgrade your browser");
-        }
-        return obj;
-    },
-
-
-    haveContentDivAreas: function () {
-        return jt.byId('chead') && jt.byId('cmain');
-    },
-
-
-    initContentDivAreas: function () {
-        var html = "<div id=\"chead\"> </div>" +
-                   "<div id=\"cmain\"> </div>";
-        jt.out('contentdiv', html);
-    },
-
-
-    //initialize the logged-in content display div areas.  Basically
-    //contentdiv is subdivided into chead and cmain.
-    initContent: function () {
-        if(!app.layout.haveContentDivAreas()) {
-            app.layout.initContentDivAreas(); }
-    },
-
-
     displayDoc: function (url) {
         var html = "Fetching " + url + " ...";
         app.layout.openDialog(null, html);
@@ -315,93 +274,6 @@ return {
     },
 
 
-    badgeDrawer: function (pen, type, count) {
-        if(!count && pen.top20s && pen.top20s[type]) {
-            count = pen.top20s[type].length; }
-        if(count >= 20) {
-            return 20; }
-        if(count >= 10) {
-            return 10; }
-        if(count >= 5) {
-            return 5; }
-        return 1;
-    },
-
-
-    badgeImgSrc: function (pen, type, count) {
-        if(!count && pen.top20s && pen.top20s[type]) {
-            count = pen.top20s[type].length; }
-        if(!count) {
-            return ""; }
-        return "img/merit/Merit" + type.capitalize() + 
-            app.layout.badgeDrawer(pen, type, count) + ".png";
-    },
-
-
-    //The current pen top20s have NOT been updated to reflect this
-    //review yet.  The overlaydiv is available for use.
-    runMeritDisplay: function (rev, isnew) {
-        var pen, top, revcount, msg, psrc, nsrc, html, odiv;
-        if(meritactive || !isnew) {
-            return; }
-        meritactive = true;
-        pen = app.pen.myPenName();
-        top = [];
-        if(pen.top20s && pen.top20s[rev.revtype]) {
-            top = pen.top20s[rev.revtype]; }
-        revcount = top.length + 1;  //top20s not updated yet...
-        switch(revcount) {
-        case 1: 
-            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
-            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
-            msg = "New Profile Badge!"; 
-            break;
-        case 5:
-            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 1);
-            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 5);
-            msg = "Upgraded Profile Badge!";
-            break;
-        case 10:
-            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 5);
-            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 10);
-            msg = "Upgraded Profile Badge!";
-            break;
-        case 20:
-            psrc = app.layout.badgeImgSrc(pen, rev.revtype, 10);
-            nsrc = app.layout.badgeImgSrc(pen, rev.revtype, 20);
-            msg = "Upgraded Profile Badge!";
-            break;
-        default:  //skip interim displays
-            meritactive = false; 
-            return; }
-        html = [["div", {cla: "headingtxt"},
-                 msg],
-                ["div", {id: "earnedmeritbadgegraphicdiv"},
-                 ["img", {id: "meritimg", src: psrc}]]];
-        jt.out('overlaydiv', jt.tac2html(html));
-        odiv = jt.byId('overlaydiv');
-        odiv.style.left ="300px";
-        odiv.style.top = "190px";
-        odiv.style.visibility = "visible";
-        app.onescapefunc = app.layout.cancelOverlay;
-        setTimeout(function () {
-            jt.byId("meritimg").src = nsrc; }, 450);
-        setTimeout(function () {
-            meritactive = false;
-            app.layout.cancelOverlay(); }, 2800);
-    },
-
-
-    currnavmode: function () {
-        return navmode;
-    },
-
-
-    headingout: function (html) {
-        jt.out('centerhdiv', html);
-    },
-
-
     dlgwrapHTML: function (title, html) {
         html = [["div", {cla: "dlgclosex"},
                  ["a", {id: "closedlg", href: "#close",
@@ -411,32 +283,6 @@ return {
                 ["div", {cla: "headingtxt"}, title],
                 html];
         return jt.tac2html(html);
-    },
-
-
-    picUploadHTML: function (fupl) {
-        var html;
-        html = ["form", {action: fupl.endpoint,
-                         enctype: "multipart/form-data", method: "post"},
-                [jt.paramsToFormInputs(app.login.authparams()),
-                 ["input", {type: "hidden", name: "_id", value: fupl.id}],
-                 ["input", {type: "hidden", name: "penid", value: fupl.penid}],
-                 ["input", {type: "hidden", name: "returnto",
-                            value: jt.enc(window.location.href + 
-                                          fupl.rethash)}],
-                 ["table",
-                  [["tr",
-                    ["td", 
-                     (fupl.notitle ? "" : "Upload " + fupl.type + " Pic")]],
-                   ["tr",
-                    ["td",
-                     ["input", {type: "file", name: "picfilein",
-                                id: "picfilein"}]]],
-                   ["tr",
-                    ["td", {align: "center"},
-                     ["input", {type: "submit", id: "picfilesubmit",
-                                value: "Upload"}]]]]]]];
-        return html;
     },
 
 
@@ -510,16 +356,6 @@ return {
                 div.style.display = "block"; }
             else {
                 div.style.display = "none"; } }
-    },
-
-
-    picUpload: function (fupl) {
-        var html;
-        html = app.layout.picUploadHTML(fupl);
-        app.layout.openOverlay({x: fupl.x || 70, y: fupl.y || 300},
-                               html, null, 
-                               function () {
-                                   jt.byId('picfilein').focus(); });
     },
 
 

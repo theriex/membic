@@ -622,35 +622,6 @@ app.review = (function () {
     },
 
 
-    postline = function (review, redispf) {
-        var i, grpids, grpref, prefix, pt = "";
-        if(review.svcdata && review.svcdata.postedgroups) {
-            prefix = redispf ? "" : "../";
-            grpids = review.svcdata.postedgroups;
-            for(i = 0; i < grpids.length; i += 1) {
-                grpref = app.lcs.getRef("group", grpids[i]);
-                if(grpref.status === "not cached" && redispf) {
-                    app.lcs.getFull("group", grpids[i], redispf);
-                    break; }
-                if(grpref.group) {
-                    if(pt) {
-                        pt += ", "; }
-                    pt += jt.tac2html(
-                        ["a", {href: prefix + "groups/" + 
-                                   jt.canonize(grpref.group.name),
-                               onclick: jt.fs("app.group.bygroupid('" + 
-                                              grpids[i] + "')")},
-                         grpref.group.name]); } }
-            if(pt) {
-                pt = ["p", {cla: "grpostline"},
-                      [["span", {cla: "grpostlinehead"},
-                        "Posted to "],
-                       pt]];
-                pt = jt.tac2html(pt); } }
-        return pt;
-    },
-
-
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
         span = jt.byId('stardisp');
@@ -1438,36 +1409,6 @@ return {
     },
 
 
-    reviewLinkHTML: function (mode) {
-        var html, imgsrc = "writereview.png", style = "";
-        if(!mode) {
-            mode = app.layout.currnavmode(); }
-        if(mode === "review") {
-            style = "color:#FFD100";
-            imgsrc = "writereviewsel.png"; }
-        html = ["div", {cla: "topnavitemdiv", style: style },
-                jt.imgntxt(imgsrc, "",  //Post and Share...
-                           "app.review.start()", "#Write",
-                           "Write a membic",
-                           "navico", "navrev", "app.review.mroll")];
-        return jt.tac2html(html);
-    },
-
-
-    mroll: function (mouse) {
-        if(mouse === "over") {
-            jt.byId('navrevimg').src = "img/writereviewsel.png";
-            jt.byId('navrevtxttd').style.color = "#FFD100"; }
-        else { //"out"
-            if(app.layout.currnavmode() === "review" || jt.byId('revfdiv')) {
-                jt.byId('navrevimg').src = "img/writereviewsel.png";
-                jt.byId('navrevtxttd').style.color = "#FFD100"; }
-            else {
-                jt.byId('navrevimg').src = "img/writereview.png";
-                jt.byId('navrevtxttd').style.color = app.colors.text; } }
-    },
-
-
     getReviewTypes: function () {
         return reviewTypes;
     },
@@ -1475,21 +1416,6 @@ return {
 
     getReviewTypeByValue: function (val) {
         return findReviewType(val);
-    },
-
-
-    badgeImageHTML: function (type, withtext, greyed, sing) {
-        var label = type.plural.capitalize(), html = [];
-        if(sing) {
-            label = type.type.capitalize(); }
-        if(type.img) {
-            html.push(["img", {cla: "reviewbadge", src: "img/" + type.img,
-                               title: label, alt: label}]);
-            if(withtext) {
-                if(greyed) {
-                    label = ["span", {style: "color:#999999;"}, label]; }
-                html.push(label); } }
-        return jt.tac2html(html);
     },
 
 

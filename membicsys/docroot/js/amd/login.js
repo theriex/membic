@@ -17,7 +17,6 @@ app.login = (function () {
         topworkdivcontents = "",
         altauths = [],
         loginhtml = "",
-        revroll = { index: 0, revs: [] },
 
 
     ////////////////////////////////////////
@@ -760,41 +759,6 @@ return {
                 app.history.dispatchState(state); }); }
         else {
             app.history.dispatchState(state); }
-    },
-
-
-    getAuthMethod: function () {
-        return authmethod; 
-    },
-
-
-    getAuthMethodPrint: function () {
-        switch(authmethod) {
-        case "mid": return "Native";
-        case "gsid": return "Google+";
-        case "fbid": return "Facebook";
-        case "twid": return "Twitter";
-        case "ghid": return "GitHub";
-        default: return "Unknown"; }
-    },
-
-
-    loginInfoHTML: function (pen) {
-        var html, iconurl;
-        switch(authmethod) {
-            case "mid": iconurl = "img/iconMOR.png"; break;
-            case "fbid": iconurl = app.facebook.iconurl; break;
-            case "twid": iconurl = app.twitter.iconurl; break;
-            case "gsid": iconurl = app.googleplus.iconurl; break;
-            case "ghid": iconurl = app.github.iconurl; break; }
-        html = [["img", {cla: "loginico", src: iconurl}],
-                ["em", authname],
-                " &nbsp; ",
-                ["a", {href: "logout", id: "logout",
-                       onclick: jt.fs("app.login.logout()")},
-                 "Sign out"]];
-        html = jt.tac2html(html);
-        return html;
     },
 
 

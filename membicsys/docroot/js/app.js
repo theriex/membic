@@ -195,65 +195,6 @@ var app = {},  //Global container for application level funcs and values
 
     // see also: app.layout.commonUtilExtensions
 
-    jt.imgntxt = function (imgfile, text, funcstr, href, 
-                           title, cssclass, idbase, mcbfnstr) {
-        var html, tblid = "", imgtdid = "", imgid = "", txttdid = "";
-        if(imgfile && imgfile.indexOf("/") < 0) {
-            imgfile = "img/" + imgfile; }
-        title = title || "";
-        cssclass = cssclass || "navico"; 
-        mcbfnstr = mcbfnstr || "";
-        if(idbase) {
-            tblid = idbase + "table";
-            imgtdid = idbase + "imgtd";
-            imgid = idbase + "img";
-            txttdid = idbase + "txttd"; }
-        html = ["table", {id: tblid, cla: "buttontable", title: title,
-                          onclick: jt.fs(funcstr)},
-                ["tr",
-                 [["td", {id: imgtdid},
-                   ["img", {id: imgid, cla: cssclass, src: imgfile,
-                            onmouseover: jt.fs(mcbfnstr + "('over','" + 
-                                               imgid + "')"),
-                            onmouseout: jt.fs(mcbfnstr + "('out','" + 
-                                              imgid + "')")}]],
-                  ["td", {id: txttdid, cla: "buttontabletexttd",
-                          onmouseover: jt.fs(mcbfnstr + "('over','" + 
-                                             imgid + "')"),
-                          onmouseout: jt.fs(mcbfnstr + "('out','" + 
-                                            imgid + "')")},
-                   text]]]];
-        html = jt.tac2html(html);
-        return html;
-    };
-
-
-    jt.checkrad = function (type, name, value, label, checked, chgfstr) {
-        var html;
-        if(!label) {
-            label = value.capitalize(); }
-        html = [["input", {type: type, name: name, value: value, id: value,
-                           checked: jt.toru(checked, "checked"), 
-                           onchange: jt.fs(chgfstr)}],
-                ["label", {fo: value, id: value + "label"}, label]];
-        html = jt.tac2html(html);
-        return html;
-    };
-
-
-    //Single checkbox onchange is not triggered on IE8 until the focus
-    //leaves the checkbox.  For IE8, use onclick rather than onchange 
-    //and redraw the checkbox from scratch with the new value.
-    jt.checkbox = function (name, value, label, checked, chgfstr) {
-        return jt.checkrad("checkbox", name, value, label, checked, chgfstr);
-    };
-
-
-    jt.radiobutton = function (name, value, label, checked, chgfstr) {
-        return jt.checkrad("radio", name, value, label, checked, chgfstr);
-    };
-
-
     jt.hex2rgb = function (hex) {
         var r, g, b;
         if(hex.indexOf("#") === 0) {
@@ -290,12 +231,5 @@ var app = {},  //Global container for application level funcs and values
             if(dim.h) {
                 elem.style.height = dim.h + "px"; } }
     };
-
-
-    jt.idInCSV = function (id, csv) {
-        if(csv && (csv.endsWith(id) || csv.indexOf(id + ",") >= 0)) {
-            return true; }
-    };
-
 
 } () );

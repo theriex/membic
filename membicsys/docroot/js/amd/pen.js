@@ -276,12 +276,6 @@ return {
     },
 
 
-    cancelNewPen: function () {
-        app.login.updateAuthentDisplay();
-        app.pgd.display();
-    },
-
-
     serializeFields: function (penName) {
         if(typeof penName.settings === 'object') {
             penName.settings = JSON.stringify(penName.settings); }
