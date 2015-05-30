@@ -9,16 +9,6 @@ A:visited {text-decoration:none; color:#521919; }
 A:active {text-decoration:none; color:#521919; }
 A:hover {text-decoration:underline; color:#885555; }
 
-a.gold:link {text-decoration:none; color:#ffd100; }
-a.gold:visited {text-decoration:none; color:#ffd100; }
-a.gold:active {text-decoration:none; color:#ffd100; }
-a.gold:hover {text-decoration:underline; color:#ffd100; }
-
-a.plainanchor:link {text-decoration:none; color:#111111; }
-a.plainanchor:visited {text-decoration:none; color:#111111; }
-a.plainanchor:active {text-decoration:none; color:#111111; }
-a.plainanchor:hover {text-decoration:none; color:#111111; }
-
 html {
   min-height: 100%; margin:0; padding:0;
 }
@@ -63,34 +53,20 @@ button, .loginbutton, .formbutton {
 #topworkdiv { float:right; padding:0px 2px 2px 0px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
-#slidesdiv { }
 #topactionsdiv { }
-#topactionstable { margin:0px; padding:0px; }
-#topactionstable td { padding:0px; }
-.topnavitemdiv { 
-  font-family:"Satisfy", cursive }
-.documentcontentsdiv { padding:0px 10px 10px 20px; }
-.brandspan { font-size:small; font-weight:bold; }
-.aboutintrolinediv { padding-left:20%; font-style:italic; font-size:medium; }
 .aboutoverviewdiv { padding:10px 10px 10px 10px; font-size:large; }
 .aboutdetailsheading { font-size:small; font-weight:bold; }
 .aboutstatementsdiv { padding:0px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
-.aboutwhatitisdiv { text-align:center; font-size:x-small; }
 .tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
 .topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }
 
 /* >> main display area and contained elements */
-#phonetextzoomfixtable, #loginformtable, .collapse { 
-  border-collapse:collapse; }
-#centerhdivtd { }
+.collapse { border-collapse:collapse; }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
-#rightcoldiv { width:160px; }
-.instructional { font-size:x-large; font-weight:bold; }
 #topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
   text-align:right; font-size:x-small; }
-#accountdiv { font-size:small; }
 #appspacediv { margin:0px 5px; clear:both; }
 #bottomnav { font-size:xx-small; text-align:center; 
   word-spacing:20px; padding:0px 20px 5px 20px;
@@ -100,25 +76,10 @@ button, .loginbutton, .formbutton {
   background:-webkit-linear-gradient(left top, #789897 0%, #8cb3b2 100%); }
 .footerlink { padding:1px 3px; border-radius:3px; }
 #contentdiv { }
-#introverview { padding:10px 0px; color:#666; font-size:medium; 
- width:60%; margin:auto; }
-#introverviewtaglinediv { position:absolute; left:40px; top:125px; 
- font-size:small; }
-#taglinedetpensdiv { font-size:small; font-style:italic; }
-#enticediv { position:absolute; left:350px; top:0px; }
-#taglinedetpensdiv { padding:10px 10px 0px 0px; }
-#revrolldiv { padding:10px 0px 0px 0px; height:200px; overflow-y:scroll; }
-.penfont, #penhnamespan, .penflist { 
+.penfont, .penflist { 
   font-family:"Satisfy", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
-#penhnametd { padding:0px 0px 0px 0px; }
-#penhnamespan { font-size:xx-large; }
-#penhbuttondiv, #grouphbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
-#recentacthdiv { float:right; }
-#rememberedhdiv { background:transparent; }
-#homepenhdiv { background:transparent; }
-#settingsbuttondiv { background:transparent; }
-#profstarhdiv { background:transparent; }
+#grouphbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
@@ -160,36 +121,11 @@ button, .loginbutton, .formbutton {
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }
-.navico, .navicodis, .naviconopad, .naviconospace { 
-  margin:0px 0px 0px 14px; padding:4px; vertical-align:bottom; }
-.navicodis { opacity:0.3; filter:alpha(opacity=30); }
-.naviconopad { padding:0px; }
-.naviconospace { margin:0px; padding:0px; }
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
-.shsico { height:20px; width:20px; vertical-align:middle; 
-  padding:0px 0px 0px 10px;}
-.svcico, .loginico { margin:0px 0px 0px 20px; border:none; 
-  vertical-align:middle; }
-.svcico { height:20px; width:20px; }
-.loginico { height:32px; width:32px; }
-.shareico, .shareicodis { height:32px; width:32px; margin:5px 15px;
-  border:none; vertical-align:middle; }
-.shareicodis { opacity:0.3; filter:alpha(opacity=30); }
-.revtypeico { vertical-align:bottom; }
-.respico { vertical-align:bottom; }
-.respicodis { opacity:0.3; filter:alpha(opacity=30); }
-#signinbuttondiv { background:#70bbe9;
- color:#003; font-size:x-large; font-weight:normal;
- padding:5px 10px; display:table; cursor:pointer; 
- border: 1px solid #003; border-radius:5px; box-shadow: 5px 5px 2px #888888 }
 
 /* >> intro layout */
 #bookslidediv { text-align:center; }
 .bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
-.bookmarkletdescr { font-size:small; text-align:right; 
-  padding:0px 0px 0px 40px;}
-#gsitd { padding: 10px; }
-#altauthmethods { padding:0px 0px 20px 30px; }
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
   padding:4px 2px 0px 2px; display:block; float:left; width:80px; }
 .liflabw { width:140px; padding:4px 4px 0px 2px; 
@@ -200,22 +136,16 @@ button, .loginbutton, .formbutton {
 .lifbuttonsdiv { text-align:center; }
 .accstatvalspan { font-size:small; font-style:italic; padding:0px 4px 0px 0px; }
 #accstatdetaildiv { font-size:small; padding:5px 5px 0px 5px; }
-.accsetcbox { margin:0px 0px 0px 20px; }
-.accsetcboxlab { font-size:small; padding:0px 0px 0px 4px; }
 #buttonornotespan { font-size:small; }
 #loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #forgotpw { }
 #accsetdiv { position:absolute; top:0px; right:0; width:300px; 
-  visibilty:hidden; }
+  visibility:hidden; }
 #accountsettingsformdiv { background:#ffae50; 
   background:-moz-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
   background:-webkit-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
   border:2px solid #666; }
-.liflabtd { height:30px; }
-.centertablediv { display:table; margin:auto; }
-.altauthspan { display:inline-block; padding:0px; width:60px; }
-#closebookslide { clear:both; }
 
 /* >> pen layout */
 #createpnintrodiv { font-size:medium; }
@@ -264,151 +194,33 @@ button, .loginbutton, .formbutton {
 .myinfoimg { width:18px; height:18px; margin-right:5px; }
 #shurlspan { font-size:small; font-family:monospace;
   background-image: url('../img/whitewash.png'); }
-.adminlogentrydiv { font-sie: medium; }
+.adminlogentrydiv { font-size: medium; }
 .logdatestampspan { font-size:small; font-family:monospace; }
 
 /* >> profile layout */
-#proftopdiv { font-size:large; }
-#profparticipatediv { }
-#profpersonaldiv { padding:0px 0px 0px 10px; }
-#profshoutdiv { padding:0px; font-size:small; overflow:auto; }
-#profcitydiv { font-size:small; padding: 0px 10px 5px 10px; }
-#profinvitediv, #creategroupdiv { font-size:small; padding: 0px 10px 5px 10px; }
-#srchpenslinkdiv, #srchgroupslinkdiv { 
-  font-size:small; padding: 20px 0px 0px 30px; }
-.profpic { max-width:125px; max-height:125px; }
-#profpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
-#profdescrdiv { height:125px; overflow:auto; }
-#picplaceholderdiv { color:#999999; font-size:small;
-  height:125px; width:110px; padding:10px; text-align:left; }
-#profsettingslink { padding:0px 0px 0px 10px; }
-/* fixed width and height on srchpic so the summary lines line up */
-.srchpic { width:30px; height:30px; vertical-align:middle; }
-.badgespan { display:inline-block; width:36px; height:36px; padding:1px; }
 .reviewbadge, .reviewbadgesel, .reviewbadgedis { 
   width:30px; height:30px; vertical-align:middle; }
 .reviewbadgesel { background:#ffae50; border-radius:8px; 
   background:-moz-linear-gradient(left top, #ffae50 0%, #ffceb0 100%);
   background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
-}
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
-#profbadgestd { padding: 0px 10px 5px 10px; }
-.revtypeselectiondiv { padding:15px; font-size:x-large; 
-  font-family:"Satisfy", cursive; }
-/* width dynamically modified in profile.styleShout */
-.textareatd { }
-#shouteditbox, .shoutout, .shoutoutstatic { text-align:left;
+#shouteditbox, .shoutout { text-align:left;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
 .shoutout { width:160px; min-height:100px; }
-.shoutoutstatic { padding:10px; }
-.grpostline { padding: 0px 0px 0px 0px; margin: 4px 0px 0px 0px; 
-  font-size:x-small; }
-.grpostlinehead { font-style:italic; }
-#profdisptable { }
-#inlinkdiv { font-size:small; font-weight:normal; padding:10px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
-.formstyle { font-size:small; }
-.penlist { list-style:none; padding:0; margin:0; }
-.sumtotal { font-size:small; }
-#srchmessagespan { font-size:small; }
-.smalltext { font-size:small; }
-#revdispdiv { }
-.reviewformul { list-style:none; padding:0; margin:0; }
-.revdisptable { }
-.revdisptable td { padding:2px 5px; }
-#transformactionstd { padding:2px 5px 10px 15px; }
-#revformbuttonstd { }
-#revbuttonsdiv { padding:20px; }
-#revbuttonsdiv button { margin:0px 10px; }
-#revsavemsg { word-spacing:normal; }
-#requestbuttonsdiv { text-align:center; padding:10px; }
-.bluetxt { color:#7a40ff; }
-.cyantxt { color:#40fff4; }
-.greentxt { color:#6fff21; }
-.goldtxt { color:#ffd100; }
-#socialrevactdiv { }
-#staticsocialrevactdiv { }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
-.revlist { list-style:none; padding:0; margin:0; }
-.revlist li { padding:4px; }
 .revimg, .revimgdis { max-width:125px; max-height:125px; }
 .revimgdis { opacity:0.3; filter:alpha(opacity=30); }
-.revtextsummary { font-size:small; } /* padded in profile reviewItemHTML */
-.removeico { width:15px; height:15px; vertical-align:middle; }
-.rslc { font-size:medium; }
-.rslcbold { font-size:medium; font-weight:bold; }
-.morerevs { font-size:small; padding: 0px 0px 0px 30px; }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none }
-.csvstrdiv { padding:5px; }
-.bigoverlabel { font-size:large; font-weight:bold; padding:25px 0px 0px 0px; }
-#statnoticediv { background:#eee; padding:15px;
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
-  font-size:small; text-align:center;
-  border: 1px solid #666666; border-radius:10px; 
-  box-shadow:10px 10px 5px #888888; }
-.statnoticeactlinktable { margin-left:auto; margin-right:auto; padding:10px; }
-.statnoticeactlinktable td { }
-/* only actual buttons should look like buttons */
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
-.searchtable td { padding:5px 10px; }
-.tagline { font-style:italic; color:#333; }
-/* width: ratstar: 60, type: 50, nbsp separator and padding */
-#starstd { text-align:right; width:150px; white-space:nowrap; }
 .starsimg { vertical-align:middle; }
-.permalink { font-size:xx-small; }
-#permalinkdiv { padding:20px 40px 0px 0px; text-align:center; }
-.actbuttons { padding:10px; }
-#chpstatdiv { padding:10px; }
-.buttontable { cursor:pointer; }
-.buttontable:hover { text-decoration:underline; }
-.buttontable td { padding:0px; }
-.buttontabletexttd { text-align:left; font-size:large; }
-.pennametable td { padding:0px 10px; }
-.colorattrtd { font-size:small; text-align:right; }
-.colorswatch { height:20px; width:40px; cursor:pointer; }
-#colortitlediv { text-align:center; border-top: 1px solid #666; }
-#revsavemsg { font-size:x-large; }
-#fstatdescr { padding: 0px 0px 5px 60px; }
-.hintText { font-size:small; font-style:italic; padding:20px; }
-#relctrlsdiv { font-size:small; }
-/* #revtypeseltable { border-collapse:collapse; } */
-.tabmodediv { font-size:small; }
-.poststatspan { font-size:small; color:#666; }
-.reqlinkspan { font-size:small; }
-.inbct { color:#666666; }
-.prereviewcbspan { padding:0px 0px 0px 40px; }
 
 /* >> group layout */
-#primgroupdlgdiv { padding:0px; }
-.errmsgdiv, #errmsgdiv { font-size:small; color:red; }
-#primgroupbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
-#primgroupbuttonsdiv button { margin:0px 10px; }
-.grpnameval { font-weight:bold; }
-.grpwiztable { padding:10px 0px 0px 0px; }
-.grpwiztable td { padding:0px 3px; vertical-align:top; }
-.tdnowrap { white-space:nowrap; }
-.tdwide { width:99%; }
 .tdnarrow { width:5%; padding:0px 5px 0px 0px; }
-.tdright { text-align:right; }
-.groupdescrtxt { padding:5px 2px 0px 2px; 
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
-  font-size:small; font-weight:normal; }
-#gpcdiv { padding:0px 20px; }
-#gndbdiv { padding:0px 10px; }
-#groupsetdlgdiv { padding:10px 0px; }
-.groupcity { font-size:small; font-weight:normal; text-align:center; 
-  vertical-align:top; }
-.grpactiondiv { text-align:center; padding:10px 0px; }
-.grpmemlinkspan { font-size:small; padding:0px 10px; }
-.grprightsdiv { font-size:small; margin:0px 0px 0px 20px; }
-.grprightslist { font-size:medium; margin:0px; }
-.grprightslist li { font-size:small; padding:2px 0px; }
-.grpmsgbuttonsdiv { padding:5px 0px 10px 20px; }
-.grpmsgbuttonsdiv button { margin:0px 6px; }
 .dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 .dlgbuttonsdiv button { margin:0px 10px; }
 .inlinebuttonsdiv { text-align:center; padding:0px 0px 10px 0px; }
@@ -416,33 +228,6 @@ button, .loginbutton, .formbutton {
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
 #rssurlta { height:40px; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
-.optionalbuttonsdiv { text-align:center; }  /* no pad */
-.optionalbuttonsdiv button { margin:15px 10px 5px 10px; }
-.memberstypeheadingdiv { padding:0px 10px; 
-  font-size:medium; font-style:italic; }
-.memberslistdiv { font-size:small; }
-.membereditdiv { display:inline-block; padding:12px;
-  border: 1px solid #666666; border-radius:10px; 
-  box-shadow:10px 10px 5px #888888; }
-.grpmembernamediv {
-  font-family:"Satisfy", cursive;
-  font-size:large; text-align:center; }
-.reasoninputdiv { padding:5px 0px; }
-#groupadminlogdiv { font-size:small; }
-.logdisptable { margin:20px 0px; }
-.logdisptable td { padding:2px 5px; }
-.midtable {}
-.midtable td { vertical-align:middle; }
-.sgrpdiv {}
-.sgpicdiv { float:left; padding:0px 10px 0px 0px; }
-.sjoinrssdiv { padding:20px 0px 0px 0px; }
-#sgrprevsdiv { padding:20px 5px; }
-#sgrptagline { padding:20px 5px; font-size:small; font-style:italic; }
-#sgrpnamedescdiv { padding:0px 5px; }
-#sgrpjoinlink { padding:0px 0px 0px 20px; }
-.grouplist { list-style:none; padding:10px 0px 5px 10px; margin:0; }
-#groupdatadiv, #grouprevdatadiv, #pendatadiv, #revdatadiv { 
-  font-size:xx-small; color:white; }
 
 /* >> review layout */
 #revdlgdiv { }
@@ -450,12 +235,10 @@ button, .loginbutton, .formbutton {
 #rdurlbutton { margin:0px 0px 0px 3px; }
 #rdstat1 { clear:both; }
 #rdtypesdiv { width:240px; margin:auto; padding:0px 0px 0px 0px; }
-
 #rdkeyindiv { padding:0px 0px 10px 0px; }
 #rdacdiv { float:right; width:50px; background:url('../img/rdaclab.png'); }
 #rdaccb { margin:0px 0px 0px 5px; }
 #rdaccblab { font-size:xx-small; width:50px; }
-
 #rdpfdiv { padding:0px 0px 5px 0px; }
 #rdpicdiv { float:left; margin:0px 5px 0px 0px; width:125px; height:125px; 
   cursor:pointer; overflow:hidden; }
@@ -463,7 +246,6 @@ button, .loginbutton, .formbutton {
 #rdstfudiv { }
 #rdstarsdiv { display:inline-block; height:35px; }
 #rdfutcbdiv { vertical-align:top; float:right; width:50px; background:url('../img/rdfuture.png'); }
-
 .rdfindiv { padding:0px 0px 6px 0px; }
 #rdtextdiv { clear:both; padding:5px 0px 0px 0px; }
 #rdta { width:275px; height:80px; padding:3px; overflow:auto;
@@ -473,34 +255,12 @@ button, .loginbutton, .formbutton {
   padding:0px 0px 10px 0px; }
 .rdgrpdiv { padding:0px 0px 8px 0px; }
 .rdglpicdiv { display:inline-block; width:40px; margin:0px 2px 0px 5px; 
-  overflow:hide; }
+  overflow:hidden; }
 .rdglpic { vertical-align:middle; max-width:40px; max-height:40px; 
   font-size:small; }
 #revautodiv { clear:both; font-size:small; width:275px; }
 #revautodiv ul { list-style-image:url('../img/acbullet.png'); }
-#revfdiv { }
-.linksdiv { padding:10px; text-align:center; }
-.commentform { padding:20px 0px 0px 0px; font-size:small; }
-.qcaspan { font-style:italic; }
-#csrchindiv { padding:0px 0px 10px 0px; }
-#csrchcontentdiv { padding:20px 0px 0px 0px; }
-#csrchbuttonsdiv { padding:20px; text-align:center; }
-.keywordcheckboxtable { padding:10px; }
-.keywordcheckboxtable td { padding:4px; }
-#earnedmeritbadgegraphicdiv { text-align:center; padding:15px; }
-.tabcontentheadertext { font-size:small; padding:0px 0px 0px 10px; }
-.transformlinkdiv, .getyoursdiv { background:#9cd1a1;
-  border: 1px solid #666666; border-radius:10px; font-size:x-small; }
-.transformlinkdiv { padding:0px 5px; margin:8px; display:table; }
 #revmodifieddiv { padding:0px 0px 0px 10px; }
-/* static display elements */
-.getyoursdiv { padding:4px 10px; margin:2px 10px 0px 0px; float:right; 
-  box-shadow:5px 5px 2px #888888; font-size:small; }
-#getyourscontainerdiv { float:right; }
-#blogimagecontainerdiv { float:left; padding:0px 10px 0px 0px; }
-#blogheadingmaindiv { padding:0px 10px; } /* pad kicks in after float */
-#blogcontentdiv { padding:10px; margin-left:7%; }
-.blogidentdiv { padding:0px 0px 20px 0px; }
 #modalseparatordiv { position:absolute; left:0px; top:0px; 
   background-color:#666666; opacity:0.3; filter:alpha(opacity=30); }
 #revpicdlgdiv { width:220px; }
@@ -513,35 +273,8 @@ button, .loginbutton, .formbutton {
 #ptduploadbuttonsdiv { text-align:center; padding:20px 0px 5px 0px; }
 
 /* >> activity layout */
-#switchmodebutton { vertical-align:middle; margin:10px 20px; }
-#revtypeseldiv { }
-#toptd { padding:0px 20px 0px 0px; }
-#alltd { padding:0px 10px 0px 20px; }
-.actmodesel { color:#ffd100; }
-.actmodeseldis { color:#999999; }
-#rsslink { padding:0px 0px 0px 5px; }
-.embedlinktext { font-size:small; }
-#activereqsdiv, #pendingqcsdiv, #announcementdiv, #groupnoticediv { 
-  padding:0px 0px 0px 40px; } /* no top/bottom pad, content starts to drift.. */
-.announcecontent { padding:5px 0px; font-size:medium; font-style:italic; }
-.reqlist { list-style:none; padding:0; margin:0; font-size:medium; }
-.reqlist li { font-style:italic; }
-.cmtlist { list-style:none; padding:5px 0px; margin:0; font-size:medium; }
-.cmtlist li { font-style:italic; }
-.reqkeywordsdiv { text-align:center; font-size:small; }
-.smallbadge { width:20px; height:20px; vertical-align:middle; }
-.profpicsmall { max-width:60px; max-height:60px; vertical-align:middle; }
-.revtypeimg { width:50px; height:50px; vertical-align:middle; }
-.confirmtext, .confirmlastline { font-size:large; }
-.confirmlastline { text-align:center; }
-.qctext { font-size:small; }
-.clickspan { cursor:pointer; }
-.blrevdate { color:#333333; }
 #feedrevsdiv { padding:0px 0px 50px 0px; }
-
-/* >> feed post review layout */
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
-.profrevdiv { clear:both; margin:0px 0px 10px 0px; }
 .fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:72px; 
   overflow:scroll; float:left; }
 .fpprofdivsp { margin-right:5px; }
@@ -575,24 +308,6 @@ button, .loginbutton, .formbutton {
 .visprefseldiv { font-size:medium; }
 .vispreflabspan { display:inline-block; width:100px; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
-
-
-/* >> settings dialog */
-#writingas { font-size:medium; font-weight:bold; }
-#accset { font-size:small; }
-.authcbtd { white-space:nowrap; }
-
-/* >> tips dialog */
-.dismissradiodiv { padding:10px 5px 20px 5px; font-size:small; }
-.rightclick { font-size:large; font-style:italic; color: #333; }
-.tipsbuttondiv { padding:0px 0px 20px 0px; font-size:large; font-weight:bold; 
- text-align:center;}
-
-/* >> general classes */
-.greytxt { color:#999999; }
-.mobileadspacediv { padding:0px 0px 0px 5px; }
-.stdadspacediv { display:table; margin-left:5px; margin-right:auto; 
-  background:#fffffc; border-radius:5px; padding:5px; }
 
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
