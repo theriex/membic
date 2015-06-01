@@ -909,6 +909,8 @@ class ReviewDataInit(webapp2.RequestHandler):
         revs = Review.all()
         count = 0
         for rev in revs:
+            if rev.modhist and rev.modhist.endswith(";1"):
+                continue
             rev.modhist = rev.modified + ";1"
             rev.grpid = 0
             set_review_mainfeed(rev)
@@ -920,6 +922,10 @@ class ReviewDataInit(webapp2.RequestHandler):
             rev.put()
             count += 1
         self.response.out.write(str(count) + " Reviews initialized<br>\n")
+        rest = self.request.get('rest')
+        if not rest or rest != "yes":
+            self.response.out.write("rest=yes not found so returning")
+            return
         rts = ReviewTag.all()
         count = 0
         for rt in rts:
