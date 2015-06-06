@@ -372,22 +372,22 @@ def set_review_mainfeed(rev):
     rev.mainfeed = 1
     logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
-        logging.info(logmsg + "is batch.")
+        # logging.info(logmsg + "is batch.")
         rev.srcrev = -202
         rev.mainfeed = 0
     if rev.svcdata < 0:  # future review, batch update etc.
-        logging.info(logmsg + "is future or batch.")
+        # logging.info(logmsg + "is future or batch.")
         rev.mainfeed = 0
     if rev.grpid > 0:   # group posting, not source review
-        logging.info(logmsg + "is group posting.")
+        # logging.info(logmsg + "is group posting.")
         rev.mainfeed = 0
     if not rev.text or len(rev.text) < 90:  # not substantive
-        logging.info(logmsg + "text not substantive.")
+        # logging.info(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 0:  # rating required
-        logging.info(logmsg + "is unrated.")
+        # logging.info(logmsg + "is unrated.")
         rev.mainfeed = 0
-    logging.info("set_review_mainfeed: " + str(rev.mainfeed))
+    # logging.info("set_review_mainfeed: " + str(rev.mainfeed))
 
 
 def prepend_to_main_feeds(review, pnm):
@@ -1031,11 +1031,15 @@ class GetReviewFeed(webapp2.RequestHandler):
             for rev in revs:
                 fv = str(rev.key().id()) + ":" + str(rev.penid)
                 feedcsv = append_to_csv(fv, feedcsv)
-                if rev.srcrev:
+                if rev.srcrev and rev.srcrev > 0:
                     fv = str(rev.srcrev) + ":0"
                     if not csv_contains(fv, feedcsv):
                         feedcsv = append_to_csv(fv, feedcsv)
             memcache.set(revtype or "all", feedcsv)
+        debug = self.request.get('debug')
+        if debug == "rawfeedcsv":
+            self.response.out.write(feedcsv)
+            return
         pnm = None
         acc = authenticated(self.request)
         if acc and intz(self.request.get('penid')):
@@ -1044,7 +1048,10 @@ class GetReviewFeed(webapp2.RequestHandler):
         revs = []
         for revid in feedids:
             rev = cached_get(intz(revid), Review)
-            revs.append(rev)
+            if not rev:
+                logging.info("GetReviewFeed cached_get fail: " + str(revid))
+            else:
+                revs.append(rev)
         returnJSON(self.response, revs)
 
 
