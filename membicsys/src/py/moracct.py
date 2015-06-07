@@ -156,8 +156,8 @@ def authenticated(request):
         emaddr = normalize_email(emaddr)
         where = "WHERE email=:1 LIMIT 1"
         accounts = MORAccount.gql(where, emaddr)
-        logging.info("moracct.py authenticated found " + str(accounts.count()) +
-                     " accounts for emaddr: " + emaddr)
+        # logging.info("moracct.py authenticated " + str(accounts.count()) +
+        #              " accounts for emaddr: " + emaddr)
         for account in accounts:
             key = pwd2key(account.password)
             token = decodeToken(key, token)
