@@ -66,13 +66,7 @@ known_rev_types = ['book', 'movie', 'video', 'music',
                    'food', 'drink', 'activity', 'other']
 
 
-def review_modification_authorized(handler):
-    """ Return the PenName if the penid matches a pen name the caller is 
-        authorized to modify, otherwise return False """
-    acc = authenticated(handler.request)
-    if not acc:
-        srverr(handler, 401, "Authentication failed")
-        return False
+def acc_review_modification_authorized(acc, handler):
     penid = intz(handler.request.get('penid'))
     if not penid:
         srverr(handler, 401, "No penid specified")
@@ -86,6 +80,16 @@ def review_modification_authorized(handler):
         srverr(handler, 401, "Pen name not authorized.")
         return False
     return pnm
+
+
+def review_modification_authorized(handler):
+    """ Return the PenName if the penid matches a pen name the caller is 
+        authorized to modify, otherwise return False """
+    acc = authenticated(handler.request)
+    if not acc:
+        srverr(handler, 401, "Authentication failed")
+        return False
+    return acc_review_modification_authorized(acc, handler)
 
 
 def noauth_get_review_for_update(handler):
@@ -677,6 +681,80 @@ def fetch_revs_for_pg(idfield, pgo):
     return pgo, resultcsv
 
 
+def feedcsventry(review):
+    return str(review.key().id()) + ":" + str(review.penid)
+
+
+def get_review_feed_pool(revtype, poolsize, blocksize):
+    numblocks = poolsize / blocksize
+    blocks = [None for i in range(numblocks)]
+    feedcsv = memcache.get(revtype)
+    if feedcsv is not None:
+        for i in range(numblocks):
+            blocks[i] = memcache.get(revtype + "RevBlock" + str(i))
+        if None not in blocks:
+            return feedcsv, blocks
+    logging.info("rebuilding feedcsv for " + revtype)
+    feedcsv = ""
+    blocks = ["" for i in range(numblocks)]
+    bidx = 0
+    count = 0
+    where = "WHERE grpid = 0 AND mainfeed = 1"
+    if revtype and revtype != "all":
+        where += " AND revtype = '" + revtype + "'"
+    where += " ORDER BY modhist DESC"
+    rq = Review.gql(where)
+    revs = rq.fetch(poolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
+                    deadline=60)
+    for rev in revs:
+        feedcsv = append_to_csv(feedcsventry(rev), feedcsv)
+        blocks[bidx] = append_to_csv(obj2JSON(rev), blocks[bidx])
+        count += 1
+        if rev.srcrev and rev.srcrev > 0:  # ensure source included in block
+            source = Review.get_by_id(rev.srcrev)
+            if source:
+                feedcsv = append_to_csv(feedcsventry(source), feedcsv)
+                blocks[bidx] = append_to_csv(obj2JSON(source), blocks[bidx])
+                count += 1
+        if count >= blocksize:
+            bidx += 1
+            count = 0
+    memcache.set(revtype, feedcsv)
+    for i in range(numblocks):
+        memcache.set(revtype + "RevBlock" + str(i), blocks[i])
+    return feedcsv, blocks
+
+
+def extract_json_by_id(fid, block):
+    json = ""
+    openidx = block.find('{"_id":"' + str(fid) + '",')
+    if openidx >= 0:
+        closeidx = openidx + 1
+        brackets = 1
+        while closeidx < len(block):
+            if block[closeidx] == '{':
+                brackets += 1
+            elif block[closeidx] == '}':
+                brackets -= 1
+                if brackets <= 0:
+                    closeidx += 1
+                    break
+            closeidx += 1
+        json = block[openidx:closeidx]
+    return json
+
+
+def resolve_ids_to_json(feedids, blocks):
+    json = ""
+    for fid in feedids:
+        for block in blocks:
+            objson = extract_json_by_id(fid, block)
+            if objson:
+                json = append_to_csv(objson, json)
+                break
+    return "[" + json + "]"
+
+
 class NewReview(webapp2.RequestHandler):
     def post(self):
         pnm = review_modification_authorized(self)
@@ -1010,50 +1088,27 @@ class VerifyAllReviews(webapp2.RequestHandler):
 
 
 class GetReviewFeed(webapp2.RequestHandler):
-    # If revtype is specified, restrict to that type. If an authorized
-    # account was given, then filter and sort based on blocking and
-    # preferences. Maximally leverage cache to avoid db overhead.
     def get(self):
+        blocksize = 200  # how many reviews to return. cacheable approx quantity
+        poolsize = 1000  # even multiple of blocksize. how many reviews to read
         revtype = self.request.get('revtype')
-        if revtype not in known_rev_types:
-            revtype = ""
-        feedcsv = memcache.get(revtype or "all")
-        if not feedcsv:  # rebuild and save in cache
-            logging.info("rebuilding feedcsv for " + (revtype or "all"))
-            feedcsv = ""
-            where = "WHERE grpid = 0 AND mainfeed = 1"
-            if revtype:
-                where += " AND revtype = '" + revtype + "'"
-            where += " ORDER BY modhist DESC"
-            rq = Review.gql(where)
-            revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
-                            deadline=60)
-            for rev in revs:
-                fv = str(rev.key().id()) + ":" + str(rev.penid)
-                feedcsv = append_to_csv(fv, feedcsv)
-                if rev.srcrev and rev.srcrev > 0:
-                    fv = str(rev.srcrev) + ":0"
-                    if not csv_contains(fv, feedcsv):
-                        feedcsv = append_to_csv(fv, feedcsv)
-            memcache.set(revtype or "all", feedcsv)
-        debug = self.request.get('debug')
-        if debug == "rawfeedcsv":
-            self.response.out.write(feedcsv)
-            return
-        pnm = None
+        if not revtype or revtype not in known_rev_types:
+            revtype = "all"
+        feedcsv, blocks = get_review_feed_pool(revtype, poolsize, blocksize)
         acc = authenticated(self.request)
+        pnm = None
         if acc and intz(self.request.get('penid')):
-            pnm = review_modification_authorized(self)
-        feedids = sort_filter_feed(feedcsv, pnm, 200)
-        revs = []
-        for revid in feedids:
-            rev = cached_get(intz(revid), Review)
-            if not rev:
-                logging.info("GetReviewFeed cached_get fail: " + str(revid))
-            else:
-                revs.append(rev)
-        returnJSON(self.response, revs)
-
+            pnm = acc_review_modification_authorized(acc, self)
+        if not pnm:
+            writeJSONResponse("[" + blocks[0] + "]", self.response)
+            return
+        feedids = sort_filter_feed(feedcsv, pnm, blocksize)
+        if self.request.get('debug') == "sortedfeedids":
+            self.response.out.write(feedids)
+            return
+        json = resolve_ids_to_json(feedids, blocks)
+        writeJSONResponse(json, self.response)
+        
 
 class ToggleHelpful(webapp2.RequestHandler):
     def get(self):
