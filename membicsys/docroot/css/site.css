@@ -54,7 +54,7 @@ button, .loginbutton, .formbutton {
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
 #topactionsdiv { }
-.aboutoverviewdiv { padding:10px 10px 10px 10px; font-size:large; }
+.aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
 .aboutdetailsheading { font-size:small; font-weight:bold; }
 .aboutstatementsdiv { padding:0px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
