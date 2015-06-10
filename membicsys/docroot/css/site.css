@@ -309,6 +309,9 @@ button, .loginbutton, .formbutton {
 .vispreflabspan { display:inline-block; width:100px; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
 
+/* >> docs layout */
+.quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
+
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
 .statseclist { font-size:medium; margin:0px; }
