@@ -1145,7 +1145,8 @@ return {
                         app.group.verifyPenStash(obj); }
                     callback(obj); },
                 app.failf(function (code, errtxt) {
-                    app.crash(code, errtxt, "GET", url, ""); }),
+                    jt.log("blockfetch " + code + ": " + errtxt);
+                    callback(null); }),
                 jt.semaphore("pgd.fetchAndDisplay" + dtype + id));
     },
 

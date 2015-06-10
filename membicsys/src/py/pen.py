@@ -180,6 +180,16 @@ def updateable_pen(handler):
     return pen
 
 
+def filter_sensitive_fields(pen):
+    if pen:
+        pen.mid = 0
+        pen.gsid = "0"
+        pen.fbid = 0
+        pen.twid = 0
+        pen.ghid = 0
+        pen.stash = ""
+
+
 def fetch_pen_by_penid(handler):
     penidstr = handler.request.get('penid')
     penid = intz(penidstr)
@@ -187,19 +197,14 @@ def fetch_pen_by_penid(handler):
         handler.error(400)
         handler.response.write("Invalid ID for Pen Name: " + penidstr)
         return
-    pen = cached_get(intz(penid), PenName)
+    # not caching individual PenNames anymore as these are blockfetched
+    # pen = cached_get(intz(penid), PenName)
+    pen = PenName.get_by_id(intz(penid))
     if not pen:
         handler.error(404)
         handler.response.write("No Pen Name found for id " + str(penid))
         return
-    # filter sensitive fields
-    pen.mid = 0
-    pen.gsid = "0"
-    pen.fbid = 0
-    pen.twid = 0
-    pen.ghid = 0
-    pen.abusive = ""
-    pen.stash = ""
+    filter_sensitive_fields(pen)
     return pen
 
 
@@ -410,13 +415,7 @@ class SearchPenNames(webapp2.RequestHandler):
         for pen in pens:
             checked += 1
             if matched_pen(acc, pen, qstr_c, time, t20, lurkers):
-                # filter sensitive fields
-                pen.mid = 0
-                pen.gsid = "0"
-                pen.fbid = 0
-                pen.twid = 0
-                pen.ghid = 0
-                pen.abusive = ""
+                filter_sensitive_fields(pen)
                 results.append(pen)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch

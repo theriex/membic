@@ -591,25 +591,24 @@ def create_or_update_grouprev(revid, grpid):
     cached_put(grprev)
 
 
-def retrieve_pen_or_group(handler):
-    grpid = intz(handler.request.get('grpid'))
-    if grpid:
-        grp = cached_get(grpid, group.Group)
-        return grp, "grpid"
-    penid = intz(handler.request.get('penid'))
-    if penid:
-        pnm = pen.fetch_pen_by_penid(handler)
-        return pnm, "penid"
+def find_pen_or_group_type_and_id(handler):
+    pgid = intz(handler.request.get('grpid'))
+    if pgid:
+        return "group", pgid, None
+    pgid = intz(handler.request.get('penid'))
+    if pgid:
+        return "pen", pgid, None
     pens = pen.find_auth_pens(handler)
     if pens and len(pens) > 0:
         mypen = pens[0]
         mypen.accessed = nowISO()
         try:
-            cached_put(mypen)
+            mypen.put()
         except Exception as e:
             logging.info("Update of pen.accessed failed: " + str(e))
-        return mypen, "penid"
-    return None, penid
+        return "pen", mypen.key().id(), mypen
+    srverr(handler, 400, "No group or pen id specified")
+    return "pen", 0, None
 
 
 def rev_in_list(revid, revs):
@@ -663,6 +662,71 @@ def update_top20s(pgo, recentrevs):
         pgo.modified = tstamp;
         cached_put(pgo)
     return pgo, list_to_csv(alltopids)
+
+
+def append_review_jsoncsv(jstr, rev):
+    jstr = jstr or ""
+    if jstr:
+        jstr += ","
+    jstr += obj2JSON(rev)
+    if rev.grpid:
+        # append group srcrevs for client cache reference
+        srcrev = Review.get_by_id(int(rev.srcrev))
+        if not srcrev:
+            logging.error("Missing srcrev for Review " + str(rev.key().id()))
+        else:
+            jstr += "," + obj2JSON(srcrev)
+    return jstr
+
+
+def append_top20_revs_to_jsoncsv(jstr, revs, pgt, pgo, sizebound):
+    topdict = {}
+    if pgo.top20s:
+        topdict = json.loads(pgo.top20s)
+        for i in range(50):
+            for rt in known_rev_types:
+                if rt in topdict and len(topdict[rt]) > i:
+                    revid = int(topdict[rt][i])
+                    rev = None
+                    for recentrev in revs:
+                        if recentrev.key().id() == revid:
+                            rev = recentrev
+                            break;
+                    if rev:  # already have the review no need to add it again
+                        continue
+                    rev = Review.get_by_id(revid)
+                    if not rev:  # could be deleted group review or somesuch
+                        continue
+                    jstr = append_review_jsoncsv(jstr, rev)
+                    if len(jstr) > sizebound:
+                        logging.info(pgt + " " + str(pgo.key().id()) + 
+                                     " exceeded sizebound " + str(sizebound))
+                        return jstr
+    return jstr
+
+
+def rebuild_reviews_block(handler, pgt, pgid):
+    logging.info("rebuild_reviews_block " + pgt + " " + str(pgid))
+    pgo = None
+    if pgt == "group":
+        pgo = group.Group.get_by_id(int(pgid))
+    elif pgt == "pen":
+        pgo = pen.PenName.get_by_id(int(pgid))
+        pen.filter_sensitive_fields(pgo)
+    if not pgo:
+        srverr(handler, 404, pgt + " " + str(pgid) + " not found")
+        return
+    jstr = obj2JSON(pgo)
+    # logging.info("rebuild_reviews_block pgo jstr: " + jstr)
+    where = "WHERE penid = :1 ORDER BY modified DESC"
+    if pgt == "group":
+        where = "WHERE grpid = :1 ORDER BY modified DESC"
+    rq = Review.gql(where, pgo.key().id())
+    revs = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    for rev in revs:
+        jstr = append_review_jsoncsv(jstr, rev)
+    jstr = append_top20_revs_to_jsoncsv(jstr, revs, pgt, pgo, 450 * 1024)
+    return "[" + jstr + "]"
 
 
 def fetch_revs_for_pg(idfield, pgo):
@@ -726,7 +790,7 @@ def get_review_feed_pool(revtype, poolsize, blocksize):
 
 
 def extract_json_by_id(fid, block):
-    json = ""
+    jstr = ""
     openidx = block.find('{"_id":"' + str(fid) + '",')
     if openidx >= 0:
         closeidx = openidx + 1
@@ -740,19 +804,19 @@ def extract_json_by_id(fid, block):
                     closeidx += 1
                     break
             closeidx += 1
-        json = block[openidx:closeidx]
-    return json
+        jstr= block[openidx:closeidx]
+    return jstr
 
 
 def resolve_ids_to_json(feedids, blocks):
-    json = ""
+    jstr = ""
     for fid in feedids:
         for block in blocks:
             objson = extract_json_by_id(fid, block)
             if objson:
-                json = append_to_csv(objson, json)
+                jstr = append_to_csv(objson, jstr)
                 break
-    return "[" + json + "]"
+    return "[" + jstr + "]"
 
 
 class NewReview(webapp2.RequestHandler):
@@ -1106,8 +1170,8 @@ class GetReviewFeed(webapp2.RequestHandler):
         if self.request.get('debug') == "sortedfeedids":
             self.response.out.write(feedids)
             return
-        json = resolve_ids_to_json(feedids, blocks)
-        writeJSONResponse(json, self.response)
+        jstr = resolve_ids_to_json(feedids, blocks)
+        writeJSONResponse(jstr, self.response)
         
 
 class ToggleHelpful(webapp2.RequestHandler):
@@ -1132,32 +1196,26 @@ class ToggleHelpful(webapp2.RequestHandler):
 
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
-        pgo, idfield = retrieve_pen_or_group(self)
-        objs = []
-        if pgo:
-            ckey = "revs" + str(pgo.key().id())
-            idcsv = memcache.get(ckey)
-            if not idcsv:
-                pgo, idcsv = fetch_revs_for_pg(idfield, pgo)
-            objs.append(pgo)
-            mostrecent = None
-            for revidstr in csv_list(idcsv):
-                rev = cached_get(int(revidstr), Review)
-                # verify cache is still intact
-                mostrecent = mostrecent or rev.modified
-                if rev.modified > mostrecent:
-                    logging.error("cache invalidation " + ckey)
-                    memcache.delete(key)
-                    return srverr(self, 409, "Outdated cache data detected")
-                # also append group srcrevs for client cache reference
-                if rev.grpid:
-                    srcrev = cached_get(int(rev.srcrev), Review)
-                    if not srcrev:
-                        logging.error("Missing srcrev for Review " + revidstr)
-                        continue
-                    objs.append(srcrev)
-                objs.append(rev)
-        returnJSON(self.response, objs)
+        pgt, pgid, mypen = find_pen_or_group_type_and_id(self)
+        if not pgid:
+            logging.info("FetchAllReviews: no pen or group found")
+            return  # not found error already reported
+        key = pgt + str(pgid)
+        jstr = memcache.get(key)
+        if not jstr:
+            jstr = rebuild_reviews_block(self, pgt, pgid)
+            memcache.set(key, jstr)
+        if mypen:  # replace first element with private pen data
+            i = 2 
+            brackets = 1
+            while i < len(jstr) and brackets > 0:
+                if jstr[i] == '{':
+                    brackets += 1
+                elif jstr[i] == '}':
+                    brackets -= 1
+                i += 1
+            jstr = '[' + obj2JSON(mypen) + jstr[i:]
+        writeJSONResponse(jstr, self.response)
 
 
 class FetchPreReviews(webapp2.RequestHandler):
