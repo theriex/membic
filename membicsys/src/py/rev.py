@@ -64,6 +64,8 @@ class Review(db.Model):
 
 known_rev_types = ['book', 'movie', 'video', 'music', 
                    'food', 'drink', 'activity', 'other']
+revblocksize = 200  # how many reviews to return. cacheable approx quantity
+revpoolsize = 1000  # even multiple of blocksize. how many reviews to read
 
 
 def acc_review_modification_authorized(acc, handler):
@@ -215,6 +217,7 @@ def note_modified(review):
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
     review.penid = intz(handler.request.get('penid'))
+    review.grpid = intz(handler.request.get('grpid'))
     review.revtype = handler.request.get('revtype')
     ratingstr = handler.request.get('rating')
     if ratingstr:
@@ -408,11 +411,15 @@ def prepend_to_main_feeds(review, pnm):
 
 def write_review(review, pnm):
     set_review_mainfeed(review)
-    cached_put(review)
+    review.put()
+    # force retrieval to ensure subsequent db hits find the latest
+    review = Review.get_by_id(review.key().id())
     if review.mainfeed:
-        prepend_to_main_feeds(review, pnm)
-    bust_cache_key("recentrevs")
-    bust_cache_key("blog" + pnm.name_c)
+        memcache.delete(review.revtype)
+        memcache.delete("all")
+        for i in range(revpoolsize / revblocksize):
+            memcache.delete(review.revtype + "RevBlock" + str(i))
+            memcache.delete("allRevBlock" + str(i))
     update_top20_reviews(pnm, review)
 
 
@@ -749,8 +756,8 @@ def feedcsventry(review):
     return str(review.key().id()) + ":" + str(review.penid)
 
 
-def get_review_feed_pool(revtype, poolsize, blocksize):
-    numblocks = poolsize / blocksize
+def get_review_feed_pool(revtype):
+    numblocks = revpoolsize / revblocksize
     blocks = [None for i in range(numblocks)]
     feedcsv = memcache.get(revtype)
     if feedcsv is not None:
@@ -768,7 +775,7 @@ def get_review_feed_pool(revtype, poolsize, blocksize):
         where += " AND revtype = '" + revtype + "'"
     where += " ORDER BY modhist DESC"
     rq = Review.gql(where)
-    revs = rq.fetch(poolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
+    revs = rq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                     deadline=60)
     for rev in revs:
         feedcsv = append_to_csv(feedcsventry(rev), feedcsv)
@@ -780,7 +787,7 @@ def get_review_feed_pool(revtype, poolsize, blocksize):
                 feedcsv = append_to_csv(feedcsventry(source), feedcsv)
                 blocks[bidx] = append_to_csv(obj2JSON(source), blocks[bidx])
                 count += 1
-        if count >= blocksize:
+        if count >= revblocksize:
             bidx += 1
             count = 0
     memcache.set(revtype, feedcsv)
@@ -1153,12 +1160,10 @@ class VerifyAllReviews(webapp2.RequestHandler):
 
 class GetReviewFeed(webapp2.RequestHandler):
     def get(self):
-        blocksize = 200  # how many reviews to return. cacheable approx quantity
-        poolsize = 1000  # even multiple of blocksize. how many reviews to read
         revtype = self.request.get('revtype')
         if not revtype or revtype not in known_rev_types:
             revtype = "all"
-        feedcsv, blocks = get_review_feed_pool(revtype, poolsize, blocksize)
+        feedcsv, blocks = get_review_feed_pool(revtype)
         acc = authenticated(self.request)
         pnm = None
         if acc and intz(self.request.get('penid')):
@@ -1166,7 +1171,7 @@ class GetReviewFeed(webapp2.RequestHandler):
         if not pnm:
             writeJSONResponse("[" + blocks[0] + "]", self.response)
             return
-        feedids = sort_filter_feed(feedcsv, pnm, blocksize)
+        feedids = sort_filter_feed(feedcsv, pnm, revblocksize)
         if self.request.get('debug') == "sortedfeedids":
             self.response.out.write(feedids)
             return
