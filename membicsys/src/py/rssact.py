@@ -117,13 +117,12 @@ class GroupRSS(webapp2.RequestHandler):
         grpid = intz(self.request.get('group'))
         grp = group.Group.get_by_id(grpid)
         # Similar to FetchAllReviews except but without extra data checks
-        reviews = []
-        ckey = "revs" + str(grpid)
-        idcsv = memcache.get(ckey)
-        if not idcsv:
-            grp, idcsv = rev.fetch_revs_for_pg("grpid", grp)
-        for revidstr in csv_list(idcsv):
-            reviews.append(cached_get(int(revidstr), rev.Review))
+        key = group + str(grpid)
+        jstr = memcache.get(key)
+        if not jstr:
+            jstr = rev.rebuild_reviews_block(self, "group", grpid)
+            memcache.set(key, jstr)
+        reviews = json.loads(jstr)
         title = grp.name
         content = rss_content(self, grpid, title, reviews)
         ctype = "application/xhtml+xml; charset=UTF-8"
