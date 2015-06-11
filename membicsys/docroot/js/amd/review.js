@@ -1488,8 +1488,8 @@ return {
                 function (updobjs) {
                     var updpen = updobjs[0], updrev = updobjs[1];
                     jt.out('rdokbuttondiv', "Saved.");
-                    updpen.recent = app.pen.myPenName().recent || [];
-                    updpen.recent.unshift(jt.instId(updrev));
+                    updpen.recent = app.activity.insertOrUpdateRev(
+                        app.pen.myPenName().recent || [], updrev);
                     app.lcs.put("pen", updpen);
                     cacheBustGroups(crev.grpids);
                     crev = copyReview(app.lcs.put("rev", updrev));

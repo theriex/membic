@@ -176,8 +176,23 @@ return {
     },
 
 
+    insertOrUpdateRev: function (revs, updrev) {
+        var i, inserted, processed;
+        processed = [];
+        inserted = false;
+        for(i = 0; i < revs.length; i += 1) {
+            if(updrev.modhist >= revs[i].modhist && !inserted) {
+                processed.push(updrev);
+                inserted = true; }
+            processed.push(revs[i]); }
+        if(!inserted) {  //empty list or older than end of list
+            processed.push(updrev); }
+        return processed;
+    },
+
+
     updateFeeds: function (rev) {
-        var revid, tname, revs, i, inserted, processed;
+        var revid, tname, revs, i, processed;
         revid = jt.instId(rev);
         //review might have changed types, so remove all first
         for(tname in feeds) {
@@ -195,15 +210,8 @@ return {
                 if(feeds.hasOwnProperty(tname)) {
                     if(tname === "all" || tname === "memo" ||
                            tname === rev.revtype ) {
-                        revs = feeds[tname];
-                        processed = [];
-                        inserted = false;
-                        for(i = 0; i < revs.length; i += 1) {
-                            if(rev.modhist >= revs[i].modhist && !inserted) {
-                                processed.push(rev);
-                                inserted = true; }
-                            processed.push(revs[i]); }
-                        feeds[tname] = processed; } } } }
+                        feeds[tname] = app.activity.insertOrUpdateRev(
+                            feeds[tname], rev); } } } }
         //might have been future before, or is future now.  Rebuild.
         if(feeds.future) {  //don't modify unless already initialized
             revs = feeds.future;
@@ -213,15 +221,8 @@ return {
                     processed.push(revs[i]); } }
             feeds.future = processed;
             if(rev.srcrev === -101) {
-                revs = feeds.future;
-                processed = [];
-                inserted = false;
-                for(i = 0; i < revs.length; i += 1) {
-                    if(rev.modhist >= revs[i].modhist && !inserted) {
-                        processed.push(rev);
-                        inserted = true; }
-                    processed.push(revs[i]); }
-                feeds.future = processed; }
+                feeds.future = app.activity.insertOrUpdateRev(
+                    feeds.future, rev); }
             feeds.remembered = null; } //trigger remerge and sort
     },
 

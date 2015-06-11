@@ -204,7 +204,7 @@ return {
             return objs; }
         for(i = 0; i < ids.length; i += 1) {
             ref = cache[type].refs[ids[i]];
-            if(ref[type]) {
+            if(ref && ref[type]) {
                 objs.push(ref[type]); } }
         return objs;
     },
