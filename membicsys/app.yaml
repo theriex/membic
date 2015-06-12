@@ -143,18 +143,6 @@ handlers:
 ######################################################################
 ##        Reviews
 
-## Initialize review reference fields
-## GET params: none
-- url: /revdatainit
-  script: src.py.rev.app
-
-
-## Verify existing database review instances, fixing as needed
-## GET params: none
-- url: /revcheckall
-  script: src.py.rev.app
-
-
 ## Return the review feed for the given type
 ## GET params: revtype, authparams, penid
 - url: /revfeed

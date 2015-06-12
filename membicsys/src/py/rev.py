@@ -14,8 +14,6 @@ from operator import attrgetter
 import re
 from cacheman import *
 import time
-# for conversion only...
-from revtag import ReviewTag
 
 
 # srcrev is heavily utilized in different contexts:
@@ -1053,109 +1051,109 @@ class GetReviewByKey(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
-class ReviewDataInit(webapp2.RequestHandler):
-    def get(self):
-        revs = Review.all()
-        count = 0
-        for rev in revs:
-            if rev.modhist and rev.modhist.endswith(";1"):
-                continue
-            rev.modhist = rev.modified + ";1"
-            rev.grpid = 0
-            set_review_mainfeed(rev)
-            if rev.srcrev >= 0:    # not some reserved special handling value
-                rev.srcrev = -1    # set to proper revid or 0 later
-            rev.orids = ""
-            rev.helpful = ""
-            rev.remembered = ""
-            rev.put()
-            count += 1
-        self.response.out.write(str(count) + " Reviews initialized<br>\n")
-        rest = self.request.get('rest')
-        if not rest or rest != "yes":
-            self.response.out.write("rest=yes not found so returning")
-            return
-        rts = ReviewTag.all()
-        count = 0
-        for rt in rts:
-            rt.converted = 0
-            rt.put()
-            count += 1
-        self.response.out.write(str(count) + " ReviewTags initialized<br>\n")
-        pens = pen.PenName.all()
-        count = 0
-        for pnm in pens:
-            pnm.remembered = ""
-            pnm.preferred = ""
-            pnm.background = ""
-            pnm.blocked = ""
-            pnm.put()
-            count += 1
-        self.response.out.write(str(count) + " Pens initialized<br>\n")
-        groups = group.Group.all()
-        count = 0
-        for grp in groups:
-            grp.adminlog = ""
-        self.response.out.write(str(count) + " Groups initialized<br>\n")
+# class ReviewDataInit(webapp2.RequestHandler):
+#     def get(self):
+#         revs = Review.all()
+#         count = 0
+#         for rev in revs:
+#             if rev.modhist and rev.modhist.endswith(";1"):
+#                 continue
+#             rev.modhist = rev.modified + ";1"
+#             rev.grpid = 0
+#             set_review_mainfeed(rev)
+#             if rev.srcrev >= 0:    # not some reserved special handling value
+#                 rev.srcrev = -1    # set to proper revid or 0 later
+#             rev.orids = ""
+#             rev.helpful = ""
+#             rev.remembered = ""
+#             rev.put()
+#             count += 1
+#         self.response.out.write(str(count) + " Reviews initialized<br>\n")
+#         rest = self.request.get('rest')
+#         if not rest or rest != "yes":
+#             self.response.out.write("rest=yes not found so returning")
+#             return
+#         rts = ReviewTag.all()
+#         count = 0
+#         for rt in rts:
+#             rt.converted = 0
+#             rt.put()
+#             count += 1
+#         self.response.out.write(str(count) + " ReviewTags initialized<br>\n")
+#         pens = pen.PenName.all()
+#         count = 0
+#         for pnm in pens:
+#             pnm.remembered = ""
+#             pnm.preferred = ""
+#             pnm.background = ""
+#             pnm.blocked = ""
+#             pnm.put()
+#             count += 1
+#         self.response.out.write(str(count) + " Pens initialized<br>\n")
+#         groups = group.Group.all()
+#         count = 0
+#         for grp in groups:
+#             grp.adminlog = ""
+#         self.response.out.write(str(count) + " Groups initialized<br>\n")
 
 
-class VerifyAllReviews(webapp2.RequestHandler):
-    def get(self):
-        memcache.delete("all")
-        for revtype in known_rev_types:
-            memcache.delete(revtype)
-        # fix up any initialized srcrev values
-        rq = Review.gql("WHERE srcrev = -1")
-        revs = rq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-        count = 0
-        for rev in revs:
-            src = find_source_review(rev.cankey, rev.modhist)
-            if src:
-                src = Review.get_by_id(src.key().id())  # read latest data
-                rev.srcrev = src.key().id()
-                revidstr = str(rev.key().id())
-                src.orids = remove_from_csv(revidstr, src.orids)
-                src.orids = prepend_to_csv(revidstr, src.orids, 200)
-                src.put()
-            else:
-                rev.srcrev = 0
-            rev.put()
-            count += 1
-        self.response.out.write(str(count) + " Reviews verified<br>\n")
-        # convert helpful and remembered to new new data representation
-        count = 0
-        rtq = ReviewTag.gql("WHERE converted = 0")
-        rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-        for rt in rts:
-            rev = Review.get_by_id(rt.revid)
-            pnm = pen.PenName.get_by_id(rt.penid)
-            if rev and pnm:
-                spid = str(rt.penid)
-                rid = str(rt.revid)
-                if not rt.nothelpful or rt.helpful > rt.nothelpful:
-                    rev.helpful = remove_from_csv(spid, rev.helpful)
-                    rev.helpful = prepend_to_csv(spid, rev.helpful, 120)
-                if not rt.forgotten or rt.remembered > rt.forgotten:
-                    rev.remembered = remove_from_csv(spid, rev.remembered)
-                    rev.remembered = prepend_to_csv(spid, rev.remembered, 120)
-                    pnm.remembered = remove_from_csv(rid, pnm.remembered)
-                    pnm.remembered = prepend_to_csv(rid, pnm.remembered, 1000)
-                    pnm.put()
-                rev.put()
-            rt.converted = 1
-            rt.put()
-            count += 1
-        self.response.out.write(str(count) + " ReviewTags converted<br>\n")
-        # convert group revid lists into separate review entries
-        groups = group.Group.all()
-        count = 0
-        for grp in groups:
-            logging.info("Converting " + grp.name)
-            revids = csv_list(grp.reviews)
-            for revid in revids:
-                count += 1
-                create_or_update_grouprev(int(revid), grp.key().id())
-        self.response.out.write(str(count) + " group reviews converted<br>\n")
+# class VerifyAllReviews(webapp2.RequestHandler):
+#     def get(self):
+#         memcache.delete("all")
+#         for revtype in known_rev_types:
+#             memcache.delete(revtype)
+#         # fix up any initialized srcrev values
+#         rq = Review.gql("WHERE srcrev = -1")
+#         revs = rq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+#         count = 0
+#         for rev in revs:
+#             src = find_source_review(rev.cankey, rev.modhist)
+#             if src:
+#                 src = Review.get_by_id(src.key().id())  # read latest data
+#                 rev.srcrev = src.key().id()
+#                 revidstr = str(rev.key().id())
+#                 src.orids = remove_from_csv(revidstr, src.orids)
+#                 src.orids = prepend_to_csv(revidstr, src.orids, 200)
+#                 src.put()
+#             else:
+#                 rev.srcrev = 0
+#             rev.put()
+#             count += 1
+#         self.response.out.write(str(count) + " Reviews verified<br>\n")
+#         # convert helpful and remembered to new new data representation
+#         count = 0
+#         rtq = ReviewTag.gql("WHERE converted = 0")
+#         rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+#         for rt in rts:
+#             rev = Review.get_by_id(rt.revid)
+#             pnm = pen.PenName.get_by_id(rt.penid)
+#             if rev and pnm:
+#                 spid = str(rt.penid)
+#                 rid = str(rt.revid)
+#                 if not rt.nothelpful or rt.helpful > rt.nothelpful:
+#                     rev.helpful = remove_from_csv(spid, rev.helpful)
+#                     rev.helpful = prepend_to_csv(spid, rev.helpful, 120)
+#                 if not rt.forgotten or rt.remembered > rt.forgotten:
+#                     rev.remembered = remove_from_csv(spid, rev.remembered)
+#                     rev.remembered = prepend_to_csv(spid, rev.remembered, 120)
+#                     pnm.remembered = remove_from_csv(rid, pnm.remembered)
+#                     pnm.remembered = prepend_to_csv(rid, pnm.remembered, 1000)
+#                     pnm.put()
+#                 rev.put()
+#             rt.converted = 1
+#             rt.put()
+#             count += 1
+#         self.response.out.write(str(count) + " ReviewTags converted<br>\n")
+#         # convert group revid lists into separate review entries
+#         groups = group.Group.all()
+#         count = 0
+#         for grp in groups:
+#             logging.info("Converting " + grp.name)
+#             revids = csv_list(grp.reviews)
+#             for revid in revids:
+#                 count += 1
+#                 create_or_update_grouprev(int(revid), grp.key().id())
+#         self.response.out.write(str(count) + " group reviews converted<br>\n")
 
 
 class GetReviewFeed(webapp2.RequestHandler):
@@ -1274,8 +1272,6 @@ app = webapp2.WSGIApplication([('/newrev', NewReview),
                                ('/srchrevs', SearchReviews),
                                ('/revbyid', GetReviewById), 
                                ('/revbykey', GetReviewByKey),
-                               ('/revdatainit', ReviewDataInit),
-                               ('/revcheckall', VerifyAllReviews),
                                ('/revfeed', GetReviewFeed),
                                ('/toghelpful', ToggleHelpful),
                                ('/blockfetch', FetchAllReviews),
