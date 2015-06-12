@@ -30,9 +30,6 @@ class Group(db.Model):
     reviews = db.TextProperty()     #CSV of posted revids, max 300
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
-    city = db.StringProperty(indexed=False)      #not used anymore
-    revtypes = db.StringProperty(indexed=False)  #not used anymore
-    revfreq = db.IntegerProperty(indexed=False)  #review every N days
     
 
 def id_in_csv(idval, csv):
@@ -94,20 +91,6 @@ def member_level(penid, group):
     if id_in_csv(penid, group.members):
         return 1
     return 0
-
-
-def city_match(grpA, grpB):
-    acs = grpA.city.split(",")
-    bcs = grpB.city.split(",")
-    for i in range(len(acs)):
-        acs[i] = canonize(acs[i])
-    for i in range(len(bcs)):
-        bcs[i] = canonize(bcs[i])
-    for ac in acs:
-        for bc in bcs:
-            if ac and bc and ac == bc:
-                return True
-    return False
 
 
 def verify_unique_name(handler, group):
@@ -457,8 +440,7 @@ class SearchGroups(webapp2.RequestHandler):
         for group in groups:
             checked += 1
             if not qstr or not qstr_c or qstr_c in group.name_c or\
-                    (group.description and qstr in group.description) or\
-                    (group.city and qstr_c in group.city.lower()):
+                    (group.description and qstr in group.description):
                 results.append(group)
             if checked >= maxcheck or len(results) >= 20:
                 # hit the max, get return cursor for next fetch

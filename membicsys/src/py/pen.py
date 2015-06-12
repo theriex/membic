@@ -26,7 +26,6 @@ class PenName(db.Model):
     # detail fields
     shoutout = db.TextProperty()
     profpic = db.BlobProperty()
-    city = db.StringProperty(indexed=False)
     accessed = db.StringProperty()  # ISO date when last logged in
     modified = db.StringProperty()  # ISO date when last changed
     remembered = db.TextProperty()  # CSV of revids for reference
@@ -38,10 +37,6 @@ class PenName(db.Model):
     blocked = db.TextProperty()     # CSV of penids to be avoided
     abusive = db.TextProperty()     # penids flagged for harassment (old)
     groups = db.TextProperty()      # groupids this pen is following
-    # counts of inbound and outbound relationships are maintained within
-    # the relationship transaction processing.  These are going away
-    following = db.IntegerProperty()
-    followers = db.IntegerProperty()
 
 
 def authorized(acc, pen):
@@ -74,7 +69,6 @@ def set_pen_attrs(pen, request):
     pen.ghid = intz(request.get('ghid'))
     pen.shoutout = request.get('shoutout') or ""
     # pen.profpic is uploaded separately during edit
-    pen.city = request.get('city') or ""
     pen.accessed = nowISO()
     pen.modified = nowISO()
     # pen.remembered handled separately
@@ -129,8 +123,7 @@ def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
     # test string match
     if not qstr_c or \
             qstr_c in pen.name_c or \
-            (pen.shoutout and qstr in pen.shoutout) or \
-            (pen.city and qstr_c in pen.city.lower()):
+            (pen.shoutout and qstr in pen.shoutout) or:
         matched = True
     # test not self
     if matched and acc and (acc._id == pen.mid or      #int compare
@@ -278,8 +271,6 @@ class NewPenName(webapp2.RequestHandler):
         pen = PenName(name=name, name_c=name_c)
         set_pen_attrs(pen, self.request)
         setattr(pen, self.request.get('am'), acc._id)
-        pen.following = 0
-        pen.followers = 0
         cached_put(pen)
         returnJSON(self.response, [ pen ])
 
@@ -299,8 +290,6 @@ class UpdatePenName(webapp2.RequestHandler):
         set_pen_attrs(pen, self.request)
         pen.name = name;
         pen.name_c = name_c;
-        # pen.following is NOT modified here.  Don't collide with rel trans
-        # pen.followers ditto
         # possible authorization was changed in the params
         acc = authenticated(self.request)
         authok = authorized(acc, pen)
@@ -547,13 +536,10 @@ class MakeTestPens(webapp2.RequestHandler):
             logging.info("Creating " + name)
             pen = PenName(name=name, name_c=canonize(name))
             pen.shoutout = "Batch created dummy pen name " + str(count)
-            pen.city = "fake city " + str(count)
             pen.accessed = nowISO()
             pen.modified = nowISO()
             pen.settings = ""
             pen.stash = ""
-            pen.following = 0
-            pen.followers = 0
             cached_put(pen)
         self.response.out.write("Test pen names created")
 
