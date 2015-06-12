@@ -27,7 +27,6 @@ class Group(db.Model):
     members = db.TextProperty()     #CSV of regular member penids
     seeking = db.TextProperty()     #CSV of member application penids
     rejects = db.TextProperty()     #CSV of rejected member application penids
-    reviews = db.TextProperty()     #CSV of posted revids, max 300
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
     
@@ -399,8 +398,7 @@ class GetGroupByName(webapp2.RequestHandler):
 
 class GetGroupStats(webapp2.RequestHandler):
     def get(self):
-        stat = {'total': 0, 'totalmem': 0, 'totalrev': 0,
-                'memmax': 0, 'memwin': "", 'revmax': 0, 'revwin': ""}
+        stat = {'total': 0, 'totalmem': 0, 'memmax': 0, 'memwin': ""}
         groups = Group.all()
         for group in groups:
             stat['total'] += 1
@@ -411,11 +409,6 @@ class GetGroupStats(webapp2.RequestHandler):
                 stat['memmax'] = memcount
                 stat['memwin'] = group.name
             stat['totalmem'] += memcount
-            revcount = elem_count_csv(group.reviews)
-            stat['totalrev'] += revcount
-            if revcount > stat['revmax']:
-                stat['revmax'] = revcount
-                stat['revwin'] = group.name
         writeJSONResponse(json.dumps(stat), self.response)        
 
 
