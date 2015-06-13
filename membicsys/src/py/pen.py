@@ -91,65 +91,6 @@ def gen_password():
     return pwd
 
 
-def native_account_for_pen(request):
-    """ Get the authorized pen, then return the native account for it """
-    acc = authenticated(request)
-    if not acc:  # authentication failed
-        return None, None
-    # If 3rd party auth, acc is a newly minted account instance with the
-    # id filled out to a temporary value. 
-    penid = request.get('penid')
-    pen = cached_get(intz(penid), PenName)
-    if not pen:
-        return None, None
-    authok = authorized(acc, pen)
-    if not authok:
-        return None, None
-    acc._id = None  # reset to differentiate between new and existing instance
-    # They are authorized for the given pen.  Good enough to fill out email.
-    if pen.mid:
-        acc = MORAccount.get_by_id(pen.mid)  #nocache
-    else:
-        where = "WHERE authsrc=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, acc.authsrc)
-        found = accounts.count()
-        if found:
-            acc = accounts[0]
-    return acc, pen
-
-
-def matched_pen(acc, pen, qstr_c, time, t20, lurkers):
-    matched = False
-    # test string match
-    if not qstr_c or \
-            qstr_c in pen.name_c or \
-            (pen.shoutout and qstr in pen.shoutout) or:
-        matched = True
-    # test not self
-    if matched and acc and (acc._id == pen.mid or      #int compare
-                            acc._id == pen.fbid or     #int compare
-                            acc._id == pen.twid or     #int compare
-                            acc._id == pen.ghid or     #int compare
-                            acc._id == pen.gsid):      #string compare
-        matched = False
-    # test recent access constraint
-    if matched and time and pen.accessed < time:
-        matched = False
-    # test they have reviewed something if lurkers not desired
-    if matched and not lurkers and not pen.top20s:
-        matched = False
-    # test required top 20 review types
-    if matched and t20 and not pen.top20s:
-        matched = False
-    if matched and t20:
-        t20s = t20.split(',')
-        for value in t20s:
-            if not has_top_twenty(pen, value):
-                matched = False
-                break
-    return matched
-
-
 def updateable_pen(handler):
     acc = authenticated(handler.request)
     if not acc:
@@ -213,9 +154,7 @@ def add_account_info_to_pen_stash(acc, pen):
 
 
 def find_auth_pens(handler):
-    # logging.info("pen.py AuthPenNames start...")
     acc = authenticated(handler.request)
-    # logging.info("pen.py AuthPenNames acc: " + str(acc))
     if not acc:
         # Eventual consistency means it is possible to create a new
         # account but not have it available for authorization yet.
@@ -225,7 +164,6 @@ def find_auth_pens(handler):
         handler.response.out.write("Authentication failed")
         return
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
-    # logging.info("pen.py AuthPenNames " + where)
     pq = PenName.gql(where, acc._id)
     pens = pq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for pen in pens:
@@ -234,19 +172,6 @@ def find_auth_pens(handler):
         except Exception as e:
             logging.info("Unable to add account info to pen " + str(e))
     return pens
-
-
-class AuthPenNames(webapp2.RequestHandler):
-    def get(self):
-        find_auth_pens(self)
-        if self.request.get('format') == "record":
-            result = ""
-            for pen in pens:
-                result += "penid: " + str(pen.key().id()) +\
-                        ", name: " + pen.name + "\n"
-            writeTextResponse(result, self.response)
-        else:
-            returnJSON(self.response, pens)
 
 
 class NewPenName(webapp2.RequestHandler):
@@ -384,35 +309,6 @@ class ToggleRemember(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
 
 
-class SearchPenNames(webapp2.RequestHandler):
-    def get(self):
-        acc = authenticated(self.request)
-        qstr = self.request.get('qstr')
-        qstr_c = "" or canonize(qstr)
-        time = self.request.get('time')
-        t20 = self.request.get('t20')
-        lurkers = self.request.get('lurkers')
-        cursor = self.request.get('cursor')
-        results = []
-        pens = PenName.all()
-        pens.order('-modified')
-        if cursor:
-            pens.with_cursor(start_cursor = cursor)
-        maxcheck = 1000
-        checked = 0
-        cursor = ""
-        for pen in pens:
-            checked += 1
-            if matched_pen(acc, pen, qstr_c, time, t20, lurkers):
-                filter_sensitive_fields(pen)
-                results.append(pen)
-            if checked >= maxcheck or len(results) >= 20:
-                # hit the max, get return cursor for next fetch
-                cursor = pens.cursor()
-                break
-        returnJSON(self.response, results, cursor, checked)
-
-
 class GetPenById(webapp2.RequestHandler):
     def get(self):
         pen = fetch_pen_by_penid(self)
@@ -421,140 +317,10 @@ class GetPenById(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
 
 
-class GetInfoForAccount(webapp2.RequestHandler):
-    def get(self):
-        acc, pen = native_account_for_pen(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authorization failed")
-            return
-        jsontxt = "{"
-        jsontxt += "\"hasEmail\":"
-        if acc.email:
-            jsontxt += "true"
-        else:
-            jsontxt += "false"
-        jsontxt += "}"
-        jsontxt = "[" + jsontxt + "]"
-        writeJSONResponse(jsontxt, self.response)
-
-
-class SetEmailFromPen(webapp2.RequestHandler):
-    def post(self):
-        acc, pen = native_account_for_pen(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authorization failed")
-            return
-        if acc.email:
-            self.error(409)  #Conflict
-            self.response.out.write("Existing email may not be overwritten")
-            # edit the native account and set the email there, this is only
-            # for filling out email where there wasn't any previously
-            return
-        emaddr = self.request.get('email')
-        if not emaddr:
-            self.error(401)
-            self.response.out.write("No email address specified")
-            return
-        acc.email = normalize_email(emaddr)
-        if not valid_new_email_address(self, emaddr):
-            # error 422
-            return;
-        try:  # just in case anything goes wrong in the transaction
-            acc.password = gen_password()  # replace previous token value
-            acc.put()  #nocache
-            pen.mid = acc.key().id()
-            pen.modified = nowISO()
-            pen.accessed = nowISO()
-            cached_put(pen)
-            returnJSON(self.response, [ pen ])
-        except Exception as e:
-            self.error(409)  #Conflict
-            self.response.out.write("Update conflict: " + str(e) + 
-                                    "\nPlease contact support." +
-                                    "\naccount: " + str(acc._id) +
-                                    "\npen: " + str(pen.key().id()))
-            return
-
-
-class PenAccessed(webapp2.RequestHandler):
-    """ Note the given pen name was accessed. """
-    def post(self):
-        # Do NOT update any other fields here (race conditions)
-        acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
-        penid = self.request.get('penid')
-        try:
-            pen = cached_get(intz(penid), PenName)
-        except Exception as e:
-            self.error(400)
-            self.response.out.write("Bad penid " + str(penid) + ". " + str(e))
-            return
-        if not pen:
-            self.error(404)
-            self.response.out.write("PenName id: " + str(id) + " not found.")
-            return
-        authok = authorized(acc, pen)
-        if not authok:
-            self.error(401)
-            self.response.out.write("You may only update your own pen name.")
-            return
-        pen.accessed = nowISO()
-        try:
-            cached_put(pen)
-        except Exception as e2:
-            self.error(412)  #precondition failed
-            self.response.out.write("Update failed: " + str(e2))
-            return
-        returnJSON(self.response, [ pen ])
-            
-
-class WalkPens(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        # pens = PenName.all()
-        # pens.order('-modified')
-        # for pen in pens:
-        #     self.response.out.write(pen.name + "\n")
-        self.response.out.write("Walk completed")
-
-
-class MakeTestPens(webapp2.RequestHandler):
-    def get(self):
-        if not self.request.url.startswith('http://localhost'):
-            self.error(405)
-            self.response.out.write("Test pens are only for local testing")
-            return
-        count = 0
-        while count < 1600:
-            count += 1
-            name = "Test Pen Name " + str(count)
-            logging.info("Creating " + name)
-            pen = PenName(name=name, name_c=canonize(name))
-            pen.shoutout = "Batch created dummy pen name " + str(count)
-            pen.accessed = nowISO()
-            pen.modified = nowISO()
-            pen.settings = ""
-            pen.stash = ""
-            cached_put(pen)
-        self.response.out.write("Test pen names created")
-
-
-app = webapp2.WSGIApplication([('/mypens', AuthPenNames),
-                               ('/newpen', NewPenName),
+app = webapp2.WSGIApplication([('/newpen', NewPenName),
                                ('/updpen', UpdatePenName),
                                ('/picupload', UploadPic),
                                ('/profpic', GetProfPic),
                                ('/togremember', ToggleRemember),
-                               ('/srchpens', SearchPenNames),
-                               ('/penbyid', GetPenById),
-                               ('/acctinfo', GetInfoForAccount),
-                               ('/penmail', SetEmailFromPen),
-                               ('/penacc', PenAccessed),
-                               ('/penwalk', WalkPens),
-                               ('/testpens', MakeTestPens)], debug=True)
+                               ('/penbyid', GetPenById)], debug=True)
 

@@ -824,40 +824,6 @@ def resolve_ids_to_json(feedids, blocks):
     return "[" + jstr + "]"
 
 
-class NewReview(webapp2.RequestHandler):
-    def post(self):
-        pnm = review_modification_authorized(self)
-        if not pnm:
-            return
-        review = fetch_review_by_cankey(self)
-        if not review:
-            penid = intz(self.request.get('penid'))
-            revtype = self.request.get('revtype')
-            review = Review(penid=penid, revtype=revtype)
-        read_review_values(self, review)
-        review.penname = pnm.name
-        if self.request.get('mode') == "batch":
-            # Might be better to unpack the existing svcdata value and 
-            # update rather than rewriting, but maybe not. Change if needed
-            review.svcdata = "{" + batch_flag_attrval(review) + "}"
-        write_review(review, pnm)
-        returnJSON(self.response, [ review ])
-
-
-class UpdateReview(webapp2.RequestHandler):
-    def post(self):
-        pnm = review_modification_authorized(self)
-        if not pnm:
-            return
-        review = safe_get_review_for_update(self)
-        if not review:
-            return
-        read_review_values(self, review)
-        review.penname = pnm.name
-        write_review(review, pnm)
-        returnJSON(self.response, [ review ])
-
-
 class SaveReview(webapp2.RequestHandler):
     def post(self):
         pnm = review_modification_authorized(self)
@@ -1022,33 +988,6 @@ class GetReviewById(webapp2.RequestHandler):
                 if review:
                     revs.append(review)
         returnJSON(self.response, revs)
-
-
-# If penid is specified, then this returns the first few matching
-# reviews, most recent first (allows for dupe checking).  If penid is
-# NOT specified, then this returns the first 10 matching reviews,
-# oldest first (allows for seniority in corresponding linkage counts).
-class GetReviewByKey(webapp2.RequestHandler):
-    def get(self):
-        acc = authenticated(self.request)
-        if not acc:
-            return srverr(self, 401, "Authentication failed")
-        penid = intz(self.request.get('penid'))
-        revtype = self.request.get('revtype')
-        cankey = self.request.get('cankey')
-        if penid:
-            fetchmax = 5
-            where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"\
-                 + " ORDER BY modified DESC"
-            revquery = Review.gql(where, penid, revtype, cankey)
-        else:  #penid not specified
-            fetchmax = 10
-            where = "WHERE revtype = :1 AND cankey = :2"\
-                 + " ORDER BY modified ASC"
-            revquery = Review.gql(where, revtype, cankey)
-        reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
-                                 deadline=10)
-        returnJSON(self.response, reviews)
 
 
 # class ReviewDataInit(webapp2.RequestHandler):
@@ -1237,44 +1176,14 @@ class FetchPreReviews(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
-class MakeTestReviews(webapp2.RequestHandler):
-    def get(self):
-        if not self.request.url.startswith('http://localhost'):
-            return srverr(self, 405, "Test reviews are only for local testing")
-        pencname = self.request.get('pencname')
-        if not pencname:
-            return srverr(self, 400, "pencname required")
-        for i in range(20):
-            # PenName top20 updated with each write, so refetch each time
-            # Same index retrieval already used by pen.py NewPenName
-            pens = pen.PenName.gql("WHERE name_c=:1 LIMIT 1", pencname)
-            if pens.count() != 1:
-                return srverr(self, 404, 
-                              "PenName name_c " + pencname + " not found")
-            rev = Review(penid=pens[0].key().id(), revtype="movie")
-            rev.rating = 75
-            rev.text = "dummy movie review " + str(i)
-            rev.modified = nowISO()
-            rev.title = "movie " + str(i)
-            rev.cankey = canonize(rev.title)
-            logging.info("Writing test review: " + rev.title)
-            write_review(rev, pens[0])
-            time.sleep(7)  # let database updates stabilize
-        self.response.out.write("Test reviews created")
-
-
-app = webapp2.WSGIApplication([('/newrev', NewReview),
-                               ('/updrev', UpdateReview),
-                               ('/saverev', SaveReview),
+app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/delrev', DeleteReview),
                                ('/revpicupload', UploadReviewPic),
                                ('/revpic', GetReviewPic),
                                ('/srchrevs', SearchReviews),
                                ('/revbyid', GetReviewById), 
-                               ('/revbykey', GetReviewByKey),
                                ('/revfeed', GetReviewFeed),
                                ('/toghelpful', ToggleHelpful),
                                ('/blockfetch', FetchAllReviews),
-                               ('/fetchprerevs', FetchPreReviews),
-                               ('/testrevs', MakeTestReviews)], debug=True)
+                               ('/fetchprerevs', FetchPreReviews)], debug=True)
 

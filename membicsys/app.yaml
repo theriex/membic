@@ -83,11 +83,6 @@ handlers:
 ######################################################################
 ##        Pen Names
 
-## Fetch pen names for current authentication
-## GET params: authparams
-- url: /mypens.*
-  script: src.py.pen.app
-
 ## Create new pen name for current authentication
 ## POST params: pen, authparams
 - url: /newpen.*
@@ -114,29 +109,9 @@ handlers:
 - url: /togremember.*
   script: src.py.pen.app
 
-## Return pen names containing the qstr text.
-## GET params: qstr, cursor, authparams
-- url: /srchpens.*
-  script: src.py.pen.app
-
 ## Return the pen name for the given id.
 ## GET params: penid
 - url: /penbyid.*
-  script: src.py.pen.app
-
-## Return non-protected account information for the given pen
-## GET params: penid, authparams
-- url: /acctinfo
-  script: src.py.pen.app
-
-## Init an account email address for the given pen
-## POST params: penid, email, authparams
-- url: /penmail.*
-  script: src.py.pen.app
-
-## Note the given pen name was accessed
-## POST params: penid, authparams
-- url: /penacc.*
   script: src.py.pen.app
 
 
@@ -148,38 +123,20 @@ handlers:
 - url: /revfeed
   script: src.py.rev.app
 
-
 ## Toggle the helpful mark on the specified review from the specified pen
 ## GET params: revid, penid, authparams
 - url: /toghelpful.*
   script: src.py.rev.app
-
-
-## Create a new review for authorized pen name
-## POST params: rev, authparams (, mode)
-##   mode=batch leaves a processing note to avoid flooding the activity feed
-- url: /newrev.*
-  script: src.py.rev.app
-
-
-## Update review for authorized pen name
-## POST params: rev, authparams
-##   _id of rev required
-- url: /updrev.*
-  script: src.py.rev.app
-
 
 ## Write the given review and associated group reviews
 ## POST params: authparams, rev, grpids
 - url: /saverev.*
   script: src.py.rev.app
 
-
 ## Delete review for authorized pen name
 ## POST params: rev, authparams
 - url: /delrev.*
   script: src.py.rev.app
-  
 
 ## Upload a review pic
 ## POST params: picfilein, _id, authparams
@@ -192,30 +149,20 @@ handlers:
 - url: /revpic.*
   script: src.py.rev.app
 
-
 ## Return reviews for a given pen within the given date range
 ## GET params: penid, mindate, maxdate, qstr, authparams (,revtype)
 - url: /srchrevs.*
   script: src.py.rev.app
-
 
 ## Return the review for the given id.
 ## GET params: revid
 - url: /revbyid.*
   script: src.py.rev.app
 
-
-## Return the review looking up by revtype and cankey
-## GET params: penid, revtype, cankey, authparams
-- url: /revbykey
-  script: src.py.rev.app
-
-
 ## Return pre-reviews for the given pen
 ## GET params: penid, authparams
 - url: /fetchprerevs.*
   script: src.py.rev.app
-
 
 ## Return recent and top reviews for a group or pen
 ## GET params: grpid or penid or authparams
@@ -251,24 +198,9 @@ handlers:
 - url: /grpmemprocess.*
   script: src.py.group.app
 
-## Acknowledge rejection of group membership application
-## POST params: penid, groupid, authparams
-- url: /grprejok.*
-  script: src.py.group.app
-
-## Fetch groups by name
-## GET params: groupname
-- url: /grpbyname.*
-  script: src.py.group.app
-
 ## Fetch general group statistics
 ## GET params: none
 - url: /grpstats.*
-  script: src.py.group.app
-
-## Return groups whose name contains the qstr text
-## GET params: qstr, cursor, authparams
-- url: /srchgroups.*
   script: src.py.group.app
 
 
@@ -322,47 +254,40 @@ handlers:
 
 
 ######################################################################
-# Test endpoints, static displays, data summaries and other urls not
-# really considered part of the API
-#
-- url: /penwalk
-  script: src.py.pen.app
-- url: /testpens
-  script: src.py.pen.app
-- url: /testrevs
-  script: src.py.rev.app
-- url: /blogs/.*
-  script: src.py.blogview.app
-- url: /emblog/.*
-  script: src.py.blogview.app
-- url: /groups/.*
-  script: src.py.groupview.app
-- url: /emgroup/.*
-  script: src.py.groupview.app
-- url: /revdisp/\d+
-  script: src.py.statweek.app
-- url: /stats.*
-  script: src.py.statweek.app
+# Summaries and stats
+
+## Fetch RSS feed content for the specified group
+## GET params: grpid
 - url: /rssgroup.*
   script: src.py.rssact.app
+
+## Fetch activity statistics for the site (used by actstat.js)
 - url: /activity.*
   script: src.py.mailsum.app
-- url: /bytheway.*
-  script: src.py.mailsum.app
-- url: /bytheimg.*
-  script: src.py.mailsum.app
-- url: /botids.*
-  script: src.py.mailsum.app
-- url: /fixrefkeys.*
-  script: src.py.mailsum.app
+
+
+######################################################################
+# General config
+
+## Email bounce handler
 - url: /_ah/bounce
   script: src.py.mailsum.app
   login: admin
+
+## Client referral tracking for linkback
+- url: /bytheway.*
+  script: src.py.mailsum.app
+
+## Return automated agents whose use of the site should not be counted.
+- url: /botids.*
+  script: src.py.mailsum.app
+
 # Trap anything ending with a slash and send it to index.html since there
 # is no default processing to figure that out otherwise.
 - url: (.*)/
   static_files: docroot/index.html
   upload: docroot
+
 # Catchall is to look in docroot.
 - url: /
   static_dir: docroot

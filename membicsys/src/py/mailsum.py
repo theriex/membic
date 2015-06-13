@@ -149,56 +149,15 @@ def btw_activity(src, request):
     stat = get_activity_stat(sday)
     note_agent(agentstr, stat)
     val = request.get("clickthrough")
-    if val:  # Somebody accessed the site requesting a specific review
-             # id or profile id in the url parameters (as happens when
-             # you click one of the links in a static review
-             # display). This is primarily an indicator of how helpful
-             # the static displays are.
+    if val:  # Somebody accessed the site for a specific group, or to
+             # remember/helpful/respond a review. Note for linkback.
         stat.clickthru += 1
     val = request.get("referral")
     if val:  # Somebody clicked on a link to the core application.
-             # Most likely an ad.  See client code.
+             # Note for possible linkback.
         bump_referral(stat, "core", val)
-    val = request.get("statinqref")
-    if val:  # Somebody clicked on a link to a review.  This happens
-             # if you post a link to your review somewhere and
-             # somebody clicks on it.  Helpful to have some clue where
-             # reviews are being shared.
-        bump_referral(stat, "rev", val)
-    val = request.get("bloginqref")
-    if val: # Somebody clicked on a link to a blog.  Helpful to have
-            # some clue on inbound blog links.  Later on this could
-            # pass blog link info through to each pen name so each pen
-            # can decide if they want to mention outside links in
-            # their shoutout or review text.
-        bump_referral(stat, "blog", val)
-    val = request.get("grpinqref")
-    if val: # Somebody clicked on a link to a group. Helpful to know
-            # what level of inbound linkage there is for groups.
-        bump_referral(stat, "grp", val)
     stat.put()  #nocache
             
-
-def rebuild_refers(stat):
-    reftxt = stat.refers
-    if not reftxt:
-        return
-    stat.refers = ""  # reset and then build up from entries
-    entries = reftxt.split(",")
-    for entry in entries:
-        idc = entry.split(":")
-        val = idc[0]
-        count = intz(idc[1])
-        for i in range(count):
-            if val.startswith("core"):
-                bump_referral(stat, "core", val[4:])
-            elif val.startswith("rev"):
-                bump_referral(stat, "rev", val[3:])
-            elif val.startswith("blog"):
-                bump_referral(stat, "blog", val[4:])
-            elif val.startswith("grp"):
-                bump_referral(stat, "grp", val[3:])
-
 
 def split_output(response, text):
     logging.info("mailsum: " + text)
@@ -312,6 +271,8 @@ class ByTheWay(webapp2.RequestHandler):
         btw_activity("/bytheway", self.request)
 
 
+# Handler from retired "bytheimg" endpoint. Leaving the code here for
+# reference in case that's needed again.
 class ByTheImg(webapp2.RequestHandler):
     """ alternative approach when XMLHttpRequest is a hassle """
     def get(self):
@@ -323,24 +284,6 @@ class ByTheImg(webapp2.RequestHandler):
         img = img.execute_transforms(output_encoding=images.PNG)
         self.response.headers['Content-Type'] = "image/png"
         self.response.out.write(img)
-
-
-# Since you can't edit text fields in the GAE Data Viewer, unhandled
-# referral keys get cleaned up by calling this endpoint.
-class FixReferKeys(webapp2.RequestHandler):
-    def get(self):
-        message = "Nothing doing."
-        statid = self.request.get('statid')
-        if statid:
-            stat = ActivityStat.get_by_id(intz(statid))
-            if stat:
-                text = stat.refers
-                # text = re.sub("revhttps_//www.google.com/", "revSE", text)
-                rebuild_refers(stat)
-                stat.put()
-                message = "ActivityStat " + statid + " refers field updated."
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write(message + "\n")
 
 
 class BounceHandler(BounceNotificationHandler):
@@ -362,7 +305,5 @@ class BounceHandler(BounceNotificationHandler):
 app = webapp2.WSGIApplication([('/botids', ReturnBotIDs),
                                ('/activity', UserActivity),
                                ('/bytheway', ByTheWay),
-                               ('/bytheimg', ByTheImg),
-                               ('/fixrefkeys', FixReferKeys),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 

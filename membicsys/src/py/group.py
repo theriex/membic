@@ -368,34 +368,6 @@ class ProcessMembership(webapp2.RequestHandler):
         returnJSON(self.response, [ group ])
 
 
-class MembershipRejectAck(webapp2.RequestHandler):
-    def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        group, role = fetch_group_and_role(self, pnm)
-        if not group:
-            return   #error already reported
-        group.rejects = remove_id_from_csv(pnm.key().id(), group.rejects)
-        verify_people(group)
-        cached_put(group)
-        returnJSON(self.response, [ group ])
-
-
-class GetGroupByName(webapp2.RequestHandler):
-    def get(self):
-        namestr = self.request.get('groupname')
-        if not namestr:
-            self.error(400)
-            self.response.write("groupname required for fetch")
-            return
-        namestr = canonize(namestr)
-        gquery = Group.gql("WHERE name_c=:1", namestr)
-        groups = gquery.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY,
-                              deadline=10)
-        returnJSON(self.response, groups)
-
-
 class GetGroupStats(webapp2.RequestHandler):
     def get(self):
         stat = {'total': 0, 'totalmem': 0, 'memmax': 0, 'memwin': ""}
@@ -412,44 +384,11 @@ class GetGroupStats(webapp2.RequestHandler):
         writeJSONResponse(json.dumps(stat), self.response)        
 
 
-class SearchGroups(webapp2.RequestHandler):
-    def get(self):
-        acc = authenticated(self.request)
-        if not acc:
-            self.error(401)
-            self.response.out.write("Authentication failed")
-            return
-        qstr = self.request.get('qstr')
-        qstr_c = canonize(qstr)
-        cursor = self.request.get('cursor')
-        results = []
-        groups = Group.all()
-        groups.order('-modified')
-        if cursor:
-            groups.with_cursor(start_cursor = cursor)
-        maxcheck = 1000
-        checked = 0
-        cursor = ""
-        for group in groups:
-            checked += 1
-            if not qstr or not qstr_c or qstr_c in group.name_c or\
-                    (group.description and qstr in group.description):
-                results.append(group)
-            if checked >= maxcheck or len(results) >= 20:
-                # hit the max, get return cursor for next fetch
-                cursor = groups.cursor()
-                break
-        returnJSON(self.response, results, cursor, checked)
-
-
 app = webapp2.WSGIApplication([('/grpdesc', UpdateDescription),
                                ('/grpbyid', GetGroupById),
                                ('/grppic', GetGroupPic),
                                ('/grpmemapply', ApplyForMembership),
                                ('/grpmemprocess', ProcessMembership),
-                               ('/grprejok', MembershipRejectAck),
-                               ('/grpbyname', GetGroupByName),
                                ('/grpstats', GetGroupStats),
-                               ('/srchgroups', SearchGroups),
                                ], debug=True)
 
