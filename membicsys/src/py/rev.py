@@ -508,20 +508,30 @@ def creation_compare(revA, revB):
     return 0
 
 
-def find_source_review(cankey, modhist):
-    source = None
-    # strict less-than match to avoid finding the same thing being checked
-    where = "WHERE cankey = :1 AND modhist < :2 ORDER BY modhist ASC"
-    rq = Review.gql(where, cankey, modhist)
-    revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    for rev in revs:
-        if source and creation_compare(source, rev) < 0:
-            break  # have the earliest, done
-        if rev.orids:
-            source = rev
-            break  # found the currently used reference root for this cankey
-        source = rev  # assign as candidate reference root
-    return source
+# find_source_review was only used during data migration, and it requires
+# an index that isn't worth maintaining for normal operations moving
+# forward.  Keeping it around for reference for now.  If it actually
+# needs to be used, then also add the following index back:
+#
+# - kind: Review
+#   properties:
+#   - name: cankey
+#   - name: modhist
+#
+# def find_source_review(cankey, modhist):
+#     source = None
+#     # strict less-than match to avoid finding the same thing being checked
+#     where = "WHERE cankey = :1 AND modhist < :2 ORDER BY modhist ASC"
+#     rq = Review.gql(where, cankey, modhist)
+#     revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#     for rev in revs:
+#         if source and creation_compare(source, rev) < 0:
+#             break  # have the earliest, done
+#         if rev.orids:
+#             source = rev
+#             break  # found the currently used reference root for this cankey
+#         source = rev  # assign as candidate reference root
+#     return source
 
 
 def sort_filter_feed(feedcsv, pnm, maxret):
@@ -723,7 +733,7 @@ def rebuild_reviews_block(handler, pgt, pgid):
         return
     jstr = obj2JSON(pgo)
     # logging.info("rebuild_reviews_block pgo jstr: " + jstr)
-    where = "WHERE penid = :1 ORDER BY modified DESC"
+    where = "WHERE grpid = 0 AND penid = :1 ORDER BY modified DESC"
     if pgt == "group":
         where = "WHERE grpid = :1 ORDER BY modified DESC"
     rq = Review.gql(where, pgo.key().id())
@@ -732,22 +742,6 @@ def rebuild_reviews_block(handler, pgt, pgid):
         jstr = append_review_jsoncsv(jstr, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pgt, pgo, 450 * 1024)
     return "[" + jstr + "]"
-
-
-def fetch_revs_for_pg(idfield, pgo):
-    where = "WHERE " + idfield + " = :1 ORDER BY modified DESC"
-    rq = Review.gql(where, pgo.key().id())
-    recent = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    recentcsv = ""
-    for rev in recent:
-        recentcsv = append_to_csv(str(rev.key().id()), recentcsv)
-        cache_verify(rev)
-    pgo, topcsv = update_top20s(pgo, recent)
-    resultcsv = recentcsv
-    for idstr in csv_list(topcsv):
-        if not csv_contains(idstr, recentcsv):
-            resultcsv = append_to_csv(idstr, resultcsv)
-    return pgo, resultcsv
 
 
 def feedcsventry(review):

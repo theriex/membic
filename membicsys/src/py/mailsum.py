@@ -174,44 +174,6 @@ def stats_text(stat):
     return text
 
 
-def pen_stats():
-    yesterday = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
-    isostart = dt2ISO(yesterday)[:10] + "T00:00:00Z"
-    isoend = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
-    stat = get_activity_stat(isostart)
-    if stat.calculated:  #already did all the work
-        return stats_text(stat)
-    # do not restrict an upper bound for PenName retrieval, otherwise
-    # anyone who has logged after midnight GMT will be excluded and
-    # their login may never get counted if they log in again the next
-    # day.  If they do login the next day, they may be double counted,
-    # but that's better than missed.
-    where = "WHERE accessed >= :1"
-    pens = PenName.gql(where, isostart)
-    for pen in pens:
-        stat.active += 1
-        where2 = "WHERE modified >= :1 AND modified < :2 AND penid = :3"
-        revs = Review.gql(where2, isostart, isoend, pen.key().id())
-        filtrevs = []
-        for rev in revs:
-            if not 'batchUpdated' in safestr(rev.svcdata):
-                filtrevs.append(rev)
-        revcount = len(filtrevs)
-        if revcount > 0:
-            stat.onerev += 1
-        if revcount > 1:
-            stat.tworev += 1
-        if revcount > 2:
-            stat.morev += 1
-        stat.ttlrev += revcount
-        if stat.names:
-            stat.names += ";"
-        stat.names += pen.name
-    stat.calculated = dt2ISO(datetime.datetime.utcnow())
-    stat.put()  #nocache
-    return stats_text(stat)
-
-
 def eligible_pen(acc, thresh):
     if not acc.email:
         return None, "No email address"
