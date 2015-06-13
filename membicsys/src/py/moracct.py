@@ -24,9 +24,6 @@ class MORAccount(db.Model):
     status = db.StringProperty()        # Pending|Active|Inactive|Unreachable
     authsrc = db.StringProperty()       # AA:id or empty if native
     modified = db.StringProperty()      # iso date
-    lastsummary = db.StringProperty()   # iso date last summary run
-    summaryfreq = db.StringProperty()   # daily, weekly, fortnightly, never
-    summaryflags = db.StringProperty(indexed=False)  # sumiflogin, sumifnoact
     mailbounce = db.TextProperty()      # isodate1,isodate2...
     actsends = db.TextProperty()        # isodate;emaddr,isodate;emaddr...
     actcode = db.StringProperty(indexed=False)  # account activation code
@@ -390,9 +387,6 @@ class CreateAccount(webapp2.RequestHandler):
         account = MORAccount(email=emaddr, password=pwd)
         account.authsrc = ""
         account.modified = nowISO()
-        account.lastsummary = nowISO()
-        account.summaryfreq = "weekly"
-        account.summaryflags = ""
         account.mailbounce = ""
         account.put()  #nocache
         token = newtoken(emaddr, pwd)

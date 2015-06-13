@@ -10,11 +10,6 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: MORAccount
-  properties:
-  - name: summaryfreq
-  - name: lastsummary
-
 - kind: Review
   properties:
   - name: cankey

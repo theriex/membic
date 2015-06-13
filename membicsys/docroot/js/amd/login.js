@@ -306,8 +306,6 @@ app.login = (function () {
     readUsermenuAccountForm = function () {
         var ua;
         ua = { email: moracct.email,
-               summaryfreq: moracct.summaryfreq,
-               summaryflags: moracct.summaryflags,
                penName: moracct.penName };
         ua.email = jt.byId('emailin').value.trim();
         if(!jt.isProbablyEmail(ua.email)) {
@@ -618,11 +616,8 @@ return {
                         function (code, errtxt) {
                             jt.out('usermenustat', "Pen name update failed " + 
                                    code + ": " + errtxt); }); }); }; }
-        if(ua.email === moracct.email &&
-           !ua.password &&
-           ua.summaryfreq === moracct.summaryfreq &&
-           ua.summaryflags === moracct.summaryflags) {
-            contf(); }
+        if(ua.email === moracct.email && !ua.password) {
+            contf(); }  //nothing changed
         else {  //account info changed
             if(ua.email !== moracct.email) {
                 contf = app.login.logout; }
