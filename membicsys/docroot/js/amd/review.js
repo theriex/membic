@@ -1851,11 +1851,12 @@ return {
             else {
                 rt = app.review.getReviewTypeByValue(rt);
                 html = "No " + rt.plural + " found."; }
-            if(xem) {
+            if(xem) {  //display extra empty message (prompt to write)
                 html += " " + xem; } }
         else {
             html = []; }
-        for(i = 0; i < revs.length; i += 1) {
+        //Displaying more than 100 reviews gets overwhelming..
+        for(i = 0; i < revs.length && i < 100; i += 1) {
             rev = revs[i];
             revdivid = prefix + jt.instId(rev);
             pr = (i > 0)? revs[i - 1] : null;

@@ -114,6 +114,17 @@ app.activity = (function () {
     },
 
 
+    mergeAndDisplayReviews = function (feedtype, revs) {
+        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
+        feeds[feedtype] = mergePersonalRecent(feedtype, revs);
+        feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
+        return app.review.displayReviews("feedrevsdiv", "afd", 
+                                         feeds[feedtype],
+                                         "app.activity.toggleExpansion",
+                                         "author");
+    },
+
+
     mainDisplay = function (dispmode) {
         app.history.checkpoint({ view: dispmode });
         if(dispmode === "memo") {
@@ -133,15 +144,9 @@ return {
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
-        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         if(feeds[feedtype]) {
-            feeds[feedtype] = mergePersonalRecent(feedtype, feeds[feedtype]);
-            feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
-            return app.review.displayReviews("feedrevsdiv", "afd", 
-                                             feeds[feedtype],
-                                             "app.activity.toggleExpansion",
-                                             "author"); }
-        jt.out('feedrevsdiv', "Fetching posts...");
+            return mergeAndDisplayReviews(feedtype, feeds[feedtype]); }
+        jt.out('contentdiv', "Fetching posts...");
         params = app.login.authparams();
         if(params) {
             params += "&penid=" + app.pen.myPenId() + "&"; }
@@ -152,12 +157,7 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
-                    feeds[feedtype] = mergePersonalRecent(feedtype, reviews);
-                    feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
-                    app.review.displayReviews("feedrevsdiv", "afd", 
-                                              feeds[feedtype],
-                                              "app.activity.toggleExpansion",
-                                              "author"); },
+                    mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
                     jt.out('feedrevsdiv', "error code: " + code + 
                            " " + errtxt); }),
