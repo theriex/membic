@@ -253,9 +253,7 @@ app.review = (function () {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
         case "sitepic":
-            html.src = review.imguri;
-            if(extra === "revroll") {
-                html.src = sslSafeRef(review.imguri); }
+            html.src = sslSafeRef(review.imguri);
             break;
         case "upldpic":
             html.src = "revpic?revid=" + jt.instId(review);
