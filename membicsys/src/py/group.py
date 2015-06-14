@@ -128,20 +128,6 @@ def read_and_validate_descriptive_fields(handler, group):
     return True
 
 
-def fetch_rev_mod_elements(handler, pnm):
-    revid = intz(handler.request.get('revid'))
-    if not revid:
-        handler.error(400)
-        handler.response.out.write("No revid specified")
-        return 0, None
-    review = cached_get(revid, rev.Review)
-    if not review:
-        handler.error(404)
-        handler.response.out.write("Review " + str(revid) + " not found")
-        return revid, None
-    return revid, review
-
-
 def fetch_group_and_role(handler, pnm):
     groupid = intz(handler.request.get('groupid'))
     if not groupid:
@@ -157,14 +143,6 @@ def fetch_group_and_role(handler, pnm):
         return None, ""
     role = pen_role(pnm.key().id(), group)
     return group, role
-
-
-def fetch_group_mod_elements(handler, pnm):
-    revid, review = fetch_rev_mod_elements(handler, pnm)
-    if not revid or not review:
-        return revid, review, None, ""
-    group, role = fetch_group_and_role(handler, pnm)
-    return revid, review, group, role
 
 
 def update_group_admin_log(group, pnm, action, target, reason):

@@ -301,71 +301,6 @@ def fetch_review_by_cankey(handler):
         return reviews[0]
 
 
-def simple_rev_activity_search(penids):
-    rps = memcache.get("recentrevs")
-    # revid0:penid0,revid1:penid1,revid2:penid2...
-    if not rps:
-        logging.info("simple_rev_activity_search finding recent reviews...")
-        rps = ""
-        revs = Review.all()
-        revs.order('-modified')
-        dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
-        checked = 0
-        for rev in revs:
-            checked += 1
-            if not (rev.svcdata and batch_flag_attrval(rev) in rev.svcdata):
-                if rps:
-                    rps += ","
-                rps += str(rev.key().id()) + ":" + str(rev.penid)
-            if rev.modified < dold:
-                break  # remaining reviews are too old to display
-        memcache.set("recentrevs", rps)
-    logging.info("simple_rev_activity_search filtering cached reviews")
-    checked = 0
-    results = []
-    rps = rps.split(",")
-    for rp in rps:
-        checked += 1
-        revpen = rp.split(":")
-        if len(penids) == 0 or (len(revpen) > 1 and revpen[1] in penids):
-            rev = cached_get(intz(revpen[0]), Review)
-            results.append(rev)
-        if len(results) > 200:
-            break
-    return checked, results
-
-
-def review_activity_search(since, cursor, penids):
-    if not since and not cursor:
-        return simple_rev_activity_search(penids)
-    results = []
-    revs = Review.all()
-    revs.order('-modified')
-    if since:
-        revs.filter('modified >', since)
-    if cursor:
-        revs.with_cursor(start_cursor = cursor)
-    maxcheck = 4000
-    maxreturn = 200
-    dold = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(30))
-    checked = 0
-    cursor = ""
-    for rev in revs:
-        checked += 1
-        if ((str(rev.penid) in penids) and
-            (not (rev.svcdata and 
-                  batch_flag_attrval(rev) in rev.svcdata))):
-            results.append(rev)
-        if len(results) >= maxreturn:
-            cursor = revs.cursor()
-            break
-        if rev.modified < dold:
-            break  #rest is too old to display
-        if checked >= maxcheck:
-            break  #that's enough resources expended
-    return checked, results
-
-
 def batch_flag_attrval(review):
     return "\"batchUpdated\":\"" + review.modified + "\""
 
@@ -638,45 +573,6 @@ def strids_from_list(revs):
     for rev in revs:
         strids.append(str(rev.key().id()))
     return strids
-
-
-def update_top20s(pgo, recentrevs):
-    maxpertype = 50  # 20 is not quite enough
-    topdict = {}
-    if pgo.top20s:
-        topdict = json.loads(pgo.top20s)
-    changed = False
-    alltopids = []
-    for rt in known_rev_types:
-        if not rt in topdict:
-            topdict[rt] = []
-        orgtids = topdict[rt] or []
-        toprevs = [];
-        for rev in recentrevs:
-            if rev.revtype == rt:
-                toprevs.append(rev)
-        for orgtid in orgtids:
-            if not rev_in_list(orgtid, toprevs):
-                orgrev = cached_get(intz(orgtid), Review)
-                if orgrev and orgrev.revtype == rt:
-                    toprevs.append(orgrev)
-        toprevs = sorted(toprevs, key=attrgetter('rating', 'modified'),
-                         reverse=True)
-        if len(toprevs) > maxpertype:
-            toprevs = toprevs[0:maxpertype]
-        newtids = strids_from_list(toprevs)
-        alltopids = alltopids + newtids
-        if newtids != orgtids:
-            changed = True
-            topdict[rt] = newtids
-    if changed:
-        topdict["latestrevtype"] = recentrevs[0].revtype
-        tstamp = nowISO();
-        topdict["t20lastupdated"] = tstamp
-        pgo.top20s = json.dumps(topdict)
-        pgo.modified = tstamp;
-        cached_put(pgo)
-    return pgo, list_to_csv(alltopids)
 
 
 def append_review_jsoncsv(jstr, rev):
@@ -968,6 +864,7 @@ class GetReviewById(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
         if revid:
+            logging.info("Client cache miss fetch Review " + revid)
             review = cached_get(intz(revid), Review)
             if not review:
                 return srverr(self, 404, "No Review found for id " + revid)
