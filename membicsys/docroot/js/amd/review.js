@@ -236,9 +236,9 @@ app.review = (function () {
     //protocol and letting the browser attempt https just results in a
     //lot of broken images.  Don't mess with the images unless you
     //have to because imagerelay eats server resources.
-    sslSafeRef = function (url) {
+    sslSafeRef = function (revid, url) {
         if(window.location.href.indexOf("https://") === 0) {
-            url = "imagerelay?url=" + jt.enc(url); }
+            url = "imagerelay?revid=" + revid + "&url=" + jt.enc(url); }
         return url;
     },
 
@@ -253,7 +253,7 @@ app.review = (function () {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
         case "sitepic":
-            html.src = sslSafeRef(review.imguri);
+            html.src = sslSafeRef(jt.instId(review), review.imguri);
             break;
         case "upldpic":
             html.src = "revpic?revid=" + jt.instId(review);

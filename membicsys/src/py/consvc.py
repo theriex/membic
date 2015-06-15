@@ -414,14 +414,15 @@ class ImageRelay(webapp2.RequestHandler):
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
         #     return
-        logging.info("ImageRelay referer: " + (self.request.referer or ""))
-        logging.info("ImageRelay request: " + str(self.request))
+        # logging.info("ImageRelay referer: " + (self.request.referer or ""))
+        # logging.info("ImageRelay request: " + str(self.request))
+        revid = self.request.get('revid')
         url = self.request.get('url')
-        if not url:
+        if not revid or not url:
             self.error(400)
-            self.response.out.write("No URL specified")
+            self.response.out.write("Both revid and url are required")
             return
-        logging.info("ImageRelay url: " + url)
+        logging.info("ImageRelay revid: " + str(revid) + ", url: " + url)
         img = memcache.get(url)
         if img:
             img = pickle.loads(img)
@@ -429,11 +430,14 @@ class ImageRelay(webapp2.RequestHandler):
         else:
             result = simple_fetchurl(self, url)
             if result:
-                logging.info("ImageRelay urlfetch successful")
-                img = images.Image(result.content)
-                logging.info("ImageRelay image constructed")
-                img = prepare_image(img)
-                memcache.set(url, pickle.dumps(img))
+                try:
+                    logging.info("ImageRelay urlfetch successful")
+                    img = images.Image(result.content)
+                    logging.info("ImageRelay image constructed")
+                    img = prepare_image(img)
+                    memcache.set(url, pickle.dumps(img))
+                except Exception as e:
+                    logging.info("ImageRelay " + str(e))
         if img:
             self.response.headers['Content-Type'] = "image/png"
             self.response.out.write(img)
