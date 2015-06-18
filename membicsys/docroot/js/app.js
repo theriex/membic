@@ -71,6 +71,18 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.trustedContainer = function () {
+        var i, tcs = ["https://www.membic.com",
+                      "http://localhost:8080",
+                      //http://192.168.0.5:8080,
+                      "https://membicsys.appspot.com"];
+        for(i = 0; i < tcs.length; i += 1) {
+            if(window.location.href.indexOf(tcs[i]) === 0) {
+                return true; } }
+        return false;
+    };
+
+
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
         var cdiv, ref;
@@ -110,8 +122,14 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
+        if(!app.embedded && !app.trustedContainer()) {
+            jt.out('topsectiondiv', "");
+            jt.out('headingdiv', "");
+            jt.out('bottomnav', "");
+            jt.out('contentdiv', "Unknown trusted host site");
+            return; }
         if(app.embedded) {
-            jt.byId('headingdiv').style.display = "none";
+            jt.byId('topsectiondiv').style.display = "none";
             jt.byId('bottomnav').style.display = "none";
             jt.byId('topsectiondiv').style.display = "none"; }
         jt.out('contentdiv', "loading modules...");

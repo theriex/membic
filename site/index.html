@@ -1,0 +1,39 @@
+<!doctype html>
+<html itemscope="itemscope" itemtype="https://schema.org/WebPage"
+      xmlns="https://www.w3.org/1999/xhtml" dir="ltr" lang="en-US">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="robots" content="noodp" />
+  <meta name="description" content="A membic is a bit sized structured summary of a noteworthy. You can note membics yourself and as part of a group. Membics enhance your memory and feed community discovery." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:image" 
+        content="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
+  <meta property="twitter:image" 
+        content="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
+  <meta itemprop="image" 
+        content="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
+  <link rel="image_src" 
+        href="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
+  <title>Membic</title>
+  <link href="css/site.css?v=150614" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<iframe id="membiciframe" src="https://membicsys.appspot.com">
+</iframe>
+
+<script>
+  var mf = document.getElementById('membiciframe');
+  if(window.location.href.indexOf("https://") !== 0) {
+    if(window.location.href.indexOf("secured=true") < 0) {
+      window.location.href = "https://www.membic.com?secured=true"; }
+    else {
+      mf.src = "notsecured.html"; } }
+  else {
+    mf.style.height = window.innerHeight + "px"; }
+</script>
+</body>
+</html>
+
+
+
