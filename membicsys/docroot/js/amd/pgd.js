@@ -998,7 +998,7 @@ return {
 
     toggleCreateGroup: function () {
         var html;
-        html = ["A group is a collection of membics related to a theme.  After creating a group, you can post related membics.  As the founder of a group, you have full privileges to manage other members and posts as you want.",
+        html = ["A group is a collection of membics related to a theme. As the founder of a group, you have full privileges to manage other members and posts as you want.",
                 ["div", {cla: "formbuttonsdiv"},
                  ["button", {type: "button", id: "creategroupbutton",
                              onclick: jt.fs("app.pgd.display('group')")},
