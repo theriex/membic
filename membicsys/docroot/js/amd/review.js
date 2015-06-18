@@ -1071,9 +1071,7 @@ app.review = (function () {
         if(type === "upldpic") {
             src = "revpic?revid=" + jt.instId(crev); }
         else if(type === "sitepic") {
-            src = crev.imguri;
-            if(window.location.href.indexOf("https://") === 0) {
-                src = "imagerelay?url=" + jt.enc(src); } }
+            src = sslSafeRef(jt.instId(crev), crev.imguri); }
         html = ["img", {id: "revimg", cla: "revimg", src: src}];
         return jt.tac2html(html);
     },
