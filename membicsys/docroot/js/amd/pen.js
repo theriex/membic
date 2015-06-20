@@ -190,7 +190,7 @@ return {
 
     visprefs: function (revdivid, penid, penname) {
         var pen, html, pcode, i, pv;
-        penname = penname || "pen " + penid;
+        penname = jt.dec(penname || "pen " + penid);
         pen = app.pen.myPenName();
         if(!pen) {
             return jt.err("Sign in to prefer, background or block posts from " +

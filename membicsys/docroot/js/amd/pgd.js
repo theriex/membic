@@ -737,6 +737,8 @@ app.pgd = (function () {
         if(dtype === "pen") {
             if((!id && !mpi) || (id && id === mpi)) {
                 msg = "Retrieving your Pen Name..."; }
+            else if(app.pennames[id]) {
+                msg = "Retrieving " + app.pennames[id]; }
             else {
                 msg = "Retrieving Pen Name " + id + "..."; } }
         jt.out(divid, msg);

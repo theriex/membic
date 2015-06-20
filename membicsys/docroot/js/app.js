@@ -29,6 +29,7 @@ var app = {},  //Global container for application level funcs and values
     app.authcookname = "membicauth";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
+    app.pennames = {};  //id: penname local lookup for improved stat msgs
 
 
     ////////////////////////////////////////
@@ -135,7 +136,7 @@ var app = {},  //Global container for application level funcs and values
         jt.out('contentdiv', "loading modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=150610");
+        jt.loadAppModules(app, modules, href, app.init2, "?v=150619");
     };
 
 

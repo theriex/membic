@@ -1854,6 +1854,7 @@ return {
         //Displaying more than 100 reviews gets overwhelming..
         for(i = 0; i < revs.length && i < 100; i += 1) {
             rev = revs[i];
+            app.pennames[rev.penid] = rev.penname;
             revdivid = prefix + jt.instId(rev);
             pr = (i > 0)? revs[i - 1] : null;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
@@ -1869,7 +1870,7 @@ return {
                                  onclick: jt.fs("app.pen.visprefs('" + 
                                                 revdivid + "','" + 
                                                 rev.penid + "','" + 
-                                                rev.penname + "')")},
+                                                jt.embenc(rev.penname) + "')")},
                            app.pen.prefcode(rev.penid)]]; }
                 authlink = 
                     ["div", {cla: "fpprofdiv"},
