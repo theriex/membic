@@ -409,13 +409,6 @@ class URLContents(webapp2.RequestHandler):
 
 class ImageRelay(webapp2.RequestHandler):
     def get(self):
-        # acc = authenticated(self.request)
-        # if not acc:
-        #     self.error(401)
-        #     self.response.out.write("Authentication failed")
-        #     return
-        # logging.info("ImageRelay referer: " + (self.request.referer or ""))
-        # logging.info("ImageRelay request: " + str(self.request))
         revid = self.request.get('revid')
         url = self.request.get('url')
         if not revid or not url:
@@ -428,16 +421,16 @@ class ImageRelay(webapp2.RequestHandler):
             img = pickle.loads(img)
             logging.info("ImageRelay retrieved from cache")
         else:
-            result = simple_fetchurl(self, url)
-            if result:
-                try:
+            try:
+                result = simple_fetchurl(self, url)
+                if result:
                     logging.info("ImageRelay urlfetch successful")
                     img = images.Image(result.content)
                     logging.info("ImageRelay image constructed")
                     img = prepare_image(img)
                     memcache.set(url, pickle.dumps(img))
-                except Exception as e:
-                    logging.info("ImageRelay " + str(e))
+            except Exception as e:
+                logging.info("ImageRelay " + str(e))
         if img:
             self.response.headers['Content-Type'] = "image/png"
             self.response.out.write(img)
