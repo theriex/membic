@@ -347,12 +347,12 @@ def write_review(review, pnm):
     review.put()
     # force retrieval to ensure subsequent db hits find the latest
     review = Review.get_by_id(review.key().id())
-    if review.mainfeed:
-        memcache.delete(review.revtype)
-        memcache.delete("all")
-        for i in range(revpoolsize / revblocksize):
-            memcache.delete(review.revtype + "RevBlock" + str(i))
-            memcache.delete("allRevBlock" + str(i))
+    # need to rebuild cache unless new review and not mainfeed.  Just do it.
+    memcache.delete(review.revtype)
+    memcache.delete("all")
+    for i in range(revpoolsize / revblocksize):
+        memcache.delete(review.revtype + "RevBlock" + str(i))
+        memcache.delete("allRevBlock" + str(i))
     update_top20_reviews(pnm, review)
 
 
