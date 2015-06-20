@@ -324,8 +324,8 @@ def set_review_mainfeed(rev):
     if not rev.text or len(rev.text) < 90:  # not substantive
         # logging.info(logmsg + "text not substantive.")
         rev.mainfeed = 0
-    if not rev.rating or rev.rating < 0:  # rating required
-        # logging.info(logmsg + "is unrated.")
+    if not rev.rating or rev.rating < 60:  # 3 stars or better
+        # logging.info(logmsg + "is not highly rated.")
         rev.mainfeed = 0
     # logging.info("set_review_mainfeed: " + str(rev.mainfeed))
 
