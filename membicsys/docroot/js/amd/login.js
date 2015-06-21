@@ -601,6 +601,13 @@ return {
     },
 
 
+    nukeAppData: function () {
+        app.activity.resetAllFeeds();
+        app.pgd.resetState();
+        app.lcs.nukeItAll();
+    },
+
+
     updateAccount: function () {
         var ua, data, contf = app.login.closeupdate;
         ua = readUsermenuAccountForm();
@@ -612,7 +619,9 @@ return {
                         pen,
                         function (penref) {
                             app.login.closeupdate();
-                            app.login.updateAuthentDisplay(); },
+                            app.login.updateAuthentDisplay();
+                            app.login.nukeAppData();
+                            app.history.dispatchState(); },
                         function (code, errtxt) {
                             jt.out('usermenustat', "Pen name update failed " + 
                                    code + ": " + errtxt); }); }); }; }

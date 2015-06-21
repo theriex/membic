@@ -251,6 +251,11 @@ return {
     resetRememberedFeed: function () {
         feeds.remembered = null;
         feeds.memo = null;
+    },
+
+
+    resetAllFeeds: function () {
+        feeds = {};
     }
 
 

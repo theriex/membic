@@ -1103,6 +1103,17 @@ return {
     },
 
 
+    resetState: function () {
+        dst.type = "";
+        dst.id = "";
+        dst.tab = "";
+        dst.obj = null;
+        searchstate = { revtype: "all", qstr: "", 
+                        init: false, inprog: false, revids: [] };
+        setdispstate = { infomode: "" };
+    },
+
+
     blockfetch: function (dtype, id, callback, divid) {
         var objref, url, time;
         divid = divid || 'contentdiv';
