@@ -11,6 +11,7 @@ import string
 import random
 from cacheman import *
 import group
+import rev
 
 
 class PenName(db.Model):
@@ -35,7 +36,6 @@ class PenName(db.Model):
     preferred = db.TextProperty()   # CSV of penids given priority
     background = db.TextProperty()  # CSV of penids with reduced priority
     blocked = db.TextProperty()     # CSV of penids to be avoided
-    abusive = db.TextProperty()     # penids flagged for harassment (old)
     groups = db.TextProperty()      # groupids this pen is following
 
 
@@ -78,7 +78,6 @@ def set_pen_attrs(pen, request):
     pen.preferred = str(request.get('preferred')) or ""
     pen.background = str(request.get('background')) or ""
     pen.blocked = str(request.get('blocked')) or ""
-    pen.abusive = str(request.get('abusive')) or ""
     pen.groups = str(request.get('groups')) or ""
 
 
@@ -174,6 +173,31 @@ def find_auth_pens(handler):
     return pens
 
 
+def reflect_pen_name_change(pen, prev_name):
+    penid = str(pen.key().id())
+    for grpid in csv_list(pen.groups):
+        grp = group.Group.get_by_id(int(grpid))
+        if grp.people:
+            pdict = json.loads(grp.people)
+            if penid in pdict:
+                pdict[penid] = pen.name
+            grp.people = json.dumps(pdict)
+            cached_put(grp)
+            memcache.delete("group" + grpid)
+            # force updated info retrieval for any subsequent call
+            grp = group.Group.get_by_id(int(grpid))
+    # update recent reviews using same index as rev.py rebuild_reviews_block
+    where = "WHERE grpid = 0 AND penid = :1 ORDER BY modified DESC"
+    rq = rev.Review.gql(where, int(penid))
+    revs = rq.fetch(300, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    for review in revs:
+        review.penname = pen.name
+        review.put()
+        # force updated info retrieval for any subsequent db access
+        review = rev.Review.get_by_id(review.key().id())
+    rev.nuke_cached_recent_review_feeds()
+
+
 class NewPenName(webapp2.RequestHandler):
     def post(self):
         acc = authenticated(self.request)
@@ -213,6 +237,7 @@ class UpdatePenName(webapp2.RequestHandler):
             return
         logging.info("UpdatePenName id: " + str(pen.key().id()))
         set_pen_attrs(pen, self.request)
+        prev_name = pen.name
         pen.name = name;
         pen.name_c = name_c;
         # possible authorization was changed in the params
@@ -223,6 +248,8 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Authorized access reference required.")
             return
         cached_put(pen)
+        if prev_name != pen.name:
+            reflect_pen_name_change(pen, prev_name)
         returnJSON(self.response, [ pen ])
         
 
@@ -297,7 +324,7 @@ class ToggleRemember(webapp2.RequestHandler):
         else:
             pen.remembered = prepend_to_csv(revid, pen.remembered)
             try:
-                review = cached_get(int(revid), Review)
+                review = cached_get(int(revid), rev.Review)
                 penid = str(pen.key().id())
                 if not csv_contains(penid, review.remembered):
                     review.remembered = prepend_to_csv(penid, review.remembered)

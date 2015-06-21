@@ -684,6 +684,19 @@ def get_review_feed_pool(revtype):
     return feedcsv, blocks
 
 
+def nuke_review_feed_pool(revtype):
+    memcache.delete(revtype)
+    numblocks = revpoolsize / revblocksize
+    for i in range(numblocks):
+        memcache.delete(revtype + "RevBlock" + str(i))
+
+
+def nuke_cached_recent_review_feeds():
+    nuke_review_feed_pool("all")
+    for rt in known_rev_types:
+        nuke_review_feed_pool(rt)
+
+
 def extract_json_by_id(fid, block):
     jstr = ""
     openidx = block.find('{"_id":"' + str(fid) + '",')

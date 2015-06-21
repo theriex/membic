@@ -612,6 +612,8 @@ return {
         var ua, data, contf = app.login.closeupdate;
         ua = readUsermenuAccountForm();
         if(ua.penName !== moracct.penName) {
+            if(!confirm("Group info logs and older reviews may still reference your previous pen name \"" + moracct.penName + "\".")) {
+                return; }
             contf = function () {
                 app.pen.getPen("", function (pen) {
                     pen.name = ua.penName;
