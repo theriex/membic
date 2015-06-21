@@ -327,6 +327,13 @@ app.login = (function () {
     },
 
 
+    setPenStashFromAccountInfo = function (acct) {
+        var mypen = app.pen.myPenName();
+        if(mypen && mypen.stash && mypen.stash.account) {
+            mypen.stash.account = acct; }
+    },
+
+
     logLoadTimes = function () {
         var millis, timer = app.amdtimer;
         millis = timer.load.end.getTime() - timer.load.start.getTime();
@@ -638,7 +645,8 @@ return {
                     function (objs) {
                         if(authmethod === "mid") {
                             setAuthentication("mid", objs[0].token, authname); }
-                        moracct = null;
+                        setPenStashFromAccountInfo(objs[0]);
+                        moracct = null;  //reset so they log in again
                         contf(); },
                     app.failf(function (code, errtxt) {
                         jt.out('setstatdiv', "Account update failed " +
