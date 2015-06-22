@@ -345,6 +345,7 @@ def prepend_to_main_feeds(review, pnm):
 def write_review(review, pnm):
     set_review_mainfeed(review)
     review.put()
+    logging.info("write_review: wrote review " + str(review.key().id()))
     # force retrieval to ensure subsequent db hits find the latest
     review = Review.get_by_id(review.key().id())
     # need to rebuild cache unless new review and not mainfeed.  Just do it.
@@ -353,7 +354,9 @@ def write_review(review, pnm):
     for i in range(revpoolsize / revblocksize):
         memcache.delete(review.revtype + "RevBlock" + str(i))
         memcache.delete("allRevBlock" + str(i))
+    logging.info("write_review: cache cleared, calling to update top 20s")
     update_top20_reviews(pnm, review)
+    logging.info("write_review: update_top20_reviews completed")
 
 
 def copy_source_review(fromrev, torev, grpid):
@@ -407,6 +410,7 @@ def write_group_post_notes_to_svcdata(review, postnotes):
 
 def write_group_reviews(review, pnm, grpidscsv):
     if not grpidscsv:
+        logging.info("write_group_reviews: no grpidscsv so nothing to do")
         return
     postnotes = []
     for grpid in csv_list(grpidscsv):
@@ -426,10 +430,15 @@ def write_group_reviews(review, pnm, grpidscsv):
             grprev = revs[0]
         else:
             grprev = Review(penid=penid, revtype=review.revtype)
+        logging.info("write_group_reviews: Group " + grpid + " " + grp.name)
+        logging.info("write_group_reviews: copying source review")
         copy_source_review(review, grprev, grpid)
         cached_put(grprev)
+        logging.info("write_group_reviews: review saved, updating top20s")
         update_top20_reviews(grp, grprev)
+        logging.info("write_group_reviews: appending post note")
         postnotes.append(group_post_note(grp, grprev))
+    logging.info("write_group_reviews: writing postnotes to svcdata")
     write_group_post_notes_to_svcdata(review, postnotes)
 
 
