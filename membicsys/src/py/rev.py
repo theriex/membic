@@ -566,7 +566,8 @@ def find_pen_or_group_type_and_id(handler):
         except Exception as e:
             logging.info("Update of pen.accessed failed: " + str(e))
         return "pen", mypen.key().id(), mypen
-    srverr(handler, 400, "No group or pen id specified")
+    # final case is no pen found because they haven't created one yet
+    # that's a normal condition and not an error return
     return "pen", 0, None
 
 
@@ -1052,14 +1053,14 @@ class ToggleHelpful(webapp2.RequestHandler):
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
         pgt, pgid, mypen = find_pen_or_group_type_and_id(self)
-        if not pgid:
-            logging.info("FetchAllReviews: no pen or group found")
-            return  # not found error already reported
-        key = pgt + str(pgid)
-        jstr = memcache.get(key)
-        if not jstr:
-            jstr = rebuild_reviews_block(self, pgt, pgid)
-            memcache.set(key, jstr)
+        if pgid: # pgid may be zero if no pen name yet
+            key = pgt + str(pgid)
+            jstr = memcache.get(key)
+            if not jstr:
+                jstr = rebuild_reviews_block(self, pgt, pgid)
+                memcache.set(key, jstr)
+        else:  # return empty array with no first item pen
+            jstr = "[]"
         if mypen:  # replace first element with private pen data
             i = 2 
             brackets = 1
