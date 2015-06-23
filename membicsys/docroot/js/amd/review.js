@@ -857,6 +857,7 @@ app.review = (function () {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
                         crev.address = place.formatted_address;
                         crev.name = place.name || jt.byId('keyin').value;
+                        jt.byId('keyin').value = crev.name;
                         crev.url = crev.url || place.website || "";
                         app.review.readURL(crev.url); }
                     }); }
@@ -1378,8 +1379,9 @@ return {
             urlin = jt.byId('urlin');
             if(urlin) {
                 url = urlin.value; } }
-        if(!url) {
-            return; }
+        if(!url) {  //reflect any other updates done in the interim.
+            crev.autocomp = false;
+            return app.review.updatedlg(); }
         if(crev.title && !crev.autocomp &&
            !confirm("Re-read title and other fields?")) {
             return; }
