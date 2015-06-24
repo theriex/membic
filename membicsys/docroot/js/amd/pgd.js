@@ -584,14 +584,20 @@ app.pgd = (function () {
 
 
     getFavoriteReviews = function () {
-        var revids, rt, tops, types, i;
+        var revids, rt, tops, types, i, revs;
         tops = dst.obj.top20s || {};
         if(!tops.all) {
             tops.all = [];
             types = app.review.getReviewTypes();
             for(i = 0; i < types.length; i += 1) {
                 rt = types[i].type;
-                tops.all = tops.all.concat(tops[rt] || []); } }
+                tops.all = tops.all.concat(tops[rt] || []); }
+            revs = app.lcs.resolveIdArrayToCachedObjs("rev", tops.all);
+            revs.sort(function (a, b) {
+                if(a.modified < b.modified) { return 1; }
+                if(a.modified > b.modified) { return -1; }
+                return 0; });
+            tops.all = app.lcs.objArrayToIdArray(revs); }
         rt = app.layout.getType();
         revids = tops[rt] || [];
         return app.lcs.resolveIdArrayToCachedObjs("rev", revids);
