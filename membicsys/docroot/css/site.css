@@ -271,6 +271,7 @@ button, .loginbutton, .formbutton {
 .ptdlabspan { font-size:medium; }
 #ptdfdiv { padding:5px; }
 #ptduploadbuttonsdiv { text-align:center; padding:20px 0px 5px 0px; }
+.directionstextdiv { text-align:center; font-size:small; }
 
 /* >> activity layout */
 #feedrevsdiv { padding:0px 0px 50px 0px; }

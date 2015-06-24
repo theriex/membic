@@ -1041,20 +1041,26 @@ app.review = (function () {
     dlgKeyFieldEntry = function () {
         var rt, html = "";
         rt = findReviewType(crev.revtype);
-        if(!rt) {  //no type selected yet, so no key field entry yet.
+        if(!rt) {  //no type selected yet, explain choice
+            html = "&#x21E7; Read URL or select type &#x21E7;"
+            if(crev.url) {
+                html = "&#x21E7;Select type&#x21E7;"; }
+            html = ["div", {cla: "directionstextdiv"}, html];
+            jt.out("rdkeyindiv", jt.tac2html(html));
             return; }
-        if(!jt.byId("rdkeyindiv").innerHTML) {
-            html = [["label", {fo: "keyin", cla: "liflab", id: "keylab"}, 
-                     rt.key],
-                    ["input", {id: "keyin", cla: "lifin", type: "text"}],
-                    ["div", {id: "rdacdiv"},
-                     ["input", {type: "checkbox", id: "rdaccb",
-                                name: "autocompleteactivationcheckbox",
-                                //<IE8 onchange only fires after onblur.
-                                //check action nullified if return false.
-                                onclick: jt.fsd("app.review.runAutoComp()"),
-                                checked: jt.toru(crev.autocomp)}]],
-                    ["div", {id: "revautodiv"}]];
+        if(!jt.byId("rdkeyincontentdiv")) {
+            html = ["div", {id: "rdkeyincontentdiv"}, 
+                    [["label", {fo: "keyin", cla: "liflab", id: "keylab"}, 
+                      rt.key],
+                     ["input", {id: "keyin", cla: "lifin", type: "text"}],
+                     ["div", {id: "rdacdiv"},
+                      ["input", {type: "checkbox", id: "rdaccb",
+                                 name: "autocompleteactivationcheckbox",
+                                 //<IE8 onchange only fires after onblur.
+                                 //check action nullified if return false.
+                                 onclick: jt.fsd("app.review.runAutoComp()"),
+                                 checked: jt.toru(crev.autocomp)}]],
+                     ["div", {id: "revautodiv"}]]];
             jt.out("rdkeyindiv", jt.tac2html(html)); }
         jt.out("keylab", rt.key.capitalize());  //update label if type changed
         jt.byId("keyin").value = jt.byId("keyin").value || crev[rt.key] || "";
