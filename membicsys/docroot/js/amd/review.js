@@ -1490,10 +1490,14 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
-                    var updpen = updobjs[0], updrev = updobjs[1];
+                    var updpen, updrev, revs;
+                    updpen = updobjs[0];
+                    updrev = updobjs[1];
                     jt.out('rdokbuttondiv', "Saved.");
-                    updpen.recent = app.activity.insertOrUpdateRev(
-                        app.pen.myPenName().recent || [], updrev);
+                    revs = app.lcs.resolveIdArrayToCachedObjs(
+                        "rev", app.pen.myPenName().recent || []);
+                    revs = app.activity.insertOrUpdateRev(revs, updrev);
+                    updpen.recent = app.lcs.objArrayToIdArray(revs);
                     app.lcs.put("pen", updpen);
                     cacheBustGroups(crev.grpids);
                     crev = copyReview(app.lcs.put("rev", updrev));

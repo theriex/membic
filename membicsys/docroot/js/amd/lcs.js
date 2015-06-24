@@ -210,6 +210,14 @@ return {
     },
 
 
+    objArrayToIdArray: function (objs) {
+        var i, ids = [];
+        for(i = 0; i < objs.length; i += 1) {
+            ids.push(jt.instId(objs[i])); }
+        return ids;
+    },
+
+
     ////////////////////////////////////////
     // application-specific published funcs
     ////////////////////////////////////////

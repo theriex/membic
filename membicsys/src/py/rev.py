@@ -354,6 +354,7 @@ def write_review(review, pnm):
     for i in range(revpoolsize / revblocksize):
         memcache.delete(review.revtype + "RevBlock" + str(i))
         memcache.delete("allRevBlock" + str(i))
+    memcache.delete("pen" + str(review.penid))
     logging.info("write_review: cache cleared, calling to update top 20s")
     update_top20_reviews(pnm, review)
     logging.info("write_review: update_top20_reviews completed")

@@ -116,6 +116,9 @@ return {
 
 
     bypenid: function (penid, tabname) {
+        var penref = app.lcs.getRef("pen", penid);
+        if(penref.pen) {
+            return app.pgd.display("pen", penid, tabname, penref.pen); }
         app.pgd.fetchAndDisplay("pen", penid, tabname);
     },
 
