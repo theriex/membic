@@ -437,6 +437,7 @@ def write_group_reviews(review, pnm, grpidscsv):
         cached_put(grprev)
         logging.info("write_group_reviews: review saved, updating top20s")
         update_top20_reviews(grp, grprev)
+        memcache.delete("group" + grpid)
         logging.info("write_group_reviews: appending post note")
         postnotes.append(group_post_note(grp, grprev))
     logging.info("write_group_reviews: writing postnotes to svcdata")
