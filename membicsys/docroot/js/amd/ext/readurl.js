@@ -200,6 +200,21 @@ app.readurl = (function () {
     },
     
 
+    fixSpamdexing = function (val) {
+        var vs, i;
+        //choose the first real value out of any multi-line title
+        if(val.indexOf("\n") >= 0) {
+            vs = val.split("\n");
+            for(i = 0; i < vs.length; i += 1) {
+                if(vs[i] && vs[i].trim()) {
+                    val = vs[i];
+                    break; } } }
+        //remove any preceding or trailing whitespace
+        val = val.trim();
+        return val;
+    },
+
+
     setTitle = function (review, html, url) {
         var elem, val;
         //the Facebook title is frequently better than the default tag title
@@ -211,6 +226,7 @@ app.readurl = (function () {
                 review.name = val;
                 return; } }
         val = findTagContents(html, "title", url);
+        val = fixSpamdexing(val);
         if(val) {
             review.title = val;
             review.name = val; }
