@@ -1042,7 +1042,7 @@ app.review = (function () {
         var rt, html = "";
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, explain choice
-            html = "&#x21E7; Read URL or select type &#x21E7;"
+            html = "&#x21E7; Read URL or select type &#x21E7;";
             if(crev.url) {
                 html = "&#x21E7;Select type&#x21E7;"; }
             html = ["div", {cla: "directionstextdiv"}, html];
