@@ -25,8 +25,8 @@
 <script>
   var mf = document.getElementById('membiciframe');
   if(window.location.href.indexOf("https://") !== 0) {
-    if(window.location.href.indexOf("secured=true") < 0) {
-      window.location.href = "https://www.membic.com?secured=true"; }
+    if(window.location.href.indexOf("c=s") < 0) {
+      window.location.href = "https://www.membic.com?c=s"; }
     else {
       mf.src = "notsecured.html"; } }
   else {
