@@ -410,9 +410,7 @@ def write_group_post_notes_to_svcdata(review, postnotes):
 
 
 def write_group_reviews(review, pnm, grpidscsv):
-    if not grpidscsv:
-        logging.info("write_group_reviews: no grpidscsv so nothing to do")
-        return
+    grpidscsv = grpidscsv or ""
     postnotes = []
     for grpid in csv_list(grpidscsv):
         grp = cached_get(int(grpid), group.Group)
@@ -432,15 +430,15 @@ def write_group_reviews(review, pnm, grpidscsv):
         else:
             grprev = Review(penid=penid, revtype=review.revtype)
         logging.info("write_group_reviews: Group " + grpid + " " + grp.name)
-        logging.info("write_group_reviews: copying source review")
+        logging.info("    copying source review")
         copy_source_review(review, grprev, grpid)
         cached_put(grprev)
-        logging.info("write_group_reviews: review saved, updating top20s")
+        logging.info("    review saved, updating top20s")
         update_top20_reviews(grp, grprev)
         memcache.delete("group" + grpid)
-        logging.info("write_group_reviews: appending post note")
+        logging.info("    appending post note")
         postnotes.append(group_post_note(grp, grprev))
-    logging.info("write_group_reviews: writing postnotes to svcdata")
+    logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_group_post_notes_to_svcdata(review, postnotes)
 
 
