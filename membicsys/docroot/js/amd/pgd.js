@@ -594,6 +594,8 @@ app.pgd = (function () {
                 tops.all = tops.all.concat(tops[rt] || []); }
             revs = app.lcs.resolveIdArrayToCachedObjs("rev", tops.all);
             revs.sort(function (a, b) {
+                if(a.rating < b.rating) { return 1; }
+                if(a.rating > b.rating) { return -1; }
                 if(a.modified < b.modified) { return 1; }
                 if(a.modified > b.modified) { return -1; }
                 return 0; });
