@@ -857,7 +857,6 @@ app.review = (function () {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
                         crev.address = place.formatted_address;
                         crev.name = place.name || jt.byId('keyin').value;
-                        jt.byId('keyin').value = crev.name;
                         crev.url = crev.url || place.website || "";
                         app.review.readURL(crev.url); }
                     }); }
@@ -1063,7 +1062,9 @@ app.review = (function () {
                      ["div", {id: "revautodiv"}]]];
             jt.out("rdkeyindiv", jt.tac2html(html)); }
         jt.out("keylab", rt.key.capitalize());  //update label if type changed
-        jt.byId("keyin").value = jt.byId("keyin").value || crev[rt.key] || "";
+        //when returning from autocomp selection, crev.title/name has been
+        //updated and needs to be reflected in the form
+        jt.byId("keyin").value = crev[rt.key] || jt.byId("keyin").value || "";
         jt.byId("rdaccb").checked = crev.autocomp;
         if(html) {  //just initialized the key input, set for entry
             jt.byId('keyin').focus(); }
