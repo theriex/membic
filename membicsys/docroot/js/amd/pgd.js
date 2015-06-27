@@ -205,47 +205,55 @@ app.pgd = (function () {
     },
 
 
+    membershipAppNoticeHTML = function (penid, name, mlev) {
+        var html;
+        html = ["div", {cla: "grpmemdiv"},
+                [["div", {cla: "fpprofdivsp"},
+                  ["img", {cla: "fpprofpic",
+                           src: "profpic?profileid=" + penid,
+                           title: jt.ndq(name),
+                           alt: "prof pic"}]],
+                 ["a", {href: "view=pen&penid=" + penid,
+                        onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
+                  ["span", {cla: "penflist"}, name]],
+                 "&nbsp;" + grpmsgs[mlev].notice,
+                 ["div", {cla: "formline"}],
+                 ["div", {cla: "formline", id: "reasondiv" + penid,
+                          style: "display:none;"},
+                  [["label", {fo: "reasonin" + penid, cla: "liflab",
+                              id: "reasonlab" + penid},
+                    "Reason"],
+                   ["input", {id: "reasonin" + penid, cla: "lifin",
+                              type: "text"}]]],
+                 ["div", {cla: "formline inlinebuttonsdiv", 
+                          id: "abdiv" + penid},
+                  [["button", {type: "button", id: "rejectb" + penid,
+                               onclick: jt.fs("app.pgd.memapp('reject" +
+                                              "','" + penid + "')")},
+                    "Reject"],
+                   ["button", {type: "button", id: "acceptb" + penid,
+                               onclick: jt.fs("app.pgd.memapp('accept" +
+                                              "','" + penid + "')")},
+                    "Accept"]]]]];
+        return html;
+    },
+
+
     outstandingApplicationsHTML = function () {
-        var html, sids, i, penid, name, mlev;
+        var html, sids, i, penid, name, mlev, slev;
         if(!dst.obj.seeking) {
             return ""; }
-        if(app.group.membershipLevel(dst.obj) < 2) {
+        mlev = app.group.membershipLevel(dst.obj);
+        if(mlev < 2) {
             return ""; }
         html = [];
         sids = dst.obj.seeking.csvarray();
         for(i = 0; i < sids.length; i += 1) {
             penid = sids[i];
             name = (dst.obj.people || {})[penid] || penid;
-            mlev = app.group.membershipLevel(dst.obj, penid);
-            html.push(["div", {cla: "grpmemdiv"},
-                       [["div", {cla: "fpprofdivsp"},
-                         ["img", {cla: "fpprofpic",
-                                  src: "profpic?profileid=" + penid,
-                                  title: jt.ndq(name),
-                                  alt: "prof pic"}]],
-                        ["a", {href: "view=pen&penid=" + penid,
-                               onclick: jt.fs("app.pen.bypenid('" + penid +
-                                              "')")},
-                         ["span", {cla: "penflist"}, name]],
-                        "&nbsp;" + grpmsgs[mlev].notice,
-                        ["div", {cla: "formline"}],
-                        ["div", {cla: "formline", id: "reasondiv" + penid,
-                                 style: "display:none;"},
-                         [["label", {fo: "reasonin" + penid, cla: "liflab",
-                                     id: "reasonlab" + penid},
-                           "Reason"],
-                          ["input", {id: "reasonin" + penid, cla: "lifin",
-                                     type: "text"}]]],
-                        ["div", {cla: "formline inlinebuttonsdiv", 
-                                 id: "abdiv" + penid},
-                         [["button", {type: "button", id: "rejectb" + penid,
-                                      onclick: jt.fs("app.pgd.memapp('reject" +
-                                                     "','" + penid + "')")},
-                           "Reject"],
-                          ["button", {type: "button", id: "acceptb" + penid,
-                                      onclick: jt.fs("app.pgd.memapp('accept" +
-                                                     "','" + penid + "')")},
-                           "Accept"]]]]]); }
+            slev = app.group.membershipLevel(dst.obj, penid);
+            if(mlev > slev || mlev === 3) {
+                html.push(membershipAppNoticeHTML(penid, name, slev)); } }
         return html;
     },
 
