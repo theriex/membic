@@ -324,12 +324,14 @@ class ProcessMembership(webapp2.RequestHandler):
         action = self.request.get('action')
         if not action or action not in ['reject', 'accept', 'demote']:
             return srverr(self, 400, "Valid action required")
-        reason = self.request.get('reason')
-        if not reason and (action == "reject" or action == "demote"):
-            return srverr(self, 400, "Rejection reason required")
         seekerid = self.request.get('seekerid')
         if not seekerid:
             return srverr(self, 400, "No seekerid specified")
+        penid = str(pnm.key().id())
+        reason = self.request.get('reason')
+        if not reason and (action == "reject" or 
+                           (action == "demote" and seekerid != penid)):
+            return srverr(self, 400, "Rejection reason required")
         seekrole = pen_role(seekerid, group)
         if not (role == "Founder" or 
                 (role == "Moderator" and 
