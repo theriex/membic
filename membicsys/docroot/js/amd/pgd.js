@@ -295,8 +295,47 @@ app.pgd = (function () {
     },
 
 
+    groupMembershipLineHTML = function (field, penid, pname, mlev) {
+        var html;
+        if(field === "founders" || (field === "moderators" && mlev < 3) ||
+                                   (field === "members" && mlev <= 1)) {
+            html = ["div", {cla: "memlistdiv"},
+                    [["div", {cla: "fpprofdivsp"},
+                      ["img", {cla: "fpprofpic",
+                               src: "profpic?profileid=" + penid,
+                               alt: "prof pic"}]],
+                     ["span", {cla: "penflist"}, pname]]]; }
+        else {  //display modifiable member listing
+            html = ["div", {cla: "formline", id: "memlistdiv" + penid},
+                    [["div", {cla: "fpprofdivsp"},
+                      ["img", {cla: "fpprofpic",
+                               src: "profpic?profileid=" + penid,
+                               alt: "prof pic"}]],
+                     ["a", {href: "#demote",
+                            onclick: jt.fs("app.layout.togdisp('memdemdiv" +
+                                           penid + "')")},
+                      ["span", {cla: "penflist"}, pname]],
+                     ["div", {cla: "formline", id: "memdemdiv" + penid,
+                              style: "display:none;"},
+                      [["label", {fo: "reasonin" + penid, cla: "liflab",
+                                  id: "reasonlab" + penid},
+                        "Reason"],
+                       ["input", {id: "reasonin" + penid, cla: "lifin",
+                                  placeholder: "Reason required",
+                                  type: "text"}],
+                       ["div", {cla: "formline formbuttonsdiv", 
+                                id: "memdembuttondiv" + penid},
+                        ["button", {type: "button", id: "demoteb" + penid,
+                                    onclick: jt.fs("app.pgd.memdem('" + 
+                                                   penid + "')")},
+                         "Demote"]]]]]]; }
+        return html;
+    },
+
+
     groupMembershipHTML = function () {
-        var html, fields, i, field, penids, j, penid, pname, line, mlev;
+        var html, fields, i, field, penids, j, penid, pname, mlev;
+        mlev = app.group.membershipLevel(dst.obj);
         html = [];
         fields = ["founders", "moderators", "members"];
         for(i = 0; i < fields.length; i += 1) {
@@ -307,40 +346,8 @@ app.pgd = (function () {
             for(j = 0; j < penids.length; j += 1) {
                 penid = penids[j];
                 pname = (dst.obj.people || {})[penid] || penid;
-                mlev = app.group.membershipLevel(dst.obj);
-                line = ["div", {cla: "formline", id: "memlistdiv" + penid},
-                        [["div", {cla: "fpprofdivsp"},
-                          ["img", {cla: "fpprofpic",
-                                   src: "profpic?profileid=" + penid,
-                                   alt: "prof pic"}]],
-                         ["a", {href: "#demote",
-                                onclick: jt.fs("app.layout.togdisp('memdemdiv" +
-                                               penid + "')")},
-                          ["span", {cla: "penflist"}, pname]],
-                         ["div", {cla: "formline", id: "memdemdiv" + penid,
-                                  style: "display:none;"},
-                          [["label", {fo: "reasonin" + penid, cla: "liflab",
-                                      id: "reasonlab" + penid},
-                            "Reason"],
-                           ["input", {id: "reasonin" + penid, cla: "lifin",
-                                      placeholder: "Reason required",
-                                      type: "text"}],
-                           ["div", {cla: "formline formbuttonsdiv", 
-                                    id: "memdembuttondiv" + penid},
-                            ["button", {type: "button", id: "demoteb" + penid,
-                                        onclick: jt.fs("app.pgd.memdem('" + 
-                                                       penid + "')")},
-                             "Demote"]]]]]];
-                if(field === "founders" || 
-                       (field === "moderators" && mlev < 3) ||
-                       (field === "members" && mlev <= 1)) {
-                    line = ["div", {cla: "memlistdiv"},
-                            [["div", {cla: "fpprofdivsp"},
-                              ["img", {cla: "fpprofpic",
-                                       src: "profpic?profileid=" + penid,
-                                       alt: "prof pic"}]],
-                             ["span", {cla: "penflist"}, pname]]]; }
-                html.push(line); } }
+                html.push(groupMembershipLineHTML(
+                    field, penid, pname, mlev)); } }
         html.push(["div", {cla: "formline"}, "&nbsp;"]); //final clear
         return jt.tac2html(html);
     },

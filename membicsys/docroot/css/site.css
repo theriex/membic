@@ -179,7 +179,8 @@ button, .loginbutton, .formbutton {
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pgdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
-.formline { clear:both; font-size:medium; /* no padding empty formlines */
+.formline, .memlistdiv { clear:both; font-size:medium; 
+  /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
 #followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold;
