@@ -3,7 +3,7 @@ import logging
 from moracct import safestr
 from morutil import *
 import rev
-import group
+import coop
 from cacheman import *
 
 
@@ -43,14 +43,14 @@ def rss_title(review):
 
 
 def item_url(handler, review):
-    url = handler.request.host_url + "?view=group&amp;groupid=" +\
-        str(review.grpid) + "&amp;tab=latest&amp;expid=" +\
+    url = handler.request.host_url + "?view=coop&amp;coopid=" +\
+        str(review.ctmid) + "&amp;tab=latest&amp;expid=" +\
         str(review.key().id())
     return url
 
 
-def rss_content(handler, grpid, title, reviews):
-    url = "?view=group&amp;groupid=" + str(grpid)
+def rss_content(handler, ctmid, title, reviews):
+    url = "?view=coop&amp;coopid=" + str(ctmid)
     email = "robot@membic.com"
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
@@ -112,23 +112,23 @@ def rss_content(handler, grpid, title, reviews):
     return txt;
 
 
-class GroupRSS(webapp2.RequestHandler):
+class CoopRSS(webapp2.RequestHandler):
     def get(self):
-        grpid = intz(self.request.get('group'))
-        grp = group.Group.get_by_id(grpid)
+        ctmid = intz(self.request.get('coop'))
+        ctm = coop.Coop.get_by_id(ctmid)
         # Similar to FetchAllReviews except but without extra data checks
-        key = group + str(grpid)
+        key = coop + str(ctmid)
         jstr = memcache.get(key)
         if not jstr:
-            jstr = rev.rebuild_reviews_block(self, "group", grpid)
+            jstr = rev.rebuild_reviews_block(self, "coop", ctmid)
             memcache.set(key, jstr)
         reviews = json.loads(jstr)
-        title = grp.name
-        content = rss_content(self, grpid, title, reviews)
+        title = ctm.name
+        content = rss_content(self, ctmid, title, reviews)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content);
 
 
-app = webapp2.WSGIApplication([('/rssgroup', GroupRSS)], debug=True)
+app = webapp2.WSGIApplication([('/rsscoop', CoopRSS)], debug=True)
 

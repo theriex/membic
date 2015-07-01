@@ -79,7 +79,7 @@ button, .loginbutton, .formbutton {
 .penfont, .penflist { 
   font-family:"Satisfy", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
-#grouphbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
+#coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
@@ -151,13 +151,13 @@ button, .loginbutton, .formbutton {
 #createpnintrodiv { font-size:medium; }
 #createpnformdiv { width:300px; }
 
-/* >> profile/group display */
-#pgdcontdiv { padding:10px 0px 10px 0px; }
-#pgdpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
-.pgdpic { max-width:125px; max-height:125px; }
-#pgddescrdiv { height:125px; overflow:auto; }
-#pgdsettingslink { padding:0px 0px 0px 10px; }
-#pgdshoutdiv { padding:0px; font-size:small; overflow:auto; }
+/* >> profile/coop display */
+#pcdcontdiv { padding:10px 0px 10px 0px; }
+#pcdpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
+.pcdpic { max-width:125px; max-height:125px; }
+#pcddescrdiv { height:125px; overflow:auto; }
+#pcdsettingslink { padding:0px 0px 0px 10px; }
+#pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #tabsdiv { clear:both; }
 #tabsul { }
 #tabsdiv ul { list-style:none; padding:0; margin:0; }
@@ -170,14 +170,14 @@ button, .loginbutton, .formbutton {
 #tabsdiv a { padding: 0 15px; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
-#pgdsrchdiv { padding: 0px 0px 10px 5px; }
-.grouplinkdiv { clear:both; padding: 0px 0px 5px 0px; }
-.grouplinkdiv a { margin-left:10px; }
-.pgdtext { clear:both; padding:0px 0px 10px 20px; }
-.pgdtoggle { padding:0px 0px 5px 0px; }
-#findgrpdiv, #creategrpdiv { font-size:medium; background-color:#f9f9fc; }
+#pcdsrchdiv { padding: 0px 0px 10px 5px; }
+.cooplinkdiv { clear:both; padding: 0px 0px 5px 0px; }
+.cooplinkdiv a { margin-left:10px; }
+.pcdtext { clear:both; padding:0px 0px 10px 20px; }
+.pcdtoggle { padding:0px 0px 5px 0px; }
+#findctmdiv, #createctmdiv { font-size:medium; background-color:#f9f9fc; }
 .formbuttonsdiv { text-align:center; padding:10px; }
-.pgdsectiondiv { background-image: url('../img/whitewash.png'); 
+.pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
 .formline, .memlistdiv { clear:both; font-size:medium; 
   /* no padding or the display gets ugly due to empty formlines */
@@ -188,10 +188,10 @@ button, .loginbutton, .formbutton {
 #calicodiv { display:inline-block; border:1px solid #333; border-radius:4px; margin:1px; width:17px; height:18px; }
 #calicoheaddiv { background:#333; height:5px; }
 #caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
-#grpembedta { height:100px; }
-#grpinfoseldiv { display:inline-block; margin-left:20px; width:50px; }
+#ctmembedta { height:100px; }
+#ctminfoseldiv { display:inline-block; margin-left:20px; width:50px; }
 #meminfoseldiv { display:inline-block; }
-.grpsetimg, .myinfoimg { vertical-align:middle; }
+.ctmsetimg, .myinfoimg { vertical-align:middle; }
 .myinfoimg { width:18px; height:18px; margin-right:5px; }
 #shurlspan { font-size:small; font-family:monospace;
   background-image: url('../img/whitewash.png'); }
@@ -220,7 +220,7 @@ button, .loginbutton, .formbutton {
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
 .starsimg { vertical-align:middle; }
 
-/* >> group layout */
+/* >> coop layout */
 .tdnarrow { width:5%; padding:0px 5px 0px 0px; }
 .dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
 .dlgbuttonsdiv button { margin:0px 10px; }
@@ -254,7 +254,7 @@ button, .loginbutton, .formbutton {
 #rdkwcbsdiv { width:260px; margin:auto; overflow:auto; }
 .rdkwcbdiv { display:inline-block; width:130px; font-size:small; 
   padding:0px 0px 10px 0px; }
-.rdgrpdiv { padding:0px 0px 8px 0px; }
+.rdctmdiv { padding:0px 0px 8px 0px; }
 .rdglpicdiv { display:inline-block; width:40px; margin:0px 2px 0px 5px; 
   overflow:hidden; }
 .rdglpic { vertical-align:middle; max-width:40px; max-height:40px; 
@@ -300,7 +300,7 @@ button, .loginbutton, .formbutton {
 .fpsecfieldsdiv { margin-left:35px; /* reviewbadge + fptitlediv */
   font-size:x-small; }
 .fpdatediv { margin-left:5px; font-size: xx-small; }
-.fpdescrdiv, .fpkeywrdsdiv, .fpgrpsdiv { 
+.fpdescrdiv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 0px 10px 0px 2px;
   font-family:"Verdana", "Arial", "Helvetica", sans-serif; }
 .fpkeywrdsdiv { font-style:italic; }

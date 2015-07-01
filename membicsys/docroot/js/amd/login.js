@@ -419,8 +419,8 @@ app.login = (function () {
         if(params.css) {
             applyCSSOverride(params.css); }
         //handle specific context requests
-        if(params.view && (params.penid || params.profid || params.groupid)) {
-            //Note who requested a specific profile or group
+        if(params.view && (params.penid || params.profid || params.coopid)) {
+            //Note who requested a specific profile or coop
             setTimeout(function () {
                 jt.call('GET', "/bytheway?clickthrough=" + params.view, null,
                         function () {
@@ -429,7 +429,7 @@ app.login = (function () {
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
                                      profid: params.profid,
-                                     groupid: params.groupid,
+                                     coopid: params.coopid,
                                      tab: params.tab,
                                      expid: params.expid }); }
         else if(params.revedit) {
@@ -535,7 +535,7 @@ return {
         jt.out('accsetdiv', "");
         jt.byId('accsetdiv').style.visibility = "hidden";
         switch(next) {
-        case 'pen': return app.pgd.display("pen");
+        case 'pen': return app.pcd.display("pen");
         case 'logout': return app.login.logout(); }
     },
 
@@ -610,7 +610,7 @@ return {
 
     nukeAppData: function () {
         app.activity.resetAllFeeds();
-        app.pgd.resetState();
+        app.pcd.resetState();
         app.lcs.nukeItAll();
     },
 
@@ -619,7 +619,7 @@ return {
         var ua, data, contf = app.login.closeupdate;
         ua = readUsermenuAccountForm();
         if(ua.penName !== moracct.penName) {
-            if(!confirm("Group info logs and older reviews may still reference your previous pen name \"" + moracct.penName + "\".")) {
+            if(!confirm("Cooperative theme info logs and older reviews may still reference your previous pen name \"" + moracct.penName + "\".")) {
                 return; }
             contf = function () {
                 app.pen.getPen("", function (pen) {

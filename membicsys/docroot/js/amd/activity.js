@@ -205,7 +205,7 @@ return {
                             processed.push(revs[i]); } }
                     feeds[tname] = processed; } } }
         //insert rev appropriately based on creation time
-        if(rev.srcrev >= 0 && !jt.isId(rev.grpid)) {  //not futbatch or grp copy
+        if(rev.srcrev >= 0 && !jt.isId(rev.ctmid)) {  //not futbatch or ctm copy
             for(tname in feeds) {
                 if(feeds.hasOwnProperty(tname)) {
                     if(tname === "all" || tname === "memo" ||

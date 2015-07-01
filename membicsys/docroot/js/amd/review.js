@@ -357,14 +357,14 @@ app.review = (function () {
     },
 
 
-    notePostingGroups = function (type, errors) {
-        var grps, i, gcb;
-        crev.grpids = "";
-        grps = app.pen.postableGroups();
-        for(i = 0; i < grps.length; i += 1) {
-            gcb = jt.byId("dgrpcb" + i);
+    notePostingCoops = function (type, errors) {
+        var ctms, i, gcb;
+        crev.ctmids = "";
+        ctms = app.pen.postableCoops();
+        for(i = 0; i < ctms.length; i += 1) {
+            gcb = jt.byId("dctmcb" + i);
             if(gcb && gcb.checked) {
-                crev.grpids = crev.grpids.csvappend(grps[i].grpid); } }
+                crev.ctmids = crev.ctmids.csvappend(ctms[i].ctmid); } }
     },
 
 
@@ -385,7 +385,7 @@ app.review = (function () {
                 crev.srcrev = -101; }
             else if(crev.srcrev && crev.srcrev === -101) {
                 crev.srcrev = 0; }
-            notePostingGroups(); }
+            notePostingCoops(); }
     },
 
 
@@ -527,7 +527,7 @@ app.review = (function () {
     revpostButtonsHTML = function (prefix, revid) {
         var rev, updrevid, html;
         rev = app.lcs.getRef("rev", revid).rev;
-        updrevid = jt.isId(rev.grpid)? rev.srcrev : revid;
+        updrevid = jt.isId(rev.ctmid)? rev.srcrev : revid;
         if(rev.penid !== app.pen.myPenId()) {
             html = [["div", {cla: "fpbuttondiv", 
                              id: prefix + revid + "helpfuldiv"},
@@ -562,12 +562,12 @@ app.review = (function () {
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
                                src: "img/writereview.png"}]]]]; }
-        if(app.group.mayRemove(app.lcs.getRef("group", rev.grpid).group, rev)) {
+        if(app.coop.mayRemove(app.lcs.getRef("coop", rev.ctmid).coop, rev)) {
             html.push(["div", {cla: "fpbuttondiv", id: "rbd" + revid},
                        ["a", {href: "#remove",
                               title: "Remove review",
-                              onclick: jt.fs("app.group.remove('" + 
-                                             rev.grpid + "','" +
+                              onclick: jt.fs("app.coop.remove('" + 
+                                             rev.ctmid + "','" +
                                              revid + "')")},
                         ["img", {cla: "fpbuttonimg",
                                  id: prefix + revid + "removebutton",
@@ -599,22 +599,22 @@ app.review = (function () {
     },
 
 
-    postedGroupLinksHTML = function (rev) {
+    postedCoopLinksHTML = function (rev) {
         var postnotes, links, html, i, pn;
-        if(!rev.svcdata || !rev.svcdata.postgrps) {
+        if(!rev.svcdata || !rev.svcdata.postctms) {
             return ""; }
-        postnotes = rev.svcdata.postgrps;
+        postnotes = rev.svcdata.postctms;
         if(!postnotes.length) {
             return ""; }
         links = [];
         for(i = 0; i < postnotes.length; i += 1) {
             pn = postnotes[i];
             links.push(jt.tac2html(
-                ["a", {href: "groups/" + jt.canonize(pn.name),
-                       onclick: jt.fs("app.group.bygroupid('" +
-                                      pn.grpid + "')")},
+                ["a", {href: "coops/" + jt.canonize(pn.name),
+                       onclick: jt.fs("app.coop.bycoopid('" +
+                                      pn.ctmid + "')")},
                  pn.name])); }
-        html = ["span", {cla: "fpgrplinkslab"}, 
+        html = ["span", {cla: "fpctmlinkslab"}, 
                 "Posted to: " + links.join(", ")];
         return jt.tac2html(html);
     },
@@ -736,11 +736,11 @@ app.review = (function () {
                 if(crev.revtype === 'book') {
                     rest = secondaryAttr("Author", attrs.content); }
                 else if(crev.revtype === 'movie') {
-                    rest = secondaryAttr("ProductGroup", attrs.content); }
+                    rest = secondaryAttr("ProductCoop", attrs.content); }
                 else if(crev.revtype === 'music') {
                     rest = secondaryAttr("Artist", attrs.content) + " " +
                         secondaryAttr("Manufacturer", attrs.content) +
-                        secondaryAttr("ProductGroup", attrs.content); }
+                        secondaryAttr("ProductCoop", attrs.content); }
                 items.push({url: url, title: title, rest: rest}); }
             itemdat = xmlExtract("Item", itemdat.remainder); }
         title = "";
@@ -981,7 +981,7 @@ app.review = (function () {
         var now = new Date().toISOString();
         jt.setInstId(review, undefined);
         review.penid = app.pen.myPenId();
-        review.grpid = 0;
+        review.ctmid = 0;
         review.rating = 0;
         review.srcrev = srcrevId;
         review.modified = now;
@@ -996,12 +996,12 @@ app.review = (function () {
     },
 
 
-    cacheBustGroups = function (grpids) {
+    cacheBustCoops = function (ctmids) {
         var i;
-        grpids = grpids || "";
-        grpids = grpids.csvarray();
-        for(i = 0; i < grpids.length; i += 1) {
-            app.lcs.uncache("group", grpids[i]); }
+        ctmids = ctmids || "";
+        ctmids = ctmids.csvarray();
+        for(i = 0; i < ctmids.length; i += 1) {
+            app.lcs.uncache("coop", ctmids[i]); }
     },
 
 
@@ -1234,36 +1234,36 @@ app.review = (function () {
     },
 
 
-    postedGroupRevId = function (grpid, rev) {
-        var grps, i;
+    postedCoopRevId = function (ctmid, rev) {
+        var ctms, i;
         rev = rev || crev;
-        if(!rev.svcdata || !rev.svcdata.postgrps) {
+        if(!rev.svcdata || !rev.svcdata.postctms) {
             return 0; }
-        grps = rev.svcdata.postgrps;
-        for(i = 0; i < grps.length; i += 1) {
-            if(grps[i].grpid === grpid) {
-                return grps[i].revid; } }
+        ctms = rev.svcdata.postctms;
+        for(i = 0; i < ctms.length; i += 1) {
+            if(ctms[i].ctmid === ctmid) {
+                return ctms[i].revid; } }
         return 0;
     },
 
 
-    dlgGroupPostSelection = function () {
-        var rt, grps, i, grp, posted, html = [];
+    dlgCoopPostSelection = function () {
+        var rt, ctms, i, ctm, posted, html = [];
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
-        grps = app.pen.postableGroups();  //sorted memberships from pen.stash
-        for(i = 0; i < grps.length; i += 1) {
-            grp = grps[i];
-            posted = jt.toru(postedGroupRevId(grp.grpid));
-            html.push(["div", {cla: "rdgrpdiv"},
+        ctms = app.pen.postableCoops();  //sorted memberships from pen.stash
+        for(i = 0; i < ctms.length; i += 1) {
+            ctm = ctms[i];
+            posted = jt.toru(postedCoopRevId(ctm.ctmid));
+            html.push(["div", {cla: "rdctmdiv"},
                        [["div", {cla: "rdglpicdiv"},
                          ["img", {cla: "rdglpic", alt: "",
-                                  src: "grppic?groupid=" + grp.grpid}]],
-                        ["input", {type: "checkbox", id: "dgrpcb" + i,
-                                   value: grp.grpid, checked: posted}],
-                        ["label", {fo: "dgrp" + i, cla: "penflist"}, 
-                         grp.name]]]); }
+                                  src: "ctmpic?coopid=" + ctm.ctmid}]],
+                        ["input", {type: "checkbox", id: "dctmcb" + i,
+                                   value: ctm.ctmid, checked: posted}],
+                        ["label", {fo: "dctm" + i, cla: "penflist"}, 
+                         ctm.name]]]); }
         if(html.length > 0) {
             html.unshift(["div", {cla: "formline"}]);
             html.unshift(["div", {cla: "liflab"}, "Post To"]); }
@@ -1272,8 +1272,8 @@ app.review = (function () {
 
 
     revurl = function (rev) {
-        if(rev.grpid) {
-            return "?view=group&groupid=" + rev.grpid + "&tab=recent&expid=" +
+        if(rev.ctmid) {
+            return "?view=coop&coopid=" + rev.ctmid + "&tab=recent&expid=" +
                 jt.instId(rev); }
         return "?view=pen&penid=" + rev.penid + "&tab=recent&expid=" +
             jt.instId(rev);
@@ -1286,7 +1286,7 @@ app.review = (function () {
         dlgDetailsEntry();
         dlgTextEntry();
         dlgKeywordEntry();
-        dlgGroupPostSelection();
+        dlgCoopPostSelection();
     };
 
 
@@ -1310,7 +1310,7 @@ return {
             return app.login.usermenu(); }
         if(!app.pen.myPenName().profpic) {
             jt.err("You need a profile picture to identify your membics");
-            return app.pgd.display("pen"); }
+            return app.pcd.display("pen"); }
         if(typeof source === 'string') {  //passed in a url
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review
@@ -1500,7 +1500,7 @@ return {
                     revs = app.activity.insertOrUpdateRev(revs, updrev);
                     updpen.recent = app.lcs.objArrayToIdArray(revs);
                     app.lcs.put("pen", updpen);
-                    cacheBustGroups(crev.grpids);
+                    cacheBustCoops(crev.ctmids);
                     crev = copyReview(app.lcs.put("rev", updrev));
                     app.activity.updateFeeds(updrev);
                     cacheBustPersonalReviewSearches();
@@ -1535,7 +1535,7 @@ return {
                             app.review.displayRead(action); } }
                     else {
                         jt.err("initWithId found no review id " + revid);
-                        app.pgd.display(); } },
+                        app.pcd.display(); } },
                 app.failf(function (code, errtxt) {
                     jt.err("initWithId failed code " + code + ": " +
                            errtxt); }),
@@ -1798,7 +1798,7 @@ return {
                             title: type.type, alt: type.type}]]],
                  ["div", {cla: "fptitlediv"},
                   ["a", {href: revurl(rev), onclick: togclick},
-                   app.pgd.reviewItemNameHTML(type, rev)]],
+                   app.pcd.reviewItemNameHTML(type, rev)]],
                  ["div", {cla: "fpstarsdiv"},
                   app.review.starsImageHTML(rev)],
                  ["div", {cla: "fpjumpdiv"},
@@ -1811,7 +1811,7 @@ return {
                    ["div", {cla: "fpdescrdiv", id: revdivid + "descrdiv"},
                     abbreviatedReviewText(prefix, revid, rev, togfname)],
                    ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
-                   ["div", {cla: "fpgrpsdiv", id: revdivid + "grpsdiv"}]]]]];
+                   ["div", {cla: "fpctmsdiv", id: revdivid + "ctmsdiv"}]]]]];
         return html;
     },
 
@@ -1928,7 +1928,7 @@ return {
             jt.out(revdivid + "descrdiv", 
                    abbreviatedReviewText(prefix, revid, rev));
             jt.out(revdivid + "keysdiv", "");
-            jt.out(revdivid + "grpsdiv", ""); }
+            jt.out(revdivid + "ctmsdiv", ""); }
         else {  //expand
             app.layout.scrollToVisible(revdivid + "buttonsdiv");
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
@@ -1937,7 +1937,7 @@ return {
                    jt.colloquialDate(jt.ISOString2Day(rev.modified)));
             jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
             jt.out(revdivid + "keysdiv", rev.keywords);
-            jt.out(revdivid + "grpsdiv", postedGroupLinksHTML(rev)); }
+            jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
     },
 
 

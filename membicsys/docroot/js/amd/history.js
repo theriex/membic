@@ -78,15 +78,15 @@ return {
             return app.activity.displayActive();
         case "memo":
             return app.activity.displayRemembered();
-        case "group":
-            return app.group.bygroupid(state.groupid, state.tab, state.expid);
+        case "coop":
+            return app.coop.bycoopid(state.coopid, state.tab, state.expid);
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
                 return app.pen.bypenid(state.profid, state.tab); }
             if(jt.isId(state.penid)) {
                 return app.pen.bypenid(state.penid, state.tab); }
-            return app.pgd.display();
+            return app.pcd.display();
         }
     },
 

@@ -71,7 +71,7 @@ var membicEmbed = (function () {
 
     writeEmbeddedContent = function () {
         var mdiv, src, html = [];
-        mdiv = jt.byId('membicgroupdiv');
+        mdiv = jt.byId('membiccoopdiv');
         computeFrameDimensions(mdiv);
         src = siteroot + "?" + jt.objdata(embparams);
         src += "&site=" + jt.enc(window.location.href);
@@ -80,7 +80,7 @@ var membicEmbed = (function () {
         html.push(["iframe", {id: "membiciframe", src: src,
                               width: framedim.width,
                               height: framedim.height}]);
-        jt.out('membicgroupdiv', jt.tac2html(html));
+        jt.out('membiccoopdiv', jt.tac2html(html));
     };
 
 
@@ -89,12 +89,12 @@ var membicEmbed = (function () {
     ////////////////////////////////////////
 return {
 
-    createGroupDisplay: function (obj) {
-        var href = document.getElementById('membicgroupdiv').innerHTML;
+    createCoopDisplay: function (obj) {
+        var href = document.getElementById('membiccoopdiv').innerHTML;
         href = href.slice(href.indexOf("href=") + 6);
         href = href.slice(0, href.indexOf('"'));
         siteroot = href.slice(0, href.indexOf("?"));
-        if(loadScripts(["jtmin.js"], membicEmbed.createGroupDisplay)) {
+        if(loadScripts(["jtmin.js"], membicEmbed.createCoopDisplay)) {
             jtminjsDecorateWithUtilities(jt);
             embparams = jt.paramsToObj(href.slice(href.indexOf("?") + 1),
                                        embparams, "String");
@@ -105,5 +105,5 @@ return {
 };  //end of returned functions
 }());
 
-membicEmbed.createGroupDisplay();
+membicEmbed.createCoopDisplay();
 

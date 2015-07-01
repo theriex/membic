@@ -84,7 +84,7 @@ def is_content_linkback(val):
     return False
 
 
-# Translate and group referral URLs into bite size series identifiers
+# Translate and collect referral URLs into series identifiers
 def bump_referral(stat, entry, val):
     if "facebook" in val:
         bump_referral_count(stat, entry + "FB")
@@ -148,7 +148,7 @@ def btw_activity(src, request):
     stat = get_activity_stat(sday)
     note_agent(agentstr, stat)
     val = request.get("clickthrough")
-    if val:  # Somebody accessed the site for a specific group, or to
+    if val:  # Somebody accessed the site for a specific coop, or to
              # remember/helpful/respond a review. Note for linkback.
         stat.clickthru += 1
     val = request.get("referral")

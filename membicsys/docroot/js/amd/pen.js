@@ -26,10 +26,10 @@ app.pen = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    fetchGroupAndRetry = function (groupid, penid, divid, callback) {
-        jt.out(divid, "Fetching group " + groupid + "...");
-        app.pgd.blockfetch("group", groupid, function (group) {
-            app.pen.groupNames(penid, divid, callback); }, divid);
+    fetchCoopAndRetry = function (coopid, penid, divid, callback) {
+        jt.out(divid, "Fetching cooperative theme " + coopid + "...");
+        app.pcd.blockfetch("coop", coopid, function (coop) {
+            app.pen.coopNames(penid, divid, callback); }, divid);
     },
 
 
@@ -111,58 +111,58 @@ return {
 
 
     getPen: function (penid, callback, divid) {
-        app.pgd.blockfetch("pen", penid, callback, divid);
+        app.pcd.blockfetch("pen", penid, callback, divid);
     },
 
 
     bypenid: function (penid, tabname) {
         var penref = app.lcs.getRef("pen", penid);
         if(penref.pen) {
-            return app.pgd.display("pen", penid, tabname, penref.pen); }
-        app.pgd.fetchAndDisplay("pen", penid, tabname);
+            return app.pcd.display("pen", penid, tabname, penref.pen); }
+        app.pcd.fetchAndDisplay("pen", penid, tabname);
     },
 
 
-    groupNames: function (pen, divid, callback) {
-        var ids, i, groupid, groupref, ret = {};
-        pen.groups = pen.groups || "";
-        ids = pen.groups.csvarray();
+    coopNames: function (pen, divid, callback) {
+        var ids, i, coopid, coopref, ret = {};
+        pen.coops = pen.coops || "";
+        ids = pen.coops.csvarray();
         for(i = 0; i < ids.length; i += 1) {
-            groupid = ids[i];
-            if(!ret[groupid]) {  //try cache lookup
-                groupref = app.lcs.getRef("group", groupid);
-                if(groupref.group) {
-                    ret[groupid] = groupref.group.name; } }
-            if(!ret[groupid]) {  //try stashed value from group.verifyStash
-                if(pen.stash && pen.stash["grp" + groupid] &&
-                   pen.stash["grp" + groupid].name) {
-                    ret[groupid] = pen.stash["grp" + groupid].name; } }
-            if(!ret[groupid] && groupref.status === "not cached") {
-                return fetchGroupAndRetry(groupid, pen, divid, callback); } }
+            coopid = ids[i];
+            if(!ret[coopid]) {  //try cache lookup
+                coopref = app.lcs.getRef("coop", coopid);
+                if(coopref.coop) {
+                    ret[coopid] = coopref.coop.name; } }
+            if(!ret[coopid]) {  //try stashed value from coop.verifyStash
+                if(pen.stash && pen.stash["ctm" + coopid] &&
+                   pen.stash["ctm" + coopid].name) {
+                    ret[coopid] = pen.stash["ctm" + coopid].name; } }
+            if(!ret[coopid] && coopref.status === "not cached") {
+                return fetchCoopAndRetry(coopid, pen, divid, callback); } }
         callback(ret);
     },
 
 
-    postableGroups: function (pen) {
-        var grps, key, obj;
+    postableCoops: function (pen) {
+        var ctms, key, obj;
         pen = pen || app.pen.myPenName();
         if(!pen.stash) {
             return []; }
-        grps = [];
+        ctms = [];
         for(key in pen.stash) {
             if(pen.stash.hasOwnProperty(key)) {
-                if(key.startsWith("grp")) {
+                if(key.startsWith("ctm")) {
                     obj = pen.stash[key];
                     if(obj.memlev >= 1) {
-                        obj.grpid = key.slice(3);
-                        grps.push(obj); } } } }
-        grps.sort(function (a, b) {
+                        obj.ctmid = key.slice(3);
+                        ctms.push(obj); } } } }
+        ctms.sort(function (a, b) {
             if(a.lastpost && !b.lastpost) { return -1; }
             if(!a.lastpost && b.lastpost) { return 1; }
             if(a.lastpost < b.lastpost) { return 1; }
             if(a.lastpost > b.lastpost) { return -1; }
             return 0; });
-        return grps;
+        return ctms;
     },
 
 

@@ -55,7 +55,51 @@ indexes:
 
 - kind: Review
   properties:
+  - name: coopid
+  - name: mainfeed
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: coopid
+  - name: mainfeed
+  - name: revtype
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: coopid
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: coopid
+  - name: penid
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: coopid
+  - name: penid
+  - name: revtype
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: coopid
+  - name: revtype
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
   - name: penid
   - name: srcrev
   - name: modified
     direction: desc
+

@@ -45,12 +45,12 @@ app.lcs = (function () {
                    return "revid=" + id; },
                putprep: function (revobj) {
                    app.review.deserializeFields(revobj); } },
-        group: { refs: {},
-                 fetchend: "grpbyid",
+        coop: { refs: {},
+                 fetchend: "ctmbyid",
                  fetchparamf: function (id) {
-                     return "groupid=" + id; },
-                 putprep: function (grpobj) {
-                     app.group.deserializeFields(grpobj); } } },
+                     return "coopid=" + id; },
+                 putprep: function (ctmobj) {
+                     app.coop.deserializeFields(ctmobj); } } },
 
 
     ////////////////////////////////////////
@@ -234,7 +234,7 @@ return {
                     rev = revref.rev;
                     if((!revtype || rev.revtype === revtype) &&
                        (!penid || rev.penid === penid) && 
-                       rev.srcrev >= 0 && !rev.grpid) {
+                       rev.srcrev >= 0 && !rev.ctmid) {
                         results.push(rev); } } } }
         return results;
     }

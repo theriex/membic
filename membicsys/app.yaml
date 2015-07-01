@@ -128,8 +128,8 @@ handlers:
 - url: /toghelpful.*
   script: src.py.rev.app
 
-## Write the given review and associated group reviews
-## POST params: authparams, rev, grpids
+## Write the given review and associated coop reviews
+## POST params: authparams, rev, ctmids
 - url: /saverev.*
   script: src.py.rev.app
 
@@ -164,44 +164,44 @@ handlers:
 - url: /fetchprerevs.*
   script: src.py.rev.app
 
-## Return recent and top reviews for a group or pen
-## GET params: grpid or penid or authparams
+## Return recent and top reviews for a coop or pen
+## GET params: ctmid or penid or authparams
 - url: /blockfetch.*
   script: src.py.rev.app
 
 
 ######################################################################
-##        Groups
+##        Coops
 
-## Create a new group or update a group description
-## POST params: penid, group, authparams
-- url: /grpdesc.*
-  script: src.py.group.app
+## Create a new coop or update a coop description
+## POST params: penid, coop, authparams
+- url: /ctmdesc.*
+  script: src.py.coop.app
 
-## Return the group for the given id
-## GET params: groupid
-- url: /grpbyid.*
-  script: src.py.group.app
+## Return the coop for the given id
+## GET params: coopid
+- url: /ctmbyid.*
+  script: src.py.coop.app
 
-## Retrieve a group pic
-## GET params: groupid
-- url: /grppic.*
-  script: src.py.group.app
+## Retrieve a coop pic
+## GET params: coopid
+- url: /ctmpic.*
+  script: src.py.coop.app
 
-## Apply for next level group membership
-## POST params: action (apply/withdraw), penid, groupid, authparams
-- url: /grpmemapply.*
-  script: src.py.group.app
+## Apply for next level coop membership
+## POST params: action (apply/withdraw), penid, coopid, authparams
+- url: /ctmmemapply.*
+  script: src.py.coop.app
 
 ## Process membership application: reject, ignore, accept
-## POST params: action, penid, groupid, seekerid, authparams
-- url: /grpmemprocess.*
-  script: src.py.group.app
+## POST params: action, penid, coopid, seekerid, authparams
+- url: /ctmmemprocess.*
+  script: src.py.coop.app
 
-## Fetch general group statistics
+## Fetch general coop statistics
 ## GET params: none
-- url: /grpstats.*
-  script: src.py.group.app
+- url: /ctmstats.*
+  script: src.py.coop.app
 
 
 ######################################################################
@@ -256,9 +256,9 @@ handlers:
 ######################################################################
 # Summaries and stats
 
-## Fetch RSS feed content for the specified group
-## GET params: grpid
-- url: /rssgroup.*
+## Fetch RSS feed content for the specified coop
+## GET params: ctmid
+- url: /rsscoop.*
   script: src.py.rssact.app
 
 ## Fetch activity statistics for the site (used by actstat.js)

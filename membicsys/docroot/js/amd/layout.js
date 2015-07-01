@@ -165,9 +165,9 @@ return {
         };
         jt.errhtml = function (actverb, code, errtxt) {
             if(code === 409) {
-                errtxt = errtxt.replace(/group \d+/g, function (grpref) {
-                    return jt.makelink("?view=group&groupid=" + 
-                                       grpref.slice(5)); }); }
+                errtxt = errtxt.replace(/coop \d+/g, function (ctmref) {
+                    return jt.makelink("?view=coop&coopid=" + 
+                                       ctmref.slice(5)); }); }
             return actverb + " failed code " + code + ": " + errtxt;
         };
     },

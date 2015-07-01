@@ -10,7 +10,7 @@ import json
 import string
 import random
 from cacheman import *
-import group
+import coop
 import rev
 
 
@@ -37,6 +37,7 @@ class PenName(db.Model):
     background = db.TextProperty()  # CSV of penids with reduced priority
     blocked = db.TextProperty()     # CSV of penids to be avoided
     groups = db.TextProperty()      # groupids this pen is following
+    coops = db.TextProperty()       # coopids this pen is following
 
 
 def authorized(acc, pen):
@@ -78,7 +79,7 @@ def set_pen_attrs(pen, request):
     pen.preferred = str(request.get('preferred')) or ""
     pen.background = str(request.get('background')) or ""
     pen.blocked = str(request.get('blocked')) or ""
-    pen.groups = str(request.get('groups')) or ""
+    pen.coops = str(request.get('coops')) or ""
 
 
 def gen_password():
@@ -96,7 +97,7 @@ def updateable_pen(handler):
         handler.error(401)  # unauthorized
         handler.response.out.write("Authentication failed")
         return False
-    # penid lookup takes precedence so you can find the pen for a group
+    # penid lookup takes precedence so you can find the pen for a coop
     penid = intz(handler.request.get('penid'))
     if not penid:
         penid = intz(handler.request.get('_id'))
@@ -175,19 +176,19 @@ def find_auth_pens(handler):
 
 def reflect_pen_name_change(pen, prev_name):
     penid = str(pen.key().id())
-    for grpid in csv_list(pen.groups):
-        grp = group.Group.get_by_id(int(grpid))
-        if grp.people:
-            pdict = json.loads(grp.people)
+    for ctmid in csv_list(pen.coops):
+        ctm = coop.Coop.get_by_id(int(ctmid))
+        if ctm.people:
+            pdict = json.loads(ctm.people)
             if penid in pdict:
                 pdict[penid] = pen.name
-            grp.people = json.dumps(pdict)
-            cached_put(grp)
-            memcache.delete("group" + grpid)
+            ctm.people = json.dumps(pdict)
+            cached_put(ctm)
+            memcache.delete("coop" + ctmid)
             # force updated info retrieval for any subsequent call
-            grp = group.Group.get_by_id(int(grpid))
+            ctm = coop.Coop.get_by_id(int(ctmid))
     # update recent reviews using same index as rev.py rebuild_reviews_block
-    where = "WHERE grpid = 0 AND penid = :1 ORDER BY modified DESC"
+    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
     rq = rev.Review.gql(where, int(penid))
     revs = rq.fetch(300, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for review in revs:
@@ -263,24 +264,24 @@ class UploadPic(webapp2.RequestHandler):
             return
         updobj = pen  # default is uploading a pic for your profile
         picfor = self.request.get('picfor') or "pen"
-        if picfor == "group":
-            grp, role = group.fetch_group_and_role(self, pen)
-            if not grp:
+        if picfor == "coop":
+            ctm, role = coop.fetch_coop_and_role(self, pen)
+            if not ctm:
                 return  # error already reported
             if not role or role != "Founder":
-                return srverr(self, 403, "Only founders may upload a group pic")
-            updobj = grp
+                return srverr(self, 403, "Only founders may upload a coop pic")
+            updobj = ctm
         upfile = self.request.get("picfilein")
         if not upfile:
             return srverr(self, 400, "No picture file received")
         logging.info("Pic upload for " + picfor + " " + str(updobj.key().id()))
         try:
             # resize images to max 160 x 160 px
-            if picfor == "group":
-                grp.picture = db.Blob(upfile)
-                grp.picture = images.resize(grp.picture, 160, 160)
-                grp.modified = nowISO()
-                cached_put(grp)
+            if picfor == "coop":
+                ctm.picture = db.Blob(upfile)
+                ctm.picture = images.resize(ctm.picture, 160, 160)
+                ctm.modified = nowISO()
+                cached_put(ctm)
             else:
                 pen.profpic = db.Blob(upfile)
                 pen.profpic = images.resize(pen.profpic, 160, 160)

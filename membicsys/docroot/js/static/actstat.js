@@ -517,11 +517,11 @@ var actstat = (function () {
     },
 
 
-    displayGroupStats = function (stat) {
+    displayCoopStats = function (stat) {
         var mwcn = jt.canonize(stat.memwin),
-            mwurl = "../groups/" + mwcn;
-        jt.out('groupstatsdiv', jt.tac2html(
-            [["span", {cla: "statlabel"}, "Total Groups"],
+            mwurl = "../coops/" + mwcn;
+        jt.out('coopstatsdiv', jt.tac2html(
+            [["span", {cla: "statlabel"}, "Total Coops"],
              ["span", {cla: "statval"}, stat.total],
              ["span", {cla: "statlabel"}, "Members"],
              ["span", {cla: "statlab2"}, "avg"],
@@ -538,14 +538,14 @@ var actstat = (function () {
     },
 
 
-    fetchAndDisplayGroupStats = function () {
-        jt.call('GET', "../grpstats", null,
+    fetchAndDisplayCoopStats = function () {
+        jt.call('GET', "../ctmstats", null,
                 function (stat) {
-                    displayGroupStats(stat); },
+                    displayCoopStats(stat); },
                 function (code, errtxt) {
-                    jt.out('groupstatsdiv', "grpstats call failed " + code +
+                    jt.out('coopstatsdiv', "ctmstats call failed " + code +
                            ": " + errtxt); },
-                jt.semaphore("actstat.fetchAndDisplayGroupStats"));
+                jt.semaphore("actstat.fetchAndDisplayCoopStats"));
     },
 
 
@@ -559,7 +559,7 @@ var actstat = (function () {
                     fetchBotListAndDisplayAgents();
                     displayActivityGraph();
                     displayUserAverages();
-                    fetchAndDisplayGroupStats(); },
+                    fetchAndDisplayCoopStats(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },
