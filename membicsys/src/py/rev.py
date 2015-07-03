@@ -825,10 +825,17 @@ def convert_pen_group_refs(handler):
     handler.response.out.write("convert_pen_group_refs completed.<br>\n")
 
 
-def convert_rev_svcdata_grouprefs(handler, svcdata):
+def convert_rev_svcdata_grouprefs(handler, rev):
+    svcdata = rev.svcdata
     if not svcdata:
         return ""
-    sdict = json.loads(svcdata)
+    sdict = {}
+    try:
+        sdict = json.loads(svcdata)
+    except Exception as e:
+        logging.info("Review " + str(rev.key().id()) + " svcdata: " + svcdata +
+                     " could not be deserialized. Initializing to empty string")
+        return ""
     if "postgrps" not in sdict:
         return svcdata
     postobjs = sdict["postgrps"]
@@ -852,7 +859,7 @@ def convert_rev_group_refs(handler):
         count += 1
         if rev.grpid <= 0:  # no group, future or batch indicator
             rev.ctmid = rev.grpid
-            rev.svcdata = convert_rev_svcdata_grouprefs(handler, rev.svcdata)
+            rev.svcdata = convert_rev_svcdata_grouprefs(handler, rev)
         elif rev.grpid > 0: # review is a group posting
             rev.ctmid = ctmid_for_grpid(handler, rev.grpid)
         rev.grpid = -404
