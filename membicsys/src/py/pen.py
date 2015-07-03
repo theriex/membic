@@ -18,17 +18,19 @@ class PenName(db.Model):
     """ A review author """
     name = db.StringProperty(required=True)
     name_c = db.StringProperty(required=True)
-    # one or more id values must be specified for authorized access
+    # indexed authentication ids (only mid is currently used)
     mid = db.IntegerProperty()
     gsid = db.StringProperty()      # Google IDs are too big to fit in an int64
     fbid = db.IntegerProperty()
     twid = db.IntegerProperty()
     ghid = db.IntegerProperty()
-    # detail fields
-    shoutout = db.TextProperty()
-    profpic = db.BlobProperty()
+    # indexed fields
     accessed = db.StringProperty()  # ISO date when last logged in
     modified = db.StringProperty()  # ISO date when last changed
+    convidx = db.IntegerProperty()  # Data conversion iteration marker
+    # non-indexed fields
+    shoutout = db.TextProperty()
+    profpic = db.BlobProperty()
     remembered = db.TextProperty()  # CSV of revids for reference
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     stash = db.TextProperty()       # precomputed vals, breadcrumbs and such

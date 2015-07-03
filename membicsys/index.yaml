@@ -12,6 +12,49 @@ indexes:
 
 - kind: Review
   properties:
+  - name: ctmid
+  - name: mainfeed
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: ctmid
+  - name: mainfeed
+  - name: revtype
+  - name: modhist
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: ctmid
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: ctmid
+  - name: penid
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: ctmid
+  - name: penid
+  - name: revtype
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: ctmid
+  - name: revtype
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
   - name: grpid
   - name: mainfeed
   - name: modhist
@@ -49,49 +92,6 @@ indexes:
 - kind: Review
   properties:
   - name: grpid
-  - name: revtype
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
-  - name: mainfeed
-  - name: modhist
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
-  - name: mainfeed
-  - name: revtype
-  - name: modhist
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
-  - name: penid
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
-  - name: penid
-  - name: revtype
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: coopid
   - name: revtype
   - name: modified
     direction: desc
@@ -102,4 +102,3 @@ indexes:
   - name: srcrev
   - name: modified
     direction: desc
-

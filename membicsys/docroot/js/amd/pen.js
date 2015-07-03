@@ -41,7 +41,11 @@ app.pen = (function () {
 
 
     updatePenName = function (pen, callok, callfail) {
-        var data;
+        var data, acctval = "";
+        if(pen.stash && pen.stash.account) {
+            //do not leak account info in to general JSON field when writing
+            acctval = pen.stash.account;
+            pen.stash.account = ""; }
         app.pen.serializeFields(pen);
         data = jt.objdata(pen, ["recent", "top20s"]);
         app.pen.deserializeFields(pen);  //in case update fail or interim use
@@ -49,6 +53,8 @@ app.pen = (function () {
                  function (updpens) {
                      updpens[0].recent = pen.recent;
                      app.lcs.put("pen", updpens[0]);
+                     if(updpens[0].stash) {
+                         updpens[0].stash.account = acctval; }
                      callok(updpens[0]); },
                  app.failf(function (code, errtxt) {
                      callfail(code, errtxt); }),
