@@ -790,7 +790,7 @@ def ctmid_for_grpid(handler, grpid):
         handler.response.out.write(msg + "<br>\n")
         logging.info(msg)
         return 0
-    ctmid = grp.calembed[len(ktx):]
+    ctmid = int(grp.calembed[len(ktx):])
     return ctmid
 
 
@@ -843,7 +843,7 @@ def convert_rev_svcdata_grouprefs(handler, rev):
         return svcdata
     for po in postobjs:
         if "grpid" in po:
-            po["ctmid"] = str(ctmid_for_grpid(handler, po["grpid"]))
+            po["ctmid"] = str(ctmid_for_grpid(handler, int(po["grpid"])))
     svcdata = json.dumps(sdict)
     return svcdata
 
