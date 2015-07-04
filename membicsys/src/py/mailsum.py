@@ -13,6 +13,7 @@ from google.appengine.ext.webapp.mail_handlers import BounceNotificationHandler
 import textwrap
 from cacheman import *
 import re
+from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
 
 class ActivityStat(db.Model):
@@ -138,7 +139,7 @@ def note_agent(agentstr, stat):
         stat.agents += agentstr
 
 
-def btw_activity(src, request):
+def btw_activity(handler, src, request):
     agentstr = request.headers.get('User-Agent')
     logging.info("btw_activity " + src + " agent: " + agentstr)
     agentstr = agentstr[:255]  #These CAN grow huge
@@ -153,9 +154,12 @@ def btw_activity(src, request):
         stat.clickthru += 1
     val = request.get("referral")
     if val:  # Somebody clicked on a link to the core application.
-             # Note for possible linkback.
+             # Note for possible linkback.d
         bump_referral(stat, "core", val)
-    stat.put()  #nocache
+    try:
+        stat.put()  #nocache
+    except OverQuotaError as oqe:
+        srverr(handler, 503, "stat put failure, database writes over quota")
             
 
 def split_output(response, text):
@@ -229,7 +233,7 @@ class UserActivity(webapp2.RequestHandler):
 
 class ByTheWay(webapp2.RequestHandler):
     def get(self):
-        btw_activity("/bytheway", self.request)
+        btw_activity(self, "/bytheway", self.request)
 
 
 # Handler from retired "bytheimg" endpoint. Leaving the code here for
@@ -237,7 +241,7 @@ class ByTheWay(webapp2.RequestHandler):
 class ByTheImg(webapp2.RequestHandler):
     """ alternative approach when XMLHttpRequest is a hassle """
     def get(self):
-        btw_activity("/bytheimg", self.request)
+        btw_activity(self, "/bytheimg", self.request)
         # hex values for a 4x4 transparent PNG created with GIMP:
         imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
         img = images.Image(imgstr)

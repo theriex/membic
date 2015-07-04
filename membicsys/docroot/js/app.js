@@ -194,6 +194,9 @@ var app = {},  //Global container for application level funcs and values
             //   404 (not found) -> general error handling
             //   405 (GET instead of POST) -> general error handling
             //   412 (precondition failed) -> general error handling
+            case 503:
+                jt.err("Server quota exceeded, some operations may not be available for the rest of the day");
+                return failfunc(code, errtxt, method, url, data);
             case 500: 
                 return app.crash(code, errtxt, method, url, data);
             default: 
