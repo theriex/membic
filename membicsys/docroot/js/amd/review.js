@@ -599,8 +599,15 @@ app.review = (function () {
     },
 
 
+    convertOldThemePostLabel = function (rev) {
+        if(rev.svcdata && rev.svcdata.postgrps && !rev.svcdata.postctms) {
+            rev.svcdata.postctms = rev.svcdata.postgrps; }
+    },
+
+
     postedCoopLinksHTML = function (rev) {
         var postnotes, links, html, i, pn;
+        convertOldThemePostLabel(rev);
         if(!rev.svcdata || !rev.svcdata.postctms) {
             return ""; }
         postnotes = rev.svcdata.postctms;
@@ -1237,6 +1244,7 @@ app.review = (function () {
     postedCoopRevId = function (ctmid, rev) {
         var ctms, i;
         rev = rev || crev;
+        convertOldThemePostLabel(rev);
         if(!rev.svcdata || !rev.svcdata.postctms) {
             return 0; }
         ctms = rev.svcdata.postctms;
@@ -1272,7 +1280,7 @@ app.review = (function () {
 
 
     revurl = function (rev) {
-        if(rev.ctmid) {
+        if(rev.ctmid && rev.ctmid !== "0") {
             return "?view=coop&coopid=" + rev.ctmid + "&tab=recent&expid=" +
                 jt.instId(rev); }
         return "?view=pen&penid=" + rev.penid + "&tab=recent&expid=" +
