@@ -253,6 +253,10 @@ class UpdatePenName(webapp2.RequestHandler):
         cached_put(pen)
         if prev_name != pen.name:
             reflect_pen_name_change(pen, prev_name)
+        try:
+            add_account_info_to_pen_stash(acc, pen)
+        except Exception as e:
+            logging.info("Account info stash failure for updated pen " + str(e))
         returnJSON(self.response, [ pen ])
         
 

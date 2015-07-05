@@ -886,6 +886,11 @@ class SaveReview(webapp2.RequestHandler):
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
         write_review(review, pnm) # updates pen top20s
         write_coop_reviews(review, pnm, self.request.get('ctmids'))
+        acc = authenticated(self.request)
+        try:
+            pen.add_account_info_to_pen_stash(acc, pnm)
+        except Exception as e:
+            logging.info("Account info stash failure for updated pen " + str(e))
         returnJSON(self.response, [ pnm, review ])
 
 
