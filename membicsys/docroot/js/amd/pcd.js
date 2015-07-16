@@ -662,13 +662,13 @@ app.pcd = (function () {
                    [["div", {cla: "pcdtoggle"},
                      ["a", {href: "#findcoops",
                             onclick: jt.fs("app.pcd.toggleFindCoops()")},
-                      "Follow coops"]],
+                      "Follow cooperative themes"]],
                     ["div", {id: "findctmdiv"}]]]);
         html.push(["div", {cla: "pcdtext"},
                    [["div", {cla: "pcdtoggle"},
                      ["a", {href: "#createcoop",
                             onclick: jt.fs("app.pcd.toggleCreateCoop()")},
-                      "Create coop"]],
+                      "Create cooperative theme"]],
                     ["div", {id: "createctmdiv"}]]]);
         jt.out('pcdcontdiv', jt.tac2html(html));
     },
@@ -757,11 +757,15 @@ app.pcd = (function () {
         var mpi, msg;
         mpi = app.pen.myPenId();
         msg = "Retrieving " + dtype.capitalize() + " " + id + "...";
-        if(dtype === "pen") {
+        if(dtype === "coop") {
+            msg = "Retrieving cooperative theme " + id + "...";
+            if(app.coopnames[id]) {
+                msg = "Retrieving " + app.coopnames[id] + "..."; } }
+        else if(dtype === "pen") {
             if((!id && !mpi) || (id && id === mpi)) {
                 msg = "Retrieving your Pen Name..."; }
             else if(app.pennames[id]) {
-                msg = "Retrieving " + app.pennames[id]; }
+                msg = "Retrieving " + app.pennames[id] + "..."; }
             else {
                 msg = "Retrieving Pen Name " + id + "..."; } }
         jt.out(divid, msg);

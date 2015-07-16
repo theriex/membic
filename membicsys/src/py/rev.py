@@ -30,7 +30,6 @@ class Review(db.Model):
     """ A review of something """
     revtype = db.StringProperty(required=True)   # book, movie, music...
     penid = db.IntegerProperty(required=True)    # who wrote the review
-    grpid = db.IntegerProperty()                 # 0 if source review
     ctmid = db.IntegerProperty()                 # 0 if source review
     rating = db.IntegerProperty()                # 0-100
     srcrev = db.IntegerProperty()                # see class comment

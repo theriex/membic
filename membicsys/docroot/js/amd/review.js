@@ -1288,6 +1288,17 @@ app.review = (function () {
     },
 
 
+    cacheNames = function (rev) {
+        var ctms, i;
+        app.pennames[rev.penid] = rev.penname;
+        convertOldThemePostLabel(rev);
+        if(rev.svcdata && rev.svcdata.postctms) {
+            ctms = rev.svcdata.postctms;
+            for(i = 0; i < ctms.length; i += 1) {
+                app.coopnames[ctms[i].ctmid] = ctms[i].name; } }
+    },
+
+
     updateReviewDialogContents = function () {
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
@@ -1875,7 +1886,7 @@ return {
         //Displaying more than 100 reviews gets overwhelming..
         for(i = 0; i < revs.length && i < 100; i += 1) {
             rev = revs[i];
-            app.pennames[rev.penid] = rev.penname;
+            cacheNames(rev);
             revdivid = prefix + jt.instId(rev);
             pr = (i > 0)? revs[i - 1] : null;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};

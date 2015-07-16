@@ -38,7 +38,6 @@ class PenName(db.Model):
     preferred = db.TextProperty()   # CSV of penids given priority
     background = db.TextProperty()  # CSV of penids with reduced priority
     blocked = db.TextProperty()     # CSV of penids to be avoided
-    groups = db.TextProperty()      # groupids this pen is following
     coops = db.TextProperty()       # coopids this pen is following
 
 
