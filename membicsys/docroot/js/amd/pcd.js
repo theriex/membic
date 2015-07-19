@@ -88,7 +88,7 @@ app.pcd = (function () {
              canbtn: "",
              restxt: "If you no longer want ownership, you can resign as a Founder and allow others to continue the cooperative theme.",
              resbtn: "Resign as Founder",
-             rescnf: "Are you sure you want to resign as Founder?"}],
+             resconf: "Are you sure you want to resign as Founder?"}],
 
 
     ////////////////////////////////////////
@@ -262,6 +262,8 @@ app.pcd = (function () {
         var penid;
         if(logentry.action === "Removed Review") {
             return logentry.tname; }
+        if(logentry.action.startsWith("Resigned")) {
+            return ""; }
         penid = logentry.targid;
         return ["a", {href: "view=pen&penid=" + penid,
                       onclick: jt.fs("app.pen.bypenid('" + penid + "')")},

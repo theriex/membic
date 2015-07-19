@@ -182,7 +182,35 @@ def verify_people(coop):
     coop.people = json.dumps(pdict)
 
 
+def membership_action_allowed(coop, action, pnm, seekerpen, seekrole, reason):
+    if action == "demote":
+        if seekerpen.key().id() == pnm.key().id():
+            return True   # You can always resign
+        elif role == "Founder":
+            if seekrole != "Founder":
+                return True  # Founders can demote anyone except other Founders
+        elif role == "Moderator":
+            if seekrole == "Member":
+                return True  # Moderators may remove problematic members
+    elif action == "accept":
+        if role == "Founder":
+            return True  # Founders can accept anyone to any position
+        elif role == "Moderator":
+            if seekrole == "NotFound":
+                return True  # Moderators may accept new members
+        # allow for taking over if all positions vacated:
+        if not coop.founders:
+            if seekrole == "Founder":
+                return True;  # Congrats, the position is yours
+            if seekrole == "Moderator":
+                return True;  # No founder to approve, so auto ok
+            if not coop.moderators:
+                return True;  # No founders or moderators, join the anarchy
+    return False
+
+
 def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
+    # Caller has determined the action is allowed, just process if possible
     seekerid = str(seekerpen.key().id());
     if action == "reject":
         coop.seeking = remove_from_csv(seekerid, coop.seeking)
@@ -206,13 +234,23 @@ def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
             msg = msg + "Member"
             update_coop_admin_log(coop, pnm, msg, seekerpen, "")
     elif action == "demote":
-        if csv_contains(seekerid, coop.moderators):
+        msg = "Demoted "
+        if seekerpen.key().id() == pnm.key().id():
+            msg = "Resigned as "
+        if csv_contains(seekerid, coop.founders):
+            coop.founders = remove_from_csv(seekerid, coop.founders)
+            coop.moderators = append_to_csv(seekerid, coop.moderators)
+            update_coop_admin_log(coop, pnm, msg + "Founder",
+                                  seekerpen, reason)
+        elif csv_contains(seekerid, coop.moderators):
             coop.moderators = remove_from_csv(seekerid, coop.moderators)
             coop.members = append_to_csv(seekerid, coop.members)
+            update_coop_admin_log(coop, pnm, msg + "Moderator",
+                                  seekerpen, reason)
         elif csv_contains(seekerid, coop.members):
             coop.members = remove_from_csv(seekerid, coop.members)
-            update_coop_admin_log(coop, pnm, "Demoted Member", 
-                                   seekerpen, reason)
+            update_coop_admin_log(coop, pnm, msg + "Member",
+                                  seekerpen, reason)
     else:
         logging.info("process_membership_action unknown action: " + action)
         return
@@ -335,18 +373,17 @@ class ProcessMembership(webapp2.RequestHandler):
                            (action == "demote" and seekerid != penid)):
             return srverr(self, 400, "Rejection reason required")
         seekrole = pen_role(seekerid, coop)
-        if not (role == "Founder" or 
-                (role == "Moderator" and 
-                 ((action == "accept" and seekrole == "NotFound") or
-                  (action != "accept" and seekrole == "Member")))):
-            return srverr(self, 400, "Processing not authorized")
         seekerpen = pen.PenName.get_by_id(int(seekerid))
         if not seekerpen:
             return srverr(self, 400, "No seeker PenName " + seekerid)
-        #if seeker not found, treat as already processed rather than error
+        if not membership_action_allowed(coop, action, pnm, 
+                                         seekerpen, seekrole, reason):
+            return srverr(self, 400, "Membership modification not authorized")
         if action == "demote" or csv_contains(seekerid, coop.seeking):
             process_membership_action(coop, action, pnm, 
                                       seekerpen, seekrole, reason)
+        else:
+            return srverr(self, 400, "Membership changed already")
         returnJSON(self.response, [ coop ])
 
 
