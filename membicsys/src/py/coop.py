@@ -182,7 +182,7 @@ def verify_people(coop):
     coop.people = json.dumps(pdict)
 
 
-def membership_action_allowed(coop, action, pnm, seekerpen, seekrole, reason):
+def membership_action_allowed(coop, action, pnm, role, seekerpen, seekrole):
     if action == "demote":
         if seekerpen.key().id() == pnm.key().id():
             return True   # You can always resign
@@ -256,6 +256,7 @@ def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
         return
     verify_people(coop)
     cached_put(coop)
+    Coop.get_by_id(coop.key().id())
 
 
 class UpdateDescription(webapp2.RequestHandler):
@@ -294,6 +295,7 @@ class UpdateDescription(webapp2.RequestHandler):
         coop.people = ""   # have to rebuild sometime and this is a good time
         verify_people(coop)
         cached_put(coop)
+        Coop.get_by_id(coop.key().id())
         # not storing any precomputed coop queries, so no cache keys to bust
         returnJSON(self.response, [ coop ])
 
@@ -346,10 +348,12 @@ class ApplyForMembership(webapp2.RequestHandler):
                 coop.seeking = append_id_to_csv(penid, coop.seeking)
                 verify_people(coop)
                 cached_put(coop)
+                Coop.get_by_id(coop.key().id())
         if action == "withdraw":
             coop.seeking = remove_id_from_csv(pnm.key().id(), coop.seeking)
             verify_people(coop)
             cached_put(coop)
+            Coop.get_by_id(coop.key().id())
         returnJSON(self.response, [ coop ])
 
 
@@ -376,8 +380,8 @@ class ProcessMembership(webapp2.RequestHandler):
         seekerpen = pen.PenName.get_by_id(int(seekerid))
         if not seekerpen:
             return srverr(self, 400, "No seeker PenName " + seekerid)
-        if not membership_action_allowed(coop, action, pnm, 
-                                         seekerpen, seekrole, reason):
+        if not membership_action_allowed(coop, action, pnm, role,
+                                         seekerpen, seekrole):
             return srverr(self, 400, "Membership modification not authorized")
         if action == "demote" or csv_contains(seekerid, coop.seeking):
             process_membership_action(coop, action, pnm, 
