@@ -77,7 +77,7 @@ var app = {},  //Global container for application level funcs and values
         var knownhost = false,
             tcs = ["https://www.membic.com",
                    "http://localhost:8080",
-                   //http://192.168.0.5:8080,
+                   //"http://10.0.0.4:8080",
                    "https://membicsys.appspot.com"];
         tcs.every(function (hosturl) {
             if(window.location.href.indexOf(hosturl) === 0) {

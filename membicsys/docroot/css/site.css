@@ -137,7 +137,6 @@ button, .loginbutton, .formbutton {
 .accstatvalspan { font-size:small; font-style:italic; padding:0px 4px 0px 0px; }
 #accstatdetaildiv { font-size:small; padding:5px 5px 0px 5px; }
 #buttonornotespan { font-size:small; }
-#loginbuttonsdiv button { margin:0px 0px 0px 20px; }
 #forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #forgotpw { }
 #accsetdiv { position:absolute; top:0px; right:0; width:300px; 
