@@ -245,6 +245,14 @@ app.review = (function () {
     },
 
 
+    //If the review.url has known issues, fix it
+    fixReviewURL = function (rev) {
+        //Amazon detail urls have extra encoding that needs to be removed
+        if(rev.url.indexOf("%3Dmembic-20%26") >= 0) {
+            rev.url = jt.dec(rev.url); }
+    },
+
+
     revFormImageHTML = function (review, type, keyval, mode) {
         var html;
         if(!keyval) {
@@ -1799,6 +1807,7 @@ return {
         togclick = jt.fs(togfname + "('" + prefix + "','" + revid + "')");
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
+        fixReviewURL(rev);
         html = ["div", {cla: (prefix === "rrd"? "fpmeminrevdiv"
                                               : "fpinrevdiv")},
                 [["div", {cla: "fpbuttonsdiv", 
