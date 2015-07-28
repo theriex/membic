@@ -697,6 +697,7 @@ app.pcd = (function () {
                 elem.className = "unselectedTab"; } });
         jt.byId(tabname + "li").className = "selectedTab";
         dst.tab = tabname;
+        historyCheckpoint();  //history collapses tab changes
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.isId(jt.instId(dst.obj))) {
@@ -1094,7 +1095,6 @@ return {
 
 
     tabsel: function (tabname) {
-        historyCheckpoint();  //history collapses tab changes
         displayTab(tabname);
     },
 
