@@ -137,11 +137,13 @@ return {
             if(!ret[coopid]) {  //try cache lookup
                 coopref = app.lcs.getRef("coop", coopid);
                 if(coopref.coop) {
-                    ret[coopid] = coopref.coop.name; } }
+                    ret[coopid] = coopref.coop.name;
+                    app.coopnames[coopid] = ret[coopid]; } }
             if(!ret[coopid]) {  //try stashed value from coop.verifyStash
                 if(pen.stash && pen.stash["ctm" + coopid] &&
                    pen.stash["ctm" + coopid].name) {
-                    ret[coopid] = pen.stash["ctm" + coopid].name; } }
+                    ret[coopid] = pen.stash["ctm" + coopid].name;
+                    app.coopnames[coopid] = ret[coopid]; } }
             if(!ret[coopid] && coopref.status === "not cached") {
                 fetchCoopAndRetry(coopid, pen, divid, callback);
                 return false; }
