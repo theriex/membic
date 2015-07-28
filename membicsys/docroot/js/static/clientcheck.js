@@ -1,5 +1,5 @@
-/*global jt: false, jtminjsDecorateWithUtilities: false */
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*global jt, jtminjsDecorateWithUtilities, navigator */
+/*jslint white, fudge */
 
 //This is a degenerate standalone module used for testing.  Don't model it.
 var clientcheck = (function () {

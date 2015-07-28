@@ -1,4 +1,6 @@
-/*global alert: false, console: false, document: false, window: false, XMLHttpRequest: false, JSON: false, escape: false, unescape: false, setTimeout: false, navigator: false */
+/*global alert, console, document, window, XMLHttpRequest, JSON, escape, unescape, setTimeout, navigator */
+
+/*jslint white, fudge, this, for */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -1078,5 +1080,3 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 };
-
-

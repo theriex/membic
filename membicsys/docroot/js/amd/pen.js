@@ -1,6 +1,6 @@
-/*global JSON: false, window: false, app: false, jt: false, setTimeout: false, confirm: false */
+/*global JSON, app, jt, confirm */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge */
 
 app.pen = (function () {
     "use strict";
@@ -28,7 +28,7 @@ app.pen = (function () {
 
     fetchCoopAndRetry = function (coopid, penid, divid, callback) {
         jt.out(divid, "Fetching cooperative theme " + coopid + "...");
-        app.pcd.blockfetch("coop", coopid, function (coop) {
+        app.pcd.blockfetch("coop", coopid, function (ignore /*coop*/) {
             app.pen.coopNames(penid, divid, callback); }, divid);
     },
 
@@ -109,7 +109,7 @@ return {
                      loginpenid = jt.instId(newpens[0]);
                      app.lcs.put("pen", newpens[0]);
                      returnCall(); },
-                 app.failf(function (code, errtxt) {
+                 app.failf(function (ignore /*code*/, errtxt) {
                      jt.out('penformstat', errtxt);
                      jt.out('pncbuttondiv', buttonhtml); }),
                 jt.semaphore("pen.createPenName"));
@@ -130,11 +130,10 @@ return {
 
 
     coopNames: function (pen, divid, callback) {
-        var ids, i, coopid, coopref, ret = {};
+        var ret = {};
         pen.coops = pen.coops || "";
-        ids = pen.coops.csvarray();
-        for(i = 0; i < ids.length; i += 1) {
-            coopid = ids[i];
+        pen.coops.csvarray().every(function (coopid) {
+            var coopref;
             if(!ret[coopid]) {  //try cache lookup
                 coopref = app.lcs.getRef("coop", coopid);
                 if(coopref.coop) {
@@ -144,24 +143,25 @@ return {
                    pen.stash["ctm" + coopid].name) {
                     ret[coopid] = pen.stash["ctm" + coopid].name; } }
             if(!ret[coopid] && coopref.status === "not cached") {
-                return fetchCoopAndRetry(coopid, pen, divid, callback); } }
+                fetchCoopAndRetry(coopid, pen, divid, callback);
+                return false; }
+            return true; });
         callback(ret);
     },
 
 
     postableCoops: function (pen) {
-        var ctms, key, obj;
+        var ctms = [];
         pen = pen || app.pen.myPenName();
         if(!pen.stash) {
             return []; }
-        ctms = [];
-        for(key in pen.stash) {
-            if(pen.stash.hasOwnProperty(key)) {
-                if(key.startsWith("ctm")) {
-                    obj = pen.stash[key];
-                    if(obj.memlev >= 1) {
-                        obj.ctmid = key.slice(3);
-                        ctms.push(obj); } } } }
+        Object.keys(pen.stash).forEach(function (key) {
+            var obj;
+            if(key.startsWith("ctm")) {
+                obj = pen.stash[key];
+                if(obj.memlev >= 1) {
+                    obj.ctmid = key.slice(3);
+                    ctms.push(obj); } } });
         ctms.sort(function (a, b) {
             if(a.lastpost && !b.lastpost) { return -1; }
             if(!a.lastpost && b.lastpost) { return 1; }
@@ -198,7 +198,7 @@ return {
 
 
     visprefs: function (revdivid, penid, penname) {
-        var pen, html, pcode, i, pv;
+        var pen, html, pcode;
         penname = jt.dec(penname || "pen " + penid);
         pen = app.pen.myPenName();
         if(!pen) {
@@ -206,15 +206,14 @@ return {
                           penname); }
         html = [];
         pcode = app.pen.prefcode(penid);
-        for(i = visprefvals.length - 1; i >= 0; i -= 1) {
-            pv = visprefvals[i];
-            html.push(["div", {cla: "visprefseldiv"},
-                       [["input", {type: "radio", name: "vpr", value: pv.name,
-                                   id: "vprin" + i,
-                                   checked: jt.toru(pv.code === pcode)}],
-                        ["span", {cla: "vispreflabspan"}, pv.name],
-                        ["span", {cla: "visprefdescrspan"}, 
-                         pv.description.replace(/\$PEN/g, penname)]]]); }
+        visprefvals.forEach(function (pv, i) {
+            html.unshift(["div", {cla: "visprefseldiv"},
+                          [["input", {type: "radio", name: "vpr", 
+                                      value: pv.name, id: "vprin" + i,
+                                      checked: jt.toru(pv.code === pcode)}],
+                           ["span", {cla: "vispreflabspan"}, pv.name],
+                           ["span", {cla: "visprefdescrspan"}, 
+                            pv.description.replace(/\$PEN/g, penname)]]]); });
         html = ["div", {id: "vpdlgdiv"},
                 [html,
                  ["div", {cla: "dlgbuttonsdiv"},
@@ -232,11 +231,11 @@ return {
 
 
     updateVisPrefs: function (penid) {
-        var i, cb, vp = null, pen;
-        for(i = 0; i < visprefvals.length; i += 1) {
-            cb = jt.byId("vprin" + i);
+        var vp = null, pen;
+        visprefvals.forEach(function (pv, i) {
+            var cb = jt.byId("vprin" + i);
             if(cb && cb.checked) {
-                vp = visprefvals[i]; } }
+                vp = pv; } });
         if(vp && vp.ident === "blocked" && 
                !confirm("Blocking cannot be undone. Permanently block?")) {
             return; }

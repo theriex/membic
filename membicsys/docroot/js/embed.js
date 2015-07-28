@@ -1,5 +1,5 @@
-/*global window: false, jtminjsDecorateWithUtilities: false, document: false, jt: false, app: false, membicFrameDimensionsOverride: false */
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*global window, jtminjsDecorateWithUtilities, document, membicFrameDimensionsOverride */
+/*jslint white, fudge */
 
 var membicEmbed = (function () {
     "use strict";
@@ -21,27 +21,30 @@ var membicEmbed = (function () {
 
 
     scriptLoaded = function (src) {
-        var elems, i;
+        var elems, loaded = false;
         elems = document.getElementsByTagName("script");
-        for(i = 0; elems && i < elems.length; i += 1) {
-            if(elems[i].src && elems[i].src === src) {
-                return true; } }
-        return false;
+        if(elems && elems.length) {
+            elems.every(function (elem) {
+                if(elem.src && elem.src === src) {
+                    loaded = true;
+                    return false; }
+                return true; }); }
+        return loaded;
     },
 
 
-    loadScripts = function (scrnames, contf) {
-        var i, src, elem, allLoaded;
-        allLoaded = true;
-        for(i = 0; i < scrnames.length; i += 1) {
-            src = siteroot + "/js/" + scrnames[i];
+    loadScripts = function (srcnames, contf) {
+        var allLoaded = true;
+        srcnames.every(function (srcname) {
+            var elem, src = siteroot + "/js/" + srcname;
             if(!scriptLoaded(src)) {
                 allLoaded = false;
                 elem = document.createElement("script");
                 elem.onload = contf;
                 elem.src = src;
                 document.getElementsByTagName("body")[0].appendChild(elem);
-                break; } }
+                return false; }
+            return true; });
         return allLoaded;
     },
 
@@ -89,7 +92,7 @@ var membicEmbed = (function () {
     ////////////////////////////////////////
 return {
 
-    createCoopDisplay: function (obj) {
+    createCoopDisplay: function () {
         var href = document.getElementById('membiccoopdiv').innerHTML;
         href = href.slice(href.indexOf("href=") + 6);
         href = href.slice(0, href.indexOf('"'));

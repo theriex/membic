@@ -1,6 +1,6 @@
-/*global app: false, jt: false */
+/*global app, jt */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, for */
 
 app.amazon = (function () {
     "use strict";
@@ -148,7 +148,7 @@ return {
     name: svcName,
     
 
-    fetchData: function (review, url, params) {
+    fetchData: function (review, url, ignore /*params*/) {
         var asin = extractASIN(url);
         jt.out('revautodiv', "Reading details from Amazon...");
         url = "amazoninfo?asin=" + asin;

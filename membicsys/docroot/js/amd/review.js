@@ -1,6 +1,6 @@
-/*global setTimeout: false, clearTimeout: false, window: false, document: false, confirm: false, app: false, jt: false, google: false */
+/*global setTimeout, window, confirm, app, jt, google */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge, for */
 
 app.review = (function () {
     "use strict";
@@ -154,16 +154,18 @@ app.review = (function () {
 
 
     findReviewType = function (type) {
-        var i;
+        var revtype;
         if(!type) {
             jt.log("review.findReviewType asked to find falsy type");
             return null; }
         type = type.toLowerCase();
-        for(i = 0; i < reviewTypes.length; i += 1) {
-            if(reviewTypes[i].type === type ||
-               reviewTypes[i].plural === type) {
-                return reviewTypes[i]; } }
-        return reviewTypes[reviewTypes.length - 1];  //last is "other"...
+        revtype = reviewTypes[reviewTypes.length - 1];  // default is "other"
+        reviewTypes.every(function (rt) {
+            if(rt.type === type || rt.plural === type) {
+                revtype = rt;
+                return false; }
+            return true; });
+        return revtype;
     },
 
 
@@ -205,7 +207,7 @@ app.review = (function () {
     },
 
 
-    reviewTextValid = function (type, errors) {
+    reviewTextValid = function () {
         var input = jt.byId('rdta');
         if(input) {
             crev.text = input.value; }
@@ -243,10 +245,12 @@ app.review = (function () {
     },
 
 
-    revFormImageHTML = function (review, type, keyval, mode, extra) {
+    revFormImageHTML = function (review, type, keyval, mode) {
         var html;
         if(!keyval) {
             return ""; }
+        if(!type) {
+            jt.log("Might show typed placeholders. Pass the type"); }
         html = {id: "revimg" + jt.instId(review), cla: "revimg", 
                 src: "img/emptyprofpic.png"};
         if(jt.isLowFuncBrowser()) {
@@ -323,17 +327,16 @@ app.review = (function () {
     },
 
 
-    secondaryFieldsValid = function (type, errors) {
-        var input, i;
+    secondaryFieldsValid = function (type) {
         //none of the secondary fields are required, so just note the values
-        for(i = 0; i < type.fields.length; i += 1) {
-            input = jt.byId(type.fields[i] + "in");
+        type.fields.forEach(function (field) {
+            var input = jt.byId(field + "in");
             if(input) {  //input field was displayed
-                crev[type.fields[i]] = input.value; } }
+                crev[type] = input.value; } });
     },
 
 
-    verifyRatingStars = function (type, errors) {
+    verifyRatingStars = function (ignore /*type*/, errors) {
         var txt;
         if(!crev.rating && crev.srcrev !== -101) {
             txt = "Please set a star rating";
@@ -341,30 +344,28 @@ app.review = (function () {
     },
 
 
-    keywordsValid = function (type, errors) {
-        var input, words, word, i, csv = "";
+    keywordsValid = function () {
+        var input, words, csv = "";
         input = jt.byId('rdkwin');
         if(input) {
             words = input.value || "";
             words = words.split(",");
-            for(i = 0; i < words.length; i += 1) {
-                word = words[i].trim();
+            words.forEach(function (word) {
+                word = word.trim();
                 if(word) {
                     if(csv) {
-                        csv += ", "; }
-                    csv += word; } }
+                        csv += ", "; }  //use spaced commas for readability
+                    csv += word; } });
             crev.keywords = csv; }
     },
 
 
-    notePostingCoops = function (type, errors) {
-        var ctms, i, gcb;
+    notePostingCoops = function () {
         crev.ctmids = "";
-        ctms = app.pen.postableCoops();
-        for(i = 0; i < ctms.length; i += 1) {
-            gcb = jt.byId("dctmcb" + i);
-            if(gcb && gcb.checked) {
-                crev.ctmids = crev.ctmids.csvappend(ctms[i].ctmid); } }
+        app.pen.postableCoops().forEach(function (ctm, i) {
+            var ctmcb = jt.byId("dctmcb" + i);
+            if(ctmcb && ctmcb.checked) {
+                crev.ctmids = crev.ctmids.csvappend(ctm.ctmid); } });
     },
 
 
@@ -404,14 +405,14 @@ app.review = (function () {
 
 
     monitorPicUpload = function () {
-        var ptdif, txt, revid;
+        var ptdif, txt, revid, ridlabel = "revid: ";
         ptdif = jt.byId('ptdif');
         if(ptdif) {
             txt = ptdif.contentDocument || ptdif.contentWindow.document;
             if(txt) {
                 txt = txt.body.innerHTML;
-                if(txt.indexOf("revid: ") === 0) {
-                    revid = txt.slice("revid: ".length);
+                if(txt.indexOf(ridlabel) === 0) {
+                    revid = txt.slice(ridlabel.length);
                     jt.setInstId(crev, revid);
                     crev.revpic = revid;
                     jt.byId('upldpicimg').src = "revpic?revid=" + revid;
@@ -539,7 +540,6 @@ app.review = (function () {
                      ["a", {href: "#write",
                             title: "Note your impressions",
                             onclick: jt.fs("app.review.fpbWrite('" +
-                                           prefix + "','" + revid + "','" +
                                            updrevid + "')")},
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
@@ -557,7 +557,6 @@ app.review = (function () {
                      ["a", {href: "#edit",
                             title: "Edit your review",
                             onclick: jt.fs("app.review.fpbWrite('" +
-                                           prefix + "','" + revid + "','" +
                                            updrevid + "')")},
                       ["img", {cla: "fpbuttonimg",
                                id: prefix + revid + "writebutton",
@@ -577,11 +576,9 @@ app.review = (function () {
 
 
     fpSecondaryFieldsHTML = function (rev) {
-        var type, i, field, value, mapurl, html = [];
-        type = findReviewType(rev.revtype);
-        for(i = 0; i < type.fields.length; i += 1) {
-            field = type.fields[i];
-            value = jt.ndq(rev[field]);
+        var html = [];
+        findReviewType(rev.revtype).fields.forEach(function (field) {
+            var mapurl, value = jt.ndq(rev[field]);
             if(value) {
                 if(field === "address") {
                     mapurl = "http://maps.google.com/?q=" + value;
@@ -594,7 +591,7 @@ app.review = (function () {
                              ["span", {cla: "secondaryfield"},
                               field]],
                             ["td", {align: "left"},
-                             value]]]); } }
+                             value]]]); } });
         return jt.tac2html(["table", {cla: "collapse"}, html]);
     },
 
@@ -606,7 +603,7 @@ app.review = (function () {
 
 
     postedCoopLinksHTML = function (rev) {
-        var postnotes, links, html, i, pn;
+        var postnotes, links, html;
         convertOldThemePostLabel(rev);
         if(!rev.svcdata || !rev.svcdata.postctms) {
             return ""; }
@@ -614,13 +611,12 @@ app.review = (function () {
         if(!postnotes.length) {
             return ""; }
         links = [];
-        for(i = 0; i < postnotes.length; i += 1) {
-            pn = postnotes[i];
+        postnotes.forEach(function (pn) {
             links.push(jt.tac2html(
                 ["a", {href: "coops/" + jt.canonize(pn.name),
                        onclick: jt.fs("app.coop.bycoopid('" +
                                       pn.ctmid + "')")},
-                 pn.name])); }
+                 pn.name])); });
         html = ["span", {cla: "fpctmlinkslab"}, 
                 "Posted to: " + links.join(", ")];
         return jt.tac2html(html);
@@ -656,7 +652,7 @@ app.review = (function () {
     },
 
 
-    starStopPointing = function (event) {
+    starStopPointing = function (/*event*/) {
         //var pos = jt.geoXY(event);  //debug
         //jt.out('starslabeltd', " " + pos.x + ", " + pos.y);  //debug
         //jt.out('rdokstatdiv', "star NOT pointing" + event.target);  //debug
@@ -730,7 +726,7 @@ app.review = (function () {
 
 
     writeAutocompLinks = function (xml) {
-        var itemdat, url, attrs, title, rest, items = [], i, lis = [];
+        var itemdat, url, attrs, title, rest, items = [], lis = [];
         itemdat = xmlExtract("Item", xml);
         while(itemdat) {
             url = xmlExtract("DetailPageURL", itemdat.content);
@@ -772,12 +768,12 @@ app.review = (function () {
             if(a.rest < b.rest) { return -1; }
             if(a.rest > b.rest) { return 1; }
             return 0; });
-        for(i = 0; i < items.length; i += 1) {
+        items.forEach(function (item) {
             lis.push(["li",
-                      ["a", {href: items[i].url, 
+                      ["a", {href: item.url, 
                              onclick: jt.fs("app.review.readURL('" + 
-                                            items[i].url + "')")},
-                       items[i].title + " " + items[i].rest]]); }
+                                            item.url + "')")},
+                       item.title + " " + item.rest]]); });
         jt.out('revautodiv', jt.tac2html(["ul", lis]));
     },
 
@@ -827,6 +823,8 @@ app.review = (function () {
     selectLocLatLng = function (latlng, ref, retry, errmsg) {
         var mapdiv, map, maxretry = 10, html;
         retry = retry || 0;
+        if(errmsg) {
+            jt.log("selectLocLatLng error: " + errmsg); }
         if(retry > maxretry) {
             verifyGeocodingInfoDiv(true);
             html = jt.byId('geocodingInfoDiv').innerHTML;
@@ -871,17 +869,16 @@ app.review = (function () {
 
         
     writeACPLinks = function (acfunc, results, status) {
-        var i, place, selfunc, items = [], html = "<ul>";
+        var items = [], html;
         if(status === google.maps.places.PlacesServiceStatus.OK) {
-            for(i = 0; i < results.length; i += 1) {
-                place = results[i];
-                selfunc = "app.review.selectLocation('" +
+            results.forEach(function (place) {
+                var selfunc = "app.review.selectLocation('" +
                     jt.embenc(place.description) + "','" + 
                     place.reference + "')";
                 items.push(["li",
                             ["a", {href: "#selectloc",
                                    onclick: jt.fs(selfunc)},
-                             place.description]]); } }
+                             place.description]]); }); }
         html = [["ul", items],
                 ["img", {src: "img/poweredbygoogle.png"}]];
         jt.out('revautodiv', jt.tac2html(html));
@@ -902,7 +899,7 @@ app.review = (function () {
     },
 
 
-    autocompletion = function (event) {
+    autocompletion = function (/*event*/) {
         var cb, srchtxt;
         cb = jt.byId("rdaccb");
         if(!cb || !cb.checked) {
@@ -976,10 +973,9 @@ app.review = (function () {
 
 
     copyReview = function (review) {
-        var name, copy = {};
-        for(name in review) {
-            if(review.hasOwnProperty(name)) {
-                copy[name] = review[name]; } }
+        var copy = {};
+        Object.keys(review).forEach(function (field) {
+            copy[field] = review[field]; });
         return copy;
     },
 
@@ -1004,11 +1000,9 @@ app.review = (function () {
 
 
     cacheBustCoops = function (ctmids) {
-        var i;
         ctmids = ctmids || "";
-        ctmids = ctmids.csvarray();
-        for(i = 0; i < ctmids.length; i += 1) {
-            app.lcs.uncache("coop", ctmids[i]); }
+        ctmids.csvarray().forEach(function (ctmid) {
+            app.lcs.uncache("coop", ctmid); });
     },
 
 
@@ -1028,14 +1022,14 @@ app.review = (function () {
 
 
     dlgRevTypeSelection = function () {
-        var i, rt, clt, html = [];
-        for(i = 0; i < reviewTypes.length; i += 1) {
-            rt = reviewTypes[i];
-            clt = (crev.revtype === rt.type) ? "reviewbadgesel" : "reviewbadge";
+        var html = [];
+        reviewTypes.forEach(function (rt) {
+            var clt = (crev.revtype === rt.type) ? "reviewbadgesel" 
+                                                 : "reviewbadge";
             html.push(["a", {href: "#" + rt.type,
                              onclick: jt.fs("app.review.updatedlg('" + 
                                             rt.type + "')")},
-                       ["img", {cla: clt, src: "img/" + rt.img}]]); }
+                       ["img", {cla: clt, src: "img/" + rt.img}]]); });
         html = ["div", {cla: "revtypesdiv", id: "revdlgtypesdiv"}, 
                 html];
         jt.out("rdtypesdiv", jt.tac2html(html));
@@ -1165,7 +1159,7 @@ app.review = (function () {
 
 
     dlgDetailsEntry = function () {
-        var rt, html, i, fldttl;
+        var rt, html, fldttl;
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
@@ -1173,8 +1167,8 @@ app.review = (function () {
             html = [["div", {id: "rdstarsdiv"}, dlgStarsHTML()]];
             if(rt.subkey) {
                 html.push(dlgFieldInputHTML(rt.subkey)); }
-            for(i = 0; i < rt.fields.length; i += 1) {
-                html.push(dlgFieldInputHTML(rt.fields[i])); }
+            rt.fields.forEach(function (field) {
+                html.push(dlgFieldInputHTML(field)); });
             //onclick the div in case the enclosing image is broken
             //and can't function as a link to bring up the dialog
             html = [["div", {id: "rdpicdiv",
@@ -1191,8 +1185,8 @@ app.review = (function () {
         jt.out('rdpicdiv', dlgPicHTML());
         if(rt.subkey) {
             jt.byId(rt.subkey + "in").value = crev[rt.subkey] || ""; }
-        for(i = 0; i < rt.fields.length; i += 1) {
-            jt.byId(rt.fields[i] + "in").value = crev[rt.fields[i]] || ""; }
+        rt.fields.forEach(function (field) {
+            jt.byId(field + "in").value = crev[field] || ""; });
         fldttl = (rt.subkey? 1 : 0) + rt.fields.length;
         if(fldttl <= 1) {
             jt.byId('rdpicdiv').style.height = "80px"; }
@@ -1216,21 +1210,21 @@ app.review = (function () {
 
 
     dlgKeywordEntry = function () {
-        var rt, html, i, chk;
+        var rt, html, chk;
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
         crev.keywords = crev.keywords || "";
         html = [];
-        for(i = 0; i < rt.dkwords.length; i += 1) {
-            chk = jt.toru(crev.keywords.indexOf(rt.dkwords[i]) >= 0, "checked");
+        rt.dkwords.forEach(function (dkword, i) {
+            chk = jt.toru(crev.keywords.indexOf(dkword) >= 0, "checked");
             html.push(["div", {cla: "rdkwcbdiv"},
                        [["input", {type: "checkbox", id: "dkw" + i,
-                                   value: rt.dkwords[i], checked: chk,
+                                   value: dkword, checked: chk,
                                    //onchange only fires onblur if <IE8
                                    onclick: jt.fsd("app.review.togkey('dkw" + 
                                                    i + "')")}],
-                        ["label", {fo: "dkw" + i}, rt.dkwords[i]]]]); }
+                        ["label", {fo: "dkw" + i}, dkword]]]); });
         html = [["div", {id: "rdkwcbsdiv"}, html]];
         html.push(["div", {id: "rdkwindiv"},
                    [["label", {fo: "rdkwin", cla: "liflab", id: "rdkwlab"},
@@ -1242,28 +1236,28 @@ app.review = (function () {
 
 
     postedCoopRevId = function (ctmid, rev) {
-        var ctms, i;
+        var revid;
         rev = rev || crev;
         convertOldThemePostLabel(rev);
         if(!rev.svcdata || !rev.svcdata.postctms) {
             return 0; }
-        ctms = rev.svcdata.postctms;
-        for(i = 0; i < ctms.length; i += 1) {
-            if(ctms[i].ctmid === ctmid) {
-                return ctms[i].revid; } }
-        return 0;
+        revid = 0;
+        rev.svcdata.postctms.every(function (ctm) {
+            if(ctm.ctmid === ctmid) {
+                revid = ctm.revid;
+                return false; }
+            return true; });
+        return revid;
     },
 
 
     dlgCoopPostSelection = function () {
-        var rt, ctms, i, ctm, posted, html = [];
+        var rt, html = [];
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
-        ctms = app.pen.postableCoops();  //sorted memberships from pen.stash
-        for(i = 0; i < ctms.length; i += 1) {
-            ctm = ctms[i];
-            posted = jt.toru(postedCoopRevId(ctm.ctmid));
+        app.pen.postableCoops().forEach(function (ctm, i) {
+            var posted = jt.toru(postedCoopRevId(ctm.ctmid));
             html.push(["div", {cla: "rdctmdiv"},
                        [["div", {cla: "rdglpicdiv"},
                          ["img", {cla: "rdglpic", alt: "",
@@ -1271,7 +1265,7 @@ app.review = (function () {
                         ["input", {type: "checkbox", id: "dctmcb" + i,
                                    value: ctm.ctmid, checked: posted}],
                         ["label", {fo: "dctm" + i, cla: "penflist"}, 
-                         ctm.name]]]); }
+                         ctm.name]]]); });
         if(html.length > 0) {
             html.unshift(["div", {cla: "formline"}]);
             html.unshift(["div", {cla: "liflab"}, "Post To"]); }
@@ -1289,13 +1283,11 @@ app.review = (function () {
 
 
     cacheNames = function (rev) {
-        var ctms, i;
         app.pennames[rev.penid] = rev.penname;
         convertOldThemePostLabel(rev);
         if(rev.svcdata && rev.svcdata.postctms) {
-            ctms = rev.svcdata.postctms;
-            for(i = 0; i < ctms.length; i += 1) {
-                app.coopnames[ctms[i].ctmid] = ctms[i].name; } }
+            rev.svcdata.postctms.forEach(function (ctm) {
+                app.coopnames[ctm.ctmid] = ctm.name; }); }
     },
 
 
@@ -1423,7 +1415,8 @@ return {
                 rbc.innerHTML = "reading..."; }
             if(url.toLowerCase().indexOf("http") !== 0) {
                 url = "http://" + url; }
-            crev.url = autourl = url;
+            crev.url = url;
+            autourl = url;
             crev.autocomp = false;
             readParameters(params);
             getURLReader(autourl, function (reader) {
@@ -1455,18 +1448,17 @@ return {
 
 
     keywordcsv: function (kwid, keycsv) {
-        var cbox = jt.byId(kwid), 
-            text = "", kw, i,
+        var cbox = jt.byId(kwid),
+            text = "",
             keywords = keycsv.split(",");
-        for(i = 0; i < keywords.length; i += 1) {
-            kw = keywords[i];
+        keywords.forEach(function (kw) {
             if(kw) {  //have something not a null value or empty string
                 kw = kw.trim();  //remove any extraneous comma space
                 if(kw === cbox.value) {
                     kw = ""; }
                 if(text && kw) {  //have a keyword already and appending another
                     text += ", "; }
-                text += kw; } }
+                text += kw; } });
         if(cbox.checked) {
             if(text) {
                 text += ", "; }
@@ -1484,7 +1476,7 @@ return {
 
 
     save: function (skipvalidation) {
-        var errors = [], i, errtxt = "", rt, data, html;
+        var errors = [], errtxt = "", rt, data, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('rdokbuttondiv').innerHTML;
         if(!skipvalidation) {
@@ -1498,8 +1490,8 @@ return {
             verifyRatingStars(rt, errors);
             if(errors.length > 0) {
                 jt.out('rdokbuttondiv', html);
-                for(i = 0; i < errors.length; i += 1) {
-                    errtxt += errors[i] + "<br/>"; }
+                errors.forEach(function (errmsg) {
+                    errtxt += errmsg + "<br/>"; });
                 jt.out('rdokstatdiv', errtxt);
                 return; } }
         jt.out('rdokbuttondiv', "Saving...");
@@ -1785,7 +1777,7 @@ return {
     },
 
 
-    fpbWrite: function (prefix, disprevid, updrevid) {
+    fpbWrite: function (updrevid) {
         if(!app.pen.myPenName()) {
             return jt.err("Sign in to note your impressions."); }
         app.lcs.getFull("rev", updrevid, function (revref) {
@@ -1845,26 +1837,26 @@ return {
 
 
     collateDupes: function (revs) {
-        var i, j, rev, result = [];
-        for(i = 0; i < revs.length; i += 1) {
-            rev = revs[i];
+        var result = [], j;
+        revs.forEach(function (rev, i) {
             if(rev) {  //not previously set to null
                 result.push(rev);
+                //collate remaining revs
                 for(j = i + 1; j < revs.length; j += 1) {
                     if(app.review.isDupeRev(revs[j], rev)) {
                         result.push(revs[j]);
-                        revs[j] = null; } } } }
+                        revs[j] = null; } } } });
         return result;
     },
 
 
     filterByRevtype: function (revs, rt) {
-        var filtered, i;
+        var filtered;
         if(rt && rt !== "all") {
             filtered = [];
-            for(i = 0; i < revs.length; i += 1) {
-                if(revs[i].revtype === rt) {
-                    filtered.push(revs[i]); } }
+            revs.forEach(function (rev) {
+                if(rev.revtype === rt) {
+                    filtered.push(rev); } });
             revs = filtered; }
         return revs;
     },
@@ -1926,11 +1918,13 @@ return {
 
     toggleExpansion: function (revs, prefix, revid) {
         var i, rev, elem, revdivid;
+        //locate the review and its associated index
         for(i = 0; i < revs.length; i += 1) {
             if(jt.instId(revs[i]) === revid) {
                 rev = revs[i];
                 break; } }
         if(i === 0 || !app.review.isDupeRev(revs[i - 1], rev)) {  //primary rev
+            //toggle expansion on any associated dupes
             for(i += 1; i < revs.length; i += 1) {
                 if(!app.review.isDupeRev(rev, revs[i])) {  //no more children
                     break; }

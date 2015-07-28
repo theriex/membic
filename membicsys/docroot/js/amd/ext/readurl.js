@@ -1,6 +1,6 @@
-/*global app: false, jt: false, unescape: false */
+/*global app, jt, unescape */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, for */
 
 
 //////////////////////////////////////////////////////////////////////
@@ -184,8 +184,8 @@ app.readurl = (function () {
 
     //Set the type if it is unambigous, and there is no specific
     //supporting extension module other than this general reader.
-    setReviewType = function (review, html, url) {
-        var i, typemaps = [
+    setReviewType = function (review, ignore /*html*/, url) {
+        var typemaps = [
             { urltxt: "imdb.", revtype: "movie" },
             { urltxt: "netflix.", revtype: "movie" },
             { urltxt: "rottentomatoes.", revtype: "movie" },
@@ -193,22 +193,22 @@ app.readurl = (function () {
             { urltxt: "vimeo.", revtype: "video" },
             { urltxt: "youtube.", revtype: "video" } ];
         url = url.toLowerCase();
-        for(i = 0; i < typemaps.length; i += 1) {
-            if(url.indexOf(typemaps[i].urltxt) >= 0) {
-                review.revtype = typemaps[i].revtype;
-                break; } }
+        typemaps.every(function (typemap) {
+            if(url.indexOf(typemap.urltxt) >= 0) {
+                review.revtype = typemap.revtype;
+                return false; }
+            return true; });
     },
     
 
     fixSpamdexing = function (val) {
-        var vs, i;
         //choose the first real value out of any multi-line title
         if(val.indexOf("\n") >= 0) {
-            vs = val.split("\n");
-            for(i = 0; i < vs.length; i += 1) {
-                if(vs[i] && vs[i].trim()) {
-                    val = vs[i];
-                    break; } } }
+            var vs = val.split("\n");
+            vs.some(function (line) {
+                if(line && line.trim()) {
+                    val = line;
+                    return true; } }); }
         //remove any preceding or trailing whitespace
         val = val.trim();
         return val;

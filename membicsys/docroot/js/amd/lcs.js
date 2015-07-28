@@ -1,6 +1,6 @@
-/*global setTimeout: false, app: false, jt: false, window: false */
+/*global app, jt, window */
 
-/*jslint white: true, maxerr: 50, indent: 4 */
+/*jslint white fudge */
 
 //////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, reviews, etc.
@@ -140,11 +140,12 @@ return {
 
 
     putAll: function (type, objs) {
-        var i;
-        for(i = 0; objs && i < objs.length; i += 1) {
-            if(objs[i].fetched) {  //ending stats and cursor object...
-                break; }
-            app.lcs.put(type, objs[i]); }
+        if(objs) {
+            objs.every(function (obj) {
+                if(obj.fetched) {  //ending stats and cursor object...
+                    return false; }
+                app.lcs.put(type, obj);
+                return true; }); }
     },
 
 
@@ -166,10 +167,8 @@ return {
 
 
     nukeItAll: function () {
-        var name;
-        for(name in cache) {
-            if(cache.hasOwnProperty(name)) {
-                cache[name].refs = {}; } }
+        Object.keys(cache).forEach(function (cachetype) {
+            cache[cachetype].refs = {}; });
     },
 
 
@@ -198,22 +197,22 @@ return {
 
 
     resolveIdArrayToCachedObjs: function (type, ids) {
-        var i, ref, objs = [];
+        var ref, objs = [];
         if(!ids) {
             jt.log("lcs.resolveIdArrayToCachedObjs undefined ids");
             return objs; }
-        for(i = 0; i < ids.length; i += 1) {
-            ref = cache[type].refs[ids[i]];
+        ids.forEach(function (oid) {
+            ref = cache[type].refs[oid];
             if(ref && ref[type]) {
-                objs.push(ref[type]); } }
+                objs.push(ref[type]); } });
         return objs;
     },
 
 
     objArrayToIdArray: function (objs) {
-        var i, ids = [];
-        for(i = 0; i < objs.length; i += 1) {
-            ids.push(jt.instId(objs[i])); }
+        var ids = [];
+        objs.forEach(function (obj) {
+            ids.push(jt.instId(obj)); });
         return ids;
     },
 
@@ -223,19 +222,18 @@ return {
     ////////////////////////////////////////
 
     getCachedRecentReviews: function (revtype, penid) {
-        var revcache, revid, revref, rev, results = [];
-        revcache = cache.rev.refs;
+        var revcache, results = [];
+        revcache = cache.rev.refs || {};
         if(revtype === "all") {
             revtype = ""; }
-        for(revid in revcache) {
-            if(revcache.hasOwnProperty(revid)) {
-                revref = revcache[revid];
-                if(revref && revref.rev) {
-                    rev = revref.rev;
-                    if((!revtype || rev.revtype === revtype) &&
-                       (!penid || rev.penid === penid) && 
-                       rev.srcrev >= 0 && !rev.ctmid) {
-                        results.push(rev); } } } }
+        Object.keys(revcache).forEach(function (revid) {
+            var rev, revref = revcache[revid];
+            if(revref && revref.rev) {
+                rev = revref.rev;
+                if((!revtype || rev.revtype === revtype) &&
+                   (!penid || rev.penid === penid) && 
+                   rev.srcrev >= 0 && !rev.ctmid) {
+                    results.push(rev); } } });
         return results;
     }
 

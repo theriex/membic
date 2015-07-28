@@ -1,6 +1,6 @@
-/*global app: false, jt: false, setTimeout: false, window: false, confirm: false */
+/*global app, jt, setTimeout, window, confirm */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Coop common display functions.
@@ -143,17 +143,17 @@ app.pcd = (function () {
 
 
     personalInfoButtonHTML = function () {
-        var les, i, html;
+        var les, html;
         les = dst.obj.adminlog;
-        if(!les || !les.length) {
-            return ""; }
         html = "";
-        for(i = 0; i < les.length; i += 1) {
-            if(isMyMembershipAction(les[i])) {
-                html = ["a", {href: "#myloginfo",
+        if(les && les.length) {
+            les.every(function (action) {
+                if(isMyMembershipAction(action)) {
+                    html = ["a", {href: "#myloginfo",
                               onclick: jt.fs("app.pcd.toggleCtmDet('mbinfo')")},
-                        ["img", {cla: "myinfoimg", src: "img/info.png"}]];
-                break; } }
+                            ["img", {cla: "myinfoimg", src: "img/info.png"}]];
+                    return false; } //found my latest, end iteration
+                return true; }); }
         return html;
     },
 
@@ -240,20 +240,20 @@ app.pcd = (function () {
 
 
     outstandingApplicationsHTML = function () {
-        var html, sids, i, penid, name, mlev, slev;
+        var html, mlev, people;
         if(!dst.obj.seeking) {
             return ""; }
         mlev = app.coop.membershipLevel(dst.obj);
         if(mlev < 2) {
             return ""; }
         html = [];
-        sids = dst.obj.seeking.csvarray();
-        for(i = 0; i < sids.length; i += 1) {
-            penid = sids[i];
-            name = (dst.obj.people || {})[penid] || penid;
+        people = dst.obj.people || {};
+        dst.obj.seeking.csvarray().forEach(function (penid) {
+            var name, slev;
+            name = people[penid] || penid;
             slev = app.coop.membershipLevel(dst.obj, penid);
             if(mlev > slev || mlev === 3) {
-                html.push(membershipAppNoticeHTML(penid, name, slev)); } }
+                html.push(membershipAppNoticeHTML(penid, name, slev)); } });
         return html;
     },
 
@@ -272,27 +272,28 @@ app.pcd = (function () {
 
 
     coopLogHTML = function (filter) {
-        var les, i, html, penid;
+        var les, html;
         les = dst.obj.adminlog;
         if(!les || !les.length) {
             return "No log entries"; }
         html = [];
-        for(i = 0; i < les.length; i += 1) {
+        les.forEach(function (logentry) {
+            var penid;
             if(!filter || (filter === "membership" &&
-                           isMyMembershipAction(les[i]))) {
-                penid = les[i].penid;
+                           isMyMembershipAction(logentry))) {
+                penid = logentry.penid;
                 html.push(
                     ["div", {cla: "adminlogentrydiv"},
                      [["span", {cla: "logdatestampspan"}, 
-                       les[i].when.slice(0, 10) + ": "],
+                       logentry.when.slice(0, 10) + ": "],
                       ["a", {href: "view=pen&penid=" + penid,
                              onclick: jt.fs("app.pen.bypenid('" + penid + 
                                             "')")},
                        ["span", {cla: "logdatestampspan"},
-                        les[i].pname || penid]],
-                      " " + les[i].action + " ",
-                      adminLogTargetHTML(les[i]),
-                      (les[i].reason? ": " + les[i].reason : "")]]); } }
+                        logentry.pname || penid]],
+                      " " + logentry.action + " ",
+                      adminLogTargetHTML(logentry),
+                      (logentry.reason? ": " + logentry.reason : "")]]); } });
         return jt.tac2html(html);
     },
 
@@ -336,20 +337,19 @@ app.pcd = (function () {
 
 
     coopMembershipHTML = function () {
-        var html, fields, i, field, penids, j, penid, pname, mlev;
+        var html, fields, mlev;
         mlev = app.coop.membershipLevel(dst.obj);
         html = [];
         fields = ["founders", "moderators", "members"];
-        for(i = 0; i < fields.length; i += 1) {
-            field = fields[i];
-            penids = dst.obj[field].csvarray();
+        fields.forEach(function (field) {
+            var people, penids = dst.obj[field].csvarray();
             if(penids.length) {
                 html.push(["div", {cla: "formline"}, field.capitalize()]); }
-            for(j = 0; j < penids.length; j += 1) {
-                penid = penids[j];
-                pname = (dst.obj.people || {})[penid] || penid;
+            people = dst.obj.people || {};
+            penids.forEach(function (penid) {
+                var pname = people[penid] || penid;
                 html.push(coopMembershipLineHTML(
-                    field, penid, pname, mlev)); } }
+                    field, penid, pname, mlev)); }); });
         html.push(["div", {cla: "formline"}, "&nbsp;"]); //final clear
         return jt.tac2html(html);
     },
@@ -378,16 +378,16 @@ app.pcd = (function () {
 
 
     monitorPicUpload = function () {
-        var tgif, txt, defs;
+        var tgif, txt, defs, mtag = "Done: ";
         tgif = jt.byId('tgif');
         if(tgif) {
             txt = tgif.contentDocument || tgif.contentWindow.document;
             if(txt) {
                 txt = txt.body.innerHTML;
-                if(txt.indexOf("Done: ") === 0) {
+                if(txt.indexOf(mtag) === 0) {
                     defs = dst[dst.type];
                     dst.obj[defs.picfield] = dst.id;
-                    dst.obj.modified = txt.slice("Done: ".length);
+                    dst.obj.modified = txt.slice(mtag.length);
                     app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
@@ -578,15 +578,13 @@ app.pcd = (function () {
 
 
     getRecentReviews = function () {
-        var revs, rt, all, i;
+        var revs, rt;
         revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
         rt = app.layout.getType();
         if(rt !== "all") {
-            all = revs;
-            revs = [];
-            for(i = 0; i < all.length; i += 1) {
-                if(all[i].revtype === rt) {
-                    revs.push(all[i]); } } }
+            revs = revs.filter(function (rev) {
+                if(rev.revtype === rt) {
+                    return true; } }); }
         return revs;
     },
 
@@ -601,14 +599,12 @@ app.pcd = (function () {
 
 
     getFavoriteReviews = function () {
-        var revids, rt, tops, types, i, revs;
+        var revids, rt, tops, revs;
         tops = dst.obj.top20s || {};
         if(!tops.all) {
             tops.all = [];
-            types = app.review.getReviewTypes();
-            for(i = 0; i < types.length; i += 1) {
-                rt = types[i].type;
-                tops.all = tops.all.concat(tops[rt] || []); }
+            app.review.getReviewTypes().forEach(function (rt) {
+                tops.all = tops.all.concat(tops[rt] || []); });
             revs = app.lcs.resolveIdArrayToCachedObjs("rev", tops.all);
             revs.sort(function (a, b) {
                 if(a.rating < b.rating) { return 1; }
@@ -644,22 +640,19 @@ app.pcd = (function () {
 
 
     displayCoops = function (coopnames) {
-        var html, gid, gname;
+        var html = [];
         if(!coopnames) {
             return app.pen.coopNames(dst.obj, "pcdcontdiv", displayCoops); }
-        html = [];
-        for(gid in coopnames) {
-            if(coopnames.hasOwnProperty(gid)) {
-                gname = coopnames[gid];
-                html.push(["div", {cla: "cooplinkdiv"},
-                           [["div", {cla: "fpprofdiv"},
-                             ["img", {cla: "fpprofpic",
-                                      alt: "no pic",
-                                      src: dst.coop.picsrc + gid}]],
-                            ["a", {href: "coops/" + jt.canonize(gname),
-                                   onclick: jt.fs("app.coop.bycoopid('" +
-                                                  gid + "')")},
-                             ["span", {cla: "penfont"}, gname]]]]); } }
+        Object.keys(coopnames).forEach(function (cid) {
+            var coopname = coopnames[cid];
+            html.push(["div", {cla: "cooplinkdiv"},
+                       [["div", {cla: "fpprofdiv"},
+                         ["img", {cla: "fpprofpic", alt: "no pic",
+                                  src: dst.coop.picsrc + cid}]],
+                        ["a", {href: "coops/" + jt.canonize(coopname),
+                               onclick: jt.fs("app.coop.bycoopid('" +
+                                              cid + "')")},
+                         ["span", {cla: "penfont"}, coopname]]]]); });
         html.push(["div", {cla: "pcdtext"},
                    [["div", {cla: "pcdtoggle"},
                      ["a", {href: "#findcoops",
@@ -681,7 +674,7 @@ app.pcd = (function () {
     },
 
 
-    tabsHTML = function (obj) {
+    tabsHTML = function () {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
@@ -696,13 +689,12 @@ app.pcd = (function () {
 
 
     displayTab = function (tabname, expid) {
-        var kt, elem, dispfunc;
+        var dispfunc;
         tabname = tabname || "latest";
-        for(kt in knowntabs) {
-            if(knowntabs.hasOwnProperty(kt)) {
-                elem = jt.byId(kt + "li");
-                if(elem) {
-                    elem.className = "unselectedTab"; } } }
+        Object.keys(knowntabs).forEach(function (kt) {
+            var elem = jt.byId(kt + "li");
+            if(elem) {
+                elem.className = "unselectedTab"; } });
         jt.byId(tabname + "li").className = "selectedTab";
         dst.tab = tabname;
         dispfunc = knowntabs[tabname].dispfunc;
@@ -747,7 +739,7 @@ app.pcd = (function () {
                        jt.linkify(obj[defs.descfield] || "")]]]]]],
                  ["div", {id: "tabsdiv"},
                   ["ul", {id: "tabsul"},
-                   tabsHTML(obj)]],
+                   tabsHTML()]],
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         setTimeout(backgroundVerifyObjectData, 100);
@@ -775,11 +767,10 @@ app.pcd = (function () {
 
 
     sourceRevIds = function (revs, dtype, id) {
-        var revids, i;
-        revids = [];
-        for(i = 0; i < revs.length; i += 1) {
-            if(dtype !== "coop" || revs[i].ctmid === id) {
-                revids.push(jt.instId(revs[i])); } }
+        var revids = [];
+        revs.forEach(function (rev) {
+            if(dtype !== "coop" || rev.ctmid === id) {
+                revids.push(jt.instId(rev)); } });
         return revids;
     },
 
@@ -1041,7 +1032,7 @@ return {
     },
 
 
-    toggleCtmDet: function (ctype, filter) {
+    toggleCtmDet: function (ctype) {
         var midispdiv = jt.byId('midispdiv');
         if(ctype === "info" && (setdispstate.infomode !== "info" ||
                                 !midispdiv.innerHTML)) {

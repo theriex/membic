@@ -1,6 +1,6 @@
-/*global window: false, document: false, setTimeout: false, app: false, jt: false */
+/*global window, document, app, jt */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4, regexp: true */
+/*jslint white, fudge, for */
 
 app.layout = (function () {
     "use strict";
@@ -19,14 +19,14 @@ app.layout = (function () {
     ////////////////////////////////////////
 
     displayDocContent = function (url, html) {
-        var idx;
+        var idx, bodystart = "<body>";
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
-        idx = html.indexOf("<body>");
+        idx = html.indexOf(bodystart);
         if(idx > 0) {
-            html = html.slice(idx + "<body>".length,
+            html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
-        html = html.replace(/\.<!-- \$ABOUTCONTACT -->/g,
+        html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
             " or <a href=\"mailto:membicsystem@gmail.com\">email us</a>.");
         //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
@@ -62,14 +62,13 @@ app.layout = (function () {
 
     //faster to grab all links rather than iterating through bottomnav
     localDocLinks = function () {
-        var i, nodes, node, href;
-        nodes = document.getElementsByTagName('a');
-        for(i = 0; nodes && i < nodes.length; i += 1) {
-            node = nodes[i];
-            href = node.href;
+        var i, href, nodes = document.getElementsByTagName('a');
+        //nodes is an HTMLCollection, not an array.  Basic iteration only.
+        for(i = 0; nodes && nodes.length && i < nodes.length; i += 1) {
+            href = nodes[i].href;
             //href may have been resolved from relative to absolute...
             if(href && href.indexOf("docs/") >= 0) {
-                attachDocLinkClick(node, href); } }
+                attachDocLinkClick(nodes[i], href); } }
     },
 
 
@@ -165,7 +164,7 @@ return {
         };
         jt.errhtml = function (actverb, code, errtxt) {
             if(code === 409) {
-                errtxt = errtxt.replace(/coop \d+/g, function (ctmref) {
+                errtxt = errtxt.replace(/coop\ \d+/g, function (ctmref) {
                     return jt.makelink("?view=coop&coopid=" + 
                                        ctmref.slice(5)); }); }
             return actverb + " failed code " + code + ": " + errtxt;
@@ -179,7 +178,7 @@ return {
 
 
     displayTypes: function (callbackf, typename) {
-        var revtypes, i, rt, clt, html = [];
+        var html = [];
         if(typeof callbackf === "function") {
             typestate.callbackf = callbackf; }
         if(typename) {
@@ -187,16 +186,14 @@ return {
                 typestate.typename = "all"; }  //toggle selection off...
             else {
                 typestate.typename = typename; } }
-        revtypes = app.review.getReviewTypes();
-        for(i = 0; i < revtypes.length; i += 1) {
-            rt = revtypes[i];
-            clt = "reviewbadge";
+        app.review.getReviewTypes().forEach(function (rt) {
+            var clt = "reviewbadge";
             if(rt.type === typestate.typename) {
                 clt = "reviewbadgesel"; }
             html.push(["a", {href: "#" + rt.type,
                              onclick: jt.fs("app.layout.displayTypes(-1,'" + 
                                             rt.type + "')")},
-                       ["img", {cla: clt, src: "img/" + rt.img}]]); }
+                       ["img", {cla: clt, src: "img/" + rt.img}]]); });
         html = ["div", {cla: "revtypesdiv", id: "revtypesdiv"}, 
                 html];
         jt.out("headingdivcontent", jt.tac2html(html));
@@ -213,7 +210,7 @@ return {
         jt.request('GET', url, null,
                    function (resp) {
                        displayDocContent(url, resp); },
-                   function (code, errtxt) {
+                   function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt); },
                    jt.semaphore("layout.displayDoc"));
     },

@@ -1,5 +1,5 @@
-/*global d3: false, jtminjsDecorateWithUtilities: false */
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*global d3, jtminjsDecorateWithUtilities */
+/*jslint white, fudge */
 
 //This is a degenerate module just used for reporting.  Don't model it.
 var actstat = (function () {
@@ -25,14 +25,15 @@ var actstat = (function () {
     ////////////////////////////////////////
 
     seriesValue = function (series, datum) {
-        var refs, i, refelems;
+        var sval = 0;
         if(datum.refers && datum.refers.indexOf(series.name) >= 0) {
-            refs = datum.refers.split(",");
-            for(i = 0; i < refs.length; i += 1) {
-                refelems = refs[i].split(":");
+            datum.refers.split(",").every(function (ref) {
+                var refelems = ref.split(":");
                 if(refelems[0] === series.name) {
-                    return parseInt(refelems[1], 10); } } }
-        return 0;
+                    sval = parseInt(refelems[1], 10);
+                    return false; } 
+                return true; }); }
+        return sval;
     },
 
 
@@ -98,25 +99,23 @@ var actstat = (function () {
 
     //For more information on series, see mailsum.py bump_referral
     makeInquirySeries = function () {
-        var series, i, refs, j, refelems, refname, refcount, sdef, result;
+        var series, refelems, refname, refcount, result;
         series = {};
         series.clickthru = makeSeriesDef("clickthru");
-        for(i = 0;i < data.length; i += 1) {
-            if(data[i].clickthru) {
-                series.clickthru.total += data[i].clickthru; }
-            if(data[i].refers) {
-                refs = data[i].refers.split(",");
-                for(j = 0; j < refs.length; j += 1) {
-                    refelems = refs[j].split(":");
+        data.forEach(function (datum) {
+            if(datum.clickthru) {
+                series.clickthru.total += datum.clickthru; }
+            if(datum.refers) {
+                datum.refers.split(",").forEach(function (ref) {
+                    refelems = ref.split(":");
                     refname = refelems[0];
                     refcount = parseInt(refelems[1], 10);
                     if(!series[refname]) {
                         series[refname] = makeSeriesDef(refname); }
-                    series[refname].total += refcount; } } }
+                    series[refname].total += refcount; }); } });
         result = [];
-        for(sdef in series) {
-            if(series.hasOwnProperty(sdef)) {
-                result.push(series[sdef]); } }
+        Object.keys(series).forEach(function (sdef) {
+            result.push(series[sdef]); });
         result.sort(function (a, b) {
             if(a.total > b.total) {
                 return -1; }
@@ -128,25 +127,24 @@ var actstat = (function () {
 
 
     minMaxInq = function (series) {
-        var max;
-        max = data.reduce(function (value, elem) {
-            var i, elmax = 0;
-            for(i = 0; i < series.length; i += 1) {
-                elmax = Math.max(elmax, seriesValue(series[i], elem)); }
+        var max = data.reduce(function (value, elem) {
+            var elmax = 0;
+            series.forEach(function (ser) {
+                elmax = Math.max(elmax, seriesValue(ser, elem)); });
             return Math.max(value, elmax); }, 0);
         return [0, max];
     },
 
 
     rowify = function (series, cols) {
-        var i, tdc = 0, rows = [], row = [];
-        for(i = 0; i < series.length; i += 1) {
+        var tdc = 0, rows = [], row = [];
+        series.forEach(function (ser) {
             if(tdc >= cols) {
                 rows.push(row);
                 row = [];
                 tdc = 0; }
-            row.push(series[i]);
-            tdc += 1; }
+            row.push(ser);
+            tdc += 1; });
         if(row.length > 0) {
             rows.push(row); }
         return rows;
@@ -188,93 +186,98 @@ var actstat = (function () {
 
 
     isRealUserAgent = function (agentstr) {
-        var i;
+        var ir = true;
         if(!agentstr) {
             return false; }
-        for(i = 0; i < botids.length; i += 1) {
-            if(agentstr.indexOf(botids[i]) >= 0) {
-                return false; } }
-        return true;
+        botids.every(function (botid) {
+            if(agentstr.indexOf(botid) >= 0) {
+                ir = false;
+                return false; }
+            return true; });
+        return ir;
     },
 
 
-    classifyComponent = function (comps, comp) {
-        var i, classified = false;
-        //"other" is always last in the comps array 
-        for(i = 0; !classified && i < comps.length; i += 1) {
-            switch(comps[i].key) {
+    classifyComponent = function (taxonomy, comp) {
+        var classified = false;
+        //"other" is always last in the top level array of the taxonomy
+        taxonomy.every(function (taxon) {
+            switch(taxon.key) {
             case "touch":
                 if(comp.key.indexOf("Mobi") >= 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "mouse":
                 if(comp.key.indexOf("Mobi") < 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "iPhone":
                 if(comp.key.indexOf("iPhone") >= 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "iPad":
                 if(comp.key.indexOf("iPad") >= 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "Android":
                 if(comp.key.indexOf("Android") >= 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "IE":
                 if(comp.key.indexOf("MSIE") >= 0 ||
                    (comp.key.indexOf("Windows NT") >= 0 &&
                     comp.key.indexOf("rv:11") >= 0)) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "Safari":
                 if(comp.key.indexOf("Safari/") >= 0 &&
                    comp.key.indexOf("Chrome/") < 0 &&
                    comp.key.indexOf("Chromium/") < 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "Firefox":
                 if(comp.key.indexOf("Firefox/") >= 0 && 
                    comp.key.indexOf("Seamonkey/") < 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "Chrome":
                 if(comp.key.indexOf("Chrome/") >= 0 && 
                    comp.key.indexOf("Chromium/") < 0) {
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
                 break;
             case "other":  
                 if(!classified) { //didn't match any previous cases...
-                    comps[i].count += 1;
-                    classifyComponent(comps[i].components, comp);
+                    taxon.count += 1;
+                    classifyComponent(taxon.components, comp);
                     classified = true; }
-                break; 
+                break;
             default: //bump the leaf count if already there
-                if(comps[i].key === comp.key) {
-                    comps[i].count += 1;
-                    classified = true; } } }
+                if(taxon.key === comp.key) {
+                    taxon.count += 1;
+                    classified = true; } }
+            if(classified) {  //done iterating
+                return false; } 
+            return true; });
         if(!classified) {  //add leaf node
-            comps.push(comp); }
+            taxonomy.push(comp); }
     },
 
 
@@ -294,7 +297,6 @@ var actstat = (function () {
 
                     
     sortTaxonomy = function (comps) {
-        var i;
         if(!comps || comps.length === 0) {
             return; }
         comps.sort(function (a, b) {
@@ -303,33 +305,36 @@ var actstat = (function () {
             if(a.count > b.count) {
                 return -1; }
             return 0; });
-        for(i = 0; i < comps.length; i += 1) {
-            sortTaxonomy(comps[i].components); }
+        comps.forEach(function (comp) {
+            sortTaxonomy(comp.components); });
     },
         
 
     hasSubLevelComponents = function (comps) {
-        var i;
-        for(i = 0; i < comps.length; i += 1) {
-            if(comps[i].components && comps[i].components.length > 0) {
-                return true; } }
-        return false;
+        var hasem = false;
+        comps.every(function (comp) {
+            if(comp.components && comp.components.length > 0) {
+                hasem = true;
+                return false; }
+            return true; });
+        return hasem;
     },
 
 
     taxonomyHTML = function (comps, prefix) {
-        var html = [], i, domid, sublist, li, style;
+        var html = [], style;
         prefix = prefix || "";
-        for(i = 0; i < comps.length; i += 1) {
+        comps.forEach(function (comp) {
+            var domid, sublist, li;
+            domid = prefix + comp.key;
             sublist = "";
-            domid = prefix + comps[i].key;
-            if(comps[i].components && comps[i].components.length > 0) {
-                sublist = taxonomyHTML(comps[i].components, domid); }
+            if(comp.components && comp.components.length > 0) {
+                sublist = taxonomyHTML(comp.components, domid); }
             li = [["span", {style: "display:inline-block;width:30px;" + 
                                    "text-align:right;" },
-                   comps[i].count],
+                   comp.count],
                   "&nbsp;",
-                  comps[i].key];
+                  comp.key];
             if(sublist) {
                 li = ["a", {href: "#" + domid,
                             onclick: jt.fs("actstat.toggleAgents('" + 
@@ -337,7 +342,7 @@ var actstat = (function () {
                       li]; }
             html.push(["li", 
                        [li,
-                        sublist]]); }
+                        sublist]]); });
         style = "list-style-type:none;padding-left:40px;";
         if(!hasSubLevelComponents(comps)) {
             style += "display:none;"; }
@@ -432,7 +437,7 @@ var actstat = (function () {
 
 
     displayUserAverages = function () {
-        var html = [], logins = {}, name, frequency, 
+        var html = [], logins = {}, frequency, 
             freqsum = 0, active = 0, flybys = 0;
         data.forEach(function (datum) {
             var pens = jt.safestr(datum.names).split(";");
@@ -442,21 +447,17 @@ var actstat = (function () {
                         logins[name] += 1; }
                     else {
                         logins[name] = 1; } } }); });
-        for(name in logins) {
-            if(logins.hasOwnProperty(name)) {
-                if(logins[name] > 1) {
-                    frequency = Math.round(data.length / logins[name]);
-                    active += 1;
-                    freqsum += frequency;
-                    html.push(["tr",
-                               [["td", {style: "padding:0px 10px;"},
-                                 name],
-                                ["td", {align: "right"},
-                                 frequency],
-                                ["td",
-                                 "days"]]]); }
+        Object.keys(logins).forEach(function (name) {
+            if(logins[name] > 1) {
+                frequency = Math.round(data.length / logins[name]);
+                active += 1;
+                freqsum += frequency;
+                html.push(["tr",
+                           [["td", {style: "padding:0px 10px;"}, name],
+                            ["td", {align: "right"}, frequency],
+                            ["td", "days"]]]); }
                 else {
-                    flybys += 1; } } }
+                    flybys += 1; } });
         html.sort(function (a, b) {
             var afreq = parseInt(a[1][1][2], 10),
                 bfreq = parseInt(b[1][1][2], 10);

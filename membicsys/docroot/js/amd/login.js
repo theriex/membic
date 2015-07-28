@@ -1,6 +1,6 @@
-/*global confirm: false, setTimeout: false, window: false, document: false, history: false, app: false, jt: false */
+/*global confirm, setTimeout, window, document, history, app, jt */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge, for */
 
 app.login = (function () {
     "use strict";
@@ -204,14 +204,14 @@ app.login = (function () {
 
 
     addParamValuesToLoginForm = function (params) {
-        var name, html = [];
+        var html = [];
         //add url parameters to pass through on form submit.  Except for
         //emailin, which should always be read from the form even if it
         //is passed back from the server for use in error handling.
-        for(name in params) {
-            if(params.hasOwnProperty(name) && name !== "emailin") {
+        Object.keys(params).forEach(function (name) {
+            if(name !== "emailin") {
                 html.push(["input", {type: "hidden", name: name,
-                                     value: params[name]}]); } }
+                                     value: params[name]}]); } });
         if(!params.returnto) {
             html.push(["input", {type: "hidden", name: "returnto",
                                  //window.location.origin is webkit only
@@ -249,18 +249,18 @@ app.login = (function () {
 
 
     activateButtonOrNoticeHTML = function (moracct) {
-        var html, acts, i, ta, sent = false;
+        var html, sent = false;
         html = ["button", {type: "button", id: "activatebutton",
                            onclick: jt.fs("app.login.sendActivation()")},
                 "Activate"];
         if(moracct.actsends) {
-            acts = moracct.actsends.split(",");
-            for(i = 0; i < acts.length; i += 1) {
-                ta = acts[i].split(";");
+            moracct.actsends.split(",").every(function (act) {
+                var ta = act.split(";");
                 if(ta[1] === moracct.email && 
-                   jt.timewithin(ta[0], 'hours', 4)) {
+                       jt.timewithin(ta[0], 'hours', 4)) {
                     sent = jt.tz2loc(jt.ISOString2Time(ta[0]));
-                    break; } } }
+                    return false; }
+                return true; }); }
         if(sent) {
             html = ["sent " + sent,
                     ["p", {cla: "activationsentdet"},
@@ -382,7 +382,7 @@ app.login = (function () {
                         function () {
                             jt.log("noted review clickthrough"); },
                         app.failf); }, 200);
-            app.lcs.getFull("pen", params.penid, function (penref) {
+            app.lcs.getFull("pen", params.penid, function (ignore /*penref*/) {
                 app.review.initWithId(params.revid, "read", 
                                       params.command); }); }
         else if(params.url) {
@@ -439,15 +439,15 @@ app.login = (function () {
 
 
     handleRedirectOrStartWork = function () {
-        var idx, params = jt.parseParams();
+        var idx, altpn = "AltAuth", params = jt.parseParams();
         standardizeAuthParams(params);
         handleInitialParamSideEffects(params);
         //figure out what to do next
-        if(params.command && params.command.indexOf("AltAuth") === 0) {
-            idx = params.command.slice("AltAuth".length);
+        if(params.command && params.command.indexOf(altpn) === 0) {
+            idx = params.command.slice(altpn.length);
             handleAlternateAuthentication(idx, params); }
-        else if(params.state && params.state.indexOf("AltAuth") === 0) {
-            idx = params.state.slice("AltAuth".length, "AltAuth".length + 1);
+        else if(params.state && params.state.indexOf(altpn) === 0) {
+            idx = params.state.slice(altpn.length, altpn.length + 1);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || app.login.readAuthCookie()) {
             loggedInDoNextStep(params); }
@@ -569,7 +569,7 @@ return {
     },
 
 
-    sendActivation: function (status) {
+    sendActivation: function (ignore /*status*/) {
         var emaddr = jt.byId('emailin').value;
         if(emaddr !== authname) {
             jt.err("Please ok your email address change before activating.");
@@ -626,7 +626,7 @@ return {
                     pen.name = ua.penName;
                     app.pen.updatePen(
                         pen,
-                        function (penref) {
+                        function (ignore /*penref*/) {
                             app.login.closeupdate();
                             app.login.updateAuthentDisplay();
                             app.login.nukeAppData();
@@ -735,7 +735,7 @@ return {
                      setAuthentication("mid", objs[0].token, emaddr);
                      //wait briefly to give the db a chance to stabilize
                      setTimeout(app.login.doNextStep, 3000); },
-                 app.failf(function (code, errtxt) {
+                 app.failf(function (ignore /*code*/, errtxt) {
                      jt.out('loginstatdiv', errtxt);
                      jt.out('loginbuttonsdiv', buttonhtml); }),
                 jt.semaphore("login.createAccount"));
@@ -768,7 +768,7 @@ return {
             else {  //default initialization
                 state = {view: "activity"}; } }
         if(app.login.isLoggedIn()) {
-            app.pen.getPen("", function (pen) {
+            app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();
                 app.history.dispatchState(state); }); }
         else {
@@ -785,10 +785,10 @@ return {
         jt.out('loginstatdiv', "Sending...");
         data = "emailin=" + jt.enc(emaddr);
         jt.call('POST', "mailcred", data,
-                function (objs) {
+                function (ignore /*objs*/) {
                     jt.out('loginstatdiv', "&nbsp;");
                     displayEmailSent(); },
-                app.failf(function (code, errtxt) {
+                app.failf(function (ignore /*code*/, errtxt) {
                     jt.out('loginstatdiv', errtxt); }),
                 jt.semaphore("forgotPassword"));
     }

@@ -1,6 +1,6 @@
-/*global alert: false, document: false, app: false, jt: false, window: false  */
+/*global app, jt */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white */
 
 // pen.stash (maintained by client)
 //   key: ctm + coopid
@@ -105,7 +105,7 @@ return {
 
 
     verifyPenStash: function (coop) {
-        var penid, pen, key, pso, i, revref, revid, memlev, modified = false;
+        var penid, pen, key, pso, memlev, modified = false;
         penid = app.pen.myPenId();
         pen = app.pen.myPenName();
         if(!pen) {
@@ -128,20 +128,20 @@ return {
         if(!pso.memlev || pso.memlev !== memlev) {
             pso.memlev = memlev;
             modified = true; }
-        for(i = 0; coop.recent && i < coop.recent.length; i += 1) {
-            revref = app.lcs.getRef("rev", coop.recent[i]);
-            if(revref.rev && revref.rev.penid === penid) {
-                if(!pso.lastpost || revref.rev.modified > pso.lastpost) {
-                    pso.lastpost = revref.rev.modified;
-                    modified = true; }
-                revid = jt.instId(revref.rev);
-                if(!pso.posts.csvcontains(revid)) {
-                    pso.posts = pso.posts.csvappend(revid);
-                    modified = true; } } }
+        if(coop.recent) {
+            coop.recent.forEach(function (recentid) {
+                var revref = app.lcs.getRef("rev", recentid);
+                if(revref.rev && revref.rev.penid === penid) {
+                    if(!pso.lastpost || revref.rev.modified > pso.lastpost) {
+                        pso.lastpost = revref.rev.modified;
+                        modified = true; }
+                    if(!pso.posts.csvcontains(recentid)) {
+                        pso.posts = pso.posts.csvappend(recentid);
+                        modified = true; } } }); }
         if(modified) {
             app.pen.updatePen(
                 pen,
-                function (pen) {
+                function (ignore /*pen*/) {
                     jt.log("Pen stash updated for " + coop.name); },
                 function (code, errtxt) {
                     jt.log("verifyPenStash " + code + ": " + errtxt); }); }

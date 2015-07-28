@@ -1,6 +1,6 @@
-/*global alert: false, console: false, confirm: false, setTimeout: false, window: false, document: false, history: false, FB: false, navigator: false, require: false, jtminjsDecorateWithUtilities: false */
+/*global setTimeout, window, document, history, jtminjsDecorateWithUtilities */
 
-/*jslint regexp: true, unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge, for */
 
 var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
@@ -74,14 +74,17 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.trustedContainer = function () {
-        var i, tcs = ["https://www.membic.com",
-                      "http://localhost:8080",
-                      //http://192.168.0.5:8080,
-                      "https://membicsys.appspot.com"];
-        for(i = 0; i < tcs.length; i += 1) {
-            if(window.location.href.indexOf(tcs[i]) === 0) {
-                return true; } }
-        return false;
+        var knownhost = false,
+            tcs = ["https://www.membic.com",
+                   "http://localhost:8080",
+                   //http://192.168.0.5:8080,
+                   "https://membicsys.appspot.com"];
+        tcs.every(function (hosturl) {
+            if(window.location.href.indexOf(hosturl) === 0) {
+                knownhost = true;
+                return false; }
+            return true; });
+        return knownhost;
     };
 
 

@@ -1,6 +1,6 @@
-/*global setTimeout: false, window: false, document: false, app: false, jt: false */
+/*global setTimeout, window, document, app, jt */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white for */
 
 //////////////////////////////////////////////////////////////////////
 // Display of recent posts from friends, remembered posts.  
@@ -22,7 +22,7 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     displayRemembered = function (filtertype) {
-        var params, revs, revids, i, revref;
+        var params, revs, revids;
         jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         filtertype = filtertype || app.layout.getType();
         if(!feeds.remembered) {
@@ -44,14 +44,16 @@ app.activity = (function () {
                 jt.out('feedrevsdiv', "Resolving remembered reviews...");
                 revs = [];
                 revids = app.pen.myPenName().remembered.csvarray();
-                for(i = 0; i < revids.length; i += 1) {
-                    revref = app.lcs.getRef("rev", revids[i]);
+                if(!revids.every(function (cv) {
+                    var revref = app.lcs.getRef("rev", cv);
                     if(revref.status === "not cached") {
-                        jt.out('feedrevsdiv', "Resolving membic " + revids[i]);
-                        return app.lcs.getFull("rev", revids[i], 
-                                               displayRemembered); }
+                        jt.out('feedrevsdiv', "Resolving membic " + cv);
+                        app.lcs.getFull("rev", cv, displayRemembered);
+                        return false; }
                     if(revref.rev) {
-                        revs.push(revref.rev); } }
+                        revs.push(revref.rev); }
+                    return true; })) { 
+                    return; }  //not every ref fetched yet
                 feeds.memo = revs; }
             jt.out('feedrevsdiv', "Merging and sorting...");
             revs = feeds.future.concat(feeds.memo);
@@ -69,21 +71,22 @@ app.activity = (function () {
 
 
     mergePersonalRecent = function (feedtype, feedrevs) {
-        var cached, myrev, revid, i, j;
+        var cached, revid;
         cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
         //non-destructively merge in recent stuff without negatively
         //impacting the existing server sort order.
-        for(i = 0; i < cached.length; i += 1) {
-            myrev = cached[i];
-            revid = jt.instId(cached[i]);
-            for(j = 0; j < feedrevs.length; j += 1) {
-                if(jt.instId(feedrevs[j]) === revid) {
-                    break; }  //already have it
-                if(feedrevs[j].modhist < myrev.modhist) {
-                    feedrevs.splice(i, 0, myrev);
-                    break; } }
+        cached.forEach(function (cacheval, cacheidx) {
+            revid = jt.instId(cacheval);
+            feedrevs.every(function (feedrev) {
+                if(jt.instId(feedrev) === revid) {
+                    return false; }  //already have the value, done iterating
+                if(feedrev.modhist < cacheval.modhist) {
+                    feedrevs.splice(cacheidx, 0, cacheval);
+                    return false; }  //new value inserted, done iterating
+                return true; });  //continue iterating
+            //If no existing reviews, prepend the value.
             if(!feedrevs.length) {
-                feedrevs.splice(0, 0, myrev); } }
+                feedrevs.splice(0, 0, cacheval); } });
         return feedrevs;
     },
 
@@ -147,6 +150,9 @@ return {
         if(feeds[feedtype]) {
             return mergeAndDisplayReviews(feedtype, feeds[feedtype]); }
         jt.out('contentdiv', "Fetching posts...");
+        if(app.login.isLoggedIn()) {
+            jt.out('contentdiv', 
+                   "Fetching posts according to your preferences..."); }
         params = app.login.authparams();
         if(params) {
             params += "&penid=" + app.pen.myPenId() + "&"; }
@@ -166,11 +172,9 @@ return {
 
 
     redisplay: function () {
-        var rts, i, rt;
-        rts = app.review.getReviewTypes();
-        for(i = 0; i < rts.length; i += 1) {
-            rt = rts[i];
-            feeds[rt.type] = null; }
+        var rts = app.review.getReviewTypes();
+        rts.forEach(function (rt) {
+            feeds[rt.type] = null; });
         feeds.all = null;
         app.activity.displayFeed();
     },
@@ -180,6 +184,8 @@ return {
         var i, inserted, processed;
         processed = [];
         inserted = false;
+        //this loop can be rewritten using array methods after findIndex
+        //becomes generally available.
         for(i = 0; i < revs.length; i += 1) {
             if(updrev.modhist >= revs[i].modhist && !inserted) {
                 processed.push(updrev);
@@ -192,37 +198,21 @@ return {
 
 
     updateFeeds: function (rev) {
-        var revid, tname, revs, i, processed;
-        revid = jt.instId(rev);
+        var revid = jt.instId(rev), feedupdt = ["all", "memo", rev.revtype];
         //review might have changed types, so remove all first
-        for(tname in feeds) {
-            if(feeds.hasOwnProperty(tname)) {
-                if(feeds[tname]) {  //extended tnames like memo may be null
-                    revs = feeds[tname];
-                    processed = [];
-                    for(i = 0; i < revs.length; i += 1) {
-                        if(jt.instId(revs[i]) !== revid) {
-                            processed.push(revs[i]); } }
-                    feeds[tname] = processed; } } }
+        Object.keys(feeds).forEach(function (feedkey) {
+            feeds[feedkey] = feeds[feedkey].filter(function (rev) {
+                return jt.instId(rev) !== revid; }); });
         //insert rev appropriately based on creation time
         if(rev.srcrev >= 0 && !jt.isId(rev.ctmid)) {  //not futbatch or ctm copy
-            for(tname in feeds) {
-                if(feeds.hasOwnProperty(tname)) {
-                    if(tname === "all" || tname === "memo" ||
-                           tname === rev.revtype ) {
-                        feeds[tname] = app.activity.insertOrUpdateRev(
-                            feeds[tname], rev); } } } }
-        //might have been future before, or is future now.  Rebuild.
-        if(feeds.future) {  //don't modify unless already initialized
-            revs = feeds.future;
-            processed = [];
-            for(i = 0; i < revs.length; i += 1) {
-                if(jt.instId(revs[i]) !== revid) {
-                    processed.push(revs[i]); } }
-            feeds.future = processed;
-            if(rev.srcrev === -101) {
-                feeds.future = app.activity.insertOrUpdateRev(
-                    feeds.future, rev); }
+            Object.keys(feeds).forEach(function (feedkey) {
+                if(feedupdt.indexOf(feedkey) >= 0) {
+                    feeds[feedkey] = app.activity.insertOrUpdateRev(
+                            feeds[feedkey], rev); }}); }
+        //add to future feed if this was a future review
+        if(rev.srcrev === -101) {
+            feeds.future = app.activity.insertOrUpdateRev(
+                feeds.future, rev);
             feeds.remembered = null; } //trigger remerge and sort
     },
 
