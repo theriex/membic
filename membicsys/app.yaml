@@ -118,11 +118,6 @@ handlers:
 ######################################################################
 ##        Reviews
 
-## Group to Coop conversion
-## GET params: prepfields=done after pens initialized...
-- url: /grpctmcnv
-  script: src.py.rev.app
-
 ## Return the review feed for the given type
 ## GET params: revtype, authparams, penid
 - url: /revfeed

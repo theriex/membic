@@ -9,7 +9,6 @@ from moracct import *
 from morutil import *
 import pen
 import coop
-import group
 import json
 from operator import attrgetter
 import re
@@ -739,134 +738,134 @@ def resolve_ids_to_json(feedids, blocks):
     return "[" + jstr + "]"
 
 
-def make_coop_from_group(grp):
-    ctm = coop.Coop(name=grp.name, name_c=grp.name_c)
-    ctm.modified = grp.modified
-    ctm.modhist = grp.modhist
-    ctm.description = grp.description
-    ctm.picture = grp.picture
-    ctm.top20s = grp.top20s
-    ctm.calembed = grp.calembed
-    ctm.founders = grp.founders
-    ctm.moderators = grp.moderators
-    ctm.members = grp.members
-    ctm.seeking = grp.seeking
-    ctm.rejects = grp.rejects
-    ctm.adminlog = grp.adminlog
-    ctm.people = grp.people
-    ctm.put()
-    ctm = coop.Coop.get_by_id(ctm.key().id())
-    return ctm
+# def make_coop_from_group(grp):
+#     ctm = coop.Coop(name=grp.name, name_c=grp.name_c)
+#     ctm.modified = grp.modified
+#     ctm.modhist = grp.modhist
+#     ctm.description = grp.description
+#     ctm.picture = grp.picture
+#     ctm.top20s = grp.top20s
+#     ctm.calembed = grp.calembed
+#     ctm.founders = grp.founders
+#     ctm.moderators = grp.moderators
+#     ctm.members = grp.members
+#     ctm.seeking = grp.seeking
+#     ctm.rejects = grp.rejects
+#     ctm.adminlog = grp.adminlog
+#     ctm.people = grp.people
+#     ctm.put()
+#     ctm = coop.Coop.get_by_id(ctm.key().id())
+#     return ctm
 
 
-def verify_coops_for_groups(handler):
-    # After running this, each Group has a matching Coop instance
-    # whose id is referenced in the calembed field.  All Groups are
-    # cached for easy reference
-    count = 0
-    ekt = "Coop:"
-    grps = group.Group.all()
-    for grp in grps:
-        count += 1
-        if not grp.calembed or not grp.calembed.startswith(ekt):
-            coop = make_coop_from_group(grp)
-            logging.info("Created Coop " + str(coop.key().id()) + 
-                         " for Group " + str(grp.key().id()))
-            grp.calembed = ekt + str(coop.key().id())
-            cached_put(grp)
-        else:
-            cache_verify(grp)
-    handler.response.out.write(str(count) + " matching Coops for Groups<br>\n")
-    handler.response.out.write("verify_coops_for_groups completed.<br>\n")
+# def verify_coops_for_groups(handler):
+#     # After running this, each Group has a matching Coop instance
+#     # whose id is referenced in the calembed field.  All Groups are
+#     # cached for easy reference
+#     count = 0
+#     ekt = "Coop:"
+#     grps = group.Group.all()
+#     for grp in grps:
+#         count += 1
+#         if not grp.calembed or not grp.calembed.startswith(ekt):
+#             coop = make_coop_from_group(grp)
+#             logging.info("Created Coop " + str(coop.key().id()) + 
+#                          " for Group " + str(grp.key().id()))
+#             grp.calembed = ekt + str(coop.key().id())
+#             cached_put(grp)
+#         else:
+#             cache_verify(grp)
+#     handler.response.out.write(str(count) + " matching Coops for Groups<br>\n")
+#     handler.response.out.write("verify_coops_for_groups completed.<br>\n")
 
 
-def ctmid_for_grpid(handler, grpid):
-    ktx = "Coop:"
-    grp = cached_get(int(grpid), group.Group)
-    if not grp:
-        return 0
-    if not grp.calembed or not grp.calembed.startswith(ktx):
-        msg = "ctmid_for_grpid " + " no calembed translation"
-        handler.response.out.write(msg + "<br>\n")
-        logging.info(msg)
-        return 0
-    ctmid = int(grp.calembed[len(ktx):])
-    return ctmid
+# def ctmid_for_grpid(handler, grpid):
+#     ktx = "Coop:"
+#     grp = cached_get(int(grpid), group.Group)
+#     if not grp:
+#         return 0
+#     if not grp.calembed or not grp.calembed.startswith(ktx):
+#         msg = "ctmid_for_grpid " + " no calembed translation"
+#         handler.response.out.write(msg + "<br>\n")
+#         logging.info(msg)
+#         return 0
+#     ctmid = int(grp.calembed[len(ktx):])
+#     return ctmid
 
 
-def convert_pen_group_refs(handler):
-    count = 0
-    worktype = "PenName.convidx initialization, "
-    conviterable = handler.request.get("prepfields")
-    if not conviterable or conviterable != "done":
-        pns = pen.PenName.all()
-        for pn in pns:
-            count += 1
-            pn.convidx = 1
-            pn.put()
-            pn = pen.PenName.get_by_id(pn.key().id())
-    else:
-        worktype = "PenName group reference conversion, "
-        pq = pen.PenName.gql("WHERE convidx > 0")
-        pns = pq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        for pn in pns:
-            count += 1
-            # stash is rebuilt client side, so nuke it out when converting.
-            pn.stash = ""
-            for grpid in csv_list(pn.groups):
-                ctmid = ctmid_for_grpid(handler, grpid)
-                if ctmid:
-                    pn.coops = append_to_csv(ctmid, pn.coops)
-            pn.convidx = 0
-            pn.put()
-            pn = pen.PenName.get_by_id(pn.key().id())
-    handler.response.out.write(worktype + str(count) + 
-                               " PenNames converted<br>\n")
-    handler.response.out.write("convert_pen_group_refs completed.<br>\n")
+# def convert_pen_group_refs(handler):
+#     count = 0
+#     worktype = "PenName.convidx initialization, "
+#     conviterable = handler.request.get("prepfields")
+#     if not conviterable or conviterable != "done":
+#         pns = pen.PenName.all()
+#         for pn in pns:
+#             count += 1
+#             pn.convidx = 1
+#             pn.put()
+#             pn = pen.PenName.get_by_id(pn.key().id())
+#     else:
+#         worktype = "PenName group reference conversion, "
+#         pq = pen.PenName.gql("WHERE convidx > 0")
+#         pns = pq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#         for pn in pns:
+#             count += 1
+#             # stash is rebuilt client side, so nuke it out when converting.
+#             pn.stash = ""
+#             for grpid in csv_list(pn.groups):
+#                 ctmid = ctmid_for_grpid(handler, grpid)
+#                 if ctmid:
+#                     pn.coops = append_to_csv(ctmid, pn.coops)
+#             pn.convidx = 0
+#             pn.put()
+#             pn = pen.PenName.get_by_id(pn.key().id())
+#     handler.response.out.write(worktype + str(count) + 
+#                                " PenNames converted<br>\n")
+#     handler.response.out.write("convert_pen_group_refs completed.<br>\n")
 
 
-def convert_rev_svcdata_grouprefs(handler, rev):
-    svcdata = rev.svcdata
-    if not svcdata:
-        return ""
-    sdict = {}
-    try:
-        sdict = json.loads(svcdata)
-    except Exception as e:
-        logging.info("Review " + str(rev.key().id()) + " svcdata: " + svcdata +
-                     " could not be deserialized. Initializing to empty string")
-        return ""
-    if "postgrps" not in sdict:
-        return svcdata
-    postobjs = sdict["postgrps"]
-    if not postobjs or not len(postobjs):
-        return svcdata
-    for po in postobjs:
-        if "grpid" in po:
-            po["ctmid"] = str(ctmid_for_grpid(handler, int(po["grpid"])))
-    svcdata = json.dumps(sdict)
-    return svcdata
+# def convert_rev_svcdata_grouprefs(handler, rev):
+#     svcdata = rev.svcdata
+#     if not svcdata:
+#         return ""
+#     sdict = {}
+#     try:
+#         sdict = json.loads(svcdata)
+#     except Exception as e:
+#         logging.info("Review " + str(rev.key().id()) + " svcdata: " + svcdata +
+#                      " could not be deserialized. Initializing to empty string")
+#         return ""
+#     if "postgrps" not in sdict:
+#         return svcdata
+#     postobjs = sdict["postgrps"]
+#     if not postobjs or not len(postobjs):
+#         return svcdata
+#     for po in postobjs:
+#         if "grpid" in po:
+#             po["ctmid"] = str(ctmid_for_grpid(handler, int(po["grpid"])))
+#     svcdata = json.dumps(sdict)
+#     return svcdata
 
 
-def convert_rev_group_refs(handler):
-    conviterable = handler.request.get("prepfields")
-    if not conviterable or conviterable != "done":
-        return
-    count = 0
-    rq = Review.gql("WHERE grpid > -404")
-    revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    for rev in revs:
-        count += 1
-        if rev.grpid <= 0:  # no group, future or batch indicator
-            rev.ctmid = rev.grpid
-            rev.svcdata = convert_rev_svcdata_grouprefs(handler, rev)
-        elif rev.grpid > 0: # review is a group posting
-            rev.ctmid = ctmid_for_grpid(handler, rev.grpid)
-        rev.grpid = -404
-        rev.put()
-        rev = Review.get_by_id(rev.key().id())
-    handler.response.out.write(str(count) + " reviews converted<br>\n")
-    handler.response.out.write("Rerun until no reviews left to convert<br>\n")
+# def convert_rev_group_refs(handler):
+#     conviterable = handler.request.get("prepfields")
+#     if not conviterable or conviterable != "done":
+#         return
+#     count = 0
+#     rq = Review.gql("WHERE grpid > -404")
+#     revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#     for rev in revs:
+#         count += 1
+#         if rev.grpid <= 0:  # no group, future or batch indicator
+#             rev.ctmid = rev.grpid
+#             rev.svcdata = convert_rev_svcdata_grouprefs(handler, rev)
+#         elif rev.grpid > 0: # review is a group posting
+#             rev.ctmid = ctmid_for_grpid(handler, rev.grpid)
+#         rev.grpid = -404
+#         rev.put()
+#         rev = Review.get_by_id(rev.key().id())
+#     handler.response.out.write(str(count) + " reviews converted<br>\n")
+#     handler.response.out.write("Rerun until no reviews left to convert<br>\n")
 
 
 class SaveReview(webapp2.RequestHandler):
@@ -1146,12 +1145,12 @@ class GetReviewById(webapp2.RequestHandler):
 #         self.response.out.write(str(count) + " coop reviews converted<br>\n")
 
 
-class ConvertGroupsToCoops(webapp2.RequestHandler):
-    def get(self):
-        verify_coops_for_groups(self)
-        convert_pen_group_refs(self)
-        convert_rev_group_refs(self)
-        self.response.out.write("ConvertGroupsToCoops completed<br>\n")
+# class ConvertGroupsToCoops(webapp2.RequestHandler):
+#     def get(self):
+#         verify_coops_for_groups(self)
+#         convert_pen_group_refs(self)
+#         convert_rev_group_refs(self)
+#         self.response.out.write("ConvertGroupsToCoops completed<br>\n")
 
 
 class GetReviewFeed(webapp2.RequestHandler):
@@ -1237,7 +1236,6 @@ class FetchPreReviews(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/delrev', DeleteReview),
-                               ('/grpctmcnv', ConvertGroupsToCoops),
                                ('/revpicupload', UploadReviewPic),
                                ('/revpic', GetReviewPic),
                                ('/srchrevs', SearchReviews),
