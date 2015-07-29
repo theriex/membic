@@ -421,6 +421,7 @@ class ImageRelay(webapp2.RequestHandler):
             img = pickle.loads(img)
             logging.info("ImageRelay retrieved from cache")
         else:
+            headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
             try:
                 result = urlfetch.fetch(url, payload=None, method="GET",
                                         headers=headers,
