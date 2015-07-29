@@ -627,6 +627,7 @@ def append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, sizebound):
     return jstr
 
 
+# returns an array of the source object followed by all the reviews
 def rebuild_reviews_block(handler, pct, pgid):
     logging.info("rebuild_reviews_block " + pct + " " + str(pgid))
     pco = None

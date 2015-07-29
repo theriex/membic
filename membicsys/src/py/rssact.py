@@ -5,6 +5,7 @@ from morutil import *
 import rev
 import coop
 from cacheman import *
+import json
 
 
 def getTitle(rev):
@@ -88,6 +89,7 @@ def rss_content(handler, ctmid, title, reviews):
     txt += "<items>\n"
     txt += " <rdf:Seq>\n"
     for review in reviews:
+        logging.info("review: " + review.cankey)
         txt += "<rdf:li rdf:resource=\"" + item_url(handler, review) + "\" />\n"
     txt += " </rdf:Seq>\n"
     txt += "</items>\n"
@@ -116,15 +118,30 @@ class CoopRSS(webapp2.RequestHandler):
     def get(self):
         ctmid = intz(self.request.get('coop'))
         ctm = coop.Coop.get_by_id(ctmid)
-        # Similar to FetchAllReviews except but without extra data checks
-        key = coop + str(ctmid)
+        # Similar to rev.py FetchAllReviews but without extra data checks
+        key = "coop" + str(ctmid)
         jstr = memcache.get(key)
         if not jstr:
             jstr = rev.rebuild_reviews_block(self, "coop", ctmid)
             memcache.set(key, jstr)
         reviews = json.loads(jstr)
+        filtered = []
+        latest = nowISO()
+        for review in reviews:
+            # filter out the instance object and anything else non-review
+            if not "ctmid" in review:
+                continue
+            # filter out any supporting source reviews
+            if review.ctmid != int(ctmid):
+                continue
+            # stop if this review is newer than the last one, since that
+            # means we are out of the recent list and into the top20s
+            if review.modhist > latest:
+                break
+            filtered.append(review)
+            latest = review.modhist
         title = ctm.name
-        content = rss_content(self, ctmid, title, reviews)
+        content = rss_content(self, ctmid, title, filtered)
         ctype = "application/xhtml+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content);
