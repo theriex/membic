@@ -604,7 +604,7 @@ app.pcd = (function () {
         if(!tops.all) {
             tops.all = [];
             app.review.getReviewTypes().forEach(function (rt) {
-                tops.all = tops.all.concat(tops[rt] || []); });
+                tops.all = tops.all.concat(tops[rt.type] || []); });
             revs = app.lcs.resolveIdArrayToCachedObjs("rev", tops.all);
             revs.sort(function (a, b) {
                 if(a.rating < b.rating) { return 1; }
