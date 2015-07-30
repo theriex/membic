@@ -228,6 +228,7 @@ button, .loginbutton, .formbutton {
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
 #rssurlta { height:40px; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
+.searchbuttondiv { margin:0px 0px 0px 40px; }
 
 /* >> review layout */
 #revdlgdiv { }

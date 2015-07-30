@@ -974,7 +974,7 @@ return {
 
 
     searchReviews: function () {
-        var srchin, params;
+        var srchin, html;
         srchin = jt.byId("pcdsrchin");
         if(!srchin) {  //query input no longer on screen.  probably switched
             return; }  //tabs so just quit
@@ -991,27 +991,37 @@ return {
             srchst.revs = searchFilterReviews(srchst.revs || [], 
                 app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent));
             displaySearchResults();  //clears the display if none matching
-            if(!srchst.revs.length && dst.obj.recent.length >= 5) {
-                //there are likely more revs on server, go fetch
-                app.displayWaitProgress(0, 800, 'pcdsrchdispdiv', 
-                    "Searching...",
-                    "Many reviews or slow data connection...");
-                params = app.login.authparams() + 
-                    "&qstr=" + jt.enc(jt.canonize(srchst.qstr)) +
-                    "&revtype=" + app.typeOrBlank(srchst.revtype) +
-                    "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
-                    jt.instId(dst.obj);
-                jt.call('GET', "srchrevs?" + params, null,
-                        function (revs) {
-                            app.lcs.putAll("rev", revs);
-                            srchst.revs = revs;
-                            displaySearchResults(); },
-                        app.failf(function (code, errtxt) {
-                            jt.out('pcdsrchdispdiv', "searchReviews failed: " + 
-                                   code + " " + errtxt); }),
-                        jt.semaphore("pcd.searchReviews")); } }
+            if(!srchst.revs.length && dst.obj.recent.length >= 50) {
+                //there are likely more revs on server, offer to go fetch
+                html = ["div", {cla: "searchbuttondiv"},
+                        ["button", {type: "button", id: "searchserverbutton",
+                                    onclick: jt.fs("app.pcd.searchServer()")},
+                         "Search Server"]];
+                jt.out('pcdsrchdispdiv', jt.tac2html(html)); } }
         else {  //no change to search parameters yet, monitor
             setTimeout(app.pcd.searchReviews, 400); }
+    },
+
+
+    searchServer: function () {
+        var params;
+        app.displayWaitProgress(0, 1600, 'pcdsrchdispdiv', 
+                                "Searching...",
+                                "Many reviews or slow data connection...");
+        params = app.login.authparams() + 
+            "&qstr=" + jt.enc(jt.canonize(srchst.qstr)) +
+            "&revtype=" + app.typeOrBlank(srchst.revtype) +
+            "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
+            jt.instId(dst.obj);
+        jt.call('GET', "srchrevs?" + params, null,
+                function (revs) {
+                    app.lcs.putAll("rev", revs);
+                    srchst.revs = revs;
+                    displaySearchResults(); },
+                app.failf(function (code, errtxt) {
+                    jt.out('pcdsrchdispdiv', "searchReviews failed: " + 
+                           code + " " + errtxt); }),
+                jt.semaphore("pcd.searchReviews"));
     },
 
 
