@@ -215,7 +215,7 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
-    app.displayWaitProgress = function(count, millis, divid, msg) {
+    app.displayWaitProgress = function(count, millis, divid, msg, msg2) {
         var html, i = 0, src;
         if(!count) {  //initial call, count is zero
             html = ["div", {cla: "waitdiv"},
@@ -234,9 +234,12 @@ var app = {},  //Global container for application level funcs and values
                 html.push(["img", {src: "img/" + src}]); }
             jt.out('waitprogdiv', jt.tac2html(html));
             if(count > 6) {
-                jt.out('waitserverdiv', "Server cache rebuild..."); }
+                msg2 = msg2 || "Server cache rebuild...";
+                jt.out('waitserverdiv', msg2); }
             setTimeout(function () {
-                app.displayWaitProgress(count + 1, millis); }, millis); }
+                app.displayWaitProgress(count + 1, millis, 
+                                        divid, msg, msg2); },
+                       millis); }
     };
 
 

@@ -39,8 +39,7 @@ app.pcd = (function () {
                                    img: "img/tabctms.png" },
                       calendar:  { href: "#coopcalendar",
                                    img: "calico" } },
-        searchstate = { revtype: "all", qstr: "", 
-                        init: false, inprog: false, revids: [] },
+        srchst = { revtype: "all", qstr: "", status: "" },
         setdispstate = { infomode: "" },
         ctmmsgs = [
             {name: "Following",
@@ -631,11 +630,41 @@ app.pcd = (function () {
         html = [["div", {id: "pcdsrchdiv"},
                  ["input", {type: "text", id: "pcdsrchin", size: 40,
                             placeholder: "Membic title or name",
-                            value: searchstate.qstr}]],
+                            value: srchst.qstr}]],
                 ["div", {id: "pcdsrchdispdiv"}]];
         jt.out('pcdcontdiv', jt.tac2html(html));
-        searchstate.init = true;
+        srchst.status = "initializing";
         app.pcd.searchReviews();
+        jt.byId('pcdsrchin').focus();
+    },
+
+
+    searchFilterReviews = function (revs, recent) {
+        var merged = [], cand;
+        recent.sort(function (a, b) {
+            if(a.modified > b.modified) { return -1; }
+            if(a.modified < b.modified) { return 1; }
+            return 0; });
+        //both arrays are now sorted by modified in descending order
+        while(revs.length || recent.length) {
+            if(!recent.length || (revs.length && 
+                                  revs[0].modified >= recent[0].modified)) {
+                cand = revs.shift(); }
+            else {
+                cand = recent.shift(); }
+            if(!srchst.qstr || 
+                   cand.cankey.indexOf(srchst.qstr.toLowerCase()) >= 0) {
+                merged.push(cand); } }
+        return merged;
+    },
+
+
+    displaySearchResults = function () {
+        app.review.displayReviews('pcdsrchdispdiv', "pcd", srchst.revs, 
+                                  "app.pcd.toggleRevExpansion", 
+                                  (dst.type === "coop"));
+        srchst.status = "waiting";
+        setTimeout(app.pcd.searchReviews, 400);
     },
 
 
@@ -952,33 +981,35 @@ return {
         if(!app.login.isLoggedIn()) {
             jt.out('pcdsrchdispdiv', "Sign in to search");
             return; }
-        if(!searchstate.inprog && 
-              (searchstate.init ||
-               searchstate.revtype !== app.layout.getType() ||
-               searchstate.qstr !== srchin.value)) {
-            searchstate.qstr = srchin.value;
-            searchstate.revtype = app.layout.getType();
-            searchstate.inprog = true;
-            searchstate.init = false;
-            params = app.login.authparams() + 
-                "&qstr=" + jt.enc(jt.canonize(searchstate.qstr)) +
-                "&revtype=" + app.typeOrBlank(searchstate.revtype) +
-                "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
-                jt.instId(dst.obj);
-            jt.call('GET', "srchrevs?" + params, null,
-                    function (revs) {
-                        app.lcs.putAll("rev", revs);
-                        searchstate.revs = revs;
-                        searchstate.inprog = false;
-                        app.review.displayReviews(
-                            'pcdsrchdispdiv', "pcd", searchstate.revs, 
-                            "app.pcd.toggleRevExpansion", 
-                            (dst.type === "coop"));
-                        setTimeout(app.pcd.searchReviews, 400); },
-                    app.failf(function (code, errtxt) {
-                        jt.out('pcdsrchdispdiv', "searchReviews failed: " + 
-                               code + " " + errtxt); }),
-                    jt.semaphore("pcd.searchReviews")); }
+        if(!srchst.status !== "processing" && 
+              (srchst.status === "initializing" ||
+               srchst.revtype !== app.layout.getType() ||
+               srchst.qstr !== srchin.value)) {
+            srchst.status = "processing";
+            srchst.qstr = srchin.value;
+            srchst.revtype = app.layout.getType();
+            srchst.revs = searchFilterReviews(srchst.revs || [], 
+                app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent));
+            displaySearchResults();  //clears the display if none matching
+            if(!srchst.revs.length && dst.obj.recent.length >= 5) {
+                //there are likely more revs on server, go fetch
+                app.displayWaitProgress(0, 800, 'pcdsrchdispdiv', 
+                    "Searching...",
+                    "Many reviews or slow data connection...");
+                params = app.login.authparams() + 
+                    "&qstr=" + jt.enc(jt.canonize(srchst.qstr)) +
+                    "&revtype=" + app.typeOrBlank(srchst.revtype) +
+                    "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
+                    jt.instId(dst.obj);
+                jt.call('GET', "srchrevs?" + params, null,
+                        function (revs) {
+                            app.lcs.putAll("rev", revs);
+                            srchst.revs = revs;
+                            displaySearchResults(); },
+                        app.failf(function (code, errtxt) {
+                            jt.out('pcdsrchdispdiv', "searchReviews failed: " + 
+                                   code + " " + errtxt); }),
+                        jt.semaphore("pcd.searchReviews")); } }
         else {  //no change to search parameters yet, monitor
             setTimeout(app.pcd.searchReviews, 400); }
     },
@@ -997,7 +1028,7 @@ return {
             revs = getFavoriteReviews();
             break;
         case "search":
-            revs = searchstate.revs;
+            revs = srchst.revs;
             break;
         default:
             jt.err("pcd.toggleRevExpansion unknown tab " + dst.tab); }
@@ -1128,8 +1159,7 @@ return {
         dst.id = "";
         dst.tab = "";
         dst.obj = null;
-        searchstate = { revtype: "all", qstr: "", 
-                        init: false, inprog: false, revids: [] };
+        srchst = { revtype: "all", qstr: "", status: "" };
         setdispstate = { infomode: "" };
     },
 
