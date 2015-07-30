@@ -215,6 +215,31 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.displayWaitProgress = function(count, millis, divid, msg) {
+        var html, i = 0, src;
+        if(!count) {  //initial call, count is zero
+            html = ["div", {cla: "waitdiv"},
+                    [["div", {id: "waitmsgdiv"}, msg],
+                     ["div", {id: "waitserverdiv"}],
+                     ["div", {id: "waitprogdiv"}]]];
+            jt.out(divid, jt.tac2html(html)); }
+        if(jt.byId('waitprogdiv')) {
+            html = [];
+            while(i < 4) {
+                i += 1;
+                if(i <= count) {
+                    src = "waitblockfilled.png"; }
+                else {
+                    src = "waitblockopen.png"; }
+                html.push(["img", {src: "img/" + src}]); }
+            jt.out('waitprogdiv', jt.tac2html(html));
+            if(count > 6) {
+                jt.out('waitserverdiv', "Server cache rebuild..."); }
+            setTimeout(function () {
+                app.displayWaitProgress(count + 1, millis); }, millis); }
+    };
+
+
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////

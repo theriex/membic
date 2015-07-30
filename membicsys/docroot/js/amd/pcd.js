@@ -763,7 +763,7 @@ app.pcd = (function () {
                 msg = "Retrieving " + app.pennames[id] + "..."; }
             else {
                 msg = "Retrieving Pen Name " + id + "..."; } }
-        jt.out(divid, msg);
+        app.displayWaitProgress(0, 750, divid, msg);
     },
 
 

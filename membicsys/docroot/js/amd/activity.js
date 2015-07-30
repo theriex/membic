@@ -128,6 +128,15 @@ app.activity = (function () {
     },
 
 
+    displayActivityPostsWaitMessage = function () {
+        var msg;
+        msg = "Fetching posts...";
+        if(app.login.isLoggedIn()) {
+            msg = "Fetching posts according to your preferences..."; }
+        app.displayWaitProgress(0, 850, 'contentdiv', msg);
+    },
+
+
     mainDisplay = function (dispmode) {
         app.history.checkpoint({ view: dispmode });
         if(dispmode === "memo") {
@@ -149,10 +158,7 @@ return {
         app.history.checkpoint({ view: "activity" });
         if(feeds[feedtype]) {
             return mergeAndDisplayReviews(feedtype, feeds[feedtype]); }
-        jt.out('contentdiv', "Fetching posts...");
-        if(app.login.isLoggedIn()) {
-            jt.out('contentdiv', 
-                   "Fetching posts according to your preferences..."); }
+        displayActivityPostsWaitMessage();
         params = app.login.authparams();
         if(params) {
             params += "&penid=" + app.pen.myPenId() + "&"; }
