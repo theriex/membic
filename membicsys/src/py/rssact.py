@@ -7,46 +7,50 @@ import coop
 from cacheman import *
 import json
 
+########################################
+# The reviews for the RSS feed are fetched from cache, which means
+# they are reconstituted JSON dicts and not databasse instances.
+########################################
 
-def getTitle(rev):
-    if rev.revtype == "book":
-        return rev.title
-    if rev.revtype == "movie":
-        return rev.title
-    if rev.revtype == "video":
-        return rev.title
-    if rev.revtype == "music":
-        return rev.title
-    if rev.revtype == "food":
-        return rev.name
-    if rev.revtype == "drink":
-        return rev.name
-    if rev.revtype == "activity":
-        return rev.name
-    if rev.revtype == "other":
-        return rev.name
+def getTitle(review):
+    if review["revtype"] == "book":
+        return review["title"]
+    if review["revtype"] == "movie":
+        return review["title"]
+    if review["revtype"] == "video":
+        return review["title"]
+    if review["revtype"] == "music":
+        return review["title"]
+    if review["revtype"] == "food":
+        return review["name"]
+    if review["revtype"] == "drink":
+        return review["name"]
+    if review["revtype"] == "activity":
+        return review["name"]
+    if review["revtype"] == "other":
+        return review["name"]
     return "unknown review type"
 
 
-def getSubkey(rev):
+def getSubkey(review):
     subkey = ""
-    if rev.revtype == "book":
-        subkey = rev.author
-    if rev.revtype == "music":
-        subkey = rev.artist
+    if review["revtype"] == "book":
+        subkey = review["author"]
+    if review["revtype"] == "music":
+        subkey = review["artist"]
     return subkey
 
 
 def rss_title(review):
-    title = str(review.rating / 20) + " star " + review.revtype + ": " +\
+    title = str(review["rating"] / 20) + " star " + review["revtype"] + ": " +\
         getTitle(review) + " " + getSubkey(review)
     return title
 
 
 def item_url(handler, review):
     url = handler.request.host_url + "?view=coop&amp;coopid=" +\
-        str(review.ctmid) + "&amp;tab=latest&amp;expid=" +\
-        str(review.key().id())
+        str(review["ctmid"]) + "&amp;tab=latest&amp;expid=" +\
+        str(review["_id"])
     return url
 
 
@@ -89,7 +93,6 @@ def rss_content(handler, ctmid, title, reviews):
     txt += "<items>\n"
     txt += " <rdf:Seq>\n"
     for review in reviews:
-        logging.info("review: " + review.cankey)
         txt += "<rdf:li rdf:resource=\"" + item_url(handler, review) + "\" />\n"
     txt += " </rdf:Seq>\n"
     txt += "</items>\n"
@@ -100,15 +103,15 @@ def rss_content(handler, ctmid, title, reviews):
         txt += "<item rdf:about=\"" + revurl + "\">\n"
         txt += "<title><![CDATA[" + revtitle + "]]></title>\n"
         txt += "<link>" + revurl + "</link>\n"
-        txt += "<description><![CDATA[" + safestr(review.keywords) + " | "
-        txt += safestr(review.text) + "]]></description>\n"
-        txt += "<dc:date>" + review.modified + "</dc:date>\n"
+        txt += "<description><![CDATA[" + safestr(review["keywords"]) + " | "
+        txt += safestr(review["text"]) + "]]></description>\n"
+        txt += "<dc:date>" + review["modified"] + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
         txt += "<dc:rights>" + copy + "</dc:rights>\n"
         txt += "<dc:source>" + revurl + "</dc:source>\n"
         txt += "<dc:title><![CDATA[" + revtitle + "]]></dc:title>\n"
         txt += "<dc:type>text</dc:type>\n"
-        txt += "<dcterms:issued>" + review.modified + "</dcterms:issued>\n"
+        txt += "<dcterms:issued>" + review["modified"] + "</dcterms:issued>\n"
         txt += "</item>\n"
     txt += "</rdf:RDF>\n"
     return txt;
@@ -132,14 +135,15 @@ class CoopRSS(webapp2.RequestHandler):
             if not "ctmid" in review:
                 continue
             # filter out any supporting source reviews
-            if review.ctmid != int(ctmid):
+            if str(review["ctmid"]) != str(ctmid):
+                logging.info("ctmid mismatch")
                 continue
             # stop if this review is newer than the last one, since that
             # means we are out of the recent list and into the top20s
-            if review.modhist > latest:
+            if review["modhist"] > latest:
                 break
             filtered.append(review)
-            latest = review.modhist
+            latest = review["modhist"]
         title = ctm.name
         content = rss_content(self, ctmid, title, filtered)
         ctype = "application/xhtml+xml; charset=UTF-8"
