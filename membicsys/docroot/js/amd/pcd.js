@@ -547,11 +547,9 @@ app.pcd = (function () {
         ta = jt.byId('ctmembedta');
         if(ta) {
             ta.readOnly = true;
-            ta.value = "<div id=\"membiccssoverride\">" + site + 
-                "/css/embedsample.css</div>\n" +
-                "<div id=\"membiccoopdiv\"><a href=\"" + site + 
-                "?view=coop&coopid=" + dst.id + "\">" + dst.obj.name + 
-                "</a></div>\n" +
+            ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
+                "?view=coop&coopid=" + dst.id + "&css=none\">" + 
+                dst.obj.name + "</a></div>\n" +
                 "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
     },
 
@@ -588,7 +586,7 @@ app.pcd = (function () {
     },
 
 
-    displayRecent = function (expid) {
+    displayRecent = function (typename, expid) {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
                                   (dst.type === "coop"));

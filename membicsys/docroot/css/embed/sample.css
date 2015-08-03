@@ -1,0 +1,15 @@
+body {
+  background-color: #ecbf8b;
+  background: linear-gradient(#ecbf8b 60%, #ffe4c4);
+}
+
+.unselectedTab { background:#9d6d34; }
+.fpinrevdiv { background-color: #ffead2; }
+
+A:link {text-decoration:none; color:#4e3e2c; }
+A:visited {text-decoration:none; color:#4e3e2c; }
+A:active {text-decoration:none; color:#4e3e2c; }
+A:hover {text-decoration:underline; color:#ffa63e; }
+
+
+

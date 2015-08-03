@@ -403,7 +403,11 @@ app.login = (function () {
         var csselem = document.createElement('link');
         csselem.rel = "stylesheet";
         csselem.type = "text/css";
-        csselem.href = jt.dec(cssurl);
+        cssurl = jt.dec(cssurl);
+        cssurl = cssurl.toLowerCase();
+        if(cssurl.indexOf("http") < 0) {
+            cssurl = "css/embed/" + cssurl + ".css"; }
+        csselem.href = cssurl;
         document.head.appendChild(csselem);
     },
 
