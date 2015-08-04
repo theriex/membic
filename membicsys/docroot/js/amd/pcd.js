@@ -586,7 +586,7 @@ app.pcd = (function () {
     },
 
 
-    displayRecent = function (typename, expid) {
+    displayRecent = function (ignore /*typename*/, expid) {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
                                   (dst.type === "coop"));

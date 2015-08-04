@@ -623,7 +623,7 @@ app.review = (function () {
         links = [];
         postnotes.forEach(function (pn) {
             links.push(jt.tac2html(
-                ["a", {href: "coops/" + jt.canonize(pn.name),
+                ["a", {href: "?view=coop&coopid=" + pn.ctmid,
                        onclick: jt.fs("app.coop.bycoopid('" +
                                       pn.ctmid + "')")},
                  pn.name])); });
