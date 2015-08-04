@@ -877,6 +877,8 @@ return {
             return app.layout.cancelOverlay(); }
         if(changed) {
             okfunc = function (updobj) {
+                if(!jt.instId(dst.obj)) {
+                    confirm("It can take several minutes before a new theme becomes available for posting, but soon you will have the option of posting to " + dst.obj.name + " when you edit a new or existing membic."); }
                 dst.obj = updobj;
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
