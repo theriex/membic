@@ -253,20 +253,26 @@ def read_review_values(handler, review):
         review.srcrev = 0
 
 
-def update_top20_reviews(pco, review):
+# To avoid extra cache retrievals and potentially the associated
+# database hits, this only rebuilds the specified revtype. Previous
+# instances of the review id are clared out first to avoid leaving
+# ghosts if the revtype changes.
+def update_top20_reviews(pco, review, ctmid):
     retmax = 30
     t20dict = {}
     if pco.top20s:
         t20dict = json.loads(pco.top20s)
+        for rt in t20dict:
+            if t20dict[rt] and str(review.key().id()) in t20dict[rt]:
+                t20dict[rt].remove(revid)
     t20ids = []
     if review.revtype in t20dict:
         t20ids = t20dict[review.revtype]
     t20revs = [ review ]
     for revid in t20ids:
         resolved = cached_get(intz(revid), Review)
-        # if unresolved reference, or wrong type, then just skip it
         if resolved and resolved.revtype == review.revtype:
-            if resolved.ctmid == 0:  # skip any misplaced theme reviews
+            if resolved.ctmid == ctmid:
                 t20revs.append(resolved)
     t20revs = sorted(t20revs, key=attrgetter('rating', 'modified'), 
                      reverse=True)
@@ -357,7 +363,7 @@ def write_review(review, pnm):
         memcache.delete("allRevBlock" + str(i))
     memcache.delete("pen" + str(review.penid))
     logging.info("write_review: cache cleared, calling to update top 20s")
-    update_top20_reviews(pnm, review)
+    update_top20_reviews(pnm, review, 0)
     logging.info("write_review: update_top20_reviews completed")
 
 
@@ -435,7 +441,7 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         copy_source_review(review, ctmrev, ctmid)
         cached_put(ctmrev)
         logging.info("    review saved, updating top20s")
-        update_top20_reviews(ctm, ctmrev)
+        update_top20_reviews(ctm, ctmrev, ctm.key().id())
         memcache.delete("coop" + ctmid)
         logging.info("    appending post note")
         postnotes.append(coop_post_note(ctm, ctmrev))
