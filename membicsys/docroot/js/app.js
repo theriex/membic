@@ -243,6 +243,16 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.toggledivdisp = function (divid) {
+        var div = jt.byId(divid);
+        if(div) {
+            if(div.style.display === "block") {
+                div.style.display = "none"; }
+            else {
+                div.style.display = "block"; } }
+    };
+
+
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////

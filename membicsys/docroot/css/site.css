@@ -313,6 +313,7 @@ button, .loginbutton, .formbutton {
 
 /* >> docs layout */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
+#aboutcoopsdiv { display:none; padding:5px 0px; }
 
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
