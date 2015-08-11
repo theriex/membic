@@ -163,7 +163,9 @@ return {
                 obj = pen.stash[key];
                 if(obj.memlev >= 1) {
                     obj.ctmid = key.slice(3);
-                    ctms.push(obj); } } });
+                    //was a member, but verify haven't resigned
+                    if(pen.coops && pen.coops.csvcontains(obj.ctmid)) {
+                        ctms.push(obj); } } } });
         ctms.sort(function (a, b) {
             if(a.lastpost && !b.lastpost) { return -1; }
             if(!a.lastpost && b.lastpost) { return 1; }
