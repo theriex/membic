@@ -680,18 +680,22 @@ app.pcd = (function () {
                                onclick: jt.fs("app.coop.bycoopid('" +
                                               cid + "')")},
                          ["span", {cla: "penfont"}, coopname]]]]); });
-        html.push(["div", {cla: "pcdtext"},
-                   [["div", {cla: "pcdtoggle"},
-                     ["a", {href: "#findcoops",
-                            onclick: jt.fs("app.pcd.toggleFindCoops()")},
-                      "Follow cooperative themes"]],
-                    ["div", {id: "findctmdiv"}]]]);
-        html.push(["div", {cla: "pcdtext"},
-                   [["div", {cla: "pcdtoggle"},
-                     ["a", {href: "#createcoop",
-                            onclick: jt.fs("app.pcd.toggleCreateCoop()")},
-                      "Create cooperative theme"]],
-                    ["div", {id: "createctmdiv"}]]]);
+        if(app.pen.myPenId() === jt.instId(dst.obj)) {
+            html.push(["div", {cla: "pcdtext"},
+                       [["div", {cla: "pcdtoggle"},
+                         ["a", {href: "#findcoops",
+                                onclick: jt.fs("app.pcd.toggleFindCoops()")},
+                          "Follow cooperative themes"]],
+                        ["div", {id: "findctmdiv"}]]]);
+            html.push(["div", {cla: "pcdtext"},
+                       [["div", {cla: "pcdtoggle"},
+                         ["a", {href: "#createcoop",
+                                onclick: jt.fs("app.pcd.toggleCreateCoop()")},
+                          "Create cooperative theme"]],
+                        ["div", {id: "createctmdiv"}]]]); }
+        if(!html.length) {
+            html.push(["div", {cla: "pcdtext"}, 
+                       "No theme memberships found."]); }
         jt.out('pcdcontdiv', jt.tac2html(html));
     },
 
