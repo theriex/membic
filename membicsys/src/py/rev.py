@@ -328,7 +328,7 @@ def set_review_mainfeed(rev):
     if rev.ctmid > 0:   # coop posting, not source review
         # logging.info(logmsg + "is coop posting.")
         rev.mainfeed = 0
-    if not rev.text or len(rev.text) < 90:  # not substantive
+    if not rev.text or len(rev.text) < 65:  # not substantive
         # logging.info(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 60:  # 3 stars or better
