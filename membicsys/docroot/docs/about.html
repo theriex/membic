@@ -9,7 +9,8 @@
 </head>
 <body>
 
-<div class="aboutoverviewdiv">
+<div class="doccontentdiv">
+<div id="aboutoverviewdiv">
 
 <p>A <b>membic</b> is a bite sized structured summary of a noteworthy
 experience. When you discover something worth remembering, make a
@@ -21,43 +22,85 @@ What you discover on your own, plus consideration of what others have discovered
 </div>
 -->
 
-</div>
+</div> <!-- aboutoverviewdiv -->
 
-<h2 class="aboutdetailsheading">Features:</h2>
+<div id="aboutfeaturesdiv">
+<h2 id="aboutdetailsheading">Features:</h2>
 <div class="aboutstatementsdiv">
 
 <ul>
-<li>7+other primary categorization
-<li>Open keyword tagging
-<li>Easily post solid synopses of books, movies, videos, music, food,
-  drinks, activities and anything else with a URL or physical location.
-<li>Track your recent and top membics.
-<li>Remember interesting membics.
-<li>Search by name, filter by type.
-<li>Prioritize sources.
-<li>Follow and join 
-  <a href="#coopmore" 
-     onclick="app.toggledivdisp('aboutcoopsdiv');return false;">
-    <i>cooperative themes</i></a>.
-  <div id="aboutcoopsdiv">
+<li><a href="#primcat"
+       onclick="app.toggledivdisp('primcatdiv');return false;">
+    <span class="aboutfeaturespan">7+other primary categorization</span></a>
+  <div id="primcatdiv" class="aboutdetaildiv">
 
-    Founders, moderators and members can post related membics through
-    to specific themes for shared discovery.  Themes have minimum
-    setup and overhead, but can be embedded into other web sites and
-    support subscribed readership via RSS. 
+    Easily post solid synopses of books, movies, videos, music, food,
+    drinks, activities and anything else with a URL or physical
+    location.  Easily filter and browse common membic types.  For
+    more specific interests, join or create a cooperative theme.
 
   </div>
-<li>Embed themes into other web pages.
-<li>Creative pen names welcome.
-<li><a href="https://github.com/theriex/membic">Free and open source</a>.
-</ul>
+<li><a href="#keywords"
+       onclick="app.toggledivdisp('openkeywordsdiv');return false;">
+    <span class="aboutfeaturespan">Open keyword tagging</span></a>
+  <div id="openkeywordsdiv" class="aboutdetaildiv">
 
-<p>If you have a suggestion to increase the awesomeness of this site,
+    Tag membics using the type optimized common keyword checkboxes,
+    write in your own, or both.
+
+  </div>
+<li><a href="#topremember"
+       onclick="app.toggledivdisp('trackmemdiv');return false;">
+    <span class="aboutfeaturespan">Tracking and memory</span></a>
+  <div id="trackmemdiv" class="aboutdetaildiv">
+
+    Automatically track your recent favorite membics for easy
+    access.  Remember membics from others to look into later.
+
+  </div>
+<li><a href="#feedfilter"
+       onclick="app.toggledivdisp('feedfilterdiv');return false;">
+    <span class="aboutfeaturespan">Optimized feed</span></a>
+  <div id="feedfilterdiv" class="aboutdetaildiv">
+
+    Prefer, background, or block people to optimize your view of the
+    community feed.  Follow specific themes you are interested in.
+
+  </div>
+<li><a href="#cooptheme" 
+       onclick="app.toggledivdisp('aboutcoopsdiv');return false;">
+    <span class="aboutfeaturespan">Cooperative themes</span></a>
+  <div id="aboutcoopsdiv" class="aboutdetaildiv">
+
+    Founders, moderators and members can post membics through to
+    cooperative themes set up for specific interests.  Follow a theme
+    to access it directly from your profile.  Themes support RSS and
+    can be embedded into other websites.
+
+  </div>
+<li><a href="#ossprivacy"
+       onclick="app.toggledivdisp('creativeossdiv');return false;">
+    <span class="aboutfeaturespan">Pen names</span></a>
+  <div id="creativeossdiv" class="aboutdetaildiv">
+
+    Impressions are public, but your pen name can reveal as much or as
+    little of yourself as you want.  Creative pen names are welcome,
+    and you can have more than one.  Your email address is never
+    shared with anyone else.  Membic.com is
+    <a href="https://github.com/theriex/membic"
+       onclick="window.open('https://github.com/theriex/membic');return false;">
+      open source</a>.
+
+  </div>
+</ul>
+</div> <!-- aboutstatementsdiv -->
+</div> <!-- aboutfeaturesdiv -->
+
+<p>If you have a question or a suggestion how to increase the
+awesomeness of this site,
 <a href="https://github.com/theriex/membic/issues"
  onclick="window.open('https://github.com/theriex/membic/issues');return
 false">open an issue on GitHub</a>.<!-- $ABOUTCONTACT --> </p>
-
-</div>
 
 <div id="returnlinkdiv" style="text-align:center; display:none;">
   <a href="https://www.membic.com">Return to membic.com</a>

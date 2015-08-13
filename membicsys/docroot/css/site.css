@@ -54,10 +54,6 @@ button, .loginbutton, .formbutton {
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
 #topactionsdiv { }
-.aboutoverviewdiv { padding:10px 10px 0px 10px; font-size:large; }
-.aboutdetailsheading { font-size:small; font-weight:bold; }
-.aboutstatementsdiv { padding:0px 10px; font-size:small; }
-.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
 .tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
 .topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }
 
@@ -313,6 +309,14 @@ button, .loginbutton, .formbutton {
 
 /* >> docs layout */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
+.doccontentdiv { padding:10px 10px 0px 10px; }
+#aboutoverviewdiv { font-size:large; }
+#aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
+.aboutstatementsdiv { padding:0px 10px; font-size:small; }
+.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
+.aboutfeaturespan { font-weight:bold; }
+#aboutfeaturesdiv {}
+.aboutdetaildiv { display:none; padding:5px 0px; }
 #aboutcoopsdiv { display:none; padding:5px 0px; }
 
 /* >> stats page layout */
