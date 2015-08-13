@@ -2,10 +2,10 @@ membic
 ======
 
 A membic is a bite sized structured summary of a noteworthy
-experience. The myopenreviews Google App Engine project has evolved
-into a platform for noting and sharing membics.  Functionally it
-consists of a Javascript web application supported by a REST API coded
-in Python.
+experience. Membic.com is a site allowing you to easily make a membic
+anytime you discover something worth remembering.  Functionally,
+membic.com consists of a JavaScript web application supported by a
+REST API coded in Python and hosted on Google App Engine.
 
 
 Getting involved:
