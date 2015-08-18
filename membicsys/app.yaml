@@ -116,7 +116,7 @@ handlers:
 
 
 ######################################################################
-##        Reviews
+##        Reviews (membics)
 
 ## Return the review feed for the given type
 ## GET params: revtype, authparams, penid
@@ -167,6 +167,11 @@ handlers:
 ## Return recent and top reviews for a coop or pen
 ## GET params: ctmid or penid or authparams
 - url: /blockfetch.*
+  script: src.py.rev.app
+
+## Batch post one or more reviews
+## POST params: email, password, revsjson
+- url: /batchupload.*
   script: src.py.rev.app
 
 

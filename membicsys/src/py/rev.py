@@ -294,18 +294,22 @@ def update_top20_reviews(pco, review, ctmid):
     cached_put(pco)
 
 
-def fetch_review_by_cankey(handler):
-    penid = intz(handler.request.get('penid'))
-    revtype = handler.request.get('revtype')
-    cankey = handler.request.get('cankey')
-    if not cankey:
-        cankey = create_cankey_from_request(handler)
+def fetch_review_by_ptc(penid, revtype, cankey):
     where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"
     revquery = Review.gql(where, penid, revtype, cankey)
     reviews = revquery.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, 
                              deadline = 10)
     if len(reviews) > 0:
         return reviews[0]
+
+
+def fetch_review_by_cankey(handler):
+    penid = intz(handler.request.get('penid'))
+    revtype = handler.request.get('revtype')
+    cankey = handler.request.get('cankey')
+    if not cankey:
+        cankey = create_cankey_from_request(handler)
+    return fetch_review_by_ptc(penid, revtype, cankey)
 
 
 def batch_flag_attrval(review):
@@ -367,24 +371,13 @@ def write_review(review, pnm):
     logging.info("write_review: update_top20_reviews completed")
 
 
-def copy_source_review(fromrev, torev, ctmid):
-    torev.revtype = fromrev.revtype
-    torev.penid = fromrev.penid
-    torev.ctmid = int(ctmid)
+def copy_rev_descrip_fields(fromrev, torev):
     torev.rating = fromrev.rating
-    torev.srcrev = fromrev.key().id()
-    torev.mainfeed = fromrev.mainfeed
-    torev.cankey = fromrev.cankey
     torev.keywords = fromrev.keywords
     torev.text = fromrev.text
-    torev.revpic = fromrev.revpic
-    torev.imguri = fromrev.imguri
-    torev.altkeys = fromrev.altkeys
-    # torev.svcdata = fromrev.svcdata
-    torev.penname = fromrev.penname
-    torev.orids = fromrev.orids
-    torev.helpful = fromrev.helpful
-    torev.remembered = fromrev.remembered
+    # revpic not copied. don't overwrite if just updating descriptive info
+    # imguri ditto
+    # altkeys and other processing, same thing.  Just descriptive fields
     torev.name = fromrev.name
     torev.title = fromrev.title
     torev.url = fromrev.url
@@ -395,6 +388,24 @@ def copy_source_review(fromrev, torev, ctmid):
     torev.starring = fromrev.starring
     torev.address = fromrev.address
     torev.year = fromrev.year
+    
+
+def copy_source_review(fromrev, torev, ctmid):
+    torev.revtype = fromrev.revtype
+    torev.penid = fromrev.penid
+    torev.ctmid = int(ctmid)
+    torev.srcrev = fromrev.key().id()
+    torev.mainfeed = fromrev.mainfeed
+    torev.cankey = fromrev.cankey
+    torev.revpic = fromrev.revpic
+    torev.imguri = fromrev.imguri
+    torev.altkeys = fromrev.altkeys
+    # torev.svcdata = fromrev.svcdata
+    torev.penname = fromrev.penname
+    torev.orids = fromrev.orids
+    torev.helpful = fromrev.helpful
+    torev.remembered = fromrev.remembered
+    copy_rev_descrip_fields(fromrev, torev)
     note_modified(torev)
 
 
@@ -528,14 +539,11 @@ def create_or_update_cooprev(revid, ctmid):
     ctmrev.revtype = srcrev.revtype
     ctmrev.penid = srcrev.penid
     ctmrev.ctmid = ctmid
-    ctmrev.rating = srcrev.rating
     ctmrev.srcrev = revid
     ctmrev.mainfeed = srcrev.mainfeed
     ctmrev.cankey = srcrev.cankey
     ctmrev.modified = srcrev.modified
     ctmrev.modhist = srcrev.modhist
-    ctmrev.keywords = srcrev.keywords
-    ctmrev.text = srcrev.text
     ctmrev.revpic = srcrev.revpic
     ctmrev.imguri = srcrev.imguri
     ctmrev.altkeys = srcrev.altkeys
@@ -544,16 +552,7 @@ def create_or_update_cooprev(revid, ctmid):
     ctmrev.orids = srcrev.orids
     ctmrev.helpful = srcrev.helpful
     ctmrev.remembered = srcrev.remembered
-    ctmrev.name = srcrev.name
-    ctmrev.title = srcrev.title
-    ctmrev.url = srcrev.url
-    ctmrev.artist = srcrev.artist
-    ctmrev.author = srcrev.author
-    ctmrev.publisher = srcrev.publisher
-    ctmrev.album = srcrev.album
-    ctmrev.starring = srcrev.starring
-    ctmrev.address = srcrev.address
-    ctmrev.year = srcrev.year
+    copy_rev_descrip_fields(srcrev, ctmrev)
     cached_put(ctmrev)
 
 
@@ -743,6 +742,46 @@ def resolve_ids_to_json(feedids, blocks):
                 jstr = append_to_csv(objson, jstr)
                 break
     return "[" + jstr + "]"
+
+
+def safe_dictattr(dictionary, fieldname):
+    val = ""
+    if dictionary and fieldname in dictionary:
+        val = dictionary[fieldname] or ""
+    return val
+
+
+def write_batch_reviews(pn, handler):
+    penid = pn.key().id()
+    revsjson = handler.request.get('revsjson')
+    revs = json.loads(revsjson)
+    for rdat in revs:
+        review = Review(penid=penid, revtype=rdat["revtype"])
+        review.penname = pn.name
+        review.rating = int(rdat["rating"])
+        review.keywords = safe_dictattr(rdat, "keywords")
+        review.text = safe_dictattr(rdat, "text")
+        review.name = onelinestr(safe_dictattr(rdat, "name"))
+        review.title = onelinestr(safe_dictattr(rdat, "title"))
+        review.url = safe_dictattr(rdat, "url")
+        review.artist = onelinestr(safe_dictattr(rdat, "artist"))
+        review.author = onelinestr(safe_dictattr(rdat, "author"))
+        review.publisher = safe_dictattr(rdat, "publisher")
+        review.album = safe_dictattr(rdat, "album")
+        review.starring = safe_dictattr(rdat, "starring")
+        review.address = safe_dictattr(rdat, "address")
+        review.year = str(safe_dictattr(rdat, "year"))
+        review.cankey = create_cankey_for_review(review)
+        existing = fetch_review_by_ptc(penid, review.revtype, review.cankey)
+        if existing:
+            copy_rev_descrip_fields(review, existing)
+            review = existing
+        review.srcrev = -202   # batch source flag
+        review.mainfeed = 0    # no batch updates in main display
+        note_modified(review)
+        review.put()
+        handler.response.out.write("updated by key: " + review.cankey + "\n")
+    handler.response.out.write("write_batch_reviews complete\n")
 
 
 # def make_coop_from_group(grp):
@@ -1241,6 +1280,31 @@ class FetchPreReviews(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
+class BatchUpload(webapp2.RequestHandler):
+    def post(self):
+        # this uses the same db access as moracct.py GetToken
+        emaddr = self.request.get('email') or ""
+        emaddr = normalize_email(emaddr)
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.out.write("BatchUpload from " + emaddr + "\n")
+        password = self.request.get('password')
+        where = "WHERE email=:1 AND password=:2 LIMIT 1"
+        accounts = MORAccount.gql(where, emaddr, password)
+        for account in accounts:
+            accid = account.key().id()
+            self.response.out.write("Account " + str(accid) + "\n")
+            # this uses the same db access as pen.py find_auth_pens
+            where = "WHERE mid=:1 LIMIT 1"
+            pens = pen.PenName.gql(where, accid)
+            for pn in pens:
+                self.response.out.write("PenName " + pn.name + "\n")
+                try:
+                    write_batch_reviews(pn, self)
+                except Exception as e:
+                    self.response.out.write(str(e) + "\n")
+        self.response.out.write("BatchUpload complete\n")
+
+
 app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/delrev', DeleteReview),
                                ('/revpicupload', UploadReviewPic),
@@ -1250,5 +1314,6 @@ app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/revfeed', GetReviewFeed),
                                ('/toghelpful', ToggleHelpful),
                                ('/blockfetch', FetchAllReviews),
-                               ('/fetchprerevs', FetchPreReviews)], debug=True)
+                               ('/fetchprerevs', FetchPreReviews),
+                               ('/batchupload', BatchUpload)], debug=True)
 
