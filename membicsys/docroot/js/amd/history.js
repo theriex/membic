@@ -1,6 +1,6 @@
-/*global window: false, document: false, history: false, JSON: false, app: false, jt: false */
+/*global window, document, history, JSON, app, jt */
 
-/*jslint white: true, unparam: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge */
 
 ////////////////////////////////////////
 // history utility methods
@@ -20,15 +20,26 @@ app.history = (function () {
     // closure helper funtions
     ////////////////////////////////////////
 
-    getTitle = function (state) {
+    getTitle = function (ignore /*state*/) {
         var title = document.title;
         return title;
     },
 
 
-    getURL = function (state) {
+    getURL = function (ignore /*state*/) {
         var url = window.location.href;
         return url;
+    },
+
+
+    indicateState = function (state) {
+        if(state.view === "activity") {
+            jt.out("topdiv", ""); }
+        else {
+            jt.out("topdiv", jt.tac2html(
+                ["a", {href: "#home",
+                       onclick: jt.fs("app.activity.displayActive()")},
+                 ["img", {src: "img/homelink.png", cla: "tabico"}]])); }
     };
 
 
@@ -43,6 +54,7 @@ return {
     //otherwise no effect.
     checkpoint: function (pstate) {
         var hstate, title, url;
+        indicateState(pstate);
         if(history) {  //verify history object defined, otherwise skip
             hstate = history.state;
             if(!hstate 
@@ -73,6 +85,7 @@ return {
 
     dispatchState: function (state) {
         state = state || app.history.currState();
+        indicateState(state);
         switch(state.view) {
         case "activity":
             return app.activity.displayActive();

@@ -61,7 +61,7 @@ button, .loginbutton, .formbutton {
 .collapse { border-collapse:collapse; }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
-#topdiv { position:absolute; left:72px; top:30px; padding:0px 10px;
+#topdiv { position:absolute; left:0px; top:45px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #appspacediv { margin:0px 5px; clear:both; }
 #bottomnav { font-size:xx-small; text-align:center; 
