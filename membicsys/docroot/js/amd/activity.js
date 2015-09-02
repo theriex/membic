@@ -21,55 +21,6 @@ app.activity = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    displayRemembered = function (filtertype) {
-        var params, revs, revids;
-        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
-        filtertype = filtertype || app.layout.getType();
-        if(!feeds.remembered) {
-            if(!feeds.future) {
-                jt.out('feedrevsdiv', "Fetching future reviews...");
-                params = app.login.authparams() + "&penid=" + 
-                    app.pen.myPenId();
-                jt.call('GET', "fetchprerevs?" + params, null,
-                        function (reviews) {
-                            app.lcs.putAll("rev", reviews);
-                            feeds.future = reviews;
-                            displayRemembered(); },
-                        app.failf(function (code, errtxt) {
-                            jt.out('feedrevsdiv', "Error code: " + code + 
-                                   ": " + errtxt); }),
-                        jt.semaphore("activity.displayRemembered"));
-                return; }
-            if(!feeds.memo) { //resolve remembered reviews
-                jt.out('feedrevsdiv', "Resolving remembered reviews...");
-                revs = [];
-                revids = app.pen.myPenName().remembered.csvarray();
-                if(!revids.every(function (cv) {
-                    var revref = app.lcs.getRef("rev", cv);
-                    if(revref.status === "not cached") {
-                        jt.out('feedrevsdiv', "Resolving membic " + cv);
-                        app.lcs.getFull("rev", cv, displayRemembered);
-                        return false; }
-                    if(revref.rev) {
-                        revs.push(revref.rev); }
-                    return true; })) { 
-                    return; }  //not every ref fetched yet
-                feeds.memo = revs; }
-            jt.out('feedrevsdiv', "Merging and sorting...");
-            revs = feeds.future.concat(feeds.memo);
-            revs.sort(function (a, b) {
-                if(a.modified < b.modified) { return 1; }
-                if(a.modified > b.modified) { return -1; }
-                return 0; });
-            feeds.remembered = app.review.collateDupes(revs); }
-        app.layout.displayTypes(displayRemembered, filtertype);
-        revs = app.review.filterByRevtype(feeds.remembered, filtertype);
-        app.review.displayReviews("feedrevsdiv", "rrd", revs,
-                                  "app.activity.toggleExpansion", "author",
-                                  "Click the main icon, then click the remember button for any membic you want to keep in your memory.");
-    },
-
-
     mergePersonalRecent = function (feedtype, feedrevs) {
         var cached, revid;
         cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
@@ -91,32 +42,6 @@ app.activity = (function () {
     },
 
 
-    bootMonitor = function () {
-        var revactdiv, html;
-        revactdiv = jt.byId('revactdiv');
-        if(revactdiv) {
-            html = revactdiv.innerHTML;
-            if(html.indexOf("Loading ") === 0) {
-                bootmon.count += 1; 
-                switch(bootmon.count) {
-                case 1:
-                    html += "<br/>Slow server day...";
-                    jt.out('revactdiv', html);
-                    bootmon.tout = setTimeout(bootMonitor, 2000);
-                    return;
-                case 2:
-                    html += "<br/>...Like really slow...";
-                    jt.out('revactdiv', html);
-                    bootmon.tout = setTimeout(bootMonitor, 2000);
-                    return;
-                default:
-                    html += "<br/><br/>Ok, there's no way this should" +
-                        " take this long. <br/>" +
-                        "Try hitting the reload button on your browser.";
-                    jt.out('revactdiv', html); } } }
-    },
-
-
     mergeAndDisplayReviews = function (feedtype, revs) {
         jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
         feeds[feedtype] = mergePersonalRecent(feedtype, revs);
@@ -134,15 +59,6 @@ app.activity = (function () {
         if(app.login.isLoggedIn()) {
             msg = "Fetching posts according to your preferences..."; }
         app.displayWaitProgress(0, 850, 'contentdiv', msg);
-    },
-
-
-    mainDisplay = function (dispmode) {
-        app.history.checkpoint({ view: dispmode });
-        if(dispmode === "memo") {
-            displayRemembered(); }
-        else {  //dispmode === "activity", activityMode === "amnew"
-            app.activity.displayFeed(); }
     };
 
 
@@ -224,12 +140,58 @@ return {
 
 
     displayActive: function () {
-        mainDisplay("activity");
+        app.activity.displayFeed();
     },
 
 
-    displayRemembered: function () {
-        mainDisplay("memo");
+    displayRemembered: function (filtertype) {
+        var params, revs, revids;
+        app.history.checkpoint({ view: "memo" });
+        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
+        filtertype = filtertype || app.layout.getType();
+        if(!feeds.remembered) {
+            if(!feeds.future) {
+                jt.out('feedrevsdiv', "Fetching future reviews...");
+                params = app.login.authparams() + "&penid=" + 
+                    app.pen.myPenId();
+                jt.call('GET', "fetchprerevs?" + params, null,
+                        function (reviews) {
+                            app.lcs.putAll("rev", reviews);
+                            feeds.future = reviews;
+                            app.activity.displayRemembered(); },
+                        app.failf(function (code, errtxt) {
+                            jt.out('feedrevsdiv', "Error code: " + code + 
+                                   ": " + errtxt); }),
+                        jt.semaphore("activity.displayRemembered"));
+                return; }
+            if(!feeds.memo) { //resolve remembered reviews
+                jt.out('feedrevsdiv', "Resolving remembered reviews...");
+                revs = [];
+                revids = app.pen.myPenName().remembered.csvarray();
+                if(!revids.every(function (cv) {
+                    var revref = app.lcs.getRef("rev", cv);
+                    if(revref.status === "not cached") {
+                        jt.out('feedrevsdiv', "Resolving membic " + cv);
+                        app.lcs.getFull("rev", cv, 
+                                        app.activity.displayRemembered);
+                        return false; }
+                    if(revref.rev) {
+                        revs.push(revref.rev); }
+                    return true; })) { 
+                    return; }  //not every ref fetched yet
+                feeds.memo = revs; }
+            jt.out('feedrevsdiv', "Merging and sorting...");
+            revs = feeds.future.concat(feeds.memo);
+            revs.sort(function (a, b) {
+                if(a.modified < b.modified) { return 1; }
+                if(a.modified > b.modified) { return -1; }
+                return 0; });
+            feeds.remembered = app.review.collateDupes(revs); }
+        app.layout.displayTypes(app.activity.displayRemembered, filtertype);
+        revs = app.review.filterByRevtype(feeds.remembered, filtertype);
+        app.review.displayReviews("feedrevsdiv", "rrd", revs,
+                                  "app.activity.toggleExpansion", "author",
+                                  "Click the main icon, then click the remember button for any membic you want to keep in your memory.");
     },
 
 
@@ -241,6 +203,32 @@ return {
             revs = app.review.filterByRevtype(feeds.remembered, 
                                               app.layout.getType()); }
         app.review.toggleExpansion(revs, prefix, revid);
+    },
+
+
+    bootMonitor: function () {
+        var revactdiv, html;
+        revactdiv = jt.byId('revactdiv');
+        if(revactdiv) {
+            html = revactdiv.innerHTML;
+            if(html.indexOf("Loading ") === 0) {
+                bootmon.count += 1; 
+                switch(bootmon.count) {
+                case 1:
+                    html += "<br/>Slow server day...";
+                    jt.out('revactdiv', html);
+                    bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
+                    return;
+                case 2:
+                    html += "<br/>...Like really slow...";
+                    jt.out('revactdiv', html);
+                    bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
+                    return;
+                default:
+                    html += "<br/><br/>Ok, there's no way this should" +
+                        " take this long. <br/>" +
+                        "Try hitting the reload button on your browser.";
+                    jt.out('revactdiv', html); } } }
     },
 
 
