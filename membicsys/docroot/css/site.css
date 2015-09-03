@@ -315,7 +315,7 @@ button, .loginbutton, .formbutton {
 .aboutstatementsdiv { padding:0px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
 .aboutfeaturespan { font-weight:bold; }
-#aboutfeaturesdiv {}
+#aboutfeaturesdiv, #aboutfaqdiv {}
 .aboutdetaildiv { display:none; padding:5px 0px; }
 #aboutcoopsdiv { display:none; padding:5px 0px; }
 
