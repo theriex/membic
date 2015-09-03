@@ -341,6 +341,20 @@ app.login = (function () {
     },
 
 
+    loadThirdPartyUtilities = function () {
+        //google fonts can occasionally be slow or unresponsive.  Load here to
+        //avoid holding up app initialization
+        var elem = document.createElement('link');
+        elem.rel = "stylesheet";
+        elem.type = "text/css";
+        elem.href = "//fonts.googleapis.com/css?family=Satisfy";
+        document.head.appendChild(elem);
+        jt.log("added stylesheet " + elem.href);
+        //The google places API doesn't like being loaded asynchronously so
+        //leaving it last in the index file instead.
+    },
+
+
     loggedInAuthentDisplay = function () {
         var mypen, nml, remb, wrib, html;
         mypen = app.pen.myPenName();
@@ -470,6 +484,7 @@ return {
 
     init: function () {
         logLoadTimes();
+        setTimeout(loadThirdPartyUtilities, 5);
         if(!loginhtml) {  //save original html in case needed later
             loginhtml = jt.byId('logindiv').innerHTML; }
         //do not change this ordering. Some auths leverage their index
