@@ -1,4 +1,4 @@
-/*global app, jt, setTimeout, window, confirm */
+/*global app, jt, setTimeout, window, confirm, document, a2a, a2a_config */
 
 /*jslint white, fudge */
 
@@ -41,6 +41,7 @@ app.pcd = (function () {
                                    img: "calico" } },
         srchst = { revtype: "all", qstr: "", status: "" },
         setdispstate = { infomode: "" },
+        addToAnyScriptLoaded = false,
         ctmmsgs = [
             {name: "Following",
              levtxt: "Following shows you are interested in reading content from members writing on this theme.",
@@ -798,6 +799,21 @@ app.pcd = (function () {
     },
 
 
+    shareViaAddToAny = function (name, url) {
+        var js;
+        if(!addToAnyScriptLoaded) {
+            js = document.createElement('script');
+            js.async = true;
+            js.src = "//static.addtoany.com/menu/page.js";
+            document.body.appendChild(js);
+            addToAnyScriptLoaded = true; }
+        else {
+            a2a_config.linkname = name;
+            a2a_config.linkurl = url;
+            a2a.init('page'); }
+    },
+
+
     sourceRevIds = function (revs, dtype, id) {
         var revids = [];
         revs.forEach(function (rev) {
@@ -944,7 +960,7 @@ return {
 
 
     share: function () {
-        var descrdiv, shurlspan, defs, html;
+        var descrdiv, shurlspan, defs, html, shtxt, linkurl;
         descrdiv = jt.byId("ppcdshoutdiv");
         if(descrdiv) {
             defs = dst[dst.type];
@@ -954,15 +970,29 @@ return {
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
-                html = [["span", {cla: "shoutspan"},
-                         (app.login.isLoggedIn() || dst.type !== "coop"? "" : 
-                          "Sign in to follow or join.<br/>")],
-                        ["span", {cla: "shoutspan"},
-                         "To share this " + dst.type + " via social media, email or text, use the following URL:"],
-                        ["br"],
-                        ["span", {id: "shurlspan"},
-                         window.location.href + defs.accsrc + dst.id]];
-                jt.out("ppcdshoutdiv", jt.tac2html(html)); } }
+                if(dst.type === "pen") {
+                    shtxt = "Direct profile URL:"; }
+                else {
+                    shtxt = "Direct theme URL:"; }
+                linkurl = window.location.href + defs.accsrc + dst.id;
+                html = [
+                    ["span", {cla: "shoutspan"},
+                     (app.login.isLoggedIn() || dst.type !== "coop"? "" : 
+                      "Sign in to follow or join.<br/>")],
+                    ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style"},
+                     [["a", {cla: "a2a_dd",
+                             href: "https://www.addtoany.com/share_save"}],
+                      ["a", {cla: "a2a_button_facebook"}],
+                      ["a", {cla: "a2a_button_twitter"}],
+                      ["a", {cla: "a2a_button_google_plus"}],
+                      ["a", {cla: "a2a_button_wordpress"}],
+                      ["a", {cla: "a2a_button_email"}]]],
+                    ["span", {cla: "shoutspan"}, shtxt],
+                    ["br"],
+                    ["span", {id: "shurlspan"},
+                     linkurl]];
+                jt.out("ppcdshoutdiv", jt.tac2html(html));
+                shareViaAddToAny(dst.obj.name, linkurl); } }
     },
 
 
