@@ -30,15 +30,25 @@ app.pcd = (function () {
                          picsrc: "ctmpic?coopid=",
                          accsrc: "?view=coop&coopid=" } },
         knowntabs = { latest:    { href: "#latestmembics", 
-                                   img: "img/tablatest.png" },
+                                   img: "img/tablatest.png",
+                                   mtitle: "My Recent Membics",
+                                   otitle: "Recent Membics from $NAME"},
                       favorites: { href: "#favoritemembics",
-                                   img: "img/helpfulq.png" }, 
+                                   img: "img/top.png",
+                                   mtitle: "My Top Membics",
+                                   otitle: "Top Membics from $NAME"},
                       search:    { href: "#searchmembics",
-                                   img: "img/search.png" }, 
-                      coops:    { href: "#coopsfollowing",
-                                   img: "img/tabctms.png" },
+                                   img: "img/search.png",
+                                   mtitle: "Search My Membics",
+                                   otitle: "Search Membics from $NAME"},
+                      coops:     { href: "#coopsfollowing",
+                                   img: "img/tabctms.png",
+                                   mtitle: "My Themes",
+                                   otitle: "Themes $NAME is following"},
                       calendar:  { href: "#coopcalendar",
-                                   img: "calico" } },
+                                   img: "calico",
+                                   mtitle: "Event Calendar",
+                                   otitle: "Event Calendar"} },
         srchst = { revtype: "all", qstr: "", status: "" },
         setdispstate = { infomode: "" },
         addToAnyScriptLoaded = false,
@@ -562,6 +572,17 @@ app.pcd = (function () {
     },
 
 
+    titleForTab = function (tab) {
+        var title;
+        if(app.pen.myPenId() === dst.id) {
+            title = tab.mtitle; }
+        else {
+            title = tab.otitle;
+            title = title.replace(/\$NAME/g, dst.obj.name); }
+        return title;
+    },
+
+
     tabHTMLFromDef = function (tabname) {
         var ico, html;
         ico = ["img", {cla: "tabico", src: knowntabs[tabname].img}];
@@ -569,6 +590,7 @@ app.pcd = (function () {
             ico = calendarIconHTML(); }
         html = ["li", {id: tabname + "li", cla: "unselectedTab"},
                 ["a", {href: knowntabs[tabname].href,
+                       title: titleForTab(knowntabs[tabname]),
                        onclick: jt.fs("app.pcd.tabsel('" + tabname + "')")},
                  ico]];
         return html;
@@ -730,6 +752,7 @@ app.pcd = (function () {
         jt.byId(tabname + "li").className = "selectedTab";
         dst.tab = tabname;
         historyCheckpoint();  //history collapses tab changes
+        jt.out('tabtitlediv', titleForTab(knowntabs[tabname]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.isId(jt.instId(dst.obj))) {
@@ -771,8 +794,9 @@ app.pcd = (function () {
                       ["span", {cla: "shoutspan"}, 
                        jt.linkify(obj[defs.descfield] || "")]]]]]],
                  ["div", {id: "tabsdiv"},
-                  ["ul", {id: "tabsul"},
-                   tabsHTML()]],
+                  [["ul", {id: "tabsul"},
+                    tabsHTML()],
+                   ["div", {id: "tabtitlediv"}]]],
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         setTimeout(backgroundVerifyObjectData, 100);

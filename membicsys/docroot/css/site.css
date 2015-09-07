@@ -165,6 +165,8 @@ button, .loginbutton, .formbutton {
 #tabsdiv a { padding: 0 15px; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
+#tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
+  font-size:small; }
 #pcdsrchdiv { padding: 0px 0px 10px 5px; }
 .cooplinkdiv { clear:both; padding: 0px 0px 5px 0px; }
 .cooplinkdiv a { margin-left:10px; }
