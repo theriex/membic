@@ -44,7 +44,7 @@ app.pcd = (function () {
                       coops:     { href: "#coopsfollowing",
                                    img: "img/tabctms.png",
                                    mtitle: "My Themes",
-                                   otitle: "Themes $NAME is following"},
+                                   otitle: "Themes followed by $NAME"},
                       calendar:  { href: "#coopcalendar",
                                    img: "calico",
                                    mtitle: "Event Calendar",
