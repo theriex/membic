@@ -37,7 +37,7 @@ app.layout = (function () {
             url = url.slice(0, idx); }
         url = url.capitalize();
         //title overrides
-        if(url === "About") {
+        if(url === "About" || url === "Howto") {
             url = ""; }
         //display content
         html = app.layout.dlgwrapHTML(url, html);
@@ -204,6 +204,7 @@ return {
 
     displayDoc: function (url) {
         var html = "Fetching " + url + " ...";
+        url = url || "docs/howto.html";
         app.layout.openDialog(null, html);
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }

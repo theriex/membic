@@ -320,6 +320,8 @@ button, .loginbutton, .formbutton {
 #aboutfeaturesdiv, #aboutfaqdiv {}
 .aboutdetaildiv { display:none; padding:5px 0px; }
 #aboutcoopsdiv { display:none; padding:5px 0px; }
+.intxtico { width:18px; height:18px; }
+.howtocontentdiv { padding:0px 10px 20px 10px; }
 
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }

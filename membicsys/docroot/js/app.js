@@ -253,6 +253,14 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.dispsecdiv = function (divid, secla) {
+        var i, sections = document.getElementsByClassName(secla);
+        for(i = 0; i < sections.length; i += 1) {
+            sections[i].style.display = "none"; }
+        jt.byId(divid).style.display = "block";
+    };
+
+
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////
