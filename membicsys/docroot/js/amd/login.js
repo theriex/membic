@@ -347,7 +347,14 @@ app.login = (function () {
         var elem = document.createElement('link');
         elem.rel = "stylesheet";
         elem.type = "text/css";
-        elem.href = "//fonts.googleapis.com/css?family=Satisfy";
+        elem.href = "//fonts.googleapis.com/css?family=Open+Sans:400,700";
+        document.head.appendChild(elem);
+        jt.log("added stylesheet " + elem.href);
+        //handwriting font for pen name display
+        elem = document.createElement('link');
+        elem.rel = "stylesheet";
+        elem.type = "text/css";
+        elem.href = "//fonts.googleapis.com/css?family=Shadows+Into+Light+Two";
         document.head.appendChild(elem);
         jt.log("added stylesheet " + elem.href);
         //The google places API doesn't like being loaded asynchronously so
@@ -368,7 +375,7 @@ app.login = (function () {
             jt.out('toprightdiv', jt.tac2html(html));
             html = [
                 ["div", {id: "topbuttonsdiv"},
-                 [["a", {href: "#remembered", title: "Your Memory",
+                 [["a", {href: "#remembered", title: "Remembered membics",
                          onclick: jt.fs("app.activity.displayRemembered()")},
                    [["img", {cla: "topbuttonimg",
                              src: "img/remembered.png"}],

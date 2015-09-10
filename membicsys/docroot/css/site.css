@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
+  font-family: "Open Sans", "Verdana", "Arial", "Helvetica", sans-serif;
   font-style:normal;
   font-weight:normal;
   font-size:large;
@@ -56,12 +56,13 @@ button, .loginbutton, .formbutton {
 #toprightdiv { float:right; padding:0px 2px 2px 0px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { height:30px; text-align:right; }
-
-.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
+.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 0px 0px; }
 #headingdiv { min-height:80px; }
 #headingdivcontent { width:240px; margin:auto; }
 
 /* >> main display area and contained elements */
+.disptitlediv { padding-bottom:5px; 
+  font-size:x-small; font-weight:bold; color:#999; }
 .collapse { border-collapse:collapse; }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
@@ -77,7 +78,7 @@ button, .loginbutton, .formbutton {
 .footerlink { padding:1px 3px; border-radius:3px; }
 #contentdiv { }
 .penfont, .penflist { 
-  font-family:"Satisfy", cursive; font-size:x-large; font-weight:bold; }
+  font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
 #coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
@@ -129,7 +130,7 @@ button, .loginbutton, .formbutton {
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
   padding:4px 2px 0px 2px; display:block; float:left; width:80px; }
 .liflabw { width:140px; padding:4px 4px 0px 2px; 
-  font-family:"Satisfy", cursive; }
+  font-family:"Shadows Into Light Two", cursive; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
 .lifin { padding:0px; font-size:small; width:145px; }
 .lifsep { clear:both; }

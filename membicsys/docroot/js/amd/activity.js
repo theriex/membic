@@ -43,13 +43,30 @@ app.activity = (function () {
 
 
     mergeAndDisplayReviews = function (feedtype, revs) {
-        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
+        jt.out("contentdiv", jt.tac2html(
+            [["div", {cla: "disptitlediv"}, "COMMUNITY MEMBICS"],
+             ["div", {id: "feedrevsdiv"}]]));
         feeds[feedtype] = mergePersonalRecent(feedtype, revs);
         feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
         return app.review.displayReviews("feedrevsdiv", "afd", 
                                          feeds[feedtype],
                                          "app.activity.toggleExpansion",
                                          "author");
+    },
+
+
+    noRememberedHintHTML = function () {
+        var html = [
+            ["p", 
+             ["To remember a membic, click its title, then click ",
+              ["img", {src: "img/rememberq.png", cla: "intxtico"}],
+              " to add it to your memory."]],
+            ["p", 
+             ["a", {href: "#maindisp",
+                    onclick: jt.fs("app.activity.displayFeed('all')")},
+              ["Return to community membics",
+               ["img", {src: "img/membiclogo.png", cla: "intxtico"}]]]]];
+        return html;
     },
 
 
@@ -147,7 +164,9 @@ return {
     displayRemembered: function (filtertype) {
         var params, revs, revids;
         app.history.checkpoint({ view: "memo" });
-        jt.out("contentdiv", jt.tac2html(["div", {id: "feedrevsdiv"}]));
+        jt.out("contentdiv", jt.tac2html(
+            [["div", {cla: "disptitlediv"}, "REMEMBERED MEMBICS"],
+             ["div", {id: "feedrevsdiv"}]]));
         filtertype = filtertype || app.layout.getType();
         if(!feeds.remembered) {
             if(!feeds.future) {
@@ -191,7 +210,7 @@ return {
         revs = app.review.filterByRevtype(feeds.remembered, filtertype);
         app.review.displayReviews("feedrevsdiv", "rrd", revs,
                                   "app.activity.toggleExpansion", "author",
-                                  "Click the main icon, then click the remember button for any membic you want to keep in your memory.");
+                                  noRememberedHintHTML());
     },
 
 

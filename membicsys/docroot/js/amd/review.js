@@ -1883,7 +1883,7 @@ return {
                 rt = app.review.getReviewTypeByValue(rt);
                 html = "No " + rt.plural + " found."; }
             if(xem) {  //display extra empty message (prompt to write)
-                html += " " + xem; } }
+                html = [html, xem]; } }
         else {
             html = []; }
         //Displaying more than 100 reviews gets overwhelming..
