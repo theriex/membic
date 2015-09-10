@@ -16,9 +16,12 @@
 <body id="bodyid">
 
 <div id="topsectiondiv">
-  <div id="logodiv" onclick="app.activity.displayFeed('all');return false;">
-    <img src="img/membiclogo.png?v=150907" id="logoimg" border="0"/></div>
-  <div id="topworkdiv">
+  <div id="topleftdiv">
+    <div id="logodiv" onclick="app.activity.displayFeed('all');return false;">
+      <img src="img/membiclogo.png?v=150907" id="logoimg"/></div>
+    <div id="topactionsdiv"></div>
+  </div> <!-- topleftdiv -->
+  <div id="toprightdiv">
     <!-- login has to be an actual form to enable remembered passwords -->
     <div id="logindiv">
       <form id="loginform" method="post" action="redirlogin">
@@ -43,7 +46,7 @@
         </div> <!-- loginvisualelementsdiv -->
       </form>
     </div> <!-- logindiv -->
-  </div> <!-- topworkdiv -->
+  </div> <!-- toprightdiv -->
 </div>
 
 <div id="headingdiv">

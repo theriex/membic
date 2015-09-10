@@ -14,7 +14,7 @@ app.login = (function () {
         authname = "",
         moracct = null,
         cookdelim = "..morauth..",
-        topworkdivcontents = "",
+        toprightdivcontents = "",
         altauths = [],
         loginhtml = "",
 
@@ -199,7 +199,7 @@ app.login = (function () {
         var html;
         if(!jt.byId('logindiv') || !jt.byId('loginform')) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
-            jt.out('topworkdiv', html); }
+            jt.out('toprightdiv', html); }
     },
 
 
@@ -356,29 +356,34 @@ app.login = (function () {
 
 
     loggedInAuthentDisplay = function () {
-        var mypen, nml, remb, wrib, html;
+        var mypen, mmb, remb, wrib, html;
         mypen = app.pen.myPenName();
         //if no pen name, then the app is prompting for that and there
         //is no authenticated menu displayed.
         if(mypen) {
-            nml = ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
-                         onclick: jt.fs("app.login.usermenu()")},
-                   mypen.name];
-            remb = ["a", {href: "#remembered",
-                          onclick: jt.fs("app.activity.displayRemembered()")},
-                    [["img", {cla: "topbuttonimg",
-                              src: "img/remembered.png"}],
-                     ["span", {id: "rememberedcountspan"},
-                      mypen.remembered.csvarray().length || ""]]];
-            wrib = ["a", {href: "#write",
-                          onclick: jt.fs("app.review.start()")},
-                    ["img", {cla: "topbuttonimg",
-                             src: "img/writereview.png"}]];
-            html = ["div", {id: "topactionsdiv"},
-                    [["div", {cla: "tasnamediv"}, nml],
-                     ["div", {id: "tasbuttonsdiv"},
-                      [remb, wrib]]]];
-            jt.out('topworkdiv', jt.tac2html(html)); }
+            html = ["a", {href: "#SignOut",
+                          onclick: jt.fs("app.login.closeupdate('logout')")},
+                    ["span", {cla: "taslinkspan"},
+                     "Sign out"]];
+            jt.out('toprightdiv', jt.tac2html(html));
+            html = [
+                ["div", {id: "topbuttonsdiv"},
+                 [["a", {href: "#remembered", title: "Your Memory",
+                         onclick: jt.fs("app.activity.displayRemembered()")},
+                   [["img", {cla: "topbuttonimg",
+                             src: "img/remembered.png"}],
+                    ["span", {id: "rememberedcountspan"},
+                     mypen.remembered.csvarray().length || ""]]],
+                  ["a", {href: "#write", title: "Make a membic",
+                         onclick: jt.fs("app.review.start()")},
+                   ["img", {cla: "topbuttonimg",
+                            src: "img/writereview.png"}]]]],
+                ["div", {id: "topproflinkdiv"},
+                 ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
+                        onclick: jt.fs("app.login.closeupdate('pen')")},
+                  ["span", {cla: "taslinkspan"},
+                   "My membics"]]]];
+            jt.out('topactionsdiv', jt.tac2html(html)); }
     },
 
 
@@ -496,11 +501,11 @@ return {
     usermenu: function () {
         var html;
         html = ["div", {id: "accountsettingsformdiv"},
-                [["div", {cla: "tasnamediv"},
+                [["div", {cla: "taslinksdiv"},
                   ["a", {href: "#mypen", id: "mypen",
                          onclick: jt.fs("app.login.closeupdate('pen')")},
                    "My Pen Name"]],
-                 ["div", {cla: "tasnamediv"}, 
+                 ["div", {cla: "taslinksdiv"}, 
                   ["a", {href: "logout", id: "logout",
                          onclick: jt.fs("app.login.closeupdate('logout')")},
                    "Sign out"]],
@@ -607,14 +612,14 @@ return {
 
     //create the logged-in display areas
     updateAuthentDisplay: function (override) {
-        if(!topworkdivcontents) {
-            topworkdivcontents = jt.byId('topworkdiv').innerHTML; }
+        if(!toprightdivcontents) {
+            toprightdivcontents = jt.byId('toprightdiv').innerHTML; }
         if(authtoken && override !== "hide") {
             loggedInAuthentDisplay(); }
         else if(override === "hide") { 
-            jt.out('topworkdiv', ""); }
+            jt.out('toprightdiv', ""); }
         else {  //restore whatever was in index.html to begin with
-            jt.out('topworkdiv', topworkdivcontents); }
+            jt.out('toprightdiv', toprightdivcontents); }
     },
 
 

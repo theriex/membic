@@ -33,13 +33,11 @@ app.history = (function () {
 
 
     indicateState = function (state) {
-        if(state.view === "activity") {
-            jt.out("topdiv", ""); }
-        else {
-            jt.out("topdiv", jt.tac2html(
-                ["a", {href: "#home",
-                       onclick: jt.fs("app.activity.displayActive()")},
-                 ["img", {src: "img/homelink.png", cla: "tabico"}]])); }
+        //This used to display a "home" clickable icon if state.view
+        //was anything other than "activity", but that looks like
+        //visual graffiti.  Buttons need to remain static so they are
+        //recognized as stable anchor points for navigation.
+        jt.out("topdiv", "");
     };
 
 

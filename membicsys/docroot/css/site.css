@@ -43,19 +43,23 @@ button, .loginbutton, .formbutton {
 
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { }
-#logodiv { float:left; cursor:pointer; } 
+#topleftdiv { float:left; }
+#logodiv { cursor:pointer; display:inline-block; } 
 #logodiv, #logoimg { width:80px; height:80px; }
-#loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
-#loginstatdiv { height:30px; text-align:right; }
-#headingdiv { min-height:80px; }
-#headingdivcontent { width:240px; margin:auto; }
-.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
-#topworkdiv { float:right; padding:0px 2px 2px 0px; }
+#topactionsdiv { display:inline-block; vertical-align:top; }
+#topbuttonsdiv { height:50px; vertical-align:top; }
+.topbuttonimg { height:40px; width:40px; padding:10px 5px 0px 15px; }
+#topproflinkdiv { }
+.taslinkspan { font-size:small; padding-left:5px; padding-right:10px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
-#topactionsdiv { }
-.tasnamediv { text-align:right; padding:0px 20px 5px 0px; font-size:small; }
-.topbuttonimg { max-height:40px; max-width:40px; padding:0px 10px; }
+#toprightdiv { float:right; padding:0px 2px 2px 0px; }
+#loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
+#loginstatdiv { height:30px; text-align:right; }
+
+.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 14px 0px; }
+#headingdiv { min-height:80px; }
+#headingdivcontent { width:240px; margin:auto; }
 
 /* >> main display area and contained elements */
 .collapse { border-collapse:collapse; }

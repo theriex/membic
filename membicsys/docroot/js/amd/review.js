@@ -565,7 +565,7 @@ app.review = (function () {
                      rev.remembered.csvarray().length],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#edit",
-                            title: "Edit your review",
+                            title: "Edit your membic",
                             onclick: jt.fs("app.review.fpbWrite('" +
                                            updrevid + "')")},
                       ["img", {cla: "fpbuttonimg",
@@ -574,7 +574,7 @@ app.review = (function () {
         if(app.coop.mayRemove(app.lcs.getRef("coop", rev.ctmid).coop, rev)) {
             html.push(["div", {cla: "fpbuttondiv", id: "rbd" + revid},
                        ["a", {href: "#remove",
-                              title: "Remove review",
+                              title: "Remove membic",
                               onclick: jt.fs("app.coop.remove('" + 
                                              rev.ctmid + "','" +
                                              revid + "')")},
