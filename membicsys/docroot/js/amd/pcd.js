@@ -170,8 +170,6 @@ app.pcd = (function () {
 
     membershipSettingsHTML = function () {
         var html, mlev, seeking;
-        if(dst.type === "pen") {
-            return ""; }
         mlev = app.coop.membershipLevel(dst.obj);
         seeking = app.coop.isSeeking(dst.obj);
         html = [];
@@ -609,11 +607,13 @@ app.pcd = (function () {
     },
 
 
-    displayRecent = function (ignore /*typename*/, expid) {
+    displayRecent = function (expid) {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
                                   (dst.type === "coop"));
-        if(expid) {
+        if(expid === "settings") {
+            app.pcd.settings(dst.obj); }
+        else if(expid) {
             app.pcd.toggleRevExpansion("pcd", expid); }
     },
 
@@ -871,7 +871,8 @@ return {
             dst.obj = obj; }
         html = ["div", {id: "pcdsettingsdlgdiv"},
                 [["div", {cla: "pcdsectiondiv"},
-                  membershipSettingsHTML()],
+                  (dst.type === "pen"? app.login.accountSettingsHTML()
+                                     : membershipSettingsHTML())],
                  ["div", {cla: "pcdsectiondiv"},
                   adminSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
@@ -884,6 +885,7 @@ return {
                   rssEmbedSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
+                                   app.login.accountSettingsInit();
                                    picSettingsInit();
                                    descripSettingsInit();
                                    calSettingsInit();

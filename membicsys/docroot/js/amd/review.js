@@ -1328,7 +1328,8 @@ return {
         app.review.resetStateVars();
         if(app.pen.myAccountStatus() !== "Active") {
             jt.err("You need to activate your account before posting");
-            return app.login.usermenu(); }
+            return app.pcd.display("pen", app.pen.myPenId(), "latest",
+                                   app.pen.myPenName(), "settings"); }
         if(!app.pen.myPenName().profpic) {
             jt.err("You need a profile picture to identify your membics");
             return app.pcd.display("pen"); }

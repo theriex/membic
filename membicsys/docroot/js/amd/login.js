@@ -363,13 +363,13 @@ app.login = (function () {
 
 
     loggedInAuthentDisplay = function () {
-        var mypen, mmb, remb, wrib, html;
+        var mypen, html;
         mypen = app.pen.myPenName();
         //if no pen name, then the app is prompting for that and there
         //is no authenticated menu displayed.
         if(mypen) {
             html = ["a", {href: "#SignOut",
-                          onclick: jt.fs("app.login.closeupdate('logout')")},
+                          onclick: jt.fs("app.login.logout()")},
                     ["span", {cla: "taslinkspan"},
                      "Sign out"]];
             jt.out('toprightdiv', jt.tac2html(html));
@@ -387,7 +387,7 @@ app.login = (function () {
                             src: "img/writereview.png"}]]]],
                 ["div", {id: "topproflinkdiv"},
                  ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
-                        onclick: jt.fs("app.login.closeupdate('pen')")},
+                        onclick: jt.fs("app.pcd.display('pen')")},
                   ["span", {cla: "taslinkspan"},
                    "My membics"]]]];
             jt.out('topactionsdiv', jt.tac2html(html)); }
@@ -505,17 +505,13 @@ return {
     },
 
 
-    usermenu: function () {
+    accountSettingsHTML: function () {
         var html;
         html = ["div", {id: "accountsettingsformdiv"},
-                [["div", {cla: "taslinksdiv"},
-                  ["a", {href: "#mypen", id: "mypen",
-                         onclick: jt.fs("app.login.closeupdate('pen')")},
-                   "My Pen Name"]],
-                 ["div", {cla: "taslinksdiv"}, 
-                  ["a", {href: "logout", id: "logout",
-                         onclick: jt.fs("app.login.closeupdate('logout')")},
-                   "Sign out"]],
+                [["div", {cla: "lifsep", id: "accpenupdatediv"},
+                  [["label", {fo: "accpenin", cla: "liflab"}, "Pen&nbsp;Name"],
+                   ["input", {type: "text", cla: "lifin", 
+                              name: "accpenin", id: "accpenin"}]]],
                  ["div", {cla: "lifsep", id: "accemailupdatediv"},
                   [["label", {fo: "emailin", cla: "liflab"}, "Email"],
                    ["input", {type: "email", cla: "lifin",
@@ -525,24 +521,20 @@ return {
                  ["div", {cla: "lifsep", id: "accstatusupdatediv"}],
                  ["div", {cla: "lifsep", id: "accstatdetaildiv"}],
                  ["div", {cla: "lifsep", id: "accpassupdatediv"}],
-                 ["div", {cla: "lifsep", id: "accpenupdatediv"},
-                  [["label", {fo: "accpenin", cla: "liflab"}, "Pen&nbsp;Name"],
-                   ["input", {type: "text", cla: "lifin", 
-                              name: "accpenin", id: "accpenin"}]]],
                  ["div", {cla: "lifsep", id: "usermenustat"}],
                  ["div", {cla: "dlgbuttonsdiv"},
-                  [["button", {type: "button", id: "cancelbutton",
-                               onclick: jt.fs("app.login.closeupdate()")},
-                    "Cancel"],
-                   ["button", {type: "button", id: "okbutton",
+                  [["button", {type: "button", id: "okbutton",
                                onclick: jt.fs("app.login.updateAccount()")},
-                    "Ok"]]]]];
-        app.layout.cancelOverlay();
-        app.layout.closeDialog();
-        app.onescapefunc = app.login.closeupdate;
-        jt.byId('accsetdiv').style.visibility = "visible";
-        jt.out('accsetdiv', jt.tac2html(html));
-        jt.byId('accstatdetaildiv').style.display = "none";
+                    "Update Account"]]]]];
+        return html;
+    },
+
+
+    accountSettingsInit: function () {
+        var detdiv = jt.byId('accstatdetaildiv');
+        if(!detdiv) { //form fields no longer displayed so nothing to do
+            return; }
+        detdiv.style.display = "none";
         if(!moracct) {
             getAccountInfoFromPenStash(); }
         if(moracct) {
@@ -559,15 +551,6 @@ return {
                         jt.err("Account details retrieval failed: " + code + 
                                " " + errtxt); }),
                     jt.semaphore("login.usermenu")); }
-    },
-
-
-    closeupdate: function (next) {
-        jt.out('accsetdiv', "");
-        jt.byId('accsetdiv').style.visibility = "hidden";
-        switch(next) {
-        case 'pen': return app.pcd.display("pen");
-        case 'logout': return app.login.logout(); }
     },
 
 
@@ -647,10 +630,10 @@ return {
 
 
     updateAccount: function () {
-        var ua, data, contf = app.login.closeupdate;
+        var ua, data, contf = app.pcd.display;
         ua = readUsermenuAccountForm();
         if(ua.penName !== moracct.penName) {
-            if(!confirm("Cooperative theme info logs and older reviews may still reference your previous pen name \"" + moracct.penName + "\".")) {
+            if(!confirm("Theme action logs and older membics may still reference your previous pen name \"" + moracct.penName + "\".")) {
                 return; }
             contf = function () {
                 app.pen.getPen("", function (pen) {
@@ -658,13 +641,15 @@ return {
                     app.pen.updatePen(
                         pen,
                         function (ignore /*penref*/) {
-                            app.login.closeupdate();
                             app.login.updateAuthentDisplay();
                             app.login.nukeAppData();
                             app.history.dispatchState(); },
                         function (code, errtxt) {
                             jt.out('usermenustat', "Pen name update failed " + 
                                    code + ": " + errtxt); }); }); }; }
+        else if(ua.password) {
+            if(!confirm("The next time you sign in, you will need to use your updated password.")) {
+                return; } }
         if(ua.email === moracct.email && !ua.password) {
             contf(); }  //nothing changed
         else {  //account info changed
@@ -712,7 +697,8 @@ return {
 
 
     logout: function (errprompt) {
-        app.login.closeupdate();
+        app.layout.closeDialog();
+        app.layout.cancelOverlay();
         logoutWithNoDisplayUpdate();
         app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateAuthentDisplay();

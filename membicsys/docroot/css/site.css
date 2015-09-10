@@ -140,12 +140,7 @@ button, .loginbutton, .formbutton {
 #buttonornotespan { font-size:small; }
 #forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #forgotpw { }
-#accsetdiv { position:absolute; top:0px; right:0; width:300px; 
-  visibility:hidden; }
-#accountsettingsformdiv { background:#ffae50; 
-  background:-moz-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
-  background:-webkit-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
-  border:2px solid #666; }
+#accountsettingsformdiv { }
 
 /* >> pen layout */
 #createpnintrodiv { font-size:medium; }
