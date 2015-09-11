@@ -268,6 +268,9 @@ app.readurl = (function () {
         if(review.revtype === "video") {  //try to be smart about music vids
             parseTitle(review); }
         setImageURI(review, html, url);
+        if(review.imguri) {
+            review.svcdata = review.svcdata || {};
+            review.svcdata.picdisp = "sitepic"; }
         setCanonicalURL(review, html, url);
     },
 
@@ -302,12 +305,9 @@ return {
                      if(url !== plainurl) {
                          return app.readurl.fetchData(review, plainurl, 
                                                       params); }
-                     jt.err("Review details were not filled out automatically" +
+                     jt.err("Membic details were not filled out automatically" +
                             " because of a problem accessing " + url + "\n\n" +
-                            "You are probably going to have to fill in the " +
-                            "review details manually. Sorry about that.\n\n" +
-                            "Here's what came back in case it helps:\n\n" +
-                            "Error code " + code + ": " + errtxt);
+                            "Details: Error code " + code + ": " + errtxt);
                      app.review.resetAutoURL(); }),
                 jt.semaphore("readurl.fetchData"));
     }

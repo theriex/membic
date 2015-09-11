@@ -1727,6 +1727,7 @@ return {
     //then this never happens, so good enough.
     resetAutoURL: function () {
         autourl = "";
+        updateReviewDialogContents();
     },
 
 
