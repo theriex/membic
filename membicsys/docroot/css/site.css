@@ -25,7 +25,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-color: #d8d8dd;
-  background: linear-gradient(#e9e9ee 60%, #d8d8dd);
+  background: linear-gradient(#e6e7e9 60%, #d8d8dd);
 }
 
 img { border:0px; }
@@ -62,7 +62,7 @@ button, .loginbutton, .formbutton {
 
 /* >> main display area and contained elements */
 .disptitlediv { padding-bottom:5px; 
-  font-size:x-small; font-weight:bold; color:#999; }
+  font-size:x-small; font-weight:bold; color:#444; }
 .collapse { border-collapse:collapse; }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
