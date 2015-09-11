@@ -1043,6 +1043,13 @@ app.review = (function () {
         html = ["div", {cla: "revtypesdiv", id: "revdlgtypesdiv"}, 
                 html];
         jt.out("rdtypesdiv", jt.tac2html(html));
+        html = "";
+        if(!crev.revtype) {
+            if(!crev.url) {
+                html = "&#x21E7; Read URL or select type &#x21E7;"; }
+            else {
+                html = "&#x21E7;Select type&#x21E7;"; } }
+        jt.out("rdtypepromptdiv", html);
         jt.byId("urlin").value = crev.url || "";
         jt.out("rdurlbuttonspan", jt.tac2html(dlgReadButtonHTML()));
     },
@@ -1051,12 +1058,7 @@ app.review = (function () {
     dlgKeyFieldEntry = function () {
         var rt, html = "";
         rt = findReviewType(crev.revtype);
-        if(!rt) {  //no type selected yet, explain choice
-            html = "&#x21E7; Read URL or select type &#x21E7;";
-            if(crev.url) {
-                html = "&#x21E7;Select type&#x21E7;"; }
-            html = ["div", {cla: "directionstextdiv"}, html];
-            jt.out("rdkeyindiv", jt.tac2html(html));
+        if(!rt) {  //no type selected yet
             return; }
         if(!jt.byId("rdkeyincontentdiv")) {
             html = ["div", {id: "rdkeyincontentdiv"}, 
@@ -1341,12 +1343,13 @@ return {
                 makeMine(crev, jt.instId(source)); } }
         crev.penid = app.pen.myPenId();
         html = ["div", {id: "revdlgdiv"},
-                [["div", {id: "rdurldiv"},
+                [["div", {id: "rdtypesdiv"}],
+                 ["div", {id: "rdtypepromptdiv"}],
+                 ["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
                    ["input", {id: "urlin", cla: "lifin", type: "url"}],
                    ["span", {id: "rdurlbuttonspan"}, dlgReadButtonHTML()],
                    ["div", {id: "rdstat1"}]]],
-                 ["div", {id: "rdtypesdiv"}],
                  ["div", {id: "rdkeyindiv"}],
                  ["div", {id: "rdpfdiv"}],     //pic, stars, fields
                  ["div", {id: "rdtextdiv"}],
