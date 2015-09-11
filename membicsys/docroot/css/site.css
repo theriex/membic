@@ -258,6 +258,7 @@ button, .loginbutton, .formbutton {
   overflow:hidden; }
 .rdglpic { vertical-align:middle; max-width:40px; max-height:40px; 
   font-size:small; }
+#rdokstatdiv { color:red; }
 #revautodiv { clear:both; font-size:small; width:275px; }
 #revautodiv ul { list-style-image:url('../img/acbullet.png'); }
 #revmodifieddiv { padding:0px 0px 0px 10px; }
