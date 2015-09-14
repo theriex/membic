@@ -48,7 +48,7 @@ class Review(db.Model):
     helpful = db.TextProperty()                  # penids CSV
     remembered = db.TextProperty()               # penids CSV
     # type-specific non-indexed fields
-    name = db.StringProperty(indexed=False)      # food, drink, activity, other
+    name = db.StringProperty(indexed=False)      # yum, activity, other
     title = db.StringProperty(indexed=False)     # book, movie, video, music
     url = db.StringProperty(indexed=False)       # source URL of item
     artist = db.StringProperty(indexed=False)    # video, music
@@ -56,12 +56,12 @@ class Review(db.Model):
     publisher = db.StringProperty(indexed=False) # book
     album = db.StringProperty(indexed=False)     # music
     starring = db.StringProperty(indexed=False)  # movie
-    address = db.StringProperty(indexed=False)   # food, drink, activity
+    address = db.StringProperty(indexed=False)   # yum, activity
     year = db.StringProperty(indexed=False)      # values like "80's" ok
 
 
-known_rev_types = ['book', 'movie', 'video', 'music', 
-                   'food', 'drink', 'activity', 'other']
+known_rev_types = ['book', 'article', 'movie', 'video', 
+                   'music', 'yum', 'activity', 'other']
 revblocksize = 200  # how many reviews to return. cacheable approx quantity
 revpoolsize = 1000  # even multiple of blocksize. how many reviews to read
 
@@ -1280,6 +1280,28 @@ class FetchPreReviews(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
+class ConvertFoodAndDrink(webapp2.RequestHandler):
+    def get(self):
+        revtypes = ["food", "drink"]
+        for rt in revtypes:
+            where = "WHERE ctmid = 0 AND revtype = '" + rt + "'" +\
+                " ORDER BY modified DESC"
+            rq = Review.gql(where)
+            revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
+                            deadline=60)
+            count = 0
+            for rev in revs:
+                revid = rev.key().id()
+                rev.revtype = 'yum'
+                rev.put()
+                count += 1
+                rev = Review.get_by_id(revid)
+                self.response.out.write(str(revid) + " " + rev.name + "<br>\n")
+                self.response.out.write(str(count) + " " + rt + 
+                                        " reviews converted<br>\n<br>\n")
+        self.response.out.write("ConvertFoodAndDrink completed")
+
+
 class BatchUpload(webapp2.RequestHandler):
     def post(self):
         # this uses the same db access as moracct.py GetToken
@@ -1315,5 +1337,6 @@ app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/toghelpful', ToggleHelpful),
                                ('/blockfetch', FetchAllReviews),
                                ('/fetchprerevs', FetchPreReviews),
+                               ('/convertfd', ConvertFoodAndDrink),
                                ('/batchupload', BatchUpload)], debug=True)
 

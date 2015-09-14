@@ -52,6 +52,13 @@ app.review = (function () {
             dkwords: [ "Fluff", "Kid Ok", 
                        "Funny", "Emotional", 
                        "Gripping", "Informational" ] },
+          { type: "article", plural: "articles", img: "TypeArticle50.png",
+            keyprompt: "Title",
+            key: "title", subkey: "author",
+            fields: [ "publisher", "year" ],
+            dkwords: [ "Informative", "Kid Ok", 
+                       "Amusing", "Emotional", 
+                       "Eloquent", "Educational" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
             keyprompt: "Movie name",
             key: "title", //subkey
@@ -73,19 +80,12 @@ app.review = (function () {
             dkwords: [ "Chill", "Social",
                        "Office", "Travel",
                        "Workout", "Dance" ] },
-          { type: "food", plural: "food", img: "TypeFood50.png",
-            keyprompt: "Name of restaurant or dish",
+          { type: "yum", plural: "yums", img: "TypeYum50.png",
+            keyprompt: "Name of restaurant, dish, or drink",
             key: "name", //subkey
             fields: [ "address" ],
             dkwords: [ "Traditional", "Innovative",
                        "Inexpensive", "Expensive", 
-                       "Quiet", "Loud" ] },
-          { type: "drink", plural: "drinks", img: "TypeDrink50.png",
-            keyprompt: "Name and where from",
-            key: "name", //subkey
-            fields: [ "address" ],
-            dkwords: [ "Traditional", "Innovative", 
-                       "Inexpensive", "Expensive",
                        "Quiet", "Loud" ] },
           { type: "activity", plural: "activities", img: "TypeActivity50.png",
             keyprompt: "Name of place or event",
@@ -924,8 +924,7 @@ app.review = (function () {
                 if(crev.revtype === 'book' || crev.revtype === 'movie' ||
                    crev.revtype === 'music') {
                     callAmazonForAutocomplete(autocompletion); }
-                else if(crev.revtype === 'food' || crev.revtype === 'drink' ||
-                        crev.revtype === 'activity') {
+                else if(crev.revtype === 'yum' || crev.revtype === 'activity') {
                     callGooglePlacesAutocomplete(autocompletion); } }
             else {
                 setTimeout(autocompletion, 750); } }

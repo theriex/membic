@@ -15,15 +15,15 @@ import json
 def getTitle(review):
     if review["revtype"] == "book":
         return review["title"]
+    if review["revtype"] == "article":
+        return review["title"]
     if review["revtype"] == "movie":
         return review["title"]
     if review["revtype"] == "video":
         return review["title"]
     if review["revtype"] == "music":
         return review["title"]
-    if review["revtype"] == "food":
-        return review["name"]
-    if review["revtype"] == "drink":
+    if review["revtype"] == "yum":
         return review["name"]
     if review["revtype"] == "activity":
         return review["name"]
