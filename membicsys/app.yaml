@@ -174,11 +174,6 @@ handlers:
 - url: /batchupload.*
   script: src.py.rev.app
 
-## Convert food and drink to yum
-## GET params: none
-- url: /convertfd.*
-  script: src.py.rev.app
-
 
 ######################################################################
 ##        Coops

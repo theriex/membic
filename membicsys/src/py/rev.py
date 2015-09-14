@@ -1280,26 +1280,26 @@ class FetchPreReviews(webapp2.RequestHandler):
         returnJSON(self.response, reviews)
 
 
-class ConvertFoodAndDrink(webapp2.RequestHandler):
-    def get(self):
-        revtypes = ["food", "drink"]
-        for rt in revtypes:
-            where = "WHERE ctmid = 0 AND revtype = '" + rt + "'" +\
-                " ORDER BY modified DESC"
-            rq = Review.gql(where)
-            revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
-                            deadline=60)
-            count = 0
-            for rev in revs:
-                revid = rev.key().id()
-                rev.revtype = 'yum'
-                rev.put()
-                count += 1
-                rev = Review.get_by_id(revid)
-                self.response.out.write(str(revid) + " " + rev.name + "<br>\n")
-                self.response.out.write(str(count) + " " + rt + 
-                                        " reviews converted<br>\n<br>\n")
-        self.response.out.write("ConvertFoodAndDrink completed")
+# class ConvertFoodAndDrink(webapp2.RequestHandler):
+#     def get(self):
+#         revtypes = ["food", "drink"]
+#         for rt in revtypes:
+#             where = "WHERE ctmid = 0 AND revtype = '" + rt + "'" +\
+#                 " ORDER BY modified DESC"
+#             rq = Review.gql(where)
+#             revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
+#                             deadline=60)
+#             count = 0
+#             for rev in revs:
+#                 revid = rev.key().id()
+#                 rev.revtype = 'yum'
+#                 rev.put()
+#                 count += 1
+#                 rev = Review.get_by_id(revid)
+#                 self.response.out.write(str(revid) + " " + rev.name + "<br>\n")
+#                 self.response.out.write(str(count) + " " + rt + 
+#                                         " reviews converted<br>\n<br>\n")
+#         self.response.out.write("ConvertFoodAndDrink completed")
 
 
 class BatchUpload(webapp2.RequestHandler):
@@ -1337,6 +1337,5 @@ app = webapp2.WSGIApplication([('/saverev', SaveReview),
                                ('/toghelpful', ToggleHelpful),
                                ('/blockfetch', FetchAllReviews),
                                ('/fetchprerevs', FetchPreReviews),
-                               ('/convertfd', ConvertFoodAndDrink),
                                ('/batchupload', BatchUpload)], debug=True)
 
