@@ -660,8 +660,24 @@ app.pcd = (function () {
     },
 
 
+    //logic here needs to be the same as in rev.py is_matching_review
+    isMatchingReview = function (qstr, rev) {
+        var keywords;
+        if(!qstr) {
+            return true; }
+        qstr = qstr.toLowerCase();
+        if(rev.cankey.indexOf(qstr) >= 0) {
+            return true; }
+        keywords = rev.keywords || "";
+        keywords = keywords.toLowerCase();
+        if(keywords.indexOf(qstr) >= 0) {
+            return true; }
+        return false;
+    },
+
+
     searchFilterReviews = function (revs, recent) {
-        var merged = [], cand;
+        var merged = [], candidate;
         recent.sort(function (a, b) {
             if(a.modified > b.modified) { return -1; }
             if(a.modified < b.modified) { return 1; }
@@ -670,12 +686,11 @@ app.pcd = (function () {
         while(revs.length || recent.length) {
             if(!recent.length || (revs.length && 
                                   revs[0].modified >= recent[0].modified)) {
-                cand = revs.shift(); }
+                candidate = revs.shift(); }
             else {
-                cand = recent.shift(); }
-            if(!srchst.qstr || 
-                   cand.cankey.indexOf(srchst.qstr.toLowerCase()) >= 0) {
-                merged.push(cand); } }
+                candidate = recent.shift(); }
+            if(isMatchingReview(srchst.qstr, candidate)) {
+                merged.push(candidate); } }
         return merged;
     },
 

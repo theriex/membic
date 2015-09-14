@@ -784,6 +784,20 @@ def write_batch_reviews(pn, handler):
     handler.response.out.write("write_batch_reviews complete\n")
 
 
+# logic here needs to the same as pcd.js isMatchingReview
+def is_matching_review(qstr, review):
+    if not qstr:
+        return True
+    qstr = qstr.lower()
+    if qstr in review.cankey:
+        return True
+    keywords = review.keywords or ""
+    keywords = keywords.lower()
+    if qstr in keywords:
+        return True
+    return False
+
+
 # def make_coop_from_group(grp):
 #     ctm = coop.Coop(name=grp.name, name_c=grp.name_c)
 #     ctm.modified = grp.modified
@@ -1058,7 +1072,7 @@ class SearchReviews(webapp2.RequestHandler):
         reviter = revquery.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=30,
                                batch_size=1000)
         for review in reviter:
-            if not qstr or qstr in review.cankey:
+            if is_matching_review(qstr, review):
                 qres.append(review)
             if len(qres) >= 20:
                 break
