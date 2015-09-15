@@ -1341,15 +1341,15 @@ class BatchUpload(webapp2.RequestHandler):
         self.response.out.write("BatchUpload complete\n")
 
 
-app = webapp2.WSGIApplication([('/saverev', SaveReview),
-                               ('/delrev', DeleteReview),
-                               ('/revpicupload', UploadReviewPic),
-                               ('/revpic', GetReviewPic),
-                               ('/srchrevs', SearchReviews),
-                               ('/revbyid', GetReviewById), 
-                               ('/revfeed', GetReviewFeed),
-                               ('/toghelpful', ToggleHelpful),
-                               ('/blockfetch', FetchAllReviews),
-                               ('/fetchprerevs', FetchPreReviews),
-                               ('/batchupload', BatchUpload)], debug=True)
+app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
+                               ('.*/delrev', DeleteReview),
+                               ('.*/revpicupload', UploadReviewPic),
+                               ('.*/revpic', GetReviewPic),
+                               ('.*/srchrevs', SearchReviews),
+                               ('.*/revbyid', GetReviewById), 
+                               ('.*/revfeed', GetReviewFeed),
+                               ('.*/toghelpful', ToggleHelpful),
+                               ('.*/blockfetch', FetchAllReviews),
+                               ('.*/fetchprerevs', FetchPreReviews),
+                               ('.*/batchupload', BatchUpload)], debug=True)
 

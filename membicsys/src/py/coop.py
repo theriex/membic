@@ -407,11 +407,11 @@ class GetCoopStats(webapp2.RequestHandler):
         writeJSONResponse(json.dumps(stat), self.response)        
 
 
-app = webapp2.WSGIApplication([('/ctmdesc', UpdateDescription),
-                               ('/ctmbyid', GetCoopById),
-                               ('/ctmpic', GetCoopPic),
-                               ('/ctmmemapply', ApplyForMembership),
-                               ('/ctmmemprocess', ProcessMembership),
-                               ('/ctmstats', GetCoopStats),
+app = webapp2.WSGIApplication([('.*/ctmdesc', UpdateDescription),
+                               ('.*/ctmbyid', GetCoopById),
+                               ('.*/ctmpic', GetCoopPic),
+                               ('.*/ctmmemapply', ApplyForMembership),
+                               ('.*/ctmmemprocess', ProcessMembership),
+                               ('.*/ctmstats', GetCoopStats),
                                ], debug=True)
 

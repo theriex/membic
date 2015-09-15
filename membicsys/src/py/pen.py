@@ -352,10 +352,10 @@ class GetPenById(webapp2.RequestHandler):
         returnJSON(self.response, [ pen ])
 
 
-app = webapp2.WSGIApplication([('/newpen', NewPenName),
-                               ('/updpen', UpdatePenName),
-                               ('/picupload', UploadPic),
-                               ('/profpic', GetProfPic),
-                               ('/togremember', ToggleRemember),
-                               ('/penbyid', GetPenById)], debug=True)
+app = webapp2.WSGIApplication([('.*/newpen', NewPenName),
+                               ('.*/updpen', UpdatePenName),
+                               ('.*/picupload', UploadPic),
+                               ('.*/profpic', GetProfPic),
+                               ('.*/togremember', ToggleRemember),
+                               ('.*/penbyid', GetPenById)], debug=True)
 

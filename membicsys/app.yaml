@@ -36,47 +36,47 @@ handlers:
 
 ## Get an access token from native credentials
 ## POST params: user, pass 
-- url: /login.*
+- url: (.*)/toklogin.*
   script: src.py.moracct.app
 
 ## Read native credentials and redirect back
 ## POST params: emailin, passin (,returnto, command, view, prof/pen/revid)
-- url: /redirlogin.*
+- url: (.*)/redirlogin.*
   script: src.py.moracct.app
 
 ## Create a new native account
 ## POST params: user, pass, email
-- url: /newacct.*
+- url: (.*)/newacct.*
   script: src.py.moracct.app
 
 ## Email forgotten native account credentials
 ## POST params: email
-- url: /mailcred.*
+- url: (.*)/mailcred.*
   script: src.py.moracct.app
 
 ## Change native account password
 ## POST params: password, authparams
-- url: /updacc.*
+- url: (.*)/updacc.*
   script: src.py.moracct.app
 
 ## Get login account details
 ## GET params: authparams
-- url: /getacct.*
+- url: (.*)/getacct.*
   script: src.py.moracct.app
 
 ## Send account activation code
 ## POST params: authparams
-- url: /sendcode.*
+- url: (.*)/sendcode.*
   script: src.py.moracct.app
 
 ## Activate or deactivate the account
 ## GET params: key, code, command, authparams
-- url: /activate.*
+- url: (.*)/activate.*
   script: src.py.moracct.app
 
 ## Get build version string
 ## GET params: none
-- url: /buildverstr.*
+- url: (.*)/buildverstr.*
   script: src.py.moracct.app
 
 
@@ -85,33 +85,33 @@ handlers:
 
 ## Create new pen name for current authentication
 ## POST params: pen, authparams
-- url: /newpen.*
+- url: (.*)/newpen.*
   script: src.py.pen.app
 
 ## Update a pen name if authorized
 ## POST params: pen, authparams
-- url: /updpen.*
+- url: (.*)/updpen.*
   script: src.py.pen.app
 
 ## Upload a profile pic
 ## POST params: picfilein, _id, authparams
 ##   _id: The PenName instance id
-- url: /picupload.*
+- url: (.*)/picupload.*
   script: src.py.pen.app
 
 ## Retrieve a profile pic
 ## GET params: profileid
-- url: /profpic.*
+- url: (.*)/profpic.*
   script: src.py.pen.app
 
 ## Toggle remembering a review
 ## GET params: revid, penid, authparams
-- url: /togremember.*
+- url: (.*)/togremember.*
   script: src.py.pen.app
 
 ## Return the pen name for the given id.
 ## GET params: penid
-- url: /penbyid.*
+- url: (.*)/penbyid.*
   script: src.py.pen.app
 
 
@@ -120,58 +120,58 @@ handlers:
 
 ## Return the review feed for the given type
 ## GET params: revtype, authparams, penid
-- url: /revfeed
+- url: (.*)/revfeed
   script: src.py.rev.app
 
 ## Toggle the helpful mark on the specified review from the specified pen
 ## GET params: revid, penid, authparams
-- url: /toghelpful.*
+- url: (.*)/toghelpful.*
   script: src.py.rev.app
 
 ## Write the given review and associated coop reviews
 ## POST params: authparams, rev, ctmids
-- url: /saverev.*
+- url: (.*)/saverev.*
   script: src.py.rev.app
 
 ## Delete review for authorized pen name
 ## POST params: rev, authparams
-- url: /delrev.*
+- url: (.*)/delrev.*
   script: src.py.rev.app
 
 ## Upload a review pic
 ## POST params: picfilein, _id, authparams
 ##   _id: The Review instance id
-- url: /revpicupload.*
+- url: (.*)/revpicupload.*
   script: src.py.rev.app
 
 ## Retrieve a review pic
 ## GET params: revid
-- url: /revpic.*
+- url: (.*)/revpic.*
   script: src.py.rev.app
 
 ## Return reviews for a given pen within the given date range
 ## GET params: penid, mindate, maxdate, qstr, authparams (,revtype)
-- url: /srchrevs.*
+- url: (.*)/srchrevs.*
   script: src.py.rev.app
 
 ## Return the review for the given id.
 ## GET params: revid
-- url: /revbyid.*
+- url: (.*)/revbyid.*
   script: src.py.rev.app
 
 ## Return pre-reviews for the given pen
 ## GET params: penid, authparams
-- url: /fetchprerevs.*
+- url: (.*)/fetchprerevs.*
   script: src.py.rev.app
 
 ## Return recent and top reviews for a coop or pen
 ## GET params: ctmid or penid or authparams
-- url: /blockfetch.*
+- url: (.*)/blockfetch.*
   script: src.py.rev.app
 
 ## Batch post one or more reviews
 ## POST params: email, password, revsjson
-- url: /batchupload.*
+- url: (.*)/batchupload.*
   script: src.py.rev.app
 
 
@@ -180,32 +180,32 @@ handlers:
 
 ## Create a new coop or update a coop description
 ## POST params: penid, coop, authparams
-- url: /ctmdesc.*
+- url: (.*)/ctmdesc.*
   script: src.py.coop.app
 
 ## Return the coop for the given id
 ## GET params: coopid
-- url: /ctmbyid.*
+- url: (.*)/ctmbyid.*
   script: src.py.coop.app
 
 ## Retrieve a coop pic
 ## GET params: coopid
-- url: /ctmpic.*
+- url: (.*)/ctmpic.*
   script: src.py.coop.app
 
 ## Apply for next level coop membership
 ## POST params: action (apply/withdraw), penid, coopid, authparams
-- url: /ctmmemapply.*
+- url: (.*)/ctmmemapply.*
   script: src.py.coop.app
 
 ## Process membership application: reject, ignore, accept
 ## POST params: action, penid, coopid, seekerid, authparams
-- url: /ctmmemprocess.*
+- url: (.*)/ctmmemprocess.*
   script: src.py.coop.app
 
 ## Fetch general coop statistics
 ## GET params: none
-- url: /ctmstats.*
+- url: (.*)/ctmstats.*
   script: src.py.coop.app
 
 
@@ -214,47 +214,47 @@ handlers:
 
 ## Return a signed OAuth request given the specified parameters
 ## POST params: name, posturl, headparams, contentparams
-- url: /oa1call.*
+- url: (.*)/oa1call.*
   script: src.py.consvc.app
 
 ## Return the specified JSON endpoint call results
 ## GET params: geturl
-- url: /jsonget.*
+- url: (.*)/jsonget.*
   script: src.py.consvc.app
 
 ## Undecorated return endpoint for Twitter to callback
 ## GET params: oauth token info
-- url: /twtok
+- url: (.*)/twtok
   script: src.py.consvc.app
 
 ## Fetch an access token for GitHub
 ## GET params: code, state
-- url: /githubtok.*
+- url: (.*)/githubtok.*
   script: src.py.consvc.app
 
 ## GitHub authentication callback endpoint
 ## GET params: code, state
-- url: /githubcb.*
+- url: (.*)/githubcb.*
   script: src.py.consvc.app
 
 ## Fetch info from Amazon
 ## GET params: asin, authparams
-- url: /amazoninfo.*
+- url: (.*)/amazoninfo.*
   script: src.py.consvc.app
 
 ## Fetch search results from Amazon
 ## GET params: revtype, title, authparams
-- url: /amazonsearch.*
+- url: (.*)/amazonsearch.*
   script: src.py.consvc.app
 
 ## Fetch the contents of the given URL
 ## GET params: url, authparams
-- url: /urlcontents.*
+- url: (.*)/urlcontents.*
   script: src.py.consvc.app
 
 ## Fetch the given image url and return it.
 ## GET params: url, authparams
-- url: /imagerelay.*
+- url: (.*)/imagerelay.*
   script: src.py.consvc.app
 
 
@@ -263,7 +263,7 @@ handlers:
 
 ## Fetch RSS feed content for the specified coop
 ## GET params: ctmid
-- url: /rsscoop.*
+- url: (.*)/rsscoop.*
   script: src.py.rssact.app
 
 ## Fetch activity statistics for the site (used by actstat.js)
@@ -280,19 +280,37 @@ handlers:
   login: admin
 
 ## Client referral tracking for linkback
-- url: /bytheway.*
+- url: (.*)/bytheway.*
   script: src.py.mailsum.app
 
 ## Return automated agents whose use of the site should not be counted.
-- url: /botids.*
+- url: (.*)/botids.*
   script: src.py.mailsum.app
 
-# Trap anything ending with a slash and send it to index.html since there
-# is no default processing to figure that out otherwise.
-- url: (.*)/
-  static_files: docroot/index.html
-  upload: docroot
+## Structural static directories
+- url: (.*)/img/
+  static_dir: docroot/img
+- url: (.*)/css/
+  static_dir: docroot/css
+- url: (.*)/docs/
+  static_dir: docroot/docs
+- url: (.*)/js/
+  static_dir: docroot/js
 
-# Catchall is to look in docroot.
+## Various flavors of start page requests:
+## Direct requests for pen name permalinks
+- url: /p/\d+
+  script: src.py.start.app
+## Direct requests for theme permalinks
+- url: /t/\d+
+  script: src.py.start.app
+## The index page
+- url: /index.html
+  script: src.py.start.app
+## Anything else ending with a slash also goes to the start page
+- url: (.*)/
+  script: src.py.start.app
+
+## Catchall is to look for a static file off docroot
 - url: /
   static_dir: docroot

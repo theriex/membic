@@ -86,6 +86,7 @@ return {
 
     displayFeed: function (feedtype) {
         var params, time;
+        app.verifyHome();
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });

@@ -450,14 +450,14 @@ class ImageRelay(webapp2.RequestHandler):
 
 
 
-app = webapp2.WSGIApplication([('/oa1call', OAuth1Call),
-                               ('/jsonget', JSONGet),
-                               ('/twtok', TwitterTokenCallback),
-                               ('/githubtok', GitHubToken),
-                               ('/githubcb', GitHubCallback),
-                               ('/amazoninfo', AmazonInfo),
-                               ('/amazonsearch', AmazonSearch),
-                               ('/urlcontents', URLContents),
-                               ('/imagerelay', ImageRelay)], 
+app = webapp2.WSGIApplication([('.*/oa1call', OAuth1Call),
+                               ('.*/jsonget', JSONGet),
+                               ('.*/twtok', TwitterTokenCallback),
+                               ('.*/githubtok', GitHubToken),
+                               ('.*/githubcb', GitHubCallback),
+                               ('.*/amazoninfo', AmazonInfo),
+                               ('.*/amazonsearch', AmazonSearch),
+                               ('.*/urlcontents', URLContents),
+                               ('.*/imagerelay', ImageRelay)], 
                               debug=True)
 

@@ -73,6 +73,14 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.verifyHome = function () {
+        if(window.location.pathname !== "/" || 
+           window.location.href.indexOf("?") >= 0 ||
+           window.location.href.indexOf("#") >= 0) {
+            window.location.href = "/"; }
+    };
+
+
     app.trustedContainer = function () {
         var knownhost = false,
             tcs = ["https://www.membic.com",

@@ -151,5 +151,5 @@ class CoopRSS(webapp2.RequestHandler):
         self.response.out.write(content);
 
 
-app = webapp2.WSGIApplication([('/rsscoop', CoopRSS)], debug=True)
+app = webapp2.WSGIApplication([('.*/rsscoop', CoopRSS)], debug=True)
 

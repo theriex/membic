@@ -1,17 +1,24 @@
+import webapp2
+import logging
+import datetime
+import pen
+import coop
+
+indexHTML = """
 <!doctype html>
 <html itemscope="itemscope" itemtype="https://schema.org/WebPage"
       xmlns="https://www.w3.org/1999/xhtml" dir="ltr" lang="en-US">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
-  <meta name="description" content="A membic is a bite sized structured summary of a noteworthy experience that enhances your memory and feeds the community memory stream." />
+  <meta name="description" content="$DESCR" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:image" content="img/membiclogo.png?v=150911" />
-  <meta property="twitter:image" content="img/membiclogo.png?v=150911" />
-  <meta itemprop="image" content="img/membiclogo.png?v=150911" />
-  <link rel="image_src" href="img/membiclogo.png?v=150911" />
-  <title>Membic</title>
-  <link href="css/site.css?v=150911" rel="stylesheet" type="text/css" />
+  <meta property="og:image" content="$SITEPIC" />
+  <meta property="twitter:image" content="$SITEPIC" />
+  <meta itemprop="image" content="$SITEPIC" />
+  <link rel="image_src" href="$SITEPIC" />
+  <title>$TITLE</title>
+  <link href="css/site.css$CACHEPARA" rel="stylesheet" type="text/css" />
 </head>
 <body id="bodyid">
 
@@ -19,7 +26,7 @@
   <div id="topleftdiv">
     <div id="logodiv" onclick="app.activity.displayFeed('all');return false;"
          title="Community membics">
-      <img src="img/membiclogo.png?v=150911" id="logoimg"/></div>
+      <img src="img/membiclogo.png$CACHEPARA" id="logoimg"/></div>
     <div id="topactionsdiv"></div>
   </div> <!-- topleftdiv -->
   <div id="toprightdiv">
@@ -81,9 +88,9 @@
 <div id="modalseparatordiv"></div>
 <div id="overlaydiv"></div>
 
-<script src="js/jtmin.js?v=150911"></script>
-<script src="js/app.js?v=150911"></script>
-<script src="js/compiled.js?v=150911"></script>
+<script src="js/jtmin.js$CACHEPARA"></script>
+<script src="js/app.js$CACHEPARA"></script>
+<script src="js/compiled.js$CACHEPARA"></script>
 
 <script>
   app.init();
@@ -93,5 +100,60 @@
 
 </body>
 </html>
+"""
 
 
+def start_page_html(handler, dbclass, dbid):
+    descr = "A membic is a bite sized structured summary of a noteworthy experience that enhances your memory and feeds the community memory stream."
+    img = "img/membiclogo.png"
+    title = "Membic"
+    if dbclass == "pen":
+        pnm = pen.PenName.get_by_id(dbid)
+        if pnm:
+            descr = "Membic profile for " + pnm.name
+            descr = descr.replace("\"", "'")
+            title = descr
+            img = "/profpic?profileid=" + str(dbid)
+    elif dbclass == "coop":
+        ctm = coop.Coop.get_by_id(dbid)
+        if ctm:
+            descr = ctm.name
+            descr = descr.replace("\"", "'")
+            title = descr
+            img = "/ctmpic?coopid=" + str(dbid)
+    cachev = "?v=" + datetime.datetime.now().strftime("%y%m%d")
+    img += cachev
+    html = indexHTML
+    html = html.replace("$SITEPIC", img)
+    html = html.replace("$TITLE", title)
+    html = html.replace("$DESCR", descr)
+    html = html.replace("$CACHEPARA", cachev)
+    handler.response.headers['Content-Type'] = 'text/html'
+    handler.response.out.write(html)
+
+
+class PenPermalinkStart(webapp2.RequestHandler):
+    def get(self, dbid):
+        return start_page_html(self, "pen", int(dbid))
+
+
+class ThemePermalinkStart(webapp2.RequestHandler):
+    def get(self, dbid):
+        return start_page_html(self, "coop", int(dbid))
+
+
+class IndexPageStart(webapp2.RequestHandler):
+    def get(self):
+        return start_page_html(self, "", 0)
+
+
+class DefaultStart(webapp2.RequestHandler):
+    def get(self, reqdet):
+        return start_page_html(self, "", 0)
+
+
+app = webapp2.WSGIApplication([('/p/(\d+)', PenPermalinkStart),
+                               ('/t/(\d+)', ThemePermalinkStart),
+                               ('/index.html', IndexPageStart),
+                               ('(.*)/', DefaultStart)],
+                              debug=True)

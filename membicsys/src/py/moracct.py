@@ -622,13 +622,14 @@ class GetBuildVersion(webapp2.RequestHandler):
         writeTextResponse("BUILDVERSIONSTRING", self.response)
 
 
-app = webapp2.WSGIApplication([('/newacct', CreateAccount),
-                               ('/login', GetToken),
-                               ('/redirlogin', TokenAndRedirect),
-                               ('/mailcred', MailCredentials),
-                               ('/updacc', UpdateAccount),
-                               ('/getacct', GetAccount),
-                               ('/sendcode', SendActivationCode),
-                               ('/activate', ActivateAccount),
-                               ('/buildverstr', GetBuildVersion)], debug=True)
+app = webapp2.WSGIApplication([('.*/newacct', CreateAccount),
+                               ('.*/toklogin', GetToken),
+                               ('.*/redirlogin', TokenAndRedirect),
+                               ('.*/mailcred', MailCredentials),
+                               ('.*/updacc', UpdateAccount),
+                               ('.*/getacct', GetAccount),
+                               ('.*/sendcode', SendActivationCode),
+                               ('.*/activate', ActivateAccount),
+                               ('.*/buildverstr', GetBuildVersion)], 
+                              debug=True)
 

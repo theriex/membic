@@ -262,7 +262,7 @@ app.review = (function () {
         if(!type) {
             jt.log("Might show typed placeholders. Pass the type"); }
         html = {id: "revimg" + jt.instId(review), cla: "revimg", 
-                src: "img/emptyprofpic.png"};
+                src: "img/nopicprof.png"};
         if(jt.isLowFuncBrowser()) {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
@@ -1086,7 +1086,7 @@ app.review = (function () {
 
     dlgPicHTML = function () {
         var src, type, html;
-        src = "img/emptyrevpic.png";
+        src = "img/nopicrev.png";
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
             src = "revpic?revid=" + jt.instId(crev); }
@@ -1606,7 +1606,7 @@ return {
                                  onchange: revfs("picdlg('sitepic')")}],
                      ["div", {id: "sitepicdetaildiv", cla: "ptddiv"},
                       [["img", {id: "sitepicimg", cla: "revimgdis",
-                                src: crev.imguri || "img/emptyprofpic.png",
+                                src: crev.imguri || "img/nopicprof.png",
                                 onclick: revfs("picdlg('sitepic')")}],
                        ["div", {id: "sitepicform", cla: "overform"}]]]]],
                    ["li",
@@ -1616,7 +1616,7 @@ return {
                      ["div", {id: "upldpicdetaildiv", cla: "ptddiv"},
                       [["img", {id: "upldpicimg", cla: "revimgdis",
                                 src: (crev.revpic ? "revpic?revid=" + revid
-                                                  : "img/emptyprofpic.png"),
+                                                  : "img/nopicprof.png"),
                                 onclick: revfs("picdlg('upldpic')")}],
                        ["div", {id: "upldpicform", cla: "overform"}]]]]],
                    ["li",

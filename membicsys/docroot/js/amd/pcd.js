@@ -107,7 +107,7 @@ app.pcd = (function () {
 
     picImgSrc = function (obj) {
         var defs = dst[dst.type], 
-            src = "img/emptyprofpic.png";
+            src = "img/nopicprof.png";
         if(obj[defs.picfield]) {  //e.g. pen.profpic
             //fetch with mild cachebust in case modified
             src = defs.picsrc + jt.instId(obj) +
@@ -1011,11 +1011,13 @@ return {
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
+                linkurl = "https://" + window.location.host;
                 if(dst.type === "pen") {
+                    linkurl += "/p/" + dst.id;
                     shtxt = "Direct profile URL:"; }
                 else {
+                    linkurl += "/t/" + dst.id;
                     shtxt = "Direct theme URL:"; }
-                linkurl = window.location.href + defs.accsrc + dst.id;
                 html = [
                     ["span", {cla: "shoutspan"},
                      (app.login.isLoggedIn() || dst.type !== "coop"? "" : 
@@ -1031,7 +1033,9 @@ return {
                     ["span", {cla: "shoutspan"}, shtxt],
                     ["br"],
                     ["span", {id: "shurlspan"},
-                     linkurl]];
+                     ["a", {href: linkurl,
+                            onclick: jt.fs("window.open('" + linkurl + "')")},
+                      linkurl]]];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
                 shareViaAddToAny(dst.obj.name, linkurl); } }
     },

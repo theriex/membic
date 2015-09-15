@@ -267,8 +267,8 @@ class BounceHandler(BounceNotificationHandler):
           account.put()
 
 
-app = webapp2.WSGIApplication([('/botids', ReturnBotIDs),
-                               ('/activity', UserActivity),
-                               ('/bytheway', ByTheWay),
+app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
+                               ('.*/activity', UserActivity),
+                               ('.*/bytheway', ByTheWay),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 

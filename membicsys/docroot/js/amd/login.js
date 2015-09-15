@@ -376,18 +376,18 @@ app.login = (function () {
             html = [
                 ["div", {id: "topbuttonsdiv"},
                  [["a", {href: "#remembered", title: "Remembered membics",
-                         onclick: jt.fs("app.activity.displayRemembered()")},
+                         onclick: jt.fs("app.login.topnav('remembered')")},
                    [["img", {cla: "topbuttonimg",
                              src: "img/remembered.png"}],
                     ["span", {id: "rememberedcountspan"},
                      mypen.remembered.csvarray().length || ""]]],
                   ["a", {href: "#write", title: "Make a membic",
-                         onclick: jt.fs("app.review.start()")},
+                         onclick: jt.fs("app.login.topnav('write')")},
                    ["img", {cla: "topbuttonimg",
                             src: "img/writereview.png"}]]]],
                 ["div", {id: "topproflinkdiv"},
                  ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
-                        onclick: jt.fs("app.pcd.display('pen')")},
+                        onclick: jt.fs("app.login.topnav('mymembics')")},
                   ["span", {cla: "taslinkspan"},
                    "My membics"]]]];
             jt.out('topactionsdiv', jt.tac2html(html)); }
@@ -422,6 +422,19 @@ app.login = (function () {
         if(params.authmethod) { params.am = params.authmethod; }
         if(params.authtoken) { params.at = params.authtoken; }
         if(params.authname) { params.an = params.authname; }
+    },
+
+
+    convertPermalinkURLElemsToParams = function (params) {
+        var idx, href = window.location.href;
+        idx = href.indexOf("/p/");
+        if(idx >= 0) {
+            params.view = "pen";
+            params.penid = href.slice(idx + 3); }
+        idx = href.indexOf("/t/");
+        if(idx >= 0) {
+            params.view = "coop";
+            params.coopid = href.slice(idx + 3); }
     },
 
 
@@ -471,6 +484,7 @@ app.login = (function () {
     handleRedirectOrStartWork = function () {
         var idx, altpn = "AltAuth", params = jt.parseParams();
         standardizeAuthParams(params);
+        convertPermalinkURLElemsToParams(params);
         handleInitialParamSideEffects(params);
         //figure out what to do next
         if(params.command && params.command.indexOf(altpn) === 0) {
@@ -622,6 +636,18 @@ return {
     },
 
 
+    topnav: function (bname) {
+        app.verifyHome();
+        switch(bname) {
+        case "remembered":
+            return app.activity.displayRemembered();
+        case "write":
+            return app.review.start();
+        case "mymembics":
+            return app.pcd.display("pen"); }
+    },
+
+
     nukeAppData: function () {
         app.activity.resetAllFeeds();
         app.pcd.resetState();
@@ -705,6 +731,7 @@ return {
         app.login.init();
         if(errprompt) {
             jt.err(errprompt); }
+        app.verifyHome();
     },
 
 
