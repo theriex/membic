@@ -803,7 +803,8 @@ app.pcd = (function () {
                     [["div", {id: "pcdnamediv"},
                       [["a", {href: defs.accsrc + jt.instId(obj),
                               onclick: jt.fs("app.pcd.share()")},
-                        ["span", {cla: "penfont"}, obj.name]],
+                        [["span", {id: "namearrowspan"}, "&#x27a1;"],
+                         ["span", {cla: "penfont"}, obj.name]]],
                        modButtonsHTML(obj)]],
                      ["div", {id: "ppcdshoutdiv"},
                       ["span", {cla: "shoutspan"}, 
@@ -1007,10 +1008,12 @@ return {
             defs = dst[dst.type];
             shurlspan = jt.byId("shurlspan");
             if(shurlspan) {
+                jt.out('namearrowspan', "&#x27a1;");
                 jt.out("ppcdshoutdiv", jt.tac2html(
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
+                jt.out('namearrowspan', "&#x2b07;");
                 linkurl = "https://" + window.location.host;
                 if(dst.type === "pen") {
                     linkurl += "/p/" + dst.id;

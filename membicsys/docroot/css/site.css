@@ -80,6 +80,7 @@ button, .loginbutton, .formbutton {
 .penfont, .penflist { 
   font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
+#namearrowspan { padding-right:5px; }
 #coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
