@@ -193,14 +193,6 @@ return {
     },
 
 
-    myAccountStatus: function () {
-        var pen = app.pen.myPenName();
-        if(!pen || !pen.stash || !pen.stash.account) {
-            return "Unknown"; }
-        return pen.stash.account.status;
-    },
-
-
     visprefs: function (revdivid, penid, penname) {
         var pen, html, pcode;
         penname = jt.dec(penname || "pen " + penid);

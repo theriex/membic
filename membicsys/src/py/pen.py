@@ -250,6 +250,8 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Authorized access reference required.")
             return
         cached_put(pen)
+        # force updated info retrieval for any subsequent call
+        pen = PenName.get_by_id(pen.key().id())
         if prev_name != pen.name:
             reflect_pen_name_change(pen, prev_name)
         try:

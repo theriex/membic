@@ -709,6 +709,26 @@ return {
     },
 
 
+    noteAccountInfo: function (pen) {
+        //only have stash.account if it is the pen you logged in with
+        if(pen && pen.stash && pen.stash.account) {
+            moracct = pen.stash.account;
+            app.pen.setMyPenId(jt.instId(pen)); }
+    },
+
+
+    accountStatus: function () {
+        var pen;
+        if(moracct) {
+            return moracct.status; }
+        pen = app.pen.myPenName();
+        if(pen && pen.stash && pen.stash.account) {
+            app.login.noteAccountInfo(pen);
+            return moracct.status; }
+        return "Unknown";
+    },
+
+
     readAuthCookie: function () {
         var cval, mtn;
         cval = jt.cookie(app.authcookname);

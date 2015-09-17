@@ -939,8 +939,9 @@ return {
             return app.layout.cancelOverlay(); }
         if(changed) {
             okfunc = function (updobj) {
-                if(!jt.instId(dst.obj)) {
-                    confirm("It can take several minutes before a new theme becomes available for posting, but soon you will have the option of posting to " + dst.obj.name + " when you edit a new or existing membic."); }
+                if(dst.type === "coop") {
+                    setTimeout(function () {
+                        app.coop.verifyPenStash(dst.obj); }, 50); }
                 dst.obj = updobj;
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
@@ -1130,11 +1131,12 @@ return {
 
     toggleFindCoops: function () {
         var html;
-        html = ["If you see something good in the ",
+        html = ["When you see something interesting in the ",
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
-                 "main feed display,"],
-                " click the title to expand the details. If the membic was posted to a cooperative theme, you can click the theme name to see all recent and top posts. If a theme looks interesting, you can follow it, and apply for membership if you want to contribute."];
+                 ["community membics",
+                  ["img", {src: "img/membiclogo.png", cla: "hthimg"}]]],
+                ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it if looks interesting. After following, you can apply for membership if you also want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {
             jt.out('findctmdiv', jt.tac2html(html)); }
         else {
@@ -1144,7 +1146,7 @@ return {
 
     toggleCreateCoop: function () {
         var html;
-        html = ["A cooperative theme holds a curated collection of membics contributed by one or more pen names. As a creating Founder, you have full privileges to manage other members and posts as you want.",
+        html = ["A cooperative theme holds a curated collection of membics contributed by one or more pen names. As a creating Founder, you will have full privileges to manage other members and posts as you want.",
                 ["div", {cla: "formbuttonsdiv"},
                  ["button", {type: "button", id: "createcoopbutton",
                              onclick: jt.fs("app.pcd.display('coop')")},
@@ -1283,7 +1285,7 @@ return {
                             return app.pen.newPenName(callback); }
                         app.lcs.tomb(dtype, id, "blockfetch failed");
                         return callback(null); }
-                    obj = objs[0];
+                    obj = objs[0];  //PenName or Coop instance
                     revs = objs.slice(1);
                     revs.sort(function (a, b) {
                         if(a.modified < b.modified) { return 1; }
@@ -1292,9 +1294,7 @@ return {
                     app.lcs.putAll("rev", revs);
                     obj.recent = sourceRevIds(revs, dtype, id);
                     app.lcs.put(dtype, obj);
-                    if(dtype === "pen" && !app.pen.myPenId() &&
-                           obj.stash && obj.stash.account) {
-                        app.pen.setMyPenId(jt.instId(obj)); }
+                    app.login.noteAccountInfo(obj);
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
                     if(dtype === "coop") {
                         app.coop.verifyPenStash(obj); }
