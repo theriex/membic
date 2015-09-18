@@ -176,6 +176,34 @@ return {
     },
 
 
+    verifyStashKeywords: function (pen) {
+        pen.stash = pen.stash || {};
+        pen.stash.keywords = pen.stash.keywords || {};
+        app.review.getReviewTypes().forEach(function (rt) {
+            if(!pen.stash.keywords[rt.type]) {
+                pen.stash.keywords[rt.type] = rt.dkwords.join(", "); } });
+    },
+
+
+    getKeywordUse: function (pen) {
+        var kwu = { recent: {}, system: {} };
+        app.review.getReviewTypes().forEach(function (rt) {
+            kwu.recent[rt.type] = "";
+            kwu.system[rt.type] = rt.dkwords.join(","); });
+        if(pen.recent) {
+            pen.recent.forEach(function (rev) {
+                rev = app.lcs.getRef("rev", rev);
+                if(rev) { 
+                    rev = rev.rev;
+                    rev.keywords.csvarray().forEach(function (kwd) {
+                        var keycsv = kwu.recent[rev.revtype];
+                        if(!keycsv.csvcontains(kwd)) {
+                            keycsv = keycsv.csvappend(kwd);
+                            kwu.recent[rev.revtype] = keycsv; } }); }}); }
+        return kwu;
+    },
+
+
     setMyPenId: function (penid) {
         loginpenid = penid;
     },

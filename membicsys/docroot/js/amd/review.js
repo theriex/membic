@@ -56,8 +56,7 @@ app.review = (function () {
             keyprompt: "Title",
             key: "title", subkey: "author",
             fields: [ "publisher", "year" ],
-            dkwords: [ "Informative", "Kid Ok", 
-                       "Amusing", "Emotional", 
+            dkwords: [ "Newsworthy", "Informative", 
                        "Eloquent", "Educational" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
             keyprompt: "Movie name",
@@ -355,18 +354,10 @@ app.review = (function () {
 
 
     keywordsValid = function () {
-        var input, words, csv = "";
+        var input;
         input = jt.byId('rdkwin');
         if(input) {
-            words = input.value || "";
-            words = words.split(",");
-            words.forEach(function (word) {
-                word = word.trim();
-                if(word) {
-                    if(csv) {
-                        csv += ", "; }  //use spaced commas for readability
-                    csv += word; } });
-            crev.keywords = csv; }
+            crev.keywords = jt.spacedCSV(input.value); }
     },
 
 
@@ -1221,13 +1212,15 @@ app.review = (function () {
 
 
     dlgKeywordEntry = function () {
-        var rt, html, chk;
+        var rt, html, pen, chk;
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
         crev.keywords = crev.keywords || "";
         html = [];
-        rt.dkwords.forEach(function (dkword, i) {
+        pen = app.pen.myPenName();
+        app.pen.verifyStashKeywords(pen);
+        pen.stash.keywords[rt.type].csvarray().forEach(function (dkword, i) {
             chk = jt.toru(crev.keywords.indexOf(dkword) >= 0, "checked");
             html.push(["div", {cla: "rdkwcbdiv"},
                        [["input", {type: "checkbox", id: "dkw" + i,
@@ -1239,7 +1232,9 @@ app.review = (function () {
         html = [["div", {id: "rdkwcbsdiv"}, html]];
         html.push(["div", {id: "rdkwindiv"},
                    [["label", {fo: "rdkwin", cla: "liflab", id: "rdkwlab"},
-                     "Keywords"],
+                     ["a", {href: "#keywordsdescription",
+                            onclick: jt.fs("app.review.kwhelpdlg()")},
+                      "Keywords"]],
                     ["input", {id: "rdkwin", cla: "lifin", type: "text", 
                                value: crev.keywords}]]]);
         jt.out('rdkwdiv', jt.tac2html(html));
@@ -1640,6 +1635,16 @@ return {
         crev.imguri = url;
         jt.byId('sitepicimg').src = url;
         displaySitePicLabel();
+    },
+
+
+    kwhelpdlg: function () {
+        var html = ["div", {id: "revpicdlgdiv"},  //re-using pic dialog..
+                    ["div", {cla: "kwhelpdlg"},
+                     [["p", "Keywords provide helpful meta-descriptive tags for information and search. Select keywords by checking the boxes, or entering words into the text box separated by commas."],
+                      ["p", "To change which keywords are shown with checkboxes, go to your profile settings."]]]];
+        app.layout.openOverlay(app.layout.placerel("rdkwindiv", -5, -100),
+                               html);
     },
 
 

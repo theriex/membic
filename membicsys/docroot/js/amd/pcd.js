@@ -475,6 +475,46 @@ app.pcd = (function () {
     },
 
 
+    keywordSettingsHTML = function () {
+        var kwu, html;
+        if(dst.type !== "pen") {
+            return ""; }
+        app.pen.verifyStashKeywords(dst.obj);
+        kwu = app.pen.getKeywordUse(dst.obj);
+        html = [];
+        app.review.getReviewTypes().forEach(function (rt) {
+            html.push(
+                ["div", {cla: "rtkwdiv", id: "rtkwdiv" + rt.type},
+                 [["div", {cla: "formline"},
+                   [["img", {cla: "reviewbadge", src: "img/" + rt.img}],
+                    ["input", {id: "kwcsvin" + rt.type, cla: "keydefin", 
+                               type: "text", placeholder: "Checkbox keywords",
+                               value: dst.obj.stash.keywords[rt.type]}]]],
+                  ["div", {cla: "formline"},
+                   ["span", {cla: "kwcsvspan"},
+                    [["span", {cla: "kwcsvlabel"}, "Recent:"],
+                     jt.spacedCSV(kwu.recent[rt.type])]]],
+                  ["div", {cla: "formline"},
+                   ["span", {cla: "kwcsvspan"},
+                    [["span", {cla: "kwcsvlabel"}, "Default:"],
+                     jt.spacedCSV(kwu.system[rt.type])]]]]]); });
+        html = ["div", {cla: "formline"},
+                [["a", {href: "#togglecustomkeywords",
+                        onclick: jt.fs("app.layout.togdisp('penkwdsdiv')")},
+                  [["img", {cla: "ctmsetimg", src: "img/tag.png"}],
+                   ["span", {cla: "settingsexpandlinkspan"},
+                    "Checkbox Keywords"]]],
+                 ["div", {cla: "formline", id: "penkwdsdiv",
+                          style: "display:none;"},
+                  [html,
+                   ["div", {cla: "dlgbuttonsdiv"},
+                    ["button", {type: "button", id: "updatekwdsdiv",
+                                onclick: jt.fs("app.pcd.updateKeywords()")},
+                     "Update Keywords"]]]]]];
+        return html;
+    },
+
+
     calendarIconHTML = function () {
         var html;
         html = ["div", {id: "calicodiv", cla: "tabico"},
@@ -896,6 +936,8 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   descripSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
+                  keywordSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
                   calendarSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
                   rssEmbedSettingsHTML()]]];
@@ -949,6 +991,14 @@ return {
                 jt.byId('okbutton').disabled = false;
                 jt.out('formstatdiv', jt.errhtml("Update", code, errtxt)); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
+    },
+
+
+    updateKeywords: function () {
+        app.review.getReviewTypes().forEach(function (rt) {
+            var val = jt.byId("kwcsvin" + rt.type).value;
+            dst.obj.stash.keywords[rt.type] = val; });
+        app.pen.updatePen(dst.obj, app.pcd.redisplay, app.failf);
     },
 
 

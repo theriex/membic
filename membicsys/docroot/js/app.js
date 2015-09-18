@@ -312,4 +312,16 @@ var app = {},  //Global container for application level funcs and values
                 elem.style.height = dim.h + "px"; } }
     };
 
+
+    jt.spacedCSV = function (csv) {
+        var spaced = "";
+        csv.csvarray().forEach(function (val) {
+            val = val.trim();
+            if(val) {
+                if(spaced) {
+                    spaced += ", "; }
+                spaced += val; } });
+        return spaced;
+    };
+
 } () );

@@ -180,6 +180,10 @@ button, .loginbutton, .formbutton {
 .formline, .memlistdiv { clear:both; font-size:medium; 
   /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
+.keydefin { width:220px; } /* dlgta - reviewbadge - pad */
+.kwcsvspan { font-size:x-small; }
+.kwcsvlabel { font-weight:bold; padding-right:4px; }
+.kwhelpdlg { font-size:small; }
 #followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold;
   padding:4px 7px 0px 2px; display:inline-block; }
