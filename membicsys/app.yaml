@@ -40,7 +40,7 @@ handlers:
   script: src.py.moracct.app
 
 ## Read native credentials and redirect back
-## POST params: emailin, passin (,returnto, command, view, prof/pen/revid)
+## POST params: emailin, passin (,returnto, command, view, objid)
 - url: .*/redirlogin.*
   script: src.py.moracct.app
 
@@ -206,6 +206,17 @@ handlers:
 ## Fetch general coop statistics
 ## GET params: none
 - url: .*/ctmstats.*
+  script: src.py.coop.app
+
+## Note membership invite for a cooperative theme
+## POST params: penid, coopid, email, authparams
+- url: .*/invitebymail.*
+  script: src.py.coop.app
+
+## Accept an invitation for a cooperative theme
+## GET params: coopid, accountemail, invitetoken
+## POST params: coopid, accountemail, authparams
+- url: .*/acceptinvite.*
   script: src.py.coop.app
 
 

@@ -147,6 +147,7 @@ def add_account_info_to_pen_stash(acc, pen):
     ad = {}
     ad["email"] = acc.email
     ad["status"] = acc.status
+    ad["invites"] = json.loads(acc.invites or "[]")
     stash = {}
     if pen.stash:
         stash = json.loads(pen.stash)
@@ -167,11 +168,6 @@ def find_auth_pens(handler):
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
     pq = PenName.gql(where, acc._id)
     pens = pq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    for pen in pens:
-        try:
-            add_account_info_to_pen_stash(acc, pen)
-        except Exception as e:
-            logging.info("Unable to add account info to pen " + str(e))
     return pens
 
 
@@ -223,6 +219,10 @@ class NewPenName(webapp2.RequestHandler):
         set_pen_attrs(pen, self.request)
         setattr(pen, self.request.get('am'), acc._id)
         cached_put(pen)
+        try:
+            add_account_info_to_pen_stash(acc, pen)
+        except Exception as e:
+            logging.info("Account info stash failure for new pen " + str(e))
         returnJSON(self.response, [ pen ])
 
 

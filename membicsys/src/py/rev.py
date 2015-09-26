@@ -571,6 +571,11 @@ def find_pen_or_coop_type_and_id(handler):
             mypen.put()
         except Exception as e:
             logging.info("Update of pen.accessed failed: " + str(e))
+        try:
+            acc = authenticated(handler.request)
+            pen.add_account_info_to_pen_stash(acc, mypen)
+        except Exception as e:
+            logging.info("Unable to add account info to pen " + str(e))
         return "pen", mypen.key().id(), mypen
     # final case is no pen found because they haven't created one yet
     # that's a normal condition and not an error return

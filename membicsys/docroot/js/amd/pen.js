@@ -41,20 +41,16 @@ app.pen = (function () {
 
 
     updatePenName = function (pen, callok, callfail) {
-        var data, acctval = "";
+        var data;
         if(pen.stash && pen.stash.account) {
-            //do not leak account info in to general JSON field when writing
-            acctval = pen.stash.account;
+            //do not leak account info in to general JSON field when writing.
             pen.stash.account = ""; }
         app.pen.serializeFields(pen);
         data = jt.objdata(pen, ["recent", "top20s"]);
         app.pen.deserializeFields(pen);  //in case update fail or interim use
         jt.call('POST', "updpen?" + app.login.authparams(), data,
                  function (updpens) {
-                     updpens[0].recent = pen.recent;
-                     app.lcs.put("pen", updpens[0]);
-                     if(updpens[0].stash) {
-                         updpens[0].stash.account = acctval; }
+                     app.pen.noteUpdatedPen(updpens[0], pen);
                      callok(updpens[0]); },
                  app.failf(function (code, errtxt) {
                      callfail(code, errtxt); }),
@@ -300,6 +296,14 @@ return {
 
     updatePen: function (pen, callbackok, callbackfail) {
         updatePenName(pen, callbackok, callbackfail);
+    },
+
+
+    noteUpdatedPen: function (updpen, currpen) {
+        if(!currpen) {
+            currpen = (app.lcs.getRef("pen", jt.instId(updpen))).pen; }
+        updpen.recent = currpen.recent;
+        app.lcs.put("pen", updpen);
     },
 
 

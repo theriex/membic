@@ -1,4 +1,4 @@
-/*global app, jt */
+/*global app, jt, confirm */
 
 /*jslint white */
 
@@ -18,6 +18,62 @@ app.coop = (function () {
     "use strict";
 
     ////////////////////////////////////////
+    // closure variables
+    ////////////////////////////////////////
+
+    var 
+
+    ////////////////////////////////////////
+    // helper functions
+    ////////////////////////////////////////
+
+    emailInviteLinkHTML = function (emaddr) {
+        var dst, subj, body, href, html;
+        dst = app.pcd.getDisplayState();
+        subj = "Invitation to join " + dst.obj.name;
+        body = "Hi,\n\n" +
+            "I'm writing a cooperative theme on membic.com called \"" + dst.obj.name + "\", and I would like to invite you to join me as a contributing member. I value your thoughts and knowledge, and I think our combined membics would be useful to us and other people. You can check out the theme at\n\n" +
+            app.secsvr + "/t/" + dst.id + "\n\n" +
+            "I've approved your membership, and you should already have received an acceptance link and any other needed account information from membicsystem@gmail.com. I'm guessing you probably have some membics you could write just from recent memory, it would be awesome to see those included.\n\n" +
+            "Here's some background in case it helps: A membic is a short structured summary of something worth remembering. Membics are quick to create, but have enough information to support collaborative memory. \"" + dst.obj.name + "\" is a collaborative memory space where we control membership and all posted membics. My hope is this will grow into a highly useful resource for us and for others interested what we choose to post. For more details, go to https://www.membic.com and click the \"About\" link at the bottom of the page.\n\n" +
+            "Looking forward to building \"" + dst.obj.name + "\" with you!\n\n" +
+            "thanks,\n\n";
+        href = "mailto:" + emaddr + "?subject=" + jt.dquotenc(subj) + 
+            "&body=" + jt.dquotenc(body);
+        html = ["a", {href: href},
+                [["img", {src: "img/email.png", cla: "inlineimg"}],
+                 ["span", {cla: "emlinktext"},
+                  "Send Invitation"]]];
+        return html;
+    },
+
+
+    displayInviteDialog = function (invite, invidx) {
+        var html;
+        html = ["div", {id: "coopinvitedlgdiv"},
+                ["div", {cla: "pcdsectiondiv"},
+                 [["p", {cla: "dlgpara"},
+                   [["span", {cla: "penflist"}, invite.penname],
+                    " has invited you to become a member of ",
+                    ["em", invite.coopname],
+                    "."]],
+                  ["p", {cla: "dlgpara"},
+                   "Accept this membership invitation to access " + invite.coopname + " from the themes tab on your profile, and enable the option to post through to " + invite.coopname + " when you write or edit a membic."],
+                  ["div", {id: "errmsgdiv", cla: "dlgpara"}],
+                  ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
+                   [["button", {type: "button", id: "membrejectbutton",
+                                onclick: jt.fs("app.coop.accrejInvite(" +
+                                               invidx + ",'Reject')")},
+                     "Reject"],
+                    ["button", {type: "button", id: "membacceptbutton",
+                                onclick: jt.fs("app.coop.accrejInvite(" +
+                                               invidx + ",'Accept')")},
+                     "Accept"]]]]]];
+        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
+    };
+
+
+    ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
 return {
@@ -32,12 +88,101 @@ return {
             "&penid=" + app.pen.myPenId();
         jt.call('POST', "ctmdesc?" + app.login.authparams(), data,
                 function (updcoops) {
-                    updcoops[0].recent = coop.recent;
-                    app.lcs.put("coop", updcoops[0]);
+                    app.coop.noteUpdatedCoop(updcoops[0], coop);
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {
                     callfail(code, errtxt); }),
                 jt.semaphore("coop.updateCoop"));
+    },
+
+
+    noteUpdatedCoop: function (updcoop, currcoop) {
+        if(!currcoop) {
+            currcoop = (app.lcs.getRef("coop", jt.instId(updcoop))).coop; }
+        //only cache if we have the recent reviews, that way we know we
+        //still need to do a blockfetch for all the data.
+        if(currcoop) {
+            updcoop.recent = currcoop.recent;
+            app.lcs.put("coop", updcoop); }
+    },
+
+
+    showInviteDialog: function (inviteobj) {
+        var email = "", html;
+        //action is either the db update button or sending mail
+        if(!inviteobj) {
+            html = ["button", {type: "button", id: "memapprovebutton",
+                               onclick: jt.fs("app.coop.updateInvite()")},
+                    "Pre-Approve Membership"]; }
+        else {
+            email = inviteobj.email;
+            html = emailInviteLinkHTML(inviteobj.email); }
+        html = ["div", {id: "coopinvitedlgdiv"},
+                ["div", {cla: "pcdsectiondiv"},
+                 [["p", {cla: "dlgpara"}, 
+                   "To invite someone as a contributing member, pre-approve their membership, then send them a mail message."],
+                  ["div", {cla: "formline"},
+                   [["label", {fo: "emailin", cla: "liflab"}, "Email"],
+                    ["input", {id: "emailin", cla: "lifin", type: "email",
+                               value: email, disabled: jt.toru(inviteobj),
+                               placeholder: "user@example.com"}]]],
+                  ["div", {id: "errmsgdiv", cla: "dlgpara"}],
+                  ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
+                   html]]]];
+        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
+    },
+
+
+    updateInvite: function () {
+        var buttonhtml, email, data;
+        buttonhtml = jt.byId('invitebuttondiv').innerHTML;
+        jt.out('invitebuttondiv', "Approving Membership...");
+        email = jt.byId('emailin').value;
+        jt.byId('emailin').disabled = true;
+        data = "penid=" + app.pen.myPenId() + "&email=" + email +
+            "&coopid=" + app.pcd.getDisplayState().id;
+        jt.call('POST', "invitebymail?" + app.login.authparams(), data,
+                function (invites) {
+                    app.coop.showInviteDialog(invites[0]); },
+                app.failf(function (code, errtxt) {
+                    jt.out('errmsgdiv', "Invite failed " + code + 
+                           ": " + errtxt);
+                    jt.out('invitebuttondiv', buttonhtml); }),
+                jt.semaphore("coop.updateInvite"));
+    },
+
+
+    accrejInvite: function (invidx, action) {
+        var invite, data;
+        invite = app.login.accountInfo("invites")[invidx];
+        if(action === "Reject" && !confirm("You will need to re-apply or be invited again to become a member of " + invite.coopname + ". Are you sure you want to reject membership?")) {
+            return; }
+        invite.processed = true;  //don't loop forever
+        data = "penid=" + app.pen.myPenId() + "&coopid=" + invite.coopid + 
+            "&inviterpenid=" + invite.penid + "&action=" + action;
+        jt.call('POST', "acceptinvite?" + app.login.authparams(), data,
+                function (updobjs) {
+                    if(action === "Accept") {
+                        app.pen.noteUpdatedPen(updobjs[0]);
+                        app.coop.noteUpdatedCoop(updobjs[1]);
+                        app.coop.verifyPenStash(updobjs[1]); }
+                    app.layout.cancelOverlay();
+                    app.coop.processInvites(); },  //in case there are more
+                app.failf(function (code, errtxt) {
+                    jt.out('errmsgdiv', "Invite processing failed " + code + 
+                           ": " + errtxt); }),
+                jt.semaphore("coop.accrejInvite"));
+    },
+
+
+    processInvites: function () {
+        var invites;
+        invites = app.login.accountInfo("invites") || [];
+        invites.some(function (invite, invidx) {
+            if(!invite.processed) {
+                displayInviteDialog(invite, invidx);
+                return true; }
+            return false; });
     },
 
 

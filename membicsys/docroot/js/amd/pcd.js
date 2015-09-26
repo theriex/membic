@@ -894,6 +894,19 @@ app.pcd = (function () {
     },
 
 
+    shareInviteHTML = function () {
+        var html;
+        if(dst.type !== "coop" ||
+           app.coop.membershipLevel(dst.obj, app.pen.myPenId()) < 2) {
+            return ""; }
+        html = ["div", {id: "invitelinkdiv"},
+                ["a", {href: "#invite",
+                       onclick: jt.fs("app.coop.showInviteDialog()")},
+                 "Invite"]];
+        return html;
+    },
+
+
     sourceRevIds = function (revs, dtype, id) {
         var revids = [];
         revs.forEach(function (rev) {
@@ -1083,7 +1096,8 @@ return {
                       ["a", {cla: "a2a_button_twitter"}],
                       ["a", {cla: "a2a_button_google_plus"}],
                       ["a", {cla: "a2a_button_wordpress"}],
-                      ["a", {cla: "a2a_button_email"}]]],
+                      ["a", {cla: "a2a_button_email"}],
+                      shareInviteHTML()]],
                     ["span", {cla: "shoutspan"}, shtxt],
                     ["br"],
                     ["span", {id: "shurlspan"},
@@ -1305,6 +1319,11 @@ return {
         dst.obj = null;
         srchst = { revtype: "all", qstr: "", status: "" };
         setdispstate = { infomode: "" };
+    },
+
+
+    getDisplayState: function () {
+        return dst;
     },
 
 

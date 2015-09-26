@@ -128,8 +128,10 @@ button, .loginbutton, .formbutton {
 /* >> intro layout */
 #bookslidediv { text-align:center; }
 .bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
+/* padding:4px 2px 0px 2px; makes the "Keywords" entry in the membic
+dialog look ok, but breaks the Email input in the invite dialog. */
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
-  padding:4px 2px 0px 2px; display:block; float:left; width:80px; }
+  padding:0px 2px; display:block; float:left; width:80px; }
 .liflabw { width:140px; padding:4px 4px 0px 2px; 
   font-family:"Shadows Into Light Two", cursive; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
@@ -199,6 +201,9 @@ button, .loginbutton, .formbutton {
   background-image: url('../img/whitewash.png'); }
 .adminlogentrydiv { font-size: medium; }
 .logdatestampspan { font-size:small; font-family:monospace; }
+#invitelinkdiv { display:inline-block; margin:4px; padding:2px;
+  background-color: #ffae50;
+  border:1px solid #333; border-radius:4px; }
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel, .reviewbadgedis { 
@@ -229,9 +234,11 @@ button, .loginbutton, .formbutton {
 .inlinebuttonsdiv { text-align:center; padding:0px 0px 10px 0px; }
 .inlinebuttonsdiv button { margin:0px 10px; }
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
+.dlgpara { width:260px; font-size:small; }
 #rssurlta { height:40px; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .searchbuttondiv { margin:0px 0px 0px 40px; }
+.inlineimg { vertical-align:middle; padding:0px 4px; }
 
 /* >> review layout */
 #revdlgdiv { }

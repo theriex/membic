@@ -27,6 +27,7 @@ class MORAccount(db.Model):
     mailbounce = db.TextProperty()      # isodate1,isodate2...
     actsends = db.TextProperty()        # isodate;emaddr,isodate;emaddr...
     actcode = db.StringProperty(indexed=False)  # account activation code
+    invites = db.TextProperty()         # theme invites JSON
     
 
 def asciienc(val):
@@ -108,9 +109,15 @@ def normalize_email(emaddr):
     return emaddr
 
 
-def valid_new_email_address(handler, emaddr):
+def valid_email_address(emaddr):
     # something @ something . something
     if not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
+        return False
+    return True
+
+
+def valid_new_email_address(handler, emaddr):
+    if not (valid_email_address(emaddr)):
         handler.error(412)  # precondition failed
         handler.response.out.write("Invalid email address")
         return
@@ -340,6 +347,27 @@ def safeURIEncode(stringval, stripnewlines = False):
     return urllib.quote(stringval.encode("utf-8"))
 
 
+def make_redirect_url_base(returnto, requrl):
+    redurl = returnto
+    if not redurl:
+        redurl = requrl
+        if redurl.find("?") >= 0:
+            redurl = redurl[0:redurl.find("?")]
+        if redurl.rfind("/") > 8:  #https://...
+            redurl = redurl[0:redurl.rfind("/")]
+    if "%3A" in redurl:
+        redurl = urllib.unquote(redurl)
+    redurl += "#"
+    return redurl
+
+
+def login_token_parameters(email, password):
+    token = newtoken(email, password)
+    params = "authmethod=mid&authtoken=" + token +\
+        "&authname=" + urllib.quote(asciienc(email))
+    return params
+
+
 def verify_secure_comms(handler, url):
     if url.startswith('https') or re.search("\:[0-9][0-9]80", url):
         return True
@@ -348,9 +376,14 @@ def verify_secure_comms(handler, url):
     return False
 
 
-def send_activation_code(handler, account):
+def random_alphanumeric(length):
     chars = string.ascii_letters + string.digits
-    account.actcode = "".join(random.choice(chars) for _ in range(30))
+    val = "".join(random.choice(chars) for _ in range(length))
+    return val
+    
+
+def send_activation_code(handler, account):
+    account.actcode = random_alphanumeric(30)
     if account.actsends:
         account.actsends += ","
     else:
@@ -419,19 +452,10 @@ class GetToken(webapp2.RequestHandler):
 
 class TokenAndRedirect(webapp2.RequestHandler):
     def post(self):
-        url = self.request.url;
-        if not verify_secure_comms(self, url):
+        requrl = self.request.url;
+        if not verify_secure_comms(self, requrl):
             return
-        redurl = self.request.get('returnto')
-        if not redurl:
-            redurl = url
-            if redurl.find("?") >= 0:
-                redurl = redurl[0:redurl.find("?")]
-            if redurl.rfind("/") > 8:  #https://...
-                redurl = redurl[0:redurl.rfind("/")]
-        if "%3A" in redurl:
-            redurl = urllib.unquote(redurl)
-        redurl += "#"
+        redurl = make_redirect_url_base(self.request.get('returnto'), requrl)
         email = self.request.get('emailin') or ""
         email = normalize_email(email)
         password = self.request.get('passin') or ""
@@ -442,9 +466,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
             accounts = MORAccount.gql(where, email, password)
             found = accounts.count()
             if found:
-                token = newtoken(email, password)
-                redurl += "authmethod=mid&authtoken=" + token
-                redurl += "&authname=" + urllib.quote(asciienc(email))
+                redurl += login_token_parameters(email, password)
             else:  # email and password did not match
                 where = "WHERE email=:1 LIMIT 1"
                 accounts = MORAccount.gql(where, email)

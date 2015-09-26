@@ -717,15 +717,15 @@ return {
     },
 
 
-    accountStatus: function () {
+    accountInfo: function (fieldname) {
         var pen;
         if(moracct) {
-            return moracct.status; }
+            return moracct[fieldname]; }
         pen = app.pen.myPenName();
         if(pen && pen.stash && pen.stash.account) {
             app.login.noteAccountInfo(pen);
-            return moracct.status; }
-        return "Unknown";
+            return moracct[fieldname]; }
+        return "";
     },
 
 
@@ -834,6 +834,7 @@ return {
         if(app.login.isLoggedIn()) {
             app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();
+                setTimeout(app.coop.processInvites, 1000);
                 app.history.dispatchState(state); }); }
         else {
             app.history.dispatchState(state); }

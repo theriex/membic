@@ -1322,7 +1322,7 @@ return {
     start: function (source) {
         var html;
         app.review.resetStateVars();
-        if(app.login.accountStatus() !== "Active") {
+        if(app.login.accountInfo("status") !== "Active") {
             jt.err("You need to activate your account before posting");
             return app.pcd.display("pen", app.pen.myPenId(), "latest",
                                    app.pen.myPenName(), "settings"); }
