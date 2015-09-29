@@ -1341,6 +1341,7 @@ return {
             url += "&penid=" + id; }  //penid not specified if retrieving self
         if(dtype === "coop") {
             url += "&ctmid=" + id; }
+        url += "&t=" + new Date().toISOString();  //cache bust
         time = new Date().getTime();
         jt.call('GET', url, null,
                 function (objs) {  // main obj + recent/top reviews
@@ -1371,7 +1372,7 @@ return {
                 app.failf(function (code, errtxt) {
                     jt.log("blockfetch " + code + ": " + errtxt);
                     callback(null); }),
-                jt.semaphore("pcd.fetchAndDisplay" + dtype + id));
+                jt.semaphore("pcd.blockfetch" + dtype + id));
     },
 
 

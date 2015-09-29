@@ -1783,7 +1783,7 @@ return {
                 "&penid=" + app.pen.myPenId() + "&revid=" + updrevid;
             jt.call('GET', url, null,
                     function (pens) {
-                        app.lcs.put("pen", pens[0]);
+                        app.pen.noteUpdatedPen(pens[0]);
                         app.login.updateAuthentDisplay();
                         app.activity.resetRememberedFeed();
                         jt.out(prefix + disprevid + "rememberdiv",

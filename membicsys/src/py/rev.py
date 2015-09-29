@@ -655,7 +655,7 @@ def rebuild_reviews_block(handler, pct, pgid):
     if pct == "coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
     rq = Review.gql(where, pco.key().id())
-    revs = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    revs = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
     for rev in revs:
         jstr = append_review_jsoncsv(jstr, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
