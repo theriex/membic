@@ -1542,26 +1542,6 @@ return {
     },
 
 
-    initWithId: function (revid, mode, action, errmsg) {
-        var params = "revid=" + revid;
-        jt.call('GET', "revbyid?" + params, null,
-                function (revs) {
-                    if(revs.length > 0) {
-                        crev = copyReview(app.lcs.put("rev", revs[0]).rev);
-                        if(mode === "edit") {
-                            app.review.display(action, errmsg); }
-                        else {
-                            app.review.displayRead(action); } }
-                    else {
-                        jt.err("initWithId found no review id " + revid);
-                        app.pcd.display(); } },
-                app.failf(function (code, errtxt) {
-                    jt.err("initWithId failed code " + code + ": " +
-                           errtxt); }),
-                jt.semaphore("review.initWithId"));
-    },
-
-
     jumpLinkHTML: function (review, type) {
         var qurl, html;
         if(!review) {

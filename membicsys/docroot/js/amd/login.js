@@ -399,19 +399,7 @@ app.login = (function () {
     //post-login.  These are separate flows.  Not supporting a
     //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
-        if(params.command === "helpful" ||
-           params.command === "remember" ||
-           params.command === "respond" ||
-           (params.view === "review" && params.revid)) {
-            setTimeout(function () {
-                jt.call('GET', "/bytheway?clickthrough=review", null,
-                        function () {
-                            jt.log("noted review clickthrough"); },
-                        app.failf); }, 200);
-            app.lcs.getFull("pen", params.penid, function (ignore /*penref*/) {
-                app.review.initWithId(params.revid, "read", 
-                                      params.command); }); }
-        else if(params.url) {
+        if(params.url) {
             app.review.readURL(jt.dec(params.url), params); }
         else {  //pass parameters along to the general processing next step
             app.login.doNextStep(params); }
