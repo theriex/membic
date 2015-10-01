@@ -290,7 +290,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #feedrevsdiv { padding:0px 0px 50px 0px; }
 .fpdiv { clear:both; margin:0px 0px 20px 0px; }
 .fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:72px; 
-  overflow:scroll; float:left; }
+  overflow:hidden; float:left; }
 .fpprofdivsp { margin-right:5px; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
 .fpprefstatdiv { height:12px; font-size:12px; text-align:center; }
