@@ -151,7 +151,7 @@ return {
     fetchData: function (review, url, ignore /*params*/) {
         var asin = extractASIN(url);
         jt.out('revautodiv', "Reading details from Amazon...");
-        url = "amazoninfo?asin=" + asin;
+        url = "amazoninfo?asin=" + asin + jt.ts("&cb=", "second");
         jt.call('GET', url, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content));

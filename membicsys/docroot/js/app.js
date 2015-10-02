@@ -27,7 +27,7 @@ var app = {},  //Global container for application level funcs and values
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";
-    app.suppemail = ["membicsystem", ["gmail", "com"].join('.')].join('@');
+    app.suppemail = "membicsystem" + "@" + "gmail" + "." + "com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
     app.pennames = {};  //id: penname local lookup for improved stat msgs
@@ -99,7 +99,7 @@ var app = {},  //Global container for application level funcs and values
 
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
-        var cdiv, ref;
+        var cdiv, params;
         app.amdtimer.load.end = new Date();
         cdiv = jt.byId('contentdiv');
         jt.out('contentdiv', " &nbsp; ");
@@ -109,9 +109,10 @@ var app = {},  //Global container for application level funcs and values
         jt.on(document, 'keypress', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
         if(document.referrer) {
-            ref = jt.enc(document.referrer);
+            params = "referral=" + jt.enc(document.referrer) + 
+                jt.ts("&cb=", "minute");
             setTimeout(function () {
-                jt.call('GET', "bytheway?referral=" + ref, null,
+                jt.call('GET', "bytheway?" + params, null,
                         function () {
                             jt.log("noted referrer: " + document.referrer); },
                         app.failf); }, 2); }
@@ -321,6 +322,21 @@ var app = {},  //Global container for application level funcs and values
                     spaced += ", "; }
                 spaced += val; } });
         return spaced;
+    };
+
+
+    //Short for "time slug", this is handy for building cache bust 
+    //parameters and such.
+    jt.ts = function (prefix, toklev) {
+        var levels, iso, slug;
+        levels = { year: 2, month: 4, day: 6, hour: 8, minute: 10 };
+        prefix = prefix || "";
+        iso = new Date().toISOString();
+        slug = iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) + 
+            iso.slice(11,13) + iso.slice(14,16) + iso.slice(17,19);
+        if(toklev) {
+            slug = slug.slice(0, levels[toklev]); }
+        return prefix + slug;
     };
 
 } () );

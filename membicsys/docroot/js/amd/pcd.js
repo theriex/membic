@@ -1160,7 +1160,7 @@ return {
             "&qstr=" + jt.enc(jt.canonize(srchst.qstr)) +
             "&revtype=" + app.typeOrBlank(srchst.revtype) +
             "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
-            jt.instId(dst.obj);
+            jt.instId(dst.obj) + jt.ts("&cb=", "hour");
         jt.call('GET', "srchrevs?" + params, null,
                 function (revs) {
                     app.lcs.putAll("rev", revs);
@@ -1342,7 +1342,7 @@ return {
             url += "&penid=" + id; }  //penid not specified if retrieving self
         if(dtype === "coop") {
             url += "&ctmid=" + id; }
-        url += "&t=" + new Date().toISOString();  //cache bust
+        url += jt.ts("&cb=", "hour");
         time = new Date().getTime();
         jt.call('GET', url, null,
                 function (objs) {  // main obj + recent/top reviews

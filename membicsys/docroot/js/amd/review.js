@@ -782,7 +782,7 @@ app.review = (function () {
     callAmazonForAutocomplete = function (acfunc) {
         var url;
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
-            jt.enc(autocomptxt);
+            jt.enc(autocomptxt) + jt.ts("&cb=", "hour");
         jt.call('GET', url, null,
                 function (json) {
                     writeAutocompLinks(jt.dec(json[0].content));
@@ -1732,7 +1732,8 @@ return {
         //disconnect update call from screen update
         setTimeout(function () {
             url = "toghelpful?" + app.login.authparams() + 
-                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid;
+                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
+                jt.ts("&cb=", "second");
             jt.call('GET', url, null,
                     function (reviews) {
                         app.lcs.put("rev", reviews[0]);
@@ -1760,7 +1761,8 @@ return {
         //disconnect update call from screen update
         setTimeout(function () {
             url = "togremember?" + app.login.authparams() +
-                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid;
+                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
+                jt.ts("&cb=", "second");
             jt.call('GET', url, null,
                     function (pens) {
                         app.pen.noteUpdatedPen(pens[0]);

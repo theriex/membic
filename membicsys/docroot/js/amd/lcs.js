@@ -96,7 +96,8 @@ return {
         url = "";
         if(window.location.href.split("/").length > 3) {  //on a sub-page
             url = "../"; }
-        url += cache[type].fetchend + "?" + cache[type].fetchparamf(id);
+        url += cache[type].fetchend + "?" + cache[type].fetchparamf(id) +
+            jt.ts("&cb=", "second");
         jt.call('GET', url, null,
                 function (objs) {
                     if(objs.length > 0) {

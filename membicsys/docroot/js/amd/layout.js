@@ -208,6 +208,7 @@ return {
         app.layout.openDialog(null, html);
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
+        url += jt.ts("?cb=", "day");
         jt.request('GET', url, null,
                    function (resp) {
                        displayDocContent(url, resp); },

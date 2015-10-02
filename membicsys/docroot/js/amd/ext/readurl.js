@@ -295,7 +295,7 @@ return {
     fetchData: function (review, url, params) {
         var geturl;
         jt.out('revautodiv', "Reading details from " + url + " ...");
-        geturl = "urlcontents?url=" + jt.enc(url);
+        geturl = "urlcontents?url=" + jt.enc(url) + jt.ts("&cb=", "second");
         jt.call('GET', geturl, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content), url);

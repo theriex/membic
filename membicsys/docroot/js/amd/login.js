@@ -455,8 +455,9 @@ app.login = (function () {
         //handle specific context requests
         if(params.view && (params.penid || params.profid || params.coopid)) {
             //Note who requested a specific profile or coop
+            params = "clickthrough=" + params.view + jt.ts("&cb=", "second");
             setTimeout(function () {
-                jt.call('GET', "/bytheway?clickthrough=" + params.view, null,
+                jt.call('GET', "/bytheway?" + params, null,
                         function () {
                             jt.log("noted profile clickthrough"); },
                         app.failf); }, 200);
@@ -536,7 +537,7 @@ return {
 
 
     accountSettingsInit: function () {
-        var detdiv = jt.byId('accstatdetaildiv');
+        var params, detdiv = jt.byId('accstatdetaildiv');
         if(!detdiv) { //form fields no longer displayed so nothing to do
             return; }
         detdiv.style.display = "none";
@@ -545,7 +546,8 @@ return {
         if(moracct) {
             writeUsermenuAccountFormElements(moracct); }
         else {
-            jt.call('GET', "getacct?" + authparams(), null,
+            params = authparams() + jt.ts("&cb=", "second");
+            jt.call('GET', "getacct?" + params, null,
                     function (accarr) {
                         if(accarr.length > 0) {
                             moracct = accarr[0];
@@ -576,7 +578,8 @@ return {
             return; }
         if(confirm("If you want to re-activate your account after deactivating, you will need to confirm your email address again.")) {
             jt.out('buttonornotespan', "Deactivating...");
-            params = app.login.authparams() + "&status=Inactive";
+            params = app.login.authparams() + "&status=Inactive" + 
+                jt.ts("&cb=", "second");
             jt.call('GET', "activate?" + params, null,
                     function (accounts) {
                         moracct = accounts[0];

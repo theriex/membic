@@ -96,7 +96,7 @@ return {
         params = app.login.authparams();
         if(params) {
             params += "&penid=" + app.pen.myPenId() + "&"; }
-        params += "revtype=" + feedtype;
+        params += "revtype=" + feedtype + jt.ts("&cb=","hour");
         time = new Date().getTime();
         jt.call('GET', "revfeed?" + params, null,
                 function (reviews) {
@@ -173,7 +173,7 @@ return {
             if(!feeds.future) {
                 jt.out('feedrevsdiv', "Fetching future reviews...");
                 params = app.login.authparams() + "&penid=" + 
-                    app.pen.myPenId();
+                    app.pen.myPenId() + jt.ts("&cb=", "second");
                 jt.call('GET', "fetchprerevs?" + params, null,
                         function (reviews) {
                             app.lcs.putAll("rev", reviews);
