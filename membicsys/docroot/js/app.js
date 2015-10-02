@@ -27,6 +27,7 @@ var app = {},  //Global container for application level funcs and values
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";
+    app.suppemail = ["membicsystem", ["gmail", "com"].join('.')].join('@');
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
     app.pennames = {};  //id: penname local lookup for improved stat msgs
@@ -153,9 +154,7 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.crash = function (code, errtxt, method, url, data) {
-        var html, now, subj, body, emref, support;
-        support = "membicsystem";
-        support += "@gmail.com";
+        var html, now, subj, body, emref;
         now = new Date();
         subj = "App crash";
         body = "Hey,\n\n" +
@@ -171,7 +170,7 @@ var app = {},  //Global container for application level funcs and values
             "https://github.com/theriex/membic/issues for " +
             "tracking purposes.\n\n" +
             "thanks,\n";
-        emref = "mailto:" + support + "?subject=" + jt.dquotenc(subj) + 
+        emref = "mailto:" + app.suppemail + "?subject=" + jt.dquotenc(subj) + 
             "&body=" + jt.dquotenc(body);
         html = [
             ["div", {id: "chead"}],

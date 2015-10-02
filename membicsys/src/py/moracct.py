@@ -396,7 +396,7 @@ def send_activation_code(handler, account):
     logging.info("Activate " + account.email + ": " + url)
     if not handler.request.host_url.startswith('http://localhost'):
         mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
-        mail.send_mail(sender="Membic System <membicsystem@gmail.com>",
+        mail.send_mail(sender="Membic Support <" + suppemail() + ">",
                        to=account.email,
                        subject="Account activation",
                        body=mailtxt)
@@ -533,7 +533,7 @@ class MailCredentials(webapp2.RequestHandler):
             else:
                 logging.info("mailing password to " + eaddr)
                 # sender needs to be a valid email address.
-                mail.send_mail(sender="Membic System <membicsystem@gmail.com>",
+                mail.send_mail(sender="Membic Support <" + suppemail() + ">",
                                to=eaddr,
                                subject="Membic.com account login",
                                body=content)

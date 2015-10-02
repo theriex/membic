@@ -27,7 +27,7 @@ app.layout = (function () {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
         html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
-            " or <a href=\"mailto:membicsystem@gmail.com\">email us</a>.");
+            " or <a href=\"" + app.suppemail + "\">email us</a>.");
         //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
         if(idx > 0) {

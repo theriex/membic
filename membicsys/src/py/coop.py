@@ -303,7 +303,7 @@ def mail_invite_notice(handler, pnm, coop, acc, invacc, invtoken):
                  "subject: " + subj + "\n" +
                  content)
     if not handler.request.host_url.startswith('http://localhost'):
-        mail.send_mail(sender="Membic System <membicsystem@gmail.com>",
+        mail.send_mail(sender="Membic Support <" + suppemail() + ">",
                        to=invacc.email,
                        subject=subj,
                        body=content)

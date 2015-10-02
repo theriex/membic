@@ -46,6 +46,10 @@ def srverr(handler, code, errtxt):
     handler.response.out.write(errtxt)
 
 
+def suppemail():
+    return "@".join(["membicsystem", ".".join(["gmail", "com"])])
+
+
 def csv_elem_count(csv):
     if not csv:
         return 0

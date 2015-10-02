@@ -836,7 +836,7 @@ app.review = (function () {
                      ["p"],
                      ["div",
                       "This normally just works. Try reloading the site, " + 
-                      "or send this error to membicsystem@gmail.com so " + 
+                      "or send this error to " + app.suppemail + " so " + 
                       "someone can look into it."]]];
             html = app.layout.dlgwrapHTML("Geocoding Error", html);
             app.layout.openDialog({y:140}, jt.tac2html(html));
@@ -1670,9 +1670,9 @@ return {
     selectLocation: function (addr, ref) {
         var errlines = [
             "Not going to be able to fill out the url and address",
-            "from the location you selected. This normally just works,",
-            "so if you could email this message to membicsystem@gmail.com",
-            "someone can look into why it.  You can also try reloading",
+            "from the location you selected. This normally just works.",
+            "If you could email this message to " + app.suppemail,
+            "someone can investigate.  You can also try reloading",
             "the site in your browser to see if that helps."];
         if(addr) {  //even if all other calls fail, use the selected name
             jt.byId('keyin').value = jt.dec(addr); }
