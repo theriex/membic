@@ -690,7 +690,7 @@ app.pcd = (function () {
         var html;
         html = [["div", {id: "pcdsrchdiv"},
                  ["input", {type: "text", id: "pcdsrchin", size: 40,
-                            placeholder: "Membic title or name",
+                            placeholder: "Membic title or keyword",
                             value: srchst.qstr}]],
                 ["div", {id: "pcdsrchdispdiv"}]];
         jt.out('pcdcontdiv', jt.tac2html(html));
