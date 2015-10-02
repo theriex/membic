@@ -285,7 +285,10 @@ app.login = (function () {
             html = [["span", {cla: "accstatvalspan"}, 
                      moracct.status || "Pending"],
                     activateButtonOrNoticeHTML(moracct)]; }
-        html = [["label", {fo: "emptyspace", cla: "liflab"}, ""],
+        //With an empty label, this line of the form gets skewed to
+        //the left.  With visible text, the font height is off and the
+        //vertical alignment looks bad.  Using a hard space as the label.
+        html = [["label", {fo: "emptyspace", cla: "liflab"}, "&nbsp;"],
                 ["span", {id: "buttonornotespan"},
                  html]];
         jt.out('accstatusupdatediv', jt.tac2html(html));
