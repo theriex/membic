@@ -1925,6 +1925,8 @@ return {
             if(jt.instId(revs[i]) === revid) {
                 rev = revs[i];
                 break; } }
+        if(!rev) {  //bad revid or bad call, nothing to do
+            return; }
         if(i === 0 || !app.review.isDupeRev(revs[i - 1], rev)) {  //primary rev
             //toggle expansion on any associated dupes
             for(i += 1; i < revs.length; i += 1) {

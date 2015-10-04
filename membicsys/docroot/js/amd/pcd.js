@@ -647,6 +647,8 @@ app.pcd = (function () {
     },
 
 
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displayRecent = function (expid) {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
@@ -679,6 +681,8 @@ app.pcd = (function () {
     },
 
 
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displayFavorites = function () {
         app.review.displayReviews('pcdcontdiv', "pcd", getFavoriteReviews(),
                                   "app.pcd.toggleRevExpansion", 
@@ -686,6 +690,8 @@ app.pcd = (function () {
     },
 
 
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displaySearch = function () {
         var html;
         html = [["div", {id: "pcdsrchdiv"},
@@ -744,9 +750,11 @@ app.pcd = (function () {
     },
 
 
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displayCoops = function (coopnames) {
         var html = [];
-        if(!coopnames) {
+        if(!coopnames || (typeof coopnames !== 'object')) {
             return app.pen.coopNames(dst.obj, "pcdcontdiv", displayCoops); }
         Object.keys(coopnames).forEach(function (cid) {
             var coopname = coopnames[cid];
@@ -778,6 +786,8 @@ app.pcd = (function () {
     },
 
 
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displayCalendar = function () {
         jt.out('pcdcontdiv', dst.obj.calembed);
     },
