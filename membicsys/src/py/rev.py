@@ -504,17 +504,25 @@ def sort_filter_feed(feedcsv, pnm, maxret):
     for elem in feedelems:
         ela = elem.split(":")
         if pnm:
+            # skip any membics from blocked pens
             if csv_contains(ela[1], pnm.blocked):
                 continue
+            # preferred pen membic
             if csv_contains(ela[1], pnm.preferred):
                 preferred.append(int(ela[0]))
+            # followed theme membic
+            elif csv_contains(ela[2], pnm.coops):
+                preferred.append(int(ela[0]))
+            # background pen membic
             elif csv_contains(ela[1], pnm.background):
                 background.append(int(ela[0]))
+            # membics from self shouldn't get buried below preferred
             elif str(ela[1]) == str(pnm.key().id()):
                 if pnm.preferred:
                     preferred.append(int(ela[0]))
                 else:
                     normal.append(int(ela[0]))
+            # default
             else:
                 normal.append(int(ela[0]))
         else:
@@ -668,7 +676,8 @@ def rebuild_reviews_block(handler, pct, pgid):
 
 
 def feedcsventry(review):
-    return str(review.key().id()) + ":" + str(review.penid)
+    return str(review.key().id()) + ":" + str(review.penid) +\
+        ":" + str(review.ctmid)
 
 
 def get_review_feed_pool(revtype):
