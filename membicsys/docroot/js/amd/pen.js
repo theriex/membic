@@ -12,15 +12,16 @@ app.pen = (function () {
     var loginpenid,
         returnFuncMemo,  //function to return to after dialog completed
         visprefvals = [
+            //keep these descriptions tight to avoid line wrap on phone
             { ident: "blocked", name: "Block", img: "img/block.png",
-              description: "Hide everything from $PEN" },
+              description: "everything from $PEN" },
             { ident: "background", name: "Background", 
               img: "img/background.png",
-              description: "Display posts from others over $PEN" },
+              description: "$PEN" },
             { ident: "normal", name: "Normal", img: "img/nopref.png",
               description: "" },
             { ident: "prefer", name: "Prefer", img: "img/prefer.png",
-              description: "Display posts from $PEN over others" }],
+              description: "posts from $PEN" }],
 
 
     ////////////////////////////////////////

@@ -510,6 +510,11 @@ def sort_filter_feed(feedcsv, pnm, maxret):
                 preferred.append(int(ela[0]))
             elif csv_contains(ela[1], pnm.background):
                 background.append(int(ela[0]))
+            elif str(ela[1]) == str(pnm.key().id()):
+                if pnm.preferred:
+                    preferred.append(int(ela[0]))
+                else:
+                    normal.append(int(ela[0]))
             else:
                 normal.append(int(ela[0]))
         else:
