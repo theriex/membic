@@ -12,14 +12,15 @@ app.pen = (function () {
     var loginpenid,
         returnFuncMemo,  //function to return to after dialog completed
         visprefvals = [
-            { ident: "blocked", code: "x", name: "Block",
-              description: "Permanently block everything from $PEN" },
-            { ident: "background", code: "z", name: "Background",
-              description: "Prefer others over $PEN" },
-            { ident: "normal", code: "&#x2022;", name: "Normal",
+            { ident: "blocked", name: "Block", img: "img/block.png",
+              description: "Hide everything from $PEN" },
+            { ident: "background", name: "Background", 
+              img: "img/background.png",
+              description: "Display posts from others over $PEN" },
+            { ident: "normal", name: "Normal", img: "img/nopref.png",
               description: "" },
-            { ident: "prefer", code: "&#x2605;", name: "Prefer",
-              description: "Prefer posts from $PEN over others" }],
+            { ident: "prefer", name: "Prefer", img: "img/prefer.png",
+              description: "Display posts from $PEN over others" }],
 
 
     ////////////////////////////////////////
@@ -218,24 +219,26 @@ return {
 
 
     visprefs: function (revdivid, penid, penname) {
-        var pen, html, pcode;
+        var pen, html, pimg;
         penname = jt.dec(penname || "pen " + penid);
         pen = app.pen.myPenName();
         if(!pen) {
             return jt.err("Sign in to prefer, background or block posts from " +
                           penname); }
         html = [];
-        pcode = app.pen.prefcode(penid);
+        pimg = app.pen.prefimg(penid);
         visprefvals.forEach(function (pv, i) {
-            html.unshift(["div", {cla: "visprefseldiv"},
+            html.unshift(["li", {cla: "visprefli"},
                           [["input", {type: "radio", name: "vpr", 
                                       value: pv.name, id: "vprin" + i,
-                                      checked: jt.toru(pv.code === pcode)}],
-                           ["span", {cla: "vispreflabspan"}, pv.name],
+                                      checked: jt.toru(pv.img === pimg)}],
+                           ["img", {cla: "visprefimg", src: pv.img}],
+                           ["span", {cla: "visprefnamespan"}, pv.name],
                            ["span", {cla: "visprefdescrspan"}, 
                             pv.description.replace(/\$PEN/g, penname)]]]); });
         html = ["div", {id: "vpdlgdiv"},
-                [html,
+                [["ul", {id: "preflist"},
+                  html],
                  ["div", {cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "cancelbutton",
                                onclick: jt.fs("app.layout.cancelOverlay()")},
@@ -279,18 +282,20 @@ return {
     },
 
 
-    prefcode: function (penid) {
-        var pen;
+    prefimg: function (penid) {
+        var pen, img;
         if(penid === app.pen.myPenId()) {
             return ""; }
+        img = visprefvals[2].img;  //normal
         pen = app.pen.myPenName();
-        if(pen && pen.preferred && pen.preferred.csvcontains(penid)) {
-            return visprefvals[3].code; }
-        if(pen && pen.background && pen.background.csvcontains(penid)) {
-            return visprefvals[1].code; }
-        if(pen && pen.blocked && pen.blocked.csvcontains(penid)) {
-            return visprefvals[0].code; }
-        return visprefvals[2].code; 
+        if(pen) {
+            if(pen.preferred && pen.preferred.csvcontains(penid)) {
+                img = visprefvals[3].img; }
+            else if(pen.background && pen.background.csvcontains(penid)) {
+                img = visprefvals[1].img; }
+            else if(pen.blocked && pen.blocked.csvcontains(penid)) {
+                img = visprefvals[0].img; } }
+        return img;
     },
 
 

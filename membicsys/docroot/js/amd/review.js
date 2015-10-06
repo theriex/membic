@@ -1888,8 +1888,8 @@ return {
                 maindivattrs.style = "display:none"; }
             authlink = "";
             if(author) {
-                vp = "";
-                if(prefix === "afd") {  //activity feed display only
+                vp = "";  //visual preferences (activity feed only)
+                if(prefix === "afd" && rev.penid !== app.pen.myPenId()) {
                     vp = ["div", {cla: "fpprefstatdiv", 
                                   id: "fppsdiv" + revdivid},
                           ["a", {href: "#visprefs",
@@ -1897,7 +1897,8 @@ return {
                                                 revdivid + "','" + 
                                                 rev.penid + "','" + 
                                                 jt.embenc(rev.penname) + "')")},
-                           app.pen.prefcode(rev.penid)]]; }
+                           ["img", {cla: "feedprefimg", 
+                                    src: app.pen.prefimg(rev.penid)}]]]; }
                 authlink = 
                     ["div", {cla: "fpprofdiv"},
                      [["a", {href: "#view=pen&penid=" + rev.penid,
