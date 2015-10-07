@@ -121,12 +121,20 @@ app.pcd = (function () {
         mypenid = app.pen.myPenId();
         mypen = app.pen.myPenName();
         objectid = jt.instId(obj);
-        if(dst.type === "pen" && mypenid && objectid === mypenid) {
-            html = ["a", {id: "pcdsettingslink", href: "#pensettings",
-                          onclick: jt.fs("app.pcd.settings()")},
-                    ["img", {cla: "reviewbadge",
-                             src: "img/settings.png"}]]; }
-        if(dst.type === "coop" && mypen) {
+        if(dst.type === "pen") {
+            if(mypenid && objectid === mypenid) {
+                html = ["a", {id: "pcdsettingslink", href: "#pensettings",
+                              onclick: jt.fs("app.pcd.settings()")},
+                        ["img", {cla: "reviewbadge",
+                                 src: "img/settings.png"}]]; }
+            else {
+                html = ["a", {href: "#visprefs",
+                              onclick: jt.fs("app.pen.visprefs('','" + 
+                                             objectid + "','" + 
+                                             jt.embenc(obj.name) + "')")},
+                        ["img", {cla: "visprefimgprof", 
+                                 src: app.pen.prefimg(objectid)}]]; } }
+        else if(dst.type === "coop" && mypen) {
             if(jt.isId(objectid) && (!mypen.coops || 
                                      !mypen.coops.csvcontains(objectid))) {
                 html = ["span", {id: "followbuttonspan"},

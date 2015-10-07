@@ -220,7 +220,11 @@ return {
 
 
     visprefs: function (revdivid, penid, penname) {
-        var pen, html, pimg;
+        var pen, html, pimg, reldivid;
+        if(revdivid) {
+            reldivid = "fppsdiv" + revdivid; }
+        else {
+            reldivid = "pcddescrdiv"; }
         penname = jt.dec(penname || "pen " + penid);
         pen = app.pen.myPenName();
         if(!pen) {
@@ -248,8 +252,7 @@ return {
                                onclick: jt.fs("app.pen.updateVisPrefs('" +
                                               penid + "')")},
                     "Ok"]]]]];
-        app.layout.openOverlay(app.layout.placerel("fppsdiv" + revdivid, 
-                                                   5, -30), 
+        app.layout.openOverlay(app.layout.placerel(reldivid, 5, -30), 
                                html);
     },
 
@@ -279,7 +282,16 @@ return {
                 pen.background = pen.background.csvappend(penid); break;
             case "prefer":
                 pen.preferred = pen.preferred.csvappend(penid); break; }
-            app.pen.updatePen(pen, app.activity.redisplay, app.failf); }
+            app.pen.updatePen(pen, app.pen.reflectVisPrefs, app.failf); }
+    },
+
+
+    reflectVisPrefs: function () {
+        if(jt.byId('feedrevsdiv')) {
+            app.activity.redisplay(); }
+        else {
+            app.activity.reinit();
+            app.pcd.redisplay(); }
     },
 
 

@@ -111,11 +111,16 @@ return {
     },
 
 
-    redisplay: function () {
+    reinit: function () {
         var rts = app.review.getReviewTypes();
         rts.forEach(function (rt) {
             feeds[rt.type] = null; });
         feeds.all = null;
+    },
+
+
+    redisplay: function () {
+        app.activity.reinit();
         app.activity.displayFeed();
     },
 

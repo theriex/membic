@@ -321,7 +321,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .togglemoretextspan { background:#ccc; }
 .fpinlinetextdiv { font-size:small; }
 #preflist { list-style:none; padding:0px 0px 0px 4px; margin:0; }
-.visprefimg { width:24px; height:24px; padding:0px 4px; }
+.visprefimg { width:24px; height:24px; margin:0px 4px; }
+.visprefimgprof { width:30px; height:30px; margin:0px 4px 0px 10px; }
 .visprefnamespan { font-weight:bold; font-size:small; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
 
