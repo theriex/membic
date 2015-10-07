@@ -264,7 +264,7 @@ return {
             if(cb && cb.checked) {
                 vp = pv; } });
         if(vp && vp.ident === "blocked" && 
-               !confirm("Blocking cannot be undone. Permanently block?")) {
+               !confirm("Blocking completely removes all membics from the main feed. Are you sure?")) {
             return; }
         app.layout.cancelOverlay();
         if(vp) {
