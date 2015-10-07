@@ -443,6 +443,7 @@ app.login = (function () {
 
 
     handleInitialParamSideEffects = function (params) {
+        var tpms;
         if(params.am && params.at && params.an && !params.special) {
             params.at = jt.enc(params.at);  //restore token encoding 
             setAuthentication(params.am, params.at, params.an); }
@@ -455,9 +456,9 @@ app.login = (function () {
         //handle specific context requests
         if(params.view && (params.penid || params.profid || params.coopid)) {
             //Note who requested a specific profile or coop
-            params = "clickthrough=" + params.view + jt.ts("&cb=", "second");
+            tpms = "clickthrough=" + params.view + jt.ts("&cb=", "second");
             setTimeout(function () {
-                jt.call('GET', "/bytheway?" + params, null,
+                jt.call('GET', "/bytheway?" + tpms, null,
                         function () {
                             jt.log("noted profile clickthrough"); },
                         app.failf); }, 200);
