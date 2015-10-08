@@ -58,6 +58,7 @@ return {
             if(!hstate 
                || hstate.view !== pstate.view 
                || hstate.profid !== pstate.profid
+               || hstate.penid !== pstate.penid
                || hstate.revid !== pstate.revid) {
                 if(history.pushState && 
                    typeof history.pushState === 'function') {
