@@ -32,7 +32,7 @@ app.history = (function () {
     },
 
 
-    indicateState = function (state) {
+    indicateState = function (/*state*/) {
         //This used to display a "home" clickable icon if state.view
         //was anything other than "activity", but that looks like
         //visual graffiti.  Buttons need to remain static so they are
