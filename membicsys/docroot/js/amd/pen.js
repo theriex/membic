@@ -28,10 +28,17 @@ app.pen = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    fetchCoopAndRetry = function (coopid, penid, divid, callback) {
+    fetchPenAndRetry = function (penid, pen, divid, callback) {
+        jt.out(divid, "Fetching pen " + penid + "...");
+        app.pcd.blockfetch("pen", penid, function (ignore /*pen*/) {
+            app.pen.prefPens(pen, divid, callback); }, divid);
+    },
+
+
+    fetchCoopAndRetry = function (coopid, pen, divid, callback) {
         jt.out(divid, "Fetching cooperative theme " + coopid + "...");
         app.pcd.blockfetch("coop", coopid, function (ignore /*coop*/) {
-            app.pen.coopNames(penid, divid, callback); }, divid);
+            app.pen.coopNames(pen, divid, callback); }, divid);
     },
 
 
@@ -127,16 +134,35 @@ return {
     },
 
 
+    prefPens: function (pen, divid, callback) {
+        var ret = {};
+        pen.preferred = pen.preferred || "";
+        pen.preferred.csvarray().every(function (penid) {
+            var penref;
+            if(app.pennames[penid]) {
+                ret[penid] = app.pennames[penid]; }
+            if(!ret[penid]) {  //try cache lookup
+                penref = app.lcs.getRef("pen", penid);
+                if(penref.pen) {
+                    ret[penid] = penref.pen.name;
+                    app.pennames[penid] = ret[penid]; } }
+            if(!ret[penid] && penref.status === "not cached") {
+                fetchPenAndRetry(penid, pen, divid, callback);
+                return false; }
+            return true; });
+        callback(ret);
+    },
+
+
     coopNames: function (pen, divid, callback) {
         var ret = {};
         pen.coops = pen.coops || "";
         pen.coops.csvarray().every(function (coopid) {
             var coopref;
-            if(!ret[coopid]) {  //try cache lookup
-                coopref = app.lcs.getRef("coop", coopid);
-                if(coopref.coop) {
-                    ret[coopid] = coopref.coop.name;
-                    app.coopnames[coopid] = ret[coopid]; } }
+            coopref = app.lcs.getRef("coop", coopid);
+            if(coopref.coop) {
+                ret[coopid] = coopref.coop.name;
+                app.coopnames[coopid] = ret[coopid]; }
             if(!ret[coopid]) {  //try stashed value from coop.verifyStash
                 if(pen.stash && pen.stash["ctm" + coopid] &&
                    pen.stash["ctm" + coopid].name) {

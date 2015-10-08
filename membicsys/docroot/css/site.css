@@ -80,7 +80,7 @@ button, .loginbutton, .formbutton {
 .penfont, .penflist { 
   font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
-#namearrowspan { padding-right:5px; vertical-align:top; }
+.penbutton { padding-right:5px; vertical-align:top; }
 #coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #chead { height:0px; clear:both; }  /* top pad if needed for profile content */
 #cmain { clear:both; padding: 8px 0px 0px 0px; }
@@ -226,6 +226,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */
 .starsimg { vertical-align:middle; }
+.leftspacelink { padding-left:10px; }
 
 /* >> coop layout */
 .tdnarrow { width:5%; padding:0px 5px 0px 0px; }

@@ -41,6 +41,10 @@ app.pcd = (function () {
                                    img: "img/search.png",
                                    mtitle: "Search My Membics",
                                    otitle: "Search Membics from $NAME"},
+                      prefpens:  { href: "#preferredpens",
+                                   img: "img/prefer.png",
+                                   mtitle: "Preferred Pen Names",
+                                   otitle: "Pen Names Preferred by $NAME"},
                       coops:     { href: "#coopsfollowing",
                                    img: "img/tabctms.png",
                                    mtitle: "My Themes",
@@ -762,6 +766,29 @@ app.pcd = (function () {
 
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
+    displayPrefPens = function (prefpens) {
+        var html = [];
+        if(!prefpens || (typeof prefpens !== 'object')) {
+            return app.pen.prefPens(dst.obj, "pcdcontdiv", displayPrefPens); }
+        Object.keys(prefpens).forEach(function (penid) {
+            var pname = prefpens[penid];
+            html.push(["div", {cla: "penlinkdiv"},
+                       [["div", {cla: "fpprofdiv"},
+                         ["img", {cla: "fpprofpic", alt: "no pic",
+                                  src: dst.pen.picsrc + penid}]],
+                        ["a", {href: "p/" + penid, cla: "leftspacelink",
+                               onclick: jt.fs("app.pen.bypenid('" +
+                                              penid + "')")},
+                         ["span", {cla: "penfont"}, pname]]]]); });
+        if(!html.length) {
+            html.push(["div", {cla: "pcdtext"},
+                       "No preferred pen names yet."]); }
+        jt.out('pcdcontdiv', jt.tac2html(html));
+    },
+
+
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displayCoops = function (coopnames) {
         var html = [];
         if(!coopnames || (typeof coopnames !== 'object')) {
@@ -772,7 +799,7 @@ app.pcd = (function () {
                        [["div", {cla: "fpprofdiv"},
                          ["img", {cla: "fpprofpic", alt: "no pic",
                                   src: dst.coop.picsrc + cid}]],
-                        ["a", {href: "coops/" + jt.canonize(coopname),
+                        ["a", {href: "t/" + cid,
                                onclick: jt.fs("app.coop.bycoopid('" +
                                               cid + "')")},
                          ["span", {cla: "penfont"}, coopname]]]]); });
@@ -809,7 +836,8 @@ app.pcd = (function () {
         html.push(tabHTMLFromDef("favorites"));
         if(!app.embedded) {
             html.push(tabHTMLFromDef("search")); }
-        if(dst.type === "pen") {  //find or create coop
+        if(dst.type === "pen") {
+            html.push(tabHTMLFromDef("prefpens"));
             html.push(tabHTMLFromDef("coops")); }
         if(dst.type === "coop" && dst.obj.calembed) {
             html.push(tabHTMLFromDef("calendar")); }
@@ -863,10 +891,11 @@ app.pcd = (function () {
                     [["div", {id: "pcdnamediv"},
                       [["a", {href: defs.accsrc + jt.instId(obj),
                               onclick: jt.fs("app.pcd.share()")},
-                        [["span", {id: "namearrowspan"}, 
+                        [["span", {id: "namearrowspan", cla: "penbutton"}, 
                           ["img", {id: "pnarw", src: "img/arrow18right.png"}]],
                          ["span", {cla: "penfont"}, obj.name]]],
-                       modButtonsHTML(obj)]],
+                       ["span", {cla: "penbutton"},
+                        modButtonsHTML(obj)]]],
                      ["div", {id: "ppcdshoutdiv"},
                       ["span", {cla: "shoutspan"}, 
                        jt.linkify(obj[defs.descfield] || "")]]]]]],
@@ -945,6 +974,7 @@ app.pcd = (function () {
             knowntabs.latest.dispfunc = displayRecent;
             knowntabs.favorites.dispfunc = displayFavorites;
             knowntabs.search.dispfunc = displaySearch;
+            knowntabs.prefpens.dispfunc = displayPrefPens;
             knowntabs.coops.dispfunc = displayCoops;
             knowntabs.calendar.dispfunc = displayCalendar; }
     };
