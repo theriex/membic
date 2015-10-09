@@ -23,7 +23,7 @@ Code organization:
 
 For the web app, you can trace the flow from `index.html` into
 `app.js` and/or search the codebase directly for any text that drew
-your attention.  The app is pure Javascript.  For an architecture
+your attention.  The app is pure JavaScript.  For an architecture
 overview, see http://sandservices.com/docs/funcjsarch.html
 
 To get into things from the server side REST API, start from
@@ -37,7 +37,7 @@ Using the API:
 -------------
 
 Feel free to call the REST API directly, but PLEASE DO NOT BATCH
-REQUESTS!  This is a fledgling site and after about a 1000 reviews the
+REQUESTS!  This is a fledgling site and after about a 1000 membics the
 whole thing will run out of resources for the day.  Once normal
 interactive site use starts approaching half the current limit, the
 pipes will be opened up.  In the meantime please help to conserve
