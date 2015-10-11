@@ -397,23 +397,6 @@ app.pcd = (function () {
     },
 
 
-    monitorPicUpload = function () {
-        var tgif, txt, defs, mtag = "Done: ";
-        tgif = jt.byId('tgif');
-        if(tgif) {
-            txt = tgif.contentDocument || tgif.contentWindow.document;
-            if(txt) {
-                txt = txt.body.innerHTML;
-                if(txt.indexOf(mtag) === 0) {
-                    defs = dst[dst.type];
-                    dst.obj[defs.picfield] = dst.id;
-                    dst.obj.modified = txt.slice(mtag.length);
-                    app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
-                    return; }
-                if(txt && txt.trim() && txt.trim() !== "Ready") {
-                    jt.out('imgupstatdiv', txt); } }
-            setTimeout(monitorPicUpload, 800); }
-    },
     picSettingsHTML = function () {
         var html;
         if(!jt.hasId(dst.obj) ||
@@ -442,7 +425,7 @@ app.pcd = (function () {
         return html;
     },
     picSettingsInit = function () {
-        monitorPicUpload();
+        app.pcd.monitorPicUpload();
     },
 
 
@@ -766,65 +749,6 @@ app.pcd = (function () {
 
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
-    displayPrefPens = function (prefpens) {
-        var html = [];
-        if(!prefpens || (typeof prefpens !== 'object')) {
-            return app.pen.prefPens(dst.obj, "pcdcontdiv", displayPrefPens); }
-        Object.keys(prefpens).forEach(function (penid) {
-            var pname = prefpens[penid];
-            html.push(["div", {cla: "penlinkdiv"},
-                       [["div", {cla: "fpprofdiv"},
-                         ["img", {cla: "fpprofpic", alt: "no pic",
-                                  src: dst.pen.picsrc + penid}]],
-                        ["a", {href: "p/" + penid, cla: "leftspacelink",
-                               onclick: jt.fs("app.pen.bypenid('" +
-                                              penid + "')")},
-                         ["span", {cla: "penfont"}, pname]]]]); });
-        if(!html.length) {
-            html.push(["div", {cla: "pcdtext"},
-                       "No preferred pen names yet."]); }
-        jt.out('pcdcontdiv', jt.tac2html(html));
-    },
-
-
-    //Called from displayTab
-    //Called from layout.displayTypes when membic type selected
-    displayCoops = function (coopnames) {
-        var html = [];
-        if(!coopnames || (typeof coopnames !== 'object')) {
-            return app.pen.coopNames(dst.obj, "pcdcontdiv", displayCoops); }
-        Object.keys(coopnames).forEach(function (cid) {
-            var coopname = coopnames[cid];
-            html.push(["div", {cla: "cooplinkdiv"},
-                       [["div", {cla: "fpprofdiv"},
-                         ["img", {cla: "fpprofpic", alt: "no pic",
-                                  src: dst.coop.picsrc + cid}]],
-                        ["a", {href: "t/" + cid,
-                               onclick: jt.fs("app.coop.bycoopid('" +
-                                              cid + "')")},
-                         ["span", {cla: "penfont"}, coopname]]]]); });
-        if(app.pen.myPenId() === jt.instId(dst.obj)) {
-            html.push(["div", {cla: "pcdtext"},
-                       [["div", {cla: "pcdtoggle"},
-                         ["a", {href: "#findcoops",
-                                onclick: jt.fs("app.pcd.toggleFindCoops()")},
-                          "Follow cooperative themes"]],
-                        ["div", {id: "findctmdiv"}]]]);
-            html.push(["div", {cla: "pcdtext"},
-                       [["div", {cla: "pcdtoggle"},
-                         ["a", {href: "#createcoop",
-                                onclick: jt.fs("app.pcd.toggleCreateCoop()")},
-                          "Create cooperative theme"]],
-                        ["div", {id: "createctmdiv"}]]]); }
-        if(!html.length) {
-            html.push(["div", {cla: "pcdtext"}, 
-                       "No theme memberships found."]); }
-        jt.out('pcdcontdiv', jt.tac2html(html));
-    },
-
-
-    //Called from displayTab
-    //Called from layout.displayTypes when membic type selected
     displayCalendar = function () {
         jt.out('pcdcontdiv', dst.obj.calembed);
     },
@@ -974,8 +898,8 @@ app.pcd = (function () {
             knowntabs.latest.dispfunc = displayRecent;
             knowntabs.favorites.dispfunc = displayFavorites;
             knowntabs.search.dispfunc = displaySearch;
-            knowntabs.prefpens.dispfunc = displayPrefPens;
-            knowntabs.coops.dispfunc = displayCoops;
+            knowntabs.prefpens.dispfunc = app.pcd.displayPrefPens;
+            knowntabs.coops.dispfunc = app.pcd.displayCoops;
             knowntabs.calendar.dispfunc = displayCalendar; }
     };
 
@@ -984,6 +908,67 @@ app.pcd = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
+    displayPrefPens: function (prefpens) {
+        var html = [];
+        if(!prefpens || (typeof prefpens !== 'object')) {
+            return app.pen.prefPens(dst.obj, "pcdcontdiv", 
+                                    app.pcd.displayPrefPens); }
+        Object.keys(prefpens).forEach(function (penid) {
+            var pname = prefpens[penid];
+            html.push(["div", {cla: "penlinkdiv"},
+                       [["div", {cla: "fpprofdiv"},
+                         ["img", {cla: "fpprofpic", alt: "no pic",
+                                  src: dst.pen.picsrc + penid}]],
+                        ["a", {href: "p/" + penid, cla: "leftspacelink",
+                               onclick: jt.fs("app.pen.bypenid('" +
+                                              penid + "')")},
+                         ["span", {cla: "penfont"}, pname]]]]); });
+        if(!html.length) {
+            html.push(["div", {cla: "pcdtext"},
+                       "No preferred pen names yet."]); }
+        jt.out('pcdcontdiv', jt.tac2html(html));
+    },
+
+
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
+    displayCoops: function (coopnames) {
+        var html = [];
+        if(!coopnames || (typeof coopnames !== 'object')) {
+            return app.pen.coopNames(dst.obj, "pcdcontdiv", 
+                                     app.pcd.displayCoops); }
+        Object.keys(coopnames).forEach(function (cid) {
+            var coopname = coopnames[cid];
+            html.push(["div", {cla: "cooplinkdiv"},
+                       [["div", {cla: "fpprofdiv"},
+                         ["img", {cla: "fpprofpic", alt: "no pic",
+                                  src: dst.coop.picsrc + cid}]],
+                        ["a", {href: "t/" + cid,
+                               onclick: jt.fs("app.coop.bycoopid('" +
+                                              cid + "')")},
+                         ["span", {cla: "penfont"}, coopname]]]]); });
+        if(app.pen.myPenId() === jt.instId(dst.obj)) {
+            html.push(["div", {cla: "pcdtext"},
+                       [["div", {cla: "pcdtoggle"},
+                         ["a", {href: "#findcoops",
+                                onclick: jt.fs("app.pcd.toggleFindCoops()")},
+                          "Follow cooperative themes"]],
+                        ["div", {id: "findctmdiv"}]]]);
+            html.push(["div", {cla: "pcdtext"},
+                       [["div", {cla: "pcdtoggle"},
+                         ["a", {href: "#createcoop",
+                                onclick: jt.fs("app.pcd.toggleCreateCoop()")},
+                          "Create cooperative theme"]],
+                        ["div", {id: "createctmdiv"}]]]); }
+        if(!html.length) {
+            html.push(["div", {cla: "pcdtext"}, 
+                       "No theme memberships found."]); }
+        jt.out('pcdcontdiv', jt.tac2html(html));
+    },
+
 
     settings: function (obj) {
         var html;
@@ -1066,6 +1051,25 @@ return {
     },
 
 
+    monitorPicUpload: function () {
+        var tgif, txt, defs, mtag = "Done: ";
+        tgif = jt.byId('tgif');
+        if(tgif) {
+            txt = tgif.contentDocument || tgif.contentWindow.document;
+            if(txt) {
+                txt = txt.body.innerHTML;
+                if(txt.indexOf(mtag) === 0) {
+                    defs = dst[dst.type];
+                    dst.obj[defs.picfield] = dst.id;
+                    dst.obj.modified = txt.slice(mtag.length);
+                    app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
+                    return; }
+                if(txt && txt.trim() && txt.trim() !== "Ready") {
+                    jt.out('imgupstatdiv', txt); } }
+            setTimeout(app.pcd.monitorPicUpload, 800); }
+    },
+
+
     saveCalEmbed: function () {
         var defs, elem, okfunc, failfunc;
         jt.byId('savecalbutton').disabled = true;
@@ -1138,7 +1142,7 @@ return {
                     shtxt = "Direct theme URL:"; }
                 html = [
                     ["span", {cla: "shoutspan"},
-                     (app.login.isLoggedIn() || dst.type !== "coop"? "" : 
+                     ((app.login.isLoggedIn() || (dst.type !== "coop"))? "" : 
                       "Sign in to follow or join.<br/>")],
                     ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style"},
                      [["a", {cla: "a2a_dd",

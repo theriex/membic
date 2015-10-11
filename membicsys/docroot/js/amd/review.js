@@ -405,26 +405,6 @@ app.review = (function () {
     },
 
 
-    monitorPicUpload = function () {
-        var ptdif, txt, revid, ridlabel = "revid: ";
-        ptdif = jt.byId('ptdif');
-        if(ptdif) {
-            txt = ptdif.contentDocument || ptdif.contentWindow.document;
-            if(txt) {
-                txt = txt.body.innerHTML;
-                if(txt.indexOf(ridlabel) === 0) {
-                    revid = txt.slice(ridlabel.length);
-                    jt.setInstId(crev, revid);
-                    crev.revpic = revid;
-                    jt.byId('upldpicimg').src = "revpic?revid=" + revid;
-                    displayUploadedPicLabel();
-                    return; }
-                if(txt.indexOf("Error: ") === 0) {
-                    jt.out('imgupstatdiv', txt); } }
-            setTimeout(monitorPicUpload, 800); }
-    },
-
-
     abbreviatedReviewText = function (prefix, revid, rev, togfname) {
         var maxchars = 400, rtxt, morehtml;
         rtxt = jt.linkify(rev.text || "");
@@ -821,54 +801,6 @@ app.review = (function () {
     },
 
 
-    selectLocLatLng = function (latlng, ref, retry, errmsg) {
-        var mapdiv, map, maxretry = 10, html;
-        retry = retry || 0;
-        if(errmsg) {
-            jt.log("selectLocLatLng error: " + errmsg); }
-        if(retry > maxretry) {
-            verifyGeocodingInfoDiv(true);
-            html = jt.byId('geocodingInfoDiv').innerHTML;
-            html = ["div", {id: "geocodingInfoDiv"},
-                    [["div",
-                      "There were problems calling the google.maps service."],
-                     html,
-                     ["p"],
-                     ["div",
-                      "This normally just works. Try reloading the site, " + 
-                      "or send this error to " + app.suppemail + " so " + 
-                      "someone can look into it."]]];
-            html = app.layout.dlgwrapHTML("Geocoding Error", html);
-            app.layout.openDialog({y:140}, jt.tac2html(html));
-            return; }
-        if(!gplacesvc && google && google.maps && google.maps.places) {
-            try {  //this can fail if the map is not ready yet
-                mapdiv = jt.byId('mapdiv');
-                map = new google.maps.Map(mapdiv, {
-                    mapTypeId: google.maps.MapTypeId.ROADMAP,
-                    center: latlng,
-                    zoom: 15 });
-                gplacesvc = new google.maps.places.PlacesService(map);
-            } catch (problem) {
-                gplacesvc = null;
-                noteServiceError(retry, problem);
-                setTimeout(function () {
-                    selectLocLatLng(latlng, ref, retry + 1, problem);
-                    }, 200 + (100 * retry));
-                return;
-            } }
-        if(gplacesvc && ref) {
-            gplacesvc.getDetails({reference: ref},
-                function (place, status) {
-                    if(status === google.maps.places.PlacesServiceStatus.OK) {
-                        crev.address = place.formatted_address;
-                        crev.name = place.name || jt.byId('keyin').value;
-                        crev.url = crev.url || place.website || "";
-                        app.review.readURL(crev.url); }
-                    }); }
-    },
-
-        
     writeACPLinks = function (acfunc, results, status) {
         var items = [], html;
         if(status === google.maps.places.PlacesServiceStatus.OK) {
@@ -897,28 +829,6 @@ app.review = (function () {
                                                            status); }); }
         else {
             setTimeout(acfunc, 400); }
-    },
-
-
-    autocompletion = function (/*event*/) {
-        var cb, srchtxt;
-        cb = jt.byId("rdaccb");
-        if(!cb || !cb.checked) {
-            jt.out('revautodiv', "");
-            return; }
-        if(crev.autocomp && jt.byId('revautodiv') && jt.byId('keyin')) {
-            srchtxt = jt.byId('keyin').value;
-            if(jt.byId('subkeyin')) {
-                srchtxt += " " + jt.byId('subkeyin').value; }
-            if(srchtxt !== autocomptxt) {
-                autocomptxt = srchtxt;
-                if(crev.revtype === 'book' || crev.revtype === 'movie' ||
-                   crev.revtype === 'music') {
-                    callAmazonForAutocomplete(autocompletion); }
-                else if(crev.revtype === 'yum' || crev.revtype === 'activity') {
-                    callGooglePlacesAutocomplete(autocompletion); } }
-            else {
-                setTimeout(autocompletion, 750); } }
     },
 
 
@@ -966,7 +876,7 @@ app.review = (function () {
                                  src: "/revpicupload", 
                                  style: "display:none"}]]];
             jt.out('upldpicform', jt.tac2html(html));
-            monitorPicUpload(); }
+            app.review.monitorPicUpload(); }
         else {  //not upldpic
             displayUploadedPicLabel(); }
     },
@@ -1377,11 +1287,53 @@ return {
     },
 
     
+    monitorPicUpload: function () {
+        var ptdif, txt, revid, ridlabel = "revid: ";
+        ptdif = jt.byId('ptdif');
+        if(ptdif) {
+            txt = ptdif.contentDocument || ptdif.contentWindow.document;
+            if(txt) {
+                txt = txt.body.innerHTML;
+                if(txt.indexOf(ridlabel) === 0) {
+                    revid = txt.slice(ridlabel.length);
+                    jt.setInstId(crev, revid);
+                    crev.revpic = revid;
+                    jt.byId('upldpicimg').src = "revpic?revid=" + revid;
+                    displayUploadedPicLabel();
+                    return; }
+                if(txt.indexOf("Error: ") === 0) {
+                    jt.out('imgupstatdiv', txt); } }
+            setTimeout(app.review.monitorPicUpload, 800); }
+    },
+
+
+    autocompletion: function (/*event*/) {
+        var cb, srchtxt;
+        cb = jt.byId("rdaccb");
+        if(!cb || !cb.checked) {
+            jt.out('revautodiv', "");
+            return; }
+        if(crev.autocomp && jt.byId('revautodiv') && jt.byId('keyin')) {
+            srchtxt = jt.byId('keyin').value;
+            if(jt.byId('subkeyin')) {
+                srchtxt += " " + jt.byId('subkeyin').value; }
+            if(srchtxt !== autocomptxt) {
+                autocomptxt = srchtxt;
+                if(crev.revtype === 'book' || crev.revtype === 'movie' ||
+                   crev.revtype === 'music') {
+                    callAmazonForAutocomplete(app.review.autocompletion); }
+                else if(crev.revtype === 'yum' || crev.revtype === 'activity') {
+                    callGooglePlacesAutocomplete(app.review.autocompletion); } }
+            else {
+                setTimeout(app.review.autocompletion, 750); } }
+    },
+
+
     runAutoComp: function () {
         if(!crev.autocomp) {
             jt.out('revautodiv', ""); }
         else {
-            autocompletion(); }
+            app.review.autocompletion(); }
     },
 
 
@@ -1667,6 +1619,54 @@ return {
     },
 
 
+    selectLocLatLng: function (latlng, ref, retry, errmsg) {
+        var mapdiv, map, maxretry = 10, html;
+        retry = retry || 0;
+        if(errmsg) {
+            jt.log("selectLocLatLng error: " + errmsg); }
+        if(retry > maxretry) {
+            verifyGeocodingInfoDiv(true);
+            html = jt.byId('geocodingInfoDiv').innerHTML;
+            html = ["div", {id: "geocodingInfoDiv"},
+                    [["div",
+                      "There were problems calling the google.maps service."],
+                     html,
+                     ["p"],
+                     ["div",
+                      "This normally just works. Try reloading the site, " + 
+                      "or send this error to " + app.suppemail + " so " + 
+                      "someone can look into it."]]];
+            html = app.layout.dlgwrapHTML("Geocoding Error", html);
+            app.layout.openDialog({y:140}, jt.tac2html(html));
+            return; }
+        if(!gplacesvc && google && google.maps && google.maps.places) {
+            try {  //this can fail if the map is not ready yet
+                mapdiv = jt.byId('mapdiv');
+                map = new google.maps.Map(mapdiv, {
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    center: latlng,
+                    zoom: 15 });
+                gplacesvc = new google.maps.places.PlacesService(map);
+            } catch (problem) {
+                gplacesvc = null;
+                noteServiceError(retry, problem);
+                setTimeout(function () {
+                    app.review.selectLocLatLng(latlng, ref, retry + 1, problem);
+                    }, 200 + (100 * retry));
+                return;
+            } }
+        if(gplacesvc && ref) {
+            gplacesvc.getDetails({reference: ref},
+                function (place, status) {
+                    if(status === google.maps.places.PlacesServiceStatus.OK) {
+                        crev.address = place.formatted_address;
+                        crev.name = place.name || jt.byId('keyin').value;
+                        crev.url = crev.url || place.website || "";
+                        app.review.readURL(crev.url); }
+                    }); }
+    },
+
+        
     selectLocation: function (addr, ref) {
         var errlines = [
             "Not going to be able to fill out the url and address",
@@ -1688,7 +1688,8 @@ return {
             try {
                 geoc.geocode({address: addr}, function (results, status) {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
-                        selectLocLatLng(results[0].geometry.location, ref); }
+                        app.review.selectLocLatLng(
+                            results[0].geometry.location, ref); }
                     else {
                         errlines.unshift("PlacesServiceStatus not OK");
                         jt.err(errlines.join("\n")); }

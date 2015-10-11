@@ -2,7 +2,8 @@
 /*jslint white, fudge */
 
 //This is a degenerate module just used for reporting.  Don't model it.
-var actstat = (function () {
+var actstat;
+actstat = (function () {
     "use strict";
 
     ////////////////////////////////////////
@@ -198,89 +199,6 @@ var actstat = (function () {
     },
 
 
-    classifyComponent = function (taxonomy, comp) {
-        var classified = false;
-        //"other" is always last in the top level array of the taxonomy
-        taxonomy.every(function (taxon) {
-            switch(taxon.key) {
-            case "touch":
-                if(comp.key.indexOf("Mobi") >= 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "mouse":
-                if(comp.key.indexOf("Mobi") < 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "iPhone":
-                if(comp.key.indexOf("iPhone") >= 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "iPad":
-                if(comp.key.indexOf("iPad") >= 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "Android":
-                if(comp.key.indexOf("Android") >= 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "IE":
-                if(comp.key.indexOf("MSIE") >= 0 ||
-                   (comp.key.indexOf("Windows NT") >= 0 &&
-                    comp.key.indexOf("rv:11") >= 0)) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "Safari":
-                if(comp.key.indexOf("Safari/") >= 0 &&
-                   comp.key.indexOf("Chrome/") < 0 &&
-                   comp.key.indexOf("Chromium/") < 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "Firefox":
-                if(comp.key.indexOf("Firefox/") >= 0 && 
-                   comp.key.indexOf("Seamonkey/") < 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "Chrome":
-                if(comp.key.indexOf("Chrome/") >= 0 && 
-                   comp.key.indexOf("Chromium/") < 0) {
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            case "other":  
-                if(!classified) { //didn't match any previous cases...
-                    taxon.count += 1;
-                    classifyComponent(taxon.components, comp);
-                    classified = true; }
-                break;
-            default: //bump the leaf count if already there
-                if(taxon.key === comp.key) {
-                    taxon.count += 1;
-                    classified = true; } }
-            if(classified) {  //done iterating
-                return false; } 
-            return true; });
-        if(!classified) {  //add leaf node
-            taxonomy.push(comp); }
-    },
-
-
     classifyData = function (taxon) {
         data.forEach(function (datum) {
             var das;
@@ -292,24 +210,10 @@ var actstat = (function () {
                     agent = agent.trim();
                     if(isRealUserAgent(agent)) {
                         comp = { key: agent, count: 1 };  //leaf component
-                        classifyComponent(taxon, comp); } }); } });
+                        actstat.classifyComponent(taxon, comp); } }); } });
     },
 
                     
-    sortTaxonomy = function (comps) {
-        if(!comps || comps.length === 0) {
-            return; }
-        comps.sort(function (a, b) {
-            if(a.count < b.count) {
-                return 1; }
-            if(a.count > b.count) {
-                return -1; }
-            return 0; });
-        comps.forEach(function (comp) {
-            sortTaxonomy(comp.components); });
-    },
-        
-
     hasSubLevelComponents = function (comps) {
         var hasem = false;
         comps.every(function (comp) {
@@ -318,38 +222,6 @@ var actstat = (function () {
                 return false; }
             return true; });
         return hasem;
-    },
-
-
-    taxonomyHTML = function (comps, prefix) {
-        var html = [], style;
-        prefix = prefix || "";
-        comps.forEach(function (comp) {
-            var domid, sublist, li;
-            domid = prefix + comp.key;
-            sublist = "";
-            if(comp.components && comp.components.length > 0) {
-                sublist = taxonomyHTML(comp.components, domid); }
-            li = [["span", {style: "display:inline-block;width:30px;" + 
-                                   "text-align:right;" },
-                   comp.count],
-                  "&nbsp;",
-                  comp.key];
-            if(sublist) {
-                li = ["a", {href: "#" + domid,
-                            onclick: jt.fs("actstat.toggleAgents('" + 
-                                           domid + "')")},
-                      li]; }
-            html.push(["li", 
-                       [li,
-                        sublist]]); });
-        style = "list-style-type:none;padding-left:40px;";
-        if(!hasSubLevelComponents(comps)) {
-            style += "display:none;"; }
-        html = ["ul", {id: prefix,
-                       style: style},
-                html];
-        return html;
     },
 
 
@@ -369,10 +241,10 @@ var actstat = (function () {
                 { key: "Chrome",  count: 0, components: [] },
                 { key: "other",   count: 0, components: [] }]}];
         classifyData(taxon);
-        sortTaxonomy(taxon);
+        actstat.sortTaxonomy(taxon);
         html = [["p", { style: "padding-left:40px;"},
                  "Agent summary:"],
-                taxonomyHTML(taxon)];
+                actstat.taxonomyHTML(taxon)];
         jt.out('agentsdiv', jt.tac2html(html));
     },
 
@@ -572,6 +444,135 @@ var actstat = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    taxonomyHTML: function (comps, prefix) {
+        var html = [], style;
+        prefix = prefix || "";
+        comps.forEach(function (comp) {
+            var domid, sublist, li;
+            domid = prefix + comp.key;
+            sublist = "";
+            if(comp.components && comp.components.length > 0) {
+                sublist = actstat.taxonomyHTML(comp.components, domid); }
+            li = [["span", {style: "display:inline-block;width:30px;" + 
+                                   "text-align:right;" },
+                   comp.count],
+                  "&nbsp;",
+                  comp.key];
+            if(sublist) {
+                li = ["a", {href: "#" + domid,
+                            onclick: jt.fs("actstat.toggleAgents('" + 
+                                           domid + "')")},
+                      li]; }
+            html.push(["li", 
+                       [li,
+                        sublist]]); });
+        style = "list-style-type:none;padding-left:40px;";
+        if(!hasSubLevelComponents(comps)) {
+            style += "display:none;"; }
+        html = ["ul", {id: prefix,
+                       style: style},
+                html];
+        return html;
+    },
+
+
+    sortTaxonomy: function (comps) {
+        if(!comps || comps.length === 0) {
+            return; }
+        comps.sort(function (a, b) {
+            if(a.count < b.count) {
+                return 1; }
+            if(a.count > b.count) {
+                return -1; }
+            return 0; });
+        comps.forEach(function (comp) {
+            actstat.sortTaxonomy(comp.components); });
+    },
+        
+
+    classifyComponent: function (taxonomy, comp) {
+        var classified = false;
+        //"other" is always last in the top level array of the taxonomy
+        taxonomy.every(function (taxon) {
+            switch(taxon.key) {
+            case "touch":
+                if(comp.key.indexOf("Mobi") >= 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "mouse":
+                if(comp.key.indexOf("Mobi") < 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "iPhone":
+                if(comp.key.indexOf("iPhone") >= 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "iPad":
+                if(comp.key.indexOf("iPad") >= 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "Android":
+                if(comp.key.indexOf("Android") >= 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "IE":
+                if(comp.key.indexOf("MSIE") >= 0 ||
+                   (comp.key.indexOf("Windows NT") >= 0 &&
+                    comp.key.indexOf("rv:11") >= 0)) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "Safari":
+                if(comp.key.indexOf("Safari/") >= 0 &&
+                   comp.key.indexOf("Chrome/") < 0 &&
+                   comp.key.indexOf("Chromium/") < 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "Firefox":
+                if(comp.key.indexOf("Firefox/") >= 0 && 
+                   comp.key.indexOf("Seamonkey/") < 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "Chrome":
+                if(comp.key.indexOf("Chrome/") >= 0 && 
+                   comp.key.indexOf("Chromium/") < 0) {
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            case "other":  
+                if(!classified) { //didn't match any previous cases...
+                    taxon.count += 1;
+                    actstat.classifyComponent(taxon.components, comp);
+                    classified = true; }
+                break;
+            default: //bump the leaf count if already there
+                if(taxon.key === comp.key) {
+                    taxon.count += 1;
+                    classified = true; } }
+            if(classified) {  //done iterating
+                return false; } 
+            return true; });
+        if(!classified) {  //add leaf node
+            taxonomy.push(comp); }
+    },
+
 
     toggleAgents: function (key) {
         var ul = jt.byId(key);

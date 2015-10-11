@@ -1,6 +1,6 @@
-/*global app: false, jt: false */
+/*global app, jt */
 
-/*jslint unparam: true, white: true, maxerr: 50, indent: 4 */
+/*jslint white, fudge */
 
 app.email = (function () {
     "use strict";

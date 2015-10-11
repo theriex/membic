@@ -357,21 +357,21 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         strval = strval.replace(/\:/g, "");
         strval = strval.replace(/\//g, "");
         strval = strval.replace(/\?/g, "");
-        strval = strval.replace(/\#/g, "");
+        strval = strval.replace(/#/g, "");
         strval = strval.replace(/\[/g, "");
         strval = strval.replace(/\]/g, "");
-        strval = strval.replace(/\@/g, "");
+        strval = strval.replace(/@/g, "");
         //URI reserved characters sub-delims
-        strval = strval.replace(/\!/g, "");
+        strval = strval.replace(/!/g, "");
         strval = strval.replace(/\$/g, "");
-        strval = strval.replace(/\&/g, "");
+        strval = strval.replace(/&/g, "");
         strval = strval.replace(/\'/g, "");
         strval = strval.replace(/\(/g, "");
         strval = strval.replace(/\)/g, "");
         strval = strval.replace(/\*/g, "");
         strval = strval.replace(/\+/g, "");
-        strval = strval.replace(/\,/g, "");
-        strval = strval.replace(/\;/g, "");
+        strval = strval.replace(/,/g, "");
+        strval = strval.replace(/;/g, "");
         strval = strval.replace(/\=/g, "");
         strval = strval.toLowerCase();
         return strval;
@@ -521,23 +521,21 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     //return the given object field and values as html POST data
     uo.objdata = function (obj, skips) {
-        var str = "", name;
+        var str = "";
         if (!obj) {
             return "";
         }
         if (!skips) {
             skips = [];
         }
-        for (name in obj) {
-            if (obj.hasOwnProperty(name)) {
-                if (skips.indexOf(name) < 0) {
-                    if (str) {
-                        str += "&";
-                    }
-                    str += name + "=" + uo.enc(obj[name]);
+        Object.keys(obj).forEach(function (name) {
+            if (skips.indexOf(name) < 0) {
+                if (str) {
+                    str += "&";
                 }
+                str += name + "=" + uo.enc(obj[name]);
             }
-        }
+        });
         return str;
     };
 
@@ -760,7 +758,6 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //all context in its own memoized stackframe param due to a mix of
     //paranoia and debugger bugs.
     uo.tac2html = function (tac, frame) {
-        var name;
         if (!frame) {
             frame = { html: "", elemtype: null, attrobj: null,
                       content: null, isHTMLTag: false, i: null};
@@ -781,15 +778,13 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 //if plain object without length then treat as attributes
                 if (frame.attrobj && typeof frame.attrobj === 'object' &&
                         !frame.attrobj.length) {
-                    for (name in frame.attrobj) {
-                        if (frame.attrobj.hasOwnProperty(name)) {
-                            if (frame.attrobj[name] !== undefined &&
-                                    frame.attrobj[name] !== null) {
-                                frame.html += " " + uo.tacattr(name) +
-                                    "=\"" + frame.attrobj[name] + "\"";
-                            }
+                    Object.keys(frame.attrobj).forEach(function (name) {
+                        if (frame.attrobj[name] !== undefined &&
+                            frame.attrobj[name] !== null) {
+                            frame.html += " " + uo.tacattr(name) +
+                                "=\"" + frame.attrobj[name] + "\"";
                         }
-                    }
+                    });
                 } else if (frame.attrobj) {  //treat as content
                     frame.content = frame.attrobj;
                 }
@@ -836,7 +831,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             tempdiv.id = tempdivid;
             document.body.appendChild(tempdiv);
         }
-        now = start = new Date().getTime();
+        now = new Date().getTime();
+        start = now;
         while (now - start < delayms) {
             now = new Date().getTime();
             uo.out(tempdivid, "delay " + (now - start));
