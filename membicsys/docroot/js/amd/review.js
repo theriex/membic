@@ -1870,7 +1870,7 @@ return {
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
             if(rt === "all") {
-                html = "No membics found."; }
+                html = "No membics to display."; }
             else {
                 rt = app.review.getReviewTypeByValue(rt);
                 html = "No " + rt.plural + " found."; }
