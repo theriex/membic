@@ -232,8 +232,9 @@ return {
             if(revref && revref.rev) {
                 rev = revref.rev;
                 if((!revtype || rev.revtype === revtype) &&
-                   (!penid || rev.penid === penid) && 
-                   rev.srcrev >= 0 && !rev.ctmid) {
+                       (!penid || rev.penid === penid) && 
+                       rev.srcrev >= 0 && 
+                       (!rev.ctmid || rev.ctmid === "0")) {
                     results.push(rev); } } });
         return results;
     }
