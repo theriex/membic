@@ -187,8 +187,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .kwcsvlabel { font-weight:bold; padding-right:4px; }
 .kwhelpdlg { font-size:small; }
 #followbuttonspan { padding:0px 0px 0px 10px; }
-#memlevspan { font-size:medium; font-weight:bold;
-  padding:4px 7px 0px 2px; display:inline-block; }
+#memlevspan { font-size:medium; font-weight:bold; padding-left:5px; }
 #calicodiv { display:inline-block; border:1px solid #333; border-radius:4px; margin:1px; width:17px; height:18px; }
 #calicoheaddiv { background:#333; height:5px; }
 #caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
