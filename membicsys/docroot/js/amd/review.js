@@ -529,10 +529,10 @@ app.review = (function () {
             rev.helpful = rev.helpful || "";
             rev.remembered = rev.remembered || "";
             html = [["div", {cla: "fpbuttondiv", 
-                             style: "background:url('../img/helpfuldis.png') no-repeat center center;"},
+                             style: "background:url('../img/helpfuldis.png') no-repeat center center; background-size:contain;"},
                      rev.helpful.csvarray().length],
                     ["div", {cla: "fpbuttondiv",
-                             style: "background:url('../img/rememberdis.png') no-repeat center center;"},
+                             style: "background:url('../img/rememberdis.png') no-repeat center center; background-size:contain;"},
                      rev.remembered.csvarray().length],
                     ["div", {cla: "fpbuttondiv"},
                      ["a", {href: "#edit",
