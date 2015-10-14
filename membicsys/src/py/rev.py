@@ -720,6 +720,30 @@ def get_review_feed_pool(revtype):
     return feedcsv, blocks
 
 
+def update_review_feed_entry_by_type(revtype, review):
+    numblocks = revpoolsize / revblocksize
+    updated = False
+    for i in range(numblocks):
+        ref = memcache.get(revtype + "RevBlock" + str(i))
+        if ref:
+            jkey = "\"_id\":\"" + str(review.key().id()) + "\""
+            jsonobjs = ref.split(",")
+            for idx, jsobj in enumerate(jsonobjs):
+                if jkey in jsobj:
+                    jsonobjs[idx] = obj2JSON(review)
+                    memcache.set(revtype + "RevBlock" + str(i),
+                                 ",".join(jsonobjs))
+                    updated = True
+                    break
+        if updated:
+            break
+
+
+def update_review_feed_entry(review):
+    update_review_feed_entry_by_type("all", review)
+    update_review_feed_entry_by_type(review.revtype, review)
+
+
 def nuke_review_feed_pool(revtype):
     memcache.delete(revtype)
     numblocks = revpoolsize / revblocksize
@@ -1269,7 +1293,7 @@ class ToggleHelpful(webapp2.RequestHandler):
             else:
                 review.helpful = prepend_to_csv(penid, review.helpful)
             cached_put(review)
-            # do not redo the main feeds. too much churn
+            update_review_feed_entry(review)
         returnJSON(self.response, [ review ])
 
 

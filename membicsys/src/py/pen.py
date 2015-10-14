@@ -339,6 +339,7 @@ class ToggleRemember(webapp2.RequestHandler):
                 if not csv_contains(penid, review.remembered):
                     review.remembered = prepend_to_csv(penid, review.remembered)
                     cached_put(review)
+                    update_review_feed_entry(review)
             except Exception as e:
                 logging.info("Failed remembered backlink from Review " + revid +
                              " to PenName " + str(pen.key().id()))
