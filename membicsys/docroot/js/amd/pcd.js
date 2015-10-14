@@ -382,15 +382,18 @@ app.pcd = (function () {
         if(app.coop.membershipLevel(dst.obj) >= 2) {
             memsel = ["a", {href: "#memberinfo",
                             onclick: jt.fs("app.pcd.toggleCtmDet('members')")},
-                      "Membership"]; }
+                      ["img", {cla: "ctmsetimg", src: "img/membership.png"}]]; }
         html = [["div", {cla: "formline"},
                  outstandingApplicationsHTML()],
                 ["div", {cla: "formline"},
                  [["div", {id: "ctminfoseldiv"},
-                   ["a", {href: "#coopinfo",
+                   ["a", {href: "#actioninfo",
                           onclick: jt.fs("app.pcd.toggleCtmDet('info')")},
                     ["img", {cla: "ctmsetimg", src: "img/info.png"}]]],
-                  ["div", {id: "meminfoseldiv"}, memsel]]],
+                  ["div", {id: "meminfoseldiv"}, memsel],
+                  ["div", {id: "reloaddiv"}, 
+                   ["a", {href: "?view=coop&coopid=" + jt.instId(dst.obj)},
+                    ["img", {cla: "ctmsetimg", src: "img/reload.png"}]]]]],
                 ["div", {cla: "formline", id: "midispdiv",
                          style: "display:none;"}]];
         return html;

@@ -182,6 +182,15 @@ def verify_people(coop):
     coop.people = json.dumps(pdict)
 
 
+def update_coop_and_bust_cache(coop):
+    verify_people(coop)
+    cached_put(coop)
+    # force subsequent database retrievals to get the latest version
+    Coop.get_by_id(coop.key().id())
+    # nuke blockfetch cached version to avoid stale data being returned
+    memcache.set("coop" + str(coop.key().id()), "")
+
+
 def membership_action_allowed(coop, action, pnm, role, seekerpen, seekrole):
     if action == "demote":
         if seekerpen.key().id() == pnm.key().id():
@@ -254,9 +263,7 @@ def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
     else:
         logging.info("process_membership_action unknown action: " + action)
         return
-    verify_people(coop)
-    cached_put(coop)
-    Coop.get_by_id(coop.key().id())
+    update_coop_and_bust_cache(coop)
 
 
 def remove_invites_for_coop(coopid, invites_json):
@@ -343,10 +350,7 @@ class UpdateDescription(webapp2.RequestHandler):
         coop.modified = nowISO()
         update_coop_admin_log(coop, pnm, "Updated Description", "", "")
         coop.people = ""   # have to rebuild sometime and this is a good time
-        verify_people(coop)
-        cached_put(coop)
-        Coop.get_by_id(coop.key().id())
-        # not storing any precomputed coop queries, so no cache keys to bust
+        update_coop_and_bust_cache(coop)
         returnJSON(self.response, [ coop ])
 
 
@@ -396,14 +400,10 @@ class ApplyForMembership(webapp2.RequestHandler):
         if action == "apply":
             if role != "Founder" and not id_in_csv(penid, coop.seeking):
                 coop.seeking = append_id_to_csv(penid, coop.seeking)
-                verify_people(coop)
-                cached_put(coop)
-                Coop.get_by_id(coop.key().id())
+                update_coop_and_bust_cache(coop)
         if action == "withdraw":
             coop.seeking = remove_id_from_csv(pnm.key().id(), coop.seeking)
-            verify_people(coop)
-            cached_put(coop)
-            Coop.get_by_id(coop.key().id())
+            update_coop_and_bust_cache(coop)
         returnJSON(self.response, [ coop ])
 
 
