@@ -90,6 +90,8 @@ return {
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
+        if(feeds.stale && feeds.stale < new Date().getTime()) {
+            feeds = {}; }
         if(feeds[feedtype]) {
             return mergeAndDisplayReviews(feedtype, feeds[feedtype]); }
         displayActivityPostsWaitMessage();
@@ -103,6 +105,8 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
+                    feeds.stale = feeds.stale || 
+                        new Date().getTime() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
                     jt.out('feedrevsdiv', "error code: " + code + 
