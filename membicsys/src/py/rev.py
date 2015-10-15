@@ -1028,11 +1028,10 @@ class DeleteReview(webapp2.RequestHandler):
         if rt in topdict and topdict[rt] and revid in topdict[rt]:
             topdict[rt].remove(revid)
         ctm.top20s = json.dumps(topdict)
-        # The reason here must be exactly "Removed Review" so the client can
+        # The reason here must be exactly "Removed Membic" so the client can
         # differentiate between removing a review and removing a member.
-        coop.update_coop_admin_log(ctm, pnm, "Removed Review", srcrev, reason)
-        ctm.modified = nowISO()
-        cached_put(ctm)
+        coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
+        coop.update_coop_and_bust_cache(ctm)
         cached_delete(revid, Review)
         returnJSON(self.response, [ ctm ])
 

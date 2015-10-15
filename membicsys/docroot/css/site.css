@@ -69,9 +69,10 @@ button, .loginbutton, .formbutton {
 #topdiv { position:absolute; left:0px; top:45px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #appspacediv { margin:0px 5px; clear:both; }
-#bottomnav { font-size:xx-small; text-align:center; 
+#bottomnav { font-size:xx-small; text-align:center; overflow:hidden;
   word-spacing:20px; padding:0px 20px 5px 20px;
-  position:fixed; left:0px; bottom:0px; height:15px; width:90%; }
+  position:fixed; left:0px; bottom:0px; height:30px; width:90%; }
+#bottomstatdiv { height:15px; overflow:hidden; }
 .footerlink, .unselectedTab { background:#789897; 
   background:-moz-linear-gradient(left top, #789897 0%, #8cb3b2 100%);
   background:-webkit-linear-gradient(left top, #789897 0%, #8cb3b2 100%); }

@@ -1243,7 +1243,9 @@ return {
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review
             crev = copyReview(source);
-            if(source.penid !== app.pen.myPenId()) {
+            if(source.penid === app.pen.myPenId()) {
+                app.coop.faultInPostThroughCoops(source); }
+            else {
                 makeMine(crev, jt.instId(source)); } }
         crev.penid = app.pen.myPenId();
         html = ["div", {id: "revdlgdiv"},
@@ -1453,7 +1455,10 @@ return {
                 errors.forEach(function (errmsg) {
                     errtxt += errmsg + "<br/>"; });
                 jt.out('rdokstatdiv', errtxt);
-                return; } }
+                return; }
+            if(!app.coop.confirmPostThrough(crev)) {
+                jt.out('rdokbuttondiv', html);
+                return; }}
         jt.out('rdokbuttondiv', "Saving...");
         app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;

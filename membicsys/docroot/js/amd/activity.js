@@ -13,7 +13,8 @@ app.activity = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var feeds = {},
+    var feeds = {},  //all keys are arrays of membics
+        feedmeta = {},
         bootmon = { tout: null, count: 0 },
 
 
@@ -90,7 +91,8 @@ return {
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
-        if(feeds.stale && feeds.stale < new Date().getTime()) {
+        if(feedmeta.stale && feedmeta.stale < new Date().getTime()) {
+            feedmeta.stale = 0;
             feeds = {}; }
         if(feeds[feedtype]) {
             return mergeAndDisplayReviews(feedtype, feeds[feedtype]); }
@@ -105,7 +107,7 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
-                    feeds.stale = feeds.stale || 
+                    feedmeta.stale = feedmeta.stale || 
                         new Date().getTime() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {

@@ -10,7 +10,7 @@
 //   when: ISO date
 //   penid: admin that took the action
 //   pname: name of admin that took the action
-//   action: e.g. "Accepted Membership", "Removed Review", "Removed Member"
+//   action: e.g. "Accepted Membership", "Removed Membic", "Removed Member"
 //   target: revid or penid of what or was affected
 //   tname: name of pen or review that was affected
 //   reason: text given as to why (required for removals)
@@ -320,7 +320,7 @@ return {
                                   onclick: jt.fs("app.coop.remove('" + 
                                                  ctmid + "','" + revid + "')")},
                        "Remove"]]]];
-            html = app.layout.dlgwrapHTML("Remove Coop Post", html);
+            html = app.layout.dlgwrapHTML("Remove Theme Post", html);
             pos = jt.geoPos(jt.byId("rbd" + revid));
             return app.layout.openDialog(
                 {x: pos.x - 40 , y: pos.y - 30},
@@ -349,6 +349,42 @@ return {
                     jt.out('rdremstatdiv', "Removal failed code " + code +
                            ": " + errtxt); },
                 jt.semaphore("coop.remove"));
+    },
+
+
+    faultInPostThroughCoops: function (rev) {
+        if(!rev || !rev.svcdata || ! rev.svcdata.postctms) {
+            return; }  //nothing to do
+        rev.svcdata.postctms.forEach(function (postlog) {
+            var ref = app.lcs.getRef("coop", postlog.ctmid);
+            if(!ref.coop && ref.status === "not cached") {
+                app.pcd.blockfetch("coop", postlog.ctmid, function (coop) {
+                    jt.log("Faulted in " + coop.name); }, "statdiv"); } });
+    },
+
+
+    confirmPostThrough: function (rev) {
+        var retval = true;
+        if(!rev.ctmids) {  //not posting through, so nothing to check
+            return true; }
+        rev.ctmids.csvarray().every(function (ctmid) {
+            var ref, rejection;
+            ref = app.lcs.getRef("coop", ctmid);  //cached on rev edit
+            if(ref && ref.coop && ref.coop.adminlog) {
+                ref.coop.adminlog.every(function (logentry) {
+                    if(logentry.action === "Removed Membic" &&
+                       logentry.targid === jt.instId(rev) &&
+                       logentry.penid !== app.pen.myPenId()) {
+                        rejection = logentry;
+                        return false; }
+                    return true; }); }
+            if(rejection) {
+                retval = confirm(rejection.pname + 
+                                 " previously removed this membic from " + 
+                                 ref.coop.name + ". Reason: \"" + 
+                                 rejection.reason + "\". Repost anyway?"); }
+            return retval; });  //stop on first non-confirmed rejection
+        return retval;
     },
 
 

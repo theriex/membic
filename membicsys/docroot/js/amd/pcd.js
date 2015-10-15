@@ -280,7 +280,7 @@ app.pcd = (function () {
 
     adminLogTargetHTML = function (logentry) {
         var penid;
-        if(logentry.action === "Removed Review") {
+        if(logentry.action === "Removed Membic") {
             return logentry.tname; }
         if(logentry.action.startsWith("Resigned")) {
             return ""; }
