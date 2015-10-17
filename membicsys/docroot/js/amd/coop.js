@@ -249,6 +249,16 @@ return {
     },
 
 
+    isRejected: function (coop, penid) {
+        if(!coop) {
+            return 0; }
+        penid = penid || app.pen.myPenId();
+        if(coop.rejects && coop.rejects.csvcontains(penid)) {
+            return true; }
+        return false;
+    },
+
+
     verifyPenStash: function (coop) {
         var penid, pen, key, pso, memlev, modified = false;
         penid = app.pen.myPenId();

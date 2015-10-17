@@ -192,6 +192,8 @@ def update_coop_and_bust_cache(coop):
 
 
 def membership_action_allowed(coop, action, pnm, role, seekerpen, seekrole):
+    logging.info(coop.name + " " + pnm.name + " (" + role + ") " + action +
+                 " " + seekerpen.name + " " + seekrole)
     if action == "demote":
         if seekerpen.key().id() == pnm.key().id():
             return True   # You can always resign
@@ -215,6 +217,12 @@ def membership_action_allowed(coop, action, pnm, role, seekerpen, seekrole):
                 return True;  # No founder to approve, so auto ok
             if not coop.moderators:
                 return True;  # No founders or moderators, join the anarchy
+    elif action == "reject":
+        if role == "Founder":
+            return True  # Founders can reject any application for any position
+        elif role == "Moderator":
+            if seekrole == "Member":
+                return True  # Moderators may reject membership applications
     return False
 
 
@@ -225,8 +233,8 @@ def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
         coop.seeking = remove_from_csv(seekerid, coop.seeking)
         if not csv_contains(seekerid, coop.rejects):
             coop.rejects = append_to_csv(seekerid, coop.rejects)
-            update_coop_admin_log(coop, pnm, "Denied Membership", 
-                                   seekerpen, reason)
+            update_coop_admin_log(coop, pnm, "Rejected " + seekrole, 
+                                  seekerpen, reason)
     elif action == "accept":
         msg = "Accepted new "
         coop.seeking = remove_from_csv(seekerid, coop.seeking)
@@ -398,11 +406,16 @@ class ApplyForMembership(webapp2.RequestHandler):
         penid = pnm.key().id()
         action = self.request.get('action')
         if action == "apply":
-            if role != "Founder" and not id_in_csv(penid, coop.seeking):
+            if role != "Founder"\
+                    and not id_in_csv(penid, coop.seeking)\
+                    and not id_in_csv(penid, coop.rejects):
                 coop.seeking = append_id_to_csv(penid, coop.seeking)
                 update_coop_and_bust_cache(coop)
-        if action == "withdraw":
+        elif action == "withdraw":
             coop.seeking = remove_id_from_csv(pnm.key().id(), coop.seeking)
+            update_coop_and_bust_cache(coop)
+        elif action == "accrej":
+            coop.rejects = remove_id_from_csv(pnm.key().id(), coop.rejects)
             update_coop_and_bust_cache(coop)
         returnJSON(self.response, [ coop ])
 

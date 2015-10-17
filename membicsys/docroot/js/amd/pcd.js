@@ -62,8 +62,9 @@ app.pcd = (function () {
              uptxt: "Only members may post.",
              upbtn: "Apply for membership",
              cantxt: "You are applying for membership.",
-             rejtxt: "Your membership application was rejected.",
              canbtn: "Withdraw membership application",
+             rejtxt: "Your membership application was rejected.",
+             rejbtn: "Ok rejection",
              restxt: "",
              resbtn: "Stop following",
              resconf: "",
@@ -74,8 +75,9 @@ app.pcd = (function () {
              uptxt: "If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
              upbtn: "Apply to become a Moderator",
              cantxt: "You are applying to become a Moderator.",
-             rejtxt: "Your Moderator application was rejected.",
              canbtn: "Withdraw Moderator application",
+             rejtxt: "Your Moderator application was rejected.",
+             rejbtn: "Ok rejection",
              restxt: "If you no longer wish to contribute, you can resign your membership and go back to just following.",
              resbtn: "Resign membership",
              resconf: "Are you sure you want to resign your membership?",
@@ -86,8 +88,9 @@ app.pcd = (function () {
              uptxt: "If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
              upbtn: "Apply to become a Founder",
              cantxt: "You are applying to become a Founder.",
-             rejtxt: "Your Founder application was rejected.",
              canbtn: "Withdraw your Founder application",
+             rejtxt: "Your Founder application was rejected.",
+             rejbtn: "Ok rejection",
              restxt: "If you no longer wish to help moderate, you can resign as a Moderator and go back to being a regular member.",
              resbtn: "Resign as Moderator",
              resconf: "Are you sure you want to resign as moderator?",
@@ -99,6 +102,7 @@ app.pcd = (function () {
              upbtn: "",
              cantxt: "",
              rejtxt: "",
+             rejbtn: "",
              canbtn: "",
              restxt: "If you no longer want ownership, you can resign as a Founder and allow others to continue the cooperative theme.",
              resbtn: "Resign as Founder",
@@ -156,7 +160,8 @@ app.pcd = (function () {
 
     isMyMembershipAction = function (entry) {
         if(entry.targid === app.pen.myPenId() &&
-           (entry.action.indexOf("Denied") >= 0 ||
+           (entry.action.indexOf("Rejected") >= 0 ||
+            entry.action.indexOf("Denied") >= 0 ||
             entry.action.indexOf("Accepted") >= 0 ||
             entry.action.indexOf("Demoted") >= 0)) {
             return true; }
@@ -180,36 +185,49 @@ app.pcd = (function () {
     },
 
 
+    membershipButtonLine = function (msgtxt, buttondivid, buttondeco, 
+                                     buttonid, buttonfs, buttontxt) {
+        var html;
+        html = ["div", {cla: "formline"},
+                [["div", {cla: "ctmlevtxt"},
+                  msgtxt],
+                 ["div", {cla: "formbuttonsdiv", id: buttondivid},
+                  [buttondeco,
+                   ["button", {type: "button", id: buttonid,
+                               onclick: buttonfs},
+                    buttontxt]]]]];
+        return html;
+    },
+
+
     membershipSettingsHTML = function () {
-        var html, mlev, seeking;
+        var html, mlev, seeking, rejected;
         mlev = app.coop.membershipLevel(dst.obj);
         seeking = app.coop.isSeeking(dst.obj);
+        rejected = app.coop.isRejected(dst.obj);
         html = [];
-        if(ctmmsgs[mlev].uptxt && !seeking) {
-            html.push(["div", {cla: "formline"},
-                       [["div", {cla: "ctmlevtxt"},
-                         ctmmsgs[mlev].uptxt],
-                        ["div", {cla: "formbuttonsdiv", id: "memappbdiv"},
-                         [personalInfoButtonHTML(),
-                          ["button", {type: "button", id: "uplevelbutton",
-                                   onclick: jt.fs("app.pcd.ctmmem('apply')")},
-                          ctmmsgs[mlev].upbtn]]]]]); }
-        if(seeking) {
-            html.push(["div", {cla: "formline"},
-                       [["div", {cla: "ctmlevtxt"},
-                         ctmmsgs[mlev].cantxt],
-                        ["div", {cla: "formbuttonsdiv", id: "memappbdiv"},
-                         ["button", {type: "button", id: "withdrawbutton",
-                                  onclick: jt.fs("app.pcd.ctmmem('withdraw')")},
-                          ctmmsgs[mlev].canbtn]]]]); }
-        else { //not seeking, show downlevel button
-            html.push(["div", {cla: "formline"},
-                       [["div", {cla: "ctmlevtxt"},
-                         ctmmsgs[mlev].restxt],
-                        ["div", {cla: "formbuttonsdiv", id: "rsbdiv"},
-                         ["button", {type: "button", id: "downlevelbutton",
-                                     onclick: jt.fs("app.pcd.ctmdownlev()")},
-                          ctmmsgs[mlev].resbtn]]]]); }
+        //show application button if not in application process
+        if(ctmmsgs[mlev].uptxt && !seeking && !rejected) {
+            html.push(membershipButtonLine(
+                ctmmsgs[mlev].uptxt, "memappbdiv", personalInfoButtonHTML(),
+                "uplevelbutton", jt.fs("app.pcd.ctmmem('apply')"),
+                ctmmsgs[mlev].upbtn)); }
+        //show appropriate process button or default downlevel button
+        if(rejected) {
+            html.push(membershipButtonLine(
+                ctmmsgs[mlev].rejtxt, "memappbdiv", personalInfoButtonHTML(),
+                "accrejbutton", jt.fs("app.pcd.ctmmem('accrej')"),
+                ctmmsgs[mlev].rejbtn)); }
+        else if(seeking) {
+            html.push(membershipButtonLine(
+                ctmmsgs[mlev].cantxt, "memappbdiv", "",
+                "withdrawbutton", jt.fs("app.pcd.ctmmem('withdraw')"),
+                ctmmsgs[mlev].canbtn)); }
+        else { //not seeking or rejected, show downlevel/resign button
+            html.push(membershipButtonLine(
+                ctmmsgs[mlev].restxt, "rsbdiv", "",
+                "downlevelbutton", jt.fs("app.pcd.ctmdownlev()"),
+                ctmmsgs[mlev].resbtn)); }
         html = [["div", {cla: "formline"},
                  [["label", {fo: "statval", cla: "liflab"}, "Status"],
                   ["a", {href: "#togglecoopstat",
@@ -296,6 +314,7 @@ app.pcd = (function () {
         les = dst.obj.adminlog;
         if(!les || !les.length) {
             return "No log entries"; }
+        les = les.slice(0, 10);  //don't scroll forever
         html = [];
         les.forEach(function (logentry) {
             var penid;
@@ -1097,6 +1116,8 @@ return {
             jt.out("memappbdiv", "Applying..."); }
         else if(action === "withdraw") {
             jt.out("memappbdiv", "Withdrawing..."); }
+        else if(action === "accrej") {
+            jt.out("memappbdiv", "Acknowledging..."); }
         app.coop.applyForMembership(dst.obj, action, app.pcd.settings);
     },
 
