@@ -23,22 +23,22 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     mergePersonalRecent = function (feedtype, feedrevs) {
-        var cached, revid;
-        cached = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
-        //non-destructively merge in recent stuff without negatively
-        //impacting the existing server sort order.
-        cached.forEach(function (cacheval, cacheidx) {
-            revid = jt.instId(cacheval);
-            feedrevs.every(function (feedrev) {
-                if(jt.instId(feedrev) === revid) {
-                    return false; }  //already have the value, done iterating
-                if(feedrev.modhist < cacheval.modhist) {
-                    feedrevs.splice(cacheidx, 0, cacheval);
-                    return false; }  //new value inserted, done iterating
-                return true; });  //continue iterating
-            //If no existing reviews, prepend the value.
-            if(!feedrevs.length) {
-                feedrevs.splice(0, 0, cacheval); } });
+        var revs, revidx = 0;
+        if(!app.pen.myPenId()) {
+            return feedrevs; }  //no personal membics to merge in
+        revs = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
+        revs.sort(function (a, b) {
+            if(a.modified < b.modified) { return 1; }
+            if(a.modified > b.modified) { return -1; }
+            return 0; });
+        //non-destructively merge in feedrevs without messing up the
+        //server sort order.
+        feedrevs.forEach(function (fr) {
+            while(revidx < revs.length && 
+                  revs[revidx].modified > fr.modified) {
+                revidx += 1; }
+            if(jt.instId(fr) !== jt.instId(revs[revidx])) {
+                revs.push(fr); } });
         return feedrevs;
     },
 
