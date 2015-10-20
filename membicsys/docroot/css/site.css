@@ -284,7 +284,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .overform { position:absolute; top:0px; left:0px; width:125px; }
 .ptdlabspan { font-size:medium; }
 #ptdfdiv { padding:5px; }
-#ptduploadbuttonsdiv { text-align:center; padding:20px 0px 5px 0px; }
+#ptduploadbuttonsdiv { text-align:center; padding:15px 0px 5px 0px; }
+#pdtfbuttondiv { padding:10px 0px 5px 0px; }
 .directionstextdiv { text-align:center; font-size:small; }
 
 /* >> activity layout */

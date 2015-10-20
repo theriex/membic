@@ -837,6 +837,15 @@ app.review = (function () {
     },
 
 
+    rotatePicButtonHTML = function () {
+        var html;
+        html = ["button", {type: "button", id: "pdtfrbutton",
+                           onclick: revfs("rotateupldpic()")},
+                "Rotate"];
+        return html;
+    },
+
+
     picdlgModForm = function () {
         var html;
         if(crev.svcdata.picdisp === "sitepic") {
@@ -874,7 +883,9 @@ app.review = (function () {
                          ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                      ["iframe", {id: "ptdif", name: "ptdif", 
                                  src: "/revpicupload", 
-                                 style: "display:none"}]]];
+                                 style: "display:none"}],
+                     ["div", {id: "pdtfbuttondiv", cla: "dlgbuttonsdiv"},
+                      rotatePicButtonHTML()]]];
             jt.out('upldpicform', jt.tac2html(html));
             app.review.monitorPicUpload(); }
         else {  //not upldpic
@@ -1572,6 +1583,23 @@ return {
         crev.imguri = url;
         jt.byId('sitepicimg').src = url;
         displaySitePicLabel();
+    },
+
+
+    rotateupldpic: function () {
+        var revid, data;
+        revid = jt.instId(crev);
+        data = "revid=" + revid + "&penid=" + app.pen.myPenId();
+        jt.out('pdtfbuttondiv', "Rotating...");
+        jt.call('POST', "rotatepic?" + app.login.authparams(), data,
+                function (/*reviews*/) {
+                    jt.out('pdtfbuttondiv', jt.tac2html(rotatePicButtonHTML()));
+                    jt.byId('upldpicimg').src = "revpic?revid=" + revid +
+                        jt.ts("&cb=", "second"); },
+                app.failf(function (code, errtxt) {
+                    jt.out('pdtfbuttondiv', jt.tac2html(rotatePicButtonHTML()));
+                    jt.err("rotate pic failed " + code + ": " + errtxt); }),
+                jt.semaphore("review.rotateupldpic"));
     },
 
 

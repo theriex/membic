@@ -149,6 +149,11 @@ handlers:
 - url: .*/revpic.*
   script: src.py.rev.app
 
+## Rotate the uploaded pic for a review
+## POST params: revid, authparams
+- url: .*/rotatepic.*
+  script: src.py.rev.app
+
 ## Return reviews for a given pen within the given date range
 ## GET params: penid, mindate, maxdate, qstr, authparams (,revtype)
 - url: .*/srchrevs.*

@@ -1085,6 +1085,29 @@ class GetReviewPic(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
+class RotateReviewPic(webapp2.RequestHandler):
+    def post(self):
+        pnm = review_modification_authorized(self)
+        if not pnm:
+            return;
+        revid = self.request.get('revid')
+        review = cached_get(intz(revid), Review)
+        if not review or review.penid != pnm.key().id():
+            return srverr(self, 403, "Review not found or not writeable")
+        if not review.revpic:
+            return srverr(self, 404, "No pic found for review " + str(revid))
+        try:
+            img = images.Image(review.revpic)
+            img.rotate(90)
+            img = img.execute_transforms(output_encoding=images.PNG)
+            review.revpic = db.Blob(img)
+            note_modified(review)
+            cached_put(review)
+        except Exception as e:
+            return srverr(self, 409, "Pic rotate failed: " + str(e))
+        returnJSON(self.response, [ review ])
+
+
 class SearchReviews(webapp2.RequestHandler):
     def get(self):
         acc = authenticated(self.request)
@@ -1387,6 +1410,7 @@ app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
                                ('.*/delrev', DeleteReview),
                                ('.*/revpicupload', UploadReviewPic),
                                ('.*/revpic', GetReviewPic),
+                               ('.*/rotatepic', RotateReviewPic),
                                ('.*/srchrevs', SearchReviews),
                                ('.*/revbyid', GetReviewById), 
                                ('.*/revfeed', GetReviewFeed),
