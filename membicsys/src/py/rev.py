@@ -26,7 +26,7 @@ import time
 #       -202: Batch update (e.g. iTunes upload or similar)
 #     Special handling reviews may not be posted to coops
 class Review(db.Model):
-    """ A review of something """
+    """ Membic future self reflecting review of something """
     revtype = db.StringProperty(required=True)   # book, movie, music...
     penid = db.IntegerProperty(required=True)    # who wrote the review
     ctmid = db.IntegerProperty()                 # 0 if source review
