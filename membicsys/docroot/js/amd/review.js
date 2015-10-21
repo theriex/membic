@@ -269,7 +269,8 @@ app.review = (function () {
             html.src = sslSafeRef(jt.instId(review), review.imguri);
             break;
         case "upldpic":
-            html.src = "revpic?revid=" + jt.instId(review);
+            html.src = "revpic?revid=" + jt.instId(review) + 
+                jt.ts("&cb", review.modified);
             break;
         case "nopic":
             if(mode !== "edit") {
@@ -1001,10 +1002,11 @@ app.review = (function () {
         src = "img/nopicrev.png";
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
-            src = "revpic?revid=" + jt.instId(crev); }
+            src = "revpic?revid=" + jt.instId(crev) + 
+                jt.ts("&cb", crev.modified); }
         else if(type === "sitepic") {
             src = sslSafeRef(jt.instId(crev), crev.imguri); }
-        html = ["img", {id: "revimg", cla: "revimg", src: src}];
+        html = ["img", {id: "dlgrevimg", cla: "revimg", src: src}];
         return jt.tac2html(html);
     },
 
@@ -1558,7 +1560,8 @@ return {
                                 onchange: revfs("picdlg('upldpic')")}],
                      ["div", {id: "upldpicdetaildiv", cla: "ptddiv"},
                       [["img", {id: "upldpicimg", cla: "revimgdis",
-                                src: (crev.revpic ? "revpic?revid=" + revid
+                                src: (crev.revpic ? ("revpic?revid=" + revid + 
+                                                    jt.ts("&cb", crev.modified))
                                                   : "img/nopicprof.png"),
                                 onclick: revfs("picdlg('upldpic')")}],
                        ["div", {id: "upldpicform", cla: "overform"}]]]]],
@@ -1567,7 +1570,7 @@ return {
                                 checked: jt.toru(dt === "nopic"),
                                 onchange: revfs("picdlg('nopic')")}],
                      ["span", {cla: "ptdlabspan"}, "No Pic"]]]]]]];
-        app.layout.openOverlay(app.layout.placerel("revimg", -5, -80), 
+        app.layout.openOverlay(app.layout.placerel("dlgrevimg", -5, -80), 
                                html, null, picdlgModForm,
                                jt.fs("app.review.updatedlg()"));
     },
@@ -1587,15 +1590,24 @@ return {
 
 
     rotateupldpic: function () {
-        var revid, data;
+        var revid, picsrc, data, elem;
         revid = jt.instId(crev);
         data = "revid=" + revid + "&penid=" + app.pen.myPenId();
         jt.out('pdtfbuttondiv', "Rotating...");
         jt.call('POST', "rotatepic?" + app.login.authparams(), data,
-                function (/*reviews*/) {
+                function (reviews) {
+                    //the updated review is partial, don't replace crev
+                    crev.modified = reviews[0].modified;
+                    picsrc = "revpic?revid=" + revid + 
+                        jt.ts("&cb", crev.modified);
                     jt.out('pdtfbuttondiv', jt.tac2html(rotatePicButtonHTML()));
-                    jt.byId('upldpicimg').src = "revpic?revid=" + revid +
-                        jt.ts("&cb=", "second"); },
+                    elem = jt.byId("revimg" + revid);
+                    if(elem) {
+                        elem.src = picsrc; }
+                    elem = jt.byId("dlgrevimg");
+                    if(elem) {
+                        elem.src = picsrc; }
+                    jt.byId('upldpicimg').src = picsrc; },
                 app.failf(function (code, errtxt) {
                     jt.out('pdtfbuttondiv', jt.tac2html(rotatePicButtonHTML()));
                     jt.err("rotate pic failed " + code + ": " + errtxt); }),

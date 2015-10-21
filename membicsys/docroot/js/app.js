@@ -331,10 +331,13 @@ var app = {},  //Global container for application level funcs and values
         var levels, iso, slug;
         levels = { year: 2, month: 4, day: 6, hour: 8, minute: 10 };
         prefix = prefix || "";
-        iso = new Date().toISOString();
+        if(toklev && toklev.endsWith('Z')) {
+            iso = toklev; }
+        else {
+            iso = new Date().toISOString(); }
         slug = iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) + 
             iso.slice(11,13) + iso.slice(14,16) + iso.slice(17,19);
-        if(toklev) {
+        if(toklev && levels[toklev]) {
             slug = slug.slice(0, levels[toklev]); }
         return prefix + slug;
     };
