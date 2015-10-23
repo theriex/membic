@@ -23,23 +23,24 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     mergePersonalRecent = function (feedtype, feedrevs) {
-        var revs, revidx = 0;
+        var revs = [], mr, mridx = 0;
         if(!app.pen.myPenId()) {
             return feedrevs; }  //no personal membics to merge in
-        revs = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
-        revs.sort(function (a, b) {
+        mr = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
+        mr.sort(function (a, b) {
             if(a.modified < b.modified) { return 1; }
             if(a.modified > b.modified) { return -1; }
             return 0; });
         //non-destructively merge in feedrevs without messing up the
         //server sort order.
         feedrevs.forEach(function (fr) {
-            while(revidx < revs.length && 
-                  revs[revidx].modified > fr.modified) {
-                revidx += 1; }
-            if(jt.instId(fr) !== jt.instId(revs[revidx])) {
+            while(mridx < mr.length && mr[mridx].modified > fr.modified) {
+                revs.push(mr[mridx]);
+                mridx += 1; }
+            if(!revs.length || 
+                   jt.instId(fr) !== jt.instId(revs[revs.length - 1])) {
                 revs.push(fr); } });
-        return feedrevs;
+        return revs;
     },
 
 
