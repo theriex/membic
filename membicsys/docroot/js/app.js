@@ -97,6 +97,23 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.haveReferrer = function () {
+        var ref, refidx, 
+            knownaddrs = [{sub: "membic.com", maxidx: 12},
+                          {sub: "membicsys.appspot.com", maxidx: 8}];
+        ref = document.referrer || "";
+        ref = ref.toLowerCase();
+        if(ref) {
+            knownaddrs.every(function (ka) {
+                refidx = ref.indexOf(ka.sub);
+                if(refidx >= 0 && refidx <= ka.maxidx) {
+                    ref = "";
+                    return false; }
+                return true; }); }
+        return ref;
+    };
+
+
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
         var cdiv, params;
@@ -108,7 +125,7 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, 'keypress', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
-        if(document.referrer) {
+        if(app.haveReferrer()) {
             params = "referral=" + jt.enc(document.referrer) + 
                 jt.ts("&cb=", "minute");
             setTimeout(function () {

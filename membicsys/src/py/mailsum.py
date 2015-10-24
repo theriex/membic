@@ -18,14 +18,18 @@ from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
 class ActivityStat(db.Model):
     """ Activity metrics for tracking purposes """
-    day = db.StringProperty(required=True)  # yyyy-mm-ddT00:00:00Z
-    active = db.IntegerProperty()     # number of pens that logged in
-    onerev = db.IntegerProperty()     # num pens that wrote at least one review
-    tworev = db.IntegerProperty()     # num pens that wrote at least two reviews
-    morev = db.IntegerProperty()      # num pens that wrote 3 or more reviews
-    ttlrev = db.IntegerProperty()     # total reviews for the day
-    names = db.TextProperty()         # ';' delimited pen names that logged in
-    calculated = db.StringProperty()  # iso date when things were tallied up
+    day = db.StringProperty(required=True)  # ISO start of day for this stat
+    calculated = db.StringProperty()  # ISO when results were calculated
+    visits = db.IntegerProperty()     # Number of app initializations
+    logins = db.IntegerProperty()     # Number of logged in app inits
+    posters = db.IntegerProperty()    # Number of pens that posted membics
+    postpens = db.TextProperty()      # who posted. penid:encname,...
+    membics = db.IntegerProperty()    # Number of membics posted
+    edits = db.IntegerProperty()      # Number of membics edited
+    themeposts = db.IntegerProperty() # Number of theme post-throughs
+    starred = db.IntegerProperty()    # Number of membics starred
+    remembered = db.IntegerProperty() # Number of membics remembered
+    responded = db.IntegerProperty()  # Number of membics created from others
     refers = db.TextProperty()        # src1:3,src2:4...
     clickthru = db.IntegerProperty()  # num specific profile or review requests
     agents = db.TextProperty()        # CSV of accessing agents
@@ -39,13 +43,17 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
 
 def get_activity_stat(sday):
     stat = ActivityStat(day=sday)
-    stat.active = 0
-    stat.onerev = 0
-    stat.tworev = 0
-    stat.morev = 0
-    stat.ttlrev = 0
-    stat.names = ""
     stat.calculated = ""
+    stat.visits = 0
+    stat.logins = 0
+    stat.posters = 0
+    stat.postpens = ""
+    stat.membics = 0
+    stat.edits = 0
+    stat.themeposts = 0
+    stat.starred = 0
+    stat.remembered = 0
+    stat.responded = 0
     stat.refers = ""
     stat.clickthru = 0
     stat.agents = ""
@@ -127,7 +135,11 @@ def is_known_bot(agentstr):
     return False
 
 
-def note_agent(agentstr, stat):
+def note_agent(stat, request):
+    agentstr = request.headers.get('User-Agent') or ""
+    agentstr = agentstr[:255]  #These CAN grow huge
+    if is_known_bot(agentstr):
+        return  #No reason to note known bots
     #An agent string can have pretty much any unicode character in it
     #except for reserved separators. For general information purposes,
     #dealing with these strings in CSV format is easiest.  Pretty sure
@@ -139,22 +151,22 @@ def note_agent(agentstr, stat):
         stat.agents += agentstr
 
 
-def btw_activity(handler, src, request):
-    agentstr = request.headers.get('User-Agent')
-    logging.info("btw_activity " + src + " agent: " + agentstr)
-    agentstr = agentstr[:255]  #These CAN grow huge
-    if is_known_bot(agentstr):
-        return
+def get_current_stat():
     sday = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
     stat = get_activity_stat(sday)
-    note_agent(agentstr, stat)
+    return stat
+
+
+def btw_activity(handler, src, request):
+    stat = get_current_stat()
+    note_agent(stat, request)
     val = request.get("clickthrough")
     if val:  # Somebody accessed the site for a specific coop, or to
              # remember/helpful/respond a review. Note for linkback.
         stat.clickthru += 1
     val = request.get("referral")
     if val:  # Somebody clicked on a link to the core application.
-             # Note for possible linkback.d
+             # Note for possible linkback.
         bump_referral(stat, "core", val)
     try:
         stat.put()  #nocache
@@ -251,6 +263,21 @@ class ByTheImg(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
+class NoteAppLaunch(webapp2.RequestHandler):
+    def get(self):
+        stat = get_current_stat()
+        note_agent(stat, self.request)
+        mode = self.request.get("mode")
+        if mode and mode == "login":
+            stat.logins += 1
+        else:
+            stat.visits += 1
+        try:
+            stat.put()  #nocache
+        except OverQuotaError as oqe:
+            srverr(handler, 503, "stat put failure, database writes over quota")
+
+
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       logging.info("BouncedEmailHandler called")
@@ -270,5 +297,6 @@ class BounceHandler(BounceNotificationHandler):
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
                                ('.*/bytheway', ByTheWay),
+                               ('.*/applaunch', NoteAppLaunch),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 

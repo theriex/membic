@@ -461,7 +461,7 @@ app.login = (function () {
                 jt.call('GET', "/bytheway?" + tpms, null,
                         function () {
                             jt.log("noted profile clickthrough"); },
-                        app.failf); }, 200);
+                        app.failf); }, 2);  //might redirect to sec srvr next..
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
                                      profid: params.profid,
@@ -471,6 +471,18 @@ app.login = (function () {
         else if(params.revedit) {
             app.history.checkpoint({ view: "review", mode: "edit",
                                      revid: params.revedit }); }
+    },
+
+
+    noteAppLaunched = function (loggedIn) {
+        var parms;
+        parms = "mode=" + (loggedIn? "login" : "visit") + 
+            jt.ts("&cb=", "second");
+        setTimeout(function () {
+            jt.call('GET', "/applaunch?" + parms, null,
+                    function () {
+                        jt.log("noted app launch"); },
+                    app.failf); }, 3000);  //Other calls more important
     },
 
 
@@ -487,8 +499,10 @@ app.login = (function () {
             idx = params.state.slice(altpn.length, altpn.length + 1);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || app.login.readAuthCookie()) {
+            noteAppLaunched(true);
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
+            noteAppLaunched(false);
             displayLoginForm(params);
             app.login.doNextStep(params); }
         else { 
