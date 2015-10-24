@@ -9,6 +9,7 @@ from moracct import *
 from morutil import *
 import pen
 import coop
+import mailsum
 import json
 from operator import attrgetter
 import re
@@ -355,6 +356,8 @@ def prepend_to_main_feeds(review, pnm):
 
 def write_review(review, pnm):
     set_review_mainfeed(review)
+    mailsum.note_review_update(review.is_saved(), review.penid, review.penname,
+                               review.ctmid, review.srcrev)
     review.put()
     logging.info("write_review: wrote review " + str(review.key().id()))
     # force retrieval to ensure subsequent db hits find the latest
@@ -450,6 +453,9 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         logging.info("write_coop_reviews: Coop " + ctmid + " " + ctm.name)
         logging.info("    copying source review")
         copy_source_review(review, ctmrev, ctmid)
+        mailsum.note_review_update(ctmrev.is_saved(), ctmrev.penid,
+                                   ctmrev.penname, ctmrev.ctmid,
+                                   ctmrev.srcrev)
         cached_put(ctmrev)
         logging.info("    review saved, updating top20s")
         update_top20_reviews(ctm, ctmrev, ctm.key().id())
@@ -1313,6 +1319,7 @@ class ToggleHelpful(webapp2.RequestHandler):
             if csv_contains(penid, review.helpful):
                 review.helpful = remove_from_csv(penid, review.helpful)
             else:
+                mailsum.bump_starred()
                 review.helpful = prepend_to_csv(penid, review.helpful)
             cached_put(review)
             update_review_feed_entry(review)

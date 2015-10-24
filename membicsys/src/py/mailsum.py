@@ -2,7 +2,7 @@ import webapp2
 import datetime
 from google.appengine.ext import db
 import logging
-from pen import PenName
+import pen
 from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
 from morutil import *
 from google.appengine.api import mail
@@ -174,6 +174,51 @@ def btw_activity(handler, src, request):
         srverr(handler, 503, "stat put failure, database writes over quota")
             
 
+def note_review_update(is_edit, penid, penname, ctmid, srcrev):
+    stat = get_current_stat()
+    modified = False
+    pstamp = str(penid) + ":" + safestr(penname)
+    if not csv_contains(pstamp, stat.postpens):
+        modified = True
+        stat.postpens = prepend_to_csv(pstamp, stat.postpens)
+        stat.posters += 1
+    if not ctmid:
+        if is_edit:
+            modified = True
+            stat.edits += 1
+        else: # new membic being created
+            modified = True
+            stat.membics += 1
+            if srcrev:
+                stat.responded += 1
+    elif not is_edit:  # has ctmid, and not editing 
+        modified = True
+        stat.themeposts += 1
+    if modified:
+        try:
+            stat.put()  #nocache
+        except OverQuotaError as oqe:
+            srverr(handler, 503, "rev stat put failure, db writes over quota")
+
+
+def bump_starred():
+    stat = get_current_stat()
+    stat.starred += 1
+    try:
+        stat.put()  #nocache
+    except OverQuotaError as oqe:
+        srverr(handler, 503, "starred stat put failure, db writes over quota")
+
+
+def bump_remembered():
+    stat = get_current_stat()
+    stat.remembered += 1
+    try:
+        stat.put()  #nocache
+    except OverQuotaError as oqe:
+        srverr(handler, 503, "remembered stat put failure, db write quota")
+
+
 def split_output(response, text):
     logging.info("mailsum: " + text)
     response.out.write(text + "\n")
@@ -202,7 +247,7 @@ def eligible_pen(acc, thresh):
     # work off the most recently accessed pen authorized for this account
     latestpen = None
     where = "WHERE mid = :1 LIMIT 20"
-    pens = PenName.gql(where, acc.key().id())
+    pens = pen.PenName.gql(where, acc.key().id())
     for pen in pens:
         if not latestpen or latestpen.accessed < pen.accessed:
             latestpen = pen
