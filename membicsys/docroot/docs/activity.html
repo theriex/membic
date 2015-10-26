@@ -10,6 +10,7 @@
 body { font: 10px sans-serif; }
 div { padding:10px; }
 .titletxt { font-size:x-large; font-weight:bold; }
+.rtxt { text-align:right; padding-left:5px; }
 
 .axis path,
 .axis line {
@@ -31,12 +32,22 @@ div { padding:10px; }
 </head>
 <body>
 
+<div id="scratchdiv">
+</div>
+
+<div id="chartdiv">
+  Loading d3...
+</div>
+
+<div id="keysdiv">
+</div>
+
+
 <div id="inqactdiv">
   <table>
     <tr><td colspan="2"><div id="inqactkeysdiv"></div></td></tr>
     <tr><td><div id="inqactgraphdiv"></div></td>
         <td><div id="agentsdiv">
-            <p>Loading d3...</p>
   </div></td></tr></table>
 </div>
 
@@ -52,7 +63,8 @@ div { padding:10px; }
 <div id="appcallsdiv">
 </div>
 
-<script src="http://d3js.org/d3.v3.js"></script>
+<!-- <script src="http://d3js.org/d3.v3.js"></script> -->
+<script src="../js/d3.v3.js"></script>
 <script src="../js/jtmin.js"></script>
 <script src="../js/static/actstat.js"></script>
 <script>

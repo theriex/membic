@@ -10,9 +10,39 @@ actstat = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var data = null,
+    var jt = {},
         botids = [],
-        jt = {},
+        stats = null,
+        colors = [ "Maroon", "Crimson", "red", "Salmon",
+                   "OrangeRed", "orange", "GoldenRod", "yellow",
+                   "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
+                   "blue", "purple", "Indigo", "DarkViolet",
+                   "Fuchsia", "silver", "DarkKhaki", "SlateGray" ],
+        //key fields for plot lines
+        kflds = [
+            { name: "visits", color: "orange", min: 0, max: 0,
+              desc: "The number of web app initializations where the user was not logged in (no cookie found). If this exceeds the number of logins, then there are people checking out the site without logging in." },
+            { name: "logins", color: "OrangeRed", min: 0, max: 0,
+              desc: "The number of web app initializations where the user was logged in (via cookie or via token after logging in)." },
+            { name: "posters", color: "red", min: 0, max: 0,
+              desc: "The number of pen names that posted membics" },
+            { name: "membics", color: "DarkGreen", min: 0, max: 0,
+              desc: "How many new membics were posted" },
+            { name: "edits", color: "LightSeaGreen", min: 0, max: 0,
+              desc: "How many existing membics were edited" },
+            { name: "themeposts", color: "blue", min: 0, max: 0,
+              desc: "How many new theme posts were created" },
+            { name: "starred", color: "purple", min: 0, max: 0,
+              desc: "How many membics were starred" },
+            { name: "remembered", color: "violet", min: 0, max: 0,
+              desc: "How many membics were remembered" },
+            { name: "responded", color: "Fuchsia", min: 0, max: 0,
+              desc: "How many membics were created from other membics" },
+            { name: "clickthru", color: "GoldenRod", min: 0, max: 0,
+              desc: "How many profiles or themes were accessed directly" }],
+        //closure level working vars
+        chart,
+        //chart defs and vars:
         margin = { top: 20, right: 20, bottom: 40, left: 40},
         width = 600 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom,
@@ -52,6 +82,13 @@ actstat = (function () {
     },
 
 
+    makeChartLine = function (attr) {
+        return d3.svg.line()
+            .x(function (d) { return chart.xscale(d.day); })
+            .y(function (d) { return chart.yscale(d[attr]); });
+    },
+
+
     showColorKeys = function (divid, keytitle, serieslayout) {
         var html = [];
         serieslayout.forEach(function (rowlayout) {
@@ -84,12 +121,7 @@ actstat = (function () {
 
 
     makeSeriesDef = function (sname) {
-        var scolor, colors = [ 
-            "Maroon", "Crimson", "red", "Salmon",
-            "OrangeRed", "orange", "GoldenRod", "yellow",
-            "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
-            "blue", "purple", "Indigo", "DarkViolet",
-            "Fuchsia", "silver", "DarkKhaki", "SlateGray" ];
+        var scolor;
         scolor = colors[sercoloridx % colors.length];
         sercoloridx += 1;
         return { name: sname, width: "2px", dashes: "1, 0", 
@@ -103,7 +135,7 @@ actstat = (function () {
         var series, refelems, refname, refcount, result;
         series = {};
         series.clickthru = makeSeriesDef("clickthru");
-        data.forEach(function (datum) {
+        stats.forEach(function (datum) {
             if(datum.clickthru) {
                 series.clickthru.total += datum.clickthru; }
             if(datum.refers) {
@@ -128,7 +160,7 @@ actstat = (function () {
 
 
     minMaxInq = function (series) {
-        var max = data.reduce(function (value, elem) {
+        var max = stats.reduce(function (value, elem) {
             var elmax = 0;
             series.forEach(function (ser) {
                 elmax = Math.max(elmax, seriesValue(ser, elem)); });
@@ -157,7 +189,7 @@ actstat = (function () {
         series = makeInquirySeries();
         showColorKeys('inqactkeysdiv', "Inquiries", rowify(series, 3));
         svg = d3.select('#inqactgraphdiv')
-            .data(data)
+            .data(stats)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
@@ -166,7 +198,7 @@ actstat = (function () {
                   "translate(" + margin.left + "," + margin.top + ")");
         xAxis = d3.svg.axis().scale(xscale).orient("bottom");
         yAxis = d3.svg.axis().scale(yscale).orient("left");
-        xscale.domain(d3.extent(data, function (d) { return d.day; }));
+        xscale.domain(d3.extent(stats, function (d) { return d.day; }));
         yscale.domain(d3.extent(minMaxInq(series), function (d) { return d; }));
         svg.append("g")
             .attr("class", "x axis")
@@ -177,12 +209,82 @@ actstat = (function () {
             .call(yAxis);
         series.forEach(function (sdef) {
             svg.append("path")
-                .datum(data)
+                .datum(stats)
                 .attr("class", "line")
                 .attr("stroke", sdef.color)
                 .attr("stroke-width", sdef.width)
                 .attr("stroke-dasharray", sdef.dashes)
                 .attr("d", makeLine(sdef)); });
+    },
+
+
+    makeChartSeries = function () {
+        var series = [];
+        kflds.forEach(function (kf) {
+            series.push({name: kf.name, color: kf.color,
+                         width: "2px", dashes: "1, 0"}); });
+        return series;
+    },
+
+
+    minMaxY = function () {
+        var mm = { min: 1000000, max: 0 };
+        mm = kflds.reduce(function (pval, kf) {
+            return { min: Math.min(pval.min, kf.min),
+                     max: Math.max(pval.max, kf.max) }; }, mm);
+        return [mm.min, mm.max];
+    },
+
+
+    displayChart = function () {
+        var svg, xAxis, yAxis, series;
+        chart = {width: 600, height: 400, offset: { x:20, y:20 }};
+        chart.xscale = d3.time.scale().range([0, chart.width]);
+        chart.yscale = d3.scale.linear().range([chart.height, 0]);
+        series = makeChartSeries();
+        svg = d3.select("#chartdiv")
+            .data(stats)
+            .append("svg")
+            .attr("width", chart.width + (2 * chart.offset.x))
+            .attr("height", chart.height + (2 * chart.offset.y))
+            .append("g")
+            .attr("transform",
+                  "translate(" + chart.offset.x + "," + chart.offset.y + ")");
+        xAxis = d3.svg.axis().scale(chart.xscale).orient("bottom");
+        yAxis = d3.svg.axis().scale(chart.yscale).orient("left");
+        chart.xscale.domain(d3.extent(stats, function (d) { return d.day; }));
+        chart.yscale.domain(d3.extent(minMaxY(), function (d) { return d; }));
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + chart.height + ")")
+            .call(xAxis);
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
+        series.forEach(function (sdef) {
+            svg.append("path")
+                .datum(stats)
+                .attr("class", "line")
+                .attr("stroke", sdef.color)
+                .attr("stroke-width", sdef.width)
+                .attr("stroke-dasharray", sdef.dashes)
+                .attr("d", makeChartLine(sdef.name)); });
+    },
+
+
+    displayKeys = function () {
+        var html = [];
+        kflds.forEach(function (kf) {
+            html.push(["tr",
+                       [["td", {style: "background-color:" + kf.color + ";" +
+                                       "cursor:crosshair;",
+                                title: kf.desc},
+                         kf.name],
+                        ["td", {cla: "rtxt"}, String(kf.min)],
+                        ["td", {cla: "rtxt"}, String(kf.max)]]]); });
+        html = ["table", {id: "keytable"},
+                html];
+        jt.out('keysdiv', jt.tac2html(html));
     },
 
 
@@ -200,7 +302,7 @@ actstat = (function () {
 
 
     classifyData = function (taxon) {
-        data.forEach(function (datum) {
+        stats.forEach(function (datum) {
             var das;
             //the agent csv format was standardized 12/10/13, ignore previous
             if(datum.day.toISOString() > "2013-12-10T00:00:00Z") { 
@@ -262,10 +364,10 @@ actstat = (function () {
 
     minMaxAct = function () {
         var min, max;
-        min = data.reduce(function (value, elem) {
+        min = stats.reduce(function (value, elem) {
             return Math.min(value, elem.active, elem.ttlrev, elem.onerev, 
                             elem.tworev, elem.morev); }, 1000000);
-        max = data.reduce(function (value, elem) {
+        max = stats.reduce(function (value, elem) {
             return Math.max(value, elem.active, elem.ttlrev, elem.onerev, 
                             elem.tworev, elem.morev); }, 0);
         return [min, max];
@@ -279,7 +381,7 @@ actstat = (function () {
                                                        [series[1], series[3]],
                                                        [null, series[4]]]);
         svg = d3.select("#useractgraphdiv")
-            .data(data)
+            .data(stats)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
@@ -288,7 +390,7 @@ actstat = (function () {
                   "translate(" + margin.left + "," + margin.top + ")");
         xAxis = d3.svg.axis().scale(xscale).orient("bottom");
         yAxis = d3.svg.axis().scale(yscale).orient("left");
-        xscale.domain(d3.extent(data, function (d) { return d.day; }));
+        xscale.domain(d3.extent(stats, function (d) { return d.day; }));
         yscale.domain(d3.extent(minMaxAct(), function (d) { return d; }));
         svg.append("g")
             .attr("class", "x axis")
@@ -299,7 +401,7 @@ actstat = (function () {
             .call(yAxis);
         series.forEach(function (sdef) {
             svg.append("path")
-                .datum(data)
+                .datum(stats)
                 .attr("class", "line")
                 .attr("stroke", sdef.color)
                 .attr("stroke-width", sdef.width)
@@ -311,7 +413,7 @@ actstat = (function () {
     displayUserAverages = function () {
         var html = [], logins = {}, frequency, 
             freqsum = 0, active = 0, flybys = 0;
-        data.forEach(function (datum) {
+        stats.forEach(function (datum) {
             var pens = jt.safestr(datum.names).split(";");
             pens.forEach(function (name) {
                 if(name) {  //possible empty string if no logins for the day
@@ -321,7 +423,7 @@ actstat = (function () {
                         logins[name] = 1; } } }); });
         Object.keys(logins).forEach(function (name) {
             if(logins[name] > 1) {
-                frequency = Math.round(data.length / logins[name]);
+                frequency = Math.round(stats.length / logins[name]);
                 active += 1;
                 freqsum += frequency;
                 html.push(["tr",
@@ -337,7 +439,7 @@ actstat = (function () {
             if(afreq > bfreq) { return 1; }
             return 0; });
         html = [["div",
-                 "Window: " + data.length + " days.<br>" +
+                 "Window: " + stats.length + " days.<br>" +
                  "Average login frequency: " + (freqsum / active) + " days"],
                 ["div", { style: "padding:0px 20px;" },
                  ["table",
@@ -360,21 +462,43 @@ actstat = (function () {
     },
 
 
+    verifyKeyFields = function (stat) {
+        kflds.forEach(function (kf) {
+            stat[kf.name] = stat[kf.name] || 0;
+            kf.min = Math.min(kf.min, stat[kf.name]);
+            kf.max = Math.max(kf.max, stat[kf.name]); });
+    },
+
+
     prepData = function () {
-        data.sort(function (a, b) {
+        stats.sort(function (a, b) {
             if(a.day < b.day) { return -1; }
             if(a.day > b.day) { return 1; }
             return 0; });
-        data.forEach(function (elem) {
-            //default values in case fields are missing
-            elem.logttl = elem.logttl || 0;
-            elem.botttl = elem.botttl || 0;
+        stats.forEach(function (elem) {
+            //default values in case any fields are missing, track min/max
+            verifyKeyFields(elem);
+            elem.postpens = elem.postpens || "";
             elem.refers = elem.refers || "";
-            elem.clickthru = elem.clickthru || 0;
             elem.agents = elem.agents || "";
+            elem.calculated = elem.calculated || elem.day;
             //data conversions
             attributizeReferrals(elem);
             elem.day = new Date(elem.day); });
+    },
+
+
+    statLineDump = function (stat) {
+        return stat.day + " " + stat.visits + " " + stat.clickthru;
+    },
+
+
+    writeScratch = function () {
+        var test = d3.select("#scratchdiv").selectAll("div")
+            .data(stats)
+            .text(String);
+        test.enter().append("div")
+            .text(statLineDump);
     },
 
 
@@ -423,16 +547,21 @@ actstat = (function () {
 
 
     fetchDataAndDisplay = function () {
-        jt.out('averagesdiv', "Fetching ActivityStat records");
-        jt.call('GET', "../activity", null,
+        var nowISO = new Date().toISOString();
+        jt.out('chartdiv', "Fetching ActivityStat records");
+        jt.call('GET', "../activity?cb=" + nowISO, null,
                 function (actstats) {
-                    data = actstats;
+                    jt.out('chartdiv', "");
+                    stats = actstats;
                     prepData();
-                    displayInquiriesGraph();
-                    fetchBotListAndDisplayAgents();
-                    displayActivityGraph();
-                    displayUserAverages();
-                    fetchAndDisplayCoopStats(); },
+                    displayChart();
+                    //writeScratch();
+                    //displayInquiriesGraph();
+                    //fetchBotListAndDisplayAgents();
+                    //displayActivityGraph();
+                    //displayUserAverages();
+                    //fetchAndDisplayCoopStats();
+                    displayKeys(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },
