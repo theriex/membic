@@ -13,16 +13,16 @@ actstat = (function () {
     var jt = {},
         botids = [],
         stats = null,
-        colors = [ "Maroon", "Crimson", "red", "Salmon",
-                   "OrangeRed", "orange", "GoldenRod", "yellow",
-                   "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
-                   "blue", "purple", "Indigo", "DarkViolet",
-                   "Fuchsia", "silver", "DarkKhaki", "SlateGray" ],
+        // colors = [ "Maroon", "Crimson", "red", "Salmon",
+        //            "OrangeRed", "orange", "GoldenRod", "yellow",
+        //            "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
+        //            "blue", "purple", "Indigo", "DarkViolet",
+        //            "Fuchsia", "silver", "DarkKhaki", "SlateGray" ],
         //key fields for plot lines
         kflds = [
-            { name: "visits", color: "orange", min: 0, max: 0,
+            { name: "visits", color: "yellow", min: 0, max: 0,
               desc: "The number of web app initializations where the user was not logged in (no cookie found). If this exceeds the number of logins, then there are people checking out the site without logging in." },
-            { name: "logins", color: "OrangeRed", min: 0, max: 0,
+            { name: "logins", color: "orange", min: 0, max: 0,
               desc: "The number of web app initializations where the user was logged in (via cookie or via token after logging in)." },
             { name: "posters", color: "red", min: 0, max: 0,
               desc: "The number of pen names that posted membics" },
@@ -42,179 +42,16 @@ actstat = (function () {
               desc: "How many profiles or themes were accessed directly" }],
         //closure level working vars
         chart,
-        //chart defs and vars:
-        margin = { top: 20, right: 20, bottom: 40, left: 40},
-        width = 600 - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom,
-        xscale = d3.time.scale().range([0, width]),
-        yscale = d3.scale.linear().range([height, 0]),
-        sercoloridx = 0,
 
 
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
 
-    seriesValue = function (series, datum) {
-        var sval = 0;
-        if(datum.refers && datum.refers.indexOf(series.name) >= 0) {
-            datum.refers.split(",").every(function (ref) {
-                var refelems = ref.split(":");
-                if(refelems[0] === series.name) {
-                    sval = parseInt(refelems[1], 10);
-                    return false; } 
-                return true; }); }
-        return sval;
-    },
-
-
-    dataValue = function (datum, accessor) {
-        if(typeof accessor === "string") {
-            return datum[accessor]; }
-        return seriesValue(accessor, datum);
-    },
-
-
-    makeLine = function (attr) {
-        return d3.svg.line()
-            .x(function (d) { return xscale(d.day); })
-            .y(function (d) { return yscale(dataValue(d, attr)); });
-    },
-
-
     makeChartLine = function (attr) {
         return d3.svg.line()
             .x(function (d) { return chart.xscale(d.day); })
             .y(function (d) { return chart.yscale(d[attr]); });
-    },
-
-
-    showColorKeys = function (divid, keytitle, serieslayout) {
-        var html = [];
-        serieslayout.forEach(function (rowlayout) {
-            var rowhtml = [];
-            rowlayout.forEach(function (seriesdef) {
-                seriesdef = seriesdef || { color: "white", name: "" };
-                rowhtml.push(["td", {style: "padding:5px 20px;"},
-                              [["span", {style: "background-color:" + 
-                                                seriesdef.color},
-                                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"],
-                               ["span", {style: "display:inline-block;" +
-                                                "width:20px;" + 
-                                                "text-align:right;"},
-                                seriesdef.total],
-                               "&nbsp;",
-                               ["a", {name: seriesdef.name,
-                                      title: seriesdef.title},
-                                seriesdef.name]]]); });
-            html.push(["tr",
-                       rowhtml]); });
-        html = ["table",
-                ["tr",
-                 [["td", {cla: "titletxt"},
-                   keytitle],
-                  ["td",
-                   ["table",
-                    html]]]]];
-        jt.out(divid, jt.tac2html(html));
-    },
-
-
-    makeSeriesDef = function (sname) {
-        var scolor;
-        scolor = colors[sercoloridx % colors.length];
-        sercoloridx += 1;
-        return { name: sname, width: "2px", dashes: "1, 0", 
-                 color: scolor, total: 0,
-                 title: "See mailsum.py bump_referral for key defs" };
-    },
-
-
-    //For more information on series, see mailsum.py bump_referral
-    makeInquirySeries = function () {
-        var series, refelems, refname, refcount, result;
-        series = {};
-        series.clickthru = makeSeriesDef("clickthru");
-        stats.forEach(function (datum) {
-            if(datum.clickthru) {
-                series.clickthru.total += datum.clickthru; }
-            if(datum.refers) {
-                datum.refers.split(",").forEach(function (ref) {
-                    refelems = ref.split(":");
-                    refname = refelems[0];
-                    refcount = parseInt(refelems[1], 10);
-                    if(!series[refname]) {
-                        series[refname] = makeSeriesDef(refname); }
-                    series[refname].total += refcount; }); } });
-        result = [];
-        Object.keys(series).forEach(function (sdef) {
-            result.push(series[sdef]); });
-        result.sort(function (a, b) {
-            if(a.total > b.total) {
-                return -1; }
-            if(a.total < b.total) {
-                return 1; }
-            return 0; });
-        return result;
-    },
-
-
-    minMaxInq = function (series) {
-        var max = stats.reduce(function (value, elem) {
-            var elmax = 0;
-            series.forEach(function (ser) {
-                elmax = Math.max(elmax, seriesValue(ser, elem)); });
-            return Math.max(value, elmax); }, 0);
-        return [0, max];
-    },
-
-
-    rowify = function (series, cols) {
-        var tdc = 0, rows = [], row = [];
-        series.forEach(function (ser) {
-            if(tdc >= cols) {
-                rows.push(row);
-                row = [];
-                tdc = 0; }
-            row.push(ser);
-            tdc += 1; });
-        if(row.length > 0) {
-            rows.push(row); }
-        return rows;
-    },
-
-
-    displayInquiriesGraph = function () {
-        var svg, xAxis, yAxis, series;
-        series = makeInquirySeries();
-        showColorKeys('inqactkeysdiv', "Inquiries", rowify(series, 3));
-        svg = d3.select('#inqactgraphdiv')
-            .data(stats)
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", 
-                  "translate(" + margin.left + "," + margin.top + ")");
-        xAxis = d3.svg.axis().scale(xscale).orient("bottom");
-        yAxis = d3.svg.axis().scale(yscale).orient("left");
-        xscale.domain(d3.extent(stats, function (d) { return d.day; }));
-        yscale.domain(d3.extent(minMaxInq(series), function (d) { return d; }));
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-        series.forEach(function (sdef) {
-            svg.append("path")
-                .datum(stats)
-                .attr("class", "line")
-                .attr("stroke", sdef.color)
-                .attr("stroke-width", sdef.width)
-                .attr("stroke-dasharray", sdef.dashes)
-                .attr("d", makeLine(sdef)); });
     },
 
 
@@ -316,17 +153,6 @@ actstat = (function () {
     },
 
                     
-    hasSubLevelComponents = function (comps) {
-        var hasem = false;
-        comps.every(function (comp) {
-            if(comp.components && comp.components.length > 0) {
-                hasem = true;
-                return false; }
-            return true; });
-        return hasem;
-    },
-
-
     //key-count-components
     displayAccessAgents = function () {
         var taxon, html;
@@ -351,104 +177,68 @@ actstat = (function () {
     },
 
 
-    makeActivitySeries = function () {
-        var series = [
-            {name: "active", color: "aqua",  width: "2px", dashes: "1, 0"},
-            {name: "ttlrev", color: "blue", width: "2px", dashes: "1, 0"},
-            {name: "onerev", color: "OrangeRed", width: "2px", dashes: "1, 0"},
-            {name: "tworev", color: "orange", width: "2px", dashes: "1, 0"},
-            {name: "morev", color: "yellow", width: "2px", dashes: "1, 0"} ];
-        return series;
+    fetchBotListAndDisplayAgents = function () {
+        jt.call('GET', "../botids", null,
+                function (results) {
+                    botids = results[0].botids.split(',');
+                    displayAccessAgents(); },
+                function (code, errtxt) {
+                    jt.out('agentsdiv', "botids failed: " + code + 
+                           " " + errtxt); },
+                jt.semaphore("actstat.fetchBotListAndDisplayAgents"));
     },
 
 
-    minMaxAct = function () {
-        var min, max;
-        min = stats.reduce(function (value, elem) {
-            return Math.min(value, elem.active, elem.ttlrev, elem.onerev, 
-                            elem.tworev, elem.morev); }, 1000000);
-        max = stats.reduce(function (value, elem) {
-            return Math.max(value, elem.active, elem.ttlrev, elem.onerev, 
-                            elem.tworev, elem.morev); }, 0);
-        return [min, max];
-    },
-
-
-    displayActivityGraph = function () {
-        var svg, xAxis, yAxis, series;
-        series = makeActivitySeries();
-        showColorKeys('useractkeydiv', "Interaction", [[series[0], series[2]],
-                                                       [series[1], series[3]],
-                                                       [null, series[4]]]);
-        svg = d3.select("#useractgraphdiv")
-            .data(stats)
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", 
-                  "translate(" + margin.left + "," + margin.top + ")");
-        xAxis = d3.svg.axis().scale(xscale).orient("bottom");
-        yAxis = d3.svg.axis().scale(yscale).orient("left");
-        xscale.domain(d3.extent(stats, function (d) { return d.day; }));
-        yscale.domain(d3.extent(minMaxAct(), function (d) { return d; }));
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-        series.forEach(function (sdef) {
-            svg.append("path")
-                .datum(stats)
-                .attr("class", "line")
-                .attr("stroke", sdef.color)
-                .attr("stroke-width", sdef.width)
-                .attr("stroke-dasharray", sdef.dashes)
-                .attr("d", makeLine(sdef.name)); });
-    },
-
-
-    displayUserAverages = function () {
-        var html = [], logins = {}, frequency, 
-            freqsum = 0, active = 0, flybys = 0;
-        stats.forEach(function (datum) {
-            var pens = jt.safestr(datum.names).split(";");
-            pens.forEach(function (name) {
-                if(name) {  //possible empty string if no logins for the day
-                    if(logins[name]) {
-                        logins[name] += 1; }
-                    else {
-                        logins[name] = 1; } } }); });
-        Object.keys(logins).forEach(function (name) {
-            if(logins[name] > 1) {
-                frequency = Math.round(stats.length / logins[name]);
-                active += 1;
-                freqsum += frequency;
-                html.push(["tr",
-                           [["td", {style: "padding:0px 10px;"}, name],
-                            ["td", {align: "right"}, frequency],
-                            ["td", "days"]]]); }
+    displayPosters = function () {
+        var pcounts = {}, pca = [], html = "";
+        stats.forEach(function (stat) {
+            stat.postpens.csvarray().forEach(function (poster) {
+                var idname = poster.split(":"),
+                    penid = idname[0],
+                    penname = idname[1];
+                if(pcounts[penid]) {
+                    pcounts[penid].count += 1; }
                 else {
-                    flybys += 1; } });
-        html.sort(function (a, b) {
-            var afreq = parseInt(a[1][1][2], 10),
-                bfreq = parseInt(b[1][1][2], 10);
-            if(afreq < bfreq) { return -1; }
-            if(afreq > bfreq) { return 1; }
+                    pcounts[penid] = { count: 1, name: penname }; } }); });
+        Object.keys(pcounts).forEach(function (penid) {
+            pca.push({penid: penid, count: pcounts[penid].count, 
+                      penname: pcounts[penid].name}); });
+        pca.sort(function (a, b) {
+            if(a.count < b.count) { return -1; }
+            if(a.count > b.count) { return 1; }
             return 0; });
-        html = [["div",
-                 "Window: " + stats.length + " days.<br>" +
-                 "Average login frequency: " + (freqsum / active) + " days"],
-                ["div", { style: "padding:0px 20px;" },
-                 ["table",
-                  html]],
-                ["div",
-                 "Active: " + active + ", Flybys: " + flybys + 
-                 ": " + (Math.round((active / (active + flybys)) * 100)) + 
-                 "% participation"]];
-        jt.out('averagesdiv', jt.tac2html(html));
+        pca.forEach(function (pref) {
+            if(html) {
+                html += ", "; }
+            html += pref.penname; });
+        jt.out('postersdiv', "<p>Posters: " + html + "</p>");
+    },
+
+
+    displaySummary = function () {
+        var html = ["table", {id: "sumtable"},
+                    ["tr",
+                     [["td", 
+                       ["div", {id: "keysdiv"}]],
+                      ["td",
+                       ["div", {id: "agentsdiv"}]],
+                      ["td", {valign: "top"},
+                       ["div", {id: "postersdiv"}]]]]];
+        jt.out('sumdiv', jt.tac2html(html));
+        displayKeys();
+        fetchBotListAndDisplayAgents();
+        displayPosters();
+    },
+
+
+    hasSubLevelComponents = function (comps) {
+        var hasem = false;
+        comps.every(function (comp) {
+            if(comp.components && comp.components.length > 0) {
+                hasem = true;
+                return false; }
+            return true; });
+        return hasem;
     },
 
 
@@ -488,64 +278,6 @@ actstat = (function () {
     },
 
 
-    statLineDump = function (stat) {
-        return stat.day + " " + stat.visits + " " + stat.clickthru;
-    },
-
-
-    writeScratch = function () {
-        var test = d3.select("#scratchdiv").selectAll("div")
-            .data(stats)
-            .text(String);
-        test.enter().append("div")
-            .text(statLineDump);
-    },
-
-
-    fetchBotListAndDisplayAgents = function () {
-        jt.call('GET', "../botids", null,
-                function (results) {
-                    botids = results[0].botids.split(',');
-                    displayAccessAgents(); },
-                function (code, errtxt) {
-                    jt.out('agentsdiv', "botids failed: " + code + 
-                           " " + errtxt); },
-                jt.semaphore("actstat.fetchBotListAndDisplayAgents"));
-    },
-
-
-    displayCoopStats = function (stat) {
-        var mwcn = jt.canonize(stat.memwin),
-            mwurl = "../coops/" + mwcn;
-        jt.out('coopstatsdiv', jt.tac2html(
-            [["span", {cla: "statlabel"}, "Total Coops"],
-             ["span", {cla: "statval"}, stat.total],
-             ["span", {cla: "statlabel"}, "Members"],
-             ["span", {cla: "statlab2"}, "avg"],
-             ["span", {cla: "statval"},
-              Math.round(stat.totalmem / stat.total)],
-             ["span", {cla: "statlab2"}, "max"],
-             ["span", {cla: "statval"}, stat.memmax],
-             ["span", {cla: "statvalkey"},
-              ["(", 
-               ["a", {href: "#" + mwcn, 
-                      onclick: jt.fs("window.open('" + mwurl + "')")},
-                stat.memwin],
-               ")"]]]));
-    },
-
-
-    fetchAndDisplayCoopStats = function () {
-        jt.call('GET', "../ctmstats", null,
-                function (stat) {
-                    displayCoopStats(stat); },
-                function (code, errtxt) {
-                    jt.out('coopstatsdiv', "ctmstats call failed " + code +
-                           ": " + errtxt); },
-                jt.semaphore("actstat.fetchAndDisplayCoopStats"));
-    },
-
-
     fetchDataAndDisplay = function () {
         var nowISO = new Date().toISOString();
         jt.out('chartdiv', "Fetching ActivityStat records");
@@ -555,13 +287,7 @@ actstat = (function () {
                     stats = actstats;
                     prepData();
                     displayChart();
-                    //writeScratch();
-                    //displayInquiriesGraph();
-                    //fetchBotListAndDisplayAgents();
-                    //displayActivityGraph();
-                    //displayUserAverages();
-                    //fetchAndDisplayCoopStats();
-                    displayKeys(); },
+                    displaySummary(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },
