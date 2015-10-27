@@ -73,9 +73,26 @@ actstat = (function () {
     },
 
 
+    setChartWidthAndHeight = function (keyreserve, minw) {
+        var over;
+        minw = minw || 320;  //take the full width of a phone
+        chart.width = window.innerWidth - (3 * chart.offset.x);
+        chart.height = Math.round((chart.width * 2) / 3);
+        over = chart.height + keyreserve - window.innerHeight;
+        if(over > 0) {
+            chart.width -= Math.round((over * 3) / 2);
+            chart.height = Math.round((chart.width * 2) / 3); }
+        if(chart.width < minw) {
+            chart.width = minw;
+            chart.height = Math.round((chart.width * 2) / 3); }
+        jt.byId('sumdiv').style.width = String(chart.width) + "px";
+    },
+
+
     displayChart = function () {
         var svg, xAxis, yAxis, series;
-        chart = {width: 600, height: 400, offset: { x:20, y:20 }};
+        chart = {offset: { x:30, y:20 }};
+        setChartWidthAndHeight(360);
         chart.xscale = d3.time.scale().range([0, chart.width]);
         chart.yscale = d3.scale.linear().range([chart.height, 0]);
         series = makeChartSeries();
@@ -114,6 +131,7 @@ actstat = (function () {
         kflds.forEach(function (kf) {
             html.push(["tr",
                        [["td", {style: "background-color:" + kf.color + ";" +
+                                       "padding:5px 10px;" +
                                        "cursor:crosshair;",
                                 title: kf.desc},
                          kf.name],
@@ -170,7 +188,7 @@ actstat = (function () {
                 { key: "other",   count: 0, components: [] }]}];
         classifyData(taxon);
         actstat.sortTaxonomy(taxon);
-        html = [["p", { style: "padding-left:40px;"},
+        html = [["p", { style: "padding-left:5px;"},
                  "Agent summary:"],
                 actstat.taxonomyHTML(taxon)];
         jt.out('agentsdiv', jt.tac2html(html));
@@ -216,13 +234,14 @@ actstat = (function () {
 
 
     displaySummary = function () {
-        var html = ["table", {id: "sumtable"},
+        var html = ["table", {id: "sumtable",
+                              style: "margin:auto;"},
                     ["tr",
-                     [["td", 
+                     [["td", {style: "background:#eee;"},
                        ["div", {id: "keysdiv"}]],
-                      ["td",
+                      ["td", {valign: "top", style: "background:#ddd;"},
                        ["div", {id: "agentsdiv"}]],
-                      ["td", {valign: "top"},
+                      ["td", {valign: "top", style: "background:#eee;"},
                        ["div", {id: "postersdiv"}]]]]];
         jt.out('sumdiv', jt.tac2html(html));
         displayKeys();
@@ -309,7 +328,7 @@ return {
             sublist = "";
             if(comp.components && comp.components.length > 0) {
                 sublist = actstat.taxonomyHTML(comp.components, domid); }
-            li = [["span", {style: "display:inline-block;width:30px;" + 
+            li = [["span", {style: "display:inline-block;" + 
                                    "text-align:right;" },
                    comp.count],
                   "&nbsp;",
@@ -322,7 +341,7 @@ return {
             html.push(["li", 
                        [li,
                         sublist]]); });
-        style = "list-style-type:none;padding-left:40px;";
+        style = "list-style-type:none;padding-left:10px;";
         if(!hasSubLevelComponents(comps)) {
             style += "display:none;"; }
         html = ["ul", {id: prefix,
