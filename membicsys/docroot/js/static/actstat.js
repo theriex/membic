@@ -1,4 +1,4 @@
-/*global d3, jtminjsDecorateWithUtilities */
+/*global d3, jtminjsDecorateWithUtilities, window */
 /*jslint white, fudge */
 
 //This is a degenerate module just used for reporting.  Don't model it.
@@ -89,14 +89,36 @@ actstat = (function () {
     },
 
 
+    alternatingWeekBackgrounds = function (viz) {
+        var sundaycoords = [], tickw = Math.round(chart.width / stats.length);
+        stats.forEach(function (stat, idx) {
+            if(stat.day.getDay() === 0) {  //Sunday
+                sundaycoords.push(idx * tickw); } });
+        if(sundaycoords[0] === 0) {  //first day was sunday, adjust x to
+            sundaycoords[0] = 1; }   //avoid overwriting the y axis line
+        else {  //add filler block before first sunday
+            sundaycoords.unshift(1); }
+        sundaycoords.forEach(function (x, idx) {
+            var width = chart.width;
+            if(idx < sundaycoords.length - 1) {
+                width = sundaycoords[idx + 1] - x; }
+            viz.append("rect")
+                .attr("x", x)
+                .attr("y", 0)
+                .attr("width", width)
+                .attr("height", chart.height)
+                .attr("fill", ((idx % 2)? "#ddd" : "#eee")); });
+    },
+
+
     displayChart = function () {
-        var svg, xAxis, yAxis, series;
+        var viz, xAxis, yAxis, series;
         chart = {offset: { x:30, y:20 }};
         setChartWidthAndHeight(360);
         chart.xscale = d3.time.scale().range([0, chart.width]);
         chart.yscale = d3.scale.linear().range([chart.height, 0]);
         series = makeChartSeries();
-        svg = d3.select("#chartdiv")
+        viz = d3.select("#chartdiv")
             .data(stats)
             .append("svg")
             .attr("width", chart.width + (2 * chart.offset.x))
@@ -108,15 +130,16 @@ actstat = (function () {
         yAxis = d3.svg.axis().scale(chart.yscale).orient("left");
         chart.xscale.domain(d3.extent(stats, function (d) { return d.day; }));
         chart.yscale.domain(d3.extent(minMaxY(), function (d) { return d; }));
-        svg.append("g")
+        viz.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + chart.height + ")")
             .call(xAxis);
-        svg.append("g")
+        viz.append("g")
             .attr("class", "y axis")
             .call(yAxis);
+        alternatingWeekBackgrounds(viz);
         series.forEach(function (sdef) {
-            svg.append("path")
+            viz.append("path")
                 .datum(stats)
                 .attr("class", "line")
                 .attr("stroke", sdef.color)
@@ -279,21 +302,41 @@ actstat = (function () {
     },
 
 
+    nextDay = function (day) {
+        day = new Date(jt.ISOString2Time(day));
+        day = new Date(day.getTime() + (24 * 60 * 60 * 1000));
+        day = day.toISOString();
+        return day;
+    },
+
+
     prepData = function () {
+        var filled = [];
         stats.sort(function (a, b) {
             if(a.day < b.day) { return -1; }
             if(a.day > b.day) { return 1; }
             return 0; });
-        stats.forEach(function (elem) {
-            //default values in case any fields are missing, track min/max
-            verifyKeyFields(elem);
-            elem.postpens = elem.postpens || "";
-            elem.refers = elem.refers || "";
-            elem.agents = elem.agents || "";
-            elem.calculated = elem.calculated || elem.day;
+        stats.forEach(function (stat) {
+            var nextday;
+            if(!filled.length) {
+                filled.push(stat); }
+            else {
+                nextday = nextDay(filled[filled.length - 1].day);
+                while(nextday < stat.day) {
+                    filled.push({day: nextday});
+                    nextday = nextDay(filled[filled.length - 1].day); }
+                filled.push(stat); } });
+        stats = filled;
+        stats.forEach(function (stat) {
+            //default values if missing
+            verifyKeyFields(stat);  //also tracks min/max
+            stat.postpens = stat.postpens || "";
+            stat.refers = stat.refers || "";
+            stat.agents = stat.agents || "";
+            stat.calculated = stat.calculated || stat.day;
             //data conversions
-            attributizeReferrals(elem);
-            elem.day = new Date(elem.day); });
+            attributizeReferrals(stat);
+            stat.day = jt.ISOString2Time(stat.day); });
     },
 
 
