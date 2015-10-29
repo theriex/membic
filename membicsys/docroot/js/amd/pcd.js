@@ -669,7 +669,7 @@ app.pcd = (function () {
     displayRecent = function (expid) {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
-                                  (dst.type === "coop"));
+                                  ((dst.type === "coop") && !app.solopage()));
         if(expid === "settings") {
             app.pcd.settings(dst.obj); }
         else if(expid) {
@@ -780,7 +780,7 @@ app.pcd = (function () {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
-        if(!app.framed()) {
+        if(!app.solopage()) {
             html.push(tabHTMLFromDef("search")); }
         if(dst.type === "pen") {
             html.push(tabHTMLFromDef("prefpens"));
@@ -1253,7 +1253,7 @@ return {
 
     toggleRevExpansion: function (prefix, revid) {
         var revs;
-        if(app.framed()) {
+        if(app.solopage()) {
             return window.open("?view=" + dst.type + "&" +
                                (dst.type === "coop"? "ctmid=" : "penid=") +
                                dst.id + "&tab=" + dst.tab + 

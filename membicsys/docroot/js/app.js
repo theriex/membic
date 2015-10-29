@@ -82,7 +82,7 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
-    app.framed = function () {
+    app.solopage = function () {
         if(app.embedded ||
                window.location.href.indexOf("/t/") > 0 ||
                window.location.href.indexOf("/p/") > 0) {
@@ -148,7 +148,7 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
-        if(app.framed()) {
+        if(app.solopage()) {
             jt.byId('topsectiondiv').style.display = "none";
             jt.byId('headingdiv').style.display = "none";
             jt.byId('bottomnav').style.display = "none";
