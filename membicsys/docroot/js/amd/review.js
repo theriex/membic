@@ -1211,6 +1211,18 @@ app.review = (function () {
     },
 
 
+    titleLink = function (rev, togclick, html) {
+        if(app.solopage() && rev.url) {
+            html = ["a", {href: rev.url, title: rev.url,
+                          onclick: jt.fs("window.open('" + rev.url + "')")},
+                    html]; }
+        else {
+            html = ["a", {href: revurl(rev), onclick: togclick},
+                    html]; }
+        return html;
+    },
+
+
     cacheNames = function (rev) {
         app.pennames[rev.penid] = rev.penname;
         convertOldThemePostLabel(rev);
@@ -1512,9 +1524,24 @@ return {
     },
 
 
+    reviewTypeIconHTML: function (type, rev, togclick) {
+        var html = ["img", {cla: "reviewbadge", src: "img/" + type.img,
+                            title: type.type, alt: type.type}];
+        html = titleLink(rev, togclick, html);
+        return html;
+    },                   
+
+
+    reviewTitleHTML: function(type, rev, togclick) {
+        var html = app.pcd.reviewItemNameHTML(type, rev);
+        html = titleLink(rev, togclick, html);
+        return html;
+    },
+
+
     jumpLinkHTML: function (review, type) {
         var qurl, html;
-        if(!review) {
+        if(!review || app.solopage()) {
             return ""; }
         if(!review.url) {
             qurl = review[type.key];
@@ -1852,12 +1879,9 @@ return {
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
                  ["div", {cla: "fptypediv"},
-                  ["a", {href: revurl(rev), onclick: togclick},
-                   ["img", {cla: "reviewbadge", src: "img/" + type.img,
-                            title: type.type, alt: type.type}]]],
+                  app.review.reviewTypeIconHTML(type, rev, togclick)],
                  ["div", {cla: "fptitlediv"},
-                  ["a", {href: revurl(rev), onclick: togclick},
-                   app.pcd.reviewItemNameHTML(type, rev)]],
+                  app.review.reviewTitleHTML(type, rev, togclick)],
                  ["div", {cla: "fpstarsdiv"},
                   app.review.starsImageHTML(rev)],
                  ["div", {cla: "fpjumpdiv"},
