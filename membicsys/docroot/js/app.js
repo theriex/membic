@@ -150,6 +150,7 @@ var app = {},  //Global container for application level funcs and values
         jtminjsDecorateWithUtilities(jt);
         if(app.framed()) {
             jt.byId('topsectiondiv').style.display = "none";
+            jt.byId('headingdiv').style.display = "none";
             jt.byId('bottomnav').style.display = "none";
             jt.byId('topsectiondiv').style.display = "none"; }
         jt.out('contentdiv', "loading modules...");
