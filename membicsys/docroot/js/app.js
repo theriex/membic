@@ -82,6 +82,14 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.framed = function () {
+        if(app.embedded ||
+               window.location.href.indexOf("/t/") > 0 ||
+               window.location.href.indexOf("/p/") > 0) {
+            return true; }
+    };
+
+
     app.trustedContainer = function () {
         var knownhost = false,
             tcs = ["https://www.membic.com",
@@ -93,6 +101,13 @@ var app = {},  //Global container for application level funcs and values
                 knownhost = true;
                 return false; }
             return true; });
+        if(knownhost) {  //verify not in a hard frame
+            try {
+                if(window.self !== window.top) {
+                    knownhost = false; }
+            } catch (e) {   //window.top access failed due to security vio.
+                jt.log("frame check exception: " + e);
+                knownhost = false; } }
         return knownhost;
     };
 
@@ -154,13 +169,13 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
-        if(!app.embedded && !app.trustedContainer()) {
+        if(!app.framed() && !app.trustedContainer()) {
             jt.out('topsectiondiv', "");
             jt.out('headingdiv', "");
             jt.out('bottomnav', "");
             jt.out('contentdiv', "Unknown trusted host site");
             return; }
-        if(app.embedded) {
+        if(app.framed()) {
             jt.byId('topsectiondiv').style.display = "none";
             jt.byId('bottomnav').style.display = "none";
             jt.byId('topsectiondiv').style.display = "none"; }

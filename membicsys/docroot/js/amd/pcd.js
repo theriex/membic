@@ -780,7 +780,7 @@ app.pcd = (function () {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
-        if(!app.embedded) {
+        if(!app.framed()) {
             html.push(tabHTMLFromDef("search")); }
         if(dst.type === "pen") {
             html.push(tabHTMLFromDef("prefpens"));
@@ -1253,9 +1253,11 @@ return {
 
     toggleRevExpansion: function (prefix, revid) {
         var revs;
-        if(app.embedded) {
-            return window.open("?view=coop&coopid=" + dst.id +
-                               "&tab=" + dst.tab + "&expid=" + revid); }
+        if(app.framed()) {
+            return window.open("?view=" + dst.type + "&" +
+                               (dst.type === "coop"? "ctmid=" : "penid=") +
+                               dst.id + "&tab=" + dst.tab + 
+                               "&expid=" + revid); }
         switch(dst.tab) {
         case "latest":
             revs = getRecentReviews();
