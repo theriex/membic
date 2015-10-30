@@ -84,8 +84,11 @@ return {
 
 
     updateCoop: function (coop, callok, callfail) {
-        var data = jt.objdata(coop, ["recent", "top20s", "revids"]) +
+        var data;
+        app.coop.serializeFields(coop);
+        data = jt.objdata(coop, ["recent", "top20s", "revids"]) +
             "&penid=" + app.pen.myPenId();
+        app.coop.deserializeFields(coop);  //if update fails or interim use
         jt.call('POST', "ctmdesc?" + app.login.authparams(), data,
                 function (updcoops) {
                     app.coop.noteUpdatedCoop(updcoops[0], coop);
@@ -408,6 +411,8 @@ return {
             ctm.adminlog = JSON.stringify(ctm.adminlog); }
         if(typeof ctm.people === 'object') {
             ctm.people = JSON.stringify(ctm.people); }
+        if(typeof ctm.soloset === 'object') {
+            ctm.soloset = JSON.stringify(ctm.soloset); }
     },
 
 
@@ -415,6 +420,7 @@ return {
         app.lcs.reconstituteJSONObjectField("top20s", ctm);
         app.lcs.reconstituteJSONObjectField("adminlog", ctm);
         app.lcs.reconstituteJSONObjectField("people", ctm);
+        app.lcs.reconstituteJSONObjectField("soloset", ctm);
     }
 
 }; //end of returned functions

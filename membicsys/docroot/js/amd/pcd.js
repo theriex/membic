@@ -556,12 +556,13 @@ app.pcd = (function () {
                  ["div", {cla: "formline", id: "ctmcalembdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    "If your cooperative has an embeddable public calendar, paste the embed code here:"],
+                    "If this theme has an embeddable public calendar, paste the embed code here:"],
                    ["textarea", {id: "calembedta", cla: "dlgta"}],
                    ["div", {cla: "dlgbuttonsdiv"},
                     ["button", {type: "button", id: "savecalbutton",
                                 onclick: jt.fs("app.pcd.saveCalEmbed()")},
-                     "Update Embed"]]]]]];
+                     "Update Embed"]],
+                   ["div", {cla: "formline", id: "calembederrdiv"}]]]]];
         return html;
     },
     calSettingsInit = function () {
@@ -573,34 +574,30 @@ app.pcd = (function () {
     },
 
 
-    rssEmbedSettingsHTML = function () {
+    rssSettingsHTML = function () {
         var sr, html;
-        sr = "https://www.commafeed.com";
         if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
             return ""; }
+        sr = "https://www.commafeed.com";  //sample RSS reader
         html = ["div", {cla: "formline"},
-                [["a", {href: "#toggletools",
-                        onclick: jt.fs("app.layout.togdisp('ctmtoolsdiv')")},
+                [["a", {href: "#toggleRSS",
+                        onclick: jt.fs("app.layout.togdisp('ctmrssdiv')")},
                   [["img", {cla: "ctmsetimg", src: "img/rssicon.png"}],
                    ["span", {cla: "settingsexpandlinkspan"},
-                    "RSS and Site Embed"]]],
-                 ["div", {cla: "formline", id: "ctmtoolsdiv",
+                    "RSS"]]],
+                 ["div", {cla: "formline", id: "ctmrssdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    [["RSS allows you to make several web pages into a single news feed. To follow posts for this theme with ",
+                    [["RSS combines multiple sources into a single news feed. To follow posts for this theme with ",
                       ["a", {href: "#sampleRSSReader",
                              onclick: jt.fs("window.open('" + sr + "')")},
                        "an RSS reader"],
                       " use this URL:"],
                      ["div", {cla: "formline"}, 
-                      ["textarea", {id: "rssurlta", cla: "dlgta"}]]]],
-                   ["div", {cla: "formline"},
-                    [["To embed this theme, add this html to your web page:"],
-                     ["div", {cla: "formline"},
-                      ["textarea", {id: "ctmembedta", cla: "dlgta"}]]]]]]]];
+                      ["textarea", {id: "rssurlta", cla: "dlgta"}]]]]]]]];
         return html;
     },
-    rssEmbedSettingsInit = function () {
+    rssSettingsInit = function () {
         var site, ta;
         site = window.location.href;
         if(site.endsWith("/")) {
@@ -610,6 +607,68 @@ app.pcd = (function () {
             ta.readOnly = true;
             ta.value = site + "/rsscoop?coop=" + 
                 jt.instId(dst.obj); }
+    },
+
+
+    soloSettingsHTML = function () {
+        var html;
+        if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
+               !jt.isId(jt.instId(dst.obj))) {
+            return ""; }
+        dst.obj.soloset = dst.obj.soloset || {};
+        dst.obj.soloset.colors = dst.obj.soloset.colors ||
+            [{name: "backgrnd", value: "#d8d8dd"},
+             {name: "tab", value: "#789897"},
+             {name: "link", value: "#521919"},
+             {name: "hover", value: "#885555"}];
+        html = [];
+        dst.obj.soloset.colors.forEach(function (cdef) {
+            html.push(["div", {cla: "formline"},
+                       [["label", {fo: cdef.name + "in", cla: "liflab"},
+                         cdef.name],
+                        ["input", {id: cdef.name + "in", cla: "lifin",
+                                   type: "color", value: cdef.value}]]]); });
+        html = ["div", {cla: "formline"},
+                [["a", {href: "#togglepermcolors",
+                        onclick: jt.fs("app.layout.togdisp('ctmcolordiv')")},
+                  [["img", {cla: "ctmsetimg", src: "img/colors.png"}],
+                   ["span", {cla: "settingsexpandlinkspan"},
+                    "Permalink Page Colors"]]],
+                 ["div", {cla: "formline", id: "ctmcolordiv",
+                          style: "display:none;"},
+                  [html,
+                   ["div", {cla: "dlgbuttonsdiv"},
+                    ["button", {type: "button", id: "savecolorsbutton",
+                                onclick: jt.fs("app.pcd.saveSoloColors()")},
+                     "Update Colors"]],
+                   ["div", {cla: "formline", id: "colorupderrdiv"}]]]]];
+        return html;
+    },
+
+
+    embedSettingsHTML = function () {
+        var html;
+        if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
+            return ""; }
+        html = ["div", {cla: "formline"},
+                [["a", {href: "#toggletools",
+                        onclick: jt.fs("app.layout.togdisp('ctmembeddiv')")},
+                  [["img", {cla: "ctmsetimg", src: "img/embed.png"}],
+                   ["span", {cla: "settingsexpandlinkspan"},
+                    "Embed Theme"]]],
+                 ["div", {cla: "formline", id: "ctmembeddiv",
+                          style: "display:none;"},
+                  [["div", {cla: "formline"},
+                    [["To embed this theme, add this html to your web page:"],
+                     ["div", {cla: "formline"},
+                      ["textarea", {id: "ctmembedta", cla: "dlgta"}]]]]]]]];
+        return html;
+    },
+    embedSettingsInit = function () {
+        var site, ta;
+        site = window.location.href;
+        if(site.endsWith("/")) {
+            site = site.slice(0, -1); }
         ta = jt.byId('ctmembedta');
         if(ta) {
             ta.readOnly = true;
@@ -860,6 +919,25 @@ app.pcd = (function () {
     },
 
 
+    createColorOverrides = function () {
+        var ckeys, sheet;
+        if(!dst || !dst.obj || !dst.obj.soloset || ! dst.obj.soloset.colors) {
+            return; }
+        ckeys = { backgrnd: { sel: "body", attr: "background"},
+                  tab: {sel: ".unselectedTab", attr: "background"},
+                  link: {sel: "A:link,A:visited,A:active", attr: "color"},
+                  hover: {sel: "A:hover", attr: "color"} };
+        sheet = window.document.styleSheets[0];
+        dst.obj.soloset.colors = dst.obj.soloset.colors || [];
+        dst.obj.soloset.colors.forEach(function (cdef) {
+            var sels = ckeys[cdef.name].sel.csvarray();
+            sels.forEach(function (sel) {
+                var rule = sel + " { " + ckeys[cdef.name].attr + ": " +
+                    cdef.value + "; }";
+                sheet.insertRule(rule, sheet.cssRules.length); }); });
+    },
+
+
     displayObject = function (obj, expid) {
         var defs, html;
         obj = obj || dst.obj;
@@ -891,6 +969,7 @@ app.pcd = (function () {
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         if(app.solopage()) {
+            createColorOverrides();
             displayRSSAndHomeLinks(); }
         setTimeout(backgroundVerifyObjectData, 100);
         displayTab(dst.tab, expid);
@@ -1052,14 +1131,19 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   calendarSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
-                  rssEmbedSettingsHTML()]]];
+                  rssSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
+                  soloSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
+                  embedSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    app.login.accountSettingsInit();
                                    picSettingsInit();
                                    descripSettingsInit();
                                    calSettingsInit();
-                                   rssEmbedSettingsInit(); });
+                                   rssSettingsInit();
+                                   embedSettingsInit(); });
     },
 
 
@@ -1146,9 +1230,27 @@ return {
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
             failfunc = function (code, errtxt) {
                 jt.byId('savecalbutton').disabled = false;
-                jt.out('imgupstatdiv', "Update failed code " + code +
+                jt.out('calembederrdiv', "Update failed code " + code +
                        ": " + errtxt); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
+    },
+
+
+    saveSoloColors: function () {
+        var defs = dst[dst.type];
+        jt.byId('savecolorsbutton').disabled = true;
+        dst.obj.soloset.colors.forEach(function (cdef, idx) {
+            var color = jt.byId(cdef.name + "in").value;
+            dst.obj.soloset.colors[idx].value = color; });
+        defs.objupdate(dst.obj,
+            function (updobj) {
+                dst.obj = updobj;
+                app.layout.cancelOverlay();
+                app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); },
+            function (code, errtxt) {
+                jt.byId('savecolorsbutton').disabled = false;
+                jt.out('colorupderrdiv', "Update failed code " + code +
+                       ": " + errtxt); });
     },
 
 

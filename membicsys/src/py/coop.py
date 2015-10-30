@@ -29,6 +29,7 @@ class Coop(db.Model):
     rejects = db.TextProperty()     #CSV of rejected member application penids
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
+    soloset = db.TextProperty()     #JSON settings for solo page display
     
 
 def id_in_csv(idval, csv):
@@ -121,6 +122,7 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.error(400)
         handler.response.out.write("Embed code must be an iframe")
         return False
+    coop.soloset = handler.request.get('soloset')
     # picture is uploaded separately
     # frequency not used anymore
     # membership fields are handled separately
