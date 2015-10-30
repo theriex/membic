@@ -24,6 +24,7 @@ var app = {},  //Global container for application level funcs and values
     app.winh = 0;
     app.minSideBySide = (320 + 320 + 10);  //smallest possible expanded display
     app.introtext = "";
+    app.hardhome = "https://membicsys.appspot.com";
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";

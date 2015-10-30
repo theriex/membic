@@ -620,6 +620,22 @@ app.pcd = (function () {
     },
 
 
+    signInToFollowHTML = function () {
+        var html, url;
+        //if they are logged in, then they will know enough to click
+        //the membic icon to go to the main site.  No need for a message.
+        if(app.login.isLoggedIn() || (dst.type !== "coop")) {
+            return ""; }
+        html = "Sign in to follow or join.<br/>";
+        if(app.solopage()) {
+            url = app.hardhome + "?view=coop&coopid=" + dst.id;
+            html = ["a", {href: url, title: dst.obj.name + " full page",
+                          onclick: jt.fs("window.open('" + url + "')")},
+                    html]; }
+        return html;
+    },
+
+
     historyCheckpoint = function () {
         var histrec = { view: dst.type, tab: dst.tab };
         histrec[dst.type + "id"] = dst.id;
@@ -1166,8 +1182,7 @@ return {
                     shtxt = "Direct theme URL:"; }
                 html = [
                     ["span", {cla: "shoutspan"},
-                     ((app.login.isLoggedIn() || (dst.type !== "coop"))? "" : 
-                      "Sign in to follow or join.<br/>")],
+                     signInToFollowHTML()],
                     ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style"},
                      [["a", {cla: "a2a_dd",
                              href: "https://www.addtoany.com/share_save"}],
@@ -1459,6 +1474,9 @@ return {
 
     fetchAndDisplay: function (dtype, id, tab, expid) {
         app.pcd.blockfetch(dtype, id, function (obj) {
+            if(!obj) {
+                jt.log("pcd.fetchAndDisplay no obj");
+                return app.activity.redisplay(); }
             app.pcd.display(dtype, id, tab || "", obj, expid); });
     }
 
