@@ -827,6 +827,29 @@ app.pcd = (function () {
     },
 
 
+    displayRSSAndHomeLinks = function () {
+        var coords, absdiv, html, homeurl, rssurl;
+        coords = jt.geoPos(jt.byId('tabsdiv'));
+        absdiv = jt.byId('overlaydiv');
+        absdiv.style.left = "130px";
+        absdiv.style.top = String(coords.y - 10) + "px";
+        absdiv.style.background = "transparent";
+        absdiv.style.border = "none";
+        absdiv.style.boxShadow = "none";
+        absdiv.style.visibility = "visible";
+        homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
+        rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
+        html = [["a", {href: rssurl, title: dst.obj.name + " RSS feed",
+                       onclick: jt.fs("window.open('" + rssurl + "')")},
+                 ["img", {cla: "webjump", src: "img/rssicon.png"}]],
+                "&nbsp; &nbsp;",
+                ["a", {href: homeurl, title: dst.obj.name + " full page",
+                       onclick: jt.fs("window.open('" + homeurl + "')")},
+                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]]];
+        jt.out('overlaydiv', jt.tac2html(html));
+    },
+
+
     backgroundVerifyObjectData = function () {
         var pen;
         if(dst.type === "coop" && jt.hasId(dst.obj)) {
@@ -867,6 +890,8 @@ app.pcd = (function () {
                    ["div", {id: "tabtitlediv"}]]],
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
+        if(app.solopage()) {
+            displayRSSAndHomeLinks(); }
         setTimeout(backgroundVerifyObjectData, 100);
         displayTab(dst.tab, expid);
     },
