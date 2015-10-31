@@ -19,15 +19,9 @@ var membicEmbed = (function () {
     ////////////////////////////////////////
 
 
-    computeFrameDimensions = function (mdiv) {
-        var pos, contheight, height, width;
-        pos = jt.geoPos(mdiv);
-        contheight = document.body.scrollHeight + pos.x;
-        contheight += 50;  //extra padding to help things work out
-        height = window.innerHeight - contheight;
-        width = document.body.offsetWidth;
-        framedim.width = Math.max(framedim.width, width);
-        framedim.height = Math.max(framedim.height, height);
+    computeFrameDimensions = function () {
+        framedim.width = Math.max(framedim.width, window.innerWidth);
+        framedim.height = Math.max(framedim.height, window.innerHeight);
         //width and/or height may be overridden in embed href params
         framedim.width = embparams.width || framedim.width;
         framedim.height = embparams.height || framedim.height;
