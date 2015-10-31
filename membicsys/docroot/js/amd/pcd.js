@@ -792,7 +792,7 @@ app.pcd = (function () {
     displayFavorites = function () {
         app.review.displayReviews('pcdcontdiv', "pcd", getFavoriteReviews(),
                                   "app.pcd.toggleRevExpansion", 
-                                  (dst.type === "coop"));
+                                  ((dst.type === "coop") && !app.solopage()));
     },
 
 
