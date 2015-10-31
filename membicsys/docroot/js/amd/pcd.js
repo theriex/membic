@@ -679,6 +679,20 @@ app.pcd = (function () {
     },
 
 
+    permalinkInfoHTML = function () {
+        var html;
+        if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
+               !jt.isId(jt.instId(dst.obj))) {
+            return ""; }
+        html = ["a", {href: "solopageinfo",
+                      onclick: jt.fs(
+                          "app.layout.displayDoc('docs/themepage.html')")},
+                ["&nbsp;",
+                 ["img", {cla: "ctmsetimg", src: "img/info.png"}]]];
+        return html;
+    },
+
+
     signInToFollowHTML = function () {
         var html, url;
         //if they are logged in, then they will know enough to click
@@ -1320,6 +1334,7 @@ return {
                       ["a", {cla: "a2a_button_email"}],
                       shareInviteHTML()]],
                     ["span", {cla: "shoutspan"}, shtxt],
+                    permalinkInfoHTML(),
                     ["br"],
                     ["span", {id: "shurlspan"},
                      ["a", {href: linkurl,

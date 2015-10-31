@@ -37,7 +37,7 @@ app.layout = (function () {
             url = url.slice(0, idx); }
         url = url.capitalize();
         //title overrides
-        if(url === "About" || url === "Howto") {
+        if(url === "About" || url === "Howto" || url === "Themepage") {
             url = ""; }
         //display content
         html = app.layout.dlgwrapHTML(url, html);
