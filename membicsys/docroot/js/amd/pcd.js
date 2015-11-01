@@ -952,6 +952,15 @@ app.pcd = (function () {
     },
 
 
+    changeSiteTabIcon = function () {
+        var link = document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = "ctmpic?" + dst.type + "id=" + dst.id;
+        document.getElementsByTagName('head')[0].appendChild(link);
+    },
+
+
     displayObject = function (obj, expid) {
         var defs, html;
         obj = obj || dst.obj;
@@ -984,6 +993,7 @@ app.pcd = (function () {
         jt.out('contentdiv', jt.tac2html(html));
         if(app.solopage()) {
             createColorOverrides();
+            changeSiteTabIcon();
             displayRSSAndHomeLinks(); }
         setTimeout(backgroundVerifyObjectData, 100);
         displayTab(dst.tab, expid);
