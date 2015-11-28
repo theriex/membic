@@ -54,8 +54,8 @@ app.review = (function () {
                        "Gripping", "Informational" ] },
           { type: "article", plural: "articles", img: "TypeArticle50.png",
             keyprompt: "Title",
-            key: "title", subkey: "author",
-            fields: [ "publisher", "year" ],
+            key: "title", //subkey
+            fields: [ "author", "publisher", "year" ],
             dkwords: [ "Newsworthy", "Informative", 
                        "Eloquent", "Educational" ] },
           { type: "movie", plural: "movies", img: "TypeMovie50.png",
