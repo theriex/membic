@@ -23,23 +23,28 @@ app.activity = (function () {
     ////////////////////////////////////////
 
     mergePersonalRecent = function (feedtype, feedrevs) {
-        var revs = [], mr, mridx = 0;
+        var revs = [], frcsv = "", mr, mridx = 0;
         if(!app.pen.myPenId()) {
             return feedrevs; }  //no personal membics to merge in
+        //non-destructively merge in recent personal membics into the 
+        //server main feed, without messing up the server display order
+        feedrevs.forEach(function (fr) {  //build the id lookup reference list
+            var frid = jt.instId(fr);
+            if(!frcsv.csvcontains(frid)) {
+                frcsv = frcsv.csvappend(frid); } });
         mr = app.lcs.getCachedRecentReviews(feedtype, app.pen.myPenId());
         mr.sort(function (a, b) {
             if(a.modified < b.modified) { return 1; }
             if(a.modified > b.modified) { return -1; }
             return 0; });
-        //non-destructively merge in feedrevs without messing up the
-        //server sort order.
         feedrevs.forEach(function (fr) {
-            while(mridx < mr.length && mr[mridx].modified > fr.modified) {
+            //push everything local that's newer and not in server list
+            while(mridx < mr.length && 
+                      mr[mridx].modified > fr.modified &&
+                      !frcsv.csvcontains(jt.instId(mr[mridx]))) {
                 revs.push(mr[mridx]);
                 mridx += 1; }
-            if(!revs.length || 
-                   jt.instId(fr) !== jt.instId(revs[revs.length - 1])) {
-                revs.push(fr); } });
+            revs.push(fr); });
         return revs;
     },
 

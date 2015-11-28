@@ -682,8 +682,9 @@ def rebuild_reviews_block(handler, pct, pgid):
 
 
 def feedcsventry(review):
-    return str(review.key().id()) + ":" + str(review.penid) +\
+    entry = str(review.key().id()) + ":" + str(review.penid) +\
         ":" + str(review.ctmid)
+    return entry
 
 
 def get_review_feed_pool(revtype):
@@ -708,7 +709,10 @@ def get_review_feed_pool(revtype):
     revs = rq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                     deadline=60)
     for rev in revs:
-        feedcsv = append_to_csv(feedcsventry(rev), feedcsv)
+        entry = feedcsventry(rev)
+        if csv_contains(entry, feedcsv):
+            continue  # already added, probably from earlier srcrev reference
+        feedcsv = append_to_csv(entry, feedcsv)
         blocks[bidx] = append_to_csv(obj2JSON(rev), blocks[bidx])
         count += 1
         if rev.srcrev and rev.srcrev > 0:  # ensure source included in block
