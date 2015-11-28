@@ -210,7 +210,7 @@ return {
 
 
     getKeywordUse: function (pen) {
-        var kwu = { recent: {}, system: {} };
+        var kwds, kwu = { recent: {}, system: {} };
         app.review.getReviewTypes().forEach(function (rt) {
             kwu.recent[rt.type] = "";
             kwu.system[rt.type] = rt.dkwords.join(","); });
@@ -219,7 +219,8 @@ return {
                 rev = app.lcs.getRef("rev", rev);
                 if(rev) { 
                     rev = rev.rev;
-                    rev.keywords.csvarray().forEach(function (kwd) {
+                    kwds = rev.keywords || "";
+                    kwds.csvarray().forEach(function (kwd) {
                         var keycsv = kwu.recent[rev.revtype];
                         if(!keycsv.csvcontains(kwd)) {
                             keycsv = keycsv.csvappend(kwd);
