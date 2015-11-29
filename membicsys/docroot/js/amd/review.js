@@ -944,7 +944,7 @@ app.review = (function () {
 
 
     dlgRevTypeSelection = function () {
-        var html = [];
+        var html = [], tpd;
         reviewTypes.forEach(function (rt) {
             var clt = (crev.revtype === rt.type) ? "reviewbadgesel" 
                                                  : "reviewbadge";
@@ -960,6 +960,10 @@ app.review = (function () {
             if(!crev.url) {
                 html = "&#x21E7; Read URL or select type &#x21E7;"; }
             else {
+                tpd = jt.byId("rdtypepromptdiv");
+                tpd.style.color = "#AB7300";
+                tpd.style.fontWeight = "bold";
+                tpd.style.fontSize = "medium";
                 html = "&#x21E7;Select type&#x21E7;"; } }
         jt.out("rdtypepromptdiv", html);
         jt.byId("urlin").value = crev.url || "";
