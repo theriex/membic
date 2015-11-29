@@ -1894,7 +1894,8 @@ return {
                    ["div", {cla: "fpdescrdiv", id: revdivid + "descrdiv"},
                     abbreviatedReviewText(prefix, revid, rev, togfname)],
                    ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
-                   ["div", {cla: "fpctmsdiv", id: revdivid + "ctmsdiv"}]]]]];
+                   ["div", {cla: "fpctmsdiv", id: revdivid + "ctmsdiv"},
+                    postedCoopLinksHTML(rev)]]]]];
         return html;
     },
 
@@ -2016,7 +2017,7 @@ return {
             jt.out(revdivid + "descrdiv", 
                    abbreviatedReviewText(prefix, revid, rev));
             jt.out(revdivid + "keysdiv", "");
-            jt.out(revdivid + "ctmsdiv", ""); }
+            jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
         else {  //expand
             app.layout.scrollToVisible(revdivid + "buttonsdiv");
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
