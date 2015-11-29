@@ -1441,17 +1441,16 @@ return {
             text = "",
             keywords = keycsv.split(",");
         keywords.forEach(function (kw) {
-            if(kw) {  //have something not a null value or empty string
-                kw = kw.trim();  //remove any extraneous comma space
-                if(kw === cbox.value) {
-                    kw = ""; }
-                if(text && kw) {  //have a keyword already and appending another
-                    text += ", "; }
-                text += kw; } });
-        if(cbox.checked) {
-            if(text) {
-                text += ", "; }
-            text += cbox.value; }
+            if(kw) {
+                kw = kw.trim(); }
+            if(kw && !text.csvcontains(kw)) {
+                text = text.csvappend(kw); } });
+        if(cbox) {
+            if(cbox.checked) {
+                text = text.csvappend(cbox.value); }
+            else {
+                text = text.csvremove(cbox.value.trim()); } }
+        text = text.replace(/,/g, ", ");
         return text;
     },
 
