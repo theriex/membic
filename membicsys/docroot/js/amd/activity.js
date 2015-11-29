@@ -22,12 +22,15 @@ app.activity = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    //Non-destructively merge in recent personal membics into the
+    //server main feed, without messing up the server display order.
+    //The main feed is ordered by creation time not modification time,
+    //so that people are not tempted to modify their membics just to
+    //keep them at the top of the display.
     mergePersonalRecent = function (feedtype, feedrevs) {
         var revs = [], frcsv = "", mr, mridx = 0;
         if(!app.pen.myPenId()) {
             return feedrevs; }  //no personal membics to merge in
-        //non-destructively merge in recent personal membics into the 
-        //server main feed, without messing up the server display order
         feedrevs.forEach(function (fr) {  //build the id lookup reference list
             var frid = jt.instId(fr);
             if(!frcsv.csvcontains(frid)) {
@@ -40,7 +43,7 @@ app.activity = (function () {
         feedrevs.forEach(function (fr) {
             //push everything local that's newer and not in server list
             while(mridx < mr.length && 
-                      mr[mridx].modified > fr.modified &&
+                      mr[mridx].modhist > fr.modhist &&
                       !frcsv.csvcontains(jt.instId(mr[mridx]))) {
                 revs.push(mr[mridx]);
                 mridx += 1; }
