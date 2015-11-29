@@ -1035,12 +1035,15 @@ app.pcd = (function () {
     shareViaAddToAny = function (name, url) {
         var js;
         if(!addToAnyScriptLoaded) {
+            //the script executes on load, so nothing left to do after
+            //adding the script tag to the document
             js = document.createElement('script');
             js.async = true;
             js.src = "//static.addtoany.com/menu/page.js";
             document.body.appendChild(js);
             addToAnyScriptLoaded = true; }
         else {
+            //reinitialize the sharing display via the API
             a2a_config.linkname = name;
             a2a_config.linkurl = url;
             a2a.init('page'); }
@@ -1365,7 +1368,11 @@ return {
                             onclick: jt.fs("window.open('" + linkurl + "')")},
                       linkurl]]];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
-                shareViaAddToAny(dst.obj.name, linkurl); } }
+                try {
+                    shareViaAddToAny(dst.obj.name, linkurl);
+                } catch(e) {
+                    jt.log("shareViaAddToAny failed: " + e);
+                } } }
     },
 
 
