@@ -376,23 +376,15 @@ app.login = (function () {
                     ["span", {cla: "taslinkspan"},
                      "Sign out"]];
             jt.out('toprightdiv', jt.tac2html(html));
-            html = [
-                ["div", {id: "topbuttonsdiv"},
-                 [["a", {href: "#remembered", title: "Remembered membics",
-                         onclick: jt.fs("app.login.topnav('remembered')")},
-                   [["img", {cla: "topbuttonimg",
-                             src: "img/remembered.png"}],
-                    ["span", {id: "rememberedcountspan"},
-                     mypen.remembered.csvarray().length || ""]]],
-                  ["a", {href: "#write", title: "Make a membic",
-                         onclick: jt.fs("app.login.topnav('write')")},
-                   ["img", {cla: "topbuttonimg",
-                            src: "img/writereview.png"}]]]],
-                ["div", {id: "topproflinkdiv"},
-                 ["a", {href: "#view=pen&penid=" + jt.instId(mypen),
-                        onclick: jt.fs("app.login.topnav('mymembics')")},
-                  ["span", {cla: "taslinkspan"},
-                   "My membics"]]]];
+            html = [["div", {id: "topbuttonsdiv"},
+                     [["a", {href: "#profile", title: "Your membics",
+                             onclick: jt.fs("app.login.topnav('mymembics')")},
+                       ["img", {cla: "topbuttonimg",
+                                src: "img/profile.png"}]],
+                      ["a", {href: "#write", title: "Make a membic",
+                             onclick: jt.fs("app.login.topnav('write')")},
+                       ["img", {cla: "topbuttonimg",
+                                src: "img/writereview.png"}]]]]];
             jt.out('topactionsdiv', jt.tac2html(html)); }
     },
 

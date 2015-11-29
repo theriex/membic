@@ -16,6 +16,7 @@ app.activity = (function () {
     var feeds = {},  //all keys are arrays of membics
         feedmeta = {},
         bootmon = { tout: null, count: 0 },
+        memodiv = "",
 
 
     ////////////////////////////////////////
@@ -182,16 +183,19 @@ return {
     },
 
 
-    displayRemembered: function (filtertype) {
+    getRememberedMembics: function () {
+        var revs = app.review.filterByRevtype(feeds.remembered,
+                                              app.layout.getType());
+        return revs;
+    },
+
+
+    displayRemembered: function (divid) {
         var params, revs, revids;
-        app.history.checkpoint({ view: "memo" });
-        jt.out("contentdiv", jt.tac2html(
-            [["div", {cla: "disptitlediv"}, "REMEMBERED MEMBICS"],
-             ["div", {id: "feedrevsdiv"}]]));
-        filtertype = filtertype || app.layout.getType();
+        memodiv = divid || memodiv;
         if(!feeds.remembered) {
             if(!feeds.future) {
-                jt.out('feedrevsdiv', "Fetching future reviews...");
+                jt.out(memodiv, "Fetching future membics...");
                 params = app.login.authparams() + "&penid=" + 
                     app.pen.myPenId() + jt.ts("&cb=", "second");
                 jt.call('GET', "fetchprerevs?" + params, null,
@@ -200,18 +204,18 @@ return {
                             feeds.future = reviews;
                             app.activity.displayRemembered(); },
                         app.failf(function (code, errtxt) {
-                            jt.out('feedrevsdiv', "Error code: " + code + 
+                            jt.out(memodiv, "Error code: " + code + 
                                    ": " + errtxt); }),
                         jt.semaphore("activity.displayRemembered"));
                 return; }
             if(!feeds.memo) { //resolve remembered reviews
-                jt.out('feedrevsdiv', "Resolving remembered reviews...");
+                jt.out(memodiv, "Resolving remembered membics...");
                 revs = [];
                 revids = app.pen.myPenName().remembered.csvarray();
                 if(!revids.every(function (cv) {
                     var revref = app.lcs.getRef("rev", cv);
                     if(revref.status === "not cached") {
-                        jt.out('feedrevsdiv', "Resolving membic " + cv);
+                        jt.out(memodiv, "Resolving membic " + cv);
                         app.lcs.getFull("rev", cv, 
                                         app.activity.displayRemembered);
                         return false; }
@@ -220,16 +224,15 @@ return {
                     return true; })) { 
                     return; }  //not every ref fetched yet
                 feeds.memo = revs; }
-            jt.out('feedrevsdiv', "Merging and sorting...");
+            jt.out(memodiv, "Merging and sorting...");
             revs = feeds.future.concat(feeds.memo);
             revs.sort(function (a, b) {
                 if(a.modified < b.modified) { return 1; }
                 if(a.modified > b.modified) { return -1; }
                 return 0; });
             feeds.remembered = app.review.collateDupes(revs); }
-        app.layout.displayTypes(app.activity.displayRemembered, filtertype);
-        revs = app.review.filterByRevtype(feeds.remembered, filtertype);
-        app.review.displayReviews("feedrevsdiv", "rrd", revs,
+        revs = app.activity.getRememberedMembics();
+        app.review.displayReviews(memodiv, "rrd", revs,
                                   "app.activity.toggleExpansion", "author",
                                   noRememberedHintHTML());
     },

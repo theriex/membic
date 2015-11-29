@@ -48,7 +48,7 @@ button, .loginbutton, .formbutton {
 #logodiv, #logoimg { width:80px; height:80px; }
 #topactionsdiv { display:inline-block; vertical-align:top; }
 #topbuttonsdiv { height:50px; vertical-align:top; }
-.topbuttonimg { height:40px; width:40px; padding:10px 5px 0px 15px; }
+.topbuttonimg { padding:10px 5px 0px 15px; }
 #topproflinkdiv { }
 .taslinkspan { font-size:small; padding-left:5px; padding-right:10px; }
 #rememberedcountspan { font-size:small; display:inline-block; 

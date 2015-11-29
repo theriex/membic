@@ -37,6 +37,10 @@ app.pcd = (function () {
                                    img: "img/top.png",
                                    mtitle: "My top membics",
                                    otitle: "Top membics"},
+                      memo:      { href: "#rememberedmembics",
+                                   img: "img/tabmemo.png",
+                                   mtitle: "My remembered membics",
+                                   otitle: "Remembered membics"},
                       search:    { href: "#searchmembics",
                                    img: "img/search.png",
                                    mtitle: "Search my membics",
@@ -798,6 +802,13 @@ app.pcd = (function () {
 
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
+    displayRemembered = function () {
+        app.activity.displayRemembered('pcdcontdiv');
+    },
+
+
+    //Called from displayTab
+    //Called from layout.displayTypes when membic type selected
     displaySearch = function () {
         var html;
         html = [["div", {id: "pcdsrchdiv"},
@@ -869,6 +880,8 @@ app.pcd = (function () {
         var html = [];
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
+        if(!app.solopage() && dst.id === app.pen.myPenId()) {
+            html.push(tabHTMLFromDef("memo")); }
         if(!app.solopage()) {
             html.push(tabHTMLFromDef("search")); }
         if(dst.type === "pen") {
@@ -1063,6 +1076,7 @@ app.pcd = (function () {
         if(!knowntabs.latest.dispfunc) {
             knowntabs.latest.dispfunc = displayRecent;
             knowntabs.favorites.dispfunc = displayFavorites;
+            knowntabs.memo.dispfunc = displayRemembered;
             knowntabs.search.dispfunc = displaySearch;
             knowntabs.prefpens.dispfunc = app.pcd.displayPrefPens;
             knowntabs.coops.dispfunc = app.pcd.displayCoops;
@@ -1431,6 +1445,9 @@ return {
             break;
         case "favorites":
             revs = getFavoriteReviews();
+            break;
+        case "memo":
+            revs = app.activity.getRememberedMembics();
             break;
         case "search":
             revs = srchst.revs;
