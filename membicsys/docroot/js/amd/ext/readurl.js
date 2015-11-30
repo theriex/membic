@@ -220,14 +220,12 @@ app.readurl = (function () {
         //the Facebook title is frequently better than the default tag title
         elem = elementForString(html, "og:title", "meta");
         if(elem) {
-            val = valueForField(elem, "content");
-            if(val) {
-                review.title = val;
-                review.name = val;
-                return; } }
-        val = findTagContents(html, "title", url);
-        val = fixSpamdexing(val);
+            val = valueForField(elem, "content"); }
+        else {
+            val = findTagContents(html, "title", url);
+            val = fixSpamdexing(val); }
         if(val) {
+            val = val.replace(/&quot;/g, "\"");
             review.title = val;
             review.name = val; }
     },
