@@ -42,6 +42,7 @@ app.layout = (function () {
         //display content
         html = app.layout.dlgwrapHTML(url, html);
         app.layout.openDialog({x: 20, y: window.pageYOffset + 40}, html);
+        app.layout.crumbify();
     },
 
 
@@ -215,6 +216,38 @@ return {
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt); },
                    jt.semaphore("layout.displayDoc"));
+    },
+
+
+    crumbify: function (index) {
+        var i, cb, cf, sections, cht;
+        index = index || 0;
+        cb = jt.byId('crumbsbackdiv');
+        cf = jt.byId('crumbsforwarddiv');
+        sections = document.getElementsByClassName("docsecdiv");
+        if(!cb || !cf || !sections || !sections.length) {
+            return; }  //nothing to do
+        for(i = 0; i < sections.length; i += 1) {
+            sections[i].style.display = "none"; }
+        sections[index].style.display = "block";
+        cht = cb.children[0].outerHTML;  //origin anchor link from doc
+        for(i = 0; i < index; i += 1) {
+            cht += " ";
+            cht += jt.tac2html(
+                ["a", {href: "#" + jt.canonize(sections[i].title),
+                       onclick: jt.fs("app.layout.crumbify(" + i + ")")},
+                 [["img", {src: "img/arrow18left.png"}],
+                  " " + sections[i].title]]); }
+        cb.innerHTML = cht;
+        cht = "";
+        for(i = index + 1; i < sections.length; i += 1) {
+            cht += " ";
+            cht += jt.tac2html(
+                ["a", {href: "#" + jt.canonize(sections[i].title),
+                       onclick: jt.fs("app.layout.crumbify(" + i + ")")},
+                 [["img", {src: "img/arrow18right.png"}],
+                  " " + sections[i].title]]); }
+        cf.innerHTML = cht;
     },
 
 

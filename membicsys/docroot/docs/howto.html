@@ -10,49 +10,40 @@
 <body>
 
 <div class="howtocontentdiv">
+<div id="crumbsbackdiv">
+  <a href="docs/about.html"
+     onclick="app.layout.displayDoc('docs/about.html');return false;">
+    <img src="img/arrow18left.png"/> about membic.com</a>
+</div>
 
 <!-- ////////////////////////////////////////////////// -->
-<div id="htfeeddiv" class="htsecdiv">
-
-<a href="docs/about.html"
-   onclick="app.layout.displayDoc('docs/about.html');return false;">
-<img src="img/arrow18left.png"/> about membic.com</a>
+<div id="htfeeddiv" class="docsecdiv" title="Community membics">
 
 <h3>Community membics <img src="img/membiclogo.png" class="hthimg"/></h3>
 
 <p>When you first open membic.com, or click the main logo, you see the
-most recent membics posted by the community.  What you see is filtered
-automatically for you, but if you particularly like or dislike what
-someone is posting you can click the <img src="img/nopref.png"
-class="intxtico"/> under their picture to prefer, background, or block
-membics from them (they won't know). </p>
+most recent membics posted by the entire membic community.  What you
+see is filtered automatically for you, but if you particularly like or
+dislike what someone is posting you can click the
+<img src="img/nopref.png" class="intxtico"/> under their picture to
+prefer, background, or block membics from them (they won't know). </p>
 
 <p>If you only want to see membics of a particular type, you can use
 the type toggle buttons at the top of the page.</p>
 
-<p>If you see a membic that looks interesting, click the title to
-expand actions and posting details.  If the membic was helpful or
-remarkable (in a good way) you can <img src="img/helpful.png"
-class="intxtico"/> it to show your appreciation.  Think of "star" as
-kind of a hybrid "like" or "upvote" thing.  You can also click
-<img src="img/rememberq.png" class="intxtico"/> to remember anything
-you might want to follow up on later.  To make your own membic
-from the one you are viewing, click <img src="img/writereview.png"
-class="intxtico"/>. </p>
-
-
-<a href="#MakingAMembic",
-   onclick="app.dispsecdiv('htwritediv','htsecdiv');return false;">
-<img src="img/arrow18right.png"/> Making a membic</a>
+<p>If you see a membic that looks interesting, click the title to see
+more.  If the membic was helpful or remarkable (in a good way) you can
+<img src="img/helpful.png" class="intxtico"/> it to show your
+appreciation.  Think of "star" as kind of a "like" or "upvote" thing.
+You can also click <img src="img/rememberq.png" class="intxtico"/> to
+remember anything you might want to follow up on later.  To make your
+own membic from the one you are viewing, click
+<img src="img/writereview.png" class="intxtico"/>. </p>
 
 
 </div> <!-- htfeeddiv -->
 <!-- ////////////////////////////////////////////////// -->
-<div id="htwritediv" class="htsecdiv" style="display:none;">
-
-<a href="#CommunityMembics",
-   onclick="app.dispsecdiv('htfeeddiv','htsecdiv');return false;">
-<img src="img/arrow18left.png"/> Community membics</a>
+<div id="htwritediv" class="docsecdiv" title="Making a membic">
 
 <h3>Making a membic <img src="img/writereview.png" class="hthimg"/></h3>
 
@@ -70,35 +61,28 @@ self about what you think is most memorable.  If there are additional
 keywords you want, just type them into the keywords box separated by
 commas. </p>
 
-<p>If you haven't finished the membic, but want to save the identifying
-information for later, check the "future" checkbox and you can find
-the membic again later by clicking <img src="img/remembered.png"
-class="intxtico"/> (your memory). </p>
+<p>If you haven't finished the membic, but want to save the
+identifying information for later, check the "future" checkbox and you
+can find the membic again later under the "remembered" tab in your
+profile. </p>
 
-<a href="#YourMembics",
-   onclick="app.dispsecdiv('htprofdiv','htsecdiv');return false;">
-<img src="img/arrow18right.png"/> Your membics</a>
 
 
 </div> <!-- htwritediv -->
 <!-- ////////////////////////////////////////////////// -->
-<div id="htprofdiv" class="htsecdiv" style="display:none;">
+<div id="htprofdiv" class="docsecdiv" title="Your profile">
 
-<a href="#MakingAMembic",
-   onclick="app.dispsecdiv('htwritediv','htsecdiv');return false;">
-<img src="img/arrow18left.png"/> Making a membic</a>
+<h3>Your profile <img src="img/profile.png" class="hthimg"/></h3>
 
-<h3>Your membics</h3>
-
-<p>To access your membics, click "My membics".  Membic.com
-automatically keeps track of your most recent membics
-<img src="img/tablatest.png" class="intxtico"/>, and your top membics
-of all time <img src="img/top.png" class="intxtico"/>.  The search tab
-<img src="img/search.png" class="intxtico"/> allows you to quickly
-locate membics you've written, even if it was a long time ago.  The
-preferred tab <img src="img/prefer.png" class="intxtico"> provides
+<p>Your profile automatically keeps track of your most recent membics
+(<img src="img/tablatest.png" class="intxtico"/>), your top membics of
+all time (<img src="img/top.png" class="intxtico"/>), and any remembered
+or future membics (<img src="img/tabmemo.png" class="intxtico"/>).  The
+search tab (<img src="img/search.png" class="intxtico"/>) allows you to
+quickly locate membics you've written, even if it was a long time ago.
+The preferred tab (<img src="img/prefer.png" class="intxtico">) provides
 quick access to pen names you think are notable, and the themes tab
-<img src="img/tabctms.png" class="intxtico"/> holds themes you are
+(<img src="img/tabctms.png" class="intxtico"/>) holds themes you are
 following or are a member of.</p>
 
 <p>To edit your profile details, click the gears icon next to your pen
@@ -108,46 +92,36 @@ you can provide a link in your profile description. </p>
 <p>If you want to share your profile with others, click your name for
 convenient share buttons and your profile permalink. </p>
 
-<a href="#Themes",
-   onclick="app.dispsecdiv('htthemesdiv','htsecdiv');return false;">
-<img src="img/arrow18right.png"/> Themes</a>
-
 
 </div> <!-- htprofdiv -->
 <!-- ////////////////////////////////////////////////// -->
-<div id="htthemesdiv" class="htsecdiv" style="display:none;">
-
-<a href="#YourMembics",
-   onclick="app.dispsecdiv('htprofdiv','htsecdiv');return false;">
-<img src="img/arrow18left.png"/> Your membics</a>
+<div id="htthemesdiv" class="docsecdiv" title="Themes">
 
 <h3>Themes <img src="img/tabctms.png" class="hthimg"/></h3>
 
 <p>If some of the membics you note are related to an ongoing interest,
-you can create a theme to collect them.  Themes are similar to
-profiles in that they track recent and top membics, and can be
-searched, but themes can also support cooperative postings from
-multiple members. </p>
+you can create a theme to collect them.  Themes can be shared with
+other people who have similar ongoing interests.  Themes support
+cooperative postings from multiple members, recent/top membics, and
+search. </p>
 
 <p>To find cooperative themes, look for a "Posted to" line in the
-expanded membic display.  If it's there, you can click the link to
-go to the theme, then click the follow button if you are interested
-in the content.  If you are following, and would also like to
-contribute content, you can apply for membership. </p>
+membic display.  Click that link to go to the theme, then click the
+follow button if you are interested in the content.  If you are
+following a theme and find that you would like to add membics to that
+theme as a contributor, you can apply for membership.  After creating
+or joining a theme, you'll have the option to post through to it
+anytime you create or edit a membic. </p>
 
-<p>Themes provide workflow for content moderation, and member
-management.  They also support RSS, can be linked to external event
-calendars, and can be embedded into other websites.  Click the
-settings button on the theme for details. </p>
-
-<p>After creating or joining a theme, you'll have the option to post
-through to it anytime you create or edit a membic. </p>
-
-<a href="docs/about.html"
-   onclick="app.layout.displayDoc('docs/about.html');return false;">
-<img src="img/arrow18left.png"/> about membic.com</a>
+<p>Themes support RSS, can be linked to external event calendars, and
+can be embedded into other websites. These capabilities enable you to
+connect your membics to your news feeds, social media, and web
+presence. Click the settings button on a theme you are following for
+details. </p>
 
 </div> <!-- htthemesdiv -->
+<!-- maybe add another section for theme workflow/moderation -->
+<div id="crumbsforwarddiv"></div>
 </div> <!-- howtocontentdiv -->
 <div id="returnlinkdiv" style="text-align:center; display:none;">
   <a href="https://www.membic.com">Return to membic.com</a>

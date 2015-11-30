@@ -129,6 +129,7 @@ var app = {},  //Global container for application level funcs and values
                             jt.log("noted referrer: " + document.referrer); },
                         app.failf); }, 2); }
         setTimeout(app.login.init, 10);
+        //setTimeout(app.layout.displayDoc, 500);
     };
 
 
@@ -265,14 +266,6 @@ var app = {},  //Global container for application level funcs and values
                 div.style.display = "none"; }
             else {
                 div.style.display = "block"; } }
-    };
-
-
-    app.dispsecdiv = function (divid, secla) {
-        var i, sections = document.getElementsByClassName(secla);
-        for(i = 0; i < sections.length; i += 1) {
-            sections[i].style.display = "none"; }
-        jt.byId(divid).style.display = "block";
     };
 
 
