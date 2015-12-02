@@ -1360,7 +1360,6 @@ return {
                       ["a", {cla: "a2a_button_twitter"}],
                       ["a", {cla: "a2a_button_google_plus"}],
                       ["a", {cla: "a2a_button_wordpress"}],
-                      ["a", {cla: "a2a_button_email"}],
                       shareInviteHTML()]],
                     ["span", {cla: "shoutspan"}, shtxt],
                     permalinkInfoHTML(),

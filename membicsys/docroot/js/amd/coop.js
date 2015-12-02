@@ -27,6 +27,24 @@ app.coop = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    followerEmailLinkHTML = function () {
+        var dst, subj, body, href, html;
+        dst = app.pcd.getDisplayState();
+        subj = "Invitation to follow " + dst.obj.name;
+        body = "Hi,\n\n" +
+            "I'm writing a theme on membic.com called \"" + dst.obj.name + "\", that I thought you might be interested in. If you join membic.com, you can follow for easy access to my latest and greatest posts. Check out the theme at\n\n" +
+            app.secsvr + "?view=coop&coopid=" + dst.id + "\n\n" +
+            "Hope you like it!\n\n";
+        href = "mailto:?subject=" + jt.dquotenc(subj) +
+            "&body=" + jt.dquotenc(body);
+        html = ["a", {href: href},
+                [["img", {src: "img/email.png", cla: "inlineimg"}],
+                 ["span", {cla: "emlinktext"},
+                  "Invite"]]];
+        return html;
+    },
+
+
     emailInviteLinkHTML = function (emaddr) {
         var dst, subj, body, href, html;
         dst = app.pcd.getDisplayState();
@@ -121,17 +139,24 @@ return {
             email = inviteobj.email;
             html = emailInviteLinkHTML(inviteobj.email); }
         html = ["div", {id: "coopinvitedlgdiv"},
-                ["div", {cla: "pcdsectiondiv"},
-                 [["p", {cla: "dlgpara"}, 
-                   "To invite someone as a contributing member, pre-approve their membership, then send them a mail message."],
-                  ["div", {cla: "formline"},
-                   [["label", {fo: "emailin", cla: "liflab"}, "Email"],
-                    ["input", {id: "emailin", cla: "lifin", type: "email",
-                               value: email, disabled: jt.toru(inviteobj),
-                               placeholder: "user@example.com"}]]],
-                  ["div", {id: "errmsgdiv", cla: "dlgpara"}],
-                  ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
-                   html]]]];
+                [["div", {cla: "pcdsectiondiv"},
+                  [["h4", "Invite Follower"],
+                   ["p", {cla: "dlgpara"},
+                    "To invite someone to follow your theme, send them a mail message with the theme name and link."],
+                   ["div", {cla: "dlgbuttonsdiv", id: "invitefollowdiv"},
+                    followerEmailLinkHTML()]]],
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["h4", "Invite Member"],
+                   ["p", {cla: "dlgpara"}, 
+                    "To invite someone as a contributing member, pre-approve their membership, then send them a mail message."],
+                   ["div", {cla: "formline"},
+                    [["label", {fo: "emailin", cla: "liflab"}, "Email"],
+                     ["input", {id: "emailin", cla: "lifin", type: "email",
+                                value: email, disabled: jt.toru(inviteobj),
+                                placeholder: "user@example.com"}]]],
+                   ["div", {id: "errmsgdiv", cla: "dlgpara"}],
+                   ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
+                    html]]]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
     },
 
