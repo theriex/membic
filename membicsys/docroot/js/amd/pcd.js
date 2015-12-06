@@ -917,7 +917,7 @@ app.pcd = (function () {
         var coords, absdiv, html, homeurl, rssurl;
         coords = jt.geoPos(jt.byId('tabsdiv'));
         absdiv = jt.byId('overlaydiv');
-        absdiv.style.left = "130px";
+        absdiv.style.left = (dst.type === "pen"? "230px" : "130px");
         absdiv.style.top = String(coords.y - 10) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
