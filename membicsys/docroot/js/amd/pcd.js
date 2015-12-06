@@ -582,7 +582,7 @@ app.pcd = (function () {
         var sr, html;
         if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
             return ""; }
-        sr = "https://www.commafeed.com";  //sample RSS reader
+        sr = "https://feedly.com";  //sample RSS reader
         html = ["div", {cla: "formline"},
                 [["a", {href: "#toggleRSS",
                         onclick: jt.fs("app.layout.togdisp('ctmrssdiv')")},
