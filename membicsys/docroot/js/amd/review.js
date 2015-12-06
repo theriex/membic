@@ -1372,6 +1372,7 @@ return {
         var cb, srchtxt;
         cb = jt.byId("rdaccb");
         if(!cb || !cb.checked) {
+            //jt.log("autocomp rdaccb not found or not checked");
             jt.out('revautodiv', "");
             return; }
         if(crev.autocomp && jt.byId('revautodiv') && jt.byId('keyin')) {
@@ -1379,6 +1380,7 @@ return {
             if(jt.byId('subkeyin')) {
                 srchtxt += " " + jt.byId('subkeyin').value; }
             if(srchtxt !== autocomptxt) {
+                //jt.log("autocomp new srchtxt: " + srchtxt);
                 autocomptxt = srchtxt;
                 if(crev.revtype === 'book' || crev.revtype === 'movie' ||
                    crev.revtype === 'music') {
@@ -1391,10 +1393,13 @@ return {
 
 
     runAutoComp: function () {
-        if(!crev.autocomp) {
-            jt.out('revautodiv', ""); }
-        else {
+        var cb = jt.byId("rdaccb");
+        crev.autocomp = cb && cb.checked;
+        if(crev.autocomp) {
+            autocomptxt = "";  //reset so search happens if toggling back on
             app.review.autocompletion(); }
+        else {
+            jt.out('revautodiv', ""); }
     },
 
 
