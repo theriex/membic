@@ -612,7 +612,7 @@ app.review = (function () {
                                       pn.ctmid + "')")},
                  pn.name])); });
         html = ["span", {cla: "fpctmlinkslab"}, 
-                "Posted to: " + links.join(", ")];
+                "Posted to: " + links.join(" | ")];
         return jt.tac2html(html);
     },
 
