@@ -27,12 +27,13 @@ app.coop = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    followerEmailLinkHTML = function () {
-        var dst, subj, body, href, html;
+    followerEmailLinkHTML = function (mlev) {
+        var dst, subj, body, href, html, 
+            involv = mlev? "I'm writing" : "I've found";
         dst = app.pcd.getDisplayState();
         subj = "Invitation to follow " + dst.obj.name;
         body = "Hi,\n\n" +
-            "I'm writing a theme on membic.com called \"" + dst.obj.name + "\", that I thought you might be interested in. If you join membic.com, you can follow for easy access to my latest and greatest posts. Check out the theme at\n\n" +
+            involv + " a theme on membic.com called \"" + dst.obj.name + "\", that I thought you might be interested in. If you join membic.com, you can follow for easy access to the latest and greatest posts. Check out the theme at\n\n" +
             app.secsvr + "?view=coop&coopid=" + dst.id + "\n\n" +
             "Hope you like it!\n\n";
         href = "mailto:?subject=" + jt.dquotenc(subj) +
@@ -128,40 +129,42 @@ return {
     },
 
 
-    showInviteDialog: function (inviteobj) {
-        var email = "", html;
+    showInviteDialog: function (mlev, inviteobj) {
+        var email = "", action, html = [];
         //action is either the db update button or sending mail
         if(!inviteobj) {
-            html = ["button", {type: "button", id: "memapprovebutton",
-                               onclick: jt.fs("app.coop.updateInvite()")},
-                    "Pre-Approve Membership"]; }
+            action = ["button", {type: "button", id: "memapprovebutton",
+                                 onclick: jt.fs("app.coop.updateInvite(" + 
+                                                mlev + ")")},
+                      "Pre-Approve Membership"]; }
         else {
             email = inviteobj.email;
-            html = emailInviteLinkHTML(inviteobj.email); }
-        html = ["div", {id: "coopinvitedlgdiv"},
-                [["div", {cla: "pcdsectiondiv"},
+            action = emailInviteLinkHTML(inviteobj.email); }
+        html.push(["div", {cla: "pcdsectiondiv"},
                   [["h4", "Invite Follower"],
                    ["p", {cla: "dlgpara"},
-                    "To invite someone to follow your theme, send them a mail message with the theme name and link."],
+                    "To invite someone to follow <em>" + app.pcd.getDisplayState().obj.name + "</em>, send them a mail message with the theme name and link."],
                    ["div", {cla: "dlgbuttonsdiv", id: "invitefollowdiv"},
-                    followerEmailLinkHTML()]]],
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["h4", "Invite Member"],
-                   ["p", {cla: "dlgpara"}, 
-                    "To invite someone as a contributing member, pre-approve their membership, then send them a mail message."],
-                   ["div", {cla: "formline"},
-                    [["label", {fo: "emailin", cla: "liflab"}, "Email"],
-                     ["input", {id: "emailin", cla: "lifin", type: "email",
-                                value: email, disabled: jt.toru(inviteobj),
-                                placeholder: "user@example.com"}]]],
-                   ["div", {id: "errmsgdiv", cla: "dlgpara"}],
-                   ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
-                    html]]]]];
+                    followerEmailLinkHTML(mlev)]]]);
+        if(mlev >= 2) { //Founder
+            html.push(["div", {cla: "pcdsectiondiv"},
+                       [["h4", "Invite Member"],
+                        ["p", {cla: "dlgpara"}, 
+                         "To invite someone as a contributing member, pre-approve their membership and then send them a mail message."],
+                        ["div", {cla: "formline"},
+                         [["label", {fo: "emailin", cla: "liflab"}, "Email"],
+                          ["input", {id: "emailin", cla: "lifin", type: "email",
+                                     value: email, disabled: jt.toru(inviteobj),
+                                     placeholder: "user@example.com"}]]],
+                        ["div", {id: "errmsgdiv", cla: "dlgpara"}],
+                        ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
+                         action]]]); }
+        html = ["div", {id: "coopinvitedlgdiv"}, html];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
     },
 
 
-    updateInvite: function () {
+    updateInvite: function (mlev) {
         var buttonhtml, email, data;
         buttonhtml = jt.byId('invitebuttondiv').innerHTML;
         jt.out('invitebuttondiv', "Approving Membership...");
@@ -171,7 +174,7 @@ return {
             "&coopid=" + app.pcd.getDisplayState().id;
         jt.call('POST', "invitebymail?" + app.login.authparams(), data,
                 function (invites) {
-                    app.coop.showInviteDialog(invites[0]); },
+                    app.coop.showInviteDialog(mlev, invites[0]); },
                 app.failf(function (code, errtxt) {
                     jt.out('errmsgdiv', "Invite failed " + code + 
                            ": " + errtxt);

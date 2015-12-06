@@ -1051,15 +1051,13 @@ app.pcd = (function () {
 
 
     shareInviteHTML = function () {
-        var html;
+        var html, mlev = app.coop.membershipLevel(dst.obj, app.pen.myPenId());
         //The solo page display uses the overlaydiv to provide RSS and 
         //site return links, so no invite or similar dialogs that use it.
-        if(dst.type !== "coop" || app.solopage() ||
-           app.coop.membershipLevel(dst.obj, app.pen.myPenId()) < 2) {
-            return ""; }
         html = ["div", {id: "invitelinkdiv"},
                 ["a", {href: "#invite",
-                       onclick: jt.fs("app.coop.showInviteDialog()")},
+                       onclick: jt.fs("app.coop.showInviteDialog(" + 
+                                      mlev + ")")},
                  "Invite"]];
         return html;
     },
