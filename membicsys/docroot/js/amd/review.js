@@ -392,6 +392,18 @@ app.review = (function () {
     },
 
 
+    validateCurrentReviewFields = function () {
+        var errors = [], rt;
+        rt = findReviewType(crev.revtype);
+        if(!rt) {
+            errors.push("Need to choose a type");
+            return errors; }
+        readAndValidateFieldValues(rt, errors);
+        verifyRatingStars(rt, errors);
+        return errors;
+    },
+
+
     displaySitePicLabel = function () {
         var html = ["div", {cla: "ptdvdiv"}, 
                     ["span", {cla: "ptdlabspan"}, "Site Pic"]];
@@ -1245,6 +1257,21 @@ app.review = (function () {
         dlgTextEntry();
         dlgKeywordEntry();
         dlgCoopPostSelection();
+    },
+
+
+    noteSaveError = function (statdivid, code, errtxt) {
+        if(!code) {  
+            //Most like the server just hung up on us and couldn't
+            //even be bothered to send a status code.  Guess it was
+            //too busy.  Usually the save works if you try again a
+            //second time, and that's what most people will do if
+            //nothing happens, so better to just eat this error rather
+            //than bothering to display a potentially confusing and
+            //vague error message.  Log and continue.
+            jt.log("Save fail 0: Call completed but not successful");
+            return; }
+        jt.out(statdivid, "Save fail " + code + ": " + errtxt);
     };
 
 
@@ -1309,7 +1336,8 @@ return {
 
     updatedlg: function (typename) {
         app.layout.cancelOverlay(true);  //close if already open or done
-        if(typename) {  
+        if(typename) {
+            jt.out('rdokstatdiv', "");  //clear errs e.g. "need to choose type"
             //rebuild the pic and details area
             if(jt.byId('rdstarsdiv') && crev.srcrev !== -101) {
                 //turn off the star functions if they were active
@@ -1468,23 +1496,16 @@ return {
 
 
     save: function (skipvalidation) {
-        var errors = [], errtxt = "", rt, data, html;
+        var errors, data, html;
         //remove save button immediately to avoid double click dupes...
         html = jt.byId('rdokbuttondiv').innerHTML;
         if(!skipvalidation) {
             jt.out('rdokbuttondiv', "Verifying...");
-            rt = findReviewType(crev.revtype);
-            if(!rt) {
-                jt.out('rdokbuttondiv', html);
-                jt.out('rdokstatdiv', "Need to choose a type");
-                return; }
-            readAndValidateFieldValues(rt, errors);
-            verifyRatingStars(rt, errors);
+            errors = validateCurrentReviewFields();
             if(errors.length > 0) {
-                jt.out('rdokbuttondiv', html);
-                errors.forEach(function (errmsg) {
-                    errtxt += errmsg + "<br/>"; });
-                jt.out('rdokstatdiv', errtxt);
+                jt.out('rdokstatdiv', errors.reduce(function (pv, cv) {
+                    return pv + cv + "<br/>"; }, ""));
+                jt.out('rdokbuttondiv', html); 
                 return; }
             if(!app.coop.confirmPostThrough(crev)) {
                 jt.out('rdokbuttondiv', html);
@@ -1513,8 +1534,8 @@ return {
                     app.layout.closeDialog();
                     app.login.doNextStep({}); },
                 app.failf(function (code, errtxt) {
-                    jt.out('rdokstatdiv', "Save fail " + code + ": " + errtxt);
-                    jt.out('rdokbuttondiv', html); }),
+                    jt.out('rdokbuttondiv', html);
+                    noteSaveError('rdokstatdiv', code, errtxt); }),
                 jt.semaphore("review.save"));
     },
 
