@@ -132,6 +132,9 @@ app.amazon = (function () {
     },
 
 
+    //Extract the ASIN assuming the format used in the autocomplete
+    //links. General Amazon links may have arbitrary unknown
+    //constructions that are not worth trying to guess.
     extractASIN = function (url) {
         var pieces = url.split("?");
         pieces = pieces[0].split("/");
@@ -157,8 +160,9 @@ return {
                      setReviewFields(review, jt.dec(json[0].content));
                      app.review.updatedlg(); },
                  app.failf(function (code, errtxt) {
-                     jt.err("Amazon data retrieval failed code " + 
+                     jt.log("Amazon data retrieval failed code " + 
                              code + ": " + errtxt);
+                     jt.err("Amazon URL could not be read.");
                      app.review.updatedlg(); }),
                 jt.semaphore("amazon.fetchData"));
     }
