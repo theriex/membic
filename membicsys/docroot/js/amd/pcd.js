@@ -1034,19 +1034,32 @@ app.pcd = (function () {
 
     shareViaAddToAny = function (name, url) {
         var js;
-        if(!addToAnyScriptLoaded) {
-            //the script executes on load, so nothing left to do after
-            //adding the script tag to the document
-            js = document.createElement('script');
-            js.async = true;
-            js.src = "//static.addtoany.com/menu/page.js";
-            document.body.appendChild(js);
-            addToAnyScriptLoaded = true; }
-        else {
-            //reinitialize the sharing display via the API
-            a2a_config.linkname = name;
-            a2a_config.linkurl = url;
-            a2a.init('page'); }
+        try {
+            if(!addToAnyScriptLoaded) {
+                //the script executes on load, so nothing left to do after
+                //adding the script tag to the document
+                js = document.createElement('script');
+                //js.async = true;
+                js.type = "text/javascript";
+                js.src = "//static.addtoany.com/menu/page.js";
+                document.body.appendChild(js);
+                jt.log("addtoany script loaded");
+                addToAnyScriptLoaded = true; }
+            else {
+                //reinitialize the sharing display via the API
+                jt.log("resetting addtoany config variables and calling init");
+                a2a_config.linkname = name;
+                a2a_config.linkurl = url;
+                a2a.init('page'); }
+        } catch(e) {
+            jt.log("shareViaAddToAny failed: " + e);
+        }
+        setTimeout(function () {
+            //jslint says to check if a2a_config === undefined but that does
+            //not work in mac ff 42.0
+            if(typeof a2a_config === 'undefined') {
+                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
+                   3500);
     },
 
 
@@ -1351,7 +1364,8 @@ return {
                 html = [
                     ["span", {cla: "shoutspan"},
                      signInToFollowHTML()],
-                    ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style"},
+                    ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style",
+                             id: "a2abdiv"},
                      [["a", {cla: "a2a_dd",
                              href: "https://www.addtoany.com/share_save"}],
                       ["a", {cla: "a2a_button_facebook"}],
@@ -1367,11 +1381,11 @@ return {
                             onclick: jt.fs("window.open('" + linkurl + "')")},
                       linkurl]]];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
-                try {
-                    shareViaAddToAny(dst.obj.name, linkurl);
-                } catch(e) {
-                    jt.log("shareViaAddToAny failed: " + e);
-                } } }
+                //make sure the above html is in place before loading
+                //the autorun addtoany script. Break the control flow,
+                //but not enough to be laggy if already loaded.
+                setTimeout(function () {
+                    shareViaAddToAny(dst.obj.name, linkurl); }, 80); } }
     },
 
 
