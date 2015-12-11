@@ -30,6 +30,7 @@ class Coop(db.Model):
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
     soloset = db.TextProperty()     #JSON settings for solo page display
+    keywords = db.TextProperty()    #CSV of custom theme keywords
     
 
 def id_in_csv(idval, csv):
@@ -123,6 +124,7 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.response.out.write("Embed code must be an iframe")
         return False
     coop.soloset = handler.request.get('soloset')
+    coop.keywords = handler.request.get('keywords')
     # picture is uploaded separately
     # frequency not used anymore
     # membership fields are handled separately

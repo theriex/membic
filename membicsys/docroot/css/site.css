@@ -263,7 +263,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rdtextdiv { clear:both; padding:5px 0px 0px 0px; }
 #rdta { width:275px; height:80px; padding:3px; overflow:auto;
   background-color:#e8e8ed; }
-#rdkwcbsdiv { width:260px; margin:auto; overflow:auto; }
+#rdkwcbsdiv, .ctmkwdiv { width:260px; margin:auto; overflow:auto; }
 .rdkwcbdiv { display:inline-block; width:130px; font-size:small; 
   padding:0px 0px 10px 0px; }
 .rdctmdiv { padding:0px 0px 8px 0px; }

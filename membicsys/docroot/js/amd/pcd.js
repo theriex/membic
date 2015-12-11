@@ -496,13 +496,10 @@ app.pcd = (function () {
     },
 
 
-    keywordSettingsHTML = function () {
-        var kwu, html;
-        if(dst.type !== "pen") {
-            return ""; }
+    reviewTypeKeywordsHTML = function () {
+        var kwu, html = [];
         app.pen.verifyStashKeywords(dst.obj);
         kwu = app.pen.getKeywordUse(dst.obj);
-        html = [];
         app.review.getReviewTypes().forEach(function (rt) {
             html.push(
                 ["div", {cla: "rtkwdiv", id: "rtkwdiv" + rt.type},
@@ -519,12 +516,42 @@ app.pcd = (function () {
                    ["span", {cla: "kwcsvspan"},
                     [["span", {cla: "kwcsvlabel"}, "Default:"],
                      jt.spacedCSV(kwu.system[rt.type])]]]]]); });
+        return html;
+    },
+
+
+    themeKeywordsHTML = function () {
+        var html;
+        html = ["div", {cla: "rtkwdiv", id: "themekwdiv"},
+                ["div", {cla: "formline"},
+                 [["img", {cla: "reviewbadge", 
+                           src: "ctmpic?" + dst.type + "id=" + dst.id}],
+                  ["input", {id: "kwcsvin", cla: "keydefin",
+                             type: "text", 
+                             placeholder: "keywords separated by commas",
+                             value: dst.obj.keywords}]]]];
+        return html;
+    },
+
+
+    keywordSettingsHTML = function () {
+        var label, html;
+        switch(dst.type) {
+        case "pen": 
+            label = "Checkbox Keywords";
+            html = reviewTypeKeywordsHTML(); 
+            break;
+        case "coop": 
+            label = "Theme Keywords";
+            html = themeKeywordsHTML(); 
+            break;
+        default: return ""; }
         html = ["div", {cla: "formline"},
                 [["a", {href: "#togglecustomkeywords",
                         onclick: jt.fs("app.layout.togdisp('penkwdsdiv')")},
                   [["img", {cla: "ctmsetimg", src: "img/tag.png"}],
                    ["span", {cla: "settingsexpandlinkspan"},
-                    "Checkbox Keywords"]]],
+                    label]]],
                  ["div", {cla: "formline", id: "penkwdsdiv",
                           style: "display:none;"},
                   [html,
@@ -1055,8 +1082,7 @@ app.pcd = (function () {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
-            //jslint says to check if a2a_config === undefined but that does
-            //not work in mac ff 42.0
+            //check if a2a_config === undefined does not work mac ff 42.0
             if(typeof a2a_config === 'undefined') {
                 jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
                    3500);
@@ -1245,10 +1271,16 @@ return {
 
 
     updateKeywords: function () {
-        app.review.getReviewTypes().forEach(function (rt) {
-            var val = jt.byId("kwcsvin" + rt.type).value;
-            dst.obj.stash.keywords[rt.type] = val; });
-        app.pen.updatePen(dst.obj, app.pcd.redisplay, app.failf);
+        var val;
+        if(dst.type === "pen") {
+            app.review.getReviewTypes().forEach(function (rt) {
+                val = jt.byId("kwcsvin" + rt.type).value;
+                dst.obj.stash.keywords[rt.type] = val; });
+            app.pen.updatePen(dst.obj, app.pcd.redisplay, app.failf); }
+        else if(dst.type === "coop") {
+            val = jt.byId("kwcsvin").value;
+            dst.obj.keywords = val;
+            app.coop.updateCoop(dst.obj, app.pcd.redisplay, app.failf); }
     },
 
 

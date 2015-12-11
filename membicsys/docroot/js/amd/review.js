@@ -1,4 +1,4 @@
-/*global setTimeout, window, confirm, app, jt, google */
+/*global setTimeout, window, confirm, app, jt, google, document */
 
 /*jslint white, fudge, for */
 
@@ -364,8 +364,8 @@ app.review = (function () {
 
     notePostingCoops = function () {
         crev.ctmids = "";
-        app.pen.postableCoops().forEach(function (ctm, i) {
-            var ctmcb = jt.byId("dctmcb" + i);
+        app.pen.postableCoops().forEach(function (ctm) {
+            var ctmcb = jt.byId("dctmcb" + ctm.ctmid);
             if(ctmcb && ctmcb.checked) {
                 crev.ctmids = crev.ctmids.csvappend(ctm.ctmid); } });
     },
@@ -1196,25 +1196,60 @@ app.review = (function () {
     },
 
 
+    displayThemeCheckboxes = function (ctm) {
+        var html = [], chk, kwid;
+        ctm.keywords = ctm.keywords || "";
+        ctm.keywords.csvarray().forEach(function (kwd, idx) {
+            chk = jt.toru(crev.keywords.indexOf(kwd) >= 0, "checked");
+            kwid = "ctm" + jt.instId(ctm) + "kw" + idx;
+            html.push(["div", {cla: "rdkwcbdiv"},
+                       [["input", {type: "checkbox", id: kwid, 
+                                   cla: "keywordcheckbox",
+                                   value: kwd, checked: chk,
+                                   onclick: jt.fsd("app.review.togkey('" +
+                                                   kwid + "')")}],
+                        ["label", {fo: kwid}, kwd]]]); });
+        jt.out("ctmkwdiv" + jt.instId(ctm), jt.tac2html(html));
+    },
+
+
     dlgCoopPostSelection = function () {
-        var rt, html = [];
+        var rt, ctms, html = [];
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
-        app.pen.postableCoops().forEach(function (ctm, i) {
+        ctms = app.pen.postableCoops();
+        ctms.forEach(function (ctm) {
             var posted = jt.toru(postedCoopRevId(ctm.ctmid));
             html.push(["div", {cla: "rdctmdiv"},
                        [["div", {cla: "rdglpicdiv"},
                          ["img", {cla: "rdglpic", alt: "",
                                   src: "ctmpic?coopid=" + ctm.ctmid}]],
-                        ["input", {type: "checkbox", id: "dctmcb" + i,
-                                   value: ctm.ctmid, checked: posted}],
-                        ["label", {fo: "dctm" + i, cla: "penflist"}, 
-                         ctm.name]]]); });
+                        ["input", {type: "checkbox", id: "dctmcb" + ctm.ctmid,
+                                   cla: "keywordcheckbox",
+                                   value: ctm.ctmid, checked: posted,
+                                   onclick: jt.fsd("app.review.togctmpost('" +
+                                                   ctm.ctmid + "')")}],
+                        ["label", {fo: "dctm" + ctm.ctmid, cla: "penflist"}, 
+                         ctm.name],
+                        ["div", {cla: "ctmkwdiv", 
+                                 id: "ctmkwdiv" + ctm.ctmid}]]]); });
         if(html.length > 0) {
             html.unshift(["div", {cla: "formline"}]);
             html.unshift(["div", {cla: "liflab"}, "Post To"]); }
         jt.out('rdgdiv', jt.tac2html(html));
+        ctms.forEach(function (ctm) {
+            app.review.togctmpost(ctm.ctmid); });
+    },
+
+
+    setAllCheckboxes = function (value, checked) {
+        //getElementsByClassName returns partial results macFF42
+        var nodes = document.getElementsByTagName("input");
+        value = value.trim();
+        Array.prototype.forEach.call(nodes, function (node) {
+            if(node.type === "checkbox" && node.value.trim() === value) {
+                node.checked = checked; } });
     },
 
 
@@ -1486,7 +1521,8 @@ return {
             if(cbox.checked) {
                 text = text.csvappend(cbox.value); }
             else {
-                text = text.csvremove(cbox.value.trim()); } }
+                text = text.csvremove(cbox.value.trim()); }
+            setAllCheckboxes(cbox.value, cbox.checked); }
         text = text.replace(/,/g, ", ");
         return text;
     },
@@ -1497,6 +1533,17 @@ return {
         rdkwin = jt.byId('rdkwin');
         keycsv = app.review.keywordcsv(kwid, rdkwin.value);
         rdkwin.value = keycsv;
+    },
+
+
+    togctmpost: function (ctmid) {
+        var cbox = jt.byId("dctmcb" + ctmid);
+        if(cbox) {
+            if(cbox.checked) {
+                app.lcs.getFull("coop", ctmid, function (coopref) {
+                    displayThemeCheckboxes(coopref.coop); }); }
+            else {
+                jt.out("ctmkwdiv" + ctmid, ""); } }
     },
 
 
