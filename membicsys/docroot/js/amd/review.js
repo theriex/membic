@@ -1275,6 +1275,16 @@ app.review = (function () {
     },
 
 
+    typeAndTitle = function (type, rev, togclick) {
+        var html;
+        html = [["img", {cla: "reviewbadge", src: "img/" + type.img,
+                         title: type.type, alt: type.type}],
+                "&nbsp;",
+                app.pcd.reviewItemNameHTML(type, rev)];
+        return titleLink(rev, togclick, html);
+    },
+
+
     cacheNames = function (rev) {
         app.pennames[rev.penid] = rev.penname;
         convertOldThemePostLabel(rev);
@@ -1600,21 +1610,6 @@ return {
 
     getCurrentReview: function () {
         return crev;
-    },
-
-
-    reviewTypeIconHTML: function (type, rev, togclick) {
-        var html = ["img", {cla: "reviewbadge", src: "img/" + type.img,
-                            title: type.type, alt: type.type}];
-        html = titleLink(rev, togclick, html);
-        return html;
-    },                   
-
-
-    reviewTitleHTML: function(type, rev, togclick) {
-        var html = app.pcd.reviewItemNameHTML(type, rev);
-        html = titleLink(rev, togclick, html);
-        return html;
     },
 
 
@@ -1947,24 +1942,27 @@ return {
 
 
     revdispHTML: function (prefix, revid, rev, togfname) {
-        var revdivid, type, html, togclick;
+        var revdivid, type, html, togclick, snjattr;
         togfname = togfname || "app.review.toggleExpansion";
         togclick = jt.fs(togfname + "('" + prefix + "','" + revid + "')");
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
         fixReviewURL(rev);
+        snjattr = {cla: "starsnjumpdiv", 
+                   style: (app.winw < 600)? "float:right;" 
+                                          : "display:inline-block;"};
         html = ["div", {cla: (prefix === "rrd"? "fpmeminrevdiv"
                                               : "fpinrevdiv")},
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
-                 ["div", {cla: "fptypediv"},
-                  app.review.reviewTypeIconHTML(type, rev, togclick)],
                  ["div", {cla: "fptitlediv"},
-                  app.review.reviewTitleHTML(type, rev, togclick)],
-                 ["div", {cla: "fpstarsdiv"},
-                  app.review.starsImageHTML(rev)],
-                 ["div", {cla: "fpjumpdiv"},
-                  app.review.jumpLinkHTML(rev, type)],
+                  [typeAndTitle(type, rev, togclick),
+                   "&nbsp;",
+                   ["div", snjattr, 
+                    [["div", {cla: "fpstarsdiv"},
+                      app.review.starsImageHTML(rev)],
+                     ["div", {cla: "fpjumpdiv"},
+                      app.review.jumpLinkHTML(rev, type)]]]]],
                  ["div", {cla: "fpsecfieldsdiv", id: revdivid + "secdiv"}],
                  ["div", {cla: "fpdatediv", id: revdivid + "datediv"}],
                  ["div", {cla: "fpbodydiv"},

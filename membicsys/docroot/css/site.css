@@ -312,7 +312,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpotherrevsdiv { }
 .fptitlediv { display:inline-block; padding:0px 10px 0px 5px; }
 .fpstarsdiv { display:inline-block; }
-.fptypediv { display:inline-block; }
 .fpsecfieldsdiv { margin-left:35px; /* reviewbadge + fptitlediv */
   font-size:x-small; }
 .fpdatediv { margin-left:5px; font-size: xx-small; }
