@@ -611,8 +611,9 @@ app.review = (function () {
                        onclick: jt.fs("app.coop.bycoopid('" +
                                       pn.ctmid + "')")},
                  pn.name])); });
-        html = ["span", {cla: "fpctmlinkslab"}, 
-                "Posted to: " + links.join(" | ")];
+        html = ["span", {cla: "fpctmlinksspan"},
+                [["span", {cla: "fpctmlinkslab"}, "Posted to: "],
+                 links.join(" | ")]];
         return jt.tac2html(html);
     },
 
