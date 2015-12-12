@@ -45,7 +45,7 @@ button, .loginbutton, .formbutton {
 #topsectiondiv { }
 #topleftdiv { float:left; }
 #logodiv { cursor:pointer; display:inline-block; } 
-#logodiv, #logoimg { width:80px; height:80px; }
+#logodiv, #logoimg { width:78px; height:78px; }
 #topactionsdiv { display:inline-block; vertical-align:top; }
 #topbuttonsdiv { height:50px; vertical-align:top; }
 .topbuttonimg { padding:10px 5px 0px 15px; }
