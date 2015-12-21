@@ -1,5 +1,5 @@
 /*global d3, jtminjsDecorateWithUtilities, window */
-/*jslint white, fudge */
+/*jslint browser, white, fudge */
 
 //This is a degenerate module just used for reporting.  Don't model it.
 var actstat;
@@ -13,45 +13,65 @@ actstat = (function () {
     var jt = {},
         botids = [],
         stats = null,
-        // colors = [ "Maroon", "Crimson", "red", "Salmon",
-        //            "OrangeRed", "orange", "GoldenRod", "yellow",
-        //            "Chartreuse", "green", "DarkGreen", "LightSeaGreen",
-        //            "blue", "purple", "Indigo", "DarkViolet",
-        //            "Fuchsia", "silver", "DarkKhaki", "SlateGray" ],
-        //key fields for plot lines
-        kflds = [
-            { name: "visits", color: "yellow", min: 0, max: 0,
+        kflds = [  //key fields for plot lines
+            //visiting
+            { name: "visits", color: "GoldenRod",
               desc: "The number of web app initializations where the user was not logged in (no cookie found). If this exceeds the number of logins, then there are people checking out the site without logging in." },
-            { name: "logins", color: "orange", min: 0, max: 0,
+            { name: "clickthru", color: "orange",
+              desc: "How many profiles or themes were accessed directly" },
+            { name: "logins", color: "#ff8a00",
               desc: "The number of web app initializations where the user was logged in (via cookie or via token after logging in)." },
-            { name: "posters", color: "red", min: 0, max: 0,
-              desc: "The number of pen names that posted membics" },
-            { name: "membics", color: "DarkGreen", min: 0, max: 0,
-              desc: "How many new membics were posted" },
-            { name: "edits", color: "LightSeaGreen", min: 0, max: 0,
-              desc: "How many existing membics were edited" },
-            { name: "themeposts", color: "blue", min: 0, max: 0,
-              desc: "How many new theme posts were created" },
-            { name: "starred", color: "purple", min: 0, max: 0,
+            //active read
+            { name: "starred", color: "#0cff00",
               desc: "How many membics were starred" },
-            { name: "remembered", color: "violet", min: 0, max: 0,
+            { name: "remembered", color: "green",
               desc: "How many membics were remembered" },
-            { name: "responded", color: "Fuchsia", min: 0, max: 0,
+            //active write
+            { name: "responded", color: "#007da4",
               desc: "How many membics were created from other membics" },
-            { name: "clickthru", color: "GoldenRod", min: 0, max: 0,
-              desc: "How many profiles or themes were accessed directly" }],
+            { name: "posters", color: "#00ffed",
+              desc: "The number of pen names that posted membics" },
+            { name: "membics", color: "blue",
+              desc: "How many new membics were posted" },
+            { name: "edits", color: "#009fff",
+              desc: "How many existing membics were edited" },
+            { name: "themeposts", color: "#7800ff",
+              desc: "How many new theme posts were created" }],
         //closure level working vars
-        chart,
+        alc,  //activity line chart
 
 
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
 
+    displayKeys = function () {
+        kflds.forEach(function (kf, idx) {
+            var descr, rc;
+            descr = kf.desc + " (series min: " + kf.min + 
+                ", series max: " + kf.max + ")";
+            rc = {x: 40, y: (30 * idx) + 10, w: 100, h: 26};
+            alc.svg.append("rect")
+                .attr({"x": rc.x, "y": rc.y, "width": rc.w, "height": rc.h})
+                .style("fill", kf.color);
+            alc.svg.append("text")
+                .attr({"x": rc.x + 10, "y": rc.y + 18, "fill": "black"})
+                .text(kf.name);
+            alc.svg.append("rect")
+                .attr({"x": rc.x, "y": rc.y, "width": rc.w, "height": rc.h,
+                       "title": descr})
+                .style("fill", kf.color)
+                .style("opacity", 0.01)
+                //.style("fill", "none")
+                .on("mouseover", actstat.sololine(kf.name))
+                .on("mouseout", actstat.sololine()); });
+    },
+
+
     makeChartLine = function (attr) {
         return d3.svg.line()
-            .x(function (d) { return chart.xscale(d.day); })
-            .y(function (d) { return chart.yscale(d[attr]); });
+            .x(function (d) { return alc.xscale(d.day); })
+            .y(function (d) { return alc.yscale(d[attr]); });
     },
 
 
@@ -69,28 +89,33 @@ actstat = (function () {
         mm = kflds.reduce(function (pval, kf) {
             return { min: Math.min(pval.min, kf.min),
                      max: Math.max(pval.max, kf.max) }; }, mm);
+        mm.max *= 1.1;  //add minor headroom at the top of the chart
         return [mm.min, mm.max];
     },
 
 
-    setChartWidthAndHeight = function (keyreserve, minw) {
+    //aim for a nice 3-2 aspect ratio scaling to the screen width
+    setChartWidthAndHeight = function (bottomrsrv, sidersrv, minw) {
         var over;
+        bottomrsrv = bottomrsrv || 0;
+        sidersrv = sidersrv || 50;
         minw = minw || 320;  //take the full width of a phone
-        chart.width = window.innerWidth - (3 * chart.offset.x);
-        chart.height = Math.round((chart.width * 2) / 3);
-        over = chart.height + keyreserve - window.innerHeight;
+        alc.width = (window.innerWidth - (3 * alc.offset.x)) - sidersrv;
+        alc.height = Math.round((alc.width * 2) / 3);
+        over = alc.height + bottomrsrv - window.innerHeight;
         if(over > 0) {
-            chart.width -= Math.round((over * 3) / 2);
-            chart.height = Math.round((chart.width * 2) / 3); }
-        if(chart.width < minw) {
-            chart.width = minw;
-            chart.height = Math.round((chart.width * 2) / 3); }
-        jt.byId('sumdiv').style.width = String(chart.width) + "px";
+            alc.width -= Math.round((over * 3) / 2);
+            alc.height = Math.round((alc.width * 2) / 3); }
+        if(alc.width < minw) {
+            alc.width = minw;
+            alc.height = Math.round((alc.width * 2) / 3); }
+        jt.byId('postersdiv').style.width = String(alc.width) + "px";
+        jt.byId('agentsdiv').style.width = String(alc.width) + "px";
     },
 
 
-    alternatingWeekBackgrounds = function (viz) {
-        var sundaycoords = [], tickw = Math.round(chart.width / stats.length);
+    alternatingWeekBackgrounds = function () {
+        var sundaycoords = [], tickw = Math.round(alc.width / stats.length);
         stats.forEach(function (stat, idx) {
             if(stat.day.getDay() === 0) {  //Sunday
                 sundaycoords.push(idx * tickw); } });
@@ -99,70 +124,53 @@ actstat = (function () {
         else {  //add filler block before first sunday
             sundaycoords.unshift(1); }
         sundaycoords.forEach(function (x, idx) {
-            var width = chart.width;
+            var width = alc.width;
             if(idx < sundaycoords.length - 1) {
                 width = sundaycoords[idx + 1] - x; }
-            viz.append("rect")
+            alc.svg.append("rect")
                 .attr("x", x)
                 .attr("y", 0)
                 .attr("width", width)
-                .attr("height", chart.height)
+                .attr("height", alc.height)
                 .attr("fill", ((idx % 2)? "#ddd" : "#eee")); });
     },
 
 
-    displayChart = function () {
-        var viz, xAxis, yAxis, series;
-        chart = {offset: { x:30, y:20 }};
-        setChartWidthAndHeight(360);
-        chart.xscale = d3.time.scale().range([0, chart.width]);
-        chart.yscale = d3.scale.linear().range([chart.height, 0]);
-        series = makeChartSeries();
-        viz = d3.select("#chartdiv")
+    displayLineChart = function () {
+        alc = {offset: { x:30, y:20 }};
+        setChartWidthAndHeight();
+        alc.xscale = d3.time.scale().range([0, alc.width]);
+        alc.yscale = d3.scale.pow().exponent(0.5).range([alc.height, 0]);
+        alc.series = makeChartSeries();
+        alc.svg = d3.select("#chartdiv")
             .data(stats)
             .append("svg")
-            .attr("width", chart.width + (2 * chart.offset.x))
-            .attr("height", chart.height + (2 * chart.offset.y))
+            .attr("width", alc.width + (2 * alc.offset.x))
+            .attr("height", alc.height + (2 * alc.offset.y))
             .append("g")
             .attr("transform",
-                  "translate(" + chart.offset.x + "," + chart.offset.y + ")");
-        xAxis = d3.svg.axis().scale(chart.xscale).orient("bottom");
-        yAxis = d3.svg.axis().scale(chart.yscale).orient("left");
-        chart.xscale.domain(d3.extent(stats, function (d) { return d.day; }));
-        chart.yscale.domain(d3.extent(minMaxY(), function (d) { return d; }));
-        viz.append("g")
+                  "translate(" + alc.offset.x + "," + alc.offset.y + ")");
+        alc.xAxis = d3.svg.axis().scale(alc.xscale).orient("bottom");
+        alc.yAxis = d3.svg.axis().scale(alc.yscale).orient("left");
+        alc.xscale.domain(d3.extent(stats, function (d) { return d.day; }));
+        alc.yscale.domain(d3.extent(minMaxY(), function (d) { return d; }));
+        alc.svg.append("g")
             .attr("class", "x axis")
-            .attr("transform", "translate(0," + chart.height + ")")
-            .call(xAxis);
-        viz.append("g")
+            .attr("transform", "translate(0," + alc.height + ")")
+            .call(alc.xAxis);
+        alc.svg.append("g")
             .attr("class", "y axis")
-            .call(yAxis);
-        alternatingWeekBackgrounds(viz);
-        series.forEach(function (sdef) {
-            viz.append("path")
+            .call(alc.yAxis);
+        alternatingWeekBackgrounds(alc.svg);
+        alc.series.forEach(function (sdef) {
+            alc.svg.append("path")
                 .datum(stats)
-                .attr("class", "line")
+                .attr("class", "line " + sdef.name)
                 .attr("stroke", sdef.color)
                 .attr("stroke-width", sdef.width)
                 .attr("stroke-dasharray", sdef.dashes)
                 .attr("d", makeChartLine(sdef.name)); });
-    },
-
-
-    displayKeys = function () {
-        var html = [];
-        kflds.forEach(function (kf) {
-            html.push(["tr",
-                       [["td", {style: "background-color:" + kf.color + ";" +
-                                       "padding:5px 10px;" +
-                                       "cursor:crosshair;",
-                                title: kf.desc},
-                         kf.name],
-                        ["td", {cla: "rtxt"}, String(kf.min)],
-                        ["td", {cla: "rtxt"}, String(kf.max)]]]); });
-        html = ["table", {id: "keytable"},
-                html];
-        jt.out('keysdiv', jt.tac2html(html));
+        displayKeys(alc.svg);
     },
 
 
@@ -257,19 +265,8 @@ actstat = (function () {
 
 
     displaySummary = function () {
-        var html = ["table", {id: "sumtable",
-                              style: "margin:auto;"},
-                    ["tr",
-                     [["td", {style: "background:#eee;"},
-                       ["div", {id: "keysdiv"}]],
-                      ["td", {valign: "top", style: "background:#ddd;"},
-                       ["div", {id: "agentsdiv"}]],
-                      ["td", {valign: "top", style: "background:#eee;"},
-                       ["div", {id: "postersdiv"}]]]]];
-        jt.out('sumdiv', jt.tac2html(html));
-        displayKeys();
-        fetchBotListAndDisplayAgents();
         displayPosters();
+        fetchBotListAndDisplayAgents();
     },
 
 
@@ -297,14 +294,15 @@ actstat = (function () {
     verifyKeyFields = function (stat) {
         kflds.forEach(function (kf) {
             stat[kf.name] = stat[kf.name] || 0;
-            kf.min = Math.min(kf.min, stat[kf.name]);
-            kf.max = Math.max(kf.max, stat[kf.name]); });
+            kf.min = Math.min(kf.min || 10000, stat[kf.name]);
+            kf.max = Math.max(kf.max || 0, stat[kf.name]); });
     },
 
 
     nextDay = function (day) {
         day = new Date(jt.ISOString2Time(day));
         day = new Date(day.getTime() + (24 * 60 * 60 * 1000));
+        day = new Date(day.getTime() - (day.getTimezoneOffset() * 60 * 1000));
         day = day.toISOString();
         return day;
     },
@@ -322,7 +320,7 @@ actstat = (function () {
                 filled.push(stat); }
             else {
                 nextday = nextDay(filled[filled.length - 1].day);
-                while(nextday < stat.day) {
+                while(nextday < stat.day.slice(0, 10)) {
                     filled.push({day: nextday});
                     nextday = nextDay(filled[filled.length - 1].day); }
                 filled.push(stat); } });
@@ -345,10 +343,11 @@ actstat = (function () {
         jt.out('chartdiv', "Fetching ActivityStat records");
         jt.call('GET', "../activity?cb=" + nowISO, null,
                 function (actstats) {
-                    jt.out('chartdiv', "");
+                    jt.out('chartdiv', "preparing data...");
                     stats = actstats;
                     prepData();
-                    displayChart();
+                    jt.out('chartdiv', "");
+                    displayLineChart();
                     displaySummary(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
@@ -361,6 +360,22 @@ actstat = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    sololine: function (name) {
+        return function (/*g, i*/) {
+            if(name) {
+                alc.svg.selectAll(".line")
+                    .transition()
+                    .style("opacity", 0.1);
+                alc.svg.selectAll("." + name)
+                    .transition()
+                    .style("opacity", 1.0); }
+            else {
+                alc.svg.selectAll(".line")
+                    .transition()
+                    .style("opacity", 1.0); } };
+    },
+
 
     taxonomyHTML: function (comps, prefix) {
         var html = [], style;
