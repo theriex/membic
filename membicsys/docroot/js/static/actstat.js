@@ -136,6 +136,17 @@ actstat = (function () {
     },
 
 
+    lineChartYAxisGuideLines = function () {
+        alc.svg.selectAll("#yaxisid .tick").forEach(function (ticks) {
+            ticks.forEach(function (tick) {
+                var yc = alc.yscale(tick.__data__);
+                alc.svg.append("line")
+                    .attr({"x1": 0, "x2": alc.width, "y1": yc , "y2": yc})
+                    .style("stroke-dasharray", "2,2")
+                    .style("stroke", "#ccc"); }); });
+    },
+
+
     displayLineChart = function () {
         alc = {offset: { x:30, y:20 }};
         setChartWidthAndHeight();
@@ -160,8 +171,10 @@ actstat = (function () {
             .call(alc.xAxis);
         alc.svg.append("g")
             .attr("class", "y axis")
+            .attr("id", "yaxisid")
             .call(alc.yAxis);
-        alternatingWeekBackgrounds(alc.svg);
+        alternatingWeekBackgrounds();
+        lineChartYAxisGuideLines();
         alc.series.forEach(function (sdef) {
             alc.svg.append("path")
                 .datum(stats)
