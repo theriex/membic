@@ -1,4 +1,4 @@
-/*global d3, jtminjsDecorateWithUtilities, window */
+/*global d3, jtminjsDecorateWithUtilities, window, epsankey */
 /*jslint browser, white, fudge */
 
 //This is a degenerate module just used for reporting.  Don't model it.
@@ -110,7 +110,6 @@ actstat = (function () {
             alc.width = minw;
             alc.height = Math.round((alc.width * 2) / 3); }
         jt.byId('postersdiv').style.width = String(alc.width) + "px";
-        jt.byId('agentsdiv').style.width = String(alc.width) + "px";
     },
 
 
@@ -214,22 +213,24 @@ actstat = (function () {
                         actstat.classifyComponent(taxon, comp); } }); } });
     },
 
-                    
+
     //key-count-components
     displayAccessAgents = function () {
         var taxon, html;
         taxon = [ 
-            { key: "touch", count: 0, components: [
-                { key: "iPhone",  count: 0, components: [] },
-                { key: "iPad",    count: 0, components: [] },
-                { key: "Android", count: 0, components: [] },
-                { key: "other",   count: 0, components: [] }]},
-            { key: "mouse", count: 0, components: [
-                { key: "IE",      count: 0, components: [] },
-                { key: "Safari",  count: 0, components: [] },
-                { key: "Firefox", count: 0, components: [] },
-                { key: "Chrome",  count: 0, components: [] },
-                { key: "other",   count: 0, components: [] }]}];
+            { key: "touch", color: "blue", count: 0, components: [
+                { key: "iPhone",  color: "#0099ff", count: 0, components: [] },
+                { key: "iPad",    color: "#00d2ff", count: 0, components: [] },
+                { key: "Android", color: "#9800ff", count: 0, components: [] },
+                { key: "other",   color: "#6400ff", count: 0, components: [] }
+            ]},
+            { key: "mouse", color: "green", count: 0, components: [
+                { key: "IE",      color: "#aff359", count: 0, components: [] },
+                { key: "Safari",  color: "#97f359", count: 0, components: [] },
+                { key: "Firefox", color: "#66ff00", count: 0, components: [] },
+                { key: "Chrome",  color: "#00ff00", count: 0, components: [] },
+                { key: "other",   color: "#e1f359", count: 0, components: [] }
+            ]}];
         classifyData(taxon);
         actstat.sortTaxonomy(taxon);
         html = [["p", { style: "padding-left:5px;"},
@@ -274,12 +275,6 @@ actstat = (function () {
                 html += ", "; }
             html += pref.penname; });
         jt.out('postersdiv', "<p>Posters: " + html + "</p>");
-    },
-
-
-    displaySummary = function () {
-        displayPosters();
-        fetchBotListAndDisplayAgents();
     },
 
 
@@ -361,7 +356,8 @@ actstat = (function () {
                     prepData();
                     jt.out('chartdiv', "");
                     displayLineChart();
-                    displaySummary(); },
+                    displayPosters();
+                    fetchBotListAndDisplayAgents(); },
                 function (code, errtxt) {
                     jt.out('averagesdiv', "fetch failed: " + code + 
                            " " + errtxt); },
