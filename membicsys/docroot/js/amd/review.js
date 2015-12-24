@@ -1143,7 +1143,7 @@ app.review = (function () {
         if(!rt) {  //no type selected yet, so no text entry yet.
             return; }
         if(!jt.byId("rdtextdiv").innerHTML) {
-            ptxt = "What was the most memorable thing for you?";
+            ptxt = "Why is this memorable? Please tell your future self why you are posting (you'll appreciate it later).";
             html = ["textarea", {id: "rdta", placeholder: ptxt},
                     crev.text || ""];
             jt.out('rdtextdiv', jt.tac2html(html)); }
