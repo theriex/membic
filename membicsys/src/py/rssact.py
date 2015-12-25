@@ -55,8 +55,8 @@ def item_url(handler, review):
 
 
 def rss_content(handler, ctmid, title, reviews):
-    url = "?view=coop&amp;coopid=" + str(ctmid)
-    email = "robot@membic.com"
+    url = "https://membicsys.appspot.com?view=coop&amp;coopid=" + str(ctmid)
+    email = "membicsystem@gmail.com"
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
     # claimed by the site to avoid unwanted content distribution.
@@ -146,7 +146,7 @@ class CoopRSS(webapp2.RequestHandler):
             latest = review["modhist"]
         title = ctm.name
         content = rss_content(self, ctmid, title, filtered)
-        ctype = "application/xhtml+xml; charset=UTF-8"
+        ctype = "application/rss+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content);
 
