@@ -1,6 +1,6 @@
 /*global app, jt, setTimeout, window, confirm, document, a2a, a2a_config */
 
-/*jslint white, fudge */
+/*jslint browser, white, fudge */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Coop common display functions.
@@ -116,6 +116,17 @@ app.pcd = (function () {
     ////////////////////////////////////////
     // helper functions
     ////////////////////////////////////////
+
+    getDirectLinkInfo = function () {
+        var infobj = {title: "", url: "https://" + window.location.host};
+        if(dst.type === "pen") {
+            infobj.url += "/p/" + dst.id;
+            infobj.title = "Direct profile URL:"; }
+        else {
+            infobj.url += "/t/" + dst.id;
+            infobj.title = "Direct theme URL:"; }
+        return infobj;
+    },
 
     picImgSrc = function (obj) {
         var defs = dst[dst.type], 
@@ -682,17 +693,10 @@ app.pcd = (function () {
         if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
             return ""; }
         html = ["div", {cla: "formline"},
-                [["a", {href: "#toggletools",
-                        onclick: jt.fs("app.layout.togdisp('ctmembeddiv')")},
+                [["a", {href: "#embed", onclick: jt.fs("app.pcd.embedHelp()")},
                   [["img", {cla: "ctmsetimg", src: "img/embed.png"}],
                    ["span", {cla: "settingsexpandlinkspan"},
-                    "Embed Theme"]]],
-                 ["div", {cla: "formline", id: "ctmembeddiv",
-                          style: "display:none;"},
-                  [["div", {cla: "formline"},
-                    [["To embed this theme, add this html to your web page:"],
-                     ["div", {cla: "formline"},
-                      ["textarea", {id: "ctmembedta", cla: "dlgta"}]]]]]]]];
+                    "Embed Theme"]]]]];
         return html;
     },
     embedSettingsInit = function () {
@@ -707,6 +711,27 @@ app.pcd = (function () {
                 "?view=coop&coopid=" + dst.id + "&css=none\">" + 
                 dst.obj.name + "</a></div>\n" +
                 "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
+    },
+    fillEmbedDialogAreas = function () {
+        var dlo, site, ta = jt.byId("embdlta");
+        site = window.location.href;
+        if(site.endsWith("/")) {
+            site = site.slice(0, -1); }
+        if(ta) {
+            dlo = getDirectLinkInfo();
+            ta.readOnly = true;
+            ta.value = dlo.url; }
+        ta = jt.byId("embscrta");
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
+                "?view=coop&coopid=" + dst.id + "&css=none\">" + 
+                dst.obj.name + "</a></div>\n" +
+                "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
+        ta = jt.byId("embwpta");
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = site + "/rsscoop?coop=" + jt.instId(dst.obj); }
     },
 
 
@@ -1082,7 +1107,7 @@ app.pcd = (function () {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
-            //check if a2a_config === undefined does not work mac ff 42.0
+            //checking a2a_config === undefined does not work mac ff 42.0
             if(typeof a2a_config === 'undefined') {
                 jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
                    3500);
@@ -1224,6 +1249,44 @@ return {
                                    calSettingsInit();
                                    rssSettingsInit();
                                    embedSettingsInit(); });
+    },
+
+
+    embedHelp: function () {
+        var html, homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
+        html = ["div", {id: "pcdembeddlgdiv"},
+                //frame
+                [["div", {cla: "pcdsectiondiv"},
+                  ["You are welcome to embed the ",
+                   ["a", {href: homeurl,
+                          onclick: jt.fs("window.open('" + homeurl + "')")},
+                    dst.obj.name + " direct theme page"],
+                   " into your own site using your website management interface or JavaScript. To embed as a frame using your website management interface, use this direct URL:",
+                   ["div", {cla: "embdlgline"},
+                    ["textarea", {id: "embdlta", cla: "embdlgta"}]]]],
+                 //embed
+                 ["div", {cla: "pcdsectiondiv"},
+                  ["If you have an existing page where you want to insert the contents of " + dst.obj.name + ", paste in the following script where you want the content to appear:",
+                   ["div", {cla: "embdlgline"},
+                    ["textarea", {id: "embscrta", cla: "embdlgta", rows: 4}]],
+                   "When the embed.js script runs, it replaces the link with the contents of your theme."]],
+                 //wordpress
+                 ["div", {cla: "pcdsectiondiv"},
+                  ["If you are using WordPress, content editing may prevent you from creating a frame or specifying a source for JavaScript.  In that case your best option may be to show recent membics for your theme via an RSS feed instead.  For example you might choose",
+                   ["div", {cla: "embdlgline"},
+                    "Customize | Widgets | Sidebar | Add a Widget | RSS"],
+                   "then use the following URL:",
+                   ["div", {cla: "embdlgline"},
+                    ["textarea", {id: "embwpta", cla: "embdlgta"}]]]],
+                 //back
+                 ["div", {cla: "pcdsectiondiv"},
+                  ["a", {href: "#settings",
+                         onclick: jt.fs("app.pcd.settings()")},
+                   [["img", {src: "img/arrow18left.png"}],
+                    " Return to Settings"]]]]];
+        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
+                               function () {
+                                   fillEmbedDialogAreas(); });
     },
 
 
@@ -1374,7 +1437,7 @@ return {
 
 
     share: function () {
-        var descrdiv, shurlspan, defs, html, shtxt, linkurl;
+        var descrdiv, shurlspan, defs, html, dlo;
         descrdiv = jt.byId("ppcdshoutdiv");
         if(descrdiv) {
             defs = dst[dst.type];
@@ -1385,14 +1448,8 @@ return {
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
+                dlo = getDirectLinkInfo();
                 jt.byId('pnarw').src = "img/arrow18down.png";
-                linkurl = "https://" + window.location.host;
-                if(dst.type === "pen") {
-                    linkurl += "/p/" + dst.id;
-                    shtxt = "Direct profile URL:"; }
-                else {
-                    linkurl += "/t/" + dst.id;
-                    shtxt = "Direct theme URL:"; }
                 html = [
                     ["span", {cla: "shoutspan"},
                      signInToFollowHTML()],
@@ -1405,19 +1462,19 @@ return {
                       ["a", {cla: "a2a_button_google_plus"}],
                       ["a", {cla: "a2a_button_wordpress"}],
                       shareInviteHTML()]],
-                    ["span", {cla: "shoutspan"}, shtxt],
+                    ["span", {cla: "shoutspan"}, dlo.title],
                     permalinkInfoHTML(),
                     ["br"],
                     ["span", {id: "shurlspan"},
-                     ["a", {href: linkurl,
-                            onclick: jt.fs("window.open('" + linkurl + "')")},
-                      linkurl]]];
+                     ["a", {href: dlo.url,
+                            onclick: jt.fs("window.open('" + dlo.url + "')")},
+                      dlo.url]]];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
                 //make sure the above html is in place before loading
                 //the autorun addtoany script. Break the control flow,
                 //but not enough to be laggy if already loaded.
                 setTimeout(function () {
-                    shareViaAddToAny(dst.obj.name, linkurl); }, 80); } }
+                    shareViaAddToAny(dst.obj.name, dlo.url); }, 80); } }
     },
 
 

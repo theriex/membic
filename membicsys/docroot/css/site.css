@@ -132,7 +132,7 @@ button, .loginbutton, .formbutton {
 /* padding:4px 2px 0px 2px; makes the "Keywords" entry in the membic
 dialog look ok, but breaks the Email input in the invite dialog. */
 .liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
-  padding:2px 2px 0px 2px; display:block; float:left; width:80px; }
+  padding:0px 2px 0px 2px; display:block; float:left; width:80px; }
 .liflabw { width:140px; padding:4px 4px 0px 2px; 
   font-family:"Shadows Into Light Two", cursive; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
@@ -240,6 +240,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .searchbuttondiv { margin:0px 0px 0px 40px; }
 .inlineimg { vertical-align:middle; padding:0px 4px; }
+.embdlgta { width:90%; padding:10px 5px 0px 5px; margin:10px 0px 5px 0px; }
 
 /* >> review layout */
 #revdlgdiv { }
