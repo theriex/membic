@@ -1077,7 +1077,9 @@ app.pcd = (function () {
                 msg = "Retrieving " + app.coopnames[id] + "..."; } }
         else if(dtype === "pen") {
             if((!id && !mpi) || (id && id === mpi)) {
-                msg = "Retrieving your Pen Name..."; }
+                //"Retrieving your Pen Name" was kind of confusing
+                //because they are just waiting for their content...
+                msg = "Retrieving your membics..."; }
             else if(app.pennames[id]) {
                 msg = "Retrieving " + app.pennames[id] + "..."; }
             else {
