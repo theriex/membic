@@ -141,6 +141,8 @@ app.pcd = (function () {
 
     modButtonsHTML = function (obj) {
         var mypenid, mypen, objectid, html = "";
+        if(app.solopage()) {
+            return ""; }
         mypenid = app.pen.myPenId();
         mypen = app.pen.myPenName();
         objectid = jt.instId(obj);
@@ -1108,7 +1110,7 @@ app.pcd = (function () {
         }
         setTimeout(function () {
             //checking a2a_config === undefined does not work mac ff 42.0
-            if(typeof a2a_config === 'undefined') {
+            if(typeof a2a_config === 'undefined') {  //mac ff required test
                 jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
                    3500);
     },
