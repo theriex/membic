@@ -1,6 +1,6 @@
 /*global window, document, app, jt */
 
-/*jslint white, fudge, for */
+/*jslint browser, white, fudge, for */
 
 app.layout = (function () {
     "use strict";
@@ -388,6 +388,28 @@ return {
                 div.style.display = "block"; }
             else {
                 div.style.display = "none"; } }
+    },
+
+
+    //Search for hashtags and return a CSV of any found in the text or
+    //in the descriptive fields of the referenced themes.  Themes are
+    //not loaded if they are not cached.
+    hashtagsCSV: function (text, ctmids) {
+        var hashes = "", matcharray, matchAndTest, regexp = /#\w+/g;
+        text = text || "";
+        ctmids = ctmids || "";
+        ctmids.csvarray().forEach(function (ctmid) {
+            var ref = app.lcs.getRef("coop", ctmid);
+            if(ref.coop) {
+                text += ref.coop.name + " " + ref.coop.description; }
+            else if(app.coopnames[ctmid]) {
+                text += " " + app.coopnames[ctmid]; } });
+        matchAndTest = function () {
+            matcharray = regexp.exec(text);
+            return matcharray; };
+        while(matchAndTest()) {
+            hashes = hashes.csvappend(matcharray[0].slice(1)); }
+        return hashes;
     },
 
 

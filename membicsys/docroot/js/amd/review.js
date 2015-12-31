@@ -1,6 +1,6 @@
 /*global setTimeout, window, confirm, app, jt, google, document */
 
-/*jslint white, fudge, for */
+/*jslint browser, white, fudge, for */
 
 app.review = (function () {
     "use strict";
@@ -1144,7 +1144,8 @@ app.review = (function () {
             return; }
         if(!jt.byId("rdtextdiv").innerHTML) {
             ptxt = "Why is this memorable? Please tell your future self why you are posting (you'll appreciate it later).";
-            html = ["textarea", {id: "rdta", placeholder: ptxt},
+            html = ["textarea", {id: "rdta", placeholder: ptxt,
+                                 onchange: jt.fs("app.review.revtxtchg()")},
                     crev.text || ""];
             jt.out('rdtextdiv', jt.tac2html(html)); }
         //text is not dynamically updated
@@ -1296,6 +1297,39 @@ app.review = (function () {
     },
 
 
+    dlgTweetButton = function () {
+        var params, tbs = jt.byId("tweetbuttondiv");
+        if(!tbs || !findReviewType(crev.revtype)) {
+            return; }
+        notePostingCoops();  //populates rev.ctmids csv from checkboxes
+        reviewTextValid();   //populates crev.text
+        params = {text: crev.text,
+                  url: crev.url || app.pen.myPenPermalink(),
+                  hashtags: app.layout.hashtagsCSV(
+                      crev.title + " " + crev.name + " " + crev.text,
+                      crev.ctmids)};
+        jt.out('tweetbuttondiv', jt.tac2html(
+            ["a", {cla: "twitter-share-button", id: "tweetbuttonanchor",
+                   href: "https://twitter.com/intent/tweet?" + 
+                   jt.objdata(params)},
+             ["img", {src: "img/twitter32.png"}]]));
+        window.twttr = (function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0],
+            t = window.twttr || {};
+            if (d.getElementById(id)) { return t; }
+            js = d.createElement(s);
+            js.id = id;
+            js.src = "https://platform.twitter.com/widgets.js";
+            fjs.parentNode.insertBefore(js, fjs);
+            t._e = [];  //Bad property name '_e'. Twitter likes it that way.
+            t.ready = function(f) {
+                t._e.push(f);
+            };
+            return t;
+        }(document, "script", "twitter-wjs"));
+    },
+
+
     updateReviewDialogContents = function () {
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
@@ -1365,6 +1399,7 @@ return {
                  ["div", {id: "rdtextdiv"}],
                  ["div", {id: "rdkwdiv"}],
                  ["div", {id: "rdgdiv"}],
+                 ["div", {id: "tweetbuttondiv"}],
                  ["div", {id: "rdokdiv"},
                   [["div", {id: "rdokstatdiv"}],
                    ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
@@ -1376,7 +1411,7 @@ return {
         app.layout.openDialog(
             {x: jt.byId("headingdivcontent").offsetLeft - 34, 
              y: window.pageYOffset + 22},
-            jt.tac2html(html), updateReviewDialogContents);
+            jt.tac2html(html), updateReviewDialogContents, dlgTweetButton);
     },
 
 
@@ -1391,6 +1426,7 @@ return {
                 jt.out('rdpfdiv', ""); }
             crev.revtype = typename; }
         updateReviewDialogContents();
+        dlgTweetButton();
     },
 
     
@@ -1551,10 +1587,19 @@ return {
         var cbox = jt.byId("dctmcb" + ctmid);
         if(cbox) {
             if(cbox.checked) {
-                app.lcs.getFull("coop", ctmid, function (coopref) {
-                    displayThemeCheckboxes(coopref.coop); }); }
+                //need the full reference for the checkbox definitions,
+                //but don't want to fault in just the coop without the
+                //supporting revs and other needed info.
+                app.pcd.blockfetch("coop", ctmid, function (coop) {
+                    dlgTweetButton();  //note any hashtags
+                    displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
+    },
+
+
+    revtxtchg: function () {
+        dlgTweetButton();
     },
 
 

@@ -1,6 +1,6 @@
-/*global JSON, app, jt, confirm */
+/*global JSON, app, jt, confirm, window */
 
-/*jslint white, fudge */
+/*jslint browser, white, fudge */
 
 app.pen = (function () {
     "use strict";
@@ -243,6 +243,9 @@ return {
         if(penref && penref.pen) {
             return penref.pen; }
         return null;
+    },
+    myPenPermalink: function () {
+        return "https://" + window.location.host + "/p/" + loginpenid;
     },
 
 
