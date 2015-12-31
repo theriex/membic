@@ -979,13 +979,13 @@ app.pcd = (function () {
         absdiv.style.visibility = "visible";
         homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
         rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
-        html = [["a", {href: rssurl, title: dst.obj.name + " RSS feed",
-                       onclick: jt.fs("window.open('" + rssurl + "')")},
-                 ["img", {cla: "webjump", src: "img/rssicon.png"}]],
-                "&nbsp; &nbsp;",
-                ["a", {href: homeurl, title: dst.obj.name + " full page",
+        html = [["a", {href: homeurl, title: dst.obj.name + " full page",
                        onclick: jt.fs("window.open('" + homeurl + "')")},
-                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]]];
+                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]],
+                "&nbsp; &nbsp;",
+                ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
+                       onclick: jt.fs("window.open('" + rssurl + "')")},
+                 ["img", {cla: "webjump", src: "img/rssicon.png"}]]];
         jt.out('overlaydiv', jt.tac2html(html));
     },
 
