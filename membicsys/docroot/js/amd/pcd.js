@@ -47,8 +47,8 @@ app.pcd = (function () {
                                    otitle: "Search membics from $NAME"},
                       prefpens:  { href: "#preferredpens",
                                    img: "img/prefer.png",
-                                   mtitle: "My preferred Pen Names",
-                                   otitle: "Pen Names preferred by $NAME"},
+                                   mtitle: "People I prefer",
+                                   otitle: "People $NAME prefers"},
                       coops:     { href: "#coopsfollowing",
                                    img: "img/tabctms.png",
                                    mtitle: "My Themes",
@@ -1179,7 +1179,7 @@ return {
                          ["span", {cla: "penfont"}, pname]]]]); });
         if(!html.length) {
             html.push(["div", {cla: "pcdtext"},
-                       "No preferred pen names yet."]); }
+                       "No preferred people yet."]); }
         jt.out('pcdcontdiv', jt.tac2html(html));
     },
 
