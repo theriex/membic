@@ -1,6 +1,6 @@
 /*global confirm, setTimeout, window, document, history, app, jt */
 
-/*jslint white, fudge, for */
+/*jslint browser, white, fudge, for, multivar */
 
 app.login = (function () {
     "use strict";
@@ -446,13 +446,15 @@ app.login = (function () {
         if(params.css) {
             applyCSSOverride(params.css); }
         //handle specific context requests
-        if(params.view && (params.penid || params.profid || params.coopid)) {
-            //Note who requested a specific profile or coop
-            tpms = "clickthrough=" + params.view + jt.ts("&cb=", "second");
+        if(params.view && (params.coopid || params.penid || params.profid)) {
+            tpms = "clickthrough=" +
+                (params.coopid? "t" : "p") + 
+                (params.coopid || params.penid || params.profid) +
+                jt.ts("&cb=", "second");
             setTimeout(function () {
                 jt.call('GET', "/bytheway?" + tpms, null,
                         function () {
-                            jt.log("noted profile clickthrough"); },
+                            jt.log("noted " + tpms); },
                         app.failf); }, 2);  //might redirect to sec srvr next..
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
@@ -467,11 +469,16 @@ app.login = (function () {
 
 
     noteAppLaunched = function (loggedIn) {
-        var parms;
-        parms = "mode=" + (loggedIn? "login" : "visit") + 
-            jt.ts("&cb=", "second");
+        var pen, params = "mode=visit";
+        if(loggedIn) {
+            params = "mode=login";
+            pen = app.pen.myPenName();
+            if(pen) {
+                params += "&penid=" + jt.instId(pen) + 
+                    "&pname=" + jt.enc(pen.name); } }
+        params += jt.ts("&cb=", "second");  //cache bust
         setTimeout(function () {
-            jt.call('GET', "/applaunch?" + parms, null,
+            jt.call('GET', "/applaunch?" + params, null,
                     function () {
                         jt.log("noted app launch"); },
                     app.failf); }, 3000);  //Other calls more important

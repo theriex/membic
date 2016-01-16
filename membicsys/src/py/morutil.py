@@ -111,3 +111,23 @@ def list_to_csv(values):
         csv = append_to_csv(val, csv)
     return csv
 
+# append ikey:1 if ikey not present, otherwise increment count
+def csv_increment(ikey, csv):
+    if not csv:
+        return ikey + ":1"
+    index = csv.find(ikey)
+    if index < 0:
+        return csv + "," + ikey + ":1"
+    index += len(ikey) + 1  # start of count
+    endidx = index + 1
+    while endidx < len(csv) and csv[endidx] != ',':
+        endidx += 1
+    count = int(csv[index:endidx])
+    count += 1
+    updated = csv[0:index] + str(count)
+    if endidx < len(csv):
+        updated += csv[endidx:]
+    return updated
+
+
+        

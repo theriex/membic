@@ -15,23 +15,24 @@ from cacheman import *
 import re
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
-
 class ActivityStat(db.Model):
     """ Activity metrics for tracking purposes """
     day = db.StringProperty(required=True)  # ISO start of day for this stat
-    calculated = db.StringProperty()  # ISO when results were calculated
-    visits = db.IntegerProperty()     # Number of app initializations
-    logins = db.IntegerProperty()     # Number of logged in app inits
-    posters = db.IntegerProperty()    # Number of pens that posted membics
-    postpens = db.TextProperty()      # who posted. penid:encname,...
-    membics = db.IntegerProperty()    # Number of membics posted
-    edits = db.IntegerProperty()      # Number of membics edited
-    themeposts = db.IntegerProperty() # Number of theme post-throughs
-    starred = db.IntegerProperty()    # Number of membics starred
-    remembered = db.IntegerProperty() # Number of membics remembered
-    responded = db.IntegerProperty()  # Number of membics created from others
-    refers = db.TextProperty()        # src1:3,src2:4...
-    clickthru = db.IntegerProperty()  # num specific profile or review requests
+    visits = db.IntegerProperty(indexed=False)      # num app initializations
+    logins = db.IntegerProperty(indexed=False)      # num logged in app inits
+    liupens = db.TextProperty()       # logged in user access: pid-encnm:cnt,...
+    posters = db.IntegerProperty(indexed=False)     # num pens posting membics
+    postpens = db.TextProperty()      # who posted: penid:encname,...
+    membics = db.IntegerProperty(indexed=False)     # num membics posted
+    edits = db.IntegerProperty(indexed=False)       # num membics edited
+    themeposts = db.IntegerProperty(indexed=False)  # num theme post-throughs
+    starred = db.IntegerProperty(indexed=False)     # num membics starred
+    remembered = db.IntegerProperty(indexed=False)  # num membics remembered
+    responded = db.IntegerProperty(indexed=False)   # num membics responded
+    refers = db.TextProperty()        # srcA:3,srcB:12...
+    clickthru = db.IntegerProperty(indexed=False)   # num specific requests
+    ctreqs = db.TextProperty()        # theme/prof ext acc [t|p]id:count,...
+    rssacc = db.TextProperty()        # theme/prof acc rss [t|p]id:count,...
     agents = db.TextProperty()        # CSV of accessing agents
 
 
@@ -43,7 +44,6 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
 
 def get_activity_stat(sday):
     stat = ActivityStat(day=sday)
-    stat.calculated = ""
     stat.visits = 0
     stat.logins = 0
     stat.posters = 0
@@ -157,13 +157,23 @@ def get_current_stat():
     return stat
 
 
+def css_summary_requested(coop, request):
+    stat = get_current_stat()
+    note_agent(stat, request)
+    stat.rssacc = csv_increment("t" + str(coop.key().id()), stat.rssacc)
+    try:
+        stat.put()  #nocache
+    except Exception as e:
+        logging.info("Logging of css access failed: " + str(e))
+
+
 def btw_activity(handler, src, request):
     stat = get_current_stat()
     note_agent(stat, request)
     val = request.get("clickthrough")
-    if val:  # Somebody accessed the site for a specific coop, or to
-             # remember/helpful/respond a review. Note for linkback.
+    if val:  # Somebody accessed the site through a permalink.
         stat.clickthru += 1
+        stat.ctreqs = csv_increment(val, stat.ctreqs)
     val = request.get("referral")
     if val:  # Somebody clicked on a link to the core application.
              # Note for possible linkback.
@@ -172,7 +182,7 @@ def btw_activity(handler, src, request):
         stat.put()  #nocache
     except OverQuotaError as oqe:
         srverr(handler, 503, "stat put failure, database writes over quota")
-            
+
 
 def note_review_update(is_edit, penid, penname, ctmid, srcrev):
     stat = get_current_stat()
@@ -313,8 +323,16 @@ class NoteAppLaunch(webapp2.RequestHandler):
         stat = get_current_stat()
         note_agent(stat, self.request)
         mode = self.request.get("mode")
+        # Possible mode values are "login" or "visit". So the app
+        # initialization is either from someone who is already logged
+        # in, or it is a general access visit.  If logged in, then
+        # penid and pname are also sent.
         if mode and mode == "login":
             stat.logins += 1
+            penid = self.request.get("penid")
+            pname = self.request.get("pname")
+            pkey = str(penid) + "-" + pname
+            stat.liupens = csv_increment(pkey, stat.liupens)
         else:
             stat.visits += 1
         try:

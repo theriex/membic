@@ -1,5 +1,5 @@
 /*global d3, jtminjsDecorateWithUtilities, window, epsankey */
-/*jslint browser, white, fudge */
+/*jslint browser, white, fudge, multivar */
 
 //This is a degenerate module just used for reporting.  Don't model it.
 var actstat;
@@ -136,9 +136,10 @@ actstat = (function () {
 
 
     lineChartYAxisGuideLines = function () {
+        var dataFieldName = "__data__";
         alc.svg.selectAll("#yaxisid .tick").forEach(function (ticks) {
             ticks.forEach(function (tick) {
-                var yc = alc.yscale(tick.__data__);
+                var yc = alc.yscale(tick[dataFieldName]);
                 alc.svg.append("line")
                     .attr({"x1": 0, "x2": alc.width, "y1": yc , "y2": yc})
                     .style("stroke-dasharray", "2,2")
@@ -339,7 +340,6 @@ actstat = (function () {
             stat.postpens = stat.postpens || "";
             stat.refers = stat.refers || "";
             stat.agents = stat.agents || "";
-            stat.calculated = stat.calculated || stat.day;
             //data conversions
             attributizeReferrals(stat);
             stat.day = jt.ISOString2Time(stat.day); });
