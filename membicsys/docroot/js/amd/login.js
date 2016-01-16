@@ -17,6 +17,7 @@ app.login = (function () {
         toprightdivcontents = "",
         altauths = [],
         loginhtml = "",
+        actsent = null,
 
 
     ////////////////////////////////////////
@@ -248,23 +249,46 @@ app.login = (function () {
     },
 
 
+    actSendContactHTML = function () {
+        var now, mins, subj, body, html;
+        now = new Date();
+        mins = ((now.getHours() - actsent.getHours()) * 60) +
+            (now.getMinutes() - actsent.getMinutes());
+        subj = "Account activation email";
+        body = "Hey,\n\n" +
+            "I've been waiting over " + mins + " minutes for activation email to show up and still haven't received anything.  I've checked my spam folder and it's not there.  Would you please reply to this message and send me my activation code so I can post a membic?\n\n" +
+            "Thanks!\n" +
+            app.pen.myPenName().name + "\n";
+        html = ["a", {href: "mailto:" + app.suppemail + "?subject=" + 
+                      jt.dquotenc(subj) + "&body=" + jt.dquotenc(body)},
+                "Contact Support"];
+        return html;
+    },
+
+
     activateButtonOrNoticeHTML = function (moracct) {
-        var html, sent = false;
+        var html, sends, sent = false;
         html = ["button", {type: "button", id: "activatebutton",
                            onclick: jt.fs("app.login.sendActivation()")},
                 "Activate"];
         if(moracct.actsends) {
-            moracct.actsends.split(",").every(function (act) {
-                var ta = act.split(";");
-                if(ta[1] === moracct.email && 
-                       jt.timewithin(ta[0], 'hours', 4)) {
-                    sent = jt.tz2loc(jt.ISOString2Time(ta[0]));
-                    return false; }
-                return true; }); }
+            sends = moracct.actsends.split(",");
+            sent = sends[sends.length - 1];
+            sent = sent.split(";");
+            if(sent[1] === moracct.email && 
+                   jt.timewithin(sent[0], 'hours', 4)) {
+                sent = sent[0]; }
+            else {
+                sent = false; } }
         if(sent) {
-            html = ["sent " + sent,
-                    ["p", {cla: "activationsentdet"},
-                     "Expedited email service is not available, so delivery may take up to 4 hrs (please also check spam folders). Click the link in the email to activate your account."]];
+            actsent = new Date(sent);
+            html = [["p", {cla: "actsendtxt"}, "You&apos;ve been waiting"],
+                    ["div", {id: "actsendcounterdiv"}],
+                    ["p", {cla: "actsendtxt"},
+                     ["for activation mail to arrive.", ["br"],
+                      "Still hasn&apos;t shown up?! Check your", ["br"],
+                      "spam folder or ", actSendContactHTML()]],
+                    ["p", {cla: "actsendtxt"}, "&nbsp;"]];
             jt.out("accstatdetaildiv", jt.tac2html(html));
             html = ["span", {cla: "actmailtext"},
                     ["a", {href: "#activationmaildetails",
@@ -575,13 +599,32 @@ return {
     },
 
 
+    displayActivationWaitTimer: function () {
+        var ascdiv = jt.byId('actsendcounterdiv'),
+            diff, hrs, mins, secs, txt;
+        if(ascdiv) {
+            diff = new Date().getTime() - actsent.getTime();
+            hrs = Math.floor(diff / (60 * 60 * 1000));
+            diff -= hrs * 60 * 60 * 1000;
+            mins = Math.floor(diff / (60 * 1000));
+            diff -= mins * 60 * 1000;
+            secs = Math.floor(diff / 1000);
+            txt = String(hrs) + " " + ((hrs === 1) ? "hour" : "hours") +
+                ", " + mins + " " + ((mins === 1) ? "minute" : "minutes") +
+                ", " + secs + " " + ((secs === 1) ? "second" : "seconds");
+            jt.out('actsendcounterdiv', txt);
+            setTimeout(app.login.displayActivationWaitTimer, 1000); }
+    },
+
+
     toggleactmaildet: function () {
         var detdiv = jt.byId("accstatdetaildiv");
         if(detdiv) {
             if(detdiv.style.display === "block") {
                 detdiv.style.display = "none"; }
             else {
-                detdiv.style.display = "block"; } }
+                detdiv.style.display = "block";
+                app.login.displayActivationWaitTimer(); } }
     },
 
 

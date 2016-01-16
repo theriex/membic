@@ -149,6 +149,7 @@ def add_account_info_to_pen_stash(acc, pen):
     ad["email"] = acc.email
     ad["status"] = acc.status
     ad["invites"] = json.loads(acc.invites or "[]")
+    ad["actsends"] = acc.actsends
     stash = {}
     if pen.stash:
         stash = json.loads(pen.stash)
