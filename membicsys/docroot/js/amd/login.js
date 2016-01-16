@@ -256,7 +256,9 @@ app.login = (function () {
             (now.getMinutes() - actsent.getMinutes());
         subj = "Account activation email";
         body = "Hey,\n\n" +
-            "I've been waiting over " + mins + " minutes for activation email to show up and still haven't received anything.  I've checked my spam folder and it's not there.  Would you please reply to this message and send me my activation code so I can post a membic?\n\n" +
+            "I've been waiting over " + mins + " " +
+            ((mins === 1) ? "minute" : "minutes") + 
+            " for activation email to show up and still haven't received anything.  I've checked my spam folder and it's not there.  Would you please reply to this message and send me my activation code so I can post a membic?\n\n" +
             "Thanks!\n" +
             app.pen.myPenName().name + "\n";
         html = ["a", {href: "mailto:" + app.suppemail + "?subject=" + 
@@ -287,7 +289,8 @@ app.login = (function () {
                     ["p", {cla: "actsendtxt"},
                      ["for activation mail to arrive.", ["br"],
                       "Still hasn&apos;t shown up?! Check your", ["br"],
-                      "spam folder or ", actSendContactHTML()]],
+                      "spam folder or ", 
+                      ["span", {id: "actcontactlinkspan"}]]],
                     ["p", {cla: "actsendtxt"}, "&nbsp;"]];
             jt.out("accstatdetaildiv", jt.tac2html(html));
             html = ["span", {cla: "actmailtext"},
@@ -613,6 +616,7 @@ return {
                 ", " + mins + " " + ((mins === 1) ? "minute" : "minutes") +
                 ", " + secs + " " + ((secs === 1) ? "second" : "seconds");
             jt.out('actsendcounterdiv', txt);
+            jt.out('actcontactlinkspan', jt.tac2html(actSendContactHTML()));
             setTimeout(app.login.displayActivationWaitTimer, 1000); }
     },
 
