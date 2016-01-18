@@ -93,7 +93,7 @@ app.review = (function () {
             dkwords: [ "Indoor", "Outdoor", 
                        "Artistic", "Athletic",
                        "Educational", "Kid Ok" ] },
-          { type: "other", plural: "others", img: "TypeOther50.png",
+          { type: "other", plural: "other membics", img: "TypeOther50.png",
             keyprompt: "Name or title", 
             key: "name", //subkey
             fields: [],
