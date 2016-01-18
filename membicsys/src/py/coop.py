@@ -237,7 +237,13 @@ def process_membership_action(coop, action, pnm, seekerpen, seekrole, reason):
         coop.seeking = remove_from_csv(seekerid, coop.seeking)
         if not csv_contains(seekerid, coop.rejects):
             coop.rejects = append_to_csv(seekerid, coop.rejects)
-            update_coop_admin_log(coop, pnm, "Rejected " + seekrole, 
+            applicrole = "Member"
+            if seekrole == "Member":
+                applicrole = "Moderator"
+            elif seekrole == "Moderator":
+                applicrole = "Founder"
+            update_coop_admin_log(coop, pnm, 
+                                  "Rejected " + applicrole + " application", 
                                   seekerpen, reason)
     elif action == "accept":
         msg = "Accepted new "

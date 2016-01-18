@@ -195,6 +195,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #ctmembedta { height:100px; }
 #ctminfoseldiv { display:inline-block; margin-left:20px; width:50px; }
 #meminfoseldiv, #reloaddiv { display:inline-block; width:50px; }
+#settingsinfolinediv { padding-bottom:8px; padding-top:2px; }
 .ctmsetimg, .myinfoimg { vertical-align:middle; }
 .myinfoimg { width:18px; height:18px; margin-right:5px; }
 #shurlspan { font-size:small; font-family:monospace;
@@ -217,6 +218,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   font-size:small; }
 .shoutout { width:160px; min-height:100px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
+.bumpedupwards { margin-top:-18px; margin-bottom:6px; }
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }

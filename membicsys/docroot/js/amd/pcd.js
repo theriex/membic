@@ -1,6 +1,6 @@
 /*global app, jt, setTimeout, window, confirm, document, a2a, a2a_config */
 
-/*jslint browser, white, fudge */
+/*jslint browser, multivar, white, fudge */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Coop common display functions.
@@ -171,6 +171,15 @@ app.pcd = (function () {
                               onclick: jt.fs("app.pcd.settings()")},
                         ["img", {cla: "reviewbadge",
                                  src: "img/settings.png"}]]; } }
+        return jt.tac2html(html);
+    },
+
+
+    accountInfoHTML = function () {
+        var html = "";
+        if(dst.type === "pen") {
+            html = ["p", "Last modified " + 
+                    jt.colloquialDate(jt.ISOString2Day(dst.obj.modified))]; }
         return jt.tac2html(html);
     },
 
@@ -412,24 +421,25 @@ app.pcd = (function () {
 
 
     adminSettingsHTML = function () {
-        var memsel = "", html;
-        if(dst.type !== "coop") {
-            return ""; }
-        if(app.coop.membershipLevel(dst.obj) >= 2) {
-            memsel = ["a", {href: "#memberinfo",
-                            onclick: jt.fs("app.pcd.toggleCtmDet('members')")},
-                      ["img", {cla: "ctmsetimg", src: "img/membership.png"}]]; }
-        html = [["div", {cla: "formline"},
-                 outstandingApplicationsHTML()],
-                ["div", {cla: "formline"},
+        var memsel = "", oah = "", html;
+        if(dst.type === "coop") {
+            oah = outstandingApplicationsHTML();
+            if(app.coop.membershipLevel(dst.obj) >= 2) {
+                memsel = [
+                    "a", {href: "#memberinfo",
+                          onclick: jt.fs("app.pcd.toggleCtmDet('members')")},
+                    ["img", {cla: "ctmsetimg", src: "img/membership.png"}]]; } }
+        html = [["div", {cla: "formline", id: "settingsinfolinediv"},
                  [["div", {id: "ctminfoseldiv"},
                    ["a", {href: "#actioninfo",
                           onclick: jt.fs("app.pcd.toggleCtmDet('info')")},
                     ["img", {cla: "ctmsetimg", src: "img/info.png"}]]],
-                  ["div", {id: "meminfoseldiv"}, memsel],
+                  ["div", {id: "meminfoseldiv",
+                           style: (memsel? "" : "display:none;")}, memsel],
                   ["div", {id: "reloaddiv"}, 
                    ["a", {href: "?view=coop&coopid=" + jt.instId(dst.obj)},
                     ["img", {cla: "ctmsetimg", src: "img/reload.png"}]]]]],
+                ["div", {cla: "formline"}, oah],
                 ["div", {cla: "formline", id: "midispdiv",
                          style: "display:none;"}]];
         return html;
@@ -548,15 +558,17 @@ app.pcd = (function () {
 
 
     keywordSettingsHTML = function () {
-        var label, html;
+        var label = "", html = "";
         switch(dst.type) {
         case "pen": 
             label = "Checkbox Keywords";
             html = reviewTypeKeywordsHTML(); 
             break;
         case "coop": 
+            if(app.coop.membershipLevel(dst.obj) < 2) {
+                return ""; }
             label = "Theme Keywords";
-            html = themeKeywordsHTML(); 
+            html = themeKeywordsHTML();
             break;
         default: return ""; }
         html = ["div", {cla: "formline"},
@@ -1226,11 +1238,13 @@ return {
         if(obj) {
             dst.obj = obj; }
         html = ["div", {id: "pcdsettingsdlgdiv"},
-                [["div", {cla: "pcdsectiondiv"},
-                  (dst.type === "pen"? app.login.accountSettingsHTML()
-                                     : membershipSettingsHTML())],
+                [["div", {cla: "bumpedupwards"},
+                  ["div", {cla: "headingtxt"}, "Settings"]],
                  ["div", {cla: "pcdsectiondiv"},
                   adminSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
+                  (dst.type === "pen"? app.login.accountSettingsHTML()
+                                     : membershipSettingsHTML())],
                  ["div", {cla: "pcdsectiondiv"},
                   picSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
@@ -1356,7 +1370,7 @@ return {
         tgif = jt.byId('tgif');
         if(tgif) {
             txt = tgif.contentDocument || tgif.contentWindow.document;
-            if(txt) {
+            if(txt && txt.body) {
                 txt = txt.body.innerHTML;
                 if(txt.indexOf(mtag) === 0) {
                     defs = dst[dst.type];
@@ -1606,7 +1620,10 @@ return {
                                 !midispdiv.innerHTML)) {
             setdispstate.infomode = "info";
             jt.byId('midispdiv').style.display = "block";
-            jt.out('midispdiv', coopLogHTML()); }
+            if(dst.type === "coop") {
+                jt.out('midispdiv', coopLogHTML()); }
+            else {
+                jt.out('midispdiv', accountInfoHTML()); } }
         else if(ctype === "mbinfo" && (setdispstate.infomode !== "finfo" ||
                                        !midispdiv.innerHTML)) {
             setdispstate.infomode = "finfo";
