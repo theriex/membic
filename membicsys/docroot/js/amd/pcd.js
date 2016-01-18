@@ -447,11 +447,17 @@ app.pcd = (function () {
 
 
     picSettingsHTML = function () {
-        var html;
+        var picsrc, html;
         if(!jt.hasId(dst.obj) ||
                (dst.type === "coop" && 
                 app.coop.membershipLevel(dst.obj) < 3)) {
             return ""; }
+        picsrc = "img/nopicprof.png";
+        if(dst.obj.profpic) {
+            picsrc = "profpic?profileid=" + dst.obj.profpic; }
+        else if(dst.obj.picture) {
+            picsrc = "ctmpic?coopid=" + dst.obj.picture; }
+        picsrc += jt.ts("&cb", dst.obj.modified);
         html = [["label", {fo: "picuploadform", cla: "overlab"},
                   "Change Picture"],
                 ["form", {action: "/picupload", method: "post",
@@ -461,13 +467,16 @@ app.pcd = (function () {
                   jt.paramsToFormInputs("picfor=" + dst.type + 
                                         "&_id=" + dst.id +
                                         "&penid=" + app.pen.myPenId()),
-                  ["div", {cla: "tablediv"},
-                   [["div", {cla: "fileindiv"},
-                     [["input", {type: "file", 
-                                 name: "picfilein", id: "picfilein"}],
-                      ["div", {id: "uploadbuttonsdiv"},
-                       ["input", {type: "submit", cla: "formbutton",
-                                  value: "Upload&nbsp;Picture"}]]]],
+                  ["div", {cla: "ptddiv"},
+                   [["img", {id: "upldpicimg", cla: "revimgdis",
+                             src: picsrc}],
+                    ["div", {id: "upldpicform", cla: "overform"},
+                     [["div", {cla: "fileindiv"},
+                       [["input", {type: "file", 
+                                   name: "picfilein", id: "picfilein"}],
+                        ["div", {id: "uploadbuttonsdiv"},
+                         ["input", {type: "submit", cla: "formbutton",
+                                    value: "Upload&nbsp;Picture"}]]]]]],
                     ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                 ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
                             style: "display:none"}]];
