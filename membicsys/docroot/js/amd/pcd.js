@@ -488,7 +488,7 @@ app.pcd = (function () {
 
 
     descripSettingsHTML = function () {
-        var nh = "", defs, html;
+        var nh = "", ht = "", defs, html;
         if(dst.type === "coop") {
             if(app.coop.membershipLevel(dst.obj) < 3) {
                 return ""; }
@@ -497,13 +497,20 @@ app.pcd = (function () {
                     "Name"],
                    ["input", {id: "namein", cla: "lifin", type: "text",
                               placeholder: "Theme name required",
-                              value: dst.obj.name}]]]; }
+                              value: dst.obj.name}]]];
+            ht = ["div", {cla: "formline"},
+                  [["label", {fo: "hashin", cla: "liflab", id: "hashlab"},
+                    "Hashtag"],
+                   ["input", {id: "hashin", cla: "lifin", type: "text",
+                              placeholder: "Optional",
+                              value: dst.obj.hashtag}]]]; }
         defs = dst[dst.type];
         html = [nh,
                 ["div", {cla: "formline"},
                  ["label", {fo: "shouteditbox", cla: "overlab"}, 
                   defs.desclabel]],
                 ["textarea", {id: "shouteditbox", cla: "dlgta"}],
+                ht,
                 ["div", {id: "formstatdiv"}],
                 ["div", {cla: "dlgbuttonsdiv"},
                  ["button", {type: "button", id: "okbutton",
@@ -1072,7 +1079,10 @@ app.pcd = (function () {
                         modButtonsHTML(obj)]]],
                      ["div", {id: "ppcdshoutdiv"},
                       ["span", {cla: "shoutspan"}, 
-                       jt.linkify(obj[defs.descfield] || "")]]]]]],
+                       jt.linkify(obj[defs.descfield] || "")]],
+                     // ["div", {id: "pcdhashdiv"},
+                     //  (obj.hashtag? ("#" + obj.hashtag) : "")]
+                    ]]]],
                  ["div", {id: "tabsdiv"},
                   [["ul", {id: "tabsul"},
                     tabsHTML()],
@@ -1133,6 +1143,7 @@ app.pcd = (function () {
         }
         setTimeout(function () {
             //checking a2a_config === undefined does not work mac ff 42.0
+            //so regardless of what jslint sez, this needs to stay..
             if(typeof a2a_config === 'undefined') {  //mac ff required test
                 jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
                    3500);
@@ -1342,6 +1353,13 @@ return {
         elem = jt.byId('shouteditbox');
         if(elem && elem.value !== dst.obj[defs.descfield]) {
             dst.obj[defs.descfield] = elem.value;
+            changed = true; }
+        elem = jt.byId('hashin');
+        if(elem && elem.value && elem.value.trim()) {
+            val = elem.value.trim();
+            if(val.indexOf("#") === 0) {
+                val = val.slice(1).trim(); }
+            dst.obj.hashtag = val;
             changed = true; }
         if(!changed) {
             return app.layout.cancelOverlay(); }

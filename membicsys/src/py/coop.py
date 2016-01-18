@@ -19,6 +19,7 @@ class Coop(db.Model):
     modhist = db.StringProperty()                # creation date, mod count
     # non-indexed fields
     description = db.TextProperty()
+    hashtag = db.StringProperty(indexed=False)
     picture = db.BlobProperty()
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     calembed = db.TextProperty()    # embedded calendar html
@@ -118,6 +119,7 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.error(400)
         handler.response.out.write("A description is required")
         return False
+    coop.hashtag = handler.request.get('hashtag')
     coop.calembed = handler.request.get('calembed')
     if coop.calembed and not coop.calembed.startswith("<iframe "):
         handler.error(400)

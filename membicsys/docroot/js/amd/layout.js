@@ -1,6 +1,6 @@
 /*global window, document, app, jt */
 
-/*jslint browser, white, fudge, for */
+/*jslint browser, multivar, white, fudge, for */
 
 app.layout = (function () {
     "use strict";
@@ -401,7 +401,9 @@ return {
         ctmids.csvarray().forEach(function (ctmid) {
             var ref = app.lcs.getRef("coop", ctmid);
             if(ref.coop) {
-                text += ref.coop.name + " " + ref.coop.description; }
+                text += ref.coop.name + " " + ref.coop.description;
+                if(ref.coop.hashtag) {
+                    text += "#" + ref.coop.hashtag; } }
             else if(app.coopnames[ctmid]) {
                 text += " " + app.coopnames[ctmid]; } });
         matchAndTest = function () {

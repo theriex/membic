@@ -157,6 +157,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcddescrdiv { height:125px; overflow:auto; }
 #pcdsettingslink { padding:0px 0px 0px 10px; }
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
+#pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #tabsdiv { clear:both; }
 #tabsul { }
 #tabsdiv ul { list-style:none; padding:0; margin:0; }
