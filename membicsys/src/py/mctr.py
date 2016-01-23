@@ -4,21 +4,23 @@ from google.appengine.api import memcache
 import pickle
 import logging
 from cacheman import *
+from moracct import *
 import datetime
 import re
+import rev
 
 class MembicCounter(db.Model):
     """ A Membic sharded Counter instance. Not guaranteed. May underreport. """
-    # parent 0 is global app counter
+    # parentid 0 is global app counter
     refp = db.StringProperty(required=True)        # <type>Counter<parentid>
     day = db.StringProperty(required=True)         # ISO date for this count
     modified = db.StringProperty()                 # ISOmem;ISOdb
     # traffic metrics: (sum visit types for total)
-    sitev = db.IntegerProperty(indexed=False)      # visits via main app
-    parav = db.IntegerProperty(indexed=False)      # visits via app params link
-    permv = db.IntegerProperty(indexed=False)      # visits via the permalink
+    sitev = db.IntegerProperty(indexed=False)      # anon visits via main app
+    sitek = db.IntegerProperty(indexed=False)      # known visits via main app
+    permv = db.IntegerProperty(indexed=False)      # anon permalink visits
+    permk = db.IntegerProperty(indexed=False)      # known permalink visits
     rssv = db.IntegerProperty(indexed=False)       # RSS summary requests
-    identv = db.IntegerProperty(indexed=False)     # logged in visitors
     logvis = db.TextProperty()                     # visitors penid:encname,...
     refers = db.TextProperty()                     # srcA:3,srcB:12...
     # activity metrics:
@@ -30,18 +32,18 @@ class MembicCounter(db.Model):
     responded = db.IntegerProperty(indexed=False)  # num membics responded
 
 
-def normalize_counter_type(giventype):
+def normalize_mctr_type(giventype):
     ct = giventype.lower()
     if ct == 'site':
         return "Site"
     if ct == 'coop' or ct == 'theme':
         return "Coop"
-    if ct == 'pen' or ct == 'penname':
+    if ct == 'pen' or ct == 'penname' or ct == 'profile':
         return "PenName"
     raise ValueError("Unknown counter type " + giventype)
 
 
-def getCounter(ctype, parid):
+def get_mctr(ctype, parid):
     key = ctype + "Counter" + str(parid)
     day = dt2ISO(datetime.datetime.utcnow())[:10] + "T00:00:00Z"
     counter = memcache.get(key)  # race conditions on update are acceptable
@@ -53,18 +55,17 @@ def getCounter(ctype, parid):
             memcache.set(key, "")
             counter = None
     if not counter:
-        gql = MembicCounter.gql("WHERE parent = :1", ctype + str(parid))
+        gql = MembicCounter.gql("WHERE refp = :1", ctype + str(parid))
         cs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         if len(cs) > 0:
             counter = cs[0]
         else:  # not found in db, make a new one
-            counter = MembicCounter(parent=key)
-            counter.day = day
+            counter = MembicCounter(refp=key,day=day)
             counter.modified = ""  # indicates this is a new counter
     return counter
 
 
-def putCounter(counter, field=None):
+def put_mctr(counter, field=None):
     # force write fields are low volume, critical counts to keep track of
     fwf = ["membics", "edits", "removed", "remembered", "responded"]
     if field in fwf:
@@ -75,37 +76,49 @@ def putCounter(counter, field=None):
     if thresh > counter.modified:
         counter.modified = nowISO();
         counter.put()
-    memcache.set(key, pickle.dumps(counter))
+    memcache.set(counter.refp, pickle.dumps(counter))
+
+
+def normalized_count_field(pnm, field):
+    if field == "sitev" and pnm:
+        field = "sitek"
+    elif field == "permv" and pnm:
+        field = "permk"
+    return field
 
 
 class BumpCounter(webapp2.RequestHandler):
     def post(self):
-        ctype = normalize_counter_type(self.request.get("type"))
+        ctype = normalize_mctr_type(self.request.get("ctype"))
         parid = int(self.request.get("parentid"))
-        field = self.request.get("field")
-        counter = getCounter(ctype, parid)
-        if field == "logvis":
-            penid = self.request.get("penid")
-            name = self.request.get("name")
-            name = re.sub(r",+", "", strval)  # strip any commas
-            name = safeURIEncode(name)        # re-encode
+        pnm = None
+        penid = self.request.get("penid")
+        if penid and int(penid):
+            pnm = rev.review_modification_authorized(self)
+        field = normalized_count_field(pnm, self.request.get("field"))
+        refer = self.request.get("refer")
+        counter = get_mctr(ctype, parid)
+        if pnm:  # note any new visitors
+            name = re.sub(r",+", "", pnm.name)  # strip any commas
+            name = safeURIEncode(name)
             val = penid + ":" + name
             if not csv_contains(val, counter.logvis):
                 counter.logvis = prepend_to_csv(val, counter.logvis)
-        elif field == "refers":
-            refer = self.request.get("refer")
+        if refer:  # note referral if given
             counter.refers = csv_increment(refer, counter.refers)
-        else:
-            cval = int(getattr(counter, field))
-            cval += 1
-            setattr(counter, field, cval)
-        putCounter(counter, field)
+        # update the count
+        logging.info("BumpCounter " + counter.refp + "." + field)
+        cval = getattr(counter, field)
+        cval = cval or 0  # counter field may not be initialized yet
+        cval += 1
+        setattr(counter, field, cval)
+        put_mctr(counter, field)
         returnJSON(self.response, [counter])
 
 
 class GetCounters(webapp2.RequestHandler):
     def get(self):
-        ctype = normalize_counter_type(self.request.get("type"))
+        ctype = normalize_mctr_type(self.request.get("ctype"))
         parid = int(self.request.get("parentid"))
         refp = ctype + "Counter" + parid
         daysback = 70  # 10 weeks back
@@ -120,6 +133,6 @@ class GetCounters(webapp2.RequestHandler):
         returnJSON(self.response, ctrs)
 
 
-app = webapp2.WSGIApplication([('.*/bumpctr', BumpCounter),
-                               ('.*/getmsctrs', GetCounters)], debug=True)
+app = webapp2.WSGIApplication([('.*/bumpmctr', BumpCounter),
+                               ('.*/getmctrs', GetCounters)], debug=True)
 

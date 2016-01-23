@@ -1,6 +1,6 @@
 /*global JSON, app, jt, confirm, window */
 
-/*jslint browser, white, fudge */
+/*jslint browser, multivar, white, fudge */
 
 app.pen = (function () {
     "use strict";
@@ -126,8 +126,24 @@ return {
     },
 
 
-    bypenid: function (penid, tabname) {
-        var penref = app.lcs.getRef("pen", penid);
+    bypenid: function (penid, src, tabname) {
+        var cts, data, ctype, penref;
+        cts = ["review", "prefpens", "membapp", "adminlog"];
+        if(cts.indexOf(src) >= 0) {
+            ctype = "sitev";
+            if(window.location.href.indexOf("/p/") >= 0) {
+                ctype = "permv"; }
+            data = jt.objdata({ctype: "Profile", parentid: penid, 
+                               field: ctype, penid: penid});
+            setTimeout(function () {
+                jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+                        function () {
+                            jt.log("bumpmctr?" + data + " success"); },
+                        function (code, errtxt) {
+                            jt.log("bumpmctr?" + data + " failed " + 
+                                   code + ": " + errtxt); }); },
+                       20); }
+        penref = app.lcs.getRef("pen", penid);
         if(penref.pen) {
             return app.pcd.display("pen", penid, tabname, penref.pen); }
         app.pcd.fetchAndDisplay("pen", penid, tabname);

@@ -277,6 +277,16 @@ handlers:
 ######################################################################
 # Summaries and stats
 
+## Bump counter for profile or theme
+## POST params: type, parentid, field [, penid, name, refer]
+- url: .*/bumpmctr.*
+  script: src.py.mctr.app
+
+## Fetch counters for profile or theme
+## GET params: type, parentid
+- url: .*/getmctrs.*
+  script: src.py.mctr.app
+
 ## Fetch RSS feed content for the specified coop
 ## GET params: ctmid
 - url: .*/rsscoop.*

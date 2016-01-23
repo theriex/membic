@@ -1,6 +1,6 @@
 /*global setTimeout, window, confirm, app, jt, google, document */
 
-/*jslint browser, white, fudge, for */
+/*jslint browser, multivar, white, fudge, for */
 
 app.review = (function () {
     "use strict";
@@ -2096,7 +2096,7 @@ return {
                     ["div", {cla: "fpprofdiv"},
                      [["a", {href: "#view=pen&penid=" + rev.penid,
                              onclick: jt.fs("app.pen.bypenid('" + 
-                                            rev.penid + "')")},
+                                            rev.penid + "','review')")},
                        ["img", {cla: "fpprofpic", 
                                 src: "profpic?profileid=" + rev.penid,
                                 title: jt.ndq(rev.penname),

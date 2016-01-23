@@ -278,7 +278,8 @@ app.pcd = (function () {
                            title: jt.ndq(name),
                            alt: "prof pic"}]],
                  ["a", {href: "view=pen&penid=" + penid,
-                        onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
+                        onclick: jt.fs("app.pen.bypenid('" + penid + 
+                                       "','membapp')")},
                   ["span", {cla: "penflist"}, name]],
                  "&nbsp;" + ctmmsgs[mlev].notice,
                  ["div", {cla: "formline"}],
@@ -330,7 +331,8 @@ app.pcd = (function () {
             return ""; }
         penid = logentry.targid;
         return ["a", {href: "view=pen&penid=" + penid,
-                      onclick: jt.fs("app.pen.bypenid('" + penid + "')")},
+                      onclick: jt.fs("app.pen.bypenid('" + penid + 
+                                     "','adminlog')")},
                 logentry.tname];
     },
 
@@ -1079,7 +1081,7 @@ app.pcd = (function () {
                         modButtonsHTML(obj)]]],
                      ["div", {id: "ppcdshoutdiv"},
                       ["span", {cla: "shoutspan"}, 
-                       jt.linkify(obj[defs.descfield] || "")]],
+                       jt.linkify(obj[defs.descfield] || "")]]
                      // ["div", {id: "pcdhashdiv"},
                      //  (obj.hashtag? ("#" + obj.hashtag) : "")]
                     ]]]],
@@ -1207,7 +1209,7 @@ return {
                                   src: dst.pen.picsrc + penid}]],
                         ["a", {href: "p/" + penid, cla: "leftspacelink",
                                onclick: jt.fs("app.pen.bypenid('" +
-                                              penid + "')")},
+                                              penid + "','prefpens')")},
                          ["span", {cla: "penfont"}, pname]]]]); });
         if(!html.length) {
             html.push(["div", {cla: "pcdtext"},

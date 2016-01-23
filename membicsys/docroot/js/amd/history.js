@@ -1,6 +1,6 @@
 /*global window, document, history, JSON, app, jt */
 
-/*jslint white, fudge */
+/*jslint browser, multivar, white, fudge */
 
 ////////////////////////////////////////
 // history utility methods
@@ -95,9 +95,9 @@ return {
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
-                return app.pen.bypenid(state.profid, state.tab); }
+                return app.pen.bypenid(state.profid, 'history', state.tab); }
             if(jt.isId(state.penid)) {
-                return app.pen.bypenid(state.penid, state.tab); }
+                return app.pen.bypenid(state.penid, 'history', state.tab); }
             return app.pcd.display();
         }
     },
