@@ -127,12 +127,11 @@ return {
 
 
     bypenid: function (penid, src, tabname) {
-        var cts, data, ctype, penref;
+        var solopage, cts, data, ctype, penref;
+        solopage = (window.location.href.indexOf("/p/") >= 0)
         cts = ["review", "prefpens", "membapp", "adminlog"];
-        if(cts.indexOf(src) >= 0) {
-            ctype = "sitev";
-            if(window.location.href.indexOf("/p/") >= 0) {
-                ctype = "permv"; }
+        if(cts.indexOf(src) >= 0 || solopage) {
+            ctype = solopage ? "permv" : "sitev";
             data = jt.objdata({ctype: "Profile", parentid: penid, 
                                field: ctype, penid: penid});
             setTimeout(function () {

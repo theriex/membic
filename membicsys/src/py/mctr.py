@@ -94,7 +94,9 @@ class BumpCounter(webapp2.RequestHandler):
         pnm = None
         penid = self.request.get("penid")
         if penid and int(penid):
-            pnm = rev.review_modification_authorized(self)
+            acc = authenticated(self.request)
+            if acc:
+                pnm = rev.acc_review_modification_authorized(acc, self)
         field = normalized_count_field(pnm, self.request.get("field"))
         refer = self.request.get("refer")
         counter = get_mctr(ctype, parid)
@@ -107,12 +109,13 @@ class BumpCounter(webapp2.RequestHandler):
         if refer:  # note referral if given
             counter.refers = csv_increment(refer, counter.refers)
         # update the count
-        logging.info("BumpCounter " + counter.refp + "." + field)
         cval = getattr(counter, field)
         cval = cval or 0  # counter field may not be initialized yet
         cval += 1
         setattr(counter, field, cval)
         put_mctr(counter, field)
+        logging.info("BumpCounter " + counter.refp + "." + field + 
+                     ": " + str(cval))
         returnJSON(self.response, [counter])
 
 

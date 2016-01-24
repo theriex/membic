@@ -1011,11 +1011,13 @@ app.pcd = (function () {
         rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
         html = [["a", {href: homeurl, title: dst.obj.name + " full page",
                        onclick: jt.fs("window.open('" + homeurl + "')")},
-                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]],
-                "&nbsp; &nbsp;",
+                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]]];
+        if(dst.type === "coop") {  //RSS only available for themes...
+            html.push("&nbsp; &nbsp;");
+            html.push(
                 ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
                        onclick: jt.fs("window.open('" + rssurl + "')")},
-                 ["img", {cla: "webjump", src: "img/rssicon.png"}]]];
+                 ["img", {cla: "webjump", src: "img/rssicon.png"}]]); }
         jt.out('overlaydiv', jt.tac2html(html));
     },
 
