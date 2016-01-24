@@ -95,6 +95,7 @@ indexHTML = """
 <script src="js/compiled.js$CACHEPARA"></script>
 
 <script>
+  app.refer = "$REFER";
   app.init();
 </script>
 
@@ -130,6 +131,7 @@ def start_page_html(handler, dbclass, dbid):
     html = html.replace("$TITLE", title)
     html = html.replace("$DESCR", descr)
     html = html.replace("$CACHEPARA", cachev)
+    html = html.replace("$REFER", handler.request.referer or "")
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 
