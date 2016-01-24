@@ -121,6 +121,8 @@ button, .loginbutton, .formbutton {
   border-top-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }
+#xtrabsdiv { position:absolute; left:70px; top:80px; visibility:hidden; 
+             padding:10px; }
 #closeline { text-align:right; font-size:x-small; }
 .dlgclosex { float:right; font-size:x-small; }
 .floatclear { clear:both; }

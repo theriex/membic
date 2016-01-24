@@ -519,6 +519,23 @@ app.review = (function () {
     //click to write and be pleasantly surprised that your previous
     //review was found (if the cankey matches), or search your reviews
     //to find the matching one and add it to the altkeys.
+    fpbWriteButtonHTML = function (prefix, disprevid, updrevid, mine) {
+        var las, html;
+        las = {href: "#write",
+               title: "Note your impressions",
+               onclick: jt.fs("app.review.fpbWrite('" + prefix + "','" + 
+                              disprevid + "','" + updrevid + "')")};
+        if(mine) {
+            las.href = "#edit";
+            las.title = "Edit your membic"; }
+        html = ["a", las,
+                ["img", {cla: "fpbuttonimg",
+                         id: prefix + updrevid + "writebutton",
+                         src: "img/writereview.png"}]];
+        return html;
+    },
+
+
     revpostButtonsHTML = function (prefix, revid) {
         var rev, updrevid, html;
         rev = app.lcs.getRef("rev", revid).rev;
@@ -531,13 +548,7 @@ app.review = (function () {
                              id: prefix + revid + "rememberdiv"},
                      fpbRememberButtonHTML(prefix, revid, updrevid)],
                     ["div", {cla: "fpbuttondiv"},
-                     ["a", {href: "#write",
-                            title: "Note your impressions",
-                            onclick: jt.fs("app.review.fpbWrite('" +
-                                           updrevid + "')")},
-                      ["img", {cla: "fpbuttonimg",
-                               id: prefix + revid + "writebutton",
-                               src: "img/writereview.png"}]]]]; }
+                     fpbWriteButtonHTML(prefix, revid, updrevid)]]; }
         else { //your own review
             rev.helpful = rev.helpful || "";
             rev.remembered = rev.remembered || "";
@@ -548,13 +559,7 @@ app.review = (function () {
                              style: "background:url('../img/rememberdis.png') no-repeat center center; background-size:contain;"},
                      rev.remembered.csvarray().length],
                     ["div", {cla: "fpbuttondiv"},
-                     ["a", {href: "#edit",
-                            title: "Edit your membic",
-                            onclick: jt.fs("app.review.fpbWrite('" +
-                                           updrevid + "')")},
-                      ["img", {cla: "fpbuttonimg",
-                               id: prefix + revid + "writebutton",
-                               src: "img/writereview.png"}]]]]; }
+                     fpbWriteButtonHTML(prefix, revid, updrevid, true)]]; }
         if(app.coop.mayRemove(app.lcs.getRef("coop", rev.ctmid).coop, rev)) {
             html.push(["div", {cla: "fpbuttondiv", id: "rbd" + revid},
                        ["a", {href: "#remove",
@@ -1264,25 +1269,15 @@ app.review = (function () {
     },
 
 
-    titleLink = function (rev, togclick, html) {
-        if(app.solopage() && rev.url) {
-            html = ["a", {href: rev.url, title: rev.url,
-                          onclick: jt.fs("window.open('" + rev.url + "')")},
-                    html]; }
-        else {
-            html = ["a", {href: revurl(rev), onclick: togclick},
-                    html]; }
-        return html;
-    },
-
-
     typeAndTitle = function (type, rev, togclick) {
         var html;
         html = [["img", {cla: "reviewbadge", src: "img/" + type.img,
                          title: type.type, alt: type.type}],
                 "&nbsp;",
                 app.pcd.reviewItemNameHTML(type, rev)];
-        return titleLink(rev, togclick, html);
+        html = ["a", {href: revurl(rev), onclick: togclick},
+                html];
+        return html;
     },
 
 
@@ -1352,6 +1347,48 @@ app.review = (function () {
             jt.log("Save fail 0: Call completed but not successful");
             return; }
         jt.out(statdivid, "Save fail " + code + ": " + errtxt);
+    },
+
+
+    signInErr = function (errtxt, prefix, disprevid) {
+        var html, wlh, href = "", sidx, yc;
+        if(app.solopage()) {
+            wlh = window.location.href;
+            sidx = wlh.indexOf("/t/");
+            if(sidx >= 0) {
+                href = "?view=coop&coopid=" + wlh.slice(sidx + 3); }
+            sidx = wlh.indexOf("/p/");
+            if(sidx >= 0) {
+                html = "?view=pen&penid=" + wlh.slice(sidx + 3); }
+            href = app.hardhome + href;
+            html = ["div", {id: "siedlgdiv"},
+                    [["div", {cla: "pcdsectiondiv"},
+                      ["a", {href: href},
+                       [["img", {cla: "reviewbadge", 
+                                 src: "img/membiclogo.png"}],
+                        errtxt]]],
+                     ["div", {cla: "dlgbuttonsdiv"},
+                      [["button", {type: "button", id: "cancelsieb",
+                                   onclick: jt.fs("app.layout.closeDialog()")},
+                        "Cancel"],
+                       ["button", {type: "button", id: "redirsieb",
+                                   onclick: jt.fs("app.redirect('" + href + 
+                                                  "')")},
+                        "Go to main site"]]]]];
+            html = app.layout.dlgwrapHTML("&nbsp", html);
+            yc = window.pageYOffset + 60;
+            if(prefix && disprevid) {
+                try {
+                    yc = jt.geoPos(jt.byId(
+                        prefix + disprevid + "buttonsdiv")).y;
+                } catch (problem) {
+                    jt.log("y offset for error dlg: " + problem);
+                } }
+            app.layout.openDialog({x: 50, y: yc},
+                                  jt.tac2html(html)); }
+        if(!html) {
+            jt.err(errtxt); }
+        return errtxt;
     };
 
 
@@ -1660,7 +1697,7 @@ return {
 
     jumpLinkHTML: function (review, type) {
         var qurl, html;
-        if(!review || app.solopage()) {
+        if(!review) {
             return ""; }
         if(!review.url) {
             qurl = review[type.key];
@@ -1915,10 +1952,11 @@ return {
     fpbToggleHelpful: function (prefix, disprevid, updrevid, retries) {
         var rev, url;
         if(!app.pen.myPenName()) {
-            return jt.err("Sign in to mark this membic as helpful."); }
+            return signInErr("Sign in to mark this membic as helpful.",
+                             prefix, disprevid); }
         rev = app.lcs.getRef("rev", updrevid).rev;
         if(rev.helpful && rev.helpful.csvarray().length >= 123) {
-            return jt.err("Enough people found this helpful already."); }
+            return jt.err("This membic has reached max stars already."); }
         jt.out(prefix + disprevid + "helpfuldiv", 
                fpbHelpfulButtonHTML(prefix, disprevid, updrevid, true));
         //disconnect update call from screen update
@@ -1947,7 +1985,8 @@ return {
     fpbToggleRemember: function (prefix, disprevid, updrevid) {
         var url;
         if(!app.pen.myPenName()) {
-            return jt.err("Sign in to remember this membic."); }
+            return signInErr("Sign in to remember this membic.",
+                             prefix, disprevid); }
         jt.out(prefix + disprevid + "rememberdiv",
                fpbRememberButtonHTML(prefix, disprevid, updrevid, true));
         //disconnect update call from screen update
@@ -1970,9 +2009,10 @@ return {
     },
 
 
-    fpbWrite: function (updrevid) {
+    fpbWrite: function (prefix, disprevid, updrevid) {
         if(!app.pen.myPenName()) {
-            return jt.err("Sign in to note your impressions."); }
+            return signInErr("Sign in to note your impressions.",
+                             prefix, disprevid); }
         app.lcs.getFull("rev", updrevid, function (revref) {
             app.review.start(revref.rev); });
     },

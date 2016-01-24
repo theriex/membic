@@ -1,6 +1,6 @@
 /*global setTimeout, window, document, history, jtminjsDecorateWithUtilities */
 
-/*jslint white, fudge, for */
+/*jslint browser, multivar, white, fudge, for */
 
 var app = {},  //Global container for application level funcs and values
     jt = {};   //Global access to general utility methods
@@ -72,6 +72,11 @@ var app = {},  //Global container for application level funcs and values
            (!jt.cookie(app.authcookname))) {
             app.redirectToSecureServer(jt.parseParams());
             return true; }
+    };
+
+
+    app.redirect = function (href) {
+        window.location.href = href;
     };
 
 
@@ -253,7 +258,7 @@ var app = {},  //Global container for application level funcs and values
                 msg2 = msg2 || "Server cache rebuild...";
                 jt.out('waitserverdiv', msg2); }
             if(count > 10) {
-                msg2 = "Either the network is super slow or communications broke. Wait or reload the page.."
+                msg2 = "Either the network is super slow or communications broke. Wait or reload the page..";
                 jt.out('waitserverdiv', msg2); }
             setTimeout(function () {
                 app.displayWaitProgress(count + 1, millis, 

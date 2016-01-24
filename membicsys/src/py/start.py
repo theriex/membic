@@ -80,6 +80,7 @@ indexHTML = """
   </div>
 </div>
 
+<div id="xtrabsdiv"></div>
 <!-- higher z than content, postioned above -->
 <div id="topdiv">  
 </div>

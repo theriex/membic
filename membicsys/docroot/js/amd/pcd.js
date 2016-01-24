@@ -1000,12 +1000,11 @@ app.pcd = (function () {
     displayRSSAndHomeLinks = function () {
         var coords, absdiv, html, homeurl, rssurl;
         coords = jt.geoPos(jt.byId('tabsdiv'));
-        absdiv = jt.byId('overlaydiv');
+        absdiv = jt.byId('xtrabsdiv');
         absdiv.style.left = (dst.type === "pen"? "230px" : "130px");
         absdiv.style.top = String(coords.y - 10) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
-        absdiv.style.boxShadow = "none";
         absdiv.style.visibility = "visible";
         homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
         rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
@@ -1018,7 +1017,7 @@ app.pcd = (function () {
                 ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
                        onclick: jt.fs("window.open('" + rssurl + "')")},
                  ["img", {cla: "webjump", src: "img/rssicon.png"}]]); }
-        jt.out('overlaydiv', jt.tac2html(html));
+        jt.out('xtrabsdiv', jt.tac2html(html));
     },
 
 
@@ -1592,11 +1591,6 @@ return {
 
     toggleRevExpansion: function (prefix, revid) {
         var revs;
-        if(app.solopage()) {
-            return window.open("?view=" + dst.type + "&" +
-                               (dst.type === "coop"? "ctmid=" : "penid=") +
-                               dst.id + "&tab=" + dst.tab + 
-                               "&expid=" + revid); }
         switch(dst.tab) {
         case "latest":
             revs = getRecentReviews();
