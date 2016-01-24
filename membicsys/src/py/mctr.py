@@ -87,6 +87,15 @@ def normalized_count_field(pnm, field):
     return field
 
 
+def bump_rss_summary(ctm):
+    counter = get_mctr("Coop", ctm.key().id())
+    counter.rssv = counter.rssv or 0
+    counter.rssv += 1;
+    put_mctr(counter, "rssv")
+    logging.info("bump_rss_counter " + counter.refp + ".rssv: " + 
+                 str(counter.rssv))
+
+
 class BumpCounter(webapp2.RequestHandler):
     def post(self):
         ctype = normalize_mctr_type(self.request.get("ctype"))

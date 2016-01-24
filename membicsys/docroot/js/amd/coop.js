@@ -1,6 +1,6 @@
-/*global app, jt, confirm */
+/*global app, jt, confirm, window */
 
-/*jslint white */
+/*jslint browser, multivar, white, fudge */
 
 // pen.stash (maintained by client)
 //   key: ctm + coopid
@@ -97,7 +97,22 @@ app.coop = (function () {
     ////////////////////////////////////////
 return {
 
-    bycoopid: function (coopid, tabname, expid) {
+    bycoopid: function (coopid, src, tabname, expid) {
+        var solopage, cts, data, ctype;
+        solopage = (window.location.href.indexOf("/t/") >= 0);
+        cts = ["review", "membership"];
+        if(cts.indexOf(src) >= 0 || solopage) {
+            ctype = solopage ? "permv" : "sitev";
+            data = jt.objdata({ctype: "Theme", parentid: coopid,
+                               field: ctype, penid: app.pen.myPenId()});
+            setTimeout(function () {
+                jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+                        function () {
+                            jt.log("bumpmctr?" + data + " success"); },
+                        function (code, errtxt) {
+                            jt.log("bumpmctr?" + data + " failed " + 
+                                   code + ": " + errtxt); }); },
+                       20); }
         app.pcd.fetchAndDisplay("coop", coopid, tabname, expid);
     },
 

@@ -609,7 +609,7 @@ app.review = (function () {
             links.push(jt.tac2html(
                 ["a", {href: "?view=coop&coopid=" + pn.ctmid,
                        onclick: jt.fs("app.coop.bycoopid('" +
-                                      pn.ctmid + "')")},
+                                      pn.ctmid + "','review')")},
                  pn.name])); });
         html = ["span", {cla: "fpctmlinksspan"},
                 [["span", {cla: "fpctmlinkslab"}, "Posted to: "],

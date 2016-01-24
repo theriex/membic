@@ -1235,7 +1235,7 @@ return {
                                   src: dst.coop.picsrc + cid}]],
                         ["a", {href: "t/" + cid,
                                onclick: jt.fs("app.coop.bycoopid('" +
-                                              cid + "')")},
+                                              cid + "','membership')")},
                          ["span", {cla: "penfont"}, coopname]]]]); });
         if(app.pen.myPenId() === jt.instId(dst.obj)) {
             html.push(["div", {cla: "pcdtext"},

@@ -91,7 +91,8 @@ return {
         case "memo":
             return app.activity.displayRemembered();
         case "coop":
-            return app.coop.bycoopid(state.coopid, state.tab, state.expid);
+            return app.coop.bycoopid(state.coopid, 'history', state.tab, 
+                                     state.expid);
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
