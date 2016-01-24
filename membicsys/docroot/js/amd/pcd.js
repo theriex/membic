@@ -1060,13 +1060,14 @@ app.pcd = (function () {
 
 
     displayObject = function (obj, expid) {
-        var defs, html;
+        var defs, html, shtxt;
         obj = obj || dst.obj;
         dst.obj = obj;
         app.layout.cancelOverlay();  //close user menu if open
         app.layout.closeDialog();    //close search dialog if open
         historyCheckpoint();
         defs = dst[dst.type];
+        shtxt = obj[defs.descfield] || "";
         html = ["div", {id: "pcdouterdiv"},
                 [["div", {id: "pcdupperdiv"},
                   [["div", {id: "pcdpicdiv"},
@@ -1081,8 +1082,11 @@ app.pcd = (function () {
                        ["span", {cla: "penbutton"},
                         modButtonsHTML(obj)]]],
                      ["div", {id: "ppcdshoutdiv"},
-                      ["span", {cla: "shoutspan"}, 
-                       jt.linkify(obj[defs.descfield] || "")]]
+                      ["span", {cla: "shoutspan",
+                                style: "font-size:" + 
+                                ((shtxt.length > 300)? "medium" : "large") +
+                               ";"}, 
+                       jt.linkify(shtxt)]]
                      // ["div", {id: "pcdhashdiv"},
                      //  (obj.hashtag? ("#" + obj.hashtag) : "")]
                     ]]]],
