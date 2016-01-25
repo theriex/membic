@@ -133,7 +133,8 @@ return {
         if(cts.indexOf(src) >= 0 || solopage) {
             ctype = solopage ? "permv" : "sitev";
             data = jt.objdata({ctype: "Profile", parentid: penid, 
-                               field: ctype, penid: penid});
+                               field: ctype, penid: penid,
+                               refer: app.refer});
             setTimeout(function () {
                 jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
                         function () {

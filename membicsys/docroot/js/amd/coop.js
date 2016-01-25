@@ -104,7 +104,8 @@ return {
         if(cts.indexOf(src) >= 0 || solopage) {
             ctype = solopage ? "permv" : "sitev";
             data = jt.objdata({ctype: "Theme", parentid: coopid,
-                               field: ctype, penid: app.pen.myPenId()});
+                               field: ctype, penid: app.pen.myPenId(),
+                               refer: app.refer});
             setTimeout(function () {
                 jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
                         function () {

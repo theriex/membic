@@ -96,6 +96,15 @@ def bump_rss_summary(ctm):
                  str(counter.rssv))
 
 
+def safe_refer_key(refer):
+    if refer.lower().startswith("http://"):
+        refer = refer[7:]
+    elif refer.lower().startswith("https://"):
+        refer = refer[8:]
+    refer = re.sub(r":", "", refer)  # remove any colons (delimiter for count)
+    return refer
+
+
 class BumpCounter(webapp2.RequestHandler):
     def post(self):
         ctype = normalize_mctr_type(self.request.get("ctype"))
@@ -116,7 +125,9 @@ class BumpCounter(webapp2.RequestHandler):
             if not csv_contains(val, counter.logvis):
                 counter.logvis = prepend_to_csv(val, counter.logvis)
         if refer:  # note referral if given
-            counter.refers = csv_increment(refer, counter.refers)
+            refer = safe_refer_key(refer)
+            if refer:
+                counter.refers = csv_increment(refer, counter.refers)
         # update the count
         cval = getattr(counter, field)
         cval = cval or 0  # counter field may not be initialized yet
