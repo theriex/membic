@@ -1336,6 +1336,13 @@ class ToggleHelpful(webapp2.RequestHandler):
             if csv_contains(penid, review.helpful):
                 review.helpful = remove_from_csv(penid, review.helpful)
             else:
+                mctr.bump_starred(review.penid, review.penname, 0)
+                disprevid = intz(self.request.get('disprevid'))
+                if disprevid > 0 and disprevid != revid:
+                    disprev = cached_get(disprevid, Review)
+                    if disprev:
+                        mctr.bump_starred(disprev.penid, disprev.penname,
+                                          disprev.ctmid)
                 mailsum.bump_starred()
                 review.helpful = prepend_to_csv(penid, review.helpful)
             cached_put(review)

@@ -1963,7 +1963,7 @@ return {
         setTimeout(function () {
             url = "toghelpful?" + app.login.authparams() + 
                 "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
-                jt.ts("&cb=", "second");
+                "&disprevid=" + disprevid + jt.ts("&cb=", "second");
             jt.call('GET', url, null,
                     function (reviews) {
                         app.lcs.put("rev", reviews[0]);

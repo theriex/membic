@@ -127,6 +127,17 @@ def bump_rss_summary(ctm):
     #              str(counter.rssv))
 
 
+def bump_starred(penid, penname, ctmid):
+    counter = None
+    if ctmid > 0:
+        counter = get_mctr("Coop", ctmid)
+    else:
+        counter = get_mctr("PenName", penid)
+    counter.starred += 1;
+    logging.info("bump_starred " + counter.refp + ": " + str(counter.starred))
+    put_mctr(counter, "starred")
+
+
 def count_review_update(action, penid, penname, ctmid, srcrev):
     counter = None
     field = None
