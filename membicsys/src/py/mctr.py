@@ -10,7 +10,12 @@ import re
 import rev
 
 class MembicCounter(db.Model):
-    """ A Membic sharded Counter instance. Not guaranteed. May underreport. """
+    """ A Membic sharded Counter instance. One instance for each
+    profile or theme.  Not guaranteed. May underreport if there are
+    several updates within the timedelta used by put_mctr to determine
+    caching followed by no updates for enough time that the counter
+    was lost from cache. A visitor is someone who clicks through to
+    the profile/theme, or who interacts with a posted review. """
     # parentid 0 is global app counter
     refp = db.StringProperty(required=True)        # <type>Counter<parentid>
     day = db.StringProperty(required=True)         # ISO date for this count
@@ -55,13 +60,26 @@ def get_mctr(ctype, parid):
             memcache.set(key, "")
             counter = None
     if not counter:
-        gql = MembicCounter.gql("WHERE refp = :1", ctype + str(parid))
+        gql = MembicCounter.gql("WHERE refp = :1", key)
         cs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         if len(cs) > 0:
             counter = cs[0]
         else:  # not found in db, make a new one
             counter = MembicCounter(refp=key,day=day)
             counter.modified = ""  # indicates this is a new counter
+            counter.sitev = 0
+            counter.sitek = 0
+            counter.permv = 0
+            counter.permk = 0
+            counter.rssv = 0
+            counter.logvis = ""
+            counter.refers = ""
+            counter.membics = 0
+            counter.edits = 0
+            counter.removed = 0
+            counter.starred = 0
+            counter.remembered = 0
+            counter.responded = 0
     return counter
 
 
@@ -76,6 +94,7 @@ def put_mctr(counter, field=None):
     if thresh > counter.modified:
         counter.modified = nowISO();
         counter.put()
+        counter = MembicCounter.get_by_id(counter.key().id())  #force db read
     memcache.set(counter.refp, pickle.dumps(counter))
 
 
@@ -87,15 +106,6 @@ def normalized_count_field(pnm, field):
     return field
 
 
-def bump_rss_summary(ctm):
-    counter = get_mctr("Coop", ctm.key().id())
-    counter.rssv = counter.rssv or 0
-    counter.rssv += 1;
-    put_mctr(counter, "rssv")
-    logging.info("bump_rss_counter " + counter.refp + ".rssv: " + 
-                 str(counter.rssv))
-
-
 def safe_refer_key(refer):
     if refer.lower().startswith("http://"):
         refer = refer[7:]
@@ -104,6 +114,52 @@ def safe_refer_key(refer):
     refer = re.sub(r":", "", refer)  # remove any colons (delimiter for count)
     return refer
 
+
+########################################
+# module interfaces
+
+def bump_rss_summary(ctm):
+    counter = get_mctr("Coop", ctm.key().id())
+    counter.rssv = counter.rssv or 0
+    counter.rssv += 1;
+    put_mctr(counter, "rssv")
+    # logging.info("bump_rss_counter " + counter.refp + ".rssv: " + 
+    #              str(counter.rssv))
+
+
+def count_review_update(action, penid, penname, ctmid, srcrev):
+    counter = None
+    field = None
+    if ctmid > 0:
+        counter = get_mctr("Coop", ctmid)
+    else:
+        counter = get_mctr("PenName", penid)
+    if action == "save":
+        counter.membics += 1
+        field = "membics"
+    elif action == "edit":
+        counter.edits += 1;
+        field = "edits"
+    elif action == "delete":
+        counter.removed += 1;
+        field = "removed"
+    put_mctr(counter, field)
+    if action == "save" and srcrev > 0:
+        # 30jan16 ep: no reasonable way to find cached srcrev in feed blocks
+        counter = None
+        src = rev.Review.get_by_id(srcrev)
+        if src:
+            if src.ctmid > 0:  # Source review was a Coop post
+                counter = get_mctr("Coop", src.ctmid)
+            else:
+                counter = get_mctr("PenName", src.penid)
+            if counter:
+                counter.responded += 1;
+                put_mctr(counter, "responded")
+
+
+########################################
+# endpoint definitions
 
 class BumpCounter(webapp2.RequestHandler):
     def post(self):

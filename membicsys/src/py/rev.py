@@ -10,6 +10,7 @@ from morutil import *
 import pen
 import coop
 import mailsum
+import mctr
 import json
 from operator import attrgetter
 import re
@@ -356,6 +357,11 @@ def prepend_to_main_feeds(review, pnm):
 
 def write_review(review, pnm):
     set_review_mainfeed(review)
+    updt = "save"
+    if review.is_saved():
+        updt = "edit"
+    mctr.count_review_update(updt, review.penid, review.penname,
+                             review.ctmid, review.srcrev)
     mailsum.note_review_update(review.is_saved(), review.penid, review.penname,
                                review.ctmid, review.srcrev)
     review.put()
@@ -453,6 +459,11 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         logging.info("write_coop_reviews: Coop " + ctmid + " " + ctm.name)
         logging.info("    copying source review")
         copy_source_review(review, ctmrev, ctmid)
+        updt = "save"
+        if ctmrev.is_saved():
+            updt = "edit"
+        mctr.count_review_update(updt, ctmrev.penid, ctmrev.penname, 
+                                 ctmrev.ctmid, ctmrev.srcrev)
         mailsum.note_review_update(ctmrev.is_saved(), ctmrev.penid,
                                    ctmrev.penname, ctmrev.ctmid,
                                    ctmrev.srcrev)
@@ -1043,6 +1054,8 @@ class DeleteReview(webapp2.RequestHandler):
         coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
         coop.update_coop_and_bust_cache(ctm)
         cached_delete(revid, Review)
+        mctr.count_review_update("delete", review.penid, review.penname,
+                                 review.ctmid, review.srcrev)
         returnJSON(self.response, [ ctm ])
 
 
