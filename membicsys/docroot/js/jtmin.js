@@ -1,6 +1,6 @@
 /*global alert, console, document, window, XMLHttpRequest, JSON, escape, unescape, setTimeout, navigator */
 
-/*jslint white, fudge, this, for */
+/*jslint browser, multivar, white, fudge, this, for */
 
 ////////////////////////////////////////
 // Just The Mods I Need

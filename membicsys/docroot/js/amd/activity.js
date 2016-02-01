@@ -54,6 +54,17 @@ app.activity = (function () {
 
 
     mergeAndDisplayReviews = function (feedtype, revs) {
+        var data = jt.objdata({ctype: "Site", parentid: 0,
+                               field: "sitev", penid: app.pen.myPenId(),
+                               refer: app.refer});
+        setTimeout(function () {
+            jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+                    function () {
+                        jt.log("bumpmctr?" + data + " success"); },
+                    function (code, errtxt) {
+                        jt.log("bumpctr?" + data + " failed " + 
+                               code + ": " + errtxt); }); },
+                   300);
         jt.out("contentdiv", jt.tac2html(
             [["div", {cla: "disptitlediv"}, "COMMUNITY MEMBICS"],
              ["div", {id: "feedrevsdiv"}]]));

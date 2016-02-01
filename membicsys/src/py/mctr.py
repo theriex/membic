@@ -206,7 +206,7 @@ def count_review_update(action, penid, penname, ctmid, srcrev):
 class BumpCounter(webapp2.RequestHandler):
     def post(self):
         ctype = normalize_mctr_type(self.request.get("ctype"))
-        parid = int(self.request.get("parentid"))
+        parid = intz(self.request.get("parentid"))
         pnm = None
         penid = self.request.get("penid")
         if penid and int(penid):
@@ -240,7 +240,7 @@ class BumpCounter(webapp2.RequestHandler):
 class GetCounters(webapp2.RequestHandler):
     def get(self):
         ctype = normalize_mctr_type(self.request.get("ctype"))
-        parid = int(self.request.get("parentid"))
+        parid = intz(self.request.get("parentid"))
         refp = ctype + "Counter" + parid
         daysback = 70  # 10 weeks back
         dtnow = datetime.datetime.utcnow()
