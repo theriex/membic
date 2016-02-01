@@ -1,6 +1,6 @@
 /*global setTimeout, window, document, app, jt */
 
-/*jslint white for */
+/*jslint browser, multivar, white, for */
 
 //////////////////////////////////////////////////////////////////////
 // Display of recent posts from friends, remembered posts.  
@@ -121,8 +121,8 @@ return {
                         new Date().getTime() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
-                    jt.out('feedrevsdiv', "error code: " + code + 
-                           " " + errtxt); }),
+                    jt.out('contentdiv', "revfeed failed code " + code + 
+                           ": " + errtxt); }),
                 jt.semaphore("activity.displayFeed"));
     },
 

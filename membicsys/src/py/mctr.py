@@ -123,19 +123,50 @@ def bump_rss_summary(ctm):
     counter.rssv = counter.rssv or 0
     counter.rssv += 1;
     put_mctr(counter, "rssv")
-    # logging.info("bump_rss_counter " + counter.refp + ".rssv: " + 
-    #              str(counter.rssv))
+    logging.info("bump_rss_counter " + counter.refp + ": " + str(counter.rssv))
 
 
-def bump_starred(penid, penname, ctmid):
-    counter = None
-    if ctmid > 0:
-        counter = get_mctr("Coop", ctmid)
-    else:
-        counter = get_mctr("PenName", penid)
-    counter.starred += 1;
-    logging.info("bump_starred " + counter.refp + ": " + str(counter.starred))
-    put_mctr(counter, "starred")
+def bump_starred(review, disprevid):
+    revid = review.key().id()
+    # counters are a side-effect. do not fail and affect caller processing
+    try:
+        counter = get_mctr("PenName", review.penid)
+        counter.starred += 1
+        put_mctr(counter, "starred")
+        logging.info("bump_starred " + counter.refp + ": " + 
+                     str(counter.starred))
+        if disprevid > 0 and disprevid != revid:
+            disprev = cached_get(disprevid, rev.Review)
+            if disprev and disprev.ctmid:
+                counter = get_mctr("Coop", disprev.ctmid)
+                counter.starred += 1
+                put_mctr(counter, "starred")
+                logging.info("bump_starred " + counter.refp + ": " + 
+                             str(counter.starred))
+    except Exception as e:
+        logging.error("bump_starred revid: " + str(revid) + 
+                      ", disprevid: " + str(disprevid) + " failed: " + str(e))
+
+
+def bump_remembered(review, disprevid):
+    revid = review.key().id()
+    try:
+        counter = get_mctr("PenName", review.penid)
+        counter.remembered += 1;
+        put_mctr(counter, "remembered")
+        logging.info("bump_remembered " + counter.refp + ": " + 
+                     str(counter.remembered))
+        if disprevid > 0 and disprevid != revid:
+            disprev = cached_get(disprevid, rev.Review)
+            if disprev and disprev.ctmid:
+                counter = get_mctr("Coop", disprev.ctmid)
+                counter.remembered += 1;
+                put_mctr(counter, "remembered")
+                logging.info("bump_remembered " + counter.refp + ": " + 
+                             str(counter.remembered))
+    except Exception as e:
+        logging.error("bump_remembered revid: " + str(revid) + 
+                      ", disprevid: " + str(disprevid) + " failed: " + str(e))
 
 
 def count_review_update(action, penid, penname, ctmid, srcrev):

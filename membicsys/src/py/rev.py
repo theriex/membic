@@ -748,12 +748,13 @@ def update_review_feed_entry_by_type(revtype, review):
         ref = memcache.get(revtype + "RevBlock" + str(i))
         if ref:
             jkey = "\"_id\":\"" + str(review.key().id()) + "\""
-            jsonobjs = ref.split(",")
+            jsonobjs = json.loads("[" + ref + "]")
             for idx, jsobj in enumerate(jsonobjs):
                 if jkey in jsobj:
                     jsonobjs[idx] = obj2JSON(review)
-                    memcache.set(revtype + "RevBlock" + str(i),
-                                 ",".join(jsonobjs))
+                    blockstr = json.dumps(jsonobjs)
+                    blockstr = blockstr[1:-1]
+                    memcache.set(revtype + "RevBlock" + str(i), blockstr)
                     updated = True
                     break
         if updated:
@@ -1336,13 +1337,7 @@ class ToggleHelpful(webapp2.RequestHandler):
             if csv_contains(penid, review.helpful):
                 review.helpful = remove_from_csv(penid, review.helpful)
             else:
-                mctr.bump_starred(review.penid, review.penname, 0)
-                disprevid = intz(self.request.get('disprevid'))
-                if disprevid > 0 and disprevid != revid:
-                    disprev = cached_get(disprevid, Review)
-                    if disprev:
-                        mctr.bump_starred(disprev.penid, disprev.penname,
-                                          disprev.ctmid)
+                mctr.bump_starred(review, intz(self.request.get('disprevid')))
                 mailsum.bump_starred()
                 review.helpful = prepend_to_csv(penid, review.helpful)
             cached_put(review)

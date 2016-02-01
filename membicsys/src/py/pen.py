@@ -13,6 +13,7 @@ from cacheman import *
 import coop
 import rev
 import mailsum
+import mctr
 
 
 class PenName(db.Model):
@@ -342,10 +343,13 @@ class ToggleRemember(webapp2.RequestHandler):
                 if not csv_contains(penid, review.remembered):
                     review.remembered = prepend_to_csv(penid, review.remembered)
                     cached_put(review)
-                    update_review_feed_entry(review)
+                    rev.update_review_feed_entry(review)
+                    mctr.bump_remembered(review, 
+                                         intz(self.request.get('disprevid')))
             except Exception as e:
-                logging.info("Failed remembered backlink from Review " + revid +
-                             " to PenName " + str(pen.key().id()))
+                logging.error("ToggleRemember failed to set backlink from " + 
+                              revid + " to PenName " + str(pen.key().id()) + 
+                              " " + str(e))
         cached_put(pen)
         returnJSON(self.response, [ pen ])
 

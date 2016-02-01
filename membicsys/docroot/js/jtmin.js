@@ -940,7 +940,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 resp = jsonobj.parse(resp);
             } catch (exception) {
                 uo.log("JSON parse failure: " + exception);
-                failure(415, resp, method, url, data);
+                failure(415, String(exception), method, url, data);
+                return;
             }
             success(resp);
         }, failure, lockobj, setup, timeoutms);

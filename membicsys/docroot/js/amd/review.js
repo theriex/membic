@@ -1993,7 +1993,7 @@ return {
         setTimeout(function () {
             url = "togremember?" + app.login.authparams() +
                 "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
-                jt.ts("&cb=", "second");
+                "&disprevid=" + disprevid + jt.ts("&cb=", "second");
             jt.call('GET', url, null,
                     function (pens) {
                         app.pen.noteUpdatedPen(pens[0]);
