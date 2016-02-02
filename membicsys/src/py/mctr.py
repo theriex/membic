@@ -16,7 +16,7 @@ class MembicCounter(db.Model):
     caching followed by no updates for enough time that the counter
     was lost from cache. A visitor is someone who clicks through to
     the profile/theme, or who interacts with a posted review. """
-    # parentid 0 is global app counter
+    # SiteCounter0 is the general activity display
     refp = db.StringProperty(required=True)        # <type>Counter<parentid>
     day = db.StringProperty(required=True)         # ISO date for this count
     modified = db.StringProperty()                 # ISOmem;ISOdb
@@ -28,6 +28,7 @@ class MembicCounter(db.Model):
     rssv = db.IntegerProperty(indexed=False)       # RSS summary requests
     logvis = db.TextProperty()                     # visitors penid:encname,...
     refers = db.TextProperty()                     # srcA:3,srcB:12...
+    agents = db.TextProperty()                     # agstr:N,...
     # activity metrics:
     membics = db.IntegerProperty(indexed=False)    # num membics posted
     edits = db.IntegerProperty(indexed=False)      # num membics edited
@@ -74,6 +75,7 @@ def get_mctr(ctype, parid):
             counter.rssv = 0
             counter.logvis = ""
             counter.refers = ""
+            counter.agents = ""
             counter.membics = 0
             counter.edits = 0
             counter.removed = 0
@@ -106,22 +108,33 @@ def normalized_count_field(pnm, field):
     return field
 
 
-def safe_refer_key(refer):
-    if refer.lower().startswith("http://"):
-        refer = refer[7:]
-    elif refer.lower().startswith("https://"):
-        refer = refer[8:]
-    refer = re.sub(r":", "", refer)  # remove any colons (delimiter for count)
-    return refer
+def safe_csv_counter_key(ktxt):
+    if ktxt.lower().startswith("http://"):
+        ktxt = ktxt[7:]
+    elif ktxt.lower().startswith("https://"):
+        ktxt = ktxt[8:]
+    ktxt = re.sub(r",", "", ktxt)  # remove any commas so CSV works
+    ktxt = re.sub(r":", "", ktxt)  # remove any colons (delimiter for count)
+    ktxt = ktxt[0:128]  # agent strings can be huge, leave just enough
+    return ktxt
+
+
+def note_agent(counter, request):
+    agent = request.headers.get('User-Agent')
+    if agent:
+        agent = safe_csv_counter_key(agent)
+        if agent:
+            counter.agents = csv_increment(agent, counter.agents)
 
 
 ########################################
 # module interfaces
 
-def bump_rss_summary(ctm):
+def bump_rss_summary(ctm, request):
     counter = get_mctr("Coop", ctm.key().id())
     counter.rssv = counter.rssv or 0
     counter.rssv += 1;
+    note_agent(counter, request)
     put_mctr(counter, "rssv")
     logging.info("bump_rss_counter " + counter.refp + ": " + str(counter.rssv))
 
@@ -223,9 +236,10 @@ class BumpCounter(webapp2.RequestHandler):
             if not csv_contains(val, counter.logvis):
                 counter.logvis = prepend_to_csv(val, counter.logvis)
         if refer:  # note referral if given
-            refer = safe_refer_key(refer)
+            refer = safe_csv_counter_key(refer)
             if refer:
                 counter.refers = csv_increment(refer, counter.refers)
+        note_agent(counter, self.request)
         # update the count
         cval = getattr(counter, field)
         cval = cval or 0  # counter field may not be initialized yet

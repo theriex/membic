@@ -152,7 +152,7 @@ class CoopRSS(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content)
         css_summary_requested(ctm, self.request)
-        bump_rss_summary(ctm)
+        bump_rss_summary(ctm, self.request)
 
 
 app = webapp2.WSGIApplication([('.*/rsscoop', CoopRSS)], debug=True)
