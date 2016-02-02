@@ -201,6 +201,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #settingsinfolinediv { padding-bottom:8px; padding-top:2px; }
 .ctmsetimg, .myinfoimg { vertical-align:middle; }
 .myinfoimg { width:18px; height:18px; margin-right:5px; }
+.permalinkdiv { padding:0px 0px 10px 0px; }
 #shurlspan { font-size:small; font-family:monospace;
   background-image: url('../img/whitewash.png'); }
 .adminlogentrydiv { font-size: medium; }

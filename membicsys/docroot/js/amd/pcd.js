@@ -1503,6 +1503,12 @@ return {
                 dlo = getDirectLinkInfo();
                 jt.byId('pnarw').src = "img/arrow18down.png";
                 html = [
+                    ["div", {cla: "permalinkdiv"},
+                     [["span", {id: "shurlspan"},
+                       ["a", {href: dlo.url,
+                              onclick: jt.fs("window.open('" + dlo.url + "')")},
+                        dlo.url]],
+                      permalinkInfoHTML()]],
                     ["span", {cla: "shoutspan"},
                      signInToFollowHTML()],
                     ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style",
@@ -1513,14 +1519,7 @@ return {
                       ["a", {cla: "a2a_button_twitter"}],
                       ["a", {cla: "a2a_button_google_plus"}],
                       ["a", {cla: "a2a_button_wordpress"}],
-                      shareInviteHTML()]],
-                    ["span", {cla: "shoutspan"}, dlo.title],
-                    permalinkInfoHTML(),
-                    ["br"],
-                    ["span", {id: "shurlspan"},
-                     ["a", {href: dlo.url,
-                            onclick: jt.fs("window.open('" + dlo.url + "')")},
-                      dlo.url]]];
+                      shareInviteHTML()]]];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
                 //make sure the above html is in place before loading
                 //the autorun addtoany script. Break the control flow,
