@@ -205,7 +205,7 @@ app.login = (function () {
 
 
     addParamValuesToLoginForm = function (params) {
-        var html = [];
+        var state, returl, html = [];
         //add url parameters to pass through on form submit.  Except for
         //emailin, which should always be read from the form even if it
         //is passed back from the server for use in error handling.
@@ -213,11 +213,14 @@ app.login = (function () {
             if(name !== "emailin") {
                 html.push(["input", {type: "hidden", name: name,
                                      value: params[name]}]); } });
-        if(!params.returnto) {
+        if(!params.returnto) { //window.location.origin is webkit only..
+            returl = window.location.protocol + "//" + 
+                window.location.host;
+            state = app.history.currState();
+            if(state.view === "coop") {
+                returl += "?view=coop&coopid=" + state.coopid; }
             html.push(["input", {type: "hidden", name: "returnto",
-                                 //window.location.origin is webkit only
-                                 value: window.location.protocol + "//" + 
-                                        window.location.host}]); }
+                                 value: returl}]); }
         jt.out('loginparaminputs', jt.tac2html(html));
     },
 
