@@ -144,6 +144,7 @@ def bump_starred(review, disprevid):
     # counters are a side-effect. do not fail and affect caller processing
     try:
         counter = get_mctr("PenName", review.penid)
+        counter.starred = counter.starred or 0
         counter.starred += 1
         put_mctr(counter, "starred")
         logging.info("bump_starred " + counter.refp + ": " + 
@@ -152,6 +153,7 @@ def bump_starred(review, disprevid):
             disprev = cached_get(disprevid, rev.Review)
             if disprev and disprev.ctmid:
                 counter = get_mctr("Coop", disprev.ctmid)
+                counter.starred = counter.starred or 0
                 counter.starred += 1
                 put_mctr(counter, "starred")
                 logging.info("bump_starred " + counter.refp + ": " + 
@@ -165,6 +167,7 @@ def bump_remembered(review, disprevid):
     revid = review.key().id()
     try:
         counter = get_mctr("PenName", review.penid)
+        counter.remembered = counter.remembered or 0
         counter.remembered += 1;
         put_mctr(counter, "remembered")
         logging.info("bump_remembered " + counter.refp + ": " + 
@@ -173,6 +176,7 @@ def bump_remembered(review, disprevid):
             disprev = cached_get(disprevid, rev.Review)
             if disprev and disprev.ctmid:
                 counter = get_mctr("Coop", disprev.ctmid)
+                counter.remembered = counter.remembered or 0
                 counter.remembered += 1;
                 put_mctr(counter, "remembered")
                 logging.info("bump_remembered " + counter.refp + ": " + 
@@ -190,12 +194,15 @@ def count_review_update(action, penid, penname, ctmid, srcrev):
     else:
         counter = get_mctr("PenName", penid)
     if action == "save":
+        counter.membics = counter.membics or 0
         counter.membics += 1
         field = "membics"
     elif action == "edit":
+        counter.edits = counter.edits or 0
         counter.edits += 1;
         field = "edits"
     elif action == "delete":
+        counter.removed = counter.removed or 0
         counter.removed += 1;
         field = "removed"
     put_mctr(counter, field)
@@ -209,6 +216,7 @@ def count_review_update(action, penid, penname, ctmid, srcrev):
             else:
                 counter = get_mctr("PenName", src.penid)
             if counter:
+                counter.responded = counter.responded or 0
                 counter.responded += 1;
                 put_mctr(counter, "responded")
 
