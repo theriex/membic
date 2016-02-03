@@ -38,8 +38,11 @@ class MembicCounter(db.Model):
     responded = db.IntegerProperty(indexed=False)  # num membics responded
 
 
-def normalize_mctr_type(giventype):
-    ct = giventype.lower()
+def normalize_mctr_type(handler):
+    ctype = handler.request.get("ctype")
+    if not ctype:
+        return srverr(handler, 400, "No ctype specified")
+    ct = ctype.lower()
     if ct == 'site':
         return "Site"
     if ct == 'coop' or ct == 'theme':
@@ -226,7 +229,9 @@ def count_review_update(action, penid, penname, ctmid, srcrev):
 
 class BumpCounter(webapp2.RequestHandler):
     def post(self):
-        ctype = normalize_mctr_type(self.request.get("ctype"))
+        ctype = normalize_mctr_type(self)
+        if not ctype:
+            return
         parid = intz(self.request.get("parentid"))
         pnm = None
         penid = self.request.get("penid")
@@ -261,17 +266,19 @@ class BumpCounter(webapp2.RequestHandler):
 
 class GetCounters(webapp2.RequestHandler):
     def get(self):
-        ctype = normalize_mctr_type(self.request.get("ctype"))
-        parid = intz(self.request.get("parentid"))
-        refp = ctype + "Counter" + parid
-        daysback = 70  # 10 weeks back
+        ctype = normalize_mctr_type(self)
+        if not ctype:
+            return
+        parid = intz(self.request.get("parentid"))  # sets to 0 if not found
+        refp = ctype + "Counter" + str(parid)
+        daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()
         thresh = dt2ISO(dtnow - datetime.timedelta(daysback))
         cq = None
         if ctype == "Site":
-            cq = MSCtr.gql("WHERE day > :1", thresh)
+            cq = MembicCounter.gql("WHERE day > :1", thresh)
         else:
-            cq = MSCtr.gql("WHERE refp = :1 AND day > :2", refp, thresh)
+            cq = MembicCounter.gql("WHERE refp = :1 AND day > :2", refp, thresh)
         ctrs = cq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
         returnJSON(self.response, ctrs)
 

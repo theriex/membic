@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="robots" content="noodp" />
+  <meta name="description" content="Membic stats display page" />
+  <title>Membic Stats</title>
+<style>
+
+body { font-family:"Verdana", "Arial", "Helvetica", sans-serif; }
+div { padding:2px 10px; }
+
+.titletxt { font-size:x-large; font-weight:bold; }
+.rtxt { text-align:right; padding-left:5px; }
+
+.axis path,
+.axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
+.line { fill: none; }
+
+</style>
+</head>
+<body>
+
+<div id="dispdiv">
+  Loading d3...
+</div>
+
+<script src="../js/d3.v3.min.js" charset="utf-8"></script>
+<script src="../js/jtmin.js"></script>
+<script src="../js/static/stat.js"></script>
+<script src="../js/static/linechart.js"></script>
+<script>
+  stat.display();
+</script>
+
+</body>
+</html>
