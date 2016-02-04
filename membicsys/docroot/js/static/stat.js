@@ -16,17 +16,17 @@ stat = (function () {
         lks = [  //line chart keys
             {name: "Visits", color: "#0000FF", //blue
              desc: "Total visits.",
-             elems: [
+             children: [
                  {name: "Site", color: "#0095ff", //lighter blue
                   desc: "Visits from within the site.",
-                  elems: [
+                  children: [
                       {name: "Signed In", color: "#006cff", field: "sitek",
                        desc: "Signed-in site visitors."},
                       {name: "Guest", color: "#0047ff", field: "sitev",
                        desc: "Unknown site visitors."}]},
                  {name: "Permalink", color: "#be00ff", //purpleish
                   desc: "Visits via permalink.",
-                  elems: [
+                  children: [
                       {name: "Signed In", color: "#9100ff", field: "permk",
                        desc: "Signed-in permalink visitors."},
                       {name: "Guest", color: "#5e00ff", field: "permv",
@@ -35,7 +35,7 @@ stat = (function () {
                   desc: "Visits via RSS readers."}]},
             {name: "Actions", color: "#00ff00",  //bright green
              desc: "Total actions.",
-             elems: [
+             children: [
                  {name: "Starred", color: "#fff900", field: "starred",
                   desc: "Total membics that were starred by other readers."},
                  {name: "Remembered", color: "#7bff00", field: "remembered",
@@ -44,7 +44,7 @@ stat = (function () {
                   desc: "Total membics written from yours."}]},
             {name: "Content", color: "#ff951e", //membic orange
              desc: "Total content creation and editing.",
-             elems: [
+             children: [
                  {name: "Created", color: "#fd700a", field: "membics",
                   desc: "Total membics created."},
                  {name: "Edited", color: "#fdba0a", field: "edits",
@@ -118,6 +118,41 @@ stat = (function () {
     },
 
 
+    fillDays = function () {
+        var start, end, filled = [], index = 0, st;
+        start = dat.days[0].day.getTime();
+        end = new Date().getTime() - (24 * 60 * 60 * 1000);
+        while(start < end) {
+            st = new Date(start);
+            if(dat.days[index].day.getTime() === start) {
+                jt.log(st + " pushing existing: " + dat.days[index].day);
+                filled.push(dat.days[index]);
+                if(index < dat.days.length - 1) {
+                    index += 1; } }
+            else {
+                jt.log(st + " pushing fill: " + new Date(start));
+                filled.push({refp: "fill",
+                             day: new Date(start),
+                             modified: new Date(start),
+                             sitev: 0,
+                             sitek: 0,
+                             permv: 0,
+                             permk: 0,
+                             rssv: 0,
+                             logvis: "",
+                             refers: "",
+                             agents: "",
+                             membics: 0,
+                             edits: 0,
+                             removed: 0,
+                             starred: 0,
+                             remembered: 0,
+                             responded: 0}); }
+            start += 24 * 60 * 60 * 1000; }
+        dat.days = filled;
+    },
+
+
     sumSeries = function (keys) {
         var res;
         keys.forEach(function (key, ki) {
@@ -138,6 +173,8 @@ stat = (function () {
         dat.raw.sort(function (a, b) {
             return a.day - b.day; });
         combineDays();
+        fillDays();
+        dat.ymax = 0;
         stat.createLineChartSeries(lks);
     },
 
@@ -186,6 +223,7 @@ return {
 
     createLineChartSeries: function (children, parent) {
         children.forEach(function (key) {
+            var locymax;
             dat.series = dat.series || [];    //series array
             dat.sis = dat.sis || {};          //series by id (field or name)
             key.id = key.field || key.name;
@@ -199,7 +237,10 @@ return {
                 key.series = sumSeries(key.children); }
             else {
                 key.series = dat.days.map(function (day) {
-                    return {x: day.day, y: day[key.id]}; }); } });
+                    return {x: day.day, y: day[key.id] || 0}; }); }
+            locymax = key.series.reduce(function (pv, ce) {
+                return Math.max(pv, ce.y); }, 0);
+            dat.ymax = Math.max(dat.ymax, locymax); });
     }
 
 }; //end of returned functions
