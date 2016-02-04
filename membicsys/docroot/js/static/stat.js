@@ -31,16 +31,16 @@ stat = (function () {
                        desc: "Signed-in permalink visitors."},
                       {name: "Guest", color: "#5e00ff", field: "permv",
                        desc: "Unknown permalink visitors."}]},
-                 {name: "RSS", color: "#00fff", //cyan
+                 {name: "RSS", color: "#000fff", //cyan
                   desc: "Visits via RSS readers."}]},
-            {name: "Actions", color: "#00ff00",  //bright green
+            {name: "Actions", color: "#00af02",  //green
              desc: "Total actions.",
              children: [
-                 {name: "Starred", color: "#fff900", field: "starred",
+                 {name: "Starred", color: "#9cce00", field: "starred",
                   desc: "Total membics that were starred by other readers."},
-                 {name: "Remembered", color: "#7bff00", field: "remembered",
+                 {name: "Remembered", color: "#54ae00", field: "remembered",
                   desc: "Total membics remembered by other readers."},
-                 {name: "Responded", color: "#00ff45", field: "responded",
+                 {name: "Responded", color: "#00a62d", field: "responded",
                   desc: "Total membics written from yours."}]},
             {name: "Content", color: "#ff951e", //membic orange
              desc: "Total content creation and editing.",
@@ -48,8 +48,8 @@ stat = (function () {
                  {name: "Created", color: "#fd700a", field: "membics",
                   desc: "Total membics created."},
                  {name: "Edited", color: "#fdba0a", field: "edits",
-                  desc: "Total membics edited."},
-                 {name: "Removed", color: "#ee3f3b", field: "removed",
+                  desc: "Total edits to existing membics."},
+                 {name: "Removed", color: "#e27062", field: "removed",
                   desc: "Total theme posts removed."}]}],
 
 
@@ -119,18 +119,17 @@ stat = (function () {
 
 
     fillDays = function () {
-        var start, end, filled = [], index = 0, st;
+        var start, end, filled = [], index = 0;
         start = dat.days[0].day.getTime();
         end = new Date().getTime() - (24 * 60 * 60 * 1000);
         while(start < end) {
-            st = new Date(start);
             if(dat.days[index].day.getTime() === start) {
-                jt.log(st + " pushing existing: " + dat.days[index].day);
+                //jt.log(st + " pushing existing: " + dat.days[index].day);
                 filled.push(dat.days[index]);
                 if(index < dat.days.length - 1) {
                     index += 1; } }
             else {
-                jt.log(st + " pushing fill: " + new Date(start));
+                //jt.log(st + " pushing fill: " + new Date(start));
                 filled.push({refp: "fill",
                              day: new Date(start),
                              modified: new Date(start),
@@ -175,7 +174,8 @@ stat = (function () {
         combineDays();
         fillDays();
         dat.ymax = 0;
-        stat.createLineChartSeries(lks);
+        dat.indmax = 0;
+        stat.createLineChartSeries(lks, null, 0);
     },
 
 
@@ -198,7 +198,7 @@ stat = (function () {
             params = "?ctype=pen&parentid=" + params.penid; }
         else {
             params = "?ctype=site&parentid=0"; }
-        params += jt.ts("&cb=", "hour")
+        params += jt.ts("&cb=", "hour");
         jt.call('GET', "../getmctrs" + params, null,
                 function(mcs) {
                     jt.out('dispdiv', "Preparing data...");
@@ -221,9 +221,8 @@ return {
         fetchDataAndDisplay();
     },
 
-    createLineChartSeries: function (children, parent) {
+    createLineChartSeries: function (children, parent, indent) {
         children.forEach(function (key) {
-            var locymax;
             dat.series = dat.series || [];    //series array
             dat.sis = dat.sis || {};          //series by id (field or name)
             key.id = key.field || key.name;
@@ -233,14 +232,21 @@ return {
             if(parent) {
                 key.parent = parent; }
             if(key.children) {
-                stat.createLineChartSeries(key.children, key);
+                stat.createLineChartSeries(key.children, key, indent + 1);
                 key.series = sumSeries(key.children); }
             else {
                 key.series = dat.days.map(function (day) {
                     return {x: day.day, y: day[key.id] || 0}; }); }
-            locymax = key.series.reduce(function (pv, ce) {
-                return Math.max(pv, ce.y); }, 0);
-            dat.ymax = Math.max(dat.ymax, locymax); });
+            key.peak = 0;
+            key.peak2 = 0;
+            key.series.forEach(function (coord) {
+                if(coord.y > key.peak) {
+                    key.peak2 = key.peak;
+                    key.peak = coord.y; }
+                else if(coord.y > key.peak2) {
+                    key.peak2 = coord.y; } });
+            dat.ymax = Math.max(dat.ymax, key.peak);
+            dat.indmax = Math.max(dat.indmax, indent); });
     }
 
 }; //end of returned functions
