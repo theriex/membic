@@ -183,9 +183,11 @@ stat = (function () {
     createCharts = function () {
         var html;
         html = ["div", {id: "chartsdiv"},
-                ["div", {id: "lcdiv"}]];
+                [["div", {id: "lcdiv"}],
+                 ["div", {id: "pcdiv"}]]];
         jt.out('dispdiv', jt.tac2html(html));
         stat.lc.display("lcdiv", dat, lks);
+        stat.pc.display("pcdiv", dat);
     },
 
 
