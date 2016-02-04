@@ -42,16 +42,20 @@ stat.lc = (function () {
         else {  //add filler block before first sunday
             sundaycoords.unshift(1); }
         sundaycoords.forEach(function (x, idx) {
-            var width = lc.width;
+            var width, ed;
+            width = lc.width;
             if(idx < sundaycoords.length - 1) {
                 width = sundaycoords[idx + 1] - x; }
+            else {
+                width = lc.width - x; }
+            ed = jt.colloquialDate(lc.xscale.invert(x + width));
+            //jt.log("  end: " + ed);
             lc.svg.append("rect")
                 .attr({"x": x, "y": 0, "width": width, "height": lc.height,
                        "fill": ((idx % 2)? "#ddd" : "#eee")})
                 .append("title")
-                .text((idx === sundaycoords.length - 1) ? "This week" :
-                      "Week ending " + jt.colloquialDate(
-                          lc.xscale.invert(x + width))); });
+                .text(((idx === sundaycoords.length - 1) ? 
+                       "This week up to " : "Week ending ") + ed); });
     },
 
 

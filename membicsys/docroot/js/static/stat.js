@@ -119,9 +119,10 @@ stat = (function () {
 
 
     fillDays = function () {
-        var start, end, filled = [], index = 0;
+        var start, now, end, filled = [], index = 0;
         start = dat.days[0].day.getTime();
-        end = new Date().getTime() - (24 * 60 * 60 * 1000);
+        now = new Date();
+        end = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
         while(start < end) {
             if(dat.days[index].day.getTime() === start) {
                 //jt.log(st + " pushing existing: " + dat.days[index].day);
