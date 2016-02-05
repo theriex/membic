@@ -174,10 +174,10 @@ stat.lc = (function () {
     ////////////////////////////////////////
 return {
 
-    display: function (divid, data, keydefs) {
+    display: function (divid, data) {
         dispdiv = divid;
         dat = data;
-        lks = keydefs;
+        lks = data.lks;
         drawChart();
     },
 

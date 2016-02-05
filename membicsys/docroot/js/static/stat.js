@@ -177,19 +177,19 @@ stat = (function () {
         dat.ymax = 0;
         dat.indmax = 0;
         stat.createLineChartSeries(lks, null, 0);
+        dat.lks = lks;
     },
 
 
     createCharts = function () {
-        var html;
-        html = ["div", {id: "chartsdiv"},
-                [["div", {id: "lcdiv"}],
-                 ["div", {id: "pcdiv"}],
-                 ["div", {id: "rcdiv"}]]];
+        var html, mods = ["lc", "pc", "rc", "ac"];
+        html = [];
+        mods.forEach(function (mod) {
+            html.push(["div", {id: mod + "div"}]); });
+        html = ["div", {id: "chartsdiv"}, html];
         jt.out('dispdiv', jt.tac2html(html));
-        stat.lc.display("lcdiv", dat, lks);
-        stat.pc.display("pcdiv", dat);
-        stat.rc.display("rcdiv", dat);
+        mods.forEach(function (mod) {
+            stat[mod].display(mod + "div", dat); });
     },
 
 
