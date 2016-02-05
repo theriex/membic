@@ -1,4 +1,4 @@
-/*global d3, stat, jt */
+/*global d3, stat, jt, window */
 /*jslint browser, multivar, white, fudge */
 
 stat.rc = (function () {
@@ -40,25 +40,41 @@ stat.rc = (function () {
                             node.value += +rves[1]; }
                         rc.nr.max = Math.max(rc.nr.max, node.value); } });
             } });
-        rc.nodes = [{name: "testA", value: 4},
-                    {name: "testB", value: 3},
-                    {name: "testD", value: 1},
-                    {name: "testE", value: 7},
-                    {name: "testC", value: 2}];
+        // rc.nodes = [{name: "testA", value: 4},
+        //             {name: "testB", value: 3},
+        //             {name: "testD", value: 1},
+        //             {name: "testE", value: 7},
+        //             {name: "testC", value: 2}];
     },
 
 
     computeDims = function () {
         var margin;
-        margin = {top: 20, right: 20, bottom: 20, left: 20};
-        //rc.diam = window.innerWidth - (margin.left + margin.right);
-        rc.diam = 960;
+        margin = {top: 10, right: 20, bottom: 10, left: 20};
+        rc.diam = window.innerWidth - (margin.left + margin.right);
         rc.margin = margin;
     },
 
 
+    adjustContentDisplay = function () {
+        var miny = rc.diam,
+            maxy = 0;
+        rc.nodes.forEach(function (node) {
+            var nodey = node.y - node.r;
+            nodey = Math.floor(nodey) - rc.margin.top;
+            miny = Math.min(miny, nodey);
+            nodey = node.y + node.r;
+            nodey = Math.ceil(nodey) + rc.margin.bottom;
+            maxy = Math.max(maxy, nodey); });
+        rc.bcon.attr("transform", "translate(0,-" + miny + ")");
+        rc.svg.attr("height", maxy - miny);
+    },
+
+
     drawContents = function () {
-        rc.nbs = rc.svg.selectAll(".node")
+        rc.bcon = rc.svg.append("g")
+            .attr("class", "nodecontainer");
+        rc.nbs = rc.bcon.selectAll(".node")
             .data(rc.bpack.nodes({children: rc.nodes})
                   .filter(function (d) { return !d.children; }))
             .enter().append("g")
@@ -71,11 +87,12 @@ stat.rc = (function () {
         rc.nbs.append("circle")
             .attr("r", function (d) { 
                 return d.r; })
-            .style("fill", "orange");
+            .style({"fill": "#fd700a", "stroke": "#b9100f"});
         rc.nbs.append("text")
             .attr("dy", ".3em")
             .style("text-anchor", "middle")
             .text(function (d) { return d.name.substring(0, d.r / 3); });
+        adjustContentDisplay();
     },
         
 
@@ -93,7 +110,6 @@ stat.rc = (function () {
         rc.nodes.sort(function (a, b) {
             return a.name.localeCompare(b.name); });
         drawContents();
-        d3.select(self.frameElement).style("height", rc.diam + "px");
     };
 
 
@@ -106,7 +122,8 @@ return {
         dispdiv = divid;
         dat = data;
         makeNodes();
-        drawChart();
+        if(rc.nodes && rc.nodes.length > 1) {
+            drawChart(); }
     }
 
 }; //end of returned functions
