@@ -1,5 +1,5 @@
 /*global d3, stat, jt, window */
-/*jslint browser, multivar, white, fudge */
+/*jslint browser, multivar, white, fudge, this */
 
 stat.ac = (function () {
     "use strict";
@@ -102,15 +102,15 @@ stat.ac = (function () {
             if(!cat.children.length) {
                 cat.children.push({id: "empty" + cat.id,
                                    name: "No " + cat.name + " agents.",
-                                   count: 0}); } })
+                                   count: 0}); } });
     },
 
 
     dataDebugHTML = function () {
         var html = [];
-        ac.nodes.forEach(function (node, idx) {
+        ac.nodes.forEach(function (node) {
             html.push(["div", {cla: "dbgdatdiv"},
-                       node.nodenumber + ": " + node.name]); });
+                       node.nodenumber + ": " + node.title]); });
         ac.links.forEach(function (link) {
             html.push(["div", {cla: "dbgdatdiv"},
                        String(link.source) + " -> " + link.target +
@@ -141,16 +141,68 @@ stat.ac = (function () {
     },
 
 
+    findPlatform = function (title) {
+        var plats = [{key: "Macintosh", val: "Mac"},
+                     {key: "Windows", val: "Windows"},
+                     {key: "Android", val: "Android"},
+                     {key: "iPhone", val: "iPhone"},
+                     {key: "iPad", val: "iPad"},
+                     {key: "iPod", val: "iPod"},
+                     {key: "Linux", val: "Linux"}],
+            retval = "";
+        plats.every(function (plat) {
+            if(title.indexOf(plat.key) >= 0) {
+                retval = plat.val;
+                return false; }
+            return true; });
+        return retval;
+    },
+
+
+    findBrowser = function (title) {
+        var brows = [{key: "Firefox", val: "Firefox"},
+                     //Chrome mentions Safari, so test for Chrome first
+                     {key: "Chrome", val: "Chrome"},
+                     {key: "Safari", val: "Safari"},
+                     {key: "Opera", val: "Opera"}],
+            retval = "";
+        brows.every(function (brow) {
+            if(title.indexOf(brow.key) >= 0) {
+                retval = brow.val;
+                return false; }
+            return true; });
+        return retval;
+    },
+
+
+    platformAndBrowser = function (title) {
+        var plat = findPlatform(title),
+            brow = findBrowser(title);
+        if(plat && brow) {
+            return plat + " " + brow; }
+        return "";
+    },
+
+
+    shortAgentName = function (title) {
+        var name, idx;
+        name = platformAndBrowser(title);
+        if(!name) {
+            name = title;
+            idx = name.indexOf("(");
+            if(idx > 0) {
+                name = name.slice(idx + 1); }
+            name = jt.ellipsis(name, 42); }
+        return name;
+    },
+
+
     makeNodes = function (taxon) {
         taxon.forEach(function (tn) {
-            var name = tn.name, 
-                pidx = name.indexOf("(");
-            if(pidx > 0) {
-                name = name.slice(pidx + 1); }
-            name = jt.ellipsis(name, 42)
             tn.nodenumber = ac.nodenumber;
             ac.nodenumber += 1;
-            ac.nodes.push({name: name, title: tn.name, count: tn.count,
+            ac.nodes.push({name: shortAgentName(tn.name), 
+                           title: tn.name, count: tn.count,
                            color: tn.color || tn.parent.color, 
                            nodenumber: tn.nodenumber}); });
         taxon.forEach(function (tn) {
@@ -223,29 +275,35 @@ stat.ac = (function () {
             .attr("class", "node")
             .attr("transform", function (d) { 
                 return "translate(" + d.x + "," + d.y + ")"; });
-            .call(d3.behavior.drag()
-                  .origin(function (d) { return d; })
-                  .on("dragstart", function () { 
-                      this.parentNode.appendChild(this); })
-                  .on("drag", stat.ac.dragmove));
-        ac.aglabelrects = ac.gns.append("rect")
+            // .call(d3.behavior.drag()
+            //       .origin(function (d) { return d; })
+            //       .on("dragstart", function () { 
+            //           this.parentNode.appendChild(this); })
+            //       .on("drag", stat.ac.dragmove));
+        ac.gns.append("rect")
             .attr("height", function (d) { return d.dy; })
             .attr("width", ac.sankey.nodeWidth())
             .style("fill", function (d) { return d.color || "blue"; })
             .style("stroke", function (d) { return d3.rgb(d.color).darker(2); })
-            .style({"cursor": "move", "fill-opacity": 0.9, 
-                    "shape-rendering": "crispEdges"})
+            .style("cursor", function (d) { 
+                return (d.title.length > d.name.length)? "move" : "default"; })
+            .style({"fill-opacity": 0.9, "shape-rendering": "crispEdges"})
+            .on("click", function (d) {
+                var nt = jt.byId("nodetext" + d.nodenumber);
+                if(nt.textContent === d.title) {
+                    nt.textContent = d.name; }
+                else {
+                    nt.textContent = d.title; }
+                })
             .append("title")
             .text(function (d) { return "(" + d.count + ") " + d.title; });
-        ac.aglabelrects.append("title")
-            .text(function (d) { return d.title; });
-        ac.aglabels = ac.gns.append("text")
+        ac.gns.append("text")
             .attr("x", 6 + ac.sankey.nodeWidth())
             .attr("y", function (d) { return d.dy / 2; })
+            .attr("id", function (d) { return "nodetext" + d.nodenumber; })
             .attr("dy", ".35em")
             .attr("text-anchor", "start")
             .attr("transform", null)
-            .style({"pointer-events": "none", "text-shadow": "0 1px 0 #fff"})
             .text(function (d) { return d.name; });
     },
 
@@ -254,7 +312,6 @@ stat.ac = (function () {
         computeDims();
         jt.out(dispdiv, "");
         ac.svg = d3.select("#" + dispdiv).append("svg")
-            //.style("background", "#fff")
             .attr("width", ac.width + ac.margin.right)
             .attr("height", ac.height)
             .append("g")
