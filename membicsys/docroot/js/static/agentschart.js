@@ -11,12 +11,12 @@ stat.ac = (function () {
     var dispdiv = null,
         dat = null,
         ac = {},
-        taxon = [{id: "root", name: "Agents", children: [
-            {id: "point", name: "Point", children: []},
-            {id: "touch", name: "Touch", children: []},
-            {id: "rss", name: "RSS", children: []},
-            {id: "bot", name: "Bot", children: []},
-            {id: "other", name: "Other", children: []}]}],
+        taxon = [{id: "root", name: "Agents", color: "#999999", children: [
+            {id: "point", name: "Point", color: "#3333ef", children: []},
+            {id: "touch", name: "Touch", color: "#00af02", children: []},
+            {id: "rss", name: "RSS", color: "#b41515", children: []},
+            {id: "bot", name: "Bot", color: "#654110", children: []},
+            {id: "other", name: "Other", color: "#ad11ba", children: []}]}],
 
 
     ////////////////////////////////////////
@@ -97,6 +97,15 @@ stat.ac = (function () {
     },
 
 
+    addPlaceholders = function () {
+        taxon[0].children.forEach(function (cat) {
+            if(!cat.children.length) {
+                cat.children.push({id: "empty" + cat.id,
+                                   name: "No " + cat.name + " agents.",
+                                   count: 0}); } })
+    },
+
+
     dataDebugHTML = function () {
         var html = [];
         ac.nodes.forEach(function (node, idx) {
@@ -111,7 +120,7 @@ stat.ac = (function () {
 
 
     sumCounts = function (tn) {
-        tn.count = tn.count || 1;
+        tn.count = tn.count || 0;
         if(tn.children) {
             tn.children.forEach(function (child) {
                 child.parent = tn;
@@ -138,10 +147,11 @@ stat.ac = (function () {
                 pidx = name.indexOf("(");
             if(pidx > 0) {
                 name = name.slice(pidx + 1); }
-            name = jt.ellipsis(name, 30)
+            name = jt.ellipsis(name, 42)
             tn.nodenumber = ac.nodenumber;
             ac.nodenumber += 1;
-            ac.nodes.push({name: name, title: tn.name, 
+            ac.nodes.push({name: name, title: tn.name, count: tn.count,
+                           color: tn.color || tn.parent.color, 
                            nodenumber: tn.nodenumber}); });
         taxon.forEach(function (tn) {
             if(tn.children) {
@@ -155,9 +165,9 @@ stat.ac = (function () {
             if(tn.parent) {
                 link = {source: tn.parent.nodenumber,
                         target: tn.nodenumber,
-                        value: tn.count};
-                if(tn.children && tn.children.length) {
-                    link.value -= 1; }
+                        count: tn.count,
+                        value: tn.count || 1,
+                        color: tn.color || tn.parent.color};
                 ac.links.push(link); } });
         taxon.forEach(function (tn) {
             if(tn.children) {
@@ -168,6 +178,7 @@ stat.ac = (function () {
     prepData = function () {
         aggregateAgents();
         classifyAgents();
+        addPlaceholders();
         sumCounts(taxon[0]);
         jt.out(dispdiv, jt.tac2html(taxonTreeHTML(taxon, [], 0)));
         ac.nodes = [];
@@ -198,25 +209,26 @@ stat.ac = (function () {
             .attr("class", "link")
             .attr("d", ac.path)
             .style("stroke-width", function (d) { return Math.max(1, d.dy); })
-            .style({"fill": "none", "stroke": "#000", "stroke-opacity": 0.2})
+            .style("stroke", function (d) { return d.color; })
+            .style({"fill": "none", "stroke-opacity": 0.2})
             .on("mouseover", function () { this.style.strokeOpacity = 0.4; })
             .on("mouseout", function () { this.style.strokeOpacity = 0.2; })
             .sort(function (a, b) { return b.dy - a.dy; });
         ac.gls.append("title")
             .text(function (d) { 
-                return "(" + d.value + ") " + d.target.title; });
+                return "(" + d.count + ") " + d.target.title; });
         ac.gns = ac.svg.append("g").selectAll(".node")
             .data(ac.nodes)
             .enter().append("g")
             .attr("class", "node")
             .attr("transform", function (d) { 
-                return "translate(" + d.x + "," + d.y + ")"; })
+                return "translate(" + d.x + "," + d.y + ")"; });
             .call(d3.behavior.drag()
                   .origin(function (d) { return d; })
                   .on("dragstart", function () { 
                       this.parentNode.appendChild(this); })
                   .on("drag", stat.ac.dragmove));
-        ac.gns.append("rect")
+        ac.aglabelrects = ac.gns.append("rect")
             .attr("height", function (d) { return d.dy; })
             .attr("width", ac.sankey.nodeWidth())
             .style("fill", function (d) { return d.color || "blue"; })
@@ -224,8 +236,10 @@ stat.ac = (function () {
             .style({"cursor": "move", "fill-opacity": 0.9, 
                     "shape-rendering": "crispEdges"})
             .append("title")
-            .text(function (d) { return "(" + d.value + ") " + d.title; });
-        ac.gns.append("text")
+            .text(function (d) { return "(" + d.count + ") " + d.title; });
+        ac.aglabelrects.append("title")
+            .text(function (d) { return d.title; });
+        ac.aglabels = ac.gns.append("text")
             .attr("x", 6 + ac.sankey.nodeWidth())
             .attr("y", function (d) { return d.dy / 2; })
             .attr("dy", ".35em")
@@ -241,7 +255,7 @@ stat.ac = (function () {
         jt.out(dispdiv, "");
         ac.svg = d3.select("#" + dispdiv).append("svg")
             //.style("background", "#fff")
-            .attr("width", ac.width)
+            .attr("width", ac.width + ac.margin.right)
             .attr("height", ac.height)
             .append("g")
             .attr("transform", "translate(" + ac.margin.left + "," + 
