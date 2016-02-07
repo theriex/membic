@@ -64,7 +64,7 @@ def get_mctr(ctype, parid):
             memcache.set(key, "")
             counter = None
     if not counter:
-        gql = MembicCounter.gql("WHERE refp = :1", key)
+        gql = MembicCounter.gql("WHERE refp = :1 AND day = :2", key, day)
         cs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         if len(cs) > 0:
             counter = cs[0]
@@ -269,6 +269,11 @@ class GetCounters(webapp2.RequestHandler):
         ctype = normalize_mctr_type(self)
         if not ctype:
             return
+        acc = authenticated(self.request)
+        if (ctype == "Site" and 
+            (not acc or acc.id().key() != 11005) and 
+            (not handler.request.host_url.startswith('http://localhost'))):
+            return srverr("403", "Access stats through your profile or theme")
         parid = intz(self.request.get("parentid"))  # sets to 0 if not found
         refp = ctype + "Counter" + str(parid)
         daysback = 70  # max 10 weeks back if not restricted by batch_size
@@ -283,6 +288,20 @@ class GetCounters(webapp2.RequestHandler):
         returnJSON(self.response, ctrs)
 
 
+class CurrentStat(webapp2.RequestHandler):
+    def get(self):
+        ctype = normalize_mctr_type(self)
+        if not ctype:
+            return
+        parid = intz(self.request.get("parentid"))  # sets to 0 if not found
+        counter = get_mctr(ctype, parid)
+        if not counter.modified:
+            put_mctr(counter)  # JSON processing needs an id
+        returnJSON(self.response, [ counter ]);
+        
+
+
 app = webapp2.WSGIApplication([('.*/bumpmctr', BumpCounter),
-                               ('.*/getmctrs', GetCounters)], debug=True)
+                               ('.*/getmctrs', GetCounters),
+                               ('.*/currstats', CurrentStat)], debug=True)
 

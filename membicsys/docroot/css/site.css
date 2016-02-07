@@ -197,7 +197,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
 #ctmembedta { height:100px; }
 #ctminfoseldiv { display:inline-block; margin-left:20px; width:50px; }
-#meminfoseldiv, #reloaddiv { display:inline-block; width:50px; }
+#meminfoseldiv, #reloaddiv, #statsdiv { display:inline-block; width:50px; }
 #settingsinfolinediv { padding-bottom:8px; padding-top:2px; }
 .ctmsetimg, .myinfoimg { vertical-align:middle; }
 .myinfoimg { width:18px; height:18px; margin-right:5px; }

@@ -182,11 +182,19 @@ stat = (function () {
 
 
     createCharts = function () {
-        var html, mods = ["lc", "pc", "rc", "ac"];
+        var params, title, html, mods = ["lc", "pc", "rc", "ac"];
+        params = jt.parseParams("String");
+        title = params.title || "";
+        title = jt.dec(title);
         html = [];
         mods.forEach(function (mod) {
             html.push(["div", {id: mod + "div"}]); });
-        html = ["div", {id: "chartsdiv"}, html];
+        html = ["div", {id: "chartsdiv"}, 
+                [["div", {id: "chartstitlediv",
+                          style: "text-align:center;font-size:xx-large;" +
+                                 "font-weight:bold;"},
+                  title],
+                 html]];
         jt.out('dispdiv', jt.tac2html(html));
         mods.forEach(function (mod) {
             stat[mod].display(mod + "div", dat); });
@@ -197,7 +205,10 @@ stat = (function () {
         var params;
         jt.out('dispdiv', "Fetching data...");
         params = jt.parseParams("String");
-        if(params.coopid) {
+        if(params.ctype && params.parentid) {
+            params = "?ctype=" + params.ctype + 
+                "&parentid=" + params.parentid; }
+        else if(params.coopid) {
             params = "?ctype=coop&parentid=" + params.coopid; }
         else if(params.penid) {
             params = "?ctype=pen&parentid=" + params.penid; }
