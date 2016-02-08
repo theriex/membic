@@ -42,11 +42,11 @@ stat.rc = (function () {
                             node.value += +rves[1]; }
                         rc.nr.max = Math.max(rc.nr.max, node.value); } });
             } });
-        // rc.nodes = [{name: "testA", value: 4},
-        //             {name: "testB", value: 3},
-        //             {name: "testD", value: 1},
-        //             {name: "testE", value: 7},
-        //             {name: "testC", value: 2}];
+        // rc.nodes = [{id: "testA", name: "testA actually has a really long name which comes up when you mouse over it", value: 4},
+        //             {id: "testB", name: "testB", value: 3},
+        //             {id: "testD", name: "testD", value: 1},
+        //             {id: "testE", name: "testE", value: 7},
+        //             {id: "testC", name: "testC", value: 2}];
     },
 
 
@@ -97,13 +97,20 @@ stat.rc = (function () {
             .text(function (d) {
                 return d.name + ": " + rc.format(d.value); });
         rc.nbs.append("circle")
-            .attr("r", function (d) { 
-                return d.r; })
-            .style({"fill": "#fd700a", "stroke": "#b9100f"});
+            .attr("r", function (d) { return d.r; })
+            .attr("id", function (d) { return "circle" + d.id; })
+            .style({"fill": "#fd700a", "stroke": "#b9100f"})
+            .on("mouseover", function (d) { stat.rc.mo(d, true); })
+            .on("mouseout", function (d) { stat.rc.mo(d, false); });
         rc.nbs.append("text")
             .attr("dy", ".3em")
-            .style("text-anchor", "middle")
-            .text(function (d) { return d.name.substring(0, d.r / 3); });
+            .attr("id", function (d) { return "textlabel" + d.id; })
+            .style({"font-size": "20px", "text-anchor": "middle"})
+            .text(function (d) { 
+                d.shortname = jt.ellipsis(d.name, d.r / 6);
+                return d.shortname; })
+            .on("mouseover", function (d) { stat.rc.mo(d, true); })
+            .on("mouseout", function (d) { stat.rc.mo(d, false); });
         adjustContentDisplay();
         if(window.addEventListener) {
             window.addEventListener("resize", adjustContentDisplay); }
@@ -143,6 +150,16 @@ return {
         makeNodes();
         if(rc.nodes && rc.nodes.length > 1) {
             drawChart(); }
+    },
+
+
+    mo: function (d, over) {
+        if(over) {
+            jt.byId("circle" + d.id).style.fill = "#ff900a";
+            jt.byId("textlabel" + d.id).textContent = d.name; }
+        else {
+            jt.byId("circle" + d.id).style.fill = "#fd700a";
+            jt.byId("textlabel" + d.id).textContent = d.shortname; }
     }
 
 }; //end of returned functions
