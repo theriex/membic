@@ -471,6 +471,7 @@ app.pcd = (function () {
                               onclick: jt.fs("window.open('/docs/stat.html" +
                                              "?ctype=" + dst.type +
                                              "&parentid=" + dst.id + 
+                                             "&" + app.login.authparams() +
                                              "&title=" + jt.enc(dst.obj.name) +
                                              "')")},
                    "Visualize All"]]]];

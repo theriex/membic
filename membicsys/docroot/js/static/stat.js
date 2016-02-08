@@ -12,7 +12,7 @@ stat = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var dat = null,
+    var dat = null, params = {},
         lks = [  //line chart keys
             {name: "Visits", color: "#0000FF", //blue
              desc: "Total visits.",
@@ -182,8 +182,7 @@ stat = (function () {
 
 
     createCharts = function () {
-        var params, title, html, mods = ["lc", "pc", "rc", "ac"];
-        params = jt.parseParams("String");
+        var title, html, mods = ["lc", "pc", "rc", "ac"];
         title = params.title || "";
         title = jt.dec(title);
         html = [];
@@ -202,20 +201,23 @@ stat = (function () {
 
 
     fetchDataAndDisplay = function () {
-        var params;
+        var parstr = "";
         jt.out('dispdiv', "Fetching data...");
         params = jt.parseParams("String");
         if(params.ctype && params.parentid) {
-            params = "?ctype=" + params.ctype + 
+            parstr ="?ctype=" + params.ctype + 
                 "&parentid=" + params.parentid; }
         else if(params.coopid) {
-            params = "?ctype=coop&parentid=" + params.coopid; }
+            parstr ="?ctype=coop&parentid=" + params.coopid; }
         else if(params.penid) {
-            params = "?ctype=pen&parentid=" + params.penid; }
+            parstr ="?ctype=pen&parentid=" + params.penid; }
         else {
-            params = "?ctype=site&parentid=0"; }
-        params += jt.ts("&cb=", "hour");
-        jt.call('GET', "../getmctrs" + params, null,
+            parstr ="?ctype=site&parentid=0"; }
+        if(params.am && params.at && params.an) {  //auth info
+            parstr += "&am=" + params.am + "&at=" + params.at + 
+                "&an=" + params.an; }
+        parstr += jt.ts("&cb=", "hour");
+        jt.call('GET', "../getmctrs" + parstr, null,
                 function(mcs) {
                     jt.out('dispdiv', "Preparing data...");
                     prepData(mcs);
