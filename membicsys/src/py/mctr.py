@@ -2,6 +2,7 @@ import webapp2
 from google.appengine.ext import db
 from google.appengine.api import memcache
 import pickle
+import json
 import logging
 from cacheman import *
 from moracct import *
@@ -284,6 +285,23 @@ class GetCounters(webapp2.RequestHandler):
             (not self.request.host_url.startswith('http://localhost'))):
             return srverr(self, "403", 
                           "Access stats through your profile or theme")
+        cqk = ctype + "CtrQuery" + str(parid)
+        res = memcache.get(cqk)
+        counter = get_mctr(ctype, parid)
+        if res:
+            res = json.loads(res)
+            # if last saved counter is not the current counter, and the 
+            # current counter is not temporary, then results are old
+            if len(res) and res[-1]["day"] != counter.day and counter.modified:
+                res = ""
+                memcache.set(cqk, "")
+        if res:
+            counter = db.to_dict(counter)
+            if len(res) and res[-1]["day"] == counter["day"]:
+                res[-1] = counter
+            else:
+                res.append(counter)
+            return writeJSONResponse(json.dumps(res, True), self.response)
         refp = ctype + "Counter" + str(parid)
         daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()
@@ -294,7 +312,9 @@ class GetCounters(webapp2.RequestHandler):
         else:
             cq = MembicCounter.gql("WHERE refp = :1 AND day > :2", refp, thresh)
         ctrs = cq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
-        returnJSON(self.response, ctrs)
+        jsondat = qres2JSON(ctrs)
+        memcache.set(cqk, jsondat)
+        writeJSONResponse(jsondat, self.response)
 
 
 class CurrentStat(webapp2.RequestHandler):
