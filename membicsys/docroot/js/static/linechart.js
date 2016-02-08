@@ -93,12 +93,19 @@ stat.lc = (function () {
     },
 
 
+    describeSeriesDef = function (sdef) {
+        var desc;
+        desc = sdef.desc + " peak: " + sdef.peak + ", foothill: " + sdef.peak2;
+        return desc;
+    },
+
+
     displayKey = function (key, index, indent) {
         var indw = 10, vsep = 10,
             kc = {x: (-1 * lc.margin.left) + (indw * indent), 
                   y: (30 * index) + vsep, 
                   w: 120 + ((dat.indmax - indent) * indw), h: 26},
-            desc = key.desc + " peak: " + key.peak + ", foothill: " + key.peak2;
+            desc = describeSeriesDef(key);
         lc.svg.append("rect")  //white background
             .attr({"x": kc.x, "y": kc.y, "width": kc.w, "height": kc.h})
             .style("fill", "#fff");
@@ -161,10 +168,16 @@ stat.lc = (function () {
                 .datum(sdef.series)
                 .attr({"class": "line " + lineClassesForKey(sdef), 
                        "stroke": sdef.color,
-                       "fill": "none", "stroke-width": 3})
+                       "fill": "none", "stroke-width": 5})
+                .on("mouseover", highlightKey(sdef.id))
+                .on("mouseout", highlightKey())
                 .attr("d", d3.svg.line()
+                      //.interpolate("monotone")
                       .x(function (d) { return lc.xscale(d.x); })
-                      .y(function (d) { return lc.yscale(d.y); })); });
+                      .y(function (d) { return lc.yscale(d.y); }))
+                .append("title")
+                .text(describeSeriesDef(sdef));
+        });
         stat.lc.displayKeys(lks, 0, 0);
     };
 
