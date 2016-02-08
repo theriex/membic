@@ -472,6 +472,7 @@ app.pcd = (function () {
                                              "?ctype=" + dst.type +
                                              "&parentid=" + dst.id + 
                                              "&" + app.login.authparams() +
+                                             "&penid=" + app.pen.myPenId() +
                                              "&title=" + jt.enc(dst.obj.name) +
                                              "')")},
                    "Visualize All"]]]];
@@ -1212,7 +1213,7 @@ app.pcd = (function () {
         setTimeout(function () {
             //checking a2a_config === undefined does not work mac ff 42.0
             //so regardless of what jslint sez, this needs to stay..
-            if(typeof a2a_config === 'undefined') {  //mac ff required test
+            if(typeof a2a_config === 'undefined') {  //mac ff requires typeof
                 jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
                    3500);
     },

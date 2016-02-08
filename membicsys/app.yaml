@@ -288,7 +288,7 @@ handlers:
   script: src.py.mctr.app
 
 ## Fetch current counter for profile or theme
-## GET params: authparams, ctype, parentid
+## GET params: authparams, ctype, parentid, penid
 - url: .*/currstat.*
   script: src.py.mctr.app
 

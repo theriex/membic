@@ -269,13 +269,21 @@ class GetCounters(webapp2.RequestHandler):
         ctype = normalize_mctr_type(self)
         if not ctype:
             return
+        parid = intz(self.request.get("parentid"))  # sets to 0 if not found
         acc = authenticated(self.request)
-        if (ctype == "Site" and 
+        if not acc:
+            return srverr(self, "403", "Authentication failed")
+        # Anyone following a theme has stats access, but profiles are private
+        if ctype == "PenName":
+            pnm = rev.acc_review_modification_authorized(acc, self)
+            if not pnm or (pnm and pnm.key().id() != parid):
+                return srverr(self, "403",
+                              "You may only view stats for your own profile")
+        elif (ctype == "Site" and 
             (not acc or acc.key().id() != 11005) and 
             (not self.request.host_url.startswith('http://localhost'))):
             return srverr(self, "403", 
                           "Access stats through your profile or theme")
-        parid = intz(self.request.get("parentid"))  # sets to 0 if not found
         refp = ctype + "Counter" + str(parid)
         daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()

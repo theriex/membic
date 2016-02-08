@@ -215,7 +215,7 @@ stat = (function () {
             parstr ="?ctype=site&parentid=0"; }
         if(params.am && params.at && params.an) {  //auth info
             parstr += "&am=" + params.am + "&at=" + params.at + 
-                "&an=" + params.an; }
+                "&an=" + params.an + "&penid=" + params.penid; }
         parstr += jt.ts("&cb=", "hour");
         jt.call('GET', "../getmctrs" + parstr, null,
                 function(mcs) {
