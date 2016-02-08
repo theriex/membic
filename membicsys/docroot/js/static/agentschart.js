@@ -312,8 +312,10 @@ stat.ac = (function () {
         computeDims();
         jt.out(dispdiv, "");
         ac.svg = d3.select("#" + dispdiv).append("svg")
-            .attr("width", ac.width + ac.margin.right)
-            .attr("height", ac.height)
+            .attr({"width": "98%", "height": "98%",
+                   "viewBox": "0 0 " + (ac.width + ac.margin.right) + 
+                              " " + ac.height,
+                   "preserveAspectRatio": "xMidYMid"})
             .append("g")
             .attr("transform", "translate(" + ac.margin.left + "," + 
                                               ac.margin.top + ")");

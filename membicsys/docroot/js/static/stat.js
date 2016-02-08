@@ -195,8 +195,11 @@ stat = (function () {
                   title],
                  html]];
         jt.out('dispdiv', jt.tac2html(html));
-        mods.forEach(function (mod) {
-            stat[mod].display(mod + "div", dat); });
+        mods.forEach(function (mod, idx) {
+            var nextdiv = "";
+            if(idx < mods.length - 1) {
+                nextdiv = mods[idx + 1] + "div"; }
+            stat[mod].display(mod + "div", dat, nextdiv); });
     },
 
 

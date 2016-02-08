@@ -9,6 +9,8 @@ stat.rc = (function () {
     ////////////////////////////////////////
 
     var dispdiv = null,
+        nextdiv = null,
+        offh = null,
         dat = null,
         rc = {},
 
@@ -58,7 +60,7 @@ stat.rc = (function () {
 
     adjustContentDisplay = function () {
         var miny = rc.diam,
-            maxy = 0;
+            maxy = 0, adjh, adjp = 1.0;
         rc.nodes.forEach(function (node) {
             var nodey = node.y - node.r;
             nodey = Math.floor(nodey) - rc.margin.top;
@@ -66,8 +68,18 @@ stat.rc = (function () {
             nodey = node.y + node.r;
             nodey = Math.ceil(nodey) + rc.margin.bottom;
             maxy = Math.max(maxy, nodey); });
+        if(!offh) {
+            offh = jt.byId(dispdiv).offsetHeight; }
+        else {
+            adjp = jt.byId(dispdiv).offsetHeight / offh; }
+        //Scroll the blank top out of the top of the enclosing div:
         rc.bcon.attr("transform", "translate(0,-" + miny + ")");
-        rc.svg.attr("height", maxy - miny);
+        //Do not resize the svg containment or the whole chart will be shrunk.
+        if(nextdiv) {
+            //total height - bottom bubble coordinate, adjusted for scroll
+            adjh = (rc.diam - maxy) + miny - rc.margin.bottom;
+            adjh = Math.round(adjh * adjp);
+            jt.byId(nextdiv).style.marginTop = String(-1 * adjh) + "px"; }
     },
 
 
@@ -93,6 +105,8 @@ stat.rc = (function () {
             .style("text-anchor", "middle")
             .text(function (d) { return d.name.substring(0, d.r / 3); });
         adjustContentDisplay();
+        if(window.addEventListener) {
+            window.addEventListener("resize", adjustContentDisplay); }
     },
         
 
@@ -104,9 +118,13 @@ stat.rc = (function () {
             .size([rc.diam, rc.diam])
             .padding(1.5);
         rc.svg = d3.select("#" + dispdiv).append("svg")
-            .attr({"width": rc.diam, "height": rc.diam,
+            .attr({"width": "98%", "height": "98%",
+                   "viewBox": "0 0 " + rc.diam + " " + rc.diam,
                    "preserveAspectRatio": "xMidYMid",
                    "class": "bubble"});
+        // rc.svg.append("rect")
+        //     .attr({"x": 0, "y": 0, "width": rc.diam, "height": rc.diam,
+        //            "fill": "#fff"});
         rc.nodes.sort(function (a, b) {
             return a.name.localeCompare(b.name); });
         drawContents();
@@ -118,8 +136,9 @@ stat.rc = (function () {
     ////////////////////////////////////////
 return {
 
-    display: function (divid, data) {
+    display: function (divid, data, nextdivid) {
         dispdiv = divid;
+        nextdiv = nextdivid;
         dat = data;
         makeNodes();
         if(rc.nodes && rc.nodes.length > 1) {

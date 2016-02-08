@@ -23,6 +23,7 @@ stat.lc = (function () {
         var margin;
         margin = {top: 10, right: 30, bottom: 40, left: 180};
         lc.width = window.innerWidth - (margin.left + margin.right);
+        lc.width = Math.max(lc.width, 1000);
         lc.h = Math.round(0.66 * lc.width);  //3-2 aspect ratio
         lc.h -= 40; //covers any exterior div padding
         lc.height = lc.h - (margin.top + margin.bottom);
@@ -146,7 +147,8 @@ stat.lc = (function () {
             .range([lc.height, 0])
             .domain([0, dat.ymax]);
         lc.svg = d3.select("#" + dispdiv).append("svg")
-            .attr({"width": lc.width, "height": lc.h,
+            .attr({"width": "100%", "height": "100%",
+                   "viewBox": "0 0 " + lc.width + " " + lc.h,
                    "preserveAspectRatio": "xMidYMid"})
             .append("g")
             .attr("transform",
