@@ -564,7 +564,7 @@ app.pcd = (function () {
                               value: dst.obj.name}]]];
             ht = ["div", {cla: "formline"},
                   [["label", {fo: "hashin", cla: "liflab", id: "hashlab"},
-                    "Hashtag"],
+                    "Hashtag #"],
                    ["input", {id: "hashin", cla: "lifin", type: "text",
                               placeholder: "Optional",
                               value: dst.obj.hashtag}]]]; }

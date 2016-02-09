@@ -10,6 +10,7 @@ from cacheman import *
 import pen
 import rev
 import json
+import re
 
 class Coop(db.Model):
     """ A cooperative theme """
@@ -17,9 +18,9 @@ class Coop(db.Model):
     name_c = db.StringProperty(required=True)
     modified = db.StringProperty()               # iso date
     modhist = db.StringProperty()                # creation date, mod count
+    hashtag = db.StringProperty()
     # non-indexed fields
     description = db.TextProperty()
-    hashtag = db.StringProperty(indexed=False)
     picture = db.BlobProperty()
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     calembed = db.TextProperty()    # embedded calendar html
@@ -110,16 +111,44 @@ def verify_unique_name(handler, coop):
     return True
 
 
+def verify_valid_unique_hashtag(handler, coop):
+    if not coop.hashtag:
+        return True
+    coop.hashtag = coop.hashtag.lower()
+    logging.info("testing hashtag " + coop.hashtag)
+    # alphabetic character, followed by alphabetic chars or numbers
+    #   1. start of string
+    #   2. not a non-alphanumeric, not a number and not '_'
+    #   3. any alphanumeric character.  Underscores ok.
+    #   4. continue to end of string
+    if not re.match(r"\A[^\W\d_][\w]*\Z", coop.hashtag):
+        return srverr(handler, 400, "Invalid hashtag.")
+    coopid = 0
+    try:
+        coopid = coop.key().id()
+    except Exception:
+        pass
+    coops = Coop.gql("WHERE hashtag = :1", coop.hashtag)
+    for sisctm in coops:
+        sid = sisctm.key().id()
+        if sid != coopid:
+            srverr(handler, 409, "Hashtag already in use")
+            return False
+    return True
+
+
 def read_and_validate_descriptive_fields(handler, coop):
     # name/name_c field has a value and has been set already
     if not verify_unique_name(handler, coop):
-        return False;
+        return False
+    coop.hashtag = handler.request.get('hashtag')
+    if not verify_valid_unique_hashtag(handler, coop):
+        return False
     coop.description = handler.request.get('description')
     if not coop.description:
         handler.error(400)
         handler.response.out.write("A description is required")
         return False
-    coop.hashtag = handler.request.get('hashtag')
     coop.calembed = handler.request.get('calembed')
     if coop.calembed and not coop.calembed.startswith("<iframe "):
         handler.error(400)
