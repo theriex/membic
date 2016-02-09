@@ -32,25 +32,27 @@ iframe { width:100%; border:0; margin:0; }
 <script>
 var cdiv = document.getElementById('contentdiv');
 var url = window.location.href;
-var path = window.location.pathname;
+var det = window.location.pathname + window.location.search
 var ref = document.referrer;
-var src = "notsecured.html";
-if(url.indexOf("https://") !== 0 && url.indexOf("c=s") < 0) {
-    cdiv.innerHTML = "Securing...";
-    src = "";
-    url = "https://www.membic.com?c=s";
-    if(path.length > 1) {
-        url += "&p=" + encodeURIComponent(path); }
+if(url.indexOf("https://") !== 0) {
+    if(url.indexOf("c=s") < 0) {
+        cdiv.innerHTML = "Securing...";
+        url = "https://www.membic.com?c=s";
+        if(det) {
+            url += "&d=" + encodeURIComponent(det); }
+        if(ref) {
+            url += "&r=" + encodeURIComponent(ref); }
+        window.location.href = url; }
+    else {
+        url = "https://membicsys.appspot.com";
+        cdiv.innerHTML = "Securing failed, please access <a href=\"" +
+            url + "\">" + url + "</a> directly."; } }
+else {
+    src = "https://membicsys.appspot.com?mf=true";
+    if(det) {
+        src += "&det=" + encodeURIComponent(det); }
     if(ref) {
-        url += "&r=" + encodeURIComponent(ref); }
-    window.location.href = url; }
-if(url.indexOf("https://") === 0) {
-    src = "https://membicsys.appspot.com?frame=true";
-    if(path.length > 1) {
-        src += "&path=" + encodeURIComponent(path); }
-    if(ref) {
-        src += "&ref=" + encodeURIComponent(ref); } }
-if(src) {
+        src += "&ref=" + encodeURIComponent(ref); }
     var elem = document.createElement('iframe');
     elem.id = "membiciframe";
     elem.src = src;
