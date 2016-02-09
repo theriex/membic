@@ -345,6 +345,9 @@ handlers:
 ## Anything else ending with a slash also goes to the start page
 - url: .*/
   script: src.py.start.app
+## Vanity theme access
+- url: /\w+
+  script: src.py.start.app
 
 ## Catchall is to look for a static file off docroot
 - url: /

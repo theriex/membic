@@ -99,7 +99,7 @@ return {
 
     bycoopid: function (coopid, src, tabname, expid) {
         var solopage, cts, data, ctype;
-        solopage = (window.location.href.indexOf("/t/") >= 0);
+        solopage = app.solopage();
         cts = ["review", "membership"];
         if(cts.indexOf(src) >= 0 || solopage) {
             ctype = solopage ? "permv" : "sitev";

@@ -1351,15 +1351,9 @@ app.review = (function () {
 
 
     signInErr = function (errtxt, prefix, disprevid) {
-        var html, wlh, href = "", sidx, yc;
+        var html, href = "", yc;
         if(app.solopage()) {
-            wlh = window.location.href;
-            sidx = wlh.indexOf("/t/");
-            if(sidx >= 0) {
-                href = "?view=coop&coopid=" + wlh.slice(sidx + 3); }
-            sidx = wlh.indexOf("/p/");
-            if(sidx >= 0) {
-                html = "?view=pen&penid=" + wlh.slice(sidx + 3); }
+            href = "?" + jt.objdata(app.login.permalinkURLElemsToParams());
             href = app.hardhome + href;
             html = ["div", {id: "siedlgdiv"},
                     [["div", {cla: "pcdsectiondiv"},

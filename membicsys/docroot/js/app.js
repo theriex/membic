@@ -88,10 +88,20 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.hashtaghref = function () {
+        var href = window.location.pathname;
+        href = href.slice(1);  //remove initial slash
+        if(href && href.indexOf('.') < 0 && href.indexOf('/') < 0) {
+            return href; }
+        return "";
+    };
+
+
     app.solopage = function () {
         if(app.embedded ||
                window.location.href.indexOf("/t/") > 0 ||
-               window.location.href.indexOf("/p/") > 0) {
+               window.location.href.indexOf("/p/") > 0 ||
+               app.hashtaghref()) {
             return true; }
         return false;
     };

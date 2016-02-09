@@ -438,19 +438,6 @@ app.login = (function () {
     },
 
 
-    convertPermalinkURLElemsToParams = function (params) {
-        var idx, href = window.location.href;
-        idx = href.indexOf("/p/");
-        if(idx >= 0) {
-            params.view = "pen";
-            params.penid = href.slice(idx + 3); }
-        idx = href.indexOf("/t/");
-        if(idx >= 0) {
-            params.view = "coop";
-            params.coopid = href.slice(idx + 3); }
-    },
-
-
     applyCSSOverride = function (cssurl) {
         var csselem = document.createElement('link');
         csselem.rel = "stylesheet";
@@ -476,7 +463,9 @@ app.login = (function () {
         if(params.css) {
             applyCSSOverride(params.css); }
         //handle specific context requests
-        if(params.view && (params.coopid || params.penid || params.profid)) {
+        if(params.view && (params.coopid || params.hashtag || 
+                           params.penid || params.profid)) {
+            params.coopid = params.coopid || app.vanityStartId;
             tpms = "clickthrough=" +
                 (params.coopid? "t" : "p") + 
                 (params.coopid || params.penid || params.profid) +
@@ -518,7 +507,7 @@ app.login = (function () {
     handleRedirectOrStartWork = function () {
         var idx, altpn = "AltAuth", params = jt.parseParams();
         standardizeAuthParams(params);
-        convertPermalinkURLElemsToParams(params);
+        app.login.permalinkURLElemsToParams(params);
         handleInitialParamSideEffects(params);
         //figure out what to do next
         if(params.command && params.command.indexOf(altpn) === 0) {
@@ -757,6 +746,33 @@ return {
 
     authparams: function () {
         return authparams();
+    },
+
+
+    permalinkURLElemsToParams: function (params) {
+        var done = false, idx, href = window.location.href;
+        if(!done) {
+            idx = href.indexOf("/p/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "pen";
+                params.penid = href.slice(idx + 3);
+                done = true; } }
+        if(!done) {
+            idx = href.indexOf("/t/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "coop";
+                params.coopid = href.slice(idx + 3);
+                done = true; } }
+        if(!done) {
+            href = app.hashtaghref();
+            if(href) {
+                params = params || {};
+                params.view = "coop";
+                params.hashtag = href;
+                done = true; } }
+        return params;
     },
 
 

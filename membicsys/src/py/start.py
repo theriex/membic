@@ -3,6 +3,8 @@ import logging
 import datetime
 import pen
 import coop
+from google.appengine.api import memcache
+from morutil import *
 
 indexHTML = """
 <!doctype html>
@@ -96,6 +98,7 @@ indexHTML = """
 
 <script>
   app.refer = "$REFER";
+  app.vanityStartId = "$VANID";
   app.init();
 </script>
 
@@ -107,6 +110,9 @@ indexHTML = """
 
 
 def start_page_html(handler, dbclass, dbid):
+    logging.info("----------------------------------------")
+    logging.info("start_page_html " + dbclass + str(dbid))
+    logging.info("----------------------------------------")
     descr = "A membic is a bite sized structured summary of a noteworthy experience that enhances your memory and feeds the community memory stream."
     img = "img/membiclogo.png"
     title = "Membic"
@@ -132,6 +138,7 @@ def start_page_html(handler, dbclass, dbid):
     html = html.replace("$DESCR", descr)
     html = html.replace("$CACHEPARA", cachev)
     html = html.replace("$REFER", handler.request.referer or "")
+    html = html.replace("$VANID", str(dbid))
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 
@@ -156,8 +163,24 @@ class DefaultStart(webapp2.RequestHandler):
         return start_page_html(self, "", 0)
 
 
+class VanityStart(webapp2.RequestHandler):
+    def get(self, hashtag):
+        if hashtag.startswith("/"):
+            hashtag = hashtag[1:]
+        coopid = memcache.get(hashtag)
+        if not coopid:
+            themes = coop.Coop.gql("WHERE hashtag = :1", hashtag)
+            found = themes.count()
+            if not found:
+                return srverr(self, 404, "No theme found for " + hashtag)
+            coopid = str(themes[0].key().id())
+            memcache.set(hashtag, coopid)
+        return start_page_html(self, "coop", int(coopid))
+
+
 app = webapp2.WSGIApplication([('/p/(\d+)', PenPermalinkStart),
                                ('/t/(\d+)', ThemePermalinkStart),
                                ('/index.html', IndexPageStart),
-                               ('(.*)/', DefaultStart)],
+                               ('(.*)/', DefaultStart),
+                               ('(.*)', VanityStart)],
                               debug=True)
