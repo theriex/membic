@@ -4,7 +4,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="robots" content="noodp" />
-  <meta name="description" content="A membic is a bit sized structured summary of a noteworthy. You can note membics yourself and as part of a group. Membics enhance your memory and feed community discovery." />
+  <meta name="description" content="A membic is a bite sized structured summary describing what you found memorable. Themes hold membics related to ongoing interests. Membic.com is an open collaborative memory project." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta property="og:image" 
         content="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
@@ -16,21 +16,47 @@
         href="https://membicsys.appspot.com/img/membiclogo.png?v=150614" />
   <title>Membic</title>
   <link href="css/site.css?v=150614" rel="stylesheet" type="text/css" />
+<style>
+html { min-height:100%; margin:0; padding:0; }
+body { margin:0px; height:100%; }
+iframe { width:100%; border:0; margin:0; }
+</style>
 </head>
 <body>
 
-<iframe id="membiciframe" src="https://membicsys.appspot.com">
-</iframe>
+<div id="contentdiv">
+  Framed content from <a href="https://membicsys.appspot.com">the
+  collaborative memory project</a>
+</div>
 
 <script>
-  var mf = document.getElementById('membiciframe');
-  if(window.location.href.indexOf("https://") !== 0) {
-    if(window.location.href.indexOf("c=s") < 0) {
-      window.location.href = "https://www.membic.com?c=s"; }
-    else {
-      mf.src = "notsecured.html"; } }
-  else {
-    mf.style.height = window.innerHeight + "px"; }
+var cdiv = document.getElementById('contentdiv');
+var url = window.location.href;
+var path = window.location.pathname;
+var ref = document.referrer;
+var src = "notsecured.html";
+if(url.indexOf("https://") !== 0 && url.indexOf("c=s") < 0) {
+    cdiv.innerHTML = "Securing...";
+    src = "";
+    url = "https://www.membic.com?c=s";
+    if(path.length > 1) {
+        url += "&p=" + encodeURIComponent(path); }
+    if(ref) {
+        url += "&r=" + encodeURIComponent(ref); }
+    window.location.href = url; }
+if(url.indexOf("https://") === 0) {
+    src = "https://membicsys.appspot.com?frame=true";
+    if(path.length > 1) {
+        src += "&path=" + encodeURIComponent(path); }
+    if(ref) {
+        src += "&ref=" + encodeURIComponent(ref); } }
+if(src) {
+    var elem = document.createElement('iframe');
+    elem.id = "membiciframe";
+    elem.src = src;
+    cdiv.innerHTML = "";
+    cdiv.appendChild(elem);
+    elem.style.height = window.innerHeight + "px"; }
 </script>
 </body>
 </html>

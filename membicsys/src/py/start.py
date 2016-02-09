@@ -113,7 +113,7 @@ def start_page_html(handler, dbclass, dbid):
     logging.info("----------------------------------------")
     logging.info("start_page_html " + dbclass + str(dbid))
     logging.info("----------------------------------------")
-    descr = "A membic is a bite sized structured summary of a noteworthy experience that enhances your memory and feeds the community memory stream."
+    descr = "A membic is a bite sized structured summary describing what you found memorable."
     img = "img/membiclogo.png"
     title = "Membic"
     if dbclass == "pen":
