@@ -109,6 +109,7 @@ return {
             setTimeout(function () {
                 jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
                         function () {
+                            app.refer = "";  //only count referrals once
                             jt.log("bumpmctr?" + data + " success"); },
                         function (code, errtxt) {
                             jt.log("bumpmctr?" + data + " failed " + 

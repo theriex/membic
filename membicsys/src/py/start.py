@@ -5,6 +5,7 @@ import pen
 import coop
 from google.appengine.api import memcache
 from morutil import *
+import urllib
 
 indexHTML = """
 <!doctype html>
@@ -109,10 +110,10 @@ indexHTML = """
 """
 
 
-def start_page_html(handler, dbclass, dbid):
-    logging.info("----------------------------------------")
-    logging.info("start_page_html " + dbclass + str(dbid))
-    logging.info("----------------------------------------")
+def start_page_html(handler, dbclass, dbid, refer):
+    # logging.info("----------------------------------------")
+    # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
+    # logging.info("----------------------------------------")
     descr = "A membic is a bite sized structured summary describing what you found memorable."
     img = "img/membiclogo.png"
     title = "Membic"
@@ -137,7 +138,7 @@ def start_page_html(handler, dbclass, dbid):
     html = html.replace("$TITLE", title)
     html = html.replace("$DESCR", descr)
     html = html.replace("$CACHEPARA", cachev)
-    html = html.replace("$REFER", handler.request.referer or "")
+    html = html.replace("$REFER", refer or handler.request.referer or "")
     html = html.replace("$VANID", str(dbid))
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
@@ -145,26 +146,57 @@ def start_page_html(handler, dbclass, dbid):
 
 class PenPermalinkStart(webapp2.RequestHandler):
     def get(self, dbid):
-        return start_page_html(self, "pen", int(dbid))
+        # logging.info("PenPermalinkStart " + dbid)
+        return start_page_html(self, "pen", int(dbid), "")
 
 
 class ThemePermalinkStart(webapp2.RequestHandler):
     def get(self, dbid):
-        return start_page_html(self, "coop", int(dbid))
+        # logging.info("ThemePermalinkStart " + dbid)
+        return start_page_html(self, "coop", int(dbid), "")
 
 
 class IndexPageStart(webapp2.RequestHandler):
     def get(self):
-        return start_page_html(self, "", 0)
+        # logging.info("IndexPageStart")
+        return start_page_html(self, "", 0, "")
 
 
 class DefaultStart(webapp2.RequestHandler):
     def get(self, reqdet):
-        return start_page_html(self, "", 0)
+        # logging.info("DefaultStart " + reqdet)
+        md = self.request.GET   # all params decoded into a UnicodeMultiDict
+        if "mf" not in md or md["mf"] != "true":  # not a membic frame
+            return start_page_html(self, "", 0, "")
+        hashtag = None
+        refer = None
+        if md["ref"]:
+            refer = md["ref"]
+        if md["det"]:
+            det = md["det"]
+            if det and len(det) > 1 and coop.is_valid_hashtag(det[1:]):
+                hashtag = det
+            elif "?" in det:
+                params = det.split("?")[1].split("&")
+                for param in params:
+                    if param.startswith("r="):
+                        refer = urllib.unquote(param[2:])
+                    elif param.startswith("d="):
+                        hashtag = urllib.unquote(param[2:])
+            if not hashtag:
+                logging.info("No hashtag found: " + str(md))
+                return start_page_html(self, "", 0, "")
+            url = "https://membicsys.appspot.com" + hashtag
+            if refer:
+                url += "?refer=" + urllib.quote(refer)
+            logging.info("redirect url: " + url)
+            self.redirect(str(url))
 
 
 class VanityStart(webapp2.RequestHandler):
     def get(self, hashtag):
+        # logging.info("VanityStart: " + hashtag)
+        refer = self.request.get('refer') or ""
         if hashtag.startswith("/"):
             hashtag = hashtag[1:]
         coopid = memcache.get(hashtag)
@@ -175,7 +207,7 @@ class VanityStart(webapp2.RequestHandler):
                 return srverr(self, 404, "No theme found for " + hashtag)
             coopid = str(themes[0].key().id())
             memcache.set(hashtag, coopid)
-        return start_page_html(self, "coop", int(coopid))
+        return start_page_html(self, "coop", int(coopid), refer)
 
 
 app = webapp2.WSGIApplication([('/p/(\d+)', PenPermalinkStart),

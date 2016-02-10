@@ -128,7 +128,7 @@ return {
 
     bypenid: function (penid, src, tabname) {
         var solopage, cts, data, ctype, penref;
-        solopage = (window.location.href.indexOf("/p/") >= 0)
+        solopage = (window.location.href.indexOf("/p/") >= 0);
         cts = ["review", "prefpens", "membapp", "adminlog"];
         if(cts.indexOf(src) >= 0 || solopage) {
             ctype = solopage ? "permv" : "sitev";
@@ -138,6 +138,7 @@ return {
             setTimeout(function () {
                 jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
                         function () {
+                            app.refer = "";  //only count referrals once
                             jt.log("bumpmctr?" + data + " success"); },
                         function (code, errtxt) {
                             jt.log("bumpmctr?" + data + " failed " + 

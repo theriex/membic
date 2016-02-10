@@ -111,17 +111,20 @@ def verify_unique_name(handler, coop):
     return True
 
 
-def verify_valid_unique_hashtag(handler, coop):
-    if not coop.hashtag:
-        return True
-    coop.hashtag = coop.hashtag.lower()
-    logging.info("testing hashtag " + coop.hashtag)
+def is_valid_hashtag(hashtag):
     # alphabetic character, followed by alphabetic chars or numbers
     #   1. start of string
     #   2. not a non-alphanumeric, not a number and not '_'
     #   3. any alphanumeric character.  Underscores ok.
     #   4. continue to end of string
-    if not re.match(r"\A[^\W\d_][\w]*\Z", coop.hashtag):
+    return re.match(r"\A[^\W\d_][\w]*\Z", hashtag)
+
+
+def verify_valid_unique_hashtag(handler, coop):
+    if not coop.hashtag:
+        return True
+    coop.hashtag = coop.hashtag.lower()
+    if not is_valid_hashtag(coop.hashtag):
         return srverr(handler, 400, "Invalid hashtag.")
     coopid = 0
     try:
