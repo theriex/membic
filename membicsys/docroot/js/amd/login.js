@@ -770,7 +770,7 @@ return {
             if(href) {
                 params = params || {};
                 params.view = "coop";
-                params.hashtag = href;
+                params.coopid = app.vanityStartId;
                 done = true; } }
         return params;
     },
