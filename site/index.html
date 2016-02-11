@@ -33,25 +33,24 @@ var cdiv = document.getElementById('contentdiv');
 var url = window.location.href;
 var det = window.location.pathname + window.location.search
 var ref = document.referrer;
+if(ref) {
+    ref = encodeURIComponent(ref); }
 if(url.indexOf("https://") !== 0) {
+    url = "https://www.membic.com" + det;
     if(url.indexOf("c=s") < 0) {
         cdiv.innerHTML = "Securing...";
-        url = "https://www.membic.com?c=s";
-        if(det) {
-            url += "&d=" + encodeURIComponent(det); }
-        if(ref) {
-            url += "&r=" + encodeURIComponent(ref); }
+        url += ((url.indexOf("?") < 0)? "?" : "&") + "c=s";
+        url += "&ref=" + ref;
         window.location.href = url; }
     else {
         url = "https://membicsys.appspot.com";
         cdiv.innerHTML = "Securing failed, please access <a href=\"" +
             url + "\">" + url + "</a> directly."; } }
 else {
-    src = "https://membicsys.appspot.com?mf=true";
-    if(det) {
-        src += "&det=" + encodeURIComponent(det); }
-    if(ref) {
-        src += "&ref=" + encodeURIComponent(ref); }
+    src = "https://membicsys.appspot.com" + det
+    if(src.indexOf("ref=") < 0 && ref) {
+        src += ((url.indexOf("?") < 0)? "?" : "&") + "ref=" + ref }
+    src = src.replace(/ref=/, "refer=")
     var elem = document.createElement('iframe');
     elem.id = "membiciframe";
     elem.src = src;
