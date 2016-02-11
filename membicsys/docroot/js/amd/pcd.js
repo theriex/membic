@@ -117,11 +117,14 @@ app.pcd = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    getDirectLinkInfo = function () {
+    getDirectLinkInfo = function (usehashtag) {
         var infobj = {title: "", url: "https://" + window.location.host};
         if(dst.type === "pen") {
             infobj.url += "/p/" + dst.id;
             infobj.title = "Direct profile URL:"; }
+        else if(usehashtag && dst.obj && dst.obj.hashtag) {
+            infobj.url += "/" + dst.obj.hashtag;
+            infobj.title = "Custom direct theme URL:"; }
         else {
             infobj.url += "/t/" + dst.id;
             infobj.title = "Direct theme URL:"; }
@@ -1562,7 +1565,7 @@ return {
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
-                dlo = getDirectLinkInfo();
+                dlo = getDirectLinkInfo(true);
                 jt.byId('pnarw').src = "img/arrow18down.png";
                 html = [
                     ["div", {cla: "permalinkdiv"},
