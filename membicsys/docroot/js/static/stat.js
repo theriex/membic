@@ -15,7 +15,7 @@ stat = (function () {
     var dat = null, params = {},
         lks = [  //line chart keys
             {name: "Visits", color: "#0000FF", //blue
-             desc: "Total visits.",
+             desc: "Total of all visits.",
              children: [
                  {name: "Site", color: "#0095ff", //lighter blue
                   desc: "Visits from within the site.",
@@ -25,7 +25,7 @@ stat = (function () {
                       {name: "Guest", color: "#0047ff", field: "sitev",
                        desc: "Unknown site visitors."}]},
                  {name: "Permalink", color: "#be00ff", //purpleish
-                  desc: "Visits via permalink.",
+                  desc: "Visits via permalink or custom theme hashtag link.",
                   children: [
                       {name: "Signed In", color: "#9100ff", field: "permk",
                        desc: "Signed-in permalink visitors."},

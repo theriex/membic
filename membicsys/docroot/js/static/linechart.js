@@ -72,7 +72,7 @@ stat.lc = (function () {
     },
 
 
-    highlightKey = function (keyid) {
+    highlightKey = function (keyid, title, yc) {
         return function (/*g, i*/) {
             if(keyid) {
                 lc.svg.selectAll(".keyback")
@@ -84,13 +84,18 @@ stat.lc = (function () {
                     .style("opacity", 0.1);
                 lc.svg.selectAll("." + keyid)
                     .transition()
-                    .style("opacity", 1.0); }
+                    .style("opacity", 1.0);
+                if(title) {
+                    if(yc) {
+                        jt.byId('titledisptxt').setAttribute("y", yc); }
+                    jt.out('titledisptxt', title); } }
             else {
                 lc.svg.selectAll(".keyback")
                     .style("opacity", klo);
                 lc.svg.selectAll(".line")
                     .transition()
-                    .style("opacity", 1.0); } };
+                    .style("opacity", 1.0);
+                jt.out('titledisptxt', ""); } };
     },
 
 
@@ -122,7 +127,7 @@ stat.lc = (function () {
             .attr({"x": kc.x, "y": kc.y, "width": kc.w, "height": kc.h + vsep,
                    "title": desc})
             .style({"fill": key.color, "opacity": 0.01})
-            .on("mouseover", highlightKey(key.id))
+            .on("mouseover", highlightKey(key.id, desc, kc.y + 18))
             .on("mouseout", highlightKey());
     },
 
@@ -134,6 +139,24 @@ stat.lc = (function () {
             res += " " + parent.id;
             parent = parent.parent; }
         return res;
+    },
+
+
+    drawSeriesLines = function () {
+        dat.series.forEach(function (sdef) {
+            lc.svg.append("path")
+                .datum(sdef.series)
+                .attr({"class": "line " + lineClassesForKey(sdef), 
+                       "stroke": sdef.color,
+                       "fill": "none", "stroke-width": 5})
+                .on("mouseover", highlightKey(sdef.id))
+                .on("mouseout", highlightKey())
+                .attr("d", d3.svg.line()
+                      //.interpolate("monotone")
+                      .x(function (d) { return lc.xscale(d.x); })
+                      .y(function (d) { return lc.yscale(d.y); }))
+                .append("title")
+                .text(describeSeriesDef(sdef)); });
     },
 
 
@@ -165,22 +188,12 @@ stat.lc = (function () {
             .call(lc.yAxis);
         alternatingWeekBackgrounds();
         yValueGuideLines();
-        dat.series.forEach(function (sdef) {
-            lc.svg.append("path")
-                .datum(sdef.series)
-                .attr({"class": "line " + lineClassesForKey(sdef), 
-                       "stroke": sdef.color,
-                       "fill": "none", "stroke-width": 5})
-                .on("mouseover", highlightKey(sdef.id))
-                .on("mouseout", highlightKey())
-                .attr("d", d3.svg.line()
-                      //.interpolate("monotone")
-                      .x(function (d) { return lc.xscale(d.x); })
-                      .y(function (d) { return lc.yscale(d.y); }))
-                .append("title")
-                .text(describeSeriesDef(sdef));
-        });
+        drawSeriesLines();
         stat.lc.displayKeys(lks, 0, 0);
+        lc.svg.append("text")
+            .attr({"x": 50, "y": 16, "fill": "black", "id": "titledisptxt"})
+            .style({"font-size": "16px", "font-style": "italic"})
+            .text("");
     };
 
 
