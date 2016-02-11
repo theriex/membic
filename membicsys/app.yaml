@@ -310,10 +310,6 @@ handlers:
   script: src.py.mailsum.app
   login: admin
 
-## Rough visit counting
-- url: .*/applaunch.*
-  script: src.py.mailsum.app
-
 ## Return automated agents whose use of the site should not be counted.
 - url: .*/botids.*
   script: src.py.mailsum.app

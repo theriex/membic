@@ -482,23 +482,6 @@ app.login = (function () {
     },
 
 
-    noteAppLaunched = function (loggedIn) {
-        var pen, params = "mode=visit";
-        if(loggedIn) {
-            params = "mode=login";
-            pen = app.pen.myPenName();
-            if(pen) {
-                params += "&penid=" + jt.instId(pen) + 
-                    "&pname=" + jt.enc(pen.name); } }
-        params += jt.ts("&cb=", "second");  //cache bust
-        setTimeout(function () {
-            jt.call('GET', "/applaunch?" + params, null,
-                    function () {
-                        jt.log("noted app launch"); },
-                    app.failf); }, 3000);  //Other calls more important
-    },
-
-
     handleRedirectOrStartWork = function () {
         var idx, altpn = "AltAuth", params = jt.parseParams();
         standardizeAuthParams(params);
@@ -512,10 +495,8 @@ app.login = (function () {
             idx = params.state.slice(altpn.length, altpn.length + 1);
             handleAlternateAuthentication(idx, params); }
         else if(authtoken || app.login.readAuthCookie()) {
-            noteAppLaunched(true);
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
-            noteAppLaunched(false);
             displayLoginForm(params);
             app.login.doNextStep(params); }
         else { 

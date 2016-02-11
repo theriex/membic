@@ -313,29 +313,6 @@ class ByTheImg(webapp2.RequestHandler):
         self.response.out.write(img)
 
 
-class NoteAppLaunch(webapp2.RequestHandler):
-    def get(self):
-        stat = get_current_stat()
-        note_agent(stat, self.request)
-        mode = self.request.get("mode")
-        # Possible mode values are "login" or "visit". So the app
-        # initialization is either from someone who is already logged
-        # in, or it is a general access visit.  If logged in, then
-        # penid and pname are also sent.
-        if mode and mode == "login":
-            stat.logins += 1
-            penid = self.request.get("penid")
-            pname = self.request.get("pname")
-            pkey = str(penid) + "-" + pname
-            stat.liupens = csv_increment(pkey, stat.liupens)
-        else:
-            stat.visits += 1
-        try:
-            stat.put()  #nocache
-        except OverQuotaError as oqe:
-            srverr(handler, 503, "stat put failure, database writes over quota")
-
-
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       logging.info("BouncedEmailHandler called")
@@ -354,6 +331,5 @@ class BounceHandler(BounceNotificationHandler):
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
-                               ('.*/applaunch', NoteAppLaunch),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 
