@@ -144,6 +144,20 @@ def start_page_html(handler, dbclass, dbid, refer):
     handler.response.out.write(html)
 
 
+def coopid_for_hashtag(hashtag):
+    if hashtag.startswith("/"):
+        hashtag = hashtag[1:]
+    coopid = memcache.get(hashtag)
+    if not coopid:
+        themes = coop.Coop.gql("WHERE hashtag = :1", hashtag)
+        found = themes.count()
+        if not found:
+            return 0
+        coopid = str(themes[0].key().id())
+        memcache.set(hashtag, coopid)
+    return int(coopid)
+
+
 class PenPermalinkStart(webapp2.RequestHandler):
     def get(self, dbid):
         # logging.info("PenPermalinkStart " + dbid)
@@ -169,7 +183,7 @@ class DefaultStart(webapp2.RequestHandler):
         if "mf" not in md or md["mf"] != "true":  # not a membic frame
             return start_page_html(self, "", 0, "")
         hashtag = None
-        refer = None
+        refer = ""
         if md["ref"]:
             refer = md["ref"]
         if md["det"]:
@@ -183,9 +197,9 @@ class DefaultStart(webapp2.RequestHandler):
                         refer = urllib.unquote(param[2:])
                     elif param.startswith("d="):
                         hashtag = urllib.unquote(param[2:])
-            if not hashtag:
+            if not hashtag or len(hashtag) <= 1:
                 logging.info("No hashtag found: " + str(md))
-                return start_page_html(self, "", 0, "")
+                return start_page_html(self, "", 0, refer)
             url = "https://membicsys.appspot.com" + hashtag
             if refer:
                 url += "?refer=" + urllib.quote(refer)
@@ -197,16 +211,9 @@ class VanityStart(webapp2.RequestHandler):
     def get(self, hashtag):
         # logging.info("VanityStart: " + hashtag)
         refer = self.request.get('refer') or ""
-        if hashtag.startswith("/"):
-            hashtag = hashtag[1:]
-        coopid = memcache.get(hashtag)
+        coopid = coopid_for_hashtag(hashtag)
         if not coopid:
-            themes = coop.Coop.gql("WHERE hashtag = :1", hashtag)
-            found = themes.count()
-            if not found:
-                return srverr(self, 404, "No theme found for " + hashtag)
-            coopid = str(themes[0].key().id())
-            memcache.set(hashtag, coopid)
+            return srverr(self, 404, "No theme found for " + hashtag)
         return start_page_html(self, "coop", int(coopid), refer)
 
 
