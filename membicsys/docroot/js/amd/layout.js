@@ -18,6 +18,24 @@ app.layout = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    replaceDocComments = function (html) {
+        var dst, txt;
+        html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
+            " or <a href=\"" + app.suppemail + "\">email us</a>.");
+        dst = app.pcd.getDisplayState();
+        if(dst && dst.type === "coop" && dst.obj) {
+            if(dst.obj.hashtag) {
+                txt = "https://" + window.location.host + "/" + 
+                    dst.obj.hashtag; }
+            else {
+                txt = "Theme hashtag not set"; }
+            html = html.replace(/<!--\ \$THEMEHASHURL\ -->/g, txt);
+            txt = "https://" + window.location.host + "/t/" + dst.id;
+            html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt); }
+        return html;
+    },
+
+
     displayDocContent = function (url, html) {
         var idx, bodystart = "<body>";
         if(!html || !html.trim()) {
@@ -26,8 +44,7 @@ app.layout = (function () {
         if(idx > 0) {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
-        html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
-            " or <a href=\"" + app.suppemail + "\">email us</a>.");
+        html = replaceDocComments(html);
         //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
         if(idx > 0) {
