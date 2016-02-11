@@ -470,11 +470,6 @@ app.login = (function () {
                 (params.coopid? "t" : "p") + 
                 (params.coopid || params.penid || params.profid) +
                 jt.ts("&cb=", "second");
-            setTimeout(function () {
-                jt.call('GET', "/bytheway?" + tpms, null,
-                        function () {
-                            jt.log("noted " + tpms); },
-                        app.failf); }, 2);  //might redirect to sec srvr next..
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
                                      profid: params.profid,

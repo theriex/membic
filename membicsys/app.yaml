@@ -310,10 +310,6 @@ handlers:
   script: src.py.mailsum.app
   login: admin
 
-## Client referral tracking for linkback
-- url: .*/bytheway.*
-  script: src.py.mailsum.app
-
 ## Rough visit counting
 - url: .*/applaunch.*
   script: src.py.mailsum.app

@@ -298,11 +298,6 @@ class UserActivity(webapp2.RequestHandler):
         returnJSON(self.response, stats)
 
 
-class ByTheWay(webapp2.RequestHandler):
-    def get(self):
-        btw_activity(self, "/bytheway", self.request)
-
-
 # Handler from retired "bytheimg" endpoint. Leaving the code here for
 # reference in case that's needed again.
 class ByTheImg(webapp2.RequestHandler):
@@ -359,7 +354,6 @@ class BounceHandler(BounceNotificationHandler):
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
-                               ('.*/bytheway', ByTheWay),
                                ('.*/applaunch', NoteAppLaunch),
                                ('/_ah/bounce', BounceHandler)], debug=True)
 

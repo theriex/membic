@@ -137,12 +137,7 @@ var app = {},  //Global container for application level funcs and values
         jt.on(window, 'popstate', app.history.pop);
         if(app.haveReferrer()) {
             params = "referral=" + jt.enc(document.referrer) + 
-                jt.ts("&cb=", "minute");
-            setTimeout(function () {
-                jt.call('GET', "bytheway?" + params, null,
-                        function () {
-                            jt.log("noted referrer: " + document.referrer); },
-                        app.failf); }, 2); }
+                jt.ts("&cb=", "minute"); }
         setTimeout(app.login.init, 10);
         //setTimeout(app.layout.displayDoc, 500);
     };
