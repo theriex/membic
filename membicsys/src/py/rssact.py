@@ -5,7 +5,6 @@ from morutil import *
 import rev
 import coop
 from cacheman import *
-from mailsum import css_summary_requested
 from mctr import bump_rss_summary
 import json
 
@@ -151,7 +150,6 @@ class CoopRSS(webapp2.RequestHandler):
         ctype = "application/rss+xml; charset=UTF-8"
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content)
-        css_summary_requested(ctm, self.request)
         bump_rss_summary(ctm, self.request)
 
 

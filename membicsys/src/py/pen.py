@@ -336,7 +336,6 @@ class ToggleRemember(webapp2.RequestHandler):
             pen.remembered = remove_from_csv(revid, pen.remembered)
         else:
             pen.remembered = prepend_to_csv(revid, pen.remembered)
-            mailsum.bump_remembered()
             try:
                 review = cached_get(int(revid), rev.Review)
                 penid = str(pen.key().id())
