@@ -95,7 +95,7 @@ indexHTML = """
 
 <script src="js/jtmin.js$CACHEPARA"></script>
 <script src="js/app.js$CACHEPARA"></script>
-<script src="js/compiled.js$CACHEPARA"></script>
+<!-- uncomment if compiling <script src="js/compiled.js$CACHEPARA"></script> -->
 
 <script>
   app.refer = "$REFER";
