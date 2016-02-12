@@ -40,8 +40,7 @@ indexHTML = """
         <div id="loginvisualelementsdiv">
           <label for="emailin" class="liflab">Email</label>
           <input type="email" class="lifin" name="emailin" id="emailin" 
-                 placeholder="nospam@example.com"
-                 autofocus/>
+                 placeholder="nospam@example.com"/>
           <div class="lifsep"></div>
           <label for="passin" class="liflab">Password</label>
           <!-- no onchange submit for password. breaks autoforms on safari -->
