@@ -1,21 +1,35 @@
 membic
 ======
 
-A membic is a bite sized structured summary of a noteworthy
-experience. Membic.com is a site allowing you to easily make a membic
-anytime you discover something worth remembering.  Functionally,
-membic.com consists of a JavaScript web application supported by a
-REST API coded in Python and hosted on Google App Engine.
+Welcome to the collaborative memory project! For an in-depth
+introductory overview, go to https://membic.com and click the about
+link.  In short, membics are bite sized structured summaries of what
+you found memorable, and themes are collection of membics devoted to
+particular topics of interest.  Themes may have multiple members and
+can serve as standalone content collections.  Operationally,
+membic.com consists of a pure functional JavaScript web application
+supported by a REST API coded in Python and hosted on Google App
+Engine.  The app leverages current standard HTML and CSS.  External
+supporting technologies are kept to a minimum.
 
 
 Getting involved:
 ----------------
 
-All comments, questions, suggestions, requests are welcome.  This is a
-community site that wants your input, whether you are coming from a
-technical background or not.  Contact theriex either via github or
-gmail to say hello.  It would be great to hear any impressions you
-have of the site and/or the project.
+Non-technical help welcome! At this phase of the project one of the
+greatest things you can do is provide fresh perspective.  The features
+are there for advanced users, but any suggestions about how to make
+those first steps easier to take can make a real difference.
+
+If you are technical, fresh perspective is still one of the greatest
+things you can provide.
+
+In any case, all comments, questions, suggestions, requests are
+welcome.  This is a community site that wants your input, whether you
+are coming from a technical background or not.  The best way to get
+involved is to simply contact theriex either via github or gmail to
+say hello.  It would be great to hear any impressions you have of the
+site and/or the project.
 
 
 Code organization:
@@ -46,6 +60,3 @@ possible.
 
 The REST API endpoints are defined and documented in `app.yaml`.
 Please identify your app in the HTTP headers when calling the API.
-
-
-
