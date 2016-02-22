@@ -225,6 +225,8 @@ app.readurl = (function () {
             val = findTagContents(html, "title", url);
             val = fixSpamdexing(val); }
         if(val) {
+            //decodeURIComponent is not needed, catch common dupe encodings..
+            val = val.replace(/&#x27;/g, "'");
             val = val.replace(/&quot;/g, "\"");
             review.title = val;
             review.name = val; }
