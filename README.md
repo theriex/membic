@@ -35,16 +35,20 @@ site and/or the project.
 Code organization:
 -----------------
 
-For the web app, you can trace the flow from `index.html` into
-`app.js` and/or search the codebase directly for any text that drew
-your attention.  The app is pure JavaScript.  For an architecture
-overview, see http://sandservices.com/docs/funcjsarch.html
+To jump in to the code, you can trace the how a request for
+`index.html` gets routed by `app.yaml` over to `start.py` which
+returns page content that calls the `init` method in `app.js`.
+Alternatively you can grep the codebase for a phrase or image source
+that drew your attention and then work back from there.
 
-To get into things from the server side REST API, start from
-`app.yaml` to see what the endpoints are, then reference the
-corresponding `.py` file in `src/py` for the implementation.
+The python code for the REST calls is all in `src/py`.  The JavaScript
+code is all off `docroot/js`.  For local development, you will need to
+install the Google App Engine SDK.
 
-For local development, you will need to install the Google App Engine SDK.
+The code organization reflects function, and function is best
+discovered through using the site.  If you have used the site for a
+while, explored the features, and are interested in an overview of how
+a specific feature works, walkthroughs are available.
   
 
 Using the API:
