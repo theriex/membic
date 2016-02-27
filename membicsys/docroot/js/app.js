@@ -126,7 +126,7 @@ var app = {},  //Global container for application level funcs and values
 
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
-        var cdiv, params;
+        var cdiv;
         app.amdtimer.load.end = new Date();
         cdiv = jt.byId('contentdiv');
         jt.out('contentdiv', " &nbsp; ");
@@ -135,9 +135,6 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, 'keypress', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
-        if(app.haveReferrer()) {
-            params = "referral=" + jt.enc(document.referrer) + 
-                jt.ts("&cb=", "minute"); }
         setTimeout(app.login.init, 10);
         //setTimeout(app.layout.displayDoc, 500);
     };
@@ -165,7 +162,7 @@ var app = {},  //Global container for application level funcs and values
             jt.byId('headingdiv').style.display = "none";
             jt.byId('bottomnav').style.display = "none";
             jt.byId('topsectiondiv').style.display = "none"; }
-        jt.out('contentdiv', "loading modules...");
+        jt.out('loadstatusdiv', "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
         jt.loadAppModules(app, modules, href, app.init2, "?v=150911");

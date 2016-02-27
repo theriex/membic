@@ -69,8 +69,13 @@ indexHTML = """
     <noscript>
     <p><b>Membic needs JavaScript to do anything useful, please enable.</b></p>
     </noscript>
-    The collaborative memory project.<br/>
-    Loading...
+    The collaborative memory project. 
+    <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
+       onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
+    <img src="img/gotolink.png" style="width:18px;height:18px;"/> Introduction</a> <br/>
+    <div id="loadstatusdiv">
+      Loading...
+    </div>
   </div> <!-- contentdiv -->
 
   <div id="bottomnav"> <!-- clicks mapped in layout.localDocLinks -->

@@ -452,7 +452,6 @@ app.login = (function () {
 
 
     handleInitialParamSideEffects = function (params) {
-        var tpms;
         if(params.am && params.at && params.an && !params.special) {
             params.at = jt.enc(params.at);  //restore token encoding 
             setAuthentication(params.am, params.at, params.an); }
@@ -466,10 +465,6 @@ app.login = (function () {
         if(params.view && (params.coopid || params.hashtag || 
                            params.penid || params.profid)) {
             params.coopid = params.coopid || app.vanityStartId;
-            tpms = "clickthrough=" +
-                (params.coopid? "t" : "p") + 
-                (params.coopid || params.penid || params.profid) +
-                jt.ts("&cb=", "second");
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,
                                      profid: params.profid,
@@ -500,6 +495,8 @@ app.login = (function () {
             displayLoginForm(params);
             app.login.doNextStep(params); }
         else { 
+            if(app.haveReferrer()) {
+                params.referral = jt.enc(document.referrer); }
             app.redirectToSecureServer(params); }
     };
 
