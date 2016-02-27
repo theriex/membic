@@ -1,6 +1,6 @@
 /*global app, jt, unescape */
 
-/*jslint white, for */
+/*jslint browser, multivar, white, fudge, for */
 
 
 //////////////////////////////////////////////////////////////////////
@@ -297,18 +297,20 @@ return {
         jt.out('revautodiv', "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + jt.enc(url) + jt.ts("&cb=", "second");
         jt.call('GET', geturl, null,
-                 function (json) {
-                     setReviewFields(review, jt.dec(json[0].content), url);
-                     app.review.updatedlg(); },
-                 app.failf(function (code, errtxt) {
-                     var plainurl = getPlainURL(url);
-                     if(url !== plainurl) {
-                         return app.readurl.fetchData(review, plainurl, 
-                                                      params); }
-                     jt.err("Membic details were not filled out automatically" +
-                            " because of a problem accessing " + url + "\n\n" +
-                            "Details: Error code " + code + ": " + errtxt);
-                     app.review.resetAutoURL(); }),
+                function (json) {
+                    setReviewFields(review, jt.dec(json[0].content), url);
+                    app.review.updatedlg(); },
+                //do not call app.failf here as the error may be from
+                //the called site rather than the membicsys server.
+                function (code, errtxt) {
+                    var plainurl = getPlainURL(url);
+                    if(url !== plainurl) {
+                        return app.readurl.fetchData(review, plainurl, 
+                                                     params); }
+                    jt.err("Membic details were not filled out automatically" +
+                           " because of a problem accessing " + url + "\n\n" +
+                           "Details: Error code " + code + ": " + errtxt);
+                    app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));
     }
 

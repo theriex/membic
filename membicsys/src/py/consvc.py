@@ -210,7 +210,14 @@ def simple_fetchurl(handler, geturl):
         handler.response.out.write("simple_fetchurl " + str(e) + 
                                    " fetching " + geturl)
         return None
-    if not result or result.status_code != 200:
+    # The journal Nature returns a 401 when you are not logged in, but
+    # displays the abstract which is what is wanted.  So 401 errors
+    # need to succeed if there is a result.  Generally a 401 should
+    # probably not pass back to the caller as that would be
+    # interpreted as them not being logged in to membic...
+    if not result or (result.status_code != 200 and result.status_code != 401):
+        logging.info("simple_fetchurl failed status_code " + 
+                     str(result.status_code) + ": " + str(result))
         handler.error(result.status_code)
         handler.response.out.write(result.content)
         return None
