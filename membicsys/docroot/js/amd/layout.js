@@ -58,7 +58,8 @@ app.layout = (function () {
             url = ""; }
         //display content
         html = app.layout.dlgwrapHTML(url, html);
-        app.layout.openDialog({x: 20, y: window.pageYOffset + 40}, html);
+        //openDialog deals with the y scroll offset as needed.
+        app.layout.openDialog({x: 20, y: 40}, html);
         app.layout.crumbify();
     },
 
