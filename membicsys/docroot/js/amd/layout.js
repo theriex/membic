@@ -210,6 +210,7 @@ return {
             if(rt.type === typestate.typename) {
                 clt = "reviewbadgesel"; }
             html.push(["a", {href: "#" + rt.type,
+                             title: rt.plural.capitalize() + " only",
                              onclick: jt.fs("app.layout.displayTypes(-1,'" + 
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
