@@ -1273,6 +1273,8 @@ app.review = (function () {
         var html;
         html = [["img", {cla: "reviewbadge", src: "img/" + type.img,
                          title: type.type, alt: type.type}],
+                ["img", {cla: "webjump", src: "img/stackedmenu.png",
+                         title: "actions", alt: "actions"}],
                 "&nbsp;",
                 app.pcd.reviewItemNameHTML(type, rev)];
         html = ["a", {href: revurl(rev), onclick: togclick},
