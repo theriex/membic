@@ -164,19 +164,15 @@ app.login = (function () {
 
     //safari displays "No%20match%20for%20those%20credentials"
     //and even "No%2520match%2520for%2520those%2520credentials"
-    fixServerText = function (text) {
-        var emailin;
+    fixServerText = function (text, email) {
         if(!text) {
             text = ""; }
         text = text.replace(/%20/g, " ");
         text = text.replace(/%2520/g, " ");
         if(text.startsWith("Not registered")) {
-            emailin = jt.byId('emailin');
-            if(emailin && emailin.value) {
-                text = fixEmailAddress(emailin.value); }
-            else {
-                text = "Account"; }
-            text += " not registered yet."; }
+            if(email) {
+                email = fixEmailAddress(email); }
+            text = (email || "Account") + " not found, click \"Create\""; }
         return text;
     },
 
@@ -233,7 +229,8 @@ app.login = (function () {
         addParamValuesToLoginForm(params);
         //decorate contents and connect additional actions
         if(params.loginerr) {
-            jt.out('loginstatdiv', fixServerText(params.loginerr)); }
+            jt.out('loginstatdiv', fixServerText(params.loginerr, 
+                                                 params.emailin)); }
         html = ["a", {id: "forgotpw", href: "#forgotpassword",
                       title: "Email my password, I spaced it",
                       onclick: jt.fs("app.login.forgotPassword()")},
@@ -827,8 +824,12 @@ return {
         var emaddr, password, data, url, buttonhtml;
         emaddr = jt.byId('emailin').value;
         password = jt.byId('passin').value;
-        if(!emaddr || !password || !emaddr.trim() || !password.trim()) {
+        if(!emaddr || !emaddr.trim()) {
             jt.out('loginstatdiv', "Please specify an email and password");
+            jt.byId('emailin').focus();
+            return; }
+        if(!password || !password.trim()) {
+            jt.out('loginstatdiv', "Please specify a password");
             jt.byId('emailin').focus();
             return; }
         jt.out('loginstatdiv', "&nbsp;");  //clear any previous message
