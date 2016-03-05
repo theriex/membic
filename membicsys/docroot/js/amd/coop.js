@@ -387,6 +387,7 @@ return {
         rev = app.lcs.getRef("rev", revid).rev;
         reason = jt.byId('reasonin').value.trim();
         if(!reason && rev.penid !== app.pen.myPenId()) {
+            removebutton.disabled = false;
             return jt.out('rdremstatdiv', "Reason required"); }
         jt.out('rdremstatdiv', "Removing...");
         data = "penid=" + app.pen.myPenId() + "&revid=" + revid + 
