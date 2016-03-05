@@ -582,7 +582,7 @@ class AcceptInvitation(webapp2.RequestHandler):
     def post(self):
         acc = authenticated(self.request)
         if not acc or acc.status != "Active":
-            return srverr(self, 403, "Your account must active before you can accept membership.")
+            return srverr(self, 403, "Your account must be active before you can accept membership.")
         pnm = rev.acc_review_modification_authorized(acc, self)
         if not pnm:  #penid did not match a pen the caller controls
             return   #error already reported
