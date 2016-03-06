@@ -16,10 +16,12 @@ indexHTML = """
   <meta name="robots" content="noodp" />
   <meta name="description" content="$DESCR" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" href="$SITEPIC">
+  <link rel="image_src" href="$SITEPIC" />
   <meta property="og:image" content="$SITEPIC" />
   <meta property="twitter:image" content="$SITEPIC" />
   <meta itemprop="image" content="$SITEPIC" />
-  <link rel="image_src" href="$SITEPIC" />
   <title>$TITLE</title>
   <link href="css/site.css$CACHEPARA" rel="stylesheet" type="text/css" />
 </head>
