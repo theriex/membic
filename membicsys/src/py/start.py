@@ -137,13 +137,13 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = descr.replace("\"", "'")
             title = descr
             img = "/ctmpic?coopid=" + str(dbid)
-    cachev = "?v=" + datetime.datetime.now().strftime("%y%m%d")
-    img += cachev
+    cachev = "v=" + datetime.datetime.now().strftime("%y%m%d")
+    img += "&" + cachev
     html = indexHTML
     html = html.replace("$SITEPIC", img)
     html = html.replace("$TITLE", title)
     html = html.replace("$DESCR", descr)
-    html = html.replace("$CACHEPARA", cachev)
+    html = html.replace("$CACHEPARA", "?" + cachev)
     html = html.replace("$REFER", refer or handler.request.referer or "")
     html = html.replace("$VANID", str(dbid))
     handler.response.headers['Content-Type'] = 'text/html'
