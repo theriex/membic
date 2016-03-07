@@ -242,6 +242,7 @@ class BumpCounter(webapp2.RequestHandler):
                 pnm = rev.acc_review_modification_authorized(acc, self)
         field = normalized_count_field(pnm, self.request.get("field"))
         refer = self.request.get("refer")
+        logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", penid: " + str(penid) + ", field: " + str(field) + ", refer: " + str(refer))
         counter = get_mctr(ctype, parid)
         if pnm:  # note any new visitors
             name = re.sub(r",+", "", pnm.name)  # strip any commas
