@@ -13,8 +13,8 @@ app.review = (function () {
         //modified by automation, that "cleaned" value should be kept to
         //confirm against the potentially edited form field value.
         autourl = "",
-        //The current review being displayed or edited.
-        crev = {},
+        crev = {},  //The current review being displayed or edited.
+        maxDispRevs = 100,  //keep the page length reasonably viewable.
         //If changing the width or height of the stars img, also change
         //profile.reviewItemHTML indent
         starimgw = 85,
@@ -240,7 +240,8 @@ app.review = (function () {
     sslSafeRef = function (revid, url) {
         if(window.location.href.indexOf("https://") === 0) {
             url = "imagerelay?revid=" + revid + "&url=" + jt.enc(url); }
-        return url;
+        //return url;
+        return "img/blank.png#" + url;
     },
 
 
@@ -269,7 +270,8 @@ app.review = (function () {
             html.src = sslSafeRef(jt.instId(review), review.imguri);
             break;
         case "upldpic":
-            html.src = "revpic?revid=" + jt.instId(review) + 
+            //html.src = "revpic?revid=" + jt.instId(review) + 
+            html.src = "img/blank.png#revpic?revid=" + jt.instId(review) + 
                 jt.ts("&cb", review.modified);
             break;
         case "nopic":
@@ -1385,6 +1387,30 @@ app.review = (function () {
         if(!html) {
             jt.err(errtxt); }
         return errtxt;
+    },
+
+
+    realizeImgSrc = function (imgtype, revs, istart, iend, mark) {
+        var i, img, src, realized = false;
+        for(i = istart; i < iend; i += 1) {
+            switch(imgtype) {
+            case "author":
+                img = jt.byId("authimg" + i);
+                if(img && img.src && img.src.indexOf(mark) >= 0) {
+                    src = "profpic?" + 
+                        img.src.slice(img.src.indexOf(mark) + mark.length);
+                    img.src = src;
+                    realized = true; }
+                break; 
+            case "revpic":
+                img = jt.byId("revimg" + jt.instId(revs[i]));
+                if(img && img.src && img.src.indexOf(mark) >= 0) {
+                    src =  img.src.slice(img.src.indexOf(mark) + 
+                                         mark.length);
+                    img.src = src;
+                    realized = true; } 
+                break; } }
+        return realized;
     };
 
 
@@ -2093,6 +2119,22 @@ return {
     },
 
 
+    realizePlaceholderImages: function (revs) {
+        var topvis = 30, rzd = false, mark = "img/blank.png#";
+        if(!revs || !revs.length) {
+            return; }
+        //first pass
+        rzd = rzd || realizeImgSrc("author", revs, 0, topvis, mark);
+        rzd = rzd || realizeImgSrc("revpic", revs, 0, topvis, mark);
+        //second pass
+        rzd = rzd || realizeImgSrc("author", revs, topvis, revs.length, mark);
+        rzd = rzd || realizeImgSrc("revpic", revs, topvis, revs.length, mark);
+        if(rzd) {
+            setTimeout(function () {
+                app.review.realizePlaceholderImages(revs); }, 200); }
+    },
+
+
     displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
         var rt, i, html, rev, pr, maindivattrs, authlink, vp, revdivid;
         rt = app.layout.getType();
@@ -2106,8 +2148,7 @@ return {
                 html = [html, xem]; } }
         else {
             html = []; }
-        //Displaying more than 100 reviews gets overwhelming..
-        for(i = 0; i < revs.length && i < 100; i += 1) {
+        for(i = 0; i < revs.length && i < maxDispRevs; i += 1) {
             rev = revs[i];
             cacheNames(rev);
             revdivid = prefix + jt.instId(rev);
@@ -2133,8 +2174,9 @@ return {
                      [["a", {href: "#view=pen&penid=" + rev.penid,
                              onclick: jt.fs("app.pen.bypenid('" + 
                                             rev.penid + "','review')")},
-                       ["img", {cla: "fpprofpic", 
-                                src: "profpic?profileid=" + rev.penid,
+                       ["img", {cla: "fpprofpic", id: "authimg" + i,
+                                src: "img/blank.png#profileid=" + rev.penid,
+                                //src: "profpic?profileid=" + rev.penid,
                                 title: jt.ndq(rev.penname),
                                 alt: jt.ndq(rev.penname)}]],
                       vp]]; }
@@ -2145,6 +2187,8 @@ return {
                          app.review.revdispHTML(prefix, jt.instId(rev), 
                                                 rev, togcbn)]]]); }
         jt.out(divid, jt.tac2html(html));
+        setTimeout(function () {
+            app.review.realizePlaceholderImages(revs); }, 500);
     },
 
 
