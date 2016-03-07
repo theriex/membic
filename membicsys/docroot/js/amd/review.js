@@ -1022,7 +1022,7 @@ app.review = (function () {
 
 
     dlgPicHTML = function () {
-        var src, type, html;
+        var src, type, html, mark = "img/blank.png#";
         src = "img/nopicrev.png";
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
@@ -1030,6 +1030,8 @@ app.review = (function () {
                 jt.ts("&cb", crev.modified); }
         else if(type === "sitepic") {
             src = sslSafeRef(jt.instId(crev), crev.imguri); }
+        if(src.indexOf(mark) >= 0) {
+            src = src.slice(src.indexOf(mark) + mark.length); }
         html = ["img", {id: "dlgrevimg", cla: "revimg", src: src}];
         return jt.tac2html(html);
     },

@@ -524,7 +524,8 @@ app.pcd = (function () {
             picsrc = "profpic?profileid=" + dst.obj.profpic; }
         else if(dst.obj.picture) {
             picsrc = "ctmpic?coopid=" + dst.obj.picture; }
-        picsrc += jt.ts("&cb", dst.obj.modified);
+        picsrc += jt.ts((picsrc.indexOf("?") >= 0? "&" : "?") + "cb=", 
+                        dst.obj.modified);
         html = [["label", {fo: "picuploadform", cla: "overlab"},
                   "Change Picture"],
                 ["form", {action: "/picupload", method: "post",
