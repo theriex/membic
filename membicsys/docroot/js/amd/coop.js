@@ -183,9 +183,11 @@ return {
 
     updateInvite: function (mlev) {
         var buttonhtml, email, data;
+        email = jt.byId('emailin').value;
+        if(!jt.isProbablyEmail(email)) {
+            return; }
         buttonhtml = jt.byId('invitebuttondiv').innerHTML;
         jt.out('invitebuttondiv', "Approving Membership...");
-        email = jt.byId('emailin').value;
         jt.byId('emailin').disabled = true;
         data = "penid=" + app.pen.myPenId() + "&email=" + email +
             "&coopid=" + app.pcd.getDisplayState().id;
