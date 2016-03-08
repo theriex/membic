@@ -416,15 +416,15 @@ app.login = (function () {
     },
 
 
-    //On localhost, params are lost when the login form is displayed.
-    //On the server, they are passed to the secure host and returned
-    //post-login.  These are separate flows.  Not supporting a
-    //separate param processing path just for local development.
     loggedInDoNextStep = function (params) {
-        if(params.url) {
-            app.review.readURL(jt.dec(params.url), params); }
-        else {  //pass parameters along to the general processing next step
-            app.login.doNextStep(params); }
+        //On localhost, params are lost when the login form is
+        //displayed.  On the server, they are passed to the secure
+        //host and returned post-login.  These are separate flows.
+        //Not supporting a separate param processing path just for
+        //local development.  This func is pretty much here to hold
+        //this comment and prevent running around in circles for hours
+        //trying to debug authentication passthroughs.
+        app.login.doNextStep(params);
     },
 
 
@@ -468,9 +468,6 @@ app.login = (function () {
                                      coopid: params.coopid,
                                      tab: params.tab,
                                      expid: params.expid }); }
-        else if(params.revedit) {
-            app.history.checkpoint({ view: "review", mode: "edit",
-                                     revid: params.revedit }); }
     },
 
 
@@ -879,6 +876,8 @@ return {
                 state = {view: "profile"}; }
             else {  //default initialization
                 state = {view: "activity"}; } }
+        if(params.url) {
+            app.activity.setURLToRead(params.url); }
         if(app.login.isLoggedIn()) {
             app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();

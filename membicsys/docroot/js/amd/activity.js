@@ -17,6 +17,7 @@ app.activity = (function () {
         feedmeta = {},
         bootmon = { tout: null, count: 0 },
         memodiv = "",
+        urlToRead = "",
 
 
     ////////////////////////////////////////
@@ -66,6 +67,13 @@ app.activity = (function () {
                         jt.log("bumpctr?" + data + " failed " + 
                                code + ": " + errtxt); }); },
                    300);
+        if(urlToRead) {
+            if(!app.pen.myPenId()) {
+                jt.err("You must be signed in to make a membic from a url parameter."); }
+            else {
+                setTimeout(function () {
+                    app.review.readURL(jt.dec(urlToRead));
+                    urlToRead = ""; }, 400); } }
         jt.out("contentdiv", jt.tac2html(
             [["div", {cla: "disptitlediv"}, "COMMUNITY MEMBICS"],
              ["div", {id: "feedrevsdiv"}]]));
@@ -295,6 +303,11 @@ return {
 
     resetAllFeeds: function () {
         feeds = {};
+    },
+
+
+    setURLToRead: function (url) {
+        urlToRead = url;
     }
 
 

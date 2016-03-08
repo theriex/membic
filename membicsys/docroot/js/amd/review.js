@@ -1413,40 +1413,11 @@ app.review = (function () {
                     realized = true; } 
                 break; } }
         return realized;
-    };
-
-
-    ////////////////////////////////////////
-    // published functions
-    ////////////////////////////////////////
-return {
-
-    resetStateVars: function () {
-        autourl = "";
-        crev = { autocomp: true };
-        autocomptxt = "";
     },
 
 
-    start: function (source) {
+    displayMembicDialog = function () {
         var html;
-        app.review.resetStateVars();
-        if(app.login.accountInfo("status") !== "Active") {
-            jt.err("You need to activate your account before posting");
-            return app.pcd.display("pen", app.pen.myPenId(), "latest",
-                                   app.pen.myPenName(), "settings"); }
-        if(!app.pen.myPenName().profpic) {
-            jt.err("You need a profile picture to identify your membics");
-            return app.pcd.display("pen"); }
-        if(typeof source === 'string') {  //passed in a url
-            autourl = source; }
-        if(typeof source === 'object') {  //passed in another review
-            crev = copyReview(source);
-            if(source.penid === app.pen.myPenId()) {
-                app.coop.faultInPostThroughCoops(source); }
-            else {
-                makeMine(crev, jt.instId(source)); } }
-        crev.penid = app.pen.myPenId();
         html = ["div", {id: "revdlgdiv"},
                 [["div", {id: "rdtypesdiv"}],
                  ["div", {id: "rdtypepromptdiv"}],
@@ -1473,11 +1444,47 @@ return {
             {x: jt.byId("headingdivcontent").offsetLeft - 34, 
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, dlgTweetButton);
+    };
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    resetStateVars: function () {
+        autourl = "";
+        crev = { autocomp: true };
+        autocomptxt = "";
+    },
+
+
+    start: function (source) {
+        app.review.resetStateVars();
+        if(app.login.accountInfo("status") !== "Active") {
+            jt.err("You need to activate your account before posting");
+            return app.pcd.display("pen", app.pen.myPenId(), "latest",
+                                   app.pen.myPenName(), "settings"); }
+        if(!app.pen.myPenName().profpic) {
+            jt.err("You need a profile picture to identify your membics");
+            return app.pcd.display("pen"); }
+        if(typeof source === 'string') {  //passed in a url
+            autourl = source; }
+        if(typeof source === 'object') {  //passed in another review
+            crev = copyReview(source);
+            if(source.penid === app.pen.myPenId()) {
+                app.coop.faultInPostThroughCoops(source); }
+            else {
+                makeMine(crev, jt.instId(source)); } }
+        crev.penid = app.pen.myPenId();
+        displayMembicDialog();
     },
 
 
     updatedlg: function (typename) {
         app.layout.cancelOverlay(true);  //close if already open or done
+        if(!jt.byId('revdlgdiv')) {  //dialog not displayed yet, init.
+            return displayMembicDialog(); }
         if(typename) {
             jt.out('rdokstatdiv', "");  //clear errs e.g. "need to choose type"
             //rebuild the pic and details area
@@ -1679,6 +1686,7 @@ return {
             if(!app.coop.confirmPostThrough(crev)) {
                 jt.out('rdokbuttondiv', html);
                 return; }}
+        crev.penid = crev.penid || app.pen.myPenId();  //reader may have skipped
         jt.out('rdokbuttondiv', "Saving...");
         app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;
