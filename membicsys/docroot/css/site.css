@@ -56,9 +56,10 @@ button, .loginbutton, .formbutton {
 #toprightdiv { float:right; padding:0px 2px 2px 0px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { height:30px; text-align:right; }
-.revtypesdiv { display:inline-block; width:240px; padding:10px 0px 0px 0px; }
+.revtypesdiv { display:inline-block; padding:10px 0px 0px 0px; }
+.revtypelink { padding:0px 3px; }
 #headingdiv { min-height:80px; }
-#headingdivcontent { width:240px; margin:auto; }
+#headingdivcontent { width:288px; margin:auto; }
 
 /* >> main display area and contained elements */
 .disptitlediv { padding-bottom:5px; 
@@ -253,7 +254,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rdurlbuttonspan { font-size:x-small; }
 #rdurlbutton { margin:0px 0px 0px 3px; }
 #rdstat1 { clear:both; }
-#rdtypesdiv { width:240px; margin:auto; padding:0px 0px 0px 0px; }
+#rdtypesdiv { width:288px; margin:auto; padding:0px 0px 0px 0px; }
 #rdtypepromptdiv { font-size:small; text-align:center; color:#999; }
 #rdkeyindiv { padding:0px 0px 10px 0px; }
 #rdacdiv { float:right; width:50px; background:url('../img/rdaclab.png'); }

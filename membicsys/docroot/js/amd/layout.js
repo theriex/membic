@@ -91,6 +91,7 @@ app.layout = (function () {
     },
 
 
+    //Minimum cell phone width is assumed to be 320px.
     findDisplayHeightAndWidth = function () {
         //most browsers (FF, safari, chrome, 
         if(window.innerWidth && window.innerHeight) {
@@ -210,7 +211,7 @@ return {
             var clt = "reviewbadge";
             if(rt.type === typestate.typename) {
                 clt = "reviewbadgesel"; }
-            html.push(["a", {href: "#" + rt.type,
+            html.push(["a", {href: "#" + rt.type, cla: "revtypelink",
                              title: rt.plural.capitalize() + " only",
                              onclick: jt.fs("app.layout.displayTypes(-1,'" + 
                                             rt.type + "')")},

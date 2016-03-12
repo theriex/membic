@@ -968,7 +968,7 @@ app.review = (function () {
         reviewTypes.forEach(function (rt) {
             var clt = (crev.revtype === rt.type) ? "reviewbadgesel" 
                                                  : "reviewbadge";
-            html.push(["a", {href: "#" + rt.type,
+            html.push(["a", {href: "#" + rt.type, cla: "revtypelink",
                              onclick: jt.fs("app.review.updatedlg('" + 
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
