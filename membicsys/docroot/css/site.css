@@ -309,7 +309,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
-.fpinrevdiv { background-color:#f9f9fc; }
+.fpinrevdiv { background-color:#ffffff; }
 .fpmeminrevdiv { background-color:#ffbe74; }
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
