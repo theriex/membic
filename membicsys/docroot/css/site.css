@@ -218,7 +218,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
 .reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
 #shouteditbox, .shoutout { text-align:left;
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif;
+  font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
 .shoutout { width:160px; min-height:100px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
@@ -311,7 +311,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
 .fpinrevdiv { background-color:#f9f9fc; }
 .fpmeminrevdiv { background-color:#ffbe74; }
-.fpbodydiv { overflow:auto; }
+.fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
 .fpbuttonsdiv { margin-left:40px; padding-top:2px; }
 .fpbuttondiv { display:inline-block; margin:0px 10px; min-width:40px; 
@@ -326,7 +326,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpdatediv { margin-left:5px; font-size: xx-small; }
 .fpdescrdiv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 2px 10px 0px 2px;
-  font-family:"Verdana", "Arial", "Helvetica", sans-serif; }
+  font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }
 .fpctmlinkslab { font-style:italic; }
 .fpkeywrdsdiv { font-style:italic; }
 .fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }

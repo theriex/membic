@@ -91,10 +91,6 @@ app.layout = (function () {
     },
 
 
-    //logo + 5 nav buttons with padding == 460 + (5 * 60) == 760
-    //standard phone width of 480 zoomed to .6 == 800
-    //going with 800 as the standard minimum display width, zoom accordingly
-    //The max width is primarily driven by index.html viewport meta tag.
     findDisplayHeightAndWidth = function () {
         //most browsers (FF, safari, chrome, 
         if(window.innerWidth && window.innerHeight) {
@@ -150,9 +146,14 @@ app.layout = (function () {
 return {
 
     init: function () {
+        var body;
         findDisplayHeightAndWidth();
         app.layout.commonUtilExtensions();
         localDocLinks();
+        if(app.winw > 500) {  //easily fit max topleftdiv + toprightdiv
+            body = jt.byId('bodyid');
+            body.style.paddingLeft = "8%";
+            body.style.paddingRight = "8%"; }
     },
 
 
