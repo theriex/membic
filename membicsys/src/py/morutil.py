@@ -113,9 +113,12 @@ def list_to_csv(values):
 
 # append ikey:1 if ikey not present, otherwise increment count
 def csv_increment(ikey, csv):
+    if ikey.find(',') >= 0 or ikey.find(':') >= 0:
+        raise ValueError("Invalid csv counter key: " + ikey)
     if not csv:
         return ikey + ":1"
-    index = csv.find(ikey)
+    delimkey = ikey + ":"
+    index = csv.find(delimkey)
     if index < 0:
         return csv + "," + ikey + ":1"
     index += len(ikey) + 1  # start of count
