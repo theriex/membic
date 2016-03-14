@@ -425,6 +425,8 @@ class GetCoopById(webapp2.RequestHandler):
 class GetCoopPic(webapp2.RequestHandler):
     def get(self):
         coopid = self.request.get('coopid')
+        if not coopid:
+            return srverr(self, 400, "Theme id required for pic")
         coop = cached_get(intz(coopid), Coop)
         havepic = coop and coop.picture
         if not havepic:
