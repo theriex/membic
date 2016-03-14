@@ -1058,7 +1058,9 @@ app.pcd = (function () {
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.isId(jt.instId(dst.obj))) {
             return dispfunc(expid); }
-        jt.out('pcdcontdiv', dst.type.capitalize() + " settings required");
+        //could be creating a new theme at this point. dialog may or may
+        //not be displayed
+        jt.out('pcdcontdiv', "Settings required.");
         app.pcd.settings();
     },
 
@@ -1696,7 +1698,7 @@ return {
 
     toggleCreateCoop: function () {
         var html;
-        html = ["A cooperative theme holds a curated collection of membics contributed by one or more pen names. As a creating Founder, you will have full privileges to manage other members and posts as you want.",
+        html = ["A cooperative theme holds related membics from one or more members. As a founder, you have full privileges to manage other members and posts.",
                 ["div", {cla: "formbuttonsdiv"},
                  ["button", {type: "button", id: "createcoopbutton",
                              onclick: jt.fs("app.pcd.display('coop')")},
