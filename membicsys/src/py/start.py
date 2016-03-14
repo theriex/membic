@@ -121,7 +121,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
     # logging.info("----------------------------------------")
     descr = "A membic is a bite sized structured summary describing what you found memorable."
-    img = "img/membiclogo.png"
+    img = ""
     title = "Membic"
     if dbclass == "pen":
         pnm = pen.PenName.get_by_id(dbid)
@@ -138,7 +138,10 @@ def start_page_html(handler, dbclass, dbid, refer):
             title = descr
             img = "/ctmpic?coopid=" + str(dbid)
     cachev = "v=" + datetime.datetime.now().strftime("%y%m%d")
-    img += "&" + cachev
+    if not img:
+        img = "img/membiclogo.png?" + cachev
+    else:
+        img += "&" + cachev
     html = indexHTML
     html = html.replace("$SITEPIC", img)
     html = html.replace("$TITLE", title)
