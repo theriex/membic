@@ -1066,8 +1066,9 @@ app.pcd = (function () {
     displayRSSAndHomeLinks = function () {
         var coords, absdiv, html, homeurl, rssurl;
         coords = jt.geoPos(jt.byId('tabsdiv'));
+        coords.x += (dst.type === "pen"? 230 : 130);
         absdiv = jt.byId('xtrabsdiv');
-        absdiv.style.left = (dst.type === "pen"? "230px" : "130px");
+        absdiv.style.left = String(coords.x) + "px";
         absdiv.style.top = String(coords.y - 10) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
