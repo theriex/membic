@@ -1444,6 +1444,40 @@ app.review = (function () {
             {x: jt.byId("headingdivcontent").offsetLeft - 34, 
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, dlgTweetButton);
+    },
+
+
+    postSaveProcessing = function (updobjs) {
+        var updpen, updrev, revs, step = "housekeeping";
+        updpen = updobjs[0];
+        updrev = updobjs[1];
+        jt.out('rdokbuttondiv', "Saved.");
+        try {
+            step = "resolving Ids";
+            revs = app.lcs.resolveIdArrayToCachedObjs(
+                "rev", app.pen.myPenName().recent || []);
+            step = "local updates";
+            revs = app.activity.insertOrUpdateRev(revs, updrev);
+            step = "tracking recent";
+            updpen.recent = app.lcs.objArrayToIdArray(revs);
+            step = "cache update";
+            app.lcs.put("pen", updpen);
+            step = "cache refresh";
+            cacheBustCoops(crev.ctmids);
+            step = "coping membic data";
+            crev = copyReview(app.lcs.put("rev", updrev));
+            step = "feed update";
+            app.activity.updateFeeds(updrev);
+            step = "search update";
+            cacheBustPersonalReviewSearches();
+            step = "closing";
+            app.layout.closeDialog();
+            step = "next step";
+            app.login.doNextStep({});
+        } catch (problem) {
+            jt.out('rdokbuttondiv', "Please reload this page, " + step + 
+                   " failed: " + problem);
+        }
     };
 
 
@@ -1695,21 +1729,7 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
-                    var updpen, updrev, revs;
-                    updpen = updobjs[0];
-                    updrev = updobjs[1];
-                    jt.out('rdokbuttondiv', "Saved.");
-                    revs = app.lcs.resolveIdArrayToCachedObjs(
-                        "rev", app.pen.myPenName().recent || []);
-                    revs = app.activity.insertOrUpdateRev(revs, updrev);
-                    updpen.recent = app.lcs.objArrayToIdArray(revs);
-                    app.lcs.put("pen", updpen);
-                    cacheBustCoops(crev.ctmids);
-                    crev = copyReview(app.lcs.put("rev", updrev));
-                    app.activity.updateFeeds(updrev);
-                    cacheBustPersonalReviewSearches();
-                    app.layout.closeDialog();
-                    app.login.doNextStep({}); },
+                    postSaveProcessing(updobjs); },
                 app.failf(function (code, errtxt) {
                     jt.out('rdokbuttondiv', html);
                     noteSaveError('rdokstatdiv', code, errtxt); }),
