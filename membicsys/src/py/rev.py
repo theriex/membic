@@ -326,7 +326,7 @@ def set_review_mainfeed(rev, acc):
         # logging.info(logmsg + "is batch.")
         rev.srcrev = -202
         rev.mainfeed = 0
-    if rev.svcdata < 0:  # future review, batch update etc.
+    if rev.srcrev < 0:  # future review, batch update etc.
         # logging.info(logmsg + "is future or batch.")
         rev.mainfeed = 0
     if rev.ctmid > 0:   # coop posting, not source review
@@ -397,6 +397,18 @@ def copy_rev_descrip_fields(fromrev, torev):
     torev.year = fromrev.year
     
 
+def copy_rev_image_fields(fromrev, torev):
+    torev.revpic = fromrev.revpic
+    torev.imguri = fromrev.imguri
+    torev.svcdata = None
+    if "sitepic" in fromrev.svcdata:
+        torev.svcdata = "{\"picdisp\": \"sitepic\"}"
+    elif "upldpic" in fromrev.svcdata:
+        torev.svcdata = "{\"picdisp\": \"upldpic\"}"
+    elif "nopic" in fromrev.svcdata:
+        torev.svcdata = "{\"picdisp\": \"nopic\"}"
+
+
 def copy_source_review(fromrev, torev, ctmid):
     torev.revtype = fromrev.revtype
     torev.penid = fromrev.penid
@@ -404,10 +416,9 @@ def copy_source_review(fromrev, torev, ctmid):
     torev.srcrev = fromrev.key().id()
     torev.mainfeed = fromrev.mainfeed
     torev.cankey = fromrev.cankey
-    torev.revpic = fromrev.revpic
-    torev.imguri = fromrev.imguri
+    copy_rev_image_fields(fromrev, torev)
     torev.altkeys = fromrev.altkeys
-    # torev.svcdata = fromrev.svcdata
+    #torev.svcdata has theme postings etc. do not copy directly
     torev.penname = fromrev.penname
     torev.orids = fromrev.orids
     torev.helpful = fromrev.helpful
@@ -546,39 +557,39 @@ def sort_filter_feed(feedcsv, pnm, maxret):
     return feedids
 
 
-def create_or_update_cooprev(revid, ctmid):
-    srcrev = Review.get_by_id(revid)
-    if not srcrev:
-        logging.info("create_or_update_cooprev Review " + str(revid) +
-                     " not found. Ignoring.")
-        return
-    logging.info("Found srcrev " + str(revid) + " " + srcrev.name)
-    ctmrev = Review(penid=srcrev.penid, revtype=srcrev.revtype)
-    gql = Review.gql("WHERE ctmid = :1 AND srcrev = :2", ctmid, revid)
-    revs = gql.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
-    if len(revs) > 0:
-        logging.info("Found existing instance")
-        ctmrev = revs[0]
-    else:
-        logging.info("Creating new instance")
-    ctmrev.revtype = srcrev.revtype
-    ctmrev.penid = srcrev.penid
-    ctmrev.ctmid = ctmid
-    ctmrev.srcrev = revid
-    ctmrev.mainfeed = srcrev.mainfeed
-    ctmrev.cankey = srcrev.cankey
-    ctmrev.modified = srcrev.modified
-    ctmrev.modhist = srcrev.modhist
-    ctmrev.revpic = srcrev.revpic
-    ctmrev.imguri = srcrev.imguri
-    ctmrev.altkeys = srcrev.altkeys
-    ctmrev.svcdata = srcrev.svcdata
-    ctmrev.penname = srcrev.penname
-    ctmrev.orids = srcrev.orids
-    ctmrev.helpful = srcrev.helpful
-    ctmrev.remembered = srcrev.remembered
-    copy_rev_descrip_fields(srcrev, ctmrev)
-    cached_put(ctmrev)
+# def create_or_update_cooprev(revid, ctmid):
+#     srcrev = Review.get_by_id(revid)
+#     if not srcrev:
+#         logging.info("create_or_update_cooprev Review " + str(revid) +
+#                      " not found. Ignoring.")
+#         return
+#     logging.info("Found srcrev " + str(revid) + " " + srcrev.name)
+#     ctmrev = Review(penid=srcrev.penid, revtype=srcrev.revtype)
+#     gql = Review.gql("WHERE ctmid = :1 AND srcrev = :2", ctmid, revid)
+#     revs = gql.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+#     if len(revs) > 0:
+#         logging.info("Found existing instance")
+#         ctmrev = revs[0]
+#     else:
+#         logging.info("Creating new instance")
+#     ctmrev.revtype = srcrev.revtype
+#     ctmrev.penid = srcrev.penid
+#     ctmrev.ctmid = ctmid
+#     ctmrev.srcrev = revid
+#     ctmrev.mainfeed = srcrev.mainfeed
+#     ctmrev.cankey = srcrev.cankey
+#     ctmrev.modified = srcrev.modified
+#     ctmrev.modhist = srcrev.modhist
+#     ctmrev.revpic = srcrev.revpic
+#     ctmrev.imguri = srcrev.imguri
+#     ctmrev.altkeys = srcrev.altkeys
+#     ctmrev.svcdata = srcrev.svcdata
+#     ctmrev.penname = srcrev.penname
+#     ctmrev.orids = srcrev.orids
+#     ctmrev.helpful = srcrev.helpful
+#     ctmrev.remembered = srcrev.remembered
+#     copy_rev_descrip_fields(srcrev, ctmrev)
+#     cached_put(ctmrev)
 
 
 def find_pen_or_coop_type_and_id(handler):
