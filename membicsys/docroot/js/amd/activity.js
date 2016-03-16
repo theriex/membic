@@ -18,6 +18,8 @@ app.activity = (function () {
         bootmon = { tout: null, count: 0 },
         memodiv = "",
         urlToRead = "",
+        hidemine = 0,
+        lastDisplayFeedtype = "all",
 
 
     ////////////////////////////////////////
@@ -57,7 +59,7 @@ app.activity = (function () {
     mergeAndDisplayReviews = function (feedtype, revs) {
         var data = jt.objdata({ctype: "Site", parentid: 0,
                                field: "sitev", penid: app.pen.myPenId(),
-                               refer: app.refer});
+                               refer: app.refer}), html;
         setTimeout(function () {
             jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
                     function () {
@@ -74,15 +76,24 @@ app.activity = (function () {
                 setTimeout(function () {
                     app.review.readURL(jt.dec(urlToRead));
                     urlToRead = ""; }, 400); } }
-        jt.out("contentdiv", jt.tac2html(
-            [["div", {cla: "disptitlediv"}, "COMMUNITY MEMBICS"],
-             ["div", {id: "feedrevsdiv"}]]));
+        html = "";
+        if(app.pen.myPenId()) {
+            lastDisplayFeedtype = feedtype;
+            html = [["input", {type: "checkbox", id: "hideminecb",
+                               onclick: jt.fsd("app.activity.toggleShowMine()"),
+                               checked: jt.toru(hidemine)}],
+                    "hide mine"]; }
+        html = [["div", {cla: "disptitlediv"}, 
+                 ["COMMUNITY MEMBICS ",
+                  html]],
+                ["div", {id: "feedrevsdiv"}]];
+        jt.out("contentdiv", jt.tac2html(html));
         feeds[feedtype] = mergePersonalRecent(feedtype, revs);
         feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
         return app.review.displayReviews("feedrevsdiv", "afd", 
                                          feeds[feedtype],
                                          "app.activity.toggleExpansion",
-                                         "author");
+                                         (hidemine? "notself" : "author"));
     },
 
 
@@ -308,6 +319,15 @@ return {
 
     setURLToRead: function (url) {
         urlToRead = url;
+    },
+
+
+    toggleShowMine: function () {
+        hidemine = !hidemine;
+        app.review.displayReviews("feedrevsdiv", "afd", 
+                                  feeds[lastDisplayFeedtype],
+                                  "app.activity.toggleExpansion",
+                                  (hidemine? "notself" : "author"));
     }
 
 

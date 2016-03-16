@@ -2166,7 +2166,7 @@ return {
 
 
     displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
-        var rt, i, html, rev, pr, maindivattrs, authlink, vp, revdivid;
+        var rt, i, html, rev, pr, maindivattrs, authlink, vp, revdivid, dm;
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
             if(rt === "all") {
@@ -2178,14 +2178,17 @@ return {
                 html = [html, xem]; } }
         else {
             html = []; }
-        for(i = 0; i < revs.length && i < maxDispRevs; i += 1) {
+        dm = maxDispRevs;
+        for(i = 0; i < revs.length && i < dm; i += 1) {
             rev = revs[i];
             cacheNames(rev);
             revdivid = prefix + jt.instId(rev);
             pr = (i > 0)? revs[i - 1] : null;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
-            if(app.review.isDupeRev(rev, pr)) {
-                maindivattrs.style = "display:none"; }
+            if(app.review.isDupeRev(rev, pr) || 
+               (author === "notself" && rev.penid === app.pen.myPenId())) {
+                maindivattrs.style = "display:none";
+                dm += 1; }
             authlink = "";
             if(author) {
                 vp = "";  //visual preferences (activity feed only)
