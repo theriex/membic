@@ -23,6 +23,7 @@ class MORAccount(db.Model):
     password = db.StringProperty(required=True)
     status = db.StringProperty()        # Pending|Active|Inactive|Unreachable
     authsrc = db.StringProperty()       # AA:id or empty if native
+    authconf = db.StringProperty(indexed=False)  # auth support
     modified = db.StringProperty()      # iso date
     mailbounce = db.TextProperty()      # isodate1,isodate2...
     actsends = db.TextProperty()        # isodate;emaddr,isodate;emaddr...
@@ -421,6 +422,7 @@ class CreateAccount(webapp2.RequestHandler):
         account.authsrc = ""
         account.modified = nowISO()
         account.mailbounce = ""
+        account.authconf = ""
         account.put()  #nocache
         token = newtoken(emaddr, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
@@ -568,6 +570,7 @@ class UpdateAccount(webapp2.RequestHandler):
                 account.actcode = ""
                 mailaddresschanged = True
             account.modified = nowISO()
+            account.authconf = account.authconf or ""
             account.put()  #nocache
             # retrieve updated version so all calls from here on will find it
             account = MORAccount.get_by_id(account.key().id())

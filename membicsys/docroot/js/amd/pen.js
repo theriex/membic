@@ -311,7 +311,8 @@ return {
             if(cb && cb.checked) {
                 vp = pv; } });
         if(vp && vp.ident === "blocked" && 
-               !confirm("Blocking completely removes all membics from the main feed. Are you sure?")) {
+               !confirm("Permanently block all membics from " +
+                        (app.pennames[penid] || "this user") + "?")) {
             return; }
         app.layout.cancelOverlay();
         if(vp) {

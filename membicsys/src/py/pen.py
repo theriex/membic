@@ -241,7 +241,11 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Invalid value for name")
             return
         logging.info("UpdatePenName id: " + str(pen.key().id()))
+        prevblocked = pen.blocked
         set_pen_attrs(pen, self.request)
+        if prevblocked != pen.blocked:
+            logging.warn(pen.name + " (" + str(pen.key().id()) + ") blocked: " +
+                         pen.blocked + ". Previously blocked: " + prevblocked)
         prev_name = pen.name
         pen.name = name;
         pen.name_c = name_c;

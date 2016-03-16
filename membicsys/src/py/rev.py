@@ -318,10 +318,8 @@ def batch_flag_attrval(review):
     return "\"batchUpdated\":\"" + review.modified + "\""
 
 
-def set_review_mainfeed(rev):
-    # Not looking forward to dealing with bots and trolls, but if that
-    # becomes necessary this is the hook point.  ep:28feb15
-    # rev.key().id() is not defined at this point
+def set_review_mainfeed(rev, acc):
+    # NB: rev.key().id() is NOT defined at this point
     rev.mainfeed = 1
     logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
@@ -333,6 +331,8 @@ def set_review_mainfeed(rev):
         rev.mainfeed = 0
     if rev.ctmid > 0:   # coop posting, not source review
         # logging.info(logmsg + "is coop posting.")
+        rev.mainfeed = 0
+    if acc.authconf:  # account needs help
         rev.mainfeed = 0
     if not rev.text or len(rev.text) < 65:  # not substantive
         # logging.info(logmsg + "text not substantive.")
@@ -355,8 +355,8 @@ def prepend_to_main_feeds(review, pnm):
     memcache.set(review.revtype, typerevs)
 
 
-def write_review(review, pnm):
-    set_review_mainfeed(review)
+def write_review(review, pnm, acc):
+    set_review_mainfeed(review, acc)
     updt = "save"
     if review.is_saved():
         updt = "edit"
@@ -990,7 +990,10 @@ def is_matching_review(qstr, review):
 
 class SaveReview(webapp2.RequestHandler):
     def post(self):
-        pnm = review_modification_authorized(self)
+        acc = authenticated(self.request)
+        if not acc:
+            return
+        pnm = acc_review_modification_authorized(acc, self)
         if not pnm:
             return
         review = get_review_for_save(self)
@@ -1002,9 +1005,8 @@ class SaveReview(webapp2.RequestHandler):
             review.srcrev = -202
             # not bothering to unpack and rewrite existing value unless needed
             review.svcdata = "{" + batch_flag_attrval(review) + "}"
-        write_review(review, pnm) # updates pen top20s
+        write_review(review, pnm, acc) # updates pen top20s
         write_coop_reviews(review, pnm, self.request.get('ctmids'))
-        acc = authenticated(self.request)
         try:
             pen.add_account_info_to_pen_stash(acc, pnm)
         except Exception as e:
