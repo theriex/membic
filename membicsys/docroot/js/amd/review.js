@@ -20,6 +20,7 @@ app.review = (function () {
         starimgw = 85,
         starimgh = 15,
         starPointingActive = false,  //true if star sliding active
+        monitor = null,
         //The last value used for autocomplete checking
         autocomptxt = "",
         gautosvc = null,
@@ -272,7 +273,7 @@ app.review = (function () {
         case "upldpic":
             //html.src = "revpic?revid=" + jt.instId(review) + 
             html.src = "img/blank.png#revpic?revid=" + jt.instId(review) + 
-                jt.ts("&cb", review.modified);
+                jt.ts("&cb=", review.modified);
             break;
         case "nopic":
             if(mode !== "edit") {
@@ -858,11 +859,21 @@ app.review = (function () {
     },
 
 
-    rotatePicButtonHTML = function () {
+    uploadPicButtonHTML = function () {
         var html;
-        html = ["button", {type: "button", id: "pdtfrbutton",
-                           onclick: revfs("rotateupldpic()")},
-                "Rotate"];
+        html = ["button", {type: "button", id: "pdtfubutton",
+                           onclick: revfs("uploadpic()")},
+                "Upload&nbsp;Pic"];
+        return html;
+    },
+
+
+    rotatePicButtonHTML = function () {
+        var html = "";
+        if(jt.hasId(crev) && crev.revpic) {
+            html = ["button", {type: "button", id: "pdtfrbutton",
+                               onclick: revfs("rotateupldpic()")},
+                    "Rotate"]; }
         return html;
     },
 
@@ -886,6 +897,7 @@ app.review = (function () {
         if(crev.svcdata.picdisp === "upldpic") {
             html = ["div", {id: "ptdfdiv"},
                     [["form", {action: "/revpicupload", method: "post",
+                               id: "upldpicfelem",
                                enctype: "multipart/form-data", target: "ptdif"},
                       [["input", {type: "hidden", name: "penid",
                                   value: app.pen.myPenId()}],
@@ -899,16 +911,13 @@ app.review = (function () {
                           [["input", {type: "file", 
                                       name: "picfilein", id: "picfilein"}],
                            ["div", {id: "ptduploadbuttonsdiv"},
-                            ["input", {type: "submit", cla: "formbutton",
-                                       value: "Upload&nbsp;Pic"}]]]],
+                            uploadPicButtonHTML()]]],
                          ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                      ["iframe", {id: "ptdif", name: "ptdif", 
-                                 src: "/revpicupload", 
-                                 style: "display:none"}],
+                                 src: "/revpicupload", style: "display:none"}],
                      ["div", {id: "pdtfbuttondiv", cla: "dlgbuttonsdiv"},
                       rotatePicButtonHTML()]]];
-            jt.out('upldpicform', jt.tac2html(html));
-            app.review.monitorPicUpload(); }
+            jt.out('upldpicform', jt.tac2html(html)); }
         else {  //not upldpic
             displayUploadedPicLabel(); }
     },
@@ -1027,7 +1036,7 @@ app.review = (function () {
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
             src = "revpic?revid=" + jt.instId(crev) + 
-                jt.ts("&cb", crev.modified); }
+                jt.ts("&cb=", crev.modified); }
         else if(type === "sitepic") {
             src = sslSafeRef(jt.instId(crev), crev.imguri); }
         if(src.indexOf(mark) >= 0) {
@@ -1532,23 +1541,41 @@ return {
     },
 
     
-    monitorPicUpload: function () {
-        var ptdif, txt, revid, ridlabel = "revid: ";
+    monitorPicUpload: function (init) {
+        var ptdif, fc, txt, revid, errpre = "failed: ", ridpre = "revid: ";
+        if(init) {
+            monitor = {state: "init", count: 0};
+            jt.out('pdtfbuttondiv', "");    //remove rotate button
+            jt.out('imgupstatdiv', ""); }
+        else {
+            monitor.state = "waiting";
+            monitor.count += 1; }
+        jt.out('ptduploadbuttonsdiv', jt.tac2html(
+            ["div", {cla: "formstatdiv"}, 
+             "Uploading..." + (monitor.count / 10)]));
         ptdif = jt.byId('ptdif');
         if(ptdif) {
-            txt = ptdif.contentDocument || ptdif.contentWindow.document;
-            if(txt) {
-                txt = txt.body.innerHTML;
-                if(txt.indexOf(ridlabel) === 0) {
-                    revid = txt.slice(ridlabel.length);
+            fc = ptdif.contentDocument || ptdif.contentWindow.document;
+            if(fc && fc.body) {  //body unavailable if err write in process
+                txt = fc.body.innerHTML;
+                jt.out('bottomstatdiv', monitor.state + " " + monitor.count + 
+                       ": " + txt);
+                if(txt.indexOf(ridpre) === 0) {
+                    revid = txt.slice(ridpre.length);
                     jt.setInstId(crev, revid);
                     crev.revpic = revid;
-                    jt.byId('upldpicimg').src = "revpic?revid=" + revid;
+                    jt.byId('upldpicimg').src = "revpic?revid=" + revid +
+                        jt.ts("&cb=", "second");  //crev.modified unchanged
                     displayUploadedPicLabel();
                     return; }
-                if(txt.indexOf("Error: ") === 0) {
-                    jt.out('imgupstatdiv', txt); } }
-            setTimeout(app.review.monitorPicUpload, 800); }
+                if(txt.indexOf(errpre) >= 0) {
+                    txt = txt.slice(txt.indexOf(errpre) + errpre.length);
+                    jt.out('imgupstatdiv', txt);    //display error
+                    fc.body.innerHTML = "Reset.";   //reset status iframe
+                    jt.out('ptduploadbuttonsdiv',   //redisplay upload button
+                           jt.tac2html(uploadPicButtonHTML()));
+                    return; } }
+            setTimeout(app.review.monitorPicUpload, 100); }
     },
 
 
@@ -1796,7 +1823,7 @@ return {
                      ["div", {id: "upldpicdetaildiv", cla: "ptddiv"},
                       [["img", {id: "upldpicimg", cla: "revimgdis",
                                 src: (crev.revpic ? ("revpic?revid=" + revid + 
-                                                    jt.ts("&cb", crev.modified))
+                                                     jt.ts("&cb=", "second"))
                                                   : "img/nopicprof.png"),
                                 onclick: revfs("picdlg('upldpic')")}],
                        ["div", {id: "upldpicform", cla: "overform"}]]]]],
@@ -1824,6 +1851,12 @@ return {
     },
 
 
+    uploadpic: function () {
+        app.review.monitorPicUpload("init");
+        jt.byId('upldpicfelem').submit();
+    },
+
+
     rotateupldpic: function () {
         var revid, picsrc, data, elem;
         revid = jt.instId(crev);
@@ -1834,7 +1867,7 @@ return {
                     //the updated review is partial, don't replace crev
                     crev.modified = reviews[0].modified;
                     picsrc = "revpic?revid=" + revid + 
-                        jt.ts("&cb", crev.modified);
+                        jt.ts("&cb=", crev.modified);
                     jt.out('pdtfbuttondiv', jt.tac2html(rotatePicButtonHTML()));
                     elem = jt.byId("revimg" + revid);
                     if(elem) {

@@ -1068,7 +1068,7 @@ class DeleteReview(webapp2.RequestHandler):
         returnJSON(self.response, [ ctm ])
 
 
-# This is a form submission endpoint, so always redirect back to the app.
+# Errors containing the string "failed: " are reported by the client
 class UploadReviewPic(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/html'
@@ -1086,17 +1086,18 @@ class UploadReviewPic(webapp2.RequestHandler):
         else:
             revtype = self.request.get("revtype")
             if not revtype:
-                return srverr(self, 406, "No revtype recieved")
+                return srverr(self, 406, "failed: No membic type")
             review = Review(penid=pnm.key().id(), revtype=revtype)
         upfile = self.request.get("picfilein")
         if not upfile:
-            return srverr(self, 406, "No picfilein received")
+            return srverr(self, 406, "failed: No pic data")
         try:
             review.revpic = db.Blob(upfile)
             review.revpic = images.resize(review.revpic, 160, 160)
             note_modified(review)
             cached_put(review)
         except Exception as e:
+            # Client looks for text containing "failed: " for error reporting
             return srverr(self, 409, "Pic upload processing failed: " + str(e))
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write("revid: " + str(review.key().id()))
