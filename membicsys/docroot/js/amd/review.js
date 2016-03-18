@@ -207,10 +207,13 @@ app.review = (function () {
     },
 
 
-    reviewTextValid = function () {
-        var input = jt.byId('rdta');
+    reviewTextValid = function (ignore /*type*/, errors) {
+        var errmsg, input = jt.byId('rdta');
         if(input) {
-            crev.text = input.value; }
+            crev.text = input.value;
+            if(!crev.text && errors) {
+                errmsg = "Why memorable?";
+                errors.push(errmsg); } }
     },
 
 
@@ -352,7 +355,7 @@ app.review = (function () {
     verifyRatingStars = function (ignore /*type*/, errors) {
         var txt;
         if(!crev.rating && crev.srcrev !== -101) {
-            txt = "Please set a star rating";
+            txt = "Please set a star rating.";
             errors.push(txt); }
     },
 
@@ -1161,7 +1164,7 @@ app.review = (function () {
         if(!rt) {  //no type selected yet, so no text entry yet.
             return; }
         if(!jt.byId("rdtextdiv").innerHTML) {
-            ptxt = "Why is this memorable? Please tell your future self why you are posting (you'll appreciate it later).";
+            ptxt = "Why is this worth remembering?";
             html = ["textarea", {id: "rdta", placeholder: ptxt,
                                  onchange: jt.fs("app.review.revtxtchg()")},
                     crev.text || ""];
@@ -1627,7 +1630,7 @@ return {
 
 
     readURL: function (url, params) {
-        var urlin, errs = [], rbc;
+        var urlin, rbc;
         if(!params) {
             params = {}; }
         if(!url) {
@@ -1642,9 +1645,7 @@ return {
             return; }
         //If the title or other key fields are not valid, that's ok because
         //we are about to read them. But don't lose comment text.
-        reviewTextValid(null, errs);
-        if(errs.length > 0) {
-            return; }
+        reviewTextValid();
         url = url.trim();
         if(url) {
             rbc = jt.byId('rdurlbuttonspan');
