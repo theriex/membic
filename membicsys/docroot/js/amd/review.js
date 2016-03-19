@@ -348,7 +348,7 @@ app.review = (function () {
         type.fields.forEach(function (field) {
             var input = jt.byId(field + "in");
             if(input) {  //input field was displayed
-                crev[type] = input.value; } });
+                crev[field] = input.value; } });
     },
 
 
@@ -1833,6 +1833,7 @@ return {
                                 checked: jt.toru(dt === "nopic"),
                                 onchange: revfs("picdlg('nopic')")}],
                      ["span", {cla: "ptdlabspan"}, "No Pic"]]]]]]];
+        validateCurrentReviewFields();  //don't lose input values on close
         app.layout.openOverlay(app.layout.placerel("dlgrevimg", -5, -80), 
                                html, null, picdlgModForm,
                                jt.fs("app.review.updatedlg()"));
