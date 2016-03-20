@@ -190,7 +190,8 @@ return {
 
 
     updateFeeds: function (rev) {
-        var revid = jt.instId(rev), feedupdt = ["all", "memo", rev.revtype];
+        var revid = jt.instId(rev), params,
+            feedupdt = ["all", "memo", rev.revtype];
         //review might have changed types, so remove all first
         Object.keys(feeds).forEach(function (feedkey) {
             feeds[feedkey] = feeds[feedkey].filter(function (rev) {
@@ -203,9 +204,23 @@ return {
                             feeds[feedkey], rev); }}); }
         //add to future feed if this was a future review
         if(rev.srcrev === -101) {
-            feeds.future = app.activity.insertOrUpdateRev(
-                feeds.future, rev);
-            feeds.remembered = null; } //trigger remerge and sort
+            if(feeds.future) {  //already loaded
+                feeds.future = app.activity.insertOrUpdateRev(
+                    feeds.future, rev); }
+            else {
+                params = app.login.authparams() + "&penid=" + 
+                    app.pen.myPenId() + jt.ts("&cb=", "second");
+                jt.call('GET', "fetchprerevs?" + params, null,
+                        function (reviews) {
+                            app.lcs.putAll("rev", reviews);
+                            feeds.future = reviews;
+                            feeds.future = app.activity.insertOrUpdateRev(
+                                feeds.future, rev); },
+                        app.failf(function (code, errtxt) {
+                            jt.log("updateRemembered fetchprerevs: " + code + 
+                                   ": " + errtxt); }),
+                        jt.semaphore("activity.updateRemembered")); }
+            feeds.remembered = null; } //force remerge and sort next access
     },
 
 
