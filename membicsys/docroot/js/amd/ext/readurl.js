@@ -217,6 +217,10 @@ app.readurl = (function () {
 
     setTitle = function (review, html, url) {
         var elem, val;
+        if(review.acselkeyval) {  //if the name was selected from an 
+            review.title = val;   //autocomplete display listing, then
+            review.name = val;    //don't change it here
+            return; }
         //the Facebook title is frequently better than the default tag title
         elem = elementForString(html, "og:title", "meta");
         if(elem) {

@@ -1976,6 +1976,8 @@ return {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
                         crev.address = place.formatted_address;
                         crev.name = place.name || jt.byId('keyin').value;
+                        crev.name = crev.name.split(",")[0];
+                        crev.acselkeyval = crev.name;
                         crev.url = crev.url || place.website || "";
                         app.review.readURL(crev.url); }
                     }); }
@@ -1990,7 +1992,9 @@ return {
             "someone can investigate.  You can also try reloading",
             "the site in your browser to see if that helps."];
         if(addr) {  //even if all other calls fail, use the selected name
-            jt.byId('keyin').value = jt.dec(addr); }
+            crev.acselkeyval = jt.dec(addr);
+            crev.acselkeyval = crev.acselkeyval.split(",")[0];
+            jt.byId('keyin').value = crev.acselkeyval; }
         if(!geoc && google && google.maps && google.maps.places) {
             geoc = new google.maps.Geocoder();
             if(!geoc) {
