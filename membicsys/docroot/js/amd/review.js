@@ -1453,7 +1453,7 @@ app.review = (function () {
                  ["div", {id: "rdextradiv"}]]];
         html = app.layout.dlgwrapHTML("Make Membic", html);
         app.layout.openDialog(
-            {x: jt.byId("headingdivcontent").offsetLeft - 34, 
+            {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, dlgTweetButton);
     },
