@@ -349,7 +349,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .themetilepicdiv { max-width:125px; max-height:125px; }
 .themetiletitlediv { max-width:125px; text-align:center;
   font-family:"Shadows Into Light Two", cursive; }
-.themetilecountdiv { text-align:center; font-size:x-small; }
+.themetilecountdiv { display:none; text-align:center; font-size:x-small; }
 
 
 /* >> docs layout */
