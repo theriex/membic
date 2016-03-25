@@ -85,7 +85,12 @@ app.activity = (function () {
                     "hide mine"]; }
         html = [["div", {cla: "disptitlediv"}, 
                  ["COMMUNITY MEMBICS ",
-                  html]],
+                  html,
+                  " | ",
+                  ["a", {title: "Show recently active themes",
+                         href: "#THEMES",
+                         onclick: jt.fs("app.activity.displayThemes()")},
+                   "THEMES"]]],
                 ["div", {id: "feedrevsdiv"}]];
         jt.out("contentdiv", jt.tac2html(html));
         feeds[feedtype] = mergePersonalRecent(feedtype, revs);
@@ -94,6 +99,40 @@ app.activity = (function () {
                                          feeds[feedtype],
                                          "app.activity.toggleExpansion",
                                          (hidemine? "notself" : "author"));
+    },
+
+
+    writeThemesFromDisplayMembics = function (membics) {
+        var themes = {}, tlist = [], html = [];
+        membics.forEach(function (membic) {
+            var pts = jt.saferef(membic, "svcdata.?postctms") || [];
+            pts.forEach(function (pn) {
+                var ctmid = pn.ctmid;
+                if(!themes[ctmid]) {
+                    themes[ctmid] = {
+                        ctmid: ctmid,
+                        name: app.coopnames[ctmid] || pn.name,
+                        count: 0}; }
+                themes[ctmid].count += 1; }); });
+        Object.keys(themes).forEach(function (ctmid) { 
+            tlist.push(themes[ctmid]); });
+        tlist.sort(function (a, b) { return b.count - a.count; });
+        tlist.forEach(function (theme) {
+            var imgsrc = "ctmpic?coopid=" + theme.ctmid;
+            html.push(["div", {cla: "themetilewrapper", 
+                               id: "themetile" + theme.ctmid},
+                       ["div", {cla: "themetile"}, 
+                        ["a", {title: "Open " + theme.name,
+                               href: "/t/" + theme.ctmid,
+                               onclick: jt.fs("app.activity.selectTheme('" +
+                                              theme.ctmid + "')")},
+                         [["div", {cla: "themetilepicdiv"},
+                           ["img", {cla: "pcdpic", src: imgsrc}]],
+                          ["div", {cla: "themetiletitlediv"},
+                           theme.name],
+                          ["div", {cla: "themetilecountdiv"},
+                           theme.count]]]]]); });
+        jt.out('themesdiv', jt.tac2html(html));
     },
 
 
@@ -155,6 +194,22 @@ return {
                     jt.out('contentdiv', "revfeed failed code " + code + 
                            ": " + errtxt); }),
                 jt.semaphore("activity.displayFeed"));
+    },
+
+
+    displayThemes: function () {
+        var html;
+        html = [["div", {cla: "disptitlediv"},
+                 ["COMMUNITY ",
+                  ["a", {title: "Show recent community membics",
+                         href: "#COMMUNITY",
+                         onclick: jt.fs("app.activity.displayFeed()")},
+                   "MEMBICS"],
+                  " | ",
+                  "THEMES"]],
+                ["div", {id: "themesdiv"}]];
+        jt.out("contentdiv", jt.tac2html(html));
+        writeThemesFromDisplayMembics(feeds.all);
     },
 
 
@@ -343,10 +398,20 @@ return {
                                   feeds[lastDisplayFeedtype],
                                   "app.activity.toggleExpansion",
                                   (hidemine? "notself" : "author"));
+    },
+
+
+    selectTheme: function (ctmid) {
+        var tiles = [], i, tile;
+        if(document.querySelectorAll) {
+            tiles = document.querySelectorAll(".themetilewrapper") || []; }
+        for(i = 0; i < tiles.length; i += 1) {  //no forEach for node list
+            tile = tiles[i];
+            if(tile.id !== "themetile" + ctmid) {
+                tile.style.display = "none"; } }
+        app.pcd.display("coop", ctmid);
     }
 
 
 }; //end of returned functions
 }());
-
-

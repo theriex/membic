@@ -310,7 +310,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
-.fpinrevdiv { background-color:#ffffff; }
+.fpinrevdiv { background-color:#ffffff; 
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px; }
 .fpmeminrevdiv { background-color:#ffbe74; }
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
@@ -338,6 +340,17 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .visprefimgprof { width:30px; height:30px; margin:0px 4px 0px 10px; }
 .visprefnamespan { font-weight:bold; font-size:small; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
+.themesdiv { }
+.themetilewrapper { display:inline-block; margin:20px; padding:20px; 
+  background:#fff; vertical-align:top; 
+  box-shadow:10px 10px 5px #888888;
+  border-radius:10px; border:1px solid #ccc; }
+.themetile { margin:auto; }
+.themetilepicdiv { max-width:125px; max-height:125px; }
+.themetiletitlediv { max-width:125px; text-align:center;
+  font-family:"Shadows Into Light Two", cursive; }
+.themetilecountdiv { text-align:center; font-size:x-small; }
+
 
 /* >> docs layout */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
