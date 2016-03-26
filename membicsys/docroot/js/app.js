@@ -3,7 +3,8 @@
 /*jslint browser, multivar, white, fudge, for */
 
 var app = {},  //Global container for application level funcs and values
-    jt = {};   //Global access to general utility methods
+    jt = {},   //Global access to general utility methods
+    a2a_config = {};  //AddToAny script loaded when needed, config required
 
 ////////////////////////////////////////
 // g l o

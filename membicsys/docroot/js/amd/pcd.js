@@ -1198,6 +1198,8 @@ app.pcd = (function () {
 
     shareViaAddToAny = function (name, url) {
         var js;
+        a2a_config.linkname = name;
+        a2a_config.linkurl = url;
         try {
             if(!addToAnyScriptLoaded) {
                 //the script executes on load, so nothing left to do after
@@ -1212,8 +1214,6 @@ app.pcd = (function () {
             else {
                 //reinitialize the sharing display via the API
                 jt.log("resetting addtoany config variables and calling init");
-                a2a_config.linkname = name;
-                a2a_config.linkurl = url;
                 a2a.init('page'); }
         } catch(e) {
             jt.log("shareViaAddToAny failed: " + e);
@@ -1222,8 +1222,7 @@ app.pcd = (function () {
             //checking a2a_config === undefined does not work mac ff 42.0
             //so regardless of what jslint sez, this needs to stay..
             if(typeof a2a_config === 'undefined') {  //mac ff requires typeof
-                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } },
-                   3500);
+                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } }, 3500);
     },
 
 
