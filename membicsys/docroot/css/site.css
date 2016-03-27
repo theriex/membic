@@ -295,7 +295,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #ptduploadbuttonsdiv { text-align:center; padding:15px 0px 5px 0px; }
 #pdtfbuttondiv { padding:10px 0px 5px 0px; }
 .directionstextdiv { text-align:center; font-size:small; }
-#tweetbuttondiv { float:left; }
 #rdokdiv { clear:both; }
 
 /* >> activity layout */

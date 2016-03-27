@@ -1310,36 +1310,25 @@ app.review = (function () {
     },
 
 
-    dlgTweetButton = function () {
-        var params, tbs = jt.byId("tweetbuttondiv");
-        if(!tbs || !findReviewType(crev.revtype)) {
-            return; }
+    updateShareInfo = function () {
         notePostingCoops();  //populates rev.ctmids csv from checkboxes
         reviewTextValid();   //populates crev.text
-        params = {text: crev.text,
-                  url: crev.url || app.pen.myPenPermalink(),
-                  hashtags: app.layout.hashtagsCSV(
-                      crev.title + " " + crev.name + " " + crev.text,
-                      crev.ctmids)};
-        jt.out('tweetbuttondiv', jt.tac2html(
-            ["a", {cla: "twitter-share-button", id: "tweetbuttonanchor",
-                   href: "https://twitter.com/intent/tweet?" + 
-                   jt.objdata(params)},
-             ["img", {src: "img/twitter32.png"}]]));
-        window.twttr = (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0],
-            t = window.twttr || {};
-            if (d.getElementById(id)) { return t; }
-            js = d.createElement(s);
-            js.id = id;
-            js.src = "https://platform.twitter.com/widgets.js";
-            fjs.parentNode.insertBefore(js, fjs);
-            t._e = [];  //Bad property name '_e'. Twitter likes it that way.
-            t.ready = function(f) {
-                t._e.push(f);
-            };
-            return t;
-        }(document, "script", "twitter-wjs"));
+        jt.out("okbutton", "Save");
+        jt.out("sharediv", "");  //rebuild share buttons with latest data
+        if(jt.hasId(crev)) {
+            jt.byId("donebutton").style.display = "initial";
+            jt.byId("closedlg").click = app.review.done;
+            if(!jt.byId('sharediv').innerHTML) {
+                jt.out("sharediv", jt.tac2html(
+                    app.layout.shareDivHTML()));
+                //make absolutely sure the share html is ready before
+                //showing the share buttons.
+                setTimeout(function () {
+                    app.layout.showShareButtons(
+                        crev.title || crev.name,
+                        crev.url,
+                        app.layout.hashtagsCSV("", crev.ctmids),
+                        crev.text); }, 80); } }
     },
 
 
@@ -1443,19 +1432,24 @@ app.review = (function () {
                  ["div", {id: "rdtextdiv"}],
                  ["div", {id: "rdkwdiv"}],
                  ["div", {id: "rdgdiv"}],
-                 ["div", {id: "tweetbuttondiv"}],
                  ["div", {id: "rdokdiv"},
                   [["div", {id: "rdokstatdiv"}],
                    ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
-                    ["button", {type: "button", id: "okbutton",
-                                onclick: jt.fs("app.review.save()")},
-                     "Ok"]]]],
+                    [["button", {type: "button", id: "okbutton",
+                                 onclick: jt.fs("app.review.save()")},
+                      "Ok"],
+                     ["button", {type: "button", id: "donebutton",
+                                 style: "display:none;",
+                                 onclick: jt.fs("app.review.done()")},
+                      "Done"]]]]],
+                 ["div", {id: "sharediv"}],
                  ["div", {id: "rdextradiv"}]]];
-        html = app.layout.dlgwrapHTML("Make Membic", html);
+        html = app.layout.dlgwrapHTML("Make Membic", html,
+                                      jt.fs("app.review.done()"));
         app.layout.openDialog(
             {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
-            jt.tac2html(html), updateReviewDialogContents, dlgTweetButton);
+            jt.tac2html(html), updateReviewDialogContents, updateShareInfo);
     },
 
 
@@ -1463,7 +1457,6 @@ app.review = (function () {
         var updpen, updrev, revs, step = "housekeeping";
         updpen = updobjs[0];
         updrev = updobjs[1];
-        jt.out('rdokbuttondiv', "Saved.");
         try {
             step = "resolving Ids";
             revs = app.lcs.resolveIdArrayToCachedObjs(
@@ -1477,19 +1470,17 @@ app.review = (function () {
             step = "cache refresh";
             cacheBustCoops(crev.ctmids);
             step = "coping membic data";
-            crev = copyReview(app.lcs.put("rev", updrev));
+            crev = copyReview(app.lcs.put("rev", updrev).rev);
             step = "feed update";
             app.activity.updateFeeds(updrev);
             step = "search update";
             cacheBustPersonalReviewSearches();
-            step = "closing";
-            app.layout.closeDialog();
-            step = "next step";
-            app.login.doNextStep({});
         } catch (problem) {
             jt.out('rdokbuttondiv', "Please reload this page, " + step + 
                    " failed: " + problem);
         }
+        jt.out('rdokstatdiv', "");
+        updateShareInfo();
     };
 
 
@@ -1540,7 +1531,7 @@ return {
                 jt.out('rdpfdiv', ""); }
             crev.revtype = typename; }
         updateReviewDialogContents();
-        dlgTweetButton();
+        updateShareInfo();
     },
 
     
@@ -1721,7 +1712,7 @@ return {
                 //but don't want to fault in just the coop without the
                 //supporting revs and other needed info.
                 app.pcd.blockfetch("coop", ctmid, function (coop) {
-                    dlgTweetButton();  //note any hashtags
+                    updateShareInfo();  //note any hashtags
                     displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
@@ -1729,7 +1720,7 @@ return {
 
 
     revtxtchg: function () {
-        dlgTweetButton();
+        updateShareInfo();
     },
 
 
@@ -1757,11 +1748,18 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call('POST', "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
+                    jt.out('rdokbuttondiv', html);
                     postSaveProcessing(updobjs); },
                 app.failf(function (code, errtxt) {
                     jt.out('rdokbuttondiv', html);
                     noteSaveError('rdokstatdiv', code, errtxt); }),
                 jt.semaphore("review.save"));
+    },
+
+
+    done: function () {
+        app.layout.closeDialog();
+        app.login.doNextStep({});
     },
 
 

@@ -1,4 +1,4 @@
-/*global app, jt, setTimeout, window, confirm, document, a2a, a2a_config */
+/*global app, jt, setTimeout, window, confirm, document */
 
 /*jslint browser, multivar, white, fudge */
 
@@ -59,7 +59,6 @@ app.pcd = (function () {
                                    otitle: "Event Calendar"} },
         srchst = { revtype: "all", qstr: "", status: "" },
         setdispstate = { infomode: "" },
-        addToAnyScriptLoaded = false,
         ctmmsgs = [
             {name: "Following",
              levtxt: "Following shows you are interested in reading content from members writing on this theme.",
@@ -1196,36 +1195,6 @@ app.pcd = (function () {
     },
 
 
-    shareViaAddToAny = function (name, url) {
-        var js;
-        a2a_config.linkname = name;
-        a2a_config.linkurl = url;
-        try {
-            if(!addToAnyScriptLoaded) {
-                //the script executes on load, so nothing left to do after
-                //adding the script tag to the document
-                js = document.createElement('script');
-                //js.async = true;
-                js.type = "text/javascript";
-                js.src = "//static.addtoany.com/menu/page.js";
-                document.body.appendChild(js);
-                jt.log("addtoany script loaded");
-                addToAnyScriptLoaded = true; }
-            else {
-                //reinitialize the sharing display via the API
-                jt.log("resetting addtoany config variables and calling init");
-                a2a.init('page'); }
-        } catch(e) {
-            jt.log("shareViaAddToAny failed: " + e);
-        }
-        setTimeout(function () {
-            //checking a2a_config === undefined does not work mac ff 42.0
-            //so regardless of what jslint sez, this needs to stay..
-            if(typeof a2a_config === 'undefined') {  //mac ff requires typeof
-                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } }, 3500);
-    },
-
-
     shareInviteHTML = function () {
         var html, mlev = app.coop.membershipLevel(dst.obj, app.pen.myPenId());
         //The solo page display uses the overlaydiv to provide RSS and 
@@ -1578,21 +1547,13 @@ return {
                       permalinkInfoHTML()]],
                     ["span", {cla: "shoutspan"},
                      signInToFollowHTML()],
-                    ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style",
-                             id: "a2abdiv"},
-                     [["a", {cla: "a2a_dd",
-                             href: "https://www.addtoany.com/share_save"}],
-                      ["a", {cla: "a2a_button_facebook"}],
-                      ["a", {cla: "a2a_button_twitter"}],
-                      ["a", {cla: "a2a_button_google_plus"}],
-                      ["a", {cla: "a2a_button_wordpress"}],
-                      shareInviteHTML()]]];
+                    app.layout.shareDivHTML(shareInviteHTML())];
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
-                //make sure the above html is in place before loading
-                //the autorun addtoany script. Break the control flow,
-                //but not enough to be laggy if already loaded.
+                //make absolutely sure the share html is ready before
+                //showing the share buttons.
                 setTimeout(function () {
-                    shareViaAddToAny(dst.obj.name, dlo.url); }, 80); } }
+                    app.layout.showShareButtons(dst.obj.name, 
+                                                dlo.url); }, 80); } }
     },
 
 

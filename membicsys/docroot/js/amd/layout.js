@@ -1,4 +1,4 @@
-/*global window, document, app, jt */
+/*global window, document, app, jt, a2a, a2a_config */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -12,6 +12,7 @@ app.layout = (function () {
     var typestate = {callback: null, typename: "all"},
         dlgqueue = [],
         siteroot = "",
+        addToAnyScriptLoaded = false,
 
 
     ////////////////////////////////////////
@@ -327,10 +328,10 @@ return {
     },
 
 
-    dlgwrapHTML: function (title, html) {
+    dlgwrapHTML: function (title, html, fs) {
+        fs = fs || jt.fs("app.layout.closeDialog()");
         html = [["div", {cla: "dlgclosex"},
-                 ["a", {id: "closedlg", href: "#close",
-                        onclick: jt.fs("app.layout.closeDialog()")},
+                 ["a", {id: "closedlg", href: "#close", onclick: fs},
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 ["div", {cla: "floatclear"}],
                 ["div", {cla: "headingtxt"}, title],
@@ -433,6 +434,57 @@ return {
         while(matchAndTest()) {
             hashes = hashes.csvappend(matcharray[0].slice(1)); }
         return hashes;
+    },
+
+
+    shareDivHTML: function (extraButtonHTML) {
+        var html;
+        extraButtonHTML = extraButtonHTML || "";
+        html = ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style",
+                        id: "a2abdiv"},
+                [["a", {cla: "a2a_dd",
+                        href: "https://www.addtoany.com/share_save"}],
+                 ["a", {cla: "a2a_button_wordpress"}],
+                 ["a", {cla: "a2a_button_pinterest"}],
+                 //["a", {cla: "a2a_button_google_plus"}],
+                 ["a", {cla: "a2a_button_facebook"}],
+                 ["a", {cla: "a2a_button_twitter"}],
+                 extraButtonHTML]];
+        return html;
+    },
+
+
+    showShareButtons: function (title, url, tags, text) {
+        var js;
+        tags = tags? " " + tags : "";
+        text = text? " " + text : "";
+        a2a_config.linkname = title;
+        a2a_config.linkurl = url;
+        a2a_config.templates = {
+            twitter: "${title} ${link}" + tags + text };
+        try {
+            if(!addToAnyScriptLoaded) {
+                //the script executes on load, so nothing left to do after
+                //adding the script tag to the document
+                js = document.createElement('script');
+                //js.async = true;
+                js.type = "text/javascript";
+                js.src = "//static.addtoany.com/menu/page.js";
+                document.body.appendChild(js);
+                jt.log("addtoany script loaded");
+                addToAnyScriptLoaded = true; }
+            else {
+                //reinitialize the sharing display via the API
+                jt.log("resetting addtoany config variables and calling init");
+                a2a.init('page'); }
+        } catch(e) {
+            jt.log("shareViaAddToAny failed: " + e);
+        }
+        setTimeout(function () {
+            //checking a2a_config === undefined does not work mac ff 42.0
+            //so regardless of what jslint sez, this needs to stay..
+            if(typeof a2a_config === 'undefined') {  //mac ff requires typeof
+                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } }, 3500);
     },
 
 
