@@ -340,7 +340,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .visprefnamespan { font-weight:bold; font-size:small; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
 .themesdiv { }
-.themetilewrapper { display:inline-block; margin:20px; padding:20px; 
+.themetilewrapper { display:inline-block; margin:5px; padding:5px; 
   background:#fff; vertical-align:top; 
   box-shadow:10px 10px 5px #888888;
   border-radius:10px; border:1px solid #ccc; }
