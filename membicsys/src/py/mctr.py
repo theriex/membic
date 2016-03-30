@@ -9,6 +9,7 @@ from moracct import *
 import datetime
 import re
 import rev
+import pen
 
 class MembicCounter(db.Model):
     """ A Membic sharded Counter instance. One instance for each
@@ -239,7 +240,7 @@ class BumpCounter(webapp2.RequestHandler):
         if penid and int(penid):
             acc = authenticated(self.request)
             if acc:
-                pnm = rev.acc_review_modification_authorized(acc, self)
+                pnm = cached_get(penid, pen.PenName)
         field = normalized_count_field(pnm, self.request.get("field"))
         refer = self.request.get("refer")
         logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", penid: " + str(penid) + ", field: " + str(field) + ", refer: " + str(refer))
