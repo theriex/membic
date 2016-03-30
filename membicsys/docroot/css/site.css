@@ -170,7 +170,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   border-left: 1px solid #666;
   border-right: 1px solid #666;
  }
-#tabsdiv a { padding: 0 15px; }
+#tabsdiv a { padding: 0 12px; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
 #tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
