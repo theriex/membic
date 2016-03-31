@@ -127,18 +127,6 @@ app.layout = (function () {
         var mdiv = jt.byId('modalseparatordiv');
         mdiv.style.width = String(app.winw) + "px";
         mdiv.style.height = String(app.winh) + "px";
-    },
-
-
-    shareServiceHTML = function (divid, url, desc, imgsrc) {
-        var linkattr, html;
-        linkattr = {href: url, title: desc};
-        if(url.indexOf("mailto") < 0) {
-            linkattr.onclick = "window.open('" + url + "');return false;"; }
-        html = ["div", {id: divid, cla: "sharebuttondiv"},
-                ["a", linkattr,
-                 ["img", {cla: "shsico", alt: desc, src: imgsrc}]]];
-        return html;
     };
 
 
@@ -488,35 +476,30 @@ return {
     },
 
 
-    shareLinksHTML: function (url, desc, reloff) {
-        var html;
-        reloff = reloff || "";
-        html = [
-            shareServiceHTML(
-                "facebookdiv", 
-                "http://www.facebook.com/sharer/sharer.php?u=" + 
-                    jt.enc(url) + "&t=" + jt.enc(desc.capitalize()),
-                "Post " + desc + " to your wall",
-                reloff + "img/f_logo.png"),
-            shareServiceHTML(
-                "twitterdiv",
-                "https://twitter.com/intent/tweet?text=" + 
-                    jt.enc(desc.capitalize()) + "&url=" + jt.enc(url),
-                "Tweet " + desc,
-                reloff + "img/tw_logo.png"),
-            shareServiceHTML(
-                "gplusdiv",
-                "https://plus.google.com/share?url=" + jt.enc(url),
-                "Plus " + desc,
-                "https://www.gstatic.com/images/icons/gplus-32.png"),
-            shareServiceHTML(
-                "emaildiv",
-                "mailto:?subject=" + jt.dquotenc(desc.capitalize()) +
-                    "&body=" + jt.dquotenc(desc.capitalize() + "\n\n" +
-                                           url + "\n"),
-                "Email " + desc,
-                reloff + "img/email.png")];
-        return jt.tac2html(html);
+    formatMembics: function (membics, format) {
+        var txt = "", keys = [];
+        membics = membics || [];
+        format = format || "JSON";
+        switch(format) {
+        case "JSON":
+            txt = JSON.stringify(membics);
+            break;
+        case "TSV":
+            if(membics.length) {
+                keys = Object.keys(membics[0]);  //use same keys for all
+                keys.forEach(function (field, idx) {
+                    if(idx) {
+                        txt += "\t"; }
+                    txt += field; });
+                txt += "\n";
+                membics.forEach(function (membic) {
+                    keys.forEach(function (field, idx) {
+                        if(idx) {
+                            txt += "\t"; }
+                        txt += membic[field]; });
+                    txt += "\n"; }); }
+            break; }
+        return txt;
     },
 
 

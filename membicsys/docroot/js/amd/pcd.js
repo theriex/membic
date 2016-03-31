@@ -1043,7 +1043,7 @@ app.pcd = (function () {
 
 
     displayTab = function (tabname, expid) {
-        var dispfunc;
+        var dispfunc, html;
         tabname = tabname || "latest";
         Object.keys(knowntabs).forEach(function (kt) {
             var elem = jt.byId(kt + "li");
@@ -1052,7 +1052,16 @@ app.pcd = (function () {
         jt.byId(tabname + "li").className = "selectedTab";
         dst.tab = tabname;
         historyCheckpoint();  //history collapses tab changes
-        jt.out('tabtitlediv', titleForTab(knowntabs[tabname]));
+        if(jt.byId("downloadlinksdiv")) {
+            jt.byId("downloadlinksdiv").style.display = "none"; }
+        html = "";
+        if(tabname.match(/^(latest|favorites|memo|search)$/)) {
+            html = ["a", {href: "#Download",
+                          onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
+                    [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
+                     "Download"]]; }
+        jt.out('tabtitlediv', jt.tac2html([titleForTab(knowntabs[tabname]),
+                                           html]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.isId(jt.instId(dst.obj))) {
@@ -1162,7 +1171,8 @@ app.pcd = (function () {
                  ["div", {id: "tabsdiv"},
                   [["ul", {id: "tabsul"},
                     tabsHTML()],
-                   ["div", {id: "tabtitlediv"}]]],
+                   ["div", {id: "tabtitlediv"}],
+                   ["div", {id: "downloadlinksdiv", style: "display:none;"}]]],
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out('contentdiv', jt.tac2html(html));
         if(app.solopage()) {
@@ -1214,6 +1224,17 @@ app.pcd = (function () {
             if(dtype !== "coop" || rev.ctmid === id) {
                 revids.push(jt.instId(rev)); } });
         return revids;
+    },
+
+
+    currentTabMembics = function () {
+        var membics = [];
+        switch(dst.tab) {
+        case "latest": membics = getRecentReviews(); break;
+        case "favorites": membics = getFavoriteReviews(); break;
+        case "memo": membics = app.activity.getRememberedMembics(); break;
+        case "search": membics = srchst.revs; break; }
+        return membics;
     },
 
 
@@ -1697,6 +1718,38 @@ return {
             jt.out('midispdiv', statsDisplayHTML()); }
         else {
             app.layout.togdisp("midispdiv"); }
+    },
+
+
+    toggleDownloadsDisp: function () {
+        var div = jt.byId("downloadlinksdiv");
+        if(div.style.display !== "none") {
+            div.style.display = "none"; }
+        else {
+            if(!div.innerHTML) {
+                div.innerHTML = jt.tac2html(
+                    [["div", {cla: "downloadoptdiv"},
+                      ["a", {href: "", id: "dloptaTSV",
+                             onclick: "app.pcd.dldata('TSV')",
+                             download: "membics.tsv"},
+                       [["img", {src: "img/download.png"}],
+                        " Spreadsheet (TSV)"]]],
+                     ["div", {cla: "downloadoptdiv"},
+                      ["a", {href: "", id: "dloptaJSON",
+                             onclick: "app.pcd.dldata('JSON')",
+                             download: "membics.json"},
+                       [["img", {src: "img/download.png"}],
+                        " JavaScript (JSON)"]]]]); }
+            div.style.display = "block"; }
+    },
+
+
+    dldata: function (format) {
+        //setting the href makes it available for when the click
+        //percolates upwards in the event processing.
+        jt.byId("dlopta" + format).href = "data:text/plain;charset=utf-8," +
+            encodeURIComponent(
+                app.layout.formatMembics(currentTabMembics(), format));
     },
 
 

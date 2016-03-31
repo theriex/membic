@@ -175,6 +175,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .tabico { width:20px; height:20px; vertical-align:top; }
 #tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
   font-size:small; }
+.downloadlinkimg { margin:0px 2px 0px 10px; }
+.downloadoptdiv { background: #ffdab1; }
 #pcdsrchdiv { padding: 0px 0px 10px 5px; }
 .cooplinkdiv { clear:both; padding: 0px 0px 5px 0px; }
 .cooplinkdiv a { margin-left:10px; }
