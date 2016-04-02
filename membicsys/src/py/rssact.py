@@ -43,7 +43,8 @@ def getSubkey(review):
 
 
 def rss_title(review):
-    title = str(review["rating"] / 20) + " star " + review["revtype"] + ": " +\
+    rating = review["rating"] or 0
+    title = str(rating / 20) + " star " + review["revtype"] + ": " +\
         getTitle(review) + " " + getSubkey(review)
     return title
 
