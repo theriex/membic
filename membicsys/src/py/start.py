@@ -29,8 +29,7 @@ indexHTML = """
 
 <div id="topsectiondiv">
   <div id="topleftdiv">
-    <div id="logodiv" onclick="app.activity.displayFeed('all');return false;"
-         title="Community membics">
+    <div id="logodiv">
       <img src="img/membiclogo.png$CACHEPARA" id="logoimg"/></div>
     <div id="topactionsdiv"></div>
   </div> <!-- topleftdiv -->
@@ -53,6 +52,9 @@ indexHTML = """
                     onclick="app.login.createAccount();return false;">
               Create Account</button>
             <input value="Sign in" type="submit" class="loginbutton"/>
+            <a href="#intro" title="Information"
+               onclick="app.layout.displayDoc('docs/about.html');return false;">
+              <img id="introimg" src="img/infotrim.png"/></a>
           </div>
           <div id="forgotpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->
@@ -85,7 +87,6 @@ indexHTML = """
     <a href="docs/about.html" class="footerlink">ABOUT</a> 
     <a href="docs/terms.html" class="footerlink">TERMS</a> 
     <a href="docs/privacy.html" class="footerlink">PRIVACY</a> 
-    <a href="docs/extensions.html" class="footerlink">EXTENSIONS</a>
   </div>
 </div>
 

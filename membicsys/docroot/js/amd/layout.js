@@ -73,22 +73,13 @@ app.layout = (function () {
     },
 
 
-    attachDocLinkClick = function (node, link) {
-        jt.on(node, "click", function (e) {
-            jt.evtend(e);
-            app.layout.displayDoc(link); });
-    },
-
-
-    //faster to grab all links rather than iterating through bottomnav
+    //hide the doc links as they are accessed from info link
     localDocLinks = function () {
-        var i, href, nodes = document.getElementsByTagName('a');
-        //nodes is an HTMLCollection, not an array.  Basic iteration only.
-        for(i = 0; nodes && nodes.length && i < nodes.length; i += 1) {
-            href = nodes[i].href;
-            //href may have been resolved from relative to absolute...
-            if(href && href.indexOf("docs/") >= 0) {
-                attachDocLinkClick(nodes[i], href); } }
+        var html = ["a", {href: "#community", title: "Community membics",
+                           onclick: jt.fs("app.activity.displayFeed('all')")},
+                     ["img", {id: "logoimg", src: "img/membiclogo.png"}]];
+        jt.out("logodiv", jt.tac2html(html));
+        jt.byId("bottomnav").style.display = "none";
     },
 
 

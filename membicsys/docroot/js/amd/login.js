@@ -398,10 +398,14 @@ app.login = (function () {
         //if no pen name, then the app is prompting for that and there
         //is no authenticated menu displayed.
         if(mypen) {
-            html = ["a", {href: "#SignOut",
-                          onclick: jt.fs("app.login.logout()")},
-                    ["span", {cla: "taslinkspan"},
-                     "Sign out"]];
+            html = [["a", {id: "introa", href: "#intro", title: "Information",
+                           onclick: jt.fs(
+                               "app.layout.displayDoc('docs/about.html')")},
+                     ["img", {id: "introimg", src: "img/infotrim.png"}]],
+                    ["a", {href: "#SignOut",
+                           onclick: jt.fs("app.login.logout()")},
+                     ["span", {cla: "taslinkspan"},
+                      "Sign out"]]];
             jt.out('toprightdiv', jt.tac2html(html));
             html = [["div", {id: "topbuttonsdiv"},
                      [["a", {href: "#profile", title: "Your membics",

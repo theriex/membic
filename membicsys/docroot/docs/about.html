@@ -12,11 +12,8 @@
 <div class="doccontentdiv">
 <div id="aboutoverviewdiv">
 
-<p>A <b>membic</b> is a bite sized structured summary describing what
-you found memorable. A <b>theme</b> holds membics related to an
-ongoing interest. <b>membic.com</b> is an open collaborative memory
-project.
-</p>
+<p><b>membic</b> = Link + Why Memorable.<br/>Trusted friends can post
+membics through to a <b>theme</b> for collaborative memory. </p>
 
 <ul class="revpictypelist">
 <li><a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
@@ -39,23 +36,23 @@ What you discover on your own, plus consideration of what others have discovered
 </div> <!-- aboutoverviewdiv -->
 
 <div id="aboutfeaturesdiv">
-<h2 id="aboutdetailsheading">Features:</h2>
+<h2 class="aboutdetailsheading">Features:</h2>
 <div class="aboutstatementsdiv">
 
 <ul>
 <li><a href="#whowhat"
        onclick="app.toggledivdisp('whowhatdiv');return false;">
-    <span class="aboutfeaturespan">Who, then What</span></a>
+    <span class="aboutfeaturespan">Keep your search engine</span></a>
   <div id="whowhatdiv" class="aboutdetaildiv">
 
-    Choose who you want to hear more from, then browse what they found
-    memorable.
+    On membic.com you choose people and themes you are particularly
+    interested in, then browse what people found memorable there.
 
   </div>
 
 <li><a href="#notsoc"
        onclick="app.toggledivdisp('notsocdiv');return false;">
-    <span class="aboutfeaturespan">Not another social net</span></a>
+    <span class="aboutfeaturespan">Keep your social net</span></a>
   <div id="notsocdiv" class="aboutdetaildiv">
 
     You don't need another social net, you need a separate
@@ -82,8 +79,8 @@ What you discover on your own, plus consideration of what others have discovered
     <span class="aboutfeaturespan">Open keyword tagging</span></a>
   <div id="openkeywordsdiv" class="aboutdetaildiv">
 
-    Tag membics using the type optimized common keyword checkboxes,
-    write in your own, or both.
+    Tag membics using the optimized keyword checkboxes, write in your
+    own, or both.
 
   </div>
 <li><a href="#topremember"
@@ -120,10 +117,9 @@ What you discover on your own, plus consideration of what others have discovered
     <span class="aboutfeaturespan">Pen names</span></a>
   <div id="creativeossdiv" class="aboutdetaildiv">
 
-    Impressions are public, but your pen name can reveal as much or as
-    little of yourself as you want.  Creative pen names are welcome,
-    and you can have more than one.  Your email address is never
-    shared with anyone else.  Membic.com is
+    Your pen name can reveal as much or as little of yourself as you
+    want.  Creative pen names are welcome.  Your email address is
+    never shared with anyone else.  Membic.com is
     <a href="https://github.com/theriex/membic"
        onclick="window.open('https://github.com/theriex/membic');return false;">
       open source</a>.
@@ -133,8 +129,9 @@ What you discover on your own, plus consideration of what others have discovered
 </div> <!-- aboutstatementsdiv -->
 </div> <!-- aboutfeaturesdiv -->
 
+
 <div id="aboutfaqdiv">
-<h2 id="aboutdetailsheading">FAQ:</h2>
+<h2 class="aboutdetailsheading">FAQ:</h2>
 <div class="aboutstatementsdiv">
 
 <ul>
@@ -156,21 +153,64 @@ What you discover on your own, plus consideration of what others have discovered
     <span class="aboutfeaturespan">What should I start with?</span></a>
   <div id="faqstartdiv" class="aboutdetaildiv">
 
-    Start with whatever you do most of.  Do you read lots of books,
-    watch lots of movies or videos, enjoy a range of wines, or want to
-    keep track of all your favorite blogging sites?  Start with
-    whatever you find most memorable.
+    Try making membics for the last five things you encountered that
+    were worth remembering.  Books are always impressive.
 
   </div>
 </ul>
 </div> <!-- aboutstatementsdiv -->
 </div> <!-- aboutfaqdiv -->
 
+
+<div id="abouttipsdiv">
+<h2 class="aboutdetailsheading">Tips and Tricks:</h2>
+<div class="aboutstatementsdiv">
+<ul>
+<li><a href="#bookmarklet"
+       onclick="app.toggledivdisp('bookmarkletdiv');return false;">
+    <span class="aboutfeaturespan">Bookmarklet</span></a>
+  <div id="bookmarkletdiv" class="aboutdetaildiv">
+
+    <p>"Right click" the 'Make Membic' link below and add it to your
+    bookmarks:</p>
+
+    <div style="padding:5px 20px;">
+      <a href="javascript:(function(){window.open('https://membicsys.appspot.com?newrev=&url='+encodeURIComponent(window.location.href));})();"
+         style="border: 2px solid #999; padding:2px; background:#ccc; font-weight:bold;">Make&nbsp;Membic</a>
+    </div>
+
+    <p>The next time you are on a memorable page, select "Make Membic"
+      from your bookmarks and the script will launch membic in a new
+      browser window. </p>
+
+  </div>
+<li><a href="#iTunes"
+       onclick="app.toggledivdisp('itunesdiv');return false;">
+    <span class="aboutfeaturespan">iTunes&reg; playlists</span></a>
+  <div id="itunesdiv" class="aboutdetaildiv">
+
+    <p>If you would like to build playlists from keywords and update
+      your top music membics automatically from iTunes&reg; check out
+      the
+      <a href="https://github.com/theriex/itsip"
+         onclick="window.open('https://github.com/theriex/itsip');return false;">
+        situational playlist generator project on github.</a></p>
+  </div>
+</ul>
+</div> <!-- aboutstatementsdiv -->
+</div> <!-- abouttipsdiv -->
+
+
 <p>If you have a question or a suggestion how to increase the
 awesomeness of this site,
 <a href="https://github.com/theriex/membic/issues"
  onclick="window.open('https://github.com/theriex/membic/issues');return
 false">open an issue on GitHub</a>.<!-- $ABOUTCONTACT --> </p>
+
+<div style="font-size:xx-small;text-align:center;word-spacing:30px;padding:0px 0px 10px 0px">
+  <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html');return false;">TERMS</a> 
+  <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html');return false;">PRIVACY</a> 
+</div>
 
 <div id="returnlinkdiv" style="text-align:center; display:none;">
   <a href="https://www.membic.com">Return to membic.com</a>

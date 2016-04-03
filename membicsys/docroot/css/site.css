@@ -46,6 +46,7 @@ button, .loginbutton, .formbutton {
 #topleftdiv { float:left; }
 #logodiv { cursor:pointer; display:inline-block; } 
 #logodiv, #logoimg { width:78px; height:78px; }
+#introimg { width:18px; height:18px; padding:0px 10px 0px 5px; }
 #topactionsdiv { display:inline-block; vertical-align:top; }
 #topbuttonsdiv { height:50px; vertical-align:top; }
 .topbuttonimg { padding:10px 5px 0px 15px; }
@@ -357,7 +358,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
 .doccontentdiv { padding:10px 10px 0px 10px; }
 #aboutoverviewdiv { font-size:large; }
-#aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
+.aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
 .aboutstatementsdiv { padding:0px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
 .aboutfeaturespan { font-weight:bold; }
