@@ -727,14 +727,14 @@ return {
             if(idx >= 0) {
                 params = params || {};
                 params.view = "pen";
-                params.penid = href.slice(idx + 3);
+                params.penid = parseInt(href.slice(idx + 3), 10);
                 done = true; } }
         if(!done) {
             idx = href.indexOf("/t/");
             if(idx >= 0) {
                 params = params || {};
                 params.view = "coop";
-                params.coopid = href.slice(idx + 3);
+                params.coopid = parseInt(href.slice(idx + 3), 10);
                 done = true; } }
         if(!done) {
             href = app.hashtaghref();
