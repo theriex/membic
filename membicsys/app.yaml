@@ -12,6 +12,7 @@ builtins:
 - remote_api: on
 
 inbound_services:
+- mail
 - mail_bounce
 
 error_handlers:
@@ -304,6 +305,11 @@ handlers:
 
 ######################################################################
 # General config
+
+## Inbound email handler
+- url: /_ah/mail/.+
+  script: src.py.mailsum.app
+  login: admin
 
 ## Email bounce handler
 - url: /_ah/bounce

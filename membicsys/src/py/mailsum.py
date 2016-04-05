@@ -3,6 +3,7 @@ import datetime
 from google.appengine.ext import db
 import logging
 import pen
+import rev
 from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
 from morutil import *
 from google.appengine.api import mail
@@ -10,6 +11,7 @@ from google.appengine.api.logservice import logservice
 from google.appengine.api import images
 from google.appengine.ext.webapp.mail_handlers import BounceNotification
 from google.appengine.ext.webapp.mail_handlers import BounceNotificationHandler
+from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 import textwrap
 from cacheman import *
 import re
@@ -76,7 +78,67 @@ class BounceHandler(BounceNotificationHandler):
           account.put()
 
 
+class InMailHandler(InboundMailHandler):
+    # cannot replicate the interactive smarts, so make a future membic
+    # that can be fleshed out next time they are online.
+    def receive(self, message):
+        emaddr = message.sender
+        descr = message.subject
+        url = ""
+        for bodtype, body in message.bodies():
+            if not url:
+                if bodtype == 'text/html':
+                    body = body.decode()
+                if not url:
+                    mo = re.search(r"https?://.*", body)
+                    if mo:
+                        url = mo.group()
+        if not url:
+            logging.info("Mail-in membic from " + emaddr + 
+                         " with no url ignored.")
+            return
+        if not descr:
+            logging.info("Mail-in membic from " + emaddr + 
+                         " with no description ignored.")
+            return
+        aq = MORAccount.gql("WHERE email=:1 LIMIT 1", emaddr)
+        found = aq.count()
+        if not found:
+            logging.info("Mail-in membic: No account found for " + emaddr)
+            return
+        acc = aq[0]
+        pq = pen.PenName.gql("WHERE mid=:1 LIMIT 1", acc.key().id())
+        found = pq.count()
+        if not found:
+            logging.info("Mail-in membic: No PenName found for " + emaddr)
+            return
+        pn = pq[0]
+        mim = rev.Review(penid=pn.key().id(), 
+                         revtype='article',
+                         ctmid=0,
+                         rating=0,
+                         srcrev=-101,
+                         mainfeed=0,
+                         cankey="")
+        rev.note_modified(mim)
+        mim.keywords = ""
+        mim.text = descr
+        mim.penname = pn.name
+        mim.name = ""
+        mim.title = ""
+        mim.url = url
+        mim.put()
+        # force retrieval to ensure subsequent db queries find it
+        mim = rev.Review.get_by_id(mim.key().id())
+        # not in top and not in main, so those caches are left intact
+        logging.info("Successfully recorded new mail-in membic " + 
+                     str(mim.key().id()) + " from " + emaddr +
+                     " url: " + mim.url + ", text: " + mim.text)
+
+
+
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
-                               ('/_ah/bounce', BounceHandler)], debug=True)
+                               ('/_ah/bounce', BounceHandler),
+                               ('/_ah/mail/.+', InMailHandler)], debug=True)
 

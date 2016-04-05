@@ -2152,7 +2152,7 @@ return {
 
 
     isDupeRev: function (rev, pr) {
-        if(rev && pr && ((rev.srcrev && rev.srcrev === pr.srcrev) || 
+        if(rev && pr && ((rev.srcrev > 0 && rev.srcrev === pr.srcrev) ||
                          (rev.cankey === pr.cankey) ||
                          (rev.url && rev.url === pr.url))) {
             return true; }
