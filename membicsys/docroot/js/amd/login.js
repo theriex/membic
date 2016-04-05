@@ -727,14 +727,14 @@ return {
             if(idx >= 0) {
                 params = params || {};
                 params.view = "pen";
-                params.penid = parseInt(href.slice(idx + 3), 10);
+                params.penid = String(parseInt(href.slice(idx + 3), 10));
                 done = true; } }
         if(!done) {
             idx = href.indexOf("/t/");
             if(idx >= 0) {
                 params = params || {};
                 params.view = "coop";
-                params.coopid = parseInt(href.slice(idx + 3), 10);
+                params.coopid = String(parseInt(href.slice(idx + 3), 10));
                 done = true; } }
         if(!done) {
             href = app.hashtaghref();
