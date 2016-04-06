@@ -1165,9 +1165,12 @@ app.review = (function () {
             return; }
         if(!jt.byId("rdtextdiv").innerHTML) {
             ptxt = "Why is this worth remembering?";
-            html = ["textarea", {id: "rdta", placeholder: ptxt,
-                                 onchange: jt.fs("app.review.revtxtchg()")},
-                    crev.text || ""];
+            html = [["div", {style: "height:2px;background-color:orange;",
+                             id: "txtlendiv"}],
+                    ["textarea", {id: "rdta", placeholder: ptxt,
+                                  onkeyup: jt.fs("app.review.txtlenind()"),
+                                  onchange: jt.fs("app.review.revtxtchg()")},
+                     crev.text || ""]];
             jt.out('rdtextdiv', jt.tac2html(html)); }
         //text is not dynamically updated
     },
@@ -1716,6 +1719,20 @@ return {
                     displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
+    },
+
+
+    txtlenind: function () {
+        var rdta, tld, width;
+        rdta = jt.byId('rdta');
+        tld = jt.byId('txtlendiv');
+        if(rdta && tld) {
+            width = rdta.value || "";
+            width = width.length;
+            width *= rdta.offsetWidth;
+            width /= 65;
+            width = Math.round(Math.min(rdta.offsetWidth, width));
+            tld.style.width = String(width) + "px"; }
     },
 
 

@@ -334,7 +334,7 @@ def set_review_mainfeed(rev, acc):
         rev.mainfeed = 0
     if acc.authconf:  # account needs help
         rev.mainfeed = 0
-    if not rev.text or len(rev.text) < 65:  # not substantive
+    if not rev.text or len(rev.text) < 65:  # not substantive (matches UI)
         # logging.info(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 60:  # 3 stars or better
