@@ -1775,6 +1775,29 @@ return {
 
 
     done: function () {
+        var org;
+        if(jt.hasId(crev)) {
+            org = app.lcs.getRef("rev", jt.instId(crev));
+            if(org && org.rev) {
+                org = org.rev;
+                validateCurrentReviewFields();
+                if(((crev.revtype !== org.revtype) ||
+                    (crev.rating !== org.rating) ||
+                    (crev.keywords !== org.keywords) ||
+                    (crev.text !== org.text) ||
+                    //svcdata.picdisp updated separately so always same here
+                    (crev.name && crev.name !== org.name) ||
+                    (crev.title && crev.title !== org.title) ||
+                    (crev.url && crev.url !== org.url) ||
+                    (crev.artist && crev.artist !== org.artist) ||
+                    (crev.author && crev.author !== org.author) ||
+                    (crev.publisher && crev.publisher !== org.publisher) ||
+                    (crev.album && crev.album !== org.album) ||
+                    (crev.starring && crev.starring !== org.starring) ||
+                    (crev.address && crev.address !== org.address) ||
+                    (crev.year && crev.year !== org.year)) &&
+                   (!confirm("Discard changes?"))) {
+                    return; } } }
         app.layout.closeDialog();
         app.login.doNextStep({});
     },
