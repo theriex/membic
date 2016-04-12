@@ -423,7 +423,7 @@ return {
                         id: "a2abdiv"},
                 [["a", {cla: "a2a_dd",
                         href: "https://www.addtoany.com/share_save"}],
-                 ["a", {cla: "a2a_button_wordpress"}],
+                 ["a", {cla: "a2a_button_tumblr"}],
                  ["a", {cla: "a2a_button_pinterest"}],
                  //["a", {cla: "a2a_button_google_plus"}],
                  ["a", {cla: "a2a_button_facebook"}],
