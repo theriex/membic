@@ -1186,6 +1186,7 @@ app.review = (function () {
         pen = app.pen.myPenName();
         app.pen.verifyStashKeywords(pen);
         pen.stash.keywords[rt.type].csvarray().forEach(function (dkword, i) {
+            dkword = dkword.trim();  //stashed keywords may be ", " separated
             chk = jt.toru(crev.keywords.indexOf(dkword) >= 0, "checked");
             html.push(["div", {cla: "rdkwcbdiv"},
                        [["input", {type: "checkbox", id: "dkw" + i,
