@@ -1784,7 +1784,7 @@ return {
                 if(((crev.revtype !== org.revtype) ||
                     (crev.rating !== org.rating) ||
                     (crev.keywords !== org.keywords) ||
-                    (crev.text !== org.text) ||
+                    (crev.text && crev.text.trim() !== org.text) ||
                     //svcdata.picdisp updated separately so always same here
                     (crev.name && crev.name !== org.name) ||
                     (crev.title && crev.title !== org.title) ||
