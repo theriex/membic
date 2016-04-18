@@ -19,6 +19,47 @@ stat.rc = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    siteForRef = function (ref) {
+        var site = ref.toLowerCase(), idx = site.indexOf("#");
+        if(idx >= 0) {
+            site = site.slice(0, idx); }
+        idx = site.indexOf("?");
+        if(idx >= 0) {
+            site = site.slice(0, idx); }
+        if(site.endsWith("/")) {
+            site = site.slice(0, -1); }
+        if(site.startsWith("https://")) {
+            site = site.slice(8); }
+        if(site.startsWith("http://")) {
+            site = site.slice(7); }
+        if(site.startsWith("www.")) {
+            site = site.slice(4); }
+        //undecorated url conversions
+        if(site.startsWith("membic.com/p/") ||
+           site.startsWith("membicsys.appspot.com/p/")) {
+            site = "Profile"; }
+        else if(site.startsWith("membic.com/t/") ||
+                site.startsWith("membic.com//t/") ||
+                site.startsWith("membicsys.appspot.com/t/")) {
+            site = "Theme"; }
+        else if(site.startsWith("membicsys.appspot.com/activate") ||
+                site.startsWith("membic.com/activate")) {
+            site = "Activation"; }
+        else if(site.startsWith("membicsys.appspot.com/index.html")) {
+            site = "membicsys.appspot.com"; }
+        else if(site.startsWith("membicsys.appspot.com/") ||
+                site.startsWith("membic.com/")) {
+            site = "Theme"; }
+        else if(site.startsWith("localhost") ||
+                site.startsWith("10.0.0.4")) {
+            site = "localhost"; }
+        idx = site.indexOf("/");
+        if(idx >= 0) {
+            site = site.slice(0, idx); }
+        return site;
+    },
+
+
     makeNodes = function () {
         rc.nodes = [];
         rc.nos = {};
@@ -28,18 +69,27 @@ stat.rc = (function () {
                 if(typeof day.refers === "string") {
                     day.refers = day.refers.split(","); }
                 day.refers.forEach(function (rv) {
-                    var rves, node;
+                    var rves, ref, su, node;
                     rves = rv.split(":");
-                    if(rves.length === 2) {  //skip any bad entries
-                        node = {id: rves[0],
-                                name: jt.dec(rves[0]),
-                                value: +rves[1]};
+                    if(rves.length === 2) {  //skip any degenerate entries
+                        su = siteForRef(jt.dec(rves[0]));
+                        node = {id: su, name: su, value: +rves[1],
+                                refobjs: {}, refs: []};
                         if(!rc.nos[node.id]) {
                             rc.nos[node.id] = node;
                             rc.nodes.push(node); }
                         else {
                             node = rc.nos[node.id];
                             node.value += +rves[1]; }
+                        ref = {id: rves[0],
+                               ref: jt.dec(rves[0]),
+                               value: +rves[1]};
+                        if(!node.refobjs[ref.id]) {
+                            node.refobjs[ref.id] = ref;
+                            node.refs.push(ref); }
+                        else {
+                            ref = node.refobjs[ref.id];
+                            ref.value += +rves[1]; }
                         rc.nr.max = Math.max(rc.nr.max, node.value); } });
             } });
         // rc.nodes = [{id: "testA", name: "testA actually has a really long name which comes up when you mouse over it", value: 4},
@@ -108,9 +158,13 @@ stat.rc = (function () {
             .style({"font-size": "20px", "text-anchor": "middle"})
             .text(function (d) { 
                 d.shortname = jt.ellipsis(d.name, d.r / 6);
+                if(d.shortname.length <= 5 && d.shortname.endsWith("...")) {
+                    d.shortname = d.name.slice(
+                        0, Math.min(1, d.shortname.length)); }
                 return d.shortname; })
             .on("mouseover", function (d) { stat.rc.mo(d, true); })
-            .on("mouseout", function (d) { stat.rc.mo(d, false); });
+            .on("mouseout", function (d) { stat.rc.mo(d, false); })
+            .on("click", function (d) { stat.rc.nodeDetail(d); });
         adjustContentDisplay();
         if(window.addEventListener) {
             window.addEventListener("resize", adjustContentDisplay); }
@@ -134,6 +188,8 @@ stat.rc = (function () {
         //            "fill": "#fff"});
         rc.nodes.sort(function (a, b) {
             return a.name.localeCompare(b.name); });
+        d3.select("#" + dispdiv).append("div")
+            .attr({"id": "noderefsdiv"});
         drawContents();
     };
 
@@ -160,6 +216,32 @@ return {
         else {
             jt.byId("circle" + d.id).style.fill = "#fd700a";
             jt.byId("textlabel" + d.id).textContent = d.shortname; }
+    },
+
+
+    closeDetail: function () {
+        jt.out('noderefsdiv', "");
+    },
+
+
+    nodeDetail: function (d) {
+        var html = [], height;
+        d.refs.forEach(function (ref) {
+            html.push(["tr",
+                       [["td", {style: "text-align:right;"}, ref.ref],
+                        ["td", {style: "text-align:right; font-weight:bold;"},
+                         ref.value]]]); });
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close", 
+                        onclick: "stat.rc.closeDetail()"},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "headingtxt"}, d.name],
+                ["table", {cla: "floatclear"}, html]];
+        jt.out('noderefsdiv', jt.tac2html(html));
+        //svg doesn't have offsetHeight so compute from parent div
+        height = (jt.byId(dispdiv).offsetHeight - 
+                  jt.byId('noderefsdiv').offsetHeight - 50) * -1;
+        jt.byId('noderefsdiv').style.top = String(height) + "px";
     }
 
 }; //end of returned functions
