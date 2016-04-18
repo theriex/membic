@@ -151,7 +151,8 @@ stat.rc = (function () {
             .attr("id", function (d) { return "circle" + d.id; })
             .style({"fill": "#fd700a", "stroke": "#b9100f"})
             .on("mouseover", function (d) { stat.rc.mo(d, true); })
-            .on("mouseout", function (d) { stat.rc.mo(d, false); });
+            .on("mouseout", function (d) { stat.rc.mo(d, false); })
+            .on("click", function (d) { stat.rc.nodeDetail(d); });
         rc.nbs.append("text")
             .attr("dy", ".3em")
             .attr("id", function (d) { return "textlabel" + d.id; })
