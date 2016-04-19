@@ -23,6 +23,76 @@ stat.ac = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    findPlatform = function (title) {
+        var plats = [{key: "Macintosh", val: "Mac"},
+                     {key: "Windows", val: "Windows"},
+                     {key: "Android", val: "Android"},
+                     {key: "iPhone", val: "iPhone"},
+                     {key: "iPad", val: "iPad"},
+                     {key: "iPod", val: "iPod"},
+                     {key: "Linux", val: "Linux"}],
+            retval = "";
+        plats.every(function (plat) {
+            if(title.indexOf(plat.key) >= 0) {
+                retval = plat.val;
+                return false; }
+            return true; });
+        return retval;
+    },
+
+
+    findBrowser = function (title) {
+        var brows = [{key: "Firefox", val: "Firefox"},
+                     //Chrome mentions Safari, so test for Chrome first
+                     {key: "Chrome", val: "Chrome"},
+                     {key: "Safari", val: "Safari"},
+                     {key: "AppleWebKit", val: "AppleWebKit"},
+                     {key: "Opera", val: "Opera"},
+                     {key: "Trident", val: "IE"},
+                     {key: "MSIE", val: "IE"}],
+            retval = "";
+        brows.every(function (brow) {
+            if(title.indexOf(brow.key) >= 0) {
+                retval = brow.val;
+                return false; }
+            return true; });
+        return retval;
+    },
+
+
+    isKnownBot = function (name) {
+        var ts = ["AhrefsBot", "Baiduspider", "ezooms.bot",
+                  "AppEngine-Google", "Googlebot", "YandexImages", 
+                  "YandexBot", "bingbot", "Yahoo! Slurp", "crawler.php"];
+        return !ts.every(function (botstr) {
+            return name.indexOf(botstr) < 0; });
+    },
+
+
+    isKnownRSS = function (name) {
+        var ts = ["netvibes.com", "feedly.com", "Windows-RSS-Platform",
+                  "Automattic Feed Fetcher"];
+        return !ts.every(function (rssa) {
+            return name.indexOf(rssa) < 0; });
+    },
+
+
+    shortAgentName = function (title) {
+        var plat, brow, name;
+        name = isKnownBot(title);
+        if(name) {
+            return "Bot/Crawler"; }
+        name = isKnownRSS(title);
+        if(name) {
+            return "RSSReader"; }
+        plat = findPlatform(title);
+        brow = findBrowser(title);
+        if(plat && brow) {
+            return plat + "_" + brow; }
+        return "";
+    },
+
+
     aggregateAgents = function () {
         ac.ags = [];
         ac.aos = {};
@@ -32,36 +102,29 @@ stat.ac = (function () {
                 if(typeof day.agents === "string") {
                     day.agents = day.agents.split(","); }
                 day.agents.forEach(function (av) {
-                    var aves, node;
+                    var aves, agent, agn, node;
                     aves = av.split(":");
                     if(aves.length === 2) {  //skip any degenerate entries
-                        node = {id: aves[0],
-                                name: jt.dec(aves[0]),
-                                count: +aves[1]};
+                        agn = shortAgentName(aves[0]);
+                        node = {id: agn, name: agn, count: +aves[1],
+                                aios: {}, agents: []};
                         if(!ac.aos[node.id]) {
                             ac.aos[node.id] = node;
                             ac.ags.push(node); }
                         else {
                             node = ac.aos[node.id];
                             node.count += +aves[1]; }
+                        agent = {id: aves[0],
+                                 name: jt.dec(aves[0]),
+                                 count: +aves[1]};
+                        if(!node.aios[agent.id]) {
+                            node.aios[agent.id] = agent;
+                            node.agents.push(agent); }
+                        else {
+                            agent = node.aios[agent.id];
+                            agent.count += +aves[1]; }
                         ac.ar.max = Math.max(ac.ar.max, node.count); } });
             } });
-    },
-
-
-    isKnownBot = function (name) {
-        var ts = ["AhrefsBot", "Baiduspider", "ezooms.bot",
-                  "AppEngine-Google", "Googlebot", "YandexImages", 
-                  "crawler.php"];
-        return !ts.every(function (botstr) {
-            return name.indexOf(botstr) < 0; });
-    },
-
-
-    isKnownRSS = function (name) {
-        var ts = ["netvibes.com", "feedly.com"];
-        return !ts.every(function (rssa) {
-            return name.indexOf(rssa) < 0; });
     },
 
 
@@ -84,9 +147,9 @@ stat.ac = (function () {
         taxon[0].children.forEach(function (cat) {
             ac.agc[cat.id] = cat.children; });
         ac.ags.forEach(function (agent) {
-            if(isKnownBot(agent.name)) {
+            if(agent.name === "Bot/Crawler") {
                 ac.agc.bot.push(agent); }
-            else if(isKnownRSS(agent.name)) {
+            else if(agent.name === "RSSReader") {
                 ac.agc.rss.push(agent); }
             else if(isKnownTouchDevice(agent.name)) {  //test before point
                 ac.agc.touch.push(agent); }
@@ -101,7 +164,8 @@ stat.ac = (function () {
         taxon[0].children.forEach(function (cat) {
             if(!cat.children.length) {
                 cat.children.push({id: "empty" + cat.id,
-                                   name: "No " + cat.name + " agents.",
+                                   //name: "No " + cat.name + " agents.",
+                                   name: "",
                                    count: 0}); } });
     },
 
@@ -141,59 +205,16 @@ stat.ac = (function () {
     },
 
 
-    findPlatform = function (title) {
-        var plats = [{key: "Macintosh", val: "Mac"},
-                     {key: "Windows", val: "Windows"},
-                     {key: "Android", val: "Android"},
-                     {key: "iPhone", val: "iPhone"},
-                     {key: "iPad", val: "iPad"},
-                     {key: "iPod", val: "iPod"},
-                     {key: "Linux", val: "Linux"}],
-            retval = "";
-        plats.every(function (plat) {
-            if(title.indexOf(plat.key) >= 0) {
-                retval = plat.val;
-                return false; }
-            return true; });
-        return retval;
-    },
-
-
-    findBrowser = function (title) {
-        var brows = [{key: "Firefox", val: "Firefox"},
-                     //Chrome mentions Safari, so test for Chrome first
-                     {key: "Chrome", val: "Chrome"},
-                     {key: "Safari", val: "Safari"},
-                     {key: "Opera", val: "Opera"}],
-            retval = "";
-        brows.every(function (brow) {
-            if(title.indexOf(brow.key) >= 0) {
-                retval = brow.val;
-                return false; }
-            return true; });
-        return retval;
-    },
-
-
-    platformAndBrowser = function (title) {
-        var plat = findPlatform(title),
-            brow = findBrowser(title);
-        if(plat && brow) {
-            return plat + " " + brow; }
-        return "";
-    },
-
-
-    shortAgentName = function (title) {
+    countAndName = function (title, count) {
         var name, idx;
-        name = platformAndBrowser(title);
+        name = shortAgentName(title);
         if(!name) {
             name = title;
             idx = name.indexOf("(");
             if(idx > 0) {
                 name = name.slice(idx + 1); }
             name = jt.ellipsis(name, 42); }
-        return name;
+        return "(" + count + ") " + name;
     },
 
 
@@ -201,9 +222,10 @@ stat.ac = (function () {
         taxon.forEach(function (tn) {
             tn.nodenumber = ac.nodenumber;
             ac.nodenumber += 1;
-            ac.nodes.push({name: shortAgentName(tn.name), 
+            ac.nodes.push({name: countAndName(tn.name, tn.count), 
                            title: tn.name, count: tn.count,
                            color: tn.color || tn.parent.color, 
+                           agents: tn.agents,
                            nodenumber: tn.nodenumber}); });
         taxon.forEach(function (tn) {
             if(tn.children) {
@@ -304,7 +326,8 @@ stat.ac = (function () {
             .attr("dy", ".35em")
             .attr("text-anchor", "start")
             .attr("transform", null)
-            .text(function (d) { return d.name; });
+            .text(function (d) { return d.name; })
+            .on("click", function (d) { stat.ac.agentDetail(d); });
     },
 
 
@@ -328,6 +351,8 @@ stat.ac = (function () {
             .links(ac.links)
             .layout(32);
         ac.path = ac.sankey.link();
+        d3.select("#" + dispdiv).append("div")
+            .attr({"id": "agdetdiv"});
         drawContents();
     };
 
@@ -352,6 +377,33 @@ return {
             "transform", "translate(" + d.x + "," + d.y + ")");
         ac.sankey.relayout();
         ac.gls.attr("d", ac.path);
+    },
+
+
+    closeDetail: function () {
+        jt.out('agdetdiv', "");
+    },
+
+
+    agentDetail: function (d) {
+        var html = [], height;
+        d.agents.sort(function (a, b) { return b.count - a.count; });
+        d.agents.forEach(function (agent) {
+            html.push(["tr",
+                       [["td", {style: "text-align:right; font-weight:bold;"}, 
+                         agent.count],
+                        ["td", {style: "text-align:right;"}, agent.name]]]); });
+        html = [["div", {cla: "dlgclosex"},
+                 ["a", {id: "closedlg", href: "#close", 
+                        onclick: "stat.ac.closeDetail()"},
+                  "&lt;close&nbsp;&nbsp;X&gt;"]],
+                ["div", {cla: "headingtxt"}, d.name],
+                ["table", {cla: "floatclear"}, html]];
+        jt.out('agdetdiv', jt.tac2html(html));
+        //svg doesn't have offsetHeight so compute from parent div
+        height = (jt.byId(dispdiv).offsetHeight - 
+                  jt.byId('agdetdiv').offsetHeight - 50) * -1;
+        jt.byId('agdetdiv').style.top = String(height) + "px";
     }
 
 
