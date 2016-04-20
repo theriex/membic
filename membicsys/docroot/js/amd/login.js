@@ -415,7 +415,7 @@ app.login = (function () {
                       ["a", {href: "#write", title: "Make a membic",
                              onclick: jt.fs("app.login.topnav('write')")},
                        ["img", {cla: "topbuttonimg",
-                                src: "img/writereview.png"}]]]]];
+                                src: "img/writenew.png"}]]]]];
             jt.out('topactionsdiv', jt.tac2html(html)); }
     },
 

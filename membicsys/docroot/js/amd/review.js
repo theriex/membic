@@ -528,7 +528,7 @@ app.review = (function () {
     fpbWriteButtonHTML = function (prefix, disprevid, updrevid, mine) {
         var las, html;
         las = {href: "#write",
-               title: "Note your impressions",
+               title: "Membic this",
                onclick: jt.fs("app.review.fpbWrite('" + prefix + "','" + 
                               disprevid + "','" + updrevid + "')")};
         if(mine) {
