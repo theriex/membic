@@ -626,7 +626,7 @@ class ActivateAccount(webapp2.RequestHandler):
             account.status = "Active"
             account.put()
             self.response.headers['Content-Type'] = 'text/html'
-            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.com Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../\"><h2>Return to membic.com site</h2></a></p>\n</body></html>")
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.com Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.com site</h2></a></p>\n</body></html>")
             return
         # no key, retrieve authenticated account
         account = authenticated(self.request)

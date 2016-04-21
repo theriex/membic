@@ -526,7 +526,7 @@ app.pcd = (function () {
         picsrc += jt.ts((picsrc.indexOf("?") >= 0? "&" : "?") + "cb=", 
                         dst.obj.modified);
         html = [["label", {fo: "picuploadform", cla: "overlab"},
-                  "Change Picture"],
+                  "Change Picture or Logo"],
                 ["form", {action: "/picupload", method: "post",
                           enctype: "multipart/form-data", target: "tgif",
                           id: "picuploadform"},
@@ -543,7 +543,7 @@ app.pcd = (function () {
                                    name: "picfilein", id: "picfilein"}],
                         ["div", {id: "uploadbuttonsdiv"},
                          ["input", {type: "submit", cla: "formbutton",
-                                    value: "Upload&nbsp;Picture"}]]]]]],
+                                    value: "Upload&nbsp;Image"}]]]]]],
                     ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                 ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
                             style: "display:none"}]];
@@ -912,7 +912,11 @@ app.pcd = (function () {
         app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
-        if(expid === "settings") {
+        if(expid === "settingspic") {
+            if(!app.pen.myPenName().profpic) {
+                jt.err("To post, you need a picture to show which membics are yours."); }
+            app.pcd.settings(dst.obj); }
+        else if(expid === "settings") {
             app.pcd.settings(dst.obj); }
         else if(expid) {
             app.pcd.toggleRevExpansion("pcd", expid); }

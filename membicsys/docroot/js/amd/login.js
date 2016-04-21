@@ -463,8 +463,10 @@ app.login = (function () {
         if(params.css) {
             applyCSSOverride(params.css); }
         //handle specific context requests
-        if(params.view && (params.coopid || params.hashtag || 
-                           params.penid || params.profid)) {
+        if(params.view === "profsetpic") {
+            app.history.checkpoint({ view: "profsetpic" }); }
+        else if(params.view && (params.coopid || params.hashtag || 
+                                params.penid || params.profid)) {
             params.coopid = params.coopid || app.vanityStartId;
             app.history.checkpoint({ view: params.view, 
                                      penid: params.penid,

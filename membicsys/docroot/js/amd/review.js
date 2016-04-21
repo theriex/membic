@@ -1503,12 +1503,13 @@ return {
     start: function (source) {
         app.review.resetStateVars();
         if(app.login.accountInfo("status") !== "Active") {
-            jt.err("You need to activate your account before posting");
+            jt.err("You need to activate your account before posting.");
             return app.pcd.display("pen", app.pen.myPenId(), "latest",
                                    app.pen.myPenName(), "settings"); }
         if(!app.pen.myPenName().profpic) {
-            jt.err("You need a profile picture to identify your membics");
-            return app.pcd.display("pen"); }
+            jt.err("To post, you need a picture to show which membics are yours.");
+            return app.pcd.display("pen", app.pen.myPenId(), "latest",
+                                   app.pen.myPenName(), "settings"); }
         if(typeof source === 'string') {  //passed in a url
             autourl = source; }
         if(typeof source === 'object') {  //passed in another review

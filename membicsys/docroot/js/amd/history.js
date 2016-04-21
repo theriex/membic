@@ -93,6 +93,9 @@ return {
         case "coop":
             return app.coop.bycoopid(state.coopid, 'history', state.tab, 
                                      state.expid);
+        case "profsetpic":
+            return app.pcd.display("pen", app.pen.myPenId(), "latest", 
+                                   app.pen.myPenName(), "settingspic");
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
