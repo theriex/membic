@@ -434,13 +434,18 @@ return {
 
 
     showShareButtons: function (title, url, tags, text) {
-        var js;
-        tags = tags? " " + tags : "";
+        var js, hts = "";
+        tags = tags || "";
+        tags.csvarray().forEach(function (tag) {
+            if(!tag.startsWith("#")) {
+                tag = "#" + tag.trim(); }
+            hts = hts.csvappend(tag); });
+        hts = hts? " " + hts : "";
         text = text? " " + text : "";
         a2a_config.linkname = title;
         a2a_config.linkurl = url;
         a2a_config.templates = {
-            twitter: "${title} ${link}" + tags + text };
+            twitter: "${title} ${link}" + hts + text };
         try {
             if(!addToAnyScriptLoaded) {
                 //the script executes on load, so nothing left to do after

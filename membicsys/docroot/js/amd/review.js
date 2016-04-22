@@ -1777,27 +1777,29 @@ return {
 
 
     done: function () {
-        var org;
+        var org, curr;
         if(jt.hasId(crev)) {
             org = app.lcs.getRef("rev", jt.instId(crev));
+            curr = crev; //use local variable for easier debugging
             if(org && org.rev) {
                 org = org.rev;
                 validateCurrentReviewFields();
-                if(((crev.revtype !== org.revtype) ||
-                    (crev.rating !== org.rating) ||
-                    (crev.keywords !== org.keywords) ||
-                    (crev.text && crev.text.trim() !== org.text) ||
+                if(((curr.revtype !== org.revtype) ||
+                    (curr.rating !== org.rating) ||
+                    (curr.keywords !== org.keywords) ||
+                    (curr.text && curr.text.trim() !== org.text) ||
                     //svcdata.picdisp updated separately so always same here
-                    (crev.name && crev.name !== org.name) ||
-                    (crev.title && crev.title !== org.title) ||
-                    (crev.url && crev.url !== org.url) ||
-                    (crev.artist && crev.artist !== org.artist) ||
-                    (crev.author && crev.author !== org.author) ||
-                    (crev.publisher && crev.publisher !== org.publisher) ||
-                    (crev.album && crev.album !== org.album) ||
-                    (crev.starring && crev.starring !== org.starring) ||
-                    (crev.address && crev.address !== org.address) ||
-                    (crev.year && crev.year !== org.year)) &&
+                    (curr.name && curr.name !== org.name) ||
+                    (curr.title && curr.title !== org.title) ||
+                    (curr.url && curr.url !== org.url &&
+                     curr.url !== jt.dec(org.url)) ||
+                    (curr.artist && curr.artist !== org.artist) ||
+                    (curr.author && curr.author !== org.author) ||
+                    (curr.publisher && curr.publisher !== org.publisher) ||
+                    (curr.album && curr.album !== org.album) ||
+                    (curr.starring && curr.starring !== org.starring) ||
+                    (curr.address && curr.address !== org.address) ||
+                    (curr.year && curr.year !== org.year)) &&
                    (!confirm("Discard changes?"))) {
                     return; } } }
         app.layout.closeDialog();
