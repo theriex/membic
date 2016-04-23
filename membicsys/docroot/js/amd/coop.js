@@ -136,6 +136,7 @@ return {
 
 
     noteUpdatedCoop: function (updcoop, currcoop) {
+        app.coop.rememberThemeName(updcoop);
         if(!currcoop) {
             currcoop = (app.lcs.getRef("coop", jt.instId(updcoop))).coop; }
         //only cache if we have the recent reviews, that way we know we
