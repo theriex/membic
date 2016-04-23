@@ -405,8 +405,11 @@ return {
                 text += ref.coop.name + " " + ref.coop.description;
                 if(ref.coop.hashtag) {
                     text += "#" + ref.coop.hashtag; } }
-            else if(app.coopnames[ctmid]) {
-                text += " " + app.coopnames[ctmid]; } });
+            else {
+                if(app.coopnames[ctmid]) {
+                    text += " " + app.coopnames[ctmid]; }
+                if(app.cooptags[ctmid]) {
+                    text += "#" + app.cooptags[ctmid]; } } });
         matchAndTest = function () {
             matcharray = regexp.exec(text);
             return matcharray; };

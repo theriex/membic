@@ -1308,9 +1308,7 @@ app.review = (function () {
         convertOldThemePostLabel(rev);
         if(rev.svcdata && rev.svcdata.postctms) {
             rev.svcdata.postctms.forEach(function (ctm) {
-                //prefer earlier cached names if already set.
-                if(!app.coopnames[ctm.ctmid]) {
-                    app.coopnames[ctm.ctmid] = ctm.name; } }); }
+                app.coop.rememberThemeName(ctm, true); }); }
     },
 
 

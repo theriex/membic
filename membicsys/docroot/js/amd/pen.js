@@ -179,7 +179,7 @@ return {
             coopref = app.lcs.getRef("coop", coopid);
             if(coopref.coop) {
                 ret[coopid] = coopref.coop.name;
-                app.coopnames[coopid] = ret[coopid]; }
+                app.coop.rememberThemeName(coopref.coop); }
             if(!ret[coopid]) {  //try stashed value from coop.verifyStash
                 if(pen.stash && pen.stash["ctm" + coopid] &&
                    pen.stash["ctm" + coopid].name) {

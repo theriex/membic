@@ -1880,6 +1880,7 @@ return {
                     app.login.noteAccountInfo(obj);
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
                     if(dtype === "coop") {
+                        app.coop.rememberThemeName(obj, true);
                         app.coop.verifyPenStash(obj); }
                     callback(obj); },
                 app.failf(function (code, errtxt) {

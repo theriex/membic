@@ -32,7 +32,8 @@ var app = {},  //Global container for application level funcs and values
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
     app.pennames = {};  //id: penname local lookup for improved stat msgs
-    app.coopnames = {}; //id: coopname local lookup for improved stat msgs
+    app.coopnames = {}; //id: theme name local lookup to avoid server calls
+    app.cooptags = {};  //id: theme hashtag local lookup
 
 
     ////////////////////////////////////////
