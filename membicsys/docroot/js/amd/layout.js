@@ -1,4 +1,4 @@
-/*global window, document, app, jt, a2a, a2a_config */
+/*global window, document, app, jt, a2a, a2a_config, d3 */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -204,6 +204,31 @@ return {
     },
 
 
+    runAnime: function () {
+        var href, js;
+        if(jt.byId('aadiv')) { //have display space for 'about' animation
+            if(!app.anime) {
+                href = window.location.href;
+                if(href.indexOf("#") > 0) {
+                    href = href.slice(0, href.indexOf("#")); }
+                if(href.indexOf("?") > 0) {
+                    href = href.slice(0, href.indexOf("?")); }
+                if(!href.endsWith("/")) {
+                    href += "/"; }
+                if(typeof d3 === 'undefined') {  //mac ff requires typeof
+                    js = document.createElement('script');
+                    //js.async = true;
+                    js.type = "text/javascript";
+                    js.src = href + "js/d3.v3.min.js";
+                    document.body.appendChild(js); }
+                jt.loadAppModules(app, ["js/static/anime"], href,
+                                  app.layout.runAnime, 
+                                  jt.ts("?cb=", "minute")); }
+            else { //app.anime loaded
+                app.anime.run(); } }
+    },
+
+
     displayDoc: function (url) {
         var html = "Fetching " + url + " ...";
         url = url || "docs/howto.html";
@@ -213,7 +238,8 @@ return {
         url += jt.ts("?cb=", "day");
         jt.request('GET', url, null,
                    function (resp) {
-                       displayDocContent(url, resp); },
+                       displayDocContent(url, resp);
+                       setTimeout(app.layout.runAnime, 50); },
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt); },
                    jt.semaphore("layout.displayDoc"));
