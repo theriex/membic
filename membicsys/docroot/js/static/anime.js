@@ -8,7 +8,7 @@ app.anime = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var ast = { width: 300, height: 180 };
+    var ast = { width: 300, height: 180, textcolor: "black" };
 
 
     ////////////////////////////////////////
@@ -38,7 +38,7 @@ app.anime = (function () {
                 .attr({"fill-opacity": 0.4, "stroke-opacity": 0.4});
             lay.glnk.append("text")
                 .attr({"x": 84, "y": 110, "fill-opacity": 0,
-                       "id": "linktxt", "fill": lay.fillc})
+                       "id": "linktxt", "fill": ast.textcolor})
                 .style({"font-size": "56px", "font-weight": "bold",
                         "text-anchor": "middle"})
                 .text("Link");
@@ -78,11 +78,11 @@ app.anime = (function () {
 
     function initFieldsAndTypesLayout () {
         var i, lay = {icosize: 30, padx: 6, pady: 3, fldw: 80, 
-                      leftm: 10, topm: 28, fillc: "black"};
+                      leftm: 10, topm: 28};
         lay.rw = (2 * (lay.icosize + lay.padx)) + lay.fldw + lay.padx;
         lay.xw = Math.round(lay.rw / 4);
         lay.yh = lay.icosize + lay.pady;
-        lay.glnk = ast.svg.append("g");
+        lay.glnk = ast.glnk;
         lay.bubble = lay.glnk.append("ellipse")
             .attr({"cx": lay.leftm + (2 * lay.xw) - lay.padx, 
                    "cy": lay.topm + (2 * lay.yh) - lay.pady, 
@@ -91,12 +91,12 @@ app.anime = (function () {
                    "fill-opacity": 0.0, "stroke-opacity": 0.0})
             .style({"fill": "#fd700a", "stroke": "#b9100f"});
         lay.gtxt = lay.glnk.append("g"); 
-       lay.gico = lay.glnk.append("g");
+        lay.gico = lay.glnk.append("g");
         for(i = 0; i < 4; i += 1) {
             lay.gtxt.append("text")
                 .attr({"x": lay.leftm + (2 * lay.xw) - lay.padx, 
                        "y": lay.topm + ((i + 1) * lay.yh) - lay.pady - 4, 
-                       "id": "lctxt" + i, "fill": lay.fillc})
+                       "id": "lctxt" + i, "fill": ast.textcolor})
                 .style({"font-size": "16px", "font-weight": "bold",
                         "text-anchor": "middle"})
                 .text(""); }
@@ -144,7 +144,7 @@ app.anime = (function () {
 
 
     function collapseTypesToLink (fseq) {
-        var transtime = 1000;
+        var transtime = 123;
         ast.fatlay.glnk.transition().duration(transtime)
             //transform and scale: scalex, 0, 0, scaley, transx, transy
             .attr("transform", "matrix(0.5,0,0,0.25,10,50)");
@@ -155,6 +155,107 @@ app.anime = (function () {
             .attr("opacity", 0.0);
         d3.select("#linktxt").transition().delay(transtime).duration(transtime)
             .attr("fill-opacity", 1.0);
+        setTimeout(function () {
+            nextAnimationSequence(fseq); }, 2 * transtime);
+    }
+
+
+    function drawStars (transtime) {
+        var sx = 140, sy = 64, sw = 14, st = transtime / 5;
+        ast.gmf.append("rect")
+            .attr({"x": sx + 2, "y": sy, "width": sw, "height": 15})
+            .style({"fill": "#fed000"})
+            .attr("opacity", 0.0)
+            .transition().duration(st)
+            .attr("opacity", 1.0);
+        ast.gmf.append("rect")
+            .attr({"x": sx + 18, "y": sy, "width": sw, "height": 15})
+            .style({"fill": "#fed000"})
+            .attr("opacity", 0.0)
+            .transition().delay(st).duration(st)
+            .attr("opacity", 1.0);
+        ast.gmf.append("rect")
+            .attr({"x": sx + 35, "y": sy, "width": sw, "height": 15})
+            .style({"fill": "#fed000"})
+            .attr("opacity", 0.0)
+            .transition().delay(2 * st).duration(st)
+            .attr("opacity", 1.0);
+        ast.gmf.append("rect")
+            .attr({"x": sx + 52, "y": sy, "width": sw, "height": 15})
+            .style({"fill": "#fed000"})
+            .attr("opacity", 0.0)
+            .transition().delay(3 * st).duration(st)
+            .attr("opacity", 1.0);
+        ast.gmf.append("rect")
+            .attr({"x": sx + 69, "y": sy, "width": sw, "height": 15})
+            .style({"fill": "#fed000"})
+            .attr("opacity", 0.0)
+            .transition().delay(4 * st).duration(st)
+            .attr("opacity", 1.0);
+        ast.gmf.append("image")
+            .attr({"xlink:href": "img/stars18ptCEmptyCenters.png",
+                   "x": sx, "y": sy, "height": 15, "width": 85})
+            .style({"opacity": 1.0});
+    }
+
+
+    function membicFields (fseq) {
+        var transtime = 123, kx = 76, ky = 101;
+        ast.gmf.append("text")
+            .attr({"x": 59, "y": 41, "fill": ast.textcolor})
+            .style({"font-size": "18px", "font-weight": "bold",
+                    "text-anchor": "left"})
+            .text("Why memorable?");
+        setTimeout(function () {
+            drawStars(transtime); }, transtime);
+        setTimeout(function () {
+            ast.gmf.append("rect")
+                .attr({"x": kx, "y": ky, "width": 10, "height": 10})
+                .style({"fill": "none", "stroke": ast.textcolor});
+            ast.gmf.append("text")
+                .attr({"x": kx + 16, "y": ky + 11, "fill": ast.textcolor})
+                .style({"font-size": "18px", "font-weight": "bold",
+                        "text-anchor": "left", "opacity": 0.8})
+                .text("keywords"); }, 2 * transtime);
+        setTimeout(function () {
+            ast.gmf.append("path")
+                .attr("d", "M " + kx +        " " + (ky + 3) + 
+                          " L " + (kx + 4) +  " " + (ky + 9) +
+                          " L " + (kx + 10) + " " + ky +
+                          " L " + (kx + 4) +  " " + (ky + 5) + " Z")
+                .style({"fill": ast.textcolor, "stroke": ast.textcolor}); },
+                   2.8 * transtime);
+        d3.select("#membicbubble").transition()
+            .delay(3 * transtime).duration(transtime)
+            .attr({"fill-opacity": 0.4, "stroke-opacity": 0.4});
+        setTimeout(function () {
+            nextAnimationSequence(fseq); }, 4 * transtime);
+    }
+
+
+    function collapseFieldsToMembic (fseq) {
+        var transtime = 123;
+        ast.gmembic.transition().duration(transtime)
+            //transform and scale: scalex, 0, 0, scaley, transx, transy
+            .attr("transform", "matrix(0.3,0,0,0.22,10,10)");
+        ast.gmf.attr("opacity", 1.0)
+            .transition().duration(transtime)
+            .attr("opacity", 0.0);
+        ast.gmembic.append("text")
+            .attr({"x": 128, "y": 90, "fill-opacity": 0,
+                   "id": "linktxt", "fill": ast.textcolor})
+            .style({"font-size": "56px", "font-weight": "bold",
+                    "text-anchor": "middle"})
+            .text("Membic")
+            .transition().duration(transtime)
+            .attr("fill-opacity", 1.0);
+        setTimeout(function () {
+            nextAnimationSequence(fseq); }, 2 * transtime);
+    }
+
+
+    function membicPosting (fseq) {
+        jt.byId("linkpluswhyspan").style.display = "initial";
     }
 
 
@@ -182,7 +283,7 @@ app.anime = (function () {
 return {
 
     run: function () {
-        return;  //not ready for production yet
+        //return;  //not ready for production yet
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(app.anime.run, 300); }
         //jt.err("Starting animation...");
@@ -193,9 +294,24 @@ return {
             .attr("transform", "translate(10,0)");
         ast.svg.append("rect")
             .attr({"x": 0, "y": 0, "width": ast.width, "height": ast.height})
-            .style({"fill": "white", "opacity": 0.4});
+            .style({"fill": "white", "opacity": 0.8});  //TODO: 0.4
+        ast.gcontent = ast.svg.append("g");  //overall content display
+        ast.gmembic = ast.gcontent.append("g");
+        ast.gmembic.append("ellipse")
+            .attr({"cx": 128, 
+                   "cy": 70, 
+                   "rx": 120,
+                   "ry": 64,
+                   "id": "membicbubble",
+                   "fill-opacity": 0.0, "stroke-opacity": 0.0})
+            .style({"fill": "#fd700a", "stroke": "#b9100f"});
+        ast.gmf = ast.gmembic.append("g")
+        ast.glnk = ast.gmf.append("g");
         nextAnimationSequence([displayIdentFieldsAndTypes,
                                collapseTypesToLink,
+                               membicFields,
+                               collapseFieldsToMembic,
+                               membicPosting,
                                endDisplay]);
     }
 
