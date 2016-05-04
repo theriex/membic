@@ -8,7 +8,8 @@ app.anime = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var ast = { width: 300, height: 180, textcolor: "black" };
+    var ast = { width: 300, height: 180, textcolor: "black" },
+        defaultTransitionTime = 1600;
 
 
     ////////////////////////////////////////
@@ -20,6 +21,22 @@ app.anime = (function () {
         jt.byId("themesitespan").style.display = "none";
         jt.byId("introductionli").style.display = "none";
         jt.byId("originli").style.display = "none";
+    }
+
+
+    function initSubgroups () {
+        ast.gmpost = ast.gcontent.append("g");
+        ast.gmembic = ast.gcontent.append("g");
+        ast.gmembic.append("ellipse")
+            .attr({"cx": 128, 
+                   "cy": 70, 
+                   "rx": 120,
+                   "ry": 64,
+                   "id": "membicbubble",
+                   "fill-opacity": 0.0, "stroke-opacity": 0.0})
+            .style({"fill": "#fd700a", "stroke": "#b9100f"});
+        ast.gmf = ast.gmembic.append("g");
+        ast.glnk = ast.gmf.append("g");
     }
 
 
@@ -48,7 +65,6 @@ app.anime = (function () {
             for(i = 0; i < 4; i += 1) {
                 jt.out("lctxt" + i, ""); }
             lay.gtxt.attr("opacity", 1.0);
-            mt.delay /= 10;  //temporary development speedup
             mt.fidx = 0;
             mt.initialized = true; }
         if(mt.fidx < mt.fields.length) {
@@ -106,50 +122,53 @@ app.anime = (function () {
 
 
     function displayIdentFieldsAndTypes (fseq) {
-        var lay = initFieldsAndTypesLayout();
+        var lay = initFieldsAndTypesLayout(),
+            trans1 = Math.round(0.6 * defaultTransitionTime),
+            trans2 = Math.round(0.3 * defaultTransitionTime),
+            trans3 = Math.round(0.4 * defaultTransitionTime);
         displayMembicTypes(fseq, lay, 
             [{fields: ["Title", "Author", "Publisher", "Year"],
-              fo: 0, delay: 600, img: "TypeBook50.png", imgc: {
+              fo: 0, delay: trans1, img: "TypeBook50.png", imgc: {
                   x: lay.leftm + 0 * lay.xw,
                   y: lay.topm + 1 * lay.yh}},
              {fields: ["Title", "Author", "Publisher", "Year"],
-              fo: 0, delay: 300, img: "TypeArticle50.png", imgc: {
+              fo: 0, delay: trans2, img: "TypeArticle50.png", imgc: {
                   x: lay.leftm + (0 * lay.xw),
                   y: lay.topm + (2 * lay.yh)}},
              {fields: ["Title", "Year", "Starring"],
-              fo: 0, delay: 400, img: "TypeMovie50.png", imgc: {
+              fo: 0, delay: trans3, img: "TypeMovie50.png", imgc: {
                   x: lay.leftm + (3 * lay.xw),
                   y: lay.topm + (1 * lay.yh)}},
              {fields: ["Title", "Artist"],
-              fo: 1, delay: 400, img: "TypeVideo50.png", imgc: {
+              fo: 1, delay: trans3, img: "TypeVideo50.png", imgc: {
                   x: lay.leftm + (3 * lay.xw),
                   y: lay.topm + (2 * lay.yh)}},
              {fields: ["Title", "Artist", "Album", "Year"],
-              fo: 0, delay: 400, img: "TypeSong50.png", imgc: {
+              fo: 0, delay: trans3, img: "TypeSong50.png", imgc: {
                   x: lay.leftm + (1 * lay.xw),
                   y: lay.topm + (3 * lay.yh)}},
              {fields: ["Name", "Address"],
-              fo: 1, delay: 400, img: "TypeYum50.png", imgc: {
+              fo: 1, delay: trans3, img: "TypeYum50.png", imgc: {
                   x: lay.leftm + (2 * lay.xw),
                   y: lay.topm + (3 * lay.yh)}},
              {fields: ["Name", "Address"],
-              fo: 1, delay: 400, img: "TypeActivity50.png", imgc: {
+              fo: 1, delay: trans3, img: "TypeActivity50.png", imgc: {
                   x: lay.leftm + (1 * lay.xw),
                   y: lay.topm + (0 * lay.yh)}},
              {fields: ["Name"],
-              fo: 1, delay: 400, img: "TypeOther50.png", imgc: {
+              fo: 1, delay: trans3, img: "TypeOther50.png", imgc: {
                   x: lay.leftm + (2 * lay.xw),
                   y: lay.topm + (0 * lay.yh)}}]);
     }
 
 
     function collapseTypesToLink (fseq) {
-        var transtime = 123;
+        var transtime = defaultTransitionTime;
         ast.fatlay.glnk.transition().duration(transtime)
             //transform and scale: scalex, 0, 0, scaley, transx, transy
             .attr("transform", "matrix(0.5,0,0,0.25,10,50)");
         ast.fatlay.gico.transition().duration(transtime)
-            .attr("transform", "matrix(0.5,0,0,0.3,36,60)")
+            .attr("transform", "matrix(0.5,0,0,0.3,36,60)");
         ast.fatlay.gico.attr("opacity", 1.0)
             .transition().delay(transtime).duration(transtime)
             .attr("opacity", 0.0);
@@ -200,7 +219,7 @@ app.anime = (function () {
 
 
     function membicFields (fseq) {
-        var transtime = 123, kx = 76, ky = 101;
+        var transtime = defaultTransitionTime, kx = 76, ky = 101;
         ast.gmf.append("text")
             .attr({"x": 59, "y": 41, "fill": ast.textcolor})
             .style({"font-size": "18px", "font-weight": "bold",
@@ -234,7 +253,7 @@ app.anime = (function () {
 
 
     function collapseFieldsToMembic (fseq) {
-        var transtime = 123;
+        var transtime = defaultTransitionTime;
         ast.gmembic.transition().duration(transtime)
             //transform and scale: scalex, 0, 0, scaley, transx, transy
             .attr("transform", "matrix(0.3,0,0,0.22,10,10)");
@@ -254,8 +273,136 @@ app.anime = (function () {
     }
 
 
+    function displayMembicPostLabel (label) {
+        ast.gmpost.append("text")
+            .attr({"x": label.x, "y": label.y, id: "mpl" + label.text,
+                   "fill": ast.textcolor})
+            .style({"font-size": "14px", "font-weight": "bold",
+                    "text-anchor": "middle", "opacity": 1.0})
+            .text(label.text);
+    }
+
+
+    function displayMembicPostIcon (label, icoidx, transtime) {
+        var bbx, sx, padx = 3, icow = 18, icodef;
+        icodef = label.icons[icoidx];
+        bbx = d3.select("#mpl" + label.text).node().getBBox();
+        sx = bbx.x + bbx.width + padx + (icoidx * (icow + padx));
+        transtime = 0.8 * transtime;  //hold stable icon at end
+        ast.gmpost.append("text")
+            .attr({"x": sx, "y": label.y, "fill": ast.textcolor,
+                   "fill-opacity": 1.0})
+            .style({"font-size": "12px", "font-weight": "bold",
+                    "text-anchor": "left"})
+            .text(icodef.text)
+            .transition().duration(transtime)
+            .attr("fill-opacity", 0.0);
+        if(icodef.img === "rssicon.png") {
+            sx += 2;
+            icow -= 4; }
+        ast.gmpost.append("image")
+            .attr({"xlink:href": "img/" + icodef.img,
+                   "x": sx, "y": bbx.y, "width": icow, "height": icow,
+                   "id": "ico" + label.text + icoidx, "opacity": 0.0})
+            .transition().duration(transtime)
+            .attr("opacity", 1.0);
+    }
+
+
+    function fadeLabel (label, transtime) {
+        d3.select("#mpl" + label.text).attr("fill-opacity", 1.0)
+            .transition().delay(transtime).duration(transtime)
+            .attr("fill-opacity", 0.7);
+        label.icons.forEach(function (icon, idx) {
+            d3.select("#ico" + label.text + idx)
+                .transition().delay(transtime).duration(transtime)
+                .attr("opacity", 0.7); });
+    }
+
+
+    function displayMembicPostingLabels (fseq, labels, labidx, icoidx) {
+        var transtime = Math.round(0.9 * defaultTransitionTime), label;
+        labidx = labidx || 0;
+        icoidx = icoidx || 0;
+        if(labidx < labels.length) {
+            label = labels[labidx];
+            if(!label.displayed) {
+                displayMembicPostLabel(label);
+                label.displayed = true; }
+            else {
+                displayMembicPostIcon(label, icoidx, transtime);
+                icoidx += 1;
+                if(icoidx >= label.icons.length) {
+                    fadeLabel(label, transtime);
+                    labidx += 1;
+                    icoidx = 0; } }
+            if(label.text === "Social") {
+                transtime = Math.round(0.6 * transtime); }
+            setTimeout(function () {
+                displayMembicPostingLabels(fseq, labels, labidx, icoidx); }, 
+                       transtime); }
+        else {
+            nextAnimationSequence(fseq); }
+    }
+
+
     function membicPosting (fseq) {
-        jt.byId("linkpluswhyspan").style.display = "initial";
+        var fcx = 140, fcy = 29, fch = 36,
+            labels = [
+                {x: fcx, y: fcy, text: "Community", icons: [
+                    {text: "Prefer", img: "prefer.png"},
+                    {text: "Normal", img: "nopref.png"},  //subst endorse
+                    {text: "Background", img: "background.png"},
+                    {text: "Block", img: "block.png"}]},
+                {x: fcx, y: fcy + fch, text: "Profile", icons: [
+                    {text: "Recent", img: "tablatest.png"},
+                    {text: "Favorites", img: "top.png"},
+                    {text: "Search", img: "search.png"}]},
+                {x: fcx, y: fcy + (2 * fch), text: "Theme", icons: [
+                    {text: "Permalink", img: "permalink.png"},
+                    {text: "Newsfeed", img: "rssicon.png"},
+                    {text: "Embed", img: "embed50.png"},
+                    {text: "Microsite", img: "microsite.png"}]},
+                {x: fcx, y: fcy + (3 * fch), text: "Social", icons: [
+                    {text: "Twitter", img: "tw_logo.png"},
+                    {text: "Facebook", img: "f_logo.png"},
+                    {text: "Pinterest", img: "p_logo.png"},
+                    {text: "Tumblr", img: "t_logo.png"},
+                    {text: "More...", img: "ellipsis.png"}]}];
+        displayMembicPostingLabels(fseq, labels, 0, 0);
+    }
+
+
+    function morphToLogo (fseq) {
+        var transtime = defaultTransitionTime;
+        ast.gmpost.transition().duration(transtime)
+            //transform and scale: scalex, 0, 0, scaley, transx, transy
+            .attr("transform", "matrix(0.2,0,0,0.15,10,15)");
+        ast.gmpost.attr("opacity", 1.0)
+            .transition().delay(transtime).duration(transtime / 2)
+            .attr("opacity", 0.0);
+        ast.gmembic.transition().duration(transtime)
+            .attr("transform", "matrix(0.34,0,0,0.26,10,10)");
+        ast.gmembic.attr("opacity", 1.0)
+            .transition().delay(transtime).duration(transtime)
+            .attr("opacity", 0.0);
+        ast.gcontent.append("image")
+            .attr({"xlink:href": "img/membiclogo.png", 
+                   "x": 3, "y": 2, "width": "100px", "height": "100px"})
+            .attr("opacity", 0.0)
+            .transition().delay(transtime).duration(transtime)
+            .attr("opacity", 0.8);
+        setTimeout(function () {
+            nextAnimationSequence(fseq); }, 2 * transtime);
+    }
+
+
+    function shrinkAway (fseq) {
+        var transtime = defaultTransitionTime;
+        ast.svg.transition().duration(transtime)
+            .attr("transform", "scale(0,0)");
+        setTimeout(function () {
+            nextAnimationSequence(fseq); }, transtime);
     }
 
 
@@ -273,7 +420,9 @@ app.anime = (function () {
                   onclick: jt.fs("window.open('" + 
               "https://membic.wordpress.com/2016/02/17/introducing-membic')")},
             "INTRODUCTION"]]];
-        //jt.out("aadiv", jt.tac2html(html));
+        jt.byId("linkpluswhyspan").style.display = "initial";
+        jt.byId('themesitespan').style.display = "initial";
+        jt.out("aadiv", jt.tac2html(html));
     }
 
 
@@ -283,7 +432,7 @@ app.anime = (function () {
 return {
 
     run: function () {
-        //return;  //not ready for production yet
+        return;  //not ready for production yet
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(app.anime.run, 300); }
         //jt.err("Starting animation...");
@@ -296,22 +445,14 @@ return {
             .attr({"x": 0, "y": 0, "width": ast.width, "height": ast.height})
             .style({"fill": "white", "opacity": 0.8});  //TODO: 0.4
         ast.gcontent = ast.svg.append("g");  //overall content display
-        ast.gmembic = ast.gcontent.append("g");
-        ast.gmembic.append("ellipse")
-            .attr({"cx": 128, 
-                   "cy": 70, 
-                   "rx": 120,
-                   "ry": 64,
-                   "id": "membicbubble",
-                   "fill-opacity": 0.0, "stroke-opacity": 0.0})
-            .style({"fill": "#fd700a", "stroke": "#b9100f"});
-        ast.gmf = ast.gmembic.append("g")
-        ast.glnk = ast.gmf.append("g");
+        initSubgroups();
         nextAnimationSequence([displayIdentFieldsAndTypes,
                                collapseTypesToLink,
                                membicFields,
                                collapseFieldsToMembic,
                                membicPosting,
+                               morphToLogo,
+                               shrinkAway,
                                endDisplay]);
     }
 
