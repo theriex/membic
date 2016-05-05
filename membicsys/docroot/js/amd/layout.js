@@ -225,6 +225,7 @@ return {
                                   app.layout.runAnime, 
                                   jt.ts("?cb=", "minute")); }
             else { //app.anime loaded
+                app.anime.reset();
                 app.anime.run(); } }
     },
 
