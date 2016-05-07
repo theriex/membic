@@ -466,7 +466,8 @@ app.anime = (function () {
             .transition().delay(transtime).duration(transtime / 2)
             .attr("opacity", 0.0);
         ast.gmembic.transition().duration(transtime)
-            .attr("transform", "matrix(0.34,0,0,0.26,10,10)");
+            //transform and scale: scalex, 0, 0, scaley, transx, transy
+            .attr("transform", "matrix(0.32,0,0,0.26,10,8)");
         ast.gmembic.attr("opacity", 1.0)
             .transition().delay(transtime).duration(transtime)
             .attr("opacity", 0.0);
