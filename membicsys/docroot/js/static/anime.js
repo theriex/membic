@@ -9,7 +9,7 @@ app.anime = (function () {
     ////////////////////////////////////////
 
     var ast = { width: 300, height: 170, textcolor: "black" },
-        defaultTransitionTime = 1600 /*1600*/,
+        defaultTransitionTime = 1600,
         svgid = "animsvg";
 
 
@@ -45,15 +45,34 @@ app.anime = (function () {
         ast.gmpost = ast.gcontent.append("g");
         ast.gmembic = ast.gcontent.append("g");
         ast.gmembic.append("ellipse")
-            .attr({"cx": 128, 
-                   "cy": 70, 
-                   "rx": 120,
-                   "ry": 64,
+            .attr({"cx": 138, 
+                   "cy": 74, 
+                   "rx": 132,
+                   "ry": 58,
                    "id": "membicbubble",
                    "fill-opacity": 0.0, "stroke-opacity": 0.0})
             .style({"fill": "#fd700a", "stroke": "#b9100f"});
         ast.gmf = ast.gmembic.append("g");
         ast.glnk = ast.gmf.append("g");
+    }
+
+
+    function initPlayerControls () {
+        //could do a play/pause by changing a closure player state and
+        //having nextAnimationSequence pick up on it to set a resume
+        //function and update the control icon.  Probably not worth it
+        //given there will appear to be a lag.  Also possible to do a
+        //fast forward by changing the transition time for the curent
+        //step.  Without a single step rewind that's of limited use.
+        ast.gcontent.append("image")
+            .attr({"xlink:href": "img/reload.png", 
+                   "x": 4, "y": ast.height - 20,
+                   "height": "12px",
+                   "width": "12px",
+                   "opacity": 0.0})
+            .on("click", app.anime.run)
+            .transition().duration(defaultTransitionTime)
+            .attr("opacity", 0.5);
     }
 
 
@@ -108,7 +127,7 @@ app.anime = (function () {
 
 
     function displayMembicTypes (fseq, lay, mts) {
-        var mt, fadeout, fadein, i, txt;
+        var mt, i, txt;
         if(!mts || !mts.length) {
             lay.bubble.attr({"fill-opacity": 0.0, "stroke-opacity": 0.0})
                 .transition().duration(800)
@@ -174,6 +193,7 @@ app.anime = (function () {
             basetime = defaultTransitionTime,
             tlong = Math.round(2 * basetime),
             tshort = Math.round(0.4 * basetime),
+            tmed = Math.round(0.8 * basetime),
             tnorm = Math.round(1.4 * basetime),
             clock = {p1: {x: lay.leftm + (2 * lay.xw),
                           y: lay.topm + (0 * lay.yh)},
@@ -201,13 +221,13 @@ app.anime = (function () {
              {fields: ["Title", "Year", "Starring"],
               fo: 0, delay: tnorm, img: "TypeMovie50.png", imgc: clock.p4},
              {fields: ["Title", "Artist"],
-              fo: 1, delay: tnorm, img: "TypeVideo50.png", imgc: clock.pB},
+              fo: 1, delay: tmed, img: "TypeVideo50.png", imgc: clock.pB},
              {fields: ["Name", "Address"],
-              fo: 1, delay: tshort, img: "TypeActivity50.png", imgc: clock.p1},
+              fo: 1, delay: tmed, img: "TypeActivity50.png", imgc: clock.p1},
              {fields: ["Name", "Address"],
               fo: 1, delay: tshort, img: "TypeYum50.png", imgc: clock.p7},
              {fields: ["Name", "URL"],
-              fo: 1, delay: tnorm, img: "TypeOther50.png", imgc: clock.p5}]);
+              fo: 1, delay: tmed, img: "TypeOther50.png", imgc: clock.p5}]);
     }
 
 
@@ -232,51 +252,53 @@ app.anime = (function () {
 
 
     function drawStars (transtime) {
-        var sx = 140, sy = 64, sw = 14, st = transtime / 5;
-        ast.gmf.append("rect")
-            .attr({"x": sx + 2, "y": sy, "width": sw, "height": 15})
+        var sx = 82, sy = 32, sr = 6, st = transtime / 5;
+        ast.gmf.append("circle")
+            .attr({"cx": sx + sr + 3, "cy": sy + sr + 1, "r": sr})
             .style({"fill": "#fed000"})
             .attr("opacity", 0.0)
             .transition().duration(st)
             .attr("opacity", 1.0);
-        ast.gmf.append("rect")
-            .attr({"x": sx + 18, "y": sy, "width": sw, "height": 15})
+        ast.gmf.append("circle")
+            .attr({"cx": sx + sr + 19, "cy": sy + sr + 1, "r": sr})
             .style({"fill": "#fed000"})
             .attr("opacity", 0.0)
             .transition().delay(st).duration(st)
             .attr("opacity", 1.0);
-        ast.gmf.append("rect")
-            .attr({"x": sx + 35, "y": sy, "width": sw, "height": 15})
+        ast.gmf.append("circle")
+            .attr({"cx": sx + sr + 36, "cy": sy + sr + 1, "r": sr})
             .style({"fill": "#fed000"})
             .attr("opacity", 0.0)
             .transition().delay(2 * st).duration(st)
             .attr("opacity", 1.0);
-        ast.gmf.append("rect")
-            .attr({"x": sx + 52, "y": sy, "width": sw, "height": 15})
+        ast.gmf.append("circle")
+            .attr({"cx": sx + sr + 53, "cy": sy + sr + 1, "r": sr})
             .style({"fill": "#fed000"})
             .attr("opacity", 0.0)
             .transition().delay(3 * st).duration(st)
             .attr("opacity", 1.0);
-        ast.gmf.append("rect")
-            .attr({"x": sx + 69, "y": sy, "width": sw, "height": 15})
+        ast.gmf.append("circle")
+            .attr({"cx": sx + sr + 70, "cy": sy + sr + 1, "r": sr})
             .style({"fill": "#fed000"})
             .attr("opacity", 0.0)
             .transition().delay(4 * st).duration(st)
             .attr("opacity", 1.0);
         ast.gmf.append("image")
             .attr({"xlink:href": "img/stars18ptCEmptyCenters.png",
-                   "x": sx, "y": sy, "height": 15, "width": 85})
-            .style({"opacity": 1.0});
+                   "x": sx, "y": sy, "height": 15, "width": 85,
+                   "opacity": 0.0})
+            .transition().duration(Math.round(0.4 * st))
+            .attr("opacity", 1.0);
     }
 
 
     function membicFields (fseq) {
-        var transtime = defaultTransitionTime, kx = 76, ky = 101;
+        var transtime = defaultTransitionTime, kx = 84, ky = 101;
         ast.gmf.append("text")
-            .attr({"x": 59, "y": 41, "fill": ast.textcolor})
+            .attr({"x": 102, "y": 79, "fill": ast.textcolor})
             .style({"font-size": "18px", "font-weight": "bold",
                     "text-anchor": "left"})
-            .text("Why memorable?");
+            .text("+ Why Memorable");
         delayf(function () {
             drawStars(transtime); }, transtime, svgid);
         delayf(function () {
@@ -285,9 +307,9 @@ app.anime = (function () {
                 .style({"fill": "none", "stroke": ast.textcolor});
             ast.gmf.append("text")
                 .attr({"x": kx + 16, "y": ky + 11, "fill": ast.textcolor})
-                .style({"font-size": "18px", "font-weight": "bold",
-                        "text-anchor": "left", "opacity": 0.8})
-                .text("keywords"); }, 2 * transtime, svgid);
+                .style({"font-size": "14px", "font-weight": "bold",
+                        "text-anchor": "left", "opacity": 1.0})
+                .text("Keywords"); }, 2 * transtime, svgid);
         delayf(function () {
             ast.gmf.append("path")
                 .attr("d", "M " + kx +        " " + (ky + 3) + 
@@ -295,7 +317,7 @@ app.anime = (function () {
                           " L " + (kx + 10) + " " + ky +
                           " L " + (kx + 4) +  " " + (ky + 5) + " Z")
                 .style({"fill": ast.textcolor, "stroke": ast.textcolor}); },
-                   2.8 * transtime, svgid);
+                   2.4 * transtime, svgid);
         d3.select("#membicbubble").transition()
             .delay(3 * transtime).duration(transtime)
             .attr({"fill-opacity": 0.4, "stroke-opacity": 0.4});
@@ -313,36 +335,59 @@ app.anime = (function () {
             .transition().duration(transtime)
             .attr("opacity", 0.0);
         ast.gmembic.append("text")
-            .attr({"x": 128, "y": 90, "fill-opacity": 0,
+            .attr({"x": 140, "y": 93, "fill-opacity": 0,
                    "id": "linktxt", "fill": ast.textcolor})
             .style({"font-size": "56px", "font-weight": "bold",
                     "text-anchor": "middle"})
             .text("Membic")
             .transition().duration(transtime)
             .attr("fill-opacity", 1.0);
+        initPlayerControls();
         delayf(function () {
             nextAnimationSequence(fseq); }, 2 * transtime, svgid);
     }
 
 
-    function displayMembicPostLabel (label) {
-        ast.gmpost.append("text")
-            .attr({"x": label.x, "y": label.y, id: "mpl" + label.text,
-                   "fill": ast.textcolor})
+    function displayMembicPostLabel (labels, lay, transtime) {
+        var i, y, labg, label = labels[lay.labidx];
+        for(i = 0; i < lay.labidx; i += 1) {
+            y = lay.y + ((lay.labidx - i) * lay.h);
+            d3.select("#mplabg" + i)
+                .transition().duration(transtime)
+                .attr("transform", "translate(" + lay.x + "," + y + ")")
+                .transition().delay(transtime).duration(transtime)
+                .attr("opacity", 0.6); }
+        labg = ast.gmpost.append("g")
+            .attr("id", "mplabg" + lay.labidx)
+            .attr("opacity", 1.0)
+            .attr("transform", "translate(" + lay.x + "," + lay.y + ")");
+        labg.append("text")
+            .attr({"x": 0, "y": 0, id: "mpl" + label.text,
+                   "fill": ast.textcolor, "fill-opacity": 0})
             .style({"font-size": "14px", "font-weight": "bold",
-                    "text-anchor": "middle", "opacity": 1.0})
-            .text(label.text);
+                    "text-anchor": "left"})
+            .text(label.text)
+            .transition().duration(transtime)
+            .attr("fill-opacity", 1.0);
     }
 
 
-    function displayMembicPostIcon (label, icoidx, transtime) {
-        var bbx, sx, padx = 3, icow = 18, icodef;
-        icodef = label.icons[icoidx];
+    function displayMembicPostIcon (labels, lay, transtime) {
+        var bbx, sx, padx = 3, icoy, icow = 18, label, icodef, labg;
+        label = labels[lay.labidx];
+        if(label.text === "Social") {
+            icow = 14; }
+        icodef = label.icons[lay.icoidx];
         bbx = d3.select("#mpl" + label.text).node().getBBox();
-        sx = bbx.x + bbx.width + padx + (icoidx * (icow + padx));
-        transtime = 0.8 * transtime;  //hold stable icon at end
-        ast.gmpost.append("text")
-            .attr({"x": sx, "y": label.y, "fill": ast.textcolor,
+        sx = bbx.x + bbx.width + padx + (lay.icoidx * (icow + padx));
+        icoy = bbx.y;
+        if(label.text === "Social") {
+            if(lay.icoidx === label.icons.length - 1) {
+                transtime *= 2; }
+            icoy += 3; }
+        labg = d3.select("#mplabg" + lay.labidx);
+        labg.append("text")
+            .attr({"x": sx, "y": 0, "fill": ast.textcolor,
                    "fill-opacity": 1.0})
             .style({"font-size": "12px", "font-weight": "bold",
                     "text-anchor": "left"})
@@ -352,76 +397,63 @@ app.anime = (function () {
         if(icodef.img === "rssicon.png") {
             sx += 2;
             icow -= 4; }
-        ast.gmpost.append("image")
+        labg.append("image")
             .attr({"xlink:href": "img/" + icodef.img,
-                   "x": sx, "y": bbx.y, "width": icow, "height": icow,
-                   "id": "ico" + label.text + icoidx, "opacity": 0.0})
+                   "x": sx, "y": icoy, "width": icow, "height": icow,
+                   "id": "ico" + label.text + lay.icoidx, "opacity": 0.0})
             .transition().duration(transtime)
             .attr("opacity", 1.0);
     }
 
 
-    function fadeLabel (label, transtime) {
-        d3.select("#mpl" + label.text).attr("fill-opacity", 1.0)
-            .transition().delay(transtime).duration(transtime)
-            .attr("fill-opacity", 0.7);
-        label.icons.forEach(function (icon, idx) {
-            d3.select("#ico" + label.text + idx)
-                .transition().delay(transtime).duration(transtime)
-                .attr("opacity", 0.7); });
-    }
-
-
-    function displayMembicPostingLabels (fseq, labels, labidx, icoidx) {
-        var transtime = Math.round(0.9 * defaultTransitionTime), label;
-        labidx = labidx || 0;
-        icoidx = icoidx || 0;
-        if(labidx < labels.length) {
-            label = labels[labidx];
+    function displayMembicPostingLabels(fseq, labels, lay) {
+        var transtime = defaultTransitionTime, label;
+        if(lay.labidx < labels.length) {
+            label = labels[lay.labidx];
             if(!label.displayed) {
-                displayMembicPostLabel(label);
+                transtime = Math.round(0.2 * transtime);
+                displayMembicPostLabel(labels, lay, transtime);
                 label.displayed = true; }
             else {
-                displayMembicPostIcon(label, icoidx, transtime);
-                icoidx += 1;
-                if(icoidx >= label.icons.length) {
-                    fadeLabel(label, transtime);
-                    labidx += 1;
-                    icoidx = 0; } }
-            if(label.text === "Social") {
-                transtime = Math.round(0.4 * transtime); }
+                transtime = Math.round(label.spd * transtime);
+                displayMembicPostIcon(labels, lay, transtime);
+                lay.icoidx += 1;
+                if(lay.icoidx >= label.icons.length) {
+                    lay.labidx += 1;
+                    lay.icoidx = 0; } }
             delayf(function () {
-                displayMembicPostingLabels(fseq, labels, labidx, icoidx); }, 
-                       transtime, svgid); }
+                displayMembicPostingLabels(fseq, labels, lay); },
+                   transtime, svgid); }
         else {
             nextAnimationSequence(fseq); }
     }
 
 
     function membicPosting (fseq) {
-        var fcx = 140, fcy = 29, fch = 36,
+        var lay = {x: 100, y: 31, h: 36, labidx: 0, icoidx: 0},
             labels = [
-                {x: fcx, y: fcy, text: "Community", icons: [
-                    {text: "Prefer", img: "prefer.png"},
-                    {text: "Normal", img: "nopref.png"},  //subst endorse
-                    {text: "Background", img: "background.png"},
-                    {text: "Block", img: "block.png"}]},
-                {x: fcx, y: fcy + fch, text: "Profile", icons: [
+                {text: "Profile", spd: 1.0, icons: [
                     {text: "Recent", img: "tablatest.png"},
                     {text: "Favorites", img: "top.png"},
+                    {text: "Remembered", img: "tabmemo.png"},
                     {text: "Search", img: "search.png"}]},
-                {x: fcx, y: fcy + (2 * fch), text: "Theme", icons: [
+                {text: "Social", spd: 0.4, icons: [
+                    {text: "Twitter", img: "socbwtw.png"},
+                    {text: "Facebook", img: "socbwf.png"},
+                    {text: "Pinterest", img: "socbwp.png"},
+                    {text: "Tumblr", img: "socbwt.png"},
+                    {text: "AddToAny", img: "socbwa2a.png"}]},
+                {text: "Theme", spd: 1.2, icons: [
                     {text: "Permalink", img: "permalink.png"},
                     {text: "Newsfeed", img: "rssicon.png"},
                     {text: "Embed", img: "embed50.png"},
                     {text: "Microsite", img: "microsite.png"}]},
-                {x: fcx, y: fcy + (3 * fch), text: "Social", icons: [
-                    {text: "Twitter", img: "tw_logo.png"},
-                    {text: "Facebook", img: "f_logo.png"},
-                    {text: "Pinterest", img: "p_logo.png"},
-                    {text: "Tumblr", img: "t_logo.png"},
-                    {text: "More...", img: "ellipsis.png"}]}];
-        displayMembicPostingLabels(fseq, labels, 0, 0);
+                {text: "Community", spd: 0.8, icons: [
+                    {text: "Prefer", img: "prefer.png"},
+                    {text: "Normal", img: "nopref.png"},  //subst endorse
+                    {text: "Background", img: "background.png"},
+                    {text: "Block", img: "block.png"}]}];
+        displayMembicPostingLabels(fseq, labels, lay);
     }
 
 
@@ -490,10 +522,8 @@ return {
     },
 
     run: function () {
-        return;  //not ready for production yet
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(app.anime.run, 300); }
-        //jt.err("Starting animation...");
         app.anime.reset();
         hideStaticComponents();
         ast.svg = d3.select("#aadiv").append("svg")
