@@ -196,9 +196,12 @@ return {
                              onclick: jt.fs("app.layout.displayTypes(-1,'" + 
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
-        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv"}, 
+        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv",
+                        style: "opacity:0.1;"}, 
                 html];
         jt.out("headingdivcontent", jt.tac2html(html));
+        setTimeout(function () {
+            jt.byId("revtypesdiv").style.opacity = 1.0; }, 100);
         if(callbackf === -1) {
             typestate.callbackf(typestate.typename); }
     },
