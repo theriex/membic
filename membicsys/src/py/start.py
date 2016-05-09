@@ -54,7 +54,7 @@ indexHTML = """
             <input value="Sign in" type="submit" class="loginbutton"/>
             <a href="#intro" title="Information"
                onclick="app.layout.displayDoc('docs/about.html');return false;">
-              <img id="introimg" src="img/infotrim.png"/></a>
+              <img id="infoimg" src="img/infotrim.png" style="opacity:0.6"/></a>
           </div>
           <div id="forgotpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->

@@ -236,6 +236,9 @@ app.login = (function () {
                       onclick: jt.fs("app.login.forgotPassword()")},
                 "forgot my password..."];
         jt.out('forgotpassdiv', jt.tac2html(html));
+        jt.byId("infoimg").style.opacity = 0.4;
+        setTimeout(function () {
+            jt.byId("infoimg").style.opacity = 0.8; }, 2000);
         if(authname) {
             jt.byId('emailin').value = authname; }
         if(params.emailin) {
@@ -401,7 +404,8 @@ app.login = (function () {
             html = [["a", {id: "introa", href: "#intro", title: "Information",
                            onclick: jt.fs(
                                "app.layout.displayDoc('docs/about.html')")},
-                     ["img", {id: "introimg", src: "img/infotrim.png"}]],
+                     ["img", {id: "infoimg", src: "img/infotrim.png",
+                              style: "width:18px;height:18px;"}]],
                     ["a", {href: "#SignOut",
                            onclick: jt.fs("app.login.logout()")},
                      ["span", {cla: "taslinkspan"},
