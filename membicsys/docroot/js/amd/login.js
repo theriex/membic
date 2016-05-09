@@ -405,7 +405,7 @@ app.login = (function () {
                            onclick: jt.fs(
                                "app.layout.displayDoc('docs/about.html')")},
                      ["img", {id: "infoimg", src: "img/infotrim.png",
-                              style: "width:18px;height:18px;"}]],
+                              style: "opacity:0.8;"}]],
                     ["a", {href: "#SignOut",
                            onclick: jt.fs("app.login.logout()")},
                      ["span", {cla: "taslinkspan"},
