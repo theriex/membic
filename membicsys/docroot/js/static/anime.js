@@ -411,7 +411,7 @@ app.anime = (function () {
         if(lay.labidx < labels.length) {
             label = labels[lay.labidx];
             if(!label.displayed) {
-                transtime = Math.round(0.2 * transtime);
+                transtime = Math.round(1.4 * transtime);
                 displayMembicPostLabel(labels, lay, transtime);
                 label.displayed = true; }
             else {
