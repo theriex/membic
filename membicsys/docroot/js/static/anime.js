@@ -449,8 +449,8 @@ app.anime = (function () {
                     {text: "Embed", img: "embed50.png"},
                     {text: "Microsite", img: "microsite.png"}]},
                 {text: "Community", spd: 0.8, icons: [
-                    {text: "Prefer", img: "prefer.png"},
-                    {text: "Normal", img: "nopref.png"},  //subst endorse
+                    {text: "Prefer", img: "promote.png"},
+                    {text: "Endorse", img: "endorse.png"},
                     {text: "Background", img: "background.png"},
                     {text: "Block", img: "block.png"}]}];
         displayMembicPostingLabels(fseq, labels, lay);
