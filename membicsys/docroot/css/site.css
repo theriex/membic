@@ -345,15 +345,20 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .visprefimgprof { width:30px; height:30px; margin:0px 4px 0px 10px; }
 .visprefnamespan { font-weight:bold; font-size:small; }
 .visprefdescrspan { padding-left:5px; font-size:small; }
+.visprefsuppdiv { padding-left:30px; font-size:small; }
 .themesdiv { }
-.themetilewrapper { display:inline-block; margin:5px; padding:5px; 
-  background:#fff; vertical-align:top; 
-  box-shadow:10px 10px 5px #888888;
-  border-radius:10px; border:1px solid #ccc; }
-.themetile { margin:auto; }
+.themetilewrapper, .proftilewrapper { display:inline-block; 
+  margin:5px; padding:5px; border:1px solid #ccc;
+  background:#fff; vertical-align:top; }
+.themetilewrapper { box-shadow:10px 10px 5px #888888; border-radius:10px; }
+.proftilewrapper { box-shadow:5px 5px 3px #888888; border-radius:5px; }
+.themetile, .proftile { margin:auto; }
 .themetilepicdiv { max-width:125px; max-height:125px; }
-.themetiletitlediv { max-width:125px; text-align:center;
+.proftilepicdiv { max-width:60px; max-height:60px; }
+.themetiletitlediv, .proftiletitlediv { text-align:center;
   font-family:"Shadows Into Light Two", cursive; }
+.themetiletitlediv { max-width:125px; }
+.proftiletitlediv { max-width:80px; font-size:small; }
 .themetilecountdiv { display:none; text-align:center; font-size:x-small; }
 
 

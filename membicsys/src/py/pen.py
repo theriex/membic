@@ -38,6 +38,7 @@ class PenName(db.Model):
     stash = db.TextProperty()       # precomputed vals, breadcrumbs and such
     settings = db.TextProperty()    # client skin, keyword overrides etc
     preferred = db.TextProperty()   # CSV of penids given priority
+    endorsed = db.TextProperty()    # CSV of penids that are known and accepted
     background = db.TextProperty()  # CSV of penids with reduced priority
     blocked = db.TextProperty()     # CSV of penids to be avoided
     coops = db.TextProperty()       # coopids this pen is following
@@ -80,6 +81,7 @@ def set_pen_attrs(pen, request):
     pen.stash = request.get('stash') or ""
     pen.settings = request.get('settings') or ""
     pen.preferred = str(request.get('preferred')) or ""
+    pen.endorsed = str(request.get('endorsed')) or ""
     pen.background = str(request.get('background')) or ""
     pen.blocked = str(request.get('blocked')) or ""
     pen.coops = str(request.get('coops')) or ""

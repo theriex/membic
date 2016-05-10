@@ -12,16 +12,23 @@ app.pen = (function () {
     var loginpenid,
         returnFuncMemo,  //function to return to after dialog completed
         visprefvals = [
-            //keep these descriptions tight to avoid line wrap on phone
+            //keep descriptions tight to avoid line wrap on phone
             { ident: "blocked", name: "Block", img: "img/block.png",
-              description: "everything from $PEN" },
+              description: "everything from $PEN",
+              supp: "Irreversibly hide all posts." },
             { ident: "background", name: "Background", 
               img: "img/background.png",
-              description: "$PEN" },
-            { ident: "normal", name: "Normal", img: "img/nopref.png",
-              description: "" },
-            { ident: "prefer", name: "Prefer", img: "img/prefer.png",
-              description: "posts from $PEN" }],
+              description: "$PEN",
+              supp: "Display after all other posts." },
+            { ident: "normal", name: "Normal", img: "img/noprefsq.png",
+              description: "",
+              supp: "Sort normally, no profile link." },
+            { ident: "endorse", name: "Endorse", img: "img/endorse.png",
+              description: "$PEN",
+              supp: "Show as preferred, but don't sort." },
+            { ident: "prefer", name: "Prefer", img: "img/promote.png",
+              description: "posts from $PEN",
+              supp: "Display before any other posts." }],
 
 
     ////////////////////////////////////////
@@ -87,6 +94,31 @@ app.pen = (function () {
                      "Create"]]]]]];
         jt.out('contentdiv', jt.tac2html(html));
         jt.byId('pnamein').focus();
+    },
+
+
+    visibilityPreferencesChanged = function (pen, vp, penid) {
+        if(!pen || !vp || !penid) {
+            return false; }
+        pen.preferred = pen.preferred || "";
+        pen.endorsed = pen.endorsed || "";
+        pen.background = pen.background || "";
+        pen.blocked = pen.blocked || "";
+        switch(vp.ident) {
+        case "blocked":
+            return !pen.blocked.csvcontains(penid);
+        case "background":
+            return !pen.background.csvcontains(penid);
+        case "endorse":
+            return !pen.endorsed.csvcontains(penid);
+        case "prefer":
+            return !pen.preferred.csvcontains(penid);
+        case "normal":
+            return (pen.blocked.csvcontains(penid) ||
+                    pen.background.csvcontains(penid) ||
+                    pen.endorsed.csvcontains(penid) ||
+                    pen.preferred.csvcontains(penid)); }
+        return true;
     };
 
 
@@ -152,9 +184,15 @@ return {
 
 
     prefPens: function (pen, divid, callback) {
-        var ret = {};
+        var ret = {}, pencsv;
         pen.preferred = pen.preferred || "";
-        pen.preferred.csvarray().every(function (penid) {
+        pen.endorsed = pen.endorsed || "";
+        pencsv = pen.preferred;
+        if(pen.endorsed) {
+            if(pencsv) {
+                pencsv += ","; }
+            pencsv += pen.endorsed; }
+        pencsv.csvarray().every(function (penid) {
             var penref;
             if(app.pennames[penid]) {
                 ret[penid] = app.pennames[penid]; }
@@ -285,9 +323,15 @@ return {
                                       value: pv.name, id: "vprin" + i,
                                       checked: jt.toru(pv.img === pimg)}],
                            ["img", {cla: "visprefimg", src: pv.img}],
-                           ["span", {cla: "visprefnamespan"}, pv.name],
-                           ["span", {cla: "visprefdescrspan"}, 
-                            pv.description.replace(/\$PEN/g, penname)]]]); });
+                           ["a", {href: "#" + pv.name,
+                                  onclick: jt.fs("app.toggledivdisp('" +
+                                                 "vpsupp" + i + "')")},
+                            ["span", {cla: "visprefnamespan"}, pv.name]],
+                           ["span", {cla: "visprefdescrspan"},
+                            pv.description.replace(/\$PEN/g, penname)],
+                           ["div", {cla: "visprefsuppdiv", id: "vpsupp" + i,
+                                    style: "display:none;"},
+                            pv.supp]]]); });
         html = ["div", {id: "vpdlgdiv"},
                 [["ul", {id: "preflist"},
                   html],
@@ -315,19 +359,19 @@ return {
                         (app.pennames[penid] || "this user") + "?")) {
             return; }
         app.layout.cancelOverlay();
-        if(vp) {
-            pen = app.pen.myPenName();
-            pen.preferred = pen.preferred || "";
+        pen = app.pen.myPenName();
+        if(visibilityPreferencesChanged(pen, vp, penid)) {
             pen.preferred = pen.preferred.csvremove(penid);
-            pen.background = pen.background || "";
+            pen.endorsed = pen.endorsed.csvremove(penid);
             pen.background = pen.background.csvremove(penid);
-            pen.blocked = pen.blocked || "";
             pen.blocked = pen.blocked.csvremove(penid);
             switch(vp.ident) {
             case "blocked":
                 pen.blocked = pen.blocked.csvappend(penid); break;
             case "background":
                 pen.background = pen.background.csvappend(penid); break;
+            case "endorse":
+                pen.endorsed = pen.endorsed.csvappend(penid); break;
             case "prefer":
                 pen.preferred = pen.preferred.csvappend(penid); break; }
             app.pen.updatePen(pen, app.pen.reflectVisPrefs, app.failf); }
@@ -351,6 +395,8 @@ return {
         pen = app.pen.myPenName();
         if(pen) {
             if(pen.preferred && pen.preferred.csvcontains(penid)) {
+                img = visprefvals[4].img; }
+            else if(pen.endorsed && pen.endorsed.csvcontains(penid)) {
                 img = visprefvals[3].img; }
             else if(pen.background && pen.background.csvcontains(penid)) {
                 img = visprefvals[1].img; }

@@ -46,9 +46,9 @@ app.pcd = (function () {
                                    mtitle: "Search my membics",
                                    otitle: "Search membics from $NAME"},
                       prefpens:  { href: "#preferredpens",
-                                   img: "img/prefer.png",
-                                   mtitle: "People I prefer",
-                                   otitle: "People $NAME prefers"},
+                                   img: "img/endorse.png",
+                                   mtitle: "People I endorse",
+                                   otitle: "People $NAME endorses"},
                       coops:     { href: "#coopsfollowing",
                                    img: "img/tabctms.png",
                                    mtitle: "My Themes",
@@ -1271,14 +1271,18 @@ return {
                                     app.pcd.displayPrefPens); }
         Object.keys(prefpens).forEach(function (penid) {
             var pname = prefpens[penid];
-            html.push(["div", {cla: "penlinkdiv"},
-                       [["div", {cla: "fpprofdiv"},
-                         ["img", {cla: "fpprofpic", alt: "no pic",
-                                  src: dst.pen.picsrc + penid}]],
-                        ["a", {href: "p/" + penid, cla: "leftspacelink",
+            html.push(["div", {cla: "proftilewrapper",
+                               id: "proftile" + penid},
+                       ["div", {cla: "proftile"},
+                        ["a", {title: "View " + pname,
+                               href: "p/" + penid,
                                onclick: jt.fs("app.pen.bypenid('" +
                                               penid + "','prefpens')")},
-                         ["span", {cla: "penfont"}, pname]]]]); });
+                         [["div", {cla: "proftilepicdiv"},
+                           ["img", {cla: "fpprofpic", alt: "no pic",
+                                    src: dst.pen.picsrc + penid}]],
+                          ["div", {cla: "proftiletitlediv"},
+                           pname]]]]]); });
         if(!html.length) {
             html.push(["div", {cla: "pcdtext"},
                        "No preferred people yet."]); }
