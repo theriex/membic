@@ -42,7 +42,7 @@ var app = {},  //Global container for application level funcs and values
 
     //app global key handling
     app.globkey = function (e) {
-        if(e && e.keyCode === 27) {  //ESC
+        if(e && (e.charCode === 27 || e.keyCode === 27)) {  //ESC
             if(app.onescapefunc) {
                 jt.evtend(e);
                 app.onescapefunc(); } }
@@ -134,7 +134,7 @@ var app = {},  //Global container for application level funcs and values
         if(!app.introtext) {  //capture original so we can revert as needed
             app.introtext = cdiv.innerHTML; }
         app.layout.init();
-        jt.on(document, 'keypress', app.globkey);
+        jt.on(document, 'keydown', app.globkey);
         jt.on(window, 'popstate', app.history.pop);
         setTimeout(app.login.init, 10);
         //setTimeout(app.layout.displayDoc, 500);
