@@ -1193,7 +1193,7 @@ app.pcd = (function () {
         mpi = app.pen.myPenId();
         msg = "Retrieving " + dtype.capitalize() + " " + id + "...";
         if(dtype === "coop") {
-            msg = "Retrieving cooperative theme " + id + "...";
+            msg = "Retrieving theme " + id + "...";
             if(app.coopnames[id]) {
                 msg = "Retrieving " + app.coopnames[id] + "..."; } }
         else if(dtype === "pen") {

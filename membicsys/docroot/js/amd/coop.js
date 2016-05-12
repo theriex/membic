@@ -426,7 +426,7 @@ return {
 
 
     rememberThemeName: function (ctm, fillonly) {
-        var ctmid = jt.instId(ctm);
+        var ctmid = ctm.ctmid || jt.instId(ctm);
         if(!fillonly || !app.coopnames[ctmid]) {
             app.coopnames[ctmid] = ctm.name;
             app.cooptags[ctmid] = ctm.hashtag || ""; }
