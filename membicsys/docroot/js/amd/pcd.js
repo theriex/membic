@@ -1088,11 +1088,13 @@ app.pcd = (function () {
         absdiv.style.border = "none";
         absdiv.style.visibility = "visible";
         homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
-        rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
+        if(dst.type !== "coop") {
+            homeurl = app.hardhome + "?view=pen&penid=" + dst.id; }
         html = [["a", {href: homeurl, title: dst.obj.name + " full page",
                        onclick: jt.fs("window.open('" + homeurl + "')")},
                  ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]]];
         if(dst.type === "coop") {  //RSS only available for themes...
+            rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
             html.push("&nbsp; &nbsp;");
             html.push(
                 ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
