@@ -1290,16 +1290,19 @@ app.review = (function () {
 
 
     typeAndTitle = function (type, rev, togclick) {
-        var html;
-        html = [["img", {cla: "reviewbadge", src: "img/" + type.img,
-                         title: type.type, alt: type.type}],
-                ["img", {cla: "webjump", src: "img/stackedmenu.png",
-                         title: "actions", alt: "actions"}],
-                "&nbsp;",
-                app.pcd.reviewItemNameHTML(type, rev)];
-        html = ["a", {href: revurl(rev), onclick: togclick},
-                html];
-        return html;
+        var th, tmh;
+        th = ["img", {cla: "reviewbadge", src: "img/" + type.img,
+                      title: type.type, alt: type.type}];
+        if(rev.url) {
+            th = ["a", {href: rev.url, title: rev.url,
+                        onclick: jt.fs("window.open('" + rev.url + "')")},
+                  th]; }
+        tmh = [["img", {cla: "webjump", src: "img/stackedmenu.png",
+                        title: "actions", alt: "actions"}],
+               "&nbsp;",
+               app.pcd.reviewItemNameHTML(type, rev)];
+        tmh = ["a", {href: revurl(rev), onclick: togclick}, tmh];
+        return [th, tmh];
     },
 
 
