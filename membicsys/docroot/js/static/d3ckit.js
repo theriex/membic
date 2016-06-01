@@ -10,13 +10,13 @@ d3ckit = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var normTransTime = 1600,
-        fastTransTime = 200,  //essentially instant, but subdivisions > 0
-        ds = {deck: [],                //slides to display. see makeDemoDeck
+    var ds = {deck: [],                //slides to display. see makeDemoDeck
               dispdivid: "d3ckitdiv",  //svg will take 100% of this space
               w: 600, h: 342,          //default viewbox dims (MacAir max)
               margin: {top: 10, right: 10, bottom: 10, left: 10},
-              moviescreen: true, textcolor: "black", transtime: normTransTime,
+              normTransTime: 1600,
+              fastTransTime: 200,  //essentially instant, but subdivisions > 0
+              moviescreen: true, textcolor: "black",
               autoplay: false, paused: false,
               //working variables
               didx: -1, svgid: null, gs: {}, 
@@ -150,8 +150,8 @@ d3ckit = (function () {
     function autoplayAsNeeded () {
         if(ds.autoplay && !ds.paused) {
             delayf(function () {
-                d3ckit.next(normTransTime); },
-                   normTransTime, ds.svgid); }
+                d3ckit.next(ds.normTransTime); },
+                   ds.normTransTime, ds.svgid); }
     }
 
 
@@ -234,7 +234,7 @@ return {
 
     rewind: function () {
         var ts = ds.transtime;
-        ds.transtime = fastTransTime;
+        ds.transtime = ds.fastTransTime;
         d3ckit.previous();
         ds.transtime = ts;
     },
@@ -280,7 +280,7 @@ return {
 
     forward: function () {
         var ts = ds.transtime;
-        ds.transtime = fastTransTime;
+        ds.transtime = ds.fastTransTime;
         d3ckit.playpause();
         ds.transtime = ts;
     },
@@ -290,6 +290,7 @@ return {
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(d3ckit.run, 300); }
         d3ckit.restart(true);
+        ds.transtime = ds.transtime || ds.normTransTime;
         if(!ds.deck || !ds.deck.length) {
             ds.deck = makeDemoDeck(); }
         ds.dw = ds.w - (ds.margin.left + ds.margin.right);
@@ -301,6 +302,8 @@ return {
         ds.globg = ds.svg.append("g")
             .attr("transform", "translate(" + ds.margin.left + "," + 
                                               ds.margin.top + ")");
+        if(ds.svgsetupfunc) {  //hook point for appending svg:marker or whatever
+            ds.svgsetupfunc(); }
         if(ds.moviescreen) {
             ds.globg.append("rect")
                 .attr({"x": 0, "y": 0, "width": ds.dw, "height": 24})
