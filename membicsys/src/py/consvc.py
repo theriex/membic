@@ -405,7 +405,7 @@ class URLContents(webapp2.RequestHandler):
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
         #     return
-        logging.info("referer: " + self.request.referer)
+        logging.info("referer: " + str(self.request.referer))
         logging.info("request: " + str(self.request))
         result = simple_fetchurl(self, self.request.get('url'))
         if result:

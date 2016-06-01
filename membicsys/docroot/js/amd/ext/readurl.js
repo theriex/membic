@@ -164,6 +164,20 @@ app.readurl = (function () {
     },
 
 
+    //In at least one use case, the query string part of the url was
+    //needed to reach the linked content, and the returned canonical
+    //value was just the base site url.  While it's nice to have
+    //extraneous url crap cleaned up by a canonical link declaration,
+    //failing to actually link to the content is not an option.  If
+    //the canonical url is less specific than the original, then go
+    //with the original to avoid that problem.
+    probableInfoLoss = function (canonical, original) {
+        if(original.startsWith(canonical)) {
+            return true; }
+        return false;
+    },
+
+
     setCanonicalURL = function (review, html, url) {
         var elem, val;
         //the Facebook url is frequently better than the canonical link
@@ -171,14 +185,18 @@ app.readurl = (function () {
         if(elem) {
             val = valueForField(elem, "content");
             if(val) {
-                review.url = verifyFullURL(val, url);
-                return; } }
+                val = verifyFullURL(val, url);
+                if(!probableInfoLoss(val, url)) {
+                    review.url = val;
+                    return; } } }
         elem = elementForString(html, "canonical", "link");
         if(elem) {
             val = valueForField(elem, "href");
             if(val) {
-                review.url = verifyFullURL(val, url);
-                return; } }
+                val = verifyFullURL(val, url);
+                if(!probableInfoLoss(val, url)) {
+                    review.url = val;
+                    return; } } }
     },
 
 
@@ -303,7 +321,8 @@ return {
         geturl = "urlcontents?url=" + jt.enc(url) + jt.ts("&cb=", "second");
         jt.call('GET', geturl, null,
                 function (json) {
-                    setReviewFields(review, jt.dec(json[0].content), url);
+                    var html = jt.dec(json[0].content);
+                    setReviewFields(review, html, url);
                     app.review.updatedlg(); },
                 //do not call app.failf here as the error may be from
                 //the called site rather than the membicsys server.
