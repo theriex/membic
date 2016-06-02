@@ -479,7 +479,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
                     redurl += "emailin=" + email + "&loginerr=Not registered"
         # preserve any state information passed in the params so they can
         # continue on their way after ultimately logging in.  If changing
-        # these params, also check login.doneWorkingWithAccount
+        # these params, also check login.doNextStep
         command = self.request.get('command')
         if command and command != "chgpwd":
             redurl += "&command=" + command
@@ -504,6 +504,9 @@ class TokenAndRedirect(webapp2.RequestHandler):
         coopid = self.request.get('coopid')
         if coopid:
             redurl += "&coopid=" + coopid
+        tab = self.request.get('tab')
+        if tab:
+            redurl += "&tab=" + tab
         url = self.request.get('url')
         if url:
             redurl += "&url=" + urllib.quote(url)

@@ -972,7 +972,8 @@ app.pcd = (function () {
         jt.out('pcdcontdiv', jt.tac2html(html));
         srchst.status = "initializing";
         app.pcd.searchReviews();
-        jt.byId('pcdsrchin').focus();
+        if(app.login.isLoggedIn()) {
+            jt.byId('pcdsrchin').focus(); }
     },
 
 
@@ -1035,7 +1036,7 @@ app.pcd = (function () {
         html.push(tabHTMLFromDef("favorites"));
         if(!app.solopage() && dst.id === app.pen.myPenId()) {
             html.push(tabHTMLFromDef("memo")); }
-        if(!app.solopage()) {
+        if(!app.solopage() || dst.type === "coop") {
             html.push(tabHTMLFromDef("search")); }
         if(dst.type === "pen") {
             html.push(tabHTMLFromDef("prefpens"));
@@ -1080,7 +1081,7 @@ app.pcd = (function () {
     displayRSSAndHomeLinks = function () {
         var coords, absdiv, html, homeurl, rssurl;
         coords = jt.geoPos(jt.byId('tabsdiv'));
-        coords.x += (dst.type === "pen"? 230 : 130);
+        coords.x += (dst.type === "pen"? 230 : 150);
         absdiv = jt.byId('xtrabsdiv');
         absdiv.style.left = String(coords.x) + "px";
         absdiv.style.top = String(coords.y - 10) + "px";
@@ -1605,7 +1606,14 @@ return {
         if(!srchin) {  //query input no longer on screen.  probably switched
             return; }  //tabs so just quit
         if(!app.login.isLoggedIn()) {
-            jt.out('pcdsrchdispdiv', "Sign in to search");
+            if(app.solopage()) {
+                jt.out('pcdsrchdispdiv', jt.tac2html(
+                    ["a", {href: app.hardhome + "?view=coop&coopid=" + dst.id +
+                                 "&tab=search"},
+                     "Sign in at full membic page to search"])); }
+            else {
+                
+                jt.out('pcdsrchdispdiv', "Sign in to search"); }
             return; }
         if(!srchst.status !== "processing" && 
               (srchst.status === "initializing" ||
