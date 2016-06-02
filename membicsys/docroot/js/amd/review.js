@@ -2336,7 +2336,8 @@ return {
             jt.out(revdivid + "keysdiv", "");
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
         else {  //expand
-            app.layout.scrollToVisible(revdivid + "buttonsdiv");
+            //scrolling on click is disorienting. Isolate situation if needed.
+            //app.layout.scrollToVisible(revdivid + "buttonsdiv");
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
