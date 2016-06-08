@@ -14,8 +14,8 @@ d3ckit = (function () {
               dispdivid: "d3ckitdiv",  //svg will take 100% of this space
               w: 600, h: 342,          //default viewbox dims (MacAir max)
               margin: {top: 10, right: 10, bottom: 10, left: 10},
-              normTransTime: 1600,
-              fastTransTime: 200,  //essentially instant, but subdivisions > 0
+              normTransTime: 800,      //basic 2 step display and read: 1600
+              fastTransTime: 100,      //essentially instant, but sequenceable
               moviescreen: true, textcolor: "black",
               autoplay: false, paused: false,
               //working variables
@@ -147,11 +147,10 @@ d3ckit = (function () {
     }
 
 
-    function autoplayAsNeeded () {
+    function autoplayAsNeeded (delaytime) {
         if(ds.autoplay && !ds.paused) {
             delayf(function () {
-                d3ckit.next(ds.normTransTime); },
-                   ds.normTransTime, ds.svgid); }
+                d3ckit.next(ds.transtime); }, delaytime, ds.svgid); }
     }
 
 
@@ -170,7 +169,7 @@ d3ckit = (function () {
                 text.transition().duration(transtime / 2)
                     .attr("fill-opacity", 1.0); } },
             //slide 1
-            {creategroup: "worldg",
+            {group: {id: "worldg"},
              display: function (transtime) {
                  var text = d3.select("#world");
                  if(text.empty()) {
@@ -245,10 +244,12 @@ return {
         if(ds.didx <= 0) {
             return; }
         slide = ds.deck[ds.didx];
+        slide.transmult = slide.transmult || 1;
         if(slide.undo) {
-            slide.undo(ds.transtime); }
+            slide.undo(Math.round(slide.transmult * ds.transtime)); }
         ds.didx -= 1;
-        autoplayAsNeeded();
+        ds.paused = true;
+        reflectPlayPause();
     },
 
 
@@ -263,18 +264,30 @@ return {
 
 
     next: function () {
-        var slide;
+        var slide, gd, pg, vg;
         if(ds.didx >= ds.deck.length - 1) {
             return; }  //already displayed last slide
         if(ds.autoplay && ds.paused) {
             return; }  //don't display next when paused
         ds.didx += 1;
         slide = ds.deck[ds.didx];
-        if(slide.creategroup && !ds.gs[slide.creategroup]) {
-            ds.gs[slide.creategroup] = ds.cg.append("g"); }
+        if(slide.group) {
+            gd = slide.group;   //easier to read
+            vg = d3.select("#" + gd.id);
+            if(vg.empty()) {    //need to create
+                pg = ds.cg;     //default parent is the general content group
+                if(gd.parentgid) {
+                    pg = d3.select("#" + gd.parentgid); }
+                if(gd.zbefore) {
+                    vg = pg.insert("g", "#" + gd.zbefore); }
+                else {
+                    vg = pg.append("g"); }
+                vg.attr("id", gd.id);
+                ds.gs[gd.id] = vg; } }
+        slide.transmult = slide.transmult || 1;
         if(slide.display) {
-            slide.display(ds.transtime); }
-        autoplayAsNeeded();
+            slide.display(Math.round(slide.transmult * ds.transtime)); }
+        autoplayAsNeeded(slide.transmult * ds.transtime);
     },
 
 
