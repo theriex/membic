@@ -233,7 +233,7 @@ return {
                 jt.loadAppModules(app, ["js/static/intro"], href, 
                                   app.layout.runAnime, 
                                   jt.ts("?cb=", "minute")); }
-            else { //app.anime loaded
+            else { //app.intro loaded
                 jt.byId("linkpluswhyspan").style.display = "none";
                 jt.byId("membicsitespan").style.display = "none";
                 jt.byId("themesitespan").style.display = "none";
