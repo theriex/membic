@@ -1,4 +1,4 @@
-/*global window, document, app, jt, a2a, a2a_config, d3 */
+/*global window, document, app, jt, a2a, a2a_config, d3, d3ckit */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -209,8 +209,8 @@ return {
 
     runAnime: function () {
         var href, js;
-        if(jt.byId('aadiv')) { //have display space for 'about' animation
-            if(!app.anime) {
+        if(jt.byId('d3ckitdiv')) { //have display space for 'about' animation
+            if(!app.intro) {
                 href = window.location.href;
                 if(href.indexOf("#") > 0) {
                     href = href.slice(0, href.indexOf("#")); }
@@ -224,12 +224,47 @@ return {
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js";
                     document.body.appendChild(js); }
-                jt.loadAppModules(app, ["js/static/anime"], href,
+                if(typeof d3ckit === 'undefined') {  //mac ff requires typeof
+                    js = document.createElement('script');
+                    //js.async = true;
+                    js.type = "text/javascript";
+                    js.src = href + "js/static/d3ckit.js";
+                    document.body.appendChild(js); }
+                jt.loadAppModules(app, ["js/static/intro"], href, 
                                   app.layout.runAnime, 
                                   jt.ts("?cb=", "minute")); }
             else { //app.anime loaded
-                app.anime.reset();
-                app.anime.run(); } }
+                jt.byId("linkpluswhyspan").style.display = "none";
+                jt.byId("membicsitespan").style.display = "none";
+                jt.byId("themesitespan").style.display = "none";
+                jt.byId("introductionli").style.display = "none";
+                jt.byId("originli").style.display = "none";
+                jt.out('d3ckitdiv', "");  //clear any previous cruft
+                app.intro.run(true, app.layout.closeAnime); } }
+    },
+
+
+    closeAnime: function () {
+        var html;
+        app.intro.furl();
+        html = ["div", {style: "font-size:x-small;" + 
+                               "padding:0px 0px 8px 0px;"},
+          [["a", {href: "#replay", onclick: jt.fs("app.layout.runAnime()")},
+            "REPLAY"],
+           " | ",
+           ["a", {href: "#origin", 
+                  onclick: jt.fs("app.layout.displayDoc('docs/origin.html')")},
+            "ORIGIN"],
+           " | ",
+           ["a", {href: "#intro",
+                  onclick: jt.fs("window.open('" + 
+              "https://membic.wordpress.com/2016/02/17/introducing-membic')")},
+            "INTRODUCTION"]]];
+        setTimeout(function () {
+            jt.out("d3ckitdiv", jt.tac2html(html));
+            jt.byId("linkpluswhyspan").style.display = "initial";
+            jt.byId('membicsitespan').style.display = "initial";
+            jt.byId('themesitespan').style.display = "initial"; }, 800);
     },
 
 

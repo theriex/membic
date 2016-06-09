@@ -1,4 +1,4 @@
-/*global app, d3, d3ckit */
+/*global app, d3, d3ckit, window */
 /*jslint browser, multivar, white, fudge, for */
 
 app.intro = (function () {
@@ -9,12 +9,14 @@ app.intro = (function () {
     ////////////////////////////////////////
 
     var ds = null,
-        leftx = 50,         //vals and logic assume viewbox width 600
-        rightx = 500,
-        midx = 270,
-        toptxty = 40,
-        line2y = 80,
-        arrowpad = 15,
+        leftx = 10,         //vals and logic assume viewbox width 320
+        rightx = 300,
+        midx = 140,
+        toptxty = 20,
+        line2y = 42,
+        line3y = 68,
+        line4y = 96,
+        arrowpad = 7,
         arrowopa = 0.8,
         bubbleopa = 0.6,
         stepv = {delay: 0, duration: 0, transtime: 800, numsteps: 2},
@@ -77,9 +79,9 @@ app.intro = (function () {
                        "fill": ds.textcolor,
                        "opacity": 0.0,
                        "fill-opacity": 0.0})
-                .style({"font-size": attrs["font-size"] || "16px",
-                        "font-weight": attrs["font-weight"] || "bold",
-                        "text-anchor": attrs["text-anchor"] || "middle"})
+                .style({"font-size": (attrs["font-size"] || "16px"),
+                        "font-weight": (attrs["font-weight"] || "bold"),
+                        "text-anchor": (attrs["text-anchor"] || "middle")})
                 .text(str); }
         elem.transition().delay(timing.delay).duration(timing.duration)
             .attr("fill-opacity", attrs.opacity || 1.0)
@@ -230,11 +232,11 @@ app.intro = (function () {
     ////////////////////////////////////////
 
     function drawStars (timing, grpname) {
-        var sx = 320, sy = 55, sr = 4, st, sd, g, soff, elem;
+        var sx = 148, sy = 41, sr = 7, st, sd, g, soff, elem;
         st = Math.round(timing.duration / 5);
         sd = timing.delay + timing.duration;  //take 3 steps total to draw
         g = ds.gs[grpname];
-        soff = [2, 13, 24, 36, 47];
+        soff = [2, 19, 36, 53, 70];
         soff.forEach(function (offset, idx) {
             elem = d3.select("#goldcircle" + idx);
             if(elem.empty()) {
@@ -249,8 +251,8 @@ app.intro = (function () {
         if(elem.empty()) {
             elem = g.append("image")
                 .attr({"xlink:href": "img/stars18ptCEmptyCenters.png",
-                       "x": sx, "y": sy, "height": 10, "width": 56,
-                       "id": "starsimage", "opacity": 0.0}) }
+                       "x": sx, "y": sy, "height": 15, "width": 85,
+                       "id": "starsimage", "opacity": 0.0}); }
         elem.transition().delay(timing.delay).duration(timing.duration)
             .attr("opacity", 1.0);
     }
@@ -269,8 +271,8 @@ app.intro = (function () {
 
 
     function drawKeywords (timing, grpname) {
-        var kx = 320, ky = 105, cbh = 6, g, 
-            cbx = kx - 10, cby = ky - cbh, cbd, elem;
+        var kx = 168, ky = 96, cbh = 10, g, 
+            cbx = kx - 17, cby = ky - cbh, cbd, elem;
         g = ds.gs[grpname];
         elem = d3.select("#cbrect");
         if(elem.empty()) {
@@ -281,16 +283,16 @@ app.intro = (function () {
         elem.transition().delay(timing.delay).duration(timing.duration)
             .attr("stroke-opacity", 0.5);
         showTextElem(timing, "cbkeywords", grpname, "Keywords",
-                     {x: kx, y: ky, "font-size": "10px", 
+                     {x: kx, y: ky, "font-size": "14px", 
                       "text-anchor": "start"});
         cbd = timing.duration;
         elem = d3.select("#cbcheckmark");
         if(elem.empty()) {
             elem = g.append("path")
-                .attr("d", "M " + cbx +       " " + (cby + 2) + 
-                          " L " + (cbx + 2) + " " + (cby + 5) +
-                          " L " + (cbx + 7) + " " + (cby - 1) +
-                          " L " + (cbx + 2) + " " + (cby + 3) + 
+                .attr("d", "M " + cbx +       " " + (cby + 3) + 
+                          " L " + (cbx + 4) + " " + (cby + 9) +
+                          " L " + (cbx + 12) + " " + (cby - 4) +
+                          " L " + (cbx + 4) + " " + (cby + 5) + 
                           " Z")
                 .attr("id", "cbcheckmark")
                 .style({"fill": ds.textcolor, "stroke": ds.textcolor})
@@ -328,62 +330,53 @@ app.intro = (function () {
             sv = step(1);
             fadeInitGroup(sv, "gShowcases", 1.0);
             showTextElem(sv, "showcases", "gShowcases",
-                         "Membic.com showcases what you found memorable.");
+                         "Membic.com showcases");
+            showTextElem(sv, "whatyoufound", "gShowcases",
+                         "what you found memorable.", {y: line2y});
             //step(2) is just time to read what was just displayed
         }
     }; }
 
 
-    function blogAndTop () { var numsteps = 3; return {
-        group: {id: "gBetwBlog"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, mtxt;
-            stepinit(transtime, numsteps);
-            sv = step(1);
-            fadeInitGroup(sv, "gBetwBlog", 1.0);
-            fadeGroup(sv, "gShowcases", 0.0);
-            fadeGroup(sv, "gBetwBlog", 1.0);
-            mtxt = d3.select("#showcases").node().getBBox();
-            slideText(sv, "membicCom", "gBetwBlog", "Membic.com",
-                      {x1: mtxt.x, y1: mtxt.y + 16, 
-                       x2: midx - 58, y2: line2y,
-                       "text-anchor": "start", "opacity": 0.8});
-            showTextElem(step(2), "bbmText", "gBetwBlog",
-                         "Think of it as something between a blog...");
-            showTextElem(step(3), "blog", "gBetwBlog", "Blog", 
-                         {x: leftx, y: line2y, "text-anchor": "start"});
-        },
-        undo: function (transtime) {
-            stepinit(transtime, numsteps);
-            fadeGroup(step(1), "gShowcases", 1.0);
-            fadeGroup(step(1), "gBetwBlog", 0.0); 
-        }
-    }; }
-
-
-    function blogAndTop2 () { var numsteps = 4; return {
-        group: {id: "gBetwTop"},
+    function blogAndTop () { var numsteps = 6; return {
+        group: {id: "gBetw"},
         transmult: numsteps,
         display: function (transtime) {
             var sv, mtxt, btxt, ttxt, ay;
             stepinit(transtime, numsteps);
             sv = step(1);
-            fadeInitGroup(sv, "gBetwTop", 1.0);
-            fadeElement(step(1), "bbmText", 0.0);
-            showTextElem(step(1), "bbmText2", "gBetwTop",
-                         "...and your ultimate top 20 list.");
-            ttxt = showTextElem(step(2), "top20",
-                                "gBetwTop", "Top 20",
-                                {x: rightx, y: line2y, "text-anchor": "end"});
+            fadeInitGroup(sv, "gBetw", 1.0);
+            fadeGroup(sv, "gShowcases", 0.0);
+            mtxt = d3.select("#showcases").node().getBBox();
+            mtxt = slideText(sv, "membicCom", "gBetw", "Membic.com",
+                             {x1: mtxt.x, y1: mtxt.y + 16, 
+                              x2: midx - 52, y2: line3y,
+                              "text-anchor": "start", "opacity": 0.8});
+            sv = step(2);
+            showTextElem(sv, "bbmText", "gBetw",
+                         "Think of it as something");
+            showTextElem(sv, "bbmTextb", "gBetw",
+                         "between a blog...", {y: line2y});
+            sv = step(3);
+            btxt = showTextElem(sv, "blog", "gBetw", "Blog", 
+                                {x: leftx, y: line3y, "text-anchor": "start"});
+            sv = step(4);
+            fadeElement(sv, "bbmText", 0.0);
+            fadeElement(sv, "bbmTextb", 0.0);
+            showTextElem(sv, "bbmText2", "gBetw",
+                         "...and your ultimate top 20 list");
+            sv = step(5);
+            ttxt = showTextElem(sv, "top20", "gBetw", "Top 20",
+                                {x: rightx, y: line3y, "text-anchor": "end"});
+            sv = step(6);
+            mtxt = mtxt.node().getBBox();
+            btxt = btxt.node().getBBox();
             ttxt = ttxt.node().getBBox();
-            mtxt = d3.select("#membicCom").node().getBBox();
-            btxt = d3.select("#blog").node().getBBox();
             ay = arrowYFromBbox(mtxt);
-            arrowConnect(step(3), "b2ma", "gBetwBlog",
+            arrowConnect(sv, "b2ma", "gBetw",
                          {x1: btxt.x + btxt.width + arrowpad, y1: ay,
                           x2: mtxt.x - arrowpad, y2: ay});
-            arrowConnect(step(3), "m2ta", "gBetwTop",
+            arrowConnect(sv, "m2ta", "gBetw",
                          {x1: mtxt.x + mtxt.width + arrowpad, y1: ay,
                           x2: ttxt.x - arrowpad, y2: ay});
         },
@@ -391,13 +384,14 @@ app.intro = (function () {
             var sv;
             stepinit(transtime, numsteps);
             sv = step(1);
-            fadeGroup(sv, "gBetwTop", 0.0);
+            fadeGroup(sv, "gBetw", 0.0);
             fadeElement(sv, "b2ma", 0.0, true);
             fadeElement(sv, "m2ta", 0.0, true);
             sv = step(2);
-            fadeElement(sv, "bbmText", 1.0);
             fadeElement(sv, "bbmText2", 0.0);
-            fadeGroup(sv, "gBetwBlog", 1.0);
+            fadeElement(sv, "blog", 0.0);
+            fadeElement(sv, "top20", 0.0);
+            fadeGroup(step(1), "gShowcases", 1.0);
         }
     }; }
 
@@ -406,16 +400,17 @@ app.intro = (function () {
         group: {id: "gWhen"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, basex, icow = 30, padw = 10, icoy;
-            basex = midx - 160; 
-            icoy = line2y - Math.round(0.6 * icow);
+            var sv, basex, icow = 30, padw = 5, icoy;
+            basex = leftx; 
+            icoy = line3y - Math.round(0.6 * icow);
             stepinit(transtime, numsteps);
             sv = step(1);
             fadeInitGroup(sv, "gWhen", 1.0);
-            fadeGroup(sv, "gBetwBlog", 0.0);
-            fadeGroup(sv, "gBetwTop", 0.0);
+            fadeGroup(sv, "gBetw", 0.0);
             showTextElem(sv, "whenyoufind", "gWhen",
-                         "When you find something worth remembering");
+                         "When you find something");
+            showTextElem(sv, "worthrem", "gWhen", "worth remembering", 
+                         {y: line2y});
             mtypes.forEach(function (mt, idx) {
                 var stepbase = idx + 2;
                 showGraphic(step(stepbase), "img" + mt.id, "gWhen",
@@ -423,7 +418,8 @@ app.intro = (function () {
                              href: "img/" + mt.img});
                 basex += icow + padw;
                 showTextElem(step(stepbase), mt.id, "gWhen", mt.name,
-                             {x: basex, y: line2y, "text-anchor": "start"});
+                             {x: midx, y: line4y, "text-anchor": "middle",
+                              "font-size": "14px"});
                 fadeElement(step(stepbase + 1), mt.id, 0.0); });
         },
         undo: function (transtime) {
@@ -431,8 +427,7 @@ app.intro = (function () {
             stepinit(transtime, numsteps);
             sv = step(1);
             fadeGroup(sv, "gWhen", 0.0);
-            fadeGroup(sv, "gBetwBlog", 1.0);
-            fadeGroup(sv, "gBetwTop", 1.0);
+            fadeGroup(sv, "gBetw", 1.0);
         }
     }; }
 
@@ -446,20 +441,21 @@ app.intro = (function () {
             sv = step(1);
             fadeInitGroup(sv, "gLink", 1.0);
             fadeElement(sv, "whenyoufind", 0.0);
+            fadeElement(sv, "worthrem", 0.0);
             showTextElem(sv, "makemembic", "gLink", "Make a Membic");
             sv = step(2);
             ds.gs.gWhen.transition().delay(sv.delay).duration(sv.duration)
                 //transform and scale: scalex, 0, 0, scaley, transx, transy
-                .attr("transform", "matrix(0.25,0,0,0.25,154,60)");
+                .attr("transform", "matrix(0.25,0,0,0.25,18,52)");
             sv = step(3);
+            fadeGroup(sv, "gWhen", 0.0);
             showBubble(sv, "linkbubble", "gLink",
-                       {"cx": midx - 50, "cy": line2y,
-                        "rx": 42, "ry": 16});
+                       {"cx": midx - 86, "cy": line3y,
+                        "rx": 36, "ry": 16});
             showTextElem(sv, "linkbt", "gLink", "Link",
-                         {x: 221, y: 86, "font-size": "18px"});
+                         {x: 56, y: 75, "font-size": "18px"});
             showTextElem(sv, "whymem", "gLink", "+ Why Memorable",
-                         {x: 362, y: 86, "font-size": "18px"});
-            fadeGroup(step(4), "gWhen", 0.0);
+                         {x: 185, y: 75, "font-size": "18px"});
             drawStars(step(5), "gLink");  //3 stage display
             drawKeywords(step(7), "gLink"); //2 stage display
         },
@@ -475,6 +471,7 @@ app.intro = (function () {
             fadeGroup(sv, "gLink", 0.0);
             fadeGroup(sv, "gWhen", 1.0);
             fadeElement(sv, "whenyoufind", 1.0);
+            fadeElement(sv, "worthrem", 1.0);
             sv = step(2);
             ds.gs.gWhen.transition().delay(sv.delay).duration(sv.duration)
                 .attr("transform", "matrix(1.0,0,0,1.0,0,0)");
@@ -482,7 +479,7 @@ app.intro = (function () {
     }; }
 
 
-    function membicShareSoc () { var numsteps = 7; return {
+    function membicShareSoc () { var numsteps = 6; return {
         group: {id: "gShare", zbefore: "gWhen"},
         transmult: numsteps,
         display: function (transtime) {
@@ -496,43 +493,35 @@ app.intro = (function () {
             if(ds.gs.gLink) {
                 ds.gs.gLink.transition().delay(sv.delay).duration(sv.duration)
                     //transform and scale: scalex, 0, 0, scaley, transx, transy
-                    .attr("transform", "matrix(0.28,0,0,0.45,130,34)"); }
+                    .attr("transform", "matrix(0.28,0,0,0.45,14,34)"); }
             sv = step(3);
             showBubble(sv, "membicbubble", "gShare",
-                       {"cx": midx - 50, "cy": line2y - 10,
-                        "rx": 48, "ry": 18});
+                       {"cx": 62, "cy": 65, "rx": 48, "ry": 18});
             showTextElem(sv, "linkm", "gShare", "Membic",
-                         {x: 221, y: 76, "font-size": "18px"});
+                         {x: 62, y: 71, "font-size": "18px"});
             sv = step(4);
             fadeGroup(sv, "gLink", 0.0);
             arrowFlow(sv, "m2soc", "gShare",
-                      {x1: 273, y1: 72, x2: 315, y2: 72});
+                      {x1: 114, y1: 66, x2: 157, y2: 66});
             sv = step(5);
-            showTextElem(sv, "othersoc", "gShare", "Other social media",
-                         {x: 390, y: 76, "font-size": "12px"});
-            ds.gs.gShare.transition().delay(sv.delay).duration(2 * sv.duration)
-                .attr("transform", "translate(-50,0)");
+            showTextElem(sv, "othersoc", "gShare", "Social media",
+                         {x: 221, y: 71, "font-size": "14px"});
             sv = step(6);
-            ds.gs.gShare.append("image")
-                .attr({"xlink:href": "img/socbwa2a.png",
-                       "x": 457, "y": 66, "height": 12, "width": 12,
-                       "id": "a2aimg", "opacity": 0.0})
-                .transition().delay(sv.delay).duration(sv.duration)
-                .attr("opacity", 1.0);
+            showGraphic(sv, "a2aimg", "gShare", 
+                        {x: 278, y: 58, w: 16, h: 16,
+                         href: "img/socbwa2a.png"});
         },
         undo: function (transtime) {
             var sv;
             stepinit(transtime, numsteps);
             sv = step(1);
-            ds.gs.gShare.transition().delay(sv.delay).duration(sv.duration)
-                .attr("transform", "translate(0,0)");
             fadeGroup(sv, "gLink", 1.0);
             sv = step(2);
             fadeElement(sv, "membicbubble", 0.0);
             fadeElement(sv, "linkm", 0.0);
             fadeElement(sv, "m2soc", 0.0, true);
             fadeElement(sv, "othersoc", 0.0);
-            fadeElement(sv, "a2aimg", 0.0, true);
+            fadeElement(sv, "a2aimg", 0.0);
             fadeGroup(sv, "gShare", 0.0);
             fadeElement(sv, "makemembic", 1.0);
             ds.gs.gLink.transition().delay(sv.delay).duration(sv.duration)
@@ -541,7 +530,7 @@ app.intro = (function () {
     }; }
 
 
-    function membicShareProfile () { var numsteps = 5; return {
+    function membicShareProfile () { var numsteps = 8; return {
         group: {id: "gShareProf", parentgid: "gShare"},
         transmult: numsteps,
         display: function (transtime) {
@@ -549,30 +538,25 @@ app.intro = (function () {
             stepinit(transtime, numsteps);
             sv = step(1);
             fadeInitGroup(sv, "gShareProf", 1.0);
-            showTextElem(sv, "profile", "gShareProf", "Profile",
-                         {x: 322, y: 121, "font-size": "12px"});
             arrowFlow(sv, "m2prof", "gShareProf",
-                      {x1: 252, y1: 87, x2: 292, y2: 112});
-            sv = step(2);
-            showTextElem(sv, "recent", "gShareProf", "Recent",
-                         {x: 370, y: 121, "font-size": "10px",
+                      {x1: 99, y1: 80, x2: 128, y2: 95});
+            showTextElem(step(2), "profile", "gShareProf", "Profile",
+                         {x: 164, y: 105, "font-size": "14px"});
+            arrowFlow(step(3), "p2r", "gShareProf",
+                      {x1: 192, y1: 101, x2: 206, y2: 95});
+            showTextElem(step(4), "recent", "gShareProf", "Discovery log",
+                         {x: 214, y: 96, "font-size": "10px",
                           "text-anchor": "start"});
-            arrowFlow(sv, "p2r", "gShareProf",
-                      {x1: 348, y1: 117, x2: 361, y2: 117});
-            sv = step(3);
-            showTextElem(sv, "favorites", "gShareProf",
-                         "Automatic top 20+",
-                         {x: 370, y: 141, "font-size": "10px",
+            arrowFlow(step(5), "p2t", "gShareProf",
+                      {x1: 192, y1: 101, x2: 207, y2: 109});
+            showTextElem(step(6), "favorites", "gShareProf", "Auto top 20",
+                         {x: 214, y: 115, "font-size": "10px",
                           "text-anchor": "start"});
-            arrowFlow(sv, "p2t", "gShareProf",
-                      {x1: 348, y1: 117, x2: 363, y2: 133});
-            sv = step(4);
-            showTextElem(sv, "search", "gShareProf",
-                         "Keyword search",
-                         {x: 370, y: 161, "font-size": "10px",
+            arrowFlow(step(7), "p2s", "gShareProf",
+                      {x1: 192, y1: 101, x2: 209, y2: 123});
+            showTextElem(step(8), "search", "gShareProf", "Keyword search",
+                         {x: 214, y: 134, "font-size": "10px",
                           "text-anchor": "start"});
-            arrowFlow(sv, "p2s", "gShareProf",
-                      {x1: 348, y1: 117, x2: 364, y2: 150});
         },
         undo: function (transtime) {
             stepinit(transtime, numsteps);
@@ -581,11 +565,11 @@ app.intro = (function () {
     }; }
 
 
-    function membicShareCommunity () { var numsteps = 5; return {
+    function membicShareCommunity () { var numsteps = 7; return {
         group: {id: "gShareComm", parentgid: "gShare"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, icc = {x: 249, y: 152, w: 10, pad: 4, vpad: 6},
+            var sv, icc = {x: 97, y: 139, w: 16, pad: 2},
                 icons = [
                     {text: "Prefer", img: "promote.png", axp: 0, ayp: 4,
                      imgxp: 2, imgyp: 1},
@@ -596,26 +580,17 @@ app.intro = (function () {
             sv = step(1);
             fadeInitGroup(sv, "gShareComm", 1.0);
             arrowFlow(sv, "m2comm", "gShareComm",
-                      {x1: 224, y1: 92, x2: 224, y2: 133});
+                      {x1: 61, y1: 86, x2: 85, y2: 120});
+            sv = step(2);
             showTextElem(sv, "community", "gShareComm", "Community",
-                         {x: 226, y: 150, "font-size": "12px"});
+                         {x: 133, y: 136, "font-size": "14px"});
             icons.forEach(function (ico, idx) {
-                var liney = icc.y + (idx * (icc.w + icc.vpad));
-                sv = step(2 + idx);
-                arrowFlow(sv, "c2" + idx, "gShareComm",
-                          {x1: 223, y1: 153,
-                           x2: icc.x - 5 + ico.axp, 
-                           y2: liney + ico.ayp});
-                ds.gs.gShareComm.append("image")
-                    .attr({"xlink:href": "img/" + ico.img,
-                           "x": icc.x + (ico.imgxp || 0), 
-                           "y": liney + (ico.imgyp || 0),
-                           "height": icc.w, "width": icc.w, "opacity": 0.0})
-                    .transition().delay(sv.delay).duration(sv.duration)
-                    .attr("opacity", 1.0); 
-                showTextElem(sv, ico.text, "gShareComm", ico.text,
-                             {"x": icc.x + 12, "y": icc.y + (idx * 16) + 10,
-                              "font-size": "10px", "text-anchor": "start"}); });
+                var xpos = icc.x + (idx * (icc.w + icc.pad));
+                if(xpos === icc.x) {  //adjust first icon over slightly
+                    xpos += 4; }
+                showGraphic(step(3 + idx), "commico" + idx, "gShareComm",
+                            {href: "img/" + ico.img,
+                             x: xpos, y: icc.y, w: icc.w, h: icc.w}); });
         },
         undo: function (transtime) {
             stepinit(transtime, numsteps);
@@ -633,23 +608,21 @@ app.intro = (function () {
             sv = step(1);
             sv.duration *= 3;
             fadeInitGroup(sv, "gLogo", 1.0);
-            ds.gs.gLogo.append("image")
-                .attr({"xlink:href": "img/membiclogo.png",
-                       "x": 114, "y": 43, "height": 112, "width": 112,
-                       "opacity": 0.0})
-                .transition().delay(sv.delay).duration(sv.duration)
-                .attr("opacity", 1.0);
+            showGraphic(sv, "membiclogo", "gLogo",
+                        {href: "img/membiclogo.png",
+                         x: 7, y: 38, w: 112, h: 112});
             showTextElem(sv, "mcom", "gLogo", "Membic.com",
-                         {x: 240, y: 77, "text-anchor": "start"});
+                         {x: 125, y: 71, "text-anchor": "start",
+                          "font-size": "18px"});
             fadeGroup(sv, "gShare", 0.0);
             sv = step(5);
-            showTextElem(sv, "worthrem", "gLogo",
+            showTextElem(sv, "whenit", "gLogo",
                          "When it's worth remembering,",
-                         {x: 240, y: 97, "text-anchor": "start",
+                         {x: 125, y: 97, "text-anchor": "start",
                           "font-size": "10px"});
             showTextElem(sv, "makemem", "gLogo",
                          "make a membic.",
-                         {x: 240, y: 111, "text-anchor": "start",
+                         {x: 125, y: 111, "text-anchor": "start",
                           "font-size": "10px"});
         },
         undo: function (transtime) {
@@ -669,13 +642,13 @@ app.intro = (function () {
         ds.deck = [
             membicComShowcases(),
             blogAndTop(),
-            blogAndTop2(),
             whenYouFind(),
             makeMembic(),
             membicShareSoc(),
             membicShareProfile(),
             membicShareCommunity(),
-            fadeToLogo()];
+            fadeToLogo()
+        ];
     }
 
 
@@ -684,14 +657,26 @@ app.intro = (function () {
     ////////////////////////////////////////
 return {
 
-    run: function () {
+    run: function (autoplay, endfunc) {
+        if(window.d3 === undefined) {  //wait until loaded
+            return setTimeout(app.intro.run, 300); }
         ds = d3ckit.displaySettings();
         ds.svgsetupfunc = makeMarkers;
         initSlides(ds);
-        ds.autoplay = true;
-        //ds.normTransTime = 200;
+        if(autoplay) {
+            ds.autoplay = true;
+            ds.cc.widthMultiple /= 2;
+            ds.cc.controls.rewind = false;
+            ds.cc.controls.forward = false; }
+        ds.endfunc = endfunc;
         d3ckit.run();
-    }
+    },
+
+
+    furl: function () {
+        d3.select("#" + ds.svgid).transition().duration(ds.transtime)
+            .attr("transform", "scale(0,0)");
+    }        
 
 
 };  //end of returned functions

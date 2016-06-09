@@ -12,16 +12,18 @@ d3ckit = (function () {
 
     var ds = {deck: [],                //slides to display. see makeDemoDeck
               dispdivid: "d3ckitdiv",  //svg will take 100% of this space
-              w: 600, h: 342,          //default viewbox dims (MacAir max)
-              margin: {top: 10, right: 10, bottom: 10, left: 10},
+              w: 320, h: 190,  //phone optimized, MacAir fullscreen ok
+              margin: {top: 5, right: 5, bottom: 5, left: 5},
               normTransTime: 800,      //basic 2 step display and read: 1600
               fastTransTime: 100,      //essentially instant, but sequenceable
               moviescreen: true, textcolor: "black",
               autoplay: false, paused: false,
               //working variables
               didx: -1, svgid: null, gs: {}, 
-              cc: {heightMultiple: 0.03, widthMultiple: 0.2,
-                   iconPadMultiple: 0.3}};
+              cc: {heightMultiple: 0.08, widthMultiple: 0.6,
+                   iconPadMultiple: 0.6,
+                   controls: {restart: true, rewind: true, previous: true,
+                              playpause: true, forward: true}}};
 
 
     ////////////////////////////////////////
@@ -93,8 +95,7 @@ d3ckit = (function () {
     }
 
 
-    function displayControls () {
-        var cc = ds.cc, secw, barw, midw, qw, xbase;
+    function initControlContextValues (cc) {
         cc.w = cc.w || Math.round(cc.widthMultiple * ds.dw);
         cc.h = cc.h || Math.floor(cc.heightMultiple * ds.dh);
         cc.x = cc.x || 3;  //just inside the edge
@@ -102,48 +103,63 @@ d3ckit = (function () {
         cc.ctrlcolor = cc.ctrlcolor || ds.textcolor;
         cc.opacitybase = 0.6;
         cc.opacityactive = 1.0;
-        secw = Math.round(cc.w / 5);
-        cc.padw = Math.round(secw * cc.iconPadMultiple);
-        cc.icow = secw - cc.padw;
-        midw = Math.floor(ds.cc.icow / 2);
-        qw = Math.floor(cc.icow / 4);
+        cc.numctrls = 0;
+        Object.keys(cc.controls).forEach(function (ckey) {
+            if(cc.controls[ckey]) {
+                cc.numctrls += 1; }});
+        cc.secw = Math.round(cc.w / cc.numctrls);
+        cc.padw = Math.round(cc.secw * cc.iconPadMultiple);
+        cc.icow = cc.secw - cc.padw;
+        cc.mw = Math.floor(ds.cc.icow / 2);  //mid width
+        cc.qw = Math.floor(cc.icow / 4);     //quarter width
+    }
+
+
+    function displayControls () {
+        var cc = ds.cc, oc = 0, xb;
+        initControlContextValues(cc);
         cc.g = ds.cg.append("g");
         cc.g.append("rect")
             .attr({"x": cc.x, "y": cc.y, "width": cc.w, "height": cc.h})
             .style({"fill": "white", "fill-opacity": 0.3});
-        //restart
-        appendGroup("restart");
-        barw = Math.round(0.15 * cc.icow);
-        appendBar({g: cc.restart, w: barw, x: barw});
-        appendTriangle({g: cc.restart, orient: "left", 
-                        x: 2 * barw});
-        //rewind
-        appendGroup("rewind");
-        appendTriangle({g: cc.rewind, orient: "left", 
-                        x: cc.x + secw});
-        appendTriangle({g: cc.rewind, orient: "left", 
-                        x: cc.x + secw + midw});
-        //previous
-        appendGroup("previous");
-        appendTriangle({g: cc.previous, orient: "left",
-                        x: cc.x + (2 * secw) + qw});
-        //playpause
-        appendGroup("playpause");
-        cc.play = cc.playpause.append("g").attr("opacity", 0.0);
-        xbase = cc.x + (3 * secw) + cc.padw;
-        appendTriangle({g: cc.play, orient: "right",
-                        x: xbase + qw + barw});
-        cc.pause = cc.playpause.append("g").attr("opacity", 0.0);
-        appendBar({g: cc.pause, w: barw, x: xbase - barw});
-        appendBar({g: cc.pause, w: barw, x: xbase, fill: "none", opa: 0.0});
-        appendBar({g: cc.pause, w: barw, x: xbase + barw});
-        reflectPlayPause();
-        //forward
-        appendGroup("forward");
-        appendTriangle({g: cc.forward, orient: "right",
-                        x: cc.x + (4 * secw) + (2 * cc.padw)});
-        appendTriangle({g: cc.forward, orient: "right",
-                        x: cc.x + (4 * secw) + (2 * cc.padw) + midw});
+        if(cc.controls.restart) {
+            appendGroup("restart");
+            cc.bw = Math.round(0.15 * cc.icow);
+            appendBar({g: cc.restart, w: cc.bw, x: cc.bw});
+            appendTriangle({g: cc.restart, orient: "left", 
+                            x: 2 * cc.bw});
+            oc += 1; }
+        if(cc.controls.rewind) {
+            appendGroup("rewind");
+            appendTriangle({g: cc.rewind, orient: "left", 
+                            x: cc.x + (oc * cc.secw)});
+            appendTriangle({g: cc.rewind, orient: "left", 
+                            x: cc.x + (oc * cc.secw) + cc.mw});
+            oc += 1; }
+        if(cc.controls.previous) {
+            appendGroup("previous");
+            appendTriangle({g: cc.previous, orient: "left",
+                            x: cc.x + (oc * cc.secw) + cc.qw});
+            oc += 1; }
+        if(cc.controls.playpause) {
+            appendGroup("playpause");
+            cc.play = cc.playpause.append("g").attr("opacity", 0.0);
+            xb = cc.x + (oc * cc.secw) + cc.padw;
+            appendTriangle({g: cc.play, orient: "right",
+                            x: xb + cc.qw + cc.bw});
+            cc.pause = cc.playpause.append("g").attr("opacity", 0.0);
+            appendBar({g: cc.pause, w: cc.bw, x: xb - cc.bw});
+            appendBar({g: cc.pause, w: cc.bw, x: xb, fill: "none", opa: 0.0});
+            appendBar({g: cc.pause, w: cc.bw, x: xb + cc.bw});
+            reflectPlayPause();
+            oc += 1; }
+        if(cc.controls.forward) {
+            appendGroup("forward");
+            appendTriangle({g: cc.forward, orient: "right",
+                            x: cc.x + (oc * cc.secw) + (2 * cc.padw)});
+            appendTriangle({g: cc.forward, orient: "right",
+                            x: cc.x + (oc * cc.secw) + (2 * cc.padw) + cc.mw});
+            oc += 1; }
     }
 
 
@@ -266,6 +282,8 @@ return {
     next: function () {
         var slide, gd, pg, vg;
         if(ds.didx >= ds.deck.length - 1) {
+            if(ds.endfunc) {
+                return ds.endfunc(); }
             return; }  //already displayed last slide
         if(ds.autoplay && ds.paused) {
             return; }  //don't display next when paused
