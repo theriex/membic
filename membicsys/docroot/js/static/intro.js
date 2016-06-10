@@ -321,7 +321,7 @@ app.intro = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
-    function membicComShowcases () { var numsteps = 2; return {
+    function membicComShowcases () { var numsteps = 4; return {
         group: {id: "gShowcases"},
         transmult: numsteps,
         display: function (transtime) {
@@ -333,12 +333,12 @@ app.intro = (function () {
                          "Membic.com showcases");
             showTextElem(sv, "whatyoufound", "gShowcases",
                          "what you found memorable.", {y: line2y});
-            //step(2) is just time to read what was just displayed
+            //remaining steps are time to read what was just displayed
         }
     }; }
 
 
-    function blogAndTop () { var numsteps = 6; return {
+    function blogAndTop () { var numsteps = 8; return {
         group: {id: "gBetw"},
         transmult: numsteps,
         display: function (transtime) {
