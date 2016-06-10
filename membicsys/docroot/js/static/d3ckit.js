@@ -12,7 +12,7 @@ d3ckit = (function () {
 
     var ds = {deck: [],                //slides to display. see makeDemoDeck
               dispdivid: "d3ckitdiv",  //svg will take 100% of this space
-              w: 320, h: 190,  //phone optimized, MacAir fullscreen ok
+              w: 320, h: 186,  //phone optimized, MacAir fullscreen ok
               margin: {top: 5, right: 5, bottom: 5, left: 5},
               normTransTime: 800,      //basic 2 step display and read: 1600
               fastTransTime: 100,      //essentially instant, but sequenceable

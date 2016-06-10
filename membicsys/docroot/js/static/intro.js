@@ -493,22 +493,22 @@ app.intro = (function () {
             if(ds.gs.gLink) {
                 ds.gs.gLink.transition().delay(sv.delay).duration(sv.duration)
                     //transform and scale: scalex, 0, 0, scaley, transx, transy
-                    .attr("transform", "matrix(0.28,0,0,0.45,14,34)"); }
+                    .attr("transform", "matrix(0.28,0,0,0.45,14,16)"); }
             sv = step(3);
             showBubble(sv, "membicbubble", "gShare",
-                       {"cx": 62, "cy": 65, "rx": 48, "ry": 18});
+                       {"cx": 62, "cy": 47, "rx": 48, "ry": 18});
             showTextElem(sv, "linkm", "gShare", "Membic",
-                         {x: 62, y: 71, "font-size": "18px"});
+                         {x: 62, y: 53, "font-size": "18px"});
             sv = step(4);
             fadeGroup(sv, "gLink", 0.0);
             arrowFlow(sv, "m2soc", "gShare",
-                      {x1: 114, y1: 66, x2: 157, y2: 66});
+                      {x1: 114, y1: 48, x2: 157, y2: 48});
             sv = step(5);
             showTextElem(sv, "othersoc", "gShare", "Social media",
-                         {x: 221, y: 71, "font-size": "14px"});
+                         {x: 221, y: 53, "font-size": "14px"});
             sv = step(6);
             showGraphic(sv, "a2aimg", "gShare", 
-                        {x: 278, y: 58, w: 16, h: 16,
+                        {x: 278, y: 40, w: 16, h: 16,
                          href: "img/socbwa2a.png"});
         },
         undo: function (transtime) {
@@ -530,33 +530,44 @@ app.intro = (function () {
     }; }
 
 
-    function membicShareProfile () { var numsteps = 8; return {
+    function membicShareProfile () { var numsteps = 6; return {
         group: {id: "gShareProf", parentgid: "gShare"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv;
+            var sv, coords = {x: 204, y: 76},
+                tabs = [{id: "recent", img: "tablatest.png", txt: "Latest"},
+                        {id: "top", img: "top.png", txt: "Top"},
+                        {id: "search", img: "search.png", txt: "Search"}];
             stepinit(transtime, numsteps);
             sv = step(1);
             fadeInitGroup(sv, "gShareProf", 1.0);
             arrowFlow(sv, "m2prof", "gShareProf",
-                      {x1: 99, y1: 80, x2: 128, y2: 95});
-            showTextElem(step(2), "profile", "gShareProf", "Profile",
-                         {x: 164, y: 105, "font-size": "14px"});
-            arrowFlow(step(3), "p2r", "gShareProf",
-                      {x1: 192, y1: 101, x2: 206, y2: 95});
-            showTextElem(step(4), "recent", "gShareProf", "Discovery log",
-                         {x: 214, y: 96, "font-size": "10px",
-                          "text-anchor": "start"});
-            arrowFlow(step(5), "p2t", "gShareProf",
-                      {x1: 192, y1: 101, x2: 207, y2: 109});
-            showTextElem(step(6), "favorites", "gShareProf", "Auto top 20",
-                         {x: 214, y: 115, "font-size": "10px",
-                          "text-anchor": "start"});
-            arrowFlow(step(7), "p2s", "gShareProf",
-                      {x1: 192, y1: 101, x2: 209, y2: 123});
-            showTextElem(step(8), "search", "gShareProf", "Keyword search",
-                         {x: 214, y: 134, "font-size": "10px",
-                          "text-anchor": "start"});
+                      {x1: 99, y1: 62, x2: 134, y2: 77});
+            sv = step(2);
+            showTextElem(sv, "profile", "gShareProf", "Profile",
+                         {x: 170, y: 86, "font-size": "14px"});
+            tabs.forEach(function (tab, idx) {
+                var elem;
+                sv = step(3 + idx);
+                elem = d3.select("#" + tab.id + "back");
+                if(elem.empty()) {
+                    elem = ds.gs.gShareProf.append("rect")
+                        .attr({"x": coords.x - 1, "y": coords.y - 1, 
+                               "width": 14, "height": 14,
+                               "rx": 4, "ry": 4,
+                               "id": tab.id + "back", 
+                               "stroke-opacity": 0.0, "fill-opacity": 0.0})
+                        .style({"fill": "#789897", "stroke": ds.textcolor}); }
+                elem.transition().delay(sv.delay).duration(sv.duration)
+                    .attr("fill-opacity", 0.5)
+                    .attr("stroke-opacity", 0.5);
+                showGraphic(sv, tab.id + "ico", "gShareProf",
+                            {href: "img/" + tab.img,
+                             x: coords.x, y: coords.y, w: 12, h: 12});
+                showTextElem(sv, tab.id, "gShareProf", tab.txt,
+                             {x: coords.x + 16, y: coords.y + 9, 
+                              "font-size": "10px", "text-anchor": "start"});
+                coords.y += 16; });
         },
         undo: function (transtime) {
             stepinit(transtime, numsteps);
@@ -565,32 +576,59 @@ app.intro = (function () {
     }; }
 
 
+    // function membicShareCommunity () { var numsteps = 7; return {
+    //     group: {id: "gShareComm", parentgid: "gShare"},
+    //     transmult: numsteps,
+    //     display: function (transtime) {
+    //         var sv, icc = {x: 97, y: 139, w: 16, pad: 2},
+    //             icons = [
+    //                 {text: "Prefer", img: "promote.png", axp: 0, ayp: 4,
+    //                  imgxp: 2, imgyp: 1},
+    //                 {text: "Endorse", img: "endorse.png", axp: 1, ayp: 2},
+    //                 {text: "Background", img: "background.png", axp: 1, ayp: 0},
+    //                 {text: "Block", img: "block.png", axp: 2, ayp: -2}];
+    //         stepinit(transtime, numsteps);
+    //         sv = step(1);
+    //         fadeInitGroup(sv, "gShareComm", 1.0);
+    //         arrowFlow(sv, "m2comm", "gShareComm",
+    //                   {x1: 61, y1: 86, x2: 85, y2: 120});
+    //         sv = step(2);
+    //         showTextElem(sv, "community", "gShareComm", "Community",
+    //                      {x: 133, y: 136, "font-size": "14px"});
+    //         icons.forEach(function (ico, idx) {
+    //             var xpos = icc.x + (idx * (icc.w + icc.pad));
+    //             if(xpos === icc.x) {  //adjust first icon over slightly
+    //                 xpos += 4; }
+    //             showGraphic(step(3 + idx), "commico" + idx, "gShareComm",
+    //                         {href: "img/" + ico.img,
+    //                          x: xpos, y: icc.y, w: icc.w, h: icc.w}); });
+    //     },
+    //     undo: function (transtime) {
+    //         stepinit(transtime, numsteps);
+    //         fadeGroup(step(1), "gShareComm", 0.0);
+    //     }
+    // }; }
+
+
     function membicShareCommunity () { var numsteps = 7; return {
         group: {id: "gShareComm", parentgid: "gShare"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, icc = {x: 97, y: 139, w: 16, pad: 2},
-                icons = [
-                    {text: "Prefer", img: "promote.png", axp: 0, ayp: 4,
-                     imgxp: 2, imgyp: 1},
-                    {text: "Endorse", img: "endorse.png", axp: 1, ayp: 2},
-                    {text: "Background", img: "background.png", axp: 1, ayp: 0},
-                    {text: "Block", img: "block.png", axp: 2, ayp: -2}];
+            var sv;
             stepinit(transtime, numsteps);
             sv = step(1);
             fadeInitGroup(sv, "gShareComm", 1.0);
-            arrowFlow(sv, "m2comm", "gShareComm",
-                      {x1: 61, y1: 86, x2: 85, y2: 120});
+            arrowFlow(sv, "m2theme", "gShareComm",
+                      {x1: 83, y1: 67, x2: 104, y2: 102});
             sv = step(2);
+            showTextElem(sv, "themes", "gShareComm", "Themes",
+                         {x: 137, y: 121, "font-size": "14px"});
+            sv = step(3);
+            arrowFlow(sv, "m2comm", "gShareComm",
+                      {x1: 61, y1: 68, x2: 61, y2: 128});
+            sv = step(4);
             showTextElem(sv, "community", "gShareComm", "Community",
-                         {x: 133, y: 136, "font-size": "14px"});
-            icons.forEach(function (ico, idx) {
-                var xpos = icc.x + (idx * (icc.w + icc.pad));
-                if(xpos === icc.x) {  //adjust first icon over slightly
-                    xpos += 4; }
-                showGraphic(step(3 + idx), "commico" + idx, "gShareComm",
-                            {href: "img/" + ico.img,
-                             x: xpos, y: icc.y, w: icc.w, h: icc.w}); });
+                         {x: 67, y: 146, "font-size": "14px"});
         },
         undo: function (transtime) {
             stepinit(transtime, numsteps);
@@ -610,19 +648,19 @@ app.intro = (function () {
             fadeInitGroup(sv, "gLogo", 1.0);
             showGraphic(sv, "membiclogo", "gLogo",
                         {href: "img/membiclogo.png",
-                         x: 7, y: 38, w: 112, h: 112});
+                         x: 6, y: 20, w: 112, h: 112});
             showTextElem(sv, "mcom", "gLogo", "Membic.com",
-                         {x: 125, y: 71, "text-anchor": "start",
+                         {x: 125, y: 53, "text-anchor": "start",
                           "font-size": "18px"});
             fadeGroup(sv, "gShare", 0.0);
             sv = step(5);
             showTextElem(sv, "whenit", "gLogo",
                          "When it's worth remembering,",
-                         {x: 125, y: 97, "text-anchor": "start",
+                         {x: 125, y: 79, "text-anchor": "start",
                           "font-size": "10px"});
             showTextElem(sv, "makemem", "gLogo",
                          "make a membic.",
-                         {x: 125, y: 111, "text-anchor": "start",
+                         {x: 125, y: 93, "text-anchor": "start",
                           "font-size": "10px"});
         },
         undo: function (transtime) {
