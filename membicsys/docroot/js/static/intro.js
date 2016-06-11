@@ -697,7 +697,8 @@ return {
 
     run: function (autoplay, endfunc) {
         if(window.d3 === undefined) {  //wait until loaded
-            return setTimeout(app.intro.run, 300); }
+            return setTimeout(function () {
+                app.intro.run(autoplay, endfunc); }, 300); }
         ds = d3ckit.displaySettings();
         ds.svgsetupfunc = makeMarkers;
         initSlides(ds);
