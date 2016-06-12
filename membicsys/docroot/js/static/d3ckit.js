@@ -343,8 +343,8 @@ return {
                 .attr("height", ds.dh); }
         ds.cg = ds.globg.append("g");  //general content group
         delayf(displayControls, ds.transtime, ds.svgid);
-        if(ds.autoplay) {
-            delayf(d3ckit.next, ds.transtime, ds.svgid); }
+        //always display first slide
+        delayf(d3ckit.next, ds.transtime, ds.svgid);
     }
 
 };  //end of returned functions

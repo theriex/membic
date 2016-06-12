@@ -81,6 +81,7 @@ app.intro = (function () {
                        "fill-opacity": 0.0})
                 .style({"font-size": (attrs["font-size"] || "16px"),
                         "font-weight": (attrs["font-weight"] || "bold"),
+                        "font-style": (attrs["font-style"] || "normal"),
                         "text-anchor": (attrs["text-anchor"] || "middle")})
                 .text(str); }
         elem.transition().delay(timing.delay).duration(timing.duration)
@@ -102,9 +103,9 @@ app.intro = (function () {
                        "fill": ds.textcolor, 
                        "opacity": attrs.opacity || 1.0,
                        "fill-opacity": attrs.opacity || 1.0})
-                .style({"font-size": "16px", 
-                        "font-weight": attrs["font-weight"] || "bold",
-                        "text-anchor": attrs["text-anchor"] || "middle"})
+                .style({"font-size": (attrs["font-size"] || "16px"), 
+                        "font-weight": (attrs["font-weight"] || "bold"),
+                        "text-anchor": (attrs["text-anchor"] || "middle")})
                 .text(str); }
         elem.attr("transform", "translate(" + 
                   (-1 * (attrs.x2 - attrs.x1)) + "," + 
@@ -194,6 +195,12 @@ app.intro = (function () {
     }
 
 
+    function fadeElems (timing, opacity, ids) {
+        ids.forEach(function (id) {
+            fadeElement(timing, id, opacity); });
+    }
+
+
     function showGraphic (timing, id, grpname, attrs) {
         var elem = d3.select("#" + id);
         if(elem.empty()) {
@@ -224,6 +231,44 @@ app.intro = (function () {
             .attr("fill-opacity", bubbleopa)
             .attr("stroke-opacity", bubbleopa);
         return elem;
+    }
+
+
+    function showRect (timing, id, grpname, attrs) {
+        var elem = d3.select("#" + id);
+        if(elem.empty()) {
+            elem = ds.gs[grpname].append("rect")
+                .attr({"id": id, "x": attrs.x, "y": attrs.y, 
+                       "width": attrs.w, "height": attrs.h,
+                       "rx": (attrs.rx || 0), "ry": (attrs.ry || 0),
+                       "stroke-opacity": 0.0, "fill-opacity": 0.0})
+                .style({"fill": (attrs.fill || "#789897"), 
+                        "stroke": (attrs.stroke || ds.textcolor)}); }
+        elem.transition().delay(timing.delay).duration(timing.duration)
+            .attr("fill-opacity", (attrs.opacity || 1.0))
+            .attr("stroke-opacity", (attrs.opacity || 1.0));
+    }
+
+
+    function showTextLines (timing, grpname, attrs, tes) {
+        var sv = {delay: timing.delay, 
+                  duration: Math.round(timing.duration / tes.length)};
+        tes.forEach(function (elem, idx) {
+            var ap = {x: attrs.x, y: attrs.y + (idx * attrs.lineheight),
+                      "font-size": attrs["font-size"],
+                      "font-weight": attrs["font-weight"],
+                      "text-anchor": attrs["text-anchor"],
+                      "font-style": attrs["font-style"]},
+                ss = {delay: sv.delay + (idx * sv.duration),
+                      duration: sv.duration};
+            if(elem.img) {
+                showGraphic(ss, elem.id + "img", grpname, 
+                            {href: "img/" + elem.img, 
+                             x: attrs.x, 
+                             y: ap.y - (Math.floor(0.65 * attrs.lineheight)),
+                             w: attrs.imgw, h: attrs.imgw});
+                ap.x += attrs.imgw + 2; }
+            showTextElem(ss, elem.id, grpname, elem.txt, ap); });
     }
 
 
@@ -508,7 +553,7 @@ app.intro = (function () {
                          {x: 221, y: 53, "font-size": "14px"});
             sv = step(6);
             showGraphic(sv, "a2aimg", "gShare", 
-                        {x: 278, y: 40, w: 16, h: 16,
+                        {x: 276, y: 41, w: 12, h: 12,
                          href: "img/socbwa2a.png"});
         },
         undo: function (transtime) {
@@ -547,20 +592,10 @@ app.intro = (function () {
             showTextElem(sv, "profile", "gShareProf", "Profile",
                          {x: 170, y: 86, "font-size": "14px"});
             tabs.forEach(function (tab, idx) {
-                var elem;
                 sv = step(3 + idx);
-                elem = d3.select("#" + tab.id + "back");
-                if(elem.empty()) {
-                    elem = ds.gs.gShareProf.append("rect")
-                        .attr({"x": coords.x - 1, "y": coords.y - 1, 
-                               "width": 14, "height": 14,
-                               "rx": 4, "ry": 4,
-                               "id": tab.id + "back", 
-                               "stroke-opacity": 0.0, "fill-opacity": 0.0})
-                        .style({"fill": "#789897", "stroke": ds.textcolor}); }
-                elem.transition().delay(sv.delay).duration(sv.duration)
-                    .attr("fill-opacity", 0.5)
-                    .attr("stroke-opacity", 0.5);
+                showRect(sv, tab.id + "back", "gShareProf", 
+                         {x: coords.x - 1, y: coords.y - 1, w: 14, h: 14,
+                          rx: 4, ry: 4, fill: "#789897", opacity: 0.5});
                 showGraphic(sv, tab.id + "ico", "gShareProf",
                             {href: "img/" + tab.img,
                              x: coords.x, y: coords.y, w: 12, h: 12});
@@ -574,40 +609,6 @@ app.intro = (function () {
             fadeGroup(step(1), "gShareProf", 0.0);
         }
     }; }
-
-
-    // function membicShareCommunity () { var numsteps = 7; return {
-    //     group: {id: "gShareComm", parentgid: "gShare"},
-    //     transmult: numsteps,
-    //     display: function (transtime) {
-    //         var sv, icc = {x: 97, y: 139, w: 16, pad: 2},
-    //             icons = [
-    //                 {text: "Prefer", img: "promote.png", axp: 0, ayp: 4,
-    //                  imgxp: 2, imgyp: 1},
-    //                 {text: "Endorse", img: "endorse.png", axp: 1, ayp: 2},
-    //                 {text: "Background", img: "background.png", axp: 1, ayp: 0},
-    //                 {text: "Block", img: "block.png", axp: 2, ayp: -2}];
-    //         stepinit(transtime, numsteps);
-    //         sv = step(1);
-    //         fadeInitGroup(sv, "gShareComm", 1.0);
-    //         arrowFlow(sv, "m2comm", "gShareComm",
-    //                   {x1: 61, y1: 86, x2: 85, y2: 120});
-    //         sv = step(2);
-    //         showTextElem(sv, "community", "gShareComm", "Community",
-    //                      {x: 133, y: 136, "font-size": "14px"});
-    //         icons.forEach(function (ico, idx) {
-    //             var xpos = icc.x + (idx * (icc.w + icc.pad));
-    //             if(xpos === icc.x) {  //adjust first icon over slightly
-    //                 xpos += 4; }
-    //             showGraphic(step(3 + idx), "commico" + idx, "gShareComm",
-    //                         {href: "img/" + ico.img,
-    //                          x: xpos, y: icc.y, w: icc.w, h: icc.w}); });
-    //     },
-    //     undo: function (transtime) {
-    //         stepinit(transtime, numsteps);
-    //         fadeGroup(step(1), "gShareComm", 0.0);
-    //     }
-    // }; }
 
 
     function membicShareCommunity () { var numsteps = 7; return {
@@ -637,6 +638,144 @@ app.intro = (function () {
     }; }
 
 
+    function communityTheme () { var numsteps = 10; return {
+        group: {id: "gCommTheme"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, tattrs, 
+                td = {x1: 35, x2: 165, y: 35, fs: "12px"},
+                bgr = {r: 3, fill: "#fd700a", stroke: "#b9100f", opa: 0.6};
+            stepinit(transtime, numsteps);
+            sv = step(1);
+            td.yorg = td.y;
+            fadeInitGroup(sv, "gCommTheme", 1.0);
+            fadeGroup(sv, "gShare", 0.0);
+            showRect(sv, "commback", "gCommTheme", 
+                     {x: td.x1 - 3, y: 4, w: 95, h: 18, rx: bgr.r, ry: bgr.r,
+                      fill: bgr.fill, stroke: bgr.stroke, opacity: bgr.opa});
+            showRect(sv, "themeback", "gCommTheme", 
+                     {x: td.x2 - 3, y: 4, w: 69, h: 18, rx: bgr.r, ry: bgr.r,
+                      fill: bgr.fill, stroke: bgr.stroke, opacity: bgr.opa});
+            slideText(sv, "commtitle", "gCommTheme", "Community",
+                      {x1: 22, y1: 146, x2: td.x1, y2: 18,
+                       "font-size": "14px", "text-anchor": "start"});
+            slideText(sv, "themestitle", "gCommTheme", "Themes",
+                      {x1: 106, y1: 121, x2: td.x2, y2: 18, 
+                       "font-size": "14px", "text-anchor": "start"});
+            //Community column display
+            sv = step(2);
+            tattrs = function (xpos) {
+                return {x: xpos, y: td.y, "font-size": td.fs, lineheight: 14,
+                        "text-anchor": "start", 
+                        "font-weight": (td["font-weight"] || "normal"),
+                        imgw: 10}; };
+            showTextElem(sv, "openacc", "gCommTheme", "Open access",
+                         tattrs(td.x1));
+            sv = step(3);
+            td.fs = "10px"; td.x1 += 10; td.y += 16;
+            td["font-weight"] = "bold";
+            showTextLines(sv, "gCommTheme", tattrs(td.x1), [
+                {img: "promote.png", id: "prefer", txt: "Prefer"},
+                {img: "endorse.png", id: "endorse", txt: "Endorse"},
+                {img: "background.png", id: "background", txt: "Background"},
+                {img: "block.png", id: "block", txt: "Block"}]);
+            sv = step(4);
+            td.fs = "12px"; td.x1 -= 10; td.y += 59;
+            td["font-weight"] = "normal";
+            showTextElem(sv, "whycomm", "gCommTheme", "See what people",
+                         tattrs(td.x1));
+            td.y += 13;
+            showTextElem(sv, "whycomm2", "gCommTheme", "are finding",
+                         tattrs(td.x1 + 13));
+            //Theme column display
+            sv = step(6);
+            td.fs = "12px"; td.y = td.yorg;
+            showTextElem(sv, "membacc", "gCommTheme", "Membership access",
+                         tattrs(td.x2));
+            sv = step(7);
+            td.fs = "10px"; td.x2 += 10; td.y += 16;
+            td["font-weight"] = "bold";
+            showTextLines(sv, "gCommTheme", tattrs(td.x2), [
+                {id: "founder", txt: "Founder"},
+                {id: "moderator", txt: "Moderator"},
+                {id: "member", txt: "Member"},
+                {id: "follower", txt: "Follower"}]);
+            sv = step(8);
+            td.fs = "12px"; td.x2 -= 10; td.y += 59;
+            td["font-weight"] = "normal";
+            showTextElem(sv, "whytheme", "gCommTheme", "Collect related",
+                         tattrs(td.x2));
+            td.y += 13;
+            showTextElem(sv, "whytheme2", "gCommTheme", "membics",
+                         tattrs(td.x2 + 13));
+        },
+        undo: function (transtime) {
+            var sv;
+            stepinit(transtime, numsteps);
+            sv = step(1);
+            fadeGroup(sv, "gCommTheme", 0.0);
+            fadeGroup(sv, "gShare", 1.0);
+            fadeElems(sv, 0.0, [
+                "openacc", "prefer", "endorse", "background", "block",
+                "preferimg", "endorseimg", "backgroundimg", "blockimg",
+                "whycomm", "whycomm2",
+                "membacc", "founder", "moderator", "member", "follower",
+                "whytheme", "whytheme2"]);
+        }
+    }; }
+
+
+    function themeFeatures () { var numsteps = 10; return {
+        group: {id: "gTheme"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, fattrs = {x: 120, y: 47, "font-size": "12px",
+                              lineheight: 18, "text-anchor": "start",
+                              imgw: 12},
+                features = [
+                    {img: "embed.png", id: "embed", txt: "Embeddable"},
+                    {img: "rssicon.png", id: "rss", txt: "Newsfeed"},
+                    {img: "stats.png", id: "stats", txt: "Stats"},
+                    {img: "tablatest.png", id: "threcent", txt: "Latest"},
+                    {img: "top.png", id: "thtop", txt: "Top"},
+                    {img: "search.png", id: "thsearch", txt: "Search"}];
+            stepinit(transtime, numsteps);
+            sv = step(1);
+            fadeInitGroup(sv, "gTheme", 1.0);
+            fadeGroup(sv, "gCommTheme", 0.0);
+            slideText(sv, "tftitle", "gTheme", "Theme",
+                      {x1: 165, y1: 18, x2: 38, y2: 53,
+                       "font-size": "14px", "text-anchor": "start"});
+            sv = step(2);
+            fadeElement(sv, "tftitle", 0.0);
+            showTextElem(sv, "tftbig", "gTheme", "Theme",
+                         {x: 30, y: 53, "text-anchor": "start",
+                          "font-size": "18px"});
+            showGraphic(sv, "microsite", "gTheme",
+                        {href: "img/microsite.png",
+                         x: 52, y: 57, w: 25, h: 25});
+            sv = step(3);
+            showTextElem(sv, "acctheme", "gTheme", 
+                         "Access by permalink or hashtag",
+                         {"font-size": "12px"});
+            sv = step(4);
+            sv.duration *= features.length;
+            showTextLines(sv, "gTheme", fattrs, features);
+        },
+        undo: function (transtime) {
+            var sv;
+            stepinit(transtime, numsteps);
+            sv = step(1);
+            fadeGroup(sv, "gTheme", 0.0);
+            fadeGroup(sv, "gCommTheme", 1.0);
+            fadeElement(sv, "tftitle", 1.0);
+            fadeElems(sv, 0.0, ["tftbig", "microsite", "acctheme", 
+                                "embed", "rss", "stats", "threcent", "thtop", 
+                                "thsearch"]);
+        }
+    }; }
+
+
     function fadeToLogo () { var numsteps = 8; return {
         group: {id: "gLogo", zbefore: "gShare"},
         transmult: numsteps,
@@ -646,13 +785,13 @@ app.intro = (function () {
             sv = step(1);
             sv.duration *= 3;
             fadeInitGroup(sv, "gLogo", 1.0);
+            fadeGroup(sv, "gTheme", 0.0);
             showGraphic(sv, "membiclogo", "gLogo",
                         {href: "img/membiclogo.png",
                          x: 6, y: 20, w: 112, h: 112});
             showTextElem(sv, "mcom", "gLogo", "Membic.com",
                          {x: 125, y: 53, "text-anchor": "start",
                           "font-size": "18px"});
-            fadeGroup(sv, "gShare", 0.0);
             sv = step(5);
             showTextElem(sv, "whenit", "gLogo",
                          "When it's worth remembering,",
@@ -667,10 +806,9 @@ app.intro = (function () {
             var sv;
             stepinit(transtime, numsteps);
             sv = step(1);
-            fadeElement(sv, "worthrem", 0.0);
-            fadeElement(sv, "makemem", 0.0);
+            fadeElems(sv, 0.0, ["whenit", "makemem"]);
             fadeGroup(sv, "gLogo", 0.0);
-            fadeGroup(sv, "gShare", 1.0);
+            fadeGroup(sv, "gTheme", 1.0);
         }
     }; }
 
@@ -685,6 +823,8 @@ app.intro = (function () {
             membicShareSoc(),
             membicShareProfile(),
             membicShareCommunity(),
+            communityTheme(),
+            themeFeatures(),
             fadeToLogo()
         ];
     }
@@ -702,6 +842,7 @@ return {
         ds = d3ckit.displaySettings();
         ds.svgsetupfunc = makeMarkers;
         initSlides(ds);
+        ds.normTransTime = 1000;
         if(autoplay) {
             ds.autoplay = true;
             ds.cc.widthMultiple /= 2;
