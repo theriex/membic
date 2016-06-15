@@ -848,6 +848,10 @@ return {
             ds.cc.widthMultiple /= 2;
             ds.cc.controls.rewind = false;
             ds.cc.controls.forward = false; }
+        else {
+            d3ckit.setKeyboardControls();
+            d3ckit.enterKeyPlayPause();
+            ds.eatCharEvents = true; }
         ds.endfunc = endfunc;
         d3ckit.run();
     },

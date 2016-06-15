@@ -170,6 +170,38 @@ d3ckit = (function () {
     }
 
 
+    function handleKeyDown (e) {
+        if(e && (e.charChode || e.keyCode) && ds.cmap) {
+            Object.keys(ds.cmap).forEach(function (cname) {
+                ds.cmap[cname].forEach(function (ukey) {
+                    var code, uc;
+                    if(typeof ukey !== "string") {
+                        code = ukey;
+                        uc = ukey; }
+                    else {
+                        code = ukey.charCodeAt(0);
+                        uc = ukey.toUpperCase().charCodeAt(0); }
+                    if(e.charCode === code || e.keyCode === code ||
+                       e.charChode === uc || e.keyCode === uc) {
+                        d3ckit[cname]();
+                        if(ds.eatCharEvents) {
+                            if(e.preventDefault) {
+                                e.preventDefault(); }
+                            else {
+                                e.returnValue = false; }
+                            if(e.stopPropagation) {
+                                e.stopPropagation(); }
+                            else {
+                                e.cancelBubble = true; } } } }); }); }
+    }
+
+
+    function handleKeyPress (e) {
+        if(e && (e.charCode === 13 || e.keyCode === 13)) {  //ENTER
+            d3ckit.playpause(); }
+    }
+
+
     function makeDemoDeck () {
         var deck = [
             //slide 0
@@ -314,6 +346,21 @@ return {
         ds.transtime = ds.fastTransTime;
         d3ckit.playpause();
         ds.transtime = ts;
+    },
+
+
+    setKeyboardControls: function (cmap) {
+        ds.cmap = cmap || {restart: ["r", "s"],
+                           rewind: ["b"],
+                           previous: ["p", 37, 38],  //left, up arrows
+                           playpause: [" ", 39, 40], //right, down arrows
+                           forward: ["f", "n"]};
+        document.addEventListener("keydown", handleKeyDown);
+    },
+
+
+    enterKeyPlayPause: function () {
+        document.addEventListener("keypress", handleKeyPress);
     },
 
 
