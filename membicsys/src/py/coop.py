@@ -361,11 +361,7 @@ def mail_invite_notice(handler, pnm, coop, acc, invacc, invtoken):
     logging.info("Invite link sent to " + invacc.email + ":\n" +
                  "subject: " + subj + "\n" +
                  content)
-    if not handler.request.host_url.startswith('http://localhost'):
-        mail.send_mail(sender="Membic Support <" + suppemail() + ">",
-                       to=invacc.email,
-                       subject=subj,
-                       body=content)
+    mailgun_send(handler, invacc.email, subj, content)
 
 
 class UpdateDescription(webapp2.RequestHandler):

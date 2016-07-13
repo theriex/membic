@@ -10,7 +10,7 @@ import urllib
 import time
 import json
 from google.appengine.api.datastore_types import Blob
-from consvc import doOAuthGet
+from consvc import doOAuthGet, getConnectionService
 from google.appengine.api import urlfetch
 from morutil import *
 import string
@@ -383,6 +383,30 @@ def random_alphanumeric(length):
     return val
     
 
+def mailgun_send(handler, eaddr, subj, body):
+    if re.search("\:[0-9][0-9]80", handler.request.url):
+        logging.info("Mail not sent to " + eaddr + " from local dev" +
+                     "\n\n" + body)
+        return
+    mg = getConnectionService("mailgun");
+    authkey = base64.b64encode("api:" + mg.ckey)
+    params = urllib.urlencode({
+            'from': 'noreply@membic.com',
+            'to': eaddr,
+            'subject': subj,
+            'text': body})
+    headers = {'Authorization': 'Basic {0}'.format(authkey),
+               'Content-Type': 'application/x-www-form-urlencoded'}
+    conn = httplib.HTTPSConnection("api.mailgun.net", 443)
+    conn.request('POST', '/v3/mg.membic.com/messages', params, headers)
+    response = conn.getresponse()
+    logging.info("mg " + eaddr + " " + subj + " " + str(response.status) + " " +
+                 str(response.reason))
+    data = response.read()
+    logging.info("mg " + eaddr + " data: " + str(data))
+    conn.close()
+
+
 def send_activation_code(handler, account):
     account.actcode = random_alphanumeric(30)
     if account.actsends:
@@ -395,12 +419,8 @@ def send_activation_code(handler, account):
     url = handler.request.host_url + "/activate?key=" +\
         str(account.key().id()) + "&code=" + account.actcode
     logging.info("Activate " + account.email + ": " + url)
-    if not handler.request.host_url.startswith('http://localhost'):
-        mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
-        mail.send_mail(sender="Membic Support <" + suppemail() + ">",
-                       to=account.email,
-                       subject="Account activation",
-                       body=mailtxt)
+    mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
+    mailgun_send(handler, account.email, "Account activation", mailtxt)
     return account
 
 
@@ -528,20 +548,10 @@ class MailCredentials(webapp2.RequestHandler):
                 content += "and your password is " + accounts[0].password
             else:
                 content += "but found no matching accounts." +\
-                    "\nEither you have not signed up yet, or you signed in" +\
-                    " via a social net before and did not provide an" +\
-                    " email address."
+                    "\nEither you have not signed up yet, or you used" +\
+                    " a different email address."
             content += "\n\nhttps://www.membic.com\n\n"
-            if re.search("\:[0-9][0-9]80", self.request.url):
-                logging.info("Mail not sent to " + eaddr + " from local dev" +
-                             "\n\n" + content)
-            else:
-                logging.info("mailing password to " + eaddr)
-                # sender needs to be a valid email address.
-                mail.send_mail(sender="Membic Support <" + suppemail() + ">",
-                               to=eaddr,
-                               subject="Membic.com account login",
-                               body=content)
+            mailgun_send(self, eaddr, "Membic.com account login", content)
         writeJSONResponse("[]", self.response)
 
 
