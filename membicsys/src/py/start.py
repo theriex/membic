@@ -121,7 +121,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("----------------------------------------")
     # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
     # logging.info("----------------------------------------")
-    descr = "A membic is a bite sized structured summary describing what you found memorable."
+    descr = "Membic helps people track and share things that are worth remembering. People use membic to list their top finds and build pages for themes they are interested in."
     img = ""
     title = "Membic"
     if dbclass == "pen":
