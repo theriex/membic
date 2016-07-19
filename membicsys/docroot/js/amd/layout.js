@@ -201,7 +201,7 @@ return {
                 html];
         jt.out("headingdivcontent", jt.tac2html(html));
         setTimeout(function () {
-            jt.byId("revtypesdiv").style.opacity = 1.0; }, 100);
+            jt.byId("revtypesdiv").style.opacity = 1.0; }, 1200);
         if(callbackf === -1) {
             typestate.callbackf(typestate.typename); }
     },
