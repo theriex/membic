@@ -13,6 +13,7 @@ app.layout = (function () {
         dlgqueue = [],
         siteroot = "",
         addToAnyScriptLoaded = false,
+        initialFadeIn = 1200,
 
 
     ////////////////////////////////////////
@@ -90,7 +91,7 @@ app.layout = (function () {
             app.winw = window.innerWidth;
             app.winh = window.innerHeight; }
         //alternate that must have been useful at some point?
-        else if(document.compatMode === 'CSS1Compat' &&
+        else if(document.compatMode === "CSS1Compat" &&
                 document.documentElement && 
                 document.documentElement.offsetWidth) {
             app.winw = document.documentElement.offsetWidth;
@@ -103,19 +104,19 @@ app.layout = (function () {
         else {  //WTF, just guess.
             app.winw = 800;
             app.winh = 800; }
-        //jt.out('bottomnav', String(app.winw) + "x" + app.winh);
+        //jt.out("bottomnav", String(app.winw) + "x" + app.winh);
     },
 
 
     closeModalSeparator = function () {
-        var mdiv = jt.byId('modalseparatordiv');
+        var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = "1px";
         mdiv.style.height = "1px";
     },
 
 
     openModalSeparator = function () {
-        var mdiv = jt.byId('modalseparatordiv');
+        var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = String(app.winw) + "px";
         mdiv.style.height = String(app.winh) + "px";
     };
@@ -132,7 +133,7 @@ return {
         app.layout.commonUtilExtensions();
         localDocLinks();
         if(app.winw > 500) {  //easily fit max topleftdiv + toprightdiv
-            body = jt.byId('bodyid');
+            body = jt.byId("bodyid");
             body.style.paddingLeft = "8%";
             body.style.paddingRight = "8%"; }
     },
@@ -154,7 +155,7 @@ return {
             obj[idfield] = idval;
         };
         jt.isId = function (idval) {
-            if(idval && typeof idval === 'string' && idval !== "0") {
+            if(idval && typeof idval === "string" && idval !== "0") {
                 return true; }
             return false;
         };
@@ -197,11 +198,13 @@ return {
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
         html = ["div", {cla: "revtypesdiv", id: "revtypesdiv",
-                        style: "opacity:0.1;"}, 
+                        style: "opacity:" + (initialFadeIn? "0.0;" : "1.0")}, 
                 html];
         jt.out("headingdivcontent", jt.tac2html(html));
-        setTimeout(function () {
-            jt.byId("revtypesdiv").style.opacity = 1.0; }, 1200);
+        if(initialFadeIn) {
+            setTimeout(function () {
+                jt.byId("revtypesdiv").style.opacity = 1.0; }, initialFadeIn);
+            initialFadeIn = 0; }
         if(callbackf === -1) {
             typestate.callbackf(typestate.typename); }
     },
@@ -209,7 +212,7 @@ return {
 
     runAnime: function () {
         var href, js;
-        if(jt.byId('d3ckitdiv')) { //have display space for 'about' animation
+        if(jt.byId("d3ckitdiv")) { //have display space for "about" animation
             if(!app.intro) {
                 href = window.location.href;
                 if(href.indexOf("#") > 0) {
@@ -218,14 +221,14 @@ return {
                     href = href.slice(0, href.indexOf("?")); }
                 if(!href.endsWith("/")) {
                     href += "/"; }
-                if(typeof d3 === 'undefined') {  //mac ff requires typeof
-                    js = document.createElement('script');
+                if(typeof d3 === "undefined") {  //mac ff requires typeof
+                    js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js";
                     document.body.appendChild(js); }
-                if(typeof d3ckit === 'undefined') {  //mac ff requires typeof
-                    js = document.createElement('script');
+                if(typeof d3ckit === "undefined") {  //mac ff requires typeof
+                    js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/static/d3ckit.js";
@@ -239,7 +242,7 @@ return {
                 jt.byId("themesitespan").style.display = "none";
                 jt.byId("introductionli").style.display = "none";
                 jt.byId("originli").style.display = "none";
-                jt.out('d3ckitdiv', "");  //clear any previous cruft
+                jt.out("d3ckitdiv", "");  //clear any previous cruft
                 app.intro.run(true, app.layout.closeAnime); } }
     },
 
@@ -263,8 +266,8 @@ return {
         setTimeout(function () {
             jt.out("d3ckitdiv", jt.tac2html(html));
             jt.byId("linkpluswhyspan").style.display = "initial";
-            jt.byId('membicsitespan').style.display = "initial";
-            jt.byId('themesitespan').style.display = "initial"; }, 800);
+            jt.byId("membicsitespan").style.display = "initial";
+            jt.byId("themesitespan").style.display = "initial"; }, 800);
     },
 
 
@@ -275,7 +278,7 @@ return {
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
         url += jt.ts("?cb=", "day");
-        jt.request('GET', url, null,
+        jt.request("GET", url, null,
                    function (resp) {
                        displayDocContent(url, resp);
                        setTimeout(app.layout.runAnime, 50); },
@@ -288,8 +291,8 @@ return {
     crumbify: function (index) {
         var i, cb, cf, sections, cht;
         index = index || 0;
-        cb = jt.byId('crumbsbackdiv');
-        cf = jt.byId('crumbsforwarddiv');
+        cb = jt.byId("crumbsbackdiv");
+        cf = jt.byId("crumbsforwarddiv");
         sections = document.getElementsByClassName("docsecdiv");
         if(!cb || !cf || !sections || !sections.length) {
             return; }  //nothing to do
@@ -318,7 +321,7 @@ return {
 
 
     writeDialogContents: function (html) {
-        jt.out('dlgdiv', jt.tac2html(
+        jt.out("dlgdiv", jt.tac2html(
             ["div", {id: "dlgborderdiv"},
              ["div", {id: "dlginsidediv"}, 
               html]]));
@@ -326,7 +329,7 @@ return {
 
 
     queueDialog: function (coords, html, initf, visf) {
-        var dlgdiv = jt.byId('dlgdiv');
+        var dlgdiv = jt.byId("dlgdiv");
         if(dlgdiv.style.visibility === "visible") {
             dlgqueue.push({coords: coords, html: html, 
                            initf: initf, visf: visf}); }
@@ -337,7 +340,7 @@ return {
 
     //clobbers existing dialog if already open
     openDialog: function (coords, html, initf, visf) {
-        var dlgdiv = jt.byId('dlgdiv');
+        var dlgdiv = jt.byId("dlgdiv");
         app.layout.cancelOverlay();  //close overlay if it happens to be up
         //window.scrollTo(0,0);  -- makes phone dialogs jump around. Don't.
         coords = coords || {};  //default x and y separately
@@ -345,7 +348,7 @@ return {
         coords.y = coords.y || 60;  //default y if not specified
         if(coords.x > (app.winw / 2)) {
             coords.x = 20; }  //display too tight, use default left pos
-        coords.y = coords.y + jt.byId('bodyid').scrollTop;  //logical height
+        coords.y = coords.y + jt.byId("bodyid").scrollTop;  //logical height
         dlgdiv.style.left = String(coords.x) + "px";
         dlgdiv.style.top = String(coords.y) + "px";
         if(!app.escapefuncstack) {
@@ -355,7 +358,7 @@ return {
         app.layout.writeDialogContents(html);
         if(initf) {
             initf(); }
-        jt.byId('dlgdiv').style.visibility = "visible";
+        jt.byId("dlgdiv").style.visibility = "visible";
         if(visf) {
             visf(); }
     },
@@ -363,8 +366,8 @@ return {
 
     closeDialog: function () {
         var dlg;
-        jt.out('dlgdiv', "");
-        jt.byId('dlgdiv').style.visibility = "hidden";
+        jt.out("dlgdiv", "");
+        jt.byId("dlgdiv").style.visibility = "hidden";
         app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();
@@ -409,9 +412,9 @@ return {
     cancelOverlay: function (preserveEscape) {
         var odiv;
         closeModalSeparator();
-        odiv = jt.byId('overlaydiv');
+        odiv = jt.byId("overlaydiv");
         if(odiv) {
-            jt.out('overlaydiv', "");
+            jt.out("overlaydiv", "");
             odiv.style.visibility = "hidden"; }
         if(!preserveEscape) {
             app.onescapefunc = null; }
@@ -421,13 +424,13 @@ return {
     openOverlay: function (coords, html, initf, visf, closefstr) {
         var odiv;
         openModalSeparator();
-        odiv = jt.byId('overlaydiv');
+        odiv = jt.byId("overlaydiv");
         coords = coords || {};
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
         coords.y = coords.y || 200;
         if(coords.x > (app.winw / 2)) {
             coords.x = 20; }  //display too tight, just indent a bit
-        coords.y = coords.y + jt.byId('bodyid').scrollTop;  //logical height
+        coords.y = coords.y + jt.byId("bodyid").scrollTop;  //logical height
         odiv.style.left = String(coords.x) + "px";
         odiv.style.top = String(coords.y) + "px";
         app.escapefuncstack.push(app.onescapefunc);
@@ -438,7 +441,7 @@ return {
                         onclick: closefstr},
                   "&lt;close&nbsp;&nbsp;X&gt;"]],
                 html];
-        jt.out('overlaydiv', jt.tac2html(html));
+        jt.out("overlaydiv", jt.tac2html(html));
         if(initf) {
             initf(); }
         odiv.style.visibility = "visible";
@@ -518,7 +521,7 @@ return {
             if(!addToAnyScriptLoaded) {
                 //the script executes on load, so nothing left to do after
                 //adding the script tag to the document
-                js = document.createElement('script');
+                js = document.createElement("script");
                 //js.async = true;
                 js.type = "text/javascript";
                 js.src = "//static.addtoany.com/menu/page.js";
@@ -528,15 +531,15 @@ return {
             else {
                 //reinitialize the sharing display via the API
                 jt.log("resetting addtoany config variables and calling init");
-                a2a.init('page'); }
+                a2a.init("page"); }
         } catch(e) {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
             //checking a2a_config === undefined does not work mac ff 42.0
             //so regardless of what jslint sez, this needs to stay..
-            if(typeof a2a_config === 'undefined') {  //mac ff requires typeof
-                jt.out('a2abdiv', "Browser history must be enabled for share buttons"); } }, 3500);
+            if(typeof a2a_config === "undefined") {  //mac ff requires typeof
+                jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } }, 3500);
     },
 
 
