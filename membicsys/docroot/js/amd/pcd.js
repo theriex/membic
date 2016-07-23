@@ -458,12 +458,12 @@ app.pcd = (function () {
             setTimeout(function () {  //fetch after initial display finished
                 var params = app.login.authparams() + "&ctype=" + dst.type +
                     "&parentid=" + dst.id + jt.ts("&cb=", "minute");
-                jt.call('GET', "currstats?" + params, null,
+                jt.call("GET", "currstats?" + params, null,
                         function (mctrs) {
                             dst.obj.mctr = mctrs[0];
-                            jt.out('statsumdiv', statSummaryHTML()); },
+                            jt.out("statsumdiv", statSummaryHTML()); },
                         app.failf(function (code, errtxt) {
-                            jt.out('statsumdiv', "currstats failed " + code +
+                            jt.out("statsumdiv", "currstats failed " + code +
                                    ": " + errtxt); }),
                         jt.semaphore("pcd.fetchStats")); }, 200); }
         html = ["div", {id: "statsdisplaydiv"},
@@ -497,8 +497,10 @@ app.pcd = (function () {
                           onclick: jt.fs("app.pcd.toggleCtmDet('info')")},
                     ["img", {cla: "ctmsetimg", src: "img/info.png"}]]],
                   ["div", {id: "meminfoseldiv",
-                           style: (memsel? "" : "display:none;")}, memsel],
-                  ["div", {id: "reloaddiv"}, 
+                           style: (memsel? "" : "display:none;")}, 
+                   memsel],
+                  ["div", {id: "reloaddiv",
+                           style: (memsel? "" : "display:none;")},
                    ["a", {href: "?view=coop&coopid=" + jt.instId(dst.obj)},
                     ["img", {cla: "ctmsetimg", src: "img/reload.png"}]]],
                   ["div", {id: "statsdiv"},
@@ -588,13 +590,13 @@ app.pcd = (function () {
     descripSettingsInit = function () {
         var defs, namein, shout;
         defs = dst[dst.type];
-        shout = jt.byId('shouteditbox');
+        shout = jt.byId("shouteditbox");
         if(shout) {
             shout.readOnly = false;
             shout.value = dst.obj[defs.descfield];
             shout.placeholder = defs.descplace; }
         //set the focus only if not already filled in
-        namein = jt.byId('namein');
+        namein = jt.byId("namein");
         if(namein && !namein.value) {
             namein.focus(); }
         else if(shout && !shout.value) {
@@ -705,7 +707,7 @@ app.pcd = (function () {
         return html;
     },
     calSettingsInit = function () {
-        var ceta = jt.byId('calembedta');
+        var ceta = jt.byId("calembedta");
         if(ceta) {
             ceta.readOnly = false;
             ceta.value = dst.obj.calembed;
@@ -741,7 +743,7 @@ app.pcd = (function () {
         site = window.location.href;
         if(site.endsWith("/")) {
             site = site.slice(0, -1); }
-        ta = jt.byId('rssurlta');
+        ta = jt.byId("rssurlta");
         if(ta) {
             ta.readOnly = true;
             ta.value = site + "/rsscoop?coop=" + 
@@ -801,7 +803,7 @@ app.pcd = (function () {
         site = window.location.href;
         if(site.endsWith("/")) {
             site = site.slice(0, -1); }
-        ta = jt.byId('ctmembedta');
+        ta = jt.byId("ctmembedta");
         if(ta) {
             ta.readOnly = true;
             ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
@@ -909,7 +911,7 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayRecent = function (expid) {
-        app.review.displayReviews('pcdcontdiv', "pcd", getRecentReviews(), 
+        app.review.displayReviews("pcdcontdiv", "pcd", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
         if(expid === "settingspic") {
@@ -947,7 +949,7 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayFavorites = function () {
-        app.review.displayReviews('pcdcontdiv', "pcd", getFavoriteReviews(),
+        app.review.displayReviews("pcdcontdiv", "pcd", getFavoriteReviews(),
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
     },
@@ -956,7 +958,7 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayRemembered = function () {
-        app.activity.displayRemembered('pcdcontdiv');
+        app.activity.displayRemembered("pcdcontdiv");
     },
 
 
@@ -969,11 +971,11 @@ app.pcd = (function () {
                             placeholder: "Membic title or keyword",
                             value: srchst.qstr}]],
                 ["div", {id: "pcdsrchdispdiv"}]];
-        jt.out('pcdcontdiv', jt.tac2html(html));
+        jt.out("pcdcontdiv", jt.tac2html(html));
         srchst.status = "initializing";
         app.pcd.searchReviews();
         if(app.login.isLoggedIn()) {
-            jt.byId('pcdsrchin').focus(); }
+            jt.byId("pcdsrchin").focus(); }
     },
 
 
@@ -1015,7 +1017,7 @@ app.pcd = (function () {
 
 
     displaySearchResults = function () {
-        app.review.displayReviews('pcdsrchdispdiv', "pcd", srchst.revs, 
+        app.review.displayReviews("pcdsrchdispdiv", "pcd", srchst.revs, 
                                   "app.pcd.toggleRevExpansion", 
                                   (dst.type === "coop"));
         srchst.status = "waiting";
@@ -1026,7 +1028,7 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayCalendar = function () {
-        jt.out('pcdcontdiv', dst.obj.calembed);
+        jt.out("pcdcontdiv", dst.obj.calembed);
     },
 
 
@@ -1065,7 +1067,7 @@ app.pcd = (function () {
                           onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
                     [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
                      "Download"]]; }
-        jt.out('tabtitlediv', jt.tac2html([titleForTab(knowntabs[tabname]),
+        jt.out("tabtitlediv", jt.tac2html([titleForTab(knowntabs[tabname]),
                                            html]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
@@ -1073,16 +1075,16 @@ app.pcd = (function () {
             return dispfunc(expid); }
         //could be creating a new theme at this point. dialog may or may
         //not be displayed
-        jt.out('pcdcontdiv', "Settings required.");
+        jt.out("pcdcontdiv", "Settings required.");
         app.pcd.settings();
     },
 
 
     displayRSSAndHomeLinks = function () {
         var coords, absdiv, html, homeurl, rssurl;
-        coords = jt.geoPos(jt.byId('tabsdiv'));
+        coords = jt.geoPos(jt.byId("tabsdiv"));
         coords.x += (dst.type === "pen"? 230 : 150);
-        absdiv = jt.byId('xtrabsdiv');
+        absdiv = jt.byId("xtrabsdiv");
         absdiv.style.left = String(coords.x) + "px";
         absdiv.style.top = String(coords.y - 10) + "px";
         absdiv.style.background = "transparent";
@@ -1101,7 +1103,7 @@ app.pcd = (function () {
                 ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
                        onclick: jt.fs("window.open('" + rssurl + "')")},
                  ["img", {cla: "webjump", src: "img/rssicon.png"}]]); }
-        jt.out('xtrabsdiv', jt.tac2html(html));
+        jt.out("xtrabsdiv", jt.tac2html(html));
     },
 
 
@@ -1135,11 +1137,11 @@ app.pcd = (function () {
 
 
     changeSiteTabIcon = function () {
-        var link = document.createElement('link');
-        link.type = 'image/x-icon';
-        link.rel = 'shortcut icon';
+        var link = document.createElement("link");
+        link.type = "image/x-icon";
+        link.rel = "shortcut icon";
         link.href = "ctmpic?" + dst.type + "id=" + dst.id;
-        document.getElementsByTagName('head')[0].appendChild(link);
+        document.getElementsByTagName("head")[0].appendChild(link);
     },
 
 
@@ -1181,7 +1183,7 @@ app.pcd = (function () {
                    ["div", {id: "tabtitlediv"}],
                    ["div", {id: "downloadlinksdiv", style: "display:none;"}]]],
                  ["div", {id: "pcdcontdiv"}]]];
-        jt.out('contentdiv', jt.tac2html(html));
+        jt.out("contentdiv", jt.tac2html(html));
         if(app.solopage()) {
             createColorOverrides();
             changeSiteTabIcon();
@@ -1269,7 +1271,7 @@ return {
     //Called from layout.displayTypes when membic type selected
     displayPrefPens: function (prefpens) {
         var html = [];
-        if(!prefpens || (typeof prefpens !== 'object')) {
+        if(!prefpens || (typeof prefpens !== "object")) {
             return app.pen.prefPens(dst.obj, "pcdcontdiv", 
                                     app.pcd.displayPrefPens); }
         Object.keys(prefpens).forEach(function (penid) {
@@ -1289,7 +1291,7 @@ return {
         if(!html.length) {
             html.push(["div", {cla: "pcdtext"},
                        "No preferred people yet."]); }
-        jt.out('pcdcontdiv', jt.tac2html(html));
+        jt.out("pcdcontdiv", jt.tac2html(html));
     },
 
 
@@ -1297,7 +1299,7 @@ return {
     //Called from layout.displayTypes when membic type selected
     displayCoops: function (coopnames) {
         var html = [];
-        if(!coopnames || (typeof coopnames !== 'object')) {
+        if(!coopnames || (typeof coopnames !== "object")) {
             return app.pen.coopNames(dst.obj, "pcdcontdiv", 
                                      app.pcd.displayCoops); }
         Object.keys(coopnames).forEach(function (cid) {
@@ -1326,7 +1328,7 @@ return {
         if(!html.length) {
             html.push(["div", {cla: "pcdtext"}, 
                        "No theme memberships found."]); }
-        jt.out('pcdcontdiv', jt.tac2html(html));
+        jt.out("pcdcontdiv", jt.tac2html(html));
     },
 
 
@@ -1419,7 +1421,7 @@ return {
 
     saveDescription: function () {
         var changed = false, defs, elem, val, okfunc, failfunc;
-        jt.byId('okbutton').disabled = true;
+        jt.byId("okbutton").disabled = true;
         defs = dst[dst.type];
         elem = jt.byId("namein");
         if(elem && elem.value && elem.value.trim()) {
@@ -1427,11 +1429,11 @@ return {
             if(dst.obj.name !== val) {
                 dst.obj.name = val;
                 changed = true; } }
-        elem = jt.byId('shouteditbox');
+        elem = jt.byId("shouteditbox");
         if(elem && elem.value !== dst.obj[defs.descfield]) {
             dst.obj[defs.descfield] = elem.value;
             changed = true; }
-        elem = jt.byId('hashin');
+        elem = jt.byId("hashin");
         if(elem && elem.value && elem.value.trim()) {
             val = elem.value.trim();
             if(val.indexOf("#") === 0) {
@@ -1449,8 +1451,8 @@ return {
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
             failfunc = function (code, errtxt) {
-                jt.byId('okbutton').disabled = false;
-                jt.out('formstatdiv', jt.errhtml("Update", code, errtxt)); };
+                jt.byId("okbutton").disabled = false;
+                jt.out("formstatdiv", jt.errhtml("Update", code, errtxt)); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
     },
 
@@ -1471,7 +1473,7 @@ return {
 
     monitorPicUpload: function () {
         var tgif, txt, defs, mtag = "Done: ";
-        tgif = jt.byId('tgif');
+        tgif = jt.byId("tgif");
         if(tgif) {
             txt = tgif.contentDocument || tgif.contentWindow.document;
             if(txt && txt.body) {
@@ -1483,14 +1485,14 @@ return {
                     app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
-                    jt.out('imgupstatdiv', txt); } }
+                    jt.out("imgupstatdiv", txt); } }
             setTimeout(app.pcd.monitorPicUpload, 800); }
     },
 
 
     saveCalEmbed: function () {
         var defs, elem, okfunc, failfunc;
-        jt.byId('savecalbutton').disabled = true;
+        jt.byId("savecalbutton").disabled = true;
         defs = dst[dst.type];
         elem = jt.byId("calembedta");
         if(elem && elem.value !== dst.obj.calembed) {
@@ -1500,8 +1502,8 @@ return {
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
             failfunc = function (code, errtxt) {
-                jt.byId('savecalbutton').disabled = false;
-                jt.out('calembederrdiv', "Update failed code " + code +
+                jt.byId("savecalbutton").disabled = false;
+                jt.out("calembederrdiv", "Update failed code " + code +
                        ": " + errtxt); };
             defs.objupdate(dst.obj, okfunc, failfunc); }
     },
@@ -1509,7 +1511,7 @@ return {
 
     saveSoloColors: function () {
         var defs = dst[dst.type];
-        jt.byId('savecolorsbutton').disabled = true;
+        jt.byId("savecolorsbutton").disabled = true;
         dst.obj.soloset.colors.forEach(function (cdef, idx) {
             var color = jt.byId(cdef.name + "in").value;
             dst.obj.soloset.colors[idx].value = color; });
@@ -1519,8 +1521,8 @@ return {
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); },
             function (code, errtxt) {
-                jt.byId('savecolorsbutton').disabled = false;
-                jt.out('colorupderrdiv', "Update failed code " + code +
+                jt.byId("savecolorsbutton").disabled = false;
+                jt.out("colorupderrdiv", "Update failed code " + code +
                        ": " + errtxt); });
     },
 
@@ -1547,11 +1549,11 @@ return {
         if(confmsg && !confirm(confmsg)) {
             return; }
         if(mlev > 0) {
-            jt.out('rsbdiv', "Resigning");
+            jt.out("rsbdiv", "Resigning");
             app.coop.processMembership(dst.obj, "demote", app.pen.myPenId(),
                                         "", app.pcd.settings); }
         else {
-            jt.out('rsbdiv', "Stopping");
+            jt.out("rsbdiv", "Stopping");
             pen = app.pen.myPenName();
             pen.coops = pen.coops.csvremove(dst.id);
             app.pen.updatePen(pen, app.pcd.redisplay, app.failf); }
@@ -1607,13 +1609,13 @@ return {
             return; }  //tabs so just quit
         if(!app.login.isLoggedIn()) {
             if(app.solopage()) {
-                jt.out('pcdsrchdispdiv', jt.tac2html(
+                jt.out("pcdsrchdispdiv", jt.tac2html(
                     ["a", {href: app.hardhome + "?view=coop&coopid=" + dst.id +
                                  "&tab=search"},
                      "Sign in at full membic page to search"])); }
             else {
                 
-                jt.out('pcdsrchdispdiv', "Sign in to search"); }
+                jt.out("pcdsrchdispdiv", "Sign in to search"); }
             return; }
         if(!srchst.status !== "processing" && 
               (srchst.status === "initializing" ||
@@ -1631,7 +1633,7 @@ return {
                         ["button", {type: "button", id: "searchserverbutton",
                                     onclick: jt.fs("app.pcd.searchServer()")},
                          "Search Server"]];
-                jt.out('pcdsrchdispdiv', jt.tac2html(html)); } }
+                jt.out("pcdsrchdispdiv", jt.tac2html(html)); } }
         else {  //no change to search parameters yet, monitor
             setTimeout(app.pcd.searchReviews, 400); }
     },
@@ -1639,7 +1641,7 @@ return {
 
     searchServer: function () {
         var params;
-        app.displayWaitProgress(0, 1600, 'pcdsrchdispdiv', 
+        app.displayWaitProgress(0, 1600, "pcdsrchdispdiv", 
                                 "Searching...",
                                 "Many reviews or slow data connection...");
         params = app.login.authparams() + 
@@ -1647,13 +1649,13 @@ return {
             "&revtype=" + app.typeOrBlank(srchst.revtype) +
             "&" + (dst.type === "coop"? "ctmid=" : "penid=") +
             jt.instId(dst.obj) + jt.ts("&cb=", "hour");
-        jt.call('GET', "srchrevs?" + params, null,
+        jt.call("GET", "srchrevs?" + params, null,
                 function (revs) {
                     app.lcs.putAll("rev", revs);
                     srchst.revs = revs;
                     displaySearchResults(); },
                 app.failf(function (code, errtxt) {
-                    jt.out('pcdsrchdispdiv', "searchReviews failed: " + 
+                    jt.out("pcdsrchdispdiv", "searchReviews failed: " + 
                            code + " " + errtxt); }),
                 jt.semaphore("pcd.searchReviews"));
     },
@@ -1689,9 +1691,9 @@ return {
                   ["img", {src: "img/membiclogo.png", cla: "hthimg"}]]],
                 ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {
-            jt.out('findctmdiv', jt.tac2html(html)); }
+            jt.out("findctmdiv", jt.tac2html(html)); }
         else {
-            jt.out('findctmdiv', ""); }
+            jt.out("findctmdiv", ""); }
     },
 
 
@@ -1703,37 +1705,37 @@ return {
                              onclick: jt.fs("app.pcd.display('coop')")},
                   "Create New Theme"]]];
         if(!jt.byId("createctmdiv").innerHTML) {
-            jt.out('createctmdiv', jt.tac2html(html)); }
+            jt.out("createctmdiv", jt.tac2html(html)); }
         else {
-            jt.out('createctmdiv', ""); }
+            jt.out("createctmdiv", ""); }
     },
 
 
     toggleCtmDet: function (ctype) {
-        var midispdiv = jt.byId('midispdiv');
+        var midispdiv = jt.byId("midispdiv");
         if(ctype === "info" && (setdispstate.infomode !== "info" ||
                                 !midispdiv.innerHTML)) {
             setdispstate.infomode = "info";
-            jt.byId('midispdiv').style.display = "block";
+            jt.byId("midispdiv").style.display = "block";
             if(dst.type === "coop") {
-                jt.out('midispdiv', coopLogHTML()); }
+                jt.out("midispdiv", coopLogHTML()); }
             else {
-                jt.out('midispdiv', accountInfoHTML()); } }
+                jt.out("midispdiv", accountInfoHTML()); } }
         else if(ctype === "mbinfo" && (setdispstate.infomode !== "finfo" ||
                                        !midispdiv.innerHTML)) {
             setdispstate.infomode = "finfo";
-            jt.byId('midispdiv').style.display = "block";
-            jt.out('midispdiv', coopLogHTML("membership")); }
+            jt.byId("midispdiv").style.display = "block";
+            jt.out("midispdiv", coopLogHTML("membership")); }
         else if(ctype === "members" && (setdispstate.infomode !== "members" ||
                                         !midispdiv.innerHTML)) {
             setdispstate.infomode = "members";
-            jt.byId('midispdiv').style.display = "block";
-            jt.out('midispdiv', coopMembershipHTML()); }
+            jt.byId("midispdiv").style.display = "block";
+            jt.out("midispdiv", coopMembershipHTML()); }
         else if(ctype === "stats" && (setdispstate.infomode !== "stats" ||
                                       !midispdiv.innerHTML)) {
             setdispstate.infomode = "stats";
-            jt.byId('midispdiv').style.display = "block";
-            jt.out('midispdiv', statsDisplayHTML()); }
+            jt.byId("midispdiv").style.display = "block";
+            jt.out("midispdiv", statsDisplayHTML()); }
         else {
             app.layout.togdisp("midispdiv"); }
     },
@@ -1856,7 +1858,7 @@ return {
 
     blockfetch: function (dtype, id, callback, divid) {
         var objref, url, time;
-        divid = divid || 'contentdiv';
+        divid = divid || "contentdiv";
         if(dtype === "pen" && !id) {
             id = app.pen.myPenId(); }
         objref = app.lcs.getRef(dtype, id);
@@ -1870,7 +1872,7 @@ return {
             url += "&ctmid=" + id; }
         url += jt.ts("&cb=", "hour");
         time = new Date().getTime();
-        jt.call('GET', url, null,
+        jt.call("GET", url, null,
                 function (objs) {  // main obj + recent/top reviews
                     var obj, revs;
                     time = new Date().getTime() - time;
