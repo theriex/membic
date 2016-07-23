@@ -64,7 +64,7 @@ app.pen = (function () {
         app.pen.serializeFields(pen);
         data = jt.objdata(pen, ["recent", "top20s"]);
         app.pen.deserializeFields(pen);  //in case update fail or interim use
-        jt.call('POST', "updpen?" + app.login.authparams(), data,
+        jt.call("POST", "updpen?" + app.login.authparams(), data,
                  function (updpens) {
                      app.pen.noteUpdatedPen(updpens[0], pen);
                      callok(updpens[0]); },
@@ -78,7 +78,7 @@ app.pen = (function () {
         var html;
         returnFuncMemo = callback;
         app.login.updateAuthentDisplay("hide");
-        jt.out('headingdivcontent', "");
+        jt.out("headingdivcontent", "");
         html = ["div", {id: "createpndiv"},
                 [["div", {id: "createpnintrodiv"},
                   "Your pen name is a unique public identifier for membics you write. Use your real name or get creative."],
@@ -92,8 +92,8 @@ app.pen = (function () {
                     ["button", {type: "button", id: "createbutton",
                                 onclick: jt.fs("app.pen.createPenName()")},
                      "Create"]]]]]];
-        jt.out('contentdiv', jt.tac2html(html));
-        jt.byId('pnamein').focus();
+        jt.out("contentdiv", jt.tac2html(html));
+        jt.byId("pnamein").focus();
     },
 
 
@@ -135,20 +135,21 @@ return {
 
     createPenName: function () {
         var buttonhtml, data, name;
-        name = jt.byId('pnamein').value;
+        name = jt.byId("pnamein").value;
         if(!name || !name.trim()) {
             return; }  //no input, so nothing to create yet
-        buttonhtml = jt.byId('pncbuttondiv').innerHTML;
-        jt.out('pncbuttondiv', "Creating Pen Name...");
+        buttonhtml = jt.byId("pncbuttondiv").innerHTML;
+        jt.out("pncbuttondiv", "Creating Pen Name...");
         data = jt.objdata({name: name});
-        jt.call('POST', "newpen?" + app.login.authparams(), data,
+        jt.call("POST", "newpen?" + app.login.authparams(), data,
                  function (newpens) {
                      loginpenid = jt.instId(newpens[0]);
                      app.lcs.put("pen", newpens[0]);
-                     returnCall(); },
+                     setTimeout(app.pen.promptFixPen, 2500);
+                     returnCall(); },  //main display rebuilds menus...
                  app.failf(function (ignore /*code*/, errtxt) {
-                     jt.out('penformstat', errtxt);
-                     jt.out('pncbuttondiv', buttonhtml); }),
+                     jt.out("penformstat", errtxt);
+                     jt.out("pncbuttondiv", buttonhtml); }),
                 jt.semaphore("pen.createPenName"));
     },
 
@@ -168,7 +169,7 @@ return {
                                field: ctype, penid: penid,
                                refer: app.refer});
             setTimeout(function () {
-                jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+                jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
                         function () {
                             app.refer = "";  //only count referrals once
                             jt.log("bumpmctr?" + data + " success"); },
@@ -379,7 +380,7 @@ return {
 
 
     reflectVisPrefs: function () {
-        if(jt.byId('feedrevsdiv')) {
+        if(jt.byId("feedrevsdiv")) {
             app.activity.redisplay(); }
         else {
             app.activity.reinit();
@@ -424,15 +425,41 @@ return {
     },
 
 
+    penReady: function () {
+        var mypen = app.pen.myPenName();
+        if(mypen.profpic && app.login.accountInfo("status") === "Active") {
+            return true; }
+        return false;
+    },
+
+
+    promptFixPen: function () {
+        var mypen, msg;
+        mypen = app.pen.myPenName();
+        msg = "";
+        if(app.login.accountInfo("status") !== "Active") {
+            msg = "You need to activate your account";
+            if(!mypen.profpic) {
+                msg += ", and set an image for your profile"; }
+            msg += " before posting."; }
+        else if(!mypen.profpic) {
+            msg = "You need to set an image for your profile before posting"; }
+        if(msg) {
+            jt.err(msg);
+            return app.pcd.display("pen", app.pen.myPenId(), "latest",
+                                   app.pen.myPenName(), "settings"); }
+    },
+
+
     serializeFields: function (penName) {
-        if(typeof penName.settings === 'object') {
+        if(typeof penName.settings === "object") {
             penName.settings = JSON.stringify(penName.settings); }
         //top20s are maintained and rebuilt by the server, so
         //serializing is not strictly necessary, but better to have
         //the field reflect the state of the other serialized fields.
-        if(typeof penName.top20s === 'object') {
+        if(typeof penName.top20s === "object") {
             penName.top20s = JSON.stringify(penName.top20s); }
-        if(typeof penName.stash === 'object') {
+        if(typeof penName.stash === "object") {
             penName.stash = JSON.stringify(penName.stash); }
     },
 
