@@ -514,16 +514,11 @@ app.pcd = (function () {
     },
 
 
-    picSettingsHTML = function () {
-        var pi, html;
-        if(!jt.hasId(dst.obj) ||
-               (dst.type === "coop" && 
-                app.coop.membershipLevel(dst.obj) < 3)) {
-            return ""; }
-        pi = {havepic: false, src: "img/nopicprof.png"};
+    getPicInfo = function () {
+        var pi = {havepic: false, src: "img/nopicprof.png"};
         if(dst.type === "pen") {
             pi.lab = "Upload a profile picture!";
-            pi.exp = "An image for your profile helps people identify membics you write. Choose something visually unique that represents you.";
+            pi.exp = "An image for your profile helps people identify membics you write. Choose something unique that visually represents you.";
             if(dst.obj.profpic) {
                 pi.havepic = true;
                 pi.lab = "Change Profile Picture";
@@ -541,12 +536,33 @@ app.pcd = (function () {
                    ["i", "Why?"]]];
         pi.src += jt.ts((pi.src.indexOf("?") >= 0? "&" : "?") + "cb=", 
                         dst.obj.modified);
+        return pi;
+    },
+
+
+    picFileSelChange = function () {
+        var fv = jt.byId("picfilein").value;
+        //chrome yields a value like "C:\\fakepath\\circuit.png"
+        fv = fv.split('\\').pop();
+        jt.out("picfilelab", fv);
+        jt.byId("picfilelab").className = "filesellab2";
+        jt.byId("upldsub").style.visibility = "visible";
+    },
+
+
+    picSettingsHTML = function () {
+        var pinf, html;
+        if(!jt.hasId(dst.obj) ||
+               (dst.type === "coop" && 
+                app.coop.membershipLevel(dst.obj) < 3)) {
+            return ""; }
+        pinf = getPicInfo();
         html = [["label", {fo: "picuploadform", cla: "overlab",
-                           style: (pi.havepic? "display:none;" : "")},
-                 pi.lab],
+                           style: (pinf.havepic? "display:none;" : "")},
+                 pinf.lab],
                 ["div", {id: "whypicdiv", cla: "formline", 
                          style: "display:none;"},
-                 ["div", {cla: "fieldexpdiv"}, pi.exp]],
+                 ["div", {cla: "fieldexpdiv"}, pinf.exp]],
                 ["form", {action: "/picupload", method: "post",
                           enctype: "multipart/form-data", target: "tgif",
                           id: "picuploadform"},
@@ -556,20 +572,25 @@ app.pcd = (function () {
                                         "&penid=" + app.pen.myPenId()),
                   ["div", {cla: "ptddiv"},
                    [["img", {id: "upldpicimg", cla: "revimgdis",
-                             src: pi.src}],
-                    ["div", {id: "upldpicform", cla: "overform"},
+                             src: pinf.src}],
+                    ["div", {id: "upldpicform", cla: "picsideform"},
                      [["div", {cla: "fileindiv"},
-                       [["input", {type: "file", 
+                       [["input", {type: "file", cla: "hidefilein",
                                    name: "picfilein", id: "picfilein"}],
-                        ["div", {id: "uploadbuttonsdiv"},
+                        ["label", {fo: "picfilein", cla: "filesellab",
+                                   id: "picfilelab"},
+                         "Choose&nbsp;Image"],
+                        ["div", {cla: "picsideformbuttonsdiv"},
                          ["input", {type: "submit", cla: "formbutton",
-                                    value: "Upload&nbsp;Image"}]]]]]],
+                                    style: "visibility:hidden;",
+                                    id: "upldsub", value: "Upload"}]]]]]],
                     ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                 ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
                             style: "display:none"}]];
         return html;
     },
     picSettingsInit = function () {
+        jt.on("picfilein", "change", picFileSelChange);
         app.pcd.monitorPicUpload();
     },
 

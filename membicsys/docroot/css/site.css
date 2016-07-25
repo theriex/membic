@@ -30,7 +30,7 @@ body {
 
 img { border:0px; vertical-align:middle; }
 
-button, .loginbutton, .formbutton { 
+button, .loginbutton, .formbutton, .filesellab { 
   border:1px solid #271400; border-radius:5px; cursor:pointer;
   background:#ffd2a4; box-shadow:1px 1px 1px #999999; }
 
@@ -297,6 +297,12 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .ptddiv { display:inline-block; position:relative; vertical-align:top;
   width:125px; height:125px; margin:5px; background:#ffeac2; }
 .overform { position:absolute; top:0px; left:0px; width:125px; }
+.picsideform { position:absolute; top:10px; left: 134px; width: 130px; }
+.picsideformbuttonsdiv { padding:0px 5px; }
+.hidefilein { width: 0.1px; height: 0.1px; /* zero is unreliable */
+  position: absolute; /* avoid layout interference with other elements */
+  opacity: 0; overflow: hidden; z-index: -1; } /* hide it */
+.filesellab, .filesellab2 { padding:0px 5px; font-size:small; cursor:pointer; }
 .ptdlabspan { font-size:medium; }
 #ptdfdiv { padding:5px; }
 #ptduploadbuttonsdiv { text-align:center; padding:15px 0px 5px 0px; }
