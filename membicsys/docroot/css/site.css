@@ -193,6 +193,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
 .keydefin { width:220px; } /* dlgta - reviewbadge - pad */
+.fieldexpdiv { font-size:small; padding:5px; }
 .kwcsvspan { font-size:x-small; }
 .kwcsvlabel { font-weight:bold; padding-right:4px; }
 .kwhelpdlg { font-size:small; }

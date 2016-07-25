@@ -515,20 +515,38 @@ app.pcd = (function () {
 
 
     picSettingsHTML = function () {
-        var picsrc, html;
+        var pi, html;
         if(!jt.hasId(dst.obj) ||
                (dst.type === "coop" && 
                 app.coop.membershipLevel(dst.obj) < 3)) {
             return ""; }
-        picsrc = "img/nopicprof.png";
-        if(dst.obj.profpic) {
-            picsrc = "profpic?profileid=" + dst.obj.profpic; }
-        else if(dst.obj.picture) {
-            picsrc = "ctmpic?coopid=" + dst.obj.picture; }
-        picsrc += jt.ts((picsrc.indexOf("?") >= 0? "&" : "?") + "cb=", 
+        pi = {havepic: false, src: "img/nopicprof.png"};
+        if(dst.type === "pen") {
+            pi.lab = "Upload a profile picture!";
+            pi.exp = "An image for your profile helps people identify membics you write. Choose something visually unique that represents you.";
+            if(dst.obj.profpic) {
+                pi.havepic = true;
+                pi.lab = "Change Profile Picture";
+                pi.src = "profpic?profileid=" + dst.obj.profpic; } }
+        else if(dst.type === "coop") {
+            pi.lab = "Upload a theme logo or picture!";
+            pi.exp = "Themes with an image look much better and are easier to find in the theme overview.";
+            if(dst.obj.picture) {
+                pi.havepic = true;
+                pi.lab = "Change Theme Logo or Picture";
+                pi.src = "profpic?profileid=" + dst.obj.profpic; } }
+        pi.lab = [pi.lab + " ",
+                  ["a", {href: "#WhyPic",
+                         onclick: jt.fs("app.toggledivdisp('whypicdiv')")},
+                   ["i", "Why?"]]];
+        pi.src += jt.ts((pi.src.indexOf("?") >= 0? "&" : "?") + "cb=", 
                         dst.obj.modified);
-        html = [["label", {fo: "picuploadform", cla: "overlab"},
-                  "Change Picture or Logo"],
+        html = [["label", {fo: "picuploadform", cla: "overlab",
+                           style: (pi.havepic? "display:none;" : "")},
+                 pi.lab],
+                ["div", {id: "whypicdiv", cla: "formline", 
+                         style: "display:none;"},
+                 ["div", {cla: "fieldexpdiv"}, pi.exp]],
                 ["form", {action: "/picupload", method: "post",
                           enctype: "multipart/form-data", target: "tgif",
                           id: "picuploadform"},
@@ -538,7 +556,7 @@ app.pcd = (function () {
                                         "&penid=" + app.pen.myPenId()),
                   ["div", {cla: "ptddiv"},
                    [["img", {id: "upldpicimg", cla: "revimgdis",
-                             src: picsrc}],
+                             src: pi.src}],
                     ["div", {id: "upldpicform", cla: "overform"},
                      [["div", {cla: "fileindiv"},
                        [["input", {type: "file", 
@@ -1342,10 +1360,10 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   adminSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
+                  picSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
                   (dst.type === "pen"? app.login.accountSettingsHTML()
                                      : membershipSettingsHTML())],
-                 ["div", {cla: "pcdsectiondiv"},
-                  picSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
                   descripSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
