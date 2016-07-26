@@ -261,7 +261,7 @@ var app = {},  //Global container for application level funcs and values
                 msg2 = msg2 || "Server cache rebuild...";
                 jt.out('waitserverdiv', msg2); }
             if(count > 10) {
-                msg2 = "Either the network is super slow or communications broke. Wait or reload the page..";
+                msg2 = "Waiting for data...";
                 jt.out('waitserverdiv', msg2); }
             setTimeout(function () {
                 app.displayWaitProgress(count + 1, millis, 
