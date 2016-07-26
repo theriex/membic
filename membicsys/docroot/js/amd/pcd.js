@@ -16,7 +16,7 @@ app.pcd = (function () {
     var //see verifyFunctionConnections for procesing switches
         dst = { type: "", id: "", tab: "", obj: null,
                 pen: { desclabel: "About Me",
-                       descplace: "Links to other public pages you have, favorite sayings...",
+                       descplace: "A message for visitors to your profile. Any links you want to share?",
                        descfield: "shoutout",
                        piclabel: "Profile Pic",
                        picfield: "profpic",
@@ -522,14 +522,14 @@ app.pcd = (function () {
             if(dst.obj.profpic) {
                 pi.havepic = true;
                 pi.lab = "Change Profile Picture";
-                pi.src = "profpic?profileid=" + dst.obj.profpic; } }
+                pi.src = picImgSrc(dst.obj); } }
         else if(dst.type === "coop") {
             pi.lab = "Upload a theme logo or picture!";
             pi.exp = "Themes with an image look much better and are easier to find in the theme overview.";
             if(dst.obj.picture) {
                 pi.havepic = true;
                 pi.lab = "Change Theme Logo or Picture";
-                pi.src = "profpic?profileid=" + dst.obj.profpic; } }
+                pi.src = picImgSrc(dst.obj); } }
         pi.lab = [pi.lab + " ",
                   ["a", {href: "#WhyPic",
                          onclick: jt.fs("app.toggledivdisp('whypicdiv')")},
@@ -596,7 +596,7 @@ app.pcd = (function () {
 
 
     descripSettingsHTML = function () {
-        var nh = "", ht = "", defs, html;
+        var nh = "", ht = "", html;
         if(dst.type === "coop") {
             if(app.coop.membershipLevel(dst.obj) < 3) {
                 return ""; }
@@ -612,11 +612,13 @@ app.pcd = (function () {
                    ["input", {id: "hashin", cla: "lifin", type: "text",
                               placeholder: "Optional",
                               value: dst.obj.hashtag}]]]; }
-        defs = dst[dst.type];
         html = [nh,
-                ["div", {cla: "formline"},
-                 ["label", {fo: "shouteditbox", cla: "overlab"}, 
-                  defs.desclabel]],
+                //Label conflicts visually with placeholder text when
+                //empty and is unnecessary if value specified.
+                //Removed to reduce visual clutter
+                // ["div", {cla: "formline"},
+                //  ["label", {fo: "shouteditbox", cla: "overlab"}, 
+                //   defs.desclabel]],
                 ["textarea", {id: "shouteditbox", cla: "dlgta"}],
                 ht,
                 ["div", {id: "formstatdiv"}],
@@ -1381,12 +1383,13 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   adminSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
+                  (dst.type === "coop"? membershipSettingsHTML() : "")],
+                 ["div", {cla: "pcdsectiondiv"},
                   picSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
-                  (dst.type === "pen"? app.login.accountSettingsHTML()
-                                     : membershipSettingsHTML())],
-                 ["div", {cla: "pcdsectiondiv"},
                   descripSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
+                  (dst.type === "pen"? app.login.accountSettingsHTML() : "")],
                  ["div", {cla: "pcdsectiondiv"},
                   keywordSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
