@@ -97,6 +97,38 @@ app.pen = (function () {
     },
 
 
+    activateAccountForNewPen = function () {
+        var html;
+        if(app.login.accountInfo("status") === "Active") {
+            return app.pen.npProfChk(); }
+        html = ["div", {id: "npaadiv"},
+                [["div", {id: "npaamsgdiv"},
+                  "Sending account activation email..."],
+                 ["div", {id: "pncbuttondiv", cla: "dlgbuttonsdiv"},
+                  ["button", {type: "button", id: "okbutton",
+                              disabled: true,
+                              onclick: jt.fs("app.pen.npProfChk()")},
+                   "Ok"]]]];
+        jt.out("contentdiv", jt.tac2html(html));
+        jt.call("POST", "sendcode?" + app.login.authparams(), "",
+                function (accounts) {
+                    app.login.noteUpdatedAccountInfo(accounts[0]);
+                    html = "An account activation email has been sent to " + 
+                        app.login.accountInfo("email") + "<br/>" + 
+                        "You will need to activate your account before posting.";
+                    jt.out("npaamsgdiv", jt.tac2html(html));
+                    jt.byId("okbutton").disabled = false;
+                    jt.byId("okbutton").focus(); },
+                app.failf(function (code, errtxt) {
+                    html = "Activation mail send failed " + code + ": " + 
+                        errtxt + "<br/>" + 
+                        "Try activating your account later.";
+                    jt.out("npaamsgdiv", jt.tac2html(html));
+                    jt.byId("okbutton").disabled = false;
+                    jt.byId("okbutton").focus(); }));
+    },
+
+
     visibilityPreferencesChanged = function (pen, vp, penid) {
         if(!pen || !vp || !penid) {
             return false; }
@@ -145,12 +177,37 @@ return {
                  function (newpens) {
                      loginpenid = jt.instId(newpens[0]);
                      app.lcs.put("pen", newpens[0]);
-                     setTimeout(app.pen.promptFixPen, 2500);
-                     returnCall(); },  //main display rebuilds menus...
+                     activateAccountForNewPen(); },
                  app.failf(function (ignore /*code*/, errtxt) {
                      jt.out("penformstat", errtxt);
                      jt.out("pncbuttondiv", buttonhtml); }),
                 jt.semaphore("pen.createPenName"));
+    },
+
+
+    npProfChk: function (action) {
+        var mypen, html;
+        mypen = app.pen.myPenName();
+        if(mypen.profpic || action) {
+            if(action === "Profile") {
+                setTimeout(app.pen.profSettings, 2200); }
+            //case 1: Signed up to enable searching a theme
+            //case 2: Signed up from main site landing page
+            //case 3: Followed theme invite
+            return returnCall(); }
+        html = ["div", {id: "nppcdiv"},
+                [["div", {id: "nppcmsgdiv"},
+                  "Before posting, your profile will need an image to visually identify membics you write."],
+                 ["div", {id: "pncbuttondiv", cla: "dlgbuttonsdiv"},
+                  [["button", {type: "button", id: "laterbutton",
+                               onclick: jt.fs("app.pen.npProfChk('Later')")},
+                   "Later"],
+                   ["button", {type: "button", id: "npprofbutton",
+                               onclick: jt.fs("app.pen.npProfChk('Profile')")},
+                    "Update Profile"]]]]];
+        jt.out("contentdiv", jt.tac2html(html));
+        //people who created an account to search need to be on their way..
+        jt.byId("laterbutton").focus();
     },
 
 
@@ -446,8 +503,13 @@ return {
             msg = "You need to set an image for your profile before posting"; }
         if(msg) {
             jt.err(msg);
-            return app.pcd.display("pen", app.pen.myPenId(), "latest",
-                                   app.pen.myPenName(), "settings"); }
+            return app.pen.profSettings(); }
+    },
+
+
+    profSettings: function () {
+        app.pcd.display("pen", app.pen.myPenId(), "latest",
+                        app.pen.myPenName(), "settings");
     },
 
 

@@ -768,6 +768,11 @@ return {
     },
 
 
+    noteUpdatedAccountInfo: function (account) {
+        moracct = account;
+    },
+
+
     accountInfo: function (fieldname) {
         var pen;
         if(moracct) {
