@@ -1654,9 +1654,9 @@ return {
                 jt.out("pcdsrchdispdiv", jt.tac2html(
                     ["a", {href: app.hardhome + "?view=coop&coopid=" + dst.id +
                                  "&tab=search"},
-                     "Sign in at full membic page to search"])); }
+                     [["u", "Sign in"],
+                      [" on membic.com to search"]]])); }
             else {
-                
                 jt.out("pcdsrchdispdiv", "Sign in to search"); }
             return; }
         if(!srchst.status !== "processing" && 
