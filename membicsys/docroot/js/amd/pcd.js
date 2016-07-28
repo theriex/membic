@@ -1104,7 +1104,8 @@ app.pcd = (function () {
             jt.byId("downloadlinksdiv").style.display = "none"; }
         html = "";
         if(tabname.match(/^(latest|favorites|memo|search)$/)) {
-            html = ["a", {href: "#Download",
+            html = ["a", {href: "#Download", id: "downloadlink",
+                          style: "padding:0px;", //override inherited tabs def
                           onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
                     [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
                      "Download"]]; }
@@ -1127,7 +1128,7 @@ app.pcd = (function () {
         coords.x += (dst.type === "pen"? 230 : 150);
         absdiv = jt.byId("xtrabsdiv");
         absdiv.style.left = String(coords.x) + "px";
-        absdiv.style.top = String(coords.y - 10) + "px";
+        absdiv.style.top = String(coords.y - 12) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
         absdiv.style.visibility = "visible";
@@ -1143,7 +1144,7 @@ app.pcd = (function () {
             html.push(
                 ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
                        onclick: jt.fs("window.open('" + rssurl + "')")},
-                 ["img", {cla: "webjump", src: "img/rssicon.png"}]]); }
+                 ["img", {cla: "rsslinkimg", src: "img/rssicon.png"}]]); }
         jt.out("xtrabsdiv", jt.tac2html(html));
     },
 
