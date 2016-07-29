@@ -572,7 +572,7 @@ app.pcd = (function () {
                                         "&_id=" + dst.id +
                                         "&penid=" + app.pen.myPenId()),
                   ["div", {cla: "ptddiv"},
-                   [["img", {id: "upldpicimg", cla: "revimgdis",
+                   [["img", {id: "upldpicimg", cla: "profimgdis",
                              src: pinf.src}],
                     ["div", {id: "upldpicform", cla: "picsideform"},
                      [["div", {cla: "fileindiv"},

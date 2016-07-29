@@ -236,7 +236,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
 .revimg, .revimgdis { max-width:125px; max-height:80px; }
-.revimgdis { opacity:0.3; filter:alpha(opacity=30); }
+.profimgdis { max-width:125px; max-height:125px; }
+.revimgdis, .profimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none; }
 .rsslinkimg { width:18px; height:18px; vertical-align:middle; border:none; 
   margin-top:-4px; }
