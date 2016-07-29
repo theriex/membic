@@ -61,7 +61,7 @@ return {
                || hstate.penid !== pstate.penid
                || hstate.revid !== pstate.revid) {
                 if(history.pushState && 
-                   typeof history.pushState === 'function') {
+                   typeof history.pushState === "function") {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.pushState(pstate, title, url);
@@ -71,7 +71,7 @@ return {
                 } }
             else if(pstate.tab && hstate.tab !== pstate.tab) {
                 if(history.replaceState &&
-                   typeof history.replaceState === 'function') {
+                   typeof history.replaceState === "function") {
                     title = getTitle(pstate);
                     url = getURL(pstate);
                     history.replaceState(pstate, title, url);
@@ -91,17 +91,20 @@ return {
         case "memo":
             return app.activity.displayRemembered();
         case "coop":
-            return app.coop.bycoopid(state.coopid, 'history', state.tab, 
+            return app.coop.bycoopid(state.coopid, "history", state.tab, 
                                      state.expid);
         case "profsetpic":
-            return app.pcd.display("pen", app.pen.myPenId(), "latest", 
-                                   app.pen.myPenName(), "settingspic");
+            if(app.pen.myPenId()) {  //they are logged in
+                return app.pcd.display("pen", app.pen.myPenId(), "latest", 
+                                       app.pen.myPenName(), "settingspic"); }
+            //otherwise just do the main display
+            return app.activity.displayActive();
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
-                return app.pen.bypenid(state.profid, 'history', state.tab); }
+                return app.pen.bypenid(state.profid, "history", state.tab); }
             if(jt.isId(state.penid)) {
-                return app.pen.bypenid(state.penid, 'history', state.tab); }
+                return app.pen.bypenid(state.penid, "history", state.tab); }
             return app.pcd.display();
         }
     },
