@@ -57,6 +57,7 @@ app.pcd = (function () {
                                    img: "calico",
                                    mtitle: "Event Calendar",
                                    otitle: "Event Calendar"} },
+        tabvpad = 0,
         srchst = { revtype: "all", qstr: "", status: "" },
         setdispstate = { infomode: "" },
         ctmmsgs = [
@@ -1105,6 +1106,7 @@ app.pcd = (function () {
         html = "";
         if(tabname.match(/^(latest|favorites|memo|search)$/)) {
             html = ["a", {href: "#Download", id: "downloadlink",
+                          title: "Download these membics",
                           style: "padding:0px;", //override inherited tabs def
                           onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
                     [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
@@ -1128,16 +1130,16 @@ app.pcd = (function () {
         coords.x += (dst.type === "pen"? 230 : 150);
         absdiv = jt.byId("xtrabsdiv");
         absdiv.style.left = String(coords.x) + "px";
-        absdiv.style.top = String(coords.y - 12) + "px";
+        absdiv.style.top = String(coords.y - 12 + tabvpad) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
         absdiv.style.visibility = "visible";
         homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
         if(dst.type !== "coop") {
             homeurl = app.hardhome + "?view=pen&penid=" + dst.id; }
-        html = [["a", {href: homeurl, title: dst.obj.name + " full page",
+        html = [["a", {href: homeurl, title: dst.obj.name + " membic page",
                        onclick: jt.fs("window.open('" + homeurl + "')")},
-                 ["img", {cla: "reviewbadge", src: "img/membiclogo.png"}]]];
+                 ["img", {cla: "reviewbadge", src: "img/membiclogobw.png"}]]];
         if(dst.type === "coop") {  //RSS only available for themes...
             rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
             html.push("&nbsp; &nbsp;");
@@ -1159,6 +1161,16 @@ app.pcd = (function () {
     },
 
 
+    createStyleOverridesForEmbedding = function () {
+        jt.byId("pcdupperdiv").style.display = "none";
+        jt.byId("bodyid").style.paddingLeft = "0px";
+        jt.byId("bodyid").style.paddingRight = "0px";
+        //give a bit of space for the top of the tabs to not be truncated
+        tabvpad = 4;  //let other styling know we padded it down
+        jt.byId("tabsdiv").style.marginTop = String(tabvpad) + "px";
+    },
+
+
     createColorOverrides = function () {
         var ckeys, sheet;
         if(!dst || !dst.obj || !dst.obj.soloset || ! dst.obj.soloset.colors) {
@@ -1172,6 +1184,8 @@ app.pcd = (function () {
         dst.obj.soloset.colors.forEach(function (cdef) {
             var sels = ckeys[cdef.name].sel.csvarray();
             sels.forEach(function (sel) {
+                if(cdef.name === "backgrnd" && app.embedded) {
+                    cdef.value = "none"; }  //use parent window background
                 var rule = sel + " { " + ckeys[cdef.name].attr + ": " +
                     cdef.value + "; }";
                 sheet.insertRule(rule, sheet.cssRules.length); }); });
@@ -1184,6 +1198,15 @@ app.pcd = (function () {
         link.rel = "shortcut icon";
         link.href = "ctmpic?" + dst.type + "id=" + dst.id;
         document.getElementsByTagName("head")[0].appendChild(link);
+    },
+
+
+    customizeSoloPageDisplay = function () {
+        if(app.embedded) {
+            createStyleOverridesForEmbedding(); }
+        createColorOverrides();
+        changeSiteTabIcon();
+        displayRSSAndHomeLinks();
     },
 
 
@@ -1227,9 +1250,7 @@ app.pcd = (function () {
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
         if(app.solopage()) {
-            createColorOverrides();
-            changeSiteTabIcon();
-            displayRSSAndHomeLinks(); }
+            customizeSoloPageDisplay(); }
         setTimeout(backgroundVerifyObjectData, 100);
         displayTab(dst.tab, expid);
     },

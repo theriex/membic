@@ -235,7 +235,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .revtitle { font-size:large; font-weight:bold; }
 .revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
-.revimg, .revimgdis { max-width:125px; max-height:125px; }
+.revimg, .revimgdis { max-width:125px; max-height:80px; }
 .revimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none; }
 .rsslinkimg { width:18px; height:18px; vertical-align:middle; border:none; 
@@ -326,7 +326,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fparevdiv { margin: 0px 0px 0px 50px; }
 .fpnarevdiv { }
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
-.fpinrevdiv { background-color:#ffffff; 
+.fpinrevdiv { background-image: url('../img/bleachscrub.png');
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px; }
 .fpmeminrevdiv { background-color:#ffbe74; }

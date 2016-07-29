@@ -1,5 +1,5 @@
 /*global window, jtminjsDecorateWithUtilities, document */
-/*jslint white, fudge */
+/*jslint browser, multivar, white, fudge */
 
 var membicEmbed = (function () {
     "use strict";
@@ -11,7 +11,6 @@ var membicEmbed = (function () {
     var siteroot = "",
         jt = {},
         embparams = {},
-        framedim = {width: 320, height: 533},  //min cell phone display
 
 
     ////////////////////////////////////////
@@ -19,28 +18,21 @@ var membicEmbed = (function () {
     ////////////////////////////////////////
 
 
-    computeFrameDimensions = function () {
-        framedim.width = Math.max(framedim.width, window.innerWidth);
-        framedim.height = Math.max(framedim.height, window.innerHeight);
-        //width and/or height may be overridden in embed href params
-        framedim.width = embparams.width || framedim.width;
-        framedim.height = embparams.height || framedim.height;
-    },
-
-
     writeEmbeddedContent = function () {
         var mdiv, src, html = [];
-        mdiv = jt.byId('membicdiv');
-        computeFrameDimensions(mdiv);
+        mdiv = jt.byId("membicdiv");
+        mdiv.style.height = "100%";
         src = siteroot + "?view=coop&coopid=" + embparams.coopid +
             "&site=" + jt.enc(window.location.href);
         if(embparams.css) {
             src += "&css=" + embparams.css; }
+        //Not possible to calculate hard width and height because
+        //membicdiv may not have content yet, or may be display:none.
+        //That produces only zero values to work with.
         html.push(["iframe", {id: "membiciframe", src: src,
-                              seamless: "seamless", frameBorder: 0,
-                              width: framedim.width,
-                              height: framedim.height}]);
-        jt.out('membicdiv', jt.tac2html(html));
+                              style: "position:relative;height:100%;width:100%",
+                              seamless: "seamless", frameBorder: 0}]);
+        jt.out("membicdiv", jt.tac2html(html));
     };
 
 
@@ -50,9 +42,9 @@ var membicEmbed = (function () {
 return {
 
     createCoopDisplay: function () {
-        var href = document.getElementById('membicdiv').innerHTML;
+        var href = document.getElementById("membicdiv").innerHTML;
         href = href.slice(href.indexOf("href=") + 6);
-        href = href.slice(0, href.indexOf('"'));
+        href = href.slice(0, href.indexOf("\""));
         siteroot = href.slice(0, href.indexOf("?"));
         jtminjsDecorateWithUtilities(jt);
         href = href.slice(href.indexOf("?") + 1);
