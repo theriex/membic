@@ -24,11 +24,11 @@ class MORAccount(db.Model):
     status = db.StringProperty()        # Pending|Active|Inactive|Unreachable
     authsrc = db.StringProperty()       # AA:id or empty if native
     authconf = db.StringProperty(indexed=False)  # auth support
-    modified = db.StringProperty()      # iso date
-    mailbounce = db.TextProperty()      # isodate1,isodate2...
-    actsends = db.TextProperty()        # isodate;emaddr,isodate;emaddr...
+    modified = db.StringProperty()      # isodate
+    mailbounce = db.TextProperty(required=False)   # isodate1,isodate2...
+    actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
-    invites = db.TextProperty()         # theme invites JSON
+    invites = db.TextProperty(required=False)   # theme invites JSON
     
 
 def asciienc(val):
