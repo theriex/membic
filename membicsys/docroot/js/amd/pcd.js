@@ -1278,7 +1278,10 @@ app.pcd = (function () {
 
 
     shareInviteHTML = function () {
-        var html, mlev = app.coop.membershipLevel(dst.obj, app.pen.myPenId());
+        var html, mlev;
+        if(dst.type !== "coop") {
+            return ""; }
+        mlev = app.coop.membershipLevel(dst.obj, app.pen.myPenId());
         //The solo page display uses the overlaydiv to provide RSS and 
         //site return links, so no invite or similar dialogs that use it.
         html = ["div", {id: "invitelinkdiv"},
