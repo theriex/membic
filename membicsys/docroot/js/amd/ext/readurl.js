@@ -251,6 +251,8 @@ app.readurl = (function () {
             val = val.replace(/&#x27;/g, "'");
             val = val.replace(/&#039;/g, "'");
             val = val.replace(/&quot;/g, "\"");
+            val = val.replace(/&amp;/g, "&");
+            val = val.replace(/&#8211;/g, "-");
             review.title = val;
             review.name = val; }
     },
@@ -317,9 +319,9 @@ return {
 
     fetchData: function (review, url, params) {
         var geturl;
-        jt.out('revautodiv', "Reading details from " + url + " ...");
+        jt.out("revautodiv", "Reading details from " + url + " ...");
         geturl = "urlcontents?url=" + jt.enc(url) + jt.ts("&cb=", "second");
-        jt.call('GET', geturl, null,
+        jt.call("GET", geturl, null,
                 function (json) {
                     var html = jt.dec(json[0].content);
                     setReviewFields(review, html, url);
