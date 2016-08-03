@@ -137,8 +137,7 @@ class CoopRSS(webapp2.RequestHandler):
             if not "ctmid" in review:
                 continue
             # filter out any supporting source reviews
-            if str(review["ctmid"]) != str(ctmid):
-                logging.info("ctmid mismatch")
+            if str(review["ctmid"]) == "0":
                 continue
             # stop if this review is newer than the last one, since that
             # means we are out of the recent list and into the top20s
