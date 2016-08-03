@@ -159,9 +159,9 @@ def coopid_for_hashtag(hashtag):
         hashtag = hashtag[1:]
     coopid = memcache.get(hashtag)
     if not coopid:
-        themes = coop.Coop.gql("WHERE hashtag = :1", hashtag)
-        found = themes.count()
-        if not found:
+        vq = VizQuery(coop.Coop, "WHERE hashtag = :1", hashtag)
+        themes = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(themes) == 0:
             return 0
         coopid = str(themes[0].key().id())
         memcache.set(hashtag, coopid)

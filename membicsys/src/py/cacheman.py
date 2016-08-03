@@ -70,6 +70,30 @@ def cached_delete(idval, dbclass):
         instance.delete()
     
 
+class VizQuery(object):
+    dboc = None
+    where = ""
+    wags = None
+    gql = None
+    def __init__(self, dboc, where, *args):
+        self.dboc = dboc
+        self.where = where
+        self.wags = args
+        self.gql = dboc.gql(where, *args)
+    def __str__(self):
+        return str(self.dboc) + " " + self.where + " " + str(self.wags)
+    def cursor(self):
+        return self.gql.cursor()
+    def with_cursor(self, **kwargs):
+        return self.gql.with_cursor(**kwargs)
+    def run(self, **kwargs):
+        logging.info("DBVQR " + str(self) + " " + str(kwargs))
+        return self.gql.run(**kwargs)
+    def fetch(self, *args, **kwargs):
+        logging.info("DBVQF " + str(self) + " " + str(args) + " " + str(kwargs))
+        return self.gql.fetch(*args, **kwargs)
+
+
 class QueryCache(object):
     def __init__(self):
         self.idvals = []

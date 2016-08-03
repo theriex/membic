@@ -298,9 +298,8 @@ def update_top20_reviews(pco, review, ctmid):
 
 def fetch_review_by_ptc(penid, revtype, cankey):
     where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"
-    revquery = Review.gql(where, penid, revtype, cankey)
-    reviews = revquery.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, 
-                             deadline = 10)
+    vq = VizQuery(Review, where, penid, revtype, cankey)
+    reviews = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
     if len(reviews) > 0:
         return reviews[0]
 
@@ -458,8 +457,8 @@ def write_coop_reviews(review, pnm, ctmidscsv):
             logging.info("write_coop_reviews: not member of " + ctmid)
             continue
         where = "WHERE ctmid = :1 AND srcrev = :2"
-        gql = Review.gql(where, int(ctmid), review.key().id())
-        revs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+        vq = VizQuery(Review, where, int(ctmid), review.key().id())
+        revs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         ctmrev = None
         if len(revs) > 0:
             ctmrev = revs[0]
@@ -507,8 +506,8 @@ def creation_compare(revA, revB):
 #     source = None
 #     # strict less-than match to avoid finding the same thing being checked
 #     where = "WHERE cankey = :1 AND modhist < :2 ORDER BY modhist ASC"
-#     rq = Review.gql(where, cankey, modhist)
-#     revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#     vq = VizQuery(Review, where, cankey, modhist)
+#     revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
 #     for rev in revs:
 #         if source and creation_compare(source, rev) < 0:
 #             break  # have the earliest, done
@@ -565,8 +564,8 @@ def sort_filter_feed(feedcsv, pnm, maxret):
 #         return
 #     logging.info("Found srcrev " + str(revid) + " " + srcrev.name)
 #     ctmrev = Review(penid=srcrev.penid, revtype=srcrev.revtype)
-#     gql = Review.gql("WHERE ctmid = :1 AND srcrev = :2", ctmid, revid)
-#     revs = gql.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+#     vq = VizQuery(Review, "WHERE ctmid = :1 AND srcrev = :2", ctmid, revid)
+#     revs = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
 #     if len(revs) > 0:
 #         logging.info("Found existing instance")
 #         ctmrev = revs[0]
@@ -690,8 +689,8 @@ def rebuild_reviews_block(handler, pct, pgid):
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
     if pct == "coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    rq = Review.gql(where, pco.key().id())
-    revs = rq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+    vq = VizQuery(Review, where, pco.key().id())
+    revs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
     for rev in revs:
         jstr = append_review_jsoncsv(jstr, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
@@ -722,8 +721,8 @@ def get_review_feed_pool(revtype):
     if revtype and revtype != "all":
         where += " AND revtype = '" + revtype + "'"
     where += " ORDER BY modhist DESC"
-    rq = Review.gql(where)
-    revs = rq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
+    vq = VizQuery(Review, where)
+    revs = vq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                     deadline=60)
     for rev in revs:
         entry = feedcsventry(rev)
@@ -937,8 +936,8 @@ def is_matching_review(qstr, review):
 #             pn = pen.PenName.get_by_id(pn.key().id())
 #     else:
 #         worktype = "PenName group reference conversion, "
-#         pq = pen.PenName.gql("WHERE convidx > 0")
-#         pns = pq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#         vq = VizQuery(pen.PenName, "WHERE convidx > 0")
+#         pns = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
 #         for pn in pns:
 #             count += 1
 #             # stash is rebuilt client side, so nuke it out when converting.
@@ -983,8 +982,8 @@ def is_matching_review(qstr, review):
 #     if not conviterable or conviterable != "done":
 #         return
 #     count = 0
-#     rq = Review.gql("WHERE grpid > -404")
-#     revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+#     vq = VizQuery(Review, "WHERE grpid > -404")
+#     revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
 #     for rev in revs:
 #         count += 1
 #         if rev.grpid <= 0:  # no group, future or batch indicator
@@ -1165,10 +1164,10 @@ class SearchReviews(webapp2.RequestHandler):
         where += " ORDER BY modified DESC"
         logging.info("SearchReviews query: " + where + " " + 
                      mindate + " - " + maxdate)
-        revquery = Review.gql(where, mindate, maxdate)
+        vq = VizQuery(Review, where, mindate, maxdate)
         qres = []
-        reviter = revquery.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=30,
-                               batch_size=1000)
+        reviter = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=30,
+                         batch_size=1000)
         for review in reviter:
             if is_matching_review(qstr, review):
                 qres.append(review)
@@ -1250,8 +1249,8 @@ class GetReviewById(webapp2.RequestHandler):
 #         for revtype in known_rev_types:
 #             memcache.delete(revtype)
 #         # fix up any initialized srcrev values
-#         rq = Review.gql("WHERE srcrev = -1")
-#         revs = rq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+#         vq = VizQuery(Review, "WHERE srcrev = -1")
+#         revs = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
 #         count = 0
 #         for rev in revs:
 #             src = find_source_review(rev.cankey, rev.modhist)
@@ -1269,8 +1268,8 @@ class GetReviewById(webapp2.RequestHandler):
 #         self.response.out.write(str(count) + " Reviews verified<br>\n")
 #         # convert helpful and remembered to new new data representation
 #         count = 0
-#         rtq = ReviewTag.gql("WHERE converted = 0")
-#         rts = rtq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+#         vq = VizQuery(ReviewTag,"WHERE converted = 0")
+#         rts = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
 #         for rt in rts:
 #             rev = Review.get_by_id(rt.revid)
 #             pnm = pen.PenName.get_by_id(rt.penid)
@@ -1386,10 +1385,10 @@ class FetchPreReviews(webapp2.RequestHandler):
         if not penid:
             return srverr(self, 400, "penid required")
         where = "WHERE penid = :1 AND srcrev = -101 ORDER BY modified DESC"
-        revquery = Review.gql(where, penid)
+        vq = VizQuery(Review, where, penid)
         fetchmax = 20
-        reviews = revquery.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
-                                 deadline=10)
+        reviews = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
+                           deadline=10)
         returnJSON(self.response, reviews)
 
 
@@ -1399,8 +1398,8 @@ class FetchPreReviews(webapp2.RequestHandler):
 #         for rt in revtypes:
 #             where = "WHERE ctmid = 0 AND revtype = '" + rt + "'" +\
 #                 " ORDER BY modified DESC"
-#             rq = Review.gql(where)
-#             revs = rq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
+#             vq = VizQuery(Review, where)
+#             revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
 #                             deadline=60)
 #             count = 0
 #             for rev in revs:
@@ -1417,6 +1416,10 @@ class FetchPreReviews(webapp2.RequestHandler):
 
 class BatchUpload(webapp2.RequestHandler):
     def post(self):
+        # this needs to be rewritten to use the standard auth.
+        # Possibly cache-only (no batch unless you recently have
+        # logged in interactively).  Turning off for now...
+        return srverr(self, 403, "Batch uploading currently offline")
         # this uses the same db access as moracct.py GetToken
         emaddr = self.request.get('email') or ""
         emaddr = normalize_email(emaddr)

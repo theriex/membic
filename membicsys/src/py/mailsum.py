@@ -55,10 +55,9 @@ class UserActivity(webapp2.RequestHandler):
         daysback = 70  # 10 weeks back
         dtnow = datetime.datetime.utcnow()
         thresh = dt2ISO(dtnow - datetime.timedelta(daysback))
-        where = "WHERE day > :1"
-        statquery = ActivityStat.gql(where, thresh)
-        stats = statquery.run(read_policy=db.EVENTUAL_CONSISTENCY,
-                              batch_size=daysback)
+        vq = VizQuery(ActivityStat, "WHERE day > :1", thresh)
+        stats = vq.run(read_policy=db.EVENTUAL_CONSISTENCY,
+                       batch_size=daysback)
         returnJSON(self.response, stats)
 
 

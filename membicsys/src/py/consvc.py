@@ -33,9 +33,8 @@ class GenObj:
 
 def getConnectionService(svcname):
     cskey = svcname
-    where = "WHERE name = :1 LIMIT 1"
-    csquery = ConnectionService.gql(where, svcname)
-    qres = cached_query(cskey, csquery, "", 5, ConnectionService, False)
+    vq = VizQuery(ConnectionService, "WHERE name = :1 LIMIT 1", svcname)
+    qres = cached_query(cskey, vq, "", 5, ConnectionService, False)
     for svc in qres.objects:
         return svc
     # no service found, create a stub instance for later editing

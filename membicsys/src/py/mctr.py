@@ -66,8 +66,8 @@ def get_mctr(ctype, parid):
             memcache.set(key, "")
             counter = None
     if not counter:
-        gql = MembicCounter.gql("WHERE refp = :1 AND day = :2", key, day)
-        cs = gql.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+        vq = VizQuery(MembicCounter, "WHERE refp = :1 AND day = :2", key, day)
+        cs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         if len(cs) > 0:
             counter = cs[0]
         else:  # not found in db, make a new one
@@ -308,12 +308,13 @@ class GetCounters(webapp2.RequestHandler):
         daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()
         thresh = dt2ISO(dtnow - datetime.timedelta(daysback))
-        cq = None
+        vq = None
         if ctype == "Site":
-            cq = MembicCounter.gql("WHERE day > :1", thresh)
+            vq = VizQuery(MembicCounter, "WHERE day > :1", thresh)
         else:
-            cq = MembicCounter.gql("WHERE refp = :1 AND day > :2", refp, thresh)
-        ctrs = cq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
+            vq = VizQuery(MembicCounter, "WHERE refp = :1 AND day > :2", 
+                          refp, thresh)
+        ctrs = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
         jsondat = qres2JSON(ctrs)
         memcache.set(cqk, jsondat)
         writeJSONResponse(jsondat, self.response)

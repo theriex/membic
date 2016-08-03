@@ -171,8 +171,8 @@ def find_auth_pens(handler):
         handler.response.out.write("Authentication failed")
         return
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
-    pq = PenName.gql(where, acc._id)
-    pens = pq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    vq = VizQuery(PenName, where, acc._id)
+    pens = vq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     return pens
 
 
@@ -191,8 +191,8 @@ def reflect_pen_name_change(pen, prev_name):
             ctm = coop.Coop.get_by_id(int(ctmid))
     # update recent reviews using same index as rev.py rebuild_reviews_block
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    rq = rev.Review.gql(where, int(penid))
-    revs = rq.fetch(300, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    vq = VizQuery(Review, where, int(penid))
+    revs = vq.fetch(300, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for review in revs:
         review.penname = pen.name
         review.put()
