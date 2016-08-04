@@ -67,8 +67,8 @@ class BounceHandler(BounceNotificationHandler):
       emaddr = notification.original['to']
       logging.info("BouncedEmailHandler emaddr: " + emaddr)
       # this uses the same access indexing as moracct.py MailCredentials
-      where = "WHERE email=:1 LIMIT 9"
-      accounts = MORAccount.gql(where, emaddr)
+      vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 9", emaddr)
+      accounts = vq.fetch(9, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
       for account in accounts:
           bouncestr = nowISO()
           if account.mailbounce:
@@ -100,18 +100,18 @@ class InMailHandler(InboundMailHandler):
             logging.info("Mail-in membic from " + emaddr + 
                          " with no description ignored.")
             return
-        aq = MORAccount.gql("WHERE email=:1 LIMIT 1", emaddr)
-        found = aq.count()
-        if not found:
+        vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
+        found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(found) == 0:
             logging.info("Mail-in membic: No account found for " + emaddr)
             return
-        acc = aq[0]
-        pq = pen.PenName.gql("WHERE mid=:1 LIMIT 1", acc.key().id())
-        found = pq.count()
-        if not found:
+        acc = found[0]
+        vq = VizQuery(pen.PenName, "WHERE mid=:1 LIMIT 1", acc.key().id())
+        found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(found) == 0:
             logging.info("Mail-in membic: No PenName found for " + emaddr)
             return
-        pn = pq[0]
+        pn = found[0]
         mim = rev.Review(penid=pn.key().id(), 
                          revtype='article',
                          ctmid=0,

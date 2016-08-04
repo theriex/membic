@@ -214,9 +214,9 @@ class NewPenName(webapp2.RequestHandler):
             self.error(401)
             self.response.out.write("Invalid value for name")
             return
-        pens = PenName.gql("WHERE name_c=:1 LIMIT 1", name_c)
-        found = pens.count()
-        if found:
+        vq = VizQuery(PenName, "WHERE name_c=:1 LIMIT 1", name_c)
+        pens = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(pens) > 0:
             self.error(412)
             self.response.out.write("That pen name is already taken")
             return

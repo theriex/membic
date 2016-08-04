@@ -102,7 +102,8 @@ def verify_unique_name(handler, coop):
         coopid = coop.key().id()
     except Exception:
         pass  # just compare to zero if no id because not saved yet
-    coops = Coop.gql("WHERE name_c=:1", coop.name_c)
+    vq = VizQuery(Coop, "WHERE name_c=:1", coop.name_c)
+    coops = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for sisctm in coops:
         sid = sisctm.key().id()
         if sid != coopid:
@@ -131,7 +132,8 @@ def verify_valid_unique_hashtag(handler, coop):
         coopid = coop.key().id()
     except Exception:
         pass
-    coops = Coop.gql("WHERE hashtag = :1", coop.hashtag)
+    vq = VizQuery(Coop, "WHERE hashtag = :1", coop.hashtag)
+    coops = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for sisctm in coops:
         sid = sisctm.key().id()
         if sid != coopid:
@@ -532,10 +534,9 @@ class InviteByMail(webapp2.RequestHandler):
         if not valid_email_address(email):
             return srverr(self, 400, "Invalid email address")
         invacc = None
-        where = "WHERE email = :1 LIMIT 1"
-        accounts = MORAccount.gql(where, email)
-        found = accounts.count()
-        if found:
+        vq = VizQuery(MORAccount, "WHERE email = :1 LIMIT 1", email)
+        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(accounts) > 0:
             invacc = accounts[0]
         else:
             pwd = random_alphanumeric(18)
@@ -565,9 +566,9 @@ class AcceptInvitation(webapp2.RequestHandler):
         coopid = self.request.get('coopid')
         emaddr = self.request.get('accountemail')
         token = self.request.get('invitetoken')
-        where = "WHERE email = :1 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr)
-        if not accounts.count():
+        vq = VizQuery(MORAccount, "WHERE email = :1 LIMIT 1", emaddr)
+        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(accounts) == 0:
             return srverr(self, 404, "No account found for " + emaddr)
         acc = accounts[0]
         if acc.status != "Active":

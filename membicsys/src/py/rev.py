@@ -1427,13 +1427,15 @@ class BatchUpload(webapp2.RequestHandler):
         self.response.out.write("BatchUpload from " + emaddr + "\n")
         password = self.request.get('password')
         where = "WHERE email=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr, password)
+        vq = VizQuery(MORAccount, where, emaddr, password)
+        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         for account in accounts:
             accid = account.key().id()
             self.response.out.write("Account " + str(accid) + "\n")
             # this uses the same db access as pen.py find_auth_pens
-            where = "WHERE mid=:1 LIMIT 1"
-            pens = pen.PenName.gql(where, accid)
+            vq2 = VizQuery(pen.PenName, "WHERE mid=:1 LIMIT 1", accid)
+            pens = vq2.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, 
+                             deadline=10)
             for pn in pens:
                 self.response.out.write("PenName " + pn.name + "\n")
                 try:

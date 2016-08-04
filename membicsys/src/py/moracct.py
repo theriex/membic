@@ -123,10 +123,9 @@ def valid_new_email_address(handler, emaddr):
         handler.error(412)  # precondition failed
         handler.response.out.write("Invalid email address")
         return
-    where = "WHERE email=:1 LIMIT 1"
-    accounts = MORAccount.gql(where, emaddr)
-    found = accounts.count()
-    if found:  # return error. Client can choose to try login if they want
+    vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
+    accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    if len(accounts) > 0:  # return error, probably forgot they signed up
         handler.error(422)  # Unprocessable Entity
         handler.response.out.write("Email address used already")
         return False
@@ -463,9 +462,9 @@ class GetToken(webapp2.RequestHandler):
         emaddr = normalize_email(emaddr)
         password = self.request.get('passin')
         where = "WHERE email=:1 AND password=:2 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr, password)
-        found = accounts.count()
-        if found:
+        vq = VizQuery(MORAccount, where, emaddr, password)
+        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(accounts) > 0:
             token = newtoken(emaddr, password)
             if self.request.get('format') == "record":
                 writeTextResponse("token: " + token + "\n", 
@@ -490,19 +489,14 @@ class TokenAndRedirect(webapp2.RequestHandler):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             redurl += "loginerr=" + "Please enter a valid email address"
         else:  # have valid email
-            where = "WHERE email=:1 AND password=:2 LIMIT 1"
-            accounts = MORAccount.gql(where, email, password)
-            found = accounts.count()
-            if found:
+            vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", email)
+            qres = cached_query(email, vq, "", 1, MORAccount, False)
+            if len(qres.objects) == 0:
+                redurl += "emailin=" + email + "&loginerr=Not registered"
+            elif qres.objects[0].password != password:
+                redurl += "emailin=" + email + "&loginerr=Wrong password"
+            else:
                 redurl += login_token_parameters(email, password)
-            else:  # email and password did not match
-                where = "WHERE email=:1 LIMIT 1"
-                accounts = MORAccount.gql(where, email)
-                found = accounts.count()
-                if found:  # account exists, must have been wrong password
-                    redurl += "emailin=" + email + "&loginerr=Wrong password"
-                else: # account doesn't exist
-                    redurl += "emailin=" + email + "&loginerr=Not registered"
         # preserve any state information passed in the params so they can
         # continue on their way after ultimately logging in.  If changing
         # these params, also check login.doNextStep
@@ -547,10 +541,10 @@ class MailCredentials(webapp2.RequestHandler):
             content = "You requested your password be mailed to you..."
             content += "\n\nThe membic system has looked up " + eaddr + " "
             eaddr = eaddr.lower()
-            where = "WHERE email=:1 LIMIT 9"
-            accounts = MORAccount.gql(where, eaddr)
-            found = accounts.count()
-            if found:
+            vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 9", eaddr)
+            accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, 
+                                deadline=10)
+            if len(accounts) > 0:
                 content += "and your password is " + accounts[0].password
             else:
                 content += "but found no matching accounts." +\
