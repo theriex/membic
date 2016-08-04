@@ -173,6 +173,9 @@ def find_auth_pens(handler):
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
     vq = VizQuery(PenName, where, acc._id)
     qres = cached_query(acc.email + "-pens", vq, "", 20, PenName, False)
+    # Do not cache an empty pens list
+    if len(qres.objects) == 0:
+        bust_cache_key(acc.email + "-pens")
     return qres.objects
 
 

@@ -197,7 +197,7 @@ return {
             return returnCall(); }
         html = ["div", {id: "nppcdiv"},
                 [["div", {id: "nppcmsgdiv"},
-                  "Before posting, your profile will need an image to visually identify membics you write."],
+                  "Your profile needs an image to visually identify membics you write."],
                  ["div", {id: "pncbuttondiv", cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "laterbutton",
                                onclick: jt.fs("app.pen.npProfChk('Later')")},
