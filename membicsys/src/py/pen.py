@@ -172,8 +172,8 @@ def find_auth_pens(handler):
         return
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
     vq = VizQuery(PenName, where, acc._id)
-    pens = vq.fetch(10, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    return pens
+    qres = cached_query(acc.email + "-pens", vq, "", 20, PenName, False)
+    return qres.objects
 
 
 def reflect_pen_name_change(pen, prev_name):
@@ -259,6 +259,7 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Authorized access reference required.")
             return
         cached_put(pen)
+        bust_cache_key(acc.email + "-pens")
         # force updated info retrieval for any subsequent call
         pen = PenName.get_by_id(pen.key().id())
         if prev_name != pen.name:

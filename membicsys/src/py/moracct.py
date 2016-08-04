@@ -13,6 +13,7 @@ from google.appengine.api.datastore_types import Blob
 from consvc import doOAuthGet, getConnectionService
 from google.appengine.api import urlfetch
 from morutil import *
+from cacheman import *
 import string
 import random
 
@@ -147,6 +148,32 @@ def extract_json_value(key, json):
     return val
 
 
+def authenticated_account_email_plus_token(emaddr, token):
+    emaddr = normalize_email(emaddr)
+    vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
+    qres = cached_query(emaddr, vq, "", 1, MORAccount, False)
+    for account in qres.objects:
+        key = pwd2key(account.password)
+        token = decodeToken(key, token)
+        if not token:
+            return None
+        try:
+            unidx = token.index(asciienc(emaddr))
+        except:
+            unidx = -1
+        if unidx <= 2:
+            return None
+        secs = int(token[(token.index(":") + 1) : (unidx - 1)])
+        now = int(round(time.time()))
+        twelvehours = 12 * 60 * 60     # flip clock, hope not using then
+        tokenlife = 90 * 24 * 60 * 60
+        if now - secs > tokenlife + twelvehours:
+            return None
+        account._id = account.key().id() # normalized id access
+        return account
+    return None
+
+
 def authenticated(request):
     """ Return an account for the given auth type if the token is valid """
     acctype = request.get('am')
@@ -158,30 +185,7 @@ def authenticated(request):
     logging.info("moracct.py authenticated acctype: " + acctype + ", emaddr: " +
                  emaddr + ", token: " + token + ", toksec: " + toksec)
     if acctype == "mid":
-        emaddr = normalize_email(emaddr)
-        where = "WHERE email=:1 LIMIT 1"
-        accounts = MORAccount.gql(where, emaddr)
-        # logging.info("moracct.py authenticated " + str(accounts.count()) +
-        #              " accounts for emaddr: " + emaddr)
-        for account in accounts:
-            key = pwd2key(account.password)
-            token = decodeToken(key, token)
-            if not token:
-                return False
-            try:
-                unidx = token.index(asciienc(emaddr))
-            except:
-                unidx = -1
-            if unidx <= 2:
-                return False
-            secs = int(token[(token.index(":") + 1) : (unidx - 1)])
-            now = int(round(time.time()))
-            twelvehours = 12 * 60 * 60     # flip clock hope not active then
-            tokenlife = 90 * 24 * 60 * 60
-            if now - secs > tokenlife + twelvehours:
-                return False
-            account._id = account.key().id() # normalized id access
-            return account  # True
+        return authenticated_account_email_plus_token(emaddr, token)
     elif acctype == "fbid":
         usertoks = emaddr.split(' ')
         useridstr = str(usertoks[0])
@@ -415,6 +419,7 @@ def send_activation_code(handler, account):
         account.actsends = ""
     account.actsends += nowISO() + ";" + account.email
     account.put()
+    bust_cache_key(account.email)
     # host_url is a field that Request inherits from WebOb
     url = handler.request.host_url + "/activate?key=" +\
         str(account.key().id()) + "&code=" + account.actcode
@@ -444,6 +449,7 @@ class CreateAccount(webapp2.RequestHandler):
         account.mailbounce = ""
         account.authconf = ""
         account.put()  #nocache
+        bust_cache_key(account.email)
         token = newtoken(emaddr, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
 
@@ -585,6 +591,7 @@ class UpdateAccount(webapp2.RequestHandler):
             account.modified = nowISO()
             account.authconf = account.authconf or ""
             account.put()  #nocache
+            bust_cache_key(account.email)
             # retrieve updated version so all calls from here on will find it
             account = MORAccount.get_by_id(account.key().id())
             token = newtoken(account.email, account.password)
@@ -638,6 +645,7 @@ class ActivateAccount(webapp2.RequestHandler):
                 return
             account.status = "Active"
             account.put()
+            bust_cache_key(account.email)
             self.response.headers['Content-Type'] = 'text/html'
             self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.com Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.com site</h2></a></p>\n</body></html>")
             return
@@ -652,6 +660,7 @@ class ActivateAccount(webapp2.RequestHandler):
         account.actcode = ""
         account.actsends = ""
         account.put()
+        bust_cache_key(account.email)
         returnJSON(self.response, [ account ])
 
 
