@@ -70,6 +70,18 @@ def cached_delete(idval, dbclass):
         instance.delete()
     
 
+# When it's not ok for stale data to show up in subsequent queries
+def synchronized_db_write(dbclass, instance):
+    instance.put()
+    # force retrieval to ensure any subsequent db queries find the latest
+    instance = dbclass.get_by_id(instance.key().id())
+
+
+def visible_get_instance(dbclass, idval):
+    logging.info("DBVG " + str(dbclass) + " " + str(idval))
+    return dbclass.get_by_id(int(idval))
+
+
 class VizQuery(object):
     dboc = None
     where = ""

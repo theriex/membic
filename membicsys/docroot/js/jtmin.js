@@ -147,13 +147,13 @@
 
     if (!Date.prototype.toISOString) {
         Date.prototype.toISOString = function () {
-            function pad(n) { return n < 10 ? '0' + n : n; }
-            return this.getUTCFullYear() + '-'
-                + pad(this.getUTCMonth() + 1) + '-'
-                + pad(this.getUTCDate()) + 'T'
-                + pad(this.getUTCHours()) + ':'
-                + pad(this.getUTCMinutes()) + ':'
-                + pad(this.getUTCSeconds()) + 'Z';
+            function pad(n) { return n < 10 ? "0" + n : n; }
+            return this.getUTCFullYear() + "-"
+                + pad(this.getUTCMonth() + 1) + "-"
+                + pad(this.getUTCDate()) + "T"
+                + pad(this.getUTCHours()) + ":"
+                + pad(this.getUTCMinutes()) + ":"
+                + pad(this.getUTCSeconds()) + "Z";
         };
     }
 
@@ -414,8 +414,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     uo.colloquialDate = function (date, compress) {
-        var days = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday',
-                     'Thursday', 'Friday', 'Saturday', 'Sunday' ],
+        var days = [ "Sunday", "Monday", "Tuesday", "Wednesday",
+                     "Thursday", "Friday", "Saturday", "Sunday" ],
             months = [ "January", "February", "March", "April", "May",
                        "June", "July", "August", "September", "October",
                        "November", "December" ],
@@ -454,8 +454,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     uo.timewithin = function (timeval, units, count, comptime) {
         var incr, deadline, testval;
-        incr = 60 * 60 * 1000;  //'hours'
-        if (units === 'days') {
+        incr = 60 * 60 * 1000;  //"hours"
+        if (units === "days") {
             incr *= 24;
         }
         if (!timeval || typeof timeval === "string") {
@@ -763,7 +763,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                       content: null, isHTMLTag: false, i: null};
         }
         //if tac is something other than an "array", use its string value
-        if (typeof tac !== 'object' || !tac.length) {
+        if (typeof tac !== "object" || !tac.length) {
             return uo.safestr(tac);
         }
         if (tac.length === 0) {
@@ -776,7 +776,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             if (tac.length > 1) { //have attributes and/or content
                 frame.attrobj = tac[1];
                 //if plain object without length then treat as attributes
-                if (frame.attrobj && typeof frame.attrobj === 'object' &&
+                if (frame.attrobj && typeof frame.attrobj === "object" &&
                         !frame.attrobj.length) {
                     Object.keys(frame.attrobj).forEach(function (name) {
                         if (frame.attrobj[name] !== undefined &&
@@ -824,7 +824,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 window.location.href.indexOf("localhost:8080") < 0) {
             return;
         }
-        tempdivid = 'localDelayBusyWaitDiv';
+        tempdivid = "localDelayBusyWaitDiv";
         tempdiv = uo.byId(tempdivid);
         if (!tempdiv) {
             tempdiv = document.createElement("div");
@@ -940,6 +940,13 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 resp = jsonobj.parse(resp);
             } catch (exception) {
                 uo.log("JSON parse failure: " + exception);
+                if (resp.length > 2000) {
+                    uo.log(resp.slice(0, 900) + " ... blah ... " +
+                           resp.slice(-900));
+                }
+                else {
+                    uo.log(resp);
+                }
                 failure(415, String(exception), method, url, data);
                 return;
             }
@@ -1066,7 +1073,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 modulenames[i] = modname;
             }
             if (!app[modname]) {
-                js = document.createElement('script');
+                js = document.createElement("script");
                 js.async = true;
                 js.src = url;
                 document.body.appendChild(js);

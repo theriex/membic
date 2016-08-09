@@ -12,7 +12,7 @@ import coop
 import mailsum
 import mctr
 import json
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 import re
 from cacheman import *
 import time
@@ -322,24 +322,24 @@ def set_review_mainfeed(rev, acc):
     rev.mainfeed = 1
     logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
-        # logging.info(logmsg + "is batch.")
+        # debuginfo(logmsg + "is batch.")
         rev.srcrev = -202
         rev.mainfeed = 0
     if rev.srcrev < 0:  # future review, batch update etc.
-        # logging.info(logmsg + "is future or batch.")
+        # debuginfo(logmsg + "is future or batch.")
         rev.mainfeed = 0
     if rev.ctmid > 0:   # coop posting, not source review
-        # logging.info(logmsg + "is coop posting.")
+        # debuginfo(logmsg + "is coop posting.")
         rev.mainfeed = 0
     if acc.authconf:  # account needs help
         rev.mainfeed = 0
     if not rev.text or len(rev.text) < 65:  # not substantive (matches UI)
-        # logging.info(logmsg + "text not substantive.")
+        # debuginfo(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 60:  # 3 stars or better
-        # logging.info(logmsg + "is not highly rated.")
+        # debuginfo(logmsg + "is not highly rated.")
         rev.mainfeed = 0
-    # logging.info("set_review_mainfeed: " + str(rev.mainfeed))
+    # debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
 
 
 def prepend_to_main_feeds(review, pnm):
@@ -354,6 +354,289 @@ def prepend_to_main_feeds(review, pnm):
     memcache.set(review.revtype, typerevs)
 
 
+def feedcsventry(review):
+    entry = str(review.key().id()) + ":" + str(review.penid) +\
+        ":" + str(review.ctmid)
+    return entry
+
+
+# Return the feedcsv and asociated JSON data blocks from cache.  If
+# the cache is partial, clean up and return None, None
+def get_feed_cache_elements(ckey):
+    feedcsv = memcache.get(ckey)
+    numblocks = revpoolsize / revblocksize
+    blocks = [None for i in range(numblocks)]
+    for i in range(numblocks):
+        blocks[i] = memcache.get(ckey + "RevBlock" + str(i))
+    if (feedcsv is not None) and (None not in blocks):
+        return feedcsv, blocks
+    # not found or partial.  Clean up.
+    memcache.delete(ckey)
+    for i in range(numblocks):
+        memcache.delete(ckey + "RevBlock" + str(i))
+    return None, None
+
+
+def replace_instance_in_json(rev, jtxt, remove):
+    objs = json.loads("[" + jtxt + "]")
+    rt = ""
+    for obj in objs:
+        idstr = str(rev.key().id())
+        if obj["_id"] == idstr:
+            if not remove:
+                debuginfo("Replaced json for _id " + idstr)
+                rt = append_to_csv(obj2JSON(rev), rt)
+            else:
+                debuginfo("Removed json for _id " + idstr)
+        else:
+            rt = append_to_csv(json.dumps(obj), rt)
+    return rt
+
+
+# update the cache or ensure it is nuked for rebuild.
+def update_feed_cache(ckey, rev):
+    debuginfo("update_feed_cache " + ckey)
+    feedcsv, blocks = get_feed_cache_elements(ckey)
+    # debuginfo("feedcsv: " + str(feedcsv))
+    if feedcsv is None:
+        debuginfo("no cache data. rebuild later if needed")
+        return  # cache cleared, rebuild later as needed
+    entry = feedcsventry(rev)
+    numblocks = revpoolsize / revblocksize
+    if csv_contains(entry, feedcsv):
+        debuginfo("updating existing cache entry")
+        for i in range(numblocks):  # walk all in case dupe included
+            blocks[i] = replace_instance_in_json(rev, blocks[i], 
+                                                 rev.mainfeed <= 0)
+            memcache.set(ckey + "RevBlock" + str(i), blocks[i])
+    elif rev.mainfeed > 0:
+        debuginfo("prepending new cache entry")
+        feedcsv = prepend_to_csv(entry, feedcsv)
+        memcache.set(ckey, feedcsv)
+        # prepend to first block.  Not worth rebalancing the blocks.
+        prepend_to_csv(obj2JSON(rev), blocks[0])
+
+
+class IDCache(object):
+    cache = None
+    datlist = None
+    def __init__(self, instlist):
+        self.cache = {}
+        self.datlist = instlist or []
+        # debuginfo("IDCache init from " + str(self.datlist))
+        for inst in self.datlist:
+            # debuginfo("caching " + str(inst))
+            # debuginfo("inst[\"_id\"] " + inst["_id"])
+            self.cache[str(inst["_id"])] = inst
+    def data_as_list(self):
+        return self.datlist
+    def get_database_instance(self, dbclass, instid):
+        inst = visible_get_instance(dbclass, instid)
+        if inst and str(instid) not in self.cache:  # track for later caching
+            self.cache[str(instid)] = inst
+            self.datlist.append(inst)
+        return inst
+    def get_cached_instance(self, instid):
+        if str(instid) in self.cache:
+            return self.cache[str(instid)]
+        return None
+    def get_instance(self, dbclass, instid):
+        inst = self.get_cached_instance(instid)
+        return inst or self.get_database_instance(dbclass, instid)
+    def add_instance(self, inst):
+        if isinstance(inst, db.Model):
+            self.cache[str(inst.key().id())] = inst
+        else:
+            self.cache[str(inst["_id"])] = inst
+        self.datlist.append(inst)
+
+
+def get_prof_and_rev_cache(jstr):
+    plist = []
+    rlist = []
+    # debuginfo("get_prof_and_rev_cache jstr: " + jstr)
+    if jstr:
+        if jstr[0] != "[":
+            jstr = "[" + jstr + "]"
+        cached = json.loads(jstr)
+        # debuginfo("get_prof_and_rev_cache cached: " + str(cached))
+        plist = cached[:1]
+        # debuginfo("get_prof_and_rev_cache plist: " + str(plist))
+        rlist = cached[1:]
+        # debuginfo("get_prof_and_rev_cache rlist: " + str(rlist))
+    pc = IDCache(plist)
+    rc = IDCache(rlist)
+    return pc, rc
+
+
+def inst_list_to_cachejson(datlist):
+    jstr = ""
+    for inst in datlist:
+        if isinstance(inst, db.Model):
+            jstr = append_to_csv(obj2JSON(inst), jstr)
+        else:
+            jstr = append_to_csv(json.dumps(inst), jstr)
+    jstr = "[" + jstr + "]"
+    return jstr
+
+
+def cache_prefix_for_dbclass(dbclass):
+    if dbclass.__name__ == "PenName":
+        return "pen"
+    if dbclass.__name__ == "Coop":
+        return "coop"
+    raise RuntimeError("no cache_prefix_for_dbclass " + dbclass.__name__)
+
+
+# Search some probable cache areas before falling back to db retrieval
+def smart_retrieve_revinst(revid, penid):
+    jstr = memcache.get("allRevBlock0")
+    if jstr and str(revid) in jstr:
+        mc = IDCache(json.loads("[" + jstr + "]"))
+        inst = mc.get_cached_instance(revid)
+        if inst:
+            return inst
+    jstr = memcache.get("pen" + str(penid))
+    if jstr and str(revid) in jstr:
+        mc = IDCache(json.loads("[" + jstr + "]")[1:])
+        inst = mc.get_cached_instance(revid)
+        if inst:
+            return inst
+    return visible_get_instance(Review, revid)
+
+
+# query the db and accumulate the results in the given review cache
+def fetch_recent_membics(dbclass, pid, rc, fetchmax=50):
+    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
+    if dbclass.__name__ == "Coop":
+        where = "WHERE ctmid = :1 ORDER BY modified DESC"
+    vq = VizQuery(Review, where, int(pid))
+    revs = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+    for rev in revs:
+        if rev.ctmid:
+            srcrev = smart_retrieve_revinst(rev.srcrev, rev.penid)
+            if not srcrev:
+                logging.error("Missing srcrev Review " + str(rev.key().id()))
+                continue
+            rc.add_instance(srcrev)
+        rc.add_instance(rev)
+    # TODO: return json? factoring rebuild_reviews_block...
+
+
+def fetch_validated_instance(tidstr, rc, dbclass, prof, rev):
+    inst = rc.get_instance(dbclass, tidstr)
+    if inst:
+        if isinstance(inst, db.Model):
+            inst = obj2JSON(inst)    # transform to standard JSON
+            inst = json.loads(inst)  # unpack into standard cache format
+        # Check for various bad data conditions. The inst will still
+        # end up in the cache but it won't be mis-listed in the top display
+        if inst and inst["revtype"] != rev.revtype:
+            inst = None
+        if inst and dbclass.__name__ == "Coop":
+            if str(inst["ctmid"]) != str(prof.key().id()):
+                inst = None  # no longer part of this theme
+            if inst and not int(inst["srcrev"]):
+                inst = None  # original source membic not specified
+            if inst: # cache the srcrev for client reference
+                srcrev = smart_retrieve_revinst(inst["srcrev"], rev.penid)
+                if not srcrev:  # bad data reference
+                    logging.error("Bad srcrev Review " + str(inst["_id"]))
+                    inst = None
+                else:
+                    rc.add_instance(srcrev)
+    return inst
+
+
+def idlist_from_instlist(instlist, lenmax):
+    idlist = []
+    lastid = "-1"
+    for inst in instlist:
+        if inst["_id"] != lastid:
+            idlist.append(inst["_id"])
+        lastid = inst["_id"]
+    if len(idlist) > lenmax:
+        idlist = idlist[0:lenmax]
+    return idlist
+
+
+def top20_jsonstr_from_prof(prof):
+    if isinstance(prof, db.Model):
+        return prof.top20s
+    if isinstance(prof, dict):
+        jstr = prof["top20s"]
+        if isinstance(jstr, dict):
+            jstr = json.dumps(jstr)
+        return jstr
+    logging.error("Could not get top20s from " + str(prof))
+    return ""
+
+
+# Returns updated json text if changed, None otherwise.
+def update_top_membics(prof, rev, dbclass, rc):
+    topmax = 30  # how many top membics of each type to keep
+    orgdict = {}
+    newdict = {}
+    jstr = top20_jsonstr_from_prof(prof)
+    if jstr:
+        orgdict = json.loads(jstr)
+        newdict = json.loads(jstr)
+        # remove ridstr across all types in case type changed
+        ridstr = str(rev.key().id())
+        for mtype in newdict:
+            if newdict[mtype] and ridstr in newdict[mtype]:
+                newdict[mtype].remove(ridstr)
+    # rebuild the top id list for the current type
+    tids = []
+    if rev.revtype in newdict:
+        tids = newdict[rev.revtype]
+    rcinst = json.loads(obj2JSON(rev))  # convert to cache dict entry
+    trevs = [rcinst]  # build list of resolved top instances to sort
+    for tidstr in tids:
+        inst = fetch_validated_instance(tidstr, rc, dbclass, prof, rev)
+        if inst:
+            trevs.append(inst)
+    # debuginfo("update_top_membics about to sort trevs.")
+    # for idx in range(len(trevs)):
+    #     debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
+    trevs = sorted(trevs, key=itemgetter('rating', 'modified'), 
+                   reverse=True)
+    tids = idlist_from_instlist(trevs, topmax)
+    newdict[rev.revtype] = tids
+    newdict["latestrevtype"] = orgdict["latestrevtype"]
+    newdict["t20lastupdated"] = orgdict["t20lastupdated"]
+    if newdict == orgdict:
+        logging.info("update_top_membics: no change")
+        return None
+    newdict["latestrevtype"] = rev.revtype
+    newdict["t20lastupdated"] = str(nowISO())
+    logging.info("update_top_membics: recalculated")
+    return json.dumps(newdict)
+
+
+def update_profile(dbclass, pid, rev):
+    debuginfo("update_profile " + dbclass.__name__ + " " + str(pid))
+    ptype = cache_prefix_for_dbclass(dbclass)
+    pc, rc = get_prof_and_rev_cache(memcache.get(ptype + str(pid)))
+    prof = pc.get_instance(dbclass, pid)
+    if len(rc.data_as_list()) == 0:  # not cached, or no membics yet
+        fetch_recent_membics(dbclass, pid, rc)
+    pendat = pc.data_as_list()
+    updt20 = update_top_membics(prof, rev, dbclass, rc)
+    if updt20:
+        if not isinstance(prof, db.Model):
+            prof = pc.get_database_instance(dbclass, pid)
+        prof.top20s = updt20
+        prof.modified = nowISO()
+        synchronized_db_write(dbclass, prof)
+        logging.info("update_profile wrote new top membics for " + 
+                     dbclass.__name__ + " " + str(pid))
+        pendat[0] = prof
+    jstr = inst_list_to_cachejson(pendat + rc.data_as_list())
+    memcache.set(cache_prefix_for_dbclass(dbclass) + str(pid), jstr)
+    debuginfo("update_profile cached " + dbclass.__name__ + " " + str(pid))
+
+
 def write_review(review, pnm, acc):
     set_review_mainfeed(review, acc)
     updt = "save"
@@ -361,20 +644,12 @@ def write_review(review, pnm, acc):
         updt = "edit"
     mctr.count_review_update(updt, review.penid, review.penname,
                              review.ctmid, review.srcrev)
-    review.put()
-    logging.info("write_review: wrote review " + str(review.key().id()))
-    # force retrieval to ensure subsequent db hits find the latest
-    review = Review.get_by_id(review.key().id())
-    # need to rebuild cache unless new review and not mainfeed.  Just do it.
-    memcache.delete(review.revtype)
-    memcache.delete("all")
-    for i in range(revpoolsize / revblocksize):
-        memcache.delete(review.revtype + "RevBlock" + str(i))
-        memcache.delete("allRevBlock" + str(i))
-    memcache.delete("pen" + str(review.penid))
-    logging.info("write_review: cache cleared, calling to update top 20s")
-    update_top20_reviews(pnm, review, 0)
-    logging.info("write_review: update_top20_reviews completed")
+    synchronized_db_write(Review, review)
+    logging.info("write_review wrote Review  " + str(review.key().id()))
+    # update all related cached data, or clear it for later rebuild
+    update_feed_cache(review.revtype, review)   # filtered main feed
+    update_feed_cache("all", review)            # main feed
+    update_profile(pen.PenName, review.penid, review)
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -697,12 +972,6 @@ def rebuild_reviews_block(handler, pct, pgid):
     return "[" + jstr + "]"
 
 
-def feedcsventry(review):
-    entry = str(review.key().id()) + ":" + str(review.penid) +\
-        ":" + str(review.ctmid)
-    return entry
-
-
 def get_review_feed_pool(revtype):
     numblocks = revpoolsize / revblocksize
     blocks = [None for i in range(numblocks)]
@@ -784,33 +1053,15 @@ def nuke_cached_recent_review_feeds():
         nuke_review_feed_pool(rt)
 
 
-def extract_json_by_id(fid, block):
-    jstr = ""
-    openidx = block.find('{"_id":"' + str(fid) + '",')
-    if openidx >= 0:
-        closeidx = openidx + 1
-        brackets = 1
-        while closeidx < len(block):
-            if block[closeidx] == '{':
-                brackets += 1
-            elif block[closeidx] == '}':
-                brackets -= 1
-                if brackets <= 0:
-                    closeidx += 1
-                    break
-            closeidx += 1
-        jstr= block[openidx:closeidx]
-    return jstr
-
-
 def resolve_ids_to_json(feedids, blocks):
     jstr = ""
-    for fid in feedids:
-        for block in blocks:
-            objson = extract_json_by_id(fid, block)
-            if objson:
-                jstr = append_to_csv(objson, jstr)
-                break
+    for block in blocks:
+        objs = json.loads("[" + block + "]")
+        for obj in objs:
+            debuginfo("resolve_ids_to_json id: " + obj["_id"])
+            debuginfo("feedids: " + str(feedids))
+            if int(obj["_id"]) in feedids:
+                jstr = append_to_csv(json.dumps(obj), jstr)
     return "[" + jstr + "]"
 
 
@@ -1356,8 +1607,8 @@ class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
         pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
         if pgid: # pgid may be zero if no pen name yet
-            key = pct + str(pgid)
-            jstr = memcache.get(key)
+            key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
+            jstr = memcache.get(key)   # grab the prebuilt JSON data
             if not jstr:
                 jstr = rebuild_reviews_block(self, pct, pgid)
                 memcache.set(key, jstr)

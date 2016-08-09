@@ -155,21 +155,25 @@ def authenticated_account_email_plus_token(emaddr, token):
         key = pwd2key(account.password)
         token = decodeToken(key, token)
         if not token:
+            logging.info("authacc em+tok: Token decode failed")
             return None
         try:
             unidx = token.index(asciienc(emaddr))
         except:
             unidx = -1
         if unidx <= 2:
+            logging.info("authacc em+tok: Token email address not matched")
             return None
         secs = int(token[(token.index(":") + 1) : (unidx - 1)])
         now = int(round(time.time()))
         twelvehours = 12 * 60 * 60     # flip clock, hope not using then
         tokenlife = 90 * 24 * 60 * 60
         if now - secs > tokenlife + twelvehours:
+            logging.info("authacc em+tok: Token expired")
             return None
         account._id = account.key().id() # normalized id access
         return account
+    logging.info("authacc em+tok: No account found")
     return None
 
 
@@ -349,6 +353,12 @@ def safeURIEncode(stringval, stripnewlines = False):
     if stripnewlines:
         stringval = ''.join(stringval.splitlines())
     return urllib.quote(stringval.encode("utf-8"))
+
+
+# debug output doesn't show up in development log view, so this dumps it
+# out at info level while making it easy to find and clean up noise later
+def debuginfo(text):
+    logging.info(text)
 
 
 def make_redirect_url_base(returnto, requrl):
