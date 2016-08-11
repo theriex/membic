@@ -84,14 +84,14 @@ def pen_role(penid, coop):
 
 def member_level(penid, coop):
     penid = str(penid)
-    coop.founders = coop.founders or ""
-    if id_in_csv(penid, coop.founders):
+    founders = attrget(coop, "founders", "")
+    if id_in_csv(penid, founders):
         return 3
-    coop.moderators = coop.moderators or ""
-    if id_in_csv(penid, coop.moderators):
+    moderators = attrget(coop, "moderators", "")
+    if id_in_csv(penid, moderators):
         return 2
-    coop.members = coop.members or ""
-    if id_in_csv(penid, coop.members):
+    members = attrget(coop, "members", "")
+    if id_in_csv(penid, members):
         return 1
     return 0
 

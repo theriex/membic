@@ -395,7 +395,7 @@ def replace_instance_in_json(rev, jtxt, remove):
 
 # update the cache or ensure it is nuked for rebuild.
 def update_feed_cache(ckey, rev):
-    debuginfo("update_feed_cache " + ckey)
+    debuginfo("update_feed_cache for " + ckey)
     feedcsv, blocks = get_feed_cache_elements(ckey)
     # debuginfo("feedcsv: " + str(feedcsv))
     if feedcsv is None:
@@ -417,123 +417,117 @@ def update_feed_cache(ckey, rev):
         prepend_to_csv(obj2JSON(rev), blocks[0])
 
 
-class IDCache(object):
+# The standard caching for the app uses pickle and works with db.Model
+# class instances that reconstitute as class instances.  This is a
+# block cache that holds an array of instances in json format, and
+# returns an instance as a dict.  Looking in memcache, "pen1234" is a
+# json array, while "PenName1234" is a pickled db record.
+# 
+# A profile can be for a PenName or for a Coop.  In serialized json
+# form, this cached data block is an array where:
+#      [0]: Public visible PenName or Coop instance.
+#  [1-~50]: Recent revs (most recent first) limited by fetchmax.
+#   [~51+]: Supporting revs.  Top revs not already in included in
+#           recent.  A Coop will also include srcrev instances for
+#           ease of access by client.
+class ProfRevCache(object):
+    prefix = ""
+    dbprofinst = None
+    publicprofinst = None
     cache = None
-    datlist = None
-    def __init__(self, instlist):
+    mainlist = None  # recent revs, or previous entire cache
+    supplist = None
+    def set_db_prof_inst(self, dbprofinst):
+        self.publicprofinst = json.loads(obj2JSON(dbprofinst))
+        if dbprofinst.__class__.__name__ == "PenName":
+            pen.filter_sensitive_fields(self.publicprofinst)
+    def __init__(self, prefix, dbprofinst):
+        self.prefix = prefix
+        self.set_db_prof_inst(dbprofinst)
         self.cache = {}
-        self.datlist = instlist or []
-        # debuginfo("IDCache init from " + str(self.datlist))
-        for inst in self.datlist:
-            # debuginfo("caching " + str(inst))
-            # debuginfo("inst[\"_id\"] " + inst["_id"])
-            self.cache[str(inst["_id"])] = inst
-    def data_as_list(self):
-        return self.datlist
-    def get_database_instance(self, dbclass, instid):
-        inst = visible_get_instance(dbclass, instid)
-        if inst and str(instid) not in self.cache:  # track for later caching
-            self.cache[str(instid)] = inst
-            self.datlist.append(inst)
-        return inst
+        self.mainlist = []
+        self.supplist = []
+        jstr = memcache.get(prefix + str(self.publicprofinst["_id"]))
+        if jstr:
+            self.mainlist = json.loads(jstr)[1:]
+            for inst in self.mainlist:
+                self.cache[str(inst["_id"])] = inst
     def get_cached_instance(self, instid):
         if str(instid) in self.cache:
             return self.cache[str(instid)]
         return None
-    def get_instance(self, dbclass, instid):
-        inst = self.get_cached_instance(instid)
-        return inst or self.get_database_instance(dbclass, instid)
-    def add_instance(self, inst):
+    def add_instance(self, inst, supporting=False, prepend=False):
         if isinstance(inst, db.Model):
-            self.cache[str(inst.key().id())] = inst
-        else:
-            self.cache[str(inst["_id"])] = inst
-        self.datlist.append(inst)
+            inst = json.loads(obj2JSON(inst))
+        if str(inst["_id"]) not in self.cache:
+            if supporting:
+                self.supplist.append(inst)
+            else:
+                if prepend:
+                    self.mainlist.insert(0, inst)
+                else:
+                    self.mainlist.append(inst)
+        elif prepend:  # need to move existing instance to top
+            self.mainlist = [inst] + [r for r in self.mainlist if\
+                                          r["_id"] != inst["_id"]]
+        self.cache[str(inst["_id"])] = inst
+    def update_memcache(self):
+        mckey = self.prefix + str(self.publicprofinst["_id"])
+        debuginfo("updating memcache " + mckey)
+        memcache.set(mckey, json.dumps([self.publicprofinst] + self.mainlist + 
+                                       self.supplist))
 
 
-def get_prof_and_rev_cache(jstr):
-    plist = []
-    rlist = []
-    # debuginfo("get_prof_and_rev_cache jstr: " + jstr)
-    if jstr:
-        if jstr[0] != "[":
-            jstr = "[" + jstr + "]"
-        cached = json.loads(jstr)
-        # debuginfo("get_prof_and_rev_cache cached: " + str(cached))
-        plist = cached[:1]
-        # debuginfo("get_prof_and_rev_cache plist: " + str(plist))
-        rlist = cached[1:]
-        # debuginfo("get_prof_and_rev_cache rlist: " + str(rlist))
-    pc = IDCache(plist)
-    rc = IDCache(rlist)
-    return pc, rc
-
-
-def inst_list_to_cachejson(datlist):
-    jstr = ""
-    for inst in datlist:
-        if isinstance(inst, db.Model):
-            jstr = append_to_csv(obj2JSON(inst), jstr)
-        else:
-            jstr = append_to_csv(json.dumps(inst), jstr)
-    jstr = "[" + jstr + "]"
-    return jstr
-
-
-def cache_prefix_for_dbclass(dbclass):
-    if dbclass.__name__ == "PenName":
-        return "pen"
-    if dbclass.__name__ == "Coop":
-        return "coop"
-    raise RuntimeError("no cache_prefix_for_dbclass " + dbclass.__name__)
-
-
-# Search some probable cache areas before falling back to db retrieval
+# Search some probable cache areas before falling back to db retrieval.
 def smart_retrieve_revinst(revid, penid):
     jstr = memcache.get("allRevBlock0")
-    if jstr and str(revid) in jstr:
-        mc = IDCache(json.loads("[" + jstr + "]"))
-        inst = mc.get_cached_instance(revid)
-        if inst:
-            return inst
-    jstr = memcache.get("pen" + str(penid))
-    if jstr and str(revid) in jstr:
-        mc = IDCache(json.loads("[" + jstr + "]")[1:])
-        inst = mc.get_cached_instance(revid)
-        if inst:
-            return inst
-    return visible_get_instance(Review, revid)
+    if jstr and str(revid) in jstr:  # skip loads if id not in string
+        revlist = json.loads(jstr)
+        for rev in revlist:
+            if rev["_id"] == str(revid):
+                return rev
+    if int(penid) > 0:  # typically pass zero for penid if already searched
+        jstr = memcache.get("pen" + str(penid))
+        if jstr and str(revid) in jstr:
+            revlist = json.loads(jstr)[1:]  # first element is PenName
+            for rev in revlist:
+                if rev["_id"] == str(revid):
+                    return rev
+    rev = visible_get_instance(Review, revid)
+    if rev:
+        rev = obj2JSON(rev)  # consistent cache representation for return
+    return rev
 
 
 # query the db and accumulate the results in the given review cache
-def fetch_recent_membics(dbclass, pid, rc, fetchmax=50):
+def fetch_recent_membics(cacheprefix, pid, prc, fetchmax=50):
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    if dbclass.__name__ == "Coop":
+    if cacheprefix == "coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, int(pid))
+    vq = VizQuery(Review, where, pid)
     revs = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
     for rev in revs:
-        if rev.ctmid:
+        if rev.ctmid:  # only add coop rev if srcrev also available
             srcrev = smart_retrieve_revinst(rev.srcrev, rev.penid)
             if not srcrev:
                 logging.error("Missing srcrev Review " + str(rev.key().id()))
                 continue
-            rc.add_instance(srcrev)
-        rc.add_instance(rev)
-    # TODO: return json? factoring rebuild_reviews_block...
+            prc.add_instance(rev)
+            prc.add_instance(srcrev, supporting=True)
+        else:
+            prc.add_instance(rev)
 
 
-def fetch_validated_instance(tidstr, rc, dbclass, prof, rev):
-    inst = rc.get_instance(dbclass, tidstr)
+def fetch_validated_instance(tidstr, prc, rev, prof):
+    inst = prc.get_cached_instance(tidstr)
+    if not inst:
+        inst = smart_retrieve_revinst(tidstr, 0)
     if inst:
-        if isinstance(inst, db.Model):
-            inst = obj2JSON(inst)    # transform to standard JSON
-            inst = json.loads(inst)  # unpack into standard cache format
-        # Check for various bad data conditions. The inst will still
-        # end up in the cache but it won't be mis-listed in the top display
+        # Check for various bad data conditions. The inst may already be
+        # cached but its id won't be in the top list.
         if inst and inst["revtype"] != rev.revtype:
             inst = None
-        if inst and dbclass.__name__ == "Coop":
+        if inst and prc.prefix == "coop":
             if str(inst["ctmid"]) != str(prof.key().id()):
                 inst = None  # no longer part of this theme
             if inst and not int(inst["srcrev"]):
@@ -544,56 +538,41 @@ def fetch_validated_instance(tidstr, rc, dbclass, prof, rev):
                     logging.error("Bad srcrev Review " + str(inst["_id"]))
                     inst = None
                 else:
-                    rc.add_instance(srcrev)
+                    prc.add_instance(srcrev, supporting=True)
     return inst
 
 
 def idlist_from_instlist(instlist, lenmax):
     idlist = []
     lastid = "-1"
-    for inst in instlist:
+    for inst in instlist:             # skip dupes
         if inst["_id"] != lastid:
-            idlist.append(inst["_id"])
+            idlist.append(int(inst["_id"]))
         lastid = inst["_id"]
-    if len(idlist) > lenmax:
+    if len(idlist) > lenmax:          # truncate length if needed
         idlist = idlist[0:lenmax]
     return idlist
 
 
-def top20_jsonstr_from_prof(prof):
-    if isinstance(prof, db.Model):
-        return prof.top20s
-    if isinstance(prof, dict):
-        jstr = prof["top20s"]
-        if isinstance(jstr, dict):
-            jstr = json.dumps(jstr)
-        return jstr
-    logging.error("Could not get top20s from " + str(prof))
-    return ""
-
-
 # Returns updated json text if changed, None otherwise.
-def update_top_membics(prof, rev, dbclass, rc):
+def update_top_membics(cacheprefix, dbprofinst, rev, prc):
     topmax = 30  # how many top membics of each type to keep
-    orgdict = {}
-    newdict = {}
-    jstr = top20_jsonstr_from_prof(prof)
-    if jstr:
-        orgdict = json.loads(jstr)
-        newdict = json.loads(jstr)
-        # remove ridstr across all types in case type changed
-        ridstr = str(rev.key().id())
-        for mtype in newdict:
-            if newdict[mtype] and ridstr in newdict[mtype]:
-                newdict[mtype].remove(ridstr)
+    jstr = dbprofinst.top20s or "{}"
+    orgdict = json.loads(jstr)
+    newdict = json.loads(jstr)
+    # remove any references to rev id across all types in case type changed
+    ridstr = str(rev.key().id())
+    for mtype in newdict:
+        if newdict[mtype] and ridstr in newdict[mtype]:
+            newdict[mtype].remove(ridstr)
     # rebuild the top id list for the current type
     tids = []
     if rev.revtype in newdict:
         tids = newdict[rev.revtype]
-    rcinst = json.loads(obj2JSON(rev))  # convert to cache dict entry
-    trevs = [rcinst]  # build list of resolved top instances to sort
+    cacherev = json.loads(obj2JSON(rev))  # cache dict representation
+    trevs = [cacherev]  # build list of resolved top instances to sort
     for tidstr in tids:
-        inst = fetch_validated_instance(tidstr, rc, dbclass, prof, rev)
+        inst = fetch_validated_instance(tidstr, prc, rev, dbprofinst)
         if inst:
             trevs.append(inst)
     # debuginfo("update_top_membics about to sort trevs.")
@@ -605,6 +584,8 @@ def update_top_membics(prof, rev, dbclass, rc):
     newdict[rev.revtype] = tids
     newdict["latestrevtype"] = orgdict["latestrevtype"]
     newdict["t20lastupdated"] = orgdict["t20lastupdated"]
+    # debuginfo("orgdict: " + str(orgdict))
+    # debuginfo("newdict: " + str(newdict))
     if newdict == orgdict:
         logging.info("update_top_membics: no change")
         return None
@@ -614,42 +595,29 @@ def update_top_membics(prof, rev, dbclass, rc):
     return json.dumps(newdict)
 
 
-def update_profile(dbclass, pid, rev):
-    debuginfo("update_profile " + dbclass.__name__ + " " + str(pid))
-    ptype = cache_prefix_for_dbclass(dbclass)
-    pc, rc = get_prof_and_rev_cache(memcache.get(ptype + str(pid)))
-    prof = pc.get_instance(dbclass, pid)
-    if len(rc.data_as_list()) == 0:  # not cached, or no membics yet
-        fetch_recent_membics(dbclass, pid, rc)
-    pendat = pc.data_as_list()
-    updt20 = update_top_membics(prof, rev, dbclass, rc)
-    if updt20:
-        if not isinstance(prof, db.Model):
-            prof = pc.get_database_instance(dbclass, pid)
-        prof.top20s = updt20
-        prof.modified = nowISO()
-        synchronized_db_write(dbclass, prof)
-        logging.info("update_profile wrote new top membics for " + 
-                     dbclass.__name__ + " " + str(pid))
-        pendat[0] = prof
-    jstr = inst_list_to_cachejson(pendat + rc.data_as_list())
-    memcache.set(cache_prefix_for_dbclass(dbclass) + str(pid), jstr)
-    debuginfo("update_profile cached " + dbclass.__name__ + " " + str(pid))
+def update_profile(cacheprefix, dbprofinst, rev):
+    prc = ProfRevCache(cacheprefix, dbprofinst)
+    if len(prc.mainlist) == 0:  # cache uninitialized or no membics yet
+        fetch_recent_membics(cacheprefix, dbprofinst.key().id(), prc)
+    prc.add_instance(rev, prepend=True)  # ensure new rev instance is cached
+    updtop = update_top_membics(cacheprefix, dbprofinst, rev, prc)
+    if updtop:
+        dbprofinst.top20s = updtop
+        dbprofinst = mctr.synchronized_db_write(dbprofinst)
+        logging.info("update_profile wrote new top membics for " +
+                     cacheprefix + " " + str(dbprofinst.key().id()))
+        prc.set_db_prof_inst(dbprofinst)
+    prc.update_memcache()
 
 
 def write_review(review, pnm, acc):
     set_review_mainfeed(review, acc)
-    updt = "save"
-    if review.is_saved():
-        updt = "edit"
-    mctr.count_review_update(updt, review.penid, review.penname,
-                             review.ctmid, review.srcrev)
-    synchronized_db_write(Review, review)
-    logging.info("write_review wrote Review  " + str(review.key().id()))
+    mctr.synchronized_db_write(review)
+    logging.info("write_review wrote Review " + str(review.key().id()))
     # update all related cached data, or clear it for later rebuild
     update_feed_cache(review.revtype, review)   # filtered main feed
     update_feed_cache("all", review)            # main feed
-    update_profile(pen.PenName, review.penid, review)
+    update_profile("pen", pnm, review)
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -723,14 +691,16 @@ def write_coop_reviews(review, pnm, ctmidscsv):
     ctmidscsv = ctmidscsv or ""
     postnotes = []
     for ctmid in csv_list(ctmidscsv):
-        ctm = cached_get(int(ctmid), coop.Coop)
+        # get cooperative theme
+        ctm = cached_get(intz(ctmid), coop.Coop)
         if not ctm:
-            logging.info("write_coop_reviews: no coop " + ctmid)
+            logging.info("write_coop_reviews: no Coop " + ctmid)
             continue
         penid = pnm.key().id()
         if not coop.member_level(penid, ctm):
             logging.info("write_coop_reviews: not member of " + ctmid)
             continue
+        # get/create theme membic for update and write it to the db
         where = "WHERE ctmid = :1 AND srcrev = :2"
         vq = VizQuery(Review, where, int(ctmid), review.key().id())
         revs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
@@ -739,58 +709,18 @@ def write_coop_reviews(review, pnm, ctmidscsv):
             ctmrev = revs[0]
         else:
             ctmrev = Review(penid=penid, revtype=review.revtype)
-        logging.info("write_coop_reviews: Coop " + ctmid + " " + ctm.name)
-        logging.info("    copying source review")
+        debuginfo("    copying source review")
         copy_source_review(review, ctmrev, ctmid)
-        updt = "save"
-        if ctmrev.is_saved():
-            updt = "edit"
-        mctr.count_review_update(updt, ctmrev.penid, ctmrev.penname, 
-                                 ctmrev.ctmid, ctmrev.srcrev)
-        cached_put(ctmrev)
-        logging.info("    review saved, updating top20s")
-        update_top20_reviews(ctm, ctmrev, ctm.key().id())
-        memcache.delete("coop" + ctmid)
+        mctr.synchronized_db_write(ctmrev)
+        logging.info("write_coop_reviews wrote review for: Coop " + ctmid + 
+                     " " + ctm.name)
+        # recalculate recent and top membics for theme, update cache
+        update_profile("coop", ctm, review)
+        # note the review was posted to this theme
         logging.info("    appending post note")
         postnotes.append(coop_post_note(ctm, ctmrev))
     logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_coop_post_notes_to_svcdata(review, postnotes)
-
-
-def creation_compare(revA, revB):
-    createA = revA.modhist.split(";")[0]
-    createB = revB.modhist.split(";")[0]
-    if createA < createB:
-        return -1
-    if createA > createB:
-        return 1
-    return 0
-
-
-# find_source_review was only used during data migration, and it requires
-# an index that isn't worth maintaining for normal operations moving
-# forward.  Keeping it around for reference for now.  If it actually
-# needs to be used, then also add the following index back:
-#
-# - kind: Review
-#   properties:
-#   - name: cankey
-#   - name: modhist
-#
-# def find_source_review(cankey, modhist):
-#     source = None
-#     # strict less-than match to avoid finding the same thing being checked
-#     where = "WHERE cankey = :1 AND modhist < :2 ORDER BY modhist ASC"
-#     vq = VizQuery(Review, where, cankey, modhist)
-#     revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-#     for rev in revs:
-#         if source and creation_compare(source, rev) < 0:
-#             break  # have the earliest, done
-#         if rev.orids:
-#             source = rev
-#             break  # found the currently used reference root for this cankey
-#         source = rev  # assign as candidate reference root
-#     return source
 
 
 def sort_filter_feed(feedcsv, pnm, maxret):
@@ -831,41 +761,6 @@ def sort_filter_feed(feedcsv, pnm, maxret):
     return feedids
 
 
-# def create_or_update_cooprev(revid, ctmid):
-#     srcrev = Review.get_by_id(revid)
-#     if not srcrev:
-#         logging.info("create_or_update_cooprev Review " + str(revid) +
-#                      " not found. Ignoring.")
-#         return
-#     logging.info("Found srcrev " + str(revid) + " " + srcrev.name)
-#     ctmrev = Review(penid=srcrev.penid, revtype=srcrev.revtype)
-#     vq = VizQuery(Review, "WHERE ctmid = :1 AND srcrev = :2", ctmid, revid)
-#     revs = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
-#     if len(revs) > 0:
-#         logging.info("Found existing instance")
-#         ctmrev = revs[0]
-#     else:
-#         logging.info("Creating new instance")
-#     ctmrev.revtype = srcrev.revtype
-#     ctmrev.penid = srcrev.penid
-#     ctmrev.ctmid = ctmid
-#     ctmrev.srcrev = revid
-#     ctmrev.mainfeed = srcrev.mainfeed
-#     ctmrev.cankey = srcrev.cankey
-#     ctmrev.modified = srcrev.modified
-#     ctmrev.modhist = srcrev.modhist
-#     ctmrev.revpic = srcrev.revpic
-#     ctmrev.imguri = srcrev.imguri
-#     ctmrev.altkeys = srcrev.altkeys
-#     ctmrev.svcdata = srcrev.svcdata
-#     ctmrev.penname = srcrev.penname
-#     ctmrev.orids = srcrev.orids
-#     ctmrev.helpful = srcrev.helpful
-#     ctmrev.remembered = srcrev.remembered
-#     copy_rev_descrip_fields(srcrev, ctmrev)
-#     cached_put(ctmrev)
-
-
 def find_pen_or_coop_type_and_id(handler):
     pgid = intz(handler.request.get('ctmid'))
     if pgid:
@@ -890,20 +785,6 @@ def find_pen_or_coop_type_and_id(handler):
     # final case is no pen found because they haven't created one yet
     # that's a normal condition and not an error return
     return "pen", 0, None
-
-
-def rev_in_list(revid, revs):
-    revid = int(revid)
-    for rev in revs:
-        if rev.key().id() == revid:
-            return rev
-
-
-def strids_from_list(revs):
-    strids = []
-    for rev in revs:
-        strids.append(str(rev.key().id()))
-    return strids
 
 
 def append_review_jsoncsv(jstr, rev):
@@ -1058,8 +939,8 @@ def resolve_ids_to_json(feedids, blocks):
     for block in blocks:
         objs = json.loads("[" + block + "]")
         for obj in objs:
-            debuginfo("resolve_ids_to_json id: " + obj["_id"])
-            debuginfo("feedids: " + str(feedids))
+            # debuginfo("resolve_ids_to_json id: " + obj["_id"])
+            # debuginfo("feedids: " + str(feedids))
             if int(obj["_id"]) in feedids:
                 jstr = append_to_csv(json.dumps(obj), jstr)
     return "[" + jstr + "]"
@@ -1117,136 +998,6 @@ def is_matching_review(qstr, review):
     if qstr in keywords:
         return True
     return False
-
-
-# def make_coop_from_group(grp):
-#     ctm = coop.Coop(name=grp.name, name_c=grp.name_c)
-#     ctm.modified = grp.modified
-#     ctm.modhist = grp.modhist
-#     ctm.description = grp.description
-#     ctm.picture = grp.picture
-#     ctm.top20s = grp.top20s
-#     ctm.calembed = grp.calembed
-#     ctm.founders = grp.founders
-#     ctm.moderators = grp.moderators
-#     ctm.members = grp.members
-#     ctm.seeking = grp.seeking
-#     ctm.rejects = grp.rejects
-#     ctm.adminlog = grp.adminlog
-#     ctm.people = grp.people
-#     ctm.put()
-#     ctm = coop.Coop.get_by_id(ctm.key().id())
-#     return ctm
-
-
-# def verify_coops_for_groups(handler):
-#     # After running this, each Group has a matching Coop instance
-#     # whose id is referenced in the calembed field.  All Groups are
-#     # cached for easy reference
-#     count = 0
-#     ekt = "Coop:"
-#     grps = group.Group.all()
-#     for grp in grps:
-#         count += 1
-#         if not grp.calembed or not grp.calembed.startswith(ekt):
-#             coop = make_coop_from_group(grp)
-#             logging.info("Created Coop " + str(coop.key().id()) + 
-#                          " for Group " + str(grp.key().id()))
-#             grp.calembed = ekt + str(coop.key().id())
-#             cached_put(grp)
-#         else:
-#             cache_verify(grp)
-#     handler.response.out.write(str(count) + " matching Coops for Groups<br>\n")
-#     handler.response.out.write("verify_coops_for_groups completed.<br>\n")
-
-
-# def ctmid_for_grpid(handler, grpid):
-#     ktx = "Coop:"
-#     grp = cached_get(int(grpid), group.Group)
-#     if not grp:
-#         return 0
-#     if not grp.calembed or not grp.calembed.startswith(ktx):
-#         msg = "ctmid_for_grpid " + " no calembed translation"
-#         handler.response.out.write(msg + "<br>\n")
-#         logging.info(msg)
-#         return 0
-#     ctmid = int(grp.calembed[len(ktx):])
-#     return ctmid
-
-
-# def convert_pen_group_refs(handler):
-#     count = 0
-#     worktype = "PenName.convidx initialization, "
-#     conviterable = handler.request.get("prepfields")
-#     if not conviterable or conviterable != "done":
-#         pns = pen.PenName.all()
-#         for pn in pns:
-#             count += 1
-#             pn.convidx = 1
-#             pn.put()
-#             pn = pen.PenName.get_by_id(pn.key().id())
-#     else:
-#         worktype = "PenName group reference conversion, "
-#         vq = VizQuery(pen.PenName, "WHERE convidx > 0")
-#         pns = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-#         for pn in pns:
-#             count += 1
-#             # stash is rebuilt client side, so nuke it out when converting.
-#             pn.stash = ""
-#             for grpid in csv_list(pn.groups):
-#                 ctmid = ctmid_for_grpid(handler, grpid)
-#                 if ctmid:
-#                     pn.coops = append_to_csv(ctmid, pn.coops)
-#             pn.convidx = 0
-#             pn.put()
-#             pn = pen.PenName.get_by_id(pn.key().id())
-#     handler.response.out.write(worktype + str(count) + 
-#                                " PenNames converted<br>\n")
-#     handler.response.out.write("convert_pen_group_refs completed.<br>\n")
-
-
-# def convert_rev_svcdata_grouprefs(handler, rev):
-#     svcdata = rev.svcdata
-#     if not svcdata:
-#         return ""
-#     sdict = {}
-#     try:
-#         sdict = json.loads(svcdata)
-#     except Exception as e:
-#         logging.info("Review " + str(rev.key().id()) + " svcdata: " + svcdata +
-#                      " could not be deserialized. Initializing to empty string")
-#         return ""
-#     if "postgrps" not in sdict:
-#         return svcdata
-#     postobjs = sdict["postgrps"]
-#     if not postobjs or not len(postobjs):
-#         return svcdata
-#     for po in postobjs:
-#         if "grpid" in po:
-#             po["ctmid"] = str(ctmid_for_grpid(handler, int(po["grpid"])))
-#     svcdata = json.dumps(sdict)
-#     return svcdata
-
-
-# def convert_rev_group_refs(handler):
-#     conviterable = handler.request.get("prepfields")
-#     if not conviterable or conviterable != "done":
-#         return
-#     count = 0
-#     vq = VizQuery(Review, "WHERE grpid > -404")
-#     revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-#     for rev in revs:
-#         count += 1
-#         if rev.grpid <= 0:  # no group, future or batch indicator
-#             rev.ctmid = rev.grpid
-#             rev.svcdata = convert_rev_svcdata_grouprefs(handler, rev)
-#         elif rev.grpid > 0: # review is a group posting
-#             rev.ctmid = ctmid_for_grpid(handler, rev.grpid)
-#         rev.grpid = -404
-#         rev.put()
-#         rev = Review.get_by_id(rev.key().id())
-#     handler.response.out.write(str(count) + " reviews converted<br>\n")
-#     handler.response.out.write("Rerun until no reviews left to convert<br>\n")
 
 
 class SaveReview(webapp2.RequestHandler):
@@ -1448,119 +1199,6 @@ class GetReviewById(webapp2.RequestHandler):
         returnJSON(self.response, revs)
 
 
-# class ReviewDataInit(webapp2.RequestHandler):
-#     def get(self):
-#         revs = Review.all()
-#         count = 0
-#         for rev in revs:
-#             if rev.modhist and rev.modhist.endswith(";1"):
-#                 continue
-#             rev.modhist = rev.modified + ";1"
-#             rev.ctmid = 0
-#             set_review_mainfeed(rev)
-#             if rev.srcrev >= 0:    # not some reserved special handling value
-#                 rev.srcrev = -1    # set to proper revid or 0 later
-#             rev.orids = ""
-#             rev.helpful = ""
-#             rev.remembered = ""
-#             rev.put()
-#             count += 1
-#         self.response.out.write(str(count) + " Reviews initialized<br>\n")
-#         rest = self.request.get('rest')
-#         if not rest or rest != "yes":
-#             self.response.out.write("rest=yes not found so returning")
-#             return
-#         rts = ReviewTag.all()
-#         count = 0
-#         for rt in rts:
-#             rt.converted = 0
-#             rt.put()
-#             count += 1
-#         self.response.out.write(str(count) + " ReviewTags initialized<br>\n")
-#         pens = pen.PenName.all()
-#         count = 0
-#         for pnm in pens:
-#             pnm.remembered = ""
-#             pnm.preferred = ""
-#             pnm.background = ""
-#             pnm.blocked = ""
-#             pnm.put()
-#             count += 1
-#         self.response.out.write(str(count) + " Pens initialized<br>\n")
-#         coops = coop.Coop.all()
-#         count = 0
-#         for ctm in coops:
-#             ctm.adminlog = ""
-#         self.response.out.write(str(count) + " Coops initialized<br>\n")
-
-
-# class VerifyAllReviews(webapp2.RequestHandler):
-#     def get(self):
-#         memcache.delete("all")
-#         for revtype in known_rev_types:
-#             memcache.delete(revtype)
-#         # fix up any initialized srcrev values
-#         vq = VizQuery(Review, "WHERE srcrev = -1")
-#         revs = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-#         count = 0
-#         for rev in revs:
-#             src = find_source_review(rev.cankey, rev.modhist)
-#             if src:
-#                 src = Review.get_by_id(src.key().id())  # read latest data
-#                 rev.srcrev = src.key().id()
-#                 revidstr = str(rev.key().id())
-#                 src.orids = remove_from_csv(revidstr, src.orids)
-#                 src.orids = prepend_to_csv(revidstr, src.orids, 200)
-#                 src.put()
-#             else:
-#                 rev.srcrev = 0
-#             rev.put()
-#             count += 1
-#         self.response.out.write(str(count) + " Reviews verified<br>\n")
-#         # convert helpful and remembered to new new data representation
-#         count = 0
-#         vq = VizQuery(ReviewTag,"WHERE converted = 0")
-#         rts = vq.fetch(10000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-#         for rt in rts:
-#             rev = Review.get_by_id(rt.revid)
-#             pnm = pen.PenName.get_by_id(rt.penid)
-#             if rev and pnm:
-#                 spid = str(rt.penid)
-#                 rid = str(rt.revid)
-#                 if not rt.nothelpful or rt.helpful > rt.nothelpful:
-#                     rev.helpful = remove_from_csv(spid, rev.helpful)
-#                     rev.helpful = prepend_to_csv(spid, rev.helpful, 120)
-#                 if not rt.forgotten or rt.remembered > rt.forgotten:
-#                     rev.remembered = remove_from_csv(spid, rev.remembered)
-#                     rev.remembered = prepend_to_csv(spid, rev.remembered, 120)
-#                     pnm.remembered = remove_from_csv(rid, pnm.remembered)
-#                     pnm.remembered = prepend_to_csv(rid, pnm.remembered, 1000)
-#                     pnm.put()
-#                 rev.put()
-#             rt.converted = 1
-#             rt.put()
-#             count += 1
-#         self.response.out.write(str(count) + " ReviewTags converted<br>\n")
-#         # convert coop revid lists into separate review entries
-#         coops = coop.Coop.all()
-#         count = 0
-#         for ctm in coops:
-#             logging.info("Converting " + ctm.name)
-#             revids = csv_list(ctm.reviews)
-#             for revid in revids:
-#                 count += 1
-#                 create_or_update_cooprev(int(revid), ctm.key().id())
-#         self.response.out.write(str(count) + " coop reviews converted<br>\n")
-
-
-# class ConvertGroupsToCoops(webapp2.RequestHandler):
-#     def get(self):
-#         verify_coops_for_groups(self)
-#         convert_pen_group_refs(self)
-#         convert_rev_group_refs(self)
-#         self.response.out.write("ConvertGroupsToCoops completed<br>\n")
-
-
 class GetReviewFeed(webapp2.RequestHandler):
     def get(self):
         revtype = self.request.get('revtype')
@@ -1641,28 +1279,6 @@ class FetchPreReviews(webapp2.RequestHandler):
         reviews = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
                            deadline=10)
         returnJSON(self.response, reviews)
-
-
-# class ConvertFoodAndDrink(webapp2.RequestHandler):
-#     def get(self):
-#         revtypes = ["food", "drink"]
-#         for rt in revtypes:
-#             where = "WHERE ctmid = 0 AND revtype = '" + rt + "'" +\
-#                 " ORDER BY modified DESC"
-#             vq = VizQuery(Review, where)
-#             revs = vq.fetch(1000, read_policy=db.EVENTUAL_CONSISTENCY, 
-#                             deadline=60)
-#             count = 0
-#             for rev in revs:
-#                 revid = rev.key().id()
-#                 rev.revtype = 'yum'
-#                 rev.put()
-#                 count += 1
-#                 rev = Review.get_by_id(revid)
-#                 self.response.out.write(str(revid) + " " + rev.name + "<br>\n")
-#                 self.response.out.write(str(count) + " " + rt + 
-#                                         " reviews converted<br>\n<br>\n")
-#         self.response.out.write("ConvertFoodAndDrink completed")
 
 
 class BatchUpload(webapp2.RequestHandler):

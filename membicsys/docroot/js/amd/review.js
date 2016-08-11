@@ -1469,7 +1469,7 @@ app.review = (function () {
             step = "local updates";
             revs = app.activity.insertOrUpdateRev(revs, updrev);
             step = "tracking recent";
-            updpen.recent = app.lcs.objArrayToIdArray(revs);
+            app.pen.updateRecentRevs(updpen, updrev, revs);
             step = "cache update";
             app.lcs.put("pen", updpen);
             step = "cache refresh";

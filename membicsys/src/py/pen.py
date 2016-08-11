@@ -121,12 +121,14 @@ def updateable_pen(handler):
 
 def filter_sensitive_fields(pen):
     if pen:
-        pen.mid = 0
-        pen.gsid = "0"
-        pen.fbid = 0
-        pen.twid = 0
-        pen.ghid = 0
-        pen.stash = ""
+        attrset(pen, "mid", 0)
+        attrset(pen, "gsid", "0")
+        attrset(pen, "fbid", 0)
+        attrset(pen, "twid", 0)
+        attrset(pen, "ghid", 0)
+        attrset(pen, "stash", "")
+        attrset(pen, "background", "")
+        attrset(pen, "blocked", "")
 
 
 def fetch_pen_by_penid(handler):

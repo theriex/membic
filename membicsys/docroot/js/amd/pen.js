@@ -513,6 +513,23 @@ return {
     },
 
 
+    updateRecentRevs: function (pn, updr, revs) {
+        var recrevs = [], penid = jt.instId(pn);
+        revs.forEach(function (rev) {
+            //skip any included source revs or theme posts just in case
+            if(rev.penid === penid && rev.ctmid === "0") {
+                if(jt.instId(rev) === jt.instId(updr)) {
+                    recrevs.push(updr); }
+                else {
+                    recrevs.push(rev); }}});
+        recrevs.sort(function (a, b) {
+            if(a.modified < b.modified) { return 1; }
+            if(a.modified > b.modified) { return -1; }
+            return 0; });
+        pn.recent = app.lcs.objArrayToIdArray(recrevs);
+    },
+
+
     serializeFields: function (penName) {
         if(typeof penName.settings === "object") {
             penName.settings = JSON.stringify(penName.settings); }

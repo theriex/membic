@@ -226,6 +226,29 @@ def count_review_update(action, penid, penname, ctmid, srcrev):
                 put_mctr(counter, "responded")
 
 
+# Prevents stale data from showing up in subsequent queries by forcing
+# a retrieval by id after database write.  Factors a common pattern
+# for updating the membic counters.
+def synchronized_db_write(instance):
+    instance.modified = nowISO()
+    instance.put()
+    # force retrieval to ensure any subsequent db queries find the latest
+    instance = instance.__class__.get_by_id(instance.key().id())
+    # update cache like cached_put if this is a pickle cached instance
+    cname = instance.__class__.__name__
+    pcns = ["PenName", "Coop"]
+    if cname in pcns:
+        memcache.set(cname + str(instance.key().id()), pickle.dumps(instance))
+    # if this was a membic, bump the appropriate counter
+    if cname == "Review":
+        updt = "save"
+        if instance.is_saved():
+            updt = "edit"
+        count_review_update(updt, instance.penid, instance.penname,
+                            instance.ctmid, instance.srcrev)
+    return instance
+
+
 ########################################
 # endpoint definitions
 
