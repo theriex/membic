@@ -76,6 +76,8 @@ def attracc(inst, field, defaultval):
     if isinstance(inst, dict):
         return inst[field]
     if isinstance(inst, db.Model):
+        if field == "_id":
+            return str(inst.key().id())
         return getattr(inst, field)
     return defaultval
 

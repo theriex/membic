@@ -354,7 +354,7 @@ class ToggleRemember(webapp2.RequestHandler):
                 if not csv_contains(penid, review.remembered):
                     review.remembered = prepend_to_csv(penid, review.remembered)
                     cached_put(review)
-                    rev.update_review_feed_entry(review)
+                    rev.update_feed_caches(review, prepend=False)
                     mctr.bump_remembered(review, 
                                          intz(self.request.get('disprevid')))
             except Exception as e:

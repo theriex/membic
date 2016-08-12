@@ -144,7 +144,7 @@ def bump_rss_summary(ctm, request):
     logging.info("bump_rss_counter " + counter.refp + ": " + str(counter.rssv))
 
 
-def bump_starred(review, disprevid):
+def bump_starred(review, disprevid, ctmid):
     revid = review.key().id()
     # counters are a side-effect. do not fail and affect caller processing
     try:
@@ -154,18 +154,17 @@ def bump_starred(review, disprevid):
         put_mctr(counter, "starred")
         logging.info("bump_starred " + counter.refp + ": " + 
                      str(counter.starred))
-        if disprevid > 0 and disprevid != revid:
-            disprev = cached_get(disprevid, rev.Review)
-            if disprev and disprev.ctmid:
-                counter = get_mctr("Coop", disprev.ctmid)
-                counter.starred = counter.starred or 0
-                counter.starred += 1
-                put_mctr(counter, "starred")
-                logging.info("bump_starred " + counter.refp + ": " + 
-                             str(counter.starred))
+        if disprevid > 0 and disprevid != revid and ctmid:
+            counter = get_mctr("Coop", ctmid)
+            counter.starred = counter.starred or 0
+            counter.starred += 1
+            put_mctr(counter, "starred")
+            logging.info("bump_starred " + counter.refp + ": " + 
+                         str(counter.starred))
     except Exception as e:
         logging.error("bump_starred revid: " + str(revid) + 
-                      ", disprevid: " + str(disprevid) + " failed: " + str(e))
+                      ", disprevid: " + str(disprevid) + 
+                      ", ctmid: " + str(ctmid) + " failed: " + str(e))
 
 
 def bump_remembered(review, disprevid):
