@@ -619,9 +619,9 @@ def update_review_caches(review):
     # If the standard instance cached was used, update it, but do not
     # generally cache individual Review instances.
     mkey = "Review" + str(review.key().id())
-    instance = memcache.get(mkey)
-    if instance:
-        memcache.set(mkey, pickle.dumps(instance))
+    cached = memcache.get(mkey)
+    if cached:
+        memcache.set(mkey, pickle.dumps(review))
 
 
 
@@ -689,7 +689,8 @@ def write_coop_post_notes_to_svcdata(review, postnotes):
     svcdict["postctms"] = postnotes
     review.svcdata = json.dumps(svcdict)
     review.modified = nowISO()
-    cached_put(review)
+    review.put()  # not generally instance cached
+    update_review_caches(review)
 
 
 def write_coop_reviews(review, pnm, ctmidscsv):
@@ -1078,7 +1079,8 @@ class UploadReviewPic(webapp2.RequestHandler):
             review.revpic = db.Blob(upfile)
             review.revpic = images.resize(review.revpic, 160, 160)
             note_modified(review)
-            cached_put(review)
+            cached_put(review)  # use instance cache when uploaded images
+            update_review_caches(review)
         except Exception as e:
             # Client looks for text containing "failed: " for error reporting
             return srverr(self, 409, "Pic upload processing failed: " + str(e))
@@ -1110,8 +1112,8 @@ class RotateReviewPic(webapp2.RequestHandler):
         pnm = review_modification_authorized(self)
         if not pnm:
             return;
-        revid = self.request.get('revid')
-        review = cached_get(intz(revid), Review)
+        revid = intz(self.request.get('revid'))
+        review = Review.get_by_id(revid)  # pull database instance for update
         if not review or review.penid != pnm.key().id():
             return srverr(self, 403, "Review not found or not writeable")
         if not review.revpic:
@@ -1122,7 +1124,8 @@ class RotateReviewPic(webapp2.RequestHandler):
             img = img.execute_transforms(output_encoding=images.PNG)
             review.revpic = db.Blob(img)
             note_modified(review)
-            cached_put(review)
+            review.put()  # not generally instance cached
+            update_review_caches(review)
         except Exception as e:
             return srverr(self, 409, "Pic rotate failed: " + str(e))
         returnJSON(self.response, [ review ])
@@ -1168,8 +1171,8 @@ class GetReviewById(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
         if revid:
-            logging.info("Client cache miss fetch Review " + revid)
-            review = cached_get(intz(revid), Review)
+            logging.warn("Client cache miss fetch Review " + revid)
+            review = smart_retrieve_revinst(revid, 0)
             if not review:
                 return srverr(self, 404, "No Review found for id " + revid)
             returnJSON(self.response, [ review ])
@@ -1177,9 +1180,10 @@ class GetReviewById(webapp2.RequestHandler):
         revs = []
         revids = self.request.get('revids')
         if revids:
+            logging.warn("Client multiple revid fetch " + revid)
             rids = revids.split(",")
             for rid in rids:
-                review = cached_get(intz(rid), Review)
+                review = smart_retrieve_revinst(rid, 0)
                 if review:
                     revs.append(review)
         returnJSON(self.response, revs)
