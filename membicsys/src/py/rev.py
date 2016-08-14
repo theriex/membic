@@ -352,6 +352,20 @@ def replace_instance_in_json(rev, jtxt, remove):
     return "[" + rt + "]"
 
 
+def prepend_instance_to_json(rev, jtxt):
+    # not safe to use prepend_to_csv due to upperbound limit
+    jtxt = jtxt or ""
+    if jtxt:
+        if len(jtxt) > 2:
+            jtxt = jtxt[1:-1]  # strip array brackets
+        else:
+            jtxt = ""
+    if jtxt:
+        jtxt = "," + jtxt
+    jtxt = obj2JSON(rev) + jtxt
+    return "[" + jtxt + "]"
+
+
 # update the cache or ensure it is nuked for rebuild.
 def update_feed_cache(ckey, rev, addifnew=False):
     debuginfo("update_feed_cache for " + ckey)
@@ -372,8 +386,9 @@ def update_feed_cache(ckey, rev, addifnew=False):
         debuginfo("prepending new cache entry")
         feedcsv = prepend_to_csv(entry, feedcsv)
         memcache.set(ckey, feedcsv)
-        # prepend to first block.  Not worth rebalancing the blocks.
-        prepend_to_csv(obj2JSON(rev), blocks[0])
+        # prepend to first block.  Not worth rebalancing all the blocks.
+        blocks[0] = prepend_instance_to_json(rev, blocks[0])
+        memcache.set(ckey + "RevBlock0", blocks[0])
 
 
 def update_feed_caches(rev, addifnew=False):
