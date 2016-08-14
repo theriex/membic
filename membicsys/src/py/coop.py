@@ -84,13 +84,13 @@ def pen_role(penid, coop):
 
 def member_level(penid, coop):
     penid = str(penid)
-    founders = attrget(coop, "founders", "")
+    founders = attracc(coop, "founders", "")
     if id_in_csv(penid, founders):
         return 3
-    moderators = attrget(coop, "moderators", "")
+    moderators = attracc(coop, "moderators", "")
     if id_in_csv(penid, moderators):
         return 2
-    members = attrget(coop, "members", "")
+    members = attracc(coop, "members", "")
     if id_in_csv(penid, members):
         return 1
     return 0

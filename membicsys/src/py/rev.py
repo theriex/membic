@@ -44,7 +44,7 @@ class Review(db.Model):
     revpic = db.BlobProperty()                   # uploaded pic for review
     imguri = db.TextProperty()                   # linked review pic URL
     altkeys = db.TextProperty()                  # known equivalent cankey vals
-    svcdata = db.TextProperty()                  # ad hoc client data JSON
+    svcdata = db.TextProperty()                  # supporting client data JSON
     penname = db.StringProperty(indexed=False)   # for ease of reporting
     orids = db.TextProperty()                    # other revids CSV
     helpful = db.TextProperty()                  # penids CSV
@@ -378,7 +378,7 @@ def get_feed_cache_elements(ckey):
 
 
 def replace_instance_in_json(rev, jtxt, remove):
-    objs = json.loads("[" + jtxt + "]")
+    objs = json.loads(jtxt)
     rt = ""
     for obj in objs:
         idstr = str(rev.key().id())
@@ -390,11 +390,11 @@ def replace_instance_in_json(rev, jtxt, remove):
                 debuginfo("Removed json for _id " + idstr)
         else:
             rt = append_to_csv(json.dumps(obj), rt)
-    return rt
+    return "[" + rt + "]"
 
 
 # update the cache or ensure it is nuked for rebuild.
-def update_feed_cache(ckey, rev, prepend=True):
+def update_feed_cache(ckey, rev, addifnew=False):
     debuginfo("update_feed_cache for " + ckey)
     feedcsv, blocks = get_feed_cache_elements(ckey)
     # debuginfo("feedcsv: " + str(feedcsv))
@@ -409,7 +409,7 @@ def update_feed_cache(ckey, rev, prepend=True):
             blocks[i] = replace_instance_in_json(rev, blocks[i], 
                                                  rev.mainfeed <= 0)
             memcache.set(ckey + "RevBlock" + str(i), blocks[i])
-    elif rev.mainfeed > 0 and prepend:
+    elif rev.mainfeed > 0 and addifnew:
         debuginfo("prepending new cache entry")
         feedcsv = prepend_to_csv(entry, feedcsv)
         memcache.set(ckey, feedcsv)
@@ -417,9 +417,9 @@ def update_feed_cache(ckey, rev, prepend=True):
         prepend_to_csv(obj2JSON(rev), blocks[0])
 
 
-def update_feed_caches(rev, prepend=True):
-    update_feed_cache("all", rev, prepend)        # main feed
-    update_feed_cache(rev.revtype, rev, prepend)  # filtered main feed
+def update_feed_caches(rev, addifnew=False):
+    update_feed_cache("all", rev, addifnew)        # main feed
+    update_feed_cache(rev.revtype, rev, addifnew)  # filtered main feed
 
 
 # The standard caching for the app uses pickle and works with db.Model
@@ -607,10 +607,12 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
     return json.dumps(newdict)
 
 
-def update_profile(cacheprefix, dbprofinst, rev):
+def update_profile(cacheprefix, dbprofinst, rev, srcrev=None):
     prc = ProfRevCache(cacheprefix, dbprofinst)
     if len(prc.mainlist) == 0:  # cache uninitialized or no membics yet
         fetch_recent_membics(cacheprefix, dbprofinst.key().id(), prc)
+    if srcrev:  # prepend source rev first so it ends up second in the list
+        prc.add_instance(srcrev, prepend=True) 
     prc.add_instance(rev, prepend=True)  # ensure new rev instance is cached
     updtop = update_top_membics(cacheprefix, dbprofinst, rev, prc)
     if updtop:
@@ -627,7 +629,7 @@ def write_review(review, pnm, acc):
     mctr.synchronized_db_write(review)
     logging.info("write_review wrote Review " + str(review.key().id()))
     # update all related cached data, or clear it for later rebuild
-    update_feed_caches(review)
+    update_feed_caches(review, addifnew=True)
     update_profile("pen", pnm, review)
 
 
@@ -645,6 +647,16 @@ def update_prof_cache(ckey, rev):
             else:
                 replist.append(cached)
         memcache.set(ckey, json.dumps(replist))
+
+
+def update_review_caches(review):
+    update_feed_caches(review)
+    update_prof_cache("pen" + str(review.penid), review)
+    if review.svcdata:
+        svcdict = json.loads(review.svcdata)
+        if "postctms" in svcdict:
+            for ctmpost in svcdict["postctms"]:
+                update_prof_cache("coop" + ctmpost["ctmid"], review)
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -741,8 +753,8 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         mctr.synchronized_db_write(ctmrev)
         logging.info("write_coop_reviews wrote review for: Coop " + ctmid + 
                      " " + ctm.name)
-        # recalculate recent and top membics for theme, update cache
-        update_profile("coop", ctm, review)
+        # update cache, recalculate recent and top membics for theme
+        update_profile("coop", ctm, ctmrev, srcrev=review)
         # note the review was posted to this theme
         logging.info("    appending post note")
         postnotes.append(coop_post_note(ctm, ctmrev))
@@ -919,6 +931,7 @@ def get_review_feed_pool(revtype):
             count = 0
     memcache.set(revtype, feedcsv)
     for i in range(numblocks):
+        blocks[i] = "[" + blocks[i] + "]"
         memcache.set(revtype + "RevBlock" + str(i), blocks[i])
     return feedcsv, blocks
 
@@ -939,7 +952,8 @@ def nuke_cached_recent_review_feeds():
 def resolve_ids_to_json(feedids, blocks):
     jstr = ""
     for block in blocks:
-        objs = json.loads("[" + block + "]")
+        # debuginfo("resolve_ids_to_json block: " + block)
+        objs = json.loads(block)
         for obj in objs:
             # debuginfo("resolve_ids_to_json id: " + obj["_id"])
             # debuginfo("feedids: " + str(feedids))
@@ -1212,7 +1226,7 @@ class GetReviewFeed(webapp2.RequestHandler):
         if acc and intz(self.request.get('penid')):
             pnm = acc_review_modification_authorized(acc, self)
         if not pnm:
-            writeJSONResponse("[" + blocks[0] + "]", self.response)
+            writeJSONResponse(blocks[0], self.response)
             return
         feedids = sort_filter_feed(feedcsv, pnm, revblocksize)
         if self.request.get('debug') == "sortedfeedids":
@@ -1233,18 +1247,15 @@ class ToggleHelpful(webapp2.RequestHandler):
             return srverr(self, 404, "Membic: " + str(revid) + " not found.")
         if csv_elem_count(review.helpful) < 123:  # semi-arbitrary upper bound
             penid = str(pnm.key().id())
-            disprevid = intz(self.request.get('disprevid'))
-            disprevsrc = intz(self.request.get('disprevsrc'))
             if csv_contains(penid, review.helpful):  # toggle off
                 review.helpful = remove_from_csv(penid, review.helpful)
             else:  # toggle on
+                disprevid = intz(self.request.get('disprevid'))
+                disprevsrc = intz(self.request.get('disprevsrc'))
                 mctr.bump_starred(review, disprevid, disprevsrc)
                 review.helpful = prepend_to_csv(penid, review.helpful)
-            review.put()  # no cache, modified unchanged
-            update_feed_caches(review, prepend=False)
-            update_prof_cache("pen" + str(review.penid), review)
-            if disprevsrc:  # update main review copy in theme cache
-                update_prof_cache("coop" + str(disprevsrc), review)
+            review.put()  # no instance cache, not modified
+            update_review_caches(review)
         returnJSON(self.response, [ review ])
 
 

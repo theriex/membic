@@ -342,21 +342,22 @@ class ToggleRemember(webapp2.RequestHandler):
         revid = self.request.get('revid')
         if not revid:
             self.error(401)
-            self.response.out.write("Review: " + revid + " not found.")
+            self.response.out.write("No revid provided.")
             return
         if csv_contains(revid, pen.remembered):
             pen.remembered = remove_from_csv(revid, pen.remembered)
         else:
             pen.remembered = prepend_to_csv(revid, pen.remembered)
             try:
-                review = cached_get(int(revid), rev.Review)
+                review = rev.Review.get_by_Id(revid)  # db inst not cached
                 penid = str(pen.key().id())
                 if not csv_contains(penid, review.remembered):
                     review.remembered = prepend_to_csv(penid, review.remembered)
-                    cached_put(review)
-                    rev.update_feed_caches(review, prepend=False)
-                    mctr.bump_remembered(review, 
-                                         intz(self.request.get('disprevid')))
+                    review.put()  # no instance cache, not modified
+                    rev.update_review_caches(review)
+                    disprevid = intz(self.request.get('disprevid'))
+                    disprevsrc = intz(self.request.get('disprevsrc'))
+                    mctr.bump_remembered(review, disprevid, disprevsrc)
             except Exception as e:
                 logging.error("ToggleRemember failed to set backlink from " + 
                               revid + " to PenName " + str(pen.key().id()) + 

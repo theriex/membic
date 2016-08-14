@@ -2123,9 +2123,13 @@ return {
                fpbRememberButtonHTML(prefix, disprevid, updrevid, true));
         //disconnect update call from screen update
         setTimeout(function () {
+            var disprevsrc = 0;
+            if(disprevid !== updrevid) {
+                disprevsrc = app.lcs.getRef("rev", disprevid).rev.ctmid; }
             url = "togremember?" + app.login.authparams() +
                 "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
-                "&disprevid=" + disprevid + jt.ts("&cb=", "second");
+                "&disprevid=" + disprevid + "&disprevsrc=" + disprevsrc + 
+                jt.ts("&cb=", "second");
             jt.call("GET", url, null,
                     function (pens) {
                         app.pen.noteUpdatedPen(pens[0]);

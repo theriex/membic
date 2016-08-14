@@ -167,7 +167,7 @@ def bump_starred(review, disprevid, ctmid):
                       ", ctmid: " + str(ctmid) + " failed: " + str(e))
 
 
-def bump_remembered(review, disprevid):
+def bump_remembered(review, disprevid, ctmid):
     revid = review.key().id()
     try:
         counter = get_mctr("PenName", review.penid)
@@ -176,18 +176,17 @@ def bump_remembered(review, disprevid):
         put_mctr(counter, "remembered")
         logging.info("bump_remembered " + counter.refp + ": " + 
                      str(counter.remembered))
-        if disprevid > 0 and disprevid != revid:
-            disprev = cached_get(disprevid, rev.Review)
-            if disprev and disprev.ctmid:
-                counter = get_mctr("Coop", disprev.ctmid)
-                counter.remembered = counter.remembered or 0
-                counter.remembered += 1;
-                put_mctr(counter, "remembered")
-                logging.info("bump_remembered " + counter.refp + ": " + 
-                             str(counter.remembered))
+        if disprevid > 0 and disprevid != revid and ctmid:
+            counter = get_mctr("Coop", ctmid)
+            counter.remembered = counter.remembered or 0
+            counter.remembered += 1;
+            put_mctr(counter, "remembered")
+            logging.info("bump_remembered " + counter.refp + ": " + 
+                         str(counter.remembered))
     except Exception as e:
         logging.error("bump_remembered revid: " + str(revid) + 
-                      ", disprevid: " + str(disprevid) + " failed: " + str(e))
+                      ", disprevid: " + str(disprevid) + 
+                      ", ctmid: " + str(ctmid) + " failed: " + str(e))
 
 
 def count_review_update(action, penid, penname, ctmid, srcrev):
