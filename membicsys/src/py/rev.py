@@ -98,7 +98,7 @@ def noauth_get_review_for_update(handler):
     revid = intz(handler.request.get('_id'))
     if not revid:
         revid = intz(handler.request.get('revid'))
-    review = cached_get(revid, Review)
+    review = Review.get_by_id(revid)  # Review db instances not cached
     if not review:
         srverr(handler, 404, "Review id: " + str(revid) + " not found.")
         return False
@@ -123,7 +123,7 @@ def get_review_for_save(handler):
         revid = intz(handler.request.get('revid'))
     review = None
     if revid:
-        review = cached_get(revid, Review)
+        review = Review.get_by_id(revid)  # Review db instances not cached
     if not review:
         review = fetch_review_by_cankey(handler)
         if not review:
@@ -253,47 +253,6 @@ def read_review_values(handler, review):
         review.srcrev = intz(srcrevstr)
     else:
         review.srcrev = 0
-
-
-# To avoid extra cache retrievals and potentially the associated
-# database hits, this only rebuilds the specified revtype. Previous
-# instances of the review id are clared out first to avoid leaving
-# ghosts if the revtype changes.
-def update_top20_reviews(pco, review, ctmid):
-    retmax = 30
-    t20dict = {}
-    if pco.top20s:
-        t20dict = json.loads(pco.top20s)
-        for rt in t20dict:
-            if t20dict[rt] and str(review.key().id()) in t20dict[rt]:
-                t20dict[rt].remove(revid)
-    t20ids = []
-    if review.revtype in t20dict:
-        t20ids = t20dict[review.revtype]
-    t20revs = [ review ]
-    for revid in t20ids:
-        resolved = cached_get(intz(revid), Review)
-        if resolved and resolved.revtype == review.revtype:
-            if resolved.ctmid == ctmid:
-                t20revs.append(resolved)
-    t20revs = sorted(t20revs, key=attrgetter('rating', 'modified'), 
-                     reverse=True)
-    if len(t20revs) > retmax:
-        t20revs = t20revs[0:retmax]
-    t20ids = []
-    lastid = -1     # trap any dupes just in case
-    for rev in t20revs:
-        currid = rev.key().id()
-        if currid != lastid:
-            t20ids.append(currid)
-        lastid = currid
-    t20dict[review.revtype] = t20ids
-    t20dict["latestrevtype"] = review.revtype
-    tstamp = nowISO()
-    t20dict["t20lastupdated"] = tstamp
-    pco.top20s = json.dumps(t20dict)
-    pco.modified = tstamp;
-    cached_put(pco)
 
 
 def fetch_review_by_ptc(penid, revtype, cankey):
@@ -507,7 +466,7 @@ def smart_retrieve_revinst(revid, penid, coopid=0):
                     return rev
     rev = visible_get_instance(Review, revid)
     if rev:
-        rev = obj2JSON(rev)  # consistent cache representation for return
+        rev = json.loads(obj2JSON(rev))  # return cache representation
     return rev
 
 
@@ -657,6 +616,13 @@ def update_review_caches(review):
         if "postctms" in svcdict:
             for ctmpost in svcdict["postctms"]:
                 update_prof_cache("coop" + ctmpost["ctmid"], review)
+    # If the standard instance cached was used, update it, but do not
+    # generally cache individual Review instances.
+    mkey = "Review" + str(review.key().id())
+    instance = memcache.get(mkey)
+    if instance:
+        memcache.set(mkey, pickle.dumps(instance))
+
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -1120,10 +1086,14 @@ class UploadReviewPic(webapp2.RequestHandler):
         self.response.out.write("revid: " + str(review.key().id()))
 
 
+# Most membics reference an image from a url, or have no image.  When
+# a pic is uploaded, that data is the majority of the size of the
+# Review instance, so it's reasonable to just cache the Review
+# instance with standard instance caching.
 class GetReviewPic(webapp2.RequestHandler):
     def get(self):
         revid = self.request.get('revid')
-        review = cached_get(intz(revid), Review)
+        review = cached_get(intz(revid), Review)  # will probably need pic again
         havepic = review and review.revpic
         if not havepic:
             return srverr(self, 404, 

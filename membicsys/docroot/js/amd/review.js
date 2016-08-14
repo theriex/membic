@@ -259,6 +259,14 @@ app.review = (function () {
     },
 
 
+    sourceRevId = function (review) {
+        var srcid = jt.instId(review);
+        if(review.ctmid && review.ctmid !== "0") {
+            srcid = review.srcrev; }
+        return srcid;
+    },
+
+
     revFormImageHTML = function (review, type, keyval, mode) {
         var html;
         if(!keyval) {
@@ -274,8 +282,9 @@ app.review = (function () {
             html.src = sslSafeRef(jt.instId(review), review.imguri);
             break;
         case "upldpic":
-            //html.src = "revpic?revid=" + jt.instId(review) + 
-            html.src = "img/blank.png#revpic?revid=" + jt.instId(review) + 
+            //Use delayed image loading src value.  Use source review image
+            //for theme posts to take advantage of caching.
+            html.src = "img/blank.png#revpic?revid=" + sourceRevId(review) + 
                 jt.ts("&cb=", review.modified);
             break;
         case "nopic":
