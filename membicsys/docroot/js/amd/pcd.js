@@ -584,6 +584,7 @@ app.pcd = (function () {
                         ["div", {cla: "picsideformbuttonsdiv"},
                          ["input", {type: "submit", cla: "formbutton",
                                     style: "visibility:hidden;",
+                                    onclick: jt.fs("app.pcd.upsub()"),
                                     id: "upldsub", value: "Upload"}]]]]]],
                     ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                 ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
@@ -1433,6 +1434,14 @@ return {
                                    calSettingsInit();
                                    rssSettingsInit();
                                    embedSettingsInit(); });
+    },
+
+
+    upsub: function () {
+        var upldbutton = jt.byId("upldsub");
+        upldbutton.disabled = true;
+        upldbutton.value = "Uploading...";
+        jt.byId("upldpicfelem").submit();
     },
 
 

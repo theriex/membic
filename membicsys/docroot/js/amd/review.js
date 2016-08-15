@@ -871,15 +871,6 @@ app.review = (function () {
     },
 
 
-    uploadPicButtonHTML = function () {
-        var html;
-        html = ["button", {type: "button", id: "pdtfubutton",
-                           onclick: revfs("uploadpic()")},
-                "Upload&nbsp;Pic"];
-        return html;
-    },
-
-
     rotatePicButtonHTML = function () {
         var html = "";
         if(jt.hasId(crev) && crev.revpic) {
@@ -887,6 +878,17 @@ app.review = (function () {
                                onclick: revfs("rotateupldpic()")},
                     "Rotate"]; }
         return html;
+    },
+
+
+    picFileSelChange = function () {
+        var fv = jt.byId("picfilein").value;
+        //chrome yields a value like "C:\\fakepath\\circuit.png"
+        fv = fv.split('\\').pop();
+        jt.out("picfilelab", fv);
+        jt.byId("picfilelab").className = "filesellab2";
+        jt.byId("upldsub").style.visibility = "visible";
+        app.review.monitorPicUpload("Init");
     },
 
 
@@ -920,16 +922,23 @@ app.review = (function () {
                        jt.paramsToFormInputs(app.login.authparams()),
                        ["div", {cla: "tablediv"},
                         [["div", {cla: "fileindiv"},
-                          [["input", {type: "file", 
+                          [["input", {type: "file", cla: "hidefilein",
                                       name: "picfilein", id: "picfilein"}],
+                           ["label", {fo: "picfilein", cla: "filesellab",
+                                      id: "picfilelab"},
+                            "Choose&nbsp;Image"],
                            ["div", {id: "ptduploadbuttonsdiv"},
-                            uploadPicButtonHTML()]]],
+                            ["input", {type: "submit", cla: "formbutton",
+                                       style: "visibility:hidden;",
+                                       onclick: jt.fs("app.review.upsub()"),
+                                       id: "upldsub", value: "Upload"}]]]],
                          ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                      ["iframe", {id: "ptdif", name: "ptdif", 
                                  src: "/revpicupload", style: "display:none"}],
                      ["div", {id: "pdtfbuttondiv", cla: "dlgbuttonsdiv"},
                       rotatePicButtonHTML()]]];
-            jt.out("upldpicform", jt.tac2html(html)); }
+            jt.out("upldpicform", jt.tac2html(html));
+            jt.on("picfilein", "change", picFileSelChange); }
         else {  //not upldpic
             displayUploadedPicLabel(); }
     },
@@ -1553,9 +1562,6 @@ return {
         else {
             monitor.state = "waiting";
             monitor.count += 1; }
-        jt.out("ptduploadbuttonsdiv", jt.tac2html(
-            ["div", {cla: "formstatdiv"}, 
-             "Uploading..." + (monitor.count / 10)]));
         ptdif = jt.byId("ptdif");
         if(ptdif) {
             fc = ptdif.contentDocument || ptdif.contentWindow.document;
@@ -1569,14 +1575,14 @@ return {
                     crev.revpic = revid;
                     jt.byId("upldpicimg").src = "revpic?revid=" + revid +
                         jt.ts("&cb=", "second");  //crev.modified unchanged
-                    displayUploadedPicLabel();
-                    return; }
+                    return picdlgModForm(); }
                 if(txt.indexOf(errpre) >= 0) {
                     txt = txt.slice(txt.indexOf(errpre) + errpre.length);
                     jt.out("imgupstatdiv", txt);    //display error
                     fc.body.innerHTML = "Reset.";   //reset status iframe
-                    jt.out("ptduploadbuttonsdiv",   //redisplay upload button
-                           jt.tac2html(uploadPicButtonHTML()));
+                    jt.out("picfilelab", "Choose&nbsp;Image");
+                    jt.byId("picfilelab").className = "filesellab";
+                    jt.byId("upldsub").style.visibility = "hidden";
                     return; } }
             setTimeout(app.review.monitorPicUpload, 100); }
     },
@@ -1871,7 +1877,7 @@ return {
                       [["img", {id: "upldpicimg", cla: "revimgdis",
                                 src: (crev.revpic ? ("revpic?revid=" + revid + 
                                                      jt.ts("&cb=", "second"))
-                                                  : "img/nopicprof.png"),
+                                                  : "img/nopicrev.png"),
                                 onclick: revfs("picdlg('upldpic')")}],
                        ["div", {id: "upldpicform", cla: "overform"}]]]]],
                    ["li",
@@ -1883,6 +1889,14 @@ return {
         app.layout.openOverlay(app.layout.placerel("dlgrevimg", -5, -80), 
                                html, null, picdlgModForm,
                                jt.fs("app.review.updatedlg()"));
+    },
+
+
+    upsub: function () {
+        var upldbutton = jt.byId("upldsub");
+        upldbutton.disabled = true;
+        upldbutton.value = "Uploading...";
+        jt.byId("upldpicfelem").submit();
     },
 
 
@@ -1906,7 +1920,7 @@ return {
 
 
     rotateupldpic: function () {
-        var revid, picsrc, data, elem;
+        var revid, picsrc, data;
         revid = jt.instId(crev);
         data = "revid=" + revid + "&penid=" + app.pen.myPenId();
         jt.out("pdtfbuttondiv", "Rotating...");
@@ -1917,12 +1931,6 @@ return {
                     picsrc = "revpic?revid=" + revid + 
                         jt.ts("&cb=", crev.modified);
                     jt.out("pdtfbuttondiv", jt.tac2html(rotatePicButtonHTML()));
-                    elem = jt.byId("revimg" + revid);
-                    if(elem) {
-                        elem.src = picsrc; }
-                    elem = jt.byId("dlgrevimg");
-                    if(elem) {
-                        elem.src = picsrc; }
                     jt.byId("upldpicimg").src = picsrc; },
                 app.failf(function (code, errtxt) {
                     jt.out("pdtfbuttondiv", jt.tac2html(rotatePicButtonHTML()));
