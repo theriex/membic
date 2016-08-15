@@ -42,10 +42,15 @@ var app = {},  //Global container for application level funcs and values
 
     //app global key handling
     app.globkey = function (e) {
+        var tempf;
         if(e && (e.charCode === 27 || e.keyCode === 27)) {  //ESC
             if(app.onescapefunc) {
                 jt.evtend(e);
-                app.onescapefunc(); } }
+                tempf = app.onescapefunc;
+                app.onescapefunc = null;
+                if(app.escapefuncstack.length > 0) {
+                    app.onescapefunc = app.escapefuncstack.pop(); }
+                tempf(); } }
     };
 
 
@@ -59,7 +64,7 @@ var app = {},  //Global container for application level funcs and values
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
         href += "&" + jt.objdata(params);
-        jt.out('contentdiv', "Redirecting to secure server...");
+        jt.out("contentdiv", "Redirecting to secure server...");
         window.location.href = href;
     };
 
@@ -92,7 +97,7 @@ var app = {},  //Global container for application level funcs and values
     app.hashtaghref = function () {
         var href = window.location.pathname;
         href = href.slice(1);  //remove initial slash
-        if(href && href.indexOf('.') < 0 && href.indexOf('/') < 0) {
+        if(href && href.indexOf(".") < 0 && href.indexOf("/") < 0) {
             return href; }
         return "";
     };
@@ -129,13 +134,13 @@ var app = {},  //Global container for application level funcs and values
     app.init2 = function () {
         var cdiv;
         app.amdtimer.load.end = new Date();
-        cdiv = jt.byId('contentdiv');
-        jt.out('contentdiv', " &nbsp; ");
+        cdiv = jt.byId("contentdiv");
+        jt.out("contentdiv", " &nbsp; ");
         if(!app.introtext) {  //capture original so we can revert as needed
             app.introtext = cdiv.innerHTML; }
         app.layout.init();
-        jt.on(document, 'keydown', app.globkey);
-        jt.on(window, 'popstate', app.history.pop);
+        jt.on(document, "keydown", app.globkey);
+        jt.on(window, "popstate", app.history.pop);
         setTimeout(app.login.init, 10);
         //setTimeout(app.layout.displayDoc, 500);
     };
@@ -159,11 +164,11 @@ var app = {},  //Global container for application level funcs and values
             href = href.slice(0, href.indexOf("?")); }
         jtminjsDecorateWithUtilities(jt);
         if(app.solopage()) {
-            jt.byId('topsectiondiv').style.display = "none";
-            jt.byId('headingdiv').style.display = "none";
-            jt.byId('bottomnav').style.display = "none";
-            jt.byId('topsectiondiv').style.display = "none"; }
-        jt.out('loadstatusdiv', "Loading app modules...");
+            jt.byId("topsectiondiv").style.display = "none";
+            jt.byId("headingdiv").style.display = "none";
+            jt.byId("bottomnav").style.display = "none";
+            jt.byId("topsectiondiv").style.display = "none"; }
+        jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
         jt.loadAppModules(app, modules, href, app.init2, "?v=150911");
@@ -198,7 +203,7 @@ var app = {},  //Global container for application level funcs and values
                  ["a", {href: emref},
                   "email support to get this fixed."]]]]]]];
         html = jt.tac2html(html);
-        jt.out('contentdiv', html);
+        jt.out("contentdiv", html);
         app.layout.closeDialog();
         app.layout.cancelOverlay();
     };
@@ -247,7 +252,7 @@ var app = {},  //Global container for application level funcs and values
                      ["div", {id: "waitserverdiv"}],
                      ["div", {id: "waitprogdiv"}]]];
             jt.out(divid, jt.tac2html(html)); }
-        if(jt.byId('waitprogdiv')) {
+        if(jt.byId("waitprogdiv")) {
             html = [];
             while(i < 4) {
                 i += 1;
@@ -256,13 +261,13 @@ var app = {},  //Global container for application level funcs and values
                 else {
                     src = "waitblockopen.png"; }
                 html.push(["img", {src: "img/" + src}]); }
-            jt.out('waitprogdiv', jt.tac2html(html));
+            jt.out("waitprogdiv", jt.tac2html(html));
             if(count > 6) {
                 msg2 = msg2 || "Server cache rebuild...";
-                jt.out('waitserverdiv', msg2); }
+                jt.out("waitserverdiv", msg2); }
             if(count > 10) {
                 msg2 = "Waiting for data...";
-                jt.out('waitserverdiv', msg2); }
+                jt.out("waitserverdiv", msg2); }
             setTimeout(function () {
                 app.displayWaitProgress(count + 1, millis, 
                                         divid, msg, msg2); },

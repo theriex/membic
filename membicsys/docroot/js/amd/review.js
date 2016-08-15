@@ -941,6 +941,7 @@ app.review = (function () {
             jt.on("picfilein", "change", picFileSelChange); }
         else {  //not upldpic
             displayUploadedPicLabel(); }
+        app.onescapefunc = function () { app.layout.cancelOverlay(true); };
     },
 
 
