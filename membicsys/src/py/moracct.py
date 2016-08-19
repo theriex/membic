@@ -147,32 +147,38 @@ def extract_json_value(key, json):
     return val
 
 
+def authenticate_account(account, emaddr, token):
+    key = pwd2key(account.password)
+    token = decodeToken(key, token)
+    if not token:
+        logging.info("authacc em+tok: Token decode failed")
+        return None
+    try:
+        unidx = token.index(asciienc(emaddr))
+    except:
+        unidx = -1
+    if unidx <= 2:
+        logging.info("authacc em+tok: Token email address not matched")
+        return None
+    secs = int(token[(token.index(":") + 1) : (unidx - 1)])
+    now = int(round(time.time()))
+    twelvehours = 12 * 60 * 60     # flip clock, hope not using then
+    tokenlife = 90 * 24 * 60 * 60
+    if now - secs > tokenlife + twelvehours:
+        logging.info("authacc em+tok: Token expired")
+        return None
+    account._id = account.key().id() # normalized id access
+    return account
+
+
 def authenticated_account_email_plus_token(emaddr, token):
     emaddr = normalize_email(emaddr)
     vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
     qres = cached_query(emaddr, vq, "", 1, MORAccount, False)
     for account in qres.objects:
-        key = pwd2key(account.password)
-        token = decodeToken(key, token)
-        if not token:
-            logging.info("authacc em+tok: Token decode failed")
-            return None
-        try:
-            unidx = token.index(asciienc(emaddr))
-        except:
-            unidx = -1
-        if unidx <= 2:
-            logging.info("authacc em+tok: Token email address not matched")
-            return None
-        secs = int(token[(token.index(":") + 1) : (unidx - 1)])
-        now = int(round(time.time()))
-        twelvehours = 12 * 60 * 60     # flip clock, hope not using then
-        tokenlife = 90 * 24 * 60 * 60
-        if now - secs > tokenlife + twelvehours:
-            logging.info("authacc em+tok: Token expired")
-            return None
-        account._id = account.key().id() # normalized id access
-        return account
+        account = authenticate_account(account, emaddr, token)
+        if account:
+            return account
     logging.info("authacc em+tok: No account found")
     return None
 

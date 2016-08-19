@@ -782,26 +782,35 @@ def sort_filter_feed(feedcsv, pnm, maxret):
     return feedids
 
 
+def update_access_time_if_needed(pen):
+    acctime = ISO2dt(pen.accessed)
+    now = datetime.datetime.utcnow()
+    diff = now - acctime
+    if diff.seconds > 2 * 60 * 60:
+        pen.accessed = nowISO()
+        pen = cached_put(pen)
+    return pen
+
+
 def find_pen_or_coop_type_and_id(handler):
-    pgid = intz(handler.request.get('ctmid'))
-    if pgid:
-        return "coop", pgid, None
-    pgid = intz(handler.request.get('penid'))
-    if pgid:
-        return "pen", pgid, None
-    pens = pen.find_auth_pens(handler)
-    if pens and len(pens) > 0:
+    coopid = intz(handler.request.get('ctmid'))
+    if coopid:
+        return "coop", coopid, None
+    auth = handler.request.get('authorize')
+    penid = intz(handler.request.get('penid'))
+    # debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
+    if penid and not auth:
+        return "pen", penid, None
+    if auth:
+        acc = authenticated(handler.request)
+        if not acc:  # error already reported
+            return "pen", 0, None
+        pens = pen.find_auth_pens(handler)
+        if not pens or len(pens) == 0:
+            return "pen", 0, None
         mypen = pens[0]
-        mypen.accessed = nowISO()
-        try:
-            mypen.put()
-        except Exception as e:
-            logging.info("Update of pen.accessed failed: " + str(e))
-        try:
-            acc = authenticated(handler.request)
-            pen.add_account_info_to_pen_stash(acc, mypen)
-        except Exception as e:
-            logging.info("Unable to add account info to pen " + str(e))
+        mypen = update_access_time_if_needed(mypen)
+        pen.add_account_info_to_pen_stash(acc, mypen)
         return "pen", mypen.key().id(), mypen
     # final case is no pen found because they haven't created one yet
     # that's a normal condition and not an error return

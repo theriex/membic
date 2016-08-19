@@ -1942,10 +1942,12 @@ return {
             return callback(objref[dtype]); }
         displayRetrievalWaitMessage(divid, dtype, id);
         url = "blockfetch?" + app.login.authparams();
-        if(dtype === "pen" && id !== app.pen.myPenId()) {
-            url += "&penid=" + id; }  //penid not specified if retrieving self
         if(dtype === "coop") {
             url += "&ctmid=" + id; }
+        else if(dtype === "pen") {
+            url += "&penid=" + id;
+            if(!id || id === app.pen.myPenId()) {  //looking for my pen
+                url += "&authorize=true"; } }      //include account info
         url += jt.ts("&cb=", "hour");
         time = new Date().getTime();
         jt.call("GET", url, null,
