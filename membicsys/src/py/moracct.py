@@ -30,6 +30,7 @@ class MORAccount(db.Model):
     actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
     invites = db.TextProperty(required=False)   # theme invites JSON
+    lastpen = db.IntegerProperty(required=False, indexed=False)  # runtime use
     
 
 def asciienc(val):
@@ -173,11 +174,20 @@ def authenticate_account(account, emaddr, token):
 
 def authenticated_account_email_plus_token(emaddr, token):
     emaddr = normalize_email(emaddr)
+    account = get_cached_instance(emaddr)
+    # debuginfo("authacc em+tok: account: " + str(account))
+    if account and isinstance(account, MORAccount):
+        account = authenticate_account(account, emaddr, token)
+        if account:
+            return account
+    bust_cache_key(emaddr)
     vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
     qres = cached_query(emaddr, vq, "", 1, MORAccount, False)
     for account in qres.objects:
         account = authenticate_account(account, emaddr, token)
         if account:
+            # replace cached QueryResult with account for direct access
+            put_cached_instance(emaddr, account)
             return account
     logging.info("authacc em+tok: No account found")
     return None
@@ -505,6 +515,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             redurl += "loginerr=" + "Please enter a valid email address"
         else:  # have valid email
+            bust_cache_key(email)  # autologin has already failed
             vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", email)
             qres = cached_query(email, vq, "", 1, MORAccount, False)
             if len(qres.objects) == 0:

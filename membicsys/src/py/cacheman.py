@@ -42,6 +42,18 @@ def cache_verify(instance):
     return entry or instance
 
 
+def get_cached_instance(ckey):
+    instance = memcache.get(ckey)
+    if instance:
+        instance = pickle.loads(instance)
+        return instance
+    return None
+
+
+def put_cached_instance(ckey, instance):
+    memcache.set(ckey, pickle.dumps(instance))
+
+
 # Read the given instance from memcache if available, otherwise fetch
 # it from the database
 def cached_get(idval, dbclass):

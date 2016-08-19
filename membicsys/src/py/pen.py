@@ -172,6 +172,10 @@ def find_auth_pens(handler):
         handler.error(401)
         handler.response.out.write("Authentication failed")
         return
+    if acc.lastpen:
+        pen = cached_get(acc.lastpen, PenName)
+        if pen and pen.mid == acc.key().id():
+            return [pen]
     where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
     vq = VizQuery(PenName, where, acc._id)
     qres = cached_query(acc.email + "-pens", vq, "", 20, PenName, False)

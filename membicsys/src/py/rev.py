@@ -809,6 +809,8 @@ def find_pen_or_coop_type_and_id(handler):
         if not pens or len(pens) == 0:
             return "pen", 0, None
         mypen = pens[0]
+        acc.lastpen = mypen.key().id()
+        put_cached_instance(acc.email, acc)
         mypen = update_access_time_if_needed(mypen)
         pen.add_account_info_to_pen_stash(acc, mypen)
         return "pen", mypen.key().id(), mypen
