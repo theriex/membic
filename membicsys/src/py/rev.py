@@ -788,7 +788,7 @@ def update_access_time_if_needed(pen):
     diff = now - acctime
     if diff.seconds > 2 * 60 * 60:
         pen.accessed = nowISO()
-        pen = cached_put(pen)
+        cached_put(pen)
     return pen
 
 
@@ -809,6 +809,7 @@ def find_pen_or_coop_type_and_id(handler):
         if not pens or len(pens) == 0:
             return "pen", 0, None
         mypen = pens[0]
+        debuginfo("fpoctai auth pen: " + str(mypen))
         acc.lastpen = mypen.key().id()
         put_cached_instance(acc.email, acc)
         mypen = update_access_time_if_needed(mypen)
