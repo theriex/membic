@@ -627,7 +627,7 @@ app.pcd = (function () {
                 ["div", {cla: "dlgbuttonsdiv"},
                  ["button", {type: "button", id: "okbutton",
                              onclick: jt.fs("app.pcd.saveDescription()")},
-                  "Update Description"]]];
+                  (jt.hasId(dst.obj)? "Update Description" : "Create Theme")]]];
         return html;
     },
     descripSettingsInit = function () {
@@ -675,8 +675,7 @@ app.pcd = (function () {
         var html;
         html = ["div", {cla: "rtkwdiv", id: "themekwdiv"},
                 ["div", {cla: "formline"},
-                 [["img", {cla: "reviewbadge", 
-                           src: "ctmpic?" + dst.type + "id=" + dst.id}],
+                 [["img", {cla: "reviewbadge", src: picImgSrc(dst.obj)}],
                   ["input", {id: "kwcsvin", cla: "keydefin",
                              type: "text", 
                              placeholder: "keywords separated by commas",
@@ -693,7 +692,7 @@ app.pcd = (function () {
             html = reviewTypeKeywordsHTML(); 
             break;
         case "coop": 
-            if(app.coop.membershipLevel(dst.obj) < 2) {
+            if(!jt.hasId(dst.obj) || app.coop.membershipLevel(dst.obj) < 2) {
                 return ""; }
             label = "Theme Keywords";
             html = themeKeywordsHTML();
@@ -728,8 +727,8 @@ app.pcd = (function () {
 
     calendarSettingsHTML = function () {
         var html;
-        if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
-               !jt.isId(jt.instId(dst.obj))) {
+        if(dst.type !== "coop" || !jt.hasId(dst.obj) || 
+               app.coop.membershipLevel(dst.obj) < 3) {
             return ""; }
         html = ["div", {cla: "formline"},
                 [["a", {href: "#togglecalembed",
@@ -760,7 +759,7 @@ app.pcd = (function () {
 
     rssSettingsHTML = function () {
         var sr, html;
-        if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
+        if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
         sr = "https://feedly.com";  //sample RSS reader
         html = ["div", {cla: "formline"},
@@ -797,7 +796,7 @@ app.pcd = (function () {
     soloSettingsHTML = function () {
         var html;
         if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
-               !jt.isId(jt.instId(dst.obj))) {
+               !jt.hasId(dst.obj)) {
             return ""; }
         dst.obj.soloset = dst.obj.soloset || {};
         dst.obj.soloset.colors = dst.obj.soloset.colors ||
@@ -832,7 +831,7 @@ app.pcd = (function () {
 
     embedSettingsHTML = function () {
         var html;
-        if(dst.type !== "coop" || !jt.isId(jt.instId(dst.obj))) {
+        if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
         html = ["div", {cla: "formline"},
                 [["a", {href: "#embed", onclick: jt.fs("app.pcd.embedHelp()")},
@@ -880,7 +879,7 @@ app.pcd = (function () {
     permalinkInfoHTML = function () {
         var html;
         if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
-               !jt.isId(jt.instId(dst.obj))) {
+               !jt.hasId(dst.obj)) {
             return ""; }
         html = ["a", {href: "solopageinfo",
                       onclick: jt.fs(
@@ -1116,7 +1115,7 @@ app.pcd = (function () {
                                            html]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
-        if(jt.isId(jt.instId(dst.obj))) {
+        if(jt.hasId(dst.obj)) {
             return dispfunc(expid); }
         //could be creating a new theme at this point. dialog may or may
         //not be displayed
