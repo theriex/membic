@@ -568,8 +568,10 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
                    reverse=True)
     tids = idlist_from_instlist(trevs, topmax)
     newdict[rev.revtype] = tids
-    newdict["latestrevtype"] = orgdict["latestrevtype"]
-    newdict["t20lastupdated"] = orgdict["t20lastupdated"]
+    if "latestrevtype" in orgdict:
+        newdict["latestrevtype"] = orgdict["latestrevtype"]
+    if "t20lastupdated" in orgdict:
+        newdict["t20lastupdated"] = orgdict["t20lastupdated"]
     # debuginfo("orgdict: " + str(orgdict))
     # debuginfo("newdict: " + str(newdict))
     if newdict == orgdict:
