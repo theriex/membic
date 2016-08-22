@@ -851,7 +851,8 @@ app.pcd = (function () {
             ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
                 "?view=coop&coopid=" + dst.id + "&css=none\">" + 
                 dst.obj.name + "</a></div>\n" +
-                "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
+                "<script src=\"" + site + 
+                "/js/embed.js?v=150101\"></script>\n"; }
     },
     fillEmbedDialogAreas = function () {
         var dlo, site, ta = jt.byId("embdlta");
@@ -868,7 +869,8 @@ app.pcd = (function () {
             ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
                 "?view=coop&coopid=" + dst.id + "&css=none\">" + 
                 dst.obj.name + "</a></div>\n" +
-                "<script src=\"" + site + "/js/embed.js\"></script>\n"; }
+                "<script src=\"" + site + 
+                "/js/embed.js?v=150101\"></script>\n"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
@@ -1763,7 +1765,8 @@ return {
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
                  ["community membics",
-                  ["img", {src: "img/membiclogo.png", cla: "hthimg"}]]],
+                  ["img", {src: "img/membiclogo.png?v=150101", 
+                           cla: "hthimg"}]]],
                 ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {
             jt.out("findctmdiv", jt.tac2html(html)); }

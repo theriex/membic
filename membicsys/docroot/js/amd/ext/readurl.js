@@ -87,7 +87,7 @@ app.readurl = (function () {
                 idx = content.indexOf("<");
                 content = content.slice(0, idx); }
             } catch (problem) {
-                jt.log("readurl.js " + url + " findTagContents: " + problem);
+                jt.log("readurl " + url + " findTagContents: " + problem);
             }
         return content;
     },

@@ -78,7 +78,8 @@ app.layout = (function () {
     localDocLinks = function () {
         var html = ["a", {href: "#community", title: "Community membics",
                            onclick: jt.fs("app.activity.displayFeed('all')")},
-                     ["img", {id: "logoimg", src: "img/membiclogo.png"}]];
+                     ["img", {id: "logoimg", 
+                              src: "img/membiclogo.png?v=150101"}]];
         jt.out("logodiv", jt.tac2html(html));
         jt.byId("bottomnav").style.display = "none";
     },
@@ -225,13 +226,13 @@ return {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/d3.v3.min.js";
+                    js.src = href + "js/d3.v3.min.js?v=150101";
                     document.body.appendChild(js); }
                 if(typeof d3ckit === "undefined") {  //mac ff requires typeof
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/static/d3ckit.js";
+                    js.src = href + "js/static/d3ckit.js?v=150101";
                     document.body.appendChild(js); }
                 jt.loadAppModules(app, ["js/static/intro"], href, 
                                   app.layout.runAnime, 
