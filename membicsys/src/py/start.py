@@ -139,7 +139,7 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = descr.replace("\"", "'")
             title = descr
             img = "/ctmpic?coopid=" + str(dbid)
-    cachev = "v=" + datetime.datetime.now().strftime("%y%m%d")
+    cachev = "v=160823"
     if not img:
         img = "img/membiclogo.png?" + cachev
     else:
