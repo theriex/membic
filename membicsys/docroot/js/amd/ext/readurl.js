@@ -230,9 +230,10 @@ app.readurl = (function () {
         //remove any preceding or trailing whitespace
         val = val.trim();
         //remove known useless prefixes
-        if((val.indexOf("Home | ") === 0) ||
-           (val.indexOf("Home - ") === 0)) {
+        if(val.startsWith("Home | ") || val.startsWith("Home - ")) {
             val = val.slice(7); }
+        if(val.endsWith(" | Home")) {
+            val = val.slice(0, -7); }
         return val;
     },
 
