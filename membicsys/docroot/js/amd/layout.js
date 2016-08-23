@@ -513,11 +513,13 @@ return {
                 tag = "#" + tag.trim(); }
             hts = hts.csvappend(tag); });
         hts = hts? " " + hts : "";
-        text = text? " " + text : "";
         a2a_config.linkname = title;
         a2a_config.linkurl = url;
         a2a_config.templates = {
-            twitter: "${title} ${link}" + hts + text };
+            //The link title gets reconstructed from the url when
+            //displayed, so don't take up space here with that.
+            //Most important thing is why it was memorable.
+            twitter: text + hts + " ${link}" };
         try {
             if(!addToAnyScriptLoaded) {
                 //the script executes on load, so nothing left to do after
