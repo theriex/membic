@@ -1910,7 +1910,10 @@ return {
                         people: {}, founders: app.pen.myPenId() };
             dst.obj.people[app.pen.myPenId()] = app.pen.myPenName().name;
             return displayObject(dst.obj); }
-        jt.err("pcd.display called with inadequate data");
+        //At this point we have an unknown situation. One possibility
+        //is an app crash resulting in a logout with no screen update,
+        //then trying to display pen 0.  Best to just reload the page.
+        document.location.reload();
     },
 
 
