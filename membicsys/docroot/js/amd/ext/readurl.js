@@ -229,6 +229,10 @@ app.readurl = (function () {
                     return true; } }); }
         //remove any preceding or trailing whitespace
         val = val.trim();
+        //remove known useless prefixes
+        if((val.indexOf("Home | ") === 0) ||
+           (val.indexOf("Home - ") === 0)) {
+            val = val.slice(7); }
         return val;
     },
 
