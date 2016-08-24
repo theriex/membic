@@ -252,13 +252,15 @@ app.readurl = (function () {
             val = findTagContents(html, "title", url);
             val = fixSpamdexing(val); }
         if(val) {
-            //decodeURIComponent is not needed, catch common dupe encodings..
+            //decodeURIComponent not needed, but catch common extra encodings..
             val = val.replace(/&#x27;/g, "'");
             val = val.replace(/&#039;/g, "'");
             val = val.replace(/&quot;/g, "\"");
             val = val.replace(/&amp;/g, "&");
             val = val.replace(/&#8211;/g, "-");
-            review.title = val;
+            //ignore any other special sequences that look bad as text.
+            val = val.replace(/&#?x?\S\S\S?\S?;/g, "");
+            review.title = val.trim();
             review.name = val; }
     },
 
