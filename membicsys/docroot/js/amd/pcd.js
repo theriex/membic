@@ -852,7 +852,7 @@ app.pcd = (function () {
                 "?view=coop&coopid=" + dst.id + "&css=none\">" + 
                 dst.obj.name + "</a></div>\n" +
                 "<script src=\"" + site + 
-                "/js/embed.js?v=160823\"></script>\n"; }
+                "/js/embed.js?v=160824\"></script>\n"; }
     },
     fillEmbedDialogAreas = function () {
         var dlo, site, ta = jt.byId("embdlta");
@@ -870,7 +870,7 @@ app.pcd = (function () {
                 "?view=coop&coopid=" + dst.id + "&css=none\">" + 
                 dst.obj.name + "</a></div>\n" +
                 "<script src=\"" + site + 
-                "/js/embed.js?v=160823\"></script>\n"; }
+                "/js/embed.js?v=160824\"></script>\n"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
@@ -1765,7 +1765,7 @@ return {
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
                  ["community membics",
-                  ["img", {src: "img/membiclogo.png?v=160823", 
+                  ["img", {src: "img/membiclogo.png?v=160824", 
                            cla: "hthimg"}]]],
                 ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {
