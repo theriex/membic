@@ -230,10 +230,10 @@ app.readurl = (function () {
         //remove any preceding or trailing whitespace
         val = val.trim();
         //remove known useless prefixes
-        if(val.startsWith("Home | ") || val.startsWith("Home - ")) {
-            val = val.slice(7); }
-        if(val.endsWith(" | Home")) {
-            val = val.slice(0, -7); }
+        val = val.replace(/Home\s[\|\-]\s/ig, "");
+        val = val.replace(/Welcome\s[\|\-]\s/ig, "");
+        //remove known useless suffixes (not as important, but still helpful)
+        val = val.replace(/\s[\|\-]\sHome/ig, "");
         return val;
     },
 
@@ -248,8 +248,10 @@ app.readurl = (function () {
         elem = elementForString(html, "og:title", "meta");
         if(elem) {
             val = valueForField(elem, "content"); }
-        else {
+        if(!val || !val.trim()) {
             val = findTagContents(html, "title", url);
+            if(!val) {
+                val = findTagContents(html, "TITLE", url); }  //still happens..
             val = fixSpamdexing(val); }
         if(val) {
             //decodeURIComponent not needed, but catch common extra encodings..
@@ -259,7 +261,8 @@ app.readurl = (function () {
             val = val.replace(/&amp;/g, "&");
             val = val.replace(/&#8211;/g, "-");
             //ignore any other special sequences that look bad as text.
-            val = val.replace(/&#?x?\S\S\S?\S?;/g, "");
+            //matches crap like "&raquo;"
+            val = val.replace(/&#?x?\S\S\S?\S?\S?;/g, "");
             review.title = val.trim();
             review.name = val; }
     },
