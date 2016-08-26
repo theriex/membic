@@ -251,9 +251,9 @@ app.readurl = (function () {
         if(!val || !val.trim()) {
             val = findTagContents(html, "title", url);
             if(!val) {
-                val = findTagContents(html, "TITLE", url); }  //still happens..
-            val = fixSpamdexing(val); }
+                val = findTagContents(html, "TITLE", url); } }
         if(val) {
+            val = fixSpamdexing(val);
             //decodeURIComponent not needed, but catch common extra encodings..
             val = val.replace(/&#x27;/g, "'");
             val = val.replace(/&#039;/g, "'");
