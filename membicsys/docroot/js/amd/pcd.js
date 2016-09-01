@@ -1069,6 +1069,25 @@ app.pcd = (function () {
     },
 
 
+    searchServerHTML = function () {
+        var html = "";
+        if(!app.login.isLoggedIn()) {
+            if(app.solopage()) {
+                html = ["a", {href: app.hardhome + "?view=coop&coopid=" + 
+                                    dst.id + "&tab=search"},
+                        [["u", "Sign in"],
+                         [" on membic.com to search archives"]]]; }
+            else {
+                html = "Sign in to search archives"; } }
+        else {
+            html = ["div", {cla: "searchbuttondiv"},
+                    ["button", {type: "button", id: "searchserverbutton",
+                                onclick: jt.fs("app.pcd.searchServer()")},
+                     "Search Archived Membics"]]; }
+        return jt.tac2html(html);
+    },
+
+
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayCalendar = function () {
@@ -1680,20 +1699,10 @@ return {
 
 
     searchReviews: function () {
-        var srchin, html;
+        var srchin;
         srchin = jt.byId("pcdsrchin");
         if(!srchin) {  //query input no longer on screen.  probably switched
             return; }  //tabs so just quit
-        if(!app.login.isLoggedIn()) {
-            if(app.solopage()) {
-                jt.out("pcdsrchdispdiv", jt.tac2html(
-                    ["a", {href: app.hardhome + "?view=coop&coopid=" + dst.id +
-                                 "&tab=search"},
-                     [["u", "Sign in"],
-                      [" on membic.com to search"]]])); }
-            else {
-                jt.out("pcdsrchdispdiv", "Sign in to search"); }
-            return; }
         if(!srchst.status !== "processing" && 
               (srchst.status === "initializing" ||
                srchst.revtype !== app.layout.getType() ||
@@ -1706,11 +1715,7 @@ return {
             displaySearchResults();  //clears the display if none matching
             if(!srchst.revs.length && dst.obj.recent.length >= 50) {
                 //there are likely more revs on server, offer to go fetch
-                html = ["div", {cla: "searchbuttondiv"},
-                        ["button", {type: "button", id: "searchserverbutton",
-                                    onclick: jt.fs("app.pcd.searchServer()")},
-                         "Search Server"]];
-                jt.out("pcdsrchdispdiv", jt.tac2html(html)); } }
+                jt.out("pcdsrchdispdiv", searchServerHTML()); } }
         else {  //no change to search parameters yet, monitor
             setTimeout(app.pcd.searchReviews, 400); }
     },
