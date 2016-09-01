@@ -564,9 +564,13 @@ return {
                 txt += "\n";
                 membics.forEach(function (membic) {
                     keys.forEach(function (field, idx) {
+                        var fv = membic[field];
+                        if(field === "text") {
+                            fv = fv.replace(/\t/g, " ");
+                            fv = fv.replace(/\n/g, "  "); }
                         if(idx) {
                             txt += "\t"; }
-                        txt += membic[field]; });
+                        txt += fv; });
                     txt += "\n"; }); }
             break; }
         return txt;

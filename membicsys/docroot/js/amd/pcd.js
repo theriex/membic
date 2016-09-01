@@ -1042,7 +1042,7 @@ app.pcd = (function () {
 
 
     searchFilterReviews = function (revs, recent) {
-        var merged = [], candidate;
+        var merged = [], candidate, last = null;
         recent.sort(function (a, b) {
             if(a.modified > b.modified) { return -1; }
             if(a.modified < b.modified) { return 1; }
@@ -1054,7 +1054,10 @@ app.pcd = (function () {
                 candidate = revs.shift(); }
             else {
                 candidate = recent.shift(); }
-            if(isMatchingReview(srchst.qstr, candidate)) {
+            if(merged.length) {
+                last = merged[merged.length - 1]; }
+            if(isMatchingReview(srchst.qstr, candidate) &&
+               jt.instId(last) !== jt.instId(candidate)) {
                 merged.push(candidate); } }
         return merged;
     },
@@ -1707,6 +1710,7 @@ return {
               (srchst.status === "initializing" ||
                srchst.revtype !== app.layout.getType() ||
                srchst.qstr !== srchin.value)) {
+            app.pcd.toggleDownloadsDisp(true);  //rebuild downloads
             srchst.status = "processing";
             srchst.qstr = srchin.value;
             srchst.revtype = app.layout.getType();
@@ -1824,9 +1828,9 @@ return {
     },
 
 
-    toggleDownloadsDisp: function () {
+    toggleDownloadsDisp: function (close) {
         var div = jt.byId("downloadlinksdiv");
-        if(div.style.display !== "none") {
+        if(close || div.style.display !== "none") {
             div.style.display = "none"; }
         else {
             if(!div.innerHTML) {
