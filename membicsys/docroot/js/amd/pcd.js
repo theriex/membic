@@ -1208,9 +1208,16 @@ app.pcd = (function () {
         dst.obj.soloset.colors.forEach(function (cdef) {
             var sels = ckeys[cdef.name].sel.csvarray();
             sels.forEach(function (sel) {
-                if(cdef.name === "backgrnd" && app.embedded) {
-                    cdef.value = "none"; }  //use parent window background
-                var rule = sel + " { " + ckeys[cdef.name].attr + ": " +
+                var rule;
+                if(cdef.name === "backgrnd") {
+                    if(app.embedded) {  //use parent window background
+                        cdef.value = "none"; }
+                    else { //set text overflow fade background color
+                        rule = "#pcddescrfadediv { background:" + 
+                            "linear-gradient(rgba(" + jt.hex2rgb(cdef.value) +
+                            ",0), " + cdef.value + "); }";
+                        sheet.insertRule(rule, sheet.cssRules.length); } }
+                rule = sel + " { " + ckeys[cdef.name].attr + ": " +
                     cdef.value + "; }";
                 sheet.insertRule(rule, sheet.cssRules.length); }); });
     },
@@ -1266,6 +1273,7 @@ app.pcd = (function () {
                      // ["div", {id: "pcdhashdiv"},
                      //  (obj.hashtag? ("#" + obj.hashtag) : "")]
                     ]]]],
+                 ["div", {id: "pcddescrfadediv"}],
                  ["div", {id: "tabsdiv"},
                   [["ul", {id: "tabsul"},
                     tabsHTML()],

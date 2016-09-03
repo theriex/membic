@@ -160,7 +160,11 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcdcontdiv { padding:10px 0px 10px 0px; }
 #pcdpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
 .pcdpic { max-width:125px; max-height:125px; }
+#pcdouterdiv { position:relative; }
 #pcddescrdiv { height:125px; overflow:auto; }
+#pcddescrfadediv { position:absolute; 
+  top:115px; left:0px; height:10px; width:100%; 
+  background:linear-gradient(rgba(230,231,233,0), #e6e7e9); }
 #pcdsettingslink { padding:0px 0px 0px 10px; }
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
