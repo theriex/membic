@@ -1187,6 +1187,7 @@ app.pcd = (function () {
 
     createStyleOverridesForEmbedding = function () {
         jt.byId("pcdupperdiv").style.display = "none";
+        jt.byId("pcddescrfadediv").style.display = "none";
         jt.byId("bodyid").style.paddingLeft = "0px";
         jt.byId("bodyid").style.paddingRight = "0px";
         //give a bit of space for the top of the tabs to not be truncated
