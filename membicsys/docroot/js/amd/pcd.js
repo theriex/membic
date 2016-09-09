@@ -871,6 +871,15 @@ app.pcd = (function () {
                 dst.obj.name + "</a></div>\n" +
                 "<script src=\"" + site + 
                 "/js/embed.js?v=160903\"></script>\n"; }
+        ta = jt.byId("embifta");
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = "<div id=\"membicdiv\" style=\"height:90vh;\">\n" +
+                "<iframe id=\"membiciframe\" src=\"" + site + "\"" +
+                "?view=coop&coopid=" + dst.id + 
+                "&css=none&site=YOURSITE.COM\" " + 
+                "style=\"position:relative;height:100%;width:100%\" " +
+                "seamless=\"seamless\" frameborder=\"0\"/></iframe>\n</div>"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
@@ -1478,29 +1487,39 @@ return {
 
 
     embedHelp: function () {
-        var html, homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
+        var html;
         html = ["div", {id: "pcdembeddlgdiv"},
-                //frame
-                [["div", {cla: "pcdsectiondiv"},
-                  ["You are welcome to embed the ",
-                   ["a", {href: homeurl,
-                          onclick: jt.fs("window.open('" + homeurl + "')")},
-                    dst.obj.name + " direct theme page"],
-                   " into your own site using your website management interface or JavaScript. To embed as a frame using your website management interface, use this direct URL:",
+                [["div", {cla: "bumpedupwards"},
+                  ["div", {cla: "headingtxt"}, "Embed " + dst.obj.name]],
+                 //Standalone URL
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "embedmethodspan"}, "Standalone URL"],
+                   " for use with your own custom domain",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embdlta", cla: "embdlgta"}]]]],
-                 //embed
+                 //embed script
                  ["div", {cla: "pcdsectiondiv"},
-                  ["If you have an existing page where you want to insert the contents of " + dst.obj.name + ", paste in the following script where you want the content to appear:",
+                  [["span", {cla: "embedmethodspan"}, "Embed script"],
+                   " to paste where you want membics in your site",
                    ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embscrta", cla: "embdlgta", rows: 4}]],
-                   "When the embed.js script runs, it replaces the link with the contents of your theme."]],
+                    ["textarea", {id: "embscrta", cla: "embdlgta", 
+                                  rows: 4}]]]],
+                 //iframe
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "embedmethodspan"}, "Embed iframe"],
+                   " non-script equivalent (edit your site name",
+                   " and adjust height as needed)",
+                   ["div", {cla: "embdlgline"},
+                    ["textarea", {id: "embifta", cla: "embdlgta", 
+                                  rows: 4}]]]],
                  //wordpress
                  ["div", {cla: "pcdsectiondiv"},
-                  ["If you are using WordPress, content editing may prevent you from creating a frame or specifying a source for JavaScript.  In that case your best option may be to show recent membics for your theme via an RSS feed instead.  For example you might choose",
+                  [["span", {cla: "embedmethodspan"}, "Newsfeed"],
+                   " syndicated content display (recent membics only)",
                    ["div", {cla: "embdlgline"},
-                    "Customize | Widgets | Sidebar | Add a Widget | RSS"],
-                   "then use the following URL:",
+                    ["div", {cla: "embedexample"},
+                     [["span", {cla: "embedexamptitle"}, "WordPress:"],
+                      " Customize | Widgets | Sidebar | Add a Widget | RSS"]]],
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embwpta", cla: "embdlgta"}]]]],
                  //back

@@ -195,6 +195,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
+.embedmethodspan { font-weight:bold; }
+.embedexample { padding-left:10px; font-size:medium; }
+.embedexamptitle { font-style:italic; }
 .formline, .memlistdiv { clear:both; font-size:medium; 
   /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
