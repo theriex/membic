@@ -1124,9 +1124,16 @@ app.pcd = (function () {
     },
 
 
+    defaultTabName = function () {
+        if(app.solopage()) {
+            return "search"; }
+        return "latest";
+    },
+
+
     displayTab = function (tabname, expid) {
         var dispfunc, html;
-        tabname = tabname || "latest";
+        tabname = tabname || defaultTabName;
         Object.keys(knowntabs).forEach(function (kt) {
             var elem = jt.byId(kt + "li");
             if(elem) {
@@ -1937,7 +1944,7 @@ return {
         dst.type = dtype || "pen";
         dst.id = id || (obj? jt.instId(obj) : "") || 
             (dst.type === "pen"? app.pen.myPenId() : "") || "";
-        dst.tab = tab || "latest";
+        dst.tab = tab || defaultTabName();
         if(obj) {
             return displayObject(obj, expid); }
         if(dst.id) {
