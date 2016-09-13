@@ -58,7 +58,7 @@ app.pcd = (function () {
                                    mtitle: "Event Calendar",
                                    otitle: "Event Calendar"} },
         tabvpad = 0,
-        srchst = { revtype: "all", qstr: "", status: "" },
+        srchst = { revtype: "all", mode: "nokeys", qstr: "", status: "" },
         setdispstate = { infomode: "" },
         ctmmsgs = [
             {name: "Following",
@@ -1019,15 +1019,15 @@ app.pcd = (function () {
     //Called from layout.displayTypes when membic type selected
     displaySearch = function () {
         var html;
-        html = [["div", {id: "pcdsrchdiv"},
-                 ["input", {type: "text", id: "pcdsrchin", size: 40,
-                            placeholder: "Membic title or keyword",
-                            value: srchst.qstr}]],
+        html = [["div", {id: "pcdsrchdiv"}],
                 ["div", {id: "pcdsrchdispdiv"}]];
         jt.out("pcdcontdiv", jt.tac2html(html));
+        if(dst.obj.keywords) {
+            srchst.mode = "srchkey"; }
         srchst.status = "initializing";
+        app.pcd.updateSearchInputDisplay();
         app.pcd.searchReviews();
-        if(app.login.isLoggedIn()) {
+        if(app.login.isLoggedIn() && jt.byId("pcdsrchin")) {
             jt.byId("pcdsrchin").focus(); }
     },
 
@@ -1073,7 +1073,16 @@ app.pcd = (function () {
 
 
     displaySearchResults = function () {
-        app.review.displayReviews("pcdsrchdispdiv", "pcd", srchst.revs, 
+        var sortedRevs = srchst.revs;
+        if(srchst.mode === "srchkey") {
+            sortedRevs = srchst.revs.slice();  //copy recency ordered array
+            sortedRevs.sort(function (a, b) {
+                if(a.rating > b.rating) { return -1; }
+                if(a.rating < b.rating) { return +1; }
+                if(a.modified > b.modified) { return -1; }
+                if(a.modified < b.modified) { return 1; }
+                return 0; }); }
+        app.review.displayReviews("pcdsrchdispdiv", "pcd", sortedRevs, 
                                   "app.pcd.toggleRevExpansion", 
                                   (dst.type === "coop"));
         srchst.status = "waiting";
@@ -1733,6 +1742,55 @@ return {
         else {
             linktxt = jt.ellipsis(revobj[type.key], 60); }
         return linktxt;
+    },
+
+
+    togsrchmode: function () {
+        if(srchst.mode === "srchkey") {
+            srchst.mode = "srchtxt"; }
+        else if(srchst.mode === "srchtxt") {
+            srchst.mode = "srchkey"; }
+        //otherwise just leave as "nokeys"
+        app.pcd.updateSearchInputDisplay();
+    },
+
+
+    keysrch: function (label) {
+        jt.byId("pcdsrchin").value = jt.byId(label).value;
+        app.pcd.searchReviews();
+    },
+
+
+    updateSearchInputDisplay: function () {
+        var imgsrc, html, style = "";
+        imgsrc = "blank.png";
+        if(srchst.mode === "srchkey") {
+            imgsrc = "keyicon.png"; }
+        else if(srchst.mode === "srchtxt") {
+            imgsrc = "txticon.png"; }
+        html = [];
+        if(srchst.mode === "srchkey") {
+            dst.obj.keywords.csvarray().forEach(function (kwd, i) {
+                var chk;
+                chk = jt.toru(srchst.qstr.indexOf(kwd) >= 0, "checked");
+                html.push(["div", {cla: "srchkwrbdiv"},
+                           [["input", {type: "radio", id: "skw" + i,
+                                       name: "srchkwds", value: kwd, 
+                                       checked: chk,
+                                       onclick: jt.fsd("app.pcd.keysrch('skw" + 
+                                                       i + "')")}],
+                            ["label", {fo: "skw" + i}, kwd]]]); });
+            style = "display:none;"; }
+        html.push(["input", {type: "text", id: "pcdsrchin", size: 30,
+                             placeholder: "Search for...", style: style,
+                             value: srchst.qstr}]);
+        style = srchst.mode === "nokeys" ? "" : "cursor:pointer;";
+        html = [["img", {cla: "reviewbadge", src: "img/" + imgsrc,
+                         style: style,
+                         onclick: jt.fs("app.pcd.togsrchmode()")}],
+                ["div", {id: "srchincontdiv"},
+                 html]];
+        jt.out("pcdsrchdiv", jt.tac2html(html));
     },
 
 
