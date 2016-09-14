@@ -450,11 +450,12 @@ class ProfRevCache(object):
             self.mainlist = [inst] + [r for r in self.mainlist if\
                                           r["_id"] != inst["_id"]]
         self.cache[str(inst["_id"])] = inst
+    def cached_value(self):
+        return json.dumps([self.publicprofinst] + self.mainlist + self.supplist)
     def update_memcache(self):
         mckey = self.prefix + str(self.publicprofinst["_id"])
         debuginfo("updating memcache " + mckey)
-        memcache.set(mckey, json.dumps([self.publicprofinst] + self.mainlist + 
-                                       self.supplist))
+        memcache.set(mckey, self.cached_value())
 
 
 # Search some probable cache areas before falling back to db retrieval.
@@ -597,6 +598,12 @@ def update_profile(cacheprefix, dbprofinst, rev, srcrev=None):
         logging.info("update_profile wrote new top membics for " +
                      cacheprefix + " " + str(dbprofinst.key().id()))
         prc.set_db_prof_inst(dbprofinst)
+    if cacheprefix == "coop":
+        dbprofinst.preb = prc.cached_value()
+        dbprofinst = mctr.synchronized_db_write(dbprofinst)
+        logging.info("update_profile updated preb for " +
+                     cacheprefix + " " + str(dbprofinst.key().id()))
+        # prc.set_db_prof_inst(dbprofinst)  # not necessary
     prc.update_memcache()
 
 
@@ -869,6 +876,8 @@ def rebuild_reviews_block(handler, pct, pgid):
     pco = None
     if pct == "coop":
         pco = coop.Coop.get_by_id(int(pgid))
+        if pco and pco.preb:
+            return pco.preb
     elif pct == "pen":
         pco = pen.PenName.get_by_id(int(pgid))
         pen.filter_sensitive_fields(pco)
@@ -885,7 +894,11 @@ def rebuild_reviews_block(handler, pct, pgid):
     for rev in revs:
         jstr = append_review_jsoncsv(jstr, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
-    return "[" + jstr + "]"
+    jstr = "[" + jstr + "]"
+    if pct == "coop":
+        pco.preb = jstr
+        mctr.synchronized_db_write(pco)
+    return jstr
 
 
 def get_review_feed_pool(revtype):
@@ -1074,6 +1087,7 @@ class DeleteReview(webapp2.RequestHandler):
         # The reason here must be exactly "Removed Membic" so the client can
         # differentiate between removing a review and removing a member.
         coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
+        ctm.preb = None  # force rebuild of cached representation
         coop.update_coop_and_bust_cache(ctm)
         cached_delete(revid, Review)
         mctr.count_review_update("delete", review.penid, review.penname,

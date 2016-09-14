@@ -33,6 +33,7 @@ class Coop(db.Model):
     people = db.TextProperty()      #JSON map of penids to display names
     soloset = db.TextProperty()     #JSON settings for solo page display
     keywords = db.TextProperty()    #CSV of custom theme keywords
+    preb = db.TextProperty()        #prebuilt JSON for membic display
     
 
 def id_in_csv(idval, csv):
