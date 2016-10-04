@@ -1795,22 +1795,22 @@ return {
             if(org && org.rev) {
                 org = org.rev;
                 validateCurrentReviewFields();
-                if(((curr.revtype !== org.revtype) ||
-                    (curr.rating !== org.rating) ||
-                    (curr.keywords !== org.keywords) ||
-                    (curr.text && curr.text.trim() !== org.text) ||
-                    //svcdata.picdisp updated separately so always same here
-                    (curr.name && curr.name !== org.name) ||
-                    (curr.title && curr.title !== org.title) ||
-                    (curr.url && curr.url !== org.url &&
-                     curr.url !== jt.dec(org.url)) ||
-                    (curr.artist && curr.artist !== org.artist) ||
-                    (curr.author && curr.author !== org.author) ||
-                    (curr.publisher && curr.publisher !== org.publisher) ||
-                    (curr.album && curr.album !== org.album) ||
-                    (curr.starring && curr.starring !== org.starring) ||
-                    (curr.address && curr.address !== org.address) ||
-                    (curr.year && curr.year !== org.year)) &&
+                if(!(jt.fsame(curr.revtype, org.revtype) &&
+                     jt.fsame(curr.rating, org.rating) &&
+                     jt.fsame(curr.keywords, org.keywords) &&
+                     jt.fsame(curr.text, org.text) &&
+                     //svcdata.picdisp updated separately so always same here
+                     jt.fsame(curr.name, org.name) &&
+                     jt.fsame(curr.title, org.title) &&
+                     (jt.fsame(curr.url, org.url) || 
+                      jt.fsame(curr.url, jt.dec(org.url))) &&
+                     jt.fsame(curr.artist, org.artist) &&
+                     jt.fsame(curr.author, org.author) &&
+                     jt.fsame(curr.publisher, org.publisher) &&
+                     jt.fsame(curr.album, org.album) &&
+                     jt.fsame(curr.starring, org.starring) &&
+                     jt.fsame(curr.address, org.address) &&
+                     jt.fsame(curr.year, org.year)) &&
                    (!confirm("Discard changes?"))) {
                     return; } } }
         app.layout.closeDialog();

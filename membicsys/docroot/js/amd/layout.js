@@ -172,6 +172,17 @@ return {
                                        ctmref.slice(5)); }); }
             return actverb + " failed code " + code + ": " + errtxt;
         };
+        jt.fsame = function (valA, valB) {  //equivalent form input value
+            if(!valA && !valB) {
+                return true; }
+            if(typeof valA === "string" &&
+               typeof valB === "string" &&
+               valA.trim() === valB.trim()) {
+                return true; }
+            if(valA === valB) {
+                return true; }
+            return false;
+        };
     },
 
 
