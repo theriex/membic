@@ -1756,7 +1756,12 @@ return {
 
 
     keysrch: function (label) {
-        jt.byId("pcdsrchin").value = jt.byId(label).value;
+        var keyval = jt.byId(label).value;
+        if(jt.byId("pcdsrchin").value === keyval) {
+            jt.byId(label).checked = false;
+            jt.byId("pcdsrchin").value = ""; }
+        else {
+            jt.byId("pcdsrchin").value = keyval; }
         app.pcd.searchReviews();
     },
 
