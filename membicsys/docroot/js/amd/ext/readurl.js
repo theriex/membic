@@ -180,6 +180,7 @@ app.readurl = (function () {
 
     setCanonicalURL = function (review, html, url) {
         var elem, val;
+        review.rurl = url;  //keep original in case canonical fails
         //the Facebook url is frequently better than the canonical link
         elem = elementForString(html, "og:url", "meta");
         if(elem) {

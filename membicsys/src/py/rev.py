@@ -52,7 +52,8 @@ class Review(db.Model):
     # type-specific non-indexed fields
     name = db.StringProperty(indexed=False)      # yum, activity, other
     title = db.StringProperty(indexed=False)     # book, movie, video, music
-    url = db.StringProperty(indexed=False)       # source URL of item
+    url = db.StringProperty(indexed=False)       # canonical URL for item
+    rurl = db.StringProperty(indexed=False)      # original read URL
     artist = db.StringProperty(indexed=False)    # video, music
     author = db.StringProperty(indexed=False)    # book
     publisher = db.StringProperty(indexed=False) # book
@@ -233,6 +234,7 @@ def read_review_values(handler, review):
     review.name = onelinestr(handler.request.get('name'))
     review.title = onelinestr(handler.request.get('title'))
     set_if_param_given(review, "url", handler, "url")
+    set_if_param_given(review, "rurl", handler, "rurl")
     review.artist = onelinestr(handler.request.get('artist'))
     review.author = onelinestr(handler.request.get('author'))
     set_if_param_given(review, "publisher", handler, "publisher")
@@ -659,6 +661,7 @@ def copy_rev_descrip_fields(fromrev, torev):
     torev.name = fromrev.name
     torev.title = fromrev.title
     torev.url = fromrev.url
+    torev.rurl = fromrev.rurl
     torev.artist = fromrev.artist
     torev.author = fromrev.author
     torev.publisher = fromrev.publisher
@@ -991,6 +994,7 @@ def write_batch_reviews(pn, handler):
         review.name = onelinestr(safe_dictattr(rdat, "name"))
         review.title = onelinestr(safe_dictattr(rdat, "title"))
         review.url = safe_dictattr(rdat, "url")
+        review.rurl = safe_dictattr(rdat, "rurl")
         review.artist = onelinestr(safe_dictattr(rdat, "artist"))
         review.author = onelinestr(safe_dictattr(rdat, "author"))
         review.publisher = safe_dictattr(rdat, "publisher")
