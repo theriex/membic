@@ -1728,7 +1728,8 @@ return {
                 //but don't want to fault in just the coop without the
                 //supporting revs and other needed info.
                 app.pcd.blockfetch("coop", ctmid, function (coop) {
-                    updateShareInfo();  //note any hashtags
+                    app.coop.rememberThemeName(coop);  //backup if cache in flux
+                    updateShareInfo();  //note themes being posted to
                     displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
