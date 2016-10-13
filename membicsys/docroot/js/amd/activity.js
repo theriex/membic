@@ -1,6 +1,6 @@
 /*global setTimeout, window, document, app, jt */
 
-/*jslint browser, multivar, white, for */
+/*jslint browser, multivar, white, fudge, for */
 
 //////////////////////////////////////////////////////////////////////
 // Display of recent posts from friends, remembered posts.  
@@ -56,12 +56,87 @@ app.activity = (function () {
     },
 
 
+    collateMultiMembics = function (revs) {
+        var result = [], j;
+        revs.forEach(function (rev, i) {
+            if(rev) {  //not previously set to null
+                result.push(rev);
+                //collate remaining revs
+                for(j = i + 1; j < revs.length; j += 1) {
+                    if(app.review.isDupeRev(revs[j], rev)) {
+                        result.push(revs[j]);
+                        revs[j] = null; } } } });
+        return result;
+    },
+
+
+    quadImageHTML = function (img, stylestr) {
+        var html = "img/nopicprof.png";
+        if(img && img.src) {
+            html = img.src; }
+        html = ["img", {src: html, style: stylestr}];
+        return html;
+    },
+
+
+    quadifyImages = function (imgs, stylestr) {
+        var quad;
+        stylestr = stylestr || "";
+        quad = [quadImageHTML(imgs[0], stylestr), 
+                quadImageHTML(null, stylestr),
+                quadImageHTML(null, stylestr),
+                quadImageHTML(imgs[imgs.length - 1], stylestr)];
+        if(imgs.length > 2) {
+            quad[1] = quadImageHTML(imgs[1], stylestr); }
+        if(imgs.length > 3) {
+            quad[2] = quadImageHTML(imgs[2], stylestr); }
+        return quad;
+    },
+
+
+    writeMultiMembicImageDiv = function (multis, mark) {
+        var imgs = [], loaded = true, rid, pd, stylestr, html;
+        if(jt.byId("profdivmulti" + jt.instId(multis[0]))) {
+            return; }  //already done
+        multis.forEach(function (rev) {
+            var profdiv, img;
+            profdiv = jt.byId("profdiv" + jt.instId(rev));
+            img = profdiv.getElementsByTagName("img");
+            img = (img && img.length)? img[0] : null;
+            if(img && img.src.indexOf(mark) >= 0) {
+                loaded = false; }
+            imgs.push(img); });
+        if(!loaded) {
+            return; }
+        rid = jt.instId(multis[0]);
+        pd = jt.byId("profdiv" + rid);
+        stylestr = "max-width:" + Math.floor(pd.offsetWidth / 2) + "px;" +
+                   "max-height:" + Math.floor(pd.offsetHeight / 2) + "px;";
+        imgs = quadifyImages(imgs, stylestr);
+        stylestr = "width:" + pd.offsetWidth + "px;" +
+                   "height:" + pd.offsetHeight + "px;" + 
+                   "overflow:hidden;";
+        html = [["div", {id: "profdivmulti" + rid, 
+                         //Don't allow clicking compound images display to
+                         //expand. Expectation is that clicking it again will 
+                         //unexpand and it links to the profile instead.
+                         // onclick: jt.fs("app.activity.toggleExpansion('" + 
+                         //                prefix + "','" + rid + "')"),
+                         style: stylestr + "display:block;"},
+                 [imgs[0], imgs[1], imgs[2], imgs[3]]],
+                ["div", {id: "profdivorig" + rid,
+                         style: stylestr + "display:none;"},
+                 pd.innerHTML]];
+        pd.innerHTML = jt.tac2html(html);
+    },
+
+
     mergeAndDisplayReviews = function (feedtype, revs) {
         var data = jt.objdata({ctype: "Site", parentid: 0,
                                field: "sitev", penid: app.pen.myPenId(),
                                refer: app.refer}), html;
         setTimeout(function () {
-            jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+            jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
                     function () {
                         app.refer = "";  //only count referrals once
                         jt.log("bumpmctr?" + data + " success"); },
@@ -94,7 +169,7 @@ app.activity = (function () {
                 ["div", {id: "feedrevsdiv"}]];
         jt.out("contentdiv", jt.tac2html(html));
         feeds[feedtype] = mergePersonalRecent(feedtype, revs);
-        feeds[feedtype] = app.review.collateDupes(feeds[feedtype]);
+        feeds[feedtype] = collateMultiMembics(feeds[feedtype]);
         return app.review.displayReviews("feedrevsdiv", "afd", 
                                          feeds[feedtype],
                                          "app.activity.toggleExpansion",
@@ -132,7 +207,7 @@ app.activity = (function () {
                            theme.name],
                           ["div", {cla: "themetilecountdiv"},
                            theme.count]]]]]); });
-        jt.out('themesdiv', jt.tac2html(html));
+        jt.out("themesdiv", jt.tac2html(html));
     },
 
 
@@ -157,7 +232,7 @@ app.activity = (function () {
         msg = "Fetching posts...";
         if(app.login.isLoggedIn()) {
             msg = "Fetching posts according to your preferences..."; }
-        app.displayWaitProgress(0, 850, 'contentdiv', msg);
+        app.displayWaitProgress(0, 850, "contentdiv", msg);
     };
 
 
@@ -183,7 +258,7 @@ return {
             params += "&penid=" + app.pen.myPenId() + "&"; }
         params += "revtype=" + feedtype + jt.ts("&cb=","hour");
         time = new Date().getTime();
-        jt.call('GET', "revfeed?" + params, null,
+        jt.call("GET", "revfeed?" + params, null,
                 function (reviews) {
                     time = new Date().getTime() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
@@ -192,7 +267,7 @@ return {
                         new Date().getTime() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
-                    jt.out('contentdiv', "revfeed failed code " + code + 
+                    jt.out("contentdiv", "revfeed failed code " + code + 
                            ": " + errtxt); }),
                 jt.semaphore("activity.displayFeed"));
     },
@@ -266,7 +341,7 @@ return {
             else {
                 params = app.login.authparams() + "&penid=" + 
                     app.pen.myPenId() + jt.ts("&cb=", "second");
-                jt.call('GET', "fetchprerevs?" + params, null,
+                jt.call("GET", "fetchprerevs?" + params, null,
                         function (reviews) {
                             app.lcs.putAll("rev", reviews);
                             feeds.future = reviews;
@@ -300,7 +375,7 @@ return {
                 jt.out(memodiv, "Fetching future membics...");
                 params = app.login.authparams() + "&penid=" + 
                     app.pen.myPenId() + jt.ts("&cb=", "second");
-                jt.call('GET', "fetchprerevs?" + params, null,
+                jt.call("GET", "fetchprerevs?" + params, null,
                         function (reviews) {
                             app.lcs.putAll("rev", reviews);
                             feeds.future = reviews;
@@ -332,7 +407,7 @@ return {
                 if(a.modified < b.modified) { return 1; }
                 if(a.modified > b.modified) { return -1; }
                 return 0; });
-            feeds.remembered = app.review.collateDupes(revs); }
+            feeds.remembered = collateMultiMembics(revs); }
         revs = app.activity.getRememberedMembics();
         app.review.displayReviews(memodiv, "rrd", revs,
                                   "app.activity.toggleExpansion", "author",
@@ -353,7 +428,7 @@ return {
 
     bootMonitor: function () {
         var revactdiv, html;
-        revactdiv = jt.byId('revactdiv');
+        revactdiv = jt.byId("revactdiv");
         if(revactdiv) {
             html = revactdiv.innerHTML;
             if(html.indexOf("Loading ") === 0) {
@@ -361,19 +436,19 @@ return {
                 switch(bootmon.count) {
                 case 1:
                     html += "<br/>Slow server day...";
-                    jt.out('revactdiv', html);
+                    jt.out("revactdiv", html);
                     bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
                     return;
                 case 2:
                     html += "<br/>...Like really slow...";
-                    jt.out('revactdiv', html);
+                    jt.out("revactdiv", html);
                     bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
                     return;
                 default:
                     html += "<br/><br/>Ok, there's no way this should" +
                         " take this long. <br/>" +
                         "Try hitting the reload button on your browser.";
-                    jt.out('revactdiv', html); } } }
+                    jt.out("revactdiv", html); } } }
     },
 
 
@@ -411,7 +486,36 @@ return {
             if(tile.id !== "themetile" + ctmid) {
                 tile.style.display = "none"; } }
         app.pcd.display("coop", ctmid);
+    },
+
+
+    indicateMultiMembics: function (revs, mark) {
+        var multis = [];
+        revs.forEach(function (rev) {
+            if(multis.length === 0) {
+                multis[0] = rev; }
+            else {
+                if(app.review.isDupeRev(rev, multis[0])) {
+                    multis.push(rev); }
+                else if(multis.length === 1) {
+                    multis[0] = rev; }
+                else { 
+                    writeMultiMembicImageDiv(multis, mark);
+                    multis = [rev]; } } });
+    },
+
+
+    showMultiMembicImage: function (revid, display) {
+        var elem = jt.byId("profdivmulti" + revid);
+        if(elem) {
+            if(display) {
+                elem.style.display = "block";
+                jt.byId("profdivorig" + revid).style.display = "none"; }
+            else {
+                elem.style.display = "none";
+                jt.byId("profdivorig" + revid).style.display = "block"; } }
     }
+
 
 
 }; //end of returned functions

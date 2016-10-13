@@ -2226,20 +2226,6 @@ return {
     },
 
 
-    collateDupes: function (revs) {
-        var result = [], j;
-        revs.forEach(function (rev, i) {
-            if(rev) {  //not previously set to null
-                result.push(rev);
-                //collate remaining revs
-                for(j = i + 1; j < revs.length; j += 1) {
-                    if(app.review.isDupeRev(revs[j], rev)) {
-                        result.push(revs[j]);
-                        revs[j] = null; } } } });
-        return result;
-    },
-
-
     filterByRevtype: function (revs, rt) {
         var filtered;
         if(rt && rt !== "all") {
@@ -2252,7 +2238,7 @@ return {
     },
 
 
-    realizePlaceholderImages: function (revs) {
+    realizePlaceholderImages: function (prefix, revs) {
         var topvis = 30, rzd = false, mark = "img/blank.png#";
         if(!revs || !revs.length) {
             return; }
@@ -2263,8 +2249,9 @@ return {
         rzd = rzd || realizeImgSrc("author", revs, topvis, revs.length, mark);
         rzd = rzd || realizeImgSrc("revpic", revs, topvis, revs.length, mark);
         if(rzd) {
+            app.activity.indicateMultiMembics(revs, mark);
             setTimeout(function () {
-                app.review.realizePlaceholderImages(revs); }, 200); }
+                app.review.realizePlaceholderImages(prefix, revs); }, 200); }
     },
 
 
@@ -2306,7 +2293,7 @@ return {
                            ["img", {cla: "feedprefimg", 
                                     src: app.pen.prefimg(rev.penid)}]]]; }
                 authlink = 
-                    ["div", {cla: "fpprofdiv"},
+                    ["div", {cla: "fpprofdiv", id: "profdiv" + jt.instId(rev)},
                      [["a", {href: "#view=pen&penid=" + rev.penid,
                              onclick: jt.fs("app.pen.bypenid('" + 
                                             rev.penid + "','review')")},
@@ -2324,7 +2311,7 @@ return {
                                                 rev, togcbn)]]]); }
         jt.out(divid, jt.tac2html(html));
         setTimeout(function () {
-            app.review.realizePlaceholderImages(revs); }, 500);
+            app.review.realizePlaceholderImages(prefix, revs); }, 500);
     },
 
 
@@ -2349,6 +2336,7 @@ return {
                     elem.style.display = "block"; } } }
         revdivid = prefix + revid;
         if(app.review.displayingExpandedView(prefix, revid)) {
+            app.activity.showMultiMembicImage(revid, true);
             jt.out(revdivid + "buttonsdiv", "");
             jt.out(revdivid + "secdiv", "");
             jt.out(revdivid + "datediv", "");
@@ -2359,6 +2347,7 @@ return {
         else {  //expand
             //scrolling on click is disorienting. Isolate situation if needed.
             //app.layout.scrollToVisible(revdivid + "buttonsdiv");
+            app.activity.showMultiMembicImage(revid, false);
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
