@@ -1282,26 +1282,32 @@ class ToggleHelpful(webapp2.RequestHandler):
 
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
-        pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
-        if pgid: # pgid may be zero if no pen name yet
-            key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
-            jstr = memcache.get(key)   # grab the prebuilt JSON data
-            if not jstr:
-                jstr = rebuild_reviews_block(self, pct, pgid)
-                memcache.set(key, jstr)
-        else:  # return empty array with no first item pen
-            jstr = "[]"
-        if mypen:  # replace first element with private pen data
-            i = 2 
-            brackets = 1
-            while i < len(jstr) and brackets > 0:
-                if jstr[i] == '{':
-                    brackets += 1
-                elif jstr[i] == '}':
-                    brackets -= 1
-                i += 1
-            jstr = '[' + obj2JSON(mypen) + jstr[i:]
-        writeJSONResponse(jstr, self.response)
+        try:
+            pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
+            if pgid: # pgid may be zero if no pen name yet
+                key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
+                jstr = memcache.get(key)   # grab the prebuilt JSON data
+                if not jstr:
+                    jstr = rebuild_reviews_block(self, pct, pgid)
+                    memcache.set(key, jstr)
+            else:  # return empty array with no first item pen
+                jstr = "[]"
+            if mypen:  # replace first element with private pen data
+                i = 2 
+                brackets = 1
+                while i < len(jstr) and brackets > 0:
+                    if jstr[i] == '{':
+                        brackets += 1
+                    elif jstr[i] == '}':
+                        brackets -= 1
+                    i += 1
+                jstr = '[' + obj2JSON(mypen) + jstr[i:]
+            writeJSONResponse(jstr, self.response)
+            return
+        except Exception as e:
+            if str(e) == "Token expired":
+                return srverr(self, 401, "FetchAllReviews failed: " + str(e))
+            return srverr(self, 500, "FetchAllReviews failed: " + str(e))
 
 
 class FetchPreReviews(webapp2.RequestHandler):

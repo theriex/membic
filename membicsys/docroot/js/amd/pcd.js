@@ -2048,7 +2048,7 @@ return {
         var objref, url, time;
         divid = divid || "contentdiv";
         if(dtype === "pen" && !id) {
-            id = app.pen.myPenId(); }
+            id = app.pen.myPenId() || ""; }
         objref = app.lcs.getRef(dtype, id);
         if(objref && objref[dtype] && objref[dtype].recent) {
             return callback(objref[dtype]); }
@@ -2060,7 +2060,7 @@ return {
             url += "&penid=" + id;
             if(!id || id === app.pen.myPenId()) {  //looking for my pen
                 url += "&authorize=true"; } }      //include account info
-        url += jt.ts("&cb=", "hour");
+        url += jt.ts("&cb=", id? "hour" : "second");
         time = new Date().getTime();
         jt.call("GET", url, null,
                 function (objs) {  // main obj + recent/top reviews

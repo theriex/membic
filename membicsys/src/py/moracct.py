@@ -166,8 +166,7 @@ def authenticate_account(account, emaddr, token):
     twelvehours = 12 * 60 * 60     # flip clock, hope not using then
     tokenlife = 90 * 24 * 60 * 60
     if now - secs > tokenlife + twelvehours:
-        logging.info("authacc em+tok: Token expired")
-        return None
+        raise ValueError("Token expired")  # verbatim match in other code
     account._id = account.key().id() # normalized id access
     return account
 
@@ -187,6 +186,7 @@ def authenticated_account_email_plus_token(emaddr, token):
         account = authenticate_account(account, emaddr, token)
         if account:
             # replace cached QueryResult with account for direct access
+            logging.info("Caching account for " + emaddr)
             put_cached_instance(emaddr, account)
             return account
     logging.info("authacc em+tok: No account found")
