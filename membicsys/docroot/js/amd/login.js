@@ -805,6 +805,7 @@ return {
         logoutWithNoDisplayUpdate();
         app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateAuthentDisplay();
+        jt.out("topactionsdiv", "");
         app.login.init();
         if(errprompt) {
             jt.err(errprompt); }
