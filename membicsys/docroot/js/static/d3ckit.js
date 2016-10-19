@@ -23,7 +23,7 @@ d3ckit = (function () {
               cc: {heightMultiple: 0.08, widthMultiple: 0.6,
                    iconPadMultiple: 0.6,
                    controls: {restart: true, rewind: true, previous: true,
-                              playpause: true, forward: true}}};
+                              playpause: true, forward: true, exit: true}}};
 
 
     ////////////////////////////////////////
@@ -74,14 +74,15 @@ d3ckit = (function () {
     }
 
 
-    function appendGroup (gname) {
+    function appendGroup (gname, title) {
         ds.cc[gname] = ds.cc.g.append("g")
             .attr("opacity", ds.cc.opacitybase)
-        .on("mouseover", function () { 
-            ds.cc[gname].attr("opacity", ds.cc.opacityactive); })
-        .on("mouseout", function () {
-            ds.cc[gname].attr("opacity", ds.cc.opacitybase); })
-        .on("click", d3ckit[gname]);
+            .on("mouseover", function () { 
+                ds.cc[gname].attr("opacity", ds.cc.opacityactive); })
+            .on("mouseout", function () {
+                ds.cc[gname].attr("opacity", ds.cc.opacitybase); })
+            .on("click", d3ckit[gname]);
+        ds.cc[gname].append("svg:title").text(title);
     }
 
 
@@ -122,43 +123,49 @@ d3ckit = (function () {
         cc.g.append("rect")
             .attr({"x": cc.x, "y": cc.y, "width": cc.w, "height": cc.h})
             .style({"fill": "white", "fill-opacity": 0.3});
+        cc.bw = Math.round(0.15 * cc.icow);
         if(cc.controls.restart) {
-            appendGroup("restart");
-            cc.bw = Math.round(0.15 * cc.icow);
+            appendGroup("restart", "Restart");
             appendBar({g: cc.restart, w: cc.bw, x: cc.bw});
             appendTriangle({g: cc.restart, orient: "left", 
                             x: 2 * cc.bw});
             oc += 1; }
         if(cc.controls.rewind) {
-            appendGroup("rewind");
+            appendGroup("rewind", "Rewind");
             appendTriangle({g: cc.rewind, orient: "left", 
                             x: cc.x + (oc * cc.secw)});
             appendTriangle({g: cc.rewind, orient: "left", 
                             x: cc.x + (oc * cc.secw) + cc.mw});
             oc += 1; }
         if(cc.controls.previous) {
-            appendGroup("previous");
+            appendGroup("previous", "Previous Slide");
             appendTriangle({g: cc.previous, orient: "left",
                             x: cc.x + (oc * cc.secw) + cc.qw});
             oc += 1; }
         if(cc.controls.playpause) {
-            appendGroup("playpause");
+            appendGroup("playpause", "Play/Pause");
             cc.play = cc.playpause.append("g").attr("opacity", 0.0);
             xb = cc.x + (oc * cc.secw) + cc.padw;
             appendTriangle({g: cc.play, orient: "right",
                             x: xb + cc.qw + cc.bw});
             cc.pause = cc.playpause.append("g").attr("opacity", 0.0);
-            appendBar({g: cc.pause, w: cc.bw, x: xb - cc.bw});
+            appendBar({g: cc.pause, w: cc.bw, x: xb - (2 * cc.bw)});
             appendBar({g: cc.pause, w: cc.bw, x: xb, fill: "none", opa: 0.0});
-            appendBar({g: cc.pause, w: cc.bw, x: xb + cc.bw});
+            appendBar({g: cc.pause, w: cc.bw, x: xb + (2 * cc.bw)});
             reflectPlayPause();
             oc += 1; }
         if(cc.controls.forward) {
-            appendGroup("forward");
+            appendGroup("forward", "Fast Forward");
             appendTriangle({g: cc.forward, orient: "right",
                             x: cc.x + (oc * cc.secw) + (2 * cc.padw)});
             appendTriangle({g: cc.forward, orient: "right",
                             x: cc.x + (oc * cc.secw) + (2 * cc.padw) + cc.mw});
+            oc += 1; }
+        if(cc.controls.exit) {
+            appendGroup("exit", "Exit Slideshow");
+            xb = cc.x + (oc * cc.secw) + (2 * cc.padw);
+            appendTriangle({g: cc.exit, orient: "right", x: xb});
+            appendBar({g: cc.exit, w: cc.bw, x: xb + (2 * cc.bw)});
             oc += 1; }
     }
 
@@ -349,12 +356,19 @@ return {
     },
 
 
+    exit: function () {
+        ds.didx = ds.deck.length - 1;
+        ds.next();
+    },
+
+
     setKeyboardControls: function (cmap) {
         ds.cmap = cmap || {restart: ["r", "s"],
                            rewind: ["b"],
                            previous: ["p", 37, 38],  //left, up arrows
                            playpause: [" ", 39, 40], //right, down arrows
-                           forward: ["f", "n"]};
+                           forward: ["f", "n"],
+                           exit: ["x", "e"]};
         document.addEventListener("keydown", handleKeyDown);
     },
 
