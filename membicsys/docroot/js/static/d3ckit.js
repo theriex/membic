@@ -358,7 +358,7 @@ return {
 
     exit: function () {
         ds.didx = ds.deck.length - 1;
-        ds.next();
+        d3ckit.next();
     },
 
 

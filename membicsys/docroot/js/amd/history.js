@@ -86,6 +86,8 @@ return {
         state = state || app.history.currState();
         indicateState(state);
         switch(state.view) {
+        case "about":
+            return app.layout.displayDoc();
         case "activity":
             return app.activity.displayActive();
         case "memo":

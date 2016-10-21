@@ -13,6 +13,7 @@ app.layout = (function () {
         dlgqueue = [],
         siteroot = "",
         addToAnyScriptLoaded = false,
+        slidedecks = {},
         initialFadeIn = 1200,
 
 
@@ -23,7 +24,7 @@ app.layout = (function () {
     replaceDocComments = function (html) {
         var dst, txt;
         html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
-            " or <a href=\"" + app.suppemail + "\">email us</a>.");
+            " or <a href=\"" + app.suppemail + "\">by email</a>.");
         dst = app.pcd.getDisplayState();
         if(dst && dst.type === "coop" && dst.obj) {
             if(dst.obj.hashtag) {
@@ -38,6 +39,24 @@ app.layout = (function () {
     },
 
 
+    noteDocSlideDecks = function (html) {
+        var calls = html.split("app.layout.runSlideDeck");
+        slidedecks = { idx: -1, names: [] };
+        calls.forEach(function (call) {
+            if(call.startsWith("('")) {
+                call = call.slice(2);
+                slidedecks.names.push(call.slice(0, call.indexOf("'")));
+                slidedecks.idx = 0; } });
+    },
+
+
+    nextSlideDeckName = function () {
+        if(slidedecks.idx >= 0 && slidedecks.idx < slidedecks.names.length) {
+            slidedecks.idx += 1;
+            return slidedecks.names[slidedecks.idx - 1]; }
+    },
+
+
     displayDocContent = function (url, html) {
         var idx, bodystart = "<body>";
         if(!html || !html.trim()) {
@@ -47,6 +66,7 @@ app.layout = (function () {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
         html = replaceDocComments(html);
+        noteDocSlideDecks(html);
         //create title from capitalized doc file name
         idx = url.lastIndexOf("/");
         if(idx > 0) {
@@ -58,10 +78,7 @@ app.layout = (function () {
         //title overrides
         if(url === "About" || url === "Howto" || url === "Themepage") {
             url = ""; }
-        //display content
-        html = app.layout.dlgwrapHTML(url, html);
-        //openDialog deals with the y scroll offset as needed.
-        app.layout.openDialog({x: 20, y: 40}, html);
+        jt.out("contentdiv", html);
         app.layout.crumbify();
     },
 
@@ -222,6 +239,42 @@ return {
     },
 
 
+    runSlideDeck: function (deckname) {
+        //load and run the specified slide deck.  Gray out the span
+        var href, js;
+        deckname = deckname || nextSlideDeckName();
+        if(!deckname) {
+            return jt.log("runSlideDeck: no deckname"); }
+        if(jt.byId("d3ckitdiv")) { //have display space for slides
+            if(!app[deckname]) {  //slides module not already loaded
+                href = jt.baseurl(window.location.href) + "/";
+                if(typeof d3 === "undefined") {  //mac ff requires typeof
+                    js = document.createElement("script");
+                    //js.async = true;
+                    js.type = "text/javascript";
+                    js.src = href + "js/d3.v3.min.js?v=161013";
+                    document.body.appendChild(js); }
+                if(typeof d3ckit === "undefined") {  //mac ff requires typeof
+                    js = document.createElement("script");
+                    //js.async = true;
+                    js.type = "text/javascript";
+                    js.src = href + "js/static/d3ckit.js?v=161013";
+                    document.body.appendChild(js); }
+                jt.loadAppModules(app, ["js/static/" + deckname], href,
+                                  function () { 
+                                      app.layout.runSlideDeck(deckname); },
+                                  jt.ts("?cb=", "minute")); }
+            else { //app[deckname] module already loaded
+                jt.out("d3ckitdiv", "");  //clear any previous cruft
+                app[deckname].run(true); } }
+    },
+
+
+    deckText: function () {
+        //display the text version of the slideshow, stopping it if needed
+    },
+
+
     runAnime: function () {
         var href, js;
         if(jt.byId("d3ckitdiv")) { //have display space for "about" animation
@@ -249,11 +302,6 @@ return {
                                   app.layout.runAnime, 
                                   jt.ts("?cb=", "minute")); }
             else { //app.intro loaded
-                jt.byId("linkpluswhyspan").style.display = "none";
-                jt.byId("membicsitespan").style.display = "none";
-                jt.byId("themesitespan").style.display = "none";
-                jt.byId("introductionli").style.display = "none";
-                jt.byId("originli").style.display = "none";
                 jt.out("d3ckitdiv", "");  //clear any previous cruft
                 app.intro.run(true, app.layout.closeAnime); } }
     },
@@ -276,24 +324,22 @@ return {
               "https://membic.wordpress.com/2016/02/17/introducing-membic')")},
             "INTRODUCTION"]]];
         setTimeout(function () {
-            jt.out("d3ckitdiv", jt.tac2html(html));
-            jt.byId("linkpluswhyspan").style.display = "initial";
-            jt.byId("membicsitespan").style.display = "initial";
-            jt.byId("themesitespan").style.display = "initial"; }, 800);
+            jt.out("d3ckitdiv", jt.tac2html(html)); });
     },
 
 
     displayDoc: function (url) {
         var html = "Fetching " + url + " ...";
-        url = url || "docs/howto.html";
-        app.layout.openDialog(null, html);
+        url = url || "docs/about.html";
+        jt.out("contentdiv", html);
+        jt.out("headingdivcontent", "");  //remove the types filter display
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
         url += jt.ts("?cb=", "day");
         jt.request("GET", url, null,
                    function (resp) {
                        displayDocContent(url, resp);
-                       setTimeout(app.layout.runAnime, 50); },
+                       setTimeout(app.layout.runSlideDeck, 50); },
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt); },
                    jt.semaphore("layout.displayDoc"));

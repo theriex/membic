@@ -892,7 +892,10 @@ return {
             if(params.view === "profile") {
                 state = {view: "profile"}; }
             else {  //default initialization
-                state = {view: "activity"}; } }
+                if(app.login.isLoggedIn()) {
+                    state = {view: "activity"}; }
+                else {
+                    state = {view: "about"}; } } }
         if(params.url) {
             app.activity.setURLToRead(params.url); }
         if(app.login.isLoggedIn()) {

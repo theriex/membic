@@ -12,35 +12,65 @@
 <div class="doccontentdiv">
 <div id="aboutoverviewdiv">
 
-<p><span id="linkpluswhyspan"><b>membic</b> = Link + Why Memorable.<br/></span>
-<span id="membicsitespan">Membic.com is a tool for collaborative link sharing. </span>
-<span id="themesitespan">Membic themes are microsites with their own membership.</span></p>
+<div class="aboutstatementsdiv">
 
-<ul class="revpictypelist">
-<li id="introductionli">
-  <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
-       onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
-    <img src="img/gotolink.png" style="width:18px;height:18px;"/> Introduction</a>
-<!-- use relative path for hard links so crawlers don't get confused. -->
-<li id="originli"><a href="origin.html"
-       onclick="app.layout.displayDoc('docs/origin.html');return false;">
-    <img src="img/arrow18right.png"/> The origin story</a>
-<li><a href="howto.html"
-       onclick="app.layout.displayDoc('docs/howto.html');return false;">
-    <img src="img/arrow18right.png"/> How it works</a>
-</ul>
+Membic.com is the premiere platform for managing and presenting
+helpful links as part of your website and more.  Free for individuals
+and collaborative groups.
+
+</div>
 
 <div id="d3ckitdiv" style="max-width:400px;"></div>
 
-<!--
-<div class="quotediv">
-What you discover on your own, plus consideration of what others have discovered, and focused collaboration through cooperative themes.
+<!-- use relative path for hard links so crawlers don't get confused. -->
+<div class="aboutstatementsdiv">
+<ul>
+  <li><a href="#WhatsAMembic"
+         onclick="app.layout.runSlideDeck('deckmembic');return false;">
+      <span id="deckmembicspan">What's a Membic?</span>
+      &nbsp;
+      <span id="deckmembicslidesspan" class="slidestextspan">slides</span></a>
+    <span class="slidestextspan"> |
+      <a href="deckmembictext.html"
+         onclick="app.layout.deckText('deckmembic');return false;">
+        <span id="deckmembictextspan">text</span></a>
+    </span>
+  <li><a href="#YourProfile"
+         onclick="app.layout.runSlideDeck('deckprofile');return false;">
+      <span id="deckprofilespan">Your Profile</span>
+      &nbsp;
+      <span id="deckprofileslidesspan" class="slidestextspan">slides</span></a>
+    <span class="slidestextspan"> |
+      <a href="deckprofiletext.html"
+         onclick="app.layout.deckText('deckprofile');return false;">
+        <span id="deckprofiletextspan">text</span></a>
+    </span>
+  <li><a href="#Themes"
+         onclick="app.layout.runSlideDeck('decktheme');return false;">
+      <span id="deckthemespan">Themes</span>
+      &nbsp;
+      <span id="deckthemeslidesspan" class="slidestextspan">slides</span></a>
+    <span class="slidestextspan"> |
+      <a href="deckthemetext.html"
+         onclick="app.layout.deckText('decktheme');return false;">
+        <span id="deckthemetextspan">text</span></a>
+    </span>
+  <li><a href="#Browse"
+         onclick="app.layout.runSlideDeck('deckbrowse');return false;">
+      <span id="deckbrowsespan">Browse</span>
+      &nbsp;
+      <span id="deckbrowseslidesspan" class="slidestextspan">slides</span></a>
+    <span class="slidestextspan"> |
+      <a href="deckbrowsetext.html"
+         onclick="app.layout.deckText('deckbrowse');return false;">
+        <span id="deckbrowsetextspan">text</span></a>
+    </span>
+</ul>
 </div>
--->
 
 </div> <!-- aboutoverviewdiv -->
 
-<div id="aboutfeaturesdiv">
+<div id="aboutfeaturesdiv" style="display:none;">
 <h2 class="aboutdetailsheading">Features:</h2>
 <div class="aboutstatementsdiv">
 
@@ -151,7 +181,7 @@ What you discover on your own, plus consideration of what others have discovered
 </div> <!-- aboutfeaturesdiv -->
 
 
-<div id="aboutfaqdiv">
+<div id="aboutfaqdiv" style="display:none;">
 <h2 class="aboutdetailsheading">FAQ:</h2>
 <div class="aboutstatementsdiv">
 
@@ -183,7 +213,7 @@ What you discover on your own, plus consideration of what others have discovered
 </div> <!-- aboutfaqdiv -->
 
 
-<div id="abouttipsdiv">
+<div id="abouttipsdiv" style="display:none;">
 <h2 class="aboutdetailsheading">Tips and Tricks:</h2>
 <div class="aboutstatementsdiv">
 <ul>
@@ -240,12 +270,13 @@ What you discover on your own, plus consideration of what others have discovered
 </div> <!-- aboutstatementsdiv -->
 </div> <!-- abouttipsdiv -->
 
-
-<p>If you have a question or a suggestion how to increase the
-awesomeness of this site,
+<div class="aboutstatementsdiv"></div> <!-- spacer -->
+<div class="aboutstatementsdiv">
+Contact us 
 <a href="https://github.com/theriex/membic/issues"
  onclick="window.open('https://github.com/theriex/membic/issues');return
-false">open an issue on GitHub</a>.<!-- $ABOUTCONTACT --> </p>
+false">on GitHub</a>.<!-- $ABOUTCONTACT -->
+</div>
 
 <div style="font-size:xx-small;text-align:center;word-spacing:30px;padding:0px 0px 10px 0px">
   <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html');return false;">TERMS</a> 

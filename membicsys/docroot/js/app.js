@@ -340,4 +340,18 @@ var app = {},  //Global container for application level funcs and values
         return spaced;
     };
 
+
+    jt.baseurl = function (url) {
+        var idx = url.indexOf("/", 9);
+        if(idx >= 0) {
+            url = url.slice(0, idx); }
+        idx = url.indexOf("#");
+        if(idx >= 0) {
+            url = url.slice(0, idx); }
+        idx = url.indexOf("?");
+        if(idx >= 0) {
+            url = url.slice(0, idx); }
+        return url;
+    };
+
 } () );

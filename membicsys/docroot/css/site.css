@@ -388,11 +388,14 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> docs layout */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
-.doccontentdiv { padding:10px 10px 0px 10px; }
+.doccontentdiv { max-width:600px; margin:auto; }
 #aboutoverviewdiv { font-size:large; }
 .aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
-.aboutstatementsdiv { padding:0px 10px; font-size:small; }
-.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 4px; }
+.aboutstatementsdiv { padding:0px 10px 10px 10px; font-size:small; }
+.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
+  list-style-image: url('../img/arrow12right.png'); }
+.aboutstatementsdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
+.slidestextspan { font-size:small; }
 .aboutfeaturespan { font-weight:bold; }
 #aboutfeaturesdiv, #aboutfaqdiv {}
 .aboutdetaildiv { display:none; padding:5px 0px; }
