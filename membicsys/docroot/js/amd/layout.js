@@ -246,15 +246,19 @@ return {
         if(!deckname) {
             return jt.log("runSlideDeck: no deckname"); }
         if(jt.byId("d3ckitdiv")) { //have display space for slides
+            jt.out("d3ckitdiv", "");  //nuke anything previously running
             if(!app[deckname]) {  //slides module not already loaded
+                jt.log("runSlideDeck loading " + deckname);
                 href = jt.baseurl(window.location.href) + "/";
                 if(typeof d3 === "undefined") {  //mac ff requires typeof
+                    jt.log("runSlideDeck loading d3");
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js?v=161013";
                     document.body.appendChild(js); }
                 if(typeof d3ckit === "undefined") {  //mac ff requires typeof
+                    jt.log("runSlideDeck loading d3ckit");
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
@@ -265,6 +269,7 @@ return {
                                       app.layout.runSlideDeck(deckname); },
                                   jt.ts("?cb=", "minute")); }
             else { //app[deckname] module already loaded
+                jt.log("runSlideDeck " + deckname);
                 jt.out("d3ckitdiv", "");  //clear any previous cruft
                 app[deckname].run(true); } }
     },

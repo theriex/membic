@@ -23,7 +23,8 @@ d3ckit = (function () {
               cc: {heightMultiple: 0.08, widthMultiple: 0.6,
                    iconPadMultiple: 0.6,
                    controls: {restart: true, rewind: true, previous: true,
-                              playpause: true, forward: true, exit: true}}};
+                              playpause: true, forward: true, exit: true}}},
+        stepv = {delay: 0, duration: 0, transtime: 800, numsteps: 2};
 
 
     ////////////////////////////////////////
@@ -271,6 +272,129 @@ d3ckit = (function () {
     ////////////////////////////////////////
 return {
 
+    slideHelperFunctions: function () { return {
+        stepinit: function (transtime, numsteps) {
+            stepv.delay = 0;
+            stepv.duration = 0;
+            stepv.transtime = transtime;
+            stepv.numsteps = numsteps;
+        },
+
+        step: function (stepnum) {
+            var steptime = Math.round(stepv.transtime / stepv.numsteps);
+            stepv.delay = Math.max(0, stepnum - 1) * steptime;
+            stepv.duration = steptime;
+            return {delay: stepv.delay, duration: stepv.duration};
+        },
+
+        showText: function (timing, id, grpname, str, attrs) {
+            var elem = d3.select("#" + id);
+            attrs = attrs || {};
+            if(elem.empty()) {
+                elem = ds.gs[grpname].append("text")
+                    .attr({"id": id, 
+                           "x": attrs.x || 140,
+                           "y": attrs.y || 20,
+                           "fill": ds.textcolor,
+                           "opacity": 0.0,
+                           "fill-opacity": 0.0})
+                    .style({"font-size": (attrs["font-size"] || "16px"),
+                            "font-weight": (attrs["font-weight"] || "bold"),
+                            "font-style": (attrs["font-style"] || "normal"),
+                            "text-anchor": (attrs["text-anchor"] || "start")})
+                    .text(str); }
+            elem.transition().delay(timing.delay).duration(timing.duration)
+                .attr("fill-opacity", attrs.opacity || 1.0)
+                .attr("opacity", attrs.opacity || 1.0);
+            return elem;
+        },
+
+        fadeInitGroup: function (timing, grpname, opacity) {
+            if(ds.gs[grpname]) {
+                ds.gs[grpname].attr("opacity", 0.0)
+                    .transition().delay(timing.delay).duration(timing.duration)
+                    .attr("opacity", opacity); }
+        },
+
+        fadeGroup: function (timing, grpname, opacity) {
+            if(ds.gs[grpname]) {
+                ds.gs[grpname]
+                    .transition().delay(timing.delay).duration(timing.duration)
+                    .attr("opacity", opacity); }
+        },
+
+        transElement: function (timing, id, attrs) {
+            var elem = d3.select("#" + id);
+            if(!elem.empty()) {
+                attrs = attrs || {};
+                if(attrs.tl) {
+                    attrs.transform = "translate(" + attrs.tl + ")"; }
+                if(typeof attrs.opa === "number") {
+                    attrs.opacity = attrs.opa; }
+                attrs.transform = attrs.transform || "translate(0,0)";
+                if(typeof attrs.opacity !== "number") {
+                    attrs.opacity = 1.0; }
+                if(typeof attrs.fillopa !== "number") {
+                    attrs.fillopa = attrs.opacity; }
+                elem.transition().delay(timing.delay).duration(timing.duration)
+                    .attr("transform", attrs.transform)
+                    .attr("opacity", attrs.opacity)
+                    .attr("fill-opacity", attrs.fillopa); }
+        },
+
+        //no starting opacity because that causes elements to suddenly re-appear
+        fadeElement: function (timing, id, opacity, remove) {
+            var elem = d3.select("#" + id);
+            if(!elem.empty()) {
+                elem.transition().delay(timing.delay).duration(timing.duration)
+                    .attr("opacity", opacity)
+                    .attr("fill-opacity", opacity);
+                if(remove) {
+                    elem.remove(); } }
+        },
+
+        showGraphic: function (timing, id, grpname, attrs) {
+            var elem = d3.select("#" + id);
+            if(elem.empty()) {
+                elem = ds.gs[grpname].append("image")
+                    .attr({"xlink:href": attrs.href, "id": id,
+                           "x": attrs.x, "y": attrs.y,
+                           "width": (attrs.w || attrs.h || 50) + "px",
+                           "height": (attrs.h || attrs.w) + "px",
+                           "opacity": 0.0}); }
+            elem.attr("opacity", 0.0)
+                .transition().delay(timing.delay).duration(timing.duration)
+                .attr("opacity", attrs.opacity || 1.0);
+            return elem;
+        },
+
+        drawBox: function (timing, id, grpname, attrs) {
+            var style = {}, g, elem;
+            attrs = attrs || {};
+            attrs.x = attrs.x || 0;
+            attrs.y = attrs.y || 0;
+            attrs.rx = attrs.rx || 0;
+            attrs.ry = attrs.ry || 0;
+            attrs.width = attrs.w || attrs.width || attrs.height;
+            attrs.height = attrs.h || attrs.height || attrs.width;
+            attrs.id = id;
+            attrs.stropa = attrs.stropa || attrs["stroke-opacity"] || 0.5;
+            attrs["stroke-opacity"] = 0.0;
+            style.fill = attrs.fill || "none";
+            style.stroke = attrs.stroke || ds.textcolor;
+            g = ds.gs[grpname];
+            elem = d3.select("#" + id);
+            if(elem.empty()) {
+                elem = g.append("rect")
+                    .attr(attrs)
+                    .style(style); }
+            elem.transition().delay(timing.delay).duration(timing.duration)
+                .attr("stroke-opacity", attrs.stropa);
+        }
+
+    }; },
+
+
     displaySettings: function () {
         return ds;
     },
@@ -379,6 +503,7 @@ return {
 
 
     run: function () {
+        var time = ds.fastTransTime;
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(d3ckit.run, 300); }
         d3ckit.restart(true);
@@ -397,11 +522,13 @@ return {
         if(ds.svgsetupfunc) {  //hook point for appending svg:marker or whatever
             ds.svgsetupfunc(); }
         if(ds.moviescreen) {
-            ds.globg.append("rect")
-                .attr({"x": 0, "y": 0, "width": ds.dw, "height": 24})
-                .style({"fill": "white", "opacity": 0.4})
-                .transition().duration(ds.transtime).ease("exp")
-                .attr("height", ds.dh); }
+            ds.moviescreen = false;  //only do by default first time
+            time = ds.normTransTime; }
+        ds.globg.append("rect")
+            .attr({"x": 0, "y": 0, "width": ds.dw, "height": 24})
+            .style({"fill": "white", "opacity": 0.4})
+            .transition().duration(time).ease("exp")
+            .attr("height", ds.dh);
         ds.cg = ds.globg.append("g");  //general content group
         delayf(displayControls, ds.transtime, ds.svgid);
         //always display first slide
