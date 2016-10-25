@@ -24,7 +24,8 @@ d3ckit = (function () {
                    iconPadMultiple: 0.6,
                    controls: {restart: true, rewind: true, previous: true,
                               playpause: true, forward: true, exit: true}}},
-        stepv = {delay: 0, duration: 0, transtime: 800, numsteps: 2};
+        stepv = {delay: 0, duration: 0, transtime: 800, numsteps: 2},
+        arropa = 0.8;  //tone down arrows slightly so not too stark
 
 
     ////////////////////////////////////////
@@ -210,6 +211,23 @@ d3ckit = (function () {
     }
 
 
+    function makeMarkers () {  //call this function only once
+        var defs = ds.svg.append("svg:defs");
+        defs.append("svg:marker")
+	        .attr({"id": "arrowend", "orient": "auto", "opacity": arropa,
+                   "refX": 2, "refY": 4.4,
+                   "markerWidth": 8, "markerHeight": 8})
+	        .append("svg:path")
+	        .attr("d", "M2,2 L2,7 L6,4 Z");
+	    defs.append("svg:marker")
+	        .attr({"id": "arrowstart", "orient": "auto", "opacity": arropa,
+                   "refX": 6, "refY": 4.4,
+                   "markerWidth": 8, "markerHeight": 8})
+	        .append("svg:path")
+	        .attr("d", "M6,2 L6,7 L2,4 Z");
+    }
+
+
     function makeDemoDeck () {
         var deck = [
             //slide 0
@@ -290,6 +308,10 @@ return {
         showText: function (timing, id, grpname, str, attrs) {
             var elem = d3.select("#" + id);
             attrs = attrs || {};
+            attrs["font-size"] = attrs.fs || attrs["font-size"] || "16px";
+            attrs["font-weight"] = attrs.fw || attrs["font-weight"] || "bold";
+            attrs["font-style"] = attrs.fe || attrs["font-style"] || "normal";
+            attrs["text-anchor"] = attrs.ta || attrs["text-anchor"] || "start";
             if(elem.empty()) {
                 elem = ds.gs[grpname].append("text")
                     .attr({"id": id, 
@@ -298,10 +320,10 @@ return {
                            "fill": ds.textcolor,
                            "opacity": 0.0,
                            "fill-opacity": 0.0})
-                    .style({"font-size": (attrs["font-size"] || "16px"),
-                            "font-weight": (attrs["font-weight"] || "bold"),
-                            "font-style": (attrs["font-style"] || "normal"),
-                            "text-anchor": (attrs["text-anchor"] || "start")})
+                    .style({"font-size": attrs["font-size"],
+                            "font-weight": attrs["font-weight"],
+                            "font-style": attrs["font-style"],
+                            "text-anchor": attrs["text-anchor"]})
                     .text(str); }
             elem.transition().delay(timing.delay).duration(timing.duration)
                 .attr("fill-opacity", attrs.opacity || 1.0)
@@ -390,6 +412,39 @@ return {
                     .style(style); }
             elem.transition().delay(timing.delay).duration(timing.duration)
                 .attr("stroke-opacity", attrs.stropa);
+        },
+
+        drawArrow: function (timing, id, grpname, attrs) {
+            var elem = d3.select("#" + id);
+            if(elem.empty()) {
+                var mx, my, start = {x1: attrs.x1, y1: attrs.y1,
+                                     x2: attrs.x1 + 1, y2: attrs.y1 + 1};
+                if(attrs["marker-start"]) {
+                    mx = attrs.x1 + Math.round((attrs.x2 - attrs.x1) / 2);
+                    my = attrs.y1 + Math.round((attrs.y2 - attrs.y1) / 2);
+                    start.x1 = mx - 1;
+                    start.x2 = mx + 1;
+                    start.y1 = my - 1;
+                    start.y2 = my + 1; }
+                elem = ds.gs[grpname].append("line")
+                    .attr({"id": id,
+                           "x1": start.x1, "y1": start.y1,
+                           "x2": start.x2, "y2": start.y2,
+                           "marker-start": attrs["marker-start"],
+                           "marker-end": "url(#arrowend)",
+                           "opacity": 0.0,
+                           "stroke-opacity": 0.0})
+                    .style({"stroke": ds.textcolor,
+                            "stroke-width": 1.5,
+                            "fill": "red"}); }
+            elem.transition().delay(timing.delay).duration(timing.duration)
+                .attr("x1", attrs.x1)
+                .attr("x2", attrs.x2)
+                .attr("y1", attrs.y1)
+                .attr("y2", attrs.y2)
+                .attr("opacity", arropa)
+                .attr("stroke-opacity", arropa);
+            return elem;
         }
 
     }; },
@@ -519,8 +574,7 @@ return {
         ds.globg = ds.svg.append("g")
             .attr("transform", "translate(" + ds.margin.left + "," + 
                                               ds.margin.top + ")");
-        if(ds.svgsetupfunc) {  //hook point for appending svg:marker or whatever
-            ds.svgsetupfunc(); }
+        makeMarkers();
         if(ds.moviescreen) {
             ds.moviescreen = false;  //only do by default first time
             time = ds.normTransTime; }
