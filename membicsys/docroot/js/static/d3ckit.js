@@ -345,23 +345,27 @@ return {
                     .attr("opacity", opacity); }
         },
 
-        transElement: function (timing, id, attrs) {
-            var elem = d3.select("#" + id);
-            if(!elem.empty()) {
-                attrs = attrs || {};
-                if(attrs.tl) {
-                    attrs.transform = "translate(" + attrs.tl + ")"; }
-                if(typeof attrs.opa === "number") {
-                    attrs.opacity = attrs.opa; }
-                attrs.transform = attrs.transform || "translate(0,0)";
-                if(typeof attrs.opacity !== "number") {
-                    attrs.opacity = 1.0; }
-                if(typeof attrs.fillopa !== "number") {
-                    attrs.fillopa = attrs.opacity; }
-                elem.transition().delay(timing.delay).duration(timing.duration)
-                    .attr("transform", attrs.transform)
-                    .attr("opacity", attrs.opacity)
-                    .attr("fill-opacity", attrs.fillopa); }
+        transElement: function (timing, ids, attrs) {
+            if(typeof ids === "string") {
+                ids = [ids]; }
+            ids.forEach(function (id) {
+                var elem = d3.select("#" + id);
+                if(!elem.empty()) {
+                    attrs = attrs || {};
+                    if(attrs.tl) {
+                        attrs.transform = "translate(" + attrs.tl + ")"; }
+                    if(typeof attrs.opa === "number") {
+                        attrs.opacity = attrs.opa; }
+                    attrs.transform = attrs.transform || "translate(0,0)";
+                    if(typeof attrs.opacity !== "number") {
+                        attrs.opacity = 1.0; }
+                    if(typeof attrs.fillopa !== "number") {
+                        attrs.fillopa = attrs.opacity; }
+                    elem.transition().delay(timing.delay)
+                        .duration(timing.duration)
+                        .attr("transform", attrs.transform)
+                        .attr("opacity", attrs.opacity)
+                        .attr("fill-opacity", attrs.fillopa); } });
         },
 
         //no starting opacity because that causes elements to suddenly re-appear
@@ -384,9 +388,11 @@ return {
                            "width": (attrs.w || attrs.h || 50) + "px",
                            "height": (attrs.h || attrs.w) + "px",
                            "opacity": 0.0}); }
+            if(typeof attrs.opacity !== "number") {
+                attrs.opacity = 1.0; }
             elem.attr("opacity", 0.0)
                 .transition().delay(timing.delay).duration(timing.duration)
-                .attr("opacity", attrs.opacity || 1.0);
+                .attr("opacity", attrs.opacity);
             return elem;
         },
 

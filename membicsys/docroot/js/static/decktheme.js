@@ -106,7 +106,7 @@ app.decktheme = (function () {
                 if(idx > 0) {
                     pr = roles[idx - 1];
                     hfs.transElement(sv, pr.id, {opa: f.op});
-                    pr.tls.forEach(function (txt, si) {
+                    pr.tls.forEach(function (ignore, si) {
                         hfs.transElement(sv, pr.tidb + si, {opa: 0.0}); }); }
                 hfs.transElement(sv, role.id, {opa: 1.0});
                 role.tls.forEach(function (txt, si) {
@@ -125,11 +125,12 @@ app.decktheme = (function () {
     }; }
 
 
-    function themeIdent () { var numsteps = 11; return {
+    function themeIdent () { var numsteps = 12; return {
         group: {id: "gTD"},
         transmult: numsteps,
         display: function (transtime) {
             var sv, f = {g: "gTD", x: 68, y: 26, y2: 52, y3: 78};
+            hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
             hfs.fadeGroup(sv, "gMB", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
@@ -149,15 +150,21 @@ app.decktheme = (function () {
             f.x = 72;
             hfs.showText(sv, "tname", f.g, "Theme Name", {x: f.x, y: f.y});
             sv = hfs.step(6); //-------------------------------
-            hfs.showText(sv, "pdesc", f.g, "Theme description",
+            hfs.showText(sv, "tdesc", f.g, "Description",
                          {x: f.x, y: f.y2, fs: "14px", fw: "normal"});
-            sv = hfs.step(7); //-------------------------------
+            hfs.showText(sv, "tsite", f.g, ", site,",
+                         {x: 148, y: f.y2, fs: "14px", fw: "normal"});
+            hfs.showText(sv, "tkeys", f.g, "custom keywords",
+                         {x: f.x, y: 68, fs: "14px", fw: "normal"});
+            sv = hfs.step(8); //-------------------------------
+            hfs.fadeElement(sv, "tsite", 0.0);
+            hfs.fadeElement(sv, "tkeys", 0.0);
             hfs.showText(sv, "pall", f.g, "All themes have a",
                          {x: 30, y: 98});
             hfs.showText(sv, "pprm", f.g, "permalink",
                          //italic or oblique renders jerkily in Mac FF 49.02
                          {x: 175, y: 98, fe: "italic"});
-            sv = hfs.step(9); //-------------------------------
+            sv = hfs.step(10); //-------------------------------
             hfs.showText(sv, "phash", f.g, "and optional #hashtag",
                          {x: 30, y: 121});
         },
@@ -221,6 +228,7 @@ app.decktheme = (function () {
             var sv;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
+            hfs.fadeElement(sv, "te", 0.0);
             hfs.fadeGroup(sv, "gTT", 0.0);
             hfs.fadeElement(sv, "pall", 1.0);
             hfs.fadeElement(sv, "pprm", 1.0);
