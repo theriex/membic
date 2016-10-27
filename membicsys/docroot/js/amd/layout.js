@@ -65,7 +65,7 @@ app.layout = (function () {
     },
 
 
-    displayDocContent = function (url, html) {
+    displayDocContent = function (url, html, overlay) {
         var idx, bodystart = "<body>";
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
@@ -86,7 +86,13 @@ app.layout = (function () {
         //title overrides
         if(url === "About" || url === "Howto" || url === "Themepage") {
             url = ""; }
-        jt.out("contentdiv", html);
+        //display content
+        if(overlay) {
+            html = app.layout.dlgwrapHTML(url, html);
+            //openDialog deals with the y scroll offset as needed.
+            app.layout.openDialog({x: 20, y: 40}, html); }
+        else {
+            jt.out("contentdiv", html); }
         app.layout.crumbify();
     },
 
@@ -365,20 +371,23 @@ return {
     },
 
 
-    displayDoc: function (url) {
+    displayDoc: function (url, overlay) {
         var html = "Fetching " + url + " ...";
         url = url || "docs/about.html";
-        jt.out("contentdiv", html);
-        jt.out("headingdivcontent", "");  //remove the types filter display
+        if(overlay) {
+            app.layout.openDialog(null, html); }
+        else {
+            jt.out("contentdiv", html);
+            jt.out("headingdivcontent", ""); } //remove the types filter display
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
         url += jt.ts("?cb=", "day");
         jt.request("GET", url, null,
                    function (resp) {
-                       displayDocContent(url, resp);
+                       displayDocContent(url, resp, overlay);
                        setTimeout(app.layout.runSlideDeck, 50); },
                    function (ignore /*code*/, errtxt) {
-                       displayDocContent(url, errtxt); },
+                       displayDocContent(url, errtxt, overlay); },
                    jt.semaphore("layout.displayDoc"));
     },
 
