@@ -312,6 +312,10 @@ return {
             attrs["font-weight"] = attrs.fw || attrs["font-weight"] || "bold";
             attrs["font-style"] = attrs.fe || attrs["font-style"] || "normal";
             attrs["text-anchor"] = attrs.ta || attrs["text-anchor"] || "start";
+            if(typeof attrs.opa === "number") {
+                attrs.opacity = attrs.opa; }
+            if(typeof attrs.opacity !== "number") {
+                attrs.opacity = 1.0; }
             if(elem.empty()) {
                 elem = ds.gs[grpname].append("text")
                     .attr({"id": id, 
@@ -326,8 +330,8 @@ return {
                             "text-anchor": attrs["text-anchor"]})
                     .text(str); }
             elem.transition().delay(timing.delay).duration(timing.duration)
-                .attr("fill-opacity", attrs.opacity || 1.0)
-                .attr("opacity", attrs.opacity || 1.0);
+                .attr("fill-opacity", attrs.opacity)
+                .attr("opacity", attrs.opacity);
             return elem;
         },
 

@@ -82,6 +82,27 @@ app.deckmembic = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
+    function titleSplash () { var numsteps = 2; return {
+        group: {id: "gTS"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, f = {g: "gTS"};
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1); //-------------------------------
+            hfs.fadeInitGroup(sv, f.g, 1.0);
+            hfs.showText(sv, "whatit", f.g, "What's a Membic?", 
+                         {x: 32, y: line3y, fs: "24px"});
+        },
+        undo: function (transtime) {
+            var sv;
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1);
+            hfs.fadeGroup(sv, "gTS", 0.0);
+        }
+    }; }
+            
+
+
     function linkComponents () { var numsteps = 10; return {
         group: {id: "gLC"},
         transmult: numsteps,
@@ -91,6 +112,7 @@ app.deckmembic = (function () {
             ic = {w: 20, x: leftx + 104, y2: 26, y3: 52, y4: 78};
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gTS", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "lcurl", f.g, "URL", 
                          {x: leftx + 30, y: line3y}); 
@@ -144,6 +166,7 @@ app.deckmembic = (function () {
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
             hfs.fadeGroup(sv, "gLC", 0.0);
+            hfs.fadeGroup(sv, "gTS", 1.0);
         }
     }; }
             
@@ -187,8 +210,7 @@ app.deckmembic = (function () {
             drawKeywords(sv, f.g);
             sv = hfs.step(12); //-------------------------------
             hfs.showText(sv, "whymem", f.g, "Why is this memorable?", 
-                         {x: 100, y: 72, 
-                          "font-style": "italic"});
+                         {x: 100, y: 72, fs: "14px", fe: "italic"});
         },
         undo: function (transtime) {
             var sv;
@@ -204,7 +226,7 @@ app.deckmembic = (function () {
     }; }
 
 
-    function makeAMembic () { var numsteps = 3; return {
+    function makeAMembic () { var numsteps = 6; return {
         group: {id: "gMM"},
         transmult: numsteps,
         display: function (transtime) {
@@ -240,6 +262,7 @@ app.deckmembic = (function () {
         ds = d3ckitds;
         hfs = d3ckit.slideHelperFunctions();
         ds.deck = [
+            titleSplash(),
             linkComponents(),
             membicComponents(),
             makeAMembic()
@@ -253,9 +276,6 @@ app.deckmembic = (function () {
 return {
 
     run: function (autoplay) {
-        if(window.d3 === undefined || d3ckit === undefined) {
-            return setTimeout(function () {
-                app.deckmembic.run(autoplay); }, 300); }
         ds = d3ckit.displaySettings();
         initSlides(ds);
         ds.normTransTime = 1000;

@@ -21,15 +21,16 @@ app.deckdisco = (function () {
         group: {id: "gMC"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, f = {g: "gMC", x: 26, y: 26, y2: 52};
+            var sv, f = {g: "gMC", x: 26, y: 26, y2: 52}, bb;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "ct1", f.g, "Discover themes", 
                          {x: f.x, y: f.y}); 
             sv = hfs.step(2); //-------------------------------
+            bb = d3.select("#ct1").node().getBBox();
             hfs.showText(sv, "ct2", f.g, ", and people,", 
-                         {x: 159, y: f.y}); 
+                         {x: bb.x + bb.width, y: f.y}); 
             sv = hfs.step(3); //-------------------------------
             hfs.showText(sv, "ct3", f.g, "in the membic community", 
                          {x: f.x, y: f.y2});
@@ -236,9 +237,9 @@ app.deckdisco = (function () {
                             {x: 137, y: 29, w: 20,
                              href: "img/TypeArticle50.png"});
             hfs.showText(sv, "art", f.g, "What's the most informative", 
-                         {x: 40, y: 70});
+                         {x: 35, y: 70});
             hfs.showText(sv, "art2", f.g, "article you've read in the", 
-                         {x: 54, y: 90});
+                         {x: 51, y: 90});
             hfs.showText(sv, "art3", f.g, "past two weeks?", 
                          {x: 83, y: 110});
         },
@@ -272,9 +273,6 @@ app.deckdisco = (function () {
 return {
 
     run: function (autoplay) {
-        if(window.d3 === undefined || d3ckit === undefined) {
-            return setTimeout(function () {
-                app.deckdisco.run(autoplay); }, 300); }
         ds = d3ckit.displaySettings();
         initSlides(ds);
         ds.normTransTime = 1000;

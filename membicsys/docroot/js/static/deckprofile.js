@@ -24,20 +24,22 @@ app.deckprofile = (function () {
         group: {id: "gPI"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, f = {g: "gPI", x: 68}, ta;
+            var sv, f = {g: "gPI", x: 68}, bb, ta;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "ptpic", f.g, "Profile picture", 
                          {x: f.x, y: namey}); 
             sv = hfs.step(2); //-------------------------------
+            bb = d3.select("#ptpic").node().getBBox();
             hfs.showText(sv, "ptico", f.g, ", icon,", 
-                         {x: 183, y: namey}); 
+                         {x: bb.x + bb.width, y: namey}); 
             sv = hfs.step(3); //-------------------------------
             hfs.showText(sv, "ptrep", f.g, "representative", 
                          {x: f.x, y: line2y}); 
+            bb = d3.select("#ptrep").node().getBBox();
             hfs.showText(sv, "ptimg", f.g, "image", 
-                         {x: 190, y: line2y}); 
+                         {x: bb.x + bb.width + 6, y: line2y}); 
             sv = hfs.step(4); //-------------------------------
             hfs.transElement(sv, "ptpic", {tl: "-68,0", opa: 0.0});
             hfs.transElement(sv, "ptico", {tl: "-183,0", opa: 0.0});
@@ -77,9 +79,9 @@ app.deckprofile = (function () {
         transmult: numsteps,
         display: function (transtime) {
             var sv, f = {g: "gPT", x: 20, y: 84, tw: 40, op: 0.4},
-                tcs = {x:  20, y: 128, "text-anchor": "start"},
-                tcm = {x: 150, y: 128, "text-anchor": "middle"},
-                tce = {x: 238, y: 128, "text-anchor": "end"},
+                tcs = {x:  20, y: 128, fw: "normal", ta: "start"},
+                tcm = {x: 150, y: 128, fw: "normal", ta: "middle"},
+                tce = {x: 238, y: 128, fw: "normal", ta: "end"},
                 tabs = [{gid: "tablatest", img: "img/tablatest.png",
                          ti: "tl", txt: "Membics you've made recently"},
                         {gid: "tabtop", img: "img/top.png",
@@ -139,9 +141,6 @@ app.deckprofile = (function () {
 return {
 
     run: function (autoplay) {
-        if(window.d3 === undefined || d3ckit === undefined) {
-            return setTimeout(function () {
-                app.deckprofile.run(autoplay); }, 300); }
         ds = d3ckit.displaySettings();
         initSlides(ds);
         ds.normTransTime = 1000;

@@ -50,6 +50,14 @@ app.layout = (function () {
     },
 
 
+    updateDeckIndexByName = function (deckname) {
+        if(slidedecks) {
+            slidedecks.names.forEach(function (name, idx) {
+                if(name === deckname) {
+                    slidedecks.idx = idx + 1; } }); }
+    },
+
+
     nextSlideDeckName = function () {
         if(slidedecks.idx >= 0 && slidedecks.idx < slidedecks.names.length) {
             slidedecks.idx += 1;
@@ -137,6 +145,23 @@ app.layout = (function () {
         var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = String(app.winw) + "px";
         mdiv.style.height = String(app.winh) + "px";
+    },
+
+
+    colorDeckLinkSpans = function (deckname, color) {
+        var span = jt.byId(deckname + "span");
+        if(span) {
+            span.style.color = color; }
+        span = jt.byId(deckname + "slidesspan");
+        if(span) {
+            span.style.color = color; }
+    },
+
+
+    ungrayKnownLinks = function () {
+        if(slidedecks) {
+            slidedecks.names.forEach(function (dn) {
+                colorDeckLinkSpans(dn, "#111111"); }); }
     };
 
 
@@ -240,11 +265,11 @@ return {
 
 
     runSlideDeck: function (deckname) {
-        //load and run the specified slide deck.  Gray out the span
         var href, js;
         deckname = deckname || nextSlideDeckName();
         if(!deckname) {
             return jt.log("runSlideDeck: no deckname"); }
+        updateDeckIndexByName(deckname);
         if(jt.byId("d3ckitdiv")) { //have display space for slides
             jt.out("d3ckitdiv", "");  //nuke anything previously running
             if(!app[deckname]) {  //slides module not already loaded
@@ -269,8 +294,15 @@ return {
                                       app.layout.runSlideDeck(deckname); },
                                   jt.ts("?cb=", "minute")); }
             else { //app[deckname] module already loaded
+                if(window.d3 === undefined || d3ckit === undefined) {
+                    return setTimeout(function () {
+                        app.layout.runSlideDeck(deckname); }, 300); }
                 jt.log("runSlideDeck " + deckname);
                 jt.out("d3ckitdiv", "");  //clear any previous cruft
+                d3ckit.displaySettings().endfunc = app.layout.runSlideDeck;
+                d3ckit.displaySettings().paused = false;
+                ungrayKnownLinks();
+                colorDeckLinkSpans(deckname, "gray");
                 app[deckname].run(true); } }
     },
 

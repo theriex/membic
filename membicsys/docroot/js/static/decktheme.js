@@ -27,7 +27,7 @@ app.decktheme = (function () {
             sv = hfs.step(1); //-------------------------------
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "pt1", f.g, "Themes collect related membics", 
-                         {x: f.x, y: tty}); 
+                         {x: f.x - 10, y: tty}); 
             hfs.showGraphic(sv, "t1g", f.g,
                             {x: 126, y: 44, w: 30, href: "img/microsite.png"});
             sv = hfs.step(3); //-------------------------------
@@ -72,7 +72,7 @@ app.decktheme = (function () {
     }; }
 
 
-    function membership () { var numsteps = 14; return {
+    function membership () { var numsteps = 16; return {
         group: {id: "gMB"},
         transmult: numsteps,
         display: function (transtime) {
@@ -95,24 +95,33 @@ app.decktheme = (function () {
             sv = hfs.step(1); //-------------------------------
             hfs.fadeGroup(sv, "gPT", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
-            roles.forEach(function (role, idx) {
+            hfs.showText(sv, "mlev", f.g, "Membership Levels",
+                         {x: f.x, y: f.y});
+            sv = hfs.step(2); //-------------------------------
+            hfs.transElement(sv, "mlev", {opa: 0.0});
+            roles.forEach(function (role) {
                 hfs.showText(sv, role.id, f.g, role.title,
-                             {x: f.x, y: f.y + (idx * f.yo), 
-                              opacity: f.op}); });
-            //steps 2, 5, 10..
+                             {x: f.x, y: f.y, opa: f.op}); });
+            sv = hfs.step(3); //-------------------------------
+            roles.forEach(function (role, idx) {
+                hfs.transElement(sv, role.id, {tl: "0," + (idx * f.yo),
+                                               opa: f.op}); });
+            //steps 4, 7, 10, 13
             roles.forEach(function (role, idx) {
                 var pr;
-                sv = hfs.step(2 + (3 * idx));
+                sv = hfs.step(4 + (3 * idx));
                 if(idx > 0) {
                     pr = roles[idx - 1];
-                    hfs.transElement(sv, pr.id, {opa: f.op});
+                    hfs.transElement(sv, pr.id, {tl: "0," + ((idx - 1) * f.yo),
+                                                 opa: f.op});
                     pr.tls.forEach(function (ignore, si) {
                         hfs.transElement(sv, pr.tidb + si, {opa: 0.0}); }); }
-                hfs.transElement(sv, role.id, {opa: 1.0});
+                hfs.transElement(sv, role.id, {tl: "0," + (idx * f.yo),
+                                               opa: 1.0});
                 role.tls.forEach(function (txt, si) {
                     hfs.showText(sv, role.tidb + si, f.g, txt,
                                  {x: f.x2, y: f.y + (si * f.yo),
-                                  opacity: 1.0, "font-weight": "normal"}); }); 
+                                  opacity: 1.0, fw: "normal"}); }); 
             });
         },
         undo: function (transtime) {
@@ -129,7 +138,7 @@ app.decktheme = (function () {
         group: {id: "gTD"},
         transmult: numsteps,
         display: function (transtime) {
-            var sv, f = {g: "gTD", x: 68, y: 26, y2: 52, y3: 78};
+            var sv, f = {g: "gTD", x: 68, y: 26, y2: 52, y3: 78}, bb;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
             hfs.fadeGroup(sv, "gMB", 0.0);
@@ -152,8 +161,10 @@ app.decktheme = (function () {
             sv = hfs.step(6); //-------------------------------
             hfs.showText(sv, "tdesc", f.g, "Description",
                          {x: f.x, y: f.y2, fs: "14px", fw: "normal"});
+            bb = d3.select("#tdesc").node().getBBox();
             hfs.showText(sv, "tsite", f.g, ", site,",
-                         {x: 148, y: f.y2, fs: "14px", fw: "normal"});
+                         {x: bb.x + bb.width, y: f.y2, 
+                          fs: "14px", fw: "normal"});
             hfs.showText(sv, "tkeys", f.g, "custom keywords",
                          {x: f.x, y: 68, fs: "14px", fw: "normal"});
             sv = hfs.step(8); //-------------------------------
@@ -161,9 +172,11 @@ app.decktheme = (function () {
             hfs.fadeElement(sv, "tkeys", 0.0);
             hfs.showText(sv, "pall", f.g, "All themes have a",
                          {x: 30, y: 98});
+            bb = d3.select("#pall").node().getBBox();
             hfs.showText(sv, "pprm", f.g, "permalink",
-                         //italic or oblique renders jerkily in Mac FF 49.02
-                         {x: 175, y: 98, fe: "italic"});
+                         //italic and oblique render jerkily in Mac FF 49.02
+                         //but still want the emphasis
+                         {x: bb.x + bb.width + 6, y: 98, fe: "italic"});
             sv = hfs.step(10); //-------------------------------
             hfs.showText(sv, "phash", f.g, "and optional #hashtag",
                          {x: 30, y: 121});
@@ -179,7 +192,7 @@ app.decktheme = (function () {
 
 
 
-    function themeTabs () { var numsteps = 14; return {
+    function themeTabs () { var numsteps = 20; return {
         group: {id: "gTT"},
         transmult: numsteps,
         display: function (transtime) {
@@ -196,7 +209,7 @@ app.decktheme = (function () {
                         {gid: "tabstats", img: "img/stats.png",
                          ti: "tn", txt: "Visual traffic analysis"},
                         {gid: "tabrss", img: "img/rssicon.png",
-                         ti: "tr", txt: "Newsfeed subscription (RSS)"},
+                         ti: "tr", txt: "RSS Newsfeed"},
                         {gid: "tabembed", img: "img/embed.png",
                          ti: "te", txt: "Embed in your website"}];
             hfs.stepinit(transtime, numsteps);
@@ -255,9 +268,6 @@ app.decktheme = (function () {
 return {
 
     run: function (autoplay) {
-        if(window.d3 === undefined || d3ckit === undefined) {
-            return setTimeout(function () {
-                app.decktheme.run(autoplay); }, 300); }
         ds = d3ckit.displaySettings();
         initSlides(ds);
         ds.normTransTime = 1000;
