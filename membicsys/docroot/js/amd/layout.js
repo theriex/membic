@@ -23,8 +23,12 @@ app.layout = (function () {
 
     replaceDocComments = function (html) {
         var dst, txt;
+        //complaints from jslint about escaping the space character here,
+        //then if you get rid of it the complaint is to use \s instead.
+        //What I want is to match exactly the one space, since this is
+        //a known marker.  Generalizing doesn't seem good.  Leaving it.
         html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
-            " or <a href=\"" + app.suppemail + "\">by email</a>.");
+            " or <a href=\"mailto:" + app.suppemail + "\">by email</a>.");
         dst = app.pcd.getDisplayState();
         if(dst && dst.type === "coop" && dst.obj) {
             if(dst.obj.hashtag) {
@@ -41,12 +45,23 @@ app.layout = (function () {
 
     noteDocSlideDecks = function (html) {
         var calls = html.split("app.layout.runSlideDeck");
-        slidedecks = { idx: -1, names: [] };
+        slidedecks = { idx: -1, names: []};
         calls.forEach(function (call) {
             if(call.startsWith("('")) {
                 call = call.slice(2);
                 slidedecks.names.push(call.slice(0, call.indexOf("'")));
                 slidedecks.idx = 0; } });
+    },
+
+
+    noteSlideDeckTextBlocks = function () {
+        slidedecks.textblocks = [];
+        slidedecks.names.forEach(function (name) {
+            var html = "", div = jt.byId(name + "textdiv");
+            if(div) {
+                html = div.innerHTML;
+                div.style.display = "none"; }
+            slidedecks.textblocks.push(html); });
     },
 
 
@@ -93,6 +108,7 @@ app.layout = (function () {
             app.layout.openDialog({x: 20, y: 40}, html); }
         else {
             jt.out("contentdiv", html); }
+        noteSlideDeckTextBlocks();
         app.layout.crumbify();
     },
 
@@ -154,13 +170,15 @@ app.layout = (function () {
     },
 
 
-    colorDeckLinkSpans = function (deckname, color) {
-        var span = jt.byId(deckname + "span");
-        if(span) {
-            span.style.color = color; }
-        span = jt.byId(deckname + "slidesspan");
-        if(span) {
-            span.style.color = color; }
+    colorDeckLinkSpans = function (deckname, color, suffixes) {
+        if(!suffixes) {
+            suffixes = ["span", "slidesspan", "textspan"]; }
+        if(typeof suffixes === "string") {
+            suffixes = [suffixes]; }
+        suffixes.forEach(function (suffix) {
+            var span = jt.byId(deckname + suffix);
+            if(span) {
+                span.style.color = color; } });
     },
 
 
@@ -308,13 +326,25 @@ return {
                 d3ckit.displaySettings().endfunc = app.layout.runSlideDeck;
                 d3ckit.displaySettings().paused = false;
                 ungrayKnownLinks();
-                colorDeckLinkSpans(deckname, "gray");
+                colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
                 app[deckname].run(true); } }
     },
 
 
-    deckText: function () {
-        //display the text version of the slideshow, stopping it if needed
+    deckText: function (deckname) {
+        var curridx = -1, html;
+        if(!deckname) {
+            return jt.log("deckText: no deckname"); }
+        updateDeckIndexByName(deckname);
+        curridx = slidedecks.idx - 1;
+        if(jt.byId("d3ckitdiv")) {
+            jt.out("d3ckitdiv", "");
+            ungrayKnownLinks();
+            colorDeckLinkSpans(deckname, "gray", "textspan");
+            if(curridx >= 0 && curridx < slidedecks.names.length) {
+                html = ["div", {cla: "decktextdiv"},
+                        slidedecks.textblocks[curridx]];
+                jt.out("d3ckitdiv", jt.tac2html(html)); } }
     },
 
 
@@ -372,8 +402,9 @@ return {
 
 
     displayDoc: function (url, overlay) {
-        var html = "Fetching " + url + " ...";
+        var html;
         url = url || "docs/about.html";
+        html = "Fetching " + url + " ...";
         if(overlay) {
             app.layout.openDialog(null, html); }
         else {

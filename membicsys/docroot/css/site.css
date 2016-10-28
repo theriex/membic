@@ -396,6 +396,14 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   list-style-image: url('../img/arrow12right.png'); }
 .aboutstatementsdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
 .slidestextspan { font-size:small; }
+.decktextdiv { background-image: url('../img/bleachscrub.png');
+  padding:5px; margin:10px; height:213px; overflow:scroll; 
+  font-size:medium; }
+.decktextdiv ol { margin:0px; padding:0px 0px 0px 20px; }
+.decktextdiv ol li { margin:0px; padding:2px 2px 0px 0px; }
+.decktextdiv ul { margin:0px; padding:0px 0px 0px 20px; }
+.decktextdiv ul li { margin:0px; padding:5px 2px 0px 5px; }
+.decktextdiv p { margin:0px; padding:10px 0px 0px 0px; }
 .aboutfeaturespan { font-weight:bold; }
 #aboutfeaturesdiv, #aboutfaqdiv {}
 .aboutdetaildiv { display:none; padding:5px 0px; }

@@ -46,6 +46,16 @@ app.deckmembic = (function () {
     }
 
 
+    function fadeStars (timing) {
+        hfs.fadeElement(timing, "goldcircle0", 0.0, true);
+        hfs.fadeElement(timing, "goldcircle1", 0.0, true);
+        hfs.fadeElement(timing, "goldcircle2", 0.0, true);
+        hfs.fadeElement(timing, "goldcircle3", 0.0, true);
+        hfs.fadeElement(timing, "goldcircle4", 0.0, true);
+        hfs.fadeElement(timing, "starsimage", 0.0, true);
+    }
+
+
     function drawKeywords (timing, grpname) {
         var kx = 119, ky = 96, cbh = 10, g, 
             cbx = kx - 17, cby = ky - cbh, cbd, elem;
@@ -75,6 +85,13 @@ app.deckmembic = (function () {
         elem.transition().delay(timing.delay + cbd).duration(cbd)
             .attr("fill-opacity", 1.0)
             .attr("stroke-opacity", 1.0);
+    }
+
+
+    function fadeKeywords (timing) {
+        hfs.fadeElement(timing, "cbcheckmark", 0.0, true);
+        hfs.fadeElement(timing, "cbrect", 0.0, true);
+        hfs.fadeElement(timing, "cbkeywords", 0.0, true);
     }
 
 
@@ -166,6 +183,7 @@ app.deckmembic = (function () {
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
             hfs.fadeGroup(sv, "gLC", 0.0);
+            hfs.transElement(sv, ["lcunique", "lcid", "lcfields"], {opa: 0.0});
             hfs.fadeGroup(sv, "gTS", 1.0);
         }
     }; }
@@ -191,14 +209,19 @@ app.deckmembic = (function () {
                                                stropa: 0.8});
             sv = hfs.step(3); //-------------------------------
             hfs.showText(sv, "strel", f.g, "Relevance",  {x: 100, y: 46});
+            hfs.transElement(sv, "strel", {opa: 1.0, tl: "0,0"});
             sv = hfs.step(4); //-------------------------------
             hfs.showText(sv, "stimp", f.g, "Importance", {x: 100, y: 66});
+            hfs.transElement(sv, "stimp", {opa: 1.0, tl: "0,0"});
             sv = hfs.step(5); //-------------------------------
             hfs.showText(sv, "stqua", f.g, "Quality",    {x: 100, y: 86});
+            hfs.transElement(sv, "stqua", {opa: 1.0, tl: "0,0"});
             sv = hfs.step(6); //-------------------------------
             hfs.showText(sv, "stpri", f.g, "Primacy",    {x: 100, y: 106});
+            hfs.transElement(sv, "stpri", {opa: 1.0, tl: "0,0"});
             sv = hfs.step(7); //-------------------------------
             hfs.showText(sv, "staff", f.g, "Affinity",   {x: 100, y: 126});
+            hfs.transElement(sv, "staff", {opa: 1.0, tl: "0,0"});
             sv = hfs.step(8); //-------------------------------
             hfs.transElement(sv, "strel", {opa: 0.0, tl: "0,0"});
             hfs.transElement(sv, "stimp", {opa: 0.0, tl: "0,-20"});
@@ -222,6 +245,9 @@ app.deckmembic = (function () {
             hfs.transElement(sv, "lcunique");
             hfs.transElement(sv, "lcid");
             hfs.transElement(sv, "lcfields");
+            fadeStars(sv);
+            fadeKeywords(sv);
+            hfs.fadeElement(sv, "whymem", 0.0);
         }
     }; }
 

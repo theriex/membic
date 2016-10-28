@@ -93,7 +93,8 @@ app.deckprofile = (function () {
                         {gid: "tabendo", img: "img/endorse.png",
                          ti: "te", txt: "Profiles you endorse"},
                         {gid: "tabtheme", img: "img/tabctms.png",
-                         ti: "tc", txt: "Themes you contribute to"}];
+                         ti: "tc", txt: "Themes you contribute to"},
+                        {gid: null}];
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
             hfs.fadeInitGroup(sv, f.g, 1.0);
@@ -113,8 +114,9 @@ app.deckprofile = (function () {
                     pt = tabs[idx - 1];
                     hfs.transElement(sv, pt.gid, {opa: f.op});
                     hfs.transElement(sv, pt.ti, {opa: 0.0}); }
-                hfs.transElement(sv, tab.gid, {opa: 1.0});
-                hfs.showText(sv, tab.ti, f.g, tab.txt, tc); });
+                if(tab.gid) {
+                    hfs.transElement(sv, tab.gid, {opa: 1.0});
+                    hfs.showText(sv, tab.ti, f.g, tab.txt, tc); } });
         },
         undo: function (transtime) {
             var sv;
