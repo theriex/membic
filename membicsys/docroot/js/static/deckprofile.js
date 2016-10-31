@@ -144,6 +144,7 @@ return {
 
     run: function (autoplay) {
         ds = d3ckit.displaySettings();
+        ds.screencolor = "#f9fffc";
         initSlides(ds);
         ds.normTransTime = 1000;
         if(autoplay) {

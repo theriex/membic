@@ -303,6 +303,7 @@ return {
 
     run: function (autoplay) {
         ds = d3ckit.displaySettings();
+        ds.screencolor = "#f1f2ff";
         initSlides(ds);
         ds.normTransTime = 1000;
         if(autoplay) {

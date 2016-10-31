@@ -16,7 +16,7 @@ d3ckit = (function () {
               margin: {top: 5, right: 5, bottom: 5, left: 5},
               normTransTime: 800,      //basic 2 step display and read: 1600
               fastTransTime: 100,      //essentially instant, but sequenceable
-              moviescreen: true, textcolor: "black",
+              moviescreen: true, screencolor: "white", textcolor: "black",
               autoplay: false, paused: false, afterpausing: null,
               //working variables
               didx: -1, svgid: null, gs: {}, opas: {},
@@ -660,7 +660,7 @@ return {
             time = ds.normTransTime; }
         ds.globg.append("rect")
             .attr({"x": 0, "y": 0, "width": ds.dw, "height": 24})
-            .style({"fill": "white", "opacity": 0.4})
+            .style({"fill": ds.screencolor, "opacity": 0.4})
             .transition().duration(time).ease("exp")
             .attr("height", ds.dh);
         ds.cg = ds.globg.append("g");  //general content group
