@@ -469,6 +469,8 @@ app.login = (function () {
         //handle specific context requests
         if(params.view === "profsetpic") {
             app.history.checkpoint({ view: "profsetpic" }); }
+        else if(params.view === "about") {
+            app.history.checkpoint({ view: "about" }); }
         else if(params.view && (params.coopid || params.hashtag || 
                                 params.penid || params.profid)) {
             params.coopid = params.coopid || app.vanityStartId;
