@@ -17,7 +17,7 @@ d3ckit = (function () {
               normTransTime: 800,      //basic 2 step display and read: 1600
               fastTransTime: 100,      //essentially instant, but sequenceable
               moviescreen: true, textcolor: "black",
-              autoplay: false, paused: false,
+              autoplay: false, paused: false, afterpausing: null,
               //working variables
               didx: -1, svgid: null, gs: {}, opas: {},
               cc: {heightMultiple: 0.08, widthMultiple: 0.6,
@@ -539,6 +539,11 @@ return {
             return; }  //do nothing until pause settles
         if(ds.didx <= 0) {
             return; }
+        if(ds.paused !== "paused") {
+            ds.paused = "pausing";
+            ds.afterpausing = d3ckit.previous;
+            reflectPlayPause();
+            return; }
         slide = ds.deck[ds.didx];
         slide.transmult = slide.transmult || 1;
         if(slide.undo) {
@@ -564,15 +569,19 @@ return {
 
 
     next: function () {
-        var slide, gd, pg, vg;
+        var slide, gd, pg, vg, pf;
+        if(ds.autoplay && ds.paused) {  //either pausing or paused
+            ds.paused = "paused";  //end the pausing state since slide finished
+            reflectPlayPause();
+            if(ds.afterpausing) {
+                pf = ds.afterpausing;
+                ds.afterpausing = null;
+                return pf(); }
+            return; }  //don't even try to play next if paused
         if(ds.didx >= ds.deck.length - 1) {
             if(ds.endfunc) {
                 return ds.endfunc(); }
             return; }  //already displayed last slide
-        if(ds.autoplay && ds.paused) {  //either pausing or paused
-            ds.paused = "paused";  //end the pausing state since slide finished
-            reflectPlayPause();
-            return; }  //don't play next if paused
         ds.didx += 1;
         slide = ds.deck[ds.didx];
         if(slide.group) {
