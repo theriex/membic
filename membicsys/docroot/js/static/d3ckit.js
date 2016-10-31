@@ -19,7 +19,7 @@ d3ckit = (function () {
               moviescreen: true, textcolor: "black",
               autoplay: false, paused: false,
               //working variables
-              didx: -1, svgid: null, gs: {}, 
+              didx: -1, svgid: null, gs: {}, opas: {},
               cc: {heightMultiple: 0.08, widthMultiple: 0.6,
                    iconPadMultiple: 0.6,
                    controls: {restart: true, rewind: true, previous: true,
@@ -45,11 +45,26 @@ d3ckit = (function () {
     }
 
 
+    function appendLine (spec) {
+        spec.y = ds.cc.y + Math.round(0.5 * ds.cc.h);
+        spec.w = Math.round(0.9 * ds.cc.icow);
+        spec.h = Math.round(0.1 * ds.cc.h);
+        spec.fill = spec.fill || ds.cc.ctrlcolor;
+        if(typeof spec.opa !== "number") {
+            spec.opa =  0.4; }
+        spec.g.append("rect")
+            .attr({"x": spec.x, "y": spec.y, "width": spec.w, "height": spec.h})
+            .style({"fill": spec.fill, "fill-opacity": spec.opa,
+                    "stroke": spec.fill});
+    }
+
+
     function appendBar (spec) {
         spec.h = spec.h || ds.cc.h;
         spec.y = spec.y || ds.cc.y;
         spec.fill = spec.fill || ds.cc.ctrlcolor;
-        spec.opa = spec.opa || 0.4;
+        if(typeof spec.opa !== "number") {
+            spec.opa =  0.4; }
         spec.g.append("rect")
             .attr({"x": spec.x, "y": spec.y, "width": spec.w, "height": spec.h})
             .style({"fill": spec.fill, "fill-opacity": spec.opa,
@@ -88,13 +103,24 @@ d3ckit = (function () {
     }
 
 
+    function fadeOpaControls (ctrls, opa) {
+        var oos = ds.opas;
+        if(!ctrls) {
+            ctrls = Object.keys(oos); }
+        ctrls.forEach(function (key) {
+            if(oos[key]) {
+                oos[key].g.attr("opacity", opa); } });
+    }
+
+
     function reflectPlayPause () {
-        if(ds.autoplay && !ds.paused) {
-            ds.cc.play.attr("opacity", 0.0);
-            ds.cc.pause.attr("opacity", 1.0); }
-        else {
-            ds.cc.play.attr("opacity", 1.0);
-            ds.cc.pause.attr("opacity", 0.0); }
+        fadeOpaControls(null, 0.0);  //hide all pause sensitive controls
+        if(ds.paused === "pausing") {
+            fadeOpaControls(["rwdis", "prevdis", "ppdis", "fwdis"], 1.0); }
+        else if(ds.paused === "paused" || !ds.autoplay) {
+            fadeOpaControls(["rwact", "prevact", "play", "fwact"], 1.0); }
+        else {  //ds.autoplay and not pausing in any way
+            fadeOpaControls(["rwact", "prevact", "pause", "fwact"], 1.0); }
     }
 
 
@@ -126,42 +152,62 @@ d3ckit = (function () {
             .attr({"x": cc.x, "y": cc.y, "width": cc.w, "height": cc.h})
             .style({"fill": "white", "fill-opacity": 0.3});
         cc.bw = Math.round(0.15 * cc.icow);
-        if(cc.controls.restart) {
+        if(cc.controls.restart) {  //always active
             appendGroup("restart", "Restart");
             appendBar({g: cc.restart, w: cc.bw, x: cc.bw});
             appendTriangle({g: cc.restart, orient: "left", 
                             x: 2 * cc.bw});
             oc += 1; }
-        if(cc.controls.rewind) {
+        if(cc.controls.rewind) {  //"rewind" control disabled while pausing
             appendGroup("rewind", "Rewind");
-            appendTriangle({g: cc.rewind, orient: "left", 
+            cc.rwact = cc.rewind.append("g").attr("opacity", 0.0);
+            appendTriangle({g: cc.rwact, orient: "left", 
                             x: cc.x + (oc * cc.secw)});
-            appendTriangle({g: cc.rewind, orient: "left", 
+            appendTriangle({g: cc.rwact, orient: "left", 
                             x: cc.x + (oc * cc.secw) + cc.mw});
+            ds.opas.rwact = {g: cc.rwact, o: 0.0};
+            cc.rwdis = cc.rewind.append("g").attr("opacity", 0.0);
+            appendLine({g: cc.rwdis, x: cc.x + (oc * cc.secw)});
+            ds.opas.rwdis = {g: cc.rwdis, o: 0.0};
             oc += 1; }
-        if(cc.controls.previous) {
+        if(cc.controls.previous) {  //"previous" control disabled while pausing
             appendGroup("previous", "Previous Slide");
-            appendTriangle({g: cc.previous, orient: "left",
+            cc.prevact = cc.previous.append("g").attr("opacity", 0.0);
+            appendTriangle({g: cc.prevact, orient: "left",
                             x: cc.x + (oc * cc.secw) + cc.qw});
+            ds.opas.prevact = {g: cc.prevact, o: 0.0};
+            cc.prevdis = cc.previous.append("g").attr("opacity", 0.0);
+            appendLine({g: cc.prevdis, x: cc.x + (oc * cc.secw)});
+            ds.opas.prevdis = {g: cc.prevdis, o: 0.0};
             oc += 1; }
-        if(cc.controls.playpause) {
+        if(cc.controls.playpause) {  //"playpause" ctrl disabled while pausing
             appendGroup("playpause", "Play/Pause");
             cc.play = cc.playpause.append("g").attr("opacity", 0.0);
             xb = cc.x + (oc * cc.secw) + cc.padw;
             appendTriangle({g: cc.play, orient: "right",
                             x: xb + cc.qw + cc.bw});
+            ds.opas.play = {g: cc.play, o: 0.0};
             cc.pause = cc.playpause.append("g").attr("opacity", 0.0);
             appendBar({g: cc.pause, w: cc.bw, x: xb - (2 * cc.bw)});
             appendBar({g: cc.pause, w: cc.bw, x: xb, fill: "none", opa: 0.0});
             appendBar({g: cc.pause, w: cc.bw, x: xb + (2 * cc.bw)});
+            ds.opas.pause = {g: cc.pause, o: 0.0};
+            cc.ppdis = cc.playpause.append("g").attr("opacity", 0.0);
+            appendLine({g: cc.ppdis, x: xb - (2 * cc.bw)});
+            ds.opas.ppdis = {g: cc.ppdis, o: 0.0};
             reflectPlayPause();
             oc += 1; }
-        if(cc.controls.forward) {
+        if(cc.controls.forward) {  //"forward" ctrl disabled while pausing
             appendGroup("forward", "Fast Forward");
-            appendTriangle({g: cc.forward, orient: "right",
+            cc.fwact = cc.forward.append("g").attr("opacity", 0.0);
+            appendTriangle({g: cc.fwact, orient: "right",
                             x: cc.x + (oc * cc.secw) + (2 * cc.padw)});
-            appendTriangle({g: cc.forward, orient: "right",
+            appendTriangle({g: cc.fwact, orient: "right",
                             x: cc.x + (oc * cc.secw) + (2 * cc.padw) + cc.mw});
+            ds.opas.fwact = {g: cc.fwact, o: 0.0};
+            cc.fwdis = cc.forward.append("g").attr("opacity", 0.0);
+            appendLine({g: cc.fwdis, x: cc.x + (oc * cc.secw)});
+            ds.opas.fwdis = {g: cc.fwdis, o: 0.0};
             oc += 1; }
         if(cc.controls.exit) {
             appendGroup("exit", "Exit Slideshow");
@@ -470,13 +516,17 @@ return {
         ds.svgid = "d3ckitsvg" + jt.ts();
         ds.didx = -1;
         ds.gs = {};
+        ds.paused = false;
         if(!running) {
             d3ckit.run(); }
     },
 
 
     rewind: function () {
-        var ts = ds.transtime;
+        var ts;
+        if(ds.paused === "pausing") {
+            return; }  //do nothing until pause settles
+        ts = ds.transtime;
         ds.transtime = ds.fastTransTime;
         d3ckit.previous();
         ds.transtime = ts;
@@ -485,6 +535,8 @@ return {
 
     previous: function () {
         var slide;
+        if(ds.paused === "pausing") {
+            return; }  //do nothing until pause settles
         if(ds.didx <= 0) {
             return; }
         slide = ds.deck[ds.didx];
@@ -492,7 +544,7 @@ return {
         if(slide.undo) {
             slide.undo(Math.round(slide.transmult * ds.transtime)); }
         ds.didx -= 1;
-        ds.paused = true;
+        ds.paused = "paused";
         reflectPlayPause();
     },
 
@@ -500,10 +552,14 @@ return {
     playpause: function () {
         if(!ds.autoplay) {
             return d3ckit.next(); }
-        ds.paused = !ds.paused;
-        reflectPlayPause();
-        if(!ds.paused) {
-            return d3ckit.next(); }
+        if(!ds.paused) {  //not paused or pausing
+            ds.paused = "pausing";
+            reflectPlayPause(); }
+        else if(ds.paused === "paused") {
+            ds.paused = false;
+            reflectPlayPause();
+            d3ckit.next(); }
+        //otherwise ds.paused === "pausing" and the click is ignored.
     },
 
 
@@ -513,8 +569,10 @@ return {
             if(ds.endfunc) {
                 return ds.endfunc(); }
             return; }  //already displayed last slide
-        if(ds.autoplay && ds.paused) {
-            return; }  //don't display next when paused
+        if(ds.autoplay && ds.paused) {  //either pausing or paused
+            ds.paused = "paused";  //end the pausing state since slide finished
+            reflectPlayPause();
+            return; }  //don't play next if paused
         ds.didx += 1;
         slide = ds.deck[ds.didx];
         if(slide.group) {
@@ -538,7 +596,10 @@ return {
 
 
     forward: function () {
-        var ts = ds.transtime;
+        var ts;
+        if(ds.paused === "pausing") {
+            return; }  //do nothing until pause settles
+        ts = ds.transtime;
         ds.transtime = ds.fastTransTime;
         d3ckit.playpause();
         ds.transtime = ts;
