@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="description" content="How to display helpful links to resources as part of your website without adding to your website maintenance." />
+  <title>How To Use Membic To Manage Helpful Links On Your Website</title>
+  <link href="../css/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="howtocontentdiv">
+
+<h2>Embedding a Membic Theme</h2>
+
+<p>Presenting helpful links as part of your website connects your site
+with the rest of the world, providing context for visitors and a handy
+way for you to track useful links.  But updating your site every time
+you find something useful can be a chore.  Here's how to manage and present
+helpful links on your website using an embedded membic theme: </p>
+
+<ol>
+
+  <li>Click <img src="img/profile.png" class="hthimg"/> to access
+  your profile.
+
+  <li>Click the themes tab <img src="img/tabctms.png" class="hthimg"/>
+
+  <li>Click the <em>"Create cooperative theme"</em> link at the bottom
+  of the page, then the <em>"Create New Theme"</em> button.  Choose a
+  name that works with your website.  For the description, include
+  your website URL.  If you have a hashtag for identifying all your
+  helpful links on social media fill that in, otherwise leave it
+  blank.  Don't worry, you can edit this information later.  Click
+  the <em>"Create Theme"</em> button.
+
+  <li>Your new theme is created and displayed.  Click the settings
+  icon <img src="img/settings.png" class="hthimg"/> and then click
+  the <em>"Choose Image"</em> button.  Upload a recognizable image
+  like your website logo.
+
+  <li>Click <img src="img/writenew.png" class="hthimg"/> to write your
+  first membic for this theme.  Your new theme will be listed at the
+  bottom with a checkbox next to it.  Check that checkbox and save.
+
+  <li>Now that you are done creating a theme and have at least one
+  membic in it, open the theme settings <img src="img/settings.png"
+  class="hthimg"/> then click the <img src="img/embed.png"
+  class="hthimg"/> <em>"Embed Theme"</em> link.  Copy and paste
+  the <em>"Embed script"</em> contents into the website page where you
+  want the display.
+
+</ol>
+
+<p>That little snippet of script does everything it can to display
+things nicely, but it can be blocked from working.  Here's how to work
+around some of the situations that can happen: </p>
+
+<ul>
+
+<li><a href="#pasto" onclick="app.toggledivdisp('pastodiv');return false;">
+    <span class="detailheadingspan">Site just shows what was pasted</span></a>
+  <div id="pastodiv" class="detailcontentdiv">
+The script snippet needs to be inserted directly into the HTML source.
+Remove what you pasted, switch your editing mode so all the tags
+are visible an try again.  If there is no mode switch, open your
+source in a different text editor.
+  </div>
+
+<li><a href="#nada" onclick="app.toggledivdisp('nadadiv');return false;">
+    <span class="detailheadingspan">Nothing gets displayed</span></a>
+  <div id="nadadiv" class="detailcontentdiv">
+Your site software might not execute script inside a page.  Remove
+what you pasted in, open the <em>"Embed Theme"</em> options and copy
+the <em>"Embed iframe"</em> content instead.  Paste that into your
+site page and replace YOURSITE.COM with your domain (just your domain,
+not your whole website address).
+  </div>
+
+<li><a href="#blocked" onclick="app.toggledivdisp('blockeddiv');return false;">
+    <span class="detailheadingspan">iframe not allowed</span></a>
+  <div id="blockeddiv" class="detailcontentdiv">
+Not being allowed to insert external content into your web page is
+kind of a drag, but you can still give visitors fast access to your
+theme as a standalone microsite.  Insert a link on your page using using the
+<em>"Standalone URL"</em> from the <em>"Embed Theme"</em> options.
+Visitors clicking that link will go directly to your theme without any
+additional wrapper.  You can match the colors to your site palette
+using the <em>"Permalink Page Colors"</em> in the theme settings.
+  </div>
+
+</ul>
+
+<h2>Custom Keywords</h2>
+
+<p>To make your posted links easier to find and more fun to browse,
+consider setting up custom keywords for your membic theme.  The
+keywords turn into search radio buttons that provide quick and
+intuitive filtering of the links you post. </p>
+
+<p>To manage keywords, open the theme settings
+<img src="img/settings.png" class="hthimg"/> then click the
+<img src="img/tag.png" class="hthimg"/> <em>"Theme Keywords"</em>
+link.  There is no limit on the number of keywords, but keeping it to
+less than 8 or so can make it easier work with.  The keywords you make
+available help to educate visitors about the kind of things you post.
+Broader concepts are good, a membic can have several keywords
+associated with it.</p>
+
+
+<h2>Posts From Multiple People</h2>
+
+<p>Your embedded theme shows the pen name image with each post, so
+different people associated with your website can all contribute.  To
+learn more about managing people and content for your theme, see
+<a class="localdocslink" href="HowToManageMembershipForThemeCollaboration.html">How To Manage Membership For Theme Collaboration</a>.
+
+
+
+</div> <!-- howtocontentdiv -->
+
+<div id="returnlinkdiv" style="text-align:center; display:none;">
+  <a href="https://www.membic.com">Return to membic.com</a>
+</div>
+<script>
+    if(window.location.href.indexOf("/docs/") > 0) {
+        document.getElementById('returnlinkdiv').style.display = "block"; }
+</script>
+</body>
+</html>

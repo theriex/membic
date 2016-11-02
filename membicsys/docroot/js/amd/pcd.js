@@ -919,6 +919,9 @@ app.pcd = (function () {
 
     historyCheckpoint = function () {
         var histrec = { view: dst.type, tab: dst.tab };
+        if(dst.type === "coop" && !dst.id) {
+            //don't push a theme history with no id. Can't restore it.
+            return; }
         histrec[dst.type + "id"] = dst.id;
         app.history.checkpoint(histrec);
     },
@@ -2055,6 +2058,9 @@ return {
         displayRetrievalWaitMessage(divid, dtype, id);
         url = "blockfetch?" + app.login.authparams();
         if(dtype === "coop") {
+            if(!id) {
+                jt.log("blockfetch coop requires an id");
+                return callback(null); }
             url += "&ctmid=" + id; }
         else if(dtype === "pen") {
             url += "&penid=" + id;

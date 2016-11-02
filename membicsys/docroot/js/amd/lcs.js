@@ -1,6 +1,6 @@
 /*global app, jt, window */
 
-/*jslint white fudge */
+/*jslint browser, multivar, white, fudge */
 
 //////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, reviews, etc.
@@ -58,9 +58,9 @@ app.lcs = (function () {
     ////////////////////////////////////////
 
     idify = function (id) {
-        if(typeof id === 'object') {
+        if(typeof id === "object") {
             id = jt.instId(id); }
-        if(typeof id === 'number') {
+        if(typeof id === "number") {
             id = String(id); }
         return id;
     };
@@ -98,7 +98,7 @@ return {
             url = "../"; }
         url += cache[type].fetchend + "?" + cache[type].fetchparamf(id) +
             jt.ts("&cb=", "second");
-        jt.call('GET', url, null,
+        jt.call("GET", url, null,
                 function (objs) {
                     if(objs.length > 0) {
                         callback(app.lcs.put(type, objs[0])); }
@@ -113,6 +113,9 @@ return {
 
     tomb: function (type, id, reason) {
         var tombstone, ref;
+        if(!id) {
+            jt.log("lcs.tomb " + type + " id required");
+            return null; }
         tombstone = { status: reason, updtime: new Date() };
         tombstone[type + "id"] = id;
         jt.setInstId(tombstone, id);
@@ -180,7 +183,7 @@ return {
         }
         if(!obj[field]) {
             obj[field] = {}; }
-        else if(typeof obj[field] !== 'object') {
+        else if(typeof obj[field] !== "object") {
             try {
                 text = obj[field];
                 parsedval = jsonobj.parse(text);
@@ -190,7 +193,7 @@ return {
                        field + ": " + text + ". Reset to empty object.");
                 obj[field] = {};
             } }
-        if(typeof obj[field] !== 'object') {
+        if(typeof obj[field] !== "object") {
             jt.log("reconstituteJSONObjectField re-initializing " + field + 
                    ". \"" + text + "\" not an object");
             obj[field] = {}; }

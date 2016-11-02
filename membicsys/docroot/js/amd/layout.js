@@ -80,36 +80,68 @@ app.layout = (function () {
     },
 
 
+    convertDocRef = function (href) {
+        if(href.indexOf("docs/") < 0) {  //need to convert crawl relative link
+            if(href.indexOf("/") >= 0) {
+                href = href.slice(0, href.lastIndexOf("/") + 1) +
+                    "docs/" + href.slice(href.lastIndexOf("/") + 1); }
+            else {
+                href = "docs/" + href; } }
+        return href;
+    },
+
+
+    convertDocLinks = function () {
+        var links, i, link;
+        links = document.getElementsByTagName("a");
+        for(i = 0; i < links.length; i += 1) {
+            link = links[i];
+            if(link.className.indexOf("localdocslink") >= 0) {
+                link.href = convertDocRef(link.href);
+                jt.on(link, "click", app.layout.docLinkClick); } }
+    },
+
+
+    getTitleForDocument = function (html, url) {
+        var title, idx;
+        if(html.indexOf("<title>") >= 0 && html.indexOf("</title>") >= 0) {
+            title = html.slice(html.indexOf("<title>") + 7,
+                               html.indexOf("</title>")); }
+        else { //create title from capitalized doc file name
+            idx = url.lastIndexOf("/");
+            if(idx > 0) {
+                url = url.slice(idx + 1); }
+            idx = url.indexOf(".");
+            if(idx > 0) {
+                url = url.slice(0, idx); }
+            title = url.capitalize(); }
+        //title overrides
+        if(title === "About" || title === "Howto" || title === "Themepage") {
+            title = ""; }
+        return title;
+    },
+
+
     displayDocContent = function (url, html, overlay) {
-        var idx, bodystart = "<body>";
+        var idx, title, bodystart = "<body>";
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
+        title = getTitleForDocument(html, url);
         idx = html.indexOf(bodystart);
         if(idx > 0) {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
         html = replaceDocComments(html);
         noteDocSlideDecks(html);
-        //create title from capitalized doc file name
-        idx = url.lastIndexOf("/");
-        if(idx > 0) {
-            url = url.slice(idx + 1); }
-        idx = url.indexOf(".");
-        if(idx > 0) {
-            url = url.slice(0, idx); }
-        url = url.capitalize();
-        //title overrides
-        if(url === "About" || url === "Howto" || url === "Themepage") {
-            url = ""; }
         //display content
         if(overlay) {
-            html = app.layout.dlgwrapHTML(url, html);
+            html = app.layout.dlgwrapHTML(title, html);
             //openDialog deals with the y scroll offset as needed.
             app.layout.openDialog({x: 20, y: 40}, html); }
         else {
             jt.out("contentdiv", html); }
+        convertDocLinks();
         noteSlideDeckTextBlocks();
-        app.layout.crumbify();
     },
 
 
@@ -423,35 +455,14 @@ return {
     },
 
 
-    crumbify: function (index) {
-        var i, cb, cf, sections, cht;
-        index = index || 0;
-        cb = jt.byId("crumbsbackdiv");
-        cf = jt.byId("crumbsforwarddiv");
-        sections = document.getElementsByClassName("docsecdiv");
-        if(!cb || !cf || !sections || !sections.length) {
-            return; }  //nothing to do
-        for(i = 0; i < sections.length; i += 1) {
-            sections[i].style.display = "none"; }
-        sections[index].style.display = "block";
-        cht = cb.children[0].outerHTML;  //origin anchor link from doc
-        for(i = 0; i < index; i += 1) {
-            cht += " ";
-            cht += jt.tac2html(
-                ["a", {href: "#" + jt.canonize(sections[i].title),
-                       onclick: jt.fs("app.layout.crumbify(" + i + ")")},
-                 [["img", {src: "img/arrow18left.png"}],
-                  " " + sections[i].title]]); }
-        cb.innerHTML = cht;
-        cht = "";
-        for(i = index + 1; i < sections.length; i += 1) {
-            cht += " ";
-            cht += jt.tac2html(
-                ["a", {href: "#" + jt.canonize(sections[i].title),
-                       onclick: jt.fs("app.layout.crumbify(" + i + ")")},
-                 [["img", {src: "img/arrow18right.png"}],
-                  " " + sections[i].title]]); }
-        cf.innerHTML = cht;
+    docLinkClick: function (event) {
+        var src, url;
+        jt.evtend(event);
+        src = event.target || event.srcElement;
+        if(src) {
+            url = convertDocRef(src.href);
+            jt.log("docLinkClick: " + url);
+            app.layout.displayDoc(url, true); }
     },
 
 

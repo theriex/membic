@@ -89,6 +89,17 @@ app.coop = (function () {
                                                invidx + ",'Accept')")},
                      "Accept"]]]]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
+    },
+
+
+    historyCheckpointIfNeeded = function (coop) {
+        //when creating a new theme, the history state will not have
+        //been checkpointed because there was no id yet.
+        var id = jt.instId(coop), 
+            hs = app.history.currState();
+        if(id && hs.view !== "coop") {
+            hs = { view: "coop", coopid: id };
+            app.history.checkpoint(hs); }
     };
 
 
@@ -107,7 +118,7 @@ return {
                                field: ctype, penid: app.pen.myPenId(),
                                refer: app.refer});
             setTimeout(function () {
-                jt.call('POST', "bumpmctr?" + app.login.authparams(), data,
+                jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
                         function () {
                             app.refer = "";  //only count referrals once
                             jt.log("bumpmctr?" + data + " success"); },
@@ -125,8 +136,9 @@ return {
         data = jt.objdata(coop, ["recent", "top20s", "revids"]) +
             "&penid=" + app.pen.myPenId();
         app.coop.deserializeFields(coop);  //if update fails or interim use
-        jt.call('POST', "ctmdesc?" + app.login.authparams(), data,
+        jt.call("POST", "ctmdesc?" + app.login.authparams(), data,
                 function (updcoops) {
+                    historyCheckpointIfNeeded(updcoops[0]);
                     app.coop.noteUpdatedCoop(updcoops[0], coop);
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {
@@ -184,21 +196,21 @@ return {
 
     updateInvite: function (mlev) {
         var buttonhtml, email, data;
-        email = jt.byId('emailin').value;
+        email = jt.byId("emailin").value;
         if(!jt.isProbablyEmail(email)) {
             return; }
-        buttonhtml = jt.byId('invitebuttondiv').innerHTML;
-        jt.out('invitebuttondiv', "Approving Membership...");
-        jt.byId('emailin').disabled = true;
+        buttonhtml = jt.byId("invitebuttondiv").innerHTML;
+        jt.out("invitebuttondiv", "Approving Membership...");
+        jt.byId("emailin").disabled = true;
         data = "penid=" + app.pen.myPenId() + "&email=" + email +
             "&coopid=" + app.pcd.getDisplayState().id;
-        jt.call('POST', "invitebymail?" + app.login.authparams(), data,
+        jt.call("POST", "invitebymail?" + app.login.authparams(), data,
                 function (invites) {
                     app.coop.showInviteDialog(mlev, invites[0]); },
                 app.failf(function (code, errtxt) {
-                    jt.out('errmsgdiv', "Invite failed " + code + 
+                    jt.out("errmsgdiv", "Invite failed " + code + 
                            ": " + errtxt);
-                    jt.out('invitebuttondiv', buttonhtml); }),
+                    jt.out("invitebuttondiv", buttonhtml); }),
                 jt.semaphore("coop.updateInvite"));
     },
 
@@ -211,7 +223,7 @@ return {
         invite.processed = true;  //don't loop forever
         data = "penid=" + app.pen.myPenId() + "&coopid=" + invite.coopid + 
             "&inviterpenid=" + invite.penid + "&action=" + action;
-        jt.call('POST', "acceptinvite?" + app.login.authparams(), data,
+        jt.call("POST", "acceptinvite?" + app.login.authparams(), data,
                 function (updobjs) {
                     if(action === "Accept") {
                         app.pen.noteUpdatedPen(updobjs[0]);
@@ -220,7 +232,7 @@ return {
                     app.layout.cancelOverlay();
                     app.coop.processInvites(); },  //in case there are more
                 app.failf(function (code, errtxt) {
-                    jt.out('errmsgdiv', "Invite processing failed " + code + 
+                    jt.out("errmsgdiv", "Invite processing failed " + code + 
                            ": " + errtxt); }),
                 jt.semaphore("coop.accrejInvite"));
     },
@@ -242,7 +254,7 @@ return {
         data = "penid=" + app.pen.myPenId() + 
             "&coopid=" + jt.instId(coop) +
             "&action=" + action;
-        jt.call('POST', "ctmmemapply?" + app.login.authparams(), data,
+        jt.call("POST", "ctmmemapply?" + app.login.authparams(), data,
                 function (updcoops) {
                     updcoops[0].recent = coop.recent;
                     app.lcs.put("coop", updcoops[0]);
@@ -260,7 +272,7 @@ return {
         data = jt.objdata({action: action, penid: app.pen.myPenId(), 
                            coopid: jt.instId(coop), seekerid: seekerid,
                            reason: reason});
-        jt.call('POST', "ctmmemprocess?" + app.login.authparams(), data,
+        jt.call("POST", "ctmmemprocess?" + app.login.authparams(), data,
                 function (updcoops) {
                     updcoops[0].recent = coop.recent;
                     app.lcs.put("coop", updcoops[0]);
@@ -367,10 +379,10 @@ return {
 
     remove: function (ctmid, revid) {
         var removebutton, html, pos, rev, ctm, reason, data;
-        removebutton = jt.byId('rdremb');
+        removebutton = jt.byId("rdremb");
         if(removebutton) {
             removebutton.disabled = true;
-            jt.out('rdremstatdiv', ""); }
+            jt.out("rdremstatdiv", ""); }
         else {
             html = ["div", {id: "revdlgdiv"},
                     [["div", {id: "rdremstatdiv"}],
@@ -386,16 +398,16 @@ return {
             return app.layout.openDialog(
                 {x: pos.x - 40 , y: pos.y - 30},
                 jt.tac2html(html), null, function() {
-                    jt.byId('reasonin').focus(); }); }
+                    jt.byId("reasonin").focus(); }); }
         rev = app.lcs.getRef("rev", revid).rev;
-        reason = jt.byId('reasonin').value.trim();
+        reason = jt.byId("reasonin").value.trim();
         if(!reason && rev.penid !== app.pen.myPenId()) {
             removebutton.disabled = false;
-            return jt.out('rdremstatdiv', "Reason required"); }
-        jt.out('rdremstatdiv', "Removing...");
+            return jt.out("rdremstatdiv", "Reason required"); }
+        jt.out("rdremstatdiv", "Removing...");
         data = "penid=" + app.pen.myPenId() + "&revid=" + revid + 
             "&reason=" + jt.enc(reason);
-        jt.call('POST', "delrev?" + app.login.authparams(), data,
+        jt.call("POST", "delrev?" + app.login.authparams(), data,
                 function (coops) {
                     ctm = app.lcs.getRef("coop", ctmid).coop;
                     if(ctm.recent && ctm.recent.indexOf(revid) >= 0) {
@@ -408,7 +420,7 @@ return {
                     app.pcd.display("coop", ctmid, "", coops[0]); },
                 function (code, errtxt) {
                     removebutton.disabled = false;
-                    jt.out('rdremstatdiv', "Removal failed code " + code +
+                    jt.out("rdremstatdiv", "Removal failed code " + code +
                            ": " + errtxt); },
                 jt.semaphore("coop.remove"));
     },
@@ -462,13 +474,13 @@ return {
         //top20s are maintained and rebuilt by the server, so
         //serializing is not strictly necessary, but it doesn't hurt.
         //ditto for adminlog and people
-        if(typeof ctm.top20s === 'object') {
+        if(typeof ctm.top20s === "object") {
             ctm.top20s = JSON.stringify(ctm.top20s); }
-        if(typeof ctm.adminlog === 'object') {
+        if(typeof ctm.adminlog === "object") {
             ctm.adminlog = JSON.stringify(ctm.adminlog); }
-        if(typeof ctm.people === 'object') {
+        if(typeof ctm.people === "object") {
             ctm.people = JSON.stringify(ctm.people); }
-        if(typeof ctm.soloset === 'object') {
+        if(typeof ctm.soloset === "object") {
             ctm.soloset = JSON.stringify(ctm.soloset); }
     },
 

@@ -112,6 +112,43 @@ app.deckdisco = (function () {
     }; }
 
 
+    function filter () { var numsteps = 5; return {
+        group: {id: "gMF"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, f = {g: "gMF", iw: 20},
+                types = ["img/TypeBook50.png", "img/TypeArticle50.png",
+                         "img/TypeMovie50.png", "img/TypeVideo50.png",
+                         "img/TypeSong50.png", "img/TypeYum50.png",
+                         "img/TypeActivity50.png", "img/TypeOther50.png"];
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gME", 0.0);
+            hfs.fadeInitGroup(sv, f.g, 1.0);
+            hfs.showText(sv, "ft1", f.g, "Click any membic type", 
+                         {x: 20, y: 28}); 
+            sv = hfs.step(2); //-------------------------------
+            types.forEach(function (type, idx) {
+                hfs.showGraphic(sv, "ftype" + idx, f.g,
+                                {x: 20 + Math.round(1.4 * (idx * f.iw)),
+                                 y: 40, w: f.iw, href: type}); });
+            sv = hfs.step(3); //-------------------------------
+            hfs.showText(sv, "ft2", f.g, "if you want to",
+                         {x: 256, y: 85, ta: "end"}); 
+            hfs.showText(sv, "ft3", f.g, "filter the display",
+                         {x: 256, y: 106, ta: "end"}); 
+        },
+        undo: function (transtime) {
+            var sv;
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1);
+            hfs.fadeGroup(sv, "gMF", 0.0);
+            hfs.fadeGroup(sv, "gME", 1.0);
+        }
+    }; }
+
+
+
     function actions () { var numsteps = 16; return {
         group: {id: "gMA"},
         transmult: numsteps,
@@ -136,7 +173,7 @@ app.deckdisco = (function () {
                         {id: null}];
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gME", 0.0);
+            hfs.fadeGroup(sv, "gMF", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showGraphic(sv, "burger", f.g, 
                             {x: 48, y: 111, w: 20, 
@@ -178,7 +215,7 @@ app.deckdisco = (function () {
             var sv;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gME", 1.0);
+            hfs.fadeGroup(sv, "gMF", 1.0);
             hfs.fadeGroup(sv, "gMA", 0.0);
         }
     }; }
@@ -261,6 +298,7 @@ app.deckdisco = (function () {
         ds.deck = [
             community(),
             endorse(),
+            filter(),
             actions(),
             getStarted()
         ];
