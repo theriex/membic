@@ -807,6 +807,7 @@ return {
         logoutWithNoDisplayUpdate();
         app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateAuthentDisplay();
+        jt.out("sysnoticediv", "");
         jt.out("topactionsdiv", "");
         app.login.init();
         if(errprompt) {
@@ -904,6 +905,7 @@ return {
             app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();
                 setTimeout(app.coop.processInvites, 1000);
+                setTimeout(app.coop.systemNotices, 4000);
                 app.history.dispatchState(state); }); }
         else {
             app.history.dispatchState(state); }

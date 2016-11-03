@@ -1145,7 +1145,7 @@ app.pcd = (function () {
 
     displayTab = function (tabname, expid) {
         var dispfunc, html;
-        tabname = tabname || defaultTabName;
+        tabname = tabname || defaultTabName();
         Object.keys(knowntabs).forEach(function (kt) {
             var elem = jt.byId(kt + "li");
             if(elem) {
@@ -2097,6 +2097,8 @@ return {
                     callback(obj); },
                 app.failf(function (code, errtxt) {
                     jt.log("blockfetch " + code + ": " + errtxt);
+                    app.lcs.tomb(dtype, id, "blockfetch failed " + code + 
+                                 ": " + errtxt);
                     callback(null); }),
                 jt.semaphore("pcd.blockfetch" + dtype + id));
     },

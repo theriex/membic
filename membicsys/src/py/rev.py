@@ -886,7 +886,7 @@ def rebuild_reviews_block(handler, pct, pgid):
         pen.filter_sensitive_fields(pco)
     if not pco:
         srverr(handler, 404, pct + " " + str(pgid) + " not found")
-        return
+        return None
     jstr = obj2JSON(pco)
     # logging.info("rebuild_reviews_block pco jstr: " + jstr)
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
@@ -1288,8 +1288,9 @@ class FetchAllReviews(webapp2.RequestHandler):
                 key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
                 jstr = memcache.get(key)   # grab the prebuilt JSON data
                 if not jstr:
-                    jstr = rebuild_reviews_block(self, pct, pgid)
-                    memcache.set(key, jstr)
+                    jstr = rebuild_reviews_block(self, pct, pgid) or ""
+                    if jstr:
+                        memcache.set(key, jstr)
             else:  # return empty array with no first item pen
                 jstr = "[]"
             if mypen:  # replace first element with private pen data

@@ -470,6 +470,49 @@ return {
     },
 
 
+    clearSysNotices: function () {
+        jt.out("sysnoticediv", ""); 
+    },
+
+
+    systemNotices: function () {
+        var sysmsg, html, pen, fault = 0, mn;
+        sysmsg = "";
+        mn = "New membership applications for $THEME";
+        html = [];
+        pen = app.pen.myPenName();
+        if(pen && pen.stash) {
+            Object.keys(pen.stash).forEach(function (key) {
+                var st, link;
+                if(key.startsWith("ctm") && pen.stash[key].memlev >= 2) {
+                    st = app.lcs.getRef("coop", pen.stash[key].ctmid);
+                    if(!st.coop && st.status === "not cached") {
+                        fault = pen.stash[key].ctmid; }
+                    else if(st.coop && st.coop.seeking) {
+                        link = ["a", {href: "#themesettings",
+                                      onclick: jt.fs("app.coop.bycoopid('" +
+                                                     st.coopid + "'" +
+                                                     ",'sysnotice',''" +
+                                                     ",'settings')")},
+                                st.coop.name];
+                        link = mn.replace(/\$THEME/g, jt.tac2html(link));
+                        html.push(["div", {cla: "membershipnoticediv"},
+                                   link]); } } }); }
+        if(sysmsg || html.length > 0) {
+            html = [["div", {cla: "dlgclosex"},
+                     ["a", {id: "closesysnotices", href: "#close", 
+                            onclick: jt.fs("app.coop.clearSysNotices()")},
+                      "&lt;close&nbsp;&nbsp;X&gt;&nbsp;"]],
+                    ["div", {id: "sysnoticecontentdiv"},
+                     [html,
+                      ["div", {id: "sysnoticefetchstatdiv"}]]]]; }
+        jt.out("sysnoticediv", jt.tac2html(html));
+        if(fault) {  //load missing theme and redisplay notices
+            app.pcd.blockfetch("coop", fault, app.coop.systemNotices,
+                               "sysnoticefetchstatdiv"); }
+    },
+
+
     serializeFields: function (ctm) {
         //top20s are maintained and rebuilt by the server, so
         //serializing is not strictly necessary, but it doesn't hurt.

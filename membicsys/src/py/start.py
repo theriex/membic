@@ -69,6 +69,8 @@ indexHTML = """
   <div id="headingdivcontent"></div>
 </div>
 
+<div id="sysnoticediv"></div>
+
 <div id="appspacediv">
   <div id="contentdiv">
     <noscript>

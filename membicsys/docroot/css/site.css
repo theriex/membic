@@ -63,6 +63,8 @@ button, .loginbutton, .formbutton, .filesellab {
 .revtypelink { padding:0px 3px; }
 #headingdiv { min-height:80px; }
 #headingdivcontent { width:288px; margin:auto; }
+#sysnoticediv { font-size:small; }
+#sysnoticecontentdiv { padding:10px; background:#ffad51; border-radius:10px; }
 
 /* >> main display area and contained elements */
 .disptitlediv { padding-bottom:5px; 
@@ -417,6 +419,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .detailcontentdiv { font-size:small; padding: 10px; display:none; }
 
 .hthimg { width:30px; height:30px; vertical-align:middle; }
+.itximg { max-width:20px; max-height:20px; vertical-align:middle; }
+.lititlespan { font-weight:bold; font-style:oblique; }
 
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
