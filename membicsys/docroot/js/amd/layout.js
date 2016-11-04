@@ -98,7 +98,9 @@ app.layout = (function () {
             link = links[i];
             if(link.className.indexOf("localdocslink") >= 0) {
                 link.href = convertDocRef(link.href);
-                jt.on(link, "click", app.layout.docLinkClick); } }
+                jt.on(link, "click", app.layout.docLinkClick); }
+            else if(link.className.indexOf("externaldocslink") >= 0) {
+                jt.on(link, "click", app.layout.externalDocLinkClick); } }
     },
 
 
@@ -463,6 +465,15 @@ return {
             url = convertDocRef(src.href);
             jt.log("docLinkClick: " + url);
             app.layout.displayDoc(url, true); }
+    },
+
+
+    externalDocLinkClick: function (event) {
+        var src;
+        jt.evtend(event);
+        src = event.target || event.srcElement;
+        if(src) {
+            window.open(src.href); }
     },
 
 
