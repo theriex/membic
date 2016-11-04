@@ -894,7 +894,7 @@ app.pcd = (function () {
             return ""; }
         html = ["a", {href: "solopageinfo",
                       onclick: jt.fs(
-                          "app.layout.displayDoc('docs/themepage.html')")},
+                          "app.layout.displayDoc('docs/themepage.html',true)")},
                 ["&nbsp;",
                  ["img", {cla: "ctmsetimg", src: "img/info.png"}]]];
         return html;
