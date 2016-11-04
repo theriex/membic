@@ -1091,7 +1091,6 @@ class DeleteReview(webapp2.RequestHandler):
         # The reason here must be exactly "Removed Membic" so the client can
         # differentiate between removing a review and removing a member.
         coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
-        ctm.preb = None  # force rebuild of cached representation
         coop.update_coop_and_bust_cache(ctm)
         cached_delete(revid, Review)
         mctr.count_review_update("delete", review.penid, review.penname,

@@ -419,7 +419,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .detailcontentdiv { font-size:small; padding: 10px; display:none; }
 
 .hthimg { width:30px; height:30px; vertical-align:middle; }
+.ilximg { max-width:25px; max-height:25px; vertical-align:middle; }
 .itximg { max-width:20px; max-height:20px; vertical-align:middle; }
+.isximg { max-width:15px; max-height:15px; vertical-align:middle; }
 .lititlespan { font-weight:bold; font-style:oblique; }
 
 /* >> stats page layout */

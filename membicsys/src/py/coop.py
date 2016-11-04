@@ -225,6 +225,7 @@ def verify_people(coop):
 
 def update_coop_and_bust_cache(coop):
     verify_people(coop)
+    coop.preb = None  # force rebuild of prebuilt cached representation
     cached_put(coop)
     # force subsequent database retrievals to get the latest version
     Coop.get_by_id(coop.key().id())
