@@ -390,8 +390,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> docs layout */
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
-.doccontentdiv { max-width:600px; margin:auto; }
-#aboutoverviewdiv { font-size:large; }
+.doccontentdiv { max-width:500px; margin:auto; }
+#aboutborderdiv { padding:10px; background-color:#ffbe74; border-radius:10px; }
+#aboutoverviewdiv { padding:5px; font-size:large; background-color: #e6e7e9 }
 .aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
 .aboutstatementsdiv { padding:0px 10px 10px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
