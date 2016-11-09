@@ -7,6 +7,7 @@ from google.appengine.api import memcache
 from morutil import *
 from cacheman import *
 import urllib
+import json
 
 indexHTML = """
 <!doctype html>
@@ -73,16 +74,12 @@ indexHTML = """
 
 <div id="appspacediv">
   <div id="contentdiv">
-    <noscript>
-    <p><b>Membic needs JavaScript to do anything useful, please enable.</b></p>
-    </noscript>
-    The collaborative memory project. 
-    <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
-       onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
-    <img src="img/gotolink.png" style="width:18px;height:18px;"/> Introduction</a> <br/>
     <div id="loadstatusdiv">
       Loading...
     </div>
+    <div id="interimcontentdiv">
+      $INTERIMCONT
+    </div> <!-- interimcontentdiv -->
   </div> <!-- contentdiv -->
 
   <div id="bottomnav"> <!-- clicks mapped in layout.localDocLinks -->
@@ -120,6 +117,49 @@ indexHTML = """
 </html>
 """
 
+noscripthtml = """
+      <noscript>
+        <p><b>Membic needs JavaScript to do anything useful, please enable and reload the page.</b></p>
+      </noscript>
+"""
+
+interimcont = """
+      The collaborative memory project. 
+      <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
+         onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
+        <img src="img/gotolink.png" style="width:18px;height:18px;"/> Introduction</a> <br/>
+"""
+
+
+revhtml = """
+<div id="pcd$RIDfpdiv" class="fpdiv">
+  <div id="pcd$RID" class="fparevdiv">
+    <div class="fpinrevdiv">
+      <div class="fptitlediv">$RTYPE <a href="$RURL" onclick="window.open('$RURL');return false;">$RTIT</a> &nbsp; $RAT </div>
+      <div class="fpbodydiv">
+        <div id="pcd$RIDdescrdiv" class="fpdescrdiv">$DESCR</div></div>
+    </div>
+  </div>
+</div>
+"""
+
+
+def membics_html_from_json_block(jtxt):
+    html = ""
+    prevtitle = ""
+    objs = json.loads(jtxt)
+    for obj in objs:
+        if "revtype" in obj and obj["srcrev"]:
+            rh = revhtml
+            rh = rh.replace("$RID", obj["_id"])
+            rh = rh.replace("$RTYPE", obj["revtype"])
+            rh = rh.replace("$RURL", obj["url"])
+            rh = rh.replace("$RTIT", obj["title"] or obj["name"])
+            rh = rh.replace("$RAT", str(obj["rating"]))
+            rh = rh.replace("$DESCR", obj["text"])
+            html += rh
+    return html
+
 
 def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("----------------------------------------")
@@ -128,6 +168,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     descr = "Membic helps people track and share things that are worth remembering. People use membic to list their top finds and build pages for themes they are interested in."
     img = ""
     title = "Membic"
+    plcont = interimcont
     if dbclass == "pen":
         pnm = pen.PenName.get_by_id(dbid)
         if pnm:
@@ -142,6 +183,8 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = descr.replace("\"", "'")
             title = descr
             img = "/ctmpic?coopid=" + str(dbid)
+            if ctm.preb:
+                plcont = membics_html_from_json_block(ctm.preb)
     cachev = "v=161106"
     if not img:
         img = "img/membiclogo.png?" + cachev
@@ -154,6 +197,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     html = html.replace("$CACHEPARA", "?" + cachev)
     html = html.replace("$REFER", refer or handler.request.referer or "")
     html = html.replace("$VANID", str(dbid))
+    html = html.replace("$INTERIMCONT", noscripthtml + plcont);
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 

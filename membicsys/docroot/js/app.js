@@ -23,7 +23,6 @@ var app = {},  //Global container for application level funcs and values
     app.embedded = false;
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
-    app.introtext = "";
     app.hardhome = "https://membicsys.appspot.com";
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
@@ -132,12 +131,7 @@ var app = {},  //Global container for application level funcs and values
 
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
-        var cdiv;
         app.amdtimer.load.end = new Date();
-        cdiv = jt.byId("contentdiv");
-        jt.out("contentdiv", " &nbsp; ");
-        if(!app.introtext) {  //capture original so we can revert as needed
-            app.introtext = cdiv.innerHTML; }
         app.layout.init();
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
@@ -246,6 +240,8 @@ var app = {},  //Global container for application level funcs and values
 
     app.displayWaitProgress = function(count, millis, divid, msg, msg2) {
         var html, i = 0, src;
+        if(jt.byId("loadstatusdiv")) {  //use status div id available
+            divid = "loadstatusdiv"; } 
         if(!count) {  //initial call, count is zero
             html = ["div", {cla: "waitdiv"},
                     [["div", {id: "waitmsgdiv"}, msg],
