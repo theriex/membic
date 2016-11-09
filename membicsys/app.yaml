@@ -302,6 +302,10 @@ handlers:
 - url: /activity.*
   script: src.py.mailsum.app
 
+## Fetch the sitemap for indexing crawler reference
+- url: .*/sitemap.xml
+  script: src.py.sitemap.app
+
 
 ######################################################################
 # General config
