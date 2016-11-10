@@ -1308,20 +1308,30 @@ app.review = (function () {
     },
 
 
-    typeAndTitle = function (type, rev, togclick) {
-        var th, tmh;
-        th = ["img", {cla: "reviewbadge", src: "img/" + type.img,
-                      title: type.type, alt: type.type}];
-        if(rev.url) {
-            th = ["a", {href: rev.url, title: rev.url,
-                        onclick: jt.fs("window.open('" + rev.url + "')")},
-                  th]; }
-        tmh = [["img", {cla: "webjump", src: "img/stackedmenu.png",
-                        title: "actions", alt: "actions"}],
-               "&nbsp;",
-               app.pcd.reviewItemNameHTML(type, rev)];
-        tmh = ["a", {href: revurl(rev), onclick: togclick}, tmh];
-        return [th, tmh];
+    membicTitleLine = function (type, rev, togclick) {
+        var html, url = rev.url;
+        if(!url) {
+            url = rev[type.key];
+            if(type.subkey) {
+                url += " " + rev[type.subkey]; }
+            url = jt.enc(url);
+            url = "https://www.google.com/?q=" + url + "#q=" + url; }
+        html = [["a", {href: revurl(rev), onclick: togclick},
+                 [["img", {cla: "reviewbadge", src: "img/" + type.img,
+                           title: type.type, alt: type.type}],
+                  ["img", {cla: "webjump", src: "img/stackedmenu.png",
+                           id: "stackmenu" + jt.instId(rev),
+                           title: "actions", alt: "actions"}]]],
+                ["a", {href: url, title: url,
+                       onclick: jt.fs("window.open('" + url + "')")},
+                 app.pcd.reviewItemNameHTML(type, rev)],
+                "&nbsp;",
+                ["div", {cla: "starsnjumpdiv", 
+                         style: (app.winw < 600)? "float:right;" 
+                                                : "display:inline-block;"},
+                 ["div", {cla: "fpstarsdiv"},
+                  app.review.starsImageHTML(rev)]]];
+        return html;
     },
 
 
@@ -1829,30 +1839,6 @@ return {
     },
 
 
-    jumpLinkHTML: function (review, type) {
-        var qurl, html;
-        if(!review) {
-            return ""; }
-        if(!review.url) {
-            qurl = review[type.key];
-            if(!qurl) {
-                return ""; }
-            if(type.subkey) { 
-                qurl += " " + review[type.subkey]; }
-            qurl = jt.enc(qurl);
-            qurl = "https://www.google.com/?q=" + qurl + "#q=" + qurl;
-            html = ["a", {href: qurl, 
-                         title: "Search for " + jt.ndq(review[type.key]),
-                         onclick: jt.fs("window.open('" + qurl + "')")},
-                    ["img", {cla: "webjump", src: "img/search.png"}]];
-            return jt.tac2html(html); }
-        html = ["a", {href: review.url, title: review.url,
-                      onclick: jt.fs("window.open('" + review.url + "')")},
-                ["img", {cla: "webjump", src: "img/gotolink.png"}]];
-        return jt.tac2html(html);
-    },
-
-
     picdlg: function (picdisp) {
         var dt, revid, html;
         if(picdisp) {
@@ -2182,27 +2168,18 @@ return {
 
 
     revdispHTML: function (prefix, revid, rev, togfname) {
-        var revdivid, type, html, togclick, snjattr;
+        var revdivid, type, html, togclick;
         togfname = togfname || "app.review.toggleExpansion";
         togclick = jt.fs(togfname + "('" + prefix + "','" + revid + "')");
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
         fixReviewURL(rev);
-        snjattr = {cla: "starsnjumpdiv", 
-                   style: (app.winw < 600)? "float:right;" 
-                                          : "display:inline-block;"};
         html = ["div", {cla: (prefix === "rrd"? "fpmeminrevdiv"
                                               : "fpinrevdiv")},
                 [["div", {cla: "fpbuttonsdiv", 
                           id: revdivid + "buttonsdiv"}],
                  ["div", {cla: "fptitlediv"},
-                  [typeAndTitle(type, rev, togclick),
-                   "&nbsp;",
-                   ["div", snjattr, 
-                    [["div", {cla: "fpstarsdiv"},
-                      app.review.starsImageHTML(rev)],
-                     ["div", {cla: "fpjumpdiv"},
-                      app.review.jumpLinkHTML(rev, type)]]]]],
+                  membicTitleLine(type, rev, togclick)],
                  ["div", {cla: "fpsecfieldsdiv", id: revdivid + "secdiv"}],
                  ["div", {cla: "fpdatediv", id: revdivid + "datediv"}],
                  ["div", {cla: "fpbodydiv"},
@@ -2337,6 +2314,8 @@ return {
         revdivid = prefix + revid;
         if(app.review.displayingExpandedView(prefix, revid)) {
             app.activity.showMultiMembicImage(revid, true);
+            if(jt.byId("stackmenu" + revid)) {
+                jt.byId("stackmenu" + revid).src = "img/stackedmenu.png"; }
             jt.out(revdivid + "buttonsdiv", "");
             jt.out(revdivid + "secdiv", "");
             jt.out(revdivid + "datediv", "");
@@ -2348,6 +2327,8 @@ return {
             //scrolling on click is disorienting. Isolate situation if needed.
             //app.layout.scrollToVisible(revdivid + "buttonsdiv");
             app.activity.showMultiMembicImage(revid, false);
+            if(jt.byId("stackmenu" + revid)) {
+                jt.byId("stackmenu" + revid).src = "img/stackedmenuopen.png"; }
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
