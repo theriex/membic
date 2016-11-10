@@ -1,5 +1,9 @@
 import webapp2
 import logging
+from cacheman import *
+from morutil import *
+import coop
+
 
 head = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -51,7 +55,18 @@ foot = """
 
 class SitemapXML(webapp2.RequestHandler):
     def get(self):
-        xml = head + foot
+        xml = head
+        vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
+        ctms = vq.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        for ctm in ctms:
+            xml += "<url>"
+            if ctm.hashtag:
+                xml += "  <loc>$DOCROOT/" + ctm.hashtag + "</loc>"
+            else:
+                xml += "  <loc>$DOCROOT/t/" + str(ctm.key().id()) + "</loc>"
+            xml += "  <lastmod>" + ctm.modified[0:10] + "</lastmod>"
+            xml += "</url>"
+        xml += foot
         xml = xml.replace("$DOCROOT", self.request.host_url)
         self.response.headers['Content-Type'] = 'text/xml'
         self.response.out.write(xml)
