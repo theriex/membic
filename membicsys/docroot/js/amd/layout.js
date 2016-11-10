@@ -521,7 +521,7 @@ return {
     },
 
 
-    closeDialog: function () {
+    closeDialog: function (jumpref) {
         var dlg;
         jt.out("dlgdiv", "");
         jt.byId("dlgdiv").style.visibility = "hidden";
@@ -529,6 +529,8 @@ return {
         if(dlgqueue.length > 0) {
             dlg = dlgqueue.pop();
             app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }
+        if(jumpref) {
+            window.open(jumpref); }
     },
 
 

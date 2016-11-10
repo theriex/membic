@@ -1397,8 +1397,8 @@ app.review = (function () {
                                    onclick: jt.fs("app.layout.closeDialog()")},
                         "Cancel"],
                        ["button", {type: "button", id: "redirsieb",
-                                   onclick: jt.fs("app.redirect('" + href + 
-                                                  "')")},
+                                   onclick: jt.fs("app.layout.closeDialog('" +
+                                                  href + "')")},
                         "Go to main site"]]]]];
             html = app.layout.dlgwrapHTML("&nbsp", html);
             yc = window.pageYOffset + 60;

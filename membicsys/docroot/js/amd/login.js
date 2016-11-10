@@ -752,6 +752,11 @@ return {
                 params.view = "coop";
                 params.coopid = app.vanityStartId;
                 done = true; } }
+        if(!done && app.embedded && app.embedded.coopid) {
+            params = params || {};
+            params.view = "coop";
+            params.coopid = app.embedded.coopid;
+            done = true; }
         return params;
     },
 

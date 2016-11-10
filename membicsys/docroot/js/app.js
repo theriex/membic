@@ -150,13 +150,13 @@ var app = {},  //Global container for application level funcs and values
         if(href.indexOf("https://") !== 0 && href.search(/:\d080/) < 0) {
             window.location.href = "https" + href.slice(4);   //switch to SSL
             return; }  //don't fire anything else off.
+        jtminjsDecorateWithUtilities(jt);
         if(href.indexOf("site=") > 0) {
-            app.embedded = true; }
+            app.embedded = jt.parseParams(); }
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
             href = href.slice(0, href.indexOf("?")); }
-        jtminjsDecorateWithUtilities(jt);
         if(app.solopage()) {
             jt.byId("topsectiondiv").style.display = "none";
             jt.byId("headingdiv").style.display = "none";
