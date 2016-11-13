@@ -99,13 +99,14 @@ app.deckmembic = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
-    function makeAMembic () { var numsteps = 6; return {
+    function makeAMembic () { var numsteps = 2; return {
         group: {id: "gMM"},
         transmult: numsteps,
-        display: function (transtime) {
+        display: function (/*transtime*/) {
             var sv, f = {x: 46, g: "gMM"};
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
+            sv = {delay: 0, duration: 0};
+            //hfs.stepinit(transtime, numsteps);
+            //sv = hfs.step(1); //-------------------------------
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "mmwhen", f.g, 
                          "When you find something",
@@ -113,7 +114,7 @@ app.deckmembic = (function () {
             hfs.showText(sv, "mmworth", f.g, 
                          "worth remembering,",
                          {x: f.x, y: line3y});
-            sv = hfs.step(3); //-------------------------------
+            //sv = hfs.step(3); //-------------------------------
             hfs.showText(sv, "mmake", f.g, "make a membic.", 
                          {x: f.x, y: line4y});
             hfs.showGraphic(sv, "imgwrite", f.g,
@@ -287,6 +288,7 @@ app.deckmembic = (function () {
     function initSlides (d3ckitds) {
         ds = d3ckitds;
         hfs = d3ckit.slideHelperFunctions();
+        ds.splash = true;
         ds.deck = [
             makeAMembic(),
             titleSplash(),

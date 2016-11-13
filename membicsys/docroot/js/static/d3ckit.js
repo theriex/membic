@@ -641,7 +641,7 @@ return {
         var time = ds.fastTransTime;
         if(window.d3 === undefined) {  //wait until loaded
             return setTimeout(d3ckit.run, 300); }
-        d3ckit.restart(true);
+        d3ckit.restart(true);  //clears div contents
         ds.transtime = ds.transtime || ds.normTransTime;
         if(!ds.deck || !ds.deck.length) {
             ds.deck = makeDemoDeck(); }
@@ -666,7 +666,10 @@ return {
         ds.cg = ds.globg.append("g");  //general content group
         delayf(displayControls, ds.transtime, ds.svgid);
         //always display first slide
-        delayf(d3ckit.next, ds.transtime, ds.svgid);
+        if(ds.splash) {
+            d3ckit.next(); }
+        else {
+            delayf(d3ckit.next, ds.transtime, ds.svgid); }
     }
 
 };  //end of returned functions
