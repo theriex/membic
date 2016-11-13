@@ -187,9 +187,11 @@ def start_page_html(handler, dbclass, dbid, refer):
                 plcont = membics_html_from_json_block(ctm.preb)
     cachev = "v=161106"
     if not img:
-        img = "img/membiclogo.png?" + cachev
+        img = "/img/membiclogo.png?" + cachev
     else:
         img += "&" + cachev
+    # social nets require a full URL to fetch the image
+    img = handler.request.host_url + img;
     html = indexHTML
     html = html.replace("$SITEPIC", img)
     html = html.replace("$TITLE", title)
