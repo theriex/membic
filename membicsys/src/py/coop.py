@@ -435,7 +435,15 @@ class GetCoopPic(webapp2.RequestHandler):
                                     " not found.")
             return
         img = images.Image(coop.picture)
-        img.resize(width=160, height=160)
+        # social net min size constraint is 200x200.  Anything below
+        # that and the image won't show, which is bad for sharing
+        # themes.  By default, resize chooses the widest dimension,
+        # which can cause the short dimension to dip below the
+        # minimum.  Using crop_to_fit instructs the scaling to use the
+        # less restricting dimension and then chop off the extra.
+        # Might lead to some interesting rendering, but at least it
+        # will be accepted by the big socnets.
+        img.resize(width=200, height=200, crop_to_fit=True)
         img = img.execute_transforms(output_encoding=images.PNG)
         self.response.headers['Content-Type'] = "image/png"
         self.response.out.write(img)
