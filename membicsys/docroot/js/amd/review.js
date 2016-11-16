@@ -1503,12 +1503,13 @@ app.review = (function () {
             app.lcs.put("pen", updpen);
             step = "cache refresh";
             cacheBustCoops(crev.ctmids);
-            step = "coping membic data";
+            step = "copying membic data";
             crev = copyReview(app.lcs.put("rev", updrev).rev);
             step = "feed update";
             app.activity.updateFeeds(updrev);
             step = "search update";
             cacheBustPersonalReviewSearches();
+            app.pcd.updateSearchStateData(updrev);
         } catch (problem) {
             jt.out("rdokbuttondiv", "Please reload this page, " + step + 
                    " failed: " + problem);

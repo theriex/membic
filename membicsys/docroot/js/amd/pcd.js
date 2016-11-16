@@ -1,6 +1,6 @@
 /*global app, jt, setTimeout, window, confirm, document */
 
-/*jslint browser, multivar, white, fudge */
+/*jslint browser, multivar, white, fudge, for */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Coop common display functions.
@@ -2039,6 +2039,18 @@ return {
         dst.obj = null;
         srchst = { revtype: "all", qstr: "", status: "" };
         setdispstate = { infomode: "" };
+    },
+
+
+    updateSearchStateData: function (updrev) {
+        var rid, i;
+        //would use findIndex rather than for, but not fully supported..
+        if(srchst.revs && srchst.revs.length) {
+            rid = jt.instId(updrev);
+            for(i = 0; i < srchst.revs.length; i += 1) {
+                if(jt.instId(srchst.revs[i]) === rid) {
+                    srchst.revs[i] = updrev;
+                    break; } } }
     },
 
 
