@@ -118,7 +118,8 @@ app.layout = (function () {
                 url = url.slice(0, idx); }
             title = url.capitalize(); }
         //title overrides
-        if(title === "About" || title === "Howto" || title === "Themepage") {
+        if(title === "About" || title === "Howto" || title === "Themepage"
+           || title === "membic definition") {
             title = ""; }
         return title;
     },

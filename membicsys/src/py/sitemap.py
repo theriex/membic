@@ -47,6 +47,10 @@ head = """<?xml version="1.0" encoding="UTF-8"?>
   <loc>$DOCROOT/docs/themepage.html</loc>
   <lastmod>2016-08-01</lastmod>
 </url>
+<url>
+  <loc>$DOCROOT/docs/definition.html</loc>
+  <lastmod>2016-11-17</lastmod>
+</url>
 """
 
 foot = """

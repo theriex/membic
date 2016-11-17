@@ -422,6 +422,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .tocdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
 .detailheadingspan {}
 .detailcontentdiv { font-size:small; padding: 10px; display:none; }
+.defcontentsdiv { display:table; margin:auto; padding:20px; }
+.defcontentinnerdiv { border:5px solid black; padding:20px; }
+.defsyllabicdiv { font-weight:bold; }
+.defpartofspeachdiv { font-style:italic; font-size:medium; padding:5px; }
 
 .hthimg { width:30px; height:30px; vertical-align:middle; }
 .ilximg { max-width:25px; max-height:25px; vertical-align:middle; }

@@ -87,6 +87,7 @@ indexHTML = """
     <a href="docs/about.html" class="footerlink">ABOUT</a>
     <a href="docs/terms.html" class="footerlink">TERMS</a>
     <a href="docs/privacy.html" class="footerlink">PRIVACY</a>
+    <a href="docs/definition.html" class="footerlink>DEFINITION</a>
     <a href="docs/howto.html" class="footerlink">HOW TO</a>
   </div>
 </div>
