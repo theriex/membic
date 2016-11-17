@@ -1782,12 +1782,14 @@ return {
                 var chk;
                 chk = jt.toru(srchst.qstr.indexOf(kwd) >= 0, "checked");
                 html.push(["div", {cla: "srchkwrbdiv"},
-                           [["input", {type: "radio", id: "skw" + i,
-                                       name: "srchkwds", value: kwd, 
-                                       checked: chk,
-                                       onclick: jt.fsd("app.pcd.keysrch('skw" + 
-                                                       i + "')")}],
-                            ["label", {fo: "skw" + i}, kwd]]]); });
+                           [["div", {cla: "skbidiv"},
+                             ["input", {
+                                 type: "radio", id: "skw" + i,
+                                 name: "srchkwds", value: kwd, 
+                                 checked: chk,
+                                 onclick: jt.fsd("app.pcd.keysrch('skw" + 
+                                                       i + "')")}]],
+                            ["label", {fo: "skw" + i}, kwd.trim()]]]); });
             style = "display:none;"; }
         html.push(["input", {type: "text", id: "pcdsrchin", size: 30,
                              placeholder: "Search for...", style: style,
