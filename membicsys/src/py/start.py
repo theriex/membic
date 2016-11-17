@@ -260,7 +260,7 @@ class DefaultStart(webapp2.RequestHandler):
             if not hashtag or len(hashtag) <= 1:
                 logging.info("No hashtag found: " + str(md))
                 return start_page_html(self, "", 0, refer)
-            url = "https://membicsys.appspot.com" + hashtag
+            url = "https://membic.com" + hashtag
             if refer:
                 url += "?refer=" + urllib.quote(refer)
             logging.info("redirect url: " + url)

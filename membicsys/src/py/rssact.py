@@ -57,7 +57,7 @@ def item_url(handler, review):
 
 
 def rss_content(handler, ctmid, title, reviews):
-    url = "https://membicsys.appspot.com?view=coop&amp;coopid=" + str(ctmid)
+    url = "https://membic.com?view=coop&amp;coopid=" + str(ctmid)
     email = "membicsystem@gmail.com"
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
