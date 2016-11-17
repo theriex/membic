@@ -1386,6 +1386,15 @@ app.pcd = (function () {
             knowntabs.prefpens.dispfunc = app.pcd.displayPrefPens;
             knowntabs.coops.dispfunc = app.pcd.displayCoops;
             knowntabs.calendar.dispfunc = displayCalendar; }
+    },
+
+
+    longestWord = function (str) {
+        var longest = "", words = str.split(/\s/);
+        words.forEach(function (word) {
+            if(word.length > longest.length) {
+                longest = word; } });
+        return longest;
     };
 
 
@@ -1779,9 +1788,11 @@ return {
         html = [];
         if(srchst.mode === "srchkey") {
             dst.obj.keywords.csvarray().forEach(function (kwd, i) {
-                var chk;
+                var chk, kwc = "srchkwrbdiv";
                 chk = jt.toru(srchst.qstr.indexOf(kwd) >= 0, "checked");
-                html.push(["div", {cla: "srchkwrbdiv"},
+                if(longestWord(kwd).length > 9) {
+                    kwc = "srchkwrbdbldiv"; }
+                html.push(["div", {cla: kwc},
                            [["div", {cla: "skbidiv"},
                              ["input", {
                                  type: "radio", id: "skw" + i,
