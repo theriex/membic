@@ -193,7 +193,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   max-width:80%; max-height:110px; overflow:scroll; vertical-align:middle; }
 .srchkwrbdiv { display:inline-block; width:80px; font-size:small; 
   cursor:pointer; background-image: url('../img/whitewash.png'); 
-  margin:0px 2px; border-radius:6px; overflow:visible; }
+  margin:1px; border-radius:6px; overflow:visible; }
 .skbidiv { float:left; }
 .srchkwrbdiv label { display:inline-block; margin:0px; padding:0px; 
   width:48px; overflow:visible; }
