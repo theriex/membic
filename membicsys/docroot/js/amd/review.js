@@ -1516,6 +1516,21 @@ app.review = (function () {
         }
         jt.out("rdokstatdiv", "");
         updateShareInfo();
+    },
+
+
+    //Not copying info from someone else's review instance even if it
+    //is available.  URL contents change, and descriptive fields can
+    //be innacurate or worse.  This is just to help avoid a person
+    //entering the same info again.
+    findExistingInstanceByURL = function (url) {
+        var revs, i, rev;
+        revs = app.lcs.getCachedRecentReviews("", app.pen.myPenId());
+        for(i = 0; i < revs.length; i += 1) {  //find method still not avail
+            rev = revs[i];
+            if(rev.url === url || rev.rurl === url) {
+                crev = copyReview(rev);
+                return rev; } }
     };
 
 
@@ -1657,6 +1672,8 @@ return {
                 url = urlin.value; } }
         if(!url) {  //reflect any other updates done in the interim.
             crev.autocomp = false;
+            return app.review.updatedlg(); }
+        if(!jt.instId(crev) && findExistingInstanceByURL(url)) {
             return app.review.updatedlg(); }
         if(crev.title && !crev.autocomp &&
            !confirm("Re-read title and other fields?")) {
