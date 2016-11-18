@@ -314,7 +314,7 @@ app.readurl = (function () {
     getPlainURL = function (url) {
         var result, crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
         result = crockfordurlregex.exec(url);
-        if(result.length < 4) {
+        if(!result || result.length < 4) {
             return url; }
         return result[1] + ":" + result[2] + result[3];
     };
