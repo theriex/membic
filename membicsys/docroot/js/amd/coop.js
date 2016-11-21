@@ -366,17 +366,6 @@ return {
     },
 
 
-    mayRemove: function (ctm, rev) {
-        var penid;
-        if(!rev || !ctm) {
-            return false; }
-        penid = app.pen.myPenId();
-        if(rev.penid === penid || app.coop.membershipLevel(ctm, penid) > 1) {
-            return true; }
-        return false;
-    },
-
-
     remove: function (ctmid, revid) {
         var removebutton, html, pos, rev, ctm, reason, data;
         removebutton = jt.byId("rdremb");

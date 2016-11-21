@@ -26,6 +26,7 @@ import time
 #   - negative srcrev values indicate special handling:
 #       -101: Future review (placeholder for later writeup)
 #       -202: Batch update (e.g. iTunes upload or similar)
+#       -604: Marked as deleted
 #     Special handling reviews may not be posted to coops
 class Review(db.Model):
     """ Membic future self reflecting review of something """
@@ -516,6 +517,8 @@ def fetch_validated_instance(tidstr, prc, rev, prof):
         # cached but its id won't be in the top list.
         if inst and inst["revtype"] != rev.revtype:
             inst = None
+        if inst and inst["srcrev"] == -604:  # marked as deleted
+            inst = None
         if inst and prc.prefix == "coop":
             if str(inst["ctmid"]) != str(prof.key().id()):
                 inst = None  # no longer part of this theme
@@ -558,9 +561,11 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
     tids = []
     if rev.revtype in newdict:
         tids = newdict[rev.revtype]
-    cacherev = json.loads(obj2JSON(rev))  # cache dict representation
-    trevs = [cacherev]  # build list of resolved top instances to sort
-    for tidstr in tids:
+    trevs = []  # list of resolved top instances to sort
+    if rev.srcrev not in [-604, -101]:  # include rev unless deleted or future
+        cacherev = json.loads(obj2JSON(rev))  # cache dict representation
+        trevs = [cacherev]
+    for tidstr in tids:  # append instances for existing ids to trevs
         inst = fetch_validated_instance(tidstr, prc, rev, dbprofinst)
         if inst:
             trevs.append(inst)
@@ -1029,6 +1034,52 @@ def is_matching_review(qstr, review):
     return False
 
 
+def delete_coop_post(review, pnm, handler):
+    ctm = coop.Coop.get_by_id(int(review.ctmid))
+    if not ctm:
+        return srverr(handler, 404, "Coop " + review.ctmid + " not found")
+    penid = pnm.key().id()
+    reason = handler.request.get('reason') or ""
+    if review.penid != penid:
+        if coop.member_level(penid, ctm) < 2:
+            return srverr(handler, 400, "You may only remove your own membic")
+        if not reason:
+            return srverr(handler, 400, "Reason required")
+    srcrev = Review.get_by_id(int(review.srcrev))
+    if not srcrev:
+        return srverr(handler, 400, "Source membic " + str(review.srcrev) +
+                      " not found")
+    rt = review.revtype
+    revid = str(review.key().id())
+    topdict = {}
+    if ctm.top20s:
+        topdict = json.loads(ctm.top20s)
+    if rt in topdict and topdict[rt] and revid in topdict[rt]:
+        topdict[rt].remove(revid)
+    ctm.top20s = json.dumps(topdict)
+    # The reason here must be exactly "Removed Membic" so the client can
+    # differentiate between removing a review and removing a member.
+    coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
+    coop.update_coop_and_bust_cache(ctm)
+    cached_delete(revid, Review)
+    mctr.count_review_update("delete", review.penid, review.penname,
+                             review.ctmid, review.srcrev)
+    return ctm
+
+
+def mark_review_as_deleted(review, pnm, acc, handler):
+    review.penname = pnm.name  # in case name modified since last update
+    review.srcrev = -604
+    # Marking a review as deleted shows up in the counters as an edit.
+    # Not worth duplicating
+    write_review(review, pnm, acc)
+    try:
+        pen.add_account_info_to_pen_stash(acc, pnm)
+    except Exception as e:
+        logging.info("Account info stash failed on membic delete: " + str(e))
+    return review
+
+
 class SaveReview(webapp2.RequestHandler):
     def post(self):
         acc = authenticated(self.request)
@@ -1057,45 +1108,24 @@ class SaveReview(webapp2.RequestHandler):
 
 class DeleteReview(webapp2.RequestHandler):
     def post(self):
-        pnm = review_modification_authorized(self)
+        acc = authenticated(self.request)
+        if not acc:
+            return
+        pnm = acc_review_modification_authorized(acc, self)
         if not pnm:
             return
         # logging.info("DeleteReview authorized PenName " + pnm.name)
         review = noauth_get_review_for_update(self)
         if not review:
             return
-        if not review.ctmid:
-            return srverr(self, 400, "Only coop posts may be deleted")
-        ctm = coop.Coop.get_by_id(int(review.ctmid))
-        if not ctm:
-            return srverr(self, 404, "Coop " + review.ctmid + " not found")
-        penid = pnm.key().id()
-        reason = self.request.get('reason') or ""
-        if review.penid != penid:
-            if coop.member_level(penid, ctm) < 2:
-                return srverr(self, 400, "You may only remove your own review")
-            if not reason:
-                return srverr(self, 400, "Reason required")
-        srcrev = Review.get_by_id(int(review.srcrev))
-        if not srcrev:
-            return srverr(self, 400, "Source review " + str(review.srcrev) +
-                          " not found")
-        rt = review.revtype
-        revid = str(review.key().id())
-        topdict = {}
-        if ctm.top20s:
-            topdict = json.loads(ctm.top20s)
-        if rt in topdict and topdict[rt] and revid in topdict[rt]:
-            topdict[rt].remove(revid)
-        ctm.top20s = json.dumps(topdict)
-        # The reason here must be exactly "Removed Membic" so the client can
-        # differentiate between removing a review and removing a member.
-        coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
-        coop.update_coop_and_bust_cache(ctm)
-        cached_delete(revid, Review)
-        mctr.count_review_update("delete", review.penid, review.penname,
-                                 review.ctmid, review.srcrev)
-        returnJSON(self.response, [ ctm ])
+        obj = None
+        if review.ctmid:
+            obj = delete_coop_post(review, pnm, self)
+        else:
+            obj = mark_review_as_deleted(review, pnm, acc, self)
+        if not obj:  # error in processing
+            return   # error already reported
+        returnJSON(self.response, [ obj ])
 
 
 # Errors containing the string "failed: " are reported by the client

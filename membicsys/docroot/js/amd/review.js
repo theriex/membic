@@ -551,8 +551,22 @@ app.review = (function () {
     },
 
 
+    mayRemove = function (rev) {
+        var penid = app.pen.myPenId();
+        if(!rev) {
+            return false; }
+        if(!rev.ctmid || rev.ctmid === "0") {  
+            //not a theme post, ok to mark your own rev deleted
+            return (rev.penid === penid); }
+        if(rev.penid === penid || 
+               app.coop.membershipLevel(rev.ctmid, penid) > 1) {
+            return true; }
+        return false;
+    },
+
+
     revpostButtonsHTML = function (prefix, revid) {
-        var rev, updrevid, html;
+        var rev, updrevid, html, rmfs;
         rev = app.lcs.getRef("rev", revid).rev;
         updrevid = jt.isId(rev.ctmid)? rev.srcrev : revid;
         if(rev.penid !== app.pen.myPenId()) {
@@ -575,13 +589,14 @@ app.review = (function () {
                      rev.remembered.csvarray().length],
                     ["div", {cla: "fpbuttondiv"},
                      fpbWriteButtonHTML(prefix, revid, updrevid, true)]]; }
-        if(app.coop.mayRemove(app.lcs.getRef("coop", rev.ctmid).coop, rev)) {
+        if(mayRemove(rev)) {
+            rmfs = jt.isId(rev.ctmid)? "coop.remove" : "review.remove";
             html.push(["div", {cla: "fpbuttondiv", id: "rbd" + revid},
                        ["a", {href: "#remove",
                               title: "Remove membic",
-                              onclick: jt.fs("app.coop.remove('" + 
+                              onclick: jt.fs("app." + rmfs + "('" + 
                                              rev.ctmid + "','" +
-                                             revid + "')")},
+                                             revid + "','" + prefix + "')")},
                         ["img", {cla: "fpbuttonimg",
                                  id: prefix + revid + "removebutton",
                                  src: "img/trash.png"}]]]); }
@@ -2270,7 +2285,7 @@ return {
             revdivid = prefix + jt.instId(rev);
             pr = (i > 0)? revs[i - 1] : null;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
-            if(app.review.isDupeRev(rev, pr) || 
+            if(rev.srcrev === -604 || app.review.isDupeRev(rev, pr) || 
                (author === "notself" && rev.penid === app.pen.myPenId())) {
                 maindivattrs.style = "display:none";
                 dm += 1; }
@@ -2354,6 +2369,29 @@ return {
             jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
             jt.out(revdivid + "keysdiv", rev.keywords);
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
+    },
+
+
+    remove: function (ignore /*ctmid*/, revid, prefix) {
+        var timg, rev, ct, data;
+        timg = jt.byId(prefix + revid + "removebutton");
+        timg.style.opacity = 0.4;
+        rev = app.lcs.getRef("rev", revid).rev;
+        ct = "Are you sure you want to remove this membic?";
+        if(rev.svcdata && rev.svcdata.postctms) {
+            ct = "Removing this membic will not delete theme posts.\n" + ct; }
+        if(!confirm(ct)) {
+            timg.style.opacity = 1.0;
+            return; }
+        data = "penid=" + app.pen.myPenId() + "&revid=" + revid;
+        jt.call("POST", "delrev?" + app.login.authparams(), data,
+                function () {
+                    app.lcs.nukeItAll();
+                    app.login.doNextStep(); },
+                function (code, errtxt) {
+                    timg.style.opacity = 1.0;
+                    jt.err("Remove failed " + code + ": " + errtxt); },
+                jt.semaphore("review.remove"));
     },
 
 

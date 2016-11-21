@@ -134,6 +134,9 @@ return {
         if(!idify(obj)) {
             jt.log("attempt to lcs.put unidentified object");
             return null; }
+        if(ref[type] && ref[type].modified > obj.modified) {
+            //attempting to put an older instance, return existing newer.
+            return ref; }
         cache[type].refs[idify(obj)] = ref;
         ref[type] = obj;
         ref.status = "ok";
