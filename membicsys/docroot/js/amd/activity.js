@@ -101,11 +101,14 @@ app.activity = (function () {
         multis.forEach(function (rev) {
             var profdiv, img;
             profdiv = jt.byId("profdiv" + jt.instId(rev));
-            img = profdiv.getElementsByTagName("img");
-            img = (img && img.length)? img[0] : null;
-            if(img && img.src.indexOf(mark) >= 0) {
+            if(!profdiv) {  //might not have made screen length cutoff
                 loaded = false; }
-            imgs.push(img); });
+            else {
+                img = profdiv.getElementsByTagName("img");
+                img = (img && img.length)? img[0] : null;
+                if(img && img.src.indexOf(mark) >= 0) {
+                    loaded = false; }
+                imgs.push(img); } });
         if(!loaded) {
             return; }
         rid = jt.instId(multis[0]);
