@@ -1316,9 +1316,9 @@ app.review = (function () {
 
     revurl = function (rev) {
         if(rev.ctmid && rev.ctmid !== "0") {
-            return "?view=coop&coopid=" + rev.ctmid + "&tab=recent&expid=" +
+            return "?view=coop&coopid=" + rev.ctmid + "&tab=latest&expid=" +
                 jt.instId(rev); }
-        return "?view=pen&penid=" + rev.penid + "&tab=recent&expid=" +
+        return "?view=pen&penid=" + rev.penid + "&tab=latest&expid=" +
             jt.instId(rev);
     },
 
