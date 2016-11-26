@@ -286,7 +286,7 @@ return {
 
 
     membershipLevel: function (coop, penid) {
-        if(!coop) {
+        if(!coop || !penid || penid === "0") {
             return 0; }
         coop.members = coop.members || "";
         coop.moderators = coop.moderators || "";
