@@ -166,7 +166,7 @@ var app = {},  //Global container for application level funcs and values
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=161117");
+        jt.loadAppModules(app, modules, href, app.init2, "?v=161126");
     };
 
 
