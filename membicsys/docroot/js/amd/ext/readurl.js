@@ -264,6 +264,9 @@ app.readurl = (function () {
             //ignore any other special sequences that look bad as text.
             //matches crap like "&raquo;"
             val = val.replace(/&#?x?\S\S\S?\S?\S?;/g, "");
+            //convert extended character nonsense common in some news sources
+            val = val.replace(/â/g, "'");
+            val = val.replace(/â/g, " - ");
             review.title = val.trim();
             review.name = val; }
     },
