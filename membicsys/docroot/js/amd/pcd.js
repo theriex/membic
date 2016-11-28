@@ -1779,12 +1779,16 @@ return {
 
 
     updateSearchInputDisplay: function () {
-        var imgsrc, html, style = "";
+        var imgsrc, html, title, style = "";
         imgsrc = "blank.png";
+        title = "Toggle text/keyword search";
+        if(!dst.obj.keywords) {
+            title = "";
+            srchst.mode = "nokeys"; }
         if(srchst.mode === "srchkey") {
-            imgsrc = "keyicon.png"; }
+            imgsrc = "keyicon2.png"; }
         else if(srchst.mode === "srchtxt") {
-            imgsrc = "txticon.png"; }
+            imgsrc = "txticon2.png"; }
         html = [];
         if(srchst.mode === "srchkey") {
             dst.obj.keywords.csvarray().forEach(function (kwd, i) {
@@ -1807,6 +1811,7 @@ return {
                              value: srchst.qstr}]);
         style = srchst.mode === "nokeys" ? "" : "cursor:pointer;";
         html = [["img", {cla: "reviewbadge", src: "img/" + imgsrc,
+                         title: title,
                          style: style,
                          onclick: jt.fs("app.pcd.togsrchmode()")}],
                 ["div", {id: "srchincontdiv"},
