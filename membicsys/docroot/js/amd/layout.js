@@ -38,7 +38,10 @@ app.layout = (function () {
                 txt = "Theme hashtag not set"; }
             html = html.replace(/<!--\ \$THEMEHASHURL\ -->/g, txt);
             txt = "https://" + window.location.host + "/t/" + dst.id;
-            html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt); }
+            html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt);
+            txt = "https://" + window.location.host + 
+                "?view=coop&coopid=" + dst.id
+            html = html.replace(/<!--\ \$MEMBICPARAMLINK\ -->/g, txt); }
         return html;
     },
 
