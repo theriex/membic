@@ -154,6 +154,7 @@ app.pcd = (function () {
                 html = ["a", {id: "pcdsettingslink", href: "#pensettings",
                               onclick: jt.fs("app.pcd.settings()")},
                         ["img", {cla: "reviewbadge",
+                                 title: "Profile settings",
                                  src: "img/settings.png"}]]; }
             else {
                 html = ["a", {href: "#visprefs",
@@ -171,6 +172,7 @@ app.pcd = (function () {
                          "Follow"]]; }
             else {
                 html = ["a", {id: "pcdsettingslink", href: "#coopsettings",
+                              title: "Theme settings",
                               onclick: jt.fs("app.pcd.settings()")},
                         ["img", {cla: "reviewbadge",
                                  src: "img/settings.png"}]]; } }

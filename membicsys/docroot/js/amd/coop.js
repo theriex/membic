@@ -286,12 +286,13 @@ return {
 
 
     membershipLevel: function (coop, penid) {
-        if(!coop || !penid || penid === "0") {
+        if(!coop) {
             return 0; }
+        if(!penid || penid === "0") {
+            penid = app.pen.myPenId(); }
         coop.members = coop.members || "";
         coop.moderators = coop.moderators || "";
         coop.founders = coop.founders || "";
-        penid = penid || app.pen.myPenId();
         if(coop.members.csvcontains(penid)) {
             return 1; }
         if(coop.moderators.csvcontains(penid)) {
