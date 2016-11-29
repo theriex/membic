@@ -288,12 +288,13 @@ return {
             return false;
         };
         //lint wants to compare variables directly with === undefined
-        //but that crashes on mac ff 49.  Factored function here to
-        //stay safe while minimizing lint noise.
-        jt.isUndefined = function (val) {
-            if(typeof val === "undefined") {  //required for mac ff
-                return true; }
-            return false; };
+        //but that crashes on mac ff 49.  Unfortunately it also dies
+        //passing an undefined parameter.  Leaving this commented out
+        //here to remember.
+        // jt.isUndefined = function (val) {
+        //     if(typeof val === "undefined") {  //required for mac ff
+        //         return true; }
+        //     return false; };
     },
 
 
@@ -344,14 +345,14 @@ return {
             if(!app[deckname]) {  //slides module not already loaded
                 jt.log("runSlideDeck loading " + deckname);
                 href = jt.baseurl(window.location.href) + "/";
-                if(jt.isUndefined(d3)) {
+                if(typeof d3 === "undefined") { //mac ff required
                     jt.log("runSlideDeck loading d3");
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js?v=161129";
                     document.body.appendChild(js); }
-                if(jt.isUndefined(d3ckit)) {
+                if(typeof d3ckit === "undefined") { //mac ff required
                     jt.log("runSlideDeck loading d3ckit");
                     js = document.createElement("script");
                     //js.async = true;
@@ -363,7 +364,8 @@ return {
                                       app.layout.runSlideDeck(deckname); },
                                   jt.ts("?cb=", "minute")); }
             else { //app[deckname] module already loaded
-                if(jt.isUndefined(window.d3) || jt.isUndefined(d3ckit)) {
+                if(typeof window.d3 === "undefined" ||   //mac ff required
+                   typeof d3ckit === "undefined") {      //mac ff required 
                     return setTimeout(function () {
                         app.layout.runSlideDeck(deckname); }, 300); }
                 jt.log("runSlideDeck " + deckname);
@@ -404,13 +406,13 @@ return {
                     href = href.slice(0, href.indexOf("?")); }
                 if(!href.endsWith("/")) {
                     href += "/"; }
-                if(jt.isUndefined(d3)) {
+                if(typeof d3 === "undefined") { //mac ff required
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js?v=161129";
                     document.body.appendChild(js); }
-                if(jt.isUndefined(d3ckit)) {
+                if(typeof d3ckit === "undefined") { //mac ff required
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
@@ -708,7 +710,7 @@ return {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
-            if(jt.isUndefined(a2a_config)) {
+            if(typeof a2a.config === "undefined") { //mac ff required
                 jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } }, 3500);
     },
 
