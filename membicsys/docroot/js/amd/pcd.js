@@ -1139,7 +1139,8 @@ app.pcd = (function () {
 
 
     defaultTabName = function () {
-        if(app.solopage()) {
+        //not supporting search tab for standalone profile display right now
+        if(app.solopage() && dst.type === "coop") {
             return "search"; }
         return "latest";
     },

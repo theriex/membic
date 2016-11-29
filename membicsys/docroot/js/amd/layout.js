@@ -287,6 +287,13 @@ return {
                 return true; }
             return false;
         };
+        //lint wants to compare variables directly with === undefined
+        //but that crashes on mac ff 49.  Factored function here to
+        //stay safe while minimizing lint noise.
+        jt.isUndefined = function (val) {
+            if(typeof val === "undefined") {  //required for mac ff
+                return true; }
+            return false; };
     },
 
 
@@ -337,14 +344,14 @@ return {
             if(!app[deckname]) {  //slides module not already loaded
                 jt.log("runSlideDeck loading " + deckname);
                 href = jt.baseurl(window.location.href) + "/";
-                if(typeof d3 === "undefined") {  //mac ff requires typeof
+                if(jt.isUndefined(d3)) {
                     jt.log("runSlideDeck loading d3");
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js?v=161128";
                     document.body.appendChild(js); }
-                if(typeof d3ckit === "undefined") {  //mac ff requires typeof
+                if(jt.isUndefined(d3ckit)) {
                     jt.log("runSlideDeck loading d3ckit");
                     js = document.createElement("script");
                     //js.async = true;
@@ -356,7 +363,7 @@ return {
                                       app.layout.runSlideDeck(deckname); },
                                   jt.ts("?cb=", "minute")); }
             else { //app[deckname] module already loaded
-                if(window.d3 === undefined || d3ckit === undefined) {
+                if(jt.isUndefined(window.d3) || jt.isUndefined(d3ckit)) {
                     return setTimeout(function () {
                         app.layout.runSlideDeck(deckname); }, 300); }
                 jt.log("runSlideDeck " + deckname);
@@ -397,13 +404,13 @@ return {
                     href = href.slice(0, href.indexOf("?")); }
                 if(!href.endsWith("/")) {
                     href += "/"; }
-                if(typeof d3 === "undefined") {  //mac ff requires typeof
+                if(jt.isUndefined(d3)) {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
                     js.src = href + "js/d3.v3.min.js?v=161128";
                     document.body.appendChild(js); }
-                if(typeof d3ckit === "undefined") {  //mac ff requires typeof
+                if(jt.isUndefined(d3ckit)) {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
@@ -701,9 +708,7 @@ return {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
-            //checking a2a_config === undefined does not work mac ff 42.0
-            //so regardless of what jslint sez, this needs to stay..
-            if(typeof a2a_config === "undefined") {  //mac ff requires typeof
+            if(jt.isUndefined(a2a_config)) {
                 jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } }, 3500);
     },
 

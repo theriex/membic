@@ -335,11 +335,8 @@ handlers:
   static_dir: docroot/js/
 
 ## Various flavors of start page requests:
-## Direct requests for pen name permalinks
-- url: /p/\d+
-  script: src.py.start.app
-## Direct requests for theme permalinks
-- url: /t/\d+
+## Direct requests for pen name (p) or theme (t) permalinks
+- url: /[p|t]/\d+
   script: src.py.start.app
 ## The index page
 - url: /index.html

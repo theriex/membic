@@ -219,16 +219,14 @@ def coopid_for_hashtag(hashtag):
     return int(coopid)
 
 
-class PenPermalinkStart(webapp2.RequestHandler):
-    def get(self, dbid):
-        # logging.info("PenPermalinkStart " + dbid)
-        return start_page_html(self, "pen", int(dbid), "")
-
-
-class ThemePermalinkStart(webapp2.RequestHandler):
-    def get(self, dbid):
-        # logging.info("ThemePermalinkStart " + dbid)
-        return start_page_html(self, "coop", int(dbid), "")
+class PermalinkStart(webapp2.RequestHandler):
+    def get(self, pt, dbid):
+        # logging.info("PermalinkStart " + pt + " " + dbid)
+        if pt == "t":
+            return start_page_html(self, "coop", int(dbid), "")
+        if pt == "p":
+            return start_page_html(self, "pen", int(dbid), "")
+        return srverr(self, 404, "Unknown permalink " + pt + ": " + dbid)
 
 
 class IndexPageStart(webapp2.RequestHandler):
@@ -278,8 +276,7 @@ class VanityStart(webapp2.RequestHandler):
         return start_page_html(self, "coop", int(coopid), refer)
 
 
-app = webapp2.WSGIApplication([('/p/(\d+)', PenPermalinkStart),
-                               ('/t/(\d+)', ThemePermalinkStart),
+app = webapp2.WSGIApplication([('/([p|t])/(\d+)', PermalinkStart),
                                ('/index.html', IndexPageStart),
                                ('(.*)/', DefaultStart),
                                ('(.*)', VanityStart)],
