@@ -186,7 +186,7 @@ def start_page_html(handler, dbclass, dbid, refer):
             img = "/ctmpic?coopid=" + str(dbid)
             if ctm.preb:
                 plcont = membics_html_from_json_block(ctm.preb)
-    cachev = "v=161128"
+    cachev = "v=161129"
     if not img:
         img = "/img/membiclogo.png?" + cachev
     else:

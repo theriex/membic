@@ -164,7 +164,7 @@ app.layout = (function () {
         var html = ["a", {href: "#community", title: "Community membics",
                            onclick: jt.fs("app.activity.displayFeed('all')")},
                      ["img", {id: "logoimg", 
-                              src: "img/membiclogo.png?v=161128"}]];
+                              src: "img/membiclogo.png?v=161129"}]];
         jt.out("logodiv", jt.tac2html(html));
         jt.byId("bottomnav").style.display = "none";
     },
@@ -349,14 +349,14 @@ return {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/d3.v3.min.js?v=161128";
+                    js.src = href + "js/d3.v3.min.js?v=161129";
                     document.body.appendChild(js); }
                 if(jt.isUndefined(d3ckit)) {
                     jt.log("runSlideDeck loading d3ckit");
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/static/d3ckit.js?v=161128";
+                    js.src = href + "js/static/d3ckit.js?v=161129";
                     document.body.appendChild(js); }
                 jt.loadAppModules(app, ["js/static/" + deckname], href,
                                   function () { 
@@ -408,13 +408,13 @@ return {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/d3.v3.min.js?v=161128";
+                    js.src = href + "js/d3.v3.min.js?v=161129";
                     document.body.appendChild(js); }
                 if(jt.isUndefined(d3ckit)) {
                     js = document.createElement("script");
                     //js.async = true;
                     js.type = "text/javascript";
-                    js.src = href + "js/static/d3ckit.js?v=161128";
+                    js.src = href + "js/static/d3ckit.js?v=161129";
                     document.body.appendChild(js); }
                 jt.loadAppModules(app, ["js/static/intro"], href, 
                                   app.layout.runAnime, 
