@@ -14,7 +14,6 @@ app.review = (function () {
         //confirm against the potentially edited form field value.
         autourl = "",
         crev = {},  //The current review being displayed or edited.
-        maxDispRevs = 100,  //keep the page length reasonably viewable.
         //If changing the width or height of the stars img, also change
         //profile.reviewItemHTML indent
         starimgw = 85,
@@ -244,8 +243,7 @@ app.review = (function () {
     sslSafeRef = function (revid, url) {
         if(window.location.href.indexOf("https://") === 0) {
             url = "imagerelay?revid=" + revid + "&url=" + jt.enc(url); }
-        //return url;
-        return "img/blank.png#" + url;
+        return url;
     },
 
 
@@ -282,9 +280,8 @@ app.review = (function () {
             html.src = sslSafeRef(jt.instId(review), review.imguri);
             break;
         case "upldpic":
-            //Use delayed image loading src value.  Use source review image
-            //for theme posts to take advantage of caching.
-            html.src = "img/blank.png#revpic?revid=" + sourceRevId(review) + 
+            //Use source rev img for theme posts to take advantage of caching.
+            html.src = "revpic?revid=" + sourceRevId(review) + 
                 jt.ts("&cb=", review.modified);
             break;
         case "nopic":
@@ -1069,7 +1066,7 @@ app.review = (function () {
 
 
     dlgPicHTML = function () {
-        var src, type, html, mark = "img/blank.png#";
+        var src, type, html;
         src = "img/nopicrev.png";
         type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
@@ -1077,8 +1074,6 @@ app.review = (function () {
                 jt.ts("&cb=", crev.modified); }
         else if(type === "sitepic") {
             src = sslSafeRef(jt.instId(crev), crev.imguri); }
-        if(src.indexOf(mark) >= 0) {
-            src = src.slice(src.indexOf(mark) + mark.length); }
         html = ["img", {id: "dlgrevimg", cla: "revimg", src: src}];
         return jt.tac2html(html);
     },
@@ -1443,30 +1438,6 @@ app.review = (function () {
     },
 
 
-    realizeImgSrc = function (imgtype, revs, istart, iend, mark) {
-        var i, img, src, realized = false;
-        for(i = istart; i < iend; i += 1) {
-            switch(imgtype) {
-            case "author":
-                img = jt.byId("authimg" + i);
-                if(img && img.src && img.src.indexOf(mark) >= 0) {
-                    src = "profpic?" + 
-                        img.src.slice(img.src.indexOf(mark) + mark.length);
-                    img.src = src;
-                    realized = true; }
-                break; 
-            case "revpic":
-                img = jt.byId("revimg" + jt.instId(revs[i]));
-                if(img && img.src && img.src.indexOf(mark) >= 0) {
-                    src =  img.src.slice(img.src.indexOf(mark) + 
-                                         mark.length);
-                    img.src = src;
-                    realized = true; } 
-                break; } }
-        return realized;
-    },
-
-
     displayMembicDialog = function () {
         var html;
         html = ["div", {id: "revdlgdiv"},
@@ -1561,6 +1532,8 @@ app.review = (function () {
         if(ela >= 52) {
             ela = Math.round(ela / 52);
             suff = "yr"; }
+        if(!ela) {
+            return "today"; }
         return String(ela) + " " + suff;
     },
 
@@ -1585,8 +1558,7 @@ app.review = (function () {
             else if(prefix === "pcdr") {  //include elapsed time for recent
                 xd = ["div", {cla: "relatimediv"}, timeAgo(rev.modified)]; }
             imgl = ["img", {cla: "fpprofpic", id: "authimg" + idx,
-                            src: "img/blank.png#profileid=" + rev.penid,
-                            //src: "profpic?profileid=" + rev.penid,
+                            src: "profpic?profileid=" + rev.penid,
                             title: jt.ndq(rev.penname),
                             alt: jt.ndq(rev.penname)}];
             if(!app.solopage()) {
@@ -2300,25 +2272,8 @@ return {
     },
 
 
-    realizePlaceholderImages: function (prefix, revs) {
-        var topvis = 30, rzd = false, mark = "img/blank.png#";
-        if(!revs || !revs.length) {
-            return; }
-        //first pass
-        rzd = rzd || realizeImgSrc("author", revs, 0, topvis, mark);
-        rzd = rzd || realizeImgSrc("revpic", revs, 0, topvis, mark);
-        //second pass
-        rzd = rzd || realizeImgSrc("author", revs, topvis, revs.length, mark);
-        rzd = rzd || realizeImgSrc("revpic", revs, topvis, revs.length, mark);
-        if(rzd) {
-            app.activity.indicateMultiMembics(revs, mark);
-            setTimeout(function () {
-                app.review.realizePlaceholderImages(prefix, revs); }, 200); }
-    },
-
-
     displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
-        var rt, i, html, rev, pr, maindivattrs, authlink, revdivid, dm;
+        var rt, html, state;
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
             if(rt === "all") {
@@ -2330,27 +2285,46 @@ return {
                 html = [html, xem]; } }
         else {
             html = []; }
-        dm = maxDispRevs;
-        for(i = 0; i < revs.length && i < dm; i += 1) {
-            rev = revs[i];
-            cacheNames(rev);
-            revdivid = prefix + jt.instId(rev);
-            pr = (i > 0)? revs[i - 1] : null;
-            maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
-            if(rev.srcrev === -604 || app.review.isDupeRev(rev, pr) || 
-               (author === "notself" && rev.penid === app.pen.myPenId())) {
-                maindivattrs.style = "display:none";
-                dm += 1; }
-            authlink = authlinkHTML(prefix, revdivid, rev, author, i);
-            html.push(["div", maindivattrs,
-                       [authlink,
-                        ["div", {cla: (author? "fparevdiv" : "fpnarevdiv"),
-                                 id: revdivid},
-                         app.review.revdispHTML(prefix, jt.instId(rev), 
-                                                rev, togcbn)]]]); }
         jt.out(divid, jt.tac2html(html));
+        state = {divid: divid, prefix: prefix,
+                 idx: 0, revs: revs, prev: null, paused: false,
+                 author: author, togcbn: togcbn};
         setTimeout(function () {
-            app.review.realizePlaceholderImages(prefix, revs); }, 500);
+            app.review.revDispIterator(state); }, 50);
+    },
+
+
+    revDispIterator: function (state) {
+        var rev, revdivid, maindivattrs, authlink, elem;
+        while(state.idx < state.revs.length) {
+            if(state.idx >= 10 && !state.paused) {
+                state.paused = true;
+                break; }
+            if(state.idx > 0) {
+                state.prev = state.revs[state.idx - 1]; }
+            rev = state.revs[state.idx];
+            cacheNames(rev);
+            revdivid = state.prefix + jt.instId(rev);
+            maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
+            if(rev.srcrev === -604 || app.review.isDupeRev(rev, state.prev) || 
+                   (state.author === "notself" && 
+                    rev.penid === app.pen.myPenId())) {
+                maindivattrs.style = "display:none"; }
+            authlink = authlinkHTML(state.prefix, revdivid, rev, 
+                                    state.author, state.idx);
+            elem = document.createElement("div");
+            elem.innerHTML = jt.tac2html(
+                ["div", maindivattrs,
+                 [authlink,
+                  ["div", {cla: (state.author? "fparevdiv" : "fpnarevdiv"),
+                           id: revdivid},
+                   app.review.revdispHTML(state.prefix, jt.instId(rev), 
+                                          rev, state.togcbn)]]]);
+            jt.byId(state.divid).appendChild(elem); 
+            state.idx += 1; }
+        if(state.idx < state.revs.length) {  //resume after pause
+            setTimeout(function () {
+                app.review.revDispIterator(state); }, 200); }
     },
 
 
