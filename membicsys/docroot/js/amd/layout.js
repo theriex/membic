@@ -710,7 +710,7 @@ return {
             jt.log("shareViaAddToAny failed: " + e);
         }
         setTimeout(function () {
-            if(typeof a2a.config === "undefined") { //mac ff required
+            if(typeof a2a_config === "undefined") { //mac ff required
                 jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } }, 3500);
     },
 
