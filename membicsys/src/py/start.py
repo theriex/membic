@@ -194,6 +194,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     img = ""
     title = "Membic"
     plcont = interimcont
+    count = 0
     if dbclass == "pen":
         pnm = pen.PenName.get_by_id(dbid)
         if pnm:
@@ -209,7 +210,10 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = ctm.description
             descr = descr.replace("\"", "'")
             img = "/ctmpic?coopid=" + str(dbid)
-            plcont, count = theme_static_content(handler, ctm)
+            try:
+                plcont, count = theme_static_content(handler, ctm)
+            except Exception as e:
+                logging.info("theme_static_content failed: " + str(e))
             if count > 1:
                 title = "Top " + str(count) + " " + title
                 descr = "Top " + str(count) + " " + descr
