@@ -210,7 +210,7 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = descr.replace("\"", "'")
             img = "/ctmpic?coopid=" + str(dbid)
             plcont, count = theme_static_content(handler, ctm)
-            if count >= 10:
+            if count > 1:
                 title = "Top " + str(count) + " " + title
                 descr = "Top " + str(count) + " " + descr
     cachev = "v=161129"

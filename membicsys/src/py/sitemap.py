@@ -57,17 +57,26 @@ foot = """
 </urlset>
 """
 
+def baseStandaloneURL(ctm):
+    if ctm.hashtag:
+        return "$DOCROOT/" + ctm.hashtag
+    return "$DOCROOT/t/" + str(ctm.key().id())
+    
+
 class SitemapXML(webapp2.RequestHandler):
     def get(self):
         xml = head
         vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
         ctms = vq.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         for ctm in ctms:
+            if not ctm.preb:  #if no pre-built content, then not much to index
+                continue
             xml += "<url>"
-            if ctm.hashtag:
-                xml += "  <loc>$DOCROOT/" + ctm.hashtag + "</loc>"
-            else:
-                xml += "  <loc>$DOCROOT/t/" + str(ctm.key().id()) + "</loc>"
+            xml += "  <loc>" + baseStandaloneURL(ctm) + "</loc>"
+            xml += "  <lastmod>" + ctm.modified[0:10] + "</lastmod>"
+            xml += "</url>"
+            xml += "<url>"
+            xml += "  <loc>" + baseStandaloneURL(ctm) + "?tab=top</loc>"
             xml += "  <lastmod>" + ctm.modified[0:10] + "</lastmod>"
             xml += "</url>"
         xml += foot
