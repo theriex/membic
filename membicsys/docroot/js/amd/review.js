@@ -1547,6 +1547,57 @@ app.review = (function () {
             if(rev.url === url || rev.rurl === url) {
                 crev = copyReview(rev);
                 return rev; } }
+    },
+
+
+    timeAgo = function (tstr) {
+        var mod, ela, suff = "d";
+        mod = jt.ISOString2Time(tstr);
+        ela = (new Date()).getTime() - mod.getTime();
+        ela = Math.round(ela / (1000 * 60 * 60 * 24));
+        if(ela >= 14) {
+            ela = Math.round(ela / 7);
+            suff = "wk"; }
+        if(ela >= 52) {
+            ela = Math.round(ela / 52);
+            suff = "yr"; }
+        return String(ela) + " " + suff;
+    },
+
+
+    authlinkHTML = function (prefix, revdivid, rev, author, idx) {
+        var xd, imgl, authlink = "";
+        if(author) {
+            xd = "";  //extra decorator div
+            if(prefix === "afd" && rev.penid !== app.pen.myPenId()) {
+                //include activity feed visibility preferences access
+                xd = ["div", {cla: "fpprefstatdiv", 
+                              id: "fppsdiv" + revdivid},
+                      ["a", {href: "#visprefs",
+                             onclick: jt.fs("app.pen.visprefs('" + 
+                                            revdivid + "','" + 
+                                            rev.penid + "','" + 
+                                            jt.embenc(rev.penname) + "')")},
+                       ["img", {cla: "feedprefimg", 
+                                src: app.pen.prefimg(rev.penid)}]]]; }
+            else if(prefix === "pcdf") {  //include count for top favorites
+                xd = ["div", {cla: "favcntrdiv"}, idx + 1]; }
+            else if(prefix === "pcdr") {  //include elapsed time for recent
+                xd = ["div", {cla: "relatimediv"}, timeAgo(rev.modified)]; }
+            imgl = ["img", {cla: "fpprofpic", id: "authimg" + idx,
+                            src: "img/blank.png#profileid=" + rev.penid,
+                            //src: "profpic?profileid=" + rev.penid,
+                            title: jt.ndq(rev.penname),
+                            alt: jt.ndq(rev.penname)}];
+            if(!app.solopage()) {
+                imgl = ["a", {href: "#view=pen&penid=" + rev.penid,
+                              onclick: jt.fs("app.pen.bypenid('" + 
+                                             rev.penid + "','review')")},
+                        imgl]; }
+            authlink = ["div", {cla: "fpprofdiv", 
+                                id: "profdiv" + jt.instId(rev)},
+                        [imgl, xd]]; }
+        return authlink;
     };
 
 
@@ -2267,7 +2318,7 @@ return {
 
 
     displayReviews: function (divid, prefix, revs, togcbn, author, xem) {
-        var rt, i, html, rev, pr, maindivattrs, authlink, vp, revdivid, dm;
+        var rt, i, html, rev, pr, maindivattrs, authlink, revdivid, dm;
         rt = app.layout.getType();
         if(!revs || revs.length === 0) {
             if(rt === "all") {
@@ -2290,30 +2341,7 @@ return {
                (author === "notself" && rev.penid === app.pen.myPenId())) {
                 maindivattrs.style = "display:none";
                 dm += 1; }
-            authlink = "";
-            if(author) {
-                vp = "";  //visual preferences (activity feed only)
-                if(prefix === "afd" && rev.penid !== app.pen.myPenId()) {
-                    vp = ["div", {cla: "fpprefstatdiv", 
-                                  id: "fppsdiv" + revdivid},
-                          ["a", {href: "#visprefs",
-                                 onclick: jt.fs("app.pen.visprefs('" + 
-                                                revdivid + "','" + 
-                                                rev.penid + "','" + 
-                                                jt.embenc(rev.penname) + "')")},
-                           ["img", {cla: "feedprefimg", 
-                                    src: app.pen.prefimg(rev.penid)}]]]; }
-                authlink = 
-                    ["div", {cla: "fpprofdiv", id: "profdiv" + jt.instId(rev)},
-                     [["a", {href: "#view=pen&penid=" + rev.penid,
-                             onclick: jt.fs("app.pen.bypenid('" + 
-                                            rev.penid + "','review')")},
-                       ["img", {cla: "fpprofpic", id: "authimg" + i,
-                                src: "img/blank.png#profileid=" + rev.penid,
-                                //src: "profpic?profileid=" + rev.penid,
-                                title: jt.ndq(rev.penname),
-                                alt: jt.ndq(rev.penname)}]],
-                      vp]]; }
+            authlink = authlinkHTML(prefix, revdivid, rev, author, i);
             html.push(["div", maindivattrs,
                        [authlink,
                         ["div", {cla: (author? "fparevdiv" : "fpnarevdiv"),

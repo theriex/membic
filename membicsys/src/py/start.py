@@ -8,6 +8,7 @@ from morutil import *
 from cacheman import *
 import urllib
 import json
+from operator import attrgetter, itemgetter
 
 indexHTML = """
 <!doctype html>
@@ -145,12 +146,28 @@ revhtml = """
 """
 
 
-def membics_html_from_json_block(jtxt):
+def theme_static_content(handler, ctm):
+    if not ctm.preb:
+        return ""
     html = ""
-    prevtitle = ""
-    objs = json.loads(jtxt)
+    count = 0
+    tabname = handler.request.get("tab")
+    tabname = tabname or "search"  # latest|top|search
+    objs = json.loads(ctm.preb)
+    # first obj is the coop, then the latest N most recent revs, then top20s
+    objs = objs[1:]  # trim to just revs
+    if tabname == "latest":
+        objs = sorted(objs, key=itemgetter('modified'), reverse=True)
+    else:
+        objs = sorted(objs, key=itemgetter('rating', 'modified'), reverse=True)
+    # it is possible to have two separate reviews for the same thing, so hide
+    # anything that hast the same cankey as the one just output.
+    prevcankey = ""
+    if tabname == "top":
+        html += "<ol>\n"
     for obj in objs:
-        if "revtype" in obj and obj["srcrev"]:
+        if "revtype" in obj and obj["ctmid"] and obj["cankey"] != prevcankey:
+            prevcankey = obj["cankey"]
             rh = revhtml
             rh = rh.replace("$RID", obj["_id"])
             rh = rh.replace("$RTYPE", obj["revtype"])
@@ -158,8 +175,15 @@ def membics_html_from_json_block(jtxt):
             rh = rh.replace("$RTIT", obj["title"] or obj["name"])
             rh = rh.replace("$RAT", str(obj["rating"]))
             rh = rh.replace("$DESCR", obj["text"])
+            if tabname == "top":
+                html += "<li>"
             html += rh
-    return html
+            count += 1
+    if tabname == "top":
+        html += "<ol>\n"
+    else:
+        count = 0  # only relevant if displaying top so you have the N
+    return html, count
 
 
 def start_page_html(handler, dbclass, dbid, refer):
@@ -180,12 +204,15 @@ def start_page_html(handler, dbclass, dbid, refer):
     elif dbclass == "coop":
         ctm = coop.Coop.get_by_id(dbid)
         if ctm:
-            descr = ctm.name
+            title = ctm.name
+            title = title.replace("\"", "'")
+            descr = ctm.description
             descr = descr.replace("\"", "'")
-            title = descr
             img = "/ctmpic?coopid=" + str(dbid)
-            if ctm.preb:
-                plcont = membics_html_from_json_block(ctm.preb)
+            plcont, count = theme_static_content(handler, ctm)
+            if count >= 10:
+                title = "Top " + str(count) + " " + title
+                descr = "Top " + str(count) + " " + descr
     cachev = "v=161129"
     if not img:
         img = "/img/membiclogo.png?" + cachev
@@ -222,10 +249,11 @@ def coopid_for_hashtag(hashtag):
 class PermalinkStart(webapp2.RequestHandler):
     def get(self, pt, dbid):
         # logging.info("PermalinkStart " + pt + " " + dbid)
+        refer = self.request.get('refer') or ""
         if pt == "t":
-            return start_page_html(self, "coop", int(dbid), "")
+            return start_page_html(self, "coop", int(dbid), refer)
         if pt == "p":
-            return start_page_html(self, "pen", int(dbid), "")
+            return start_page_html(self, "pen", int(dbid), refer)
         return srverr(self, 404, "Unknown permalink " + pt + ": " + dbid)
 
 
@@ -276,7 +304,7 @@ class VanityStart(webapp2.RequestHandler):
         return start_page_html(self, "coop", int(coopid), refer)
 
 
-app = webapp2.WSGIApplication([('/([p|t])/(\d+)', PermalinkStart),
+app = webapp2.WSGIApplication([('/([p|t])/(\d+).*', PermalinkStart),
                                ('/index.html', IndexPageStart),
                                ('(.*)/', DefaultStart),
                                ('(.*)', VanityStart)],

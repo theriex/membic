@@ -969,9 +969,9 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayRecent = function (expid) {
-        app.review.displayReviews("pcdcontdiv", "pcd", getRecentReviews(), 
+        app.review.displayReviews("pcdcontdiv", "pcdr", getRecentReviews(), 
                                   "app.pcd.toggleRevExpansion", 
-                                  ((dst.type === "coop") && !app.solopage()));
+                                  (dst.type === "coop"));
         if(expid === "settingspic") {
             if(!app.pen.myPenName().profpic) {
                 jt.err("To post, you need a picture to show which membics are yours."); }
@@ -1007,9 +1007,9 @@ app.pcd = (function () {
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
     displayFavorites = function () {
-        app.review.displayReviews("pcdcontdiv", "pcd", getFavoriteReviews(),
+        app.review.displayReviews("pcdcontdiv", "pcdf", getFavoriteReviews(),
                                   "app.pcd.toggleRevExpansion", 
-                                  ((dst.type === "coop") && !app.solopage()));
+                                  (dst.type === "coop"));
     },
 
 
@@ -1087,9 +1087,9 @@ app.pcd = (function () {
                 if(a.modified > b.modified) { return -1; }
                 if(a.modified < b.modified) { return 1; }
                 return 0; }); }
-        app.review.displayReviews("pcdsrchdispdiv", "pcd", sortedRevs, 
+        app.review.displayReviews("pcdsrchdispdiv", "pcds", sortedRevs, 
                                   "app.pcd.toggleRevExpansion", 
-                                  (dst.type === "coop"));
+                                  ((dst.type === "coop") && !app.solopage()));
         srchst.status = "waiting";
         setTimeout(app.pcd.searchReviews, 400);
     },
@@ -2032,6 +2032,9 @@ return {
         dst.id = id || (obj? jt.instId(obj) : "") || 
             (dst.type === "pen"? app.pen.myPenId() : "") || "";
         dst.tab = tab || defaultTabName();
+        if(dst.tab === "top") {  //parameterized request
+            document.title = document.title.replace(/^Top \d+ /, "");
+            dst.tab = "favorites"; }
         if(obj) {
             return displayObject(obj, expid); }
         if(dst.id) {

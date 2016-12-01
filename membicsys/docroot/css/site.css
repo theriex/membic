@@ -236,6 +236,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #invitelinkdiv { display:inline-block; margin:4px; padding:2px;
   background-color: #ffae50;
   border:1px solid #333; border-radius:4px; }
+.favcntrdiv { text-align:right; font-size:medium; font-weight:bold; 
+  padding:0px 5px 0px 0px; }
+.relatimediv { text-align:right; font-size:small; padding:0px 5px 0px 0px; }
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel, .reviewbadgedis { 
