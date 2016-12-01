@@ -72,7 +72,7 @@ class SitemapXML(webapp2.RequestHandler):
             if not ctm.preb:  #if no pre-built content, then not much to index
                 continue
             xml += "<url>"
-            xml += "  <loc>" + baseStandaloneURL(ctm) + "</loc>"
+            xml += "  <loc>" + baseStandaloneURL(ctm) + "?tab=latest</loc>"
             xml += "  <lastmod>" + ctm.modified[0:10] + "</lastmod>"
             xml += "</url>"
             xml += "<url>"
