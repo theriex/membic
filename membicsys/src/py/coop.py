@@ -33,7 +33,8 @@ class Coop(db.Model):
     people = db.TextProperty()      #JSON map of penids to display names
     soloset = db.TextProperty()     #JSON settings for solo page display
     keywords = db.TextProperty()    #CSV of custom theme keywords
-    preb = db.TextProperty()        #prebuilt JSON for membic display
+    preb = db.TextProperty()        #JSON membics for display (from query)
+    preb2 = db.TextProperty()       #JSON membics (overflow from preb)
     
 
 def id_in_csv(idval, csv):
@@ -223,9 +224,44 @@ def verify_people(coop):
     coop.people = json.dumps(pdict)
 
 
+def prebuilt_membics_stale(coop):
+    thresh = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(hours=-1))
+    if coop.modified > thresh:
+        logging.info("coop modified within past hour, slow db, preb NOT stale")
+        return False
+    solodict = {}
+    if coop.soloset:
+        solodict = json.loads(coop.soloset)
+    if "stats" not in solodict:
+        logging.info("stats not in solodict, preb stale")
+        return True
+    statdict = solodict["stats"]
+    if "upd" not in statdict:
+        logging.info("upd not in statdict, preb stale")
+        return True
+    mod = coop.modified
+    upd = statdict["upd"]
+    if upd[0:16] == mod[0:16]:  # within a minute is equivalent
+        return False  # stats are up to date
+    logging.info("stats.upd != coop.modified, preb stale")
+    return True
+
+
+def update_coop_stats(coop, count):
+    solodict = {}
+    if coop.soloset:
+        solodict = json.loads(coop.soloset)
+    s1 = coop.preb or ""
+    s2 = coop.preb2 or ""
+    solodict["stats"] = {"mc": count, "s1": len(s1), "s2": len(s2),
+                         "upd": nowISO()}  # coop.modified updated on save
+    coop.soloset = json.dumps(solodict)
+
+
 def update_coop_and_bust_cache(coop):
     verify_people(coop)
-    coop.preb = None  # force rebuild of prebuilt cached representation
+    coop.preb = None   # force rebuild of prebuilt cached representation
+    coop.preb2 = None
     cached_put(coop)
     # force subsequent database retrievals to get the latest version
     Coop.get_by_id(coop.key().id())

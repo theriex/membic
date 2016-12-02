@@ -306,7 +306,7 @@ def obj2JSON(obj):
             props[prop] = str(props[prop])
         if(prop == "top20s"):
             props[prop] = quoteTop20IDs(props[prop])
-        if(prop == "preb"):
+        if(prop == "preb" or prop == "preb2"):
             props[prop] = ""
         # logging.info(prop + ": " + str(props[prop]))
     jsontxt = json.dumps(props, True)

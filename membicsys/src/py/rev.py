@@ -884,7 +884,7 @@ def rebuild_reviews_block(handler, pct, pgid):
     pco = None
     if pct == "coop":
         pco = coop.Coop.get_by_id(int(pgid))
-        if pco and pco.preb:
+        if pco and pco.preb and not coop.prebuilt_membics_stale(pco):
             return pco.preb
     elif pct == "pen":
         pco = pen.PenName.get_by_id(int(pgid))
@@ -898,14 +898,22 @@ def rebuild_reviews_block(handler, pct, pgid):
     if pct == "coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
     vq = VizQuery(Review, where, pco.key().id())
-    # 11/30/16 complaint that 50 is too few for reasonable recall prompting
-    revs = vq.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-    for rev in revs:
-        jstr = append_review_jsoncsv(jstr, rev)
+    fsz = 100  # 11/30/16 complaint that 50 makes "recent" tab feel lossy
+    js2 = ""
+    revs = vq.fetch(500, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+    idx = 0  # idx not initialized if enumerate punts due to no revs...
+    for idx, rev in enumerate(revs):
+        if idx < fsz:
+            jstr = append_review_jsoncsv(jstr, rev)
+        else:
+            js2 = append_review_jsoncsv(js2, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
     jstr = "[" + jstr + "]"
+    js2 = "[" + js2 + "]"
     if pct == "coop":
         pco.preb = jstr
+        pco.preb2 = js2
+        coop.update_coop_stats(pco, idx)
         mctr.synchronized_db_write(pco)
     return jstr
 
