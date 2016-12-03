@@ -1398,6 +1398,23 @@ app.pcd = (function () {
             if(word.length > longest.length) {
                 longest = word; } });
         return longest;
+    },
+
+
+    updateRecentMembics = function (dtype, id, obj, supp, base) {
+        var oldest = null;
+        if(base.length) {
+            oldest = base[base.length - 1]; }
+        supp.forEach(function (membic) {
+            //ensure cached, and use newer version if already cached
+            membic = app.lcs.put("rev", membic).rev;
+            //supp membics are already in descending modified order
+            if(!oldest || oldest.modified > membic.modified ||
+                   (oldest.modified === membic.modified && 
+                    jt.instId(oldest) !== jt.instId(membic))) {
+                base.push(membic);
+                oldest = membic; } });  //maintain DESC in case dupe found
+        obj.recent = sourceRevIds(base, dtype, id);
     };
 
 
@@ -2105,8 +2122,8 @@ return {
         url += jt.ts("&cb=", id? "hour" : "second");
         time = new Date().getTime();
         jt.call("GET", url, null,
-                function (objs) {  // main obj + recent/top reviews
-                    var obj, revs;
+                function (objs) {   //main obj + recent/top reviews
+                    var obj;
                     time = new Date().getTime() - time;
                     jt.log("blockfetch " + dtype + " " + id  + 
                            " returned in " + time/1000 + " seconds.");
@@ -2117,13 +2134,7 @@ return {
                         app.lcs.tomb(dtype, id, "blockfetch failed");
                         return callback(null); }
                     obj = objs[0];  //PenName or Coop instance
-                    revs = objs.slice(1);
-                    revs.sort(function (a, b) {
-                        if(a.modified < b.modified) { return 1; }
-                        if(a.modified > b.modified) { return -1; }
-                        return 0; });
-                    app.lcs.putAll("rev", revs);
-                    obj.recent = sourceRevIds(revs, dtype, id);
+                    updateRecentMembics(dtype, id, obj, objs.slice(1), []);
                     app.lcs.put(dtype, obj);
                     app.login.noteAccountInfo(obj);
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
@@ -2146,6 +2157,43 @@ return {
                 jt.log("pcd.fetchAndDisplay no obj");
                 return app.activity.redisplay(); }
             app.pcd.display(dtype, id, tab || "", obj, expid); });
+    },
+
+
+    fetchmore: function () {
+        var url, time, elem;
+        if(!jt.byId("fetchmorediv")) {
+            if((dst.tab === "latest" || dst.tab === "search") &&
+                   dst.type === "coop" && dst.obj.soloset && 
+                   dst.obj.soloset.stats && dst.obj.soloset.stats.mc &&
+                   dst.obj.soloset.stats.mc > dst.obj.recent.length &&
+                   !dst.obj.suppfetched) {
+                elem = document.createElement("div");
+                elem.innerHTML = jt.tac2html(
+                    ["div", {id: "fetchmorediv"},
+                     ["a", {href: "#fetchmore",
+                            onclick: jt.fs("app.pcd.fetchmore()")},
+                      "Fetch more..."]]);
+                jt.byId("pcdcontdiv").appendChild(elem); }
+            return; }
+        jt.out("fetchmorediv", "Fetching...");
+        url = "blockfetch?" + app.login.authparams() + "&ctmid=" + dst.id +
+            "&supp=preb2" + jt.ts("&cb=", "second");
+        time = new Date().getTime();
+        jt.call("GET", url, null,
+                function (membics) {  //contents of preb2 is just reviews
+                    time = new Date().getTime() - time;
+                    jt.log("blockfetch supp " + dst.type + " " + dst.id  + 
+                           " returned in " + time/1000 + " seconds.");
+                    jt.out("fetchmorediv", "Redisplaying...");
+                    dst.obj.suppfetched = true;
+                    updateRecentMembics(dst.type, dst.id, dst.obj, membics, 
+                                        getRecentReviews());
+                    displayTab(dst.tab); },
+                function (code, errtxt) {
+                    jt.out("fetchmorediv", "Fetch failed " + code + 
+                           ": " + errtxt); },
+                jt.semaphore("pcd.fetchmore"));
     }
 
 };  //end of returned functions

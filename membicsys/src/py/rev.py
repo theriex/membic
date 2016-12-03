@@ -892,15 +892,17 @@ def rebuild_reviews_block(handler, pct, pgid):
     if not pco:
         srverr(handler, 404, pct + " " + str(pgid) + " not found")
         return None
-    jstr = obj2JSON(pco)
-    # logging.info("rebuild_reviews_block pco jstr: " + jstr)
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
     if pct == "coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
     vq = VizQuery(Review, where, pco.key().id())
     fsz = 100  # 11/30/16 complaint that 50 makes "recent" tab feel lossy
+    fmax = fsz
+    if pct == "coop":
+        fmax = 500
+    jstr = ""
     js2 = ""
-    revs = vq.fetch(500, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
+    revs = vq.fetch(fmax, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
     idx = 0  # idx not initialized if enumerate punts due to no revs...
     for idx, rev in enumerate(revs):
         if idx < fsz:
@@ -908,12 +910,12 @@ def rebuild_reviews_block(handler, pct, pgid):
         else:
             js2 = append_review_jsoncsv(js2, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
-    jstr = "[" + jstr + "]"
-    js2 = "[" + js2 + "]"
     if pct == "coop":
-        pco.preb = jstr
-        pco.preb2 = js2
+        pco.preb = "[" + obj2JSON(pco) + "," + jstr + "]"
+        pco.preb2 = "[" + js2 + "]"
         coop.update_coop_stats(pco, idx)
+        # rebuild preb to include updated stats, maybe s1 off by one but ok.
+        pco.preb = "[" + obj2JSON(pco) + "," + jstr + "]"
         mctr.synchronized_db_write(pco)
     return jstr
 
@@ -1087,6 +1089,14 @@ def mark_review_as_deleted(review, pnm, acc, handler):
     except Exception as e:
         logging.info("Account info stash failed on membic delete: " + str(e))
     return review
+
+
+def supplemental_recent_reviews(handler, pgid):
+    jstr = "[]"
+    pco = coop.Coop.get_by_id(int(pgid))
+    if pco and pco.preb2:
+        jstr = pco.preb2
+    writeJSONResponse(jstr, handler.response);
 
 
 class SaveReview(webapp2.RequestHandler):
@@ -1323,6 +1333,8 @@ class FetchAllReviews(webapp2.RequestHandler):
         try:
             pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
             if pgid: # pgid may be zero if no pen name yet
+                if self.request.get('supp'):
+                    return supplemental_recent_reviews(self, pgid)
                 key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
                 jstr = memcache.get(key)   # grab the prebuilt JSON data
                 if not jstr:

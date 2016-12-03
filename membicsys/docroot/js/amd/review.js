@@ -2325,6 +2325,8 @@ return {
         if(state.idx < state.revs.length) {  //resume after pause
             setTimeout(function () {
                 app.review.revDispIterator(state); }, 200); }
+        else {
+            app.pcd.fetchmore(); }
     },
 
 
