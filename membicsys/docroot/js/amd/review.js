@@ -2326,7 +2326,7 @@ return {
             setTimeout(function () {
                 app.review.revDispIterator(state); }, 200); }
         else {
-            app.pcd.fetchmore(); }
+            app.pcd.fetchmore("linkonly"); }
     },
 
 

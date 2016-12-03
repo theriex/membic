@@ -1860,6 +1860,7 @@ return {
                 //there are likely more revs on server, offer to go fetch
                 jt.out("pcdsrchdispdiv", searchServerHTML()); } }
         else {  //no change to search parameters yet, monitor
+            app.pcd.fetchmore("linkonly");
             setTimeout(app.pcd.searchReviews, 400); }
     },
 
@@ -2160,7 +2161,7 @@ return {
     },
 
 
-    fetchmore: function () {
+    fetchmore: function (linkonly) {
         var url, time, elem;
         if(!jt.byId("fetchmorediv")) {
             if((dst.tab === "latest" || dst.tab === "search") &&
@@ -2175,6 +2176,8 @@ return {
                             onclick: jt.fs("app.pcd.fetchmore()")},
                       "Fetch more..."]]);
                 jt.byId("pcdcontdiv").appendChild(elem); }
+            return; }
+        if(linkonly) {
             return; }
         jt.out("fetchmorediv", "Fetching...");
         url = "blockfetch?" + app.login.authparams() + "&ctmid=" + dst.id +
