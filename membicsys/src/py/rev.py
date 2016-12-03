@@ -917,8 +917,7 @@ def rebuild_reviews_block(handler, pct, pgid):
         # rebuild preb to include updated stats, maybe s1 off by one but ok.
         pco.preb = "[" + obj2JSON(pco) + "," + jstr + "]"
         mctr.synchronized_db_write(pco)
-    else:
-        jstr = "[" + obj2JSON(pco) + "," + jstr + "]"
+    jstr = "[" + obj2JSON(pco) + "," + jstr + "]"
     return jstr
 
 

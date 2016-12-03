@@ -301,11 +301,23 @@ app.readurl = (function () {
     },
 
 
+    setPublisherFromSource = function (review, html) {
+        var elem, val;
+        if(!review.publisher) {
+            elem = elementForString(html, "og:site_name", "meta");
+            if(elem) {
+                val = valueForField(elem, "content"); }
+            if(val) {
+                review.publisher = val; } }
+    },
+
+
     setReviewFields = function (review, html, url) {
         setReviewType(review, html, url);
         setTitle(review, html, url);
         if(review.revtype === "video") {  //try to be smart about music vids
             parseTitle(review); }
+        setPublisherFromSource(review, html);
         setImageURI(review, html, url);
         if(review.imguri) {
             review.svcdata = review.svcdata || {};
