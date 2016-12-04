@@ -301,7 +301,7 @@ app.readurl = (function () {
     },
 
 
-    setPublisherFromSource = function (review, html) {
+    setPublisher = function (review, html) {
         var elem, val;
         if(!review.publisher) {
             elem = elementForString(html, "og:site_name", "meta");
@@ -312,12 +312,27 @@ app.readurl = (function () {
     },
 
 
+    setAuthor = function (review, html) {
+        var elem, val;
+        if(!review.author) {
+            //looking for "author" should pick up either 
+            //<meta content="whoever" name="author">
+            //<meta itemprop="author" content="whoever">
+            elem = elementForString(html, "author", "meta");
+            if(elem) {
+                val = valueForField(elem, "content"); }
+            if(val) {
+                review.author = val; } }
+    },
+
+
     setReviewFields = function (review, html, url) {
         setReviewType(review, html, url);
         setTitle(review, html, url);
         if(review.revtype === "video") {  //try to be smart about music vids
             parseTitle(review); }
-        setPublisherFromSource(review, html);
+        setPublisher(review, html);
+        setAuthor(review, html);
         setImageURI(review, html, url);
         if(review.imguri) {
             review.svcdata = review.svcdata || {};
