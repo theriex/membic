@@ -10,6 +10,7 @@ from hashlib import sha256
 import hmac
 from google.appengine.api import urlfetch
 import urllib
+import Cookie
 import datetime
 from base64 import b64encode
 from cacheman import *
@@ -191,6 +192,70 @@ def callAmazon(handler, svc, params):
         handler.response.out.write(str(e))
 
 
+def interpreted_url_fetch_result(handler, result):
+    # The journal Nature returns a 401 when you are not logged in, but
+    # displays the abstract which is what is wanted.  So 401 errors
+    # need to succeed if there is a result.  Generally a 401 should
+    # not pass back to the caller as that would be interpreted by the
+    # client as not being logged in to membic.  An empty result is
+    # failure, there is no use case for fetching empty pages.
+    if not result or (result.status_code != 200 and result.status_code != 401):
+        code = "unknown"
+        content = "no content"
+        if not result:
+            result = "no result"
+        else:
+            code = result.status_code
+            content = result.content
+        logging.info("url fetch failed status_code " + str(code) +
+                     ": " + str(result))
+        handler.error(code)
+        handler.response.out.write(content)
+        return None
+    return result
+
+
+class URLFetcher(object):
+    # stackoverflow.com/questions/9358591/url-fetch-too-many-repeated-redirects
+    def __init__(self):
+        self.cookie = Cookie.SimpleCookie()
+        self.tries = 0
+    def fetch(self, handler, geturl):
+        while geturl is not None and self.tries < 6:
+            orgurl = geturl
+            try:
+                result = urlfetch.fetch(geturl, payload=None, method="GET",
+                                          headers=self.get_headers(self.cookie),
+                                          # Rather take a partial result
+                                          # than throw ResponseTooLargeError
+                                          allow_truncated=True,
+                                          follow_redirects=False,
+                                          deadline=10)
+            except Exception as e:
+                logging.info("URLFetcher.fetch error: " + str(e))
+                handler.error(400)
+                msg = "URLFetcher.fetch " + str(e) + " fetching " + geturl
+                if orgurl != geturl:
+                    msg += "(redirected from " + orgurl + ")"
+                handler.response.out.write(msg)
+                return None
+            # Let the site set any cookies they require
+            self.cookie.load(result.headers.get('set-cookie', ''))
+            # Follow redirect (if any)
+            geturl = result.headers.get('location')
+            self.tries += 1
+        return interpreted_url_fetch_result(handler, result)
+    def get_headers(self, cookie):
+        headers = {"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0",
+                   "Cookie": self.makeCookieHeader(cookie)}
+        return headers
+    def makeCookieHeader(self, cookie):
+        cookieHeader = ""
+        for value in cookie.values():
+            cookieHeader += "%s=%s; " % (value.key, value.value)
+        return cookieHeader
+
+
 def simple_fetchurl(handler, geturl):
     if not geturl:
         handler.error(400)
@@ -200,27 +265,15 @@ def simple_fetchurl(handler, geturl):
     try: 
         result = urlfetch.fetch(geturl, payload=None, method="GET",
                                 headers=headers,
-                                allow_truncated=False, 
-                                follow_redirects=True, 
-                                deadline=10, 
+                                allow_truncated=False,
+                                follow_redirects=True,
+                                deadline=10,
                                 validate_certificate=False)
     except Exception as e:
-        handler.error(400)
-        handler.response.out.write("simple_fetchurl " + str(e) + 
-                                   " fetching " + geturl)
-        return None
-    # The journal Nature returns a 401 when you are not logged in, but
-    # displays the abstract which is what is wanted.  So 401 errors
-    # need to succeed if there is a result.  Generally a 401 should
-    # probably not pass back to the caller as that would be
-    # interpreted as them not being logged in to membic...
-    if not result or (result.status_code != 200 and result.status_code != 401):
-        logging.info("simple_fetchurl failed status_code " + 
-                     str(result.status_code) + ": " + str(result))
-        handler.error(result.status_code)
-        handler.response.out.write(result.content)
-        return None
-    return result
+        logging.info("simple fetch error: " + str(e))
+        uf = URLFetcher()
+        return uf.fetch(handler, geturl)
+    return interpreted_url_fetch_result(handler, result)
 
 
 # Returning an image directly to a browser doesn't work unless it is

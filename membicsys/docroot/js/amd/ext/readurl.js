@@ -304,9 +304,14 @@ app.readurl = (function () {
     setPublisher = function (review, html) {
         var elem, val;
         if(!review.publisher) {
-            elem = elementForString(html, "og:site_name", "meta");
-            if(elem) {
-                val = valueForField(elem, "content"); }
+            if(!val) {
+                elem = elementForString(html, "og:site_name", "meta");
+                if(elem) {
+                    val = valueForField(elem, "content"); } }
+            if(!val) {
+                elem = elementForString(html, "cre", "meta");
+                if(elem) {
+                    val = valueForField(elem, "content"); } }
             if(val) {
                 review.publisher = val; } }
     },
@@ -346,7 +351,8 @@ app.readurl = (function () {
         result = crockfordurlregex.exec(url);
         if(!result || result.length < 4) {
             return url; }
-        return result[1] + ":" + result[2] + result[3];
+        return result[1] + ":" + result[2] + result[3] +
+            (result[5]? "/" + result[5] : "")
     };
 
 
