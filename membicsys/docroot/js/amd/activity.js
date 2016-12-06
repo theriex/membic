@@ -331,13 +331,14 @@ return {
             feeds[feedkey] = feeds[feedkey].filter(function (rev) {
                 return jt.instId(rev) !== revid; }); });
         //insert rev appropriately based on creation time
-        if(rev.srcrev >= 0 && !jt.isId(rev.ctmid)) {  //not futbatch or ctm copy
+        if(jt.strNonNeg(rev.srcrev) && !jt.isId(rev.ctmid)) {
+            //not future, batch, marked as deleted or theme post
             Object.keys(feeds).forEach(function (feedkey) {
                 if(feedupdt.indexOf(feedkey) >= 0) {
                     feeds[feedkey] = app.activity.insertOrUpdateRev(
                             feeds[feedkey], rev); }}); }
         //add to future feed if this was a future review
-        if(rev.srcrev === -101) {
+        if(rev.srcrev === "-101") {
             if(feeds.future) {  //already loaded
                 feeds.future = app.activity.insertOrUpdateRev(
                     feeds.future, rev); }

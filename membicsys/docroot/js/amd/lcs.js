@@ -239,7 +239,7 @@ return {
                 rev = revref.rev;
                 if((!revtype || rev.revtype === revtype) &&
                        (!penid || rev.penid === penid) && 
-                       rev.srcrev >= 0 && 
+                       jt.strNonNeg(rev.srcrev) && 
                        (!rev.ctmid || rev.ctmid === "0")) {
                     results.push(rev); } } });
         return results;

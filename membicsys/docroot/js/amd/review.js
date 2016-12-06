@@ -113,7 +113,7 @@ app.review = (function () {
         var imgfile = "img/stars18ptC.png", greyfile = "img/stars18ptCg.png",
             width, offset, rat, html;
         if(typeof rating !== "number") {
-            mode = mode || (rating.srcrev === -101 ? "prereview" : "read");
+            mode = mode || (rating.srcrev === "-101" ? "prereview" : "read");
             rating = rating.rating; }
         rat = app.review.starRating(rating);
         if(mode === "prereview") {
@@ -360,7 +360,7 @@ app.review = (function () {
 
     verifyRatingStars = function (ignore /*type*/, errors) {
         var txt;
-        if(!crev.rating && crev.srcrev !== -101) {
+        if(!crev.rating && crev.srcrev !== "-101") {
             txt = "Please set a star rating.";
             errors.push(txt); }
     },
@@ -397,9 +397,9 @@ app.review = (function () {
             noteURLValue();
             futcb = jt.byId("rdfutcb");
             if(futcb && futcb.checked) {
-                crev.srcrev = -101; }
-            else if(crev.srcrev && crev.srcrev === -101) {
-                crev.srcrev = 0; }
+                crev.srcrev = "-101"; }
+            else if(crev.srcrev && crev.srcrev === "-101") {
+                crev.srcrev = "0"; }
             notePostingCoops(); }
     },
 
@@ -1084,7 +1084,7 @@ app.review = (function () {
         imgfile = "img/stars18ptC.png"; 
         greyfile = "img/stars18ptCg.png";
         rat = app.review.starRating(crev.rating) || 0;
-        if(crev.srcrev === -101) {
+        if(crev.srcrev === "-101") {
             return jt.tac2html(
                 ["img", {cla: "starsimg", src: "img/future.png",
                          title: rat.title, alt: rat.title}]); }
@@ -1171,7 +1171,7 @@ app.review = (function () {
                      ["input", {type: "checkbox", id: "rdfutcb",
                                 name: "futuremembicmarkercheckbox",
                                 onclick: jt.fsd("app.review.togglefuture()"),
-                                checked: jt.toru(crev.srcrev === -101)}]],
+                                checked: jt.toru(crev.srcrev === "-101")}]],
                     html];
             jt.out("rdpfdiv", jt.tac2html(html));
             dlgStarsActivate(); }
@@ -1609,7 +1609,7 @@ return {
         if(typename) {
             jt.out("rdokstatdiv", "");  //clear errs e.g. "need to choose type"
             //rebuild the pic and details area
-            if(jt.byId("rdstarsdiv") && crev.srcrev !== -101) {
+            if(jt.byId("rdstarsdiv") && crev.srcrev !== "-101") {
                 //turn off the star functions if they were active
                 dlgStarsDeactivate();
                 jt.out("rdpfdiv", ""); }
@@ -1690,12 +1690,12 @@ return {
 
 
     togglefuture: function () {
-        if(crev.srcrev === -101) {
-            crev.srcrev = 0;
+        if(crev.srcrev === "-101") {
+            crev.srcrev = "0";
             jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML()));
             dlgStarsActivate(); }
         else {
-            crev.srcrev = -101;
+            crev.srcrev = "-101";
             dlgStarsDeactivate();
             jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML())); }
     },
@@ -2252,7 +2252,7 @@ return {
 
 
     isDupeRev: function (rev, pr) {
-        if(rev && pr && ((rev.srcrev > 0 && rev.srcrev === pr.srcrev) ||
+        if(rev && pr && ((jt.strPos(rev.srcrev) && rev.srcrev === pr.srcrev) ||
                          (rev.cankey === pr.cankey) ||
                          (rev.url && rev.url === pr.url))) {
             return true; }
@@ -2306,7 +2306,8 @@ return {
             cacheNames(rev);
             revdivid = state.prefix + jt.instId(rev);
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
-            if(rev.srcrev === -604 || app.review.isDupeRev(rev, state.prev) || 
+            if(rev.srcrev === "-604" || 
+                   app.review.isDupeRev(rev, state.prev) || 
                    (state.author === "notself" && 
                     rev.penid === app.pen.myPenId())) {
                 maindivattrs.style = "display:none"; }

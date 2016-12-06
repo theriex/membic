@@ -40,7 +40,7 @@ app.layout = (function () {
             txt = "https://" + window.location.host + "/t/" + dst.id;
             html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt);
             txt = "https://" + window.location.host + 
-                "?view=coop&coopid=" + dst.id
+                "?view=coop&coopid=" + dst.id;
             html = html.replace(/<!--\ \$MEMBICPARAMLINK\ -->/g, txt); }
         return html;
     },
@@ -287,10 +287,24 @@ return {
                 return true; }
             return false;
         };
+        jt.strNonNeg = function (val) {
+            if(typeof val === "string") {
+                val = parseInt(val, 10); }
+            if(!val || val > 0) {
+                return true; }  //numeric value can overflow js number
+            return false;
+        };
+        jt.strPos = function (val) {
+            if(typeof val === "string") {
+                val = parseInt(val, 10); }
+            if(val) {
+                return true; }  //numeric value can overflow js number
+            return false;
+        };
         //lint wants to compare variables directly with === undefined
         //but that crashes on mac ff 49.  Unfortunately it also dies
         //passing an undefined parameter.  Leaving this commented out
-        //here to remember.
+        //here to remember not to bother trying this approach.
         // jt.isUndefined = function (val) {
         //     if(typeof val === "undefined") {  //required for mac ff
         //         return true; }

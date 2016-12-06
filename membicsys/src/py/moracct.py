@@ -304,6 +304,8 @@ def obj2JSON(obj):
         # javascript integer value cannot hold database integer value..
         if(isinstance(val, (int, long)) and (prop.endswith("id"))):
             props[prop] = str(props[prop])
+        if(prop == "srcrev"):
+            props[prop] = str(props[prop])
         if(prop == "top20s"):
             props[prop] = quoteTop20IDs(props[prop])
         if(prop == "preb" or prop == "preb2"):
