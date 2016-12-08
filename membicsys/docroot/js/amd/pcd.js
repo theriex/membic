@@ -773,11 +773,12 @@ app.pcd = (function () {
                  ["div", {cla: "formline", id: "ctmrssdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
-                    [["RSS combines multiple sources into a single news feed. To follow posts for this theme with ",
+                    [["To follow posts for this theme with an ",
                       ["a", {href: "#sampleRSSReader",
                              onclick: jt.fs("window.open('" + sr + "')")},
-                       "an RSS reader"],
-                      " use this URL:"],
+                       "RSS reader"],
+                      ", content decorator, or social media broadcaster, ",
+                      "use this URL:"],
                      ["div", {cla: "formline"}, 
                       ["textarea", {id: "rssurlta", cla: "dlgta"}]]]]]]]];
         return html;
