@@ -1,6 +1,6 @@
 /*global app, jt, window */
 
-/*jslint browser, multivar, white, fudge */
+/*jslint browser, multivar, white, fudge, for */
 
 //////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, reviews, etc.
@@ -147,12 +147,14 @@ return {
 
 
     putAll: function (type, objs) {
-        if(objs) {
-            objs.every(function (obj) {
-                if(obj.fetched) {  //ending stats and cursor object...
-                    return false; }
-                app.lcs.put(type, obj);
-                return true; }); }
+        //If there is a newer version of an obj already cached,
+        //then that element is updated in the given array to avoid
+        //ending up with older copies of things in lists.
+        var i;
+        for(i = 0; objs && i < objs.length; i += 1) {
+            if(objs[i].fetched) {  //ending stats and cursor object
+                break; }
+            objs[i] = app.lcs.put(type, objs[i])[type]; }
     },
 
 

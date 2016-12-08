@@ -2391,8 +2391,14 @@ return {
             return; }
         data = "penid=" + app.pen.myPenId() + "&revid=" + revid;
         jt.call("POST", "delrev?" + app.login.authparams(), data,
-                function () {
+                function (reviews) {
                     app.lcs.nukeItAll();
+                    //An immediate fetch may still retrieve the
+                    //unmarked membic due to database update lag.
+                    //Cache the marked-as-deleted instance to avoid
+                    //seeing it in the meantime.
+                    app.lcs.put("rev", reviews[0]);
+                    app.activity.reinit();  //clear existing feeds
                     app.login.doNextStep(); },
                 function (code, errtxt) {
                     timg.style.opacity = 1.0;
