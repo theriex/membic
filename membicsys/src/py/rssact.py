@@ -41,6 +41,9 @@ def item_url(handler, review):
     url = None
     if "url" in review:
         url = review["url"]
+        # pick up any stray unencoded ampersands and encode for valid xml
+        url = url.replace("&amp;", "&");
+        url = url.replace("&", "&amp;");
     if not url:
         url = handler.request.host_url + "?view=coop&amp;coopid=" +\
             str(review["ctmid"]) + "&amp;tab=latest&amp;expid=" +\
