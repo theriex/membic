@@ -13,55 +13,92 @@ import json
 # they are reconstituted JSON dicts and not databasse instances.
 ########################################
 
-def getTitle(review):
-    if review["revtype"] == "book":
-        return review["title"]
-    if review["revtype"] == "article":
-        return review["title"]
-    if review["revtype"] == "movie":
-        return review["title"]
-    if review["revtype"] == "video":
-        return review["title"]
-    if review["revtype"] == "music":
-        return review["title"]
-    if review["revtype"] == "yum":
-        return review["name"]
-    if review["revtype"] == "activity":
-        return review["name"]
-    if review["revtype"] == "other":
-        return review["name"]
-    return "unknown review type"
+def revtxt_title(review):
+    names = ["yum", "activity", "other"]
+    if review["revtype"] in names:
+        return safestr(review["name"])
+    return safestr(review["title"])
 
 
-def getSubkey(review):
+def revtxt_subkey(review):
     subkey = ""
     if review["revtype"] == "book":
-        subkey = review["author"]
+        subkey = safestr(review["author"])
     if review["revtype"] == "music":
-        subkey = review["artist"]
+        subkey = safestr(review["artist"])
     return subkey
 
 
-def rss_title(review):
+def revtxt_stars(review):
+    stars = ""
     rating = review["rating"] or 0
-    title = str(rating / 20) + " star " + review["revtype"] + ": " +\
-        getTitle(review) + " " + getSubkey(review)
-    return title
+    for i in range(0, rating / 20):
+        stars += "*"
+    return stars
 
 
 def item_url(handler, review):
-    url = handler.request.host_url + "?view=coop&amp;coopid=" +\
-        str(review["ctmid"]) + "&amp;tab=latest&amp;expid=" +\
-        str(review["_id"])
+    url = None
+    if "url" in review:
+        url = review["url"]
+    if not url:
+        url = handler.request.host_url + "?view=coop&amp;coopid=" +\
+            str(review["ctmid"]) + "&amp;tab=latest&amp;expid=" +\
+            str(review["_id"])
     return url
+
+
+def space_conc(base, txt):
+    txt = txt or ""
+    if base and txt:
+        base += " "
+    base += txt
+    return base
+
+
+def rev_text_from_spec(review, spec):
+    txt = ""
+    for cc in spec:
+        if cc == "s":
+            txt = space_conc(txt, revtxt_stars(review))
+        elif cc == "r":
+            txt = space_conc(txt, review["revtype"])
+        elif cc == "t":
+            txt = space_conc(txt, revtxt_title(review))
+            txt = space_conc(txt, revtxt_subkey(review))
+        elif cc == "k":
+            txt = space_conc(txt, safestr(review["keywords"]))
+        elif cc == "d":
+            txt = space_conc(txt, safestr(review["text"]))
+        elif cc == "v":
+            txt = space_conc(txt, "|")
+    return txt
+
+
+def title_spec_and_desc_spec(handler):
+    # Title or description specification elements:
+    #   s: rating stars
+    #   r: revtype
+    #   t: title/name
+    #   k: keywords
+    #   d: text description
+    #   v: vertical bar delimiter
+    # So for example, to put everything in the title: ts=sdvtvrk
+    ts = handler.request.get("ts")
+    ds = handler.request.get("ds")
+    if not ts and not ds:
+        ts = "st"
+        ds = "dvrk"
+    return ts, ds
 
 
 def rss_content(handler, ctmid, title, reviews):
     url = "https://membic.com?view=coop&amp;coopid=" + str(ctmid)
     email = "membicsystem@gmail.com"
+    ts, ds = title_spec_and_desc_spec(handler)
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
-    # claimed by the site to avoid unwanted content distribution.
+    # claimed by the site to help avoid unwanted content distribution.
     copy = "Copyright SAND Services Inc."
     desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -100,13 +137,13 @@ def rss_content(handler, ctmid, title, reviews):
     txt += "</items>\n"
     txt += "</channel>\n"
     for review in reviews:
-        revtitle = rss_title(review)
         revurl = item_url(handler, review)
+        revtitle = rev_text_from_spec(review, ts)
+        revdesc = rev_text_from_spec(review, ds)
         txt += "<item rdf:about=\"" + revurl + "\">\n"
         txt += "<title><![CDATA[" + revtitle + "]]></title>\n"
         txt += "<link>" + revurl + "</link>\n"
-        txt += "<description><![CDATA[" + safestr(review["keywords"]) + " | "
-        txt += safestr(review["text"]) + "]]></description>\n"
+        txt += "<description><![CDATA[" + revdesc + "]]></description>\n"
         txt += "<dc:date>" + review["modified"] + "</dc:date>\n"
         txt += "<dc:language>en-us</dc:language>\n"
         txt += "<dc:rights>" + copy + "</dc:rights>\n"
