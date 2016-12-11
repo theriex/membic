@@ -980,7 +980,9 @@ app.pcd = (function () {
         else if(expid === "settings") {
             app.pcd.settings(dst.obj); }
         else if(expid) {
-            app.pcd.toggleRevExpansion("pcd", expid); }
+            //give the display a chance to settle before toggling
+            setTimeout(function () {
+                app.pcd.toggleRevExpansion("pcdr", expid); }, 600); }
     },
 
 

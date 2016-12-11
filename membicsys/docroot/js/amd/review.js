@@ -2363,7 +2363,10 @@ return {
             jt.out(revdivid + "keysdiv", "");
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
         else {  //expand
-            //scrolling on click is disorienting. Isolate situation if needed.
+            //scrolling on click is disorienting. Moves the element to
+            //the top of the page when you click it so it jumps
+            //around. Originally for people clicking through from RSS
+            //links. Not needed anymore.
             //app.layout.scrollToVisible(revdivid + "buttonsdiv");
             app.activity.showMultiMembicImage(revid, false);
             if(jt.byId("stackmenu" + revid)) {
