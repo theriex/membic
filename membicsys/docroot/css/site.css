@@ -206,7 +206,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
-.embedmethodspan { font-weight:bold; }
 .embedexample { padding-left:10px; font-size:medium; }
 .embedexamptitle { font-style:italic; }
 .formline, .memlistdiv { clear:both; font-size:medium; 
@@ -279,7 +278,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
 .searchbuttondiv { margin:0px 0px 0px 40px; }
 .inlineimg { vertical-align:middle; padding:0px 4px; }
-.embdlgta { width:90%; padding:10px 5px 0px 5px; margin:10px 0px 5px 0px; }
+.setpldlgmspan { font-weight:bold; }
+.setpldlgta { width:90%; padding:10px 5px 0px 5px; margin:10px 0px 5px 0px; }
 #fetchmorediv { font-size:medium; padding:0px 0px 5px 10px; }
 
 /* >> review layout */

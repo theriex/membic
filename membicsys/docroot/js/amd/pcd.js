@@ -760,39 +760,34 @@ app.pcd = (function () {
 
 
     rssSettingsHTML = function () {
-        var sr, html;
+        var html;
         if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
-        sr = "https://feedly.com";  //sample RSS reader
         html = ["div", {cla: "formline"},
-                [["a", {href: "#toggleRSS",
-                        onclick: jt.fs("app.layout.togdisp('ctmrssdiv')")},
+                [["a", {href: "#rss", onclick: jt.fs("app.pcd.rssHelp()")},
                   [["img", {cla: "ctmsetimg", src: "img/rssicon.png"}],
                    ["span", {cla: "settingsexpandlinkspan"},
-                    "RSS"]]],
-                 ["div", {cla: "formline", id: "ctmrssdiv",
-                          style: "display:none;"},
-                  [["div", {cla: "formline"},
-                    [["To follow posts for this theme with an ",
-                      ["a", {href: "#sampleRSSReader",
-                             onclick: jt.fs("window.open('" + sr + "')")},
-                       "RSS reader"],
-                      ", content decorator, or social media broadcaster, ",
-                      "use this URL:"],
-                     ["div", {cla: "formline"}, 
-                      ["textarea", {id: "rssurlta", cla: "dlgta"}]]]]]]]];
+                    "RSS Feed"]]]]];
         return html;
     },
-    rssSettingsInit = function () {
-        var site, ta;
-        site = window.location.href;
-        if(site.endsWith("/")) {
-            site = site.slice(0, -1); }
-        ta = jt.byId("rssurlta");
+    fillRSSDialogAreas = function () {
+        var furl, ta;
+        furl = window.location.href;
+        if(furl.endsWith("/")) {
+            furl = furl.slice(0, -1); }
+        furl += "/rsscoop?coop=" + jt.instId(dst.obj);
+        ta = jt.byId("rssbta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = site + "/rsscoop?coop=" + 
-                jt.instId(dst.obj); }
+            ta.value = furl; }
+        ta = jt.byId("rsscta");
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = furl + "&ts=st&ds=dvrk"; }
+        ta = jt.byId("rssota");
+        if(ta) {
+            ta.readOnly = true;
+            ta.value = furl + "&ts=sdvtvrk"; }
     },
 
 
@@ -842,20 +837,6 @@ app.pcd = (function () {
                    ["span", {cla: "settingsexpandlinkspan"},
                     "Embed Theme"]]]]];
         return html;
-    },
-    embedSettingsInit = function () {
-        var site, ta;
-        site = window.location.href;
-        if(site.endsWith("/")) {
-            site = site.slice(0, -1); }
-        ta = jt.byId("ctmembedta");
-        if(ta) {
-            ta.readOnly = true;
-            ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
-                "?view=coop&coopid=" + dst.id + "&css=none\">" + 
-                dst.obj.name + "</a></div>\n" +
-                "<script src=\"" + site + 
-                "/js/embed.js?v=161208\"></script>\n"; }
     },
     fillEmbedDialogAreas = function () {
         var dlo, site, ta = jt.byId("embdlta");
@@ -1523,9 +1504,7 @@ return {
                                    app.login.accountSettingsInit();
                                    picSettingsInit();
                                    descripSettingsInit();
-                                   calSettingsInit();
-                                   rssSettingsInit();
-                                   embedSettingsInit(); });
+                                   calSettingsInit(); });
     },
 
 
@@ -1537,6 +1516,55 @@ return {
     },
 
 
+    rssHelp: function () {
+        var sr, html;
+        sr = "https://feedly.com";  //sample RSS reader
+        html = ["div", {id: "pcdembeddlgdiv"},
+                [["div", {cla: "bumpedupwards"},
+                  ["div", {cla: "headingtxt"}, "RSS for " + dst.obj.name]],
+                 //basic RSS (http or https)
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "setpldlgmspan"}, "Standard RSS"],
+                   " for use with an ",
+                   ["a", {href: "#sampleRSSReader",
+                          onclick: jt.fs("window.open('" + sr + "')")},
+                    "RSS reader"],
+                   " or sidebar content:",
+                   ["div", {cla: "setplustdiv"},
+                    ["textarea", {id: "rssbta", cla: "setpldlgta"}]],
+                   "Either <em>http</em> or <em>https</em> can be used."]],
+                 //custom RSS
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "setpldlgmspan"}, "Custom RSS"],
+                   " to specify how the summary is presented:",
+                   ["div", {cla: "setplustdiv"},
+                    ["textarea", {id: "rsscta", cla: "setpldlgta"}]],
+                   "Change the <em>ts</em> and <em>ds</em> parameter value letters to reflect what you want:",
+                   ["ul",
+                    [["li", "<b>s</b>: rating stars (as asterisks)"],
+                     ["li", "<b>r</b>: membic type (e.g. \"book\")"],
+                     ["li", "<b>t</b>: title or name"],
+                     ["li", "<b>k</b>: keywords"],
+                     ["li", "<b>d</b>: description why memorable"],
+                     ["li", "<b>v</b>: vertical bar delimiter"]]]]],
+                 //sample one line title
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "setpldlgmspan"}, "Title only"],
+                   " example with all info in one line:",
+                   ["div", {cla: "setplustdiv"},
+                    ["textarea", {id: "rssota", cla: "setpldlgta"}]]]],
+                 //back
+                 ["div", {cla: "pcdsectiondiv"},
+                  ["a", {href: "#settings",
+                         onclick: jt.fs("app.pcd.settings()")},
+                   [["img", {src: "img/arrow18left.png"}],
+                    " Return to Settings"]]]]];
+        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
+                               function () {
+                                   fillRSSDialogAreas(); });
+    },
+
+
     embedHelp: function () {
         var html;
         html = ["div", {id: "pcdembeddlgdiv"},
@@ -1544,35 +1572,35 @@ return {
                   ["div", {cla: "headingtxt"}, "Embed " + dst.obj.name]],
                  //Standalone URL
                  ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "embedmethodspan"}, "Standalone URL"],
+                  [["span", {cla: "setpldlgmspan"}, "Standalone URL"],
                    " for use with your own custom domain",
                    ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embdlta", cla: "embdlgta"}]]]],
+                    ["textarea", {id: "embdlta", cla: "setpldlgta"}]]]],
                  //embed script
                  ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "embedmethodspan"}, "Embed script"],
+                  [["span", {cla: "setpldlgmspan"}, "Embed script"],
                    " to paste where you want membics in your site",
                    ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embscrta", cla: "embdlgta", 
+                    ["textarea", {id: "embscrta", cla: "setpldlgta", 
                                   rows: 4}]]]],
                  //iframe
                  ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "embedmethodspan"}, "Embed iframe"],
+                  [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
                    " non-script equivalent (edit your site name",
                    " and adjust height as needed)",
                    ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embifta", cla: "embdlgta", 
+                    ["textarea", {id: "embifta", cla: "setpldlgta", 
                                   rows: 4}]]]],
                  //wordpress
                  ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "embedmethodspan"}, "Newsfeed"],
+                  [["span", {cla: "setpldlgmspan"}, "Newsfeed"],
                    " syndicated content display (recent membics only)",
                    ["div", {cla: "embdlgline"},
                     ["div", {cla: "embedexample"},
                      [["span", {cla: "embedexamptitle"}, "WordPress:"],
                       " Customize | Widgets | Sidebar | Add a Widget | RSS"]]],
                    ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embwpta", cla: "embdlgta"}]]]],
+                    ["textarea", {id: "embwpta", cla: "setpldlgta"}]]]],
                  //back
                  ["div", {cla: "pcdsectiondiv"},
                   ["a", {href: "#settings",
