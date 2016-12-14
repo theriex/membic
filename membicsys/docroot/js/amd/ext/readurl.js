@@ -326,6 +326,10 @@ app.readurl = (function () {
             elem = elementForString(html, "author", "meta");
             if(elem) {
                 val = valueForField(elem, "content"); }
+            if(val.startsWith("http")) {  //washingtonpost 
+                elem = html.match(/author:\[\"([^\"]+)/)
+                if(elem && elem.length > 1) {
+                    val = elem[1]; } }
             if(val) {
                 review.author = val; } }
     },
