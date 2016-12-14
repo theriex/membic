@@ -270,8 +270,8 @@ return {
                         new Date().getTime() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
-                    jt.out("contentdiv", "revfeed failed code " + code + 
-                           ": " + errtxt); }),
+                    jt.out("contentdiv", "Data retrieval failed code " + code + 
+                           ": " + errtxt + "<br/>Please reload the page"); }),
                 jt.semaphore("activity.displayFeed"));
     },
 
