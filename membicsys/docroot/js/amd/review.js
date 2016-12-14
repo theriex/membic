@@ -1257,6 +1257,7 @@ app.review = (function () {
         var html = [], chk, kwid;
         ctm.keywords = ctm.keywords || "";
         ctm.keywords.csvarray().forEach(function (kwd, idx) {
+            kwd = kwd.trim();  //keywords may be ", " separated
             chk = jt.toru(crev.keywords.indexOf(kwd) >= 0, "checked");
             kwid = "ctm" + jt.instId(ctm) + "kw" + idx;
             html.push(["div", {cla: "rdkwcbdiv"},
