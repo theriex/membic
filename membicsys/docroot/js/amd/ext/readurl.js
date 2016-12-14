@@ -327,7 +327,7 @@ app.readurl = (function () {
             if(elem) {
                 val = valueForField(elem, "content"); }
             if(val.startsWith("http")) {  //washingtonpost 
-                elem = html.match(/author:\[\"([^\"]+)/)
+                elem = html.match(/author:\["([^"]+)/);
                 if(elem && elem.length > 1) {
                     val = elem[1]; } }
             if(val) {
@@ -356,7 +356,7 @@ app.readurl = (function () {
         if(!result || result.length < 4) {
             return url; }
         return result[1] + ":" + result[2] + result[3] +
-            (result[5]? "/" + result[5] : "")
+            (result[5]? "/" + result[5] : "");
     };
 
 
