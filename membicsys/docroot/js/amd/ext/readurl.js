@@ -330,6 +330,10 @@ app.readurl = (function () {
                 elem = html.match(/author:\["([^"]+)/);
                 if(elem && elem.length > 1) {
                     val = elem[1]; } }
+            if(!val) {  //huffingtonpost
+                elem = html.match(/author":\{[^\}]*name":"([^"]+)/);
+                if(elem && elem.length > 1) {
+                    val = elem[1]; } }
             if(val) {
                 review.author = val; } }
     },
