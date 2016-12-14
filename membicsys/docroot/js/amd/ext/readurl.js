@@ -334,6 +334,10 @@ app.readurl = (function () {
                 elem = html.match(/author":\{[^\}]*name":"([^"]+)/);
                 if(elem && elem.length > 1) {
                     val = elem[1]; } }
+            if(!val) {  //politico
+                elem = html.match(/content_author":"([^"]+)/);
+                if(elem && elem.length > 1) {
+                    val = elem[1]; } }
             if(val) {
                 review.author = val; } }
     },
