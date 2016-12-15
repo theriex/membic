@@ -61,6 +61,7 @@ app.readurl = (function () {
                 found = true; }
             else {
                 found = false;
+                str = "";  //reset to avoid returning bad interim tags
                 idx = html.indexOf(targetstr, idx + 1); } }
         return str;
     },
@@ -317,8 +318,12 @@ app.readurl = (function () {
     },
 
 
-    setAuthor = function (review, html) {
-        var elem, val;
+    setAuthor = function (review, html, url) {
+        var elem, val,
+            brokens = [
+                {src: "washingtonpost", reg: /author:\["([^"]+)/},
+                {src: "huffingtonpost", reg: /author":\{[^\}]*name":"([^"]+)/},
+                {src: "politi.co", reg: /content_author":"([^"]+)/}];
         if(!review.author) {
             //looking for "author" should pick up either 
             //<meta content="whoever" name="author">
@@ -326,18 +331,12 @@ app.readurl = (function () {
             elem = elementForString(html, "author", "meta");
             if(elem) {
                 val = valueForField(elem, "content"); }
-            if(val.startsWith("http")) {  //washingtonpost 
-                elem = html.match(/author:\["([^"]+)/);
-                if(elem && elem.length > 1) {
-                    val = elem[1]; } }
-            if(!val) {  //huffingtonpost
-                elem = html.match(/author":\{[^\}]*name":"([^"]+)/);
-                if(elem && elem.length > 1) {
-                    val = elem[1]; } }
-            if(!val) {  //politico
-                elem = html.match(/content_author":"([^"]+)/);
-                if(elem && elem.length > 1) {
-                    val = elem[1]; } }
+            if(!val || val.startsWith("http")) {
+                brokens.forEach(function (custom) {
+                    if(url.indexOf(custom.src) >= 0) {
+                        elem = html.match(custom.reg);
+                        if(elem && elem.length > 1) {
+                            val = elem[1]; } } }); }
             if(val) {
                 review.author = val; } }
     },
@@ -349,7 +348,7 @@ app.readurl = (function () {
         if(review.revtype === "video") {  //try to be smart about music vids
             parseTitle(review); }
         setPublisher(review, html);
-        setAuthor(review, html);
+        setAuthor(review, html, url);
         setImageURI(review, html, url);
         if(review.imguri) {
             review.svcdata = review.svcdata || {};
