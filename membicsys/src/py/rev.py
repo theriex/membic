@@ -11,6 +11,7 @@ import pen
 import coop
 import mailsum
 import mctr
+import mfeed
 import json
 from operator import attrgetter, itemgetter
 import re
@@ -66,8 +67,6 @@ class Review(db.Model):
 
 known_rev_types = ['book', 'article', 'movie', 'video', 
                    'music', 'yum', 'activity', 'other']
-revblocksize = 200  # how many reviews to return. cacheable approx quantity
-revpoolsize = 1000  # even multiple of blocksize. how many reviews to read
 
 
 def acc_review_modification_authorized(acc, handler):
@@ -316,89 +315,6 @@ def prepend_to_main_feeds(review, pnm):
     memcache.set(review.revtype, typerevs)
 
 
-def feedcsventry(review):
-    entry = str(review.key().id()) + ":" + str(review.penid) +\
-        ":" + str(review.ctmid)
-    return entry
-
-
-# Return the feedcsv and asociated JSON data blocks from cache.  If
-# the cache is partial, clean up and return None, None
-def get_feed_cache_elements(ckey):
-    feedcsv = memcache.get(ckey)
-    numblocks = revpoolsize / revblocksize
-    blocks = [None for i in range(numblocks)]
-    for i in range(numblocks):
-        blocks[i] = memcache.get(ckey + "RevBlock" + str(i))
-    if (feedcsv is not None) and (None not in blocks):
-        return feedcsv, blocks
-    # not found or partial.  Clean up.
-    memcache.delete(ckey)
-    for i in range(numblocks):
-        memcache.delete(ckey + "RevBlock" + str(i))
-    return None, None
-
-
-def replace_instance_in_json(rev, jtxt, remove):
-    objs = json.loads(jtxt)
-    rt = ""
-    for obj in objs:
-        idstr = str(rev.key().id())
-        if obj["_id"] == idstr:
-            if not remove:
-                debuginfo("Replaced json for _id " + idstr)
-                rt = append_to_csv(obj2JSON(rev), rt)
-            else:
-                debuginfo("Removed json for _id " + idstr)
-        else:
-            rt = append_to_csv(json.dumps(obj), rt)
-    return "[" + rt + "]"
-
-
-def prepend_instance_to_json(rev, jtxt):
-    # not safe to use prepend_to_csv due to upperbound limit
-    jtxt = jtxt or ""
-    if jtxt:
-        if len(jtxt) > 2:
-            jtxt = jtxt[1:-1]  # strip array brackets
-        else:
-            jtxt = ""
-    if jtxt:
-        jtxt = "," + jtxt
-    jtxt = obj2JSON(rev) + jtxt
-    return "[" + jtxt + "]"
-
-
-# update the cache or ensure it is nuked for rebuild.
-def update_feed_cache(ckey, rev, addifnew=False):
-    debuginfo("update_feed_cache for " + ckey)
-    feedcsv, blocks = get_feed_cache_elements(ckey)
-    # debuginfo("feedcsv: " + str(feedcsv))
-    if feedcsv is None:
-        debuginfo("no cache data. rebuild later if needed")
-        return  # cache cleared, rebuild later as needed
-    entry = feedcsventry(rev)
-    numblocks = revpoolsize / revblocksize
-    if csv_contains(entry, feedcsv):
-        debuginfo("updating existing cache entry")
-        for i in range(numblocks):  # walk all in case dupe included
-            blocks[i] = replace_instance_in_json(rev, blocks[i], 
-                                                 rev.mainfeed <= 0)
-            memcache.set(ckey + "RevBlock" + str(i), blocks[i])
-    elif rev.mainfeed > 0 and addifnew:
-        debuginfo("prepending new cache entry")
-        feedcsv = prepend_to_csv(entry, feedcsv)
-        memcache.set(ckey, feedcsv)
-        # prepend to first block.  Not worth rebalancing all the blocks.
-        blocks[0] = prepend_instance_to_json(rev, blocks[0])
-        memcache.set(ckey + "RevBlock0", blocks[0])
-
-
-def update_feed_caches(rev, addifnew=False):
-    update_feed_cache("all", rev, addifnew)        # main feed
-    update_feed_cache(rev.revtype, rev, addifnew)  # filtered main feed
-
-
 # The standard caching for the app uses pickle and works with db.Model
 # class instances that reconstitute as class instances.  This is a
 # block cache that holds an array of instances in json format, and
@@ -619,7 +535,7 @@ def write_review(review, pnm, acc):
     mctr.synchronized_db_write(review)
     logging.info("write_review wrote Review " + str(review.key().id()))
     # update all related cached data, or clear it for later rebuild
-    update_feed_caches(review, addifnew=True)
+    mfeed.update_feed_caches(review, addifnew=True)
     update_profile("pen", pnm, review)
 
 
@@ -637,23 +553,6 @@ def update_prof_cache(ckey, rev):
             else:
                 replist.append(cached)
         memcache.set(ckey, json.dumps(replist))
-
-
-def update_review_caches(review):
-    update_feed_caches(review)
-    update_prof_cache("pen" + str(review.penid), review)
-    if review.svcdata:
-        svcdict = json.loads(review.svcdata)
-        if "postctms" in svcdict:
-            for ctmpost in svcdict["postctms"]:
-                update_prof_cache("coop" + ctmpost["ctmid"], review)
-    # If the standard instance cached was used, update it, but do not
-    # generally cache individual Review instances.
-    mkey = "Review" + str(review.key().id())
-    cached = memcache.get(mkey)
-    if cached:
-        memcache.set(mkey, pickle.dumps(review))
-
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -714,6 +613,22 @@ def coop_post_note(ctm, ctmrev):
     return postnote
 
 
+def update_review_caches(review):
+    mfeed.update_feed_caches(review)
+    update_prof_cache("pen" + str(review.penid), review)
+    if review.svcdata:
+        svcdict = json.loads(review.svcdata)
+        if "postctms" in svcdict:
+            for ctmpost in svcdict["postctms"]:
+                update_prof_cache("coop" + ctmpost["ctmid"], review)
+    # If the standard instance cached was used, update it, but do not
+    # generally cache individual Review instances.
+    mkey = "Review" + str(review.key().id())
+    cached = memcache.get(mkey)
+    if cached:
+        memcache.set(mkey, pickle.dumps(review))
+
+
 def write_coop_post_notes_to_svcdata(review, postnotes):
     svcdict = {}
     if review.svcdata:
@@ -759,44 +674,6 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         postnotes.append(coop_post_note(ctm, ctmrev))
     logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_coop_post_notes_to_svcdata(review, postnotes)
-
-
-def sort_filter_feed(feedcsv, pnm, maxret):
-    preferred = []
-    normal = []
-    background = []
-    feedelems = csv_list(feedcsv)
-    for elem in feedelems:
-        ela = elem.split(":")
-        if pnm:
-            # skip any membics from blocked pens
-            if csv_contains(ela[1], pnm.blocked):
-                continue
-            # preferred pen membic
-            if csv_contains(ela[1], pnm.preferred):
-                preferred.append(int(ela[0]))
-            # followed theme membic
-            elif csv_contains(ela[2], pnm.coops):
-                preferred.append(int(ela[0]))
-            # background pen membic
-            elif csv_contains(ela[1], pnm.background):
-                background.append(int(ela[0]))
-            # membics from self shouldn't get buried below preferred
-            elif str(ela[1]) == str(pnm.key().id()):
-                if pnm.preferred:
-                    preferred.append(int(ela[0]))
-                else:
-                    normal.append(int(ela[0]))
-            # default
-            else:
-                normal.append(int(ela[0]))
-        else:
-            preferred.append(int(ela[0]))
-        if len(preferred) >= maxret:
-            break
-    feedids = preferred[:maxret] + normal[:maxret] + background[:maxret]
-    feedids = feedids[:maxret]
-    return feedids
 
 
 def update_access_time_if_needed(pen):
@@ -919,76 +796,6 @@ def rebuild_reviews_block(handler, pct, pgid):
         mctr.synchronized_db_write(pco)
     jstr = "[" + obj2JSON(pco) + "," + jstr + "]"
     return jstr
-
-
-def get_review_feed_pool(revtype):
-    numblocks = revpoolsize / revblocksize
-    blocks = [None for i in range(numblocks)]
-    feedcsv = memcache.get(revtype)
-    if feedcsv is not None:
-        for i in range(numblocks):
-            blocks[i] = memcache.get(revtype + "RevBlock" + str(i))
-        if None not in blocks:
-            return feedcsv, blocks
-    logging.info("rebuilding feedcsv for " + revtype)
-    feedcsv = ""
-    blocks = ["" for i in range(numblocks)]
-    bidx = 0
-    count = 0
-    where = "WHERE ctmid = 0 AND mainfeed = 1"
-    if revtype and revtype != "all":
-        where += " AND revtype = '" + revtype + "'"
-    where += " ORDER BY modhist DESC"
-    vq = VizQuery(Review, where)
-    revs = vq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
-                    deadline=60)
-    for rev in revs:
-        entry = feedcsventry(rev)
-        if csv_contains(entry, feedcsv):
-            continue  # already added, probably from earlier srcrev reference
-        feedcsv = append_to_csv(entry, feedcsv)
-        blocks[bidx] = append_to_csv(obj2JSON(rev), blocks[bidx])
-        count += 1
-        if rev.srcrev and rev.srcrev > 0:  # ensure source included in block
-            source = Review.get_by_id(rev.srcrev)
-            if source:
-                feedcsv = append_to_csv(feedcsventry(source), feedcsv)
-                blocks[bidx] = append_to_csv(obj2JSON(source), blocks[bidx])
-                count += 1
-        if count >= revblocksize:
-            bidx += 1
-            count = 0
-    memcache.set(revtype, feedcsv)
-    for i in range(numblocks):
-        blocks[i] = "[" + blocks[i] + "]"
-        memcache.set(revtype + "RevBlock" + str(i), blocks[i])
-    return feedcsv, blocks
-
-
-def nuke_review_feed_pool(revtype):
-    memcache.delete(revtype)
-    numblocks = revpoolsize / revblocksize
-    for i in range(numblocks):
-        memcache.delete(revtype + "RevBlock" + str(i))
-
-
-def nuke_cached_recent_review_feeds():
-    nuke_review_feed_pool("all")
-    for rt in known_rev_types:
-        nuke_review_feed_pool(rt)
-
-
-def resolve_ids_to_json(feedids, blocks):
-    jstr = ""
-    for block in blocks:
-        # debuginfo("resolve_ids_to_json block: " + block)
-        objs = json.loads(block)
-        for obj in objs:
-            # debuginfo("resolve_ids_to_json id: " + obj["_id"])
-            # debuginfo("feedids: " + str(feedids))
-            if int(obj["_id"]) in feedids:
-                jstr = append_to_csv(json.dumps(obj), jstr)
-    return "[" + jstr + "]"
 
 
 def safe_dictattr(dictionary, fieldname):
@@ -1290,7 +1097,7 @@ class GetReviewFeed(webapp2.RequestHandler):
         revtype = self.request.get('revtype')
         if not revtype or revtype not in known_rev_types:
             revtype = "all"
-        feedcsv, blocks = get_review_feed_pool(revtype)
+        feedcsv, blocks = mfeed.get_review_feed_pool(revtype)
         acc = authenticated(self.request)
         pnm = None
         if acc and intz(self.request.get('penid')):
@@ -1298,11 +1105,11 @@ class GetReviewFeed(webapp2.RequestHandler):
         if not pnm:
             writeJSONResponse(blocks[0], self.response)
             return
-        feedids = sort_filter_feed(feedcsv, pnm, revblocksize)
+        feedids = mfeed.sort_filter_feed(feedcsv, pnm)
         if self.request.get('debug') == "sortedfeedids":
             self.response.out.write(feedids)
             return
-        jstr = resolve_ids_to_json(feedids, blocks)
+        jstr = mfeed.resolve_ids_to_json(feedids, blocks)
         writeJSONResponse(jstr, self.response)
         
 

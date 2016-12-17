@@ -12,6 +12,7 @@ import random
 from cacheman import *
 import coop
 import rev
+import mfeed
 import mailsum
 import mctr
 
@@ -200,14 +201,14 @@ def reflect_pen_name_change(pen, prev_name):
             ctm = coop.Coop.get_by_id(int(ctmid))
     # update recent reviews using same index as rev.py rebuild_reviews_block
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, int(penid))
+    vq = VizQuery(rev.Review, where, int(penid))
     revs = vq.fetch(300, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for review in revs:
         review.penname = pen.name
         review.put()
         # force updated info retrieval for any subsequent db access
         review = rev.Review.get_by_id(review.key().id())
-    rev.nuke_cached_recent_review_feeds()
+    mfeed.nuke_cached_recent_review_feeds()
 
 
 class NewPenName(webapp2.RequestHandler):
