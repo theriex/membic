@@ -310,7 +310,7 @@ app.readurl = (function () {
                 if(elem) {
                     val = valueForField(elem, "content"); } }
             if(!val) {
-                elem = elementForString(html, "cre", "meta");
+                elem = elementForString(html, "name=\"cre\"", "meta");
                 if(elem) {
                     val = valueForField(elem, "content"); } }
             if(val) {
