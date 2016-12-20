@@ -65,6 +65,15 @@ def get_precomp_feed_pool(revtype):
     return feedcsv, blocks
 
 
+def set_mfeed_data(mf, feedcsv, blocks):
+    mf.feedcsv = feedcsv
+    mf.block0 = blocks[0]
+    mf.block1 = blocks[1]
+    mf.block2 = blocks[2]
+    mf.block3 = blocks[3]
+    mf.block4 = blocks[4]
+
+
 def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
     mf = None
     vq = VizQuery(MembicFeed, "WHERE revtype = :1", revtype)
@@ -73,18 +82,19 @@ def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
         mf = feeds[0]
     else:
         mf = MembicFeed(revtype=revtype)
-    mf.feedcsv = feedcsv
-    mf.block0 = blocks[0]
-    mf.block1 = blocks[1]
-    mf.block2 = blocks[2]
-    mf.block3 = blocks[3]
-    mf.block4 = blocks[4]
+    set_mfeed_data(mf, feedcsv, blocks)
     ts = nowISO()
     mf.updated = ts
     if rebuilt:
         mf.rebuilt = ts
-    mf.put()
+    try:
+        mf.put()
+    except Exception as e:
+        logging.warn("write_precomp_feed_pool clearing after error: " + str(e))
+        set_mfeed_data(mf, None, [None for i in range(numblocks)])
+        mf.put()
     mf = MembicFeed.get_by_id(mf.key().id())  #force db to read latest
+            
 
 
 def get_review_feed_pool(revtype):
