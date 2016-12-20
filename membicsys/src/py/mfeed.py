@@ -74,6 +74,22 @@ def set_mfeed_data(mf, feedcsv, blocks):
     mf.block4 = blocks[4]
 
 
+def get_mfeed_stats(mf):
+    total = 0
+    msg = "mfeed \"" + mf.revtype + "\""
+    if mf.feedcsv:
+        total += len(mf.feedcsv)
+        msg += " feedcsv: " + str(len(mf.feedcsv)) + " (" +\
+            str(mf.feedcsv.count(",") + 1) + " entries)"
+    blocks = [mf.block0, mf.block1, mf.block2, mf.block3, mf.block4]
+    for idx, block in enumerate(blocks):
+        if block:
+            total += len(block)
+            msg += ", block" + str(idx) + ": " + str(len(block))
+    msg += ", total: " + str(total)
+    return msg
+
+
 def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
     mf = None
     vq = VizQuery(MembicFeed, "WHERE revtype = :1", revtype)
@@ -88,6 +104,7 @@ def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
     if rebuilt:
         mf.rebuilt = ts
     try:
+        logging.info(get_mfeed_stats(mf))
         mf.put()
     except Exception as e:
         logging.warn("write_precomp_feed_pool clearing after error: " + str(e))
@@ -105,6 +122,7 @@ def get_review_feed_pool(revtype):
     if feedcsv:
         return feedcsv, blocks
     logging.info("rebuilding feedcsv for " + revtype)
+    cacheavail = 1040000  # db limit max 1,048,487 
     feedcsv = ""
     blocks = ["" for i in range(numblocks)]
     bidx = 0
@@ -120,18 +138,26 @@ def get_review_feed_pool(revtype):
         entry = feedcsventry(review)
         if csv_contains(entry, feedcsv):
             continue  # already added, probably from earlier srcrev reference
+        objson = obj2JSON(review)
+        cacheavail -= len(entry) + len(objson)
         feedcsv = append_to_csv(entry, feedcsv)
-        blocks[bidx] = append_to_csv(obj2JSON(review), blocks[bidx])
+        blocks[bidx] = append_to_csv(objson, blocks[bidx])
         count += 1
         if review.srcrev and review.srcrev > 0:  # ensure src included in block
             source = rev.Review.get_by_id(review.srcrev)
             if source:
-                feedcsv = append_to_csv(feedcsventry(source), feedcsv)
-                blocks[bidx] = append_to_csv(obj2JSON(source), blocks[bidx])
-                count += 1
+                entry = feedcsventry(source)
+                if not csv_contains(entry, feedcsv):
+                    objson = obj2JSON(source)
+                    feedcsv = append_to_csv(entry, feedcsv)
+                    cacheavail -= len(entry) + len(objson)
+                    blocks[bidx] = append_to_csv(objson, blocks[bidx])
+                    count += 1
         if count >= revblocksize:
             bidx += 1
             count = 0
+        if cacheavail <= 0:
+            break
     for i in range(numblocks):
         blocks[i] = "[" + blocks[i] + "]"
     write_precomp_feed_pool(revtype, feedcsv, blocks, True)
