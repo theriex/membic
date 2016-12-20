@@ -3,7 +3,7 @@
 /*jslint browser, multivar, white, fudge, for */
 
 //////////////////////////////////////////////////////////////////////
-// Display of recent posts from friends, remembered posts.  
+// Display of recent membics from friends, remembered membics.  
 //
 
 app.activity = (function () {
@@ -232,9 +232,9 @@ app.activity = (function () {
 
     displayActivityPostsWaitMessage = function () {
         var msg;
-        msg = "Fetching posts...";
+        msg = "Fetching community membics...";
         if(app.login.isLoggedIn()) {
-            msg = "Fetching posts according to your preferences..."; }
+            msg = "Fetching community membics based on your preferences..."; }
         app.displayWaitProgress(0, 850, "contentdiv", msg);
     };
 
