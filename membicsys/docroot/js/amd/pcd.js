@@ -1887,8 +1887,9 @@ return {
             srchst.revs = searchFilterReviews(srchst.revs || [], 
                 app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent));
             displaySearchResults();  //clears the display if none matching
-            if(!srchst.revs.length && dst.obj.recent.length >= 50) {
-                //there are likely more revs on server, offer to go fetch
+            //If there are more revs on the server, offer to search further,
+            //otherwise it is discomforting to not find something.
+            if(srchst.revs.length < 20 && dst.obj.recent.length >= 50) {
                 jt.out("pcdsrchdispdiv", searchServerHTML()); } }
         else {  //no change to search parameters yet, monitor
             app.pcd.fetchmore("linkonly");
