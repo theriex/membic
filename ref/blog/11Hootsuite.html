@@ -1,0 +1,68 @@
+<!-- Connecting Membic to Hootsuite -->
+
+For the past year, I've been pretty happy sharing my membics via Twitter whenever I write them.  I had my Twitter account set to share on Facebook, and that approach generally worked well to keep a variety of people informed.  However I couldn't help but notice that I was sharing every membic for my <em>epnewtech</em> theme, and that made me think some automation could be helpful.
+
+
+<h2>Social Media Tools</h2>
+
+Social media tools are primarily for marketing, but they address the problem of reaching people who prefer to use different social networks.  If you have more than a few people interested in your membics, chances are you will find yourself in this situation.  Rather than choosing a single social network and telling everyone to find you there, you can use a social media tool to reach your friends using whichever network they prefer.
+
+There are quite a few social network tools out there, with varying features and pricing.  I decided to go with Hootsuite because they have been doing this for quite a while, and they are kind enough to let you get started with some basic features for free.
+
+
+<h2>RSS Feeds</h2>
+
+One awesome feature of Hootsuite is the ability to read from an RSS feed (hourly, every few hours, or daily) and post to whichever social network you want.  Setting this up is remarkably easy:  I connected Hootsuite to my Twitter account, then chose "Publisher" from the main menu, then "RSS Feeds", and then "+" to add a new feed.  I copied the link location of the RSS feed icon on the <em>epnewtech</em> theme page and pasted that into the Hootsuite dialog URL field.  I selected to check the feed every 6 hours, sending one post at a time, and including text from the post in my messages. Done.
+
+Hootsuite requires a URL shortener for links.  I went with the default "ow.ly" option. Requiring a URL shortener bothered me at first because I'm one of those careful people who likes to read the address of what I'm clicking on.  I decided it was ok because:
+<ol>
+
+<li><p>Even though I'm moderately careful, I'll tolerate the long and decorated URLs typically used by popular social networks. I look at who the post is from, the description, and image to help determine if it's ok to click, or if I need to go find it myself.</p>
+
+<li><p>A social media tool can't do it's job without tracking clicks, so a URL shortener is a requirement.</p>
+
+</ol>
+
+The actual impact of the shortened URLs ends up being minimally intrusive.  More on that later.
+
+
+<h2>First Tweet</h2>
+
+After setting up, I posted a new membic and looked forward to seeing the automatic tweet. Then I waited some more.  Nothing.  Then I hit the docs and found out that Hootsuite won't read a secure http (https) feed address.  No problem, the membic RSS feeds can be accessed either way.  So I rebuilt the RSS feed definition in Hootsuite using the plain http url.  Hootsuite won't retroactively post things from the feed, so I made another membic and waited.
+
+This time the automatic tweet went through on schedule, but the tweet was pretty much just a plain text title.  That's when I realized the RSS feed needed some special care to serve Hootsuite well.  Cutting to the chase, the solution is to tack <b>&ts=sdvtvrk</b> onto the end of the RSS feed URL.  Looks cryptic, but it's actually pretty simple if you know what the letters mean.
+
+The <em>"ts"</em> parameter stands for <em>title specification</em> and it reads letter codes to choose which summary elements should appear in the title of each RSS feed entry.  There is also a <em>"ds"</em> parameter (for <em>description specification</em>) which does the same thing for the body of each RSS feed entry.  Because Hootsuite won't read past the title if it is too long, I decided to just put everything into the title. Here's what the letter codes are:
+
+<ul>
+<b>s</b> rating stars (as asterisks)
+<b>d</b> membic text description
+<b>v</b> vertical bar separator
+<b>t</b> title of the membic
+<b>r</b> type of membic (e.g. "book", "activity")
+<b>k</b> keywords
+</ul>
+
+It's likely some of the text won't fit into the tweet, so I put the most important things first.
+
+
+<h2>Working Automation</h2>
+
+After tuning the RSS feed, the tweet from my article membic looked great!  The text got cut off after 110 characters to fit the Twitter size limit, but with an ellipsis so it looks on purpose. The tweet included the article pic, the article title, the first couple of lines of text from the article summary, and the article source (e.g. "nytimes.com").
+
+The link for the tweet displayed as a shortened twitter url ("t.co") which opens in a new browser tab when clicked.  All standard and looking good.  So what happened with that Hootsuite "ow.ly" URL shortener?
+
+If you watch closely when you click through to the article (or check your browser history afterwards) you will see that the "t.co" link opens the "ow.ly" link which then opens the link to the article.  The process is smooth and barely noticeable, allowing both Twitter and Hootsuite to note that the link was clicked.  Adding one more click tracker doesn't slow things down much.
+
+
+<h2>Cascading Posts</h2>
+
+If you have your Twitter account set up to post through to Facebook, that still works when Hootsuite automatically tweets for you, but the Facebook post shows the Hootsuite "ow.ly" URL as the source.  To clean that up, I stopped the automatic post-through via Twitter, and set up a second automatic RSS feed publisher in Hootsuite.  I used the same RSS feed URL as I did when setting up publishing to Twitter, but connected the feed to my Facebook account.  When publishing to Facebook, there's an option to choose your post visibility.  The default setting is public, but I chose friends because that's how I use Facebook.
+
+In the Facebook post, the full membic text shows up because there is no size limit, and the post looks like you would expect with an article pic and source.  Facebook indicates that the post was via Hootsuite, so any of my friends can see that I'm using automation.  That's worth being aware of if that matters to you or your followers, but for me it was previously showing my posts via Twitter, so it seems about the same.
+
+As with all social networks, it's probably a good idea to interact personally when you have time, but automation can still be a big help.  For me it was especially useful since the time I spend recording something memorable frequently doesn't coincide with the time I spend on social networks, even if membics might be part of my outbound social communications.  In all, Hootsuite is a pretty cool tool to be aware of, and using it makes working with themes in membic even easier.
+
+To see the results of <a href="https://hootsuite.com/">Hootsuite</a> automation, compare my <a href="https://twitter.com/theriex">twitter feed</a> against the <a href="https://membic.com/epnewtech">epnewtech</a> theme.
+
+HTH.
