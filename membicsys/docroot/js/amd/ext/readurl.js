@@ -364,7 +364,23 @@ app.readurl = (function () {
             return url; }
         return result[1] + ":" + result[2] + result[3] +
             (result[5]? "/" + result[5] : "");
+    },
+
+
+    getFetchErrorText = function (url, code, callerr) {
+        var errtxt = "Membic details were not filled out automatically" +
+            " because of a problem accessing " + url + "\n\n" +
+            "Details: Error code " + code + ": " + callerr;
+        if(code === 400 && callerr.toLowerCase().indexOf("over quota") >= 0) {
+            errtxt = "Tried to fetch " + url + ", but the site responded" +
+                " with an error saying it had too much traffic. So" +
+                " membic details were not filled out automatically." +
+                " You can try reading again to see if the site" +
+                " becomes less busy, or you can fill out the membic" +
+                " fields directly."; }
+        return errtxt;
     };
+
 
 
     ////////////////////////////////////////
@@ -391,9 +407,7 @@ return {
                     if(url !== plainurl) {
                         return app.readurl.fetchData(review, plainurl, 
                                                      params); }
-                    jt.err("Membic details were not filled out automatically" +
-                           " because of a problem accessing " + url + "\n\n" +
-                           "Details: Error code " + code + ": " + errtxt);
+                    jt.err(getFetchErrorText(url, code, errtxt));
                     app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));
     }
