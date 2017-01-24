@@ -368,15 +368,15 @@ app.readurl = (function () {
 
 
     getFetchErrorText = function (url, code, callerr) {
-        var errtxt = "Membic details were not filled out automatically" +
+        var errtxt, phrase;
+        errtxt = "Membic details were not filled out automatically" +
             " because of a problem accessing " + url + "\n\n" +
             "Details: Error code " + code + ": " + callerr;
-        if(code === 400 && callerr.toLowerCase().indexOf("over quota") >= 0) {
-            errtxt = "Tried to fetch " + url + ", but the site responded" +
-                " with an error saying it had too much traffic. So" +
-                " membic details were not filled out automatically." +
-                " You can try reading again to see if the site" +
-                " becomes less busy, or you can fill out the membic" +
+        phrase = "urlfetch.Fetch() required more quota";
+        if(code === 400 && callerr.indexOf(phrase) >= 0) {
+            errtxt = "Tried to fetch " + url + ", but there was too much" +
+                " traffic. You can try reading again to see if things" +
+                " have gotten less busy, or you can fill out the membic" +
                 " fields directly."; }
         return errtxt;
     };
