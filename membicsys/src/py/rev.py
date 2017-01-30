@@ -787,14 +787,16 @@ def rebuild_reviews_block(handler, pct, pgid):
         else:
             js2 = append_review_jsoncsv(js2, rev)
     jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
+    if jstr:
+        jstr = "," + jstr;
     if pct == "coop":
-        pco.preb = "[" + obj2JSON(pco) + "," + jstr + "]"
+        pco.preb = "[" + obj2JSON(pco) + jstr + "]"
         pco.preb2 = "[" + js2 + "]"
         coop.update_coop_stats(pco, idx)
         # rebuild preb to include updated stats, maybe s1 off by one but ok.
-        pco.preb = "[" + obj2JSON(pco) + "," + jstr + "]"
+        pco.preb = "[" + obj2JSON(pco) + jstr + "]"
         mctr.synchronized_db_write(pco)
-    jstr = "[" + obj2JSON(pco) + "," + jstr + "]"
+    jstr = "[" + obj2JSON(pco) + jstr + "]"
     return jstr
 
 
