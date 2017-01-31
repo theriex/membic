@@ -34,7 +34,11 @@ def intz(val):
         val = val[1:len(val) - 1]
     if val == "undefined":
         return 0
-    return int(val)
+    try:
+        val = int(val)
+    except Exception as e:
+        val = 0
+    return val
 
 
 # You can't return a value from a webapp2.RequestHandler, so this method
