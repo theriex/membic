@@ -4,7 +4,7 @@ from google.appengine.ext import db
 from google.appengine.api import images
 from google.appengine.api import memcache
 import logging
-from moracct import *
+import moracct
 from morutil import *
 from cacheman import *
 import pen
@@ -401,7 +401,7 @@ def mail_invite_notice(handler, pnm, coop, acc, invacc, invtoken):
     logging.info("Invite link sent to " + invacc.email + ":\n" +
                  "subject: " + subj + "\n" +
                  content)
-    mailgun_send(handler, invacc.email, subj, content)
+    moracct.mailgun_send(handler, invacc.email, subj, content)
 
 
 class UpdateDescription(webapp2.RequestHandler):
@@ -439,7 +439,7 @@ class UpdateDescription(webapp2.RequestHandler):
         update_coop_admin_log(coop, pnm, "Updated Description", "", "")
         coop.people = ""   # have to rebuild sometime and this is a good time
         update_coop_and_bust_cache(coop)
-        returnJSON(self.response, [ coop ])
+        moracct.returnJSON(self.response, [ coop ])
 
 
 class GetCoopById(webapp2.RequestHandler):
@@ -455,7 +455,7 @@ class GetCoopById(webapp2.RequestHandler):
             self.error(404)
             self.response.write("No Coop found for id " + coopidstr)
             return
-        returnJSON(self.response, [ coop ])
+        moracct.returnJSON(self.response, [ coop ])
 
 
 class GetCoopPic(webapp2.RequestHandler):
@@ -507,7 +507,7 @@ class ApplyForMembership(webapp2.RequestHandler):
         elif action == "accrej":
             coop.rejects = remove_id_from_csv(pnm.key().id(), coop.rejects)
             update_coop_and_bust_cache(coop)
-        returnJSON(self.response, [ coop ])
+        moracct.returnJSON(self.response, [ coop ])
 
 
 class ProcessMembership(webapp2.RequestHandler):
@@ -541,7 +541,7 @@ class ProcessMembership(webapp2.RequestHandler):
                                       seekerpen, seekrole, reason)
         else:
             return srverr(self, 400, "Membership changed already")
-        returnJSON(self.response, [ coop ])
+        moracct.returnJSON(self.response, [ coop ])
 
 
 class GetCoopStats(webapp2.RequestHandler):
@@ -557,12 +557,12 @@ class GetCoopStats(webapp2.RequestHandler):
                 stat['memmax'] = memcount
                 stat['memwin'] = coop.name
             stat['totalmem'] += memcount
-        writeJSONResponse(json.dumps(stat), self.response)        
+        moracct.writeJSONResponse(json.dumps(stat), self.response)        
 
 
 class InviteByMail(webapp2.RequestHandler):
     def post(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc or acc.status != "Active":
             return srverr(self, 403, "Your account must be active to invite others.")
         pnm = rev.acc_review_modification_authorized(acc, self)
@@ -576,30 +576,31 @@ class InviteByMail(webapp2.RequestHandler):
         email = self.request.get('email')
         if not email:
             return srverr(self, 400, "No email specified")
-        email = normalize_email(email)
-        if not valid_email_address(email):
+        email = moracct.normalize_email(email)
+        if not moracct.valid_email_address(email):
             return srverr(self, 400, "Invalid email address")
         invacc = None
-        vq = VizQuery(MORAccount, "WHERE email = :1 LIMIT 1", email)
+        vq = VizQuery(moracct.MORAccount, "WHERE email = :1 LIMIT 1", email)
         accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         if len(accounts) > 0:
             invacc = accounts[0]
         else:
-            pwd = random_alphanumeric(18)
-            invacc = MORAccount(email=email, password=pwd)
+            pwd = moracct.random_alphanumeric(18)
+            invacc = moracct.MORAccount(email=email, password=pwd)
             invacc.modified = nowISO()
             invacc.status = "Invited"
             invacc.mailbounce = ""
         invacc.invites = invacc.invites or "[]"
         invacc.invites = remove_invites_for_coop(coop.key().id(), 
                                                  invacc.invites)
-        invtoken = random_alphanumeric(40)
+        invtoken = moracct.random_alphanumeric(40)
         invacc.invites = add_invite_for_coop(coop, pnm, invtoken, 
                                              invacc.invites)
         invacc.put();  #nocache
-        invacc = MORAccount.get_by_id(invacc.key().id())
+        invacc = moracct.MORAccount.get_by_id(invacc.key().id())
         mail_invite_notice(self, pnm, coop, acc, invacc, invtoken)
-        writeJSONResponse("[{\"email\":\"" + email + "\"}]", self.response)
+        moracct.writeJSONResponse("[{\"email\":\"" + email + "\"}]", 
+                                  self.response)
 
 
 class AcceptInvitation(webapp2.RequestHandler):
@@ -612,7 +613,7 @@ class AcceptInvitation(webapp2.RequestHandler):
         coopid = self.request.get('coopid')
         emaddr = self.request.get('accountemail')
         token = self.request.get('invitetoken')
-        vq = VizQuery(MORAccount, "WHERE email = :1 LIMIT 1", emaddr)
+        vq = VizQuery(moracct.MORAccount, "WHERE email = :1 LIMIT 1", emaddr)
         accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         if len(accounts) == 0:
             return srverr(self, 404, "No account found for " + emaddr)
@@ -620,12 +621,12 @@ class AcceptInvitation(webapp2.RequestHandler):
         if acc.status != "Active":
             acc.status = "Active"
             acc.put()
-            acc = MORAccount.get_by_id(acc.key().id())
-        redurl = make_redirect_url_base("", self.request.url)
-        redurl += login_token_parameters(acc.email, acc.password)
+            acc = moracct.MORAccount.get_by_id(acc.key().id())
+        redurl = moracct.make_redirect_url_base("", self.request.url)
+        redurl += moracct.login_token_parameters(acc.email, acc.password)
         self.redirect(str(redurl))
     def post(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc or acc.status != "Active":
             return srverr(self, 403, "Your account must be active before you can accept membership.")
         pnm = rev.acc_review_modification_authorized(acc, self)
@@ -652,8 +653,8 @@ class AcceptInvitation(webapp2.RequestHandler):
             updobjs = [ pnm, coop ]
         acc.invites = remove_invites_for_coop(coopid, acc.invites)
         acc.put()
-        acc = MORAccount.get_by_id(acc.key().id())
-        returnJSON(self.response, updobjs)
+        acc = moracct.MORAccount.get_by_id(acc.key().id())
+        moracct.returnJSON(self.response, updobjs)
 
 
 app = webapp2.WSGIApplication([('.*/ctmdesc', UpdateDescription),

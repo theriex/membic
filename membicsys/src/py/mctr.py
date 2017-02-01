@@ -5,7 +5,7 @@ import pickle
 import json
 import logging
 from cacheman import *
-from moracct import *
+import moracct
 import datetime
 import re
 import rev
@@ -259,7 +259,7 @@ class BumpCounter(webapp2.RequestHandler):
         pnm = None
         penid = self.request.get("penid")
         if penid and int(penid):
-            acc = authenticated(self.request)
+            acc = moracct.authenticated(self.request)
             if acc:
                 pnm = cached_get(penid, pen.PenName)
         field = normalized_count_field(pnm, self.request.get("field"))
@@ -268,7 +268,7 @@ class BumpCounter(webapp2.RequestHandler):
         counter = get_mctr(ctype, parid)
         if pnm:  # note any new visitors
             name = re.sub(r",+", "", pnm.name)  # strip any commas
-            name = safeURIEncode(name)
+            name = moracct.safeURIEncode(name)
             val = penid + ":" + name
             if not csv_contains(val, counter.logvis):
                 counter.logvis = prepend_to_csv(val, counter.logvis)
@@ -285,7 +285,7 @@ class BumpCounter(webapp2.RequestHandler):
         put_mctr(counter, field)
         logging.info("BumpCounter " + counter.refp + "." + field + 
                      ": " + str(cval))
-        returnJSON(self.response, [counter])
+        moracct.returnJSON(self.response, [counter])
 
 
 class GetCounters(webapp2.RequestHandler):
@@ -294,7 +294,7 @@ class GetCounters(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))  # sets to 0 if not found
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return srverr(self, "403", "Authentication failed")
         # Anyone following a theme has stats access, but profiles are private
@@ -324,7 +324,8 @@ class GetCounters(webapp2.RequestHandler):
                 res[-1] = counter
             else:
                 res.append(counter)
-            return writeJSONResponse(json.dumps(res, True), self.response)
+            return moracct.writeJSONResponse(json.dumps(res, True), 
+                                             self.response)
         refp = ctype + "Counter" + str(parid)
         daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()
@@ -336,9 +337,9 @@ class GetCounters(webapp2.RequestHandler):
             vq = VizQuery(MembicCounter, "WHERE refp = :1 AND day > :2", 
                           refp, thresh)
         ctrs = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
-        jsondat = qres2JSON(ctrs)
+        jsondat = moracct.qres2JSON(ctrs)
         memcache.set(cqk, jsondat)
-        writeJSONResponse(jsondat, self.response)
+        moracct.writeJSONResponse(jsondat, self.response)
 
 
 class CurrentStat(webapp2.RequestHandler):
@@ -350,7 +351,7 @@ class CurrentStat(webapp2.RequestHandler):
         counter = get_mctr(ctype, parid)
         if not counter.modified:
             put_mctr(counter)  # JSON processing needs an id
-        returnJSON(self.response, [ counter ]);
+        moracct.returnJSON(self.response, [ counter ]);
         
 
 

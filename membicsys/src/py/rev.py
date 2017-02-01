@@ -5,7 +5,7 @@ from google.appengine.api import images
 from google.appengine.api import memcache
 import logging
 import urllib
-from moracct import *
+import moracct
 from morutil import *
 import pen
 import coop
@@ -45,6 +45,8 @@ class Review(db.Model):
     text = db.TextProperty()                     # review text
     revpic = db.BlobProperty()                   # uploaded pic for review
     imguri = db.TextProperty()                   # linked review pic URL
+    icwhen = db.StringProperty(indexed=False)    # when img cache last written
+    icdata = db.BlobProperty()                   # secure relay img cache data
     altkeys = db.TextProperty()                  # known equivalent cankey vals
     svcdata = db.TextProperty()                  # supporting client data JSON
     penname = db.StringProperty(indexed=False)   # for ease of reporting
@@ -88,7 +90,7 @@ def acc_review_modification_authorized(acc, handler):
 def review_modification_authorized(handler):
     """ Return the PenName if the penid matches a pen name the caller is 
         authorized to modify, otherwise return False """
-    acc = authenticated(handler.request)
+    acc = moracct.authenticated(handler.request)
     if not acc:
         srverr(handler, 401, "Authentication failed")
         return False
@@ -231,12 +233,12 @@ def read_review_values(handler, review):
         review.revpic = None
     set_if_param_given(review, "imguri", handler, "imguri")
     note_modified(review)
-    review.name = onelinestr(handler.request.get('name'))
-    review.title = onelinestr(handler.request.get('title'))
+    review.name = moracct.onelinestr(handler.request.get('name'))
+    review.title = moracct.onelinestr(handler.request.get('title'))
     set_if_param_given(review, "url", handler, "url")
     set_if_param_given(review, "rurl", handler, "rurl")
-    review.artist = onelinestr(handler.request.get('artist'))
-    review.author = onelinestr(handler.request.get('author'))
+    review.artist = moracct.onelinestr(handler.request.get('artist'))
+    review.author = moracct.onelinestr(handler.request.get('author'))
     set_if_param_given(review, "publisher", handler, "publisher")
     set_if_param_given(review, "album", handler, "album")
     set_if_param_given(review, "starring", handler, "starring")
@@ -283,24 +285,24 @@ def set_review_mainfeed(rev, acc):
     rev.mainfeed = 1
     logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
     if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
-        # debuginfo(logmsg + "is batch.")
+        # moracct.debuginfo(logmsg + "is batch.")
         rev.srcrev = -202
         rev.mainfeed = 0
     if rev.srcrev < 0:  # future review, batch update etc.
-        # debuginfo(logmsg + "is future or batch.")
+        # moracct.debuginfo(logmsg + "is future or batch.")
         rev.mainfeed = 0
     if rev.ctmid > 0:   # coop posting, not source review
-        # debuginfo(logmsg + "is coop posting.")
+        # moracct.debuginfo(logmsg + "is coop posting.")
         rev.mainfeed = 0
     if acc.authconf:  # account needs help
         rev.mainfeed = 0
     if not rev.text or len(rev.text) < 65:  # not substantive (matches UI)
-        # debuginfo(logmsg + "text not substantive.")
+        # moracct.debuginfo(logmsg + "text not substantive.")
         rev.mainfeed = 0
     if not rev.rating or rev.rating < 60:  # 3 stars or better
-        # debuginfo(logmsg + "is not highly rated.")
+        # moracct.debuginfo(logmsg + "is not highly rated.")
         rev.mainfeed = 0
-    # debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
+    # moracct.debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
 
 
 def prepend_to_main_feeds(review, pnm):
@@ -336,7 +338,7 @@ class ProfRevCache(object):
     mainlist = None  # recent revs, or previous entire cache
     supplist = None
     def set_db_prof_inst(self, dbprofinst):
-        self.publicprofinst = json.loads(obj2JSON(dbprofinst))
+        self.publicprofinst = json.loads(moracct.obj2JSON(dbprofinst))
         if dbprofinst.__class__.__name__ == "PenName":
             pen.filter_sensitive_fields(self.publicprofinst)
     def __init__(self, prefix, dbprofinst):
@@ -356,7 +358,7 @@ class ProfRevCache(object):
         return None
     def add_instance(self, inst, supporting=False, prepend=False):
         if isinstance(inst, db.Model):
-            inst = json.loads(obj2JSON(inst))
+            inst = json.loads(moracct.obj2JSON(inst))
         if str(inst["_id"]) not in self.cache:
             if supporting:
                 self.supplist.append(inst)
@@ -373,7 +375,7 @@ class ProfRevCache(object):
         return json.dumps([self.publicprofinst] + self.mainlist + self.supplist)
     def update_memcache(self):
         mckey = self.prefix + str(self.publicprofinst["_id"])
-        debuginfo("updating memcache " + mckey)
+        moracct.debuginfo("updating memcache " + mckey)
         memcache.set(mckey, self.cached_value())
 
 
@@ -401,7 +403,7 @@ def smart_retrieve_revinst(revid, penid, coopid=0):
                     return rev
     rev = visible_get_instance(Review, revid)
     if rev:
-        rev = json.loads(obj2JSON(rev))  # return cache representation
+        rev = json.loads(moracct.obj2JSON(rev))  # return cache representation
     return rev
 
 
@@ -479,15 +481,15 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
         tids = newdict[rev.revtype]
     trevs = []  # list of resolved top instances to sort
     if rev.srcrev not in [-604, -101]:  # include rev unless deleted or future
-        cacherev = json.loads(obj2JSON(rev))  # cache dict representation
+        cacherev = json.loads(moracct.obj2JSON(rev))  # cache dict repr
         trevs = [cacherev]
     for tidstr in tids:  # append instances for existing ids to trevs
         inst = fetch_validated_instance(tidstr, prc, rev, dbprofinst)
         if inst:
             trevs.append(inst)
-    # debuginfo("update_top_membics about to sort trevs.")
+    # moracct.debuginfo("update_top_membics about to sort trevs.")
     # for idx in range(len(trevs)):
-    #     debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
+    #     moracct.debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
     trevs = sorted(trevs, key=itemgetter('rating', 'modified'), 
                    reverse=True)
     tids = idlist_from_instlist(trevs, topmax)
@@ -496,8 +498,8 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
         newdict["latestrevtype"] = orgdict["latestrevtype"]
     if "t20lastupdated" in orgdict:
         newdict["t20lastupdated"] = orgdict["t20lastupdated"]
-    # debuginfo("orgdict: " + str(orgdict))
-    # debuginfo("newdict: " + str(newdict))
+    # moracct.debuginfo("orgdict: " + str(orgdict))
+    # moracct.debuginfo("newdict: " + str(newdict))
     if newdict == orgdict:
         logging.info("update_top_membics: no change")
         return None
@@ -541,10 +543,11 @@ def write_review(review, pnm, acc):
 
 def update_prof_cache(ckey, rev):
     if isinstance(rev, db.Model):
-        rev = json.loads(obj2JSON(rev))
+        rev = json.loads(moracct.obj2JSON(rev))
     jstr = memcache.get(ckey)
     if jstr and rev["_id"] in jstr:
-        debuginfo("update_prof_cache Review " + rev["_id"] + " in " + ckey)
+        moracct.debuginfo("update_prof_cache Review " + rev["_id"] + 
+                          " in " + ckey)
         replist = []
         cachelist = json.loads(jstr)
         for idx, cached in enumerate(cachelist):
@@ -662,7 +665,7 @@ def write_coop_reviews(review, pnm, ctmidscsv):
             ctmrev = revs[0]
         else:
             ctmrev = Review(penid=penid, revtype=review.revtype)
-        debuginfo("    copying source review")
+        moracct.debuginfo("    copying source review")
         copy_source_review(review, ctmrev, ctmid)
         mctr.synchronized_db_write(ctmrev)
         logging.info("write_coop_reviews wrote review for: Coop " + ctmid + 
@@ -692,18 +695,20 @@ def find_pen_or_coop_type_and_id(handler):
         return "coop", coopid, None
     auth = handler.request.get('authorize')
     penid = intz(handler.request.get('penid'))
-    # debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
+    # moracct.debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
     if penid and not auth:
         return "pen", penid, None
     if auth:
-        acc = authenticated(handler.request)
+        acc = moracct.authenticated(handler.request)
+        logging.info("TODO: find_pen_or_coop_ have acc")
         if not acc:  # error already reported
             return "pen", 0, None
         pens = pen.find_auth_pens(handler)
+        logging.info("TODO: find_pen_or_coop_ have pens")
         if not pens or len(pens) == 0:
             return "pen", 0, None
         mypen = pens[0]
-        debuginfo("fpoctai auth pen: " + str(mypen))
+        moracct.debuginfo("fpoctai auth pen: " + str(mypen))
         acc.lastpen = mypen.key().id()
         put_cached_instance(acc.email, acc)
         mypen = update_access_time_if_needed(mypen)
@@ -718,14 +723,14 @@ def append_review_jsoncsv(jstr, rev):
     jstr = jstr or ""
     if jstr:
         jstr += ","
-    jstr += obj2JSON(rev)
+    jstr += moracct.obj2JSON(rev)
     if rev.ctmid:
         # append coop srcrevs for client cache reference
         srcrev = Review.get_by_id(int(rev.srcrev))
         if not srcrev:
             logging.error("Missing srcrev for Review " + str(rev.key().id()))
         else:
-            jstr += "," + obj2JSON(srcrev)
+            jstr += "," + moracct.obj2JSON(srcrev)
     return jstr
 
 
@@ -790,13 +795,13 @@ def rebuild_reviews_block(handler, pct, pgid):
     if jstr:
         jstr = "," + jstr;
     if pct == "coop":
-        pco.preb = "[" + obj2JSON(pco) + jstr + "]"
+        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
         pco.preb2 = "[" + js2 + "]"
         coop.update_coop_stats(pco, idx)
         # rebuild preb to include updated stats, maybe s1 off by one but ok.
-        pco.preb = "[" + obj2JSON(pco) + jstr + "]"
+        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
         mctr.synchronized_db_write(pco)
-    jstr = "[" + obj2JSON(pco) + jstr + "]"
+    jstr = "[" + moracct.obj2JSON(pco) + jstr + "]"
     return jstr
 
 
@@ -817,12 +822,12 @@ def write_batch_reviews(pn, handler):
         review.rating = int(rdat["rating"])
         review.keywords = safe_dictattr(rdat, "keywords")
         review.text = safe_dictattr(rdat, "text")
-        review.name = onelinestr(safe_dictattr(rdat, "name"))
-        review.title = onelinestr(safe_dictattr(rdat, "title"))
+        review.name = moracct.onelinestr(safe_dictattr(rdat, "name"))
+        review.title = moracct.onelinestr(safe_dictattr(rdat, "title"))
         review.url = safe_dictattr(rdat, "url")
         review.rurl = safe_dictattr(rdat, "rurl")
-        review.artist = onelinestr(safe_dictattr(rdat, "artist"))
-        review.author = onelinestr(safe_dictattr(rdat, "author"))
+        review.artist = moracct.onelinestr(safe_dictattr(rdat, "artist"))
+        review.author = moracct.onelinestr(safe_dictattr(rdat, "author"))
         review.publisher = safe_dictattr(rdat, "publisher")
         review.album = safe_dictattr(rdat, "album")
         review.starring = safe_dictattr(rdat, "starring")
@@ -906,12 +911,27 @@ def supplemental_recent_reviews(handler, pgid):
     pco = coop.Coop.get_by_id(int(pgid))
     if pco and pco.preb2:
         jstr = pco.preb2
-    writeJSONResponse(jstr, handler.response);
+    moracct.writeJSONResponse(jstr, handler.response);
+
+
+# Returning raw image data directly to the browser doesn't work, it
+# must be transformed first. If transforming anyway, may as well
+# standardize on PNG format. Large images are not required, restrict
+# the size to avoid pushing 1mb size limit on value/object.  Upscaling
+# small images can look very ugly, so leave anything below threshold.
+def prepare_image(img):
+    maxwidth = 160
+    if img.width > maxwidth:
+        img.resize(width=maxwidth)  # height adjusts automatically to match
+    else:  # at least one transform required so do a dummy crop
+        img.crop(0.0, 0.0, 1.0, 1.0)
+    img = img.execute_transforms(output_encoding=images.PNG)
+    return img
 
 
 class SaveReview(webapp2.RequestHandler):
     def post(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return
         pnm = acc_review_modification_authorized(acc, self)
@@ -932,12 +952,12 @@ class SaveReview(webapp2.RequestHandler):
             pen.add_account_info_to_pen_stash(acc, pnm)
         except Exception as e:
             logging.info("Account info stash failure for updated pen " + str(e))
-        returnJSON(self.response, [ pnm, review ])
+        moracct.returnJSON(self.response, [ pnm, review ])
 
 
 class DeleteReview(webapp2.RequestHandler):
     def post(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return
         pnm = acc_review_modification_authorized(acc, self)
@@ -954,7 +974,7 @@ class DeleteReview(webapp2.RequestHandler):
             obj = mark_review_as_deleted(review, pnm, acc, self)
         if not obj:  # error in processing
             return   # error already reported
-        returnJSON(self.response, [ obj ])
+        moracct.returnJSON(self.response, [ obj ])
 
 
 # Errors containing the string "failed: " are reported by the client
@@ -981,8 +1001,7 @@ class UploadReviewPic(webapp2.RequestHandler):
         if not upfile:
             return srverr(self, 406, "failed: No pic data")
         try:
-            review.revpic = db.Blob(upfile)
-            review.revpic = images.resize(review.revpic, 160, 160)
+            review.revpic = db.Blob(prepare_image(images.Image(upfile)))
             note_modified(review)
             cached_put(review)  # use instance cache when uploaded images
             update_review_caches(review)
@@ -1005,9 +1024,7 @@ class GetReviewPic(webapp2.RequestHandler):
         if not havepic:
             return srverr(self, 404, 
                           "Pic for review " + str(revid) + " not found.")
-        img = images.Image(review.revpic)
-        img.resize(width=160, height=160)
-        img = img.execute_transforms(output_encoding=images.PNG)
+        img = prepare_image(images.Image(review.revpic))
         self.response.headers['Content-Type'] = "image/png"
         self.response.out.write(img)
 
@@ -1033,12 +1050,12 @@ class RotateReviewPic(webapp2.RequestHandler):
             update_review_caches(review)
         except Exception as e:
             return srverr(self, 409, "Pic rotate failed: " + str(e))
-        returnJSON(self.response, [ review ])
+        moracct.returnJSON(self.response, [ review ])
 
 
 class SearchReviews(webapp2.RequestHandler):
     def get(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
@@ -1069,7 +1086,7 @@ class SearchReviews(webapp2.RequestHandler):
                 qres.append(review)
             if len(qres) >= 20:
                 break
-        returnJSON(self.response, qres)
+        moracct.returnJSON(self.response, qres)
 
 
 class GetReviewById(webapp2.RequestHandler):
@@ -1080,7 +1097,7 @@ class GetReviewById(webapp2.RequestHandler):
             review = smart_retrieve_revinst(revid, 0)
             if not review:
                 return srverr(self, 404, "No Review found for id " + revid)
-            returnJSON(self.response, [ review ])
+            moracct.returnJSON(self.response, [ review ])
             return
         revs = []
         revids = self.request.get('revids')
@@ -1091,7 +1108,7 @@ class GetReviewById(webapp2.RequestHandler):
                 review = smart_retrieve_revinst(rid, 0)
                 if review:
                     revs.append(review)
-        returnJSON(self.response, revs)
+        moracct.returnJSON(self.response, revs)
 
 
 class GetReviewFeed(webapp2.RequestHandler):
@@ -1100,19 +1117,19 @@ class GetReviewFeed(webapp2.RequestHandler):
         if not revtype or revtype not in known_rev_types:
             revtype = "all"
         feedcsv, blocks = mfeed.get_review_feed_pool(revtype)
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         pnm = None
         if acc and intz(self.request.get('penid')):
             pnm = acc_review_modification_authorized(acc, self)
         if not pnm:
-            writeJSONResponse(blocks[0], self.response)
+            moracct.writeJSONResponse(blocks[0], self.response)
             return
         feedids = mfeed.sort_filter_feed(feedcsv, pnm)
         if self.request.get('debug') == "sortedfeedids":
             self.response.out.write(feedids)
             return
         jstr = mfeed.resolve_ids_to_json(feedids, blocks)
-        writeJSONResponse(jstr, self.response)
+        moracct.writeJSONResponse(jstr, self.response)
         
 
 class ToggleHelpful(webapp2.RequestHandler):
@@ -1135,13 +1152,15 @@ class ToggleHelpful(webapp2.RequestHandler):
                 review.helpful = prepend_to_csv(penid, review.helpful)
             review.put()  # no instance cache, not modified
             update_review_caches(review)
-        returnJSON(self.response, [ review ])
+        moracct.returnJSON(self.response, [ review ])
 
 
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
         try:
+            logging.info("TODO: FetchAllReviews start.")
             pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
+            logging.info("TODO: FetchAllReviews found pct, pgid, mypen.")
             if pgid: # pgid may be zero if no pen name yet
                 if self.request.get('supp'):
                     return supplemental_recent_reviews(self, pgid)
@@ -1162,8 +1181,8 @@ class FetchAllReviews(webapp2.RequestHandler):
                     elif jstr[i] == '}':
                         brackets -= 1
                     i += 1
-                jstr = '[' + obj2JSON(mypen) + jstr[i:]
-            writeJSONResponse(jstr, self.response)
+                jstr = '[' + moracct.obj2JSON(mypen) + jstr[i:]
+            moracct.writeJSONResponse(jstr, self.response)
             return
         except Exception as e:
             if str(e) == "Token expired":
@@ -1173,7 +1192,7 @@ class FetchAllReviews(webapp2.RequestHandler):
 
 class FetchPreReviews(webapp2.RequestHandler):
     def get(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
@@ -1184,7 +1203,7 @@ class FetchPreReviews(webapp2.RequestHandler):
         fetchmax = 20
         reviews = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
                            deadline=10)
-        returnJSON(self.response, reviews)
+        moracct.returnJSON(self.response, reviews)
 
 
 class BatchUpload(webapp2.RequestHandler):
@@ -1195,12 +1214,12 @@ class BatchUpload(webapp2.RequestHandler):
         return srverr(self, 403, "Batch uploading currently offline")
         # this uses the same db access as moracct.py GetToken
         emaddr = self.request.get('email') or ""
-        emaddr = normalize_email(emaddr)
+        emaddr = moracct.normalize_email(emaddr)
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.out.write("BatchUpload from " + emaddr + "\n")
         password = self.request.get('password')
         where = "WHERE email=:1 AND password=:2 LIMIT 1"
-        vq = VizQuery(MORAccount, where, emaddr, password)
+        vq = VizQuery(moracct.MORAccount, where, emaddr, password)
         accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         for account in accounts:
             accid = account.key().id()

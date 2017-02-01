@@ -4,7 +4,7 @@ from google.appengine.ext import db
 import logging
 import pen
 import rev
-from moracct import MORAccount, safestr, returnJSON, writeJSONResponse
+import moracct
 from morutil import *
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
@@ -47,7 +47,8 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
-        writeJSONResponse("[{\"botids\":\"" + csv +  "\"}]", self.response)
+        moracct.writeJSONResponse("[{\"botids\":\"" + csv +  "\"}]", 
+                                  self.response)
 
 
 class UserActivity(webapp2.RequestHandler):
@@ -58,7 +59,7 @@ class UserActivity(webapp2.RequestHandler):
         vq = VizQuery(ActivityStat, "WHERE day > :1", thresh)
         stats = vq.run(read_policy=db.EVENTUAL_CONSISTENCY,
                        batch_size=daysback)
-        returnJSON(self.response, stats)
+        moracct.returnJSON(self.response, stats)
 
 
 class BounceHandler(BounceNotificationHandler):
@@ -67,7 +68,7 @@ class BounceHandler(BounceNotificationHandler):
       emaddr = notification.original['to']
       logging.info("BouncedEmailHandler emaddr: " + emaddr)
       # this uses the same access indexing as moracct.py MailCredentials
-      vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 9", emaddr)
+      vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 9", emaddr)
       accounts = vq.fetch(9, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
       for account in accounts:
           bouncestr = nowISO()
@@ -100,7 +101,7 @@ class InMailHandler(InboundMailHandler):
             logging.info("Mail-in membic from " + emaddr + 
                          " with no description ignored.")
             return
-        vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
+        vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
         found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         if len(found) == 0:
             logging.info("Mail-in membic: No account found for " + emaddr)

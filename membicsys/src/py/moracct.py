@@ -10,7 +10,7 @@ import urllib
 import time
 import json
 from google.appengine.api.datastore_types import Blob
-from consvc import doOAuthGet, getConnectionService
+import consvc
 from google.appengine.api import urlfetch
 from morutil import *
 from cacheman import *
@@ -217,7 +217,7 @@ def authenticated(request):
             return account 
     elif acctype == "twid":
         svc = "https://api.twitter.com/1.1/account/verify_credentials.json"
-        result = doOAuthGet("Twitter", svc, token, toksec)
+        result = consvc.doOAuthGet("Twitter", svc, token, toksec)
         if result and (result.status_code == 200 or
                        result.status_code == 429 or 
                        result.status_code == 420):
@@ -421,7 +421,7 @@ def mailgun_send(handler, eaddr, subj, body):
         logging.info("Mail not sent to " + eaddr + " from local dev" +
                      "\n\n" + body)
         return
-    mg = getConnectionService("mailgun");
+    mg = consvc.getConnectionService("mailgun");
     authkey = base64.b64encode("api:" + mg.ckey)
     params = urllib.urlencode({
             'from': 'noreply@membic.com',

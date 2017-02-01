@@ -1,6 +1,6 @@
 import webapp2
 import logging
-from moracct import safestr
+import moracct
 from morutil import *
 import rev
 import coop
@@ -16,16 +16,16 @@ import json
 def revtxt_title(review):
     names = ["yum", "activity", "other"]
     if review["revtype"] in names:
-        return safestr(review["name"])
-    return safestr(review["title"])
+        return moracct.safestr(review["name"])
+    return moracct.safestr(review["title"])
 
 
 def revtxt_subkey(review):
     subkey = ""
     if review["revtype"] == "book":
-        subkey = safestr(review["author"])
+        subkey = moracct.safestr(review["author"])
     if review["revtype"] == "music":
-        subkey = safestr(review["artist"])
+        subkey = moracct.safestr(review["artist"])
     return subkey
 
 
@@ -70,9 +70,9 @@ def rev_text_from_spec(review, spec):
             txt = space_conc(txt, revtxt_title(review))
             txt = space_conc(txt, revtxt_subkey(review))
         elif cc == "k":
-            txt = space_conc(txt, safestr(review["keywords"]))
+            txt = space_conc(txt, moracct.safestr(review["keywords"]))
         elif cc == "d":
-            txt = space_conc(txt, safestr(review["text"]))
+            txt = space_conc(txt, moracct.safestr(review["text"]))
         elif cc == "v":
             txt = space_conc(txt, "|")
     return txt

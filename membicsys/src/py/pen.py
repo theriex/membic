@@ -3,7 +3,7 @@ import datetime
 from google.appengine.ext import db
 from google.appengine.api import images
 import logging
-from moracct import *
+import moracct
 from morutil import *
 import urllib
 import json
@@ -98,7 +98,7 @@ def gen_password():
 
 
 def updateable_pen(handler):
-    acc = authenticated(handler.request)
+    acc = moracct.authenticated(handler.request)
     if not acc:
         handler.error(401)  # unauthorized
         handler.response.out.write("Authentication failed")
@@ -164,7 +164,7 @@ def add_account_info_to_pen_stash(acc, pen):
 
 
 def find_auth_pens(handler):
-    acc = authenticated(handler.request)
+    acc = moracct.authenticated(handler.request)
     if not acc:
         # Eventual consistency means it is possible to create a new
         # account but not have it available for authorization yet.
@@ -213,7 +213,7 @@ def reflect_pen_name_change(pen, prev_name):
 
 class NewPenName(webapp2.RequestHandler):
     def post(self):
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             self.error(401)
             self.response.out.write("Authentication failed")
@@ -238,7 +238,7 @@ class NewPenName(webapp2.RequestHandler):
             add_account_info_to_pen_stash(acc, pen)
         except Exception as e:
             logging.info("Account info stash failure for new pen " + str(e))
-        returnJSON(self.response, [ pen ])
+        moracct.returnJSON(self.response, [ pen ])
 
 
 class UpdatePenName(webapp2.RequestHandler):
@@ -262,7 +262,7 @@ class UpdatePenName(webapp2.RequestHandler):
         pen.name = name;
         pen.name_c = name_c;
         # possible authorization was changed in the params
-        acc = authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         authok = authorized(acc, pen)
         if not authok:
             self.error(401)
@@ -278,7 +278,7 @@ class UpdatePenName(webapp2.RequestHandler):
             add_account_info_to_pen_stash(acc, pen)
         except Exception as e:
             logging.info("Account info stash failure for updated pen " + str(e))
-        returnJSON(self.response, [ pen ])
+        moracct.returnJSON(self.response, [ pen ])
         
 
 class UploadPic(webapp2.RequestHandler):
@@ -368,7 +368,7 @@ class ToggleRemember(webapp2.RequestHandler):
                               revid + " to PenName " + str(pen.key().id()) + 
                               " " + str(e))
         cached_put(pen)
-        returnJSON(self.response, [ pen ])
+        moracct.returnJSON(self.response, [ pen ])
 
 
 class GetPenById(webapp2.RequestHandler):
@@ -376,7 +376,7 @@ class GetPenById(webapp2.RequestHandler):
         pen = fetch_pen_by_penid(self)
         if not pen:
             return
-        returnJSON(self.response, [ pen ])
+        moracct.returnJSON(self.response, [ pen ])
 
 
 app = webapp2.WSGIApplication([('.*/newpen', NewPenName),

@@ -15,6 +15,7 @@ import datetime
 from base64 import b64encode
 from cacheman import *
 from google.appengine.api import memcache
+import rev
 
 
 class ConnectionService(db.Model):
@@ -215,6 +216,15 @@ def interpreted_url_fetch_result(handler, result):
     return result
 
 
+def blank_placeholder_image():
+    # hex values for a 4x4 transparent PNG created with GIMP:
+    imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
+    img = images.Image(imgstr)
+    img.resize(width=4, height=4)
+    img = img.execute_transforms(output_encoding=images.PNG)
+    return img
+
+
 class URLFetcher(object):
     # stackoverflow.com/questions/9358591/url-fetch-too-many-repeated-redirects
     def __init__(self):
@@ -274,23 +284,6 @@ def simple_fetchurl(handler, geturl):
         uf = URLFetcher()
         return uf.fetch(handler, geturl)
     return interpreted_url_fetch_result(handler, result)
-
-
-# Returning an image directly to a browser doesn't work unless it is
-# transformed first, and if transforming anyway, may as well dump it
-# out in PNG format.  If the image is being cached, then it is subject
-# to the 1mb max cacheable string length, and in general it doesn't
-# make any sense to be passing large images around so restricting to
-# 125px wide.
-def prepare_image(img):
-    maxwidth = 125
-    if img.width > maxwidth:
-        img.resize(width=maxwidth)  # height adjusted automatically to match
-    else:
-        # at least one transform required so do a dummy crop
-        img.crop(0.0, 0.0, 1.0, 1.0)
-    img = img.execute_transforms(output_encoding=images.PNG)
-    return img
 
 
 # params: name, oauth_callback, oauth_verifier
@@ -391,7 +384,7 @@ class GitHubCallback(webapp2.RequestHandler):
 
 class AmazonInfo(webapp2.RequestHandler):
     def get(self):
-        # acc = authenticated(self.request)
+        # acc = moracct.authenticated(self.request)
         # if not acc:
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
@@ -416,7 +409,7 @@ class AmazonInfo(webapp2.RequestHandler):
 
 class AmazonSearch(webapp2.RequestHandler):
     def get(self):
-        # acc = authenticated(self.request)
+        # acc = moracct.authenticated(self.request)
         # if not acc:
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
@@ -452,7 +445,7 @@ class AmazonSearch(webapp2.RequestHandler):
 
 class URLContents(webapp2.RequestHandler):
     def get(self):
-        # acc = authenticated(self.request)
+        # acc = moracct.authenticated(self.request)
         # if not acc:
         #     self.error(401)
         #     self.response.out.write("Authentication failed")
@@ -468,18 +461,22 @@ class URLContents(webapp2.RequestHandler):
 
 class ImageRelay(webapp2.RequestHandler):
     def get(self):
-        revid = self.request.get('revid')
+        revid = intz(self.request.get('revid'))
         url = self.request.get('url')
         if not revid or not url:
             self.error(400)
             self.response.out.write("Both revid and url are required")
             return
+        mbc = None
         img = memcache.get(url)
         if img:
             img = pickle.loads(img)
-            # This level of info makes the general log pretty noisy.
             # logging.info("ImageRelay retrieved from cache")
-        else:
+        if not img:
+            mbc = visible_get_instance(rev.Review, revid)
+            if mbc and mbc.icdata and mbc.icwhen > mbc.modified:
+                img = rev.prepare_image(images.Image(mbc.icdata))
+        if not img:
             msg = "ImageRelay revid: " + str(revid) + ", url: " + url
             headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
             try:
@@ -493,7 +490,11 @@ class ImageRelay(webapp2.RequestHandler):
                     msg += " - urlfetch successful"
                     img = images.Image(result.content)
                     msg += " - image constructed"
-                    img = prepare_image(img)
+                    img = rev.prepare_image(img)
+                    msg += " - image prepared"
+                    mbc.icwhen = nowISO()
+                    mbc.icdata = db.Blob(img)
+                    mbc.put()
                     memcache.set(url, pickle.dumps(img))
             except Exception as e:
                 img = None
@@ -502,11 +503,7 @@ class ImageRelay(webapp2.RequestHandler):
                 # trying permanent rev changes, not worth a warning.
                 logging.info(msg + " - error: " + str(e))
             if not img:
-                # hex values for a 4x4 transparent PNG created with GIMP:
-                imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
-                img = images.Image(imgstr)
-                img.resize(width=4, height=4)
-                img = img.execute_transforms(output_encoding=images.PNG)
+                img = blank_placeholder_image()
                 logging.info("ImageRelay returning blank image placeholder")
         if img:
             self.response.headers['Content-Type'] = "image/png"

@@ -2,9 +2,11 @@ from google.appengine.ext import db
 from google.appengine.api import memcache
 import logging
 from cacheman import *
-from moracct import *
+import moracct
 from morutil import *
 import rev
+import json
+
 
 class MembicFeed(db.Model):
     """ Transient precomputed query results to save time. """
@@ -138,7 +140,7 @@ def get_review_feed_pool(revtype):
         entry = feedcsventry(review)
         if csv_contains(entry, feedcsv):
             continue  # already added, probably from earlier srcrev reference
-        objson = obj2JSON(review)
+        objson = moracct.obj2JSON(review)
         cacheavail -= len(entry) + len(objson)
         feedcsv = append_to_csv(entry, feedcsv)
         blocks[bidx] = append_to_csv(objson, blocks[bidx])
@@ -148,7 +150,7 @@ def get_review_feed_pool(revtype):
             if source:
                 entry = feedcsventry(source)
                 if not csv_contains(entry, feedcsv):
-                    objson = obj2JSON(source)
+                    objson = moracct.obj2JSON(source)
                     feedcsv = append_to_csv(entry, feedcsv)
                     cacheavail -= len(entry) + len(objson)
                     blocks[bidx] = append_to_csv(objson, blocks[bidx])
@@ -206,11 +208,11 @@ def sort_filter_feed(feedcsv, pnm, maxret=revblocksize):
 def resolve_ids_to_json(feedids, blocks):
     jstr = ""
     for block in blocks:
-        # debuginfo("resolve_ids_to_json block: " + block)
+        # moracct.debuginfo("resolve_ids_to_json block: " + block)
         objs = json.loads(block)
         for obj in objs:
-            # debuginfo("resolve_ids_to_json id: " + obj["_id"])
-            # debuginfo("feedids: " + str(feedids))
+            # moracct.debuginfo("resolve_ids_to_json id: " + obj["_id"])
+            # moracct.debuginfo("feedids: " + str(feedids))
             if int(obj["_id"]) in feedids:
                 jstr = append_to_csv(json.dumps(obj), jstr)
     return "[" + jstr + "]"
@@ -234,10 +236,10 @@ def replace_instance_in_json(rev, jtxt, remove):
         idstr = str(rev.key().id())
         if obj["_id"] == idstr:
             if not remove:
-                debuginfo("Replaced json for _id " + idstr)
-                rt = append_to_csv(obj2JSON(rev), rt)
+                moracct.debuginfo("Replaced json for _id " + idstr)
+                rt = append_to_csv(moracct.obj2JSON(rev), rt)
             else:
-                debuginfo("Removed json for _id " + idstr)
+                moracct.debuginfo("Removed json for _id " + idstr)
         else:
             rt = append_to_csv(json.dumps(obj), rt)
     return "[" + rt + "]"
@@ -253,26 +255,26 @@ def prepend_instance_to_json(rev, jtxt):
             jtxt = ""
     if jtxt:
         jtxt = "," + jtxt
-    jtxt = obj2JSON(rev) + jtxt
+    jtxt = moracct.obj2JSON(rev) + jtxt
     return "[" + jtxt + "]"
 
 
 # update the cache or ensure it is nuked for rebuild.
 def update_feed_cache(ckey, rev, addifnew=False):
-    debuginfo("update_feed_cache for " + ckey)
+    moracct.debuginfo("update_feed_cache for " + ckey)
     feedcsv, blocks = get_feed_cache_elements(ckey)
-    # debuginfo("feedcsv: " + str(feedcsv))
+    # moracct.debuginfo("feedcsv: " + str(feedcsv))
     if feedcsv is None:
-        debuginfo("no cache data. rebuild later if needed")
+        moracct.debuginfo("no cache data. rebuild later if needed")
         return  # cache cleared, rebuild later as needed
     entry = feedcsventry(rev)
     if csv_contains(entry, feedcsv):
-        debuginfo("updating existing cache entry")
+        moracct.debuginfo("updating existing cache entry")
         for i in range(numblocks):  # walk all in case dupe included
             blocks[i] = replace_instance_in_json(rev, blocks[i], 
                                                  rev.mainfeed <= 0)
     elif rev.mainfeed > 0 and addifnew:
-        debuginfo("prepending new cache entry")
+        moracct.debuginfo("prepending new cache entry")
         feedcsv = prepend_to_csv(entry, feedcsv)
         # prepend to first block.  Not worth rebalancing all the blocks.
         blocks[0] = prepend_instance_to_json(rev, blocks[0])
