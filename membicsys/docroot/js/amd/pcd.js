@@ -118,7 +118,8 @@ app.pcd = (function () {
     ////////////////////////////////////////
 
     getDirectLinkInfo = function (usehashtag) {
-        var infobj = {title: "", url: "https://" + window.location.host};
+        //var infobj = {title: "", url: "https://" + window.location.host};
+        var infobj = {title: "", url: app.hardhome};
         if(dst.type === "pen") {
             infobj.url += "/p/" + dst.id;
             infobj.title = "Direct profile URL:"; }
