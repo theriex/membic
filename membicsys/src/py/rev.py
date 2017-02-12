@@ -700,11 +700,9 @@ def find_pen_or_coop_type_and_id(handler):
         return "pen", penid, None
     if auth:
         acc = moracct.authenticated(handler.request)
-        logging.info("TODO: find_pen_or_coop_ have acc")
         if not acc:  # error already reported
             return "pen", 0, None
         pens = pen.find_auth_pens(handler)
-        logging.info("TODO: find_pen_or_coop_ have pens")
         if not pens or len(pens) == 0:
             return "pen", 0, None
         mypen = pens[0]
@@ -1158,9 +1156,7 @@ class ToggleHelpful(webapp2.RequestHandler):
 class FetchAllReviews(webapp2.RequestHandler):
     def get(self):
         try:
-            logging.info("TODO: FetchAllReviews start.")
             pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
-            logging.info("TODO: FetchAllReviews found pct, pgid, mypen.")
             if pgid: # pgid may be zero if no pen name yet
                 if self.request.get('supp'):
                     return supplemental_recent_reviews(self, pgid)
@@ -1186,7 +1182,7 @@ class FetchAllReviews(webapp2.RequestHandler):
             return
         except Exception as e:
             if str(e) == "Token expired":
-                return srverr(self, 401, "FetchAllReviews failed: " + str(e))
+                return srverr(self, 401, "Your access token has expired, you will need to sign in again.")
             return srverr(self, 500, "FetchAllReviews failed: " + str(e))
 
 
