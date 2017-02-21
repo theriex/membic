@@ -466,7 +466,7 @@ return {
 
 
     systemNotices: function () {
-        var sysmsg, html, pen, fault = 0, mn;
+        var sysmsg, html, pen, fault = 0, mn, statdivid = "";
         sysmsg = "";
         mn = "New membership applications for $THEME";
         html = [];
@@ -489,6 +489,7 @@ return {
                         html.push(["div", {cla: "membershipnoticediv"},
                                    link]); } } }); }
         if(sysmsg || html.length > 0) {
+            statdivid = "sysnoticefetchstatdiv";
             html = [["div", {cla: "dlgclosex"},
                      ["a", {id: "closesysnotices", href: "#close", 
                             onclick: jt.fs("app.coop.clearSysNotices()")},
@@ -499,7 +500,7 @@ return {
         jt.out("sysnoticediv", jt.tac2html(html));
         if(fault) {  //load missing theme and redisplay notices
             app.pcd.blockfetch("coop", fault, app.coop.systemNotices,
-                               "sysnoticefetchstatdiv"); }
+                               statdivid); }
     },
 
 
