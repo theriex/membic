@@ -2142,7 +2142,8 @@ return {
         objref = app.lcs.getRef(dtype, id);
         if(objref && objref[dtype] && objref[dtype].recent) {
             return callback(objref[dtype]); }
-        displayRetrievalWaitMessage(divid, dtype, id);
+        if(divid !== "quiet") {
+            displayRetrievalWaitMessage(divid, dtype, id); }
         url = "blockfetch?" + app.login.authparams();
         if(dtype === "coop") {
             if(!id) {
@@ -2161,7 +2162,8 @@ return {
                     time = new Date().getTime() - time;
                     jt.log("blockfetch " + dtype + " " + id  + 
                            " returned in " + time/1000 + " seconds.");
-                    jt.out(divid, "");
+                    if(divid !== "quiet") {
+                        jt.out(divid, ""); }
                     if(!objs.length || !objs[0]) {
                         if(dtype === "pen") {
                             return app.pen.newPenName(callback); }

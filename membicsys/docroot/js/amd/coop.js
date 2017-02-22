@@ -466,7 +466,7 @@ return {
 
 
     systemNotices: function () {
-        var sysmsg, html, pen, fault = 0, mn, statdivid = "";
+        var sysmsg, html, pen, fault = 0, mn, statdivid = "quiet";
         sysmsg = "";
         mn = "New membership applications for $THEME";
         html = [];
