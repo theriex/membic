@@ -461,18 +461,18 @@ class URLContents(webapp2.RequestHandler):
 
 class ImageRelay(webapp2.RequestHandler):
     def get(self):
-        revid = intz(self.request.get('revid'))
+        revid = intz(self.request.get('revid'))  # may be 0 if adding new inst
         url = self.request.get('url')
-        if not revid or not url:
+        if not url:
             self.error(400)
-            self.response.out.write("Both revid and url are required")
+            self.response.out.write("No image url given")
             return
         mbc = None
         img = memcache.get(url)
         if img:
             img = pickle.loads(img)
             # logging.info("ImageRelay retrieved from cache")
-        if not img:
+        if not img and revid:
             mbc = visible_get_instance(rev.Review, revid)
             if mbc and mbc.icdata and mbc.icwhen > mbc.modified:
                 img = rev.prepare_image(images.Image(mbc.icdata))
@@ -492,9 +492,10 @@ class ImageRelay(webapp2.RequestHandler):
                     msg += " - image constructed"
                     img = rev.prepare_image(img)
                     msg += " - image prepared"
-                    mbc.icwhen = nowISO()
-                    mbc.icdata = db.Blob(img)
-                    mbc.put()
+                    if mbc:
+                        mbc.icwhen = nowISO()
+                        mbc.icdata = db.Blob(img)
+                        mbc.put()
                     memcache.set(url, pickle.dumps(img))
             except Exception as e:
                 img = None
