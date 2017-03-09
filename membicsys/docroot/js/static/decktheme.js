@@ -229,7 +229,7 @@ app.decktheme = (function () {
                         {gid: "tabtop", img: "img/top.png",
                          ti: "tt", txt: "Top theme membics"},
                         {gid: "tabsearch", img: "img/search.png",
-                         ti: "ts", txt: "Search theme membics"},
+                         ti: "ts", txt: "Search by text or keyword"},
                         {gid: "tabstats", img: "img/stats.png",
                          ti: "tn", txt: "Visual traffic analysis"},
                         {gid: "tabrss", img: "img/rssicon.png",
