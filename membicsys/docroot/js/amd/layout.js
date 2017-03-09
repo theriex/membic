@@ -94,6 +94,22 @@ app.layout = (function () {
     },
 
 
+    shouldOpenInNewTab = function (link) {
+        var nt, matches,
+            lms = ["#", "https://membic.com", "https://membic.org",
+                   "https://www.membic.com", "https://www.membic.org",
+                   "http://localhost", "mailto"];
+        if(link.className.indexOf("externaldocslink") >= 0) {
+            nt = true; }
+        if(!nt) {
+            matches = lms.filter(function (substr) {
+                if(link.href.indexOf(substr) >= 0) {
+                    return substr; } });
+            nt = !(matches && matches.length); }
+        return nt;
+    },
+
+
     convertDocLinks = function () {
         var links, i, link;
         links = document.getElementsByTagName("a");
@@ -102,7 +118,8 @@ app.layout = (function () {
             if(link.className.indexOf("localdocslink") >= 0) {
                 link.href = convertDocRef(link.href);
                 jt.on(link, "click", app.layout.docLinkClick); }
-            else if(link.className.indexOf("externaldocslink") >= 0) {
+            else if(shouldOpenInNewTab(link)) {
+                jt.log("new tab for: " + link.href);
                 jt.on(link, "click", app.layout.externalDocLinkClick); } }
     },
 
