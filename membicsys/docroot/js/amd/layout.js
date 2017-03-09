@@ -119,7 +119,7 @@ app.layout = (function () {
                 link.href = convertDocRef(link.href);
                 jt.on(link, "click", app.layout.docLinkClick); }
             else if(shouldOpenInNewTab(link)) {
-                jt.log("new tab for: " + link.href);
+                //jt.log("new tab for: " + link.href);
                 jt.on(link, "click", app.layout.externalDocLinkClick); } }
     },
 

@@ -20,6 +20,27 @@ app.deckprofile = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
+    function titleSplash () { var numsteps = 2; return {
+        group: {id: "gTS"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, f = {g: "gTS"};
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gMM", 0.0);
+            hfs.fadeInitGroup(sv, f.g, 1.0);
+            hfs.showText(sv, "whatit", f.g, "Your Profile", 
+                         {x: 76, y: line3y, fs: "24px"});
+        },
+        undo: function (transtime) {
+            var sv;
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1);
+            hfs.fadeGroup(sv, "gTS", 0.0);
+        }
+    }; }
+
+
     function profIdent () { var numsteps = 9; return {
         group: {id: "gPI"},
         transmult: numsteps,
@@ -27,6 +48,7 @@ app.deckprofile = (function () {
             var sv, f = {g: "gPI", x: 68}, bb, ta;
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gTS", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "ptpic", f.g, "Profile picture", 
                          {x: f.x, y: namey}); 
@@ -70,6 +92,7 @@ app.deckprofile = (function () {
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
             hfs.fadeGroup(sv, "gPI", 0.0);
+            hfs.fadeGroup(sv, "gTS", 1.0);
         }
     }; }
         
@@ -131,6 +154,7 @@ app.deckprofile = (function () {
         ds = d3ckitds;
         hfs = d3ckit.slideHelperFunctions();
         ds.deck = [
+            titleSplash(),
             profIdent(),
             profTabs()
         ];

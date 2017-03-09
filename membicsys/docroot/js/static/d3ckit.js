@@ -14,7 +14,7 @@ d3ckit = (function () {
               dispdivid: "d3ckitdiv",  //svg will take 100% of this space
               w: 320, h: 186,  //phone optimized, MacAir fullscreen ok
               margin: {top: 5, right: 5, bottom: 5, left: 5},
-              normTransTime: 800,      //basic 2 step display and read: 1600
+              normTransTime: 800,      //basic 2 step display: 2x this value
               fastTransTime: 100,      //essentially instant, but sequenceable
               moviescreen: true, screencolor: "white", textcolor: "black",
               autoplay: false, paused: false, afterpausing: null,

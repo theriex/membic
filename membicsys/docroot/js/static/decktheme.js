@@ -10,13 +10,35 @@ app.decktheme = (function () {
 
     var ds = null,
         hfs = null,
-        tty = 26;
+        tty = 26,
+        line3y = 78;
         //vals and logic assume viewbox width 320
 
 
     ////////////////////////////////////////
     //base slide creation functions
     ////////////////////////////////////////
+
+    function titleSplash () { var numsteps = 2; return {
+        group: {id: "gTS"},
+        transmult: numsteps,
+        display: function (transtime) {
+            var sv, f = {g: "gTS"};
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gMM", 0.0);
+            hfs.fadeInitGroup(sv, f.g, 1.0);
+            hfs.showText(sv, "whatit", f.g, "Themes", 
+                         {x: 84, y: line3y, fs: "24px"});
+        },
+        undo: function (transtime) {
+            var sv;
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1);
+            hfs.fadeGroup(sv, "gTS", 0.0);
+        }
+    }; }
+
 
     function profTheme () { var numsteps = 12; return {
         group: {id: "gPT"},
@@ -25,6 +47,7 @@ app.decktheme = (function () {
             var sv, f = {g: "gPT", x: 20};
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gTS", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "pt1", f.g, "Themes collect related membics", 
                          {x: f.x - 10, y: tty}); 
@@ -68,6 +91,7 @@ app.decktheme = (function () {
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
             hfs.fadeGroup(sv, "gPT", 0.0);
+            hfs.fadeGroup(sv, "gTS", 1.0);
         }
     }; }
 
@@ -254,6 +278,7 @@ app.decktheme = (function () {
         ds = d3ckitds;
         hfs = d3ckit.slideHelperFunctions();
         ds.deck = [
+            titleSplash(),
             profTheme(),
             membership(),
             themeIdent(),
