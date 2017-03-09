@@ -20,6 +20,7 @@ app.activity = (function () {
         urlToRead = "",
         hidemine = 0,
         lastDisplayFeedtype = "all",
+        srvctms = null,
 
 
     ////////////////////////////////////////
@@ -180,8 +181,26 @@ app.activity = (function () {
     },
 
 
-    writeThemesFromDisplayMembics = function (membics) {
-        var themes = {}, tlist = [], html = [];
+    countTop20Ids = function (top20s) {
+        var count = 0, rts = app.review.getReviewTypes();
+        if(top20s) {
+            rts.forEach(function (type) {
+                if(top20s[type.type]) {
+                    count += top20s[type.type].length; } }); }
+        return count;
+    },
+
+
+    makeThemeSummaries = function (membics) {
+        var themes = {}, tlist = [], mincount = 5;
+        if(srvctms) {  //have themes from server call to retrieve summary
+            srvctms.forEach(function (csum) {
+                if(csum.founders) {  //not abandoned
+                    themes[csum.ctmid] = {
+                        ctmid: csum.ctmid,
+                        name: csum.name,
+                        modified: csum.modified,
+                        count: countTop20Ids(csum.top20s)}; } }); }
         membics.forEach(function (membic) {
             var pts = jt.saferef(membic, "svcdata.?postctms") || [];
             pts.forEach(function (pn) {
@@ -190,11 +209,23 @@ app.activity = (function () {
                     themes[ctmid] = {
                         ctmid: ctmid,
                         name: app.coopnames[ctmid] || pn.name,
-                        count: 0}; }
+                        modified: membic.modified,  //first is most recent
+                        count: mincount}; }
+                themes[ctmid].count = Math.max(themes[ctmid].count, mincount);
                 themes[ctmid].count += 1; }); });
-        Object.keys(themes).forEach(function (ctmid) { 
-            tlist.push(themes[ctmid]); });
-        tlist.sort(function (a, b) { return b.count - a.count; });
+        Object.keys(themes).forEach(function (ctmid) {
+            var theme = themes[ctmid];
+            if(theme.count >= mincount) {
+                tlist.push(theme); } });
+        tlist.sort(function (a, b) { 
+            return b.modified.localeCompare(a.modified); });
+        return tlist;
+    },
+
+
+    writeThemesFromDisplayMembics = function (membics) {
+        var tlist, html = [];
+        tlist = makeThemeSummaries(membics);
         tlist.forEach(function (theme) {
             var imgsrc = "ctmpic?coopid=" + theme.ctmid;
             html.push(["div", {cla: "themetilewrapper", 
@@ -211,6 +242,18 @@ app.activity = (function () {
                           ["div", {cla: "themetilecountdiv"},
                            theme.count]]]]]); });
         jt.out("themesdiv", jt.tac2html(html));
+        if(!srvctms) {  //fetch full themes list from server and rebuild
+            jt.call("GET", "ctmstats", null,
+                    function (summaries) {
+                        summaries.forEach(function (cs) {
+                            app.lcs.reconstituteJSONObjectField("top20s",
+                                                                cs); });
+                        srvctms = summaries;
+                        app.activity.displayThemes(); },
+                    app.failf(function (code, errtxt) {
+                        jt.log("ctmstats retrieval call failed " + code + 
+                               ": " + errtxt); }),
+                    jt.semaphore("activity.ctmstats")); }
     },
 
 

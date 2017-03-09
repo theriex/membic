@@ -546,18 +546,18 @@ class ProcessMembership(webapp2.RequestHandler):
 
 class GetCoopStats(webapp2.RequestHandler):
     def get(self):
-        stat = {'total': 0, 'totalmem': 0, 'memmax': 0, 'memwin': ""}
+        ctms = []
         coops = Coop.all()
         for coop in coops:
-            stat['total'] += 1
-            memcount = elem_count_csv(coop.founders) +\
-                elem_count_csv(coop.moderators) +\
-                elem_count_csv(coop.members)
-            if memcount > stat['memmax']:
-                stat['memmax'] = memcount
-                stat['memwin'] = coop.name
-            stat['totalmem'] += memcount
-        moracct.writeJSONResponse(json.dumps(stat), self.response)        
+            ctms.append({"ctmid": str(coop.key().id()),
+                         "name": coop.name,
+                         "description": coop.description,
+                         "modified": coop.modified,
+                         "founders": coop.founders,
+                         "moderators": coop.moderators,
+                         "members": coop.members,
+                         "top20s": coop.top20s})
+        moracct.writeJSONResponse(json.dumps(ctms), self.response)
 
 
 class InviteByMail(webapp2.RequestHandler):
