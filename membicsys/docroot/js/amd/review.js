@@ -556,7 +556,8 @@ app.review = (function () {
             return (rev.penid === penid); }
         //if rev.ctmid, then we are viewing a theme, which is dst.obj
         if(rev.penid === penid || 
-               app.coop.membershipLevel(app.pcd.getDisplayState(), penid) > 1) {
+               app.coop.membershipLevel(
+                   app.pcd.getDisplayState().obj, penid) > 1) {
             return true; }
         return false;
     },
