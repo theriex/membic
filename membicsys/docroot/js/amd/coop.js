@@ -21,7 +21,8 @@ app.coop = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var 
+    var srvctms = null,
+
 
     ////////////////////////////////////////
     // helper functions
@@ -501,6 +502,57 @@ return {
         if(fault) {  //load missing theme and redisplay notices
             app.pcd.blockfetch("coop", fault, app.coop.systemNotices,
                                statdivid); }
+    },
+
+
+    hasFlag: function (ctm, flagname) {
+        if(ctm && ctm.soloset && ctm.soloset.flags) {
+            return ctm.soloset.flags[flagname]; }
+        return false;
+    },
+
+
+    setFlag: function (ctm, flagname, value) {
+        ctm.soloset = ctm.soloset || {};
+        ctm.soloset.flags = ctm.soloset.flags || {};
+        ctm.soloset.flags[flagname] = value;
+    },
+
+
+    isArchived: function (ctmid) {
+        var obj = app.lcs.getRef("coop", ctmid);
+        if(obj) {
+            obj = obj.coop;
+            return app.coop.hasFlag(obj, "archived"); }
+        if(srvctms) {
+            srvctms.forEach(function (csum) {
+                if(csum.ctmid === ctmid) {
+                    obj = csum; } });
+            if(obj) {
+                return app.coop.hasFlag(obj, "archived"); } }
+        return false;
+    },
+
+
+    srvctms: function () {
+        return srvctms;
+    },
+
+
+    getThemeSummaries: function (contf) {
+        if(srvctms) {
+            return contf(srvctms); }
+        jt.call("GET", "ctmstats", null,
+                function (summaries) {
+                    summaries.forEach(function (cs) {
+                        app.lcs.rjof("top20s", cs);
+                        app.lcs.rjof("soloset", cs); });
+                    srvctms = summaries;
+                    app.activity.displayThemes(); },
+                app.failf(function (code, errtxt) {
+                    jt.log("ctmstats retrieval call failed " + code + 
+                           ": " + errtxt); }),
+                jt.semaphore("coop.ctmstats"));
     },
 
 

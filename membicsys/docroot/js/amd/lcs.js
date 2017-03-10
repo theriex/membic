@@ -181,6 +181,9 @@ return {
     },
 
 
+    rjof: function (field, obj) {  //shorthand name
+        app.lcs.reconstituteJSONObjectField(field, obj);
+    },
     reconstituteJSONObjectField: function (field, obj) {
         var text, parsedval, jsonobj = JSON || window.JSON;
         if (!jsonobj) {

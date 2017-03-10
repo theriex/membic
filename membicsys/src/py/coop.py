@@ -144,6 +144,41 @@ def verify_valid_unique_hashtag(handler, coop):
     return True
 
 
+def has_flag(coop, flagname):
+    solodict = {}
+    if coop.soloset:
+        solodict = json.loads(coop.soloset)
+    if "flags" in solodict:
+        flagsdict = solodict["flags"]
+        return flagsdict[flagname]
+    return False
+
+
+def verify_soloset(coop, paramjson):
+    srvdict = {}
+    if coop.soloset:
+        srvdict = json.loads(coop.soloset)
+    usrdict = {}
+    if paramjson and len(paramjson):
+        usrdict = json.loads(paramjson)
+    usrflags = {}
+    if "flags" in usrdict:
+        usrflags = usrdict["flags"]
+    svrflags = {}
+    if "flags" in srvdict:
+        svrflags = srvdict["flags"]
+    # verify and restore any values that are maintained server side.  always
+    # make sure server values are present so they don't get toggled on
+    # client side by accident.
+    if "mainf" not in svrflags:
+        svrflags["mainf"] = ""
+    usrflags["mainf"] = svrflags["mainf"]
+    # put the data back together
+    usrdict["flags"] = usrflags
+    coop.soloset = json.dumps(usrdict)
+    # logging.info("verify_soloset coop.soloset: " + coop.soloset)
+
+
 def read_and_validate_descriptive_fields(handler, coop):
     # name/name_c field has a value and has been set already
     if not verify_unique_name(handler, coop):
@@ -161,7 +196,7 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.error(400)
         handler.response.out.write("Embed code must be an iframe")
         return False
-    coop.soloset = handler.request.get('soloset')
+    verify_soloset(coop, handler.request.get('soloset'))
     coop.keywords = handler.request.get('keywords')
     # picture is uploaded separately
     # frequency not used anymore
@@ -556,6 +591,7 @@ class GetCoopStats(webapp2.RequestHandler):
                          "founders": coop.founders,
                          "moderators": coop.moderators,
                          "members": coop.members,
+                         "soloset": coop.soloset,
                          "top20s": coop.top20s})
         moracct.writeJSONResponse(json.dumps(ctms), self.response)
 

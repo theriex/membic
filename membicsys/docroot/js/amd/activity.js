@@ -20,7 +20,6 @@ app.activity = (function () {
         urlToRead = "",
         hidemine = 0,
         lastDisplayFeedtype = "all",
-        srvctms = null,
 
 
     ////////////////////////////////////////
@@ -191,16 +190,28 @@ app.activity = (function () {
     },
 
 
+    isMainDisplayableTheme = function (csum) {
+        if(!csum.founders) {
+            return false; }  //no founders left, theme was abandoned
+        if(app.coop.hasFlag(csum, "mainf") ||
+           app.coop.hasFlag(csum, "groupf")) {
+            return false; }
+        return true;
+    },
+
+
     makeThemeSummaries = function (membics) {
-        var themes = {}, tlist = [], mincount = 5;
-        if(srvctms) {  //have themes from server call to retrieve summary
+        var themes = {}, tlist = [], mincount = 5, srvctms;
+        srvctms = app.coop.srvctms();
+        if(srvctms) {  //have themes summaries from earlier server call
             srvctms.forEach(function (csum) {
-                if(csum.founders) {  //not abandoned
-                    themes[csum.ctmid] = {
-                        ctmid: csum.ctmid,
-                        name: csum.name,
-                        modified: csum.modified,
-                        count: countTop20Ids(csum.top20s)}; } }); }
+                themes[csum.ctmid] = {
+                    ctmid: csum.ctmid,
+                    name: csum.name,
+                    founders: csum.founders,
+                    soloset: csum.soloset,
+                    modified: csum.modified,
+                    count: countTop20Ids(csum.top20s)}; }); }
         membics.forEach(function (membic) {
             var pts = jt.saferef(membic, "svcdata.?postctms") || [];
             pts.forEach(function (pn) {
@@ -215,7 +226,7 @@ app.activity = (function () {
                 themes[ctmid].count += 1; }); });
         Object.keys(themes).forEach(function (ctmid) {
             var theme = themes[ctmid];
-            if(theme.count >= mincount) {
+            if(theme.count >= mincount && isMainDisplayableTheme(theme)) {
                 tlist.push(theme); } });
         tlist.sort(function (a, b) { 
             return b.modified.localeCompare(a.modified); });
@@ -242,18 +253,8 @@ app.activity = (function () {
                           ["div", {cla: "themetilecountdiv"},
                            theme.count]]]]]); });
         jt.out("themesdiv", jt.tac2html(html));
-        if(!srvctms) {  //fetch full themes list from server and rebuild
-            jt.call("GET", "ctmstats", null,
-                    function (summaries) {
-                        summaries.forEach(function (cs) {
-                            app.lcs.reconstituteJSONObjectField("top20s",
-                                                                cs); });
-                        srvctms = summaries;
-                        app.activity.displayThemes(); },
-                    app.failf(function (code, errtxt) {
-                        jt.log("ctmstats retrieval call failed " + code + 
-                               ": " + errtxt); }),
-                    jt.semaphore("activity.ctmstats")); }
+        if(!app.coop.srvctms()) {
+            app.coop.getThemeSummaries(app.activity.displayThemes); }
     },
 
 

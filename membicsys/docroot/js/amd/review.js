@@ -155,7 +155,6 @@ app.review = (function () {
     findReviewType = function (type) {
         var revtype;
         if(!type) {
-            jt.log("review.findReviewType asked to find falsy type");
             return null; }
         type = type.toLowerCase();
         revtype = reviewTypes[reviewTypes.length - 1];  // default is "other"

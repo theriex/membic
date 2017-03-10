@@ -300,8 +300,9 @@ return {
                 obj = pen.stash[key];
                 if(obj.memlev >= 1) {
                     obj.ctmid = key.slice(3);
-                    //was a member, but verify haven't resigned
-                    if(pen.coops && pen.coops.csvcontains(obj.ctmid)) {
+                    //was a member, verify they haven't resigned
+                    if(pen.coops && pen.coops.csvcontains(obj.ctmid) &&
+                           !app.coop.isArchived(obj.ctmid)) {
                         ctms.push(obj); } } } });
         ctms.sort(function (a, b) {
             if(a.lastpost && !b.lastpost) { return -1; }

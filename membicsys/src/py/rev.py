@@ -652,6 +652,9 @@ def write_coop_reviews(review, pnm, ctmidscsv):
         if not ctm:
             logging.info("write_coop_reviews: no Coop " + ctmid)
             continue
+        if coop.has_flag(ctm, "archived"):
+            logging.info("write_coop_reviews: Coop " + ctmid + " archived")
+            continue
         penid = pnm.key().id()
         if not coop.member_level(penid, ctm):
             logging.info("write_coop_reviews: not member of " + ctmid)

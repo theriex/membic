@@ -601,7 +601,7 @@ app.pcd = (function () {
 
 
     descripSettingsHTML = function () {
-        var nh = "", ht = "", html;
+        var nh = "", ht = "", ark = "", html;
         if(dst.type === "coop") {
             if(app.coop.membershipLevel(dst.obj) < 3) {
                 return ""; }
@@ -616,7 +616,12 @@ app.pcd = (function () {
                     "Hashtag #"],
                    ["input", {id: "hashin", cla: "lifin", type: "text",
                               placeholder: "Optional",
-                              value: dst.obj.hashtag}]]]; }
+                              value: dst.obj.hashtag}]]];
+            ark = ["div", {cla:"formline"},
+                   [["input", {type:"checkbox", id:"arkcb", value:"archived",
+                               checked:jt.toru(
+                                   app.coop.hasFlag(dst.obj, "archived"))}],
+                    ["label", {fo:"arkcb"}, "Archive (no further posts)"]]]; }
         html = [nh,
                 //Label conflicts visually with placeholder text when
                 //empty and is unnecessary if value specified.
@@ -626,6 +631,7 @@ app.pcd = (function () {
                 //   defs.desclabel]],
                 ["textarea", {id: "shouteditbox", cla: "dlgta"}],
                 ht,
+                ark,
                 ["div", {id: "formstatdiv"}],
                 ["div", {cla: "dlgbuttonsdiv"},
                  ["button", {type: "button", id: "okbutton",
@@ -1647,6 +1653,13 @@ return {
                 val = val.slice(1).trim(); }
             dst.obj.hashtag = val;
             changed = true; }
+        elem = jt.byId("arkcb");
+        if(elem) {
+            val = elem.checked? new Date().toISOString() : "";
+            if((app.coop.hasFlag(dst.obj, "archived") && !val) ||
+               (!app.coop.hasFlag(dst.obj, "archived") && val)) {
+                changed = true; }
+            app.coop.setFlag(dst.obj, "archived", val); }
         if(!changed) {
             return app.layout.cancelOverlay(); }
         if(changed) {
