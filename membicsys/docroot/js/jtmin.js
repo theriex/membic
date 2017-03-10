@@ -65,6 +65,26 @@
     }
 
 
+    if(!String.prototype.csvarruniq) {
+        String.prototype.csvarruniq = function () {
+            var va = [], vo = {};
+            if(this && this.trim()) {
+                va = this.split(",");
+                console.log("va: " + va);
+                va.forEach(function (val, idx) {
+                    if (!vo[val]) {
+                        console.log("  " + val + ": " + (idx + 1));
+                        vo[val] = idx + 1; } });
+                va = [];
+                Object.keys(vo).forEach(function (key) {
+                    console.log("va: " + va);
+                    va.push(key); });
+                va.sort(function (a, b) { return vo[a] - vo[b]; }); }
+            return va;
+        };
+    }
+
+
     if (!String.prototype.csvcontains) {
         String.prototype.csvcontains = function (val) {
             if (this.endsWith(val) || this.indexOf(val + ",") >= 0) {
@@ -405,6 +425,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         date = new Date(year, (month - 1), day, hours, minutes, seconds, 0);
         return date;
     };
+    uo.isoString2Time = uo.ISOString2Time;
 
 
     uo.tz2loc = function (date) {
@@ -702,7 +723,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //Override this function if you need your own custom tags.  If I've
     //missed anything generally useful, let me know.
     uo.isHTMLElement = function (elemtype) {
-        var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"];
+        var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr", "svg"];
         if (typeof elemtype !== "string") {
             return false;
         }
@@ -1058,6 +1079,10 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
     uo.loadAppModules = function (app, modulenames, path, callback, parastr) {
         var i, url, modname, js;
+        if (path.indexOf("#") > 0) {
+            path = path.slice(0, path.indexOf("#")); }
+        if (path.indexOf("?") > 0) {
+            path = path.slice(0, path.indexOf("?")); }
         if (path.lastIndexOf(".") > path.lastIndexOf("/")) {
             path = path.slice(0, path.lastIndexOf("/"));
         }

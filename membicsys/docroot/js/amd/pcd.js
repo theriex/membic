@@ -415,7 +415,7 @@ app.pcd = (function () {
         html = [];
         fields = ["founders", "moderators", "members"];
         fields.forEach(function (field) {
-            var people, penids = dst.obj[field].csvarray();
+            var people, penids = dst.obj[field].csvarruniq();
             if(penids.length) {
                 html.push(["div", {cla: "formline"}, field.capitalize()]); }
             people = dst.obj.people || {};
