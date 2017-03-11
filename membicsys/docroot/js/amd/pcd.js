@@ -744,7 +744,7 @@ app.pcd = (function () {
                         onclick: jt.fs("app.layout.togdisp('ctmcalembdiv')")},
                   [calendarIconHTML(),
                    ["span", {cla: "settingsexpandlinkspan"},
-                    "Embedded Calendar"]]],
+                    "Include Calendar"]]],
                  ["div", {cla: "formline", id: "ctmcalembdiv",
                           style: "display:none;"},
                   [["div", {cla: "formline"},
@@ -854,23 +854,14 @@ app.pcd = (function () {
             dlo = getDirectLinkInfo();
             ta.readOnly = true;
             ta.value = dlo.url; }
-        ta = jt.byId("embscrta");
-        if(ta) {
-            ta.readOnly = true;
-            ta.value = "<div id=\"membicdiv\"><a href=\"" + site + 
-                "?view=coop&coopid=" + dst.id + "&css=none\">" + 
-                dst.obj.name + "</a></div>\n" +
-                "<script src=\"" + site + 
-                "/js/embed.js?v=170124\"></script>\n"; }
         ta = jt.byId("embifta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = "<div id=\"membicdiv\" style=\"height:90vh;\">\n" +
-                "<iframe id=\"membiciframe\" src=\"" + site + "\"" +
+            ta.value = "<iframe id=\"membiciframe\" src=\"" + site + "\"" +
                 "?view=coop&coopid=" + dst.id + 
                 "&css=none&site=YOURSITE.COM\" " + 
                 "style=\"position:relative;height:100%;width:100%\" " +
-                "seamless=\"seamless\" frameborder=\"0\"/></iframe>\n</div>"; }
+                "seamless=\"seamless\" frameborder=\"0\"/></iframe>"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
@@ -1499,13 +1490,13 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   keywordSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
-                  calendarSettingsHTML()],
+                  soloSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
                   rssSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
-                  soloSettingsHTML()],
+                  embedSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
-                  embedSettingsHTML()]]];
+                  calendarSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    app.login.accountSettingsInit();
@@ -1583,21 +1574,13 @@ return {
                    " for use with your own custom domain",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embdlta", cla: "setpldlgta"}]]]],
-                 //embed script
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Embed script"],
-                   " to paste where you want membics in your site",
-                   ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embscrta", cla: "setpldlgta", 
-                                  rows: 4}]]]],
                  //iframe
                  ["div", {cla: "pcdsectiondiv"},
                   [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
-                   " non-script equivalent (edit your site name",
-                   " and adjust height as needed)",
+                   " (replace the site value with your domain)",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embifta", cla: "setpldlgta", 
-                                  rows: 4}]]]],
+                                  rows: 5}]]]],
                  //wordpress
                  ["div", {cla: "pcdsectiondiv"},
                   [["span", {cla: "setpldlgmspan"}, "Newsfeed"],
