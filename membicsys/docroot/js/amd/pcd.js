@@ -857,7 +857,7 @@ app.pcd = (function () {
         ta = jt.byId("embifta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = "<iframe id=\"membiciframe\" src=\"" + site + "\"" +
+            ta.value = "<iframe id=\"membiciframe\" src=\"" + site + 
                 "?view=coop&coopid=" + dst.id + 
                 "&css=none&site=YOURSITE.COM\" " + 
                 "style=\"position:relative;height:100%;width:100%\" " +
@@ -1943,7 +1943,7 @@ return {
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
                  ["community membics",
-                  ["img", {src: "img/membiclogo.png?v=170124", 
+                  ["img", {src: "img/membiclogo.png?v=170311", 
                            cla: "hthimg"}]]],
                 ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {

@@ -268,7 +268,7 @@ app.activity = (function () {
              ["a", {href: "#maindisp",
                     onclick: jt.fs("app.activity.displayFeed('all')")},
               ["Return to community membics",
-               ["img", {src: "img/membiclogo.png?v=170124", 
+               ["img", {src: "img/membiclogo.png?v=170311", 
                         cla: "intxtico"}]]]]];
         return html;
     },
