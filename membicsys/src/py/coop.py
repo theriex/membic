@@ -150,7 +150,8 @@ def has_flag(coop, flagname):
         solodict = json.loads(coop.soloset)
     if "flags" in solodict:
         flagsdict = solodict["flags"]
-        return flagsdict[flagname]
+        if flagname in flagsdict:
+            return flagsdict[flagname]
     return False
 
 
