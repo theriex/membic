@@ -531,6 +531,17 @@ return {
     },
 
 
+    maxPostsPerDay: function (updval) {
+        var mypen = app.pen.myPenName();
+        mypen.settings = mypen.settings || {};
+        mypen.settings.maxPostsPerDay = mypen.settings.maxPostsPerDay || 1;
+        if(!updval) {
+            return +(mypen.settings.maxPostsPerDay); }
+        mypen.settings.maxPostsPerDay = updval;
+        return mypen;
+    },
+
+
     serializeFields: function (penName) {
         if(typeof penName.settings === "object") {
             penName.settings = JSON.stringify(penName.settings); }

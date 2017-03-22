@@ -328,6 +328,14 @@ app.login = (function () {
                 ["input", {type: "password", cla: "lifin", 
                            name: "passin", id: "passin"}]];
         jt.out("accpassupdatediv", jt.tac2html(html));
+        //Give a choice on how many posts before queueing them.
+        html = [["label", {fo:"maxpdsel", cla:"liflab"}, "Queuing"],
+                ["select", {id:"maxpdsel"},
+                 [["option", {value:1}, 1],
+                  ["option", {selected:jt.toru(app.pen.maxPostsPerDay() === 2),
+                              value:2}, 2]]],
+                ["span", {cla:"accstatvalspan"}, "&nbsp;(per day)"]];
+        jt.out("maxpostperdaydiv", jt.tac2html(html));
         app.pen.getPen("", function (pen) {
             var accpenin = jt.byId("accpenin");
             if(accpenin) {
@@ -337,7 +345,7 @@ app.login = (function () {
 
 
     readUsermenuAccountForm = function () {
-        var ua;
+        var ua, elem;
         ua = { email: moracct.email,
                penName: moracct.penName };
         ua.email = jt.byId("emailin").value.trim();
@@ -348,6 +356,8 @@ app.login = (function () {
             return; }
         if(jt.byId("passin").value) {
             ua.password = jt.byId("passin").value.trim(); }
+        elem = jt.byId("maxpdsel");
+        ua.maxpd = +(elem.options[elem.selectedIndex].value);
         ua.penName = jt.byId("accpenin").value;
         return ua;
     },
@@ -539,6 +549,7 @@ return {
                  ["div", {cla: "lifsep", id: "accstatusupdatediv"}],
                  ["div", {cla: "lifsep", id: "accstatdetaildiv"}],
                  ["div", {cla: "lifsep", id: "accpassupdatediv"}],
+                 ["div", {cla: "lifsep", id: "maxpostperdaydiv"}],
                  ["div", {cla: "lifsep", id: "usermenustat"}],
                  ["div", {cla: "dlgbuttonsdiv"},
                   [["button", {type: "button", id: "okbutton",
@@ -687,7 +698,10 @@ return {
         //moracct.penName may not be populated if brand new
         if(ua.penName !== app.pen.myPenName().name) {
             if(!confirm("Theme action logs and older membics may still reference your previous pen name \"" + moracct.penName + "\".")) {
-                return; }
+                return; } }
+        if(ua.penName !== app.pen.myPenName().name ||
+               ua.maxpd !== app.pen.maxPostsPerDay()) {
+            app.pen.maxPostsPerDay(ua.maxpd);
             contf = function () {
                 app.pen.getPen("", function (pen) {
                     pen.name = ua.penName;
