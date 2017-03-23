@@ -115,6 +115,11 @@ def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
     mf = MembicFeed.get_by_id(mf.key().id())  #force db to read latest
             
 
+def is_future_queued(membic):
+    if membic.dispafter and membic.dispafter > nowISO():
+        return True
+    return False
+
 
 def get_review_feed_pool(revtype):
     feedcsv, blocks = get_cached_feed_pool(revtype)
@@ -136,9 +141,8 @@ def get_review_feed_pool(revtype):
     vq = VizQuery(rev.Review, where)
     reviews = vq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                        deadline=60)
-    ts = nowISO()
     for review in reviews:
-        if review.dispafter and review.dispafter > ts:
+        if is_future_queued(review):
             continue  # not available for display yet
         entry = feedcsventry(review)
         if csv_contains(entry, feedcsv):
@@ -232,15 +236,15 @@ def get_feed_cache_elements(ckey):
     return feedcsv, blocks
         
 
-def replace_instance_in_json(rev, jtxt, remove):
+def replace_instance_in_json(review, jtxt, remove):
     objs = json.loads(jtxt)
     rt = ""
     for obj in objs:
-        idstr = str(rev.key().id())
+        idstr = str(review.key().id())
         if obj["_id"] == idstr:
             if not remove:
                 moracct.debuginfo("Replaced json for _id " + idstr)
-                rt = append_to_csv(moracct.obj2JSON(rev), rt)
+                rt = append_to_csv(moracct.obj2JSON(review), rt)
             else:
                 moracct.debuginfo("Removed json for _id " + idstr)
         else:
@@ -248,7 +252,7 @@ def replace_instance_in_json(rev, jtxt, remove):
     return "[" + rt + "]"
 
 
-def prepend_instance_to_json(rev, jtxt):
+def prepend_instance_to_json(review, jtxt):
     # not safe to use prepend_to_csv due to upperbound limit
     jtxt = jtxt or ""
     if jtxt:
@@ -258,36 +262,36 @@ def prepend_instance_to_json(rev, jtxt):
             jtxt = ""
     if jtxt:
         jtxt = "," + jtxt
-    jtxt = moracct.obj2JSON(rev) + jtxt
+    jtxt = moracct.obj2JSON(review) + jtxt
     return "[" + jtxt + "]"
 
 
 # update the cache or ensure it is nuked for rebuild.
-def update_feed_cache(ckey, rev, addifnew=False):
+def update_feed_cache(ckey, review, addifnew=False):
     moracct.debuginfo("update_feed_cache for " + ckey)
     feedcsv, blocks = get_feed_cache_elements(ckey)
     # moracct.debuginfo("feedcsv: " + str(feedcsv))
     if feedcsv is None:
         moracct.debuginfo("no cache data. rebuild later if needed")
         return  # cache cleared, rebuild later as needed
-    entry = feedcsventry(rev)
+    entry = feedcsventry(review)
     if csv_contains(entry, feedcsv):
         moracct.debuginfo("updating existing cache entry")
         for i in range(numblocks):  # walk all in case dupe included
-            blocks[i] = replace_instance_in_json(rev, blocks[i], 
-                                                 rev.mainfeed <= 0)
-    elif rev.mainfeed > 0 and addifnew:
+            blocks[i] = replace_instance_in_json(review, blocks[i], 
+                                                 review.mainfeed <= 0)
+    elif review.mainfeed > 0 and addifnew and not is_future_queued(review):
         moracct.debuginfo("prepending new cache entry")
         feedcsv = prepend_to_csv(entry, feedcsv)
         # prepend to first block.  Not worth rebalancing all the blocks.
-        blocks[0] = prepend_instance_to_json(rev, blocks[0])
+        blocks[0] = prepend_instance_to_json(review, blocks[0])
     write_precomp_feed_pool(ckey, feedcsv, blocks)
     write_cached_feed_pool(ckey, feedcsv, blocks)
 
 
-def update_feed_caches(rev, addifnew=False):
-    update_feed_cache("all", rev, addifnew)        # main feed
-    update_feed_cache(rev.revtype, rev, addifnew)  # filtered main feed
+def update_feed_caches(review, addifnew=False):
+    update_feed_cache("all", review, addifnew)        # main feed
+    update_feed_cache(review.revtype, review, addifnew)  # filtered main feed
 
 
 def nuke_review_feed_pool(revtype):
