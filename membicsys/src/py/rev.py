@@ -618,6 +618,7 @@ def copy_source_review(fromrev, torev, ctmid):
     torev.mainfeed = fromrev.mainfeed
     torev.cankey = fromrev.cankey
     copy_rev_image_fields(fromrev, torev)
+    torev.dispafter = fromrev.dispafter
     torev.altkeys = fromrev.altkeys
     #torev.svcdata has theme postings etc. do not copy directly
     torev.penname = fromrev.penname

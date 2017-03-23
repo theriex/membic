@@ -1388,7 +1388,7 @@ app.pcd = (function () {
         if(base.length) {
             oldest = base[base.length - 1]; }
         supp.forEach(function (membic) {
-            if(!membic.dispafter || membic.dispafter > ts ||
+            if(!membic.dispafter || membic.dispafter < ts ||
                    membic.penid === app.pen.myPenId()) {
                 //ensure cached, and use newer version if already cached
                 membic = app.lcs.put("rev", membic).rev;
