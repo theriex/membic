@@ -1838,8 +1838,8 @@ return {
             if(!app.coop.confirmPostThrough(crev)) {
                 jt.out("rdokbuttondiv", html);
                 return; }}
-        crev.penid = crev.penid || app.pen.myPenId();  //reader may have skipped
         jt.out("rdokbuttondiv", "Saving...");
+        crev.penid = crev.penid || app.pen.myPenId();  //reader may have skipped
         app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;
         app.review.serializeFields(crev);

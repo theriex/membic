@@ -185,7 +185,7 @@ app.pcd = (function () {
         var html = "";
         if(dst.type === "pen") {
             html = ["p", "Last modified " + 
-                    jt.colloquialDate(jt.ISOString2Day(dst.obj.modified))]; }
+                    jt.colloquialDate(jt.isoString2Day(dst.obj.modified))]; }
         return jt.tac2html(html);
     },
 
@@ -547,7 +547,7 @@ app.pcd = (function () {
     picFileSelChange = function () {
         var fv = jt.byId("picfilein").value;
         //chrome yields a value like "C:\\fakepath\\circuit.png"
-        fv = fv.split('\\').pop();
+        fv = fv.split("\\").pop();
         jt.out("picfilelab", fv);
         jt.byId("picfilelab").className = "filesellab2";
         jt.byId("upldsub").style.visibility = "visible";
@@ -1384,18 +1384,20 @@ app.pcd = (function () {
 
 
     updateRecentMembics = function (dtype, id, obj, supp, base) {
-        var oldest = null;
+        var oldest = null, ts = new Date().toISOString();
         if(base.length) {
             oldest = base[base.length - 1]; }
         supp.forEach(function (membic) {
-            //ensure cached, and use newer version if already cached
-            membic = app.lcs.put("rev", membic).rev;
-            //supp membics are already in descending modified order
-            if(!oldest || oldest.modified > membic.modified ||
-                   (oldest.modified === membic.modified && 
-                    jt.instId(oldest) !== jt.instId(membic))) {
-                base.push(membic);
-                oldest = membic; } });  //maintain DESC in case dupe found
+            if(!membic.dispafter || membic.dispafter > ts ||
+                   membic.penid === app.pen.myPenId()) {
+                //ensure cached, and use newer version if already cached
+                membic = app.lcs.put("rev", membic).rev;
+                //supp membics are already in descending modified order
+                if(!oldest || oldest.modified > membic.modified ||
+                       (oldest.modified === membic.modified && 
+                        jt.instId(oldest) !== jt.instId(membic))) {
+                    base.push(membic);
+                    oldest = membic; } } });  //maintain DESC in case dupe found
         obj.recent = sourceRevIds(base, dtype, id);
     };
 
@@ -2080,7 +2082,7 @@ return {
             (dst.type === "pen"? app.pen.myPenId() : "") || "";
         dst.tab = tab || defaultTabName();
         if(dst.tab === "top") {  //parameterized request
-            document.title = document.title.replace(/^Top \d+ /, "");
+            document.title = document.title.replace(/^Top\s\d+\s/, "");
             dst.tab = "favorites"; }
         if(obj) {
             return displayObject(obj, expid); }
@@ -2151,11 +2153,11 @@ return {
             if(!id || id === app.pen.myPenId()) {  //looking for my pen
                 url += "&authorize=true"; } }      //include account info
         url += jt.ts("&cb=", id? "hour" : "second");
-        time = new Date().getTime();
+        time = Date.now();
         jt.call("GET", url, null,
                 function (objs) {   //main obj + recent/top reviews
                     var obj;
-                    time = new Date().getTime() - time;
+                    time = Date.now() - time;
                     jt.log("blockfetch " + dtype + " " + id  + 
                            " returned in " + time/1000 + " seconds.");
                     if(divid !== "quiet") {
@@ -2213,10 +2215,10 @@ return {
         jt.out("fetchmorediv", "Fetching...");
         url = "blockfetch?" + app.login.authparams() + "&ctmid=" + dst.id +
             "&supp=preb2" + jt.ts("&cb=", "second");
-        time = new Date().getTime();
+        time = Date.now();
         jt.call("GET", url, null,
                 function (membics) {  //contents of preb2 is just reviews
-                    time = new Date().getTime() - time;
+                    time = Date.now() - time;
                     jt.log("blockfetch supp " + dst.type + " " + dst.id  + 
                            " returned in " + time/1000 + " seconds.");
                     jt.out("fetchmorediv", "Redisplaying...");

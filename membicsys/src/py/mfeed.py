@@ -136,7 +136,10 @@ def get_review_feed_pool(revtype):
     vq = VizQuery(rev.Review, where)
     reviews = vq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                        deadline=60)
+    ts = nowISO()
     for review in reviews:
+        if review.dispafter and review.dispafter > ts:
+            continue  # not available for display yet
         entry = feedcsventry(review)
         if csv_contains(entry, feedcsv):
             continue  # already added, probably from earlier srcrev reference

@@ -12,6 +12,7 @@ import coop
 import mailsum
 import mctr
 import mfeed
+import mblock
 import json
 from operator import attrgetter, itemgetter
 import re
@@ -47,6 +48,7 @@ class Review(db.Model):
     imguri = db.TextProperty()                   # linked review pic URL
     icwhen = db.StringProperty(indexed=False)    # when img cache last written
     icdata = db.BlobProperty()                   # secure relay img cache data
+    dispafter = db.StringProperty(indexed=False) # ISO date
     altkeys = db.TextProperty()                  # known equivalent cankey vals
     svcdata = db.TextProperty()                  # supporting client data JSON
     penname = db.StringProperty(indexed=False)   # for ease of reporting
@@ -305,6 +307,23 @@ def set_review_mainfeed(rev, acc):
     # moracct.debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
 
 
+def set_review_dispafter(review, pnm):
+    # dispafter is only set on create, it is not changed on edit. Reacting
+    # to changes requires dealing with the queue as a whole.
+    if review.is_saved():
+        return
+    mpd = 1
+    jstr = pnm.settings or "{}"
+    try:
+        psd = json.loads(jstr)
+        if "maxPostsPerDay" in psd:
+            mpd = min(2, int(psd["maxPostsPerDay"]))
+        review.dispafter = mblock.get_queuing_vis_date(pnm.key().id(), mpd)
+    except Exception as e:
+        logging.warn("set_review_dispafter pen: " + str(pnm.key().id()) +
+                     " queuing failure: " + str(e))
+
+
 def prepend_to_main_feeds(review, pnm):
     feedentry = str(review.key().id()) + ":" + str(review.penid)
     allrevs = memcache.get("all") or ""
@@ -534,6 +553,7 @@ def update_profile(cacheprefix, dbprofinst, rev, srcrev=None):
 
 def write_review(review, pnm, acc):
     set_review_mainfeed(review, acc)
+    set_review_dispafter(review, pnm)
     mctr.synchronized_db_write(review)
     logging.info("write_review wrote Review " + str(review.key().id()))
     # update all related cached data, or clear it for later rebuild
@@ -732,77 +752,6 @@ def append_review_jsoncsv(jstr, rev):
             logging.error("Missing srcrev for Review " + str(rev.key().id()))
         else:
             jstr += "," + moracct.obj2JSON(srcrev)
-    return jstr
-
-
-def append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, sizebound):
-    topdict = {}
-    if pco.top20s:
-        topdict = json.loads(pco.top20s)
-        for i in range(50):
-            for rt in known_rev_types:
-                if rt in topdict and len(topdict[rt]) > i:
-                    revid = int(topdict[rt][i])
-                    rev = None
-                    for recentrev in revs:
-                        if recentrev.key().id() == revid:
-                            rev = recentrev
-                            break;
-                    if rev:  # already have the review no need to add it again
-                        continue
-                    rev = Review.get_by_id(revid)
-                    if not rev:  # could be deleted coop review or somesuch
-                        continue
-                    jstr = append_review_jsoncsv(jstr, rev)
-                    if len(jstr) > sizebound:
-                        logging.info(pct + " " + str(pco.key().id()) + 
-                                     " exceeded sizebound " + str(sizebound))
-                        return jstr
-    return jstr
-
-
-# returns an array of the source object followed by all the reviews
-def rebuild_reviews_block(handler, pct, pgid):
-    logging.info("rebuild_reviews_block " + pct + " " + str(pgid))
-    pco = None
-    if pct == "coop":
-        pco = coop.Coop.get_by_id(int(pgid))
-        if pco and pco.preb and not coop.prebuilt_membics_stale(pco):
-            return pco.preb
-    elif pct == "pen":
-        pco = pen.PenName.get_by_id(int(pgid))
-        pen.filter_sensitive_fields(pco)
-    if not pco:
-        srverr(handler, 404, pct + " " + str(pgid) + " not found")
-        return None
-    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    if pct == "coop":
-        where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, pco.key().id())
-    fsz = 100  # 11/30/16 complaint that 50 makes "recent" tab feel lossy
-    fmax = fsz
-    if pct == "coop":
-        fmax = 500
-    jstr = ""
-    js2 = ""
-    revs = vq.fetch(fmax, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-    idx = 0  # idx not initialized if enumerate punts due to no revs...
-    for idx, rev in enumerate(revs):
-        if idx < fsz:
-            jstr = append_review_jsoncsv(jstr, rev)
-        else:
-            js2 = append_review_jsoncsv(js2, rev)
-    jstr = append_top20_revs_to_jsoncsv(jstr, revs, pct, pco, 450 * 1024)
-    if jstr:
-        jstr = "," + jstr;
-    if pct == "coop":
-        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
-        pco.preb2 = "[" + js2 + "]"
-        coop.update_coop_stats(pco, idx)
-        # rebuild preb to include updated stats, maybe s1 off by one but ok.
-        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
-        mctr.synchronized_db_write(pco)
-    jstr = "[" + moracct.obj2JSON(pco) + jstr + "]"
     return jstr
 
 
@@ -1163,15 +1112,10 @@ class FetchAllReviews(webapp2.RequestHandler):
             if pgid: # pgid may be zero if no pen name yet
                 if self.request.get('supp'):
                     return supplemental_recent_reviews(self, pgid)
-                key = pct + str(pgid)      # e.g. "pen1234" or "coop5678"
-                jstr = memcache.get(key)   # grab the prebuilt JSON data
-                if not jstr:
-                    jstr = rebuild_reviews_block(self, pct, pgid) or ""
-                    if jstr:
-                        memcache.set(key, jstr)
+                jstr = mblock.get_membics_json_for_profile(pct, pgid)
             else:  # return empty array with no first item pen
                 jstr = "[]"
-            if mypen:  # replace first element with private pen data
+            if jstr and mypen:  # replace first element with private pen data
                 i = 2 
                 brackets = 1
                 while i < len(jstr) and brackets > 0:
@@ -1181,11 +1125,15 @@ class FetchAllReviews(webapp2.RequestHandler):
                         brackets -= 1
                     i += 1
                 jstr = '[' + moracct.obj2JSON(mypen) + jstr[i:]
-            moracct.writeJSONResponse(jstr, self.response)
+            if not jstr:
+                srverr(handler, 404, pct + " " + str(pgid) + " not found")
+            else:
+                moracct.writeJSONResponse(jstr, self.response)
             return
         except Exception as e:
             if str(e) == "Token expired":
                 return srverr(self, 401, "Your access token has expired, you will need to sign in again.")
+            logging.warn("FetchAllReviews failed: " + str(e))
             return srverr(self, 500, "FetchAllReviews failed: " + str(e))
 
 

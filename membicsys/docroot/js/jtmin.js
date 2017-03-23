@@ -409,6 +409,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         date = new Date(year, (month - 1), day, 0, 0, 0, 0);
         return date;
     };
+    uo.isoString2Day = uo.ISOString2Day;
 
 
     uo.ISOString2Time = function (str) {
