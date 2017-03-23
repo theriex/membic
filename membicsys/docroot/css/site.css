@@ -366,9 +366,12 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpsecfieldsdiv { margin-left:35px; /* reviewbadge + fptitlediv */
   font-size:x-small; }
 .fpdatediv { margin-left:5px; font-size: xx-small; }
-.fpdescrdiv, .fpkeywrdsdiv, .fpctmsdiv { 
+.fpdcontdiv { position:relative; }
+.fpqoverdiv { position:absolute; top:0px; left:140px; font-style:italic; }
+.fpdescrdiv, .fpdescrfadediv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 2px 10px 0px 2px;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }
+.fpdescrfadediv { opacity:0.2; }
 .fpctmlinkslab { font-style:italic; }
 .fpkeywrdsdiv { font-style:italic; }
 .fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }

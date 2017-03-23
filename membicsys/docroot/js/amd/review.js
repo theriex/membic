@@ -447,6 +447,20 @@ app.review = (function () {
     },
 
 
+    membicDescripHTML = function (prefix, revid, rev, togfname, revdivid) {
+        var html = "", dc = "fpdescrdiv";
+        if(rev.dispafter && rev.dispafter > new Date().toISOString()) {
+            html = ["div", {cla: "fpqoverdiv", id: revdivid + "fpqoverdiv"},
+                    jt.tz2human(jt.isoString2Time(rev.dispafter)) +
+                    " (queued)"];
+            dc = "fpdescrfadediv"; }
+        html = [html,
+                ["div", {cla: dc, id: revdivid + "descrdiv"},
+                 abbreviatedReviewText(prefix, revid, rev, togfname)]];
+        return html;
+    },
+
+
     fpbHelpfulButtonHTML = function (prefix, disprevid, updrevid, processing) {
         var rev, penid, title = "", alt = "", src = "", html;
         rev = app.lcs.getRef("rev", updrevid).rev;
@@ -897,7 +911,7 @@ app.review = (function () {
     picFileSelChange = function () {
         var fv = jt.byId("picfilein").value;
         //chrome yields a value like "C:\\fakepath\\circuit.png"
-        fv = fv.split('\\').pop();
+        fv = fv.split("\\").pop();
         jt.out("picfilelab", fv);
         jt.byId("picfilelab").className = "filesellab2";
         jt.byId("upldsub").style.visibility = "visible";
@@ -1524,8 +1538,8 @@ app.review = (function () {
 
     timeAgo = function (tstr) {
         var mod, ela, suff = "d";
-        mod = jt.ISOString2Time(tstr);
-        ela = (new Date()).getTime() - mod.getTime();
+        mod = jt.isoString2Time(tstr);
+        ela = Date.now() - mod.getTime();
         ela = Math.round(ela / (1000 * 60 * 60 * 24));
         if(ela >= 14) {
             ela = Math.round(ela / 7);
@@ -2243,8 +2257,8 @@ return {
                  ["div", {cla: "fpbodydiv"},
                   [["div", {cla: "fprevpicdiv"},
                     app.review.picHTML(rev, type)],
-                   ["div", {cla: "fpdescrdiv", id: revdivid + "descrdiv"},
-                    abbreviatedReviewText(prefix, revid, rev, togfname)],
+                   ["div", {cla: "fpdcontdiv"},
+                    membicDescripHTML(prefix, revid, rev, togfname, revdivid)],
                    ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
                    ["div", {cla: "fpctmsdiv", id: revdivid + "ctmsdiv"},
                     postedCoopLinksHTML(rev)]]]]];
@@ -2375,7 +2389,7 @@ return {
             jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
-                   jt.colloquialDate(jt.ISOString2Day(rev.modified)));
+                   jt.colloquialDate(jt.isoString2Day(rev.modified)));
             jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
             jt.out(revdivid + "keysdiv", rev.keywords);
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }

@@ -435,13 +435,26 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    uo.days = [ "Sunday", "Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday" ];
+    uo.months = [ "January", "February", "March", "April", "May", 
+                  "June", "July", "August", "September", "October", 
+                  "November", "December" ];
+
+    uo.tz2human = function (zd) {
+        var ds;
+        if(typeof zd === "string") {
+            zd = uo.ISOString2Time(zd); }
+        zd = uo.tz2loc(zd);  //convert back to local time
+        ds = uo.days[zd.getDay()].slice(0, 3) + " " + 
+            zd.getDate() + " " + uo.months[zd.getMonth()].slice(0, 3) + " " +
+            zd.getFullYear() + " " + zd.getHours() + ":" + zd.getMinutes();
+        return ds;
+    };
+
+
     uo.colloquialDate = function (date, compress) {
-        var days = [ "Sunday", "Monday", "Tuesday", "Wednesday",
-                     "Thursday", "Friday", "Saturday", "Sunday" ],
-            months = [ "January", "February", "March", "April", "May",
-                       "June", "July", "August", "September", "October",
-                       "November", "December" ],
-            now = new Date(),
+        var now = new Date(),
             elapsed,
             dayname,
             month,
@@ -456,8 +469,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         if (elapsed < 48 * 60 * 60 * 1000) {
             return "Yesterday";
         }
-        dayname = String(days[date.getUTCDay()]);
-        month = String(months[date.getMonth()]);
+        dayname = String(uo.days[date.getUTCDay()]);
+        month = String(uo.months[date.getMonth()]);
         if (compress) {
             dayname = dayname.slice(0, 3);
             month = month.slice(0, 3);
