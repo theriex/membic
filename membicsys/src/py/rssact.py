@@ -179,6 +179,9 @@ class CoopRSS(webapp2.RequestHandler):
             # filter out any supporting source reviews
             if str(review["ctmid"]) == "0":
                 continue
+            # filter out any reviews that are future queued
+            if "dispafter" in review and review["dispafter"] > nowISO():
+                continue
             # stop if this review is newer than the last one, since that
             # means we are out of the recent list and into the top20s
             if review["modhist"] > latest:
