@@ -1388,6 +1388,8 @@ app.pcd = (function () {
         if(base.length) {
             oldest = base[base.length - 1]; }
         supp.forEach(function (membic) {
+            if(jt.instId(membic) === "5011097258033152") {
+                jt.log("Processing it"); }
             if(!membic.dispafter || membic.dispafter < ts ||
                    membic.penid === app.pen.myPenId()) {
                 //ensure cached, and use newer version if already cached
@@ -2168,9 +2170,9 @@ return {
                         app.lcs.tomb(dtype, id, "blockfetch failed");
                         return callback(null); }
                     obj = objs[0];  //PenName or Coop instance
-                    updateRecentMembics(dtype, id, obj, objs.slice(1), []);
                     app.lcs.put(dtype, obj);
                     app.login.noteAccountInfo(obj);
+                    updateRecentMembics(dtype, id, obj, objs.slice(1), []);
                     jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
                     if(dtype === "coop") {
                         app.coop.rememberThemeName(obj, true);
