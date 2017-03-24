@@ -1065,7 +1065,7 @@ app.pcd = (function () {
             sortedRevs = srchst.revs.slice();  //copy recency ordered array
             sortedRevs.sort(function (a, b) {
                 if(a.rating > b.rating) { return -1; }
-                if(a.rating < b.rating) { return +1; }
+                if(a.rating < b.rating) { return 1; }
                 if(a.modified > b.modified) { return -1; }
                 if(a.modified < b.modified) { return 1; }
                 return 0; }); }
@@ -1388,8 +1388,8 @@ app.pcd = (function () {
         if(base.length) {
             oldest = base[base.length - 1]; }
         supp.forEach(function (membic) {
-            if(jt.instId(membic) === "5011097258033152") {
-                jt.log("Processing it"); }
+            // if(jt.instId(membic) === "5011097258033152") {
+            //     jt.log("Processing it"); }
             if(!membic.dispafter || membic.dispafter < ts ||
                    membic.penid === app.pen.myPenId()) {
                 //ensure cached, and use newer version if already cached

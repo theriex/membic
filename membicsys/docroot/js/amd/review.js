@@ -1626,8 +1626,8 @@ return {
             //rebuild the pic and details area
             if(jt.byId("rdstarsdiv") && crev.srcrev !== "-101") {
                 //turn off the star functions if they were active
-                dlgStarsDeactivate();
-                jt.out("rdpfdiv", ""); }
+                dlgStarsDeactivate(); }
+            jt.out("rdpfdiv", "");  //rebuild subkey etc fields if type changed
             crev.revtype = typename; }
         updateReviewDialogContents();
         updateShareInfo();
@@ -2268,7 +2268,7 @@ return {
 
     isDupeRev: function (rev, pr) {
         if(rev && pr && ((jt.strPos(rev.srcrev) && rev.srcrev === pr.srcrev) ||
-                         (rev.cankey === pr.cankey) ||
+                         (rev.cankey && rev.cankey === pr.cankey) ||
                          (rev.url && rev.url === pr.url))) {
             return true; }
         return false;

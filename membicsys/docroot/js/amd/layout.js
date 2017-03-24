@@ -308,14 +308,14 @@ return {
             if(typeof val === "string") {
                 val = parseInt(val, 10); }
             if(!val || val > 0) {
-                return true; }  //numeric value can overflow js number
+                return true; }  //numeric value may overflow js int
             return false;
         };
         jt.strPos = function (val) {
             if(typeof val === "string") {
                 val = parseInt(val, 10); }
-            if(val) {
-                return true; }  //numeric value can overflow js number
+            if(val > 0) {
+                return true; }  //numeric value may overflow js int
             return false;
         };
         //lint wants to compare variables directly with === undefined
