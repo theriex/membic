@@ -94,23 +94,23 @@ class InMailHandler(InboundMailHandler):
                     if mo:
                         url = mo.group()
         if not url:
-            logging.info("Mail-in membic from " + emaddr + 
+            logging.warn("Mail-in membic from " + emaddr + 
                          " with no url ignored.")
             return
         if not descr:
-            logging.info("Mail-in membic from " + emaddr + 
+            logging.warn("Mail-in membic from " + emaddr + 
                          " with no description ignored.")
             return
         vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
         found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         if len(found) == 0:
-            logging.info("Mail-in membic: No account found for " + emaddr)
+            logging.warn("Mail-in membic: No account found for " + emaddr)
             return
         acc = found[0]
         vq = VizQuery(pen.PenName, "WHERE mid=:1 LIMIT 1", acc.key().id())
         found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
         if len(found) == 0:
-            logging.info("Mail-in membic: No PenName found for " + emaddr)
+            logging.warn("Mail-in membic: No PenName found for " + emaddr)
             return
         pn = found[0]
         mim = rev.Review(penid=pn.key().id(), 
