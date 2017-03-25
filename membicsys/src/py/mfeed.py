@@ -6,6 +6,7 @@ import moracct
 from morutil import *
 import rev
 import json
+from operator import attrgetter, itemgetter
 
 
 class MembicFeed(db.Model):
@@ -115,12 +116,6 @@ def write_precomp_feed_pool(revtype, feedcsv, blocks, rebuilt=False):
     mf = MembicFeed.get_by_id(mf.key().id())  #force db to read latest
             
 
-def is_future_queued(membic):
-    if membic.dispafter and membic.dispafter > nowISO():
-        return True
-    return False
-
-
 def get_review_feed_pool(revtype):
     feedcsv, blocks = get_cached_feed_pool(revtype)
     if feedcsv:
@@ -142,8 +137,6 @@ def get_review_feed_pool(revtype):
     reviews = vq.fetch(revpoolsize, read_policy=db.EVENTUAL_CONSISTENCY, 
                        deadline=60)
     for review in reviews:
-        if is_future_queued(review):
-            continue  # not available for display yet
         entry = feedcsventry(review)
         if csv_contains(entry, feedcsv):
             continue  # already added, probably from earlier srcrev reference
@@ -174,42 +167,46 @@ def get_review_feed_pool(revtype):
     return feedcsv, blocks
 
 
-def sort_filter_feed(feedcsv, pnm, maxret=revblocksize):
-    preferred = []
-    normal = []
-    background = []
-    feedelems = csv_list(feedcsv)
-    for elem in feedelems:
-        ela = elem.split(":")
-        if pnm:
-            # skip any membics from blocked pens
-            if csv_contains(ela[1], pnm.blocked):
-                continue
-            # preferred pen membic
-            if csv_contains(ela[1], pnm.preferred):
-                preferred.append(int(ela[0]))
-            # followed theme membic
-            elif csv_contains(ela[2], pnm.coops):
-                preferred.append(int(ela[0]))
-            # background pen membic
-            elif csv_contains(ela[1], pnm.background):
-                background.append(int(ela[0]))
-            # membics from self shouldn't get buried below preferred
-            elif str(ela[1]) == str(pnm.key().id()):
-                if pnm.preferred:
-                    preferred.append(int(ela[0]))
-                else:
-                    normal.append(int(ela[0]))
-            # default
-            else:
-                normal.append(int(ela[0]))
-        else:
-            preferred.append(int(ela[0]))
-        if len(preferred) >= maxret:
-            break
-    feedids = preferred[:maxret] + normal[:maxret] + background[:maxret]
-    feedids = feedids[:maxret]
-    return feedids
+# Now that membics also need to be filtered based on dispafter, the feedcsv
+# does not have enough data to actually handle the filtering.  This algo was
+# not the fastest anyway, but leaving it here for behavior reference while
+# transitioning.
+# def sort_filter_feed(feedcsv, pnm, maxret=revblocksize):
+#     preferred = []
+#     normal = []
+#     background = []
+#     feedelems = csv_list(feedcsv)
+#     for elem in feedelems:
+#         ela = elem.split(":")
+#         if pnm:
+#             # skip any membics from blocked pens
+#             if csv_contains(ela[1], pnm.blocked):
+#                 continue
+#             # preferred pen membic
+#             if csv_contains(ela[1], pnm.preferred):
+#                 preferred.append(int(ela[0]))
+#             # followed theme membic
+#             elif csv_contains(ela[2], pnm.coops):
+#                 preferred.append(int(ela[0]))
+#             # background pen membic
+#             elif csv_contains(ela[1], pnm.background):
+#                 background.append(int(ela[0]))
+#             # membics from self shouldn't get buried below preferred
+#             elif str(ela[1]) == str(pnm.key().id()):
+#                 if pnm.preferred:
+#                     preferred.append(int(ela[0]))
+#                 else:
+#                     normal.append(int(ela[0]))
+#             # default
+#             else:
+#                 normal.append(int(ela[0]))
+#         else:
+#             preferred.append(int(ela[0]))
+#         if len(preferred) >= maxret:
+#             break
+#     feedids = preferred[:maxret] + normal[:maxret] + background[:maxret]
+#     feedids = feedids[:maxret]
+#     return feedids
 
 
 def resolve_ids_to_json(feedids, blocks):
@@ -280,7 +277,7 @@ def update_feed_cache(ckey, review, addifnew=False):
         for i in range(numblocks):  # walk all in case dupe included
             blocks[i] = replace_instance_in_json(review, blocks[i], 
                                                  review.mainfeed <= 0)
-    elif review.mainfeed > 0 and addifnew and not is_future_queued(review):
+    elif review.mainfeed > 0 and addifnew:
         moracct.debuginfo("prepending new cache entry")
         feedcsv = prepend_to_csv(entry, feedcsv)
         # prepend to first block.  Not worth rebalancing all the blocks.
@@ -305,4 +302,45 @@ def nuke_cached_recent_review_feeds():
     nuke_review_feed_pool("all")
     for rt in rev.known_rev_types:
         nuke_review_feed_pool(rt)
+
+
+def is_client_visible(obj, pnm, ts):
+    if "dispafter" in obj and obj["dispafter"] > ts:
+        return False
+    if pnm and csv_contains(obj["penid"], pnm.blocked):
+        return False
+    return True
+
+
+def filter_for_client(blocks, pnm):
+    maxret = revblocksize
+    fos = []
+    ts = nowISO()
+    for block in blocks:
+        if not block or block == "[]":
+            continue;
+        objs = json.loads(block)
+        objs = [obj for obj in objs if is_client_visible(obj, pnm, ts)]
+        fos.extend(objs)
+        if len(fos) >= maxret:
+            break
+    fos = fos[:maxret]
+    if pnm:
+        prefcount = 0
+        for obj in fos:
+            if csv_contains(obj["penid"], pnm.preferred):
+                prefcount += 1
+                obj["displayprio"] = 1
+            elif csv_contains(obj["penid"], pnm.background):
+                obj["displayprio"] = -1
+            else:
+                obj["displayprio"] = 0
+        if prefcount:  # need to bump up own membics to not get buried
+            mypid = str(pnm.key().id())
+            for obj in fos:
+                if obj["penid"] == mypid:
+                    obj["displayprio"] = 1
+        # natural sort order was by modhist.  Re-sort with prio first
+        fos.sort(key=itemgetter("displayprio", "modhist"), reverse=True)
+    return json.dumps(fos)
 

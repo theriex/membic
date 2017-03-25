@@ -1068,18 +1068,12 @@ class GetReviewFeed(webapp2.RequestHandler):
         if not revtype or revtype not in known_rev_types:
             revtype = "all"
         feedcsv, blocks = mfeed.get_review_feed_pool(revtype)
+        jstr = blocks[0];
         acc = moracct.authenticated(self.request)
         pnm = None
         if acc and intz(self.request.get('penid')):
             pnm = acc_review_modification_authorized(acc, self)
-        if not pnm:
-            moracct.writeJSONResponse(blocks[0], self.response)
-            return
-        feedids = mfeed.sort_filter_feed(feedcsv, pnm)
-        if self.request.get('debug') == "sortedfeedids":
-            self.response.out.write(feedids)
-            return
-        jstr = mfeed.resolve_ids_to_json(feedids, blocks)
+        jstr = mfeed.filter_for_client(blocks, pnm);
         moracct.writeJSONResponse(jstr, self.response)
         
 
