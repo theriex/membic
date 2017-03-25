@@ -99,6 +99,14 @@ def get_membics_json_for_profile(pct, pgid):
     return jstr
 
 
+def is_queue_calc_membic(membic):
+    if membic["ctmid"] != "0":
+        return False
+    if membic["srcrev"][0] == "-":  # negative number
+        return False
+    return True
+
+
 def get_queuing_vis_date(penid, mpd):  # maxPostsPerDay is 1 or 2
     membics = json.loads(get_membics_json_for_profile("pen", penid))
     if len(membics) > 0:
@@ -106,12 +114,19 @@ def get_queuing_vis_date(penid, mpd):  # maxPostsPerDay is 1 or 2
     # logging.info("gqvd " + str(len(membics)) + " membics, mpd: " + str(mpd))
     if len(membics) < mpd:
         return ""
+    # membics were sorted by modified, need them ordered by creation time
     membics = sorted(membics, key=itemgetter('modhist'), reverse=True)
-    pm = membics[mpd - 1]
-    bd = pm["modhist"].split(";")[0]
+    # pull any future/theme membics not part of the queuing
+    membics = [m for m in membics if is_queue_calc_membic(m)]
+    if len(membics) < mpd:
+        return ""
+    pm = membics[mpd - 1]  # the first or second most recent membic
+    # logging.info("Base membic date calcs is rev " + pm["_id"])
+    bd = pm["modhist"].split(";")[0]  # base for calcs is creation date
     if "dispafter" in pm and pm["dispafter"] > bd:
-        bd = pm["dispafter"]
+        bd = pm["dispafter"]          # if base was queued, queue after that
+    # logging.info("Base date is " + bd)
     bd = ISO2dt(bd)
-    bd += datetime.timedelta(hours=(mpd * 24))
+    bd += datetime.timedelta(hours=24)
     return dt2ISO(bd)
 

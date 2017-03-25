@@ -308,8 +308,9 @@ def set_review_mainfeed(rev, acc):
 
 
 def set_review_dispafter(review, pnm):
-    # dispafter is only set on create, it is not changed on edit. Reacting
-    # to changes requires dealing with the queue as a whole.
+    # dispafter is only set on create, it is not changed on edit. If a
+    # dispafter were to be altered for one membic it could logically cascade
+    # into the entire queue.
     if review.is_saved():
         return
     mpd = 1
