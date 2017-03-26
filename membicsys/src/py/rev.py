@@ -219,6 +219,14 @@ def note_modified(review):
         review.modhist = review.modified + ";1"
 
 
+def future_ok(review):
+    if not review.is_saved():
+        return True
+    if review.srcrev == -101:
+        return True
+    return False
+
+
 def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
     review.penid = intz(handler.request.get('penid'))
@@ -256,7 +264,9 @@ def read_review_values(handler, review):
     set_if_param_given(review, "svcdata", handler, "svcdata")
     srcrevstr = handler.request.get('srcrev')
     if srcrevstr:
-        review.srcrev = intz(srcrevstr)
+        srcrevid = intz(srcrevstr)
+        if srcrevid != -101 or future_ok(review):
+            review.srcrev = intz(srcrevstr)
     else:
         review.srcrev = 0
 

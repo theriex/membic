@@ -1166,11 +1166,12 @@ app.review = (function () {
 
 
     dlgDetailsEntry = function () {
-        var rt, html, fldttl;
+        var rt, html, fldttl, futok;
         rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
         if(!jt.byId("rdpfdiv").innerHTML) {
+            futok = app.review.futureok(crev);
             html = [["div", {id: "rdstarsdiv"}, dlgStarsHTML()]];
             if(rt.subkey) {
                 html.push(dlgFieldInputHTML(rt.subkey)); }
@@ -1184,10 +1185,13 @@ app.review = (function () {
                     ["div", {id: "rdfutcbdiv"},
                      ["input", {type: "checkbox", id: "rdfutcb",
                                 name: "futuremembicmarkercheckbox",
+                                disabled: jt.toru(!futok),
                                 onclick: jt.fsd("app.review.togglefuture()"),
                                 checked: jt.toru(crev.srcrev === "-101")}]],
                     html];
             jt.out("rdpfdiv", jt.tac2html(html));
+            if(!futok) {
+                jt.byId("rdfutcbdiv").style.opacity = 0.4; }
             dlgStarsActivate(); }
         jt.out("rdpicdiv", dlgPicHTML());
         if(rt.subkey) {
@@ -1879,6 +1883,7 @@ return {
                 org = org.rev;
                 validateCurrentReviewFields();
                 if(!(jt.fsame(curr.revtype, org.revtype) &&
+                     jt.fsame(curr.srcrev, org.srcrev) &&  //unchecked future
                      jt.fsame(curr.rating, org.rating) &&
                      jt.fsame(curr.keywords, org.keywords) &&
                      jt.fsame(curr.text, org.text) &&
@@ -2422,6 +2427,19 @@ return {
                     timg.style.opacity = 1.0;
                     jt.err("Remove failed " + code + ": " + errtxt); },
                 jt.semaphore("review.remove"));
+    },
+
+
+    futureok: function (rev) {
+        var cached, revid = jt.instId(rev);
+        if(!revid) {  //not saved yet, so future ok
+            return true; }
+        if(rev.srcrev === "-101") {  //currently future, so future ok
+            return true; }
+        cached = app.lcs.getRef("rev", revid).rev;
+        if(cached.srcrev === "-101") {  //currently saved as future so ok
+            return true; }
+        return false;
     },
 
 
