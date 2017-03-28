@@ -400,12 +400,14 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 
 /* >> docs layout */
+.superscript { vertical-align:super; font-size:50%; line-height:normal; }
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
 .doccontentdiv { max-width:500px; margin:auto; }
 #aboutborderdiv { padding:10px; background-color:#ffbe74; border-radius:10px; }
 #aboutoverviewdiv { padding:5px; font-size:large; background-color: #e6e7e9 }
 .aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
 .aboutintrodiv { font-size:large; font-weight:bold; font-style:italic; }
+#freedetdiv { font-size:medium; font-weight:normal; font-style:normal; }
 .aboutstatementsdiv { padding:0px 10px 10px 10px; font-size:small; }
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
   list-style-image: url('../img/arrow12right.png'); }

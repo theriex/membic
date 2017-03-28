@@ -99,37 +99,6 @@ app.deckmembic = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
-    function makeAMembic () { var numsteps = 2; return {
-        group: {id: "gMM"},
-        transmult: numsteps,
-        display: function (/*transtime*/) {
-            var sv, f = {x: 46, g: "gMM"};
-            sv = {delay: 0, duration: 0};
-            //hfs.stepinit(transtime, numsteps);
-            //sv = hfs.step(1); //-------------------------------
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "mmwhen", f.g, 
-                         "When you find something",
-                         {x: f.x, y: line2y});
-            hfs.showText(sv, "mmworth", f.g, 
-                         "worth remembering,",
-                         {x: f.x, y: line3y});
-            //sv = hfs.step(3); //-------------------------------
-            hfs.showText(sv, "mmake", f.g, "make a membic.", 
-                         {x: f.x, y: line4y});
-            hfs.showGraphic(sv, "imgwrite", f.g,
-                            {x: 187, y: 84, w: 55, h: 47,
-                             href: "img/writenew.png"});
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gMM", 0.0);
-        }
-    }; }
-
-
     function titleSplash () { var numsteps = 2; return {
         group: {id: "gTS"},
         transmult: numsteps,
@@ -147,7 +116,6 @@ app.deckmembic = (function () {
             hfs.stepinit(transtime, numsteps);
             sv = hfs.step(1);
             hfs.fadeGroup(sv, "gTS", 0.0);
-            hfs.fadeGroup(sv, "gMM", 1.0);
         }
     }; }
             
@@ -285,15 +253,48 @@ app.deckmembic = (function () {
     }; }
 
 
+    function makeAMembic () { var numsteps = 6; return {
+        group: {id: "gMM"},
+        transmult: numsteps,
+        display: function (/*transtime*/) {
+            var sv, f = {x: 46, g: "gMM"};
+            sv = {delay: 0, duration: 0};
+            //hfs.stepinit(transtime, numsteps);
+            //sv = hfs.step(1); //-------------------------------
+            hfs.fadeGroup(sv, "gMC", 0.0);
+            hfs.fadeInitGroup(sv, f.g, 1.0);
+            hfs.showText(sv, "mmwhen", f.g, 
+                         "When you find something",
+                         {x: f.x, y: line2y});
+            hfs.showText(sv, "mmworth", f.g, 
+                         "worth remembering,",
+                         {x: f.x, y: line3y});
+            //sv = hfs.step(3); //-------------------------------
+            hfs.showText(sv, "mmake", f.g, "make a membic.", 
+                         {x: f.x, y: line4y});
+            hfs.showGraphic(sv, "imgwrite", f.g,
+                            {x: 187, y: 84, w: 55, h: 47,
+                             href: "img/writenew.png"});
+        },
+        undo: function (transtime) {
+            var sv;
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1);
+            hfs.fadeGroup(sv, "gMM", 0.0);
+            hfs.fadeGroup(sv, "gMC", 1.0);
+        }
+    }; }
+
+
     function initSlides (d3ckitds) {
         ds = d3ckitds;
         hfs = d3ckit.slideHelperFunctions();
         ds.splash = true;
         ds.deck = [
-            makeAMembic(),
             titleSplash(),
             linkComponents(),
-            membicComponents()
+            membicComponents(),
+            makeAMembic()
         ];
     }
 
