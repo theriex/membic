@@ -153,6 +153,7 @@ class InMailHandler(InboundMailHandler):
         empens = csv_list(svc.data)
         accepted = False
         for empen in empens:
+            empen = empen.strip()
             address, penid = empen.split(":")
             if address == emaddr:
                 accepted = True
