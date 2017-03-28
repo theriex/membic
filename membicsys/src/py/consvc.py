@@ -19,13 +19,11 @@ import rev
 
 
 class ConnectionService(db.Model):
-    """ Connection tokens for other sites """
-    # Unique name of this connection service
-    name = db.StringProperty(required=True)
-    # The consumer key for oauth1
-    ckey = db.StringProperty(required=True)
-    # The consumer secret for oauth1
-    secret = db.StringProperty(required=True)
+    """ Connection tokens and info for supporting services """
+    name = db.StringProperty(required=True)     # Unique service name
+    ckey = db.StringProperty(required=True)     # consumer key for oauth1
+    secret = db.StringProperty(required=True)   # consumer secret for oauth1
+    data = db.TextProperty(required=False)      # svc specific support data
 
 
 class GenObj:
@@ -33,10 +31,11 @@ class GenObj:
         self.__dict__.update(kwds)
 
 
-def getConnectionService(svcname):
+def get_connection_service(svcname):
     cskey = svcname
     vq = VizQuery(ConnectionService, "WHERE name = :1 LIMIT 1", svcname)
-    qres = cached_query(cskey, vq, "", 5, ConnectionService, False)
+    # The query max here should hold all the rows in the database
+    qres = cached_query(cskey, vq, "", 6, ConnectionService, False)
     for svc in qres.objects:
         return svc
     # no service found, create a stub instance for later editing
@@ -146,7 +145,7 @@ def doOAuthCall(url, params, httpverb):
 def doOAuthGet(svcname, url, token, toksec):
     logging.info("doOAuthGet " + svcname + " " + url + " token: " + token + 
                  " toksec: " + toksec)
-    svc = getConnectionService(svcname)
+    svc = get_connection_service(svcname)
     params = {
         "oauth_consumer_key": svc.ckey,
         "oauth_nonce": str(getrandbits(64)),
@@ -161,6 +160,20 @@ def doOAuthGet(svcname, url, token, toksec):
 
 def doOAuthPost(url, params):
     return doOAuthCall(url, params, "POST")
+
+
+def update_mailins(penid, mailaddrcsv):
+    penid = str(penid)
+    svc = get_connection_service("MailIn")
+    svc.data = svc.data or ""
+    if not mailaddrcsv and svc.data.find(penid) < 0:
+        return  # nothing there now and nothing there after, so nothing to do
+    mappings = csv_list(svc.data)  # emaddr:penid entries
+    mappings = [m for m in mappings if m.find(":" + penid) < 0]
+    for emaddr in csv_list(mailaddrcsv):
+        mappings.append(emaddr + ":" + penid)
+    svc.data = list_to_csv(mappings)
+    cached_put(svc)
 
 
 def callAmazon(handler, svc, params):
@@ -295,7 +308,7 @@ class OAuth1Call(webapp2.RequestHandler):
         if not toksec:
             toksec = ""
         logging.info("svcname: " + svcname)
-        svc = getConnectionService(svcname)
+        svc = get_connection_service(svcname)
         params = makeParamHash(svc, self.request)
         addOAuthSig("POST", svc, toksec, svcurl, params)
         result = doOAuthPost(svcurl, params)
@@ -345,7 +358,7 @@ class GitHubToken(webapp2.RequestHandler):
     def get(self):
         code = self.request.get('code')
         state = self.request.get('state')
-        svc = getConnectionService("GitHub")
+        svc = get_connection_service("GitHub")
         url = "https://github.com/login/oauth/access_token"
         headers = { 'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json' }
@@ -392,7 +405,7 @@ class AmazonInfo(webapp2.RequestHandler):
         # logging.info("referer: " + self.request.referer)
         # logging.info("request: " + str(self.request))
         asin = self.request.get('asin')
-        svc = getConnectionService("Amazon")
+        svc = get_connection_service("Amazon")
         # Note the parameters must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
         params += "&AssociateTag=membic-20"
@@ -430,7 +443,7 @@ class AmazonSearch(webapp2.RequestHandler):
             self.response.headers['Content-Type'] = 'application/json'
             self.response.out.write(json)
             return
-        svc = getConnectionService("Amazon")
+        svc = get_connection_service("Amazon")
         # Params must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
         params += "&AssociateTag=membic-20"

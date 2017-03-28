@@ -15,6 +15,7 @@ import rev
 import mfeed
 import mailsum
 import mctr
+import consvc
 
 
 class PenName(db.Model):
@@ -211,6 +212,22 @@ def reflect_pen_name_change(pen, prev_name):
     mfeed.nuke_cached_recent_review_feeds()
 
 
+def reflect_mailin_address_changes(pen, prevstash, currstash):
+    if prevstash == pen.stash:
+        return
+    prevstash = json.loads(prevstash)
+    prevmis = ""
+    if "mailins" in prevstash:
+        prevmis = prevstash["mailins"]
+    currstash = json.loads(currstash)
+    currmis = ""
+    if "mailins" in currstash:
+        currmis = currstash["mailins"]
+    if prevmis == currmis:
+        return
+    consvc.update_mailins(pen.key().id(), currmis)
+
+
 class NewPenName(webapp2.RequestHandler):
     def post(self):
         acc = moracct.authenticated(self.request)
@@ -253,8 +270,10 @@ class UpdatePenName(webapp2.RequestHandler):
             self.response.out.write("Invalid value for name")
             return
         logging.info("UpdatePenName id: " + str(pen.key().id()))
+        prevstash = pen.stash
         prevblocked = pen.blocked
         set_pen_attrs(pen, self.request)
+        reflect_mailin_address_changes(pen, prevstash, pen.stash)
         if prevblocked != pen.blocked:
             logging.warn(pen.name + " (" + str(pen.key().id()) + ") blocked: " +
                          pen.blocked + ". Previously blocked: " + prevblocked)

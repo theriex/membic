@@ -4,10 +4,10 @@
  ************************************************************
  */
 
-A:link {text-decoration:none; color:#521919; }
-A:visited {text-decoration:none; color:#521919; }
-A:active {text-decoration:none; color:#521919; }
-A:hover {text-decoration:underline; color:#885555; }
+A:link {text-decoration:none; color:#84521a; }
+A:visited {text-decoration:none; color:#84521a; }
+A:active {text-decoration:none; color:#84521a; }
+A:hover {text-decoration:underline; color:#a05705; }
 
 html {
   min-height: 100%; margin:0; padding:0;

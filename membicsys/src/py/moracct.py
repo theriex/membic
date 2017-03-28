@@ -421,7 +421,7 @@ def mailgun_send(handler, eaddr, subj, body):
         logging.info("Mail not sent to " + eaddr + " from local dev" +
                      "\n\n" + body)
         return
-    mg = consvc.getConnectionService("mailgun");
+    mg = consvc.get_connection_service("mailgun");
     authkey = base64.b64encode("api:" + mg.ckey)
     params = urllib.urlencode({
             'from': 'noreply@membic.com',

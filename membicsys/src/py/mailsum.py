@@ -5,6 +5,7 @@ import logging
 import pen
 import rev
 import moracct
+import consvc
 from morutil import *
 from google.appengine.api import mail
 from google.appengine.api.logservice import logservice
@@ -42,6 +43,42 @@ class ActivityStat(db.Model):
 bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "netvibes.com", # not really a bot, but not a really a hit either
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
+
+
+def make_future_membic(penid, url, txt1, txt2):
+    mim = rev.Review(penid=int(penid),
+                     revtype='article',
+                     ctmid=0,
+                     rating=0,
+                     srcrev=-101,
+                     mainfeed=0,
+                     cankey="")
+    rev.note_modified(mim)
+    mim.keywords = ""
+    mim.name = ""
+    mim.title = ""
+    mim.url = url
+    # if both txt1 and txt2 still have values, then neither had just the
+    # url. Use the shorter one for the title and the other for the description.
+    if txt1 and txt2:
+        if len(txt2) > len(txt1):
+            mim.name = txt1
+            mim.title = txt1
+            mim.text = txt2
+        else:
+            mim.name = txt2
+            mim.title = txt2
+            mim.text = txt1
+    # otherwise put whatever text is available in the description.
+    else:
+        mim.text = txt1 or txt2
+    mim.put()
+    # force retrieval to ensure subsequent db queries find the new instance
+    mim = rev.Review.get_by_id(mim.key().id())
+    # not in top and not in main, so those caches are left intact
+    logging.info("New future membic created for PenName " + str(penid) +
+                 " url: " + url + ", title: " + mim.title + 
+                 ", text: " + mim.text)
 
 
 class ReturnBotIDs(webapp2.RequestHandler):
@@ -83,58 +120,49 @@ class InMailHandler(InboundMailHandler):
     # that can be fleshed out next time they are online.
     def receive(self, message):
         emaddr = message.sender
-        descr = message.subject
-        url = ""
+        subj = ""
+        if hasattr(message, "subject"):
+            subj = message.subject
+        body = ""
         for bodtype, body in message.bodies():
-            if not url:
-                if bodtype == 'text/html':
-                    body = body.decode()
-                if not url:
-                    mo = re.search(r"https?://.*", body)
-                    if mo:
-                        url = mo.group()
+            if bodtype == 'text/html':
+                body = body.decode()
+            if body:
+                break
+        url = ""
+        # Can't match on beginning of line because there might be some space
+        # or other prefixing there and this should be forgiving. Example:
+        # "check out http://membic.com it totally rocks!"
+        # Do want to pull the url out if found though, otherwise the user
+        # would need to edit it out manually later.
+        rem = re.compile("https?://[^\s$]*")
+        mo = rem.search(subj)
+        if mo:
+            url = mo.group()
+            subj = "".join(rem.split(subj)).strip()
         if not url:
+            mo = rem.search(body)
+            if mo:
+                url = mo.group()
+                body = "".join(rem.split(body)).strip()
+        if not (url or subj or body):
             logging.warn("Mail-in membic from " + emaddr + 
-                         " with no url ignored.")
+                         " with no content ignored.")
             return
-        if not descr:
-            logging.warn("Mail-in membic from " + emaddr + 
-                         " with no description ignored.")
-            return
-        vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
-        found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        if len(found) == 0:
-            logging.warn("Mail-in membic: No account found for " + emaddr)
-            return
-        acc = found[0]
-        vq = VizQuery(pen.PenName, "WHERE mid=:1 LIMIT 1", acc.key().id())
-        found = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        if len(found) == 0:
-            logging.warn("Mail-in membic: No PenName found for " + emaddr)
-            return
-        pn = found[0]
-        mim = rev.Review(penid=pn.key().id(), 
-                         revtype='article',
-                         ctmid=0,
-                         rating=0,
-                         srcrev=-101,
-                         mainfeed=0,
-                         cankey="")
-        rev.note_modified(mim)
-        mim.keywords = ""
-        mim.text = descr
-        mim.penname = pn.name
-        mim.name = ""
-        mim.title = ""
-        mim.url = url
-        mim.put()
-        # force retrieval to ensure subsequent db queries find it
-        mim = rev.Review.get_by_id(mim.key().id())
-        # not in top and not in main, so those caches are left intact
-        logging.info("Successfully recorded new mail-in membic " + 
-                     str(mim.key().id()) + " from " + emaddr +
-                     " url: " + mim.url + ", text: " + mim.text)
-
+        svc = consvc.get_connection_service("MailIn")
+        empens = csv_list(svc.data)
+        accepted = False
+        for empen in empens:
+            address, penid = empen.split(":")
+            if address == emaddr:
+                accepted = True
+                logging.info("Mail-in membic from " + address + 
+                             " mapped to PenName " + penid + ". " + url +
+                             ", subj: " + subj + ", body: " + body)
+                make_future_membic(penid, url, subj, body)
+                break
+        if not accepted:
+            logging.info("No mail-in mapping for " + emaddr);
 
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),

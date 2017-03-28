@@ -724,6 +724,41 @@ app.pcd = (function () {
     },
 
 
+    mailinSettingsHTML = function () {
+        var html, subj, body, mh;
+        if(dst.type !== "pen" || !jt.hasId(dst.obj)) {
+            return ""; }
+        dst.obj.stash = dst.obj.stash || {};
+        dst.obj.stash.mailins = dst.obj.stash.mailins || "";
+        subj = "Membic Title or URL or Description";
+        body = "Membic URL and/or Description";
+        mh = "mailto:membic@membicsys.appspotmail.com?subject=" + 
+            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
+        html = ["div", {cla:"formline"},
+                [["a", {href:"#togglemailinsettings",
+                        onclick:jt.fs("app.layout.togdisp('mailinsdiv')")},
+                  [["img", {cla:"ctmsetimg", src:"img/emailbw22.png"}],
+                   ["span", {cla:"settingsexpandlinkspan"},
+                    "Mail-In Membics"]]],
+                 ["div", {cla:"formline", id:"mailinsdiv",
+                          style:"display:none;"},
+                  ["div", {cla:"rtkwdiv", id:"mailinaccsdiv"},
+                   [["div", {cla:"formline"},
+                     ["Authorized ",
+                     ["a", {href:mh}, "mail-in membic "],
+                      "addresses (separate multiple accounts with commas)."]],
+                    ["div", {cla:"formline"},
+                     ["input", {id:"emaddrin", cla:"keydefin", type:"text",
+                                placeholder:"myaccount@example.com",
+                                value:dst.obj.stash.mailins}]],
+                    ["div", {cla:"dlgbuttonsdiv"},
+                     ["button", {type:"button", id:"updatemiab",
+                                 onclick:jt.fs("app.pcd.updateMailins()")},
+                      "Update Mail-Ins"]]]]]]];
+        return html;
+    },
+
+
     calendarIconHTML = function () {
         var html;
         html = ["div", {id: "calicodiv", cla: "tabico"},
@@ -1494,6 +1529,8 @@ return {
                  ["div", {cla: "pcdsectiondiv"},
                   keywordSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
+                  mailinSettingsHTML()],
+                 ["div", {cla: "pcdsectiondiv"},
                   soloSettingsHTML()],
                  ["div", {cla: "pcdsectiondiv"},
                   rssSettingsHTML()],
@@ -1675,6 +1712,12 @@ return {
             val = jt.byId("kwcsvin").value;
             dst.obj.keywords = val;
             app.coop.updateCoop(dst.obj, app.pcd.redisplay, app.failf); }
+    },
+
+
+    updateMailins: function () {
+        dst.obj.stash.mailins = jt.byId("emaddrin").value;
+        app.pen.updatePen(dst.obj, app.pcd.redisplay, app.failf);
     },
 
 
