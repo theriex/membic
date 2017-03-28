@@ -256,11 +256,10 @@ app.deckmembic = (function () {
     function makeAMembic () { var numsteps = 6; return {
         group: {id: "gMM"},
         transmult: numsteps,
-        display: function (/*transtime*/) {
+        display: function (transtime) {
             var sv, f = {x: 46, g: "gMM"};
-            sv = {delay: 0, duration: 0};
-            //hfs.stepinit(transtime, numsteps);
-            //sv = hfs.step(1); //-------------------------------
+            hfs.stepinit(transtime, numsteps);
+            sv = hfs.step(1); //-------------------------------
             hfs.fadeGroup(sv, "gMC", 0.0);
             hfs.fadeInitGroup(sv, f.g, 1.0);
             hfs.showText(sv, "mmwhen", f.g, 
@@ -269,7 +268,7 @@ app.deckmembic = (function () {
             hfs.showText(sv, "mmworth", f.g, 
                          "worth remembering,",
                          {x: f.x, y: line3y});
-            //sv = hfs.step(3); //-------------------------------
+            sv = hfs.step(3); //-------------------------------
             hfs.showText(sv, "mmake", f.g, "make a membic.", 
                          {x: f.x, y: line4y});
             hfs.showGraphic(sv, "imgwrite", f.g,
