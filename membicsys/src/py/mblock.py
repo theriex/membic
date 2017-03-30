@@ -112,7 +112,14 @@ def get_queuing_vis_date(penid, mpd):  # maxPostsPerDay is 1 or 2
     if len(membics) > 0:
         membics = membics[1:]  # remove the pen or coop instance
     # logging.info("gqvd " + str(len(membics)) + " membics, mpd: " + str(mpd))
-    if len(membics) < mpd:
+    # If they've created < mpd membics, then there isn't enough to calculate
+    # a dispafter date.  But we also want to provide some slack for people
+    # who are just getting started, so they can get some membics loaded up
+    # onto a page.  They may dominate the main feed slightly at first, but
+    # hopefully that will be a good introduction.  Working on the assumption
+    # that their first posts will not also be posted through to a theme.  If
+    # they are, then they should be familiar with the qeueing concept.
+    if len(membics) < 5:
         return ""
     # membics were sorted by modified, need them ordered by creation time
     membics = sorted(membics, key=itemgetter('modhist'), reverse=True)
