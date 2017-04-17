@@ -319,10 +319,11 @@ d3ckit = (function () {
         deck = currdeck();
         slide = deck.slides[deck.slideidx];
         bullet = slide[slide.bulletidx];
-        if(!bullet.g) {
+        if(!bullet.g) {  //not already displayed
             bullet.g = slide.g.append("g");
-            bullet.id = slide.id + "bullet" + slide.bulletidx; }
-        ttlt = bullet(bullet.g);
+            bullet.id = slide.id + "bullet" + slide.bulletidx;
+            bullet.undo = []; }
+        ttlt = bullet(bullet);
         autoplayAsNeeded(ttlt);
     }
 
@@ -339,6 +340,24 @@ d3ckit = (function () {
         dds.slideFades[dds.slideFadeIdx](slide);
         dds.slideFadeIdx += 1;
         dds.slideFadeIdx = dds.slideFadeIdx % dds.slideFades.length;
+    }
+
+
+    function memoizeFadeElementUndo (context, id, opacity) {
+        var timing = {delay:0, duration:dds.ffrwlen};
+        opacity = 1.0 - opacity;
+        context.undo.push(function () {
+            d3ckit.fadeElement(context, id, timing, opacity); });
+    }
+
+
+    function memoizeTransElementUndo (context, id, attrs) {
+        var timing = {delay:0, duration:dds.ffrwlen};
+        context.undo.push(function () {
+            d3ckit.transElement(context, id, timing, {
+                transform: "translate(0,0)",
+                opacity: 1.0 - attrs.opacity,
+                fillopa: 1.0 - attrs.fillopa}); });
     }
 
 
@@ -360,7 +379,7 @@ return {
     },
 
 
-    showText: function (g, id, str, timing, attrs) {
+    showText: function (context, id, str, timing, attrs) {
         var elem;
         timing = timing || d3ckit.timing();
         attrs = attrs || {};
@@ -374,7 +393,7 @@ return {
             attrs.opacity = 1.0; }
         elem = d3.select("#" + id);
         if(elem.empty()) {
-            elem = g.append("text")
+            elem = context.g.append("text")
                 .attr({"id": id, 
                        "x": attrs.x || 140,
                        "y": attrs.y || 20,
@@ -393,12 +412,12 @@ return {
     },
 
 
-    showGraphic: function (g, id, timing, attrs) {
+    showGraphic: function (context, id, timing, attrs) {
         var elem;
         timing = timing || d3ckit.timing();
         elem = d3.select("#" + id);
         if(elem.empty()) {
-            elem = g.append("image")
+            elem = context.g.append("image")
                 .attr({"xlink:href": attrs.href, "id": id,
                        "x": attrs.x, "y": attrs.y,
                        "width": (attrs.w || attrs.h || 50) + "px",
@@ -413,8 +432,11 @@ return {
     },
 
 
-    //no starting opacity because that causes elements to suddenly re-appear
-    fadeElement: function (timing, ids, opacity, remove) {
+    //no starting opacity or previously faded elements will suddenly flash
+    //back into existence before fading again.  referenced elements may be
+    //from other bullets, so this memoizes an undo to invert the opacity.
+    //if remove is true, then no undo is memoized.
+    fadeElement: function (context, ids, timing, opacity, remove) {
         if(typeof ids === "string") {
             ids = [ids]; }
         ids.forEach(function (id) {
@@ -424,11 +446,15 @@ return {
                     .attr("opacity", opacity)
                     .attr("fill-opacity", opacity);
                 if(remove) {
-                    elem.remove(); } } });
+                    elem.remove(); }
+                else {
+                    memoizeFadeElementUndo(context, id, opacity); } } });
     },
 
 
-    transElement: function (timing, ids, attrs) {
+    //similar to fadeElement but also handles coordinate translation. The
+    //translation undo returns to 0,0.
+    transElement: function (context, ids, timing, attrs) {
         if(typeof ids === "string") {
             ids = [ids]; }
         ids.forEach(function (id) {
@@ -447,11 +473,12 @@ return {
                 elem.transition().delay(timing.delay).duration(timing.duration)
                     .attr("transform", attrs.transform)
                     .attr("opacity", attrs.opacity)
-                    .attr("fill-opacity", attrs.fillopa); } });
+                    .attr("fill-opacity", attrs.fillopa);
+                memoizeTransElementUndo(context, id, attrs); } });
     },
 
 
-    drawBox: function (g, id, timing, attrs) {
+    drawBox: function (context, id, timing, attrs) {
         var style = {}, elem;
         attrs = attrs || {};
         attrs.x = attrs.x || 0;
@@ -467,7 +494,7 @@ return {
         style.stroke = attrs.stroke || dds.textcolor;
         elem = d3.select("#" + id);
         if(elem.empty()) {
-            elem = g.append("rect")
+            elem = context.g.append("rect")
                 .attr(attrs)
                 .style(style); }
         elem.transition().delay(timing.delay).duration(timing.duration)
@@ -475,7 +502,7 @@ return {
     },
 
 
-    drawArrow: function (g, id, timing, attrs) {
+    drawArrow: function (context, id, timing, attrs) {
         var elem = d3.select("#" + id);
         if(elem.empty()) {
             var mx, my, start = {x1: attrs.x1, y1: attrs.y1,
@@ -487,7 +514,7 @@ return {
                 start.x2 = mx + 1;
                 start.y1 = my - 1;
                 start.y2 = my + 1; }
-            elem = g.append("line")
+            elem = context.g.append("line")
                 .attr({"id": id,
                        "x1": start.x1, "y1": start.y1,
                        "x2": start.x2, "y2": start.y2,
@@ -530,6 +557,8 @@ return {
         dds.beatlen = dds.ffrwlen;
         slide = deck.slides[deck.slideidx];
         slide.g.selectAll("*").remove();
+        slide.forEach(function (bullet) {
+            bullet.g = null; });
         deck.slideidx -= 1;
         slide.g.transition().duration(dds.beatlen)
             .attr("opacity", 1.0);
@@ -538,7 +567,7 @@ return {
 
 
     previous: function () {
-        var ts, deck, slide;
+        var ts, deck, slide, bullet;
         if(dds.paused === "pausing") {
             return; }  //do nothing until pause settles
         if(dds.paused !== "paused") {
@@ -552,10 +581,12 @@ return {
             return; }  //no previous bullet to display
         ts = dds.beatlen;
         dds.beatlen = dds.ffrwlen;
-        slide[slide.bulletidx].g.selectAll("*").remove();
+        bullet = slide[slide.bulletidx];
+        bullet.undo.forEach(function (undof) { 
+            undof();
+        });
+        bullet.g.selectAll("*").remove();
         slide.bulletidx -= 1;
-        slide[slide.bulletidx].g.selectAll("*").remove();
-        displayBullet();
         dds.beatlen = ts;
     },
 
@@ -687,7 +718,7 @@ return {
         deck.g = dds.cg.append("g");
         deck.ig = deck.g.append("g")     //need a group for init stuff
             .attr("opacity", 1.0);
-        itime = deck.init(deck.ig) || dds.beatlen;
+        itime = deck.init({g:deck.ig}) || dds.beatlen;
         delayf(function () {
             deck.slides = deck.slides || deck.getSlides();
             deck.slides.forEach(function (slide, idx) {
