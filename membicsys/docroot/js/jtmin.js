@@ -1111,8 +1111,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                 modname = modname.slice(modname.lastIndexOf("/") + 1);
                 modulenames[i] = modname;
             }
-            if (!app[modname]) {
+            if (!app[modname] && !uo.byId("appmodule_" + modname)) {
                 js = document.createElement("script");
+                js.id = "appmodule_" + modname;
                 js.async = true;
                 js.src = url;
                 document.body.appendChild(js);

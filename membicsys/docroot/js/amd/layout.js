@@ -13,7 +13,8 @@ app.layout = (function () {
         dlgqueue = [],
         siteroot = "",
         addToAnyScriptLoaded = false,
-        slidedecks = {},
+        decknames = [],
+        deckplays = 0,
         initialFadeIn = 1200,
 
 
@@ -48,38 +49,14 @@ app.layout = (function () {
 
     noteDocSlideDecks = function (html) {
         var calls = html.split("app.layout.runSlideDeck");
-        slidedecks = { idx: -1, names: []};
+        decknames = [];  //clear anything previously loaded
+        deckplays = 0;   //reset deck play counter
         calls.forEach(function (call) {
+            var deckname;
             if(call.startsWith("('")) {
                 call = call.slice(2);
-                slidedecks.names.push(call.slice(0, call.indexOf("'")));
-                slidedecks.idx = 0; } });
-    },
-
-
-    noteSlideDeckTextBlocks = function () {
-        slidedecks.textblocks = [];
-        slidedecks.names.forEach(function (name) {
-            var html = "", div = jt.byId(name + "textdiv");
-            if(div) {
-                html = div.innerHTML;
-                div.style.display = "none"; }
-            slidedecks.textblocks.push(html); });
-    },
-
-
-    updateDeckIndexByName = function (deckname) {
-        if(slidedecks) {
-            slidedecks.names.forEach(function (name, idx) {
-                if(name === deckname) {
-                    slidedecks.idx = idx + 1; } }); }
-    },
-
-
-    nextSlideDeckName = function () {
-        if(slidedecks.idx >= 0 && slidedecks.idx < slidedecks.names.length) {
-            slidedecks.idx += 1;
-            return slidedecks.names[slidedecks.idx - 1]; }
+                deckname = call.slice(0, call.indexOf("'"));
+                decknames.push(deckname); } });
     },
 
 
@@ -164,7 +141,6 @@ app.layout = (function () {
         else {
             jt.out("contentdiv", html); }
         convertDocLinks();
-        noteSlideDeckTextBlocks();
     },
 
 
@@ -238,8 +214,8 @@ app.layout = (function () {
 
 
     ungrayKnownLinks = function () {
-        if(slidedecks) {
-            slidedecks.names.forEach(function (dn) {
+        if(decknames) {
+            decknames.forEach(function (dn) {
                 colorDeckLinkSpans(dn, "#111111"); }); }
     };
 
@@ -365,117 +341,33 @@ return {
     },
 
 
+    deckStart: function () {
+        deckplays = true;
+        if(deckplays) {  //autoplay after first one
+            d3ckit.playpause(); }
+    },
+
+
+    deckFinish: function () {
+        deckplays += 1;
+        d3ckit.nextDeck();  //start next deck
+    },
+
+
     runSlideDeck: function (deckname) {
-        var href, js;
-        deckname = deckname || nextSlideDeckName();
-        if(!deckname) {
-            return jt.log("runSlideDeck: no deckname"); }
-        updateDeckIndexByName(deckname);
-        if(jt.byId("d3ckitdiv")) { //have display space for slides
-            jt.out("d3ckitdiv", "");  //nuke anything previously running
-            if(!app[deckname]) {  //slides module not already loaded
-                jt.log("runSlideDeck loading " + deckname);
-                href = jt.baseurl(window.location.href) + "/";
-                if(typeof d3 === "undefined") { //mac ff required
-                    jt.log("runSlideDeck loading d3");
-                    js = document.createElement("script");
-                    //js.async = true;
-                    js.type = "text/javascript";
-                    js.src = href + "js/d3.v3.min.js?v=170311";
-                    document.body.appendChild(js); }
-                if(typeof d3ckit === "undefined") { //mac ff required
-                    jt.log("runSlideDeck loading d3ckit");
-                    js = document.createElement("script");
-                    //js.async = true;
-                    js.type = "text/javascript";
-                    js.src = href + "js/static/d3ckit.js?v=170311";
-                    document.body.appendChild(js); }
-                jt.loadAppModules(app, ["js/static/" + deckname], href,
-                                  function () { 
-                                      app.layout.runSlideDeck(deckname); },
-                                  jt.ts("?cb=", "minute")); }
-            else { //app[deckname] module already loaded
-                if(typeof window.d3 === "undefined" ||   //mac ff required
-                   typeof d3ckit === "undefined") {      //mac ff required 
-                    return setTimeout(function () {
-                        app.layout.runSlideDeck(deckname); }, 300); }
-                jt.log("runSlideDeck " + deckname);
-                jt.out("d3ckitdiv", "");  //clear any previous cruft
-                d3ckit.displaySettings().endfunc = app.layout.runSlideDeck;
-                d3ckit.displaySettings().paused = false;
-                ungrayKnownLinks();
-                colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
-                app[deckname].run(true); } }
+        jt.log("runSlideDeck " + deckname);
+        ungrayKnownLinks();
+        colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
+        d3ckit.displayDeck(deckname);
     },
 
 
     deckText: function (deckname) {
-        var curridx = -1, html;
-        if(!deckname) {
-            return jt.log("deckText: no deckname"); }
-        updateDeckIndexByName(deckname);
-        curridx = slidedecks.idx - 1;
-        if(jt.byId("d3ckitdiv")) {
-            jt.out("d3ckitdiv", "");
-            ungrayKnownLinks();
-            colorDeckLinkSpans(deckname, "gray", "textspan");
-            if(curridx >= 0 && curridx < slidedecks.names.length) {
-                html = ["div", {cla: "decktextdiv"},
-                        slidedecks.textblocks[curridx]];
-                jt.out("d3ckitdiv", jt.tac2html(html)); } }
-    },
-
-
-    runAnime: function () {
-        var href, js;
-        if(jt.byId("d3ckitdiv")) { //have display space for "about" animation
-            if(!app.intro) {
-                href = window.location.href;
-                if(href.indexOf("#") > 0) {
-                    href = href.slice(0, href.indexOf("#")); }
-                if(href.indexOf("?") > 0) {
-                    href = href.slice(0, href.indexOf("?")); }
-                if(!href.endsWith("/")) {
-                    href += "/"; }
-                if(typeof d3 === "undefined") { //mac ff required
-                    js = document.createElement("script");
-                    //js.async = true;
-                    js.type = "text/javascript";
-                    js.src = href + "js/d3.v3.min.js?v=170311";
-                    document.body.appendChild(js); }
-                if(typeof d3ckit === "undefined") { //mac ff required
-                    js = document.createElement("script");
-                    //js.async = true;
-                    js.type = "text/javascript";
-                    js.src = href + "js/static/d3ckit.js?v=170311";
-                    document.body.appendChild(js); }
-                jt.loadAppModules(app, ["js/static/intro"], href, 
-                                  app.layout.runAnime, 
-                                  jt.ts("?cb=", "minute")); }
-            else { //app.intro loaded
-                jt.out("d3ckitdiv", "");  //clear any previous cruft
-                app.intro.run(true, app.layout.closeAnime); } }
-    },
-
-
-    closeAnime: function () {
-        var html;
-        app.intro.furl();
-        html = ["div", {style: "font-size:x-small;" + 
-                               "padding:0px 0px 8px 0px;"},
-          [["a", {href: "#replay", onclick: jt.fs("app.layout.runAnime()")},
-            "REPLAY"],
-           " | ",
-           ["a", {href: "#origin", 
-                  onclick: jt.fs("app.layout.displayDoc('docs/origin.html')")},
-            "ORIGIN"],
-           " | ",
-           ["a", {href: "#intro",
-                  onclick: jt.fs("window.open('" + 
-              "https://membic.wordpress.com/2016/02/17/introducing-membic')")},
-            "INTRODUCTION"]]];
-        setTimeout(function () {
-            jt.out("d3ckitdiv", jt.tac2html(html)); });
+        var dds = d3ckit.getDisplay();
+        jt.log("deckText " + deckname);
+        ungrayKnownLinks();
+        colorDeckLinkSpans(deckname, "gray", "textspan");
+        jt.out(dds.divid, d3ckit.deckByName(deckname).texthtml);
     },
 
 
@@ -494,10 +386,48 @@ return {
         jt.request("GET", url, null,
                    function (resp) {
                        displayDocContent(url, resp, overlay);
-                       setTimeout(app.layout.runSlideDeck, 50); },
+                       setTimeout(app.layout.loadSlideDecks, 50); },
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt, overlay); },
                    jt.semaphore("layout.displayDoc"));
+    },
+
+
+    loadSlideDecks: function () {
+        var modnames = [];
+        if(jt.byId("d3ckitdiv") && decknames && decknames.length) {
+            if(typeof d3 === "undefined") { //mac ff idiom
+                app.loadScript("loadSlideDecks", "js/d3.v3.min.js", 
+                               "d3script"); }
+            if(typeof d3ckit === "undefined") { //mac ff idiom
+                app.loadScript("loadSlideDecks", "js/static/d3ckit.js",
+                               "d3ckitscript"); }
+            decknames.forEach(function (deckname) {
+                modnames.push("js/static/" + deckname); });
+            jt.loadAppModules(app, modnames, window.location.href,
+                              app.layout.displaySlideDecks,
+                              jt.ts("?cb=", "minute")); }
+    },
+
+
+    displaySlideDecks: function () {
+        var deckdisp = {divid:"d3ckitdiv", decks:[],
+                        deckStartFunc:app.layout.deckStart,
+                        deckFinishFunc:app.layout.deckFinish};
+        if(typeof window.d3 === "undefined" ||   //mac ff idiom
+           typeof d3ckit === "undefined") {      //mac ff idiom
+            return setTimeout(app.layout.displaySlideDecks, 300); }
+        //everything loaded and stable, set up and go
+        decknames.forEach(function (deckname) {
+            var deck = app[deckname], 
+            decktextdiv = jt.byId(deckname + "textdiv");
+            deck.deckname = deckname;
+            if(decktextdiv) {  //store text with deck
+                deck.texthtml = decktextdiv.innerHTML;
+                decktextdiv.style.display = "none"; }
+            deckdisp.decks.push(deck); });
+        d3ckit.initDisplay(deckdisp);
+        d3ckit.displayDeck();
     },
 
 

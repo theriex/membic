@@ -170,6 +170,25 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.loadScript = function (logsrc, href, id) {
+        var js;
+        if(jt.byId(id)) {
+            return; }  //already loaded. Might need to wait for it.
+        if(logsrc) {
+            jt.log(logsrc + " loading " + href); }
+        if(!href.startsWith("http")) {
+            href = jt.baseurl(window.location.href) + "/" + href; }
+        if(href.indexOf("v=") < 0) {
+            href += "?v=170311"; }
+        js = document.createElement("script");
+        //js.async = true;
+        js.type = "text/javascript";
+        js.id = id;
+        js.src = href;
+        document.body.appendChild(js);
+    };
+
+
     app.crash = function (code, errtxt, method, url, data) {
         var html, now, subj, body, emref;
         now = new Date();
