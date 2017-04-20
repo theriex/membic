@@ -3,7 +3,7 @@
 
 /***********
 
-Terms:
+Objects:
   - Display: Top level object passed to initDisplay.  Fields:
     - divid: id of div where the SVG should be
     - deckStartFunc: optional function to call on start (else autoplay)
@@ -53,6 +53,7 @@ d3ckit = (function () {
                          playpause: true,  // > or || Next bullet or Pause
                          forward: true,    // >>  Next slide
                          exit: true}},     // >|  Last slide
+        bto = null,    //bullet display sequencing timeout
         dds = null,    //local copy of display passed to initDisplay
         arropa = 0.8;  //tone down arrows slightly so not too stark
 
@@ -61,11 +62,18 @@ d3ckit = (function () {
     // helper functions
     ////////////////////////////////////////
 
-    function delayf (func, delay, currsvgid) {
+    function delayf (func, delay, currdeckidx) {
         delay = Math.round(delay);
-        setTimeout(function () {
-            if(dds.svgid !== currsvgid || !(jt.byId(dds.svgid))) {
-                return; }  //previous or non-existant svg reference
+        //jt.log("delayf: " + delay);
+        if(bto) {
+            jt.log("delayf already waiting, clear existing timeout first");
+            return; }
+        bto = setTimeout(function () {
+            if(dds && dds.deckidx !== currdeckidx) {
+                jt.log("delayf aborting, deckidx mismatch: " + currdeckidx + 
+                       ", " + dds.deckidx);
+                return; }  //the deck has changed in the meantime
+            bto = null;
             func(); }, delay);
     }
 
@@ -175,7 +183,7 @@ d3ckit = (function () {
     function displayControls () {
         var oc = 0, xb;
         initControlContextValues(cc);
-        cc.g = dds.cg.append("g");
+        cc.g = dds.globg.append("g").attr("id", "d3ckitDisplayControls");
         cc.g.append("rect")
             .attr({"x": cc.x, "y": cc.y, "width": cc.w, "height": cc.h})
             .style({"fill": "white", "fill-opacity": 0.3});
@@ -246,13 +254,6 @@ d3ckit = (function () {
     }
 
 
-    function autoplayAsNeeded (delaytime) {
-        if((dds.dispmode === "animate") && !dds.paused) {
-            delayf(function () {
-                d3ckit.next(dds.beatlen); }, delaytime, dds.svgid); }
-    }
-
-
     function handleKeyDown (e) {
         if(e && (e.charChode || e.keyCode) && dds.cmap) {
             Object.keys(dds.cmap).forEach(function (cname) {
@@ -315,16 +316,21 @@ d3ckit = (function () {
 
 
     function displayBullet () {
-        var deck, slide, bullet, ttlt;
+        var deck, slide, bullet, bid, ttlt;
         deck = currdeck();
         slide = deck.slides[deck.slideidx];
         bullet = slide[slide.bulletidx];
-        if(!bullet.g) {  //not already displayed
+        //bullet.g may be left over from a previous display while the actual
+        //g element has been removed.
+        bid = slide.id + "B" + slide.bulletidx;
+        //jt.log("displayBullet: " + bid);
+        if(!jt.byId(bid)) {  //not already displayed
             bullet.g = slide.g.append("g");
-            bullet.id = slide.id + "bullet" + slide.bulletidx;
+            bullet.id = bid;
             bullet.undo = []; }
         ttlt = bullet(bullet);
-        autoplayAsNeeded(ttlt);
+        if((dds.dispmode === "animate") && !dds.paused) {
+            delayf(function () { d3ckit.next(); }, ttlt, dds.deckidx); }
     }
 
 
@@ -542,7 +548,7 @@ return {
 
 
     rewind: function () {
-        var ts, deck, slide;
+        var deck, slide;
         if(dds.paused === "pausing") {
             return; }  //do nothing until pause settles
         if(dds.paused !== "paused") {
@@ -553,7 +559,6 @@ return {
         deck = currdeck();
         if(deck.slideidx <= 0) {
             return; }  //no previous slide to display
-        ts = dds.beatlen;
         dds.beatlen = dds.ffrwlen;
         slide = deck.slides[deck.slideidx];
         slide.g.selectAll("*").remove();
@@ -562,12 +567,12 @@ return {
         deck.slideidx -= 1;
         slide.g.transition().duration(dds.beatlen)
             .attr("opacity", 1.0);
-        dds.beatlen = ts;
+        dds.beatlen = dds.normlen;
     },
 
 
     previous: function () {
-        var ts, deck, slide, bullet;
+        var deck, slide, bullet;
         if(dds.paused === "pausing") {
             return; }  //do nothing until pause settles
         if(dds.paused !== "paused") {
@@ -579,7 +584,6 @@ return {
         slide = deck.slides[deck.slideidx];
         if(slide.bulletidx <= 0) {
             return; }  //no previous bullet to display
-        ts = dds.beatlen;
         dds.beatlen = dds.ffrwlen;
         bullet = slide[slide.bulletidx];
         bullet.undo.forEach(function (undof) { 
@@ -587,7 +591,7 @@ return {
         });
         bullet.g.selectAll("*").remove();
         slide.bulletidx -= 1;
-        dds.beatlen = ts;
+        dds.beatlen = dds.normlen;
     },
 
 
@@ -625,7 +629,7 @@ return {
         if(!deck.started) {
             deck.started = true;
             deck.ig.transition().duration(dds.beatlen).attr("opacity", 0.0);
-            return delayf(d3ckit.next, dds.beatlen, dds.svgid); }
+            return delayf(d3ckit.next, dds.beatlen, dds.deckidx); }
         slide = deck.slides[deck.slideidx];
         //more bullets on slide...
         if(slide.bulletidx < slide.length - 1) {
@@ -648,18 +652,17 @@ return {
 
 
     forward: function () {
-        var ts, deck, slide;
+        var deck, slide;
         if(dds.paused === "pausing") {
             return; }  //do nothing until pause settles
         deck = currdeck;
         if(deck.slideidx >= deck.slides.length - 1) {
             return; }  //no next slide
-        ts = dds.beatlen;
         dds.beatlen = dds.ffrwlen;
         slide = deck.slides[deck.slideidx];
         slide.g.transition().duration(dds.beatlen)
             .attr("opacity", 0.0);
-        dds.beatlen = ts;
+        dds.beatlen = dds.normlen;
         deck.slideidx += 1;
         slide = deck.slides[deck.slideidx];
         slide.bulletidx = -1;
@@ -708,6 +711,9 @@ return {
 
     displayDeck: function (deckname) {
         var deck, itime;
+        if(bto) {
+            clearTimeout(bto);
+            bto = null; }
         if(!deckname) {
             deckname = currdeck().deckname; }
         dds.decks.forEach(function (deckdef, idx) {
@@ -715,18 +721,21 @@ return {
                 dds.deckidx = idx;
                 deck = deckdef; } });
         dds.cg.selectAll("*").remove();  //clear any previous displays
-        deck.g = dds.cg.append("g");
+        deck.started = false;
+        deck.g = dds.cg.append("g").attr("id", deck.deckname);
         deck.ig = deck.g.append("g")     //need a group for init stuff
+            .attr("id", deck.deckname + "Init")
             .attr("opacity", 1.0);
         itime = deck.init({g:deck.ig}) || dds.beatlen;
         delayf(function () {
             deck.slides = deck.slides || deck.getSlides();
             deck.slides.forEach(function (slide, idx) {
-                slide.g = deck.g.append("g");
+                slide.g = deck.g.append("g")
+                    .attr("id", deck.deckname + "Slide" + idx);
                 slide.g.attr("opacity", 1.0);  //used for fadeout on completion
-                slide.id = "slide" + idx;
+                slide.id = deck.deckname + "S" + idx;
                 slide.bulletidx = -1; });
-            deck.slideidx = 0;
+            deck.slideidx = 0;  //first call to next shows first bullet
             if(dds.deckStartFunc) {
                 if(dds.dispmode === "animate") {
                     dds.paused = "paused"; }
@@ -734,7 +743,7 @@ return {
                 dds.deckStartFunc(dds); }  //caller determines what to do next
             else {
                 d3ckit.next(); }           //autoplay
-        }, itime, dds.svgid);
+        }, itime, dds.deckidx);
     },
 
 
@@ -750,8 +759,9 @@ return {
 
     initDisplay: function (display) {
         dds = display;
-        dds.beatlen = dds.beatlen || 1700;
+        dds.normlen = dds.normlen || 1700;
         dds.ffrwlen = dds.ffrwlen || 100;  //sequenceable pseudo-instant
+        dds.beatlen = dds.beatlen || dds.normlen;
         dds.margin = dds.margin || {top:5, right:5, bottom:5, left:5};
         dds.w = dds.w || 320;  //utility calcs are all based on a small phone 
         dds.h = dds.h || 186;  //display because easier to scale up smoothly
@@ -765,6 +775,7 @@ return {
             d3ckit.setKeyboardControls(dds.cmap); }
         dds.dc = {  //display constants for consistent slide presentations
             leftx:10,      //farthest comfortable left
+            line1y:16,     //some arbitrary but consistent horizontal lines
             line2y:42,
             line3y:68,
             line4y:96,
@@ -783,6 +794,7 @@ return {
             .attr("preserveAspectRatio", "xMidYMin meet")
             .attr("id", dds.svgid);
         dds.globg = dds.svg.append("g")
+            .attr("id", "d3ckitglobg")
             .attr("transform", "translate(" + dds.margin.left + "," + 
                                               dds.margin.top + ")");
         if(dds.makeMarkers) {
@@ -792,8 +804,9 @@ return {
         dds.globg.append("rect")
             .attr({"x": 0, "y": 0, "width": dds.dw, "height": dds.dh})
             .style({"fill": dds.screencolor, "opacity": 0.4});
-        dds.cg = dds.globg.append("g");  //general content groupd
-        delayf(displayControls, (0.5 * dds.beatlen), dds.svgid);
+        dds.cg = dds.globg.append("g")   //general content g
+            .attr("id", "d3ckitcontent");
+        setTimeout(displayControls, Math.round(0.5 * dds.beatlen));
     }
 
 };  //end of returned functions

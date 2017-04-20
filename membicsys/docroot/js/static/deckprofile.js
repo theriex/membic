@@ -8,155 +8,145 @@ app.deckprofile = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var ds = null,
-        hfs = null,
-        //vals and logic assume viewbox width 320
-        namey = 26,
-        line2y = 52,
-        line3y = 78;
+    var dc = null,
+        dsp = null;
 
 
     ////////////////////////////////////////
     //base slide creation functions
     ////////////////////////////////////////
 
-    function titleSplash () { var numsteps = 2; return {
-        group: {id: "gTS"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gTS"};
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gMM", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "whatit", f.g, "Your Profile", 
-                         {x: 76, y: line3y, fs: "24px"});
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gTS", 0.0);
-        }
-    }; }
-
-
-    function profIdent () { var numsteps = 9; return {
-        group: {id: "gPI"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gPI", x: 68}, bb, ta;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gTS", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "ptpic", f.g, "Profile picture", 
-                         {x: f.x, y: namey}); 
-            sv = hfs.step(2); //-------------------------------
+    function appendProfileIdentBulletFuncs (bfs) {
+        var sc = {x:68, x2:72, namey:26},
+            bb;
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(0.6);
+            d3ckit.showText(context, "ptpic", "Profile picture", timing,
+                            {x:sc.x, y:sc.namey}); 
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(0.6);
             bb = d3.select("#ptpic").node().getBBox();
-            hfs.showText(sv, "ptico", f.g, ", icon,", 
-                         {x: bb.x + bb.width, y: namey}); 
-            sv = hfs.step(3); //-------------------------------
-            hfs.showText(sv, "ptrep", f.g, "representative", 
-                         {x: f.x, y: line2y}); 
+            d3ckit.showText(context, "ptico", ", icon,", timing,
+                            {x:sc.x + bb.width, y:sc.namey}); 
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(0.8);
+            d3ckit.showText(context, "ptrep", "representative", timing,
+                            {x:sc.x, y:dc.line2y}); 
             bb = d3.select("#ptrep").node().getBBox();
-            hfs.showText(sv, "ptimg", f.g, "image", 
-                         {x: bb.x + bb.width + 6, y: line2y}); 
-            sv = hfs.step(4); //-------------------------------
-            hfs.transElement(sv, "ptpic", {tl: "-68,0", opa: 0.0});
-            hfs.transElement(sv, "ptico", {tl: "-183,0", opa: 0.0});
-            hfs.transElement(sv, "ptrep", {tl: "-68,0", opa: 0.0});
-            hfs.transElement(sv, "ptimg", {tl: "-190,0", opa: 0.0});
-            hfs.drawBox(sv, "picframe", f.g, {x: 10, y: 10, w: 50, 
-                                              stropa: 0.8});
-            hfs.showGraphic(sv, "imgprof", f.g,
-                            {x: 4, y: 14, w: 55, h: 47,
-                             href: "img/profile.png"});
-            sv = hfs.step(5); //-------------------------------
-            f.x = 72;
-            hfs.showText(sv, "pname", f.g, "Pen Name", {x: f.x, y: namey}); 
-            hfs.showText(sv, "pnor", f.g, "or", {x: 98, y: line2y}); 
-            hfs.showText(sv, "pnrn", f.g, "Real Name", {x: f.x, y: line3y}); 
-            sv = hfs.step(7); //-------------------------------
-            hfs.transElement(sv, "pnor", {tl: "0,-26", opa: 0.0});
-            hfs.transElement(sv, "pnrn", {tl: "0,-52", opa: 0.0});
-            sv = hfs.step(8); //-------------------------------
-            ta = {x: f.x, y: line2y, "font-size": "14px", 
-                  "font-weight": "normal"};
-            hfs.showText(sv, "pdesc", f.g, "Anything you want to say", ta);
-            ta.y += 16;
-            hfs.showText(sv, "pdesc2", f.g, "about yourself (optional)", ta);
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gPI", 0.0);
-            hfs.fadeGroup(sv, "gTS", 1.0);
-        }
-    }; }
-        
-        
-    function profTabs () { var numsteps = 14; return {
-        group: {id: "gPT"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gPT", x: 20, y: 84, tw: 40, op: 0.4},
-                tcs = {x:  20, y: 128, fw: "normal", ta: "start"},
-                tcm = {x: 150, y: 128, fw: "normal", ta: "middle"},
-                tce = {x: 238, y: 128, fw: "normal", ta: "end"},
-                tabs = [{gid: "tablatest", img: "img/tablatest.png",
-                         ti: "tl", txt: "Membics you've made recently"},
-                        {gid: "tabtop", img: "img/top.png",
-                         ti: "tt", txt: "Your top membics of all time"},
-                        {gid: "tabmemo", img: "img/tabmemo.png",
-                         ti: "tm", txt: "Remembered membics from others"},
-                        {gid: "tabsearch", img: "img/search.png",
-                         ti: "ts", txt: "Search your membics"},
-                        {gid: "tabendo", img: "img/endorse.png",
-                         ti: "te", txt: "Profiles you endorse"},
-                        {gid: "tabtheme", img: "img/tabctms.png",
-                         ti: "tc", txt: "Themes you contribute to"},
-                        {gid: null}];
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            tabs.forEach(function (tab, idx) {
-                hfs.showGraphic(sv, tab.gid, f.g, 
-                                {x: f.x + (idx * f.tw), y: f.y, w: 20, 
-                                 opacity: f.op, href: tab.img}); });
-            //steps 2, 4, 6...12
-            tabs.forEach(function (tab, idx) {
-                var pt, tc = tcm;
-                if(idx === 0) {
-                    tc = tcs; }
-                if(idx === tabs.length - 1) {
-                    tc = tce; }
-                sv = hfs.step(2 + (2 * idx));
-                if(idx > 0) {
-                    pt = tabs[idx - 1];
-                    hfs.transElement(sv, pt.gid, {opa: f.op});
-                    hfs.transElement(sv, pt.ti, {opa: 0.0}); }
-                if(tab.gid) {
-                    hfs.transElement(sv, tab.gid, {opa: 1.0});
-                    hfs.showText(sv, tab.ti, f.g, tab.txt, tc); } });
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gPT", 0.0);
-        }
-    }; }
+            d3ckit.showText(context, "ptimg", "image", timing,
+                            {x:bb.x + bb.width + 6, y:dc.line2y});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing();
+            d3ckit.transElement(context, "ptpic", timing,
+                                {tl: "-68,0", opa: 0.0});
+            d3ckit.transElement(context, "ptico", timing,
+                                {tl: "-183,0", opa: 0.0});
+            d3ckit.transElement(context, "ptrep", timing,
+                                {tl: "-68,0", opa: 0.0});
+            d3ckit.transElement(context, "ptimg", timing,
+                                {tl: "-190,0", opa: 0.0});
+            d3ckit.drawBox(context, "picframe", timing, 
+                           {x: 10, y: 10, w: 50, stropa: 0.8});
+            d3ckit.showGraphic(context, "imgprof", timing,
+                               {x: 4, y: 14, w: 55, h: 47,
+                                href: "img/profile.png"});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing();
+            d3ckit.showText(context, "pname", "Pen Name", timing,
+                            {x:sc.x2, y:sc.namey}); 
+            d3ckit.showText(context, "pnor", "or", timing,
+                            {x:98, y:46}); 
+            d3ckit.showText(context, "pnrn", "Real Name", timing,
+                            {x:sc.x2, y:dc.line3y});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(0.6);
+            d3ckit.transElement(context, "pnor", timing,
+                                {tl: "0,-26", opa: 0.0});
+            d3ckit.transElement(context, "pnrn", timing,
+                                {tl: "0,-52", opa: 0.0});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing();
+            d3ckit.showText(context, "pdesc", "Anything you want to say",
+                            timing, {x:sc.x2, y:dc.line2y,
+                                     "font-size": "14px", 
+                                     "font-weight": "normal"});
+            d3ckit.showText(context, "pdesc2", "about yourself (optional)",
+                            timing, {x:sc.x2, y:dc.line2y + 16,
+                                     "font-size": "14px", 
+                                     "font-weight": "normal"});
+            timing.duration *= 2;  //extra hold since lots of words
+            return d3ckit.totalTime(timing); });
+    }
 
 
-    function initSlides (d3ckitds) {
-        ds = d3ckitds;
-        hfs = d3ckit.slideHelperFunctions();
-        ds.deck = [
-            titleSplash(),
-            profIdent(),
-            profTabs()
+    function makeProfTabFunc (tabs, tab, idx, tc, sc) {
+        return function (context) {
+            var pt, timing = d3ckit.timing();
+            if(idx > 0) {
+                pt = tabs[idx - 1];
+                d3ckit.transElement(context, pt.gid, timing, {opa:sc.op});
+                d3ckit.transElement(context, pt.ti, timing, {opa:0.0}); }
+            if(tab.gid) {
+                d3ckit.transElement(context, tab.gid, timing, {opa:1.0});
+                d3ckit.showText(context, tab.ti, tab.txt, timing, tc); }
+            return d3ckit.totalTime(timing); };
+    }
+
+
+    function appendProfileTabBulletFuncs (bulletfuncs) {
+        var sc = {x:20, y:84, tw:40, op:0.4},
+            tcs = {x:  20, y: 128, fw: "normal", ta: "start"},
+            tcm = {x: 150, y: 128, fw: "normal", ta: "middle"},
+            tce = {x: 238, y: 128, fw: "normal", ta: "end"},
+            tabs = [{gid: "tablatest", img: "img/tablatest.png",
+                     ti: "tl", txt: "Membics you've made recently"},
+                    {gid: "tabtop", img: "img/top.png",
+                     ti: "tt", txt: "Your top membics of all time"},
+                    {gid: "tabmemo", img: "img/tabmemo.png",
+                     ti: "tm", txt: "Remembered membics from others"},
+                    {gid: "tabsearch", img: "img/search.png",
+                     ti: "ts", txt: "Search your membics"},
+                    {gid: "tabendo", img: "img/endorse.png",
+                     ti: "te", txt: "Profiles you endorse"},
+                    {gid: "tabtheme", img: "img/tabctms.png",
+                     ti: "tc", txt: "Themes you contribute to"},
+                    {gid: null}];
+        bulletfuncs.push(function (context) {
+            var timing = d3ckit.timing(0.4);
+            tabs.forEach(function (tab, idx) {
+                d3ckit.showGraphic(context, tab.gid, timing,
+                                   {x:sc.x + (idx * sc.tw), y:sc.y, w:20, 
+                                    opacity:sc.op, href: tab.img}); });
+            return d3ckit.totalTime(timing); });
+        tabs.forEach(function (tab, idx) {
+            var tc = tcm;
+            if(idx === 0) {
+                tc = tcs; }
+            if(idx === tabs.length - 1) {
+                tc = tce; }
+            bulletfuncs.push(makeProfTabFunc(tabs, tab, idx, tc, sc)); });
+        return bulletfuncs;
+    }
+
+
+    function getTaglineBulletFuncs () {
+        return [
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "proftag", 
+                                "Augment your memory and share.", timing,
+                                {x:20, y:dc.line3y});
+                d3ckit.showGraphic(context, "proftagimg", timing,
+                                   {x:120, y:80, w:55, h:47,
+                                    href: "img/profile.png"});
+                timing.duration *= 2;  //extra hold time at end
+                return d3ckit.totalTime(timing); }
         ];
     }
 
@@ -166,21 +156,20 @@ app.deckprofile = (function () {
     ////////////////////////////////////////
 return {
 
-    run: function (autoplay) {
-        ds = d3ckit.displaySettings();
-        ds.screencolor = "#f9fffc";
-        initSlides(ds);
-        ds.normTransTime = 1000;
-        if(autoplay) {
-            ds.autoplay = true;
-            ds.cc.widthMultiple /= 2;
-            ds.cc.controls.rewind = false;
-            ds.cc.controls.forward = false; }
-        else {
-            d3ckit.setKeyboardControls();
-            d3ckit.enterKeyPlayPause();
-            ds.eatCharEvents = true; }
-        d3ckit.run();
+    getSlides: function () {
+        var firstSlideBullets = [];
+        appendProfileIdentBulletFuncs(firstSlideBullets);
+        appendProfileTabBulletFuncs(firstSlideBullets);
+        return [firstSlideBullets,
+                getTaglineBulletFuncs()];
+    },
+
+
+    init: function (context) {
+        dsp = d3ckit.getDisplay();
+        dc = dsp.dc;
+        d3ckit.showText(context, "yourprof", "Your Profile", null,
+                        {x:76, y:dc.titley, fs:dc.titlefs});
     }
 
 };  //end of returned functions
