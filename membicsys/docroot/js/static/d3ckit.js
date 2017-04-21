@@ -62,11 +62,18 @@ d3ckit = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    function clearNextQueuedFunction () {
+        if(bto) {
+            clearTimeout(bto);
+            bto = null; }
+    }
+
+
     function delayf (func, delay, currdeckidx) {
         delay = Math.round(delay);
         //jt.log("delayf: " + delay);
         if(bto) {
-            jt.log("delayf already waiting, clear existing timeout first");
+            jt.log("delayf already waiting, clear timeout first");
             return; }
         bto = setTimeout(function () {
             if(dds && dds.deckidx !== currdeckidx) {
@@ -655,9 +662,10 @@ return {
         var deck, slide;
         if(dds.paused === "pausing") {
             return; }  //do nothing until pause settles
-        deck = currdeck;
+        deck = currdeck();
         if(deck.slideidx >= deck.slides.length - 1) {
             return; }  //no next slide
+        clearNextQueuedFunction();
         dds.beatlen = dds.ffrwlen;
         slide = deck.slides[deck.slideidx];
         slide.g.transition().duration(dds.beatlen)
@@ -711,9 +719,7 @@ return {
 
     displayDeck: function (deckname) {
         var deck, itime;
-        if(bto) {
-            clearTimeout(bto);
-            bto = null; }
+        clearNextQueuedFunction();
         if(!deckname) {
             deckname = currdeck().deckname; }
         dds.decks.forEach(function (deckdef, idx) {
