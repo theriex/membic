@@ -8,299 +8,271 @@ app.deckdisco = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var ds = null,
-        hfs = null;
-        //vals and logic assume viewbox width 320
+    var dc = null,
+        dsp = null;
 
 
     ////////////////////////////////////////
     // base slide creation functions
     ////////////////////////////////////////
 
-    function community () { var numsteps = 5; return {
-        group: {id: "gMC"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gMC", x: 26, y: 26, y2: 52}, bb;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "ct1", f.g, "Discover themes", 
-                         {x: f.x, y: f.y}); 
-            sv = hfs.step(2); //-------------------------------
-            bb = d3.select("#ct1").node().getBBox();
-            hfs.showText(sv, "ct2", f.g, ", and people,", 
-                         {x: bb.x + bb.width, y: f.y}); 
-            sv = hfs.step(3); //-------------------------------
-            hfs.showText(sv, "ct3", f.g, "in the membic community", 
-                         {x: f.x, y: f.y2});
-            sv = hfs.step(4); //-------------------------------
-            hfs.showGraphic(sv, "cg", f.g,
-                            {x: 186, y: 60, w: 30, href: "img/membiclogo.png"});
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gMC", 0.0);
-        }
-    }; }
+    function getIntroFramingBulletFuncs () {
+        var sc = {x:30};
+        return [
+            function (context) {
+                var timing = d3ckit.timing(0.6);
+                d3ckit.showText(context, "fsn", "Find something new",
+                                timing, {x:sc.x, y:dc.line2y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.8);
+                d3ckit.showText(context, "ftm", "in the membic",
+                                timing, {x:sc.x, y:dc.line3y});
+                d3ckit.showText(context, "comm", "community",
+                                timing, {x:sc.x, y:dc.line4y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.5);
+                d3ckit.showGraphic(context, "imgcommfeed", timing,
+                                   {x:140, y:76, w:50,
+                                    href: "img/membiclogo.png"});
+                timing.duration *= 2;
+                return d3ckit.totalTime(timing); }
+        ];
+    }
 
 
-    function endorse () { var numsteps = 20; return {
-        group: {id: "gME"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gME", x: 32, y: 20, lw: 50, op: 0.4,
-                         y2: 62, y3: 90, yo: 20},
-                levs = [{id: "promote", title: "Prefer", img: "promote.png",
-                         tidb: "levpt", tls: ["Trust this person's membics",
-                                              "and show their posts first."]},
-                        {id: "endorse", title: "Endorse", img: "endorse.png",
-                         tidb: "levet", tls: ["Trust this person's membics",
-                                              "but don't sort their posts",
-                                              "ahead of other people."]},
-                        {id: "normal", title: "Normal", img: "noprefsq.png",
-                         tidb: "levnt", tls: ["Don't do anything special",
-                                              "with membics from this person."]},
-                        {id: "bg", title: "Background", img: "background.png",
-                         tidb: "levbt", tls: ["Sort this person's membics",
-                                              "to the end."]},
-                        {id: "block", title: "Block", img: "block.png",
-                         tidb: "levxt", tls: ["Don't show any membics from",
-                                              "this person at all ever."]},
-                        {id: null}];
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gMC", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
+    function getMembicFeedbackBulletFuncs () {
+        var sc = {x:80, y1:dc.line4y + 16, y2:dc.line5y + 16, gp:0.6,
+                  smx:44, smy:96, smw:30, ax:40, ay:50, aw:40, ap:16};
+        return [
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "rtm", "React to membics",
+                                timing, {x:sc.x, y:sc.y1});
+                d3ckit.showText(context, "fo", "from others",
+                                timing, {x:sc.x, y:sc.y2});
+                d3ckit.showGraphic(context, "imgstm", timing,
+                                   {x:sc.smx, y:sc.smy, w:sc.smw,
+                                    href: "img/stackedmenu.png"});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.3);
+                d3ckit.fadeElement(context, "rtm", timing, 0.4);
+                d3ckit.fadeElement(context, "fo", timing, 0.4);
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showGraphic(context, "imghq", timing,
+                                   {x:sc.ax, 
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/helpfulq.png"});
+                d3ckit.showGraphic(context, "imgremq", timing,
+                                   {x:sc.ax + (sc.aw + sc.ap), 
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/rememberq.png"});
+                d3ckit.showGraphic(context, "imgwrq", timing,
+                                   {x:sc.ax + (2 * (sc.aw + sc.ap)),
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/writereview.png"});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.fadeElement(context, "imgstm", timing, sc.gp);
+                d3ckit.fadeElement(context, "imghq", timing, 0.0);
+                d3ckit.fadeElement(context, "imgremq", timing, sc.gp);
+                d3ckit.fadeElement(context, "imgwrq", timing, sc.gp);
+                d3ckit.showGraphic(context, "imgh", timing,
+                                   {x:sc.ax, 
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/helpful.png"});
+                d3ckit.showText(context, "helpfuldesc", 
+                                "Mark this membic as helpful",
+                                timing, {x:30, y:dc.line2y});
+                timing.duration *= 2;
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.fadeElement(context, "helpfuldesc", timing, 0.0);
+                d3ckit.fadeElement(context, "imgh", timing, 0.0);
+                d3ckit.fadeElement(context, "imghq", timing, sc.gp);
+                d3ckit.fadeElement(context, "imgremq", timing, 0.0);
+                d3ckit.showGraphic(context, "imgrem", timing,
+                                   {x:sc.ax + (sc.aw + sc.ap), 
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/rememberedsel.png"});
+                d3ckit.showText(context, "rememberdesc", 
+                                "Remember this membic for later",
+                                timing, {x:10, y:dc.line2y});
+                timing.duration *= 2;
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.fadeElement(context, "rememberdesc", timing, 0.0);
+                d3ckit.fadeElement(context, "imgrem", timing, 0.0);
+                d3ckit.fadeElement(context, "imgremq", timing, sc.gp);
+                d3ckit.fadeElement(context, "imgwrq", timing, sc.gp);
+                d3ckit.showGraphic(context, "imgwr", timing,
+                                   {x:sc.ax + (2 * (sc.aw + sc.ap)),
+                                    y:sc.ay, w:sc.aw,
+                                    href: "img/writereviewsel.png"});
+                d3ckit.showText(context, "writedesc", 
+                                "Write why this was memorable",
+                                timing, {x:16, y:dc.line2y});
+                timing.duration *= 2;
+                return d3ckit.totalTime(timing); }
+        ];
+    }
+
+
+    function makePrefDispFunc (levs, lev, idx, sc) {
+        return function (context) {
+            var pl, anchor = "start", timing = d3ckit.timing(1.0);
+            if(idx > 0) {
+                pl = levs[idx - 1];
+                anchor = "middle";
+                d3ckit.fadeElement(context, pl.id + "graphic", timing, sc.op);
+                d3ckit.fadeElement(context, pl.id + "title", timing, 0.0);
+                pl.tls.forEach(function (ignore, ti) {
+                    d3ckit.fadeElement(context, pl.tidb + ti, timing, 0.0); });}
+            d3ckit.fadeElement(context, lev.id + "graphic", timing, 1.0);
+            d3ckit.showText(context, lev.id + "title", lev.title, timing,
+                            {x:sc.x + (idx * sc.lw), y:sc.y2, opacity:1.0,
+                             ta:anchor});
+            lev.tls.forEach(function (txt, ti) {
+                d3ckit.showText(context, lev.tidb + ti, txt, timing,
+                                {x:sc.x, y:sc.y3 + (ti * sc.yo),
+                                 opacity:1.0, fw:"normal", fs:"14px"}); });
+            timing.duration *= 2;
+            return d3ckit.totalTime(timing); 
+        };
+    }
+
+
+    function getProfilePrioritizationBulletFuncs () {
+        var levs = [{id: "promote", title: "Prefer", img: "promote.png",
+                     tidb: "levpt", tls: ["Trust this person's membics",
+                                          "and show their posts first."]},
+                    {id: "endorse", title: "Endorse", img: "endorse.png",
+                     tidb: "levet", tls: ["Trust this person's membics",
+                                          "but don't sort their posts",
+                                          "ahead of other people."]},
+                    {id: "normal", title: "Normal", img: "noprefsq.png",
+                     tidb: "levnt", tls: ["Don't do anything special",
+                                          "with membics from this person."]},
+                    {id: "bg", title: "Background", img: "background.png",
+                     tidb: "levbt", tls: ["Sort this person's membics",
+                                          "to the end."]},
+                    {id: "block", title: "Block", img: "block.png",
+                     tidb: "levxt", tls: ["Don't show any membics from",
+                                          "this person at all ever."]}],
+            sc = {x:32, y:20, lw:50, op:0.4, y2:62, y3:90, yo:20},
+            bfs = [];
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(1.0);
+            d3ckit.showText(context, "prefintro",
+                            "Tune who you hear from",
+                            timing, {x:sc.x, y:dc.line3y});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(1.0);
             levs.forEach(function (lev, idx) {
-                if(lev.id) {
-                    hfs.showGraphic(sv, lev.id + "graphic", f.g,
-                                    {x: f.x + (idx * f.lw), y: f.y, 
-                                     w: 20, opacity: f.op, 
-                                     href: "img/" + lev.img}); } });
-            //steps 2, 5, 8...
-            levs.forEach(function (lev, idx) {
-                var pl, anchor = "start";
-                sv = hfs.step(2 + (4 * idx));
-                if(idx > 0) {
-                    pl = levs[idx - 1];
-                    anchor = "middle";
-                    hfs.transElement(sv, pl.id + "graphic", {opa: f.op});
-                    hfs.transElement(sv, pl.id + "title", {opa: 0.0});
-                    pl.tls.forEach(function (ignore, ti) {
-                        hfs.transElement(sv, pl.tidb + ti, {opa: 0.0}); }); }
-                if(lev.id) {
-                    hfs.transElement(sv, lev.id + "graphic", {opa: 1.0});
-                    hfs.showText(sv, lev.id + "title", f.g, lev.title,
-                                 {x: f.x + (idx * f.lw), y: f.y2, 
-                                  opacity: 1.0, ta: anchor});
-                    lev.tls.forEach(function (txt, ti) {
-                        hfs.showText(sv, lev.tidb + ti, f.g, txt,
-                                     {x: f.x, y: f.y3 + (ti * f.yo),
-                                      opacity: 1.0, fw: "normal", 
-                                      fs: "14px"}); }); } });
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gME", 0.0);
-            hfs.fadeGroup(sv, "gMC", 1.0);
-        }
-    }; }
+                d3ckit.showGraphic(context, lev.id + "graphic", timing,
+                                    {x:sc.x + (idx * sc.lw), y:sc.y, 
+                                     w:20, opacity:sc.op, 
+                                     href: "img/" + lev.img}); });
+            d3ckit.fadeElement(context, "prefintro", 
+                               {delay:timing.duration,
+                                duration:timing.duration}, 0.0);
+            return d3ckit.totalTime(timing); });
+        levs.forEach(function (lev, idx) {
+            bfs.push(makePrefDispFunc(levs, lev, idx, sc)); });
+        return bfs;
+    }
 
 
-    function filter () { var numsteps = 5; return {
-        group: {id: "gMF"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gMF", iw: 20},
-                types = ["img/TypeBook50.png", "img/TypeArticle50.png",
-                         "img/TypeMovie50.png", "img/TypeVideo50.png",
-                         "img/TypeSong50.png", "img/TypeYum50.png",
-                         "img/TypeActivity50.png", "img/TypeOther50.png"];
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gME", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "ft1", f.g, "Click any membic type", 
-                         {x: 20, y: 28}); 
-            sv = hfs.step(2); //-------------------------------
+    function makeTypeDispFunc (types, type, idx, sc) {
+        return function (context) {
+            var pt, timing = d3ckit.timing(1.0);
+            if(idx > 0) {
+                pt = types[idx - 1];
+                d3ckit.fadeElement(context, pt.id + "graphic", timing, sc.op);
+                pt.tls.forEach(function (ignore, ti) {
+                    d3ckit.fadeElement(context, pt.id + "t" + ti, 
+                                       timing, 0.0); }); }
+            d3ckit.fadeElement(context, type.id + "graphic", timing, 1.0);
+            type.tls.forEach(function (txt, ti) {
+                d3ckit.showText(context, type.id + "t" + ti, txt, timing,
+                                {x:140, ta:"middle", y:sc.y3 + (ti * sc.yo),
+                                 opacity:1.0, fw:"normal", fs:"14px"}); });
+            timing.duration *= 2;
+            return d3ckit.totalTime(timing);
+        };
+    }
+
+
+    function getTypeFilterBulletFuncs() {
+        var types = [{id:"tbook", img:"TypeBook50.png",
+                      tls:["Notable books for reference",
+                           "and recommendation"]},
+                     {id:"tarticle", img:"TypeArticle50.png",
+                      tls:["Articles memorable for",
+                           "information or insight"]},
+                     {id:"tmovie", img:"TypeMovie50.png",
+                      tls:["Movies, documentaries, and",
+                           "series worth remembering"]},
+                     {id:"tvideo", img:"TypeVideo50.png",
+                      tls:["Videos worth keeping for",
+                           "reference later"]},
+                     {id:"tsong", img:"TypeSong50.png",
+                      tls:["Songs or collections",
+                           "recommended to the world"]},
+                     {id:"tyum", img:"TypeYum50.png",
+                      tls:["Food, drinks, provisioning,",
+                           "bars, and eateries"]},
+                     {id:"tact", img:"TypeActivity50.png",
+                      tls:["Notable things to do",
+                           "around town"]},
+                     {id:"tother", img:"TypeOther50.png",
+                      tls:["Everything else"]}],
+            sc = {x:32, y:20, lw:30, op:0.4, y2:62, y3:dc.line3y, yo:20},
+            bfs = [];
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(1.0);
+            d3ckit.showText(context, "typesintro",
+                            "Filter by type",
+                            timing, {x:60, y:dc.line3y});
+            return d3ckit.totalTime(timing); });
+        bfs.push(function (context) {
+            var timing = d3ckit.timing(1.0);
             types.forEach(function (type, idx) {
-                hfs.showGraphic(sv, "ftype" + idx, f.g,
-                                {x: 20 + Math.round(1.4 * (idx * f.iw)),
-                                 y: 40, w: f.iw, href: type}); });
-            sv = hfs.step(3); //-------------------------------
-            hfs.showText(sv, "ft2", f.g, "if you want to",
-                         {x: 256, y: 85, ta: "end"}); 
-            hfs.showText(sv, "ft3", f.g, "filter the display",
-                         {x: 256, y: 106, ta: "end"}); 
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gMF", 0.0);
-            hfs.fadeGroup(sv, "gME", 1.0);
-        }
-    }; }
+                d3ckit.showGraphic(context, type.id + "graphic", timing,
+                                   {x:sc.x + (idx * sc.lw), y:sc.y,
+                                    w:20, opacity:sc.op,
+                                    href:"img/" + type.img}); });
+            d3ckit.fadeElement(context, "typesintro",
+                               {delay:timing.duration,
+                                duration:timing.duration}, 0.0);
+            return d3ckit.totalTime(timing); });
+        types.forEach(function (type, idx) {
+            bfs.push(makeTypeDispFunc(types, type, idx, sc)); });
+        return bfs;
+    }
 
 
-
-    function actions () { var numsteps = 16; return {
-        group: {id: "gMA"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gMA", x: 60, y: 70, lw: 70,
-                         y2: 62, y3: 21, yo: 20},
-                acts = [{id: "star", title: "Star", 
-                         img1: "helpfulq.png", img2: "helpful.png", 
-                         tidb: "acth", tls: ["\"Star\" to let the writer know",
-                                             "this membic was helpful,",
-                                             "interesting, or important"]},
-                        {id: "memo", title: "Remember",
-                         img1: "rememberq.png", img2: "remembered.png",
-                         tidb: "actr", tls: ["",
-                                             "\"Remember\" to save this membic",
-                                             "for quick reference later"]},
-                        {id: "write", title: "Write",
-                         img1: "writereview.png", img2: "writenew.png",
-                         tidb: "actw", tls: ["",
-                                             "\"Write\" to make your own",
-                                             "membic for this link"]},
-                        {id: null}];
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gMF", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showGraphic(sv, "burger", f.g, 
-                            {x: 48, y: 111, w: 20, 
-                             href: "img/stackedmenu.png"});
-            hfs.showText(sv, "clicktitle", f.g, 
-                         "Membic action menu", {x: 72, y: 128});
-            sv = hfs.step(2); //-------------------------------
-            hfs.transElement(sv, ["clicktitle", "burger"], {opa: 0.4});
-            acts.forEach(function (act, idx) {
-                var yadj = (idx? f.y : f.y - 3);
-                if(act.id) {
-                    hfs.showGraphic(sv, act.id + "img1", f.g,
-                                    {x: f.x + (idx * f.lw), y: yadj, w: 40,
-                                     href: "img/" + act.img1}); 
-                    hfs.showGraphic(sv, act.id + "img2", f.g,
-                                    {x: f.x + (idx * f.lw), y: yadj, w: 40,
-                                     href: "img/" + act.img2,
-                                     opacity: 0.0}); } });
-            //steps 3, 7...15
-            acts.forEach(function (act, idx) {
-                var pa;
-                sv = hfs.step(3 + (4 * idx));
-                if(idx > 0) {
-                    pa = acts[idx - 1];
-                    hfs.transElement(sv, pa.id + "img1", {opa: 1.0});
-                    hfs.transElement(sv, pa.id + "img2", {opa: 0.0});
-                    pa.tls.forEach(function (ignore, ti) {
-                        hfs.transElement(sv, pa.tidb + ti, {opa: 0.0}); }); }
-                if(act.id) {
-                    hfs.transElement(sv, act.id + "img1", {opa: 0.0});
-                    hfs.transElement(sv, act.id + "img2", {opa: 1.0});
-                    act.tls.forEach(function (txt, ti) {
-                        hfs.showText(sv, act.tidb + ti, f.g, txt,
-                                     {x: f.x, y: f.y3 + (ti * f.yo),
-                                      opacity: 1.0, fw: "normal",
-                                      fs: "14px"}); }); } });
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.fadeGroup(sv, "gMF", 1.0);
-            hfs.fadeGroup(sv, "gMA", 0.0);
-        }
-    }; }
-
-
-    function getStarted () { var numsteps = 12; return {
-        group: {id: "gGS"},
-        transmult: numsteps,
-        display: function (transtime) {
-            var sv, f = {g: "gGS", x:140, y: 40, yo: 20};
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1); //-------------------------------
-            hfs.fadeGroup(sv, "gMA", 0.0);
-            hfs.fadeInitGroup(sv, f.g, 1.0);
-            hfs.showText(sv, "gstitle", f.g, 
-                         "Getting started", {x: 76, y: 20});
-            sv = hfs.step(2); //-------------------------------
-            hfs.transElement(sv, "gstitle", {opa: 0.4});
-            hfs.showGraphic(sv, "rbimg", f.g, {x: 127, y: 29, w: 20, 
-                                               href: "img/TypeBook50.png"});
-            hfs.showText(sv, "rb", f.g, "Any books you", {x: 78, y: 70});
-            hfs.showText(sv, "rb2", f.g, "would recommend?", {x: 62, y: 90});
-            sv = hfs.step(4); //-------------------------------
-            hfs.transElement(sv, ["rb", "rbimg", "rb2"], {opa: 0.0});
-            hfs.showGraphic(sv, "actimg", f.g, 
-                            {x: 127, y: 29, w: 20,
-                             href: "img/TypeActivity50.png"});
-            hfs.showText(sv, "act", f.g, "Fun things around town?", 
-                         {x: 44, y: 70});
-            sv = hfs.step(6); //-------------------------------
-            hfs.transElement(sv, ["act", "actimg"], {opa: 0.0});
-            hfs.showGraphic(sv, "yumimg", f.g,
-                            {x: 127, y: 29, w: 20,
-                             href: "img/TypeYum50.png"});
-            hfs.showText(sv, "yum", f.g, "Great food or drinks?", 
-                         {x: 54, y: 70});
-            sv = hfs.step(8); //-------------------------------
-            hfs.transElement(sv, ["yum", "yumimg"], {opa: 0.0});
-            hfs.showGraphic(sv, "vidimg", f.g,
-                            {x: 115, y: 29, w: 20,
-                             href: "img/TypeVideo50.png"});
-            hfs.showGraphic(sv, "musimg", f.g,
-                            {x: 137, y: 29, w: 20,
-                             href: "img/TypeSong50.png"});
-            hfs.showText(sv, "ent", f.g, "Videos or music?", {x: 70, y: 70});
-            sv = hfs.step(9); //-------------------------------
-            hfs.transElement(sv, ["vidimg", "musimg"], {tl: "-10,0"});
-            hfs.showGraphic(sv, "movimg", f.g,
-                            {x: 147, y: 29, w: 20,
-                             href: "img/TypeMovie50.png"});
-            hfs.showText(sv, "ent2", f.g, "Movies?", {x: 101, y: 90});
-            sv = hfs.step(11); //-------------------------------
-            hfs.transElement(sv, ["vidimg", "musimg", "movimg", "ent", "ent2"], 
-                             {opa: 0.0});
-            hfs.showGraphic(sv, "artimg", f.g,
-                            {x: 137, y: 29, w: 20,
-                             href: "img/TypeArticle50.png"});
-            hfs.showText(sv, "art", f.g, "What's the most informative", 
-                         {x: 35, y: 70});
-            hfs.showText(sv, "art2", f.g, "article you've read in the", 
-                         {x: 51, y: 90});
-            hfs.showText(sv, "art3", f.g, "past two weeks?", 
-                         {x: 83, y: 110});
-        },
-        undo: function (transtime) {
-            var sv;
-            hfs.stepinit(transtime, numsteps);
-            sv = hfs.step(1);
-            hfs.transElement(sv, ["artimg", "art", "art2", "art3"], {opa: 0.0});
-            hfs.fadeGroup(sv, "gMA", 1.0);
-            hfs.fadeGroup(sv, "gGS", 0.0);
-        }
-    }; }
-
-
-
-    function initSlides (d3ckitds) {
-        ds = d3ckitds;
-        hfs = d3ckit.slideHelperFunctions();
-        ds.deck = [
-            community(),
-            endorse(),
-            filter(),
-            actions(),
-            getStarted()
+    function getTaglineDisplayBulletFuncs () {
+        return [
+            function (context) {
+                var timing = d3ckit.timing(0.5);
+                d3ckit.showText(context, "tag1", "Membic", timing,
+                                {x:50, y:dc.line3y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "tag2", "Memory Communication", timing,
+                                {x:50, y:dc.line4y, fs:"14px", fw:"normal"});
+                timing.duration *= 2;
+                return d3ckit.totalTime(timing); }
         ];
     }
 
@@ -310,22 +282,24 @@ app.deckdisco = (function () {
     ////////////////////////////////////////
 return {
 
-    run: function (autoplay) {
-        ds = d3ckit.displaySettings();
-        ds.screencolor = "#f8f0f5";
-        initSlides(ds);
-        ds.normTransTime = 1000;
-        if(autoplay) {
-            ds.autoplay = true;
-            ds.cc.widthMultiple /= 2;
-            ds.cc.controls.rewind = false;
-            ds.cc.controls.forward = false; }
-        else {
-            d3ckit.setKeyboardControls();
-            d3ckit.enterKeyPlayPause();
-            ds.eatCharEvents = true; }
-        d3ckit.run();
+    getSlides: function () {
+        return [getIntroFramingBulletFuncs(),
+                getMembicFeedbackBulletFuncs(),
+                getProfilePrioritizationBulletFuncs(),
+                getTypeFilterBulletFuncs(),
+                getTaglineDisplayBulletFuncs()];
+    },
+
+
+    init: function (context) {
+        var timing = d3ckit.timing(0.5);
+        dsp = d3ckit.getDisplay();
+        dc = dsp.dc;
+        d3ckit.showText(context, "discovery", "Discovery", null,
+                        {x:80, y:dc.titley, fs:dc.titlefs});
+        return d3ckit.totalTime(timing);
     }
+
 
 };  //end of returned functions
 }());

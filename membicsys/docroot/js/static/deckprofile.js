@@ -169,7 +169,7 @@ return {
         dsp = d3ckit.getDisplay();
         dc = dsp.dc;
         d3ckit.showText(context, "yourprof", "Your Profile", null,
-                        {x:76, y:dc.titley, fs:dc.titlefs});
+                        {x:72, y:dc.titley, fs:dc.titlefs});
     }
 
 };  //end of returned functions

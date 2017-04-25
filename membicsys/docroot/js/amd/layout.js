@@ -342,7 +342,6 @@ return {
 
 
     deckStart: function () {
-        deckplays = true;
         if(deckplays) {  //autoplay after first one
             d3ckit.playpause(); }
     },

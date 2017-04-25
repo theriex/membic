@@ -785,6 +785,7 @@ return {
             line2y:42,
             line3y:68,
             line4y:96,
+            line5y:122,
             titley:68,
             titlefs:"24px"};
         //init working variables
