@@ -153,6 +153,38 @@ d3ckit = (function () {
     }
 
 
+    function displayBigPlayButton () {
+        var bt = {x:170, y:76, h:40, w:30};
+        if(!dds.bigArrowPlayColor) {
+            return; }
+        if(dds.paused === "paused" && dds.dispmode === "animate") {
+            bt.color = dds.bigArrowPlayColor;
+            if(!cc.bapg) {
+                cc.bapg = dds.globg.append("g")
+                    .attr("id", "d3ckitbapg")
+                    .attr("opacity", cc.opacitybase)
+                    .on("mouseover", function () {
+                        cc.bapg.attr("opacity", cc.opacityactive); })
+                    .on("mouseout", function () {
+                        cc.bapg.attr("opacity", cc.opacitybase); })
+                    .on("click", d3ckit.playpause); }
+            cc.bapt = cc.bapg.append("path")
+                .attr("d", "M " + bt.x + " " + (bt.y + Math.round(bt.h / 2)) +
+                          " L " + (bt.x - bt.w) + " " + bt.y +
+                          " L " + (bt.x - bt.w) + " " + (bt.y + bt.h) +
+                          " Z")
+                .style({"fill": bt.color, "stroke": bt.color,
+                        "fill-opacity": 0.0})
+                .transition().duration(1000).style("fill-opacity", 1.0); }
+        else {  //not paused, clear big play button if displayed
+            if(cc.bapg) {
+                cc.bapg.transition().duration(1000)
+                    .attr("opacity", 0.0);
+                setTimeout(function () {
+                    cc.bapg.selectAll("*").remove(); }, 1000); } }
+    }
+
+
     function reflectPlayPause () {
         if(!dds.opas) {
             return; } //controls not initialized yet, so nothing to do
@@ -163,6 +195,7 @@ d3ckit = (function () {
             fadeOpaControls(["rwact", "prevact", "play", "fwact"], 1.0); }
         else {  //animate and not pausing in any way
             fadeOpaControls(["rwact", "prevact", "pause", "fwact"], 1.0); }
+        displayBigPlayButton();
     }
 
 
@@ -310,7 +343,40 @@ d3ckit = (function () {
     }
 
 
-    function holdMinimumDivSize (divid) {
+    function initDisplayDefinitions (display) {
+        dds = display;
+        dds.normlen = dds.normlen || 1700;
+        dds.ffrwlen = dds.ffrwlen || 100;  //sequenceable pseudo-instant
+        dds.beatlen = dds.beatlen || dds.normlen;
+        dds.margin = dds.margin || {top:5, right:5, bottom:5, left:5};
+        dds.w = dds.w || 320;  //utility calcs are all based on a small phone 
+        dds.h = dds.h || 186;  //display because easier to scale up smoothly
+        dds.dw = dds.w - (dds.margin.left + dds.margin.right);  //display width
+        dds.dh = dds.h - (dds.margin.top + dds.margin.bottom);  //display height
+        dds.screencolor = dds.screencolor || "white";
+        dds.textcolor = dds.textcolor || "black";
+        dds.dispmode = dds.dispmode || "animate";  //"animate" or "manual"
+        if(dds.bindkeycontrols || dds.dispmode === "manual") {
+            dds.eatCharEvents = true;  //override post init if want propagation
+            d3ckit.setKeyboardControls(dds.cmap); }
+        dds.dc = dds.dc || {  //helpful constants for consistent slides
+            leftx:10,      //farthest comfortable left
+            line1y:16,     //arbitrary horizontal lines
+            line2y:42,
+            line3y:68,
+            line4y:96,
+            line5y:122,
+            titley:68,
+            titlefs:"24px"};
+        //init working variables
+        dds.w = 320;  //calcs are all based on a small phone display
+        dds.h = 186;  //because easier to scale up smoothly
+        dds.svgid = "d3ckitsvg" + jt.ts();  //unique and no async refs
+        dds.deckidx = 0;
+    }
+
+
+    function freezeMinimumDivSize (divid) {
         var div = jt.byId(divid);
         div.style.minHeight = String(div.offsetHeight) + "px";
         div.style.minWidth = String(div.offsetWidth) + "px";
@@ -764,37 +830,8 @@ return {
 
 
     initDisplay: function (display) {
-        dds = display;
-        dds.normlen = dds.normlen || 1700;
-        dds.ffrwlen = dds.ffrwlen || 100;  //sequenceable pseudo-instant
-        dds.beatlen = dds.beatlen || dds.normlen;
-        dds.margin = dds.margin || {top:5, right:5, bottom:5, left:5};
-        dds.w = dds.w || 320;  //utility calcs are all based on a small phone 
-        dds.h = dds.h || 186;  //display because easier to scale up smoothly
-        dds.dw = dds.w - (dds.margin.left + dds.margin.right);  //display width
-        dds.dh = dds.h - (dds.margin.top + dds.margin.bottom);  //display height
-        dds.screencolor = dds.screencolor || "white";
-        dds.textcolor = dds.textcolor || "black";
-        dds.dispmode = dds.dispmode || "animate";  //"animate" or "manual"
-        if(dds.bindkeycontrols || dds.dispmode === "manual") {
-            dds.eatCharEvents = true;  //override post init if want propagation
-            d3ckit.setKeyboardControls(dds.cmap); }
-        dds.dc = {  //display constants for consistent slide presentations
-            leftx:10,      //farthest comfortable left
-            line1y:16,     //some arbitrary but consistent horizontal lines
-            line2y:42,
-            line3y:68,
-            line4y:96,
-            line5y:122,
-            titley:68,
-            titlefs:"24px"};
-        //init working variables
-        dds.w = 320;  //calcs are all based on a small phone display
-        dds.h = 186;  //because easier to scale up smoothly
-        dds.svgid = "d3ckitsvg" + jt.ts();  //unique and no async refs
-        dds.deckidx = 0;
-        //init display componenets
-        holdMinimumDivSize(dds.divid);
+        initDisplayDefinitions(display);  //sets dds
+        freezeMinimumDivSize(dds.divid);  //prevents display collapse blink
         jt.out(dds.divid, "");  //completely clear the working div
         dds.svg = d3.select("#" + dds.divid).append("svg")
             .attr("viewBox", "0 0 " + dds.w + " " + dds.h)
@@ -804,9 +841,9 @@ return {
             .attr("id", "d3ckitglobg")
             .attr("transform", "translate(" + dds.margin.left + "," + 
                                               dds.margin.top + ")");
-        if(dds.makeMarkers) {
+        if(dds.makeMarkers) {  //caller has specific markers
             dds.makeMarkers(); }
-        else {
+        else {  //create default markers
             makeMarkers(); }
         dds.globg.append("rect")
             .attr({"x": 0, "y": 0, "width": dds.dw, "height": dds.dh})

@@ -411,6 +411,7 @@ return {
 
     displaySlideDecks: function () {
         var deckdisp = {divid:"d3ckitdiv", decks:[],
+                        bigArrowPlayColor:"#00af02",
                         deckStartFunc:app.layout.deckStart,
                         deckFinishFunc:app.layout.deckFinish};
         if(typeof window.d3 === "undefined" ||   //mac ff idiom
