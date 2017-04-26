@@ -396,16 +396,17 @@ return {
         var modnames = [];
         if(jt.byId("d3ckitdiv") && decknames && decknames.length) {
             if(typeof d3 === "undefined") { //mac ff idiom
-                app.loadScript("loadSlideDecks", "js/d3.v3.min.js", 
+                app.loadScript("loadSlideDecks", 
+                               "js/d3.v3.min.js", 
                                "d3script"); }
             if(typeof d3ckit === "undefined") { //mac ff idiom
-                app.loadScript("loadSlideDecks", "js/static/d3ckit.js",
+                app.loadScript("loadSlideDecks", 
+                               "js/static/d3ckit.js?v=170311",
                                "d3ckitscript"); }
             decknames.forEach(function (deckname) {
                 modnames.push("js/static/" + deckname); });
             jt.loadAppModules(app, modnames, window.location.href,
-                              app.layout.displaySlideDecks,
-                              jt.ts("?cb=", "minute")); }
+                              app.layout.displaySlideDecks, "?v=170311"); }
     },
 
 
