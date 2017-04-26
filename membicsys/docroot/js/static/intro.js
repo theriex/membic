@@ -787,7 +787,7 @@ app.intro = (function () {
             fadeInitGroup(sv, "gLogo", 1.0);
             fadeGroup(sv, "gTheme", 0.0);
             showGraphic(sv, "membiclogo", "gLogo",
-                        {href: "img/membiclogo.png?v=170311",
+                        {href: "img/membiclogo.png?v=170426",
                          x: 6, y: 20, w: 112, h: 112});
             showTextElem(sv, "mcom", "gLogo", "Membic.com",
                          {x: 125, y: 53, "text-anchor": "start",
