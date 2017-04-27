@@ -14,7 +14,7 @@ app.layout = (function () {
         siteroot = "",
         addToAnyScriptLoaded = false,
         decknames = [],
-        deckplays = 0,
+        autoplay = false,
         initialFadeIn = 1200,
 
 
@@ -50,7 +50,7 @@ app.layout = (function () {
     noteDocSlideDecks = function (html) {
         var calls = html.split("app.layout.runSlideDeck");
         decknames = [];  //clear anything previously loaded
-        deckplays = 0;   //reset deck play counter
+        autoplay = false;
         calls.forEach(function (call) {
             var deckname;
             if(call.startsWith("('")) {
@@ -342,19 +342,20 @@ return {
 
 
     deckStart: function () {
-        if(deckplays) {  //autoplay after first one
+        if(autoplay) {
             d3ckit.playpause(); }
     },
 
 
     deckFinish: function () {
-        deckplays += 1;
+        autoplay = true;  //autoplay after the first one has been played
         d3ckit.nextDeck();  //start next deck
     },
 
 
     runSlideDeck: function (deckname) {
         jt.log("runSlideDeck " + deckname);
+        autoplay = true;
         ungrayKnownLinks();
         colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
         d3ckit.displayDeck(deckname);

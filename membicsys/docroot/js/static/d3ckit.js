@@ -770,7 +770,7 @@ return {
             dds.decksByName = {};
             dds.decks.forEach(function (deck) {
                 dds.decksByName[deck.deckname] = deck; }); }
-        return dds.decksByName(deckname);
+        return dds.decksByName[deckname];
     },
 
 
