@@ -224,6 +224,7 @@ app.decktheme = (function () {
             if(tab.gid) {
                 d3ckit.transElement(context, tab.gid, timing, {opa:1.0});
                 d3ckit.showText(context, tab.ti, tab.txt, timing, tc); }
+            timing.duration = Math.round(1.4 * timing.duration);
             return d3ckit.totalTime(timing); };
     }
 
@@ -232,9 +233,9 @@ app.decktheme = (function () {
     function getThemeComponentBulletFuncs () {
         var bfs = getThemeProfileBulletFuncs(),
             sc = {x:20, y:84, tw:40, op:0.4},
-            tcs = {x:  20, y: 128, "text-anchor": "start"},
-            tcm = {x: 130, y: 128, "text-anchor": "middle"},
-            tce = {x: 244, y: 128, "text-anchor": "end"},
+            tcs = {x:  20, y: 128, fw:"normal", ta:"start"},
+            tcm = {x: 130, y: 128, fw:"normal", ta:"middle"},
+            tce = {x: 244, y: 128, fw:"normal", ta:"end"},
             tabs = [{gid: "tablatest", img: "img/tablatest.png",
                      ti: "tl", txt: "Recent theme membics"},
                     {gid: "tabtop", img: "img/top.png",
