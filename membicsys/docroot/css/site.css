@@ -443,6 +443,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .isximg { max-width:15px; max-height:15px; vertical-align:middle; }
 .lititlespan { font-weight:bold; font-style:oblique; }
 
+.rectbb { fill:#ffd2a4; stroke:#271400; cursor:pointer; }
+.rectbt { cursor:pointer; }
+
+
 /* >> stats page layout */
 .statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
 .statseclist { font-size:medium; margin:0px; }

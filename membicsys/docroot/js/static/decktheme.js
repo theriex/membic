@@ -301,6 +301,13 @@ app.decktheme = (function () {
     ////////////////////////////////////////
 return {
 
+    getTaglineBulletFuncs: function () {
+        dsp = dsp || d3ckit.getDisplay();
+        dc = dc || dsp.dc;
+        return getTaglineBulletFuncs();
+    },
+
+
     getSlides: function () {
         return [getThemeUseBulletFuncs(),
                 getMembershipBulletFuncs(),

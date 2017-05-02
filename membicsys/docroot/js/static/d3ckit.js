@@ -361,6 +361,7 @@ d3ckit = (function () {
             d3ckit.setKeyboardControls(dds.cmap); }
         dds.dc = dds.dc || {  //helpful constants for consistent slides
             leftx:10,      //farthest comfortable left
+            tmidx:140,     //midpoint for middle aligned text
             line1y:16,     //arbitrary horizontal lines
             line2y:42,
             line3y:68,
@@ -402,7 +403,7 @@ d3ckit = (function () {
             bullet.id = bid;
             bullet.undo = []; }
         ttlt = bullet(bullet);
-        if((dds.dispmode === "animate") && !dds.paused) {
+        if((dds.dispmode === "animate") && !dds.paused && ttlt >= 0) {
             delayf(function () { d3ckit.next(); }, ttlt, dds.deckidx); }
     }
 
@@ -462,6 +463,8 @@ return {
         var elem;
         timing = timing || d3ckit.timing();
         attrs = attrs || {};
+        if(typeof attrs.fs === "number") {
+            attrs.fs = attrs.fs + "px"; }
         attrs["font-size"] = attrs.fs || attrs["font-size"] || "16px";
         attrs["font-weight"] = attrs.fw || attrs["font-weight"] || "bold";
         attrs["font-style"] = attrs.fe || attrs["font-style"] || "normal";

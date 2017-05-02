@@ -429,7 +429,7 @@ return {
                 decktextdiv.style.display = "none"; }
             deckdisp.decks.push(deck); });
         d3ckit.initDisplay(deckdisp);
-        d3ckit.displayDeck();
+        d3ckit.displayDeck("deckmembic");
     },
 
 
