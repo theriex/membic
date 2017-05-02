@@ -211,6 +211,37 @@ app.deckisfor = (function () {
         return -1;  //halts autoplay
     }
 
+
+    function getTaglineBulletFuncs () {
+        return [
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "tbt1", "Membic saves and displays",
+                                timing, {x:dc.tmidx, ta:"middle", y:dc.line2y});
+                d3ckit.showText(context, "tbt2", "helpful reference links.",
+                                timing, {x:dc.tmidx, ta:"middle", y:dc.line3y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.5);
+                d3ckit.showText(context, "tbt3", "For you, ",
+                                timing, {x:44, y:dc.line4y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.5),
+                    bb = d3.select("#tbt3").node().getBBox();
+                d3ckit.showText(context, "tbt4", "your groups,",
+                                timing, {x:bb.x + bb.width + 5, y:dc.line4y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "tbt5", "and your websites.",
+                                timing, {x:dc.tmidx, ta:"middle", y:dc.line5y});
+                timing.duration *= 2;  //extra hold time at end
+                return d3ckit.totalTime(timing); }
+        ];
+    }
+    
+
     ////////////////////////////////////////
     // public functions
     ////////////////////////////////////////
@@ -223,7 +254,7 @@ return {
 
     getSlides: function () {
         return [[startQuestions],
-                app.decktheme.getTaglineBulletFuncs()];
+                getTaglineBulletFuncs()];
     },
 
 
