@@ -341,7 +341,10 @@ return {
     },
 
 
-    deckStart: function () {
+    deckStart: function (dds) {
+        var deckname = dds.decks[dds.deckidx].deckname;
+        ungrayKnownLinks();
+        colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
         if(autoplay) {
             d3ckit.playpause(); }
     },
