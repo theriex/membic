@@ -153,9 +153,30 @@ d3ckit = (function () {
     }
 
 
+    function currdeck () {
+        return dds.decks[dds.deckidx];
+    }
+
+
+    function haveMoreBullets () {
+        var deck, slide;
+        deck = currdeck();
+        if(!deck || !deck.slides || !deck.slideidx) {
+            return true; }  //in the process of setting up
+        slide = deck.slides[deck.slideidx];
+        //more bullets on slide
+        if(slide.bulletidx < slide.length - 1) {
+            return true; }
+        //more slides in deck...
+        if(deck.slideidx < deck.slides.length - 1) {
+            return true; }
+        return false;
+    }
+
+
     function displayBigPlayButton () {
         var bt = {x:170, y:76, h:40, w:30};
-        if(!dds.bigArrowPlayColor) {
+        if(!dds.bigArrowPlayColor || !haveMoreBullets()) {
             return; }
         if(dds.paused === "paused" && dds.dispmode === "animate") {
             bt.color = dds.bigArrowPlayColor;
@@ -185,8 +206,9 @@ d3ckit = (function () {
                 cc.bapg.transition().duration(1000)
                     .attr("opacity", 0.0);
                 setTimeout(function () {
-                    cc.bapg.selectAll("*").remove();
-                    cc.bapg = null; }, 1000); } }
+                    if(cc.bapg) {
+                        cc.bapg.selectAll("*").remove();
+                        cc.bapg = null; } }, 1000); } }
     }
 
 
@@ -386,11 +408,6 @@ d3ckit = (function () {
         var div = jt.byId(divid);
         div.style.minHeight = String(div.offsetHeight) + "px";
         div.style.minWidth = String(div.offsetWidth) + "px";
-    }
-
-
-    function currdeck () {
-        return dds.decks[dds.deckidx];
     }
 
 
@@ -639,13 +656,15 @@ return {
             return; }
         deck = currdeck();
         if(deck.slideidx <= 0) {
-            return; }  //no previous slide to display
+            return d3ckit.restart(); }  //no previous slide, play from top
         dds.beatlen = dds.ffrwlen;
         slide = deck.slides[deck.slideidx];
         slide.g.selectAll("*").remove();
         slide.forEach(function (bullet) {
             bullet.g = null; });
+        slide.bulletidx = 0;
         deck.slideidx -= 1;
+        slide = deck.slides[deck.slideidx];
         slide.g.transition().duration(dds.beatlen)
             .attr("opacity", 1.0);
         dds.beatlen = dds.normlen;
@@ -784,6 +803,8 @@ return {
 
     nextDeck: function (loop) {
         if(!loop && dds.deckidx >= dds.decks.length - 1) {
+            dds.paused = "paused";
+            reflectPlayPause();
             return; }
         dds.deckidx += 1;
         dds.deckidx = dds.deckidx % dds.decks.length;

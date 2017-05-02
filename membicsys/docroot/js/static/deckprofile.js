@@ -139,9 +139,10 @@ app.deckprofile = (function () {
         return [
             function (context) {
                 var timing = d3ckit.timing(1.0);
-                d3ckit.showText(context, "proftag", 
-                                "Augment your memory and share.", timing,
-                                {x:20, y:dc.line3y});
+                d3ckit.showText(context, "proftag", "Augment your memory", 
+                                timing, {x:20, y:dc.line3y});
+                d3ckit.showText(context, "proftag2", "and share.", 
+                                timing, {x:20, y:dc.line4y});
                 d3ckit.showGraphic(context, "proftagimg", timing,
                                    {x:120, y:80, w:55, h:47,
                                     href: "img/profile.png"});
