@@ -175,13 +175,18 @@ d3ckit = (function () {
                           " Z")
                 .style({"fill": bt.color, "stroke": bt.color,
                         "fill-opacity": 0.0})
-                .transition().duration(1000).style("fill-opacity", 1.0); }
+                .transition().duration(1000).style("fill-opacity", 1.0);
+            d3.select("#d3ckitcontent").transition().duration(1000)
+                .attr("opacity", cc.opacitybase); }
         else {  //not paused, clear big play button if displayed
+            d3.select("#d3ckitcontent").transition().duration(500)
+                .attr("opacity", cc.opacityactive);
             if(cc.bapg) {
                 cc.bapg.transition().duration(1000)
                     .attr("opacity", 0.0);
                 setTimeout(function () {
-                    cc.bapg.selectAll("*").remove(); }, 1000); } }
+                    cc.bapg.selectAll("*").remove();
+                    cc.bapg = null; }, 1000); } }
     }
 
 
@@ -852,7 +857,8 @@ return {
             .attr({"x": 0, "y": 0, "width": dds.dw, "height": dds.dh})
             .style({"fill": dds.screencolor, "opacity": 0.4});
         dds.cg = dds.globg.append("g")   //general content g
-            .attr("id", "d3ckitcontent");
+            .attr("id", "d3ckitcontent")
+            .attr("opacity", 1.0);
         setTimeout(displayControls, Math.round(0.5 * dds.beatlen));
     }
 
