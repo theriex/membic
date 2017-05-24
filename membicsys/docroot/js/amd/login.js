@@ -25,10 +25,16 @@ app.login = (function () {
     ////////////////////////////////////////
 
     secureURL = function (endpoint) {
-        var url = window.location.href;
-        if(url.indexOf("https://") === 0 || url.search(/:\d080/) >= 0) {
+        var url = window.location.href,
+            sm = url.match(/^https:\/\//),
+            dm = url.match(/:\d080/),
+            //reject plain .com URL only, let subdirs and specific requests 
+            //through to support any older embeddings or permalinks.
+            cm = url.match(/^https?:\/\/(www\.)?(membic.com)\/?$/);
+        if((sm || dm) && !cm) {  //secure or dev but not .com
             url = endpoint; }  //relative path url ok, data is encrypted
         else {  //return secured URL for endpoint
+            endpoint = endpoint || "";
             url = app.secsvr + "/" + endpoint; }
         return url;
     },

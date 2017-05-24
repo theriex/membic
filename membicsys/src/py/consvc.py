@@ -347,7 +347,7 @@ class TwitterTokenCallback(webapp2.RequestHandler):
     def get(self):
         params = ["oauth_token", "oauth_token_secret", 
                   "oauth_callback_confirmed", "oauth_verifier"]
-        url = "https://www.membic.com/#command=AltAuth1"
+        url = "https://www.membic.org/#command=AltAuth1"
         for param in params:
             url += "&" + param + "=" + self.request.get(param)
         logging.info("TwitterTokenCallback url: " + url);
@@ -390,7 +390,7 @@ class GitHubCallback(webapp2.RequestHandler):
         code = self.request.get('code')
         state = self.request.get('state')
         logging.info("GitHubCallback state: " + state + ", code: " + code)
-        url = "https://www.membic.com/#command=AltAuth3" +\
+        url = "https://www.membic.org/#command=AltAuth3" +\
             "&state=" + state + "&code=" + code
         self.redirect(str(url))
 

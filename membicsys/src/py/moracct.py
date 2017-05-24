@@ -424,14 +424,14 @@ def mailgun_send(handler, eaddr, subj, body):
     mg = consvc.get_connection_service("mailgun");
     authkey = base64.b64encode("api:" + mg.ckey)
     params = urllib.urlencode({
-            'from': 'noreply@membic.com',
+            'from': 'noreply@membic.org',
             'to': eaddr,
             'subject': subj,
             'text': body})
     headers = {'Authorization': 'Basic {0}'.format(authkey),
                'Content-Type': 'application/x-www-form-urlencoded'}
     conn = httplib.HTTPSConnection("api.mailgun.net", 443)
-    conn.request('POST', '/v3/mg.membic.com/messages', params, headers)
+    conn.request('POST', '/v3/mg.membic.org/messages', params, headers)
     response = conn.getresponse()
     logging.info("mg " + eaddr + " " + subj + " " + str(response.status) + " " +
                  str(response.reason))
@@ -453,7 +453,7 @@ def send_activation_code(handler, account):
     url = handler.request.host_url + "/activate?key=" +\
         str(account.key().id()) + "&code=" + account.actcode
     logging.info("Activate " + account.email + ": " + url)
-    mailtxt = "Hello,\n\nWelcome to membic.com! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
+    mailtxt = "Hello,\n\nWelcome to membic.org! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
     mailgun_send(handler, account.email, "Account activation", mailtxt)
     return account
 
@@ -581,8 +581,8 @@ class MailCredentials(webapp2.RequestHandler):
                 content += "but found no matching accounts." +\
                     "\nEither you have not signed up yet, or you used" +\
                     " a different email address."
-            content += "\n\nhttps://www.membic.com\n\n"
-            mailgun_send(self, eaddr, "Membic.com account login", content)
+            content += "\n\nhttps://www.membic.org\n\n"
+            mailgun_send(self, eaddr, "Membic.org account login", content)
         writeJSONResponse("[]", self.response)
 
 
@@ -672,7 +672,7 @@ class ActivateAccount(webapp2.RequestHandler):
             account.put()
             bust_cache_key(account.email)
             self.response.headers['Content-Type'] = 'text/html'
-            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.com Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.com site</h2></a></p>\n</body></html>")
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
             return
         # no key, retrieve authenticated account
         account = authenticated(self.request)

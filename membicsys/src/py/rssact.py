@@ -96,13 +96,13 @@ def title_spec_and_desc_spec(handler):
 
 
 def rss_content(handler, ctmid, title, reviews):
-    url = "https://membic.com?view=coop&amp;coopid=" + str(ctmid)
+    url = "https://membic.org?view=coop&amp;coopid=" + str(ctmid)
     email = "membicsystem@gmail.com"
     ts, ds = title_spec_and_desc_spec(handler)
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
     # claimed by the site to help avoid unwanted content distribution.
-    copy = "Copyright SAND Services Inc."
+    copy = "Copyright epinova consulting"
     desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"

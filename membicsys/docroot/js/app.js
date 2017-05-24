@@ -24,7 +24,7 @@ var app = {},  //Global container for application level funcs and values
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
     //app.hardhome = "https://membicsys.appspot.com";
-    app.hardhome = "https://membic.com";
+    app.hardhome = "https://membic.org";
     app.secsvr = "https://" + window.location.hostname;
     app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";
@@ -59,8 +59,9 @@ var app = {},  //Global container for application level funcs and values
         state = {};
         if(history && history.state) {
             state = history.state; }
-        href = app.secvsr + "#returnto=" + jt.enc(app.mainsvr) + 
+        href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
             "&logout=true";
+        href = href.replace(/membic.com/ig, "membic.org");
         if(state && state.view === "profile" && state.profid) {
             href += "&reqprof=" + state.profid; }
         href += "&" + jt.objdata(params);
@@ -115,7 +116,7 @@ var app = {},  //Global container for application level funcs and values
 
     app.haveReferrer = function () {
         var ref, refidx, 
-            knownaddrs = [{sub: "membic.com", maxidx: 12},
+            knownaddrs = [{sub: "membic.org", maxidx: 12},
                           {sub: "membicsys.appspot.com", maxidx: 8}];
         ref = document.referrer || "";
         ref = ref.toLowerCase();
@@ -166,7 +167,7 @@ var app = {},  //Global container for application level funcs and values
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=170502");
+        jt.loadAppModules(app, modules, href, app.init2, "?v=170524");
     };
 
 
@@ -179,7 +180,7 @@ var app = {},  //Global container for application level funcs and values
         if(!href.startsWith("http")) {
             href = jt.baseurl(window.location.href) + "/" + href; }
         if(href.indexOf("v=") < 0) {
-            href += "?v=170502"; }
+            href += "?v=170524"; }
         js = document.createElement("script");
         //js.async = true;
         js.type = "text/javascript";

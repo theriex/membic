@@ -1119,7 +1119,7 @@ app.pcd = (function () {
                 html = ["a", {href: app.hardhome + "?view=coop&coopid=" + 
                                     dst.id + "&tab=search"},
                         [["u", "Sign in"],
-                         [" on membic.com to search archives"]]]; }
+                         [" on membic.org to search archives"]]]; }
             else {
                 html = "Sign in to search archives"; } }
         else {
@@ -1990,7 +1990,7 @@ return {
                 ["a", {href: "#home",
                        onclick: jt.fs("app.activity.displayFeed()")},
                  ["community membics",
-                  ["img", {src: "img/membiclogo.png?v=170502", 
+                  ["img", {src: "img/membiclogo.png?v=170524", 
                            cla: "hthimg"}]]],
                 ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
         if(!jt.byId("findctmdiv").innerHTML) {

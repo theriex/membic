@@ -375,7 +375,7 @@ app.intro = (function () {
             sv = step(1);
             fadeInitGroup(sv, "gShowcases", 1.0);
             showTextElem(sv, "showcases", "gShowcases",
-                         "Membic.com showcases");
+                         "Membic.org showcases");
             showTextElem(sv, "whatyoufound", "gShowcases",
                          "what you found memorable.", {y: line2y});
             //remaining steps are time to read what was just displayed
@@ -393,7 +393,7 @@ app.intro = (function () {
             fadeInitGroup(sv, "gBetw", 1.0);
             fadeGroup(sv, "gShowcases", 0.0);
             mtxt = d3.select("#showcases").node().getBBox();
-            mtxt = slideText(sv, "membicCom", "gBetw", "Membic.com",
+            mtxt = slideText(sv, "membicCom", "gBetw", "Membic.org",
                              {x1: mtxt.x, y1: mtxt.y + 16, 
                               x2: midx - 52, y2: line3y,
                               "text-anchor": "start", "opacity": 0.8});
@@ -787,9 +787,9 @@ app.intro = (function () {
             fadeInitGroup(sv, "gLogo", 1.0);
             fadeGroup(sv, "gTheme", 0.0);
             showGraphic(sv, "membiclogo", "gLogo",
-                        {href: "img/membiclogo.png?v=170502",
+                        {href: "img/membiclogo.png?v=170524",
                          x: 6, y: 20, w: 112, h: 112});
-            showTextElem(sv, "mcom", "gLogo", "Membic.com",
+            showTextElem(sv, "mcom", "gLogo", "Membic.org",
                          {x: 125, y: 53, "text-anchor": "start",
                           "font-size": "18px"});
             sv = step(5);

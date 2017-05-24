@@ -190,7 +190,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("----------------------------------------")
     # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
     # logging.info("----------------------------------------")
-    descr = "Membic helps people track and share things that are worth remembering. People use membic to list their top finds and build pages for themes they are interested in."
+    descr = "Membic helps people track and share things that are worth remembering. People use membic themes to make selected articles, books, videos and other links part of their web presence."
     img = ""
     title = "Membic"
     plcont = interimcont
@@ -217,7 +217,7 @@ def start_page_html(handler, dbclass, dbid, refer):
             if count > 1:
                 title = "Top " + str(count) + " " + title
                 descr = "Top " + str(count) + " " + descr
-    cachev = "v=170502"
+    cachev = "v=170524"
     if not img:
         img = "/img/membiclogo.png?" + cachev
     else:
@@ -291,7 +291,7 @@ class DefaultStart(webapp2.RequestHandler):
             if not hashtag or len(hashtag) <= 1:
                 logging.info("No hashtag found: " + str(md))
                 return start_page_html(self, "", 0, refer)
-            url = "https://membic.com" + hashtag
+            url = "https://membic.org" + hashtag
             if refer:
                 url += "?refer=" + urllib.quote(refer)
             logging.info("redirect url: " + url)

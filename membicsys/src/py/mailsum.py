@@ -132,7 +132,7 @@ class InMailHandler(InboundMailHandler):
         url = ""
         # Can't match on beginning of line because there might be some space
         # or other prefixing there and this should be forgiving. Example:
-        # "check out http://membic.com it totally rocks!"
+        # "check out http://membic.org it totally rocks!"
         # Do want to pull the url out if found though, otherwise the user
         # would need to edit it out manually later.
         rem = re.compile("https?://[^\s$]*")

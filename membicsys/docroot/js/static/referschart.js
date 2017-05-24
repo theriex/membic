@@ -35,20 +35,20 @@ stat.rc = (function () {
         if(site.startsWith("www.")) {
             site = site.slice(4); }
         //undecorated url conversions
-        if(site.startsWith("membic.com/p/") ||
+        if(site.startsWith("membic.org/p/") ||
            site.startsWith("membicsys.appspot.com/p/")) {
             site = "Profile"; }
-        else if(site.startsWith("membic.com/t/") ||
-                site.startsWith("membic.com//t/") ||
+        else if(site.startsWith("membic.org/t/") ||
+                site.startsWith("membic.org//t/") ||
                 site.startsWith("membicsys.appspot.com/t/")) {
             site = "Theme"; }
         else if(site.startsWith("membicsys.appspot.com/activate") ||
-                site.startsWith("membic.com/activate")) {
+                site.startsWith("membic.org/activate")) {
             site = "Activation"; }
         else if(site.startsWith("membicsys.appspot.com/index.html")) {
             site = "membicsys.appspot.com"; }
         else if(site.startsWith("membicsys.appspot.com/") ||
-                site.startsWith("membic.com/")) {
+                site.startsWith("membic.org/")) {
             site = "Theme"; }
         else if(site.startsWith("localhost") ||
                 site.startsWith("10.0.0.4")) {

@@ -73,8 +73,8 @@ app.layout = (function () {
 
     shouldOpenInNewTab = function (link) {
         var nt, matches,
-            lms = ["#", "https://membic.com", "https://membic.org",
-                   "https://www.membic.com", "https://www.membic.org",
+            lms = ["#", "https://membic.org", "https://membic.org",
+                   "https://www.membic.org", "https://www.membic.org",
                    "http://localhost", "mailto"];
         if(link.className.indexOf("externaldocslink") >= 0) {
             nt = true; }
@@ -157,7 +157,7 @@ app.layout = (function () {
         var html = ["a", {href: "#community", title: "Community membics",
                            onclick: jt.fs("app.activity.displayFeed('all')")},
                      ["img", {id: "logoimg", 
-                              src: "img/membiclogo.png?v=170502"}]];
+                              src: "img/membiclogo.png?v=170524"}]];
         jt.out("logodiv", jt.tac2html(html));
         jt.byId("bottomnav").style.display = "none";
     },
@@ -405,12 +405,12 @@ return {
                                "d3script"); }
             if(typeof d3ckit === "undefined") { //mac ff idiom
                 app.loadScript("loadSlideDecks", 
-                               "js/static/d3ckit.js?v=170502",
+                               "js/static/d3ckit.js?v=170524",
                                "d3ckitscript"); }
             decknames.forEach(function (deckname) {
                 modnames.push("js/static/" + deckname); });
             jt.loadAppModules(app, modnames, window.location.href,
-                              app.layout.displaySlideDecks, "?v=170502"); }
+                              app.layout.displaySlideDecks, "?v=170524"); }
     },
 
 
