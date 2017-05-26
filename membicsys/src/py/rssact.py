@@ -2,7 +2,7 @@ import webapp2
 import logging
 import moracct
 from morutil import *
-import rev
+import mblock
 import coop
 from cacheman import *
 from mctr import bump_rss_summary
@@ -167,7 +167,7 @@ class CoopRSS(webapp2.RequestHandler):
         key = "coop" + str(ctmid)
         jstr = memcache.get(key)
         if not jstr:
-            jstr = rev.rebuild_reviews_block(self, "coop", ctmid)
+            jstr = mblock.get_membics_json_for_profile("coop", ctmid)
             memcache.set(key, jstr)
         reviews = json.loads(jstr)
         filtered = []
