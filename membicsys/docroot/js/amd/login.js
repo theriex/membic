@@ -358,7 +358,7 @@ app.login = (function () {
         if(!jt.isProbablyEmail(ua.email)) {
             return jt.out("usermenustat", "Invalid email address"); }
         if(ua.email !== moracct.email &&
-           (!confirm("You will need to login again and re-activate your account from your new email address. Setting your email address to " + ua.email))) {
+           (!confirm("You will need to sign in again and re-activate your account from your new email address. Setting your email address to " + ua.email))) {
             return; }
         if(jt.byId("passin").value) {
             ua.password = jt.byId("passin").value.trim(); }
