@@ -184,6 +184,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .tabico { width:20px; height:20px; vertical-align:top; }
 #tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
   font-size:small; }
+#tabtitlediv a { padding:0px; }
 #downloadlink { display:inline-block; margin:6px 2px 0px 10px; padding:0px; 
   background-image: url('../img/whitewash.png'); }
 .downloadlinkimg { margin:0px 2px; }
@@ -259,7 +260,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .profimgdis { max-width:125px; max-height:125px; }
 .revimgdis, .profimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none; }
-.rsslinkimg { width:18px; height:18px; vertical-align:middle; border:none; 
+.rsslinkimg { width:15px; height:15px; vertical-align:middle; border:none; 
   margin-top:-4px; }
 .buttondiv { padding:0px 5px; font-size:large; }
 .sharebuttondiv { display:inline; }  /* see shareico for padding */

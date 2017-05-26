@@ -32,11 +32,11 @@ app.pcd = (function () {
         knowntabs = { latest:    { href: "#latestmembics", 
                                    img: "img/tablatest.png",
                                    mtitle: "My recent membics",
-                                   otitle: "Recent membics"},
+                                   otitle: "Recent membics from $NAME"},
                       favorites: { href: "#favoritemembics",
                                    img: "img/top.png",
                                    mtitle: "My top membics",
-                                   otitle: "Top membics"},
+                                   otitle: "Top membics from $NAME"},
                       memo:      { href: "#rememberedmembics",
                                    img: "img/tabmemo.png",
                                    mtitle: "My remembered membics",
@@ -944,13 +944,18 @@ app.pcd = (function () {
     },
 
 
-    titleForTab = function (tab) {
-        var title;
+    titleForTab = function (tab, homelink) {
+        var title, name, url;
         if(app.pen.myPenId() === dst.id) {
             title = tab.mtitle; }
         else {
             title = tab.otitle;
-            title = title.replace(/\$NAME/g, dst.obj.name); }
+            name = dst.obj.name;
+            if(homelink && dst.type === "coop") {
+                url = app.secsvr + "?view=coop&coopid=" + dst.id;
+                name = "<a href=\"" + url + "\" onclick=\"window.open('" + 
+                    url + "');return false\">" + name + "</a>"; }
+            title = title.replace(/\$NAME/g, name); }
         return title;
     },
 
@@ -1183,8 +1188,9 @@ app.pcd = (function () {
                           onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
                     [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
                      "Download"]]; }
-        jt.out("tabtitlediv", jt.tac2html([titleForTab(knowntabs[tabname]),
-                                           html]));
+        jt.out("tabtitlediv", jt.tac2html(
+            [titleForTab(knowntabs[tabname], true),
+             html]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.hasId(dst.obj)) {
@@ -1197,28 +1203,30 @@ app.pcd = (function () {
 
 
     displayRSSAndHomeLinks = function () {
-        var coords, absdiv, html, homeurl, rssurl;
+        var coords, absdiv, html, rssurl;
         coords = jt.geoPos(jt.byId("tabsdiv"));
-        coords.x += (dst.type === "pen"? 230 : 150);
+        coords.x += (dst.type === "pen"? 230 : 130);
         absdiv = jt.byId("xtrabsdiv");
         absdiv.style.left = String(coords.x) + "px";
         absdiv.style.top = String(coords.y - 12 + tabvpad) + "px";
         absdiv.style.background = "transparent";
         absdiv.style.border = "none";
         absdiv.style.visibility = "visible";
-        homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
-        if(dst.type !== "coop") {
-            homeurl = app.hardhome + "?view=pen&penid=" + dst.id; }
-        html = [["a", {href: homeurl, title: dst.obj.name + " membic page",
-                       onclick: jt.fs("window.open('" + homeurl + "')")},
-                 ["img", {cla: "reviewbadge", src: "img/membiclogobw.png"}]]];
+        html = [];
+        //removed membic logo since tab title text provides a link back...
+        //homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
+        //if(dst.type !== "coop") {
+        //    homeurl = app.hardhome + "?view=pen&penid=" + dst.id; }
+        //html = [["a", {href: homeurl, title: dst.obj.name + " membic page",
+        //               onclick: jt.fs("window.open('" + homeurl + "')")},
+        //         ["img", {cla: "reviewbadge", src: "img/membiclogobw.png"}]]];
         if(dst.type === "coop") {  //RSS only available for themes...
             rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
             html.push("&nbsp; &nbsp;");
             html.push(
-                ["a", {href: rssurl, title: dst.obj.name + " RSS feed",
-                       onclick: jt.fs("window.open('" + rssurl + "')")},
-                 ["img", {cla: "rsslinkimg", src: "img/rssicon.png"}]]); }
+                ["a", {href:rssurl, title:dst.obj.name + " RSS feed",
+                       onclick:jt.fs("window.open('" + rssurl + "')")},
+                 ["img", {cla:"rsslinkimg", src:"img/rssiconlighter.png"}]]); }
         jt.out("xtrabsdiv", jt.tac2html(html));
     },
 
