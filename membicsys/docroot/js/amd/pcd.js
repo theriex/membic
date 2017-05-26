@@ -1168,6 +1168,17 @@ app.pcd = (function () {
     },
 
 
+    inFrame = function () {
+        try {
+            if(window.self !== window.top) {
+                return true; }
+        } catch (ignore) {  //same origin security failure
+            return true;
+        }
+        return false;
+    },
+
+
     displayTab = function (tabname, expid) {
         var dispfunc, html;
         tabname = tabname || defaultTabName();
@@ -1189,7 +1200,7 @@ app.pcd = (function () {
                     [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
                      "Download"]]; }
         jt.out("tabtitlediv", jt.tac2html(
-            [titleForTab(knowntabs[tabname], true),
+            [titleForTab(knowntabs[tabname], inFrame()),
              html]));
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
