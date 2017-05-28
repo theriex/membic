@@ -346,6 +346,15 @@ def returnDictAsJSON(response, obj):
     writeJSONResponse("[" + jsontxt + "]", response)
 
 
+def safe_json_loads(jstr):
+    val = {}
+    try:
+        val = json.loads(jstr)
+    except Exception as e:
+        logging.info("safe_json_loads ignoring exception: " + str(e))
+    return val
+
+
 def safestr(val):
     if not val:
         return ""

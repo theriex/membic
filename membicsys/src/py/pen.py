@@ -215,11 +215,11 @@ def reflect_pen_name_change(pen, prev_name):
 def reflect_mailin_address_changes(pen, prevstash, currstash):
     if prevstash == pen.stash:
         return
-    prevstash = json.loads(prevstash)
+    prevstash = moracct.safe_json_loads(prevstash)
     prevmis = ""
     if "mailins" in prevstash:
         prevmis = prevstash["mailins"]
-    currstash = json.loads(currstash)
+    currstash = moracct.safe_json_loads(currstash)
     currmis = ""
     if "mailins" in currstash:
         currmis = currstash["mailins"]
