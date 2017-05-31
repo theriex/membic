@@ -348,10 +348,13 @@ def returnDictAsJSON(response, obj):
 
 def safe_json_loads(jstr):
     val = {}
+    if not jstr:
+        return val
     try:
         val = json.loads(jstr)
     except Exception as e:
-        logging.info("safe_json_loads ignoring exception: " + str(e))
+        logging.info("safe_json_loads ignoring exception: " + str(e) +
+                     "\njstr: " + jstr)
     return val
 
 
@@ -426,7 +429,7 @@ def random_alphanumeric(length):
     
 
 def mailgun_send(handler, eaddr, subj, body):
-    if re.search("\:[0-9][0-9]80", handler.request.url):
+    if handler and re.search("\:[0-9][0-9]80", handler.request.url):
         logging.info("Mail not sent to " + eaddr + " from local dev" +
                      "\n\n" + body)
         return

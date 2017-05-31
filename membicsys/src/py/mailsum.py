@@ -16,6 +16,7 @@ from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 import textwrap
 from cacheman import *
 import re
+import json
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
 class ActivityStat(db.Model):
@@ -81,6 +82,101 @@ def make_future_membic(penid, url, txt1, txt2):
                  ", text: " + mim.text)
 
 
+def send_theme_post_reminder(pn, mrt, numthemes):
+    td = datetime.datetime.utcnow() - ISO2dt(mrt["lastpost"])
+    subj = "Read any memorable articles?"
+    body = "Hi " + pn.name + ",\n\n"
+    body += "You haven't posted to " + mrt["name"]
+    if numthemes > 1:
+        body += ", or any of your themes,"
+    body += " in over " + str(td.days) + " days. "
+    body += "To get the most out of your theme, note memorable things when you find them. Read any memorable articles recently?\n\n"
+    body += "On your phone:\n"
+    body += "1. Add membic.org to your home screen\n"
+    body += "2. Copy any article link into the write membic dialog.\n\n"
+    body += "Hope you run into something in the next week that's worth a membic!\n\n"
+    body += "Best wishes,\nEric (with help from automation)\n"
+    logging.info("send_theme_post_reminder " + str(pn.key().id()) + ":\n" +
+                 body)
+    acc = moracct.MORAccount.get_by_id(pn.mid)
+    # all email goes to support and gets forwarded for now
+    body = "PenName " + str(pen.key().id()) + " " + acc.email + "\n" + body
+    moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
+
+
+def already_reminded(pn, mrt):
+    # reminders are relative to your last post, not your last access.
+    # logging in is much better than not logging in, but this is about
+    # theme content irrespective of browsing.
+    now = nowISO()
+    dtacc = ISO2dt(mrt["lastpost"])
+    schedule = [7, 14, 30, 60]
+    thresh = dt2ISO(dtacc + datetime.timedelta(schedule[-1] + 2))
+    if thresh < now:
+        return "Outside schedule bounds"
+    for days in schedule:
+        rtag = "reminder" + str(days)
+        if rtag in mrt and mrt[rtag] < mrt["lastpost"]:
+            mrt[rtag] = ""  # reset due to more recent account access
+    for days in schedule:
+        thresh = dt2ISO(dtacc + datetime.timedelta(days))
+        if thresh > now:
+            return str(days) + " day reminder not due yet"
+        if rtag not in mrt or not mrt[rtag]:
+            mrt[rtag] = now  # note we are sending this reminder
+            return False     # go send it
+        # otherwise check if the next one is due..
+    return "Past reminder schedule"
+    
+
+def send_reminders(pn):
+    settings = moracct.safe_json_loads(pn.settings)
+    if "contactprefs" in settings:
+        prefs = settings["contactprefs"]
+        if "reminders" in prefs and prefs["reminders"] == "no":
+            logging.info("send_reminders reminders disabled for " + pn.name)
+            return
+    stash = moracct.safe_json_loads(pn.stash)
+    mrt = None
+    numthemes = 0
+    for key in stash.keys():
+        if key.startswith("ctm"):
+            theme = stash[key]
+            if theme["lastpost"]:
+                numthemes += 1
+                if not mrt or theme["lastpost"] < mrt["lastpost"]:
+                    mrt = theme
+    if not mrt:
+        logging.info("send_reminders no theme posts for " + pn.name)
+        return
+    rem = already_reminded(pn, mrt)
+    if rem:
+        logging.info("send_reminders already reminded " + pn.name +
+                     " (" + rem + ")")
+        return
+    logging.info("send_reminders reminding " + pn.name)
+    send_theme_post_reminder(pn, mrt, numthemes)
+    pn.stash = json.dumps(stash)  # capture any reminder notes
+    cached_put(pn)
+    
+
+def remind_offline_pens():
+    offmin = 4      # min days offline to qualify for a reminder
+    offmax = 100    # max days offline before considered dead
+    mfetch = 500    # max size of reminder pool
+    dtnow = datetime.datetime.utcnow()
+    threshmin = dt2ISO(dtnow - datetime.timedelta(offmin))
+    threshmax = dt2ISO(dtnow - datetime.timedelta(offmax))
+    vq = VizQuery(pen.PenName, "WHERE accessed < :1 ORDER BY accessed DESC",
+                  threshmin)
+    pns = vq.fetch(mfetch, read_policy=db.EVENTUAL_CONSISTENCY, deadline=180)
+    for idx, pn in enumerate(pns):
+        # logging.info("remind_offline_pens: " + pn.name);
+        if pn.accessed < threshmax:
+            break  # this pen and everyone else following is gone
+        send_reminders(pn)
+
+
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
@@ -97,6 +193,12 @@ class UserActivity(webapp2.RequestHandler):
         stats = vq.run(read_policy=db.EVENTUAL_CONSISTENCY,
                        batch_size=daysback)
         moracct.returnJSON(self.response, stats)
+
+
+class PeriodicProcessing(webapp2.RequestHandler):
+    def get(self):
+        remind_offline_pens()
+        moracct.writeTextResponse("PeriodicProcessing done.", self.response)
 
 
 class BounceHandler(BounceNotificationHandler):
@@ -168,6 +270,7 @@ class InMailHandler(InboundMailHandler):
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
+                               ('.*/periodic', PeriodicProcessing),
                                ('/_ah/bounce', BounceHandler),
                                ('/_ah/mail/.+', InMailHandler)], debug=True)
 

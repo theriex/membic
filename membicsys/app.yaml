@@ -320,6 +320,11 @@ handlers:
   script: src.py.mailsum.app
   login: admin
 
+## Nightly periodic processing, reminders and such.
+- url: .*/periodic.*
+  script: src.py.mailsum.app
+  login: admin
+
 ## Return automated agents whose use of the site should not be counted.
 - url: .*/botids.*
   script: src.py.mailsum.app

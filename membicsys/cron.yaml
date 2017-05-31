@@ -1,0 +1,5 @@
+cron:
+- description: periodic reminders
+  url: /periodic
+  schedule: every day 23:30
+  timezone: America/Los_Angeles
