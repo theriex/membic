@@ -1570,7 +1570,7 @@ return {
         var upldbutton = jt.byId("upldsub");
         upldbutton.disabled = true;
         upldbutton.value = "Uploading...";
-        jt.byId("upldpicfelem").submit();
+        jt.byId("picuploadform").submit();
     },
 
 
