@@ -95,14 +95,20 @@ def title_spec_and_desc_spec(handler):
     return ts, ds
 
 
-def rss_content(handler, ctmid, title, reviews):
-    url = "https://membic.org?view=coop&amp;coopid=" + str(ctmid)
+def theme_ident_info(ctm):
+    ctmid = ctm.key().id()
+    title = ctm.name
     email = "membicsystem@gmail.com"
-    ts, ds = title_spec_and_desc_spec(handler)
     # Reviews are written by a pen names, but the site does not tie pen
     # names to people. Copyright of the content of this rss feed is
     # claimed by the site to help avoid unwanted content distribution.
     copy = "Copyright epinova consulting"
+    return ctmid, title, email, copy
+
+
+def rdf_content(handler, url, ctm, reviews):
+    ctmid, title, email, copy = theme_ident_info(ctm)
+    ts, ds = title_spec_and_desc_spec(handler)
     desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"
@@ -156,41 +162,83 @@ def rss_content(handler, ctmid, title, reviews):
         txt += "<dcterms:issued>" + review["modified"] + "</dcterms:issued>\n"
         txt += "</item>\n"
     txt += "</rdf:RDF>\n"
-    return txt;
+    ctype = "application/rss+xml; charset=UTF-8"
+    return txt, ctype
+
+
+def rss_content(handler, url, ctm, membics):
+    ctmid, title, email, copy = theme_ident_info(ctm)
+    ts, ds = title_spec_and_desc_spec(handler)
+    desc = str(len(membics)) + " recent membics"
+    txt = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+    txt += "<rss version=\"2.0\">\n"
+    txt += "<channel>\n"
+    txt += "<title>" + title + "</title>\n"
+    txt += "<link>" + url + "</link>\n"
+    txt += "<description><![CDATA[" + desc + "]]></description>\n"
+    for membic in membics:
+        itemurl = item_url(handler, membic)
+        itemtitle = rev_text_from_spec(membic, ts)
+        itemdesc = rev_text_from_spec(membic, ds)
+        txt += "<item>\n"
+        txt += "<title><![CDATA[" + itemtitle + "]]></title>\n"
+        txt += "<link><![CDATA[" + itemurl + "]]></link>\n"
+        txt += "<guid>" + str(membic["_id"]) + "</guid>\n"
+        txt += "<pubDate>" + membic["modified"] + "</pubDate>\n"
+        txt += "<description><![CDATA[" + itemdesc + "]]></description>\n"
+        txt += "</item>\n"
+    txt += "</channel>\n</rss>\n"
+    # Using "xml" rather than "rss+xml" because otherwise mobile Firefox
+    # tries to download the contents, which is highly frustrating when you
+    # are trying to copy the rss feed url into another app. 19jun17
+    ctype = "application/xml; charset=UTF-8"
+    return txt, ctype
+
+
+def get_theme_rss_membics (handler):
+    ctmid = intz(handler.request.get('coop'))
+    ctm = coop.Coop.get_by_id(ctmid)
+    # Similar to rev.py FetchAllReviews but without extra data checks
+    key = "coop" + str(ctmid)
+    jstr = memcache.get(key)
+    if not jstr:
+        jstr = mblock.get_membics_json_for_profile("coop", ctmid)
+        memcache.set(key, jstr)
+    reviews = json.loads(jstr)
+    filtered = []
+    latest = nowISO()
+    for review in reviews:
+        # filter out the instance object and anything else non-review
+        if not "ctmid" in review:
+            continue
+        # filter out any supporting source reviews
+        if str(review["ctmid"]) == "0":
+            continue
+        # filter out any reviews that are future queued
+        if "dispafter" in review and review["dispafter"] > nowISO():
+            continue
+        # stop if this review is newer than the last one, since that
+        # means we are out of the recent list and into the top20s
+        if review["modhist"] > latest:
+            break
+        filtered.append(review)
+        latest = review["modhist"]
+    return ctm, filtered
 
 
 class CoopRSS(webapp2.RequestHandler):
     def get(self):
-        ctmid = intz(self.request.get('coop'))
-        ctm = coop.Coop.get_by_id(ctmid)
-        # Similar to rev.py FetchAllReviews but without extra data checks
-        key = "coop" + str(ctmid)
-        jstr = memcache.get(key)
-        if not jstr:
-            jstr = mblock.get_membics_json_for_profile("coop", ctmid)
-            memcache.set(key, jstr)
-        reviews = json.loads(jstr)
-        filtered = []
-        latest = nowISO()
-        for review in reviews:
-            # filter out the instance object and anything else non-review
-            if not "ctmid" in review:
-                continue
-            # filter out any supporting source reviews
-            if str(review["ctmid"]) == "0":
-                continue
-            # filter out any reviews that are future queued
-            if "dispafter" in review and review["dispafter"] > nowISO():
-                continue
-            # stop if this review is newer than the last one, since that
-            # means we are out of the recent list and into the top20s
-            if review["modhist"] > latest:
-                break
-            filtered.append(review)
-            latest = review["modhist"]
-        title = ctm.name
-        content = rss_content(self, ctmid, title, filtered)
-        ctype = "application/rss+xml; charset=UTF-8"
+        ctm, filtered = get_theme_rss_membics(self)
+        ftype = (self.request.get('format') or "rss").lower()
+        logging.info("ftype: " + ftype)
+        url = "https://membic.org?view=coop&amp;coopid=" + str(ctm.key().id())
+        if ftype == "rss":
+            content, ctype = rss_content(self, url, ctm, filtered)
+        elif ftype == "rdf":
+            url += "&amp;format=rdf"
+            content, ctype = rdf_content(self, url, ctm, filtered)
+        else:
+            return srverr(self, 403, "Unknown feed format: " + ftype)
         self.response.headers['Content-Type'] = ctype
         self.response.out.write(content)
         bump_rss_summary(ctm, self.request)
