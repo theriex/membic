@@ -109,7 +109,7 @@ def theme_ident_info(ctm):
 def theme_url_info(ctm, ftype, ts, ds):
     base = "https://membic.org"
     ctmid = str(ctm.key().id())
-    url = base + "?view=coop&amp;coopid=" + ctmid
+    url = base + "?view=coop&coopid=" + ctmid
     fu = base + "/rsscoop?coop=" + ctmid + "&format=" + ftype
     if ts:
         fu += "&ts=" + ts
@@ -125,6 +125,7 @@ def rdf_content(handler, ctm, reviews):
     ctmid, title, email, copy = theme_ident_info(ctm)
     ts, ds = title_spec_and_desc_spec(handler)
     url, fu, pic = theme_url_info(ctm, "rdf", ts, ds)
+    url = url.replace("&", "&amp;")
     desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"
@@ -186,6 +187,7 @@ def rss_content(handler, ctm, membics):
     ctmid, title, email, copy = theme_ident_info(ctm)
     ts, ds = title_spec_and_desc_spec(handler)
     url, fu, pic = theme_url_info(ctm, "rss", ts, ds)
+    url = url.replace("&", "&amp;")
     txt = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
     txt += "<rss version=\"2.0\">\n"
     txt += "<channel>\n"

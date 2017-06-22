@@ -27,6 +27,7 @@ indexHTML = """
   <meta itemprop="image" content="$SITEPIC" />
   <title>$TITLE</title>
   <link href="css/site.css$CACHEPARA" rel="stylesheet" type="text/css" />
+  $FEEDLINKS
 </head>
 <body id="bodyid">
 
@@ -161,7 +162,7 @@ def theme_static_content(handler, ctm):
     else:
         objs = sorted(objs, key=itemgetter('rating', 'modified'), reverse=True)
     # it is possible to have two separate reviews for the same thing, so hide
-    # anything that hast the same cankey as the one just output.
+    # anything that has the same cankey as the one just output.
     prevcankey = ""
     if tabname == "top":
         html += "<ol>\n"
@@ -186,15 +187,29 @@ def theme_static_content(handler, ctm):
     return html, count
 
 
-def start_page_html(handler, dbclass, dbid, refer):
-    # logging.info("----------------------------------------")
-    # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
-    # logging.info("----------------------------------------")
+def feed_link(handler, ctm, apptype, feedformat):
+    ctmid = str(ctm.key().id())
+    html = "<link rel=\"alternate\" type=\"" + apptype + "\""
+    html += " href=\"" + handler.request.host_url + "/rsscoop?coop=" + ctmid
+    if feedformat:
+        html += "&format=" + feedformat
+    html += "\" />"
+    return html
+
+
+def feedlinks_for_theme(handler, ctm):
+    linkhtml = feed_link(handler, ctm, "application/rss+xml", "")
+    linkhtml += "\n  " + feed_link(handler, ctm, "application/json", "json")
+    return linkhtml
+
+
+def spdet(handler, dbclass, dbid, cachev):
+    title = "Membic"
     descr = "Membic helps people track and share things that are worth remembering. People use membic themes to make selected articles, books, videos and other links part of their web presence."
     img = ""
-    title = "Membic"
-    plcont = interimcont
+    content = interimcont
     count = 0
+    feedlinks = ""
     if dbclass == "pen":
         pnm = pen.PenName.get_by_id(dbid)
         if pnm:
@@ -211,17 +226,27 @@ def start_page_html(handler, dbclass, dbid, refer):
             descr = descr.replace("\"", "'")
             img = "/ctmpic?coopid=" + str(dbid)
             try:
-                plcont, count = theme_static_content(handler, ctm)
+                content, count = theme_static_content(handler, ctm)
             except Exception as e:
                 logging.info("theme_static_content failed: " + str(e))
             if count > 1:
                 title = "Top " + str(count) + " " + title
                 descr = "Top " + str(count) + " " + descr
-    cachev = "v=170604"
+            feedlinks = feedlinks_for_theme(handler, ctm)
     if not img:
         img = "/img/membiclogo.png?" + cachev
     else:
         img += "&" + cachev
+    return title, descr, img, content, feedlinks
+
+
+def start_page_html(handler, dbclass, dbid, refer):
+    # logging.info("----------------------------------------")
+    # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
+    # logging.info("----------------------------------------")
+    cachev = "v=170604"
+    title, descr, img, content, feedlinks = spdet(handler, dbclass, dbid,
+                                                  cachev)
     # social nets require a full URL to fetch the image
     img = handler.request.host_url + img;
     html = indexHTML
@@ -231,7 +256,8 @@ def start_page_html(handler, dbclass, dbid, refer):
     html = html.replace("$CACHEPARA", "?" + cachev)
     html = html.replace("$REFER", refer or handler.request.referer or "")
     html = html.replace("$VANID", str(dbid))
-    html = html.replace("$INTERIMCONT", noscripthtml + plcont);
+    html = html.replace("$INTERIMCONT", noscripthtml + content);
+    html = html.replace("$FEEDLINKS", feedlinks)
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 
