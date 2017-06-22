@@ -137,4 +137,9 @@ def csv_increment(ikey, csv):
     return updated
 
 
-        
+def htmlquot(txt):
+    txt = txt or ""
+    return txt.replace("\"", "&quot;")
+
+
+

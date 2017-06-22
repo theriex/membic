@@ -106,9 +106,25 @@ def theme_ident_info(ctm):
     return ctmid, title, email, copy
 
 
-def rdf_content(handler, url, ctm, reviews):
+def theme_url_info(ctm, ftype, ts, ds):
+    base = "https://membic.org"
+    ctmid = str(ctm.key().id())
+    url = base + "?view=coop&amp;coopid=" + ctmid
+    fu = base + "/rsscoop?coop=" + ctmid + "&format=" + ftype
+    if ts:
+        fu += "&ts=" + ts
+    if ds:
+        fu += "&ds=" + ds
+    pic = ""
+    if ctm.picture:
+        pic = base + "/ctmpic?coopid=" + ctmid
+    return url, fu, pic
+
+
+def rdf_content(handler, ctm, reviews):
     ctmid, title, email, copy = theme_ident_info(ctm)
     ts, ds = title_spec_and_desc_spec(handler)
+    url, fu, pic = theme_url_info(ctm, "rdf", ts, ds)
     desc = str(len(reviews)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"
@@ -166,16 +182,16 @@ def rdf_content(handler, url, ctm, reviews):
     return txt, ctype
 
 
-def rss_content(handler, url, ctm, membics):
+def rss_content(handler, ctm, membics):
     ctmid, title, email, copy = theme_ident_info(ctm)
     ts, ds = title_spec_and_desc_spec(handler)
-    desc = str(len(membics)) + " recent membics"
+    url, fu, pic = theme_url_info(ctm, "rss", ts, ds)
     txt = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
     txt += "<rss version=\"2.0\">\n"
     txt += "<channel>\n"
     txt += "<title>" + title + "</title>\n"
     txt += "<link>" + url + "</link>\n"
-    txt += "<description><![CDATA[" + desc + "]]></description>\n"
+    txt += "<description><![CDATA[" + ctm.description + "]]></description>\n"
     for membic in membics:
         itemurl = item_url(handler, membic)
         itemtitle = rev_text_from_spec(membic, ts)
@@ -192,6 +208,36 @@ def rss_content(handler, url, ctm, membics):
     # tries to download the contents, which is highly frustrating when you
     # are trying to copy the rss feed url into another app. 19jun17
     ctype = "application/xml; charset=UTF-8"
+    return txt, ctype
+
+
+def json_content(handler, ctm, membics):
+    ctmid, title, email, copy = theme_ident_info(ctm)
+    ts, ds = title_spec_and_desc_spec(handler)
+    url, fu, pic = theme_url_info(ctm, "json", ts, ds)
+    txt = "{\"version\": \"https://jsonfeed.org/version/1\",\n"
+    txt += "\"title\": \"" + htmlquot(title) + "\",\n"
+    txt += "\"home_page_url\": \"" + url + "\",\n"
+    txt += "\"feed_url\": \"" + fu + "\",\n"
+    txt += "\"description\": \"" + htmlquot(ctm.description) + "\",\n"
+    if pic:
+        txt += "\"icon\": \"" + pic + "\",\n"
+    items = ""
+    for membic in membics:
+        if items:
+            items += ",\n"
+        itemurl = item_url(handler, membic)
+        itemtitle = rev_text_from_spec(membic, ts)
+        itemdesc = rev_text_from_spec(membic, ds)
+        created = membic["modhist"].split(";")[0]
+        items += "{\"id\": \"" + str(membic["_id"]) + "\",\n"
+        items += "\"url\": \"" + itemurl + "\",\n"
+        items += "\"title\": \"" + htmlquot(itemtitle) + "\",\n"
+        items += "\"content_text\": \"" + htmlquot(itemdesc) + "\",\n"
+        items += "\"date_published\": \"" + created + "\",\n"
+        items += "\"date_modified\": \"" + membic["modified"] + "\"}"
+    txt += "\"items\": [\n" + items + "]}\n"
+    ctype = "application/json; charset=UTF-8"
     return txt, ctype
 
 
@@ -230,13 +276,12 @@ class CoopRSS(webapp2.RequestHandler):
     def get(self):
         ctm, filtered = get_theme_rss_membics(self)
         ftype = (self.request.get('format') or "rss").lower()
-        logging.info("ftype: " + ftype)
-        url = "https://membic.org?view=coop&amp;coopid=" + str(ctm.key().id())
         if ftype == "rss":
-            content, ctype = rss_content(self, url, ctm, filtered)
+            content, ctype = rss_content(self, ctm, filtered)
         elif ftype == "rdf":
-            url += "&amp;format=rdf"
-            content, ctype = rdf_content(self, url, ctm, filtered)
+            content, ctype = rdf_content(self, ctm, filtered)
+        elif ftype == "json":
+            content, ctype = json_content(self, ctm, filtered)
         else:
             return srverr(self, 403, "Unknown feed format: " + ftype)
         self.response.headers['Content-Type'] = ctype
