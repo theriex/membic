@@ -142,16 +142,34 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
+    app.secureURL = function (url) {
+        var idx, secbase = app.hardhome;
+        if(url.indexOf(secbase) === 0 || url.search(/:\d080/) >= 0) {
+            return url; }
+        idx = url.indexOf("/", 9);  //endpoint specified
+        if(idx >= 0) {
+            return secbase + url.slice(idx); }
+        idx = url.indexOf("?");  //query specified
+        if(idx >= 0) {
+            return secbase + url.slice(idx); }
+        idx = url.indexOf("#");  //hash specified
+        if(idx >= 0) {
+            return secbase + url.slice(idx); }
+        return secbase;  //nothing specified, return plain site
+    };
+
+
     app.init = function () {
-        var href = window.location.href,
+        var securl, href = window.location.href,
             modules = [ "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/activity", "js/amd/pcd",
                         "js/amd/review", "js/amd/pen", "js/amd/coop",
                         "js/amd/ext/amazon", "js/amd/ext/email",
                         "js/amd/ext/readurl" ];
-        if(href.indexOf("https://") !== 0 && href.search(/:\d080/) < 0) {
-            window.location.href = "https" + href.slice(4);   //switch to SSL
-            return; }  //don't fire anything else off.
+        securl = app.secureURL(href);
+        if(securl !== href) {
+            window.location.href = securl;  //redirect
+            return; }  //don't fire anything else off
         jtminjsDecorateWithUtilities(jt);
         if(href.indexOf("site=") > 0) {
             app.embedded = jt.parseParams(); }
