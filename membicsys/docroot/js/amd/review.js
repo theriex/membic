@@ -1,4 +1,4 @@
-/*global setTimeout, window, confirm, app, jt, google, document */
+/*global window, confirm, app, jt, google, document */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -827,12 +827,14 @@ app.review = (function () {
         jt.call("GET", url, null,
                 function (json) {
                     writeAutocompLinks(jt.dec(json[0].content));
-                    setTimeout(acfunc, 400); },
+                    app.fork({descr:"Amazon sutocomp loop ok",
+                              func:acfunc, ms:400}); },
                 app.failf(function (code, errtxt) {
                     jt.out("revautodiv", "");
                     jt.log("Amazon info retrieval failed code " +
                            code + ": " + errtxt);
-                    setTimeout(acfunc, 400); }),
+                    app.fork({descr:"Amazon autocomp loop retry",
+                              func:acfunc, ms:400}); }),
                 jt.semaphore("review.callAmazonForAutocomplete"));
     },
 
@@ -876,7 +878,8 @@ app.review = (function () {
         html = [["ul", items],
                 ["img", {src: "img/poweredbygoogle.png"}]];
         jt.out("revautodiv", jt.tac2html(html));
-        setTimeout(acfunc, 400);
+        app.fork({descr:"Google places autocomp loop",
+                  func:acfunc, ms:400});
     },
 
 
@@ -889,7 +892,8 @@ app.review = (function () {
                                              writeACPLinks(acfunc, results,
                                                            status); }); }
         else {
-            setTimeout(acfunc, 400); }
+            app.fork({descr:"Google places autocomp start",
+                      func:acfunc, ms:400}); }
     },
 
 
@@ -1387,12 +1391,15 @@ app.review = (function () {
                     app.layout.shareDivHTML()));
                 //make absolutely sure the share html is ready before
                 //showing the share buttons.
-                setTimeout(function () {
-                    app.layout.showShareButtons(
-                        crev.title || crev.name,
-                        crev.url,
-                        app.layout.hashtagsCSV("", crev.ctmids),
-                        crev.text); }, 80); } }
+                app.fork({
+                    descr:"share button stabilization wait",
+                    func:function () {
+                        app.layout.showShareButtons(
+                            crev.title || crev.name,
+                            crev.url,
+                            app.layout.hashtagsCSV("", crev.ctmids),
+                            crev.text); },
+                    ms:80}); } }
     },
 
 
@@ -1669,7 +1676,8 @@ return {
                     jt.byId("picfilelab").className = "filesellab";
                     jt.byId("upldsub").style.visibility = "hidden";
                     return; } }
-            setTimeout(app.review.monitorPicUpload, 100); }
+            app.fork({descr:"membic pic upload monitor",
+                      func:app.review.monitorPicUpload, ms:100}); }
     },
 
 
@@ -1693,7 +1701,8 @@ return {
                 else if(crev.revtype === "yum" || crev.revtype === "activity") {
                     callGooglePlacesAutocomplete(app.review.autocompletion); } }
             else {
-                setTimeout(app.review.autocompletion, 750); } }
+                app.fork({descr:"autocomp general start check",
+                          func:app.review.autocompletion, ms:750}); } }
     },
 
 
@@ -2084,9 +2093,12 @@ return {
             } catch (problem) {
                 gplacesvc = null;
                 noteServiceError(retry, problem);
-                setTimeout(function () {
-                    app.review.selectLocLatLng(latlng, ref, retry + 1, problem);
-                    }, 200 + (100 * retry));
+                app.fork({
+                    descr:"selectLocLatLng retry",
+                    func:function () {
+                        app.review.selectLocLatLng(latlng, ref, retry + 1,
+                                                   problem); },
+                    ms:200 + (100 * retry)});
                 return;
             } }
         if(gplacesvc && ref) {
@@ -2170,29 +2182,32 @@ return {
         jt.out(prefix + disprevid + "helpfuldiv", 
                fpbHelpfulButtonHTML(prefix, disprevid, updrevid, true));
         //disconnect update call from screen update
-        setTimeout(function () {
-            var disprevsrc = 0;
-            if(disprevid !== updrevid) {
-                disprevsrc = app.lcs.getRef("rev", disprevid).rev.ctmid; }
-            url = "toghelpful?" + app.login.authparams() + 
-                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid + 
-                "&disprevid=" + disprevid + "&disprevsrc=" + disprevsrc + 
-                jt.ts("&cb=", "second");
-            jt.call("GET", url, null,
-                    function (reviews) {
-                        app.lcs.put("rev", reviews[0]);
-                        app.activity.updateFeeds(reviews[0]);
-                        jt.out(prefix + disprevid + "helpfuldiv",
-                               fpbHelpfulButtonHTML(
-                                   prefix, disprevid, updrevid)); },
-                    app.failf(function (code, errtxt) {
-                        if(!retries || retries < 3) {
-                            retries = retries || 0;
-                            return app.review.fpbToggleHelpful(
-                                prefix, disprevid, updrevid, retries + 1); }
-                        jt.err("Toggle helpful call failed " + code + 
-                               ": " + errtxt); }),
-                    jt.semaphore("review.toggleHelpful")); }, 50);
+        app.fork({
+            descr:"background server toggle helpful",
+            func:function () {
+                var disprevsrc = 0;
+                if(disprevid !== updrevid) {
+                    disprevsrc = app.lcs.getRef("rev", disprevid).rev.ctmid; }
+                url = "toghelpful?" + app.login.authparams() + 
+                    "&penid=" + app.pen.myPenId() + "&revid=" + updrevid + 
+                    "&disprevid=" + disprevid + "&disprevsrc=" + disprevsrc + 
+                    jt.ts("&cb=", "second");
+                jt.call("GET", url, null,
+                        function (reviews) {
+                            app.lcs.put("rev", reviews[0]);
+                            app.activity.updateFeeds(reviews[0]);
+                            jt.out(prefix + disprevid + "helpfuldiv",
+                                   fpbHelpfulButtonHTML(
+                                       prefix, disprevid, updrevid)); },
+                        app.failf(function (code, errtxt) {
+                            if(!retries || retries < 3) {
+                                retries = retries || 0;
+                                return app.review.fpbToggleHelpful(
+                                    prefix, disprevid, updrevid, retries + 1); }
+                            jt.err("Toggle helpful call failed " + code + 
+                                   ": " + errtxt); }),
+                        jt.semaphore("review.toggleHelpful")); },
+            ms:50});
     },
 
 
@@ -2204,26 +2219,29 @@ return {
         jt.out(prefix + disprevid + "rememberdiv",
                fpbRememberButtonHTML(prefix, disprevid, updrevid, true));
         //disconnect update call from screen update
-        setTimeout(function () {
-            var disprevsrc = 0;
-            if(disprevid !== updrevid) {
-                disprevsrc = app.lcs.getRef("rev", disprevid).rev.ctmid; }
-            url = "togremember?" + app.login.authparams() +
-                "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
-                "&disprevid=" + disprevid + "&disprevsrc=" + disprevsrc + 
-                jt.ts("&cb=", "second");
-            jt.call("GET", url, null,
-                    function (pens) {
-                        app.pen.noteUpdatedPen(pens[0]);
-                        app.login.updateAuthentDisplay();
-                        app.activity.resetRememberedFeed();
-                        jt.out(prefix + disprevid + "rememberdiv",
-                               fpbRememberButtonHTML(
-                                   prefix, disprevid, updrevid)); },
-                    app.failf(function (code, errtxt) {
-                        jt.err("Toggle remember call failed " + code +
-                               ": " + errtxt); }),
-                    jt.semaphore("review.toggleRemember")); }, 50);
+        app.fork({
+            descr:"background server toggle remember",
+            func:function () {
+                var disprevsrc = 0;
+                if(disprevid !== updrevid) {
+                    disprevsrc = app.lcs.getRef("rev", disprevid).rev.ctmid; }
+                url = "togremember?" + app.login.authparams() +
+                    "&penid=" + app.pen.myPenId() + "&revid=" + updrevid +
+                    "&disprevid=" + disprevid + "&disprevsrc=" + disprevsrc + 
+                    jt.ts("&cb=", "second");
+                jt.call("GET", url, null,
+                        function (pens) {
+                            app.pen.noteUpdatedPen(pens[0]);
+                            app.login.updateAuthentDisplay();
+                            app.activity.resetRememberedFeed();
+                            jt.out(prefix + disprevid + "rememberdiv",
+                                   fpbRememberButtonHTML(
+                                       prefix, disprevid, updrevid)); },
+                        app.failf(function (code, errtxt) {
+                            jt.err("Toggle remember call failed " + code +
+                                   ": " + errtxt); }),
+                        jt.semaphore("review.toggleRemember")); },
+            ms:50});
     },
 
 
@@ -2309,8 +2327,10 @@ return {
         state = {divid: divid, prefix: prefix,
                  idx: 0, revs: revs, prev: null, paused: false,
                  author: author, togcbn: togcbn};
-        setTimeout(function () {
-            app.review.revDispIterator(state); }, 50);
+        app.fork({descr:"revDispIterator start",
+                  func:function () {
+                      app.review.revDispIterator(state); },
+                  ms:50});
     },
 
 
@@ -2344,8 +2364,11 @@ return {
             jt.byId(state.divid).appendChild(elem); 
             state.idx += 1; }
         if(state.idx < state.revs.length) {  //resume after pause
-            setTimeout(function () {
-                app.review.revDispIterator(state); }, 200); }
+            app.fork({
+                descr:"revDispIterator loop",
+                func:function () {
+                    app.review.revDispIterator(state); },
+                ms:200}); }
         else {
             app.pcd.fetchmore("linkonly"); }
     },

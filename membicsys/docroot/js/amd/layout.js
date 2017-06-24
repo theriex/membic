@@ -333,8 +333,11 @@ return {
                 html];
         jt.out("headingdivcontent", jt.tac2html(html));
         if(initialFadeIn) {
-            setTimeout(function () {
-                jt.byId("revtypesdiv").style.opacity = 1.0; }, initialFadeIn);
+            app.fork({
+                descr:"Type icons display fade in",
+                func:function () {
+                    jt.byId("revtypesdiv").style.opacity = 1.0; },
+                ms:initialFadeIn});
             initialFadeIn = 0; }
         if(callbackf === -1) {
             typestate.callbackf(typestate.typename); }
@@ -389,7 +392,9 @@ return {
         jt.request("GET", url, null,
                    function (resp) {
                        displayDocContent(url, resp, overlay);
-                       setTimeout(app.layout.loadSlideDecks, 50); },
+                       app.fork({descr:"slide deck load",
+                                 func:app.layout.loadSlideDecks,
+                                 ms:50}); },
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt, overlay); },
                    jt.semaphore("layout.displayDoc"));
@@ -421,7 +426,9 @@ return {
                         deckFinishFunc:app.layout.deckFinish};
         if(typeof window.d3 === "undefined" ||   //mac ff idiom
            typeof d3ckit === "undefined") {      //mac ff idiom
-            return setTimeout(app.layout.displaySlideDecks, 300); }
+            return app.fork({descr:"display slide decks",
+                             func:app.layout.displaySlideDecks,
+                             ms:300}); }
         //everything loaded and stable, set up and go
         decknames.forEach(function (deckname) {
             var deck = app[deckname], 
@@ -675,9 +682,12 @@ return {
         } catch(e) {
             jt.log("shareViaAddToAny failed: " + e);
         }
-        setTimeout(function () {
-            if(typeof a2a_config === "undefined") { //mac ff required
-                jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } }, 3500);
+        app.fork({
+            descr:"verify a2a loaded ok",
+            func:function () {
+                if(typeof a2a_config === "undefined") { //mac ff required
+                    jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } },
+            ms:3500});
     },
 
 

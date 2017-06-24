@@ -190,7 +190,8 @@ return {
         mypen = app.pen.myPenName();
         if(mypen.profpic || action) {
             if(action === "Profile") {
-                setTimeout(app.pen.profSettings, 2200); }
+                app.fork({descr:"npProfChk action Profile",
+                          func:app.pen.profSettings, ms:2200}); }
             //case 1: Signed up to enable searching a theme
             //case 2: Signed up from main site landing page
             //case 3: Followed theme invite
@@ -225,15 +226,17 @@ return {
             data = jt.objdata({ctype: "Profile", parentid: penid, 
                                field: ctype, penid: penid,
                                refer: app.refer});
-            setTimeout(function () {
-                jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
-                        function () {
-                            app.refer = "";  //only count referrals once
-                            jt.log("bumpmctr?" + data + " success"); },
-                        function (code, errtxt) {
-                            jt.log("bumpmctr?" + data + " failed " + 
-                                   code + ": " + errtxt); }); },
-                       20); }
+            app.fork({
+                descr:"bypenid bumpmctr call",
+                func:function () {
+                    jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
+                            function () {
+                                app.refer = "";  //only count referrals once
+                                jt.log("bumpmctr?" + data + " success"); },
+                            function (code, errtxt) {
+                                jt.log("bumpmctr?" + data + " failed " + 
+                                       code + ": " + errtxt); }); },
+                ms:20}); }
         penref = app.lcs.getRef("pen", penid);
         if(penref.pen) {
             return app.pcd.display("pen", penid, tabname, penref.pen); }

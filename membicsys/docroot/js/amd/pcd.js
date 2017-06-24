@@ -1,4 +1,4 @@
-/*global app, jt, setTimeout, window, confirm, document */
+/*global app, jt, window, confirm, document */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -459,17 +459,20 @@ app.pcd = (function () {
             sumh = statSummaryHTML(); }
         else {
             sumh = "fetching stats...";
-            setTimeout(function () {  //fetch after initial display finished
-                var params = app.login.authparams() + "&ctype=" + dst.type +
-                    "&parentid=" + dst.id + jt.ts("&cb=", "minute");
-                jt.call("GET", "currstats?" + params, null,
-                        function (mctrs) {
-                            dst.obj.mctr = mctrs[0];
-                            jt.out("statsumdiv", statSummaryHTML()); },
-                        app.failf(function (code, errtxt) {
-                            jt.out("statsumdiv", "currstats failed " + code +
-                                   ": " + errtxt); }),
-                        jt.semaphore("pcd.fetchStats")); }, 200); }
+            app.fork({
+                descr:"stats data retrieval",
+                func:function () {  //fetch after initial display finished
+                    var params = app.login.authparams() + "&ctype=" + dst.type +
+                        "&parentid=" + dst.id + jt.ts("&cb=", "minute");
+                    jt.call("GET", "currstats?" + params, null,
+                            function (mctrs) {
+                                dst.obj.mctr = mctrs[0];
+                                jt.out("statsumdiv", statSummaryHTML()); },
+                            app.failf(function (code, errtxt) {
+                                jt.out("statsumdiv", "currstats failed " +
+                                       code + ": " + errtxt); }),
+                            jt.semaphore("pcd.fetchStats")); },
+                ms:200}); }
         html = ["div", {id: "statsdisplaydiv"},
                 [["div", {id: "statsumdiv"}, sumh],
                  ["div", {cla: "formbuttonsdiv", id: "statsvisbdiv"},
@@ -1000,8 +1003,11 @@ app.pcd = (function () {
             app.pcd.settings(dst.obj); }
         else if(expid) {
             //give the display a chance to settle before toggling
-            setTimeout(function () {
-                app.pcd.toggleRevExpansion("pcdr", expid); }, 600); }
+            app.fork({
+                descr:"selected membic expansion",
+                func:function () {
+                    app.pcd.toggleRevExpansion("pcdr", expid); },
+                ms:600}); }
     },
 
 
@@ -1113,7 +1119,9 @@ app.pcd = (function () {
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
         srchst.status = "waiting";
-        setTimeout(app.pcd.searchReviews, 400);
+        app.fork({descr:"search membics input check",
+                  func:app.pcd.searchReviews,
+                  ms:400});
     },
 
 
@@ -1351,7 +1359,8 @@ app.pcd = (function () {
         jt.out("contentdiv", jt.tac2html(html));
         if(app.solopage()) {
             customizeSoloPageDisplay(); }
-        setTimeout(backgroundVerifyObjectData, 100);
+        app.fork({descr:"background verify pen/theme",
+                  func:backgroundVerifyObjectData, ms:100});
         displayTab(dst.tab, expid);
     },
 
@@ -1708,8 +1717,11 @@ return {
         if(changed) {
             okfunc = function (updobj) {
                 if(dst.type === "coop") {
-                    setTimeout(function () {
-                        app.coop.verifyPenStash(dst.obj); }, 50); }
+                    app.fork({
+                        descr:"verify theme pen stash",
+                        func:function () {
+                            app.coop.verifyPenStash(dst.obj); },
+                        ms:50}); }
                 dst.obj = updobj;
                 app.layout.cancelOverlay();
                 app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
@@ -1755,7 +1767,9 @@ return {
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
                     jt.out("imgupstatdiv", txt); } }
-            setTimeout(app.pcd.monitorPicUpload, 800); }
+            app.fork({descr:"monitor pic upload",
+                      func:app.pcd.monitorPicUpload,
+                      ms:800}); }
     },
 
 
@@ -1854,9 +1868,12 @@ return {
                 jt.out("ppcdshoutdiv", jt.tac2html(html));
                 //make absolutely sure the share html is ready before
                 //showing the share buttons.
-                setTimeout(function () {
-                    app.layout.showShareButtons(dst.obj.name, 
-                                                dlo.url); }, 80); } }
+                app.fork({
+                    descr:"share button thread separation",
+                    func:function () {
+                        app.layout.showShareButtons(dst.obj.name, 
+                                                    dlo.url); },
+                    ms:80}); } }
     },
 
 
@@ -1956,7 +1973,9 @@ return {
                 jt.out("pcdsrchdispdiv", searchServerHTML()); } }
         else {  //no change to search parameters yet, monitor
             app.pcd.fetchmore("linkonly");
-            setTimeout(app.pcd.searchReviews, 400); }
+            app.fork({descr:"monitor search parameters",
+                      func:app.pcd.searchReviews,
+                      ms:400}); }
     },
 
 

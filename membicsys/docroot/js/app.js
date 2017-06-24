@@ -1,4 +1,4 @@
-/*global setTimeout, window, document, history, jtminjsDecorateWithUtilities */
+/*global window, document, history, jtminjsDecorateWithUtilities */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -34,6 +34,7 @@ var app = {},  //Global container for application level funcs and values
     app.pennames = {};  //id: penname local lookup for improved stat msgs
     app.coopnames = {}; //id: theme name local lookup to avoid server calls
     app.cooptags = {};  //id: theme hashtag local lookup
+    app.forks = [];  //tasks started through setTimeout
 
 
     ////////////////////////////////////////
@@ -51,6 +52,22 @@ var app = {},  //Global container for application level funcs and values
                 if(app.escapefuncstack.length > 0) {
                     app.onescapefunc = app.escapefuncstack.pop(); }
                 tempf(); } }
+    };
+
+
+    app.fork = function (tobj) {
+        var ft, forks = app.forks;
+        if(!tobj.descr || !tobj.func || !tobj.ms) {
+            jt.log("app.fork bad object descr: " + tobj.descr +
+                   ", func: " + tobj.func +
+                   ", ms: " + tobj.ms); }
+        if(forks.length && forks[forks.length - 1].descr === tobj.descr) {
+            ft = forks[forks.length - 1];
+            ft.count = ft.count || 1;
+            ft.count += 1; }
+        else {
+            forks.push(tobj); }
+        return setTimeout(tobj.func, tobj.ms);
     };
 
 
@@ -137,8 +154,16 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
-        setTimeout(app.login.init, 10);
-        //setTimeout(app.layout.displayDoc, 500);
+        //bootstrap completed, end this thread and begin next phase
+        app.fork({descr:"initial authentication",
+                  func:app.login.init, ms:10});
+        setTimeout(function () {
+            jt.log("setTimeout forked tasks:");
+            app.forks.forEach(function (tobj) {
+                var txt = "    " + tobj.descr + " (" + tobj.ms + "ms)";
+                if(tobj.count) {
+                    txt += " " + tobj.count + "x"; }
+                jt.log(txt); }); }, 14000);
     };
 
 

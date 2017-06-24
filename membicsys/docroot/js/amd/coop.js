@@ -118,15 +118,17 @@ return {
             data = jt.objdata({ctype: "Theme", parentid: coopid,
                                field: ctype, penid: app.pen.myPenId(),
                                refer: app.refer});
-            setTimeout(function () {
-                jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
-                        function () {
-                            app.refer = "";  //only count referrals once
-                            jt.log("bumpmctr?" + data + " success"); },
-                        function (code, errtxt) {
-                            jt.log("bumpmctr?" + data + " failed " + 
-                                   code + ": " + errtxt); }); },
-                       20); }
+            app.fork({
+                descr:"bump counters theme solopage",
+                func:function () {
+                    jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
+                            function () {
+                                app.refer = "";  //only count referrals once
+                                jt.log("bumpmctr?" + data + " success"); },
+                            function (code, errtxt) {
+                                jt.log("bumpmctr?" + data + " failed " + 
+                                       code + ": " + errtxt); }); },
+                ms:20}); }
         app.pcd.fetchAndDisplay("coop", coopid, tabname, expid);
     },
 

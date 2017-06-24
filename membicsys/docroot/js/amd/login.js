@@ -1,4 +1,4 @@
-/*global confirm, setTimeout, window, document, history, app, jt */
+/*global confirm, window, document, history, app, jt */
 
 /*jslint browser, white, fudge, for, multivar */
 
@@ -139,9 +139,10 @@ app.login = (function () {
             redurl = app.mainsvr + "#command=AltAuth" + (+idx);
             if(params.reqprof) {
                 redurl += "&view=pen&penid=" + params.reqprof; }
-            setTimeout(function () {
-                window.location.href = redurl; 
-            }, 20); }
+            app.fork({descr:"AltAuth redirect",
+                      func:function () {
+                          window.location.href = redurl; },
+                      ms:20}); }
         else {  //we are on app.mainsvr at this point
             if(typeof idx !== "number") {
                 idx = parseInt(idx, 10); }
@@ -243,8 +244,10 @@ app.login = (function () {
                 "forgot my password..."];
         jt.out("forgotpassdiv", jt.tac2html(html));
         jt.byId("infoimg").style.opacity = 0.4;
-        setTimeout(function () {
-            jt.byId("infoimg").style.opacity = 0.8; }, 2000);
+        app.fork({descr:"dim info button slightly",
+                  func:function () {
+                      jt.byId("infoimg").style.opacity = 0.8; },
+                  ms:2000});
         if(authname) {
             jt.byId("emailin").value = authname; }
         if(params.emailin) {
@@ -530,7 +533,8 @@ return {
 
     init: function () {
         logLoadTimes();
-        setTimeout(loadThirdPartyUtilities, 5);
+        app.fork({descr:"dynamic fonts",
+                  func:loadThirdPartyUtilities, ms:5});
         if(!loginhtml) {  //save original html in case needed later
             loginhtml = jt.byId("logindiv").innerHTML; }
         //do not change this ordering. Some auths leverage their index
@@ -594,7 +598,7 @@ return {
         var ascdiv = jt.byId("actsendcounterdiv"),
             diff, hrs, mins, secs, txt;
         if(ascdiv) {
-            diff = new Date().getTime() - actsent.getTime();
+            diff = Date.now() - actsent.getTime();
             hrs = Math.floor(diff / (60 * 60 * 1000));
             diff -= hrs * 60 * 60 * 1000;
             mins = Math.floor(diff / (60 * 1000));
@@ -605,7 +609,9 @@ return {
                 ", " + secs + " " + ((secs === 1) ? "second" : "seconds");
             jt.out("actsendcounterdiv", txt);
             jt.out("actcontactlinkspan", jt.tac2html(actSendContactHTML()));
-            setTimeout(app.login.displayActivationWaitTimer, 1000); }
+            app.fork({descr:"Activation wait time",
+                      func:app.login.displayActivationWaitTimer,
+                      ms:1000}); }
     },
 
 
@@ -888,7 +894,9 @@ return {
                      jt.out("logindiv", html);
                      setAuthentication("mid", objs[0].token, emaddr);
                      //wait briefly to give the db a chance to stabilize
-                     setTimeout(app.login.doNextStep, 3000); },
+                     app.fork({descr:"new account stabilization wait",
+                               func:app.login.doNextStep,
+                               ms:3000}); },
                  app.failf(function (ignore /*code*/, errtxt) {
                      jt.out("loginstatdiv", errtxt);
                      jt.out("loginbuttonsdiv", buttonhtml); }),
@@ -929,8 +937,10 @@ return {
         if(app.login.isLoggedIn()) {
             app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();
-                setTimeout(app.coop.processInvites, 1000);
-                setTimeout(app.coop.systemNotices, 4000);
+                app.fork({descr:"show any theme invitations",
+                          func:app.coop.processInvites, ms:1000});
+                app.fork({descr:"display system notices",
+                          func:app.coop.systemNotices, ms:4000});
                 app.history.dispatchState(state); }); }
         else {
             app.history.dispatchState(state); }

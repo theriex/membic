@@ -1,4 +1,4 @@
-/*global setTimeout, window, document, app, jt */
+/*global window, document, app, jt */
 
 /*jslint browser, multivar, white, fudge, for */
 
@@ -138,22 +138,27 @@ app.activity = (function () {
         var data = jt.objdata({ctype: "Site", parentid: 0,
                                field: "sitev", penid: app.pen.myPenId(),
                                refer: app.refer}), html;
-        setTimeout(function () {
-            jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
-                    function () {
-                        app.refer = "";  //only count referrals once
-                        jt.log("bumpmctr?" + data + " success"); },
-                    function (code, errtxt) {
-                        jt.log("bumpctr?" + data + " failed " + 
-                               code + ": " + errtxt); }); },
-                   300);
+        app.fork({
+            descr:"bump stat counters",
+            func:function () {
+                jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
+                        function () {
+                            app.refer = "";  //only count referrals once
+                            jt.log("bumpmctr?" + data + " success"); },
+                        function (code, errtxt) {
+                            jt.log("bumpctr?" + data + " failed " + 
+                                   code + ": " + errtxt); }); },
+            ms:300});
         if(urlToRead) {
             if(!app.pen.myPenId()) {
                 jt.err("You must be signed in to make a membic from a url parameter."); }
             else {
-                setTimeout(function () {
-                    app.review.readURL(jt.dec(urlToRead));
-                    urlToRead = ""; }, 400); } }
+                app.fork({
+                    descr:"read URL from parameters",
+                    func:function () {
+                        app.review.readURL(jt.dec(urlToRead));
+                        urlToRead = ""; },
+                    ms:400}); } }
         html = "";
         if(app.pen.myPenId()) {
             lastDisplayFeedtype = feedtype;
@@ -294,7 +299,7 @@ return {
         feedtype = feedtype || "all";
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
-        if(feedmeta.stale && feedmeta.stale < new Date().getTime()) {
+        if(feedmeta.stale && feedmeta.stale < Date.now()) {
             feedmeta.stale = 0;
             feeds = {}; }
         if(feeds[feedtype]) {
@@ -304,14 +309,14 @@ return {
         if(params) {
             params += "&penid=" + app.pen.myPenId() + "&"; }
         params += "revtype=" + feedtype + jt.ts("&cb=","hour");
-        time = new Date().getTime();
+        time = Date.now();
         jt.call("GET", "revfeed?" + params, null,
                 function (reviews) {
-                    time = new Date().getTime() - time;
+                    time = Date.now() - time;
                     jt.log("revfeed returned in " + time/1000 + " seconds.");
                     app.lcs.putAll("rev", reviews);
                     feedmeta.stale = feedmeta.stale || 
-                        new Date().getTime() + (60 * 60 * 1000);
+                        Date.now() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
                     jt.out("contentdiv", "Data retrieval failed code " + code + 
@@ -485,12 +490,16 @@ return {
                 case 1:
                     html += "<br/>Slow server day...";
                     jt.out("revactdiv", html);
-                    bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
+                    bootmon.tout = app.fork({
+                        descr:"boot monitor case 1",
+                        func:app.activity.bootMonitor, ms:2000});
                     return;
                 case 2:
                     html += "<br/>...Like really slow...";
                     jt.out("revactdiv", html);
-                    bootmon.tout = setTimeout(app.activity.bootMonitor, 2000);
+                    bootmon.tout = app.fork({
+                        descr:"boot monitor case 2",
+                        func:app.activity.bootMonitor, ms:2000});
                     return;
                 default:
                     html += "<br/><br/>Ok, there's no way this should" +
