@@ -49,8 +49,8 @@ button, .loginbutton, .formbutton, .filesellab {
 #infoimg { width:18px; height:18px; padding:2px 10px 0px 5px; 
            transition:opacity 2s; }
 #topactionsdiv { display:inline-block; vertical-align:top; }
-#topbuttonsdiv { height:50px; vertical-align:top; }
-.topbuttonimg { padding:10px 5px 0px 15px; }
+#topbuttonsdiv { height:50px; vertical-align:top; margin-left:-5px; }
+.topbuttonimg { padding:10px 16px 0px 0px; }
 #topproflinkdiv { }
 .taslinkspan { font-size:small; padding-left:5px; padding-right:10px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
