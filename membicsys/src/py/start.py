@@ -130,7 +130,7 @@ interimcont = """
       The collaborative memory project. 
       <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
          onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
-        <img src="img/gotolink.png" style="width:18px;height:18px;"/> Introduction</a> <br/>
+        Introduction</a> <br/>
 """
 
 

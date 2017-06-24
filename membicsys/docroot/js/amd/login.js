@@ -935,6 +935,9 @@ return {
         if(params.url) {
             app.activity.setURLToRead(params.url); }
         if(app.login.isLoggedIn()) {
+            //remove the login form before the network call so the form
+            //isn't hanging around excessively on a slow network.
+            app.login.updateAuthentDisplay("hide");
             app.pen.getPen("", function (ignore /*pen*/) {
                 app.login.updateAuthentDisplay();
                 app.fork({descr:"show any theme invitations",

@@ -16,6 +16,7 @@ app.layout = (function () {
         decknames = [],
         autoplay = false,
         initialFadeIn = 1200,
+        tightLeftX = 10,
 
 
     ////////////////////////////////////////
@@ -137,7 +138,7 @@ app.layout = (function () {
         if(overlay) {
             html = app.layout.dlgwrapHTML(title, html);
             //openDialog deals with the y scroll offset as needed.
-            app.layout.openDialog({x: 20, y: 40}, html); }
+            app.layout.openDialog({x: tightLeftX, y: 40}, html); }
         else {
             jt.out("contentdiv", html); }
         convertDocLinks();
@@ -489,8 +490,8 @@ return {
         coords = coords || {};  //default x and y separately
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 100);
         coords.y = coords.y || 60;  //default y if not specified
-        if(coords.x > (app.winw / 2)) {
-            coords.x = 20; }  //display too tight, use default left pos
+        if(coords.x > (app.winw / 2) || app.winw < 350) {
+            coords.x = tightLeftX; }  //display too tight, use default left pos
         coords.y = coords.y + jt.byId("bodyid").scrollTop;  //logical height
         dlgdiv.style.left = String(coords.x) + "px";
         dlgdiv.style.top = String(coords.y) + "px";
@@ -573,8 +574,8 @@ return {
         coords = coords || {};
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
         coords.y = coords.y || 200;
-        if(coords.x > (app.winw / 2)) {
-            coords.x = 20; }  //display too tight, just indent a bit
+        if(coords.x > (app.winw / 2) || app.winw < 350) {
+            coords.x = tightLeftX; }
         coords.y = coords.y + jt.byId("bodyid").scrollTop;  //logical height
         odiv.style.left = String(coords.x) + "px";
         odiv.style.top = String(coords.y) + "px";

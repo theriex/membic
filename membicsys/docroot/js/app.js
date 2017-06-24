@@ -35,6 +35,7 @@ var app = {},  //Global container for application level funcs and values
     app.coopnames = {}; //id: theme name local lookup to avoid server calls
     app.cooptags = {};  //id: theme hashtag local lookup
     app.forks = [];  //tasks started through setTimeout
+    app.wait = {divid:"", timeout:null};
 
 
     ////////////////////////////////////////
@@ -163,7 +164,7 @@ var app = {},  //Global container for application level funcs and values
                 var txt = "    " + tobj.descr + " (" + tobj.ms + "ms)";
                 if(tobj.count) {
                     txt += " " + tobj.count + "x"; }
-                jt.log(txt); }); }, 14000);
+                jt.log(txt); }); }, 30000);
     };
 
 
@@ -207,6 +208,7 @@ var app = {},  //Global container for application level funcs and values
             jt.byId("headingdiv").style.display = "none";
             jt.byId("bottomnav").style.display = "none";
             jt.byId("topsectiondiv").style.display = "none"; }
+        jt.out("interimcontentdiv", "");  //have script, so clear placeholder
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
@@ -305,7 +307,12 @@ var app = {},  //Global container for application level funcs and values
     app.displayWaitProgress = function(count, millis, divid, msg, msg2) {
         var html, i = 0, src;
         if(jt.byId("loadstatusdiv")) {  //use status div id available
-            divid = "loadstatusdiv"; } 
+            divid = "loadstatusdiv"; }
+        if(app.wait.divid && app.wait.divid !== divid) {
+            if(count) {  //this is an old thread that has been superseded
+                return; }
+            clearTimeout(app.wait.timeout); } //stop previous thread
+        app.wait.divid = divid;  //track this wait task as the currrent one
         if(!count) {  //initial call, count is zero
             html = ["div", {cla: "waitdiv"},
                     [["div", {id: "waitmsgdiv"}, msg],
@@ -328,10 +335,12 @@ var app = {},  //Global container for application level funcs and values
             if(count > 10) {
                 msg2 = "Waiting for data...";
                 jt.out("waitserverdiv", msg2); }
-            setTimeout(function () {
-                app.displayWaitProgress(count + 1, millis, 
-                                        divid, msg, msg2); },
-                       millis); }
+            app.wait.timeout = app.fork(
+                {descr:"wait progress " + divid,
+                 func:function () {
+                     app.displayWaitProgress(count + 1, millis, 
+                                             divid, msg, msg2); },
+                 ms:millis}); }
     };
 
 

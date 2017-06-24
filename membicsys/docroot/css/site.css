@@ -97,7 +97,7 @@ button, .loginbutton, .formbutton, .filesellab {
   background:-webkit-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
   border-radius:10px; max-width:85%; border: 1px solid #666666; 
   box-shadow:10px 10px 5px #888888; }
-#dlgdiv { position:absolute; left:20px; top:60px;
+#dlgdiv { position:absolute; left:10px; top:60px;
   visibility:hidden; 
   max-width:95%;
   padding:1px;
@@ -413,7 +413,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
   list-style-image: url('../img/arrow12right.png'); }
 .aboutstatementsdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
-.slidestextspan { font-size:small; }
+.slidestextspan { font-size:small; display:none; }
 .decktextdiv { background-image: url('../img/bleachscrub.png');
   padding:5px; margin:10px; height:213px; overflow:scroll; 
   font-size:medium; }
