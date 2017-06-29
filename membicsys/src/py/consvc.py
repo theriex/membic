@@ -408,7 +408,7 @@ class AmazonInfo(webapp2.RequestHandler):
         svc = get_connection_service("Amazon")
         # Note the parameters must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
-        params += "&AssociateTag=membic-20"
+        params += "&AssociateTag=epinova-20"
         params += "&Condition=All"
         params += "&IdType=ASIN"
         params += "&ItemId=" + asin
@@ -446,7 +446,7 @@ class AmazonSearch(webapp2.RequestHandler):
         svc = get_connection_service("Amazon")
         # Params must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
-        params += "&AssociateTag=membic-20"
+        params += "&AssociateTag=epinova-20"
         params += "&Keywords=" + enc(srchtxt)
         params += "&Operation=ItemSearch"
         params += "&SearchIndex=" + amznidx

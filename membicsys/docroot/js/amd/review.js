@@ -251,7 +251,7 @@ app.review = (function () {
         if(!rev.url) {
             return; }  //nothing to fix
         //Amazon detail urls have extra encoding that needs to be removed
-        if(rev.url.indexOf("%3Dmembic-20%26") >= 0) {
+        if(rev.url.indexOf("%3Depinova-20%26") >= 0) {
             rev.url = jt.dec(rev.url); }
     },
 
