@@ -235,6 +235,7 @@ return {
             body = jt.byId("bodyid");
             body.style.paddingLeft = "8%";
             body.style.paddingRight = "8%"; }
+        app.layout.rotateBackgroundPic();
     },
 
 
@@ -431,6 +432,8 @@ return {
                              func:app.layout.displaySlideDecks,
                              ms:300}); }
         //everything loaded and stable, set up and go
+        deckdisp.vidw = Math.min((app.winw - 40), 420);
+        jt.byId(deckdisp.divid).style.width = deckdisp.vidw + "px";
         decknames.forEach(function (deckname) {
             var deck = app[deckname], 
             decktextdiv = jt.byId(deckname + "textdiv");
@@ -728,8 +731,31 @@ return {
     },
     getSiteRoot: function () {
         return siteroot;
-    }
+    },
 
+
+    rotateBackgroundPic: function () {
+        var body = jt.byId("bodyid"), picf,
+            //pic00 is reserved as a placeholder and is not in the rotation
+            pics = ["SnaefellsnesPenninsula.jpg", 
+                    "BigIslandKona.jpg",
+                    "RedwoodMoss.jpg", 
+                    "BlueHill.jpg",
+                    "QueeensGardenBryce.jpg", 
+                    //"Iceland.jpg",
+                    "GlassHouseLillies.jpg", 
+                    "BryceWood.jpg", 
+                    "NorthShore.jpg"];
+        //bgpicidx is 1 based for easier init and to avoid confusion with pic00
+        if(!app.bgpicidx) {  //choose starting index based on todays date
+            app.bgpicidx = (new Date().getDate() % pics.length) + 1; }
+        if(app.bgpicidx > pics.length) {  //one-based bgpicidx
+            app.bgpicidx = 1; }
+        picf = "../img/sbg/" + pics[app.bgpicidx - 1];
+        jt.log("switching background to " + picf);
+        body.style.backgroundImage = "url('" + picf + "')";
+        app.bgpicidx += 1;
+    }
 
 };  //end of returned functions
 }());

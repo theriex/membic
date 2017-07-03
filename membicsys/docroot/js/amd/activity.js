@@ -297,6 +297,7 @@ return {
         var params, time;
         app.verifyHome();
         feedtype = feedtype || "all";
+        app.layout.rotateBackgroundPic();
         app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
         if(feedmeta.stale && feedmeta.stale < Date.now()) {
@@ -572,8 +573,6 @@ return {
                 elem.style.display = "none";
                 jt.byId("profdivorig" + revid).style.display = "block"; } }
     }
-
-
 
 }; //end of returned functions
 }());

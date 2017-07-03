@@ -2354,6 +2354,7 @@ return {
             authlink = authlinkHTML(state.prefix, revdivid, rev, 
                                     state.author, state.idx);
             elem = document.createElement("div");
+            elem.className = "fpcontdiv";
             elem.innerHTML = jt.tac2html(
                 ["div", maindivattrs,
                  [authlink,

@@ -420,25 +420,29 @@ app.login = (function () {
         //if no pen name, then the app is prompting for that and there
         //is no authenticated menu displayed.
         if(mypen) {
-            html = [["a", {id: "introa", href: "#intro", title: "Information",
-                           onclick: jt.fs(
-                               "app.layout.displayDoc('docs/about.html')")},
-                     ["img", {id: "infoimg", src: "img/infotrim.png",
-                              style: "opacity:0.8;"}]],
-                    ["a", {href: "#SignOut",
-                           onclick: jt.fs("app.login.logout()")},
-                     ["span", {cla: "taslinkspan"},
-                      "Sign out"]]];
+            html = ["div", {id:"infosignoutdiv"},
+                    [["a", {id: "introa", href: "#intro", title: "Information",
+                            onclick: jt.fs(
+                                "app.layout.displayDoc('docs/about.html')")},
+                      ["img", {id: "infoimg", src: "img/infotrim.png",
+                               style: "opacity:0.8;"}]],
+                     ["a", {href: "#SignOut",
+                            onclick: jt.fs("app.login.logout()")},
+                      ["span", {cla: "taslinkspan"},
+                       "Sign out"]]]];
             jt.out("toprightdiv", jt.tac2html(html));
             html = [["div", {id: "topbuttonsdiv"},
-                     [["a", {href: "#profile", title: "Your membics",
+                     [["a", {href: "#profile", cla: "topbuttonlink",
+                             title: "Your membics",
                              onclick: jt.fs("app.login.topnav('mymembics')")},
                        ["img", {cla: "topbuttonimg",
                                 src: "img/profile.png"}]],
-                      ["a", {href: "#write", title: "Make a membic",
+                      ["a", {href: "#write", cla: "topbuttonlink",
+                             title: "Make a membic",
                              onclick: jt.fs("app.login.topnav('write')")},
                        ["img", {cla: "topbuttonimg",
                                 src: "img/writenew.png"}]]]]];
+            jt.byId("topactionsdiv").style.display = "inline-block";
             jt.out("topactionsdiv", jt.tac2html(html)); }
     },
 
@@ -840,6 +844,7 @@ return {
         app.login.updateAuthentDisplay();
         jt.out("sysnoticediv", "");
         jt.out("topactionsdiv", "");
+        jt.byId("topactionsdiv").style.display = "none";
         app.login.init();
         if(errprompt) {
             jt.err(errprompt); }

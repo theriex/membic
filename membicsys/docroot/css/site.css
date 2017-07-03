@@ -22,10 +22,10 @@ body {
   margin:0px;
   color:#111111;
   height: 100%;
-  background-repeat: no-repeat;
+  background-image: url('../img/sbg/00pic.png');
   background-attachment: fixed;
-  background-color: #d8d8dd;
-  background: linear-gradient(#e6e7e9 60%, #d8d8dd);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 img { border:0px; vertical-align:middle; }
@@ -43,32 +43,50 @@ button, .loginbutton, .formbutton, .filesellab {
 
 /* >> topsectiondiv and contained elements */
 #topsectiondiv { }
-#topleftdiv { float:left; }
-#logodiv { cursor:pointer; display:inline-block; } 
+#topleftdiv { float:left; border-radius:20px; }
+#logodiv { cursor:pointer; display:inline-block; margin:0;
+           background-color:#ddd;
+           border-top-left-radius:10px;
+           border-bottom-left-radius:10px;
+           border-bottom-right-radius:10px;
+} 
 #logodiv, #logoimg { width:78px; height:78px; }
 #infoimg { width:18px; height:18px; padding:2px 10px 0px 5px; 
            transition:opacity 2s; }
-#topactionsdiv { display:inline-block; vertical-align:top; }
-#topbuttonsdiv { height:50px; vertical-align:top; margin-left:-5px; }
+#topactionsdiv { display:none; vertical-align:top; 
+                 margin:0px 0px 0px -10px;
+                 padding:0px 0px 10px 5px;
+                 background-color:#ddd; 
+                 border-top-right-radius:10px;
+                 border-bottom-right-radius:10px; }
+#topbuttonsdiv { height:50px; vertical-align:top; }
+.topbuttonlink { }
 .topbuttonimg { padding:10px 16px 0px 0px; }
 #topproflinkdiv { }
 .taslinkspan { font-size:small; padding-left:5px; padding-right:10px; }
 #rememberedcountspan { font-size:small; display:inline-block; 
   position:relative; top:-12px; left:-12px; }
-#toprightdiv { float:right; padding:0px 2px 2px 0px; }
+#toprightdiv { float:right; 
+               padding:0px 2px 2px 0px; 
+               margin:2px 0px 2px 0px;
+               opacity:0.95;
+               background-color:#e6e7e9; border-radius:20px; }
+#infosignoutdiv { margin-top:-2px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { height:30px; text-align:right; }
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
-               transition:opacity 1s; }
-.revtypelink { padding:0px 3px; }
+               transition:opacity 1s; 
+               padding:2px 0px 5px 0px; }
+.revtypelink { margin:0px 3px; padding:0px 0px 4px 0px; opacity:0.8;
+               background-color:#e6e7e9; border-radius:10px; }
 #headingdiv { min-height:80px; }
 #headingdivcontent { width:288px; margin:auto; }
 #sysnoticediv { font-size:small; }
 #sysnoticecontentdiv { padding:10px; background:#ffad51; border-radius:10px; }
 
 /* >> main display area and contained elements */
-.disptitlediv { padding-bottom:5px; 
-  font-size:x-small; font-weight:bold; color:#444; }
+.disptitlediv { padding:0px 0px 5px 5px; background-color:#e6e7e9;
+  font-size:x-small; font-weight:bold; color:#444; border-radius:10px; }
 .collapse { border-collapse:collapse; }
 #centerhdiv { font-size:x-large; font-weight:bold; }
 #centerhdiv { display:table; margin:0px auto; }
@@ -164,13 +182,13 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .pcdpic { max-width:125px; max-height:125px; }
 #pcdouterdiv { position:relative; }
 #pcddescrdiv { height:125px; overflow:auto; }
-#pcddescrfadediv { position:absolute; 
-  top:115px; left:0px; height:10px; width:100%; 
-  background:linear-gradient(rgba(230,231,233,0), #e6e7e9); }
+#pcduppercontentdiv { background:#e6e7e9; opacity:0.9; 
+  border-radius:10px; }
+#pcdnamediv { padding-top:5px; }
 #pcdsettingslink { padding:0px 0px 0px 10px; }
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
-#tabsdiv { clear:both; }
+#tabsdiv { clear:both; background:#e6e7e9; opacity:0.9; }
 #tabsul { }
 #tabsdiv ul { list-style:none; padding:0; margin:0; }
 #tabsdiv ul li { display:inline; 
@@ -340,9 +358,11 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> activity layout */
 #feedrevsdiv { padding:0px 0px 50px 0px; }
-.fpdiv { clear:both; margin:0px 0px 20px 0px; }
+.fpcontdiv { margin:0px 0px 8px 0px; padding:0; }
+.fpdiv { clear:both; padding:0; margin:0; min-height:100px;
+         background-color:#e6e7e9; opacity:0.98; border-radius:10px; }
 .fpprofdiv, .fpprofdivsp { display:inline-block; width:50px; height:80px; 
-  overflow:hidden; float:left; }
+  overflow:hidden; float:left; padding-top:20px; }
 .fpprofdivsp { margin-right:5px; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
 .feedprefimg { width:16px; height:16px; padding: 2px; }
@@ -403,16 +423,31 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 /* >> docs layout */
 .superscript { vertical-align:super; font-size:50%; line-height:normal; }
 .quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
-.doccontentdiv { max-width:500px; margin:auto; }
-#aboutborderdiv { padding:10px; background-color:#ffbe74; border-radius:10px; }
-#aboutoverviewdiv { padding:5px; font-size:large; background-color: #e6e7e9 }
+.aboutcontentdiv { text-align:center; }
+#aboutoverviewdiv { padding:5px; font-size:large; text-align:left;
+  display:inline-block; min-width:280px; /* small phone */
+  background-image:url('../img/e6e7e9p80.png');
+  border:10px solid #ffbe74; border-radius:10px; }
 .aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
-.aboutintrodiv { font-size:large; font-weight:bold; font-style:italic; }
+#d3ckitdiv { position:relative; background-color:#fff; opacity:0.8; }
 #freedetdiv { font-size:medium; font-weight:normal; font-style:normal; }
-.aboutstatementsdiv { padding:0px 10px 10px 10px; font-size:small; }
-.aboutstatementsdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
+.aboutstatementsdiv, .aboutenddiv { margin:10px auto;
+  padding:0px 10px; font-size:small; text-align:left;
+  background-image:url('../img/e6e7e9p80.png'); border-radius:10px; }
+.aboutstatementsdiv { display:inline-block; }
+.aboutenddiv { max-width:420px; }
+.arrowul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
   list-style-image: url('../img/arrow12right.png'); }
-.aboutstatementsdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
+.arrowul li { font-size:medium; margin:10px 0px 0px 0px;
+  padding:0px 0px 0px 5px;
+  background:#e6e7e9; opacity:0.8; border-radius:10px; }
+.nobulletul { list-style:none; margin:0px 4px; padding:0px 10px 2px; 10px; }
+.nobulletul li { font-size:medium; margin:8px 0px;
+  padding:0px 0px 0px 5px;
+  background:#e6e7e9; opacity:0.8; border-radius:10px; }
+.toplinediv { padding:5px 0px 0px 0px; }
+#aboutbottomdiv { font-size:xx-small; text-align:center; word-spacing:30px;
+  padding:0; max-width:420px; margin:auto; }
 .slidestextspan { font-size:small; display:none; }
 .decktextdiv { background-image: url('../img/bleachscrub.png');
   padding:5px; margin:10px; height:213px; overflow:scroll; 
@@ -446,6 +481,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 .rectbb { fill:#ffd2a4; stroke:#271400; cursor:pointer; }
 .rectbt { cursor:pointer; }
+
+.waitdiv { background:#e6e7e9; opacity:0.8; border-radius:10px; }
 
 
 /* >> stats page layout */

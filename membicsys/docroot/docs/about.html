@@ -9,22 +9,8 @@
 </head>
 <body>
 
-<div class="doccontentdiv">
+<div class="aboutcontentdiv">
 
-<div class="aboutintrodiv">
-
-<a href="https://membic.wordpress.com/2017/03/16/using-a-membic-theme-for-references-on-your-website/">Add a Reading Page to Your Site.</a>
-<!--
-<a href="#free" onclick="app.layout.togdisp('freedetdiv');return false;">
-<span class="superscript">free</span></a>
-<div id="freedetdiv" style="display:none;">
-The membic service is free and always will be.
-</div>
--->
-
-</div>
-
-<div id="aboutborderdiv">
 <div id="aboutoverviewdiv">
 
 <div id="d3ckitdiv" style="max-width:400px;min-height:186px;">
@@ -32,7 +18,7 @@ The membic service is free and always will be.
 
 <!-- use relative path for hard links so crawlers don't get confused. -->
 <div class="aboutstatementsdiv">
-<ul>
+<ul class="arrowul">
   <li><a href="#IsThisForMe"
          onclick="app.layout.runSlideDeck('deckisfor');return false;">
       <span id="deckisforspan">Is this for me?</span></a>
@@ -198,15 +184,16 @@ The membic service is free and always will be.
 </div>
 
 </div> <!-- aboutoverviewdiv -->
-</div> <!-- aboutborderdiv -->
 
-<div class="aboutstatementsdiv">
-<p>Details and advanced use at
-<a href="https://membic.wordpress.com">the blog</a>.</p>
-
-<ul>
+<div class="aboutstatementsdiv" id="aboutblogdiv">
+  <div class="toplinediv">
+    Details and advanced use at 
+    <a href="https://membic.wordpress.com">the blog</a>.
+  </div>
+<ul class="nobulletul">
 <li><a href="https://membic.wordpress.com/2016/02/17/introducing-membic/">Introducing Membic: Trusted Collaborative Memory</a>
 <li><a href="https://membic.wordpress.com/2017/05/26/what-you-read-who-you-are/">What You Read, Who You Are</a>
+<li><a href="https://membic.wordpress.com/2017/03/16/using-a-membic-theme-for-references-on-your-website/">Add a Reading Page to Your Site.</a>
 <li><a href="https://membic.wordpress.com/2017/01/23/connecting-membic-to-hootsuite/">Connecting Membic to Hootsuite</a>
 <!--
 <li><a href="https://membic.wordpress.com/2016/03/12/collaborative-vs-social/">Collaborative vs Social</a>
@@ -217,17 +204,16 @@ The membic service is free and always will be.
 </ul>
 </div>
 
-<div class="aboutstatementsdiv"></div> <!-- spacer -->
-<div class="aboutstatementsdiv">
-Contact us 
-<a href="https://github.com/theriex/membic/issues">on GitHub</a>.<!-- $ABOUTCONTACT -->
-</div>
 
-<div style="font-size:xx-small;text-align:center;word-spacing:30px;padding:0px 0px 10px 0px">
-  <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html',true);return false;">TERMS</a>
-  <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html',true);return false;">PRIVACY</a>
-  <a href="docs/definition.html" onclick="app.layout.displayDoc('docs/definition.html',true);return false;">DEFINITION</a>
-  <span style="word-spacing:5px;"><a href="docs/howto.html" onclick="app.layout.displayDoc('docs/howto.html',true);return false;">HOW TO</a></span>
+<div class="aboutenddiv">
+Always free. Contact us 
+<a href="https://github.com/theriex/membic/issues">on GitHub</a>.<!-- $ABOUTCONTACT -->
+  <div id="aboutbottomdiv">
+    <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html',true);return false;">TERMS</a>
+    <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html',true);return false;">PRIVACY</a>
+    <a href="docs/definition.html" onclick="app.layout.displayDoc('docs/definition.html',true);return false;">DEFINITION</a>
+    <span style="word-spacing:5px;"><a href="docs/howto.html" onclick="app.layout.displayDoc('docs/howto.html',true);return false;">HOW TO</a></span>
+  </div>
 </div>
 
 <div id="returnlinkdiv" style="text-align:center; display:none;">

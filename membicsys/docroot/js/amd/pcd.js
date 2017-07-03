@@ -1327,7 +1327,7 @@ app.pcd = (function () {
         defs = dst[dst.type];
         shtxt = obj[defs.descfield] || "";
         html = ["div", {id: "pcdouterdiv"},
-                [["div", {id: "pcdupperdiv"},
+                [["div", {id: "pcduppercontentdiv"},
                   [["div", {id: "pcdpicdiv"},
                     ["img", {cla: "pcdpic", src: picImgSrc(obj)}]],
                    ["div", {id: "pcddescrdiv"},
@@ -1344,12 +1344,11 @@ app.pcd = (function () {
                       ["span", {cla: "shoutspan",
                                 style: "font-size:" + 
                                 ((shtxt.length > 300)? "medium" : "large") +
-                               ";"}, 
+                                ";"}, 
                        jt.linkify(shtxt)]]
                      // ["div", {id: "pcdhashdiv"},
                      //  (obj.hashtag? ("#" + obj.hashtag) : "")]
                     ]]]],
-                 ["div", {id: "pcddescrfadediv"}],
                  ["div", {id: "tabsdiv"},
                   [["ul", {id: "tabsul"},
                     tabsHTML()],
