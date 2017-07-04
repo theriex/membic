@@ -31,18 +31,22 @@ app.pcd = (function () {
                          accsrc: "?view=coop&coopid=" } },
         knowntabs = { latest:    { href: "#latestmembics", 
                                    img: "img/tablatest.png",
+                                   stitle: "Recent",
                                    mtitle: "My recent membics",
                                    otitle: "Recent membics from $NAME"},
                       favorites: { href: "#favoritemembics",
                                    img: "img/top.png",
+                                   stitle: "Top",
                                    mtitle: "My top membics",
                                    otitle: "Top membics from $NAME"},
                       memo:      { href: "#rememberedmembics",
                                    img: "img/tabmemo.png",
+                                   stitle: "Remembered",
                                    mtitle: "My remembered membics",
                                    otitle: "Remembered membics"},
                       search:    { href: "#searchmembics",
                                    img: "img/search.png",
+                                   stitle: "Searched",
                                    mtitle: "Search my membics",
                                    otitle: "Search membics from $NAME"},
                       prefpens:  { href: "#preferredpens",
@@ -968,11 +972,11 @@ app.pcd = (function () {
         ico = ["img", {cla: "tabico", src: knowntabs[tabname].img}];
         if(knowntabs[tabname].img === "calico") {
             ico = calendarIconHTML(); }
-        html = ["li", {id: tabname + "li", cla: "unselectedTab"},
-                ["a", {href: knowntabs[tabname].href,
-                       title: titleForTab(knowntabs[tabname]),
-                       onclick: jt.fs("app.pcd.tabsel('" + tabname + "')")},
-                 ico]];
+        html = ["a", {cla:"tablink", id:"tablink" + tabname,
+                      href:knowntabs[tabname].href,
+                      title:titleForTab(knowntabs[tabname]),
+                      onclick:jt.fs("app.pcd.tabsel('" + tabname + "')")},
+                 ico];
         return html;
     },
 
@@ -1052,8 +1056,9 @@ app.pcd = (function () {
     //Called from layout.displayTypes when membic type selected
     displaySearch = function () {
         var html;
-        html = [["div", {id: "pcdsrchdiv"}],
-                ["div", {id: "pcdsrchdispdiv"}]];
+        html = [["div", {id: "pcdkeysrchdiv"}],
+                ["div", {id: "pcdsrchdispdiv"}],
+                ["div", {id: "pcdsrvsrchdiv"}]];
         jt.out("pcdcontdiv", jt.tac2html(html));
         if(dst.obj.keywords) {
             srchst.mode = "srchkey"; }
@@ -1176,40 +1181,57 @@ app.pcd = (function () {
     },
 
 
-    inFrame = function () {
-        try {
-            if(window.self !== window.top) {
-                return true; }
-        } catch (ignore) {  //same origin security failure
-            return true;
-        }
-        return false;
+    showContentActions = function (tabname) {
+        var html, rssurl, actdiv = jt.byId("pcdactdiv");
+        if(!actdiv) {
+            return; }
+        actdiv.style.display = "none";
+        html = "";
+        if(tabname.match(/^(latest|favorites|memo|search)$/)) {
+            html = [["div", {id:"downloadmenudiv", 
+                             style:"display:inline-block;"},
+                     [["a", {href:"#Download", id: "downloadlink",
+                             title:"Download " + knowntabs[tabname].stitle,
+                             onclick:jt.fs("app.pcd.toggleDownloadsDisp()")},
+                       [["img", {src:"img/download.png", 
+                                 cla:"downloadlinkimg"}],
+                        "Download " + knowntabs[tabname].stitle]],
+                      ["div", {id:"downloadlinksdiv", 
+                               style:"display:none;"}]]]]; }
+        if(tabname === "latest" && dst.type === "coop") {
+            rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
+            html.push([" | ",
+                       ["a", {href:"#Subscribe", id:"rsslink",
+                              title:"Subscribe RSS",
+                              onclick:jt.fs("window.open('" + rssurl + "')")},
+                        [["img", {src:"img/rssicon.png", 
+                                  cla:"dlrssimg"}],
+                         "Subscribe RSS"]]]); }
+        if(tabname === "search") {
+            html.push([" | ",
+                       ["div", {id:"pcdsrchindiv",
+                                style:"display:inline-block;"},
+                        ["input", {type:"text", id:"pcdsrchin", size:30,
+                                   placeholder: "Search for...",
+                                   value: srchst.qstr}]]]); }
+        if(html) {
+            html = ["div", {id:"pcdactcontentdiv"}, html];
+            actdiv.innerHTML = jt.tac2html(html);
+            actdiv.style.display = "inline-block"; }
     },
 
 
     displayTab = function (tabname, expid) {
-        var dispfunc, html;
+        var dispfunc;
         tabname = tabname || defaultTabName();
-        Object.keys(knowntabs).forEach(function (kt) {
-            var elem = jt.byId(kt + "li");
+        Object.keys(knowntabs).forEach(function (tabkey) {
+            var elem = jt.byId("tablink" + tabkey);
             if(elem) {
-                elem.className = "unselectedTab"; } });
-        jt.byId(tabname + "li").className = "selectedTab";
+                elem.className = "tablink"; } });
+        jt.byId("tablink" + tabname).className = "tablinksel";
         dst.tab = tabname;
         historyCheckpoint();  //history collapses tab changes
-        if(jt.byId("downloadlinksdiv")) {
-            jt.byId("downloadlinksdiv").style.display = "none"; }
-        html = "";
-        if(tabname.match(/^(latest|favorites|memo|search)$/)) {
-            html = ["a", {href: "#Download", id: "downloadlink",
-                          title: "Download these membics",
-                          style: "padding:0px;", //override inherited tabs def
-                          onclick: jt.fs("app.pcd.toggleDownloadsDisp()")},
-                    [["img", {src: "img/download.png", cla: "downloadlinkimg"}],
-                     "Download"]]; }
-        jt.out("tabtitlediv", jt.tac2html(
-            [titleForTab(knowntabs[tabname], inFrame()),
-             html]));
+        showContentActions(tabname);
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.hasId(dst.obj)) {
@@ -1349,11 +1371,9 @@ app.pcd = (function () {
                      // ["div", {id: "pcdhashdiv"},
                      //  (obj.hashtag? ("#" + obj.hashtag) : "")]
                     ]]]],
-                 ["div", {id: "tabsdiv"},
-                  [["ul", {id: "tabsul"},
-                    tabsHTML()],
-                   ["div", {id: "tabtitlediv"}],
-                   ["div", {id: "downloadlinksdiv", style: "display:none;"}]]],
+                 ["div", {id: "pcdctrldiv"},
+                  [["div", {id: "tabsdiv"}, tabsHTML()],
+                   ["div", {id: "pcdactdiv"}]]],
                  ["div", {id: "pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
         if(app.solopage()) {
@@ -1507,15 +1527,9 @@ return {
             return app.pen.coopNames(dst.obj, "pcdcontdiv", 
                                      app.pcd.displayCoops); }
         Object.keys(coopnames).forEach(function (cid) {
-            var coopname = coopnames[cid];
-            html.push(["div", {cla: "cooplinkdiv"},
-                       [["div", {cla: "fpprofdiv"},
-                         ["img", {cla: "fpprofpic", alt: "no pic",
-                                  src: dst.coop.picsrc + cid}]],
-                        ["a", {href: "t/" + cid,
-                               onclick: jt.fs("app.coop.bycoopid('" +
-                                              cid + "','membership')")},
-                         ["span", {cla: "penfont"}, coopname]]]]); });
+            html.push(app.activity.getThemeTileTAC(
+                {ctmid:cid, name:coopnames[cid]},
+                jt.fs("app.coop.bycoopid('" + cid + "','membership')"))); });
         if(app.pen.myPenId() === jt.instId(dst.obj)) {
             html.push(["div", {cla: "pcdtext"},
                        [["div", {cla: "pcdtoggle"},
@@ -1909,18 +1923,9 @@ return {
 
 
     updateSearchInputDisplay: function () {
-        var imgsrc, html, title, style = "";
-        imgsrc = "blank.png";
-        title = "Toggle text/keyword search";
-        if(!dst.obj.keywords) {
-            title = "";
-            srchst.mode = "nokeys"; }
-        if(srchst.mode === "srchkey") {
-            imgsrc = "keyicon2.png"; }
-        else if(srchst.mode === "srchtxt") {
-            imgsrc = "txticon2.png"; }
-        html = [];
-        if(srchst.mode === "srchkey") {
+        var html = "";
+        if(dst.type === "coop" && dst.obj.keywords) {
+            html = [];
             dst.obj.keywords.csvarray().forEach(function (kwd, i) {
                 var chk, kwc = "srchkwrbdiv";
                 chk = jt.toru(srchst.qstr.indexOf(kwd) >= 0, "checked");
@@ -1935,18 +1940,9 @@ return {
                                  onclick: jt.fsd("app.pcd.keysrch('skw" + 
                                                        i + "')")}]],
                             ["label", {fo: "skw" + i}, kwd.trim()]]]); });
-            style = "display:none;"; }
-        html.push(["input", {type: "text", id: "pcdsrchin", size: 30,
-                             placeholder: "Search for...", style: style,
-                             value: srchst.qstr}]);
-        style = srchst.mode === "nokeys" ? "" : "cursor:pointer;";
-        html = [["img", {cla: "reviewbadge", src: "img/" + imgsrc,
-                         title: title,
-                         style: style,
-                         onclick: jt.fs("app.pcd.togsrchmode()")}],
-                ["div", {id: "srchincontdiv"},
-                 html]];
-        jt.out("pcdsrchdiv", jt.tac2html(html));
+            jt.out("pcdkeysrchdiv", jt.tac2html(html)); }
+        else {
+            jt.byId("pcdkeysrchdiv").style.display = "none"; }
     },
 
 
@@ -1966,10 +1962,11 @@ return {
             srchst.revs = searchFilterReviews(srchst.revs || [], 
                 app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent));
             displaySearchResults();  //clears the display if none matching
+            jt.out("pcdsrvsrchdiv", "");
             //If there are more revs on the server, offer to search further,
-            //otherwise it is discomforting to not find something.
+            //otherwise it can be discomforting to not find something.
             if(srchst.revs.length < 20 && dst.obj.recent.length >= 50) {
-                jt.out("pcdsrchdispdiv", searchServerHTML()); } }
+                jt.out("pcdsrvsrchdiv", searchServerHTML()); } }
         else {  //no change to search parameters yet, monitor
             app.pcd.fetchmore("linkonly");
             app.fork({descr:"monitor search parameters",
@@ -1992,6 +1989,7 @@ return {
                 function (revs) {
                     app.lcs.putAll("rev", revs);
                     srchst.revs = revs;
+                    jt.byId("pcdsrvsrchdiv").style.display = "none";
                     displaySearchResults(); },
                 app.failf(function (code, errtxt) {
                     jt.out("pcdsrchdispdiv", "searchReviews failed: " + 

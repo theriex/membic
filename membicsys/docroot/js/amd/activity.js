@@ -243,20 +243,9 @@ app.activity = (function () {
         var tlist, html = [];
         tlist = makeThemeSummaries(membics);
         tlist.forEach(function (theme) {
-            var imgsrc = "ctmpic?coopid=" + theme.ctmid;
-            html.push(["div", {cla: "themetilewrapper", 
-                               id: "themetile" + theme.ctmid},
-                       ["div", {cla: "themetile"}, 
-                        ["a", {title: "Open " + theme.name,
-                               href: "/t/" + theme.ctmid,
-                               onclick: jt.fs("app.activity.selectTheme('" +
-                                              theme.ctmid + "')")},
-                         [["div", {cla: "themetilepicdiv"},
-                           ["img", {cla: "pcdpic", src: imgsrc}]],
-                          ["div", {cla: "themetiletitlediv"},
-                           theme.name],
-                          ["div", {cla: "themetilecountdiv"},
-                           theme.count]]]]]); });
+            html.push(app.activity.getThemeTileTAC(
+                theme, jt.fs("app.activity.selectTheme('" +
+                             theme.ctmid + "')"))); });
         jt.out("themesdiv", jt.tac2html(html));
         if(!app.coop.srvctms()) {
             app.coop.getThemeSummaries(app.activity.displayThemes); }
@@ -572,7 +561,27 @@ return {
             else {
                 elem.style.display = "none";
                 jt.byId("profdivorig" + revid).style.display = "block"; } }
+    },
+
+
+    getThemeTileTAC: function (theme, clickfstr) {
+        var html;
+        html = ["div", {cla: "themetilewrapper", 
+                        id: "themetile" + theme.ctmid},
+                ["div", {cla: "themetile"}, 
+                 ["a", {title: "Open " + theme.name,
+                        href: "/t/" + theme.ctmid,
+                        onclick: clickfstr},
+                  [["div", {cla: "themetilepicdiv"},
+                    ["img", {cla: "pcdpic", 
+                             src: "ctmpic?coopid=" + theme.ctmid}]],
+                   ["div", {cla: "themetiletitlediv"},
+                    theme.name],
+                   ["div", {cla: "themetilecountdiv"},
+                    theme.count]]]]];
+        return html;
     }
+
 
 }; //end of returned functions
 }());

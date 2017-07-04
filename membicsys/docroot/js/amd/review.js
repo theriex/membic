@@ -1030,7 +1030,7 @@ app.review = (function () {
         reviewTypes.forEach(function (rt) {
             var clt = (crev.revtype === rt.type) ? "reviewbadgesel" 
                                                  : "reviewbadge";
-            html.push(["a", {href: "#" + rt.type, cla: "revtypelink",
+            html.push(["a", {href: "#" + rt.type, cla: "typeselect",
                              onclick: jt.fs("app.review.updatedlg('" + 
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
@@ -2320,7 +2320,8 @@ return {
                 rt = app.review.getReviewTypeByValue(rt);
                 html = "No " + rt.plural + " found."; }
             if(xem) {  //display extra empty message (prompt to write)
-                html = [html, xem]; } }
+                html = [html, xem]; }
+            html = ["div", {id:"membicliststatusdiv"}, html]; }
         else {
             html = []; }
         jt.out(divid, jt.tac2html(html));
