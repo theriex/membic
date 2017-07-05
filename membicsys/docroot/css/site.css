@@ -180,7 +180,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #createpnformdiv { width:300px; }
 
 /* >> profile/coop display */
-#pcdcontdiv { padding:10px 0px 10px 0px; }
+#pcdcontdiv { padding:5px 0px 10px 0px; }
 #pcdpicdiv { width:130px; height:127px; padding:0px 5px 2px 0px; float:left; }
 .pcdpic { max-width:125px; max-height:125px; }
 #pcdouterdiv { position:relative; }
@@ -200,7 +200,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   border-left: 1px solid #666;
   border-right: 1px solid #666;
  }
-#tabsdiv a { padding: 0 12px; }
+#tabsdiv a { padding:2px 12px 0px 12px; }
 .unselectedTab { border-bottom: 1px solid #666; }
 .tabico { width:20px; height:20px; vertical-align:top; }
 #tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
@@ -216,7 +216,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #downloadlinksdiv { font-size:medium; text-align:left; }
 .downloadoptdiv { background-image: url('../img/whitewash.png'); }
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
-#pcdkeysrchdiv { margin:-6px 2px 4px 2px; padding:0px 5px;
+#pcdkeysrchdiv { margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
 #srchincontdiv { display:inline-block; padding-left:12px; 
   max-width:80%; max-height:110px; overflow:scroll; vertical-align:middle; }

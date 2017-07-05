@@ -235,7 +235,8 @@ return {
             body = jt.byId("bodyid");
             body.style.paddingLeft = "8%";
             body.style.paddingRight = "8%"; }
-        app.layout.rotateBackgroundPic();
+        if(!app.embedded) {
+            app.layout.rotateBackgroundPic(); }
     },
 
 

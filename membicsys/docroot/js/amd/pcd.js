@@ -64,6 +64,11 @@ app.pcd = (function () {
         tabvpad = 0,
         srchst = { revtype: "all", mode: "nokeys", qstr: "", status: "" },
         setdispstate = { infomode: "" },
+        standardOverrideColors = [
+            {name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
+            {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
+             attr:"color"},
+            {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}],
         ctmmsgs = [
             {name: "Following",
              levtxt: "Following shows you are interested in reading content from members writing on this theme.",
@@ -846,18 +851,18 @@ app.pcd = (function () {
                !jt.hasId(dst.obj)) {
             return ""; }
         dst.obj.soloset = dst.obj.soloset || {};
-        dst.obj.soloset.colors = dst.obj.soloset.colors ||
-            [{name: "backgrnd", value: "#d8d8dd"},
-             {name: "tab", value: "#789897"},
-             {name: "link", value: "#521919"},
-             {name: "hover", value: "#885555"}];
+        if(!dst.obj.soloset.colors || Array.isArray(dst.obj.soloset.colors)) {
+            dst.obj.soloset.colors = {};
+            standardOverrideColors.forEach(function (soc) {
+                dst.obj.soloset.colors[soc.name] = soc.value; }); }
         html = [];
-        dst.obj.soloset.colors.forEach(function (cdef) {
+        standardOverrideColors.forEach(function (soc) {
+            var colorval = dst.obj.soloset.colors[soc.name] || soc.value;
             html.push(["div", {cla: "formline"},
-                       [["label", {fo: cdef.name + "in", cla: "liflab"},
-                         cdef.name],
-                        ["input", {id: cdef.name + "in", cla: "lifin",
-                                   type: "color", value: cdef.value}]]]); });
+                       [["label", {fo: soc.name + "in", cla: "liflab"},
+                         soc.name],
+                        ["input", {id: soc.name + "in", cla: "lifin",
+                                   type: "color", value: colorval}]]]); });
         html = ["div", {cla: "formline"},
                 [["a", {href: "#togglepermcolors",
                         onclick: jt.fs("app.layout.togdisp('ctmcolordiv')")},
@@ -1243,35 +1248,6 @@ app.pcd = (function () {
     },
 
 
-    displayRSSAndHomeLinks = function () {
-        var coords, absdiv, html, rssurl;
-        coords = jt.geoPos(jt.byId("tabsdiv"));
-        coords.x += (dst.type === "pen"? 230 : 130);
-        absdiv = jt.byId("xtrabsdiv");
-        absdiv.style.left = String(coords.x) + "px";
-        absdiv.style.top = String(coords.y - 12 + tabvpad) + "px";
-        absdiv.style.background = "transparent";
-        absdiv.style.border = "none";
-        absdiv.style.visibility = "visible";
-        html = [];
-        //removed membic logo since tab title text provides a link back...
-        //homeurl = app.hardhome + "?view=coop&coopid=" + dst.id;
-        //if(dst.type !== "coop") {
-        //    homeurl = app.hardhome + "?view=pen&penid=" + dst.id; }
-        //html = [["a", {href: homeurl, title: dst.obj.name + " membic page",
-        //               onclick: jt.fs("window.open('" + homeurl + "')")},
-        //         ["img", {cla: "reviewbadge", src: "img/membiclogobw.png"}]]];
-        if(dst.type === "coop") {  //RSS only available for themes...
-            rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
-            html.push("&nbsp; &nbsp;");
-            html.push(
-                ["a", {href:rssurl, title:dst.obj.name + " RSS feed",
-                       onclick:jt.fs("window.open('" + rssurl + "')")},
-                 ["img", {cla:"rsslinkimg", src:"img/rssiconlighter.png"}]]); }
-        jt.out("xtrabsdiv", jt.tac2html(html));
-    },
-
-
     backgroundVerifyObjectData = function () {
         var pen;
         if(dst.type === "coop" && jt.hasId(dst.obj)) {
@@ -1283,8 +1259,7 @@ app.pcd = (function () {
 
 
     createStyleOverridesForEmbedding = function () {
-        jt.byId("pcdupperdiv").style.display = "none";
-        jt.byId("pcddescrfadediv").style.display = "none";
+        jt.byId("pcduppercontentdiv").style.display = "none";
         jt.byId("bodyid").style.paddingLeft = "0px";
         jt.byId("bodyid").style.paddingRight = "0px";
         //give a bit of space for the top of the tabs to not be truncated
@@ -1294,30 +1269,18 @@ app.pcd = (function () {
 
 
     createColorOverrides = function () {
-        var ckeys, sheet;
-        if(!dst || !dst.obj || !dst.obj.soloset || ! dst.obj.soloset.colors) {
+        var sheet;
+        if(!app.embedded) {
             return; }
-        ckeys = { backgrnd: { sel: "body", attr: "background"},
-                  tab: {sel: ".unselectedTab", attr: "background"},
-                  link: {sel: "A:link,A:visited,A:active", attr: "color"},
-                  hover: {sel: "A:hover", attr: "color"} };
+        if(!dst || !dst.obj || !dst.obj.soloset || !dst.obj.soloset.colors) {
+            return; }
         sheet = window.document.styleSheets[0];
-        dst.obj.soloset.colors = dst.obj.soloset.colors || [];
-        dst.obj.soloset.colors.forEach(function (cdef) {
-            var sels = ckeys[cdef.name].sel.csvarray();
-            sels.forEach(function (sel) {
-                var rule;
-                if(cdef.name === "backgrnd") {
-                    if(app.embedded) {  //use parent window background
-                        cdef.value = "none"; }
-                    else { //set text overflow fade background color
-                        rule = "#pcddescrfadediv { background:" + 
-                            "linear-gradient(rgba(" + jt.hex2rgb(cdef.value) +
-                            ",0), " + cdef.value + "); }";
-                        sheet.insertRule(rule, sheet.cssRules.length); } }
-                rule = sel + " { " + ckeys[cdef.name].attr + ": " +
-                    cdef.value + "; }";
-                sheet.insertRule(rule, sheet.cssRules.length); }); });
+        standardOverrideColors.forEach(function (soc) {
+            var color = dst.obj.soloset.colors[soc.name];
+            if(color) {
+                soc.sel.csvarray().forEach(function (sel) {
+                    var rule = sel + " { " + soc.attr + ": " + color + "; }";
+                    sheet.insertRule(rule, sheet.cssRules.length); }); } });
     },
 
 
@@ -1335,7 +1298,6 @@ app.pcd = (function () {
             createStyleOverridesForEmbedding(); }
         createColorOverrides();
         changeSiteTabIcon();
-        displayRSSAndHomeLinks();
     },
 
 
@@ -1808,9 +1770,9 @@ return {
     saveSoloColors: function () {
         var defs = dst[dst.type];
         jt.byId("savecolorsbutton").disabled = true;
-        dst.obj.soloset.colors.forEach(function (cdef, idx) {
-            var color = jt.byId(cdef.name + "in").value;
-            dst.obj.soloset.colors[idx].value = color; });
+        standardOverrideColors.forEach(function (soc) {
+            var color = jt.byId(soc.name + "in").value;
+            dst.obj.soloset.colors[soc.name] = color; });
         defs.objupdate(dst.obj,
             function (updobj) {
                 dst.obj = updobj;
