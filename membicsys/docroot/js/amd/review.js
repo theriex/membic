@@ -248,11 +248,21 @@ app.review = (function () {
 
     //If the review.url has known issues, fix it
     fixReviewURL = function (rev) {
+        var uo;
         if(!rev.url) {
             return; }  //nothing to fix
-        //Amazon detail urls have extra encoding that needs to be removed
-        if(rev.url.indexOf("%3Depinova-20%26") >= 0) {
-            rev.url = jt.dec(rev.url); }
+        if(rev.url.indexOf("amazon.com") >= 0) {
+            //sometimes urls have been recorded with duplicate encoding
+            if(rev.url.indexOf("-20%26") >= 0) {
+                rev.url = jt.dec(rev.url); }
+            if(rev.url.indexOf("?") > 0 && rev.url.indexOf("&tag=") > 0) {
+                uo = {pvs:[{attr:"SubscriptionId", val:"AKIAJK6TWJBQGIYJ4ENA"},
+                           {attr:"tag", val:"epinova-20"}],
+                      bq: rev.url.split("?")};
+                uo.parsed = jt.paramsToObj(uo.bq[1], null, "String");
+                uo.pvs.forEach(function (pv) {
+                    uo.parsed[pv.attr] = pv.val; });
+                rev.url = uo.bq[0] + "?" + jt.objdata(uo.parsed); } }
     },
 
 
