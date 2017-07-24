@@ -1206,7 +1206,8 @@ app.pcd = (function () {
         if(tabname === "latest" && dst.type === "coop") {
             rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
             html.push([" | ",
-                       ["a", {href:"#Subscribe", id:"rsslink",
+                       ["a", {href:rssurl, //support right click copy link 
+                              id:"rsslink",
                               title:"Subscribe RSS",
                               onclick:jt.fs("window.open('" + rssurl + "')")},
                         [["img", {src:"img/rssicon.png", 
