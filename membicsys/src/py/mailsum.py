@@ -100,7 +100,7 @@ def send_theme_post_reminder(pn, mrt, numthemes):
                  body)
     acc = moracct.MORAccount.get_by_id(pn.mid)
     # all email goes to support and gets forwarded for now
-    body = "PenName " + str(pen.key().id()) + " " + acc.email + "\n" + body
+    body = "PenName " + str(pn.key().id()) + " " + acc.email + "\n" + body
     moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
 
 
