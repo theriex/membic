@@ -46,9 +46,12 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
-def make_future_membic(penid, url, txt1, txt2):
+def make_future_membic(penid, mailsubj, mailbody, mailto):
+    # A mail-in membic is expected to have a url, but it's not required.
+    # Not remotely possible to replicate the interactive smarts so don't.
+    # Use a clear format for the interactive processing to start from.
     mim = rev.Review(penid=int(penid),
-                     revtype='article',
+                     revtype='article',  # most mail-in membics are articles
                      ctmid=0,
                      rating=0,
                      srcrev=-101,
@@ -58,28 +61,17 @@ def make_future_membic(penid, url, txt1, txt2):
     mim.keywords = ""
     mim.name = ""
     mim.title = ""
-    mim.url = url
-    # if both txt1 and txt2 still have values, then neither had just the
-    # url. Use the shorter one for the title and the other for the description.
-    if txt1 and txt2:
-        if len(txt2) > len(txt1):
-            mim.name = txt1
-            mim.title = txt1
-            mim.text = txt2
-        else:
-            mim.name = txt2
-            mim.title = txt2
-            mim.text = txt1
-    # otherwise put whatever text is available in the description.
-    else:
-        mim.text = txt1 or txt2
+    mim.url = ""
+    # Client code depends on this exact text format.
+    mim.text = "Mail sent to " + mailto + " recieved " + mim.modified +\
+               "\nSubject: " + mailsubj +\
+               "\nBody: " + mailbody
     mim.put()
     # force retrieval to ensure subsequent db queries find the new instance
     mim = rev.Review.get_by_id(mim.key().id())
     # not in top and not in main, so those caches are left intact
-    logging.info("New future membic created for PenName " + str(penid) +
-                 " url: " + url + ", title: " + mim.title + 
-                 ", text: " + mim.text)
+    logging.info("Future membic " + str(mim.key().id()) + 
+                 " created for PenName " + str(penid))
 
 
 def send_theme_post_reminder(pn, mrt, numthemes):
@@ -177,6 +169,71 @@ def remind_offline_pens():
         send_reminders(pn)
 
 
+def note_inbound_mail(message):
+    mailfrom = message.sender
+    mailto = message.to
+    mailsubj = ""
+    if hasattr(message, "subject"):
+        mailsubj = message.subject
+    mailbody = ""
+    for bodtype, body in message.bodies():
+        if bodtype == 'text/html':
+            mailbody = body.decode()
+        if mailbody:
+            break
+    logging.info("Received mail from " + mailfrom + " to " + mailto +
+                 " subject: " + mailsubj[0:512] + 
+                 "\nbody: " + mailbody[0:512])
+    return mailfrom, mailto, mailsubj, mailbody
+
+
+def find_penid_from_consvc(emaddr):
+    svc = consvc.get_connection_service("MailIn")
+    empens = csv_list(svc.data)
+    for empen in empens:
+        empen = empen.strip()
+        address, penid = empen.split(":")
+        if address == emaddr:
+            return penid
+    logging.info("No MailIn ConnectionService mapping for " + emaddr)
+    return None
+
+
+def find_penid_from_email(emaddr):
+    account = get_cached_instance(emaddr)
+    if not account or not isinstance(account, moracct.MORAccount):
+        account = None
+        vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 1", emaddr)
+        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+        if len(accounts) > 0:
+            account = accounts[0]
+    if not account:
+        logging.info("No account found for " + emaddr)
+        return None
+    # similar logic to pen.find_auth_pens
+    if account.lastpen:
+        return account.lastpen
+    account._id = account.key().id() # normalized id access
+    pens = pen.query_for_auth_pens(account, "mid")
+    if not pens or len(pens) == 0:
+        logging.info("No PenName found for " + emaddr)
+        return None
+    return pens[0].key().id()
+
+
+def find_penid_for_email_address(emaddr):
+    # emaddr = "Some Person <whoever@example.com>"
+    match = re.search(r'[\w.-]+@[\w.-]+', emaddr)
+    if match:
+        emaddr = match.group()
+    else:
+        return None
+    emaddr = moracct.normalize_email(emaddr)
+    # search individual accounts first, no hijacking addresses via mappings.
+    penid = find_penid_from_email(emaddr) or find_penid_from_consvc(emaddr)
+    return penid
+
+
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
@@ -218,54 +275,17 @@ class BounceHandler(BounceNotificationHandler):
 
 
 class InMailHandler(InboundMailHandler):
-    # cannot replicate the interactive smarts, so make a future membic
-    # that can be fleshed out next time they are online.
     def receive(self, message):
-        emaddr = message.sender
-        subj = ""
-        if hasattr(message, "subject"):
-            subj = message.subject
-        body = ""
-        for bodtype, body in message.bodies():
-            if bodtype == 'text/html':
-                body = body.decode()
-            if body:
-                break
-        url = ""
-        # Can't match on beginning of line because there might be some space
-        # or other prefixing there and this should be forgiving. Example:
-        # "check out http://membic.org it totally rocks!"
-        # Do want to pull the url out if found though, otherwise the user
-        # would need to edit it out manually later.
-        rem = re.compile("https?://[^\s$]*")
-        mo = rem.search(subj)
-        if mo:
-            url = mo.group()
-            subj = "".join(rem.split(subj)).strip()
-        if not url:
-            mo = rem.search(body)
-            if mo:
-                url = mo.group()
-                body = "".join(rem.split(body)).strip()
-        if not (url or subj or body):
-            logging.warn("Mail-in membic from " + emaddr + 
-                         " with no content ignored.")
+        mailfrom, mailto, mailsubj, mailbody = note_inbound_mail(message)
+        if not mailsubj and not mailbody:
+            logging.info("No subject or body, nothing to make a membic out of.")
             return
-        svc = consvc.get_connection_service("MailIn")
-        empens = csv_list(svc.data)
-        accepted = False
-        for empen in empens:
-            empen = empen.strip()
-            address, penid = empen.split(":")
-            if address == emaddr:
-                accepted = True
-                logging.info("Mail-in membic from " + address + 
-                             " mapped to PenName " + penid + ". " + url +
-                             ", subj: " + subj + ", body: " + body)
-                make_future_membic(penid, url, subj, body)
-                break
-        if not accepted:
-            logging.info("No mail-in mapping for " + emaddr);
+        # if needed, potentially reject anything too wordy at this point
+        penid = find_penid_for_email_address(mailfrom)
+        if not penid:
+            return    # lookup failures already logged
+        logging.info("Mail from " + mailfrom + " mapped to pen " + str(penid))
+        make_future_membic(penid, mailsubj, mailbody, mailto)
 
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),

@@ -164,6 +164,16 @@ def add_account_info_to_pen_stash(acc, pen):
     pen.stash = json.dumps(stash)
 
 
+def query_for_auth_pens(acc, authmethod):
+    where = "WHERE " + authmethod + "=:1 LIMIT 20"
+    vq = VizQuery(PenName, where, acc._id)
+    qres = cached_query(acc.email + "-pens", vq, "", 20, PenName, False)
+    # Do not cache an empty pens list
+    if len(qres.objects) == 0:
+        bust_cache_key(acc.email + "-pens")
+    return qres.objects
+
+
 def find_auth_pens(handler):
     acc = moracct.authenticated(handler.request)
     if not acc:
@@ -178,13 +188,7 @@ def find_auth_pens(handler):
         pen = cached_get(acc.lastpen, PenName)
         if pen and pen.mid == acc.key().id():
             return [pen]
-    where = "WHERE " + handler.request.get('am') + "=:1 LIMIT 20"
-    vq = VizQuery(PenName, where, acc._id)
-    qres = cached_query(acc.email + "-pens", vq, "", 20, PenName, False)
-    # Do not cache an empty pens list
-    if len(qres.objects) == 0:
-        bust_cache_key(acc.email + "-pens")
-    return qres.objects
+    return query_for_auth_pens(acc, handler.request.get('am'))
 
 
 def reflect_pen_name_change(pen, prev_name):
