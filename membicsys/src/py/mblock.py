@@ -54,7 +54,7 @@ def rebuild_membics_block(pct, pgid):
         pco = pen.PenName.get_by_id(int(pgid))
         pen.filter_sensitive_fields(pco)
     if not pco:
-        logging.warn("rmb " + pct + " " + str(pgid) + " not found")
+        logging.info("rmb " + pct + " " + str(pgid) + " not found")
         return None
     where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
     if pct == "coop":
