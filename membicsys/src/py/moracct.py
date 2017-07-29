@@ -16,6 +16,7 @@ from morutil import *
 from cacheman import *
 import string
 import random
+import os
 
 
 class MORAccount(db.Model):
@@ -429,7 +430,8 @@ def random_alphanumeric(length):
     
 
 def mailgun_send(handler, eaddr, subj, body):
-    if handler and re.search("\:[0-9][0-9]80", handler.request.url):
+    if ((not os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine/'))
+        or (handler and re.search("\:[0-9][0-9]80", handler.request.url))):
         logging.info("Mail not sent to " + eaddr + " from local dev" +
                      "\n\n" + body)
         return

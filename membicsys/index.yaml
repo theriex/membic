@@ -64,3 +64,9 @@ indexes:
   - name: srcrev
   - name: modified
     direction: desc
+
+- kind: Review
+  properties:
+  - name: srcrev
+  - name: modified
+    direction: desc

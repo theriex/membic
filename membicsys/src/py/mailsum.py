@@ -46,7 +46,51 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
-def make_future_membic(penid, mailsubj, mailbody, mailto):
+def send_pending_membic_mail(pname, pm):
+    acc = moracct.MORAccount.get_by_id(pname.mid)
+    subj = "Your mail-in membic is pending"
+    body = "Click here to post: https://membic.org?am=mid&an=" + acc.email +\
+           "&at=" + moracct.newtoken(acc.email, acc.password) +\
+           "&view=pen&penid=" + str(pname.key().id()) + "&tab=memo&expid=" +\
+           str(pm.key().id()) + "&action=edit\n\n" +\
+           "You can see all your pending membics on the memo tab of your " +\
+           "profile.\n\n" +\
+           "Thanks for posting!\nEric (with help from automation)\n"
+    moracct.mailgun_send(None, acc.email, subj, body)
+
+
+max_pend_membic_rmndr_d = 40
+
+def send_pending_membic_reminder(pm):
+    pname = pen.PenName.get_by_id(pm.penid)
+    reminder_schedule = [2, 4, 7, 14, 30]
+    stash = moracct.safe_json_loads(pname.stash)
+    if "mimrem" not in stash:
+        stash["mimrem"] = {}
+    srk = "mim" + str(pm.key().id())
+    remsent = stash["mimrem"].pop(srk, "")  # fetch and remove entry or ""
+    modt = ISO2dt(pm.modified)
+    thresh = dt2ISO(modt + datetime.timedelta(days=max_pend_membic_rmndr_d))
+    now = nowISO()
+    if now > thresh:
+        return "Too old to remind about"
+    prevcount = 0
+    for daycount in reminder_schedule:
+        ps = dt2ISO(modt + datetime.timedelta(days=prevcount))
+        pe = dt2ISO(modt + datetime.timedelta(days=daycount))
+        period_active = ps <= now and pe >= now
+        reminder_active = ps <= remsent and pe >= remsent
+        if period_active and reminder_active:
+            return str(daycount) + " day reminder already sent"
+        prevount = daycount
+    send_pending_membic_mail(pname, pm)
+    stash["mimrem"][srk] = now
+    pname.stash = json.dumps(stash)
+    cached_put(pname)
+    return "Sent pending membic reminder"
+
+
+def make_pending_membic(penid, mailsubj, mailbody, mailto):
     # A mail-in membic is expected to have a url, but it's not required.
     # Not remotely possible to replicate the interactive smarts so don't.
     # Use a clear format for the interactive processing to start from.
@@ -63,7 +107,7 @@ def make_future_membic(penid, mailsubj, mailbody, mailto):
     mim.title = ""
     mim.url = ""
     # Client code depends on this exact text format.
-    mim.text = "Mail sent to " + mailto + " recieved " + mim.modified +\
+    mim.text = "Mail sent to " + mailto + " received " + mim.modified +\
                "\nSubject: " + mailsubj +\
                "\nBody: " + mailbody
     mim.put()
@@ -72,6 +116,7 @@ def make_future_membic(penid, mailsubj, mailbody, mailto):
     # not in top and not in main, so those caches are left intact
     logging.info("Future membic " + str(mim.key().id()) + 
                  " created for PenName " + str(penid))
+    send_pending_membic_reminder(mim)
 
 
 def send_theme_post_reminder(pn, mrt, numthemes):
@@ -81,17 +126,18 @@ def send_theme_post_reminder(pn, mrt, numthemes):
     body += "You haven't posted to " + mrt["name"]
     if numthemes > 1:
         body += ", or any of your themes,"
-    body += " in over " + str(td.days) + " days. "
-    body += "To get the most out of your theme, note memorable things when you find them. Read any memorable articles recently?\n\n"
+    body += " in over " + str(td.days) + " days."
+    body += " Read any memorable articles recently?\n\n"
     body += "On your phone:\n"
     body += "1. Add membic.org to your home screen\n"
-    body += "2. Copy any article link into the write membic dialog.\n\n"
-    body += "Hope you run into something in the next week that's worth a membic!\n\n"
-    body += "Best wishes,\nEric (with help from automation)\n"
-    logging.info("send_theme_post_reminder " + str(pn.key().id()) + ":\n" +
-                 body)
+    body += "2. Copy any article link and paste it to write a membic.\n\n"
+    body += "Happy theme building,\nEric (with help from automation)\n"
     acc = moracct.MORAccount.get_by_id(pn.mid)
-    # all email goes to support and gets forwarded for now
+    logging.info("send_theme_post_reminder " + pn.name + " " + 
+                 str(pn.key().id()) + " " + acc.email + ":\nSubject: " +
+                 subj + "\nBody: " + body)
+    # TODO: Remove this debug line and send to the pen rather than support
+    #       after the reminder process verified stable
     body = "PenName " + str(pn.key().id()) + " " + acc.email + "\n" + body
     moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
 
@@ -126,8 +172,7 @@ def send_reminders(pn):
     if "contactprefs" in settings:
         prefs = settings["contactprefs"]
         if "reminders" in prefs and prefs["reminders"] == "no":
-            logging.info("send_reminders reminders disabled for " + pn.name)
-            return
+            return "Reminders disabled"
     stash = moracct.safe_json_loads(pn.stash)
     mrt = None
     numthemes = 0
@@ -139,17 +184,15 @@ def send_reminders(pn):
                 if not mrt or theme["lastpost"] < mrt["lastpost"]:
                     mrt = theme
     if not mrt:
-        logging.info("send_reminders no theme posts for " + pn.name)
-        return
+        return "No theme posts"
     rem = already_reminded(pn, mrt)
     if rem:
-        logging.info("send_reminders already reminded " + pn.name +
-                     " (" + rem + ")")
-        return
+        return rem
     logging.info("send_reminders reminding " + pn.name)
     send_theme_post_reminder(pn, mrt, numthemes)
     pn.stash = json.dumps(stash)  # capture any reminder notes
     cached_put(pn)
+    return "Sent reminder"
     
 
 def remind_offline_pens():
@@ -159,6 +202,7 @@ def remind_offline_pens():
     dtnow = datetime.datetime.utcnow()
     threshmin = dt2ISO(dtnow - datetime.timedelta(offmin))
     threshmax = dt2ISO(dtnow - datetime.timedelta(offmax))
+    stat = "Checking offline between " + threshmin + " and " + threshmax + "\n"
     vq = VizQuery(pen.PenName, "WHERE accessed < :1 ORDER BY accessed DESC",
                   threshmin)
     pns = vq.fetch(mfetch, read_policy=db.EVENTUAL_CONSISTENCY, deadline=180)
@@ -166,7 +210,22 @@ def remind_offline_pens():
         # logging.info("remind_offline_pens: " + pn.name);
         if pn.accessed < threshmax:
             break  # this pen and everyone else following is gone
-        send_reminders(pn)
+        stat += str(pn.key().id()) + " " + pn.name + ": " +\
+                send_reminders(pn) + "\n"
+    return stat
+
+
+def remind_pending_membics():
+    stat = ""
+    delta = datetime.timedelta(days=max_pend_membic_rmndr_d)
+    modthresh = dt2ISO(datetime.datetime.utcnow() - delta)
+    where = "WHERE srcrev = -101 AND modified > :1 ORDER BY modified DESC"
+    vq = VizQuery(rev.Review, where, modthresh)
+    ms = vq.fetch(500, read_policy=db.EVENTUAL_CONSISTENCY, deadline=180)
+    for membic in ms:
+        stat += str(membic.key().id()) + ": " +\
+                send_pending_membic_reminder(membic) + "\n"
+    return stat
 
 
 def note_inbound_mail(message):
@@ -254,8 +313,15 @@ class UserActivity(webapp2.RequestHandler):
 
 class PeriodicProcessing(webapp2.RequestHandler):
     def get(self):
-        remind_offline_pens()
-        moracct.writeTextResponse("PeriodicProcessing done.", self.response)
+        body = "Periodic processing status messages:\n"
+        body += "---- Offline pen reminders: ----\n"
+        body += remind_offline_pens()
+        body += "---- Pending membic reminders: ----\n"
+        body += remind_pending_membics()
+        subj = "PeriodicProcessing status messages"
+        moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
+        body += "\nPeriodicProcessing completed."
+        moracct.writeTextResponse(body, self.response)
 
 
 class BounceHandler(BounceNotificationHandler):
@@ -285,7 +351,8 @@ class InMailHandler(InboundMailHandler):
         if not penid:
             return    # lookup failures already logged
         logging.info("Mail from " + mailfrom + " mapped to pen " + str(penid))
-        make_future_membic(penid, mailsubj, mailbody, mailto)
+        stat = make_pending_membic(penid, mailsubj, mailbody, mailto)
+        logging.info("InMailHandler: " + stat)
 
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
