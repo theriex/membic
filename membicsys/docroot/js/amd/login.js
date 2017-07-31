@@ -502,7 +502,8 @@ app.login = (function () {
                                      profid: params.profid,
                                      coopid: params.coopid,
                                      tab: params.tab,
-                                     expid: params.expid }); }
+                                     expid: params.expid,
+                                     action: params.action }); }
     },
 
 

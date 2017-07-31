@@ -217,8 +217,11 @@ return {
     },
 
 
-    bypenid: function (penid, src, tabname) {
+    bypenid: function (penid, src, tabname, expid, action) {
         var solopage, cts, data, ctype, penref;
+        // jt.log("pen.bypenid " + penid + " src: " + src + 
+        //        ", tabname: " + tabname + ", expid: " + expid +
+        //        ", action: " + action);
         solopage = (window.location.href.indexOf("/p/") >= 0);
         cts = ["review", "prefpens", "membapp", "adminlog"];
         if(cts.indexOf(src) >= 0 || solopage) {
@@ -239,8 +242,9 @@ return {
                 ms:20}); }
         penref = app.lcs.getRef("pen", penid);
         if(penref.pen) {
-            return app.pcd.display("pen", penid, tabname, penref.pen); }
-        app.pcd.fetchAndDisplay("pen", penid, tabname);
+            return app.pcd.display("pen", penid, tabname, penref.pen,
+                                   expid, action); }
+        app.pcd.fetchAndDisplay("pen", penid, tabname, expid, action);
     },
 
 

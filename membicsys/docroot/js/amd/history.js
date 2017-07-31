@@ -84,13 +84,14 @@ return {
 
     dispatchState: function (state) {
         state = state || app.history.currState();
+        //jt.log("history.dispatchState " + jt.objdata(state));
         indicateState(state);
         switch(state.view) {
         case "about":
             return app.layout.displayDoc();
         case "activity":
             return app.activity.displayActive();
-        case "memo":
+        case "memo":  //not using anymore, memo tab for pen instead...
             return app.activity.displayRemembered();
         case "coop":
             return app.coop.bycoopid(state.coopid, "history", state.tab, 
@@ -104,9 +105,10 @@ return {
         case "profile": //fall through to pen
         case "pen":
             if(jt.isId(state.profid)) {
-                return app.pen.bypenid(state.profid, "history", state.tab); }
+                state.penid = state.profid; }
             if(jt.isId(state.penid)) {
-                return app.pen.bypenid(state.penid, "history", state.tab); }
+                return app.pen.bypenid(state.penid, "history", state.tab,
+                                       state.expid, state.action); }
             return app.pcd.display();
         }
     },

@@ -1052,8 +1052,9 @@ app.pcd = (function () {
 
     //Called from displayTab
     //Called from layout.displayTypes when membic type selected
-    displayRemembered = function () {
-        app.activity.displayRemembered("pcdcontdiv");
+    displayRemembered = function (expid, action) {
+        //jt.log("pcd.displayRemembered expid:" + expid + ", action:" + action);
+        app.activity.displayRemembered("pcdcontdiv", expid, action);
     },
 
 
@@ -1227,8 +1228,10 @@ app.pcd = (function () {
     },
 
 
-    displayTab = function (tabname, expid) {
+    displayTab = function (tabname, expid, action) {
         var dispfunc;
+        // jt.log("pcd.displayTab " + tabname + ", expid: " + expid + 
+        //        ", action: " + action);
         tabname = tabname || defaultTabName();
         Object.keys(knowntabs).forEach(function (tabkey) {
             var elem = jt.byId("tablink" + tabkey);
@@ -1241,7 +1244,7 @@ app.pcd = (function () {
         dispfunc = knowntabs[tabname].dispfunc;
         app.layout.displayTypes(dispfunc);  //connect type filtering
         if(jt.hasId(dst.obj)) {
-            return dispfunc(expid); }
+            return dispfunc(expid, action); }
         //could be creating a new theme at this point. dialog may or may
         //not be displayed
         jt.out("pcdcontdiv", "Settings required.");
@@ -1302,8 +1305,9 @@ app.pcd = (function () {
     },
 
 
-    displayObject = function (obj, expid) {
+    displayObject = function (obj, expid, action) {
         var defs, html, shtxt;
+        // jt.log("pcd.displayObject expid: " + expid + ", action: " + action);
         obj = obj || dst.obj;
         dst.obj = obj;
         app.layout.cancelOverlay();  //close user menu if open
@@ -1343,7 +1347,7 @@ app.pcd = (function () {
             customizeSoloPageDisplay(); }
         app.fork({descr:"background verify pen/theme",
                   func:backgroundVerifyObjectData, ms:100});
-        displayTab(dst.tab, expid);
+        displayTab(dst.tab, expid, action);
     },
 
 
@@ -2118,7 +2122,9 @@ return {
     },
 
 
-    display: function (dtype, id, tab, obj, expid) {
+    display: function (dtype, id, tab, obj, expid, action) {
+        // jt.log("pcd.display tab: " + tab + ", expid: " + expid + 
+        //        ", action: " + action);
         verifyFunctionConnections();
         dst.type = dtype || "pen";
         dst.id = id || (obj? jt.instId(obj) : "") || 
@@ -2128,7 +2134,7 @@ return {
             document.title = document.title.replace(/^Top\s\d+\s/, "");
             dst.tab = "favorites"; }
         if(obj) {
-            return displayObject(obj, expid); }
+            return displayObject(obj, expid, action); }
         if(dst.id) {
             return app.pcd.fetchAndDisplay(dst.type, dst.id, dst.tab); }
         if(dtype === "coop") {  //creating new coop
@@ -2228,12 +2234,14 @@ return {
     },
 
 
-    fetchAndDisplay: function (dtype, id, tab, expid) {
+    fetchAndDisplay: function (dtype, id, tab, expid, action) {
+        // jt.log("pcd.fetchAndDisplay " + dtype + " " + id + " tab: " + tab +
+        //        ", expid: " + expid + ", action: " + action);
         app.pcd.blockfetch(dtype, id, function (obj) {
             if(!obj) {
                 jt.log("pcd.fetchAndDisplay no obj");
                 return app.activity.redisplay(); }
-            app.pcd.display(dtype, id, tab || "", obj, expid); });
+            app.pcd.display(dtype, id, tab || "", obj, expid, action); });
     },
 
 
