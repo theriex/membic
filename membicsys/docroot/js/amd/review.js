@@ -1474,6 +1474,17 @@ app.review = (function () {
     },
 
 
+    automateMembicDialog = function () {
+        var rbc;
+        if(crev.srcrev === "-101" && crev.text.startsWith("Mail to ")) {
+            app.review.togglefuture(true);
+            rbc = jt.byId("rdurlbuttonspan");
+            if(rbc) {
+                rbc.innerHTML = "reading..."; }
+            app.readurl.automateMailInMembic(crev); }
+    },
+
+
     displayMembicDialog = function () {
         var html;
         html = ["div", {id: "revdlgdiv"},
@@ -1507,6 +1518,7 @@ app.review = (function () {
             {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, updateShareInfo);
+        automateMembicDialog();
     },
 
 
@@ -1727,12 +1739,16 @@ return {
     },
 
 
-    togglefuture: function () {
+    togglefuture: function (updatecheckbox) {
         if(crev.srcrev === "-101") {
+            if(updatecheckbox) {
+                jt.byId("rdfutcb").checked = false; }
             crev.srcrev = "0";
             jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML()));
             dlgStarsActivate(); }
         else {
+            if(updatecheckbox) {
+                jt.byId("rdfutcb").checked = true; }
             crev.srcrev = "-101";
             dlgStarsDeactivate();
             jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML())); }
@@ -1921,7 +1937,10 @@ return {
                    (!confirm("Discard changes?"))) {
                     return; } } }
         app.layout.closeDialog();
-        app.login.doNextStep({});
+        if(jt.hasId(crev)) {  //show the edited membic on their profile
+            return app.pcd.display("pen", crev.penid, (crev.srcrev === "-101")? 
+                                   "memo" : "latest"); }
+        app.login.doNextStep({});  //return to wherever we were
     },
 
 

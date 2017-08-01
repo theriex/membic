@@ -282,6 +282,8 @@ app.activity = (function () {
                     app.activity.toggleExpansion("rrd", expid); },
                 ms:600}); }
         if(action === "edit") {
+            //don't repeat the edit action when restoring state after dlg close
+            app.history.currState().action = "";
             //edit the pending membic after expanding it
             app.fork({
                 descr:"auto edit pending membic",

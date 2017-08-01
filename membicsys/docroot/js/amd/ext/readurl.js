@@ -379,8 +379,24 @@ app.readurl = (function () {
                 " have gotten less busy, or you can fill out the membic" +
                 " fields directly."; }
         return errtxt;
-    };
+    },
 
+
+    readMailInMembicText = function (mim) {
+        var mc = {text:""}, lines = mim.text.split("\n");
+        lines.forEach(function (line, idx) {
+            if(idx === 0) {
+                //to: "me" if sent to me@membic.org
+                mc.to = line.match(/[^\s]+@membic.org/g)[0].slice(0, -11);
+                mc.received = line.slice(-20); }  //ISO timestamp
+            else if(idx === 1) {
+                mc.subj = line.slice(9); }  //everything after "Subject: "
+            else {
+                if(idx === 2) {
+                    line = line.slice(6); }  //everything after "Body: "
+                mc.text += line + "\n"; } });
+        return mc;
+    };
 
 
     ////////////////////////////////////////
@@ -410,6 +426,32 @@ return {
                     jt.err(getFetchErrorText(url, code, errtxt));
                     app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));
+    },
+
+
+    automateMailInMembic: function (mim) {
+        var mc, mt;
+        mc = readMailInMembicText(mim);
+        mt = mc.text;
+        if(mc.text.indexOf(mc.subj) < 0) {
+            mt = mc.subj + "\n" + mc.text; }
+        mc.url = mt.match(/https?:\/\/[^\s]+/g);
+        if(mc.url) {
+            mc.url = mc.url[0];
+            mim.url = mc.url;
+            mt = mt.replace(mc.url, "").trim(); }
+        //Optionally read and replace special lines here. e.g. asterisks ->
+        //star rating, [theme1, theme2] -> preselected theme checkboxes.
+        mim.text = mt;
+        //force text to be redisplayed.  Ordinarily edits are maintained
+        //during other updates like stars and checkboxes.  In this case it
+        //should be rebuilt.
+        jt.out("rdtextdiv", "");
+        //Reading from the source overrides any fields guessed from email.
+        //Probably better values, and more consistent behavior.
+        if(mc.url) {
+            return app.readurl.fetchData(mim, mc.url); }
+        app.review.updatedlg();
     }
 
 };  //end of returned functions
