@@ -440,8 +440,9 @@ return {
             mc.url = mc.url[0];
             mim.url = mc.url;
             mt = mt.replace(mc.url, "").trim(); }
-        //Optionally read and replace special lines here. e.g. asterisks ->
-        //star rating, [theme1, theme2] -> preselected theme checkboxes.
+        //Not doing asterisks -> stars because it loses granularity and
+        //consideration, and it looks bad in the email.  Not doing theme
+        //checkbox preselects because of typos and extra markup.
         mim.text = mt;
         //force text to be redisplayed.  Ordinarily edits are maintained
         //during other updates like stars and checkboxes.  In this case it
