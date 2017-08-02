@@ -2328,14 +2328,15 @@ return {
 
 
     filterByRevtype: function (revs, rt) {
-        var filtered;
-        if(rt && rt !== "all") {
-            filtered = [];
-            revs.forEach(function (rev) {
-                if(rev.revtype === rt) {
-                    filtered.push(rev); } });
-            revs = filtered; }
-        return revs;
+        var filtered = [];
+        rt = rt || "all";
+        revs.forEach(function (rev) {
+            //with database lag it is possible to end up with a deleted
+            //membic showing up in a query response.  Safest to filter here.
+            if(rev.srcrev !== "-604" &&
+               (rev.revtype === rt || rt === "all")) {
+                filtered.push(rev); } });
+        return filtered;
     },
 
 

@@ -361,6 +361,9 @@ return {
         rts.forEach(function (rt) {
             feeds[rt.type] = null; });
         feeds.all = null;
+        feeds.remembered = null;
+        feeds.future = null;
+        feeds.memo = null;
     },
 
 
