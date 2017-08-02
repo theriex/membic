@@ -383,18 +383,17 @@ app.readurl = (function () {
 
 
     readMailInMembicText = function (mim) {
-        var mc = {text:""}, lines = mim.text.split("\n");
-        lines.forEach(function (line, idx) {
-            if(idx === 0) {
-                //to: "me" if sent to me@membic.org
-                mc.to = line.match(/[^\s]+@membic.org/g)[0].slice(0, -11);
-                mc.received = line.slice(-20); }  //ISO timestamp
-            else if(idx === 1) {
-                mc.subj = line.slice(9); }  //everything after "Subject: "
-            else {
-                if(idx === 2) {
-                    line = line.slice(6); }  //everything after "Body: "
-                mc.text += line + "\n"; } });
+        //Need to parse independently of newlines which can be inserted
+        //pretty much anywhere.  Especially in a long subject.  The body may
+        //be html or text.
+        var mc = {}, elems;
+        elems = mim.text.split("Subject: ");
+        mc.to = elems[0].match(/[^\s]+@membic.org/g)[0].slice(0, -11);
+        mc.received = elems[0].replace(/\n/g, "").slice(-20);
+        elems = elems[1].split("Body: ");
+        mc.subj = elems[0].replace(/\n/g, "");
+        mc.subj = mc.subj.replace(/\s/g, " ");
+        mc.text = elems[1];  //leave raw to allow for pulling a url out of it
         return mc;
     };
 
@@ -429,27 +428,24 @@ return {
     },
 
 
+    //The mail subject is the reason why the link is memorable, the body has
+    //the url.  Anything else is confusing to both humans and machines.  The
+    //mail body is typically html.  The body will frequently have sig or
+    //other extraneous information attached.
     automateMailInMembic: function (mim) {
-        var mc, mt;
-        mc = readMailInMembicText(mim);
-        mt = mc.text;
-        if(mc.text.indexOf(mc.subj) < 0) {
-            mt = mc.subj + "\n" + mc.text; }
-        mc.url = mt.match(/https?:\/\/[^\s]+/g);
+        var mc = readMailInMembicText(mim);
+        mc.url = mc.text.match(/https?:\/\/[^\s'"]+/g);
         if(mc.url) {
             mc.url = mc.url[0];
-            mim.url = mc.url;
-            mt = mt.replace(mc.url, "").trim(); }
+            mim.url = mc.url; }
         //Not doing asterisks -> stars because it loses granularity and
-        //consideration, and it looks bad in the email.  Not doing theme
-        //checkbox preselects because of typos and extra markup.
-        mim.text = mt;
+        //consideration, and it looks bad in the email.  Not doing keyword
+        //or theme checkbox preselects because of typos and extra markup.
+        mim.text = mc.subj;
         //force text to be redisplayed.  Ordinarily edits are maintained
         //during other updates like stars and checkboxes.  In this case it
         //should be rebuilt.
         jt.out("rdtextdiv", "");
-        //Reading from the source overrides any fields guessed from email.
-        //Probably better values, and more consistent behavior.
         if(mc.url) {
             return app.readurl.fetchData(mim, mc.url); }
         app.review.updatedlg();

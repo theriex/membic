@@ -1476,7 +1476,7 @@ app.review = (function () {
 
     automateMembicDialog = function () {
         var rbc;
-        if(crev.srcrev === "-101" && crev.text.startsWith("Mail to ")) {
+        if(app.review.isMailInMembic(crev)) {
             app.review.togglefuture(true);
             rbc = jt.byId("rdurlbuttonspan");
             if(rbc) {
@@ -2494,6 +2494,13 @@ return {
         if(cached.srcrev === "-101") {  //currently saved as future so ok
             return true; }
         return false;
+    },
+
+
+    isMailInMembic: function (rev) {
+        //Exact text format matches mailsum.py make_pending_membic
+        return (rev.srcrev === "-101" && 
+                rev.text.trim().startsWith("Mail sent to "));
     },
 
 

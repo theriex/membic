@@ -106,7 +106,7 @@ def make_pending_membic(penid, mailsubj, mailbody, mailto):
     mim.name = ""
     mim.title = ""
     mim.url = ""
-    # Client code depends on this exact text format.
+    # Exact text format matched by review.js isMailInMembic
     mim.text = "Mail sent to " + mailto + " received " + mim.modified +\
                "\nSubject: " + mailsubj +\
                "\nBody: " + mailbody
