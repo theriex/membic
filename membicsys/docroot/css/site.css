@@ -74,6 +74,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #infosignoutdiv { margin-top:-2px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { height:30px; text-align:right; }
+.loginstatspan { background-image:url('../img/e6e7e9p80.png'); }
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
                transition:opacity 1s; 
                padding:2px 0px 5px 0px; }
