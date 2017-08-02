@@ -237,6 +237,8 @@ def note_inbound_mail(message):
         mailsubj = message.subject
     mailbody = ""
     for bodtype, body in message.bodies():
+        # HTML bodies are returned first, then plain text bodies.
+        mailbody = body;
         if bodtype == 'text/html':
             mailbody = body.decode()
         if mailbody:
