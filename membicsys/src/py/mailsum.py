@@ -117,6 +117,7 @@ def make_pending_membic(penid, mailsubj, mailbody, mailto):
     logging.info("Future membic " + str(mim.key().id()) + 
                  " created for PenName " + str(penid))
     send_pending_membic_reminder(mim)
+    return "Pending membic created"
 
 
 def send_theme_post_reminder(pn, mrt, numthemes):
