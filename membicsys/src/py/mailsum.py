@@ -237,9 +237,13 @@ def note_inbound_mail(message):
         mailsubj = message.subject
     mailbody = ""
     for bodtype, body in message.bodies():
-        # HTML bodies are returned first, then plain text bodies.
-        mailbody = body;
+        # HTML bodies are returned first, then plain text bodies.  Docs say
+        # to decode if bodtype == 'text/html' but apparently plain text also
+        # needs to be decoded.  Just take the first available, but ignore
+        # whatever other cruft might be found.
         if bodtype == 'text/html':
+            mailbody = body.decode()
+        elif bodtype == 'text/plain':
             mailbody = body.decode()
         if mailbody:
             break
