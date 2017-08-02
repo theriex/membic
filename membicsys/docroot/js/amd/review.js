@@ -1938,7 +1938,7 @@ return {
                     return; } } }
         app.layout.closeDialog();
         if(jt.hasId(crev)) {  //show the edited membic on their profile
-            return app.pcd.display("pen", crev.penid, (crev.srcrev === "-101")? 
+            return app.pcd.display("pen", crev.penid, (org.srcrev === "-101")? 
                                    "memo" : "latest"); }
         app.login.doNextStep({});  //return to wherever we were
     },
