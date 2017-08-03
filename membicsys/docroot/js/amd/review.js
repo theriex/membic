@@ -587,6 +587,19 @@ app.review = (function () {
     },
 
 
+    posCountOrSpace = function (count) {
+        if(count) {
+            return String(count); }
+        return "&nbsp;";
+    },
+
+
+    //It is possible to display [Helpful|Remember|Write|Trash] at the same
+    //time if you are a theme moderator expanding someone else's membic.  If
+    //making any changes, test that on a phone to make sure it looks ok.
+    //Also keep in mind that for your own membic, there are counts displayed
+    //for how many people found your membic helpful or wrote membics from
+    //it.  That may not be frequent, but that also requires space.
     revpostButtonsHTML = function (prefix, revid) {
         var rev, updrevid, html, rmfs;
         rev = app.lcs.getRef("rev", revid).rev;
@@ -605,10 +618,10 @@ app.review = (function () {
             rev.remembered = rev.remembered || "";
             html = [["div", {cla: "fpbuttondiv", 
                              style: "background:url('../img/helpfuldis.png') no-repeat center center; background-size:contain;"},
-                     rev.helpful.csvarray().length],
+                     posCountOrSpace(rev.helpful.csvarray().length)],
                     ["div", {cla: "fpbuttondiv",
                              style: "background:url('../img/rememberdis.png') no-repeat center center; background-size:contain;"},
-                     rev.remembered.csvarray().length],
+                     posCountOrSpace(rev.remembered.csvarray().length)],
                     ["div", {cla: "fpbuttondiv"},
                      fpbWriteButtonHTML(prefix, revid, updrevid, true)]]; }
         if(mayRemove(rev)) {

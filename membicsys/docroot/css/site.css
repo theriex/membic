@@ -390,8 +390,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv { float:left; padding:0px 10px 0px 3px; }
 .fpbuttonsdiv { margin-left:40px; padding-top:2px; }
-.fpbuttondiv { display:inline-block; margin:0px 10px; min-width:40px; 
-   text-align:center; }
+.fpbuttondiv { display:inline-block; margin:0px 10px; text-align:center; 
+  min-width:40px; min-height:30px; }
 .fpotherrevsdiv { display:inline-block; }
 .fpbuttonimg { max-height:40px; max-width:40px; vertical-align:middle; }
 .fpotherrevsdiv { }
