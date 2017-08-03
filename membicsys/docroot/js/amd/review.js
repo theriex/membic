@@ -675,6 +675,92 @@ app.review = (function () {
     },
 
 
+    selectedThemesChanged = function (org) {
+        var newchecked, changed = false;
+        if(!org) {
+            return false; }
+        notePostingCoops();  //update crev.ctmids CSV from checkboxes
+        newchecked = crev.ctmids;
+        if(org.svcdata && org.svcdata.postctms) {
+            org.svcdata.postctms.forEach(function (ctm) {
+                if(!newchecked.csvcontains(ctm.ctmid)) {
+                    changed = true; }  //was checked before and isn't now
+                newchecked = newchecked.csvremove(ctm.ctmid); }); }
+        //anything left in newchecked was not previously in postctms
+        return newchecked || changed;
+    },
+
+
+    picChanged = function (org) {
+        var newpic = "", oldpic = "";
+        if(crev.svcdata) {
+            newpic = crev.svcdata.picdisp || ""; }
+        if(org && org.svcdata) {
+            oldpic = org.svcdata.picdisp || ""; }
+        if(newpic !== oldpic) {
+            return true; }
+        return false;
+    },
+
+
+    haveChanges = function () {
+        var org;
+        if(jt.hasId(crev)) {
+            org = app.lcs.getRef("rev", jt.instId(crev));
+            if(org && org.rev) {
+                org = org.rev; }
+            else {
+                org = null; }
+            if(org) {
+                validateCurrentReviewFields();  //verify crev updated
+                if(jt.fsame(crev.revtype, org.revtype) &&
+                   jt.fsame(crev.srcrev, org.srcrev) &&  //unchecked future
+                   jt.fsame(crev.rating, org.rating) &&
+                   jt.fsame(crev.keywords, org.keywords) &&
+                   jt.fsame(crev.text, org.text) &&
+                   //svcdata values checked separately
+                   jt.fsame(crev.name, org.name) &&
+                   jt.fsame(crev.title, org.title) &&
+                   (jt.fsame(crev.url, org.url) || 
+                    jt.fsame(crev.url, jt.dec(org.url))) &&
+                   jt.fsame(crev.artist, org.artist) &&
+                   jt.fsame(crev.author, org.author) &&
+                   jt.fsame(crev.publisher, org.publisher) &&
+                   jt.fsame(crev.album, org.album) &&
+                   jt.fsame(crev.starring, org.starring) &&
+                   jt.fsame(crev.address, org.address) &&
+                   jt.fsame(crev.year, org.year) &&
+                   !selectedThemesChanged(org) &&
+                   !picChanged(org)) {
+                    return false; } } }
+        return true;  //not saved yet, or no changes detected
+    },
+
+
+    displayAppropriateButton = function (statmsg, messageWithButton) {
+        if(!jt.byId("rdokbuttondiv").innerHTML) {
+            jt.out("rdokbuttondiv", jt.tac2html(
+                [["button", {type: "button", id: "okbutton",
+                             onclick: jt.fs("app.review.save()")},
+                  "Save"],
+                 ["button", {type: "button", id: "donebutton",
+                             onclick: jt.fs("app.review.done()")},
+                  "Done"]])); }
+        statmsg = statmsg || "";
+        jt.out("rdokstatdiv", statmsg);
+        if((statmsg && !messageWithButton) || !findReviewType(crev.revtype)) {
+            jt.byId("rdokbuttondiv").style.display = "none"; }
+        else if(haveChanges()) {
+            jt.byId("okbutton").style.display = "inline";
+            jt.byId("donebutton").style.display = "none";
+            jt.byId("rdokbuttondiv").style.display = "block"; }
+        else {
+            jt.byId("okbutton").style.display = "none";
+            jt.byId("donebutton").style.display = "inline";
+            jt.byId("rdokbuttondiv").style.display = "block"; }
+    },
+
+
     starDisplayAdjust = function (event, roundup) {
         var span, spanloc, evtx, relx, sval, html;
         span = jt.byId("stardisp");
@@ -694,6 +780,7 @@ app.review = (function () {
         crev.rating = sval;
         html = starsImageHTML(crev, "edit");
         jt.out("stardisp", html);
+        displayAppropriateButton();
     },
 
 
@@ -988,8 +1075,12 @@ app.review = (function () {
 
     copyReview = function (review) {
         var copy = {};
+        app.review.serializeFields(review);
         Object.keys(review).forEach(function (field) {
             copy[field] = review[field]; });
+        app.review.deserializeFields(review);
+        if(copy.svcdata) {
+            app.review.deserializeFields(copy); }
         return copy;
     },
 
@@ -1072,7 +1163,8 @@ app.review = (function () {
             html = ["div", {id: "rdkeyincontentdiv"}, 
                     [["label", {fo: "keyin", cla: "liflab", id: "keylab"}, 
                       rt.key],
-                     ["input", {id: "keyin", cla: "lifin", type: "text"}],
+                     ["input", {id: "keyin", cla: "lifin", type: "text",
+                                oninput:jt.fs("app.review.buttoncheck()")}],
                      ["div", {id: "rdacdiv"},
                       ["input", {type: "checkbox", id: "rdaccb",
                                  name: "autocompleteactivationcheckbox",
@@ -1175,7 +1267,8 @@ app.review = (function () {
     dlgFieldInputHTML = function (fldn) {
         return ["div", {id: fldn + "div", cla: "rdfindiv"},
                 ["input", {id: fldn + "in", type: "text", 
-                           cla: "lifin", placeholder: fldn.capitalize()}]];
+                           cla: "lifin", placeholder: fldn.capitalize(),
+                           oninput:jt.fs("app.review.buttoncheck()")}]];
     },
 
 
@@ -1391,10 +1484,9 @@ app.review = (function () {
     updateShareInfo = function () {
         notePostingCoops();  //populates rev.ctmids csv from checkboxes
         reviewTextValid();   //populates crev.text
-        jt.out("okbutton", "Save");
+        displayAppropriateButton();
         jt.out("sharediv", "");  //rebuild share buttons with latest data
         if(jt.hasId(crev)) {
-            jt.byId("donebutton").style.display = "initial";
             jt.byId("closedlg").click = app.review.done;
             if(!jt.byId("sharediv").innerHTML) {
                 jt.out("sharediv", jt.tac2html(
@@ -1423,18 +1515,18 @@ app.review = (function () {
     },
 
 
-    noteSaveError = function (statdivid, code, errtxt) {
+    noteSaveError = function (code, errtxt) {
         if(!code) {  
-            //Most like the server just hung up on us and couldn't
+            //Likely that the server just hung up on us and couldn't
             //even be bothered to send a status code.  Guess it was
-            //too busy.  Usually the save works if you try again a
+            //just too busy.  Usually the save works if you try again a
             //second time, and that's what most people will do if
             //nothing happens, so better to just eat this error rather
             //than bothering to display a potentially confusing and
-            //vague error message.  Log and continue.
+            //vague error message.  Log it to the console and continue.
             jt.log("Save fail 0: Call completed but not successful");
-            return; }
-        jt.out(statdivid, "Save fail " + code + ": " + errtxt);
+            return ""; }
+        return "Save fail " + code + ": " + errtxt;
     },
 
 
@@ -1492,7 +1584,8 @@ app.review = (function () {
                  ["div", {id: "rdtypepromptdiv"}],
                  ["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
-                   ["input", {id: "urlin", cla: "lifin", type: "url"}],
+                   ["input", {id: "urlin", cla: "lifin", type: "url",
+                              oninput:jt.fs("app.review.buttoncheck()")}],
                    ["span", {id: "rdurlbuttonspan"}, dlgReadButtonHTML()],
                    ["div", {id: "rdstat1"}]]],
                  ["div", {id: "rdkeyindiv"}],
@@ -1502,14 +1595,7 @@ app.review = (function () {
                  ["div", {id: "rdgdiv"}],
                  ["div", {id: "rdokdiv"},
                   [["div", {id: "rdokstatdiv"}],
-                   ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"},
-                    [["button", {type: "button", id: "okbutton",
-                                 onclick: jt.fs("app.review.save()")},
-                      "Ok"],
-                     ["button", {type: "button", id: "donebutton",
-                                 style: "display:none;",
-                                 onclick: jt.fs("app.review.done()")},
-                      "Done"]]]]],
+                   ["div", {id: "rdokbuttondiv", cla: "dlgbuttonsdiv"}]]],
                  ["div", {id: "sharediv"}],
                  ["div", {id: "rdextradiv"}]]];
         html = app.layout.dlgwrapHTML("Make Membic", html,
@@ -1546,10 +1632,9 @@ app.review = (function () {
             cacheBustPersonalReviewSearches();
             app.pcd.updateSearchStateData(updrev);
         } catch (problem) {
-            jt.out("rdokbuttondiv", "Please reload this page, " + step + 
-                   " failed: " + problem);
+            displayAppropriateButton("Please reload this page, " + step + 
+                                     " failed: " + problem);
         }
-        jt.out("rdokstatdiv", "");
         updateShareInfo();
     },
 
@@ -1655,7 +1740,6 @@ return {
         if(!jt.byId("revdlgdiv")) {  //dialog not displayed yet, init.
             return displayMembicDialog(); }
         if(typename) {
-            jt.out("rdokstatdiv", "");  //clear errs e.g. "need to choose type"
             //rebuild the pic and details area
             if(jt.byId("rdstarsdiv") && crev.srcrev !== "-101") {
                 //turn off the star functions if they were active
@@ -1752,6 +1836,7 @@ return {
             crev.srcrev = "-101";
             dlgStarsDeactivate();
             jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML())); }
+        displayAppropriateButton();
     },
 
 
@@ -1838,6 +1923,7 @@ return {
         rdkwin = jt.byId("rdkwin");
         keycsv = app.review.keywordcsv(kwid, rdkwin.value);
         rdkwin.value = keycsv;
+        displayAppropriateButton();
     },
 
 
@@ -1854,6 +1940,7 @@ return {
                     displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
+        displayAppropriateButton();
     },
 
 
@@ -1868,6 +1955,7 @@ return {
             width /= 65;
             width = Math.round(Math.min(rdta.offsetWidth, width));
             tld.style.width = String(width) + "px"; }
+        displayAppropriateButton();
     },
 
 
@@ -1877,21 +1965,20 @@ return {
 
 
     save: function (skipvalidation) {
-        var errors, data, html;
+        var errors, data;
         //remove save button immediately to avoid double click dupes...
-        html = jt.byId("rdokbuttondiv").innerHTML;
+        displayAppropriateButton("Saving...");
         if(!skipvalidation) {
-            jt.out("rdokbuttondiv", "Verifying...");
+            displayAppropriateButton("Verifying...");
             errors = validateCurrentReviewFields();
             if(errors.length > 0) {
-                jt.out("rdokstatdiv", errors.reduce(function (pv, cv) {
-                    return pv + cv + "<br/>"; }, ""));
-                jt.out("rdokbuttondiv", html); 
+                displayAppropriateButton(errors.reduce(function (pv, cv) {
+                    return pv + cv + "<br/>"; }, ""), true);
                 return; }
             if(!app.coop.confirmPostThrough(crev)) {
-                jt.out("rdokbuttondiv", html);
+                displayAppropriateButton();
                 return; }}
-        jt.out("rdokbuttondiv", "Saving...");
+        displayAppropriateButton("Writing...");
         crev.penid = crev.penid || app.pen.myPenId();  //reader may have skipped
         app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;
@@ -1900,47 +1987,35 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call("POST", "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
-                    jt.out("rdokbuttondiv", html);
+                    displayAppropriateButton("Saved.");
                     postSaveProcessing(updobjs); },
                 app.failf(function (code, errtxt) {
-                    jt.out("rdokbuttondiv", html);
-                    noteSaveError("rdokstatdiv", code, errtxt); }),
+                    displayAppropriateButton(
+                        noteSaveError(code, errtxt), true); }),
                 jt.semaphore("review.save"));
     },
 
 
     done: function () {
-        var org, curr;
-        if(jt.hasId(crev)) {
-            org = app.lcs.getRef("rev", jt.instId(crev));
-            curr = crev; //use local variable for easier debugging
-            if(org && org.rev) {
-                org = org.rev;
-                validateCurrentReviewFields();
-                if(!(jt.fsame(curr.revtype, org.revtype) &&
-                     jt.fsame(curr.srcrev, org.srcrev) &&  //unchecked future
-                     jt.fsame(curr.rating, org.rating) &&
-                     jt.fsame(curr.keywords, org.keywords) &&
-                     jt.fsame(curr.text, org.text) &&
-                     //svcdata.picdisp updated separately so always same here
-                     jt.fsame(curr.name, org.name) &&
-                     jt.fsame(curr.title, org.title) &&
-                     (jt.fsame(curr.url, org.url) || 
-                      jt.fsame(curr.url, jt.dec(org.url))) &&
-                     jt.fsame(curr.artist, org.artist) &&
-                     jt.fsame(curr.author, org.author) &&
-                     jt.fsame(curr.publisher, org.publisher) &&
-                     jt.fsame(curr.album, org.album) &&
-                     jt.fsame(curr.starring, org.starring) &&
-                     jt.fsame(curr.address, org.address) &&
-                     jt.fsame(curr.year, org.year)) &&
-                   (!confirm("Discard changes?"))) {
-                    return; } } }
+        var state, cached;
+        if(jt.hasId(crev) && haveChanges()) {
+            if(!confirm("Discard changes?")) {
+                return; } }
         app.layout.closeDialog();
-        if(jt.hasId(crev)) {  //show the edited membic on their profile
-            return app.pcd.display("pen", crev.penid, (org.srcrev === "-101")? 
-                                   "memo" : "latest"); }
-        app.login.doNextStep({});  //return to wherever we were
+        //generally want to return to where we were, except when a future
+        //membic has just changed to a regular membic.  Then watching it
+        //disappear from the remembered tab on save is disconcerting.
+        if(jt.hasId(crev)) {
+            state = app.history.currState();
+            if(state && state.view === "pen" && state.tab === "memo") {
+                //crev may have changed if they are canceling without saving
+                //so determine future status from cached version
+                cached = app.lcs.getRef("rev", jt.instId(crev)).rev;
+                if(cached.srcrev !== "-101") {
+                    return app.pcd.display("pen", crev.penid, "latest"); } } }
+        //return to wherever we were, while allowing for any other
+        //processing that needs to get done.
+        app.login.doNextStep({});
     },
 
 
@@ -2502,6 +2577,11 @@ return {
         //Exact text format matches mailsum.py make_pending_membic
         return (rev.srcrev === "-101" && 
                 rev.text.trim().startsWith("Mail sent to "));
+    },
+
+
+    buttoncheck: function () {
+        displayAppropriateButton();
     },
 
 

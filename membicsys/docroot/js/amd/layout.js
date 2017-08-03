@@ -680,8 +680,8 @@ return {
                 document.body.appendChild(js);
                 jt.log("addtoany script loaded");
                 addToAnyScriptLoaded = true; }
-            else {
-                //reinitialize the sharing display via the API
+            else if(a2a) {
+                //script already loaded and have a2a object to work with
                 jt.log("resetting addtoany config variables and calling init");
                 a2a.init("page"); }
         } catch(e) {
