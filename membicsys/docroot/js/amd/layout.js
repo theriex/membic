@@ -32,18 +32,24 @@ app.layout = (function () {
         html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
             " or <a href=\"mailto:" + app.suppemail + "\">by email</a>.");
         dst = app.pcd.getDisplayState();
-        if(dst && dst.type === "coop" && dst.obj) {
-            if(dst.obj.hashtag) {
-                txt = "https://" + window.location.host + "/" + 
-                    dst.obj.hashtag; }
-            else {
-                txt = "Theme hashtag not set"; }
-            html = html.replace(/<!--\ \$THEMEHASHURL\ -->/g, txt);
-            txt = "https://" + window.location.host + "/t/" + dst.id;
-            html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt);
-            txt = "https://" + window.location.host + 
-                "?view=coop&coopid=" + dst.id;
-            html = html.replace(/<!--\ \$MEMBICPARAMLINK\ -->/g, txt); }
+        if(dst && dst.obj) {
+            if(dst.type === "coop") {
+                if(dst.obj.hashtag) {
+                    txt = "https://" + window.location.host + "/" + 
+                        dst.obj.hashtag; }
+                else {
+                    txt = "Theme hashtag not set"; }
+                html = html.replace(/<!--\ \$THEMEHASHURL\ -->/g, txt);
+                txt = "https://" + window.location.host + "/t/" + dst.id;
+                html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt);
+                txt = "https://" + window.location.host + 
+                    "?view=coop&coopid=" + dst.id;
+                html = html.replace(/<!--\ \$MEMBICPARAMLINK\ -->/g, txt); }
+            txt = jt.tac2html(["a", {href: "#settings",
+                                     onclick: jt.fs("app.pcd.settings()")},
+                               "See Settings for RSS and embedding."]);
+            html = html.replace(/<!--\ \$SEEPCDSETTINGSLINK\ -->/g, txt); }
+
         return html;
     },
 

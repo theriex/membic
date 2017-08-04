@@ -916,17 +916,43 @@ app.pcd = (function () {
     },
 
 
-    permalinkInfoHTML = function () {
-        var html;
-        if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
-               !jt.hasId(dst.obj)) {
-            return ""; }
-        html = ["a", {href: "solopageinfo",
-                      onclick: jt.fs(
-                          "app.layout.displayDoc('docs/themepage.html',true)")},
-                ["&nbsp;",
-                 ["img", {cla: "ctmsetimg", src: "img/info.png"}]]];
+    alternateDisplayHTML = function () {
+        var url, html, href = window.location.href;
+        if(href.match(/\/[t|p]\//) || (dst.obj && dst.obj.hashtag &&
+                             (href.indexOf("/" + dst.obj.hashtag) > 0))) {
+            url = app.hardhome + "?view=" + dst.type + "&" + dst.type + "id" +
+                "=" + jt.instId(dst.obj);
+            html = [["a", {href: url.url,
+                           onclick: jt.fs("window.open('" + url + "')")},
+                     ["img", {src:"img/membiclogo.png", cla:"reviewbadge"}]],
+                    "&nbsp;"]; }
+
+        else {
+            url = getDirectLinkInfo(true).url;
+            html = ["span", {id: "shurlspan"},
+                    ["a", {href: url.url,
+                           onclick: jt.fs("window.open('" + url + "')")},
+                     url]]; }
         return html;
+    },
+
+
+    permalinkInfoHTML = function () {
+        var url, html;
+        if(dst.type !== "coop" || !dst.obj || !jt.hasId(dst.obj)) {
+            html = ""; }
+        else if(app.coop.membershipLevel(dst.obj) < 3) {
+            url = app.hardhome + "/rsscoop?" + dst.type + "=" + 
+                jt.instId(dst.obj);
+            html = ["a", {href:url, 
+                          onclick:jt.fs("window.open('" + url + "')")},
+                    ["img", {cla: "ctmsetimg", src: "img/rssicon.png"}]]; }
+        else {
+            html = ["a", {href:"#solopageinfo", 
+                          onclick: jt.fs("app.layout.displayDoc('" + 
+                                         "docs/themepage.html',true)")},
+                    ["img", {cla: "ctmsetimg", src: "img/info.png"}]]; }
+        return ["&nbsp;", html];
     },
 
 
@@ -1824,7 +1850,7 @@ return {
 
 
     share: function () {
-        var descrdiv, shurlspan, defs, html, dlo;
+        var descrdiv, shurlspan, defs, html;
         descrdiv = jt.byId("ppcdshoutdiv");
         if(descrdiv) {
             defs = dst[dst.type];
@@ -1834,13 +1860,9 @@ return {
                     ["span", {cla: "shoutspan"}, 
                      jt.linkify(dst.obj[defs.descfield] || "")])); }
             else {
-                dlo = getDirectLinkInfo(true);
                 html = [
                     ["div", {cla: "permalinkdiv"},
-                     [["span", {id: "shurlspan"},
-                       ["a", {href: dlo.url,
-                              onclick: jt.fs("window.open('" + dlo.url + "')")},
-                        dlo.url]],
+                     [alternateDisplayHTML(),
                       permalinkInfoHTML()]],
                     ["span", {cla: "shoutspan"},
                      signInToFollowHTML()],
@@ -1851,8 +1873,8 @@ return {
                 app.fork({
                     descr:"share button thread separation",
                     func:function () {
-                        app.layout.showShareButtons(dst.obj.name, 
-                                                    dlo.url); },
+                        app.layout.showShareButtons(
+                            dst.obj.name, getDirectLinkInfo(true).url); },
                     ms:80}); } }
     },
 
