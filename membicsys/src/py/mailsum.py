@@ -216,6 +216,20 @@ def remind_offline_pens():
     return stat
 
 
+def list_active_pens(maxpens, daysback):
+    stat = "Most recently accessed " + str(maxpens) + " pens within past " +\
+           str(daysback) + " days:\n"
+    dtnow = datetime.datetime.utcnow()
+    daysback += 1  # using strict greater than comparison in query
+    cutoff = dt2ISO(dtnow - datetime.timedelta(daysback))
+    vq = VizQuery(pen.PenName, "WHERE accessed > :1 ORDER BY accessed DESC",
+                  cutoff)
+    pns = vq.fetch(maxpens, read_policy=db.EVENTUAL_CONSISTENCY, deadline=180)
+    for idx, pn in enumerate(pns):
+        stat += pn.name + " " + str(pn.key().id()) + " " + pn.accessed + "\n"
+    return stat
+
+
 def remind_pending_membics():
     stat = ""
     delta = datetime.timedelta(days=max_pend_membic_rmndr_d)
@@ -321,10 +335,13 @@ class UserActivity(webapp2.RequestHandler):
 class PeriodicProcessing(webapp2.RequestHandler):
     def get(self):
         body = "Periodic processing status messages:\n"
-        body += "---- Offline pen reminders: ----\n"
-        body += remind_offline_pens()
         body += "---- Pending membic reminders: ----\n"
         body += remind_pending_membics()
+        body += "---- Offline pen reminders: ----\n"
+        body += remind_offline_pens()
+        body += "---- Active pens: ----\n"
+        body += list_active_pens(20, 7)
+        # mail the accumulated messages to support
         subj = "PeriodicProcessing status messages"
         moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
         body += "\nPeriodicProcessing completed."
