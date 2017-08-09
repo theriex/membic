@@ -600,17 +600,19 @@ return {
         var html;
         html = ["div", {cla: "themetilewrapper", 
                         id: "themetile" + theme.ctmid},
-                ["div", {cla: "themetile"}, 
-                 ["a", {title: "Open " + theme.name,
-                        href: "/t/" + theme.ctmid,
-                        onclick: clickfstr},
-                  [["div", {cla: "themetilepicdiv"},
-                    ["img", {cla: "pcdpic", 
-                             src: "ctmpic?coopid=" + theme.ctmid}]],
-                   ["div", {cla: "themetiletitlediv"},
-                    theme.name],
-                   ["div", {cla: "themetilecountdiv"},
-                    theme.count]]]]];
+                ["div", {cla: "themetile"},
+                 [["div", {cla:"tilemstatdiv"},
+                   app.pcd.membershipSettingsLink(theme)],
+                  ["a", {title: "Open " + theme.name,
+                         href: "/t/" + theme.ctmid,
+                         onclick: clickfstr},
+                   [["div", {cla: "themetilepicdiv"},
+                     ["img", {cla: "pcdpic",
+                              src: "ctmpic?coopid=" + theme.ctmid}]],
+                    ["div", {cla: "themetiletitlediv"},
+                     theme.name],
+                    ["div", {cla: "themetilecountdiv"},
+                     theme.count]]]]]];
         return html;
     }
 

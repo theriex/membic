@@ -431,6 +431,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .themetiletitlediv { max-width:125px; }
 .proftiletitlediv { max-width:80px; font-size:small; }
 .themetilecountdiv { display:none; text-align:center; font-size:x-small; }
+.tilemstatdiv { text-align:center; font-size:x-small; background:#ffdab1;
+  border-radius:5px; padding-bottom:1px; margin:-4px 0px 2px 0px; }
 #membicliststatusdiv { background:#e6e7e9; opacity:0.8; border-radius:10px; }
 
 /* >> docs layout */

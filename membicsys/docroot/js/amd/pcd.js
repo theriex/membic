@@ -273,7 +273,7 @@ app.pcd = (function () {
                  [["label", {fo: "statval", cla: "liflab"}, "Status"],
                   ["a", {href: "#togglecoopstat",
                          onclick: jt.fs("app.layout.togdisp('ctmstatdetdiv')")},
-                   ["span", {id: "memlevspan"}, 
+                   ["span", {id: "memlevspan"},
                     (seeking? "Applying" : ctmmsgs[mlev].name)]]]],
                 ["div", {cla: "formline", id: "ctmstatdetdiv",
                          style: "display:none;"},
@@ -1845,6 +1845,8 @@ return {
             jt.out("rsbdiv", "Stopping");
             pen = app.pen.myPenName();
             pen.coops = pen.coops.csvremove(dst.id);
+            if(pen.stash && pen.stash["ctm" + dst.id]) {
+                pen.stash["ctm" + dst.id] = null; }
             app.pen.updatePen(pen, app.pcd.redisplay, app.failf); }
     },
 
@@ -2158,7 +2160,8 @@ return {
         if(obj) {
             return displayObject(obj, expid, action); }
         if(dst.id) {
-            return app.pcd.fetchAndDisplay(dst.type, dst.id, dst.tab); }
+            return app.pcd.fetchAndDisplay(dst.type, dst.id, dst.tab, 
+                                           expid, action); }
         if(dtype === "coop") {  //creating new coop
             dst.obj = { name: "", description: "", 
                         people: {}, founders: app.pen.myPenId() };
@@ -2303,6 +2306,23 @@ return {
                     jt.out("fetchmorediv", "Fetch failed " + code + 
                            ": " + errtxt); },
                 jt.semaphore("pcd.fetchmore"));
+    },
+
+
+    membershipSettingsLink: function (theme) {
+        var html, stashid, pen, mlev;
+        stashid = "ctm" + theme.ctmid;
+        pen = app.pen.myPenName();
+        if(!pen || !pen.stash || !pen.stash[stashid]) {
+            return ""; }
+        //only have pen.stash[stashid] if at least following.  Verifying
+        //zero here only prevents crashing if the data is somehow corrupt.
+        mlev = pen.stash[stashid].memlev || 0;
+        html = ["a", {href:"#" + theme.name + " Settings",
+                      onclick:jt.fs("app.pcd.display('coop','" + theme.ctmid +
+                                    "',null,null,'settings')")},
+                ctmmsgs[mlev].name];
+        return jt.tac2html(html);
     }
 
 };  //end of returned functions
