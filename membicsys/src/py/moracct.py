@@ -438,7 +438,7 @@ def mailgun_send(handler, eaddr, subj, body):
     mg = consvc.get_connection_service("mailgun");
     authkey = base64.b64encode("api:" + mg.ckey)
     params = urllib.urlencode({
-            'from': 'noreply@membic.org',
+            'from': 'Membic Notifier <noreply@membic.org>',
             'to': eaddr,
             'subject': subj,
             'text': body})

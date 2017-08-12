@@ -4,6 +4,7 @@ from google.appengine.ext import db
 import logging
 import pen
 import rev
+import coop
 import moracct
 import consvc
 from morutil import *
@@ -230,6 +231,199 @@ def list_active_pens(maxpens, daysback):
     return stat
 
 
+class MembicSummary(object):
+    membicid = 0
+    penid = ""
+    verb = "created"
+    title = ""
+    url = ""
+    text = ""
+    ctmcsv = ""
+    def __init__(self, membic, postctms):
+        # postctms is a list of {ctmid, name, revid} dicts
+        self.membicid = membic.key().id()
+        self.penid = str(membic.penid)
+        if membic.modified > membic.modhist:
+            logging.info("mod: " + membic.modified + ", mhi: " + membic.modhist)
+            self.verb = "updated"
+        self.title = membic.name or membic.title
+        self.url = membic.url
+        self.text = membic.text
+        for pc in postctms:
+            self.ctmcsv = append_to_csv(pc["ctmid"], self.ctmcsv)
+
+class ThemeSummary(object):
+    theme = None
+    membics = []  # MembicSummary instances for recent posts to this theme
+    penids = ""   # CSV of penids receiving notices for this theme
+    def __init__(self, theme):
+        self.theme = theme
+
+class RecipientSummary(object):
+    penid = ""
+    name = ""
+    mid = 0
+    emaddr = ""
+    def __init__(self, penid, name="", mid=0, emaddr=""):
+        self.penid = str(penid)
+        self.name = name
+        self.emaddr = emaddr
+
+
+def fetch_daily_notice_membics():
+    now = datetime.datetime.utcnow().replace(microsecond=0,second=0,minute=30)
+    yesterday = dt2ISO(now - datetime.timedelta(1))
+    earliest = dt2ISO(now - datetime.timedelta(6))
+    now = dt2ISO(now)
+    membics = []
+    # Not worth a new index just for this traversal.  Walk using standard:
+    where = "WHERE ctmid = 0 AND modified > :1 ORDER BY modified DESC"
+    vq = VizQuery(rev.Review, where, earliest)
+    ms = vq.fetch(4000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=2000)
+    for membic in ms:
+        if membic.srcrev < 0:
+            continue   # ignore future, batch, deleted etc
+        if membic.modified > now:
+            continue   # send with tomorrow's notifications
+        if membic.dispafter > now:
+            continue   # don't notify if still future queued
+        if membic.modified < yesterday:  # past normal retrieval window
+            if not membic.dispafter:
+                continue  # not queued, just old
+            if membic.dispafter < yesterday:
+                continue  # already notified previously
+        svcdata = json.loads(membic.svcdata or "{}")
+        if "postctms" not in svcdata or not len(svcdata["postctms"]):
+            continue  # not posted to any themes so no notices
+        membics.append(MembicSummary(membic, svcdata["postctms"]))
+    times = {"now": now, "since": yesterday, "earliest": earliest}
+    return times, membics
+
+
+# If a membic is posted to more than one theme, that should be shown because
+# it's good to know when something is cross posted.
+def theme_summaries_for_membics(membic_summaries):
+    tss = {}
+    for msum in membic_summaries:
+        for tidstr in csv_list(msum.ctmcsv):
+            if tidstr not in tss:
+                theme = coop.Coop.get_by_id(int(tidstr))
+                if theme:
+                    tss[tidstr] = ThemeSummary(theme)
+            if tidstr in tss:
+                tss[tidstr].membics.append(msum)
+    return tss
+
+
+def recipient_summaries_for_themes(tss):
+    rss = {}
+    for key in tss:
+        tp = tss[key]
+        penids = csv_list(tp.theme.founders)
+        penids.extend(csv_list(tp.theme.moderators))
+        penids.extend(csv_list(tp.theme.members))
+        tp.penids = list_to_csv(penids)
+        for penid in penids:
+            if penid not in rss:
+                rss[penid] = RecipientSummary(penid)
+    # Followers are not tracked from the theme permission lists.  Have to
+    # find by iterating through the current active users
+    since = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(61))
+    where = "WHERE accessed > :1 ORDER BY accessed DESC"
+    vq = VizQuery(pen.PenName, where, since)
+    pns = vq.fetch(2000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=4000)
+    for pn in pns:
+        penid = str(pn.key().id())
+        if pn.coops:  # following themes, update recipient info as appropriate
+            for ctmid in tss:
+                if csv_contains(ctmid, pn.coops):  # following this theme
+                    # note penid as theme recipient
+                    tss[ctmid].penids = append_to_csv(penid, tss[ctmid].penids)
+                    # add/update overall recipient summary info
+                    rss[penid] = RecipientSummary(penid, pn.name, pn.mid)
+        if penid in rss: # theme member or some kind of recipient, note details
+            rss[penid] = RecipientSummary(penid, pn.name, pn.mid)
+    return rss
+
+
+def error_check_recipient_fields(recip):
+    if not recip.mid:
+        pn = pen.PenName.get_by_id(int(recip.penid))
+        if not pn:
+            return "No PenName found, penid: " + str(recip.penid)
+        recip.name = pn.name
+        recip.mid = pn.mid
+    if not recip.emaddr:
+        acc = moracct.MORAccount.get_by_id(int(recip.mid))
+        if not acc:
+            return "No MORAccount found, mid: " + str(recip.mid)
+        recip.emaddr = acc.email
+    return None
+
+
+def theme_url(ts):
+    url = "https://membic.org/t/" + str(ts.theme.key().id())
+    if ts.theme.hashtag:
+        url = "https://membic.org/" + ts.theme.hashtag
+    # The default tab is search, which is ordered by star rating so the new
+    # membics won't be at the top.  Show the most recent theme posts.
+    url += "?tab=latest"
+    return url
+
+
+def send_recent_membics_notice(recip, tss):
+    body = ""
+    tcount = 0
+    mcount = 0
+    for tskey in tss:
+        ttb = ""
+        ts = tss[tskey]
+        for ms in ts.membics:
+            if ms.penid != recip.penid:  # not the recipients own post
+                mcount += 1
+                if not ttb:
+                    tcount += 1
+                    ttb = ts.theme.name + " (" + theme_url(ts) + ")\n\n"
+                if ms.verb == "updated":
+                    ttb += "(Updated) "
+                ttb += ms.title + "\n"
+                if ms.url:
+                    ttb += ms.url + "\n"
+                ttb += ms.text + "\n\n"
+        body += ttb  # append theme summary text (if any created)
+    if not body:
+        return recip.name + ": No notices\n"
+    head = "Hi " + recip.name + ",\n\n"
+    head += "There are new membics in themes you are following:\n\n"
+    # Theme notice email might be forwarded so no tokens in the url
+    foot = "You are receiving this notice as from your theme associations. To view or modify your theme associations go to the themes tab on your profile page: https://membic.org?view=pen&penid=" + str(recip.penid) + "&tab=coops\n\n"
+    foot += "If you feel you have received this notice in error, or to report any problems with the contents, please forward this notice and your comments to support@membic.org\n\n"
+    foot += "The Collaborative Memory Project\n"
+    subj = "New posts for themes you are associated with"
+    moracct.mailgun_send(None, recip.emaddr, subj, head + body + foot)
+    return recip.name + ": " + str(mcount) + " notices, " +\
+        str(tcount) + " themes\n"
+        
+
+def recent_membic_notices():
+    times, ms = fetch_daily_notice_membics()  # build MembicSummary list
+    stat = str(len(ms)) + " membics between yesterday " + times["since"] + "\n"
+    if len(ms):
+        tss = theme_summaries_for_membics(ms)
+        for key in tss:
+            tp = tss[key]
+            stat += "    " + tp.theme.name + ": " + str(len(tp.membics)) + "\n"
+        rss = recipient_summaries_for_themes(tss)
+        for key in rss:
+            recip = rss[key]
+            err = error_check_recipient_fields(recip)
+            if err:
+                stat += err + "\n"
+                continue
+            stat += send_recent_membics_notice(recip, tss)
+    return stat
+
+
 def remind_pending_membics():
     stat = ""
     delta = datetime.timedelta(days=max_pend_membic_rmndr_d)
@@ -333,8 +527,13 @@ class UserActivity(webapp2.RequestHandler):
 
 
 class PeriodicProcessing(webapp2.RequestHandler):
+    # Normally called from cron.yaml 30 minutes before quota reset. That
+    # might look like an odd time from the local server perspective, but
+    # since this is query load it makes sense to be close to reset.
     def get(self):
         body = "Periodic processing status messages:\n"
+        body += "---- Recent membic notifications: ----\n"
+        body += recent_membic_notices()
         body += "---- Pending membic reminders: ----\n"
         body += remind_pending_membics()
         body += "---- Offline pen reminders: ----\n"

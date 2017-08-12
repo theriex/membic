@@ -670,7 +670,11 @@ def write_coop_post_notes_to_svcdata(review, postnotes):
         svcdict = json.loads(review.svcdata)
     svcdict["postctms"] = postnotes
     review.svcdata = json.dumps(svcdict)
-    review.modified = nowISO()
+    # Do not update the modified timestamp here since it can cause the
+    # modified and modhist fields to be off by a few millis, which can then
+    # round to seconds, which can round to minutes etc.  For a new membic
+    # the modhist ISO and the modified ISO should be the same.
+    # review.modified = nowISO()
     review.put()  # not generally instance cached
     update_review_caches(review)
 
