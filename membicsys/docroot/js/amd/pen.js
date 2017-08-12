@@ -305,7 +305,7 @@ return {
             var obj;
             if(key.startsWith("ctm")) {
                 obj = pen.stash[key];
-                if(obj.memlev >= 1) {
+                if(obj && obj.memlev >= 1) {
                     obj.ctmid = key.slice(3);
                     //was a member, verify they haven't resigned
                     if(pen.coops && pen.coops.csvcontains(obj.ctmid) &&
