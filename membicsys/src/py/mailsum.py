@@ -198,6 +198,11 @@ def send_reminders(pn):
     
 
 def remind_offline_pens():
+    # Test drove this with all messages going to support and it seems to be
+    # working, but it's kind of annoying.  The intent is to be helpful when
+    # you want to keep an ongoing interest active, but when you are trying
+    # to make it through your email that's not a good time.
+    return "disabled until demand and opt-in supported in pen settings"
     offmin = 4      # min days offline to qualify for a reminder
     offmax = 100    # max days offline before considered dead
     mfetch = 500    # max size of reminder pool
@@ -536,8 +541,8 @@ class PeriodicProcessing(webapp2.RequestHandler):
         body += recent_membic_notices()
         body += "---- Pending membic reminders: ----\n"
         body += remind_pending_membics()
-        body += "---- Offline pen reminders: ----\n"
-        body += remind_offline_pens()
+        # body += "---- Offline pen reminders: ----\n"
+        # body += remind_offline_pens()
         body += "---- Active pens: ----\n"
         body += list_active_pens(20, 7)
         # mail the accumulated messages to support
