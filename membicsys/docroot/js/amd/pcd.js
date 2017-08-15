@@ -46,7 +46,7 @@ app.pcd = (function () {
                                    otitle: "Remembered membics"},
                       search:    { href: "#searchmembics",
                                    img: "img/search.png",
-                                   stitle: "Searched",
+                                   stitle: "",  //stitle doesn't clarify..
                                    mtitle: "Search my membics",
                                    otitle: "Search membics from $NAME"},
                       prefpens:  { href: "#preferredpens",
@@ -1224,12 +1224,10 @@ app.pcd = (function () {
                              style:"display:inline-block;"},
                      [["a", {href:"#Download", id: "downloadlink",
                              title:"Download " + knowntabs[tabname].stitle,
-                             onclick:jt.fs("app.pcd.toggleDownloadsDisp()")},
+                             onclick:jt.fs("app.pcd.showDownloadDialog")},
                        [["img", {src:"img/download.png", 
                                  cla:"downloadlinkimg"}],
-                        "Download " + knowntabs[tabname].stitle]],
-                      ["div", {id:"downloadlinksdiv", 
-                               style:"display:none;"}]]]]; }
+                        "Download " + knowntabs[tabname].stitle]]]]]; }
         if(tabname === "latest" && dst.type === "coop") {
             rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
             html.push([" | ",
@@ -1946,7 +1944,6 @@ return {
               (srchst.status === "initializing" ||
                srchst.revtype !== app.layout.getType() ||
                srchst.qstr !== srchin.value)) {
-            app.pcd.toggleDownloadsDisp(true);  //rebuild downloads
             srchst.status = "processing";
             srchst.qstr = srchin.value;
             srchst.revtype = app.layout.getType();
@@ -2070,35 +2067,8 @@ return {
     },
 
 
-    toggleDownloadsDisp: function (close) {
-        var div = jt.byId("downloadlinksdiv");
-        if(close || div.style.display !== "none") {
-            div.style.display = "none"; }
-        else {
-            if(!div.innerHTML) {
-                div.innerHTML = jt.tac2html(
-                    [["div", {cla: "downloadoptdiv"},
-                      ["a", {href: "", id: "dloptaTSV",
-                             onclick: "app.pcd.dldata('TSV')",
-                             download: "membics.tsv"},
-                       [["img", {src: "img/download.png"}],
-                        " Spreadsheet (TSV)"]]],
-                     ["div", {cla: "downloadoptdiv"},
-                      ["a", {href: "", id: "dloptaJSON",
-                             onclick: "app.pcd.dldata('JSON')",
-                             download: "membics.json"},
-                       [["img", {src: "img/download.png"}],
-                        " JavaScript (JSON)"]]]]); }
-            div.style.display = "block"; }
-    },
-
-
-    dldata: function (format) {
-        //setting the href makes it available for when the click
-        //percolates upwards in the event processing.
-        jt.byId("dlopta" + format).href = "data:text/plain;charset=utf-8," +
-            encodeURIComponent(
-                app.layout.formatMembics(currentTabMembics(), format));
+    showDownloadDialog: function () {
+        app.layout.showDownloadOptions(currentTabMembics);
     },
 
 

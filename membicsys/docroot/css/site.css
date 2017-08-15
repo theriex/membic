@@ -214,8 +214,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #downloadlink { background-image: url('../img/whitewash.png'); }
 .downloadlinkimg { margin:0px 2px; }
 .dlrssimg { width:11px; height:12px; margin:0px 2px 2px 0px; }
-#downloadlinksdiv { font-size:medium; text-align:left; }
-.downloadoptdiv { background-image: url('../img/whitewash.png'); }
+.dloptseldiv { background-image: url('../img/whitewash.png'); }
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
 #pcdkeysrchdiv { margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
@@ -313,6 +312,11 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .setpldlgmspan { font-weight:bold; }
 .setpldlgta { width:90%; padding:10px 5px 0px 5px; margin:10px 0px 5px 0px; }
 #fetchmorediv { font-size:medium; padding:0px 0px 5px 10px; }
+#dloptseltitlediv { font-size:large; font-weight:bold; text-align:center; }
+.dloptseldiv { min-width:100px; padding:10px 10px 2px 2px; }
+.dlformatlabel { font-size:medium; padding-left:10px; }
+#downloadactiontextspan { font-size:large; }
+#downloadactiondiv { min-width:150px; text-align:center; padding:20px; }
 
 /* >> review layout */
 #revdlgdiv { }

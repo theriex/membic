@@ -1459,13 +1459,7 @@ app.review = (function () {
 
 
     membicTitleLine = function (type, rev, togclick) {
-        var html, url = rev.url;
-        if(!url) {
-            url = rev[type.key];
-            if(type.subkey) {
-                url += " " + rev[type.subkey]; }
-            url = jt.enc(url);
-            url = "https://www.google.com/?q=" + url + "#q=" + url; }
+        var html, url = app.review.membicURL(type, rev.url);
         html = [["a", {href: revurl(rev), onclick: togclick},
                  [["img", {cla: "reviewbadge", src: "img/" + type.img,
                            title: type.type, alt: type.type}],
@@ -2595,6 +2589,18 @@ return {
 
     buttoncheck: function () {
         displayAppropriateButton();
+    },
+
+
+    membicURL: function (type, membic) {
+        var url = membic.url;
+        if(!url) {
+            url = membic[type.key];
+            if(type.subkey) {
+                url += " " + membic[type.subkey]; }
+            url = jt.enc(url);
+            url = "https://www.google.com/?q=" + url + "#q=" + url; }
+        return url;
     },
 
 

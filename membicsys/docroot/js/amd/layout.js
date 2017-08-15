@@ -10,6 +10,10 @@ app.layout = (function () {
     ////////////////////////////////////////
 
     var typestate = {callback: null, typename: "all"},
+        dnld = {mf:null, opts:[{format:"html", name:"Document (HTML)"},
+                               {format:"pdf", name:"Document (PDF)"},
+                               {format:"tsv", name:"Spreadsheet (TSV)"},
+                               {format:"json", name:"JavaScript (JSON)"}]},
         dlgqueue = [],
         siteroot = "",
         addToAnyScriptLoaded = false,
@@ -224,6 +228,69 @@ app.layout = (function () {
         if(decknames) {
             decknames.forEach(function (dn) {
                 colorDeckLinkSpans(dn, "#111111"); }); }
+    },
+
+
+    getHTMLDataURI = function (membics) {
+        var txt;
+        membics = membics || [];
+        txt = "<!doctype html>\n<html>\n<head>\n" +
+            "<meta http-equiv=\"Content-Type\"" + 
+            " content=\"application/pdf; charset=UTF-8\" />\n" +
+            "<title>Membics</title>\n" +
+            "<style>\n" +
+            ".printrevdiv { clear:both; margin-bottom:10px; }\n" +
+            ".fprevpicdiv { float:left; padding:0px 10px 0px 3px; }\n" +
+            ".revimg { max-width:125px; max-height:80px; min-width:50px; }\n" +
+            "</style>\n" +
+            "</head><body>";
+        membics.forEach(function (membic) {
+            var type = app.review.getReviewTypeByValue(membic.revtype),
+                url = app.review.membicURL(type, membic),
+                pic = "";
+            if(membic.imguri) {
+                pic = ["img", {cla:"revimg", src:membic.imguri}]; }
+            txt += "\n" + jt.tac2html(
+                ["div", {cla:"printrevdiv"},
+                 [["div", {cla:"fprevpicdiv"}, pic],
+                  ["a", {href: url},
+                   app.pcd.reviewItemNameHTML(type, membic)],
+                  ["br"],
+                  jt.linkify(membic.text || "")]]); });
+        txt += "</body></html>\n";
+        return "data:application/pdf;charset=utf-8," + encodeURIComponent(txt);
+    },
+
+
+    getTSVDataURI = function (membics) {
+        var txt = "", keys = [];
+        membics = membics || [];
+        if(membics.length) {
+            keys = Object.keys(membics[0]);  //use same keys for all
+            keys.forEach(function (field, idx) {
+                if(idx) {
+                    txt += "\t"; }
+                txt += field; });
+            txt += "\n";
+            membics.forEach(function (membic) {
+                keys.forEach(function (field, idx) {
+                    var fv = membic[field];
+                    if(field === "text") {
+                        fv = fv.replace(/\t/g, " ");
+                        fv = fv.replace(/\n/g, "  "); }
+                    if(idx) {
+                        txt += "\t"; }
+                    txt += fv; });
+                txt += "\n"; }); }
+        return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
+    },
+
+
+    getJSONDataURI = function (membics) {
+        var txt;
+        membics = membics || [];
+        txt = JSON.stringify(membics);
+        return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
     };
 
 
@@ -702,34 +769,71 @@ return {
     },
 
 
-    formatMembics: function (membics, format) {
-        var txt = "", keys = [];
-        membics = membics || [];
-        format = format || "JSON";
-        switch(format) {
-        case "JSON":
-            txt = JSON.stringify(membics);
+    //With a single direct download link, the link would initially have
+    //href="" which would then be set to an appropriate data URI in an
+    //onclick handler before letting the click event percolate up to be
+    //taken care of by the browser.  With all options in a dialog, the data
+    //URI can be calculated when the radio button is selected.
+    showDownloadOptions: function (membicsfunction) {
+        var html = [];
+        dnld.mf = membicsfunction;
+        html.push(["div", {id:"dloptseltitlediv"}, "File Format"]);
+        dnld.opts.forEach(function (opt, idx) {
+            html.push(
+                ["div", {cla:"dloptseldiv"},
+                 [["input", {type:"radio", name:"dloptr", value:opt.format,
+                             id:"dldrad" + opt.format, checked:jt.toru(!idx),
+                             onchange:jt.fs("app.layout.dldrad(" + idx +")")}],
+                  ["label", {fo:"dldrad" + opt.format, cla:"dlformatlabel"},
+                   opt.name]]]); });
+        html.push(["div", {id:"downloadactiondiv"}]);
+        html = ["div", {id:"downloadoptsdiv"}, html];
+        app.layout.openOverlay(jt.geoPos(jt.byId("downloadlink")), html,
+                               function () { app.layout.dldrad(0); });
+    },
+
+
+    dldrad: function (dloptidx) {
+        var dlopt = dnld.opts[dloptidx];
+        switch(dlopt.format) {
+        case "html":
+            jt.out("downloadactiondiv", jt.tac2html(
+                ["a", {id:"downloadactionlink", href:getHTMLDataURI(dnld.mf()),
+                       download:"membics.html",
+                       onclick:jt.fsd("app.layout.cancelOverlay()")},
+                 [["img", {src: "img/download.png"}],
+                  ["span", {id:"downloadactiontextspan"}, 
+                   "Download HTML"]]]));
             break;
-        case "TSV":
-            if(membics.length) {
-                keys = Object.keys(membics[0]);  //use same keys for all
-                keys.forEach(function (field, idx) {
-                    if(idx) {
-                        txt += "\t"; }
-                    txt += field; });
-                txt += "\n";
-                membics.forEach(function (membic) {
-                    keys.forEach(function (field, idx) {
-                        var fv = membic[field];
-                        if(field === "text") {
-                            fv = fv.replace(/\t/g, " ");
-                            fv = fv.replace(/\n/g, "  "); }
-                        if(idx) {
-                            txt += "\t"; }
-                        txt += fv; });
-                    txt += "\n"; }); }
-            break; }
-        return txt;
+        case "pdf":
+            jt.out("downloadactiondiv", jt.tac2html(
+                ["a", {id:"downloadactionlink", href:"#printToPDF",
+                       onclick:jt.fs("app.layout.cancelOverlay();" +
+                                     "window.print();")},
+                 [["img", {src: "img/download.png"}],
+                  ["span", {id:"downloadactiontextspan"}, 
+                   "Print to PDF"]]]));
+            break;
+        case "tsv":
+            jt.out("downloadactiondiv", jt.tac2html(
+                ["a", {id:"downloadactionlink", href:getTSVDataURI(dnld.mf()),
+                       download:"membics.tsv",
+                       onclick:jt.fsd("app.layout.cancelOverlay()")},
+                 [["img", {src: "img/download.png"}],
+                  ["span", {id:"downloadactiontextspan"}, 
+                   "Download TSV"]]]));
+            break;
+        case "json":
+            jt.out("downloadactiondiv", jt.tac2html(
+                ["a", {id:"downloadactionlink", href:getJSONDataURI(dnld.mf()),
+                       download:"membics.json",
+                       onclick:jt.fsd("app.layout.cancelOverlay()")},
+                 [["img", {src: "img/download.png"}],
+                  ["span", {id:"downloadactiontextspan"}, 
+                   "Download JSON"]]]));
+            break;
+        default:
+            jt.out("downloadactiondiv", "Unknown Format"); }
     },
 
 
