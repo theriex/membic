@@ -1190,15 +1190,15 @@ app.pcd = (function () {
 
     tabsHTML = function () {
         var html = [];
+        if(dst.type === "pen") {
+            html.push(tabHTMLFromDef("coops"));
+            html.push(tabHTMLFromDef("prefpens")); }
         html.push(tabHTMLFromDef("latest"));
         html.push(tabHTMLFromDef("favorites"));
         if(!app.solopage() && dst.id === app.pen.myPenId()) {
             html.push(tabHTMLFromDef("memo")); }
         if(!app.solopage() || dst.type === "coop") {
             html.push(tabHTMLFromDef("search")); }
-        if(dst.type === "pen") {
-            html.push(tabHTMLFromDef("prefpens"));
-            html.push(tabHTMLFromDef("coops")); }
         if(dst.type === "coop" && dst.obj.calembed) {
             html.push(tabHTMLFromDef("calendar")); }
         return html;
