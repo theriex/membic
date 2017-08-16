@@ -447,10 +447,10 @@ def mailgun_send(handler, eaddr, subj, body):
     conn = httplib.HTTPSConnection("api.mailgun.net", 443)
     conn.request('POST', '/v3/mg.membic.org/messages', params, headers)
     response = conn.getresponse()
-    logging.info("mg " + eaddr + " " + subj + " " + str(response.status) + " " +
-                 str(response.reason))
+    logging.info("mgsi " + eaddr + " " + subj + " " + str(response.status) + 
+                 " " + str(response.reason))
     data = response.read()
-    logging.info("mg " + eaddr + " data: " + str(data))
+    logging.info("mgsi " + eaddr + " data: " + str(data))
     conn.close()
 
 
