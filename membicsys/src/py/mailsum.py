@@ -64,6 +64,7 @@ max_pend_membic_rmndr_d = 40
 
 def send_pending_membic_reminder(pm):
     pname = pen.PenName.get_by_id(pm.penid)
+    who = str(pname.name) + " < "
     reminder_schedule = [2, 4, 7, 14, 30]
     stash = moracct.safe_json_loads(pname.stash)
     if "mimrem" not in stash:
@@ -74,7 +75,7 @@ def send_pending_membic_reminder(pm):
     thresh = dt2ISO(modt + datetime.timedelta(days=max_pend_membic_rmndr_d))
     now = nowISO()
     if now > thresh:
-        return "Too old to remind about"
+        return who + "Too old to remind about"
     prevcount = 0
     for daycount in reminder_schedule:
         ps = dt2ISO(modt + datetime.timedelta(days=prevcount))
@@ -82,13 +83,13 @@ def send_pending_membic_reminder(pm):
         period_active = ps <= now and pe >= now
         reminder_active = ps <= remsent and pe >= remsent
         if period_active and reminder_active:
-            return str(daycount) + " day reminder already sent"
+            return who + str(daycount) + " day reminder already sent"
         prevount = daycount
     send_pending_membic_mail(pname, pm)
     stash["mimrem"][srk] = now
     pname.stash = json.dumps(stash)
     cached_put(pname)
-    return "Sent pending membic reminder"
+    return who + "Sent pending membic reminder"
 
 
 def make_pending_membic(penid, mailsubj, mailbody, mailto):
