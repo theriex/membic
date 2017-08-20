@@ -1459,7 +1459,7 @@ app.review = (function () {
 
 
     membicTitleLine = function (type, rev, togclick) {
-        var html, url = app.review.membicURL(type, rev.url);
+        var html, url = app.review.membicURL(type, rev);
         html = [["a", {href: revurl(rev), onclick: togclick},
                  [["img", {cla: "reviewbadge", src: "img/" + type.img,
                            title: type.type, alt: type.type}],
