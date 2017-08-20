@@ -255,15 +255,18 @@ class MembicSummary(object):
         self.title = membic.name or membic.title
         self.url = membic.url
         self.text = membic.text
+        self.ctmcsv = ""
         for pc in postctms:
             self.ctmcsv = append_to_csv(pc["ctmid"], self.ctmcsv)
 
 class ThemeSummary(object):
-    theme = None
-    membics = []  # MembicSummary instances for recent posts to this theme
-    penids = ""   # CSV of penids receiving notices for this theme
+    theme = None    # Coop db object
+    membics = None  # List of MembicSummary instances for recent posts
+    penids = ""     # CSV of penids receiving notices for this theme
     def __init__(self, theme):
         self.theme = theme
+        self.membics = []
+        self.penids = ""
 
 class RecipientSummary(object):
     penid = ""
@@ -273,10 +276,12 @@ class RecipientSummary(object):
     def __init__(self, penid, name="", mid=0, emaddr=""):
         self.penid = str(penid)
         self.name = name
+        self.mid = mid
         self.emaddr = emaddr
 
 
 def fetch_daily_notice_membics():
+    """ Returns a list of recent source membics """
     now = datetime.datetime.utcnow().replace(microsecond=0,second=0,minute=30)
     yesterday = dt2ISO(now - datetime.timedelta(1))
     earliest = dt2ISO(now - datetime.timedelta(6))
@@ -309,14 +314,18 @@ def fetch_daily_notice_membics():
 # If a membic is posted to more than one theme, that should be shown because
 # it's good to know when something is cross posted.
 def theme_summaries_for_membics(membic_summaries):
+    """ Returns a dict of ThemeSummary instances accessed by themeidstr """
     tss = {}
     for msum in membic_summaries:
+        # logging.info("Building summaries for " + msum.title)
+        # logging.info("tids: " + msum.ctmcsv)
         for tidstr in csv_list(msum.ctmcsv):
             if tidstr not in tss:
                 theme = coop.Coop.get_by_id(int(tidstr))
                 if theme:
                     tss[tidstr] = ThemeSummary(theme)
             if tidstr in tss:
+                # logging.info("Appending to " + tss[tidstr].theme.name)
                 tss[tidstr].membics.append(msum)
     return tss
 
