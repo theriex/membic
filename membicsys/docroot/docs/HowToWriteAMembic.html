@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="description" content="How to write a membic when you find something worth remembering.." />
+  <title>How To Write a Membic</title>
+  <link href="../css/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="howtocontentdiv">
+
+<a class="localdocslink" href="howto.html"><img src="../img/arrow18left.png">How To</a>
+
+<p>To make a membic, click the <img src="../img/writenew.png"
+class="hthimg"/> write button to bring up the interactive dialog.  Either
+paste in a url to read, or select a type and fill out the fields using
+autocomplete.  Writing a membic is simple. Here are some ways to make it
+easier to write a membic when you find something worth remembering: </p>
+
+<ol>
+
+<li><b>Homescreen</b>: On your phone, add membic to your homescreen.  When you
+find something worth remembering, copy the link, open membic, and paste the
+url into the interactive dialog.
+
+<li><b>Bookmarklet</b>: On your computer, set up a the "Make Membic"
+executable bookmark (directions below) to automatically start writing a
+membic for any page you are on.
+
+<li><b>Mail it in</b>: From any browser, click the share button and mail
+to <em>me@membic.org</em>.  Membic will look up your profile and make a
+membic for you to confirm later.
+
+</ol>
+
+<p>Membic is designed to work well on phones and mobile devices.  If you run into any issues please let us know <a href="https://github.com/theriex/membic/issues">on GitHub</a>.<!-- $ABOUTCONTACT -->
+</p>
+
+<h3>Setting up the bookmarklet</h3>
+
+<p>The "Make Membic" bookmarklet is a tiny bit of script that opens membic
+in a new browser window and passes along the url of the site you are on.
+Here's how to add it to the browser on your computer: </p>
+
+  <ul>
+    <li><em>Firefox</em>
+      <ol>
+        <li>"Right click" this link <img src="../img/arrow12right.png"> <a href="javascript:(function(){window.open('https://membic.org?newrev=&url='+encodeURIComponent(window.location.href));})();" style="font-weight:bold;">Make&nbsp;Membic</a> then choose "Bookmark This Link".
+      </ol>
+    <li><em>Chrome/Safari</em>
+      <ol>
+        <li>"Right click" this link <img src="../img/arrow12right.png"> <a href="javascript:(function(){window.open('https://membic.org?newrev=&url='+encodeURIComponent(window.location.href));})();" style="font-weight:bold;">Make&nbsp;Membic</a> then choose "Copy Link Address".
+        <li>Open Bookmarks | Bookmark This Page...
+        <li>Edit... change the bookmark name to "Make Membic", replace
+          the URL with the copied link.  Save.
+      </ol>
+  </ul>
+
+<p>The next time you are reading something memorable, choose "Make Membic" from
+your bookmarks to make a membic for it.</p>
+
+
+<h3>Integration projects</h3>
+
+<p>Membic welcomes and appreciates other projects that want to integrate
+using the API.  Contact us <a href="https://github.com/theriex/membic/issues">on
+GitHub</a>.<!-- $ABOUTCONTACT -->
+</p>
+
+<p>If you would like to build playlists from keywords, and update your top
+music membics automatically
+from <span class="lititlespan">iTunes&reg;</span>, check out the
+<a href="https://github.com/theriex/itsip">
+situational playlist generator project on github.</a></p>
+
+
+</div> <!-- howtocontentdiv -->
+
+<div id="returnlinkdiv" style="text-align:center; display:none;">
+  <a href="https://www.membic.org">Return to membic.org</a>
+</div>
+<script>
+    if(window.location.href.indexOf("/docs/") > 0) {
+        document.getElementById('returnlinkdiv').style.display = "block"; }
+</script>
+</body>
+</html>

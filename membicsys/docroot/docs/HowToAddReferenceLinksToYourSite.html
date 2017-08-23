@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="description" content="How to display helpful links to resources as part of your website without adding to your website maintenance." />
+  <title>How To Add Reference Links To Your Site</title>
+  <link href="../css/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div class="howtocontentdiv">
+
+<a class="localdocslink" href="howto.html"><img src="../img/arrow18left.png">How To</a>
+
+<p>A reference links page connects your site to the rest of the
+world. Here's how to include membics from a theme into a page on your
+site:</p>
+
+<ol>
+
+  <li>Click <img src="../img/profile.png" class="hthimg"/> to access
+  your profile.
+
+  <li>Select <img src="../img/tabctms.png" class="hthimg"/> (your themes tab).
+
+  <li>Click the theme you want to embed in your site.
+
+  <li>Open the theme settings <img src="../img/settings.png"
+  class="itximg"/> and click <img src="../img/embed.png"
+  class="itximg"/><b>Embed Theme</b>. 
+
+  <li>Copy the <em>Embed iframe</em> code and paste it into your web page.
+
+  <li>Replace <code>YOURSITE.COM</code> with your site domain.
+
+</ol>
+
+<p>Don't have a theme for tracking reference links?
+<a class="localdocslink" href="HowToMakeATheme.html">Create A Theme</a></p>
+
+<p>If your site hosting does not allow you to include an iframe into your
+site, you can always display the direct link to your membic theme page,
+or <a href="#inclnewsfeed"
+onclick="app.toggledivdisp('inclnewsfeeddiv');return false;"> include your
+theme content through a newsfeed plugin</a>. </p>
+<div id="inclnewsfeeddiv" class="detailcontentdiv">
+
+Refer to your website software documentation for how to include newsfeed
+content as part of your site.  Usually this is a module or widget, and may
+be associated with decorative content.  For example a default Wordpress site
+allows newsfeeds in a sidebar.  To add, select <code>Customize | Widgets |
+Sidebar | Add a Widget | RSS</code>, then paste the <b>Newsfeed</b> URL for
+your theme.
+
+</div>
+
+
+</div> <!-- howtocontentdiv -->
+
+<div id="returnlinkdiv" style="text-align:center; display:none;">
+  <a href="https://www.membic.org">Return to membic.org</a>
+</div>
+<script>
+    if(window.location.href.indexOf("/docs/") > 0) {
+        document.getElementById('returnlinkdiv').style.display = "block"; }
+</script>
+</body>
+</html>

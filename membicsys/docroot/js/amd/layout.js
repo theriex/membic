@@ -134,7 +134,7 @@ app.layout = (function () {
 
 
     displayDocContent = function (url, html, overlay) {
-        var idx, title, bodystart = "<body>";
+        var idx, title, bodystart = "<body>", coords, elem;
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
         title = getTitleForDocument(html, url);
@@ -147,8 +147,15 @@ app.layout = (function () {
         //display content
         if(overlay) {
             html = app.layout.dlgwrapHTML(title, html);
+            coords = {x: tightLeftX, y: 40};
+            if(typeof overlay === "string") {
+                elem = jt.byId(overlay);
+                if(elem) {
+                    coords = jt.geoPos(elem);
+                    //position content above element (footer links)
+                    coords.y = Math.max(coords.y - 250, 40); } }
             //openDialog deals with the y scroll offset as needed.
-            app.layout.openDialog({x: tightLeftX, y: 40}, html); }
+            app.layout.openDialog(coords, html); }
         else {
             jt.out("contentdiv", html); }
         convertDocLinks();

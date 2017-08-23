@@ -84,7 +84,7 @@ indexHTML = """
     </div> <!-- interimcontentdiv -->
   </div> <!-- contentdiv -->
 
-  <div id="bottomnav"> <!-- clicks mapped in layout.localDocLinks -->
+  <div id="bottomnav"> <!-- equivalent links also in docs/about.html -->
     <div id="bottomstatdiv"></div>
     <a href="docs/about.html" class="footerlink">ABOUT</a>
     <a href="docs/terms.html" class="footerlink">TERMS</a>

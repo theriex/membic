@@ -1524,12 +1524,6 @@ return {
         if(app.pen.myPenId() === jt.instId(dst.obj)) {
             html.push(["div", {cla: "pcdtext"},
                        [["div", {cla: "pcdtoggle"},
-                         ["a", {href: "#findcoops",
-                                onclick: jt.fs("app.pcd.toggleFindCoops()")},
-                          "Follow cooperative themes"]],
-                        ["div", {id: "findctmdiv"}]]]);
-            html.push(["div", {cla: "pcdtext"},
-                       [["div", {cla: "pcdtoggle"},
                          ["a", {href: "#createcoop",
                                 onclick: jt.fs("app.pcd.toggleCreateCoop()")},
                           "Create cooperative theme"]],
@@ -1575,7 +1569,9 @@ return {
                                    app.login.accountSettingsInit();
                                    picSettingsInit();
                                    descripSettingsInit();
-                                   calSettingsInit(); });
+                                   calSettingsInit(); },
+                               jt.hasId(dst.obj)? "" : 
+                                   jt.fs("app.pcd.cancelThemeCreate()"));
     },
 
 
@@ -1657,11 +1653,7 @@ return {
                  //wordpress
                  ["div", {cla: "pcdsectiondiv"},
                   [["span", {cla: "setpldlgmspan"}, "Newsfeed"],
-                   " syndicated content display (recent membics only)",
-                   ["div", {cla: "embdlgline"},
-                    ["div", {cla: "embedexample"},
-                     [["span", {cla: "embedexamptitle"}, "WordPress:"],
-                      " Customize | Widgets | Sidebar | Add a Widget | RSS"]]],
+                   " syndicated content display (recent membics)",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embwpta", cla: "setpldlgta"}]]]],
                  //back
@@ -2007,22 +1999,6 @@ return {
     },
 
 
-    toggleFindCoops: function () {
-        var html;
-        html = ["When you see something interesting in the ",
-                ["a", {href: "#home",
-                       onclick: jt.fs("app.activity.displayFeed()")},
-                 ["community membics",
-                  ["img", {src: "img/membiclogo.png?v=170820", 
-                           cla: "hthimg"}]]],
-                ", click the title to see if it was posted to any cooperative themes. If it was, you can click through to the theme and follow it. After following, you can apply for membership if you want to contribute."];
-        if(!jt.byId("findctmdiv").innerHTML) {
-            jt.out("findctmdiv", jt.tac2html(html)); }
-        else {
-            jt.out("findctmdiv", ""); }
-    },
-
-
     toggleCreateCoop: function () {
         var html;
         html = ["A cooperative theme holds related membics from one or more members. As a founder, you have full privileges to manage other members and posts.",
@@ -2293,6 +2269,12 @@ return {
                                     "',null,null,'settings')")},
                 ctmmsgs[mlev].name];
         return jt.tac2html(html);
+    },
+
+
+    cancelThemeCreate: function () {
+        app.layout.cancelOverlay();
+        app.pcd.display("pen", app.pen.myPenId(), "coops");
     }
 
 };  //end of returned functions

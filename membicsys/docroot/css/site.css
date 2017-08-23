@@ -129,7 +129,7 @@ button, .loginbutton, .formbutton, .filesellab {
   border-top-right-radius: 10px;
   border-bottom-left-radius: 10px;
   border: 1px solid #999; 
-  box-shadow:10px 10px 5px #888888; }
+  box-shadow:3px 3px 2px #888888; }
 #dlgborderdiv {
   padding:4px;
   background-color: #fff;
@@ -482,6 +482,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #aboutcoopsdiv { display:none; padding:5px 0px; }
 .intxtico { width:18px; height:18px; }
 .howtocontentdiv { padding:10px; font-size:medium; }
+.howtocontentdiv ol li { padding:5px 0px; min-height:30px; }
 .tocdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
   list-style-image: url('../img/arrow12right.png'); }
 .tocdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
