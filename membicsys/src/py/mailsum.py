@@ -422,7 +422,7 @@ def send_recent_membics_notice(recip, tss):
 
 def recent_membic_notices():
     times, ms = fetch_daily_notice_membics()  # build MembicSummary list
-    stat = str(len(ms)) + " membics between yesterday " + times["since"] + "\n"
+    stat = str(len(ms)) + " membics since yesterday " + times["since"] + "\n"
     if len(ms):
         tss = theme_summaries_for_membics(ms)
         for key in tss:
