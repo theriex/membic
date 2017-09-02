@@ -540,15 +540,21 @@ return {
     //back into existence before fading again.  referenced elements may be
     //from other bullets, so this memoizes an undo to invert the opacity.
     //if remove is true, then no undo is memoized.
-    fadeElement: function (context, ids, timing, opacity, remove) {
+    fadeElement: function (context, ids, tim, opacity, remove) {
         if(typeof ids === "string") {
             ids = [ids]; }
         ids.forEach(function (id) {
             var elem = d3.select("#" + id);
             if(!elem.empty()) {
-                elem.transition().delay(timing.delay).duration(timing.duration)
-                    .attr("opacity", opacity)
-                    .attr("fill-opacity", opacity);
+                if(elem.style("font-style") === "italic") {
+                    //don't set the fill-opacity or the element will switch
+                    //to normal style before fading (firefox)
+                    elem.transition().delay(tim.delay).duration(tim.duration)
+                        .attr("opacity", opacity); }
+                else {
+                    elem.transition().delay(tim.delay).duration(tim.duration)
+                        .attr("opacity", opacity)
+                        .attr("fill-opacity", opacity); }
                 if(remove) {
                     elem.remove(); }
                 else {

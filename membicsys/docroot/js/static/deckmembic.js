@@ -79,6 +79,52 @@ app.deckmembic = (function () {
     //base slide creation functions
     ////////////////////////////////////////
 
+    function getDefinitionDisplayFuncs () {
+        var ad = {x:dc.leftx + 10};
+        return [
+            function (context) {
+                var timing = d3ckit.timing(0.1);
+                d3ckit.showText(context, "defsyll", "mem·bic",
+                                timing, {x:ad.x, y:dc.line2y});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.1);
+                d3ckit.showText(context, "defpho", "/ˈmem.bɪk/",
+                                timing, {x:ad.x, y:dc.line3y,
+                                         "font-weight":"normal"});
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.1),
+                    phobox = d3.select("#defpho").node().getBBox();
+                ad.posx = ad.x + phobox.width + 10;
+                d3ckit.showText(context, "defpos", "noun",
+                                timing, {x:ad.posx, y:dc.line3y,
+                                         "font-weight":"normal",
+                                         "font-style":"italic"});
+                timing.duration *= 3;
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.showText(context, "defdef", 
+                                "1. A link with a reason why it is memorable.",
+                                timing, {x:ad.x, y:dc.line4y,
+                                         "font-size":"12px"});
+                timing.duration *= 3;  //pause after def
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(1.0);
+                d3ckit.fadeElement(context, "defsyll", timing, 0.0);
+                d3ckit.fadeElement(context, "defpho", timing, 0.0);
+                d3ckit.fadeElement(context, "defpos", timing, 0.0);
+                return d3ckit.totalTime(timing); },
+            function (context) {
+                var timing = d3ckit.timing(0.5);
+                d3ckit.fadeElement(context, "defdef", timing, 0.0);
+                return d3ckit.totalTime(timing); }
+        ];
+    }
+
+
     function getLinkComponentBulletFuncs () {
         var ad = {x:dc.leftx + 110, x2:140},
             ic = {w:20, x:dc.leftx + 104, y2:26, y3:52, y4:78};
@@ -257,7 +303,8 @@ app.deckmembic = (function () {
 return {
 
     getSlides: function () {
-        return [getLinkComponentBulletFuncs(),
+        return [getDefinitionDisplayFuncs(),
+                getLinkComponentBulletFuncs(),
                 getTaglineBulletFuncs()];
     },
 
