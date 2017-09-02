@@ -1242,7 +1242,9 @@ app.pcd = (function () {
             html.push([" | ",
                        ["div", {id:"pcdsrchindiv",
                                 style:"display:inline-block;"},
-                        ["input", {type:"text", id:"pcdsrchin", size:30,
+                        //Anything over 27 wraps on my phone, even though
+                        //it looks ok on Chrome dev simulation.
+                        ["input", {type:"text", id:"pcdsrchin", size:26,
                                    placeholder: "Search for...",
                                    value: srchst.qstr}]]]); }
         if(html) {
