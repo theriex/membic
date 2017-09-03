@@ -253,6 +253,8 @@ class NewPenName(webapp2.RequestHandler):
             return
         pen = PenName(name=name, name_c=name_c)
         set_pen_attrs(pen, self.request)
+        # by default, everyone follows membic news
+        pen.coops = pen.coops or "5251912920203264"
         setattr(pen, self.request.get('am'), acc._id)
         cached_put(pen)
         try:
