@@ -342,8 +342,10 @@ def recipient_summaries_for_themes(tss):
             if penid not in rss:
                 rss[penid] = RecipientSummary(penid)
     # Followers are not tracked from the theme permission lists.  Have to
-    # find by iterating through the current active users
-    since = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(61))
+    # find by iterating through the current active users.  Go back like
+    # 18 months to maximize the chance of pinging stragglers, at least
+    # for the membic blog updates.
+    since = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(545))
     where = "WHERE accessed > :1 ORDER BY accessed DESC"
     vq = VizQuery(pen.PenName, where, since)
     pns = vq.fetch(2000, read_policy=db.EVENTUAL_CONSISTENCY, deadline=4000)
