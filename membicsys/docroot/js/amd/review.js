@@ -1546,7 +1546,7 @@ app.review = (function () {
                     [["div", {cla: "pcdsectiondiv"},
                       ["a", {href: href},
                        [["img", {cla: "reviewbadge", 
-                                 src: "img/membiclogo.png?v=170903"}],
+                                 src: "img/membiclogo.png?v=170908"}],
                         errtxt]]],
                      ["div", {cla: "dlgbuttonsdiv"},
                       [["button", {type: "button", id: "cancelsieb",
