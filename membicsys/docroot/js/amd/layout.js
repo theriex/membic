@@ -243,7 +243,7 @@ app.layout = (function () {
         membics = membics || [];
         txt = "<!doctype html>\n<html>\n<head>\n" +
             "<meta http-equiv=\"Content-Type\"" + 
-            " content=\"application/pdf; charset=UTF-8\" />\n" +
+            " content=\"text/html; charset=UTF-8\" />\n" +
             "<title>Membics</title>\n" +
             "<style>\n" +
             ".printrevdiv { clear:both; margin-bottom:10px; }\n" +
@@ -265,7 +265,7 @@ app.layout = (function () {
                   ["br"],
                   jt.linkify(membic.text || "")]]); });
         txt += "</body></html>\n";
-        return "data:application/pdf;charset=utf-8," + encodeURIComponent(txt);
+        return "data:text/html;charset=utf-8," + encodeURIComponent(txt);
     },
 
 
