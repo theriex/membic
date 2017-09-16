@@ -460,18 +460,17 @@ def note_inbound_mail(message):
     mailsubj = ""
     if hasattr(message, "subject"):
         mailsubj = message.subject
-    mailbody = ""
+    textbody = ""
+    htmlbody = ""
     for bodtype, body in message.bodies():
         # HTML bodies are returned first, then plain text bodies.  Docs say
         # to decode if bodtype == 'text/html' but apparently plain text also
-        # needs to be decoded.  Just take the first available, but ignore
-        # whatever other cruft might be found.
+        # needs to be decoded.
         if bodtype == 'text/html':
-            mailbody = body.decode()
+            textbody = body.decode()
         elif bodtype == 'text/plain':
-            mailbody = body.decode()
-        if mailbody:
-            break
+            htmlbody = body.decode()
+    mailbody = textbody or htmlbody
     logging.info("Received mail from " + mailfrom + " to " + mailto +
                  " subject: " + mailsubj[0:512] + 
                  "\nbody: " + mailbody[0:512])
