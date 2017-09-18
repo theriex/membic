@@ -419,6 +419,23 @@ return {
     },
 
 
+    faultInPostableCoops: function () {
+        var pen = app.pen.myPenName();
+        if(!pen || !pen.stash) {
+            return; }
+        Object.keys(pen.stash).forEach(function (key) {
+            var ctm, ref;
+            if(key.startsWith("ctm")) {
+                ctm = pen.stash[key];
+                if(ctm && ctm.memlev >= 1) {
+                    ref = app.lcs.getRef("coop", ctm.ctmid);
+                    if(!ref.coop && ref.status === "not cached") {
+                        app.pcd.blockfetch("coop", ctm.ctmid, function (coop) {
+                            jt.log("Faulted in postable theme " + 
+                                   coop.name); }, "statdiv"); } } } });
+    },
+
+
     faultInPostThroughCoops: function (rev) {
         if(!rev || !rev.svcdata || ! rev.svcdata.postctms) {
             return; }  //nothing to do

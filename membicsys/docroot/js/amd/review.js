@@ -1391,6 +1391,17 @@ app.review = (function () {
     },
 
 
+    isPrecheckTheme = function (ctmid) {
+        var orglen;
+        if(crev && crev.precheckThemes && crev.precheckThemes.length) {
+            orglen = crev.precheckThemes.length;
+            crev.precheckThemes = crev.precheckThemes.filter(function (ctm) {
+                return (ctm.ctmid !== ctmid); });
+            return (crev.precheckThemes.length !== orglen); }
+        return false;
+    },
+
+
     displayThemeCheckboxes = function (ctm) {
         var html = [], chk, kwid;
         ctm.keywords = ctm.keywords || "";
@@ -1416,7 +1427,8 @@ app.review = (function () {
             return; }
         ctms = app.pen.postableCoops();
         ctms.forEach(function (ctm) {
-            var posted = jt.toru(postedCoopRevId(ctm.ctmid));
+            var posted = jt.toru(postedCoopRevId(ctm.ctmid) || 
+                                 isPrecheckTheme(ctm.ctmid));
             html.push(["div", {cla: "rdctmdiv"},
                        [["div", {cla: "rdglpicdiv"},
                          ["img", {cla: "rdglpic", alt: "",
@@ -1513,6 +1525,7 @@ app.review = (function () {
 
 
     updateReviewDialogContents = function () {
+        app.coop.faultInPostableCoops();
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
         dlgDetailsEntry();
@@ -2601,6 +2614,18 @@ return {
             url = jt.enc(url);
             url = "https://www.google.com/?q=" + url + "#q=" + url; }
         return url;
+    },
+
+
+    precheckThemes: function (ctms) {
+        if(crev) {
+            crev.precheckThemes = ctms; }
+    },
+
+
+    updateRating: function (rating) {
+        crev.rating = rating;
+        jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML()));
     },
 
 
