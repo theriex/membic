@@ -471,6 +471,8 @@ app.readurl = (function () {
         if(idx >= 0) {
             membic.text = paragraphToLine(rectxt.slice(idx)); }
         app.review.precheckThemes(mimc.themes);
+        if(mimc.keywords) {
+            membic.keywords = mimc.keywords.replace(/,/g, ", "); }
         app.review.updateRating(membic.rating);
     },
 
