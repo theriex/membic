@@ -244,7 +244,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("----------------------------------------")
     # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
     # logging.info("----------------------------------------")
-    cachev = "v=170908"
+    cachev = "v=170918"
     title, descr, img, content, feedlinks = spdet(handler, dbclass, dbid,
                                                   cachev)
     # social nets require a full URL to fetch the image
