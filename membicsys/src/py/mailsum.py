@@ -47,7 +47,7 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
-def send_pending_membic_mail(pname, pm):
+def send_pending_membic_mail(pname, pm, stash):
     acc = moracct.MORAccount.get_by_id(pname.mid)
     subj = "Your mail-in membic is pending"
     body = "Click here to post: https://membic.org?am=mid&an=" + acc.email +\
@@ -58,6 +58,11 @@ def send_pending_membic_mail(pname, pm):
            "profile.\n\n" +\
            "Thanks for posting!\nEric (with help from automation)\n"
     moracct.mailgun_send(None, acc.email, subj, body)
+    if "mailins" in stash:  # remind other mailing accounts so not lost
+        for emaddr in csv_list(stash["mailins"]):
+            emaddr = emaddr.strip()
+            if emaddr != acc.email:
+                moracct.mailgun_send(None, emaddr, subj, body)
 
 
 max_pend_membic_rmndr_d = 40
@@ -85,7 +90,7 @@ def send_pending_membic_reminder(pm):
         if period_active and reminder_active:
             return who + str(daycount) + " day reminder already sent"
         prevount = daycount
-    send_pending_membic_mail(pname, pm)
+    send_pending_membic_mail(pname, pm, stash)
     stash["mimrem"][srk] = now
     pname.stash = json.dumps(stash)
     cached_put(pname)
