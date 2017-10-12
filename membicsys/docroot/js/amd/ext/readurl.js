@@ -542,10 +542,18 @@ return {
                 //do not call app.failf here as the error may be from
                 //the called site rather than the membicsys server.
                 function (code, errtxt) {
-                    var plainurl = getPlainURL(url);
+                    var plainurl;
+                    //With auto https redirects retrying http is confusing.
+                    // if((url.toLowerCase().indexOf("https://") === 0) &&
+                    //    (errtxt.match(/Invalid.*SSL/i))) {
+                    //     plainurl = "http://" + url.slice(8);
+                    //     return app.readurl.fetchData(membic, plainurl, 
+                    //                                  params, mimc); }
+                    plainurl = getPlainURL(url);
                     if(url !== plainurl) {
                         return app.readurl.fetchData(membic, plainurl, 
-                                                     params); }
+                                                     params, mimc); }
+                    heuristicParseMailInText(membic, mimc);
                     jt.err(getFetchErrorText(url, code, errtxt));
                     app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));
