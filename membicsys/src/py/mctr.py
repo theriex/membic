@@ -247,6 +247,7 @@ def synchronized_db_write(instance):
     return instance
 
 
+
 ########################################
 # endpoint definitions
 
@@ -294,9 +295,11 @@ class GetCounters(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))  # sets to 0 if not found
-        acc = moracct.authenticated(self.request)
-        if not acc:
-            return srverr(self, "403", "Authentication failed")
+        acc = None
+        if not ctype == "Coop":
+            acc = moracct.authenticated(self.request)
+            if not acc:
+                return srverr(self, "403", "Authentication failed")
         # Anyone following a theme has stats access, but profiles are private
         if ctype == "PenName":
             pnm = rev.acc_review_modification_authorized(acc, self)
