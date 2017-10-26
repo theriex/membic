@@ -415,6 +415,18 @@ app.readurl = (function () {
     },
 
 
+    readAsURL = function (membic, ignore /*mimc*/, line) {
+        var match;
+        if(line) {
+            match = line.match(/https?:\/\/[^\s'"]+/);
+            if(match) {
+                //url already set, and possibly fixed, so don't overwrite
+                //membic.url = match[1];
+                line = ""; } }
+        return line;
+    },
+
+
     heuristicReadLine = function (membic, mimc, line) {
         var title = membic.title || membic.name || "";
         title = title.trim();
@@ -425,6 +437,7 @@ app.readurl = (function () {
         line = readAsThemeName(membic, mimc, line);
         line = readAsKeyword(membic, mimc, line);
         line = readAsRating(membic, mimc, line);
+        line = readAsURL(membic, mimc, line);
         if(line && !membic.text) {
             //First encountered text not understood as something else is
             //assumed to be the reason why this link is memorable.  It would
@@ -569,9 +582,14 @@ return {
         var mc = readMailInMembicText(mim);
         //grab the first URL as the source to read. No other option really.
         mc.url = mc.text.match(/https?:\/\/[^\s'"]+/g);
+        if(!mc.url) {
+            mc.url = mc.subj.match(/https?:\/\/[^\s'"]+/g); }
         if(mc.url) {
             mc.url = mc.url[0];
             mim.url = mc.url; }
+        //set the text of the mail-in membic to the mail subject so that in
+        //a worst case fetch and heuristic parse failure at least the
+        //standard case of why something is memorable will be kept.
         mim.text = mc.subj;
         //force text to be redisplayed.  Ordinarily edits are maintained
         //during other updates like stars and checkboxes.  In this case it
