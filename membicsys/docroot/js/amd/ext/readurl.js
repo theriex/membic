@@ -527,8 +527,11 @@ app.readurl = (function () {
         //autowrap preserves spaces, and lines can be wrapped mid-word.
         mc.subj = elems[0].replace(/\n/g, "");  //just remove newlines
         mc.subj = mc.subj.replace(/\s/g, " ");  //normalize whitespace
-        //Leave raw text intact, see heuristic processing for details.
+        //Leave raw text intact, all smarts are in the heuristic processing.
         mc.text = elems[1];
+        //Do clean up html however, since it's a mess to read.
+        if(mc.text.trim().toLowerCase().startsWith("<html")) {
+            mc.text = mc.text.replace(/<\/?[^>]+>/g, "\n"); }
         return mc;
     };
 
