@@ -77,7 +77,7 @@ indexHTML = """
 <div id="appspacediv">
   <div id="contentdiv">
     <div id="loadstatusdiv">
-      Loading...
+      Loading Application...
     </div>
     <div id="interimcontentdiv">
       $INTERIMCONT
@@ -86,11 +86,9 @@ indexHTML = """
 
   <div id="bottomnav"> <!-- equivalent links also in docs/about.html -->
     <div id="bottomstatdiv"></div>
-    <a href="docs/about.html" class="footerlink">ABOUT</a>
     <a href="docs/terms.html" class="footerlink">TERMS</a>
     <a href="docs/privacy.html" class="footerlink">PRIVACY</a>
-    <a href="docs/definition.html" class="footerlink">DEFINITION</a>
-    <a href="docs/howto.html" class="footerlink">HOW TO</a>
+    <span style="word-spacing:5px;"><a href="docs/howto.html" class="footerlink">HOW TO</a></span>
   </div>
 </div>
 
@@ -122,15 +120,28 @@ indexHTML = """
 
 noscripthtml = """
       <noscript>
-        <p><b>Membic needs JavaScript to do anything useful, please enable and reload the page.</b></p>
+        <p><b>Membic is a JavaScript app, please enable and reload this page.</b></p>
       </noscript>
 """
 
 interimcont = """
-      The collaborative memory project. 
-      <a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
+<div class="defcontentsdiv">
+  <div class="defcontentinnerdiv">
+    <div class="defsyllabicdiv">mem&#x00b7;bic</div>
+    <div class="defphoneticdiv">/'mem.b&#x026a;k/</div>
+    <div class="defpartofspeachdiv">noun</div>
+    <div class="defdefdiv">
+      1. A link with a reason why it is memorable.
+    </div>
+  </div>
+</div>
+
+<p>Visit the <a href="https://membic.wordpress.com/">Membic Blog</a> for
+details or the 
+<a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
          onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
-        Introduction</a> <br/>
+        Introduction</a>.
+       <br/>
 """
 
 

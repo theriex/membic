@@ -179,16 +179,16 @@ app.deckisfor = (function () {
         qs = [
             //web site
             {t:"q", id:"website", m:"", txt:"Do you have a web site?"},
-            {t:"q", id:"siterefs", m:"y:website", txt:"Does your site provide reference links to articles, books, or videos?"},
+            {t:"q", id:"siterefs", m:"y:website", txt:"Does your site provide resource links to articles, books, or videos?"},
             {t:"q", id:"refsupd", m:"y:siterefs", txt:"Are the links regularly updated and easy for visitors to search?"},
-            {t:"a", id:"incinstead", m:"n:refsupd", txt:"Replacing your reference links page with a membic theme keeps it up to date and looking great."},
+            {t:"a", id:"incinstead", m:"n:refsupd", txt:"Replacing your resource links page with a membic theme keeps it up to date and looking great."},
             {t:"q", id:"potentrefs", m:"n:siterefs", txt:"Are there articles, books, videos or other links that could be helpful to people visiting your site?"},
             {t:"a", id:"startrefs", m:"y:potentrefs", txt:"You can add depth and interest to your site by embedding a membic theme with helpful links."},
 
             //reading or research group
             {t:"q", id:"readgroup", m:"", txt:"Are you part of a reading or research group?"},
             {t:"q", id:"grpshare", m:"y:readgroup", txt:"Would it help your group to easily share links to articles, books, videos and other resources?"},
-            {t:"a", id:"grptheme", m:"y:grpshare", txt:"A membic theme is an easy and powerful way for groups to share and manage helpful reference links."},
+            {t:"a", id:"grptheme", m:"y:grpshare", txt:"A membic theme is an easy and powerful way for groups to share and manage helpful resource links."},
 
             //helpful individual, thought leader
             {t:"q", id:"findlinks", m:"", txt:"Do you regularly find articles, books, or videos that could be helpful or interesting to other people?"},
@@ -218,7 +218,7 @@ app.deckisfor = (function () {
                 var timing = d3ckit.timing(1.0);
                 d3ckit.showText(context, "tbt1", "Membic saves and displays",
                                 timing, {x:dc.tmidx, ta:"middle", y:dc.line2y});
-                d3ckit.showText(context, "tbt2", "helpful reference links.",
+                d3ckit.showText(context, "tbt2", "helpful resource links.",
                                 timing, {x:dc.tmidx, ta:"middle", y:dc.line3y});
                 return d3ckit.totalTime(timing); },
             function (context) {
