@@ -563,7 +563,11 @@ class PeriodicProcessing(webapp2.RequestHandler):
         body += list_active_pens(20, 7)
         # mail the accumulated messages to support
         subj = "PeriodicProcessing status messages"
-        moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
+        try:
+            moracct.mailgun_send(None, "membicsystem@gmail.com", subj, body)
+        except:
+            logging.info(subj + "\n\n" + body)
+            raise
         body += "\nPeriodicProcessing completed."
         moracct.writeTextResponse(body, self.response)
 
