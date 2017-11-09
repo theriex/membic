@@ -216,7 +216,7 @@ def feedlinks_for_theme(handler, ctm):
 
 def spdet(handler, dbclass, dbid, cachev):
     title = "Membic"
-    descr = "Membic helps people track and share things that are worth remembering. People use membic themes to make selected articles, books, videos and other links part of their web presence."
+    descr = "Membic helps people track and share resource links that are worth remembering. People use membic themes to make resource pages for their sites."
     img = ""
     content = interimcont
     count = 0
