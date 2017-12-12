@@ -7,6 +7,7 @@ import coop
 from cacheman import *
 from mctr import bump_rss_summary
 import json
+from operator import itemgetter
 
 ########################################
 # The reviews for the RSS feed are fetched from cache, which means
@@ -254,7 +255,6 @@ def get_theme_rss_membics (handler):
         memcache.set(key, jstr)
     reviews = json.loads(jstr)
     filtered = []
-    latest = nowISO()
     for review in reviews:
         # filter out the instance object and anything else non-review
         if not "ctmid" in review:
@@ -265,12 +265,14 @@ def get_theme_rss_membics (handler):
         # filter out any reviews that are future queued
         if "dispafter" in review and review["dispafter"] > nowISO():
             continue
-        # stop if this review is newer than the last one, since that
-        # means we are out of the recent list and into the top20s
-        if review["modhist"] > latest:
-            break
+        # set the modified timestamp from the modhist timestamp so that
+        # edited membics keep the same timestamp that was used when any
+        # readers first looked at the RSS.
+        review["modified"] = review["modhist"][0:20]
         filtered.append(review)
-        latest = review["modhist"]
+    filtered = sorted(filtered, key=itemgetter('modhist'), reverse=True)
+    # Don't need to worry about duplicates since top20s are only added if
+    # they are not already in the list.
     return ctm, filtered
 
 

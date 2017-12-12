@@ -1676,6 +1676,7 @@ app.review = (function () {
 
     timeAgo = function (tstr) {
         var mod, ela, suff = "d";
+        tstr = tstr.slice(0,20);  //read only the Zulu date part
         mod = jt.isoString2Time(tstr);
         ela = Date.now() - mod.getTime();
         ela = Math.round(ela / (1000 * 60 * 60 * 24));
@@ -1709,7 +1710,7 @@ app.review = (function () {
             else if(prefix === "pcdf") {  //include count for top favorites
                 xd = ["div", {cla: "favcntrdiv"}, idx + 1]; }
             else if(prefix === "pcdr") {  //include elapsed time for recent
-                xd = ["div", {cla: "relatimediv"}, timeAgo(rev.modified)]; }
+                xd = ["div", {cla: "relatimediv"}, timeAgo(rev.modhist)]; }
             imgl = ["img", {cla: "fpprofpic", id: "authimg" + idx,
                             src: "profpic?profileid=" + rev.penid,
                             title: jt.ndq(rev.penname),

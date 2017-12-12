@@ -1020,6 +1020,10 @@ app.pcd = (function () {
             revs = revs.filter(function (rev) {
                 if(rev.revtype === rt) {
                     return true; } }); }
+        revs.sort(function (a, b) {
+            if(a.modhist > b.modhist) { return -1; }
+            if(a.modhist < b.modhist) { return 1; }
+            return 0; });
         return revs;
     },
 
