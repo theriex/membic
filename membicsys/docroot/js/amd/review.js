@@ -1605,6 +1605,7 @@ app.review = (function () {
                  ["div", {id: "rdurldiv"},
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
                    ["input", {id: "urlin", cla: "lifin", type: "url",
+                              placeholder: "Paste Link Here",
                               oninput:jt.fs("app.review.buttoncheck()")}],
                    ["span", {id: "rdurlbuttonspan"}, dlgReadButtonHTML()],
                    ["div", {id: "rdstat1"}]]],
