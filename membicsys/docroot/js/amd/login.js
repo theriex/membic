@@ -685,9 +685,22 @@ return {
         if(authtoken && override !== "hide") {
             loggedInAuthentDisplay(); }
         else if(override === "hide") { 
+            setTimeout(app.login.verifyAuthentHideOk, 8000);
             jt.out("toprightdiv", ""); }
         else {  //restore whatever was in index.html to begin with
             jt.out("toprightdiv", toprightdivcontents); }
+    },
+
+
+    //Hiding the authent area permanently is a bad idea if app comms screw
+    //up and normal call flow is disrupted.  Only allowed if new pen.
+    verifyAuthentHideOk: function () {
+        jt.log("verifyAuthentHideOk called");
+        if(!jt.byId("createpndiv") && !jt.byId("npaadiv")) {
+            jt.out("toprightdiv", jt.tac2html(
+                ["a", {href:"https://membic.org",
+                       onclick:jt.fs("window.location.reload()")},
+                 "&nbsp; Refresh Sign In &nbsp;"])); }
     },
 
 
@@ -909,7 +922,10 @@ return {
                          "<p>Signing you in for the first time now...</p>";
                      jt.out("logindiv", html);
                      setAuthentication("mid", objs[0].token, emaddr);
-                     //wait briefly to give the db a chance to stabilize
+                     //Wait briefly to give the db a chance to stabilize.
+                     //Without waiting, it won't work.  With waiting, it
+                     //usually works, but not guaranteed.  User might have
+                     //to login again, or reload the page if extreme lag.
                      app.fork({descr:"new account stabilization wait",
                                func:app.login.doNextStep,
                                ms:3000}); },

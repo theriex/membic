@@ -492,6 +492,8 @@ class CreateAccount(webapp2.RequestHandler):
         account.mailbounce = ""
         account.authconf = ""
         account.put()  #nocache
+        # force retrieval to hopefully minimize lag finding the new instance
+        account = MORAccount.get_by_id(int(account.key().id()))
         bust_cache_key(account.email)
         token = newtoken(emaddr, pwd)
         writeJSONResponse("[{\"token\":\"" + token + "\"}]", self.response)
