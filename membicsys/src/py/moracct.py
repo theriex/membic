@@ -437,11 +437,12 @@ def mailgun_send(handler, eaddr, subj, body):
         return
     mg = consvc.get_connection_service("mailgun");
     authkey = base64.b64encode("api:" + mg.ckey)
+    # urlencode converts to ascii. passing unicode text crashes it.
     params = urllib.urlencode({
             'from': 'Membic Notifier <noreply@membic.org>',
-            'to': eaddr,
-            'subject': subj,
-            'text': body})
+            'to': eaddr.encode('utf-8'),
+            'subject': subj.encode('utf-8'),
+            'text': body.encode('utf-8')})
     headers = {'Authorization': 'Basic {0}'.format(authkey),
                'Content-Type': 'application/x-www-form-urlencoded'}
     conn = httplib.HTTPSConnection("api.mailgun.net", 443)

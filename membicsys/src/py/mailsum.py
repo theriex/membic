@@ -422,7 +422,12 @@ def send_recent_membics_notice(recip, tss):
     foot += "If you feel you have received this notice in error, or to report any problems with the contents, please forward this notice and your comments to support@membic.org\n\n"
     foot += "The Collaborative Memory Project\n"
     subj = "New posts for themes you are associated with"
-    moracct.mailgun_send(None, recip.emaddr, subj, head + body + foot)
+    try:
+        moracct.mailgun_send(None, recip.emaddr, subj, head + body + foot)
+    except Exception as e:
+        logging.warn("send_recent_membics_notice to " + recip.emaddr +
+                     " failed: " + str(e) + ". subj: " + subj + 
+                     ", body: " + body)
     return recip.name + ": " + str(mcount) + " notices, " +\
         str(tcount) + " themes\n"
         
