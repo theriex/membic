@@ -696,7 +696,8 @@ return {
     //up and normal call flow is disrupted.  Only allowed if new pen.
     verifyAuthentHideOk: function () {
         jt.log("verifyAuthentHideOk called");
-        if(!jt.byId("createpndiv") && !jt.byId("npaadiv")) {
+        if(!jt.byId("infosignoutdiv") && !jt.byId("createpndiv") && 
+           !jt.byId("npaadiv")) {
             jt.out("toprightdiv", jt.tac2html(
                 ["a", {href:"https://membic.org",
                        onclick:jt.fs("window.location.reload()")},
