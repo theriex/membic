@@ -427,6 +427,7 @@ return {
             var ctm, ref;
             if(key.startsWith("ctm")) {
                 ctm = pen.stash[key];
+                ctm.ctmid = ctm.ctmid || key.slice(3);  //verify ctmid set
                 if(ctm && ctm.memlev >= 1) {
                     ref = app.lcs.getRef("coop", ctm.ctmid);
                     if(!ref.coop && ref.status === "not cached") {
