@@ -823,6 +823,10 @@ def is_matching_review(qstr, review):
     keywords = keywords.lower()
     if qstr in keywords:
         return True
+    text = review.text or ""
+    text = text.lower()
+    if qstr in text:
+        return True
     return False
 
 

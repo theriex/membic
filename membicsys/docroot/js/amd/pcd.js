@@ -1108,7 +1108,7 @@ app.pcd = (function () {
 
     //logic here needs to be the same as in rev.py is_matching_review
     isMatchingReview = function (qstr, rev) {
-        var keywords;
+        var keywords, text;
         if(srchst.revtype !== "all" && srchst.revtype !== rev.revtype) {
             return false; }
         if(!qstr) {
@@ -1119,6 +1119,9 @@ app.pcd = (function () {
         keywords = rev.keywords || "";
         keywords = keywords.toLowerCase();
         if(keywords.indexOf(qstr) >= 0) {
+            return true; }
+        text = rev.text.toLowerCase();
+        if(text.indexOf(qstr) >= 0) {
             return true; }
         return false;
     },
