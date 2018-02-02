@@ -1370,6 +1370,7 @@ app.review = (function () {
                             onclick: jt.fs("app.review.kwhelpdlg()")},
                       "Keywords"]],
                     ["input", {id: "rdkwin", cla: "lifin", type: "text", 
+                               oninput: jt.fsd("app.review.togkey()"),
                                value: crev.keywords}]]]);
         jt.out("rdkwdiv", jt.tac2html(html));
     },
@@ -1942,6 +1943,7 @@ return {
 
     togkey: function (kwid) {
         var rdkwin, keycsv;
+        kwid = kwid || "";
         rdkwin = jt.byId("rdkwin");
         keycsv = app.review.keywordcsv(kwid, rdkwin.value);
         rdkwin.value = keycsv;
