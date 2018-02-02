@@ -2115,6 +2115,7 @@ return {
         dst.id = id || (obj? jt.instId(obj) : "") || 
             (dst.type === "pen"? app.pen.myPenId() : "") || "";
         dst.tab = tab || defaultTabName();
+        srchst.revs = null;  //reset if previously viewing a different theme
         if(dst.tab === "top") {  //parameterized request
             document.title = document.title.replace(/^Top\s\d+\s/, "");
             dst.tab = "favorites"; }
