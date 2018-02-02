@@ -212,7 +212,7 @@ var app = {},  //Global container for application level funcs and values
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=180201");
+        jt.loadAppModules(app, modules, href, app.init2, "?v=180202");
     };
 
 
@@ -225,7 +225,7 @@ var app = {},  //Global container for application level funcs and values
         if(!href.startsWith("http")) {
             href = jt.baseurl(window.location.href) + "/" + href; }
         if(href.indexOf("v=") < 0) {
-            href += "?v=180201"; }
+            href += "?v=180202"; }
         js = document.createElement("script");
         //js.async = true;
         js.type = "text/javascript";
