@@ -1177,7 +1177,8 @@ app.pcd = (function () {
                         [["u", "Sign in"],
                          [" on membic.org to search archives"]]]; }
             else {
-                html = "Sign in to search archives"; } }
+                html = "Sign in to search archives"; }
+            html = ["div", {id: "arxsidiv"}, html]; }
         else {
             html = ["div", {cla: "searchbuttondiv"},
                     ["button", {type: "button", id: "searchserverbutton",

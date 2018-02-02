@@ -217,7 +217,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .dlrssimg { width:11px; height:12px; margin:0px 2px 2px 0px; }
 .dloptseldiv { background-image: url('../img/whitewash.png'); }
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
-#pcdkeysrchdiv { margin:-2px 2px 4px 2px; padding:0px 5px;
+#pcdkeysrchdiv, #fetchmorediv, #arxsidiv {
+  margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
 #srchincontdiv { display:inline-block; padding-left:12px; 
   max-width:80%; max-height:110px; overflow:scroll; vertical-align:middle; }
