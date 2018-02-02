@@ -1108,22 +1108,21 @@ app.pcd = (function () {
 
     //logic here needs to be the same as in rev.py is_matching_review
     isMatchingReview = function (qstr, rev) {
-        var keywords, text;
+        var toks = [], token, i, keywords, text;
         if(srchst.revtype !== "all" && srchst.revtype !== rev.revtype) {
             return false; }
         if(!qstr) {
             return true; }
-        qstr = qstr.toLowerCase();
-        if(rev.cankey.indexOf(qstr) >= 0) {
-            return true; }
-        keywords = rev.keywords || "";
-        keywords = keywords.toLowerCase();
-        if(keywords.indexOf(qstr) >= 0) {
-            return true; }
-        text = rev.text.toLowerCase();
-        if(text.indexOf(qstr) >= 0) {
-            return true; }
-        return false;
+        keywords = (rev.keywords || "").toLowerCase();
+        text = (rev.text || "").toLowerCase();
+        toks = qstr.toLowerCase().split(/\s+/);
+        for(i = 0; i < toks.length; i += 1) {  //find each token somewhere
+            token = toks[i];
+            if(rev.cankey.indexOf(token) >= 0) { continue; }
+            if(keywords.indexOf(token) >= 0) { continue; }
+            if(text.indexOf(token) >= 0) { continue; }
+            return false; }
+        return true;
     },
 
 
@@ -1901,13 +1900,20 @@ return {
     },
 
 
-    keysrch: function (label) {
-        var keyval = jt.byId(label).value;
-        if(jt.byId("pcdsrchin").value === keyval) {
-            jt.byId(label).checked = false;
-            jt.byId("pcdsrchin").value = ""; }
-        else {
-            jt.byId("pcdsrchin").value = keyval; }
+    keysrch: function () {
+        var srch = jt.byId("pcdsrchin").value;
+        dst.obj.keywords.csvarray().forEach(function (kwd, i) {
+            var cb = jt.byId("skw" + i), rx;
+            kwd = kwd.trim();
+            if(cb.checked) {
+                if(srch.indexOf(kwd) < 0) {
+                    srch += " " + kwd; } }
+            else {
+                rx = new RegExp(kwd, "g");
+                srch = srch.replace(rx, ""); } });
+        srch = srch.replace("  ", " ");
+        srch = srch.trim();
+        jt.byId("pcdsrchin").value = srch;
         app.pcd.searchReviews();
     },
 
@@ -1924,11 +1930,10 @@ return {
                 html.push(["div", {cla: kwc},
                            [["div", {cla: "skbidiv"},
                              ["input", {
-                                 type: "radio", id: "skw" + i,
+                                 type: "checkbox", id: "skw" + i,
                                  name: "srchkwds", value: kwd, 
                                  checked: chk,
-                                 onclick: jt.fsd("app.pcd.keysrch('skw" + 
-                                                       i + "')")}]],
+                                 onclick: jt.fsd("app.pcd.keysrch()")}]],
                             ["label", {fo: "skw" + i}, kwd.trim()]]]); });
             jt.out("pcdkeysrchdiv", jt.tac2html(html)); }
         else {

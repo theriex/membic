@@ -816,18 +816,18 @@ def write_batch_reviews(pn, handler):
 def is_matching_review(qstr, review):
     if not qstr:
         return True
-    qstr = qstr.lower()
-    if qstr in review.cankey:
-        return True
-    keywords = review.keywords or ""
-    keywords = keywords.lower()
-    if qstr in keywords:
-        return True
-    text = review.text or ""
-    text = text.lower()
-    if qstr in text:
-        return True
-    return False
+    keywords = (review.keywords or "").lower()
+    text = (review.text or "").lower()
+    toks = qstr.lower().split()
+    for token in toks:
+        if token in review.cankey:
+            continue
+        if token in keywords:
+            continue
+        if token in text:
+            continue
+        return False
+    return True
 
 
 def delete_coop_post(review, pnm, handler):
