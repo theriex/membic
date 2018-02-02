@@ -1922,9 +1922,9 @@ return {
 
 
     keywordcsv: function (kwid, keycsv) {
-        var cbox = jt.byId(kwid),
-            text = "",
-            keywords = keycsv.split(",");
+        var cbox = null, text = "", keywords = keycsv.split(",");
+        if(kwid) {
+            cbox = jt.byId(kwid); }
         keywords.forEach(function (kw) {
             if(kw) {
                 kw = kw.trim(); }
@@ -1945,6 +1945,10 @@ return {
         var rdkwin, keycsv;
         kwid = kwid || "";
         rdkwin = jt.byId("rdkwin");
+        //to avoid odd editing interactions, back off interim manual editing
+        if(rdkwin.value && (rdkwin.value.trim() === crev.keywords ||
+                            rdkwin.value.trim() == crev.keywords + ",")) {
+            return; }
         keycsv = app.review.keywordcsv(kwid, rdkwin.value);
         rdkwin.value = keycsv;
         displayAppropriateButton();
