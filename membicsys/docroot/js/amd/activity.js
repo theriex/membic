@@ -196,7 +196,7 @@ app.activity = (function () {
 
 
     isMainDisplayableTheme = function (csum) {
-        if(!csum.founders) {
+        if(!csum.founders && !csum.sumtype === "dynamic") {
             return false; }  //no founders left, theme was abandoned
         if(app.coop.hasFlag(csum, "mainf") ||
            app.coop.hasFlag(csum, "groupf")) {
@@ -224,6 +224,7 @@ app.activity = (function () {
                 if(!themes[ctmid]) {
                     themes[ctmid] = {
                         ctmid: ctmid,
+                        sumtype: "dynamic",
                         name: app.coopnames[ctmid] || pn.name,
                         modified: membic.modified,  //first is most recent
                         count: mincount}; }
@@ -298,6 +299,9 @@ app.activity = (function () {
         msg = "Fetching community membics...";
         if(app.login.isLoggedIn()) {
             msg = "Fetching community membics based on your preferences..."; }
+        //The msg text initially shows without any background, but is
+        //incorporated into the wait status display shortly and should
+        //not have any div around it.
         app.displayWaitProgress(0, 850, "contentdiv", msg);
     };
 
@@ -334,8 +338,13 @@ return {
                         Date.now() + (60 * 60 * 1000);
                     mergeAndDisplayReviews(feedtype, reviews); },
                 app.failf(function (code, errtxt) {
-                    jt.out("contentdiv", "Data retrieval failed code " + code + 
-                           ": " + errtxt + "<br/>Please reload the page"); }),
+                    jt.out("contentdiv", jt.tac2html(
+                        ["div", {id: "retrfaildiv"},
+                         ["Data retrieval failed code " + code + ": " + errtxt,
+                          ["br"],
+                          ["a", {href:"https://membic.org",
+                                 onclick:jt.fs("window.location.reload()")},
+                           "Please reload the page"]]])); }),
                 jt.semaphore("activity.displayFeed"));
     },
 
