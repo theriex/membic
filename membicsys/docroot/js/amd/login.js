@@ -253,11 +253,6 @@ app.login = (function () {
                       onclick: jt.fs("app.login.forgotPassword()")},
                 "forgot my password..."];
         jt.out("forgotpassdiv", jt.tac2html(html));
-        jt.byId("infoimg").style.opacity = 0.4;
-        app.fork({descr:"dim info button slightly",
-                  func:function () {
-                      jt.byId("infoimg").style.opacity = 0.8; },
-                  ms:2000});
         if(authname) {
             jt.byId("emailin").value = authname; }
         if(params.emailin) {
@@ -716,6 +711,7 @@ return {
 
     topnav: function (bname) {
         app.verifyHome();
+        jt.byId("infoimg").style.display = "initial";  //verify available
         switch(bname) {
         case "remembered":
             return app.activity.displayRemembered();

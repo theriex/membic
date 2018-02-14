@@ -157,6 +157,8 @@ app.layout = (function () {
             //openDialog deals with the y scroll offset as needed.
             app.layout.openDialog(coords, html); }
         else {
+            if(url.indexOf("about.html") >= 0) {
+                jt.byId("infoimg").style.display = "none"; }
             jt.out("contentdiv", html); }
         convertDocLinks();
     },
