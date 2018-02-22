@@ -904,9 +904,8 @@ app.pcd = (function () {
         ta = jt.byId("embifta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = "<iframe id=\"membiciframe\" src=\"" + site + 
-                "?view=coop&coopid=" + dst.id + 
-                "&css=none&site=YOURSITE.COM\" " + 
+            ta.value = "<iframe id=\"membiciframe\" src=\"" + app.hardhome +
+                "/e/" + dst.id + "?site=YOURSITE.COM\" " +
                 "style=\"position:relative;height:100%;width:100%\" " +
                 "seamless=\"seamless\" frameborder=\"0\"/></iframe>"; }
         ta = jt.byId("embwpta");

@@ -108,6 +108,7 @@ indexHTML = """
 
 <script>
   app.refer = "$REFER";
+  app.embedded = $EMBED;
   app.vanityStartId = "$VANID";
   app.init();
 </script>
@@ -228,7 +229,7 @@ def spdet(handler, dbclass, dbid, cachev):
             descr = descr.replace("\"", "'")
             title = descr
             img = "/profpic?profileid=" + str(dbid)
-    elif dbclass == "coop":
+    elif dbclass == "coop" or dbclass == "embed":
         ctm = coop.Coop.get_by_id(dbid)
         if ctm:
             title = ctm.name
@@ -258,6 +259,9 @@ def start_page_html(handler, dbclass, dbid, refer):
     cachev = "v=180202"
     title, descr, img, content, feedlinks = spdet(handler, dbclass, dbid,
                                                   cachev)
+    embed = "null"
+    if dbclass == "embed":
+        embed = "{coopid:" + str(dbid) + "}"
     # social nets require a full URL to fetch the image
     img = handler.request.host_url + img;
     html = indexHTML
@@ -266,6 +270,7 @@ def start_page_html(handler, dbclass, dbid, refer):
     html = html.replace("$DESCR", descr)
     html = html.replace("$CACHEPARA", "?" + cachev)
     html = html.replace("$REFER", refer or handler.request.referer or "")
+    html = html.replace("$EMBED", embed)
     html = html.replace("$VANID", str(dbid))
     html = html.replace("$INTERIMCONT", noscripthtml + content);
     html = html.replace("$FEEDLINKS", feedlinks)
@@ -293,6 +298,9 @@ class PermalinkStart(webapp2.RequestHandler):
         refer = self.request.get('refer') or ""
         if pt == "t":
             return start_page_html(self, "coop", int(dbid), refer)
+        if pt == "e":
+            refer = refer or self.request.get('site') or ""
+            return start_page_html(self, "embed", int(dbid), refer)
         if pt == "p":
             return start_page_html(self, "pen", int(dbid), refer)
         return srverr(self, 404, "Unknown permalink " + pt + ": " + dbid)
@@ -345,7 +353,7 @@ class VanityStart(webapp2.RequestHandler):
         return start_page_html(self, "coop", int(coopid), refer)
 
 
-app = webapp2.WSGIApplication([('/([p|t])/(\d+).*', PermalinkStart),
+app = webapp2.WSGIApplication([('/([p|t|e])/(\d+).*', PermalinkStart),
                                ('/index.html', IndexPageStart),
                                ('(.*)/', DefaultStart),
                                ('(.*)', VanityStart)],

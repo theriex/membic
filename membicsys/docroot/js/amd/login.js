@@ -797,6 +797,13 @@ return {
                 params.coopid = String(parseInt(href.slice(idx + 3), 10));
                 done = true; } }
         if(!done) {
+            idx = href.indexOf("/e/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "coop";
+                params.coopid = String(parseInt(href.slice(idx + 3), 10));
+                done = true; } }
+        if(!done) {
             href = app.hashtaghref();
             if(href) {
                 params = params || {};

@@ -341,7 +341,7 @@ handlers:
 
 ## Various flavors of start page requests:
 ## Direct request for a pen name (p) or theme (t) permalink
-- url: /[p|t]/\d+.*
+- url: /[p|t|e]/\d+.*
   script: src.py.start.app
 ## The index page
 - url: /index.html

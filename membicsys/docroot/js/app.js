@@ -20,7 +20,7 @@ var app = {},  //Global container for application level funcs and values
                    text: "#111111",
                    link: "#3150b2",
                    hover: "#3399cc" };
-    app.embedded = false;
+    //app.embedded is set in start.py
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
     //app.hardhome = "https://membicsys.appspot.com";
@@ -197,8 +197,6 @@ var app = {},  //Global container for application level funcs and values
             window.location.href = securl;  //redirect
             return; }  //don't fire anything else off
         jtminjsDecorateWithUtilities(jt);
-        if(href.indexOf("site=") > 0) {
-            app.embedded = jt.parseParams(); }
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {
