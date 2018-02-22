@@ -177,7 +177,7 @@ app.layout = (function () {
         var html = ["a", {href: "#community", title: "Community membics",
                            onclick: jt.fs("app.activity.displayFeed('all')")},
                      ["img", {id: "logoimg", 
-                              src: "img/membiclogo.png?v=180202"}]];
+                              src: "img/membiclogo.png?v=180222"}]];
         jt.out("logodiv", jt.tac2html(html));
         jt.byId("bottomnav").style.display = "none";
     },
@@ -495,12 +495,12 @@ return {
                                "d3script"); }
             if(typeof d3ckit === "undefined") { //mac ff idiom
                 app.loadScript("loadSlideDecks", 
-                               "js/static/d3ckit.js?v=180202",
+                               "js/static/d3ckit.js?v=180222",
                                "d3ckitscript"); }
             decknames.forEach(function (deckname) {
                 modnames.push("js/static/" + deckname); });
             jt.loadAppModules(app, modnames, window.location.href,
-                              app.layout.displaySlideDecks, "?v=180202"); }
+                              app.layout.displaySlideDecks, "?v=180222"); }
     },
 
 
