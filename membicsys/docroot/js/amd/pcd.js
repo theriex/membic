@@ -1168,11 +1168,13 @@ app.pcd = (function () {
 
 
     searchServerHTML = function () {
-        var html = "";
+        var html = "", url;
         if(!app.login.isLoggedIn()) {
             if(app.solopage()) {
-                html = ["a", {href: app.hardhome + "?view=coop&coopid=" + 
-                                    dst.id + "&tab=search"},
+                url = app.hardhome + "?view=coop&coopid=" + dst.id + 
+                    "&tab=search";
+                html = ["a", {href:url, 
+                              onclick:jt.fs("window.open('" + url + "')")},
                         [["u", "Sign in"],
                          [" on membic.org to search archives"]]]; }
             else {
