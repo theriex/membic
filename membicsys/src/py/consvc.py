@@ -16,6 +16,7 @@ from base64 import b64encode
 from cacheman import *
 from google.appengine.api import memcache
 import rev
+import moracct
 
 
 class ConnectionService(db.Model):
@@ -206,7 +207,7 @@ def callAmazon(handler, svc, params):
         handler.response.out.write(str(e))
 
 
-def interpreted_url_fetch_result(handler, result):
+def interpreted_url_fetch_result(handler, result, geturl):
     # The journal Nature returns a 401 when you are not logged in, but
     # displays the abstract which is what is wanted.  So 401 errors
     # need to succeed if there is a result.  Generally a 401 should
@@ -221,8 +222,11 @@ def interpreted_url_fetch_result(handler, result):
         else:
             code = result.status_code
             content = result.content
-        logging.info("url fetch failed status_code " + str(code) +
-                     ": " + str(result))
+        errtxt = "url fetch failure: " + geturl + " " + str(code) + " " +\
+                 str(content)
+        logging.warn(errtxt)
+        moracct.mailgun_send(handler, "membicsystem@gmail.com", 
+                             "url fetch failure", errtxt)
         handler.error(code)
         handler.response.out.write(content)
         return None
@@ -267,7 +271,7 @@ class URLFetcher(object):
             # Follow redirect (if any)
             geturl = result.headers.get('location')
             self.tries += 1
-        return interpreted_url_fetch_result(handler, result)
+        return interpreted_url_fetch_result(handler, result, geturl)
     def get_headers(self, cookie):
         headers = {"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0",
                    "Cookie": self.makeCookieHeader(cookie)}
@@ -296,7 +300,7 @@ def simple_fetchurl(handler, geturl):
         logging.info("simple fetch error: " + str(e))
         uf = URLFetcher()
         return uf.fetch(handler, geturl)
-    return interpreted_url_fetch_result(handler, result)
+    return interpreted_url_fetch_result(handler, result, geturl)
 
 
 # params: name, oauth_callback, oauth_verifier

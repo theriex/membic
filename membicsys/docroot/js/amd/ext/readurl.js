@@ -491,26 +491,51 @@ app.readurl = (function () {
 
 
     getPlainURL = function (url) {
+        //returns the url minus any query or hash parts.  In some instances
+        //that may lead to completely different content, but the original
+        //failed so the idea is to retry without to try get a pic.
         var result, crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
         result = crockfordurlregex.exec(url);
         if(!result || result.length < 4) {
             return url; }
+        // 0: whole url
+        // 1: scheme (e.g. "https")
+        // 2: "//"
+        // 3: host (e.g. "membic.org")
+        // 4: port (e.g. "8080")
+        // 5: path (e.g. "fetchurl" for https://membic.org/fetchurl)
+        // 6: query (everything after the '?' and before the '#')
+        // 7: hash (everything after the '#')
         return result[1] + ":" + result[2] + result[3] +
             (result[5]? "/" + result[5] : "");
     },
 
 
     getFetchErrorText = function (url, code, callerr) {
-        var errtxt, phrase;
+        var errtxt, phrase, 
+            manfill = " You may need to fill out the membic fields yourself.";
         errtxt = "Membic details were not filled out automatically" +
             " because of a problem accessing " + url + "\n\n" +
             "Details: Error code " + code + ": " + callerr;
-        phrase = "urlfetch.Fetch() required more quota";
-        if(code === 400 && callerr.indexOf(phrase) >= 0) {
-            errtxt = "Tried to fetch " + url + ", but there was too much" +
-                " traffic. You can try reading again to see if things" +
-                " have gotten less busy, or you can fill out the membic" +
-                " fields directly."; }
+        phrase = "urlfetch.Fetch() required more quota";  //too many calls
+        if(code >= 400 && code < 500) {
+            errtxt = "The server for " + url + " is not allowing automated" +
+                " access." + manfill; }
+        switch(code) {
+        case 400:
+            if(callerr.indexOf(phrase) >= 0) {
+                errtxt = "Tried to fetch " + url + ", but there was too much" +
+                    " traffic. You can try reading again to see if things" +
+                    " have gotten less busy, or you can fill out the membic" +
+                    " fields directly."; }
+            break;
+        case 401: //fall through
+        case 403:
+            errtxt = "The server for " + url + " is not allowing automation" +
+                " to read the page." + manfill; break;
+        case 404:
+            errtxt = "The server for " + url + " could not find the page." +
+                " Double check the url is correct."; break; }
         return errtxt;
     },
 
@@ -559,14 +584,10 @@ return {
                 //the called site rather than the membicsys server.
                 function (code, errtxt) {
                     var plainurl;
-                    //With auto https redirects retrying http is confusing.
-                    // if((url.toLowerCase().indexOf("https://") === 0) &&
-                    //    (errtxt.match(/Invalid.*SSL/i))) {
-                    //     plainurl = "http://" + url.slice(8);
-                    //     return app.readurl.fetchData(membic, plainurl, 
-                    //                                  params, mimc); }
+                    //Do not retry http if the original was https since the
+                    //site may redirect http to https causing a loop.
                     plainurl = getPlainURL(url);
-                    if(url !== plainurl) {
+                    if(url !== plainurl) {  //wasn't a permalink, retry basic
                         return app.readurl.fetchData(membic, plainurl, 
                                                      params, mimc); }
                     heuristicParseMailInText(membic, mimc);
