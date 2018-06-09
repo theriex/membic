@@ -1945,6 +1945,12 @@ return {
         var rdkwin, keycsv;
         kwid = kwid || "";
         rdkwin = jt.byId("rdkwin");
+        //if the user is entering a space (presumably as part of a
+        //multi-word keyword), or entering a comma (in preparation for
+        //another keyword), get out of the way.
+        if(rdkwin.value && (rdkwin.value.endsWith(" ") ||
+                            rdkwin.value.endsWith(","))) {
+            return; }
         //to avoid odd editing interactions, back off interim manual editing
         if(rdkwin.value && (rdkwin.value.trim() === crev.keywords ||
                             rdkwin.value.trim() == crev.keywords + ",")) {
