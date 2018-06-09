@@ -207,6 +207,15 @@ def callAmazon(handler, svc, params):
         handler.response.out.write(str(e))
 
 
+def interpreted_fetch_error(geturl, code, content):
+    if code == 429:
+        # Attempting to return a 429 error from GAE results in a 500 error
+        # of 'Invalid HTTP status code: 429'.  Have to return some other code.
+        code = 400
+        content = "The server for " + geturl + " is complaining it is too busy to respond. You can try again in a few moments, or just fill in the membic fields directly."
+    return code, content
+
+
 def interpreted_url_fetch_result(handler, result, geturl):
     # The journal Nature returns a 401 when you are not logged in, but
     # displays the abstract which is what is wanted.  So 401 errors
@@ -227,6 +236,7 @@ def interpreted_url_fetch_result(handler, result, geturl):
         logging.warn(errtxt)
         moracct.mailgun_send(handler, "membicsystem@gmail.com", 
                              "url fetch failure", errtxt)
+        code, content = interpreted_fetch_error(geturl, code, content)
         handler.error(code)
         handler.response.out.write(content)
         return None
