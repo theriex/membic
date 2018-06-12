@@ -1,0 +1,32 @@
+<!-- Publishing An Academic Reading List Using a Membic Theme -->
+
+Just finished helping translate an academic course reading list into a Membic Theme.  It continues to amaze me how much of our societal knowledge is in pdf file format, and how many of those cost money to access.  At least publishing a recommended reading list provides some indication of what's worth it.
+
+<h2>Why do this</h2>
+
+The reading list in this case was for a course that had gained interest outside of the academic institution, so having everything on the university network pointing at local library resources wasn't the best way to communicate.  On the other hand, there wasn't a handy appropriate website to put it on either.  Converting the reading list to more generally accessible links and putting those into a membic theme seemed like a good way to go.  Membic themes look good, are searchable, and can be easily embedded into a web page later as needed.
+
+Links to pdf files can usually be viewed just by clicking them, so that works just fine.  For files that are not immediately viewable, linking to a site where they can be downloaded (possibly for a fee), feels less than optimal and a bit of an unmerited endorsement.  But with rare exceptions, most of the download sites provide an article abstract, so if you already have an account with a different archive you can retrieve the article without too much difficulty.
+
+In short, a membic theme seems like a good match for presenting an academic reading list.
+
+<h2>Challenges</h2>
+
+The biggest thing that got in the way was the queuing.  The Membic site is set up to automatically queue bunches of membics created on the same day so that followers and feeds get updated at a steadier, more absorbable pace.  Generally that's a great feature, but when the goal is to quickly put up an entire reading list, those updates are not important and queuing gets in the way.  I <a href="https://github.com/theriex/membic/issues/32">opened an issue on that</a>, so before the next reading list theme creation, there will be a way to skip the feed queuing.
+
+Another drawback was the high percentage of sites that do not allow automated retrieval of article listing information.  I think returning article abstract details would facilitate more sales, but apparently most publishing organizations feel that access from a server rather than directly from a person should be shut down.  That seems limited.  If anyone is aware of a reference article archive that supports automated access, definitely let me know as I'll prefer them.  In this case it wasn't much of a problem since the reading list already had title, author, and other info, so filling out the membic details manually was quick.
+
+The last drawback was the order the articles were presented.  The default membic presentation is most recent first, but in this case it was desirable to always have the syllabus be the first thing listed.  Because the search view goes by rating first and then recency, the solution was to make the syllabus link 5 stars and everything 4.5 stars.  That put the syllabus always on top when the theme was accessed directly.  That's a perfectly reasonable use of stars, but perhaps not the most intuitive mechanism.
+
+<h2>Benefits</h2>
+
+As expected, the resulting reading list has it's own permalink, looks good, is searchable, and can be easily updated.  That compares favorably to the average reading list page.
+
+Because each membic includes a description why the article is important, the level of depth and usefulness of the overall reading list is enhanced.  It's possible to include why an article is important in a conventional reading list display, but it's unusual.  The reason why the article is important becomes part of the searchable text, which helps find things in addition to providing guidance.
+
+Keywords turned out to be more useful than expected.  Some of the articles were example cases, and being able to set up keywords for the theme meant I could just check off the appropriate reading category for the membic, making the articles searchable by category.
+
+<h2>Conclusion</h2>
+
+Using <a href="https://membic.org">membic.org</a> for article reading lists works pretty well.  For a long list, the queuing skip feature will be a big help, but I would do this again for another course.
+
