@@ -45,6 +45,7 @@ def append_top20_membics_to_jsoncsv(jstr, membics, pct, pco, sizebound):
 # returns an array of the source object followed by all the membics
 def rebuild_membics_block(pct, pgid):
     logging.info("rebuild_membics_block " + pct + " " + str(pgid))
+    acc = None
     pco = None
     if pct == "coop":
         pco = coop.Coop.get_by_id(int(pgid))
@@ -52,7 +53,8 @@ def rebuild_membics_block(pct, pgid):
             return pco.preb
     elif pct == "pen":
         pco = pen.PenName.get_by_id(int(pgid))
-        pen.filter_sensitive_fields(pco)
+        if pco:
+            pen.filter_sensitive_fields(pco)
     if not pco:
         logging.info("rmb " + pct + " " + str(pgid) + " not found")
         return None
@@ -76,15 +78,15 @@ def rebuild_membics_block(pct, pgid):
     jstr = append_top20_membics_to_jsoncsv(jstr, membics, pct, pco, 450 * 1024)
     if jstr:
         jstr = "," + jstr;
+    jstr = moracct.obj2JSON(pco) + jstr;
     if pct == "coop":
-        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
+        pco.preb = "[" + jstr + "]"
         pco.preb2 = "[" + js2 + "]"
         coop.update_coop_stats(pco, idx)
         # rebuild preb to include updated stats, maybe s1 off by one but ok.
-        pco.preb = "[" + moracct.obj2JSON(pco) + jstr + "]"
+        pco.preb = "[" + jstr + "]"
         mctr.synchronized_db_write(pco)
-    jstr = "[" + moracct.obj2JSON(pco) + jstr + "]"
-    return jstr
+    return "[" + jstr + "]"
 
 
 def get_membics_json_for_profile(pct, pgid):
