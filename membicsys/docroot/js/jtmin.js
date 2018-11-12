@@ -1,6 +1,6 @@
-/*global alert, console, document, window, XMLHttpRequest, JSON, escape, unescape, setTimeout, navigator */
+/*jslint browser, multivar, white, fudge, this, for, long */
 
-/*jslint browser, multivar, white, fudge, this, for */
+/*global alert, console, document, window, XMLHttpRequest, JSON, escape, unescape, setTimeout, navigator */
 
 ////////////////////////////////////////
 // Just The Mods I Need
@@ -313,7 +313,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
 
 
     uo.enc = function (val) {
-        val = val || "";
+        if (!val && val !== 0) {
+            val = ""; }
         if (typeof val === "string") {
             val = val.trim();
         }
@@ -412,7 +413,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     uo.isoString2Day = uo.ISOString2Day;
 
 
-    uo.ISOString2Time = function (str) {
+    uo.ISOString2Time = function (str, utc) {
         var date, year, month, day, hours, minutes, seconds;
         if (!str) {
             str = new Date().toISOString();
@@ -423,7 +424,12 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         hours = parseInt(str.slice(11, 13), 10);
         minutes = parseInt(str.slice(14, 16), 10);
         seconds = parseInt(str.slice(17, 19), 10);
-        date = new Date(year, (month - 1), day, hours, minutes, seconds, 0);
+        if(utc || str.endsWith("Z")) {
+            date = new Date(Date.UTC(year, (month - 1), day, 
+                                     hours, minutes, seconds, 0)); }
+        else {
+            date = new Date(year, (month - 1), day, 
+                            hours, minutes, seconds, 0); }
         return date;
     };
     uo.isoString2Time = uo.ISOString2Time;
@@ -453,22 +459,26 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    uo.colloquialDate = function (date, compress) {
+    uo.colloquialDate = function (date, compress, commands) {
         var now = new Date(),
             elapsed,
             dayname,
             month,
             retval;
+        commands = commands || "";
         if (typeof date === "string") {
             date = uo.ISOString2Day(date);
+            if(commands.indexOf("z2loc") >= 0) {
+                date = uo.tz2loc(date); }
         }
         elapsed = now.getTime() - date.getTime();
-        if (elapsed < 24 * 60 * 60 * 1000) {
-            return "Today";
-        }
-        if (elapsed < 48 * 60 * 60 * 1000) {
-            return "Yesterday";
-        }
+        if(commands.indexOf("nodaily") < 0) {
+            if (elapsed < 24 * 60 * 60 * 1000) {
+                return "Today";
+            }
+            if (elapsed < 48 * 60 * 60 * 1000) {
+                return "Yesterday";
+            } }
         dayname = String(uo.days[date.getUTCDay()]);
         month = String(uo.months[date.getMonth()]);
         if (compress) {
@@ -596,7 +606,10 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             return "";
         }
         //strip any common trailing punctuation on the url if found
-        if (/[\.\,\)]$/.test(url)) {
+        //e.g. "(blah blah https://epinova.com)"
+        //e.g. "ok https://en.wikipedia.org/wiki/Thanksgiving_(United_States)"
+        if (/[\.\,]$/.test(url) || 
+            (url.endsWith(")") && url.indexOf("(") < 0)) {
             suffix = url.slice(-1);
             url = url.slice(0, -1);
         }
@@ -730,6 +743,66 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
+    //provide default move behavior for an element.  Typical use is to make
+    //an absolute positioned div moveable by the user.  Pass an appropriate
+    //functions object to override the default behavior.  To allow an
+    //absolute positioned div to be moved anywhere in the document body:
+    //    uo.makeDraggable("myElementId")
+    uo.makeDraggable = function (elem, fso) {
+        if(!elem) {
+            return; }
+        if(typeof elem === "string") {
+            elem = uo.byId(elem); }
+        elem.draggable = true;
+        fso = fso || {};
+        //set up dragstart handler for the given element
+        fso.dragstart = fso.dragstart || function (evt) {
+            var dat = evt.target.id + ":" + evt.pageX + ":" + evt.pageY;
+            //uo.log("drag started " + dat);
+            evt.target.style.opacity = "0.4";
+            evt.dataTransfer.effectAllowed = "move";
+            //Have to set data for DnD to be allowed
+            fso.dat = dat;  //dataTransfer not always available
+            evt.dataTransfer.setData("text/plain", dat); };
+        uo.on(elem, "dragstart", fso.dragstart);
+        //set up a general drop handler 
+        fso.drop = fso.drop || function (evt) {
+            var pos = {x: evt.pageX, y: evt.pageY},
+                dat = fso.dat.split(":"),
+                offset = {x: pos.x - (Number(dat[1])), 
+                          y: pos.y - (Number(dat[2]))},
+                srcelem = uo.byId(dat[0]),
+                coord = uo.geoPos(srcelem);
+            uo.evtend(evt);
+            srcelem.style.opacity = "1.0";
+            //uo.log("drag end offset: " + offset.x + "," + offset.y);
+            coord.x += offset.x;
+            coord.y += offset.y;
+            srcelem.style.left = coord.x + "px";
+            srcelem.style.top = coord.y + "px"; };
+        //set up a general dragover handler to let the drops through
+        fso.dragover = fso.dragover || function (evt) {
+            uo.evtend(evt);  //default action prevents drop
+            return false; };
+        //associate the dragover and drop handlers with the targets
+        fso.dropTargets = fso.dropTargets || [document.body];
+        fso.dropTargets.forEach(function (dt) {
+            uo.on(dt, "dragover", fso.dragover);
+            uo.on(dt, "drop", fso.drop); });
+        //add hooks for any other function overrides provided
+        if(fso.dragend) {
+            uo.on(elem, "dragend", fso.dragend); }
+        if(fso.drag) {
+            uo.on(elem, "drag", fso.drag); }
+        if(fso.dragenter) {
+            uo.on(elem, "dragenter", fso.dragenter); }
+        if(fso.dragexit) {
+            uo.on(elem, "dragexit", fso.dragexit); }
+        if(fso.dragleave) {
+            uo.on(elem, "dragleave", fso.dragleave); }
+    };
+
+
     ////////////////////////////////////////
     // HTML creation
     ////////////////////////////////////////
@@ -737,7 +810,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     //Override this function if you need your own custom tags.  If I've
     //missed anything generally useful, let me know.
     uo.isHTMLElement = function (elemtype) {
-        var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr", "svg"];
+        var elems = ["a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big", "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd", "del", "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "i", "iframe", "img", "input", "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript", "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr", "svg", "g", "path", "rect", "circle", "text"];
         if (typeof elemtype !== "string") {
             return false;
         }
@@ -752,7 +825,8 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     uo.isHTMLVoidElement = function (elemtype) {
         var voids = ["area", "base", "br", "col", "command", "embed",
                      "hr", "img", "input", "keygen", "link", "menuitem",
-                     "meta", "param", "source", "track", "wbr"];
+                     "meta", "param", "source", "track", "wbr", 
+                     "path", "rect", "circle"];
         elemtype = (uo.safestr(elemtype)).trim().toLowerCase();
         if (voids.indexOf(elemtype) >= 0) {
             return true;
@@ -866,10 +940,10 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             tempdiv.id = tempdivid;
             document.body.appendChild(tempdiv);
         }
-        now = new Date().getTime();
+        now = Date.now();
         start = now;
         while (now - start < delayms) {
-            now = new Date().getTime();
+            now = Date.now();
             uo.out(tempdivid, "delay " + (now - start));
         }
         uo.out(tempdivid, "");
@@ -996,7 +1070,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         var levels, iso, slug;
         levels = { year: 2, month: 4, day: 6, hour: 8, minute: 10 };
         prefix = prefix || "";
-        if(toklev && toklev.endsWith('Z')) {
+        if(toklev && toklev.endsWith("Z")) {
             iso = toklev; }
         else {
             iso = new Date().toISOString(); }
@@ -1079,7 +1153,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             return { x: event.pageX, y: event.pageY };
         }
         pos = { h: -1, w: -1, x: event.offsetX, y: event.offsetY };
-        pos = uo.geoPos(event.srcElement, pos);
+        pos = uo.geoPos(event.srcElement || event.target, pos);
         if (!pos) {
             pos = { x: event.offsetX, y: event.offsetY };
         }
@@ -1100,7 +1174,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
         if (path.lastIndexOf(".") > path.lastIndexOf("/")) {
             path = path.slice(0, path.lastIndexOf("/"));
         }
-        if (path.charAt(path.length - 1) !== '/') {
+        if (path.charAt(path.length - 1) !== "/") {
             path += "/";
         }
         parastr = parastr || "";
