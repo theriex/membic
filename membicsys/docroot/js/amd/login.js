@@ -965,7 +965,8 @@ return {
                 state = {view: "profile"}; }
             else {  //default initialization
                 if(app.login.isLoggedIn()) {
-                    state = {view: "activity"}; }
+                    //view: activity takes too long on cold server
+                    state = {view: "profile"}; }
                 else {
                     state = {view: "about"}; } } }
         if(params.url) {
