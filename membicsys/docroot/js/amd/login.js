@@ -228,7 +228,13 @@ app.login = (function () {
     },
 
 
+    //prefer output in the login form if available, otherwise use main stat div
     loginstat = function (txt) {
+        var loginstatformdiv = jt.byId("loginstatformdiv");
+        if(loginstatformdiv) {
+            jt.out("loginstatformdiv", jt.tac2html(
+                ["span", {cla:"loginstatspan"}, txt]));
+            return; }
         if(!txt) {
             //keep some text in the div so it doesn't collapse
             jt.out("loginstatdiv", "&nbsp;"); }
@@ -248,11 +254,11 @@ app.login = (function () {
         //decorate contents and connect additional actions
         if(params.loginerr) {
             loginstat(fixServerText(params.loginerr, params.emailin)); }
-        html = ["a", {id: "forgotpw", href: "#forgotpassword",
-                      title: "Email my password, I spaced it",
-                      onclick: jt.fs("app.login.forgotPassword()")},
-                "forgot my password..."];
-        jt.out("forgotpassdiv", jt.tac2html(html));
+        html = ["a", {id:"resetpw", href:"#resetpassword",
+                      title:"Email a password reset link",
+                      onclick:jt.fs("app.login.resetPassword()")},
+                "reset password..."];
+        jt.out("resetpassdiv", jt.tac2html(html));
         if(authname) {
             jt.byId("emailin").value = authname; }
         if(params.emailin) {
@@ -987,7 +993,7 @@ return {
     },
 
 
-    forgotPassword: function () {
+    resetPassword: function () {
         var emaddr, data;
         emaddr = jt.byId("emailin").value;
         if(!jt.isProbablyEmail(emaddr)) {
@@ -1001,7 +1007,7 @@ return {
                     displayEmailSent(); },
                 app.failf(function (ignore /*code*/, errtxt) {
                     loginstat(errtxt); }),
-                jt.semaphore("forgotPassword"));
+                jt.semaphore("resetPassword"));
     }
 
 };  //end of returned functions

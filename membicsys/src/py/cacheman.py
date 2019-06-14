@@ -163,9 +163,7 @@ def cached_query(ckey, query, cursor, fetchmax, dbclass, logit):
         qc = QueryCache()
     qres = QueryResult()
     qres.qcstart = qc.started
-    # Have previous QueryCache, return from cache if adequate.  Cached
-    # results may be empty, it is the responsibility of the caller to
-    # bust the cache after adding a new instance.
+    # Have previous QueryCache, return from cache if adequate.
     if qc.started:
         offset = 0
         if cursor and cursor.startswith("cache"):
@@ -176,10 +174,17 @@ def cached_query(ckey, query, cursor, fetchmax, dbclass, logit):
                 logging.info("Query results retrieved from cache")
             idvals = qc.idvals[offset:endidx]
             for idval in idvals:
+                if logit:
+                    logging.info("appending " + str(dbclass) + " " + str(idval))
                 qres.objects.append(cached_get(idval, dbclass))
             if qc.cursor:
                 qres.cursor = "cache" + str(endidx)
-            return qres;
+            if len(qres.objects):
+                return qres
+            else:  # a newly created user might not be found the first time
+                if logit:
+                    logging.info("Nothing found in cache, rechecking db")
+                qc.started = None
     # No previous QueryCache, or need more values from the db
     if not qc.started:
         if logit:

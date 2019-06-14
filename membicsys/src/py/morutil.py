@@ -1,5 +1,9 @@
+from google.appengine.ext import db
+from google.appengine.api.datastore_types import Blob
+import logging
 import datetime
 import re
+import json
 
 def nowISO():
     """ Return the current time as an ISO string """
@@ -48,6 +52,64 @@ def intz(val):
 def srverr(handler, code, errtxt):
     handler.error(code)
     handler.response.out.write(errtxt)
+
+
+def srvText(handler, text):
+    """ Factored method to write headers for plain text result """
+    handler.response.headers['Content-Type'] = 'text/plain'
+    handler.response.out.write(text)
+
+
+def srvJSON(handler, jsontxt):
+    """ Factored method to write headers for JSON result """
+    handler.response.headers['Access-Control-Allow-Origin'] = '*'
+    handler.response.headers['Content-Type'] = 'application/json'
+    handler.response.out.write(jsontxt)
+
+
+def obj2JSON(obj, filts=[]):
+    """ Factored method return a database object as JSON text """
+    props = db.to_dict(obj)
+    # logging.info("props: " + str(props))
+    logging.info("filts: " + str(filts))
+    for prop, val in props.iteritems():
+        # binary data like pics is fetched separately by id
+        if(isinstance(val, Blob)):
+            props[prop] = str(obj.key().id())
+        # integer values must be strings or they overflow javascript integer
+        if((isinstance(val, (int, long)) and (prop.endswith("id"))) or
+           (prop == "srcrev")):
+            props[prop] = str(props[prop])
+        if prop in filts:
+            props[prop] = ""
+        # logging.info(prop + ": " + str(props[prop]))
+    jsontxt = json.dumps(props, True)
+    # prepend the instance id as an "_id" field
+    jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " + jsontxt[1:]
+    # logging.info(jsontxt)
+    return jsontxt
+
+
+def qres2JSON(queryResults, cursor="", fetched=-1, itemsep="\n", filts=[]):
+    """ Factored method to return query results as JSON """
+    result = ""
+    for obj in queryResults:
+        if result:
+            result += "," + itemsep + " "
+        result += obj2JSON(obj, filts=filts)
+    if cursor or fetched > 0:
+        if result:
+            result += "," + itemsep + " "
+        result += "{\"fetched\":" + str(fetched) + \
+            ", \"cursor\":\"" + cursor + "\"}"
+    result = "[" + result + "]"
+    return result
+
+
+def srvObjs(handler, queryResults, cursor="", fetched=-1, filts=[]):
+    """ Write JSON given an array of db objs or a query result """
+    result = qres2JSON(queryResults, cursor, fetched, filts=filts)
+    srvJSON(handler, result)
 
 
 def suppemail():

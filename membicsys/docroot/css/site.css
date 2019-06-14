@@ -74,7 +74,9 @@ button, .loginbutton, .formbutton, .filesellab {
 #infosignoutdiv { margin-top:-2px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { height:30px; text-align:right; }
-.loginstatspan { background-image:url('../img/e6e7e9p80.png'); }
+#loginstatformdiv { padding:0px 5px; }
+.loginstatspan { background-image:url('../img/e6e7e9p80.png'); 
+                 font-size:small; }
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
                transition:opacity 1s; 
                padding:2px 0px 5px 0px; }
@@ -111,8 +113,7 @@ button, .loginbutton, .formbutton, .filesellab {
 .penflist { font-size:medium; }
 .penbutton { padding-right:5px; vertical-align:top; }
 #coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
-#chead { height:0px; clear:both; }  /* top pad if needed for profile content */
-#cmain { clear:both; padding: 8px 0px 0px 0px; }
+#bonkmain { clear:both; padding:10px; background:#ed8f8f; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; background:#ffad51; 
   background:-moz-linear-gradient(left top, #ffdab1 0%, #ffad51 100%);
@@ -172,8 +173,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .accstatvalspan { font-size:small; font-style:italic; padding:0px 4px 0px 0px; }
 #accstatdetaildiv { font-size:small; padding:5px 5px 0px 5px; }
 #buttonornotespan { font-size:small; }
-#forgotpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
-#forgotpw { }
+#resetpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
+#resetpw { }
 #accountsettingsformdiv { }
 
 /* >> pen layout */

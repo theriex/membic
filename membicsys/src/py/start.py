@@ -51,6 +51,8 @@ indexHTML = """
           <!-- no onchange submit for password. breaks autoforms on safari -->
           <input type="password" class="lifin" name="passin" id="passin"/> 
           <div class="lifsep"></div>
+          <div id="loginstatformdiv"></div>
+          <div class="lifsep"></div>
           <div id="loginbuttonsdiv" class="lifbuttonsdiv">
             <button type="button" id="createAccountButton"
                     onclick="app.login.createAccount();return false;">
@@ -60,7 +62,7 @@ indexHTML = """
                onclick="app.layout.displayDoc('docs/about.html');return false;">
               <img id="infoimg" src="img/infotrim.png" style="opacity:0.6"/></a>
           </div>
-          <div id="forgotpassdiv"></div>
+          <div id="resetpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->
       </form>
     </div> <!-- logindiv -->

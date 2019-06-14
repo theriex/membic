@@ -54,7 +54,7 @@ app.coop = (function () {
         body = "Hi,\n\n" +
             "I'm writing a cooperative theme on membic.org called \"" + dst.obj.name + "\", and I would like to invite you to join me as a contributing member. I value your thoughts and knowledge, and I think our combined membics would be useful to us and other people. You can check out the theme at\n\n" +
             app.secsvr + "/t/" + dst.id + "\n\n" +
-            "I've approved your membership, and you should already have received an acceptance link and any other needed account information from " + app.suppemail + ". If you can't find that, you can use the \"forgot my password\" link on the login form to get in. I'm guessing you probably have some membics you could write just from recent memory, it would be awesome to see those included.\n\n" +
+            "I've approved your membership, and you should already have received an acceptance link and any other needed account information from " + app.suppemail + ". If you can't find that, use the \"reset password\" link on the login form to get in. I'm guessing you probably have some membics you could write just from recent memory, it would be awesome to see those included.\n\n" +
             "A membic is a link plus a reason why it is memorable. \"" + dst.obj.name + "\" is a collaborative memory space where we control membership and all posted membics. My hope is this will grow into a highly useful resource for us and for others interested what we choose to post. For more info, go to https://www.membic.org\n\n" +
             "Looking forward to building \"" + dst.obj.name + "\" with you!\n\n" +
             "thanks,\n\n";

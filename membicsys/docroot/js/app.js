@@ -237,14 +237,15 @@ var app = {},  //Global container for application level funcs and values
         var html, now, subj, body, emref;
         now = new Date();
         subj = "App crash";
-        body = "Hey,\n\n" +
-            "The app crashed.  Here are some details:\n\n" +
-            "local time: " + now + "\n" +
-            "method: " + method + "\n" +
+        body = "method: " + method + "\n" +
             "url: " + url + "\n" +
             "data: " + data + "\n" +
             "code: " + code + "\n" +
-            errtxt + "\n\n" +
+            errtxt + "\n\n";
+        jt.log("app.crash " + body);
+        body = "Hey,\n\n" +
+            "The app crashed.  Here are some details:\n\n" +
+            "local time: " + now + "\n" + body +
             "Please fix this so it doesn't happen again.  If it is " +
             "anything more than a minor bug, open an issue on " +
             "https://github.com/theriex/membic/issues for " +
@@ -252,14 +253,12 @@ var app = {},  //Global container for application level funcs and values
             "thanks,\n";
         emref = "mailto:" + app.suppemail + "?subject=" + jt.dquotenc(subj) + 
             "&body=" + jt.dquotenc(body);
-        html = [
-            ["div", {id: "chead"}],
-            ["div", {id: "cmain"},
-             [["p", "The app just bonked."],
-              ["p", 
-               [["It would be awesome if you could ",
-                 ["a", {href: emref},
-                  "email support to get this fixed."]]]]]]];
+        html = ["div", {id: "bonkmain"},
+                [["p", "The app just bonked."],
+                 ["p", 
+                  [["It would be awesome if you could ",
+                    ["a", {href: emref},
+                     "email support to get this fixed."]]]]]];
         html = jt.tac2html(html);
         jt.out("contentdiv", html);
         app.layout.closeDialog();

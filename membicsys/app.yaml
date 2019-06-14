@@ -6,7 +6,7 @@ threadsafe: true
 
 libraries:
 - name: pycrypto
-  version: "2.3"
+  version: "2.6.1"
 
 builtins:
 - remote_api: on
@@ -38,47 +38,42 @@ handlers:
 ## Get an access token from native credentials
 ## POST params: user, pass 
 - url: .*/toklogin.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
 ## Read native credentials and redirect back
 ## POST params: emailin, passin (,returnto, command, view, objid)
 - url: .*/redirlogin.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
 ## Create a new native account
 ## POST params: user, pass, email
 - url: .*/newacct.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
-## Email forgotten native account credentials
+## Email password reset access link
 ## POST params: email
-- url: .*/mailcred.*
-  script: src.py.moracct.app
+- url: .*/mailpwr.*
+  script: src.py.muser.app
 
 ## Change native account password
 ## POST params: password, authparams
 - url: .*/updacc.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
-## Get login account details
+## Get login account
 ## GET params: authparams
 - url: .*/getacct.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
 ## Send account activation code
 ## POST params: authparams
 - url: .*/sendcode.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
-## Activate or deactivate the account
-## GET params: key, code, command, authparams
+## Activate account with key/code, or deactivate (status: Inactive)
+## GET params: key, code, authparams
 - url: .*/activate.*
-  script: src.py.moracct.app
-
-## Get build version string
-## GET params: none
-- url: .*/buildverstr.*
-  script: src.py.moracct.app
+  script: src.py.muser.app
 
 
 ######################################################################
