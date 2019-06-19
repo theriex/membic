@@ -1096,7 +1096,9 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             }
             expiration = new Date();
             expiration.setDate(expiration.getDate() + expiredays);
-            cval = escape(cval) + "; expires=" + expiration.toUTCString();
+            cval = escape(cval) + 
+                "; Expires=" + expiration.toUTCString() +
+                "; Path=/"
             document.cookie = cname + "=" + cval;
         }
         cval = document.cookie;

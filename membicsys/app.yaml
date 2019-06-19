@@ -347,6 +347,10 @@ handlers:
 ## Vanity theme access
 - url: /\w+
   script: src.py.start.app
+## Fetch a summary of recently updated profiles and themes
+- url: .*/recentactive.*
+  script: src.py.start.app
+
 
 ## Catchall is to look for a static file off docroot
 - url: /

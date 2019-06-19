@@ -10,6 +10,7 @@ import morutil
 import string
 import random
 import os
+import urllib
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """
@@ -210,6 +211,17 @@ def update_email_and_password(handler, account):
     return True
 
 
+def asciienc(val):
+    val = unicode(val)
+    return val.encode('utf8')
+
+
+def login_token_parameters(muser):
+    params = "authname=" + urllib.quote(asciienc(muser.email)) +\
+                         "&authtoken=" + token_for_user(muser)
+    return params
+
+
 def verify_hashtag_db(handler, dbobj, dbclass):
     # fetch first two instances to ensure there isn't a conflict in the db
     # due to update latency or some other strange circumstance
@@ -325,7 +337,7 @@ class GetToken(webapp2.RequestHandler):
             morutil.srverr(self, 401, "No account found for " + emaddr +  ".")
             return
         password = self.request.get('passin')
-        ph = make_password_hash(emaddr, pwd, muser.created)
+        ph = make_password_hash(emaddr, password, muser.created)
         if ph != muser.phash:
             morutil.srverr(self, 401, "No match for those credentials")
             return
@@ -352,11 +364,11 @@ class TokenAndRedirect(webapp2.RequestHandler):
                 redurl += "emailin=" + email + "&loginerr=No account found"
             else:
                 password = self.request.get('passin') or ""
-                ph = make_password_hash(emaddr, pwd, muser.created)
+                ph = make_password_hash(emaddr, password, muser.created)
                 if ph != muser.phash:
                     redurl += "emailin=" + email + "&loginerr=Wrong password"
                 else:
-                    redurl += login_token_parameters(email, password)
+                    redurl += login_token_parameters(muser)
         # preserve any state information passed in the params so they can
         # continue on their way after ultimately logging in.  If changing
         # these params, also check login.doNextStep

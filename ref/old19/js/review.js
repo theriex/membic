@@ -1552,11 +1552,13 @@ app.review = (function () {
 
 
     signInErr = function (errtxt, prefix, disprevid) {
-        var html, yc;
+        var html, href = "", yc;
         if(app.solopage()) {
+            href = "?" + jt.objdata(app.login.permalinkURLElemsToParams());
+            href = app.hardhome + href;
             html = ["div", {id: "siedlgdiv"},
                     [["div", {cla: "pcdsectiondiv"},
-                      ["a", {href: app.hardhome},
+                      ["a", {href: href},
                        [["img", {cla: "reviewbadge", 
                                  src: "img/membiclogo.png?v=181127"}],
                         errtxt]]],
@@ -1566,7 +1568,7 @@ app.review = (function () {
                         "Cancel"],
                        ["button", {type: "button", id: "redirsieb",
                                    onclick: jt.fs("app.layout.closeDialog('" +
-                                                  app.hardhome + "')")},
+                                                  href + "')")},
                         "Go to main site"]]]]];
             html = app.layout.dlgwrapHTML("&nbsp", html);
             yc = window.pageYOffset + 60;

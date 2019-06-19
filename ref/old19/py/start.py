@@ -3,15 +3,12 @@ import logging
 import datetime
 import pen
 import coop
-import muser
 from google.appengine.api import memcache
 from morutil import *
 from cacheman import *
 import urllib
 import json
 from operator import attrgetter, itemgetter
-
-# Provide appropriate source for the main page or hashtag specified page.
 
 indexHTML = """
 <!doctype html>
@@ -61,6 +58,9 @@ indexHTML = """
                     onclick="app.login.createAccount();return false;">
               Create Account</button>
             <input value="Sign in" type="submit" class="loginbutton"/>
+            <a href="#intro" title="Information"
+               onclick="app.layout.displayDoc('docs/about.html');return false;">
+              <img id="infoimg" src="img/infotrim.png" style="opacity:0.6"/></a>
           </div>
           <div id="resetpassdiv"></div>
         </div> <!-- loginvisualelementsdiv -->
@@ -109,7 +109,6 @@ indexHTML = """
 <!-- uncomment if compiling <script src="js/compiled.js$CACHEPARA"></script> -->
 
 <script>
-  app.pfoj = $PREFETCHOBJSON;
   app.refer = "$REFER";
   app.embedded = $EMBED;
   app.vanityStartId = "$VANID";
@@ -124,12 +123,12 @@ indexHTML = """
 
 noscripthtml = """
       <noscript>
-        <p><b>Membic is a JavaScript app, please enable script and reload.</b></p>
+        <p><b>Membic is a JavaScript app, please enable and reload this page.</b></p>
       </noscript>
 """
 
 interimcont = """
-<div class="defcontentsdiv" id="membicdefinitiondiv">
+<div class="defcontentsdiv">
   <div class="defcontentinnerdiv">
     <div class="defsyllabicdiv">mem&#x00b7;bic</div>
     <div class="defphoneticdiv">/'mem.b&#x026a;k/</div>
@@ -161,20 +160,8 @@ revhtml = """
 </div>
 """
 
-tplinkhtml = """
-<div class="tplinkdiv" id="tplinkdiv$TPID">
-  <div class="tplinkpicdiv"></div>
-  <div class="tplinkdescdiv">
-    <span class="tplinknamespan"><a href="/$HASHTAG">$NAME</a></span>
-    $DESCRIP
-</div>
-"""
-
 
 def theme_static_content(handler, ctm):
-    # This doesn't have to match the actual display, or be particularly
-    # functional, it just has to be something a search engine can read.
-    # Bonus points for decorating rather than replacing client side.
     if not ctm.preb:
         return ""
     html = ""
@@ -230,90 +217,21 @@ def feedlinks_for_theme(handler, ctm):
     return linkhtml
 
 
-def json_for_theme_prof(obj, obtype):
-    sd = {"instid": str(obj.key().id()),
-          "obtype": obtype,
-          "modified": obj.modified,
-          "hashtag": obj.hashtag}
-    if not sd["hashtag"]:
-        sd["hashtag"] = sd["instid"]
-    if obtype == "theme":
-        if obj.picture:
-            sd["pic"] = str(obj.key().id())
-        sd["name"] = obj.name
-        sd["description"] = obj.description
-        sd["founders"] = obj.founders
-        sd["moderators"] = obj.moderators
-        sd["members"] = obj.members
-        sd["seeking"] = obj.seeking
-        sd["rejects"] = obj.rejects
-    elif obtype == "profile":
-        if obj.profpic:
-            sd["pic"] = str(obj.key().id())
-        sd["name"] = sd["hashtag"]
-        sd["description"] = ""
-        sj = json.loads(obj.settings or "{}")
-        if "name" in sj:
-            sd["name"] = sj["name"]
-        if "description" in sj:
-            sd["description"] = sj["description"]
-    return json.dumps(sd)
-
-
-def fetch_recent_themes_and_profiles(handler, cachev):
-    jtxt = ""
-    vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
-    objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    for obj in objs:
-        if jtxt:
-            jtxt += ","
-        jtxt += json_for_theme_prof(obj, "theme")
-    vq = VizQuery(muser.MUser, "ORDER BY modified DESC")
-    objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    for obj in objs:
-        if jtxt:
-            jtxt += ","
-        jtxt += json_for_theme_prof(obj, "profile")
-    return "[" + jtxt + "]"
-
-
-# cache fetch most recently modified 50 themes and 50 profiles.
-def recent_active_content(handler, cachev):
-    content = ""
-    jtps = memcache.get("activecontent")
-    if not jtps:
-        jtps = fetch_recent_themes_and_profiles(handler, cachev)
-        memcache.set("activecontent", jtps)
-    ods = json.loads(jtps)
-    for od in ods:
-        logging.info(str(od))
-        # logging.info(od["obtype"] + od["instid"] + " " + od["hashtag"])
-        th = tplinkhtml
-        th = th.replace("$TPID", od["instid"])
-        th = th.replace("$HASHTAG", od["hashtag"])
-        th = th.replace("$NAME", od["name"])
-        th = th.replace("$DESCRIP", od["description"])
-        content += th
-    pfoj = {"obtype": "activetps", "jtps": ods}
-    pfoj = json.dumps(pfoj)
-    return content, pfoj
-
-
-def spdet(handler, dtype, dbid, cachev):
+def spdet(handler, dbclass, dbid, cachev):
     title = "Membic"
     descr = "Membic helps people track and share resource links that are worth remembering. People use membic themes to make resource pages for their sites."
     img = ""
     content = interimcont
+    count = 0
     feedlinks = ""
-    pfoj = "null"
-    if dtype == "pen":
+    if dbclass == "pen":
         pnm = pen.PenName.get_by_id(dbid)
         if pnm:
             descr = "Membic profile for " + pnm.name
             descr = descr.replace("\"", "'")
             title = descr
             img = "/profpic?profileid=" + str(dbid)
-    elif dtype == "coop" or dtype == "embed":
+    elif dbclass == "coop" or dbclass == "embed":
         ctm = coop.Coop.get_by_id(dbid)
         if ctm:
             title = ctm.name
@@ -321,7 +239,6 @@ def spdet(handler, dtype, dbid, cachev):
             descr = ctm.description
             descr = descr.replace("\"", "'")
             img = "/ctmpic?coopid=" + str(dbid)
-            count = 0
             try:
                 content, count = theme_static_content(handler, ctm)
             except Exception as e:
@@ -330,25 +247,22 @@ def spdet(handler, dtype, dbid, cachev):
                 title = "Top " + str(count) + " " + title
                 descr = "Top " + str(count) + " " + descr
             feedlinks = feedlinks_for_theme(handler, ctm)
-    else: # unkown dtype or unspecified
-        content, pfoj = recent_active_content(handler, cachev)
-        content += interimcont
-    # make sure img is set and appropriately cache busted
     if not img:
         img = "/img/membiclogo.png?" + cachev
     else:
         img += "&" + cachev
-    return title, descr, img, content, feedlinks, pfoj
+    return title, descr, img, content, feedlinks
 
 
-def start_page_html(handler, dtype, dbid, refer):
+def start_page_html(handler, dbclass, dbid, refer):
     # logging.info("----------------------------------------")
-    # logging.info("start_page_html " + dtype + str(dbid) + " " + refer)
+    # logging.info("start_page_html " + dbclass + str(dbid) + " " + refer)
     # logging.info("----------------------------------------")
     cachev = "v=181127"
-    title, descr, img, content, fls, pfoj = spdet(handler, dtype, dbid, cachev)
+    title, descr, img, content, feedlinks = spdet(handler, dbclass, dbid,
+                                                  cachev)
     embed = "null"
-    if dtype == "embed":
+    if dbclass == "embed":
         embed = "{coopid:" + str(dbid) + "}"
     # social nets require a full URL to fetch the image
     img = handler.request.host_url + img;
@@ -361,8 +275,7 @@ def start_page_html(handler, dtype, dbid, refer):
     html = html.replace("$EMBED", embed)
     html = html.replace("$VANID", str(dbid))
     html = html.replace("$INTERIMCONT", noscripthtml + content);
-    html = html.replace("$FEEDLINKS", fls)
-    html = html.replace("$PREFETCHOBJSON", pfoj)
+    html = html.replace("$FEEDLINKS", feedlinks)
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 
@@ -379,12 +292,6 @@ def coopid_for_hashtag(hashtag):
         coopid = str(themes[0].key().id())
         memcache.set(hashtag, coopid)
     return int(coopid)
-
-
-class GetRecentActive(webapp2.RequestHandler):
-    def get(self):
-        content, pfoj = recent_active_content(self, "")
-        srvJSON(self, "[" + pfoj + "]")
 
 
 class PermalinkStart(webapp2.RequestHandler):
@@ -448,8 +355,7 @@ class VanityStart(webapp2.RequestHandler):
         return start_page_html(self, "coop", int(coopid), refer)
 
 
-app = webapp2.WSGIApplication([('.*/recentactive', GetRecentActive),
-                               ('/([p|t|e])/(\d+).*', PermalinkStart),
+app = webapp2.WSGIApplication([('/([p|t|e])/(\d+).*', PermalinkStart),
                                ('/index.html', IndexPageStart),
                                ('(.*)/', DefaultStart),
                                ('(.*)', VanityStart)],

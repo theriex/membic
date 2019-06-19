@@ -152,7 +152,6 @@ var app = {},  //Global container for application level funcs and values
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
         app.amdtimer.load.end = new Date();
-        jt.out("loadstatusdiv", "");  //done loading
         app.layout.init();
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
@@ -188,8 +187,7 @@ var app = {},  //Global container for application level funcs and values
 
     app.init = function () {
         var securl, href = window.location.href,
-            modules = [ "js/amd/themes", 
-                        "js/amd/layout", "js/amd/lcs", "js/amd/history",
+            modules = [ "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/activity", "js/amd/pcd",
                         "js/amd/review", "js/amd/pen", "js/amd/coop",
                         "js/amd/ext/amazon", "js/amd/ext/email",
@@ -208,6 +206,7 @@ var app = {},  //Global container for application level funcs and values
             jt.byId("headingdiv").style.display = "none";
             jt.byId("bottomnav").style.display = "none";
             jt.byId("topsectiondiv").style.display = "none"; }
+        jt.out("interimcontentdiv", "");  //have script, so clear placeholder
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };

@@ -9,12 +9,13 @@ app.login = (function () {
     // closure variables
     ////////////////////////////////////////
 
-    var authname = "",
+    var authmethod = "",
         authtoken = "",
+        authname = "",
         moracct = null,
         cookdelim = "..morauth..",
-        initialTopSectionHTML = "",
         toprightdivcontents = "",
+        altauths = [],
         loginhtml = "",
         actsent = null,
 
@@ -40,15 +41,21 @@ app.login = (function () {
 
 
     authparams = function () {
-        var params = "an=" + jt.enc(authname) + "&at=" + authtoken;
+        var params, sec; 
+        params = "am=" + authmethod + "&at=" + authtoken + 
+                 "&an=" + jt.enc(authname);
+        sec = jt.cookie(authtoken);
+        if(sec) {
+            params += "&as=" + jt.enc(sec); }
         return params;
     },
 
 
     //Produces less cryptic params to read
     authparamsfull = function () {
-        var params = "authname=" + jt.enc(authname) + 
-                     "&authtoken=" + authtoken;
+        var params = "authmethod=" + authmethod + 
+                     "&authtoken=" + authtoken + 
+                     "&authname=" + jt.enc(authname);
         return params;
     },
 
@@ -56,6 +63,7 @@ app.login = (function () {
     logoutWithNoDisplayUpdate = function () {
         //remove the cookie and reset the app vars
         jt.cookie(app.authcookname, "", -1);
+        authmethod = "";
         authtoken = "";
         authname = "";
         moracct = null;
@@ -84,9 +92,10 @@ app.login = (function () {
     //regardless of the expiration set here.  This happens even if
     //directly using Cookie.set, or setting document.cookie directly.
     //On FF14 without noscript, all is normal.
-    setAuthentication = function (name, token) {
-        var cval = name + cookdelim + token;
+    setAuthentication = function (method, token, name) {
+        var cval = method + cookdelim + token + cookdelim + name;
         jt.cookie(app.authcookname, cval, 365);
+        authmethod = method;
         authtoken = token;
         authname = name;
         if(authname) {
@@ -115,6 +124,29 @@ app.login = (function () {
         app.layout.openDialog({y:90}, jt.tac2html(html), null,
                               function () {
                                   jt.byId("okbutton").focus(); });
+    },
+
+
+    //all alternate login is done from the main server. 
+    handleAlternateAuthentication = function (idx, params) {
+        var redurl;
+        if(!params) {
+            params = jt.parseParams(); }
+        if(window.location.href.indexOf("localhost") >= 0) {
+            jt.err("Not redirecting to main server off localhost. Confusing.");
+            return; }
+        if(window.location.href.indexOf(app.mainsvr) !== 0) {
+            redurl = app.mainsvr + "#command=AltAuth" + (+idx);
+            if(params.reqprof) {
+                redurl += "&view=pen&penid=" + params.reqprof; }
+            app.fork({descr:"AltAuth redirect",
+                      func:function () {
+                          window.location.href = redurl; },
+                      ms:20}); }
+        else {  //we are on app.mainsvr at this point
+            if(typeof idx !== "number") {
+                idx = parseInt(idx, 10); }
+            altauths[idx].authenticate(params); }
     },
 
 
@@ -438,6 +470,13 @@ app.login = (function () {
     },
 
 
+    standardizeAuthParams = function (params) {
+        if(params.authmethod) { params.am = params.authmethod; }
+        if(params.authtoken) { params.at = params.authtoken; }
+        if(params.authname) { params.an = params.authname; }
+    },
+
+
     applyCSSOverride = function (cssurl) {
         var csselem = document.createElement("link");
         csselem.rel = "stylesheet";
@@ -452,8 +491,9 @@ app.login = (function () {
 
 
     handleInitialParamSideEffects = function (params) {
-        if(params.an && params.at) {
-            setAuthentication(params.an, params.at); }
+        if(params.am && params.at && params.an && !params.special) {
+            params.at = jt.enc(params.at);  //restore token encoding 
+            setAuthentication(params.am, params.at, params.an); }
         if(params.logout) {
             logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //clean up the URL display
@@ -479,12 +519,18 @@ app.login = (function () {
 
 
     handleRedirectOrStartWork = function () {
-        var params = jt.parseParams();
-        params.an = params.an || params.authname;
-        params.at = params.at || params.authtoken;
+        var idx, altpn = "AltAuth", params = jt.parseParams();
+        standardizeAuthParams(params);
+        app.login.permalinkURLElemsToParams(params);
         handleInitialParamSideEffects(params);
         //figure out what to do next
-        if(authtoken || app.login.readAuthCookie()) {
+        if(params.command && params.command.indexOf(altpn) === 0) {
+            idx = params.command.slice(altpn.length);
+            handleAlternateAuthentication(idx, params); }
+        else if(params.state && params.state.indexOf(altpn) === 0) {
+            idx = params.state.slice(altpn.length, altpn.length + 1);
+            handleAlternateAuthentication(idx, params); }
+        else if(authtoken || app.login.readAuthCookie()) {
             loggedInDoNextStep(params); }
         else if(secureURL("login") === "login") {
             displayLoginForm(params);
@@ -507,6 +553,8 @@ return {
                   func:loadThirdPartyUtilities, ms:5});
         if(!loginhtml) {  //save original html in case needed later
             loginhtml = jt.byId("logindiv").innerHTML; }
+        //do not change this ordering. Some auths leverage their index
+        altauths = [ app.facebook, app.twitter, app.googleplus, app.github ];
         handleRedirectOrStartWork();
     },
 
@@ -631,32 +679,6 @@ return {
     },
 
 
-    updateTopSection: function () {
-        if(!initialTopSectionHTML) {
-            initialTopSectionHTML = jt.byId("topsectiondiv").innerHTML; }
-        if(!app.login.isLoggedIn()) {
-            jt.out("topsectiondiv", initialTopSectionHTML);
-            return app.themes.display(); }
-        var sep = "&nbsp;&nbsp;|&nbsp;&nbsp";
-        var html = ["div", {id:"topnavdiv"}, [
-            ["a", {href:"#Themes",
-                   onclick:jt.fs("app.themes.display()")},
-             [["img", {cla:"navimg", src:"img/membiclogo.png"}],
-              "Themes"]],
-            sep,
-            ["a", {href:"#Profile",
-                   onclick:jt.fs("app.profile.display()")},
-             [["img", {cla:"navimg", src:"img/profile.png"}],
-              "Profile"]],
-            sep,
-            ["a", {href:"#Membic",
-                   onclick:jt.fs("app.review.start()")},
-             [["img", {cla:"navimg", src:"img/writenew.png"}],
-              "Membic"]]]];
-        jt.out("topsectiondiv", jt.tac2html(html));
-    },
-
-
     //create the logged-in display areas
     updateAuthentDisplay: function (override) {
         if(!toprightdivcontents) {
@@ -747,7 +769,8 @@ return {
             jt.log("updacc data: " + data);
             jt.call("POST", secureURL("updacc"), data,
                     function (objs) {
-                        setAuthentication(authname, objs[0].token);
+                        if(authmethod === "mid") {
+                            setAuthentication("mid", objs[0].token, authname); }
                         setPenStashFromAccountInfo(objs[0]);
                         moracct = null;  //reset so they log in again
                         contf(); },
@@ -763,8 +786,47 @@ return {
     },
 
 
+    permalinkURLElemsToParams: function (params) {
+        var done = false, idx, href = window.location.href;
+        if(!done) {
+            idx = href.indexOf("/p/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "pen";
+                params.penid = String(parseInt(href.slice(idx + 3), 10));
+                done = true; } }
+        if(!done) {
+            idx = href.indexOf("/t/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "coop";
+                params.coopid = String(parseInt(href.slice(idx + 3), 10));
+                done = true; } }
+        if(!done) {
+            idx = href.indexOf("/e/");
+            if(idx >= 0) {
+                params = params || {};
+                params.view = "coop";
+                params.coopid = String(parseInt(href.slice(idx + 3), 10));
+                done = true; } }
+        if(!done) {
+            href = app.hashtaghref();
+            if(href) {
+                params = params || {};
+                params.view = "coop";
+                params.coopid = app.vanityStartId;
+                done = true; } }
+        if(!done && app.embedded && app.embedded.coopid) {
+            params = params || {};
+            params.view = "coop";
+            params.coopid = app.embedded.coopid;
+            done = true; }
+        return params;
+    },
+
+
     isLoggedIn: function () {
-        if(authname && authtoken) {
+        if(authmethod && authtoken && authname) {
             return true; }
         return false;
     },
@@ -800,8 +862,9 @@ return {
         cval = jt.cookie(app.authcookname);
         if(cval) {
             mtn = cval.split(cookdelim);
-            authname = mtn[0].replace("%40", "@");
-            authtoken = mtn[1]; }
+            authmethod = mtn[0];
+            authtoken = mtn[1];
+            authname = mtn[2].replace("%40", "@"); }
         app.login.updateAuthentDisplay();
         return authtoken;  //true if set earlier
     },
@@ -820,6 +883,11 @@ return {
         if(errprompt) {
             jt.err(errprompt); }
         app.verifyHome();
+    },
+
+
+    altLogin: function (idx) {
+        handleAlternateAuthentication(idx);
     },
 
 
@@ -886,6 +954,10 @@ return {
             //if changing here, also check /redirlogin
             redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
+            if(params.special === "nativeonly") {
+                redurl += "&special=nativeonly"; }
+            if(params.reqprof) {
+                redurl += "&view=pen&penid=" + params.reqprof; }
             xpara = jt.objdata(params, ["logout", "returnto"]);
             if(xpara) {
                 redurl += "&" + xpara; }
@@ -895,14 +967,29 @@ return {
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(!state || !state.view) {
-            if(app.login.isLoggedIn()) {
+            if(params.view === "profile") {
                 state = {view: "profile"}; }
-            else {
-                state = {view: "themes"}; } }
+            else {  //default initialization
+                if(app.login.isLoggedIn()) {
+                    //view: activity takes too long on cold server
+                    state = {view: "profile"}; }
+                else {
+                    state = {view: "about"}; } } }
         if(params.url) {
             app.activity.setURLToRead(params.url); }
-        app.login.updateTopSection()
-        app.history.dispatchState(state);
+        if(app.login.isLoggedIn()) {
+            //remove the login form before the network call so the form
+            //isn't hanging around excessively on a slow network.
+            app.login.updateAuthentDisplay("hide");
+            app.pen.getPen("", function (ignore /*pen*/) {
+                app.login.updateAuthentDisplay();
+                app.fork({descr:"show any theme invitations",
+                          func:app.coop.processInvites, ms:1000});
+                app.fork({descr:"display system notices",
+                          func:app.coop.systemNotices, ms:4000});
+                app.history.dispatchState(state); }); }
+        else {
+            app.history.dispatchState(state); }
     },
 
 
