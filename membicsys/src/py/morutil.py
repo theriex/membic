@@ -84,8 +84,11 @@ def obj2JSON(obj, filts=[]):
             props[prop] = ""
         # logging.info(prop + ": " + str(props[prop]))
     jsontxt = json.dumps(props, True)
-    # prepend the instance id as an "_id" field
-    jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " + jsontxt[1:]
+    # prepend object information
+    jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " +\
+              "\"instid\":\"" + str(obj.key().id()) + "\", " +\
+              "\"obtype\":\"" + obj.key().kind() + "\", " +\
+              jsontxt[1:]
     # logging.info(jsontxt)
     return jsontxt
 

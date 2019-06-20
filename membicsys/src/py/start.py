@@ -13,6 +13,8 @@ from operator import attrgetter, itemgetter
 
 # Provide appropriate source for the main page or hashtag specified page.
 
+cachev = "v=181127"
+
 indexHTML = """
 <!doctype html>
 <html itemscope="itemscope" itemtype="https://schema.org/WebPage"
@@ -167,67 +169,9 @@ tplinkhtml = """
   <div class="tplinkdescdiv">
     <span class="tplinknamespan"><a href="/$HASHTAG">$NAME</a></span>
     $DESCRIP
+  </div>
 </div>
 """
-
-
-def theme_static_content(handler, ctm):
-    # This doesn't have to match the actual display, or be particularly
-    # functional, it just has to be something a search engine can read.
-    # Bonus points for decorating rather than replacing client side.
-    if not ctm.preb:
-        return ""
-    html = ""
-    count = 0
-    tabname = handler.request.get("tab")
-    tabname = tabname or "search"  # latest|top|search
-    objs = json.loads(ctm.preb)
-    # first obj is the coop, then the latest N most recent revs, then top20s
-    objs = objs[1:]  # trim to just revs
-    if tabname == "latest":
-        objs = sorted(objs, key=itemgetter('modified'), reverse=True)
-    else:
-        objs = sorted(objs, key=itemgetter('rating', 'modified'), reverse=True)
-    # it is possible to have two separate reviews for the same thing, so hide
-    # anything that has the same cankey as the one just output.
-    prevcankey = ""
-    if tabname == "top":
-        html += "<ol>\n"
-    for obj in objs:
-        if "revtype" in obj and obj["ctmid"] and obj["cankey"] != prevcankey:
-            prevcankey = obj["cankey"]
-            rh = revhtml
-            rh = rh.replace("$RID", obj["_id"])
-            rh = rh.replace("$RTYPE", obj["revtype"])
-            rh = rh.replace("$RURL", obj["url"])
-            rh = rh.replace("$RTIT", obj["title"] or obj["name"])
-            rh = rh.replace("$RAT", str(obj["rating"]))
-            rh = rh.replace("$DESCR", obj["text"])
-            if tabname == "top":
-                html += "<li>"
-            html += rh
-            count += 1
-    if tabname == "top":
-        html += "<ol>\n"
-    else:
-        count = 0  # only relevant if displaying top so you have the N
-    return html, count
-
-
-def feed_link(handler, ctm, apptype, feedformat):
-    ctmid = str(ctm.key().id())
-    html = "<link rel=\"alternate\" type=\"" + apptype + "\""
-    html += " href=\"" + handler.request.host_url + "/rsscoop?coop=" + ctmid
-    if feedformat:
-        html += "&format=" + feedformat
-    html += "\" />"
-    return html
-
-
-def feedlinks_for_theme(handler, ctm):
-    linkhtml = feed_link(handler, ctm, "application/rss+xml", "")
-    linkhtml += "\n  " + feed_link(handler, ctm, "application/json", "json")
-    return linkhtml
 
 
 def json_for_theme_prof(obj, obtype):
@@ -260,7 +204,7 @@ def json_for_theme_prof(obj, obtype):
     return json.dumps(sd)
 
 
-def fetch_recent_themes_and_profiles(handler, cachev):
+def fetch_recent_themes_and_profiles(handler):
     jtxt = ""
     vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
     objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
@@ -278,11 +222,11 @@ def fetch_recent_themes_and_profiles(handler, cachev):
 
 
 # cache fetch most recently modified 50 themes and 50 profiles.
-def recent_active_content(handler, cachev):
+def recent_active_content(handler):
     content = ""
     jtps = memcache.get("activecontent")
     if not jtps:
-        jtps = fetch_recent_themes_and_profiles(handler, cachev)
+        jtps = fetch_recent_themes_and_profiles(handler)
         memcache.set("activecontent", jtps)
     ods = json.loads(jtps)
     for od in ods:
@@ -294,96 +238,189 @@ def recent_active_content(handler, cachev):
         th = th.replace("$NAME", od["name"])
         th = th.replace("$DESCRIP", od["description"])
         content += th
-    pfoj = {"obtype": "activetps", "jtps": ods}
+    pfoj = {"obtype":"activetps", "instid":"411", "_id":"411", 
+            "modified":nowISO(), "jtps": ods}
     pfoj = json.dumps(pfoj)
     return content, pfoj
 
 
-def spdet(handler, dtype, dbid, cachev):
-    title = "Membic"
-    descr = "Membic helps people track and share resource links that are worth remembering. People use membic themes to make resource pages for their sites."
-    img = ""
-    content = interimcont
-    feedlinks = ""
-    pfoj = "null"
-    if dtype == "pen":
-        pnm = pen.PenName.get_by_id(dbid)
-        if pnm:
-            descr = "Membic profile for " + pnm.name
-            descr = descr.replace("\"", "'")
-            title = descr
-            img = "/profpic?profileid=" + str(dbid)
-    elif dtype == "coop" or dtype == "embed":
-        ctm = coop.Coop.get_by_id(dbid)
-        if ctm:
-            title = ctm.name
-            title = title.replace("\"", "'")
-            descr = ctm.description
-            descr = descr.replace("\"", "'")
-            img = "/ctmpic?coopid=" + str(dbid)
-            count = 0
-            try:
-                content, count = theme_static_content(handler, ctm)
-            except Exception as e:
-                logging.info("theme_static_content failed: " + str(e))
-            if count > 1:
-                title = "Top " + str(count) + " " + title
-                descr = "Top " + str(count) + " " + descr
-            feedlinks = feedlinks_for_theme(handler, ctm)
-    else: # unkown dtype or unspecified
-        content, pfoj = recent_active_content(handler, cachev)
-        content += interimcont
-    # make sure img is set and appropriately cache busted
-    if not img:
-        img = "/img/membiclogo.png?" + cachev
+def membics_from_prebuilt(obj):
+    html = ""
+    mems = obj.preb or "[]"
+    mems = json.loads(mems)
+    for membic in mems:
+        # for themes, the first entry in the preb might the theme itself
+        if "revtype" not in membic:
+            continue
+        rh = revhtml
+        rh = rh.replace("$RID", membic["_id"])
+        rh = rh.replace("$RTYPE", membic["revtype"])
+        rh = rh.replace("$RURL", membic["url"])
+        rh = rh.replace("$RTIT", membic["title"] or membic["name"])
+        rh = rh.replace("$RAT", str(membic["rating"]))
+        rh = rh.replace("$DESCR", membic["text"])
+        html += rh
+    return html
+
+
+def content_and_prefetch(handler, obj):
+    if obj:
+        content = membics_from_prebuilt(obj)
+        pfoj = obj2JSON(obj)
     else:
-        img += "&" + cachev
-    return title, descr, img, content, feedlinks, pfoj
+        content, pfoj = recent_active_content(handler)
+    content += interimcont
+    return content, pfoj
 
 
-def start_page_html(handler, dtype, dbid, refer):
-    # logging.info("----------------------------------------")
-    # logging.info("start_page_html " + dtype + str(dbid) + " " + refer)
-    # logging.info("----------------------------------------")
-    cachev = "v=181127"
-    title, descr, img, content, fls, pfoj = spdet(handler, dtype, dbid, cachev)
-    embed = "null"
-    if dtype == "embed":
-        embed = "{coopid:" + str(dbid) + "}"
-    # social nets require a full URL to fetch the image
-    img = handler.request.host_url + img;
+def sitepic_for_object(obj):
+    img = "/img/membiclogo.png?" + cachev
+    if obj:
+        if obj.key().kind() == "Coop" and obj.picture:
+            img = "/ctmpic?coopid=" + str(obj.key().id()) + "&" + cachev
+        elif obj.key().kind() == "MUser" and obj.profpic:
+            img = "/profpic?profileid=" + str(obj.key().id()) + "&" + cachev
+    return img
+
+
+def sitetitle_for_object(obj):
+    title = "Membic"
+    if obj:
+        if obj.key().kind() == "Coop":
+            title = obj.name
+            title = title.replace("\"", "'")
+        elif obj.key().kind() == "MUser":
+            title = "Membic Profile "
+            sd = obj.settings or "{}"
+            sd = json.loads(sd)
+            if "name" in sd:
+                title += sd["name"]
+                title = title.replace("\"", "'")
+    return title
+
+
+def sitedescr_for_object(obj):
+    descr = "Membic helps people build reference link pages that can be added to other sites."
+    if obj:
+        if obj.key().kind() == "Coop":
+            descr = obj.description
+            descr = descr.replace("\"", "'")
+        elif obj.key().kind() == "MUser":
+            descr = ""
+            sd = obj.settings or "{}"
+            sd = json.loads(sd)
+            if "description" in sd:
+                descr = sd["description"]
+                descr = descr.replace("\"", "'")
+    return descr
+
+
+def embed_spec_objson(handler, obj):
+    embed = handler.request.get("site")
+    if embed and obj:
+        embed = "{coopid:" + str(obj.key().id()) + ",site:" + embed + "}"
+    else:
+        embed = "null"
+    return embed
+
+
+def obidstr_or_empty(obj):
+    idstr = ""
+    if obj:
+        idstr = str(obj.key().id())
+    return idstr
+
+
+def feed_link(handler, ctm, apptype, feedformat):
+    ctmid = str(ctm.key().id())
+    html = "<link rel=\"alternate\" type=\"" + apptype + "\""
+    html += " href=\"" + handler.request.host_url + "/rsscoop?coop=" + ctmid
+    if feedformat:
+        html += "&format=" + feedformat
+    html += "\" />"
+    return html
+
+
+def feedlinks_for_object(handler, obj):
+    if not obj or obj.key().kind() != "Coop":
+        return ""
+    linkhtml = feed_link(handler, obj, "application/rss+xml", "")
+    linkhtml += "\n  " + feed_link(handler, obj, "application/json", "json")
+    return linkhtml
+
+
+def write_start_page(handler, obj, refer):
+    content, pfoj = content_and_prefetch(handler, obj)
     html = indexHTML
-    html = html.replace("$SITEPIC", img)
-    html = html.replace("$TITLE", title)
-    html = html.replace("$DESCR", descr)
+    html = html.replace("$SITEPIC", sitepic_for_object(obj))
+    html = html.replace("$TITLE", sitetitle_for_object(obj))
+    html = html.replace("$DESCR", sitedescr_for_object(obj))
     html = html.replace("$CACHEPARA", "?" + cachev)
     html = html.replace("$REFER", refer or handler.request.referer or "")
-    html = html.replace("$EMBED", embed)
-    html = html.replace("$VANID", str(dbid))
+    html = html.replace("$EMBED", embed_spec_objson(handler, obj))
+    html = html.replace("$VANID", obidstr_or_empty(obj))
     html = html.replace("$INTERIMCONT", noscripthtml + content);
-    html = html.replace("$FEEDLINKS", fls)
+    html = html.replace("$FEEDLINKS", feedlinks_for_object(handler, obj))
     html = html.replace("$PREFETCHOBJSON", pfoj)
     handler.response.headers['Content-Type'] = 'text/html'
     handler.response.out.write(html)
 
 
-def coopid_for_hashtag(hashtag):
+def dbclass_for_obtype(obtype):
+    if obtype == "theme":
+        return coop.Coop
+    if obtype == "profile":
+        return muser.MUser
+    return None
+
+
+def query_for_hashtag(obtype, hashtag):
+    instid = ""
+    obj = None
+    vq = VizQuery(dbclass_for_obtype(obtype), "WHERE hashtag = :1", hashtag)
+    objs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    if len(objs) > 0:
+        instid = str(objs[0].key().id())
+        obj = objs[0]
+        cache_verify(obj)
+    return obtype, instid, obj
+
+
+def instance_by_hashtag(hashtag):
     if hashtag.startswith("/"):
         hashtag = hashtag[1:]
-    coopid = memcache.get(hashtag)
-    if not coopid:
-        vq = VizQuery(coop.Coop, "WHERE hashtag = :1", hashtag)
-        themes = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        if len(themes) == 0:
-            return 0
-        coopid = str(themes[0].key().id())
-        memcache.set(hashtag, coopid)
-    return int(coopid)
+    obtype = ""  # "theme" or "profile"
+    instid = ""  # db object key as a string
+    obj = None   # the database object from cache or query
+    trans = memcache.get(hashtag)
+    if trans:  # have a value like "theme:instid"
+        trans = trans.split(":")
+        obtype = trans[0]
+        instid = trans[1]
+        obj = cached_get(int(instid), dbclass_for_obtype(obtype))
+    if not obj:
+        obtype, instid, obj = query_for_hashtag("theme", hashtag)
+    if not obj:
+        obtype, instid, obj = query_for_hashtag("profile", hashtag)
+    # hashtag might have been an instid
+    if not obj and hashtag.isdigit():
+        obj = cached_get(hashtag, dbclass_for_obtype("theme"))
+        if obj:
+            obtype = "theme"
+            instid = hashtag
+    if not obj and hashtag.isdigit():
+        obj = cached_get(hashtag, dbclass_for_obtype("profile"))
+        if obj:
+            obtype = "profile"
+            instid = hashtag
+    if obj:  # note the hashtag translation for subsequent calls
+        memcache.set(hashtag, obtype + ":" + instid)
+    return obtype, instid, obj
 
 
 class GetRecentActive(webapp2.RequestHandler):
     def get(self):
-        content, pfoj = recent_active_content(self, "")
+        content, pfoj = recent_active_content(self)
         srvJSON(self, "[" + pfoj + "]")
 
 
@@ -391,61 +428,38 @@ class PermalinkStart(webapp2.RequestHandler):
     def get(self, pt, dbid):
         # logging.info("PermalinkStart " + pt + " " + dbid)
         refer = self.request.get('refer') or ""
-        if pt == "t":
-            return start_page_html(self, "coop", int(dbid), refer)
-        if pt == "e":
-            refer = refer or self.request.get('site') or ""
-            return start_page_html(self, "embed", int(dbid), refer)
-        if pt == "p":
-            return start_page_html(self, "pen", int(dbid), refer)
-        return srverr(self, 404, "Unknown permalink " + pt + ": " + dbid)
+        obtype, instid, obj = instance_by_hashtag(dbid)
+        if not obj:
+            return srverr(self, 404, "No instance found for " + hashtag)
+        write_start_page(self, obj, refer)
 
 
 class IndexPageStart(webapp2.RequestHandler):
     def get(self):
         # logging.info("IndexPageStart")
-        return start_page_html(self, "", 0, "")
+        refer = self.request.get("refer") or ""
+        write_start_page(self, "", refer)
 
 
 class DefaultStart(webapp2.RequestHandler):
     def get(self, reqdet):
         # logging.info("DefaultStart " + reqdet)
         md = self.request.GET   # all params decoded into a UnicodeMultiDict
-        if "mf" not in md or md["mf"] != "true":  # not a membic frame
-            return start_page_html(self, "", 0, "")
-        hashtag = None
         refer = ""
-        if md["ref"]:
-            refer = md["ref"]
-        if md["det"]:
-            det = md["det"]
-            if det and len(det) > 1 and coop.is_valid_hashtag(det[1:]):
-                hashtag = det
-            elif "?" in det:
-                params = det.split("?")[1].split("&")
-                for param in params:
-                    if param.startswith("r="):
-                        refer = urllib.unquote(param[2:])
-                    elif param.startswith("d="):
-                        hashtag = urllib.unquote(param[2:])
-            if not hashtag or len(hashtag) <= 1:
-                logging.info("No hashtag found: " + str(md))
-                return start_page_html(self, "", 0, refer)
-            url = "https://membic.org" + hashtag
-            if refer:
-                url += "?refer=" + urllib.quote(refer)
-            logging.info("redirect url: " + url)
-            self.redirect(str(url))
+        if "refer" in md and md["refer"]:
+            refer = md["refer"]
+        # Unpack "view=coop&coopid=idval" or other situations here if needed
+        write_start_page(self, "", refer)
 
 
 class VanityStart(webapp2.RequestHandler):
     def get(self, hashtag):
         # logging.info("VanityStart: " + hashtag)
         refer = self.request.get('refer') or ""
-        coopid = coopid_for_hashtag(hashtag)
-        if not coopid:
-            return srverr(self, 404, "No theme found for " + hashtag)
-        return start_page_html(self, "coop", int(coopid), refer)
+        obtype, instid, obj = instance_by_hashtag(hashtag)
+        if not obj:
+            return srverr(self, 404, "No instance found for " + hashtag)
+        write_start_page(self, obj, refer)
 
 
 app = webapp2.WSGIApplication([('.*/recentactive', GetRecentActive),

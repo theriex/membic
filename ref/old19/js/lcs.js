@@ -32,7 +32,6 @@ app.lcs = (function () {
     ////////////////////////////////////////
 
     var cache = {
-        activetps: { refs: {} },
         pen: { refs: {},
                fetchend: "penbyid",
                fetchparamf: function (id) {

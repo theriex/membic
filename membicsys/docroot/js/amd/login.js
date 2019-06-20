@@ -895,7 +895,9 @@ return {
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(!state || !state.view) {
-            if(app.login.isLoggedIn()) {
+            if(app.pfoj && app.pfoj.obtype === "Coop") {
+                state = {view:"coop", coopid:app.pfoj.instid}; }
+            else if(app.login.isLoggedIn()) {
                 state = {view: "profile"}; }
             else {
                 state = {view: "themes"}; } }

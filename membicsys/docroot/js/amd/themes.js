@@ -12,16 +12,16 @@ app.themes = (function () {
         var defdiv = jt.byId("membicdefinitiondiv");
         if(!mdefhtml && defdiv) {
             mdefhtml = defdiv.innerHTML; }
-        if(!tps && app.pfoj) {
-            tps = app.pfoj;
-            if(tps.obtype === "activetps") {
-                tps = tps.jtps; }
-            else {  //some other prefetch object, need to call server
-                tps = null; } }
-        if(!tps) {
+        tps = null;  //reset local cached array each time to use latest
+        var atr = app.lcs.getRef("activetps", "411");
+        if(atr.activetps) {  //have cached recent
+            //jt.log("using cached activetps");
+            tps = atr.activetps.jtps; }
+        else {  //no recent, go get it
+            //jt.log("fetching activetps");
             jt.call("GET", "/recentactive" + jt.ts("?cb=", "minute"), null,
-                    function (tps) {
-                        tps = tps[0].jtps;
+                    function (racs) {
+                        app.lcs.put("activetps", racs[0])
                         app.themes.display(); },
                     app.failf(function (code, errtxt) {
                         jt.err("Fetching recent active failed " + code + ": " +
@@ -32,8 +32,15 @@ app.themes = (function () {
     }
 
 
+    function decorateAndSort () {
+        //if logged in, tag with "M" for member etc.
+        jt.log("themes.decorateAndSort not implemented yet");
+    }
+
+
     function writeContent () {
         var html = [];
+        decorateAndSort();
         tps.forEach(function (tp) {
             var imgsrc = "img/blank.png";
             if(tp.pic) {
@@ -61,8 +68,16 @@ app.themes = (function () {
     }
 
 
+    function showListing (obtype, instid) {
+        if(obtype === "profile") {
+            return app.profile.byprofid(profid); }
+        return app.coop.bycoopid(instid);
+    }
+
+
     return {
-        display: function display () { displayMainContent(); }
+        display: function display () { displayMainContent(); },
+        show: function show (obtype, instid) { showListing(obtype, instid); }
     };
 }());
 

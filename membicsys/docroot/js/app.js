@@ -156,6 +156,8 @@ var app = {},  //Global container for application level funcs and values
         app.layout.init();
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
+        if(app.pfoj) {
+            app.lcs.put(app.pfoj.obtype, app.pfoj); }
         //bootstrap completed, end this thread and begin next phase
         app.fork({descr:"initial authentication",
                   func:app.login.init, ms:10});
