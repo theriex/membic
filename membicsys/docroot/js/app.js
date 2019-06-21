@@ -190,7 +190,7 @@ var app = {},  //Global container for application level funcs and values
 
     app.init = function () {
         var securl, href = window.location.href,
-            modules = [ "js/amd/themes", 
+            modules = [ "js/amd/themes", "js/amd/profile",
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/activity", "js/amd/pcd",
                         "js/amd/review", "js/amd/pen", "js/amd/coop",

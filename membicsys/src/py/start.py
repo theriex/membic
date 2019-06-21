@@ -248,9 +248,13 @@ def membics_from_prebuilt(obj):
     html = ""
     mems = obj.preb or "[]"
     mems = json.loads(mems)
+    objidstr = str(obj.key().id())
     for membic in mems:
         # for themes, the first entry in the preb might the theme itself
         if "revtype" not in membic:
+            continue
+        # themes have both the source rev and the theme rev, just use theme
+        if obj.key().kind() == "Coop" and membic["ctmid"] != objidstr:
             continue
         rh = revhtml
         rh = rh.replace("$RID", membic["_id"])
@@ -318,7 +322,8 @@ def sitedescr_for_object(obj):
 def embed_spec_objson(handler, obj):
     embed = handler.request.get("site")
     if embed and obj:
-        embed = "{coopid:" + str(obj.key().id()) + ",site:" + embed + "}"
+        embed = "{coopid:\"" + str(obj.key().id()) +\
+                "\", site:\"" + embed + "\"}"
     else:
         embed = "null"
     return embed

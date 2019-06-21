@@ -317,6 +317,7 @@ return {
         feedtype = feedtype || "all";
         //app.layout.rotateBackgroundPic();
         jt.byId("infoimg").style.display = "initial";  //verify available
+        app.layout.displayTypes(app.activity.displayFeed, feedtype);
         app.history.checkpoint({ view: "activity" });
         if(feedmeta.stale && feedmeta.stale < Date.now()) {
             feedmeta.stale = 0;

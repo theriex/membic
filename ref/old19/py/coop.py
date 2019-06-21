@@ -491,7 +491,7 @@ class GetCoopById(webapp2.RequestHandler):
             self.error(404)
             self.response.write("No Coop found for id " + coopidstr)
             return
-        srvObjs(self, [ coop ])
+        moracct.returnJSON(self.response, [ coop ])
 
 
 class GetCoopPic(webapp2.RequestHandler):

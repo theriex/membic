@@ -87,8 +87,6 @@ return {
         //jt.log("history.dispatchState " + jt.objdata(state));
         indicateState(state);
         switch(state.view) {
-        case "themes":
-            return app.themes.display();
         case "about":
             return app.layout.displayDoc();
         case "activity":

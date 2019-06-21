@@ -395,40 +395,6 @@ return {
     },
 
 
-    displayTypes: function (callbackf, typename) {
-        var html = [];
-        if(typeof callbackf === "function") {
-            typestate.callbackf = callbackf; }
-        if(typename) {
-            if(typename === typestate.typename && callbackf === -1) {
-                typestate.typename = "all"; }  //toggle selection off...
-            else {
-                typestate.typename = typename; } }
-        app.review.getReviewTypes().forEach(function (rt) {
-            var clt = "reviewbadge";
-            if(rt.type === typestate.typename) {
-                clt = "reviewbadgesel"; }
-            html.push(["a", {href: "#" + rt.type, cla: "revtypelink",
-                             title: rt.plural.capitalize() + " only",
-                             onclick: jt.fs("app.layout.displayTypes(-1,'" + 
-                                            rt.type + "')")},
-                       ["img", {cla: clt, src: "img/" + rt.img}]]); });
-        html = ["div", {cla: "revtypesdiv", id: "revtypesdiv",
-                        style: "opacity:" + (initialFadeIn? "0.0;" : "1.0")}, 
-                html];
-        jt.out("headingdivcontent", jt.tac2html(html));
-        if(initialFadeIn) {
-            app.fork({
-                descr:"Type icons display fade in",
-                func:function () {
-                    jt.byId("revtypesdiv").style.opacity = 1.0; },
-                ms:initialFadeIn});
-            initialFadeIn = 0; }
-        if(callbackf === -1) {
-            typestate.callbackf(typestate.typename); }
-    },
-
-
     deckStart: function (dds) {
         var deckname = dds.decks[dds.deckidx].deckname;
         ungrayKnownLinks();

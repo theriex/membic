@@ -635,8 +635,7 @@ return {
         if(!initialTopSectionHTML) {
             initialTopSectionHTML = jt.byId("topsectiondiv").innerHTML; }
         if(!app.login.isLoggedIn()) {
-            jt.out("topsectiondiv", initialTopSectionHTML);
-            return app.themes.display(); }
+            return jt.out("topsectiondiv", initialTopSectionHTML); }
         var sep = "&nbsp;&nbsp;|&nbsp;&nbsp";
         var html = ["div", {id:"topnavdiv"}, [
             ["a", {href:"#Themes",

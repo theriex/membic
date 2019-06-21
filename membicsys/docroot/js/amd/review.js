@@ -217,6 +217,8 @@ app.review = (function () {
 
     verifyReviewImageDisplayType = function (review) {
         var dt = "guess";
+        if(review.svcdata && typeof review.svcdata === "string") {
+            app.review.deserializeFields(review); }
         if(review.svcdata && review.svcdata.picdisp) {
             dt = review.svcdata.picdisp; }
         if(dt !== "nopic" && dt !== "sitepic" && dt !== "upldpic") {

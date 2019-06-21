@@ -596,7 +596,6 @@ return {
         app.lcs.reconstituteJSONObjectField("adminlog", ctm);
         app.lcs.reconstituteJSONObjectField("people", ctm);
         app.lcs.reconstituteJSONObjectField("soloset", ctm);
-        app.lcs.reconstituteJSONObjectField("preb", ctm);
     }
 
 }; //end of returned functions

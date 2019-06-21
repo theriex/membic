@@ -208,7 +208,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
   font-size:small; }
 #tabtitlediv a { padding:0px; }
-#pcdactdiv { display:inline-block; }
+#pcdactdiv { }
+#pcdacrssdiv { float:left; }
+#pcdacsrchdiv { display:inline-block; }
+#pcdacemdiv { float:right; }
 #pcdactcontentdiv { font-size:small; text-align:center; padding:0px 5px; 
   background:#e6e7e9; opacity:0.9; border-radius:10px 10px 0px 0px; }
 #pcdsrchindiv {}
@@ -217,15 +220,15 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .dlrssimg { width:11px; height:12px; margin:0px 2px 2px 0px; }
 .dloptseldiv { background-image: url('../img/whitewash.png'); }
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
-#pcdkeysrchdiv, #fetchmorediv, #arxsidiv, #retrfaildiv, #fetchwaitdiv {
+#pcdkeysrchdiv, #pcdtypesrchdiv { background:#e6e7e9; opacity:0.8; clear:both; }
+#fetchmorediv, #arxsidiv, #retrfaildiv, #fetchwaitdiv {
   margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
 #srchincontdiv { display:inline-block; padding-left:12px; 
   max-width:80%; max-height:110px; overflow:scroll; vertical-align:middle; }
-.srchkwrbdiv, .srchkwrbdbldiv { display:inline-block; width:80px; 
+.srchkwrbdiv { display:inline-block; width:100px; 
   font-size:small; background-image: url('../img/whitewash.png'); 
   margin:1px; border-radius:6px; overflow:visible; }
-.srchkwrbdbldiv { width:160px; }
 .skbidiv { float:left; }
 .srchkwrbdiv label { display:inline-block; margin:0px; padding:0px; 
   width:48px; overflow:visible; }

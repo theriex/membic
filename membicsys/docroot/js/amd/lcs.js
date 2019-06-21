@@ -47,11 +47,11 @@ app.lcs = (function () {
                putprep: function (revobj) {
                    app.review.deserializeFields(revobj); } },
         coop: { refs: {},
-                 fetchend: "ctmbyid",
-                 fetchparamf: function (id) {
-                     return "coopid=" + id; },
-                 putprep: function (ctmobj) {
-                     app.coop.deserializeFields(ctmobj); } } },
+                fetchend: "ctmbyid",
+                fetchparamf: function (id) {
+                    return "coopid=" + id; },
+                putprep: function (ctmobj) {
+                    app.coop.deserializeFields(ctmobj); } } },
 
 
     ////////////////////////////////////////
@@ -67,6 +67,13 @@ app.lcs = (function () {
     };
 
 
+    function typify (type) {
+        if(type === "Coop") {
+            type = "coop"; }
+        return type;
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -75,11 +82,11 @@ return {
     getRef: function (type, id) {
         var ref;
         id = idify(id);  //convert to string as needed
-        ref = cache[type].refs[id];
+        ref = cache[typify(type)].refs[id];
         if(!ref) {
             ref = { status: "not cached",
                     updtime: new Date() };
-            ref[type + "id"] = id; }
+            ref[typify(type) + "id"] = id; }
         return ref;
     },
 
@@ -87,6 +94,7 @@ return {
     getFull: function (type, id, callback, debugmsg) {
         var ref, url;
         id = idify(id);
+        type = typify(type);
         ref = app.lcs.getRef(type, id);
         if(ref && ref.status !== "not cached") {
             if(debugmsg) {
@@ -114,6 +122,7 @@ return {
 
     tomb: function (type, id, reason) {
         var tombstone, ref;
+        type = typify(type);
         if(!id) {
             jt.log("lcs.tomb " + type + " id required");
             return null; }
@@ -129,6 +138,7 @@ return {
 
     put: function (type, obj) {
         var ref;
+        type = typify(type);
         if(cache[type].putprep) {
             cache[type].putprep(obj); }
         ref = app.lcs.getRef(type, obj);
@@ -160,6 +170,7 @@ return {
 
 
     uncache: function (type, id) {
+        type = typify(type);
         var ref = app.lcs.getRef(type, id);
         ref.status = "not cached";
         ref.updtime = new Date();
@@ -168,8 +179,8 @@ return {
 
 
     rem: function (type, obj) {
-        var ref;
-        ref = app.lcs.getRef(type, obj);
+        type = typify(type);
+        var ref = app.lcs.getRef(type, obj);
         ref.status = "deleted";
         ref.updtime = new Date();
         ref[type] = null;
