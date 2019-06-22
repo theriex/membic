@@ -25,6 +25,7 @@ app.review = (function () {
         gautosvc = null,
         geoc = null,
         gplacesvc = null,
+        maxabbrev = 400,
         //             Review definitions:
         //Review type definitions always include the url field, it is
         //appended automatically if not explicitely listed elsewhere
@@ -441,21 +442,37 @@ app.review = (function () {
     },
 
 
-    abbreviatedReviewText = function (prefix, revid, rev, togfname) {
-        var maxchars = 400, rtxt, morehtml;
-        rtxt = jt.linkify(rev.text || "");
-        if(rtxt.length > maxchars) {
+    dispRevText = function (prefix, revid, rev, togfname) {
+        var rtxt = jt.linkify(rev.text || "");
+        if(rtxt.length > maxabbrev) {
             rtxt = rev.text;  //start with raw text
-            morehtml = ["a", {href: "#expand",
-                              onclick: jt.fs(togfname + "('" +
-                                             prefix + "','" + revid + "')")},
-                        ["span", {cla: "togglemoretextspan"},
-                         "more"]];
             //truncated text could result in a busted link if embedded
             //in the description.  Fixed on toggle.
-            rtxt = jt.linkify(rtxt.slice(0, maxchars)) + "... " + 
-                jt.tac2html(morehtml); }
-        return rtxt;
+            rtxt = jt.linkify(rtxt.slice(0, maxabbrev)) + "... "; }
+        var html = [["span", {id:prefix + revid + "revtxtspan"}, rtxt],
+                    "&nbsp;",
+                    ["a", {href:"#more", 
+                           onclick:jt.fs(togfname + "('" + prefix + "','" + 
+                                         revid + "')")},
+                     ["span", {id:prefix + revid + "togmorespan",
+                               cla:"togglemoretextspan"}, "+"]]];
+        return jt.tac2html(html);
+    },
+
+
+    toggleDispRevText = function (prefix, revid, rev) {
+        var rtxt = rev.text || "";
+        var togspan = jt.byId(prefix + revid + "togmorespan");
+        if(!togspan) {
+            return jt.log("toggleDispRevText togspan not found"); }
+        if(togspan.innerHTML.indexOf("+") >= 0) {
+            togspan.innerHTML = "&nbsp;-&nbsp;";
+            jt.out(prefix + revid + "revtxtspan", jt.linkify(rtxt)); }
+        else {
+            togspan.innerHTML = "+";
+            if(rtxt.length > maxabbrev) {
+                rtxt = jt.linkify(rtxt.slice(0, maxabbrev)) + "... "; }
+            jt.out(prefix + revid + "revtxtspan", jt.linkify(rtxt)); }
     },
 
 
@@ -468,7 +485,7 @@ app.review = (function () {
             dc = "fpdescrfadediv"; }
         html = [html,
                 ["div", {cla: dc, id: revdivid + "descrdiv"},
-                 abbreviatedReviewText(prefix, revid, rev, togfname)]];
+                 dispRevText(prefix, revid, rev, togfname)]];
         return html;
     },
 
@@ -1473,23 +1490,20 @@ app.review = (function () {
     },
 
 
-    membicTitleLine = function (type, rev, togclick) {
-        var html, url = app.review.membicURL(type, rev);
-        html = [["a", {href: revurl(rev), onclick: togclick},
-                 [["img", {cla: "reviewbadge", src: "img/" + type.img,
-                           title: type.type, alt: type.type}],
-                  ["img", {cla: "webjump", src: "img/stackedmenu.png",
-                           id: "stackmenu" + jt.instId(rev),
-                           title: "actions", alt: "actions"}]]],
-                ["a", {href: url, title: url,
-                       onclick: jt.fs("window.open('" + url + "')")},
-                 app.pcd.reviewItemNameHTML(type, rev)],
-                "&nbsp;",
-                ["div", {cla: "starsnjumpdiv", 
-                         style: (app.winw < 600)? "float:right;" 
-                                                : "display:inline-block;"},
-                 ["div", {cla: "fpstarsdiv"},
-                  app.review.starsImageHTML(rev)]]];
+    membicTitleLine = function (type, rev) {
+        var url = app.review.membicURL(type, rev);
+        var starstyle = "display:inline-block;"
+        if(app.winw < 600) {
+            starstyle = "float:right;" }
+        var html = [["a", {href:url, title:url,
+                           onclick:jt.fs("window.open('" + url + "')")},
+                     [["img", {cla:"reviewbadge", src:"img/" + type.img,
+                               title:type.type, alt:type.type}],
+                      app.pcd.reviewItemNameHTML(type, rev)]],
+                    "&nbsp;",
+                    ["div", {cla:"starsnjumpdiv", style:starstyle},
+                     ["div", {cla: "fpstarsdiv"},
+                      app.review.starsImageHTML(rev)]]];
         return html;
     },
 
@@ -2393,8 +2407,13 @@ return {
 
 
     displayingExpandedView: function (prefix, revid) {
-        var buttondivid = prefix + revid + "buttonsdiv";
-        if(jt.byId(buttondivid).innerHTML) {
+        //It's less work to just write the content once and then just toggle
+        //the display style, but that would mean more work up front while
+        //filtering lots of reviews.  Since writing the expanded content
+        //later, it's easier just to write it each time and test for its
+        //existence as the expansion display indicator.
+        var datedivid = prefix + revid + "datediv";
+        if(jt.byId(datedivid).innerHTML) {
             return true; }
         return false;
     },
@@ -2407,21 +2426,18 @@ return {
         revdivid = prefix + revid;
         type = app.review.getReviewTypeByValue(rev.revtype);
         fixReviewURL(rev);
-        html = ["div", {cla: (prefix === "rrd"? "fpmeminrevdiv"
-                                              : "fpinrevdiv")},
-                [["div", {cla: "fpbuttonsdiv", 
-                          id: revdivid + "buttonsdiv"}],
-                 ["div", {cla: "fptitlediv"},
-                  membicTitleLine(type, rev, togclick)],
-                 ["div", {cla: "fpsecfieldsdiv", id: revdivid + "secdiv"}],
-                 ["div", {cla: "fpdatediv", id: revdivid + "datediv"}],
-                 ["div", {cla: "fpbodydiv"},
-                  [["div", {cla: "fprevpicdiv"},
+        html = ["div", {cla:"fpinrevdiv"},
+                [["div", {cla:"fptitlediv"},
+                  membicTitleLine(type, rev)],
+                 ["div", {cla:"fpbodydiv"},
+                  [["div", {cla:"fprevpicdiv"},
                     app.review.picHTML(rev, type)],
-                   ["div", {cla: "fpdcontdiv"},
+                   ["div", {cla:"fpdcontdiv"},
                     membicDescripHTML(prefix, revid, rev, togfname, revdivid)],
-                   ["div", {cla: "fpkeywrdsdiv", id: revdivid + "keysdiv"}],
-                   ["div", {cla: "fpctmsdiv", id: revdivid + "ctmsdiv"},
+                   ["div", {cla:"fpsecfieldsdiv", id:revdivid + "secdiv"}],
+                   ["div", {cla:"fpdatediv", id:revdivid + "datediv"}],
+                   ["div", {cla:"fpkeywrdsdiv", id:revdivid + "keysdiv"}],
+                   ["div", {cla:"fpctmsdiv", id:revdivid + "ctmsdiv"},
                     postedCoopLinksHTML(rev)]]]]];
         return html;
     },
@@ -2535,31 +2551,18 @@ return {
                 else {
                     elem.style.display = "block"; } } }
         revdivid = prefix + revid;
+        toggleDispRevText(prefix, revid, rev);
         if(app.review.displayingExpandedView(prefix, revid)) {
             app.activity.showMultiMembicImage(revid, true);
-            if(jt.byId("stackmenu" + revid)) {
-                jt.byId("stackmenu" + revid).src = "img/stackedmenu.png"; }
-            jt.out(revdivid + "buttonsdiv", "");
             jt.out(revdivid + "secdiv", "");
             jt.out(revdivid + "datediv", "");
-            jt.out(revdivid + "descrdiv", 
-                   abbreviatedReviewText(prefix, revid, rev));
             jt.out(revdivid + "keysdiv", "");
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
         else {  //expand
-            //scrolling on click is disorienting. Moves the element to
-            //the top of the page when you click it so it jumps
-            //around. Originally for people clicking through from RSS
-            //links. Not needed anymore.
-            //app.layout.scrollToVisible(revdivid + "buttonsdiv");
             app.activity.showMultiMembicImage(revid, false);
-            if(jt.byId("stackmenu" + revid)) {
-                jt.byId("stackmenu" + revid).src = "img/stackedmenuopen.png"; }
-            jt.out(revdivid + "buttonsdiv", revpostButtonsHTML(prefix, revid));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
                    jt.colloquialDate(jt.isoString2Day(rev.modified)));
-            jt.out(revdivid + "descrdiv", jt.linkify(rev.text || ""));
             jt.out(revdivid + "keysdiv", rev.keywords);
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
     },

@@ -1127,6 +1127,7 @@ app.pcd = (function () {
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
         updateResultsEmailLink(sortedRevs);
+        srchst.disprevs = sortedRevs;
         srchst.status = "waiting";
     },
 
@@ -1382,6 +1383,7 @@ app.pcd = (function () {
         srchst.kwrds = "";
         srchst.qstr = "";
         srchst.revs = [];
+        srchst.disprevs = [];
     },
 
 
@@ -2055,23 +2057,7 @@ return {
 
 
     toggleRevExpansion: function (prefix, revid) {
-        var revs;
-        switch(dst.tab) {
-        case "latest":
-            revs = getRecentReviews();
-            break;
-        case "favorites":
-            revs = getFavoriteReviews();
-            break;
-        case "memo":
-            revs = app.activity.getRememberedMembics();
-            break;
-        case "search":
-            revs = srchst.revs;
-            break;
-        default:
-            jt.err("pcd.toggleRevExpansion unknown tab " + dst.tab); }
-        app.review.toggleExpansion(revs, prefix, revid);
+        app.review.toggleExpansion(srchst.disprevs, prefix, revid);
     },
 
 
