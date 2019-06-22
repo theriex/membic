@@ -64,7 +64,9 @@ app.themes = (function () {
 
 
     function displayMainContent () {
-        initVars() && writeContent();
+        if(initVars()) {  //have data to work with
+            app.history.checkpoint({view:"themes"});
+            writeContent(); }
     }
 
 

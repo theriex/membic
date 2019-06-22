@@ -17,18 +17,16 @@ app.pcd = (function () {
         dst = { type: "", id: "", tab: "", obj: null,
                 profile: { desclabel: "About Me",
                            descplace: "A message for visitors to your profile. Any links you want to share?",
-                           descfield: "shoutout",
+                           descfield: "aboutme",
                            piclabel: "Profile Pic",
                            picfield: "profpic",
-                           picsrc: "profpic?profileid=",
-                           accsrc: "?view=profile&profid=" },
+                           picsrc: "profpic?profileid=" },
                 coop: { desclabel: "Description",
                         descplace: "What is this cooperative theme focused on? What's appropriate to post?",
                         descfield: "description", 
                         piclabel: "Theme Pic",
                         picfield: "picture",
-                        picsrc: "ctmpic?coopid=",
-                        accsrc: "?view=coop&coopid=" } },
+                        picsrc: "ctmpic?coopid=" } },
         srchst = { mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:"" },
         setdispstate = { infomode: "" },
         standardOverrideColors = [
@@ -1054,26 +1052,6 @@ app.pcd = (function () {
     },
 
 
-    //logic here needs to be the same as in rev.py is_matching_review
-    isMatchingReview = function (qstr, rev) {
-        var toks = [], token, i, keywords, text;
-        if(srchst.revtype !== "all" && srchst.revtype !== rev.revtype) {
-            return false; }
-        if(!qstr) {
-            return true; }
-        keywords = (rev.keywords || "").toLowerCase();
-        text = (rev.text || "").toLowerCase();
-        toks = qstr.toLowerCase().split(/\s+/);
-        for(i = 0; i < toks.length; i += 1) {  //find each token somewhere
-            token = toks[i];
-            if(rev.cankey.indexOf(token) >= 0) { continue; }
-            if(keywords.indexOf(token) >= 0) { continue; }
-            if(text.indexOf(token) >= 0) { continue; }
-            return false; }
-        return true;
-    },
-
-
     isKeywordMatch = function (membic) {
         if(!srchst.kwrds) {  //not filtering by keyword
             return true; }
@@ -1288,31 +1266,62 @@ app.pcd = (function () {
     },
 
 
+    shareButtonsHTML = function () {
+        //thanks to https://sharingbuttons.io/
+        var dca = "resp-sharing-button resp-sharing-button--small";
+        var dcb = "resp-sharing-button__icon resp-sharing-button__icon--solid";
+        var urlp = "https%3A%2F%2Fmembic.org%2F" + dst.obj.instid;
+        var tlnp = jt.dquotenc(dst.obj.name);
+        var tac = [
+            //Twitter
+            ["a", {cla:"resp-sharing-button__link",
+                   href:"https://twitter.com/intent/tweet/?text=" + tlnp + 
+                       "&amp;url=" + urlp,
+                   target:"_blank", rel:"noopener", "aria-label":""},
+             ["div", {cla:dca + " resp-sharing-button--twitter"},
+              ["div", {"aria-hidden":"true", cla:dcb},
+               ["svg", {xmlns:"http://www.w3.org/2000/svg",
+                        viewBox:"0 0 24 24"},
+                ["path", {d:"M23.44 4.83c-.8.37-1.5.38-2.22.02.93-.56.98-.96 1.32-2.02-.88.52-1.86.9-2.9 1.1-.82-.88-2-1.43-3.3-1.43-2.5 0-4.55 2.04-4.55 4.54 0 .36.03.7.1 1.04-3.77-.2-7.12-2-9.36-4.75-.4.67-.6 1.45-.6 2.3 0 1.56.8 2.95 2 3.77-.74-.03-1.44-.23-2.05-.57v.06c0 2.2 1.56 4.03 3.64 4.44-.67.2-1.37.2-2.06.08.58 1.8 2.26 3.12 4.25 3.16C5.78 18.1 3.37 18.74 1 18.46c2 1.3 4.4 2.04 6.97 2.04 8.35 0 12.92-6.92 12.92-12.93 0-.2 0-.4-.02-.6.9-.63 1.96-1.22 2.56-2.14z"}]]]]],
+            //Facebook
+            ["a", {cla:"resp-sharing-button__link", 
+                   href:"https://facebook.com/sharer/sharer.php?u=" + urlp, 
+                   target:"_blank", rel:"noopener", "aria-label":""},
+             ["div", {cla:dca + " resp-sharing-button--facebook"},
+              ["div", {"aria-hidden":"true", cla:dcb},
+               ["svg", {xmlns:"http://www.w3.org/2000/svg",
+                        viewBox:"0 0 24 24"},
+                ["path", {d:"M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z"}]]]]]];
+        return tac;
+    },
+
+
     writeTopContent = function (defs, obj) {
         var shtxt = obj[defs.descfield] || "";
+        var fsz = "large";
+        if(shtxt.length > 300) {
+            fsz = "medium"; }
         var html = ["div", {id: "pcdouterdiv"},
                     [["div", {id: "pcduppercontentdiv"},
                       [["div", {id: "pcdpicdiv"},
                         ["img", {cla: "pcdpic", src: picImgSrc(obj)}]],
                        ["div", {id: "pcddescrdiv"},
                         [["div", {id: "pcdnamediv"},
-                          [["a", {href: defs.accsrc + jt.instId(obj),
-                                  onclick: jt.fs("app.pcd.share()")},
-                            [["span", {id: "namearrowspan", cla: "penbutton"}, 
-                              ["img", {id: "pnarw", src: "img/stackedmenu.png",
-                                       cla: "webjump"}]],
-                             ["span", {cla: "penfont"}, obj.name]]],
+                          [["a", {href: "/" + jt.instId(obj),
+                                  onclick: jt.fs("app.pcd.togshare()")},
+                            [["span", {id:"pcdnamespan", cla:"penfont"}, 
+                              obj.name],
+                             ["span", {id: "namearrowspan", cla: "penbutton"}, 
+                              ["img", {id: "pnarw", src: "img/sharemenu.png",
+                                       cla: "webjump"}]]]],
                            ["span", {cla: "penbutton"},
                             modButtonsHTML(obj)]]],
                          ["div", {id: "ppcdshoutdiv"},
-                          ["span", {cla: "shoutspan",
-                                    style: "font-size:" + 
-                                    ((shtxt.length > 300)? "medium" : "large") +
-                                    ";"}, 
-                           jt.linkify(shtxt)]]
-                         // ["div", {id: "pcdhashdiv"},
-                         //  (obj.hashtag? ("#" + obj.hashtag) : "")]
-                        ]]]],
+                          [["div", {id:"sharediv", style:"display:none;"}, 
+                            shareButtonsHTML()],
+                           ["span", {cla: "shoutspan",
+                                     style: "font-size:" + fsz + ";"}, 
+                            jt.linkify(shtxt)]]]]]]],
                      ["div", {id: "pcdctrldiv"},
                       ["div", {id: "pcdactdiv"}]],
                      ["div", {id: "pcdcontdiv"}]]];
@@ -1349,13 +1358,31 @@ app.pcd = (function () {
     },
         
 
+    initializeSearchState = function () {
+        srchst.status = "initializing";
+        srchst.mtypes = "";
+        srchst.kwrds = "";
+        srchst.qstr = "";
+        srchst.revs = [];
+    },
+
+
+    resetDisplayStateFromObject = function (obj) {
+        dst.obj = obj;
+        dst.mtypes = "";
+        dst.keywords = "";
+    },
+
+
     displayObject = function (obj, expid, action) {
         // jt.log("pcd.displayObject expid: " + expid + ", action: " + action);
         obj = obj || dst.obj;
-        dst.obj = obj;
+        resetDisplayStateFromObject(obj);
+        dst.mtypes = 
         app.layout.cancelOverlay();  //close user menu if open
         app.layout.closeDialog();    //close search dialog if open
         historyCheckpoint();
+        initializeSearchState();
         var defs = dst[dst.type];
         writeTopContent(defs, obj)
         if(app.solopage()) {
@@ -1366,7 +1393,6 @@ app.pcd = (function () {
             jt.out("pcdcontdiv", "Settings required.");
             return app.pcd.settings(); }
         showContentControls();
-        srchst.status = "initializing";
         app.pcd.updateSearchInputDisplay();
         app.pcd.searchReviews();
     },
@@ -1481,6 +1507,7 @@ app.pcd = (function () {
             if(isSearchableMembic(membic)) {
                 var keywords = membic.keywords || "";
                 keywords.csvarray().forEach(function (key) {
+                    key = key.trim();
                     if(!keys.csvcontains(key)) {
                         keys = keys.csvappend(key); } }); } });
         return keys;
@@ -1912,33 +1939,14 @@ return {
     },
 
 
-    share: function () {
-        var descrdiv, shurlspan, defs, html;
-        descrdiv = jt.byId("ppcdshoutdiv");
-        if(descrdiv) {
-            defs = dst[dst.type];
-            shurlspan = jt.byId("shurlspan");
-            if(shurlspan) {
-                jt.out("ppcdshoutdiv", jt.tac2html(
-                    ["span", {cla: "shoutspan"}, 
-                     jt.linkify(dst.obj[defs.descfield] || "")])); }
-            else {
-                html = [
-                    ["div", {cla: "permalinkdiv"},
-                     [alternateDisplayHTML(),
-                      permalinkInfoHTML()]],
-                    ["span", {cla: "shoutspan"},
-                     signInToFollowHTML()],
-                    app.layout.shareDivHTML(shareInviteHTML())];
-                jt.out("ppcdshoutdiv", jt.tac2html(html));
-                //make absolutely sure the share html is ready before
-                //showing the share buttons.
-                app.fork({
-                    descr:"share button thread separation",
-                    func:function () {
-                        app.layout.showShareButtons(
-                            dst.obj.name, getDirectLinkInfo(true).url); },
-                    ms:80}); } }
+    togshare: function () {
+        var sharediv = jt.byId("sharediv");
+        if(!sharediv) {
+            return; }
+        if(sharediv.style.display === "block") {
+            sharediv.style.display = "none"; }
+        else {
+            sharediv.style.display = "block"; }
     },
 
 

@@ -22,9 +22,11 @@ class MUser(db.Model):
     actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
     # app data
+    name = db.StringProperty()      # optional but recommended public name
+    aboutme = db.TextProperty()     # optional description, links to site etc
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
-    settings = db.TextProperty()    # JSON skin, keys, descrip, full name...
+    settings = db.TextProperty()    # JSON skin, key overrides
     coops = db.TextProperty()       # JSON following, invites
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
