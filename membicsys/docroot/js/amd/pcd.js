@@ -1096,6 +1096,23 @@ app.pcd = (function () {
     },
 
 
+    updateResultsEmailLink = function (sortedRevs) {
+        var eml = jt.byId("emaillink");
+        if(!eml) {
+            return; }
+        var subj = "Selected links from " + dst.obj.name;
+        var body = "Here are some links from " + dst.obj.name + ".\n" +
+            "To select links yourself, go to https://membic.org/" +
+            dst.obj.instid;
+        sortedRevs.forEach(function (rev) {
+            body += "\n\n" + rev.url + "\n" + (rev.title || rev.name) + "\n" +
+                rev.text; });
+        var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+            jt.dquotenc(body);
+        eml.href = link;
+    },
+
+
     displaySearchResults = function () {
         var sortedRevs = srchst.revs;
         if(srchst.mode === "srchkey") {
@@ -1109,6 +1126,7 @@ app.pcd = (function () {
         app.review.displayReviews("pcdsrchdispdiv", "pcds", sortedRevs, 
                                   "app.pcd.toggleRevExpansion", 
                                   ((dst.type === "coop") && !app.solopage()));
+        updateResultsEmailLink(sortedRevs);
         srchst.status = "waiting";
     },
 
@@ -1347,7 +1365,7 @@ app.pcd = (function () {
                            value: srchst.qstr,
                            onchange:jt.fs("app.pcd.searchReviews()")}]]],
               ["div", {id:"pcdacemdiv"},
-               ["a", {href:"#filledInByMembicsDisplay"},
+               ["a", {id:"emaillink", href:"#filledInByMembicsDisplay"},
                 ["img", {src:"img/emailbw22.png"}]]]]],
             ["div", {id:"pcdkeysrchdiv"}],
             ["div", {id:"pcdtypesrchdiv"}]];
@@ -1495,7 +1513,7 @@ app.pcd = (function () {
     function isSearchableMembic (obj) {
         if(!obj.revtype) {  //could be an overflow indicator
             return false; }
-        if(dst.obtype === "coop" && obj.ctmid !== dst.obj.instid) {  //src ref
+        if(dst.coop && obj.ctmid !== dst.obj.instid) {  //src ref
             return false; }
         return true;
     }
