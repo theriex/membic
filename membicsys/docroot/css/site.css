@@ -42,7 +42,7 @@ button, .loginbutton, .formbutton, .filesellab {
  */
 
 /* >> topsectiondiv and contained elements */
-#topsectiondiv { }
+#topsectiondiv { margin:0px 0px 2px 0px; }
 #topleftdiv { float:left; border-radius:20px; }
 #logodiv { display:inline-block; margin:0; }
 #logodiv, #logoimg { width:78px; height:78px; }
@@ -68,7 +68,7 @@ button, .loginbutton, .formbutton, .filesellab {
                border-radius:20px; }
 #infosignoutdiv { margin-top:-2px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
-#loginstatdiv { height:30px; text-align:right; }
+#loginstatdiv { text-align:right; }
 #loginstatformdiv { padding:0px 5px; }
 .loginstatspan { background-image:url('../img/e6e7e9p80.png'); 
                  font-size:small; }
@@ -80,7 +80,7 @@ button, .loginbutton, .formbutton, .filesellab {
   background-color:#e6e7e9; opacity:0.8; border-radius:10px; }
 .typeselect { background-color:transparent; }
 .tablinksel { background-color:#ffae50; }
-#headingdiv { min-height:80px; }
+#headingdiv { }
 #headingdivcontent { width:288px; margin:auto; }
 #loadstatusdiv { background-image:url('../img/e6e7e9p80.png'); }
 #sysnoticediv { font-size:small; }

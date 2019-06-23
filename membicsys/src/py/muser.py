@@ -12,6 +12,11 @@ import random
 import os
 import urllib
 
+# coops: {coopid:lev, coopid2:lev, ...} is verified when fetching recent
+# themes to ensure they are included in the downloaded set.  So the app can
+# always go from the login account to the appropriate theme summary.  Other
+# users themes may not be available if they were too old to fetch.
+
 class MUser(db.Model):
     """ Membic User account, authentication and data """
     # auth and setup
@@ -27,11 +32,18 @@ class MUser(db.Model):
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
     settings = db.TextProperty()    # JSON skin, key overrides
-    coops = db.TextProperty()       # JSON following, invites
+    coops = db.TextProperty()       # JSON coopid:lev map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
     accessed = db.StringProperty()  # isodate
     preb = db.TextProperty()        # JSON membics for display, overflow link
+
+# The activation code is delivered by activation email only
+filter_server = ["actcode"]
+
+# Private fields are not visible to anyone except the account owner
+filter_private = ["email", "phash", "status", "mailbounce", "actsends",
+                  "actcode"]
 
 
 def verify_secure_comms(handler, url):
@@ -449,7 +461,7 @@ class GetAccount(webapp2.RequestHandler):
         if not account:
             return morutil.srverr(self, 401, "Authentication failed")
         # actcode is delivered via activation email only
-        morutil.srvObjs(self, [account], filts=["actcode"])
+        morutil.srvObjs(self, [account], filts=filter_server)
 
 
 class SendActivationCode(webapp2.RequestHandler):
@@ -465,7 +477,7 @@ class SendActivationCode(webapp2.RequestHandler):
         muser.put()  #nocache
         bust_cache_key(account.email)
         # actcode is delivered via activation email only
-        morutil.srvObjs(self.response, [muser], filts=["actcode"])
+        morutil.srvObjs(self.response, [muser], filts=filter_server)
 
 
 class ActivateAccount(webapp2.RequestHandler):
@@ -497,7 +509,19 @@ class ActivateAccount(webapp2.RequestHandler):
         account.actsends = ""
         account.put()
         bust_cache_key(account.email)
-        morutil.srvObjs(self, [account])
+        morutil.srvObjs(self, [account], filts=filter_server)
+
+
+class GetProfileById(webapp2.RequestHandler):
+    def get(self):
+        pidstr = self.request.get('profid')
+        profid = intz(pidstr)
+        if profid <= 0:
+            return morutil.srverr(self, 400, "Invalid profid: " + pidstr)
+        prof = cached_get(profid, MUser)
+        if not prof:
+            return morutil.srverr(self, 404, "No profile for id " + pidstr)
+        morutil.srvObjs(self, [prof], filts=filter_private)
 
 
 app = webapp2.WSGIApplication([('.*/newacct', CreateAccount),
@@ -507,5 +531,6 @@ app = webapp2.WSGIApplication([('.*/newacct', CreateAccount),
                                ('.*/updacc', UpdateAccount),
                                ('.*/getacct', GetAccount),
                                ('.*/sendcode', SendActivationCode),
-                               ('.*/activate', ActivateAccount)],
+                               ('.*/activate', ActivateAccount),
+                               ('.*/profbyid', GetProfileById)],
                               debug=True)

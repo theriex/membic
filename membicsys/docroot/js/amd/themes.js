@@ -72,7 +72,7 @@ app.themes = (function () {
 
     function showListing (obtype, instid) {
         if(obtype === "profile") {
-            return app.profile.byprofid(profid); }
+            return app.profile.byprofid(instid); }
         return app.coop.bycoopid(instid);
     }
 

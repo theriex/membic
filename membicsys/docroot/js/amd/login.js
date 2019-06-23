@@ -801,7 +801,7 @@ return {
             mtn = cval.split(cookdelim);
             authname = mtn[0].replace("%40", "@");
             authtoken = mtn[1]; }
-        app.login.updateAuthentDisplay();
+        app.login.updateTopSection();
         return authtoken;  //true if set earlier
     },
 
@@ -811,7 +811,7 @@ return {
         app.layout.cancelOverlay();
         logoutWithNoDisplayUpdate();
         app.history.checkpoint({ view: "profile", profid: 0 });
-        app.login.updateAuthentDisplay();
+        app.login.updateTopSection();
         jt.out("sysnoticediv", "");
         jt.out("topactionsdiv", "");
         jt.byId("topactionsdiv").style.display = "none";
@@ -894,10 +894,12 @@ return {
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(!state || !state.view) {
-            if(app.pfoj && app.pfoj.obtype === "Coop") {
-                state = {view:"coop", coopid:app.pfoj.instid}; }
-            else if(app.login.isLoggedIn()) {
+            if(app.login.isLoggedIn()) {  //your profile is your home
                 state = {view: "profile"}; }
+            else if(app.pfoj && app.pfoj.obtype === "Coop") {
+                state = {view:"coop", coopid:app.pfoj.instid}; }
+            else if(app.pfoj && app.pfoj.obtype === "MUser") {
+                state = {view:"profile", profid:app.pfoj.instid}; }
             else {
                 state = {view: "themes"}; } }
         if(params.url) {

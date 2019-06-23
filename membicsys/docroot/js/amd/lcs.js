@@ -33,6 +33,12 @@ app.lcs = (function () {
 
     var cache = {
         activetps: { refs: {} },
+        profile: { refs: {},
+                   fetchend: "profbyid",
+                   fetchparamf: function (id) {
+                       return "profid=" + id; },
+                   putprep: function (profobj) {
+                       app.profile.deserializeFields(profobj); } },
         pen: { refs: {},
                fetchend: "penbyid",
                fetchparamf: function (id) {
@@ -70,6 +76,8 @@ app.lcs = (function () {
     function typify (type) {
         if(type === "Coop") {
             type = "coop"; }
+        if(type === "MUser") {
+            type = "profile"; }
         return type;
     }
 

@@ -209,12 +209,16 @@ def fetch_recent_themes_and_profiles(handler):
     vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
     objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for obj in objs:
+        if not obj.preb or len(obj.preb) < 10:  # no membics
+            continue
         if jtxt:
             jtxt += ","
         jtxt += json_for_theme_prof(obj, "theme")
     vq = VizQuery(muser.MUser, "ORDER BY modified DESC")
     objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for obj in objs:
+        if not obj.preb or len(obj.preb) < 10:  # no membics
+            continue
         if jtxt:
             jtxt += ","
         jtxt += json_for_theme_prof(obj, "profile")

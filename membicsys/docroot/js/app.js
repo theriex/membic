@@ -192,8 +192,8 @@ var app = {},  //Global container for application level funcs and values
         var securl, href = window.location.href,
             modules = [ "js/amd/themes", "js/amd/profile",
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
-                        "js/amd/login", "js/amd/activity", "js/amd/pcd",
-                        "js/amd/review", "js/amd/pen", "js/amd/coop",
+                        "js/amd/login", "js/amd/pcd",
+                        "js/amd/review", "js/amd/coop",
                         "js/amd/ext/amazon", "js/amd/ext/email",
                         "js/amd/ext/readurl" ];
         securl = app.secureURL(href);

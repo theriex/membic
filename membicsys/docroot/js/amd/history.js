@@ -103,8 +103,9 @@ return {
                 return app.pcd.display("pen", app.pen.myPenId(), "latest", 
                                        app.pen.myPenName(), "settingspic"); }
             //otherwise just do the main display
-            return app.activity.displayActive();
-        case "profile": //fall through to pen
+            return app.profile.display();
+        case "profile":
+            return app.profile.byprofid(state.profid);
         case "pen":
             if(jt.isId(state.profid)) {
                 state.penid = state.profid; }
@@ -112,6 +113,8 @@ return {
                 return app.pen.bypenid(state.penid, "history", state.tab,
                                        state.expid, state.action); }
             return app.pcd.display();
+        default:
+            jt.log("history.dispatchState unknown state: " + state);
         }
     },
 

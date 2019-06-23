@@ -118,39 +118,28 @@ app.pcd = (function () {
 
 
     modButtonsHTML = function (obj) {
-        var mypenid, mypen, objectid, html = "";
         if(app.solopage()) {
             return ""; }
-        mypenid = app.pen.myPenId();
-        mypen = app.pen.myPenName();
-        objectid = jt.instId(obj);
-        if(dst.type === "pen") {
-            if(mypenid && objectid === mypenid) {
-                html = ["a", {id: "pcdsettingslink", href: "#pensettings",
-                              onclick: jt.fs("app.pcd.settings()")},
-                        ["img", {cla: "reviewbadge",
-                                 title: "Profile settings",
-                                 src: "img/settings.png"}]]; }
-            else {
-                html = ["a", {href: "#visprefs",
-                              onclick: jt.fs("app.pen.visprefs('','" + 
-                                             objectid + "','" + 
-                                             jt.embenc(obj.name) + "')")},
-                        ["img", {cla: "visprefimgprof", 
-                                 src: app.pen.prefimg(objectid)}]]; } }
-        else if(dst.type === "coop" && mypen) {
-            if(jt.isId(objectid) && (!mypen.coops || 
-                                     !mypen.coops.csvcontains(objectid))) {
-                html = ["span", {id: "followbuttonspan"},
-                        ["button", {type: "button", id: "followbutton",
-                                    onclick: jt.fs("app.pcd.follow()")},
-                         "Follow"]]; }
-            else {
-                html = ["a", {id: "pcdsettingslink", href: "#coopsettings",
+        var html = "";
+        if(dst.type === "profile") {
+            if(obj.instid === app.profile.myProfId()) {
+                html = ["a", {id:"pcdsettingslink", href:"#profilesettings",
+                              title:"Profile Settings",
+                              onclick:jt.fs("app.pcd.settings()")},
+                        ["img", {cla:"reviewbadge",
+                                 src:"img/settings.png"}]]; } }
+        else if(dst.type === "coop" && app.profile.myProfId()) {
+            if(obj.instid && app.profile.themeLevel(obj.instid)) {
+                html = ["a", {id:"pcdsettingslink", href:"#coopsettings",
                               title: "Theme settings",
-                              onclick: jt.fs("app.pcd.settings()")},
-                        ["img", {cla: "reviewbadge",
-                                 src: "img/settings.png"}]]; } }
+                              onclick:jt.fs("app.pcd.settings()")},
+                        ["img", {cla:"reviewbadge",
+                                 src:"img/settings.png"}]]; }
+            else {
+                html = ["span", {id:"followbuttonspan"},
+                        ["button", {type:"button", id:"followbutton",
+                                    onclick:jt.fs("app.pcd.follow()")},
+                         "Follow"]]; } }
         return jt.tac2html(html);
     },
 
@@ -1232,16 +1221,6 @@ app.pcd = (function () {
     },
 
 
-    backgroundVerifyObjectData = function () {
-        var pen;
-        if(dst.type === "coop" && jt.hasId(dst.obj)) {
-            pen = app.pen.myPenName();
-            if(app.coop.membershipLevel(dst.obj, app.pen.myPenId()) > 0 &&
-               !(pen.coops && pen.coops.csvcontains(jt.instId(dst.obj)))) {
-                app.pcd.follow(); } }
-    },
-
-
     createStyleOverridesForEmbedding = function () {
         jt.byId("pcduppercontentdiv").style.display = "none";
         jt.byId("bodyid").style.paddingLeft = "0px";
@@ -1328,8 +1307,8 @@ app.pcd = (function () {
                         [["div", {id: "pcdnamediv"},
                           [["a", {href: "/" + jt.instId(obj),
                                   onclick: jt.fs("app.pcd.togshare()")},
-                            [["span", {id:"pcdnamespan", cla:"penfont"}, 
-                              obj.name],
+                            [["span", {id:"pcdnamespan", cla:"penfont"},
+                              obj.name || obj.instid],
                              ["span", {id: "namearrowspan", cla: "penbutton"}, 
                               ["img", {id: "pnarw", src: "img/sharemenu.png",
                                        cla: "webjump"}]]]],
@@ -1388,6 +1367,10 @@ app.pcd = (function () {
 
 
     resetDisplayStateFromObject = function (obj) {
+        if(typeof(obj.preb) === "object" && !obj.preb.length) {
+            //just in case preb had a bad value like {}
+            obj.preb = []; }
+        jt.log("resetDisplayStateFromObject typeof preb: " + typeof(obj));
         dst.obj = obj;
         dst.mtypes = "";
         dst.keywords = "";
@@ -1398,7 +1381,6 @@ app.pcd = (function () {
         // jt.log("pcd.displayObject expid: " + expid + ", action: " + action);
         obj = obj || dst.obj;
         resetDisplayStateFromObject(obj);
-        dst.mtypes = 
         app.layout.cancelOverlay();  //close user menu if open
         app.layout.closeDialog();    //close search dialog if open
         historyCheckpoint();
@@ -1407,8 +1389,8 @@ app.pcd = (function () {
         writeTopContent(defs, obj)
         if(app.solopage()) {
             customizeSoloPageDisplay(); }
-        app.fork({descr:"background verify profile/theme",
-                  func:backgroundVerifyObjectData, ms:100});
+        if(dst.type === "coop" && dst.obj.instid) {
+            app.profile.verifyMembership(dst.obj); }
         if(!jt.hasId(dst.obj)) {  //creating a new theme
             jt.out("pcdcontdiv", "Settings required.");
             return app.pcd.settings(); }
@@ -2164,14 +2146,14 @@ return {
             dst.obj = app.lcs.getRef(dtype, id)[dtype];
             return displayObject(dst.obj); }
         if(dtype === "coop") {  //creating new coop
+            var profname = app.profile.myName();
+            if(!profname) {
+                jt.err("You need to have a name for your profile.");
+                return app.profile.displayProfile(); }
             dst.obj = { name: "", description: "", 
                         people: {}, founders: app.profile.myProfId() };
-            dst.obj.people[app.profile.myProfId()] = app.profile.myName();
+            dst.obj.people[app.profile.myProfId()] = profname;
             return displayObject(dst.obj); }
-        //At this point we have an unknown situation. One possibility
-        //is an app crash resulting in a logout with no screen update,
-        //then trying to display pen 0.  Best to just reload the page.
-        document.location.reload();
     },
 
 
@@ -2261,13 +2243,14 @@ return {
 
 
     fetchAndDisplay: function (dtype, id) {
-        // jt.log("pcd.fetchAndDisplay " + dtype + " " + id);
-        if(dtype === "profile" && !id) {
-            id = app.profile.myProfId(); }
+        //jt.log("pcd.fetchAndDisplay " + dtype + " " + id);
+        if(!id) {
+            jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
+            jt.log(new Error().stack); }
         app.lcs.getFull(dtype, id, function (obj) {
             if(!obj) {
-                jt.log("pcd.fetchAndDisplay no obj");
-                return app.activity.redisplay(); }
+                jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
+                return app.themes.display(); }
             app.pcd.display(dtype, id); });
     },
 

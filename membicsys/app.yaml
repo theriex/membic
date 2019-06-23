@@ -75,6 +75,11 @@ handlers:
 - url: .*/activate.*
   script: src.py.muser.app
 
+## Return the public profile information for the given id
+## GET params: profid
+- url: .*/profbyid.*
+  script: src.py.muser.app
+
 
 ######################################################################
 ##        Pen Names
