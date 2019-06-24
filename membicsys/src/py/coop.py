@@ -70,16 +70,16 @@ def elem_count_csv(csv):
     return len(ids)
 
 
-def pen_role(penid, coop):
-    penid = str(penid)
+def user_role(userid, coop):
+    userid = str(userid)
     coop.founders = coop.founders or ""
-    if id_in_csv(penid, coop.founders):
+    if id_in_csv(userid, coop.founders):
         return "Founder"
     coop.moderators = coop.moderators or ""
-    if id_in_csv(penid, coop.moderators):
+    if id_in_csv(userid, coop.moderators):
         return "Moderator"
     coop.members = coop.members or ""
-    if id_in_csv(penid, coop.members):
+    if id_in_csv(userid, coop.members):
         return "Member"
     return "NotFound"
 
@@ -206,10 +206,10 @@ def read_and_validate_descriptive_fields(handler, coop):
     return True
 
 
-def fetch_coop_and_role(handler, pnm):
+def fetch_coop_and_role(handler, muser):
     coopid = intz(handler.request.get('coopid'))
     if not coopid:
-        coopid = intz(handler.request.get('_id'))
+        coopid = intz(handler.request.get('instid'))
     if not coopid:
         handler.error(400)
         handler.response.out.write("No coopid specified")
@@ -220,7 +220,7 @@ def fetch_coop_and_role(handler, pnm):
         handler.response.out.write("Cooperative theme" + str(coopid) + 
                                    " not found")
         return None, ""
-    role = pen_role(pnm.key().id(), coop)
+    role = user_role(muser.key().id(), coop)
     return coop, role
 
 
@@ -459,7 +459,7 @@ class UpdateDescription(webapp2.RequestHandler):
                 self.response.out.write("Cooperative Theme " + ctmid + 
                                         " not found")
                 return
-            if pen_role(pnm.key().id(), coop) != "Founder":
+            if user_role(pnm.key().id(), coop) != "Founder":
                 self.error(400)
                 self.response.out.write(
                     "Only a Founder may change the theme description.")
@@ -565,7 +565,7 @@ class ProcessMembership(webapp2.RequestHandler):
         if not reason and (action == "reject" or 
                            (action == "demote" and seekerid != penid)):
             return srverr(self, 400, "Rejection reason required")
-        seekrole = pen_role(seekerid, coop)
+        seekrole = user_role(seekerid, coop)
         seekerpen = pen.PenName.get_by_id(int(seekerid))
         if not seekerpen:
             return srverr(self, 400, "No seeker PenName " + seekerid)

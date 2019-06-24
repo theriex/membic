@@ -91,7 +91,7 @@ app.login = (function () {
         authname = name;
         if(authname) {
             authname = authname.replace("%40", "@"); }
-        app.login.updateAuthentDisplay();
+        app.login.updateTopSection();
     },
 
 
@@ -259,76 +259,70 @@ app.login = (function () {
     },
 
 
-    activateButtonOrNoticeHTML = function (moracct) {
-        var html, sends, sent = false;
-        html = ["button", {type: "button", id: "activatebutton",
-                           onclick: jt.fs("app.login.sendActivation()")},
-                "Activate"];
-        if(moracct.actsends) {
-            sends = moracct.actsends.split(",");
+    activateButtonOrNoticeHTML = function (prof) {
+        var html = ["button", {type:"button", id:"activatebutton",
+                               onclick:jt.fs("app.login.sendActivation()")},
+                    "Activate"];
+        var sent = false;
+        if(prof.actsends) {
+            var sends = prof.actsends.split(",");
             sent = sends[sends.length - 1];
             sent = sent.split(";");
-            if(sent[1] === moracct.email && 
+            if(sent[1] === prof.email && 
                    jt.timewithin(sent[0], "hours", 4)) {
                 sent = sent[0]; }
             else {
                 sent = false; } }
         if(sent) {
             actsent = new Date(sent);
-            html = [["p", {cla: "actsendtxt"}, "You&apos;ve been waiting"],
-                    ["div", {id: "actsendcounterdiv"}],
-                    ["p", {cla: "actsendtxt"},
+            html = [["p", {cla:"actsendtxt"}, "You&apos;ve been waiting"],
+                    ["div", {id:"actsendcounterdiv"}],
+                    ["p", {cla:"actsendtxt"},
                      ["for activation mail to arrive.", ["br"],
                       "Still hasn&apos;t shown up?! Check your", ["br"],
                       "spam folder or ", 
-                      ["span", {id: "actcontactlinkspan"}]]],
-                    ["p", {cla: "actsendtxt"}, "&nbsp;"]];
+                      ["span", {id:"actcontactlinkspan"}]]],
+                    ["p", {cla:"actsendtxt"}, "&nbsp;"]];
             jt.out("accstatdetaildiv", jt.tac2html(html));
-            html = ["span", {cla: "actmailtext"},
-                    ["a", {href: "#activationmaildetails",
+            html = ["span", {cla:"actmailtext"},
+                    ["a", {href:"#activationmaildetails",
                            onclick: jt.fs("app.login.toggleactmaildet()")},
                      "mail sent"]]; }
         return html;
     },
 
 
-    writeUsermenuAccountFormElements = function (moracct) {
+    writeUsermenuAccountFormElements = function (prof) {
         var html;
-        if(moracct.status === "Active") {
-            html = [["span", {cla: "accstatvalspan"}, "Active"],
-                    ["button", {type: "button", id: "deactivatebutton",
-                                onclick: jt.fs("app.login.deactivateAcct()")},
+        if(prof.status === "Active") {
+            html = [["span", {cla:"accstatvalspan"}, "Active"],
+                    ["button", {type:"button", id:"deactivatebutton",
+                                onclick:jt.fs("app.login.deactivateAcct()")},
                      "Deactivate"]]; }
         else { //Pending|Inactive|Unreachable
-            html = [["span", {cla: "accstatvalspan"}, 
-                     moracct.status || "Pending"],
-                    activateButtonOrNoticeHTML(moracct)]; }
+            html = [["span", {cla:"accstatvalspan"},
+                     prof.status || "Pending"],
+                    activateButtonOrNoticeHTML(prof)]; }
         //With an empty label, this line of the form gets skewed to
         //the left.  With visible text, the font height is off and the
         //vertical alignment looks bad.  Using a hard space as the label.
-        html = [["label", {fo: "emptyspace", cla: "liflab"}, "&nbsp;"],
-                ["span", {id: "buttonornotespan"},
-                 html]];
-        jt.out("accstatusupdatediv", jt.tac2html(html));
-        //You can request your password be mailed to you, so simple
-        //entry seems best here.
-        html = [["label", {fo: "passin", cla: "liflab"}, "Password"],
-                ["input", {type: "password", cla: "lifin", 
-                           name: "passin", id: "passin"}]];
-        jt.out("accpassupdatediv", jt.tac2html(html));
+        jt.out("accstatusupdatediv", jt.tac2html(
+            [["label", {fo:"emptyspace", cla:"liflab"}, "&nbsp;"],
+             ["span", {id:"buttonornotespan"},
+              html]]));
+        //Just a single password entry field.  They can reset it if needed.
+        jt.out("accpassupdatediv", jt.tac2html(
+            [["label", {fo:"passin", cla:"liflab"}, "Password"],
+             ["input", {type:"password", cla:"lifin", 
+                        name:"passin", id:"passin"}]]));
         //Give a choice on how many posts before queueing them.
-        html = [["label", {fo:"maxpdsel", cla:"liflab"}, "Queuing"],
-                ["select", {id:"maxpdsel"},
-                 [["option", {value:1}, 1],
-                  ["option", {selected:jt.toru(app.pen.maxPostsPerDay() === 2),
-                              value:2}, 2]]],
-                ["span", {cla:"accstatvalspan"}, "&nbsp;(per day)"]];
-        jt.out("maxpostperdaydiv", jt.tac2html(html));
-        app.pen.getPen("", function (pen) {
-            var accpenin = jt.byId("accpenin");
-            if(accpenin) {
-                accpenin.value = pen.name;
-                moracct.penName = pen.name; }}, "usermenustat");
+        jt.out("maxpostperdaydiv", jt.tac2html(
+            [["label", {fo:"maxpdsel", cla:"liflab"}, "Queuing"],
+             ["select", {id:"maxpdsel"},
+              [["option", {value:1}, 1],
+               ["option", {selected:jt.toru(app.pen.maxPostsPerDay() === 2),
+                           value:2}, 2]]],
+             ["span", {cla:"accstatvalspan"}, "&nbsp;(per day)"]]));
     },
 
 
@@ -512,27 +506,22 @@ return {
 
 
     accountSettingsHTML: function () {
-        var html;
-        html = ["div", {id: "accountsettingsformdiv"},
-                [["div", {cla: "lifsep", id: "accpenupdatediv"},
-                  [["label", {fo: "accpenin", cla: "liflab"}, "Pen&nbsp;Name"],
-                   ["input", {type: "text", cla: "lifin", 
-                              name: "accpenin", id: "accpenin"}]]],
-                 ["div", {cla: "lifsep", id: "accemailupdatediv"},
-                  [["label", {fo: "emailin", cla: "liflab"}, "Email"],
-                   ["input", {type: "email", cla: "lifin",
-                              name: "emailin", id: "emailin",
-                              value: authname,
-                              placeholder: "nospam@example.com"}]]],
-                 ["div", {cla: "lifsep", id: "accstatusupdatediv"}],
-                 ["div", {cla: "lifsep", id: "accstatdetaildiv"}],
-                 ["div", {cla: "lifsep", id: "accpassupdatediv"}],
-                 ["div", {cla: "lifsep", id: "maxpostperdaydiv"}],
-                 ["div", {cla: "lifsep", id: "usermenustat"}],
-                 ["div", {cla: "dlgbuttonsdiv"},
-                  [["button", {type: "button", id: "okbutton",
-                               onclick: jt.fs("app.login.updateAccount()")},
-                    "Update Account"]]]]];
+        var html = ["div", {id:"accountsettingsformdiv"},
+                    [["div", {cla:"lifsep"},
+                      [["label", {fo:"emailin", cla:"liflab"}, "Email"],
+                       ["input", {type:"email", cla:"lifin",
+                                  name:"emailin", id:"emailin",
+                                  value:authname,
+                                  placeholder: "nospam@example.com"}]]],
+                     ["div", {cla:"lifsep", id:"accstatusupdatediv"}],
+                     ["div", {cla:"lifsep", id:"accstatdetaildiv"}],
+                     ["div", {cla:"lifsep", id:"accpassupdatediv"}],
+                     ["div", {cla:"lifsep", id:"maxpostperdaydiv"}],
+                     ["div", {cla:"lifsep", id:"usermenustat"}],
+                     ["div", {cla:"dlgbuttonsdiv"},
+                      [["button", {type:"button", id:"okbutton",
+                                   onclick: jt.fs("app.login.updateAccount()")},
+                        "Update Personal"]]]]];
         return html;
     },
 
@@ -542,23 +531,8 @@ return {
         if(!detdiv) { //form fields no longer displayed so nothing to do
             return; }
         detdiv.style.display = "none";
-        if(!moracct) {
-            getAccountInfoFromPenStash(); }
-        if(moracct) {
-            writeUsermenuAccountFormElements(moracct); }
-        else {
-            params = authparams() + jt.ts("&cb=", "second");
-            jt.call("GET", "getacct?" + params, null,
-                    function (accarr) {
-                        if(accarr.length > 0) {
-                            moracct = accarr[0];
-                            writeUsermenuAccountFormElements(moracct); }
-                        else {
-                            jt.err("Account details unavailable"); } },
-                    app.failf(function (code, errtxt) {
-                        jt.err("Account details retrieval failed: " + code + 
-                               " " + errtxt); }),
-                    jt.semaphore("login.usermenu")); }
+        app.profile.fetchProfile(function (prof) {
+            writeUsermenuAccountFormElements(prof); });
     },
 
 
@@ -728,7 +702,7 @@ return {
                     app.pen.updatePen(
                         pen,
                         function (ignore /*penref*/) {
-                            app.login.updateAuthentDisplay();
+                            app.login.updateTopSection();
                             app.login.nukeAppData();
                             app.history.dispatchState(); },
                         function (code, errtxt) {

@@ -2,6 +2,7 @@ import webapp2
 import datetime
 from google.appengine.ext import db
 from google.appengine.api.datastore_types import Blob
+from google.appengine.api import images
 import logging
 from cacheman import *  # cached_* VizQuery
 from Crypto.Hash import HMAC, SHA512
@@ -15,7 +16,9 @@ import urllib
 # coops: {coopid:lev, coopid2:lev, ...} is verified when fetching recent
 # themes to ensure they are included in the downloaded set.  So the app can
 # always go from the login account to the appropriate theme summary.  Other
-# users themes may not be available if they were too old to fetch.
+# users themes may not be available if they were too old to fetch.  The lev
+# values are following:-1, member:1, moderator:2, founder:3.  Any falsy
+# value means no association.
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """
@@ -391,11 +394,11 @@ class TokenAndRedirect(webapp2.RequestHandler):
             redurl += "&command=" + command
         reqprof = self.request.get('reqprof')
         if reqprof:
-            redurl += "&view=pen&penid=" + reqprof
+            redurl += "&view=profile&profid=" + reqprof
         url = self.request.get('url')
         if url:
             redurl += "&url=" + urllib.quote(url)
-        ps = ["special", "view", "profid", "penid", "revid", "coopid", "tab"]
+        ps = ["special", "view", "profid", "revid", "coopid", "tab"]
         for param in ps:
             spec = self.request.get(param)
             if spec:
@@ -524,6 +527,65 @@ class GetProfileById(webapp2.RequestHandler):
         morutil.srvObjs(self, [prof], filts=filter_private)
 
 
+class UploadPic(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write('Ready')
+    def post(self):
+        muser = authenticated(self.request)
+        if not muser:
+            return  # error already reported
+        updobj = muser  # default is uploading a pic for your profile
+        picfor = self.request.get('picfor') or "profile"
+        if picfor == "coop":
+            ctm, role = coop.fetch_coop_and_role(self, muser)
+            if not ctm:
+                return  # error already reported
+            if not role or role != "Founder":
+                return srverr(self, 403, "Only founders may upload a coop pic")
+            updobj = ctm
+        upfile = self.request.get("picfilein")
+        if not upfile:
+            return srverr(self, 400, "No picture file received")
+        logging.info("Pic upload for " + picfor + " " + str(updobj.key().id()))
+        updtime = nowISO()
+        try:
+            # resize images to max 160 x 160 px
+            if picfor == "coop":
+                ctm.picture = db.Blob(upfile)
+                ctm.picture = images.resize(ctm.picture, 160, 160)
+                ctm.modified = updtime
+                cached_put(ctm)
+            else: # profile
+                muser.profpic = db.Blob(upfile)
+                muser.profpic = images.resize(muser.profpic, 160, 160)
+                muser.modified = updtime
+                cached_put(muser)
+        except Exception as e:
+            return srverr(self, 500, "Profile picture upload failed: " + str(e))
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write("Done: " + updtime)
+
+
+class GetProfPic(webapp2.RequestHandler):
+    def get(self):
+        profid = self.request.get('profileid')
+        muser = cached_get(intz(profid), MUser)
+        img = None
+        if muser and muser.profpic:
+            img = images.Image(muser.profpic)
+            img.resize(width=160, height=160)
+            img = img.execute_transforms(output_encoding=images.PNG)
+        if not img:  # probably legacy account with no image set yet
+            # hex values for a 4x4 transparent PNG created with GIMP:
+            imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
+            img = images.Image(imgstr)
+            img.resize(width=4, height=4)
+            img = img.execute_transforms(output_encoding=images.PNG)
+        self.response.headers['Content-Type'] = "image/png"
+        self.response.out.write(img)
+
+
 app = webapp2.WSGIApplication([('.*/newacct', CreateAccount),
                                ('.*/toklogin', GetToken),
                                ('.*/redirlogin', TokenAndRedirect),
@@ -532,5 +594,7 @@ app = webapp2.WSGIApplication([('.*/newacct', CreateAccount),
                                ('.*/getacct', GetAccount),
                                ('.*/sendcode', SendActivationCode),
                                ('.*/activate', ActivateAccount),
-                               ('.*/profbyid', GetProfileById)],
+                               ('.*/profbyid', GetProfileById),
+                               ('.*/picupload', UploadPic),
+                               ('.*/profpic', GetProfPic)],
                               debug=True)

@@ -288,21 +288,20 @@ return {
     },
 
 
-    membershipLevel: function (coop, penid) {
+    membershipLevel: function (coop, profid) {
         if(!coop) {
             return 0; }
-        if(!penid || penid === "0") {
-            penid = app.pen.myPenId(); }
-        coop.members = coop.members || "";
-        coop.moderators = coop.moderators || "";
-        coop.founders = coop.founders || "";
-        if(coop.members.csvcontains(penid)) {
-            return 1; }
-        if(coop.moderators.csvcontains(penid)) {
-            return 2; }
-        if(coop.founders.csvcontains(penid)) {
-            return 3; }
-        return 0;
+        if(!profid || profid === "0") {
+            profid = app.profile.myProfId(); }
+        if(!profid) {
+            return 0; }
+        var fields = ["members", "moderators", "founders"];
+        var lev = 0;
+        fields.forEach(function (field, idx) {
+            coop[field] = coop[field] || "";
+            if(coop[field].csvcontains(profid)) {
+                lev = idx + 1; } })  //member:1, moderator:2, founder:3
+        return lev;
     },
 
 

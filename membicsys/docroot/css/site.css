@@ -190,7 +190,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcduppercontentdiv { background:#e6e7e9; opacity:0.9; border-radius:10px; }
 #pcdnamediv { padding-top:5px; }
 #pcdnamespan { margin-right:5px; }
-#pcdsettingslink { padding:0px 0px 0px 10px; }
+#pcdsettingslink { }
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #pcdctrldiv { clear:both; }

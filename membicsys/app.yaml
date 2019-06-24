@@ -23,17 +23,16 @@ handlers:
 ######################################################################
 ##                  API
 ## authparams:
-##   am: authentication method: "mid", "gsid", "fbid", "twid"
-##   at: authentication token (from local or supported external source)
-##   an: authentication name (email if native auth, or 3rd party id info)
+##   an: authentication name (email address)
+##   at: authentication token (hash from server)
 ##
-## Queries may return a base64 cursor value as the last element.
 ## Optional parameters are listed in parentheses
+## Open queries may return a base64 cursor value as the last element.
 ##
 ######################################################################
 
 ######################################################################
-##        Native site authentication 
+##        Profile access and authentication
 
 ## Get an access token from native credentials
 ## POST params: user, pass 
@@ -80,6 +79,16 @@ handlers:
 - url: .*/profbyid.*
   script: src.py.muser.app
 
+## Upload a profile or theme pic (picfor=coop)
+## POST params: picfilein, instid, authparams (,picfor)
+- url: .*/picupload.*
+  script: src.py.muser.app
+
+## Retrieve a profile pic
+## GET params: profileid
+- url: .*/profpic.*
+  script: src.py.muser.app
+
 
 ######################################################################
 ##        Pen Names
@@ -92,17 +101,6 @@ handlers:
 ## Update a pen name if authorized
 ## POST params: pen, authparams
 - url: .*/updpen.*
-  script: src.py.pen.app
-
-## Upload a profile pic
-## POST params: picfilein, _id, authparams
-##   _id: The PenName instance id
-- url: .*/picupload.*
-  script: src.py.pen.app
-
-## Retrieve a profile pic
-## GET params: profileid
-- url: .*/profpic.*
   script: src.py.pen.app
 
 ## Toggle remembering a review
@@ -294,8 +292,8 @@ handlers:
   script: src.py.mctr.app
 
 ## Fetch RSS feed content for the specified coop
-## GET params: ctmid
-- url: .*/rsscoop.*
+## GET params: coop=instid or profile=instid
+- url: .*/rssfeed.*
   script: src.py.rssact.app
 
 ## Fetch activity statistics for the site (used by actstat.js)

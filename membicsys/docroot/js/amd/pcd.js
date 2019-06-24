@@ -109,7 +109,7 @@ app.pcd = (function () {
     picImgSrc = function (obj) {
         var defs = dst[dst.type], 
             src = "img/nopicprof.png";
-        if(obj[defs.picfield]) {  //e.g. pen.profpic
+        if(obj[defs.picfield]) {  //e.g. profile.profpic
             //fetch with mild cachebust in case modified
             src = defs.picsrc + jt.instId(obj) +
                 "&modified=" + obj.modified; }
@@ -196,11 +196,10 @@ app.pcd = (function () {
 
 
     membershipSettingsHTML = function () {
-        var html, mlev, seeking, rejected;
-        mlev = app.coop.membershipLevel(dst.obj);
-        seeking = app.coop.isSeeking(dst.obj);
-        rejected = app.coop.isRejected(dst.obj);
-        html = [];
+        var mlev = app.coop.membershipLevel(dst.obj);
+        var seeking = app.coop.isSeeking(dst.obj);
+        var rejected = app.coop.isRejected(dst.obj);
+        var html = [];
         //show application button if not in application process
         if(ctmmsgs[mlev].uptxt && !seeking && !rejected) {
             html.push(membershipButtonLine(
@@ -486,7 +485,7 @@ app.pcd = (function () {
 
     getPicInfo = function () {
         var pi = {havepic: false, src: "img/nopicprof.png"};
-        if(dst.type === "pen") {
+        if(dst.type === "profile") {
             pi.lab = "Upload a profile picture!";
             pi.exp = "An image for your profile helps people identify membics you write. Choose something unique that visually represents you.";
             if(dst.obj.profpic) {
@@ -525,7 +524,7 @@ app.pcd = (function () {
         if(!jt.hasId(dst.obj) ||
                (dst.type === "coop" && 
                 app.coop.membershipLevel(dst.obj) < 3)) {
-            return ""; }
+            return ""; }  //not creating and not founder so not available
         pinf = getPicInfo();
         html = [["label", {fo: "picuploadform", cla: "overlab",
                            style: (pinf.havepic? "display:none;" : "")},
@@ -538,8 +537,7 @@ app.pcd = (function () {
                           id: "picuploadform"},
                  [jt.paramsToFormInputs(app.login.authparams()),
                   jt.paramsToFormInputs("picfor=" + dst.type + 
-                                        "&_id=" + dst.id +
-                                        "&penid=" + app.pen.myPenId()),
+                                        "&instid" + dst.obj.instid),
                   ["div", {cla: "ptddiv"},
                    [["img", {id: "upldpicimg", cla: "profimgdis",
                              src: pinf.src}],
@@ -567,42 +565,43 @@ app.pcd = (function () {
 
 
     descripSettingsHTML = function () {
-        var nh = "", ht = "", ark = "", html;
-        if(dst.type === "coop") {
-            if(app.coop.membershipLevel(dst.obj) < 3) {
-                return ""; }
-            nh = ["div", {cla: "formline"},
-                  [["label", {fo: "namein", cla: "liflab", id: "namelab"},
+        if(dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) {
+            return ""; } //only founders can update the theme description
+        var nameplace = "Theme name required";
+        if(dst.type !== "coop") {
+            nameplace = "Profile display name"; }
+        var nh = ["div", {cla:"formline"},
+                  [["label", {fo:"namein", cla:"liflab", id:"namelab"},
                     "Name"],
-                   ["input", {id: "namein", cla: "lifin", type: "text",
-                              placeholder: "Theme name required",
-                              value: dst.obj.name}]]];
-            ht = ["div", {cla: "formline"},
-                  [["label", {fo: "hashin", cla: "liflab", id: "hashlab"},
+                   ["input", {id:"namein", cla:"lifin", type:"text",
+                              placeholder:nameplace, value:dst.obj.name}]]];
+        var ht = ["div", {cla:"formline"},
+                  [["label", {fo:"hashin", cla:"liflab", id:"hashlab"},
                     "Hashtag&nbsp;#"],
-                   ["input", {id: "hashin", cla: "lifin", type: "text",
-                              placeholder: "Optional",
-                              value: dst.obj.hashtag}]]];
+                   ["input", {id:"hashin", cla:"lifin", type:"text",
+                              placeholder:"Easy access and share",
+                              value:dst.obj.hashtag}]]];
+        var ark = "";
+        if(dst.type === "coop") {
             ark = ["div", {cla:"formline"},
                    [["input", {type:"checkbox", id:"arkcb", value:"archived",
                                checked:jt.toru(
-                                   app.coop.hasFlag(dst.obj, "archived"))}],
+                                   app.coop.hasFlag(dst.obj,"archived"))}],
                     ["label", {fo:"arkcb"}, "Archive (no further posts)"]]]; }
-        html = [nh,
-                //Label conflicts visually with placeholder text when
-                //empty and is unnecessary if value specified.
-                //Removed to reduce visual clutter
-                // ["div", {cla: "formline"},
-                //  ["label", {fo: "shouteditbox", cla: "overlab"}, 
-                //   defs.desclabel]],
-                ["textarea", {id: "shouteditbox", cla: "dlgta"}],
-                ht,
-                ark,
-                ["div", {id: "formstatdiv"}],
-                ["div", {cla: "dlgbuttonsdiv"},
-                 ["button", {type: "button", id: "okbutton",
-                             onclick: jt.fs("app.pcd.saveDescription()")},
-                  (jt.hasId(dst.obj)? "Update Description" : "Create Theme")]]];
+        var btxt = "Create Theme";
+        if(jt.hasId(dst.obj)) {
+            btxt = "Update Description"; }
+        var html = [nh,
+                    //textarea label conflicts visually with placeholder
+                    //text when empty.  Removed to reduce visual clutter.
+                    ["textarea", {id: "shouteditbox", cla: "dlgta"}],
+                    ht,
+                    ark,
+                    ["div", {id: "formstatdiv"}],
+                    ["div", {cla: "dlgbuttonsdiv"},
+                     ["button", {type: "button", id: "okbutton",
+                                 onclick: jt.fs("app.pcd.saveDescription()")},
+                      btxt]]];
         return html;
     },
     descripSettingsInit = function () {
@@ -622,25 +621,25 @@ app.pcd = (function () {
     },
 
 
-    reviewTypeKeywordsHTML = function () {
-        var kwu, html = [];
-        app.pen.verifyStashKeywords(dst.obj);
-        kwu = app.pen.getKeywordUse(dst.obj);
+    reviewTypeKeywordsHTML = function (prof) {
+        var html = [];
+        app.prof.verifyStashKeywords(prof);
+        var kwu = app.prof.getKeywordUse(prof);
         app.review.getReviewTypes().forEach(function (rt) {
             html.push(
-                ["div", {cla: "rtkwdiv", id: "rtkwdiv" + rt.type},
-                 [["div", {cla: "formline"},
-                   [["img", {cla: "reviewbadge", src: "img/" + rt.img}],
-                    ["input", {id: "kwcsvin" + rt.type, cla: "keydefin", 
-                               type: "text", placeholder: "Checkbox keywords",
-                               value: dst.obj.stash.keywords[rt.type]}]]],
-                  ["div", {cla: "formline"},
-                   ["span", {cla: "kwcsvspan"},
-                    [["span", {cla: "kwcsvlabel"}, "Recent:"],
+                ["div", {cla:"rtkwdiv", id:"rtkwdiv" + rt.type},
+                 [["div", {cla:"formline"},
+                   [["img", {cla:"reviewbadge", src:"img/" + rt.img}],
+                    ["input", {id:"kwcsvin" + rt.type, cla:"keydefin", 
+                               type:"text", placeholder:"Checkbox keywords",
+                               value:prof.stash.keywords[rt.type]}]]],
+                  ["div", {cla:"formline"},
+                   ["span", {cla:"kwcsvspan"},
+                    [["span", {cla:"kwcsvlabel"}, "Recent:"],
                      jt.spacedCSV(kwu.recent[rt.type])]]],
-                  ["div", {cla: "formline"},
-                   ["span", {cla: "kwcsvspan"},
-                    [["span", {cla: "kwcsvlabel"}, "Default:"],
+                  ["div", {cla:"formline"},
+                   ["span", {cla:"kwcsvspan"},
+                    [["span", {cla:"kwcsvlabel"}, "Default:"],
                      jt.spacedCSV(kwu.system[rt.type])]]]]]); });
         return html;
     },
@@ -660,11 +659,12 @@ app.pcd = (function () {
 
 
     keywordSettingsHTML = function () {
-        var label = "", html = "";
+        var label = "";
+        var html = "";
         switch(dst.type) {
-        case "pen": 
+        case "profile": 
             label = "Checkbox Keywords";
-            html = reviewTypeKeywordsHTML(); 
+            html = reviewTypeKeywordsHTML(dst.obj);
             break;
         case "coop": 
             if(!jt.hasId(dst.obj) || app.coop.membershipLevel(dst.obj) < 2) {
@@ -673,54 +673,54 @@ app.pcd = (function () {
             html = themeKeywordsHTML();
             break;
         default: return ""; }
-        html = ["div", {cla: "formline"},
-                [["a", {href: "#togglecustomkeywords",
-                        onclick: jt.fs("app.layout.togdisp('penkwdsdiv')")},
-                  [["img", {cla: "ctmsetimg", src: "img/tag.png"}],
-                   ["span", {cla: "settingsexpandlinkspan"},
+        html = ["div", {cla:"formline"},
+                [["a", {href:"#togglecustomkeywords",
+                        onclick:jt.fs("app.layout.togdisp('profkwdsdiv')")},
+                  [["img", {cla:"ctmsetimg", src:"img/tag.png"}],
+                   ["span", {cla:"settingsexpandlinkspan"},
                     label]]],
-                 ["div", {cla: "formline", id: "penkwdsdiv",
-                          style: "display:none;"},
+                 ["div", {cla:"formline",id:"profkwdsdiv",
+                          style:"display:none;"},
                   [html,
-                   ["div", {cla: "dlgbuttonsdiv"},
-                    ["button", {type: "button", id: "updatekwdsdiv",
-                                onclick: jt.fs("app.pcd.updateKeywords()")},
+                   ["div", {cla:"dlgbuttonsdiv"},
+                    ["button", {type:"button", id:"updatekwdsdiv",
+                                onclick:jt.fs("app.pcd.updateKeywords()")},
                      "Update Keywords"]]]]]];
         return html;
     },
 
 
     mailinSettingsHTML = function () {
-        var html, subj, body, mh;
-        if(dst.type !== "pen" || !jt.hasId(dst.obj)) {
-            return ""; }
+        if(dst.type !== "profile" || !jt.hasId(dst.obj)) {
+            return ""; }  //mail-in support for themes not supported yet
         dst.obj.stash = dst.obj.stash || {};
         dst.obj.stash.mailins = dst.obj.stash.mailins || "";
-        subj = "Membic Title or URL or Description";
-        body = "Membic URL and/or Description";
-        mh = "mailto:membic@membicsys.appspotmail.com?subject=" + 
+        var stash = dst.obj.stash;
+        var subj = "Membic Title or URL or Description";
+        var body = "Membic URL and/or Description";
+        var mh = "mailto:membic@membicsys.appspotmail.com?subject=" + 
             jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
-        html = ["div", {cla:"formline"},
-                [["a", {href:"#togglemailinsettings",
-                        onclick:jt.fs("app.layout.togdisp('mailinsdiv')")},
-                  [["img", {cla:"ctmsetimg", src:"img/emailbw22.png"}],
-                   ["span", {cla:"settingsexpandlinkspan"},
-                    "Mail-In Membics"]]],
-                 ["div", {cla:"formline", id:"mailinsdiv",
-                          style:"display:none;"},
-                  ["div", {cla:"rtkwdiv", id:"mailinaccsdiv"},
-                   [["div", {cla:"formline"},
-                     ["Authorized ",
-                     ["a", {href:mh}, "mail-in membic "],
-                      "addresses (separate multiple accounts with commas)."]],
-                    ["div", {cla:"formline"},
-                     ["input", {id:"emaddrin", cla:"keydefin", type:"text",
-                                placeholder:"myaccount@example.com",
-                                value:dst.obj.stash.mailins}]],
-                    ["div", {cla:"dlgbuttonsdiv"},
-                     ["button", {type:"button", id:"updatemiab",
-                                 onclick:jt.fs("app.pcd.updateMailins()")},
-                      "Update Mail-Ins"]]]]]]];
+        var html = ["div", {cla:"formline"},
+                    [["a", {href:"#togglemailinsettings",
+                            onclick:jt.fs("app.layout.togdisp('mailinsdiv')")},
+                      [["img", {cla:"ctmsetimg", src:"img/emailbw22.png"}],
+                       ["span", {cla:"settingsexpandlinkspan"},
+                        "Mail-In Membics"]]],
+                     ["div", {cla:"formline", id:"mailinsdiv",
+                              style:"display:none;"},
+                      ["div", {cla:"rtkwdiv", id:"mailinaccsdiv"},
+                       [["div", {cla:"formline"},
+                         ["Authorized ",
+                          ["a", {href:mh}, "mail-in membic "],
+                          "addresses (comma separated)"]],
+                        ["div", {cla:"formline"},
+                         ["input", {id:"emaddrin", cla:"keydefin", type:"text",
+                                    placeholder:"myaccount@example.com",
+                                    value:stash.mailins}]],
+                        ["div", {cla:"dlgbuttonsdiv"},
+                         ["button", {type:"button", id:"updatemiab",
+                                     onclick:jt.fs("app.pcd.updateMailins()")},
+                          "Update Mail-Ins"]]]]]]];
         return html;
     },
 
@@ -768,14 +768,13 @@ app.pcd = (function () {
 
 
     rssSettingsHTML = function () {
-        var html;
         if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
-        html = ["div", {cla: "formline"},
-                [["a", {href: "#rss", onclick: jt.fs("app.pcd.rssHelp()")},
-                  [["img", {cla: "ctmsetimg", src: "img/rssicon.png"}],
-                   ["span", {cla: "settingsexpandlinkspan"},
-                    "RSS Feed"]]]]];
+        var html = ["div", {cla:"formline"},
+                    [["a", {href:"#rss", onclick:jt.fs("app.pcd.rssHelp()")},
+                      [["img", {cla:"ctmsetimg", src:"img/rssicon.png"}],
+                       ["span", {cla:"settingsexpandlinkspan"},
+                        "RSS Feed"]]]]];
         return html;
     },
     fillRSSDialogAreas = function () {
@@ -783,7 +782,7 @@ app.pcd = (function () {
         furl = window.location.href;
         if(furl.endsWith("/")) {
             furl = furl.slice(0, -1); }
-        furl += "/rsscoop?coop=" + jt.instId(dst.obj);
+        furl += "/rssfeed?" + dst.type + "=" + jt.instId(dst.obj);
         ta = jt.byId("rssbta");
         if(ta) {
             ta.readOnly = true;
@@ -800,72 +799,71 @@ app.pcd = (function () {
 
 
     soloSettingsHTML = function () {
-        var html;
-        if(dst.type !== "coop" || app.coop.membershipLevel(dst.obj) < 3 ||
-               !jt.hasId(dst.obj)) {
+        if(dst.type !== "coop" || !jt.hasId(dst.obj) || 
+               app.coop.membershipLevel(dst.obj) < 3) {
             return ""; }
         dst.obj.soloset = dst.obj.soloset || {};
         if(!dst.obj.soloset.colors || Array.isArray(dst.obj.soloset.colors)) {
             dst.obj.soloset.colors = {};
             standardOverrideColors.forEach(function (soc) {
                 dst.obj.soloset.colors[soc.name] = soc.value; }); }
-        html = [];
+        var html = [];
         standardOverrideColors.forEach(function (soc) {
             var colorval = dst.obj.soloset.colors[soc.name] || soc.value;
-            html.push(["div", {cla: "formline"},
-                       [["label", {fo: soc.name + "in", cla: "liflab"},
+            html.push(["div", {cla:"formline"},
+                       [["label", {fo:soc.name + "in", cla:"liflab"},
                          soc.name],
-                        ["input", {id: soc.name + "in", cla: "lifin",
-                                   type: "color", value: colorval}]]]); });
-        html = ["div", {cla: "formline"},
-                [["a", {href: "#togglepermcolors",
-                        onclick: jt.fs("app.layout.togdisp('ctmcolordiv')")},
-                  [["img", {cla: "ctmsetimg", src: "img/colors.png"}],
-                   ["span", {cla: "settingsexpandlinkspan"},
+                        ["input", {id:soc.name + "in", cla:"lifin",
+                                   type:"color", value:colorval}]]]); });
+        html = ["div", {cla:"formline"},
+                [["a", {href:"#togglepermcolors",
+                        onclick:jt.fs("app.layout.togdisp('ctmcolordiv')")},
+                  [["img", {cla:"ctmsetimg", src:"img/colors.png"}],
+                   ["span", {cla:"settingsexpandlinkspan"},
                     "Permalink Page Colors"]]],
-                 ["div", {cla: "formline", id: "ctmcolordiv",
-                          style: "display:none;"},
+                 ["div", {cla:"formline", id:"ctmcolordiv",
+                          style:"display:none;"},
                   [html,
-                   ["div", {cla: "dlgbuttonsdiv"},
-                    ["button", {type: "button", id: "savecolorsbutton",
-                                onclick: jt.fs("app.pcd.saveSoloColors()")},
+                   ["div", {cla:"dlgbuttonsdiv"},
+                    ["button", {type:"button", id:"savecolorsbutton",
+                                onclick:jt.fs("app.pcd.saveSoloColors()")},
                      "Update Colors"]],
-                   ["div", {cla: "formline", id: "colorupderrdiv"}]]]]];
+                   ["div", {cla:"formline", id:"colorupderrdiv"}]]]]];
         return html;
     },
 
 
     embedSettingsHTML = function () {
-        var html;
-        if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
+        if(!jt.hasId(dst.obj)) {
             return ""; }
-        html = ["div", {cla: "formline"},
-                [["a", {href: "#embed", onclick: jt.fs("app.pcd.embedHelp()")},
-                  [["img", {cla: "ctmsetimg", src: "img/embed.png"}],
-                   ["span", {cla: "settingsexpandlinkspan"},
-                    "Embed Theme"]]]]];
+        var html = ["div", {cla:"formline"},
+                    [["a", {href:"#embed", 
+                            onclick:jt.fs("app.pcd.embedHelp()")},
+                      [["img", {cla:"ctmsetimg", src:"img/embed.png"}],
+                       ["span", {cla:"settingsexpandlinkspan"},
+                        "Embed Feed"]]]]];
         return html;
     },
     fillEmbedDialogAreas = function () {
-        var dlo, site, ta = jt.byId("embdlta");
-        site = window.location.href;
+        var site = window.location.href;
+        var ta = jt.byId("embdlta");
         if(site.endsWith("/")) {
             site = site.slice(0, -1); }
         if(ta) {
-            dlo = getDirectLinkInfo();
             ta.readOnly = true;
-            ta.value = dlo.url; }
+            ta.value = getDirectLinkInfo().url; }
         ta = jt.byId("embifta");
         if(ta) {
             ta.readOnly = true;
             ta.value = "<iframe id=\"membiciframe\" src=\"" + app.hardhome +
-                "/e/" + dst.id + "?site=YOURSITE.COM\" " +
+                "/" + dst.id + "?site=YOURSITE.COM\" " +
                 "style=\"position:relative;height:100%;width:100%\" " +
                 "seamless=\"seamless\" frameborder=\"0\"/></iframe>"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = site + "/rsscoop?coop=" + jt.instId(dst.obj); }
+            ta.value = site + "/rssfeed?" + dst.type + "=" + 
+                jt.instId(dst.obj); }
     },
 
 
@@ -895,7 +893,7 @@ app.pcd = (function () {
         if(dst.type !== "coop" || !dst.obj || !jt.hasId(dst.obj)) {
             html = ""; }
         else if(app.coop.membershipLevel(dst.obj) < 3) {
-            url = app.hardhome + "/rsscoop?" + dst.type + "=" + 
+            url = app.hardhome + "/rssfeed?" + dst.type + "=" + 
                 jt.instId(dst.obj);
             html = ["a", {href:url, 
                           onclick:jt.fs("window.open('" + url + "')")},
@@ -1173,7 +1171,7 @@ app.pcd = (function () {
                                  cla:"downloadlinkimg"}],
                         "Download " + knowntabs[tabname].stitle]]]]]; }
         if(tabname === "latest" && dst.type === "coop") {
-            rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
+            rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
             html.push([" | ",
                        ["a", {href:rssurl, //support right click copy link 
                               id:"rsslink",
@@ -1306,6 +1304,7 @@ app.pcd = (function () {
                        ["div", {id: "pcddescrdiv"},
                         [["div", {id: "pcdnamediv"},
                           [["a", {href: "/" + jt.instId(obj),
+                                  title:"Share",
                                   onclick: jt.fs("app.pcd.togshare()")},
                             [["span", {id:"pcdnamespan", cla:"penfont"},
                               obj.name || obj.instid],
@@ -1328,7 +1327,7 @@ app.pcd = (function () {
 
 
     showContentControls = function () {
-        var rssurl = app.hardhome + "/rsscoop?coop=" + dst.id;
+        var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
         var html = [
             ["div", {id:"pcdactcontentdiv"}, 
              [["div", {id:"pcdacrssdiv"},
@@ -1636,34 +1635,34 @@ return {
 
 
     settings: function (obj) {
-        var html;
         if(obj) {
             dst.obj = obj; }
-        html = ["div", {id: "pcdsettingsdlgdiv"},
-                [["div", {cla: "bumpedupwards"},
-                  ["div", {cla: "headingtxt"}, "Settings"]],
-                 ["div", {cla: "pcdsectiondiv"},
-                  adminSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  (dst.type === "coop"? membershipSettingsHTML() : "")],
-                 ["div", {cla: "pcdsectiondiv"},
-                  picSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  descripSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  (dst.type === "pen"? app.login.accountSettingsHTML() : "")],
-                 ["div", {cla: "pcdsectiondiv"},
-                  keywordSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  mailinSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  soloSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  rssSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  embedSettingsHTML()],
-                 ["div", {cla: "pcdsectiondiv"},
-                  calendarSettingsHTML()]]];
+        var html = [
+            "div", {id: "pcdsettingsdlgdiv"},
+            [["div", {cla: "bumpedupwards"},
+              ["div", {cla: "headingtxt"}, "Settings"]],
+             ["div", {cla: "pcdsectiondiv"},
+              adminSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              (dst.type === "coop"? membershipSettingsHTML() : "")],
+             ["div", {cla: "pcdsectiondiv"},
+              picSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              descripSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              (dst.type === "profile"? app.login.accountSettingsHTML() : "")],
+             ["div", {cla: "pcdsectiondiv"},
+              keywordSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              mailinSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              soloSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              rssSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              embedSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              calendarSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    app.login.accountSettingsInit();
