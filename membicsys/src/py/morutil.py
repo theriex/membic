@@ -4,6 +4,7 @@ import logging
 import datetime
 import re
 import json
+import urllib
 
 def nowISO():
     """ Return the current time as an ISO string """
@@ -207,4 +208,10 @@ def htmlquot(txt):
     return txt.replace("\"", "&quot;")
 
 
+def safeURIEncode(stringval, stripnewlines = False):
+    if not stringval:
+        stringval = ""
+    if stripnewlines:
+        stringval = ''.join(stringval.splitlines())
+    return urllib.quote(stringval.encode("utf-8"))
 

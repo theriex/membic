@@ -45,8 +45,25 @@ app.profile = (function () {
     }
 
 
+    //obj may be either full profile or abbreviated obj with email/password
     function updateProfile (obj, succf, failf) {
-        jt.err("profile.updateProfile not implemented yet.");
+        if(!obj) {
+            obj = myProfile(); }
+        if(!obj) {
+            if(failf) {
+                return failf(400, "No profile object to update"); }
+            return; }  //nothing to do
+        var data = jt.objdata(obj) + "&" + app.login.authparams()
+        jt.call("POST", "/updacc", data,
+                function (updprof) {
+                    app.login.setAuth(updprof.email, updprof.token);
+                    if(succf) {
+                        succf(updprof); } },
+                function (code, errtxt) {
+                    jt.log("updateProfile " + code + " " + errtxt);
+                    if(failf) {
+                        failf(code, errtxt); } },
+                jt.semaphore("profile.updateProfile"));
     }
 
 
@@ -124,6 +141,25 @@ app.profile = (function () {
     }
 
 
+    function setNoUpdate (field, val) {
+        var prof = myProfile();
+        if(!prof) {  //not logged in, so nothing to do
+            return; }
+        prof.settings = prof.settings || {};
+        prof.settings[field] = val;
+    }
+
+
+    function getWithDefault (field, dval) {
+        var prof = myProfile();
+        dval = dval || null;
+        if(!prof) {  //not logged in, so nothing to do
+            return dval; }
+        prof.settings = prof.settings || {};
+        return prof.settings[field] || dval;
+    }
+
+
     function deserializeFields (prof) {
         app.lcs.reconstituteJSONObjectField("settings", prof);
         app.lcs.reconstituteJSONObjectField("coops", prof);
@@ -143,6 +179,9 @@ app.profile = (function () {
         verifyStashKeywords: function (prof) { verifyStashKeywords(prof); },
         verifyMembership: function (coop) { verifyMembership(coop); },
         getKeywordUse: function (prof) { return getKeywordUse(prof); },
+        setnu: function (field, val) { setNoUpdate(field, val); },
+        getwd: function (field, dval) { getWithDefault(field, dval); },
+        resetStateVars: function () { mypid = ""; },
         deserializeFields: function (prof) { deserializeFields(prof); }
     };
 }());

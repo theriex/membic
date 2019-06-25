@@ -22,31 +22,24 @@ import urllib
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """
-    # auth and setup
+    # private auth and setup, see safe_json
     email = db.EmailProperty(required=True)
     phash = db.StringProperty(required=True)
     status = db.StringProperty()    # Pending|Active|Inactive|Unreachable
     mailbounce = db.TextProperty(required=False)   # isodate1,isodate2...
     actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
-    # app data
+    # public app data
     name = db.StringProperty()      # optional but recommended public name
     aboutme = db.TextProperty()     # optional description, links to site etc
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
-    settings = db.TextProperty()    # JSON skin, key overrides
+    settings = db.TextProperty()    # JSON skin, key overrides, invites
     coops = db.TextProperty()       # JSON coopid:lev map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
     accessed = db.StringProperty()  # isodate
     preb = db.TextProperty()        # JSON membics for display, overflow link
-
-# The activation code is delivered by activation email only
-filter_server = ["actcode"]
-
-# Private fields are not visible to anyone except the account owner
-filter_private = ["email", "phash", "status", "mailbounce", "actsends",
-                  "actcode"]
 
 
 def verify_secure_comms(handler, url):
@@ -319,6 +312,16 @@ def make_redirect_url_base(returnto, requrl):
     return redurl
 
 
+def safe_json(muser, filtering):
+    hides = ["email", "phash", "status", "mailbounce", "actsends", "actcode"]
+    if filtering == "personal":
+        hides = ["actcode"]  # activation code delivered by email only
+    jsontxt = morutil.obj2JSON(muser, filts=hides)
+    if filtering == "personal":  # include access token for subsequent calls
+        jsontxt = "{\"token\":\"" + token_for_user(muser) + "\", " + jsontxt[1:]
+    return jsontxt
+
+
 class CreateAccount(webapp2.RequestHandler):
     def post(self):
         url = self.request.url;
@@ -329,7 +332,8 @@ class CreateAccount(webapp2.RequestHandler):
         muser.created = cretime
         muser.modified = cretime
         muser.accessed = cretime
-        if not update_email_and_password(self, muser):
+        token = update_email_and_password(self, muser)
+        if not token:
             return  # error already reported
         if not update_account_fields(self, muser):
             return  # error already reported
@@ -339,8 +343,7 @@ class CreateAccount(webapp2.RequestHandler):
         # force retrieval to hopefully minimize lag finding the new instance
         muser = MUser.get_by_id(int(muser.key().id()))
         bust_cache_key(muser.email)  # known but not cached. probably overkill
-        token = token_for_user(muser)
-        morutil.srvJSON(self, "[{\"token\":\"" + token + "\"}]")
+        morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class GetToken(webapp2.RequestHandler):
@@ -358,11 +361,11 @@ class GetToken(webapp2.RequestHandler):
         if ph != muser.phash:
             morutil.srverr(self, 401, "No match for those credentials")
             return
-        token = token_for_user(muser)
         if self.request.get('format') == "record":
+            token = token_for_user(muser)
             writeTextResponse("token: " + token + "\n", self.response)
         else:
-            morutil.srvJSON(self, "[{\"token\":\"" + token + "\"}]")
+            morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class TokenAndRedirect(webapp2.RequestHandler):
@@ -409,7 +412,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
 
 # This emails a link to access the app via the same token stored in the
 # cookie or local storage.  The link will work until they change their
-# password.  Client can choose convenience or immediate reset.
+# password.  Client can choose to continue or reset.
 class MailPasswordReset(webapp2.RequestHandler):
     def post(self):
         eaddr = normalize_email(self.request.get('emailin') or "")
@@ -455,16 +458,15 @@ class UpdateAccount(webapp2.RequestHandler):
         account = MORAccount.get_by_id(account.key().id())
         cache_hashtag(account)
         token = token_for_user(account)
-        morutil.srvJSON(self, "[{\"token\":\"" + token + "\"}]")
+        morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class GetAccount(webapp2.RequestHandler):
     def get(self):
-        account = authenticated(self.request)
-        if not account:
+        muser = authenticated(self.request)
+        if not muser:
             return morutil.srverr(self, 401, "Authentication failed")
-        # actcode is delivered via activation email only
-        morutil.srvObjs(self, [account], filts=filter_server)
+        morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class SendActivationCode(webapp2.RequestHandler):
@@ -479,8 +481,7 @@ class SendActivationCode(webapp2.RequestHandler):
         send_activation_code(self, muser)  # updates actsends
         muser.put()  #nocache
         bust_cache_key(account.email)
-        # actcode is delivered via activation email only
-        morutil.srvObjs(self.response, [muser], filts=filter_server)
+        morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class ActivateAccount(webapp2.RequestHandler):
@@ -490,29 +491,29 @@ class ActivateAccount(webapp2.RequestHandler):
             code = self.request.get('code')
             if not code:
                 return morutil.srverr(self, 412, "No activation code given")
-            account = MUser.get_by_id(int(key))
-            if not account:
+            muser = MUser.get_by_id(int(key))
+            if not muser:
                 return morutil.srverr(self, 404, "Account key " + key + 
                                       " not found")
-            if account.actcode != code:
+            if muser.actcode != code:
                 return morutil.srverr(self, 412, "Activation code not matched")
-            account.status = "Active"
-            account.put()
-            bust_cache_key(account.email)
+            muser.status = "Active"
+            muser.put()
+            bust_cache_key(muser.email)
             self.response.headers['Content-Type'] = 'text/html'
             self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
             return
         # no key, confirm account deactivation
-        account = authenticated(self.request)
+        muser = authenticated(self.request)
         status = self.request.get('status')
-        if not account or status != "Inactive":
+        if not muser or status != "Inactive":
             return morutil.srverr(self, 412, "Invalid account deactivation")
-        account.status = status  # Inactive
-        account.actcode = ""
-        account.actsends = ""
-        account.put()
-        bust_cache_key(account.email)
-        morutil.srvObjs(self, [account], filts=filter_server)
+        muser.status = status  # Inactive
+        muser.actcode = ""
+        muser.actsends = ""
+        muser.put()
+        bust_cache_key(muser.email)
+        morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
 class GetProfileById(webapp2.RequestHandler):
@@ -524,7 +525,7 @@ class GetProfileById(webapp2.RequestHandler):
         prof = cached_get(profid, MUser)
         if not prof:
             return morutil.srverr(self, 404, "No profile for id " + pidstr)
-        morutil.srvObjs(self, [prof], filts=filter_private)
+        morutil.srvJSON(self, "[" + safe_json(muser, "public") + "]");
 
 
 class UploadPic(webapp2.RequestHandler):

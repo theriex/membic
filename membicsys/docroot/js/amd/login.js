@@ -11,7 +11,6 @@ app.login = (function () {
 
     var authname = "",
         authtoken = "",
-        moracct = null,
         cookdelim = "..morauth..",
         initialTopSectionHTML = "",
         toprightdivcontents = "",
@@ -58,9 +57,8 @@ app.login = (function () {
         jt.cookie(app.authcookname, "", -1);
         authtoken = "";
         authname = "";
-        moracct = null;
         app.review.resetStateVars();
-        app.pen.resetStateVars();
+        app.profile.resetStateVars();
     },
 
 
@@ -79,7 +77,7 @@ app.login = (function () {
 
 
     //Cookie timeout is enforced both by the expiration setting here,
-    //and by the server (moracct.py authenticated).  On FF14 with
+    //and by the server (muser.py authenticated).  On FF14 with
     //noscript installed, the cookie gets written as a session cookie
     //regardless of the expiration set here.  This happens even if
     //directly using Cookie.set, or setting document.cookie directly.
@@ -317,45 +315,15 @@ app.login = (function () {
                         name:"passin", id:"passin"}]]));
         //Give a choice on how many posts before queueing them.
         jt.out("maxpostperdaydiv", jt.tac2html(
-            [["label", {fo:"maxpdsel", cla:"liflab"}, "Queuing"],
+            [["label", {fo:"maxpdsel", cla:"liflab"}, "Feed"],
              ["select", {id:"maxpdsel"},
-              [["option", {value:1}, 1],
-               ["option", {selected:jt.toru(app.pen.maxPostsPerDay() === 2),
-                           value:2}, 2]]],
-             ["span", {cla:"accstatvalspan"}, "&nbsp;(per day)"]]));
-    },
-
-
-    readUsermenuAccountForm = function () {
-        var ua, elem;
-        ua = { email: moracct.email,
-               penName: moracct.penName };
-        ua.email = jt.byId("emailin").value.trim();
-        if(!jt.isProbablyEmail(ua.email)) {
-            return jt.out("usermenustat", "Invalid email address"); }
-        if(ua.email !== moracct.email &&
-           (!confirm("You will need to sign in again and re-activate your account from your new email address. Setting your email address to " + ua.email))) {
-            return; }
-        if(jt.byId("passin").value) {
-            ua.password = jt.byId("passin").value.trim(); }
-        elem = jt.byId("maxpdsel");
-        ua.maxpd = +(elem.options[elem.selectedIndex].value);
-        ua.penName = jt.byId("accpenin").value;
-        return ua;
-    },
-
-
-    getAccountInfoFromPenStash = function () {
-        var mypen = app.pen.myPenName();
-        if(mypen && mypen.stash && mypen.stash.account) {
-            moracct = mypen.stash.account; }
-    },
-
-
-    setPenStashFromAccountInfo = function (acct) {
-        var mypen = app.pen.myPenName();
-        if(mypen && mypen.stash && mypen.stash.account) {
-            mypen.stash.account = acct; }
+              [["option", {value:1}, 
+                1],
+               ["option", {selected:jt.toru(
+                   app.profile.getwd("maxPostsPerDay", 1) === 2),
+                           value:2}, 
+                2]]],
+             ["span", {cla:"accstatvalspan"}, "&nbsp;membic per day"]]));
     },
 
 
@@ -519,7 +487,7 @@ return {
                      ["div", {cla:"lifsep", id:"maxpostperdaydiv"}],
                      ["div", {cla:"lifsep", id:"usermenustat"}],
                      ["div", {cla:"dlgbuttonsdiv"},
-                      [["button", {type:"button", id:"okbutton",
+                      [["button", {type:"button", id:"accupdbutton",
                                    onclick: jt.fs("app.login.updateAccount()")},
                         "Update Personal"]]]]];
         return html;
@@ -573,18 +541,20 @@ return {
         if(emaddr !== authname) {
             jt.err("Please ok your email address change before deactivating.");
             return; }
-        if(confirm("If you want to re-activate your account after deactivating, you will need to confirm your email address again.")) {
-            jt.out("buttonornotespan", "Deactivating...");
-            params = app.login.authparams() + "&status=Inactive" + 
-                jt.ts("&cb=", "second");
-            jt.call("GET", "activate?" + params, null,
-                    function (accounts) {
-                        moracct = accounts[0];
-                        writeUsermenuAccountFormElements(moracct); },
-                    app.failf(function (code, errtxt) {
-                        jt.err("Deactivation failed " + code + ": " + errtxt);
-                        writeUsermenuAccountFormElements(moracct); }),
-                    jt.semaphore("login.deactivateAcct")); }
+        if(!confirm("If you want to re-activate your account after deactivating, you will need to confirm your email address again.")) {
+            return; }
+        jt.out("buttonornotespan", "Deactivating...");
+        params = app.login.authparams() + "&status=Inactive" + 
+            jt.ts("&cb=", "second");
+        jt.call("GET", "activate?" + params, null,
+                function (accounts) {
+                    app.lcs.put("profile", accounts[0]);
+                    writeUsermenuAccountFormElements(accounts[0]); },
+                app.failf(function (code, errtxt) {
+                    jt.err("Deactivation failed " + code + ": " + errtxt);
+                    writeUsermenuAccountFormElements(
+                        app.profile.myProfile()); }),
+                jt.semaphore("login.deactivateAcct"));
     },
 
 
@@ -596,11 +566,12 @@ return {
         jt.out("buttonornotespan", "Sending...");
         jt.call("POST", "sendcode?" + app.login.authparams(), "",
                 function (accounts) {
-                    moracct = accounts[0];
-                    writeUsermenuAccountFormElements(moracct); },
+                    app.lcs.put("profile", accounts[0]);
+                    writeUsermenuAccountFormElements(accounts[0]); },
                 app.failf(function (code, errtxt) {
                     jt.err("Sending failed " + code + ": " + errtxt);
-                    writeUsermenuAccountFormElements(moracct); }),
+                    writeUsermenuAccountFormElements(
+                        app.profile.myProfile()); }),
                 jt.semaphore("login.sendActivation"));
     },
 
@@ -687,47 +658,30 @@ return {
 
 
     updateAccount: function () {
-        var ua, data, contf = app.pcd.display;
-        ua = readUsermenuAccountForm();
-        //moracct.penName may not be populated if brand new
-        if(ua.penName !== app.pen.myPenName().name) {
-            if(!confirm("Theme action logs and older membics may still reference your previous pen name \"" + moracct.penName + "\".")) {
-                return; } }
-        if(ua.penName !== app.pen.myPenName().name ||
-               ua.maxpd !== app.pen.maxPostsPerDay()) {
-            app.pen.maxPostsPerDay(ua.maxpd);
-            contf = function () {
-                app.pen.getPen("", function (pen) {
-                    pen.name = ua.penName;
-                    app.pen.updatePen(
-                        pen,
-                        function (ignore /*penref*/) {
-                            app.login.updateTopSection();
-                            app.login.nukeAppData();
-                            app.history.dispatchState(); },
-                        function (code, errtxt) {
-                            jt.out("usermenustat", "Pen name update failed " + 
-                                   code + ": " + errtxt); }); }); }; }
-        else if(ua.password) {
-            if(!confirm("The next time you sign in, you will need to use your updated password.")) {
-                return; } }
-        if(ua.email === moracct.email && !ua.password) {
-            contf(); }  //nothing changed
-        else {  //account info changed
-            if(ua.email !== moracct.email) {
-                contf = app.login.logout; }
-            data = jt.objdata(ua) + "&" + authparams();
-            jt.log("updacc data: " + data);
-            jt.call("POST", secureURL("updacc"), data,
-                    function (objs) {
-                        setAuthentication(authname, objs[0].token);
-                        setPenStashFromAccountInfo(objs[0]);
-                        moracct = null;  //reset so they log in again
-                        contf(); },
-                    app.failf(function (code, errtxt) {
-                        jt.out("setstatdiv", "Account update failed " +
-                               code + ": " + errtxt); }),
-                    jt.semaphore("login.updateAccount")); }
+        var emval = jt.byId("emailin").value.trim();
+        if(!jt.isProbablyEmail(emval)) {
+            return jt.out("usermenustat", "Invalid email address"); }
+        var emold = app.profile.myProfile().email;
+        var passval = jt.byId("passin").value.trim();
+        if(!passval && emval !== emold) {
+            return jt.out("usermenustat", "Password needed for email change"); }
+        if(emval !== emold && !confirm("You will need to re-activate your account from your new email address " + emval)) {
+            return; }
+        maxpd = Number(mpdsel.options[mpdsel.selectedIndex].value);
+        app.profile.setnu("maxPostsPerDay", maxpd);
+        var updsettings = app.profile.myProfile().settings;
+        jt.byId("accupdbutton").disabled = true;
+        jt.out("usermenustat", "Updating personal info...")
+        //account update also updates authent info.
+        app.profile.update(
+            {emailin:emval, passin:passval, settings:updsettings},
+            function () { //updated account already cached
+                jt.byId("accupdbutton").disabled = false;
+                jt.out("usermenustat", "Personal info updated."); },
+            function (code, errtxt) {
+                jt.byId("accupdbutton").disabled = false;
+                jt.byId("usermenustat", "Update failed code " + code + " " +
+                        errtxt); });
     },
 
 
@@ -743,28 +697,11 @@ return {
     },
 
 
-    noteAccountInfo: function (pen) {
-        //only have stash.account if it is the pen you logged in with
-        if(pen && pen.stash && pen.stash.account) {
-            moracct = pen.stash.account;
-            app.pen.setMyPenId(jt.instId(pen)); }
-    },
-
-
-    noteUpdatedAccountInfo: function (account) {
-        moracct = account;
-    },
-
-
     accountInfo: function (fieldname) {
-        var pen;
-        if(moracct) {
-            return moracct[fieldname]; }
-        pen = app.pen.myPenName();
-        if(pen && pen.stash && pen.stash.account) {
-            app.login.noteAccountInfo(pen);
-            return moracct[fieldname]; }
-        return "";
+        var prof = app.profile.myProfile();
+        if(prof && prof.stash && prof.settings[fieldname]) {
+            return prof.stash[fieldname]; }
+        return ""
     },
 
 
@@ -868,12 +805,13 @@ return {
         //pop or set by handleRedirectOrStartWork
         state = app.history.currState();
         if(!state || !state.view) {
-            if(app.login.isLoggedIn()) {  //your profile is your home
-                state = {view: "profile"}; }
-            else if(app.pfoj && app.pfoj.obtype === "Coop") {
+            //if pfoj is a theme or profile, view it (specified by the URL)
+            if(app.pfoj && app.pfoj.obtype === "Coop") {
                 state = {view:"coop", coopid:app.pfoj.instid}; }
             else if(app.pfoj && app.pfoj.obtype === "MUser") {
                 state = {view:"profile", profid:app.pfoj.instid}; }
+            else if(app.login.isLoggedIn()) {  //your profile is your home
+                state = {view: "profile"}; }
             else {
                 state = {view: "themes"}; } }
         if(params.url) {

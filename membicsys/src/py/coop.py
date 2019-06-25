@@ -23,7 +23,6 @@ class Coop(db.Model):
     description = db.TextProperty()
     picture = db.BlobProperty()
     top20s = db.TextProperty()      # accumulated top 20 reviews of each type
-    calembed = db.TextProperty()    # embedded calendar html
     founders = db.TextProperty()    #CSV of founding member penids
     moderators = db.TextProperty()  #CSV of moderator member penids
     members = db.TextProperty()     #CSV of regular member penids

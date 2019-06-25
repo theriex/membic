@@ -274,7 +274,10 @@ def membics_from_prebuilt(obj):
 def content_and_prefetch(handler, obj):
     if obj:
         content = membics_from_prebuilt(obj)
-        pfoj = obj2JSON(obj)
+        pfoj = obj2JSON(obj)  # includes all fields (public)
+        if obj.key().kind() == "MUser":
+            # always return fully filtered account info in document source.
+            pfoj = muser.safe_json(obj, "public")
     else:
         content, pfoj = recent_active_content(handler)
     content += interimcont

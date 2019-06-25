@@ -5,11 +5,11 @@ import pickle
 import json
 import logging
 from cacheman import *
-import moracct
+import muser
+import morutil
 import datetime
 import re
 import rev
-import pen
 
 class MembicCounter(db.Model):
     """ A Membic sharded Counter instance. One instance for each
@@ -257,20 +257,18 @@ class BumpCounter(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))
-        pnm = None
-        penid = self.request.get("penid")
-        if penid and int(penid):
-            acc = moracct.authenticated(self.request)
-            if acc:
-                pnm = cached_get(penid, pen.PenName)
-        field = normalized_count_field(pnm, self.request.get("field"))
+        muser = None
+        profid = self.request.get("profid")
+        if profid and int(profid):
+            muser = muser.authenticated(self.request)
+        field = normalized_count_field(prof, self.request.get("field"))
         refer = self.request.get("refer")
         logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", penid: " + str(penid) + ", field: " + str(field) + ", refer: " + str(refer))
         counter = get_mctr(ctype, parid)
-        if pnm:  # note any new visitors
+        if muser:  # note any new visitors
             name = re.sub(r",+", "", pnm.name)  # strip any commas
-            name = moracct.safeURIEncode(name)
-            val = penid + ":" + name
+            name = morutil.safeURIEncode(name)
+            val = profid + ":" + name
             if not csv_contains(val, counter.logvis):
                 counter.logvis = prepend_to_csv(val, counter.logvis)
         if refer:  # note referral if given
@@ -286,7 +284,7 @@ class BumpCounter(webapp2.RequestHandler):
         put_mctr(counter, field)
         logging.info("BumpCounter " + counter.refp + "." + field + 
                      ": " + str(cval))
-        moracct.returnJSON(self.response, [counter])
+        morutil.srvObjs(self, [counter])
 
 
 class GetCounters(webapp2.RequestHandler):
@@ -295,17 +293,15 @@ class GetCounters(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))  # sets to 0 if not found
-        acc = None
+        muser = None
         if not ctype == "Coop":
-            acc = moracct.authenticated(self.request)
-            if not acc:
+            muser = muser.authenticated(self.request)
+            if not muser:
                 return srverr(self, "403", "Authentication failed")
         # Anyone following a theme has stats access, but profiles are private
-        if ctype == "PenName":
-            pnm = rev.acc_review_modification_authorized(acc, self)
-            if not pnm or (pnm and pnm.key().id() != parid):
-                return srverr(self, "403",
-                              "You may only view stats for your own profile")
+        if ctype == "Profile" and parid != muser.key().id():
+            return srverr(self, "403", 
+                          "You may only view stats for your own profile")
         elif (ctype == "Site" and 
             (not acc or acc.key().id() != 11005) and 
             (not self.request.host_url.startswith('http://localhost'))):
@@ -327,8 +323,7 @@ class GetCounters(webapp2.RequestHandler):
                 res[-1] = counter
             else:
                 res.append(counter)
-            return moracct.writeJSONResponse(json.dumps(res, True), 
-                                             self.response)
+            return morutil.srvJSON(self, json.dumps(res, True))
         refp = ctype + "Counter" + str(parid)
         daysback = 70  # max 10 weeks back if not restricted by batch_size
         dtnow = datetime.datetime.utcnow()
@@ -340,9 +335,9 @@ class GetCounters(webapp2.RequestHandler):
             vq = VizQuery(MembicCounter, "WHERE refp = :1 AND day > :2", 
                           refp, thresh)
         ctrs = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, batch_size=1000)
-        jsondat = moracct.qres2JSON(ctrs)
+        jsondat = morutil.qres2JSON(ctrs)
         memcache.set(cqk, jsondat)
-        moracct.writeJSONResponse(jsondat, self.response)
+        morutil.srvJSON(self, jsondat)
 
 
 class CurrentStat(webapp2.RequestHandler):
@@ -354,7 +349,7 @@ class CurrentStat(webapp2.RequestHandler):
         counter = get_mctr(ctype, parid)
         if not counter.modified:
             put_mctr(counter)  # JSON processing needs an id
-        moracct.returnJSON(self.response, [ counter ]);
+        morutil.srvObjs(self, [ counter ]);
         
 
 
