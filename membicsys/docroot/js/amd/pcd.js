@@ -628,6 +628,22 @@ app.pcd = (function () {
     },
 
 
+    personalSettingsHTML = function () {
+        if(dst.type !== "profile") {
+            return ""; }
+        var html = ["div", {cla:"formline"},
+                    [["a", {href:"#togglepersonalinfo",
+                            onclick:jt.fs("app.layout.togdisp('profpidiv')")},
+                      [["img", {cla:"ctmsetimg", src:"img/personinfo.png"}],
+                       ["span", {cla:"settingsexpandlinkspan"},
+                        "Personal Info"]]],
+                     ["div", {cla:"formline", id:"profpidiv",
+                              style:"display:none;"},
+                      app.login.accountSettingsHTML()]]];
+        return html;
+    },
+
+
     reviewTypeKeywordsHTML = function (prof) {
         var html = [];
         app.profile.verifyStashKeywords(prof);
@@ -683,10 +699,10 @@ app.pcd = (function () {
         html = ["div", {cla:"formline"},
                 [["a", {href:"#togglecustomkeywords",
                         onclick:jt.fs("app.layout.togdisp('profkwdsdiv')")},
-                  [["img", {cla:"ctmsetimg", src:"img/tag.png"}],
+                  [["img", {cla:"ctmsetimg", src:"img/checkbox.png"}],
                    ["span", {cla:"settingsexpandlinkspan"},
                     label]]],
-                 ["div", {cla:"formline",id:"profkwdsdiv",
+                 ["div", {cla:"formline", id:"profkwdsdiv",
                           style:"display:none;"},
                   [html,
                    ["div", {cla:"dlgbuttonsdiv"},
@@ -821,7 +837,7 @@ app.pcd = (function () {
         if(ta) {
             ta.readOnly = true;
             ta.value = "<iframe id=\"membiciframe\" src=\"" + app.hardhome +
-                "/" + dst.id + "?site=YOURSITE.COM\" " +
+                "/" + dst.id + "?site=EXAMPLE.COM\" " +
                 "style=\"position:relative;height:100%;width:100%\" " +
                 "seamless=\"seamless\" frameborder=\"0\"/></iframe>"; }
         ta = jt.byId("embwpta");
@@ -1476,7 +1492,7 @@ return {
              ["div", {cla: "pcdsectiondiv"},
               descripSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
-              (dst.type === "profile"? app.login.accountSettingsHTML() : "")],
+              personalSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
               keywordSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
@@ -1558,24 +1574,25 @@ return {
         var html;
         html = ["div", {id: "pcdembeddlgdiv"},
                 [["div", {cla: "bumpedupwards"},
-                  ["div", {cla: "headingtxt"}, "Embed " + dst.obj.name]],
+                  ["div", {cla: "headingtxt"}, 
+                   "Embed " + dst.type.capitalize()]],
+                 //iframe
+                 ["div", {cla: "pcdsectiondiv"},
+                  [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
+                   " (replace EXAMPLE.COM with your domain)",
+                   ["div", {cla: "embdlgline"},
+                    ["textarea", {id: "embifta", cla: "setpldlgta", 
+                                  rows: 5}]]]],
                  //Standalone URL
                  ["div", {cla: "pcdsectiondiv"},
                   [["span", {cla: "setpldlgmspan"}, "Standalone URL"],
                    " for use with your own custom domain",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embdlta", cla: "setpldlgta"}]]]],
-                 //iframe
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
-                   " (replace the site value with your domain)",
-                   ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embifta", cla: "setpldlgta", 
-                                  rows: 5}]]]],
                  //wordpress
                  ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Newsfeed"],
-                   " syndicated content display (recent membics)",
+                  [["span", {cla: "setpldlgmspan"}, "RSS Newsfeed"],
+                   " syndicated content display",
                    ["div", {cla: "embdlgline"},
                     ["textarea", {id: "embwpta", cla: "setpldlgta"}]]]],
                  //back
