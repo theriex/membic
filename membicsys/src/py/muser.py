@@ -13,12 +13,11 @@ import random
 import os
 import urllib
 
-# coops: {coopid:lev, coopid2:lev, ...} is verified when fetching recent
-# themes to ensure they are included in the downloaded set.  So the app can
-# always go from the login account to the appropriate theme summary.  Other
-# users themes may not be available if they were too old to fetch.  The lev
-# values are following:-1, member:1, moderator:2, founder:3.  Any falsy
-# value means no association.
+# coops: {coopid:info, coopid2:info2, ...}
+#   info: {lev:N, name:str, hashtag:str, descrip:str, pic:idstr, keywords:CSV}
+#   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
+# Any falsy value for lev means no association.  Maintained by client, updated
+# as available.  Used as a cache and may be out of date.
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """
@@ -35,7 +34,7 @@ class MUser(db.Model):
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
     settings = db.TextProperty()    # JSON skin, key overrides, invites
-    coops = db.TextProperty()       # JSON coopid:lev map, see note
+    coops = db.TextProperty()       # JSON coopid map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
     accessed = db.StringProperty()  # isodate

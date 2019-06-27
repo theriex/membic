@@ -215,3 +215,32 @@ def safeURIEncode(stringval, stripnewlines = False):
         stringval = ''.join(stringval.splitlines())
     return urllib.quote(stringval.encode("utf-8"))
 
+
+def safestr(val):
+    if not val:
+        return ""
+    try:
+        # str(val) yields ascii only. Names are not all english.
+        val = unicode(val)
+    except Exception as e:
+        logging.info("safestr exception: " + str(e))
+        val = val.encode('ascii', 'xmlcharrefreplace')
+        logging.info("safestr fallback encoding: " + val)
+    return val
+
+
+def onelinestr(val):
+    val = safestr(val);
+    val = val.replace("\n", " ")
+    if len(val) > 255:
+        val = val[:255]
+    return val
+
+
+# debug output doesn't show up in development log view, so this dumps text
+# at info level while making it easy to find/cleanup in code
+def debuginfo(text):
+    logging.info(text)
+
+
+

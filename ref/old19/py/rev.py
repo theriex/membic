@@ -5,8 +5,7 @@ from google.appengine.api import images
 from google.appengine.api import memcache
 import logging
 import urllib
-import muser
-import ovrf
+import moracct
 from morutil import *
 import pen
 import coop
@@ -31,20 +30,14 @@ import time
 #       -202: Batch update (e.g. iTunes upload or similar)
 #       -604: Marked as deleted
 #     Special handling reviews may not be posted to coops
-#
-# cankey (canonical key) is an alternate index based on collapsed review
-# field info.  It can be used to group multiple membics for the same thing
-# within a theme, or for search.  The value is maintained server-side for
-# consistency.  Multiple membics with the same cankey/penid/ctmid are
-# allowed but discouraged.
 class Review(db.Model):
-    """ Membic: URL or unique identifying information + why memorable """
+    """ Membic future self reflecting review of something """
     revtype = db.StringProperty(required=True)   # book, movie, music...
-    penid = db.IntegerProperty(required=True)    # who wrote this review
-    ctmid = db.IntegerProperty()                 # Coop id or 0 if source review
+    penid = db.IntegerProperty(required=True)    # who wrote the review
+    ctmid = db.IntegerProperty()                 # 0 if source review
     rating = db.IntegerProperty()                # 0-100
     srcrev = db.IntegerProperty()                # see class comment
-    mainfeed = db.IntegerProperty()              # 0 if ineligible, 1 if good
+    mainfeed = db.IntegerProperty()              # 0 if ineligible, 1 if ok
     cankey = db.StringProperty()                 # canonized key/subkey value
     modified = db.StringProperty()               # ISO date
     modhist = db.StringProperty()                # creation date, mod count
@@ -99,7 +92,7 @@ def acc_review_modification_authorized(acc, handler):
 def review_modification_authorized(handler):
     """ Return the PenName if the penid matches a pen name the caller is 
         authorized to modify, otherwise return False """
-    acc = muser.authenticated(handler.request)
+    acc = moracct.authenticated(handler.request)
     if not acc:
         srverr(handler, 401, "Authentication failed")
         return False
@@ -128,25 +121,23 @@ def safe_get_review_for_update(handler):
     return review
 
 
-def get_review_for_save(handler, acc):
-    revid = (intz(handler.request.get("_id")) or
-             intz(handler.request.get("instid")) or
-             intz(handler.request.get("revid")))
+def get_review_for_save(handler):
+    penid = intz(handler.request.get('penid'))
+    revid = intz(handler.request.get('_id'))
+    if not revid:
+        revid = intz(handler.request.get('revid'))
     review = None
     if revid:
         review = Review.get_by_id(revid)  # Review db instances not cached
-    if review:
-        if review.penid != acc.key().id():
-            srverr(handler, 401, "Not your review")
-            return False
-        if review.ctmid:
-            srverr(handler, 401, "Not a source review")
-            return False
     if not review:
-        revtype = handler.request.get('revtype')
-        review = Review(penid=acc.key().id(), revtype=revtype)
+        review = fetch_review_by_cankey(handler)
+        if not review:
+            revtype = handler.request.get('revtype')
+            review = Review(penid=penid, revtype=revtype)
+    if penid != review.penid:
+        srverr(handler, 401, "Not your review")
+        return False
     return review
-
 
 
 def canonize_cankey(cankey):
@@ -211,7 +202,7 @@ def create_cankey_for_review(review):
 
 
 def set_if_param_given(review, fieldname, handler, paramname):
-    defaultval = "Membic_parameter_unspecified"
+    defaultval = "MOR_parameter_unspecified"
     val = handler.request.get(paramname, default_value=defaultval)
     logging.info("set_if_param_given " + paramname + ": " + val)
     if val != defaultval:
@@ -236,100 +227,14 @@ def future_ok(review):
     return False
 
 
-def read_review_rating(handler):
-    rating = 60  # default to 3 stars (average)
-    ratingstr = handler.request.get('rating')
-    if ratingstr:  # a value, possibly "0", was specified
-        rating = int(ratingstr)
-        rating = max(rating, 0)
-        rating = min(rating, 100)
-    return rating
-
-
-def batch_flag_attrval(review):
-    return "\"batchUpdated\":\"" + review.modified + "\""
-
-
-def set_review_srcrev(handler, review, acc):
-    srcrev = 0
-    srcrevstr = handler.request.get('srcrev')
-    if srcrevstr:
-        val = intz(srcrevstr)
-        # Marking as deleted is done separately.  These values are allowed
-        # but not really supported for much anymore.
-        if ((val == -101 and not review.is_saved()) or val == -202):
-            srcrev = val
-    if self.request.get('mode') == "batch":
-        srcrev = -202
-        # batch upload overwrites svcdata since there isn't any yet
-        review.svcdata = "{" + batch_flag_attrval(review) + "}"
-    review.srcrev = srcrev
-
-
-def set_review_dispafter(review, acc):
-    # dispafter is only set on create, it is not changed on edit. If a
-    # dispafter were to be altered for one membic it could logically cascade
-    # into the entire queue.
-    if review.is_saved():
-        return
-    try:
-        mpd = 1
-        asd = json.loads(acc.settings or "{}")
-        if "maxPostsPerDay" in asd:
-            mpd = int(asd["maxPostsPerDay"])
-            mpd = max(1, mpd)
-            mpd = min(2, mpd)
-        wait = 24 / mpd  # every 24 hours or every 12 hours
-        preb = json.loads(acc.preb or "[]")
-        if not len(preb):  # first post, so no wait.
-            review.dispafter = review.modified or nowISO()
-        else:
-            disp = preb[0]["dispafter"] or preb[0]["modified"]
-            disp = ISO2dt(disp)
-            disp += datetime.timedelta(hours=wait)
-            disp = dt2ISO(disp)
-            review.dispafter = max(review.modified, disp)
-    except Exception as e:
-        logging.warn("set_review_dispafter MUser: " + str(acc.key().id()) +
-                     " queuing failure: " + str(e))
-
-
-def set_review_mainfeed(rev, acc):
-    # NB: rev.key().id() is NOT defined at this point
-    rev.mainfeed = 1
-    # logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
-    if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
-        # debuginfo(logmsg + "is batch.")
-        rev.srcrev = -202
-        rev.mainfeed = 0
-    if rev.srcrev < 0:  # future review, batch update etc.
-        # debuginfo(logmsg + "is future or batch.")
-        rev.mainfeed = 0
-    if rev.ctmid > 0:   # coop posting, not source review
-        # debuginfo(logmsg + "is coop posting.")
-        rev.mainfeed = 0
-    if not acc.actcode:  # account needs help
-        rev.mainfeed = 0
-    if not rev.text or len(rev.text) < 65:  # not substantive (UI indicated)
-        # debuginfo(logmsg + "text not substantive.")
-        rev.mainfeed = 0
-    if not rev.rating or rev.rating < 60:  # 3 stars or better
-        # debuginfo(logmsg + "is not highly rated.")
-        rev.mainfeed = 0
-    # debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
-
-
-# Read the field values for a source review.  Theme reviews are copied from
-# source reviews (post-through model) so not read directly.
-def read_review_values(handler, review, acc):
+def read_review_values(handler, review):
     """ Read the form parameter values into the given review """
-    review.revtype = handler.request.get('revtype') or "other"
-    # penid was already set when review was retrieved/constructed
-    review.ctmid = 0  # reading fields for a source review
-    review.rating = read_review_rating(handler)
-    set_review_srcrev(handler, review, acc)
-    # mainfeed and cankey set after other fields read
-    note_modified(review)  # sets modified and modhist
+    review.penid = intz(handler.request.get('penid'))
+    review.ctmid = intz(handler.request.get('ctmid'))
+    review.revtype = handler.request.get('revtype')
+    ratingstr = handler.request.get('rating')
+    if ratingstr:
+        review.rating = int(ratingstr)
     set_if_param_given(review, "keywords", handler, "keywords")
     set_if_param_given(review, "text", handler, "text")
     # review.revpic is uploaded separately, but deleted via flag:
@@ -337,30 +242,33 @@ def read_review_values(handler, review, acc):
     if val == "DELETED":
         review.revpic = None
     set_if_param_given(review, "imguri", handler, "imguri")
-    # icwhen and icdata are for runtime relay tracking, managed by consvc
-    set_review_dispafter(review, acc)
-    set_if_param_given(review, "altkeys", handler, "altkeys")
-    set_if_param_given(review, "svcdata", handler, "svcdata")
-    review.penname = acc.name
-    set_if_param_given(review, "orids", handler, "orids")
-    # helpful is updated separately, not by review owner
-    # remembered is updated separately, not by review owner
-    # key/subkey fields are always read, others updated only if given:
-    review.name = onelinestr(handler.request.get('name'))
-    review.title = onelinestr(handler.request.get('title'))
+    note_modified(review)
+    review.name = moracct.onelinestr(handler.request.get('name'))
+    review.title = moracct.onelinestr(handler.request.get('title'))
     set_if_param_given(review, "url", handler, "url")
     set_if_param_given(review, "rurl", handler, "rurl")
-    review.artist = onelinestr(handler.request.get('artist'))
-    review.author = onelinestr(handler.request.get('author'))
+    review.artist = moracct.onelinestr(handler.request.get('artist'))
+    review.author = moracct.onelinestr(handler.request.get('author'))
     set_if_param_given(review, "publisher", handler, "publisher")
     set_if_param_given(review, "album", handler, "album")
     set_if_param_given(review, "starring", handler, "starring")
     set_if_param_given(review, "address", handler, "address")
     set_if_param_given(review, "year", handler, "year")
-    # summary values
-    set_review_mainfeed(review, acc)
-    review.cankey = create_cankey_for_review(review)  # server consistency
-
+    review.cankey = handler.request.get('cankey')
+    if not review.cankey:
+        review.cankey = create_cankey_from_request(handler)
+    set_if_param_given(review, "altkeys", handler, "altkeys")
+    srevidstr = handler.request.get('srevid')
+    if srevidstr:
+        review.srevid = intz(srevidstr)
+    set_if_param_given(review, "svcdata", handler, "svcdata")
+    srcrevstr = handler.request.get('srcrev')
+    if srcrevstr:
+        srcrevid = intz(srcrevstr)
+        if srcrevid != -101 or future_ok(review):
+            review.srcrev = intz(srcrevstr)
+    else:
+        review.srcrev = 0
 
 
 def fetch_review_by_ptc(penid, revtype, cankey):
@@ -369,6 +277,62 @@ def fetch_review_by_ptc(penid, revtype, cankey):
     reviews = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
     if len(reviews) > 0:
         return reviews[0]
+
+
+def fetch_review_by_cankey(handler):
+    penid = intz(handler.request.get('penid'))
+    revtype = handler.request.get('revtype')
+    cankey = handler.request.get('cankey')
+    if not cankey:
+        cankey = create_cankey_from_request(handler)
+    return fetch_review_by_ptc(penid, revtype, cankey)
+
+
+def batch_flag_attrval(review):
+    return "\"batchUpdated\":\"" + review.modified + "\""
+
+
+def set_review_mainfeed(rev, acc):
+    # NB: rev.key().id() is NOT defined at this point
+    rev.mainfeed = 1
+    logmsg = "set_review_mainfeed " + (rev.title or rev.name) + " "
+    if rev.svcdata and batch_flag_attrval(rev) in rev.svcdata:
+        # moracct.debuginfo(logmsg + "is batch.")
+        rev.srcrev = -202
+        rev.mainfeed = 0
+    if rev.srcrev < 0:  # future review, batch update etc.
+        # moracct.debuginfo(logmsg + "is future or batch.")
+        rev.mainfeed = 0
+    if rev.ctmid > 0:   # coop posting, not source review
+        # moracct.debuginfo(logmsg + "is coop posting.")
+        rev.mainfeed = 0
+    if acc.authconf:  # account needs help
+        rev.mainfeed = 0
+    if not rev.text or len(rev.text) < 65:  # not substantive (matches UI)
+        # moracct.debuginfo(logmsg + "text not substantive.")
+        rev.mainfeed = 0
+    if not rev.rating or rev.rating < 60:  # 3 stars or better
+        # moracct.debuginfo(logmsg + "is not highly rated.")
+        rev.mainfeed = 0
+    # moracct.debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
+
+
+def set_review_dispafter(review, pnm):
+    # dispafter is only set on create, it is not changed on edit. If a
+    # dispafter were to be altered for one membic it could logically cascade
+    # into the entire queue.
+    if review.is_saved():
+        return
+    mpd = 1
+    jstr = pnm.settings or "{}"
+    try:
+        psd = json.loads(jstr)
+        if "maxPostsPerDay" in psd:
+            mpd = min(2, int(psd["maxPostsPerDay"]))
+        review.dispafter = mblock.get_queuing_vis_date(pnm.key().id(), mpd)
+    except Exception as e:
+        logging.warn("set_review_dispafter pen: " + str(pnm.key().id()) +
+                     " queuing failure: " + str(e))
 
 
 def prepend_to_main_feeds(review, pnm):
@@ -441,7 +405,7 @@ class ProfRevCache(object):
         return json.dumps([self.publicprofinst] + self.mainlist + self.supplist)
     def update_memcache(self):
         mckey = self.prefix + str(self.publicprofinst["_id"])
-        debuginfo("updating memcache " + mckey)
+        moracct.debuginfo("updating memcache " + mckey)
         memcache.set(mckey, self.cached_value())
 
 
@@ -553,9 +517,9 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
         inst = fetch_validated_instance(tidstr, prc, rev, dbprofinst)
         if inst:
             trevs.append(inst)
-    # debuginfo("update_top_membics about to sort trevs.")
+    # moracct.debuginfo("update_top_membics about to sort trevs.")
     # for idx in range(len(trevs)):
-    #     debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
+    #     moracct.debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
     trevs = sorted(trevs, key=itemgetter('rating', 'modified'), 
                    reverse=True)
     tids = idlist_from_instlist(trevs, topmax)
@@ -564,8 +528,8 @@ def update_top_membics(cacheprefix, dbprofinst, rev, prc):
         newdict["latestrevtype"] = orgdict["latestrevtype"]
     if "t20lastupdated" in orgdict:
         newdict["t20lastupdated"] = orgdict["t20lastupdated"]
-    # debuginfo("orgdict: " + str(orgdict))
-    # debuginfo("newdict: " + str(newdict))
+    # moracct.debuginfo("orgdict: " + str(orgdict))
+    # moracct.debuginfo("newdict: " + str(newdict))
     if newdict == orgdict:
         logging.info("update_top_membics: no change")
         return None
@@ -613,7 +577,7 @@ def update_prof_cache(ckey, rev):
         rev = json.loads(moracct.obj2JSON(rev))
     jstr = memcache.get(ckey)
     if jstr and rev["_id"] in jstr:
-        debuginfo("update_prof_cache Review " + rev["_id"] + 
+        moracct.debuginfo("update_prof_cache Review " + rev["_id"] + 
                           " in " + ckey)
         replist = []
         cachelist = json.loads(jstr)
@@ -718,7 +682,6 @@ def write_coop_post_notes_to_svcdata(review, postnotes):
 def write_coop_reviews(review, pnm, ctmidscsv):
     ctmidscsv = ctmidscsv or ""
     postnotes = []
-    coops = []
     for ctmid in csv_list(ctmidscsv):
         # get cooperative theme
         ctm = cached_get(intz(ctmid), coop.Coop)
@@ -733,26 +696,26 @@ def write_coop_reviews(review, pnm, ctmidscsv):
             logging.info("write_coop_reviews: not member of " + ctmid)
             continue
         # get/create theme membic for update and write it to the db
-        ctmrev = None
         where = "WHERE ctmid = :1 AND srcrev = :2"
         vq = VizQuery(Review, where, int(ctmid), review.key().id())
         revs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
+        ctmrev = None
         if len(revs) > 0:
             ctmrev = revs[0]
         else:
             ctmrev = Review(penid=penid, revtype=review.revtype)
-        debuginfo("    copying source review")
+        moracct.debuginfo("    copying source review")
         copy_source_review(review, ctmrev, ctmid)
         mctr.synchronized_db_write(ctmrev)
         logging.info("write_coop_reviews wrote review for: Coop " + ctmid + 
                      " " + ctm.name)
-        ctm = rebuild_prebuilt(ctm, review)  # returns updated Coop
+        # update cache, recalculate recent and top membics for theme
+        update_profile("coop", ctm, ctmrev, srcrev=review)
+        # note the review was posted to this theme
         logging.info("    appending post note")
         postnotes.append(coop_post_note(ctm, ctmrev))
-        coops.append(ctm)
     logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_coop_post_notes_to_svcdata(review, postnotes)
-    return coops
 
 
 def update_access_time_if_needed(pen):
@@ -771,18 +734,18 @@ def find_pen_or_coop_type_and_id(handler):
         return "coop", coopid, None
     auth = handler.request.get('authorize')
     penid = intz(handler.request.get('penid'))
-    # debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
+    # moracct.debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
     if penid and not auth:
         return "pen", penid, None
     if auth:
-        acc = muser.authenticated(handler.request)
+        acc = moracct.authenticated(handler.request)
         if not acc:  # error already reported
             return "pen", 0, None
         pens = pen.find_auth_pens(handler)
         if not pens or len(pens) == 0:
             return "pen", 0, None
         mypen = pens[0]
-        debuginfo("fpoctai auth pen: " + str(mypen))
+        moracct.debuginfo("fpoctai auth pen: " + str(mypen))
         acc.lastpen = mypen.key().id()
         put_cached_instance(acc.email, acc)
         mypen = update_access_time_if_needed(mypen)
@@ -825,12 +788,12 @@ def write_batch_reviews(pn, handler):
         review.rating = int(rdat["rating"])
         review.keywords = safe_dictattr(rdat, "keywords")
         review.text = safe_dictattr(rdat, "text")
-        review.name = onelinestr(safe_dictattr(rdat, "name"))
-        review.title = onelinestr(safe_dictattr(rdat, "title"))
+        review.name = moracct.onelinestr(safe_dictattr(rdat, "name"))
+        review.title = moracct.onelinestr(safe_dictattr(rdat, "title"))
         review.url = safe_dictattr(rdat, "url")
         review.rurl = safe_dictattr(rdat, "rurl")
-        review.artist = onelinestr(safe_dictattr(rdat, "artist"))
-        review.author = onelinestr(safe_dictattr(rdat, "author"))
+        review.artist = moracct.onelinestr(safe_dictattr(rdat, "artist"))
+        review.author = moracct.onelinestr(safe_dictattr(rdat, "author"))
         review.publisher = safe_dictattr(rdat, "publisher")
         review.album = safe_dictattr(rdat, "album")
         review.starring = safe_dictattr(rdat, "starring")
@@ -936,72 +899,35 @@ def prepare_image(img):
     return img
 
 
-# GAE max object size is 1mb.  A unicode char is 2-4 bytes.  Guessing around
-# 3k chars of storage for text elements: 10k.  200x200 pic: 40k.  Double for
-# safety, so a max of 900k for preb.  Go with 800k for preb.  If all membics
-# won't fit, the last entry in the preb array will be {overflow:id}.  
-# Rebuilding all the preb each time is a database hit. Comfortable for now.
-def rebuild_prebuilt(instance, review):
-    priminst = instance
-    kind = priminst.kind()
-    instid = priminst.key().id()
-    where = "WHERE penid = :1 ORDER BY modified DESC"
-    if kind == "Coop":
-        where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, instid)
-    sizemax = 800 * 1000  # 800k the short count way
-    preb = obj2JSON(review)  # encodes unicode characters, len testing accurate
-    currsize = len(jstr)
-    revcount = 1
-    overcount = 0
-    revs = vq.run(read_policy=STRONG_CONSISTENCY, deadline=60, batch_size=1000)
-    for rev in revs:
-        if str(rev.key().id()) == str(review.key().id()):
-            continue  # first entry was the latest version
-        if rev.srcrev and rev.srcrev < 0:
-            continue  # deleted or other ignorable
-        jstr = obj2JSON(rev)
-        if currsize + 1 + len(jstr) > sizemax:
-            overcount += 1
-            overflow = ovrf.get_overflow(kind, instid, overcount)
-            preb += ",{\"overflow\": \"" + str(overflow.key().id()) + "\"}"
-            instance.preb = "[" + preb + "]"
-            cached_put(instance)  # writes current MUser, Coop or Overflow
-            instance = overflow
-            preb = jstr
-            currsize = len(jstr)
-        else:
-            preb += "," + jstr
-            currsize += 1 + len(jstr)
-        revcount += 1
-    cached_put(instance)
-    logging.info("rebuild_prebuilt " + str(revcount) + " membics " + kind +
-                 " " + str(instid) + " overcount: " + str(overcount))
-    return priminst
-
-
 class SaveReview(webapp2.RequestHandler):
     def post(self):
-        acc = muser.authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
-            return  # error already reported
-        review = get_review_for_save(self, acc)
+            return
+        pnm = acc_review_modification_authorized(acc, self)
+        if not pnm:
+            return
+        review = get_review_for_save(self)
         if not review:
-            return  # error already reported
-        read_review_values(self, review, acc)
-        mctr.synchronized_db_write(review)
-        logging.info("SaveReview wrote Review " + str(review.key().id()))
-        acc = rebuild_prebuilt(acc, review)  # returns updated MUser
-        logging.info("SaveReview updated MUser.preb " + str(acc.key().id()))
-        objs = write_coop_reviews(review, pnm, self.request.get('ctmids'))
-        objs.insert(0, review)
-        objs.insert(0, acc)
-        morutil.srvObjs(self.response, objs)  # [acc, review, coop1, ...]
+            return
+        read_review_values(self, review)
+        review.penname = pnm.name
+        if self.request.get('mode') == "batch":
+            review.srcrev = -202
+            # not bothering to unpack and rewrite existing value unless needed
+            review.svcdata = "{" + batch_flag_attrval(review) + "}"
+        write_review(review, pnm, acc) # updates pen top20s
+        write_coop_reviews(review, pnm, self.request.get('ctmids'))
+        try:
+            pen.add_account_info_to_pen_stash(acc, pnm)
+        except Exception as e:
+            logging.info("Account info stash failure for updated pen " + str(e))
+        moracct.returnJSON(self.response, [ pnm, review ])
 
 
 class DeleteReview(webapp2.RequestHandler):
     def post(self):
-        acc = muser.authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return
         pnm = acc_review_modification_authorized(acc, self)
@@ -1099,7 +1025,7 @@ class RotateReviewPic(webapp2.RequestHandler):
 
 class SearchReviews(webapp2.RequestHandler):
     def get(self):
-        acc = muser.authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
@@ -1154,6 +1080,21 @@ class GetReviewById(webapp2.RequestHandler):
                     revs.append(review)
         moracct.returnJSON(self.response, revs)
 
+
+class GetReviewFeed(webapp2.RequestHandler):
+    def get(self):
+        revtype = self.request.get('revtype')
+        if not revtype or revtype not in known_rev_types:
+            revtype = "all"
+        feedcsv, blocks = mfeed.get_review_feed_pool(revtype)
+        jstr = blocks[0];
+        acc = moracct.authenticated(self.request)
+        pnm = None
+        if acc and intz(self.request.get('penid')):
+            pnm = acc_review_modification_authorized(acc, self)
+        jstr = mfeed.filter_for_client(blocks, pnm);
+        moracct.writeJSONResponse(jstr, self.response)
+        
 
 class ToggleHelpful(webapp2.RequestHandler):
     def get(self):
@@ -1212,7 +1153,7 @@ class FetchAllReviews(webapp2.RequestHandler):
 
 class FetchPreReviews(webapp2.RequestHandler):
     def get(self):
-        acc = muser.authenticated(self.request)
+        acc = moracct.authenticated(self.request)
         if not acc:
             return srverr(self, 401, "Authentication failed")
         penid = intz(self.request.get('penid'))
@@ -1264,6 +1205,7 @@ app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
                                ('.*/rotatepic', RotateReviewPic),
                                ('.*/srchrevs', SearchReviews),
                                ('.*/revbyid', GetReviewById), 
+                               ('.*/revfeed', GetReviewFeed),
                                ('.*/toghelpful', ToggleHelpful),
                                ('.*/blockfetch', FetchAllReviews),
                                ('.*/fetchprerevs', FetchPreReviews),
