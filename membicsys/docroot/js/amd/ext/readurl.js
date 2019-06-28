@@ -1,6 +1,6 @@
 /*global app, jt, unescape */
 
-/*jslint browser, multivar, white, fudge, for */
+/*jslint browser, white, fudge, for */
 
 
 //////////////////////////////////////////////////////////////////////
@@ -15,23 +15,14 @@
 app.readurl = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var svcName = "URLReader",  //ascii with no spaces, used as an id
-        //no attribution since no API provided.
+    var svcName = "URLReader";  //ascii with no spaces, used as an id.
+    //no attribution since no API provided.
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    valueForField = function (elem, field) {
-        var idx, val;
-        idx = elem.indexOf(field);
+    function valueForField (elem, field) {
+        var idx = elem.indexOf(field);
         if(idx >= 0) {
-            val = elem.slice(idx + field.length);
+            var val = elem.slice(idx + field.length);
             idx = val.indexOf("\"");
             if(idx >= 0) {  //double quote delimited
                 val = val.slice(idx + 1);
@@ -47,11 +38,11 @@ app.readurl = (function () {
                     val = val.slice(0, idx);
                     return val; } } }
         return "";
-    },
+    }
 
 
-    elementForStringSearch = function (html, targetstr, elemtype) {
-        var found = false, start, end, idx, str = "";
+    function elementForStringSearch (html, targetstr, elemtype) {
+        var found = false; var start; var end; var idx; var str = "";
         idx = html.indexOf(targetstr);
         while(!found && idx >= 0) {
             start = html.lastIndexOf("<", idx);
@@ -64,23 +55,23 @@ app.readurl = (function () {
                 str = "";  //reset to avoid returning bad interim tags
                 idx = html.indexOf(targetstr, idx + 1); } }
         return str;
-    },
+    }
 
 
-    elementForString = function (html, targetstr, elemtype) {
+    function elementForString (html, targetstr, elemtype) {
         var str = elementForStringSearch(html, targetstr, elemtype);
         if(!str) {
             //src for at least rottentomatoes shows up fully escaped
             html = unescape(html);
             str = elementForStringSearch(html, targetstr, elemtype); }
         return str;
-    },
+    }
 
 
-    findTagContents = function (html, tagname, url) {
-        var content = "", idx;
+    function findTagContents (html, tagname, url) {
+        var content = "";
         try {
-            idx = html.indexOf("<" + tagname);
+            var idx = html.indexOf("<" + tagname);
             if(idx >= 0) {
                 content = html.slice(idx + 1);
                 idx = content.indexOf(">");
@@ -91,11 +82,11 @@ app.readurl = (function () {
                 jt.log("readurl " + url + " findTagContents: " + problem);
             }
         return content;
-    },
+    }
 
 
-    verifyFullURL = function (val, url) {
-        var urlbase, idx;
+    function verifyFullURL (val, url) {
+        var urlbase;
         if(val.indexOf("http") >= 0) {
             return val; }
         if(val.indexOf("/") === 0) {  //hard url off root
@@ -105,19 +96,19 @@ app.readurl = (function () {
             return urlbase + "/" + val; }
         //relative url
         urlbase = url.split("?")[0];
-        idx = urlbase.lastIndexOf("/");
+        var idx = urlbase.lastIndexOf("/");
         if(idx > 9) {  //the slashes at the start don't count
             urlbase = urlbase.slice(0, idx); }
         idx = urlbase.lastIndexOf("/");
         if(idx <= 9) {
             urlbase += "/"; }
         return urlbase + val;
-    },
+    }
 
 
-    setImageURI = function (review, html, url) {
-        var elem, val, index;
-        elem = elementForString(html, "image_src", "link");
+    function setImageURI (review, html, url) {
+        var val;
+        var elem = elementForString(html, "image_src", "link");
         if(elem) {
             val = valueForField(elem, "href");
             if(val) {
@@ -145,9 +136,9 @@ app.readurl = (function () {
                     review.title = val;
                     return; } } }
         //try groping in the dark for some kind of logo...
-        index = html.search(/src=[A-Za-z0-9\'\"\/]*logo\.png/i);
+        var index = html.search(/src=[A-Za-z0-9'"\/]*logo\.png/i);
         if(index < 0) {  //try same regex again, but unescape the html
-            index = unescape(html).search(/src=[A-Za-z0-9\'\"\/]*logo\.png/i);
+            index = unescape(html).search(/src=[A-Za-z0-9'"\/]*logo\.png/i);
             if(index >= 0) {
                 html = unescape(html); } }
         if(index > 0) {
@@ -162,7 +153,7 @@ app.readurl = (function () {
             if(val) {
                 review.imguri = verifyFullURL(val, url);
                 return; } }
-    },
+    }
 
 
     //In at least one use case, the query string part of the url was
@@ -172,18 +163,18 @@ app.readurl = (function () {
     //failing to actually link to the content is not an option.  If
     //the canonical url is less specific than the original, then go
     //with the original to avoid that problem.
-    probableInfoLoss = function (canonical, original) {
+    function probableInfoLoss (canonical, original) {
         if(original.startsWith(canonical)) {
             return true; }
         return false;
-    },
+    }
 
 
-    setCanonicalURL = function (review, html, url) {
-        var elem, val;
+    function setCanonicalURL (review, html, url) {
+        var val;
         review.rurl = url;  //keep original in case canonical fails
         //the Facebook url is frequently better than the canonical link
-        elem = elementForString(html, "og:url", "meta");
+        var elem = elementForString(html, "og:url", "meta");
         if(elem) {
             val = valueForField(elem, "content");
             if(val) {
@@ -199,12 +190,12 @@ app.readurl = (function () {
                 if(!probableInfoLoss(val, url)) {
                     review.url = val;
                     return; } } }
-    },
+    }
 
 
     //Set the type if it is unambigous, and there is no specific
     //supporting extension module other than this general reader.
-    setReviewType = function (review, ignore /*html*/, url) {
+    function setReviewType (review, ignore /*html*/, url) {
         var typemaps = [
             { urltxt: "imdb.", revtype: "movie" },
             { urltxt: "netflix.", revtype: "movie" },
@@ -218,10 +209,10 @@ app.readurl = (function () {
                 review.revtype = typemap.revtype;
                 return false; }
             return true; });
-    },
+    }
     
 
-    fixSpamdexing = function (val) {
+    function fixSpamdexing (val) {
         //choose the first real value out of any multi-line title
         if(val.indexOf("\n") >= 0) {
             var vs = val.split("\n");
@@ -232,22 +223,43 @@ app.readurl = (function () {
         //remove any preceding or trailing whitespace
         val = val.trim();
         //remove known useless prefixes
-        val = val.replace(/Home\s[\|\-]\s/ig, "");
-        val = val.replace(/Welcome\s[\|\-]\s/ig, "");
+        val = val.replace(/Home\s[|\-]\s/ig, "");
+        val = val.replace(/Welcome\s[|\-]\s/ig, "");
         //remove known useless suffixes (not as important, but still helpful)
-        val = val.replace(/\s[\|\-]\sHome/ig, "");
+        val = val.replace(/\s[|\-]\sHome/ig, "");
         return val;
-    },
+    }
 
 
-    setTitle = function (review, html, url) {
-        var elem, val;
+    function commonUnicodeConversions (val) {
+        //When this file first started, unicode characters would
+        //occasionally come through spelled out in escape sequences.  Some
+        //of those sequences were trapped and converted on a case-by-case
+        //basis to keep things rolling. For example a variant of a right
+        //leaning quotation mark was replaced with an apostrophe.  A better
+        //solution would be to generally re-encode the sequences, or
+        //trace/fix why the encoding broke in the first place.  It would be
+        //good for title strings and other text to come through unscathed
+        //regardless of language or emojii.
+        //
+        //The one exception I'm keeping here is to replace the long emphasis
+        //dash with a standard ascii dash surrounded by spaces.  The reason
+        //is that people use the long dash to sneak through ridiculously
+        //long titles that can't be obviously truncated.
+        val = val.replace(/—/g, " - ");
+        return val;
+    }
+
+
+
+    function setTitle (review, html, url) {
+        var val;
         if(review.acselkeyval) {  //if the name was selected from an 
             review.title = val;   //autocomplete display listing, then
             review.name = val;    //don't change it here
             return; }
         //the Facebook title is frequently better than the default tag title
-        elem = elementForString(html, "og:title", "meta");
+        var elem = elementForString(html, "og:title", "meta");
         if(elem) {
             val = valueForField(elem, "content"); }
         if(!val || !val.trim()) {
@@ -265,22 +277,19 @@ app.readurl = (function () {
             //ignore any other special sequences that look bad as text.
             //matches crap like "&raquo;"
             val = val.replace(/&#?x?\S\S\S?\S?\S?;/g, "");
-            //convert extended character nonsense common in some news sources
-            val = val.replace(/â/g, "'");
-            val = val.replace(/â/g, " - ");
+            val = commonUnicodeConversions(val);
             review.title = val.trim();
             review.name = val; }
-    },
+    }
 
 
     //Attempt to parse the title.  Add smarts on case basis.  In
     //general, guessing artist, title is most likely due to players
     //organizing music by artist, then album, then title
-    parseTitle = function (review) {
-        var text, i;
+    function parseTitle (review) {
         if(!review.title) {
             return; }
-        text = review.title;
+        var text = review.title;
         //case: "artist - title"
         //e.g. http://www.youtube.com/watch?v=KnIJOO__jVo
         if(text.indexOf(" - ") > 0) {
@@ -289,6 +298,7 @@ app.readurl = (function () {
             text = text.split(" - ");
             review.artist = text[0].trim();
             review.title = "";
+            var i;
             for(i = 1; i < text.length; i += 1) {
                 if(review.title) {
                     review.title += " - "; }
@@ -299,11 +309,11 @@ app.readurl = (function () {
             text = text.split(": ", 2);
             review.artist = text[0].trim();
             review.title = text[1].trim(); }
-    },
+    }
 
 
-    setPublisher = function (review, html) {
-        var elem, val;
+    function setPublisher (review, html) {
+        var elem; var val;
         if(!review.publisher) {
             if(!val) {
                 elem = elementForString(html, "og:site_name", "meta");
@@ -315,20 +325,20 @@ app.readurl = (function () {
                     val = valueForField(elem, "content"); } }
             if(val) {
                 review.publisher = val; } }
-    },
+    }
 
 
-    setAuthor = function (review, html, url) {
-        var elem, val,
-            brokens = [
+    function setAuthor (review, html, url) {
+        var val;
+        var brokens = [
                 {src: "washingtonpost", reg: /author:\["([^"]+)/},
-                {src: "huffingtonpost", reg: /author":\{[^\}]*name":"([^"]+)/},
+                {src: "huffingtonpost", reg: /author":\{[^}]*name":"([^"]+)/},
                 {src: "politi.co", reg: /content_author":"([^"]+)/}];
         if(!review.author) {
             //looking for "author" should pick up either 
             //<meta content="whoever" name="author">
             //<meta itemprop="author" content="whoever">
-            elem = elementForString(html, "author", "meta");
+            var elem = elementForString(html, "author", "meta");
             if(elem) {
                 val = valueForField(elem, "content"); }
             if(!val || val.startsWith("http")) {
@@ -339,10 +349,10 @@ app.readurl = (function () {
                             val = elem[1]; } } }); }
             if(val) {
                 review.author = val; } }
-    },
+    }
 
 
-    setReviewFields = function (review, html, url) {
+    function setReviewFields (review, html, url) {
         setReviewType(review, html, url);
         setTitle(review, html, url);
         if(review.revtype === "video") {  //try to be smart about music vids
@@ -354,30 +364,28 @@ app.readurl = (function () {
             review.svcdata = review.svcdata || {};
             review.svcdata.picdisp = "sitepic"; }
         setCanonicalURL(review, html, url);
-    },
+    }
 
 
-    readAsThemeName = function (membic, mimc, line) {
-        var cm = "themes:", pen;
+    function readAsThemeName (membic, mimc, line) {
+        var cm = "themes:";
         if(line) {
             if(line.toLowerCase().startsWith(cm)) {
                 line.slice(cm.length).csvarray().forEach(function (thn) {
                     readAsThemeName(membic, mimc, thn.trim()); });
                 line = ""; }
-            pen = app.pen.myPenName();
-            if(line && pen && pen.stash) {
-                Object.keys(pen.stash).forEach(function (key) {
-                    var ctm;
-                    if(key.startsWith("ctm")) {
-                        ctm = pen.stash[key];
-                        if(ctm.name.toLowerCase() === line.toLowerCase()) {
-                            mimc.themes.push(ctm);  //read only..
-                            line = ""; } } }); } }
+            var prof = app.profile.myProfile();
+            if(line && prof) {
+                Object.keys(prof.coops).forEach(function (ctmid) {
+                    var theme = prof.coops[ctmid];
+                    if(theme.name.toLowerCase() === line.toLowerCase()) {
+                        mimc.themes.push(ctmid);
+                        line = ""; } }); } }
         return line;
-    },
+    }
 
 
-    readAsKeyword = function (membic, mimc, line, addIfNotFound) {
+    function readAsKeyword (membic, mimc, line, addIfNotFound) {
         var cm = "keywords:";
         if(line) {
             if(line.toLowerCase().startsWith(cm)) {
@@ -397,37 +405,39 @@ app.readurl = (function () {
             mimc.keywords = mimc.keywords.csvappend(line);
             line = ""; }
         return line;
-    },
+    }
 
 
-    readAsRating = function (membic, ignore /*mimc*/, line) {
+    function readAsRating (membic, ignore /*mimc*/, line) {
         var match;
         if(line) {
             //start of line, followed by 1-5 asterisks, followed by space or
             //end.  This does not use a {1,5} count match because that can
             //also match more than 5 asterisks, which is more likely a sig
             //line or other text separator and not a rating.
-            match = line.match(/^(\*\*?\*?\*?\*?)(\s|$)/);
+            //lint wants the multiline 'm' modifier.  Doesn't matter.
+            match = line.match(/^(\*\*?\*?\*?\*?)(\s|$)/m);
             if(match) {
                 membic.rating = match[1].length * 20;
                 line = ""; } }
         return line;
-    },
+    }
 
 
-    readAsURL = function (membic, ignore /*mimc*/, line) {
+    function readAsURL (line) {
         var match;
         if(line) {
             match = line.match(/https?:\/\/[^\s'"]+/);
             if(match) {
-                //url already set, and possibly fixed, so don't overwrite
-                //membic.url = match[1];
+                //just note that the line was understood as a URL.  The
+                //membic url was already set and corrected earlier. This
+                //just clears any other URL lines.
                 line = ""; } }
         return line;
-    },
+    }
 
 
-    heuristicReadLine = function (membic, mimc, line) {
+    function heuristicReadLine (membic, mimc, line) {
         var title = membic.title || membic.name || "";
         title = title.trim();
         line = line || "";
@@ -437,7 +447,7 @@ app.readurl = (function () {
         line = readAsThemeName(membic, mimc, line);
         line = readAsKeyword(membic, mimc, line);
         line = readAsRating(membic, mimc, line);
-        line = readAsURL(membic, mimc, line);
+        line = readAsURL(line);
         if(line && !membic.text) {
             //First encountered text not understood as something else is
             //assumed to be the reason why this link is memorable.  It would
@@ -446,11 +456,11 @@ app.readurl = (function () {
             //is generally more annoying than helpful.
             membic.text = line; }
         return line;
-    },
+    }
 
 
-    paragraphToLine = function (txt) {
-        var par = "", lines = txt.split("\n"), i;
+    function paragraphToLine (txt) {
+        var par = ""; var lines = txt.split("\n"); var i;
         for(i = 0; i < lines.length; i += 1) {
             if(!lines[i]) {
                 break; }
@@ -458,11 +468,11 @@ app.readurl = (function () {
                 par += " "; }
             par += lines[i].trim(); }
         return par;
-    },
+    }
 
 
-    heuristicParseMailInText = function (membic, mimc) {
-        var idx, rectxt = "";  //reconstituted text lines
+    function heuristicParseMailInText (membic, mimc) {
+        var rectxt = "";  //reconstituted text lines
         if(!mimc) {
             return; }
         mimc.themes = [];
@@ -480,22 +490,22 @@ app.readurl = (function () {
         //wrap at 78 characters.  If the reason why a link was memorable was
         //pulled from the body of the email, there is a good chance only the
         //first line of text was captured.  Grab the rest from the rectxt.
-        idx = rectxt.indexOf(membic.text);
+        var idx = rectxt.indexOf(membic.text);
         if(idx >= 0) {
             membic.text = paragraphToLine(rectxt.slice(idx)); }
         app.review.precheckThemes(mimc.themes);
         if(mimc.keywords) {
             membic.keywords = mimc.keywords.replace(/,/g, ", "); }
         app.review.updateRating(membic.rating);
-    },
+    }
 
 
-    getPlainURL = function (url) {
+    function getPlainURL (url) {
         //returns the url minus any query or hash parts.  In some instances
         //that may lead to completely different content, but the original
         //failed so the idea is to retry without to try get a pic.
-        var result, crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
-        result = crockfordurlregex.exec(url);
+        var crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
+        var result = crockfordurlregex.exec(url);
         if(!result || result.length < 4) {
             return url; }
         // 0: whole url
@@ -508,16 +518,15 @@ app.readurl = (function () {
         // 7: hash (everything after the '#')
         return result[1] + ":" + result[2] + result[3] +
             (result[5]? "/" + result[5] : "");
-    },
+    }
 
 
-    getFetchErrorText = function (url, code, callerr) {
-        var errtxt, phrase, 
-            manfill = " You may need to fill out the membic fields yourself.";
-        errtxt = "Membic details were not filled out automatically" +
+    function getFetchErrorText (url, code, callerr) {
+        var errtxt = "Membic details were not filled out automatically" +
             " because of a problem accessing " + url + "\n\n" +
             "Details: Error code " + code + ": " + callerr;
-        phrase = "urlfetch.Fetch() required more quota";  //too many calls
+        var manfill = " You may need to fill out the membic fields yourself.";
+        var phrase = "urlfetch.Fetch() required more quota";  //too many calls
         if(code >= 400 && code < 500) {
             errtxt = "The server for " + url + " is not allowing automated" +
                 " access." + manfill; }
@@ -537,15 +546,15 @@ app.readurl = (function () {
             errtxt = "The server for " + url + " could not find the page." +
                 " Double check the url is correct."; break; }
         return errtxt;
-    },
+    }
 
 
-    readMailInMembicText = function (mim) {
+    function readMailInMembicText (mim) {
         //Need to parse independently of newlines that can be inserted
         //pretty much anywhere, especially in a long subject that gets
         //wrapped.  The body is probably text but may be html.
-        var mc = {}, elems;
-        elems = mim.text.split("Subject: ");
+        var mc = {};
+        var elems = mim.text.split("Subject: ");
         mc.to = elems[0].match(/[^\s]+@membic.org/g)[0].slice(0, -11);
         mc.received = elems[0].replace(/\n/g, "").slice(-20);
         elems = elems[1].split("Body: ");
@@ -558,11 +567,11 @@ app.readurl = (function () {
         if(mc.text.trim().toLowerCase().startsWith("<html")) {
             mc.text = mc.text.replace(/<\/?[^>]+>/g, "\n"); }
         return mc;
-    };
+    }
 
 
     ////////////////////////////////////////
-    // published functions
+    // published functions and attributes
     ////////////////////////////////////////
 return {
 

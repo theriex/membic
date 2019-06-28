@@ -31,11 +31,9 @@ var app = {},  //Global container for application level funcs and values
     app.suppemail = "membicsystem" + "@" + "gmail" + "." + "com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
-    app.pennames = {};  //id: penname local lookup for improved stat msgs
-    app.coopnames = {}; //id: theme name local lookup to avoid server calls
-    app.cooptags = {};  //id: theme hashtag local lookup
     app.forks = [];  //tasks started through setTimeout
     app.wait = {divid:"", timeout:null};
+    app.urlToRead = "";
 
 
     ////////////////////////////////////////
@@ -194,7 +192,7 @@ var app = {},  //Global container for application level funcs and values
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/pcd",
                         "js/amd/review", "js/amd/coop",
-                        "js/amd/ext/amazon", "js/amd/ext/email",
+                        "js/amd/ext/amazon",
                         "js/amd/ext/readurl" ];
         securl = app.secureURL(href);
         if(securl !== href) {

@@ -1,6 +1,6 @@
 /*global app, jt, confirm, window */
 
-/*jslint browser, multivar, white, fudge */
+/*jslint browser, white, fudge, long */
 
 // prof.stash (maintained by client)
 //   key: ctm + coopid
@@ -17,58 +17,47 @@
 app.coop = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var srvctms = null,
-
-
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    followerEmailLinkHTML = function (mlev) {
-        var dst, subj, body, href, html, 
-            involv = mlev? "I'm writing" : "I've found";
-        dst = app.pcd.getDisplayState();
-        subj = "Invitation to follow " + dst.obj.name;
-        body = "Hi,\n\n" +
+    function followerEmailLinkHTML (mlev) {
+        var dst = app.pcd.getDisplayState();
+        var subj = "Invitation to follow " + dst.obj.name;
+        var involv = "I've found";
+        if(mlev) {
+            involv = "I'm writing"; }
+        var body = "Hi,\n\n" +
             involv + " a theme on membic.org called \"" + dst.obj.name + "\", that I thought you might be interested in. If you join membic.org, you can follow for easy access to the latest and greatest posts. Check out the theme at\n\n" +
             app.secsvr + "?view=coop&coopid=" + dst.id + "\n\n" +
             "Hope you like it!\n\n";
-        href = "mailto:?subject=" + jt.dquotenc(subj) +
+        var link = "mailto:?subject=" + jt.dquotenc(subj) +
             "&body=" + jt.dquotenc(body);
-        html = ["a", {href: href},
-                [["img", {src: "img/email.png", cla: "inlineimg"}],
-                 ["span", {cla: "emlinktext"},
-                  "Invite"]]];
+        var html = ["a", {href:link},
+                    [["img", {src:"img/email.png", cla:"inlineimg"}],
+                     ["span", {cla:"emlinktext"},
+                      "Invite"]]];
         return html;
-    },
+    }
 
 
-    emailInviteLinkHTML = function (emaddr) {
-        var dst, subj, body, href, html;
-        dst = app.pcd.getDisplayState();
-        subj = "Invitation to join " + dst.obj.name;
-        body = "Hi,\n\n" +
+    function emailInviteLinkHTML (emaddr) {
+        var dst = app.pcd.getDisplayState();
+        var subj = "Invitation to join " + dst.obj.name;
+        var body = "Hi,\n\n" +
             "I'm writing a cooperative theme on membic.org called \"" + dst.obj.name + "\", and I would like to invite you to join me as a contributing member. I value your thoughts and knowledge, and I think our combined membics would be useful to us and other people. You can check out the theme at\n\n" +
             app.secsvr + "/t/" + dst.id + "\n\n" +
             "I've approved your membership, and you should already have received an acceptance link and any other needed account information from " + app.suppemail + ". If you can't find that, use the \"reset password\" link on the login form to get in. I'm guessing you probably have some membics you could write just from recent memory, it would be awesome to see those included.\n\n" +
             "A membic is a link plus a reason why it is memorable. \"" + dst.obj.name + "\" is a collaborative memory space where we control membership and all posted membics. My hope is this will grow into a highly useful resource for us and for others interested what we choose to post. For more info, go to https://www.membic.org\n\n" +
             "Looking forward to building \"" + dst.obj.name + "\" with you!\n\n" +
             "thanks,\n\n";
-        href = "mailto:" + emaddr + "?subject=" + jt.dquotenc(subj) + 
+        var link = "mailto:" + emaddr + "?subject=" + jt.dquotenc(subj) + 
             "&body=" + jt.dquotenc(body);
-        html = ["a", {href: href},
-                [["img", {src: "img/email.png", cla: "inlineimg"}],
-                 ["span", {cla: "emlinktext"},
-                  "Send Invitation"]]];
+        var html = ["a", {href:link},
+                    [["img", {src:"img/email.png", cla:"inlineimg"}],
+                     ["span", {cla:"emlinktext"},
+                      "Send Invitation"]]];
         return html;
-    },
+    }
 
 
-    displayInviteDialog = function (invite, invidx) {
+    function displayInviteDialog (invite, invidx) {
         var html;
         html = ["div", {id: "coopinvitedlgdiv"},
                 ["div", {cla: "pcdsectiondiv"},
@@ -90,18 +79,18 @@ app.coop = (function () {
                                                invidx + ",'Accept')")},
                      "Accept"]]]]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
-    },
+    }
 
 
-    historyCheckpointIfNeeded = function (coop) {
+    function historyCheckpointIfNeeded (coop) {
         //when creating a new theme, the history state will not have
         //been checkpointed because there was no id yet.
-        var id = jt.instId(coop), 
-            hs = app.history.currState();
+        var id = jt.instId(coop);
+        var hs = app.history.currState();
         if(id && hs.view !== "coop") {
             hs = { view: "coop", coopid: id };
             app.history.checkpoint(hs); }
-    };
+    }
 
 
     ////////////////////////////////////////
@@ -110,14 +99,15 @@ app.coop = (function () {
 return {
 
     bycoopid: function (coopid, src, tabname, expid) {
-        var solopage, cts, data, ctype;
-        solopage = app.solopage();
-        cts = ["review", "membership"];
+        var solopage = app.solopage();
+        var cts = ["review", "membership"];
         if(cts.indexOf(src) >= 0 || solopage) {
-            ctype = solopage ? "permv" : "sitev";
-            data = jt.objdata({ctype:"Theme", parentid:coopid,
-                               field:ctype, profid:app.profile.myProfId(),
-                               refer:app.refer});
+            var ctype = "sitev";
+            if(solopage) {
+                    ctype = "permv"; }
+            var data = jt.objdata({ctype:"Theme", parentid:coopid,
+                                   field:ctype, profid:app.profile.myProfId(),
+                                   refer:app.refer});
             app.fork({
                 descr:"bump counters theme solopage",
                 func:function () {
@@ -136,13 +126,14 @@ return {
     updateCoop: function (coop, callok, callfail) {
         var data;
         app.coop.serializeFields(coop);
-        data = jt.objdata(coop, ["recent", "top20s", "revids"]) +
+        data = jt.objdata(coop, ["preb", "top20s", "revids"]) +
             "&profid=" + app.profile.myProfId();
         app.coop.deserializeFields(coop);  //if update fails or interim use
         jt.call("POST", "ctmdesc?" + app.login.authparams(), data,
                 function (updcoops) {
+                    app.lcs.put("coop", updcoops[0]);
+                    app.profile.verifyMembership(updcoops[0]);
                     historyCheckpointIfNeeded(updcoops[0]);
-                    app.coop.noteUpdatedCoop(updcoops[0], coop);
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {
                     callfail(code, errtxt); }),
@@ -150,20 +141,8 @@ return {
     },
 
 
-    noteUpdatedCoop: function (updcoop, currcoop) {
-        app.coop.rememberThemeName(updcoop);
-        if(!currcoop) {
-            currcoop = (app.lcs.getRef("coop", jt.instId(updcoop))).coop; }
-        //only cache if we have the recent reviews, that way we know we
-        //still need to do a blockfetch for all the data.
-        if(currcoop) {
-            updcoop.recent = currcoop.recent;
-            app.lcs.put("coop", updcoop); }
-    },
-
-
     showInviteDialog: function (mlev, inviteobj) {
-        var email = "", action, html = [];
+        var email = ""; var action; var html = [];
         //action is either the db update button or sending mail
         if(!inviteobj) {
             action = ["button", {type: "button", id: "memapprovebutton",
@@ -198,14 +177,13 @@ return {
 
 
     updateInvite: function (mlev) {
-        var buttonhtml, email, data;
-        email = jt.byId("emailin").value;
+        var email = jt.byId("emailin").value;
         if(!jt.isProbablyEmail(email)) {
             return; }
-        buttonhtml = jt.byId("invitebuttondiv").innerHTML;
+        var buttonhtml = jt.byId("invitebuttondiv").innerHTML;
         jt.out("invitebuttondiv", "Approving Membership...");
         jt.byId("emailin").disabled = true;
-        data = "profid=" + app.profile.myProfId() + "&email=" + email +
+        var data = "profid=" + app.profile.myProfId() + "&email=" + email +
             "&coopid=" + app.pcd.getDisplayState().id;
         jt.call("POST", "invitebymail?" + app.login.authparams(), data,
                 function (invites) {
@@ -219,18 +197,17 @@ return {
 
 
     accrejInvite: function (invidx, action) {
-        var invite, data;
-        invite = app.login.accountInfo("invites")[invidx];
+        var invite = app.login.accountInfo("invites")[invidx];
         if(action === "Reject" && !confirm("You will need to re-apply or be invited again to become a member of " + invite.coopname + ". Are you sure you want to reject membership?")) {
             return; }
         invite.processed = true;  //don't loop forever
-        data = "profid=" + app.profile.myProfId() + "&coopid=" + invite.coopid + "&inviterprofid=" + invite.profid + "&action=" + action;
+        var data = "profid=" + app.profile.myProfId() + "&coopid=" + invite.coopid + "&inviterprofid=" + invite.profid + "&action=" + action;
         jt.call("POST", "acceptinvite?" + app.login.authparams(), data,
                 function (updobjs) {
                     if(action === "Accept") {
                         app.lcs.put("profile", updobjs[0]);
-                        app.coop.noteUpdatedCoop(updobjs[1]);
-                        app.coop.verifyPenStash(updobjs[1]); }
+                        app.lcs.put("coop", updobjs[1]);
+                        app.profile.verifyMembership(updobjs[1]); }
                     app.layout.cancelOverlay();
                     app.coop.processInvites(); },  //in case there are more
                 app.failf(function (code, errtxt) {
@@ -256,8 +233,8 @@ return {
         data = "profid=" + app.profile.myProfId() + "&coopid=" + jt.instId(coop) + "&action=" + action;
         jt.call("POST", "ctmmemapply?" + app.login.authparams(), data,
                 function (updcoops) {
-                    updcoops[0].recent = coop.recent;
                     app.lcs.put("coop", updcoops[0]);
+                    app.profile.verifyMembership(updobjs[0]);
                     contf(updcoops[0]); },
                 function (code, errtxt) {
                     jt.err(action + " membership application failed code: " +
@@ -267,15 +244,14 @@ return {
     },
 
 
-    processMembership: function (coop, action, seekerid, reason, contf) {
-        var data;
-        data = jt.objdata({action:action, profid:app.profile.myProfId(),
-                           coopid:jt.instId(coop), seekerid:seekerid,
-                           reason:reason});
+    processMembership: function (coop, pact, pseekid, preason, contf) {
+        var data = jt.objdata({action:pact, profid:app.profile.myProfId(),
+                               coopid:jt.instId(coop), seekerid:pseekid,
+                               reason:preason});
         jt.call("POST", "ctmmemprocess?" + app.login.authparams(), data,
                 function (updcoops) {
-                    updcoops[0].recent = coop.recent;
                     app.lcs.put("coop", updcoops[0]);
+                    app.profile.verifyMembership(updobjs[0]);
                     contf(updcoops[0]); },
                 function (code, errtxt) {
                     jt.err("Membership processing failed code: " + code +
@@ -297,7 +273,7 @@ return {
         fields.forEach(function (field, idx) {
             coop[field] = coop[field] || "";
             if(coop[field].csvcontains(profid)) {
-                lev = idx + 1; } })  //member:1, moderator:2, founder:3
+                lev = idx + 1; } });  //member:1, moderator:2, founder:3
         return lev;
     },
 
@@ -322,89 +298,39 @@ return {
     },
 
 
-    verifyPenStash: function (coop) {
-        var profid, pen, key, pso, memlev, modified = false;
-        profid = app.profile.myProfId();
-        prof = app.profile.myProfile();
-        if(!prof) {
-            return; }
-        key = "ctm" + jt.instId(coop);
-        if(!prof.stash) {
-            prof.stash = {};
-            modified = true; }
-        if(!prof.stash[key]) {
-            prof.stash[key] = { posts: "", lastpost: "" };
-            modified = true; }
-        pso = prof.stash[key];
-        if(!pso.posts && pso.lastpost) {
-            pso.lastpost = "";
-            modified = true; }
-        if(!pso.name || pso.name !== coop.name) {
-            pso.name = coop.name;
-            modified = true; }
-        memlev = app.coop.membershipLevel(coop, profid);
-        if(!pso.memlev || pso.memlev !== memlev) {
-            pso.memlev = memlev;
-            modified = true; }
-        if(coop.recent) {
-            coop.recent.forEach(function (recentid) {
-                var revref = app.lcs.getRef("rev", recentid);
-                if(revref.rev && revref.rev.profid === profid) {
-                    if(!pso.lastpost || revref.rev.modified > pso.lastpost) {
-                        pso.lastpost = revref.rev.modified;
-                        modified = true; }
-                    if(!pso.posts.csvcontains(recentid)) {
-                        pso.posts = pso.posts.csvappend(recentid);
-                        modified = true; } } }); }
-        if(modified) {
-            app.profile.updatePen(
-                prof,
-                function () {
-                    jt.log("Pen stash updated for " + coop.name); },
-                function (code, errtxt) {
-                    jt.log("verifyPenStash " + code + ": " + errtxt); }); }
-    },
-
-
     remove: function (ctmid, revid) {
-        var removebutton, html, pos, rev, ctm, reason, data;
-        removebutton = jt.byId("rdremb");
+        var removebutton = jt.byId("rdremb");
         if(removebutton) {
             removebutton.disabled = true;
             jt.out("rdremstatdiv", ""); }
         else {
-            html = ["div", {id: "revdlgdiv"},
-                    [["div", {id: "rdremstatdiv"}],
-                     ["label", {fo: "reasonin", cla: "liflab"}, "Reason"],
-                     ["input", {id: "reasonin", cla: "lifin", type: "text"}],
-                     ["div", {id: "rdrembdiv", cla: "dlgbuttonsdiv"},
-                      ["button", {type: "button", id: "rdremb",
-                                  onclick: jt.fs("app.coop.remove('" + 
-                                                 ctmid + "','" + revid + "')")},
-                       "Remove"]]]];
+            var html = ["div", {id:"revdlgdiv"},
+                        [["div", {id:"rdremstatdiv"}],
+                         ["label", {fo:"reasonin", cla:"liflab"}, "Reason"],
+                         ["input", {id:"reasonin", cla:"lifin", type:"text"}],
+                         ["div", {id:"rdrembdiv", cla:"dlgbuttonsdiv"},
+                          ["button", {type:"button", id:"rdremb",
+                                      onclick:jt.fs("app.coop.remove('" + 
+                                                     ctmid + "','" + revid + 
+                                                    "')")},
+                           "Remove"]]]];
             html = app.layout.dlgwrapHTML("Remove Theme Post", html);
-            pos = jt.geoPos(jt.byId("rbd" + revid));
+            var pos = jt.geoPos(jt.byId("rbd" + revid));
             return app.layout.openDialog(
                 {x: pos.x - 40 , y: pos.y - 30},
                 jt.tac2html(html), null, function() {
                     jt.byId("reasonin").focus(); }); }
-        rev = app.lcs.getRef("rev", revid).rev;
-        reason = jt.byId("reasonin").value.trim();
+        var rev = app.lcs.getRef("rev", revid).rev;
+        var reason = jt.byId("reasonin").value.trim();
         if(!reason && rev.profid !== app.profile.myProfId()) {
             removebutton.disabled = false;
             return jt.out("rdremstatdiv", "Reason required"); }
         jt.out("rdremstatdiv", "Removing...");
-        data = "profid=" + app.profile.myProfId() + "&revid=" + revid + 
+        var data = "profid=" + app.profile.myProfId() + "&revid=" + revid + 
             "&reason=" + jt.enc(reason);
         jt.call("POST", "delrev?" + app.login.authparams(), data,
                 function (coops) {
-                    ctm = app.lcs.getRef("coop", ctmid).coop;
-                    if(ctm.recent && ctm.recent.indexOf(revid) >= 0) {
-                        ctm.recent.splice(ctm.recent.indexOf(revid), 1); }
-                    coops[0].recent = ctm.recent;
-                    //top20s updated by server, rebuilt for display as needed
                     app.lcs.put("coop", coops[0]);
-                    app.lcs.uncache("rev", revid);
                     app.layout.closeDialog();
                     app.pcd.display("coop", ctmid, "", coops[0]); },
                 function (code, errtxt) {
@@ -415,49 +341,12 @@ return {
     },
 
 
-    faultInPostableCoops: function () {
-        var prof = app.profile.myProfile();
-        if(!prof || !prof.stash) {
-            return; }
-        Object.keys(prof.stash).forEach(function (key) {
-            var ctm, ref;
-            if(key.startsWith("ctm")) {
-                ctm = prof.stash[key];
-                ctm.ctmid = ctm.ctmid || key.slice(3);  //verify ctmid set
-                if(ctm && ctm.memlev >= 1) {
-                    ref = app.lcs.getRef("coop", ctm.ctmid);
-                    if(!ref.coop && ref.status === "not cached") {
-                        app.pcd.blockfetch("coop", ctm.ctmid, function (coop) {
-                            jt.log("Faulted in postable theme " + 
-                                   coop.name); }, "statdiv"); } } } });
-    },
-
-
-    faultInPostThroughCoops: function (rev) {
-        if(!rev || !rev.svcdata || ! rev.svcdata.postctms) {
-            return; }  //nothing to do
-        rev.svcdata.postctms.forEach(function (postlog) {
-            var ref = app.lcs.getRef("coop", postlog.ctmid);
-            if(!ref.coop && ref.status === "not cached") {
-                app.pcd.blockfetch("coop", postlog.ctmid, function (coop) {
-                    jt.log("Faulted in " + coop.name); }, "statdiv"); } });
-    },
-
-
-    rememberThemeName: function (ctm, fillonly) {
-        var ctmid = ctm.ctmid || jt.instId(ctm);
-        if(!fillonly || !app.coopnames[ctmid]) {
-            app.coopnames[ctmid] = ctm.name;
-            app.cooptags[ctmid] = ctm.hashtag || ""; }
-    },
-
-
     confirmPostThrough: function (rev) {
         var retval = true;
         if(!rev.ctmids) {  //not posting through, so nothing to check
             return true; }
+        var ref; var rejection;
         rev.ctmids.csvarray().every(function (ctmid) {
-            var ref, rejection;
             ref = app.lcs.getRef("coop", ctmid);  //cached on rev edit
             if(ref && ref.coop && ref.coop.adminlog) {
                 ref.coop.adminlog.every(function (logentry) {
@@ -482,45 +371,6 @@ return {
     },
 
 
-    systemNotices: function () {
-        var sysmsg, html, prof, fault = 0, mn, statdivid = "quiet";
-        sysmsg = "";
-        mn = "New membership applications for $THEME";
-        html = [];
-        prof = app.profile.myProfile();
-        if(prof && prof.stash) {
-            Object.keys(prof.stash).forEach(function (key) {
-                var st, link;
-                if(key.startsWith("ctm") && prof.stash[key].memlev >= 2) {
-                    st = app.lcs.getRef("coop", prof.stash[key].ctmid);
-                    if(!st.coop && st.status === "not cached") {
-                        fault = prof.stash[key].ctmid; }
-                    else if(st.coop && st.coop.seeking) {
-                        link = ["a", {href: "#themesettings",
-                                      onclick: jt.fs("app.coop.bycoopid('" +
-                                                     st.coopid + "'" +
-                                                     ",'sysnotice',''" +
-                                                     ",'settings')")},
-                                st.coop.name];
-                        link = mn.replace(/\$THEME/g, jt.tac2html(link));
-                        html.push(["div", {cla: "membershipnoticediv"},
-                                   link]); } } }); }
-        if(sysmsg || html.length > 0) {
-            statdivid = "sysnoticefetchstatdiv";
-            html = [["div", {cla: "dlgclosex"},
-                     ["a", {id: "closesysnotices", href: "#close", 
-                            onclick: jt.fs("app.coop.clearSysNotices()")},
-                      "&lt;close&nbsp;&nbsp;X&gt;&nbsp;"]],
-                    ["div", {id: "sysnoticecontentdiv"},
-                     [html,
-                      ["div", {id: "sysnoticefetchstatdiv"}]]]]; }
-        jt.out("sysnoticediv", jt.tac2html(html));
-        if(fault) {  //load missing theme and redisplay notices
-            app.pcd.blockfetch("coop", fault, app.coop.systemNotices,
-                               statdivid); }
-    },
-
-
     hasFlag: function (ctm, flagname) {
         if(ctm && ctm.soloset && ctm.soloset.flags) {
             return ctm.soloset.flags[flagname]; }
@@ -532,43 +382,6 @@ return {
         ctm.soloset = ctm.soloset || {};
         ctm.soloset.flags = ctm.soloset.flags || {};
         ctm.soloset.flags[flagname] = value;
-    },
-
-
-    isArchived: function (ctmid) {
-        var obj = app.lcs.getRef("coop", ctmid);
-        if(obj) {
-            obj = obj.coop;
-            return app.coop.hasFlag(obj, "archived"); }
-        if(srvctms) {
-            srvctms.forEach(function (csum) {
-                if(csum.ctmid === ctmid) {
-                    obj = csum; } });
-            if(obj) {
-                return app.coop.hasFlag(obj, "archived"); } }
-        return false;
-    },
-
-
-    srvctms: function () {
-        return srvctms;
-    },
-
-
-    getThemeSummaries: function (contf) {
-        if(srvctms) {
-            return contf(srvctms); }
-        jt.call("GET", "ctmstats", null,
-                function (summaries) {
-                    summaries.forEach(function (cs) {
-                        app.lcs.rjof("top20s", cs);
-                        app.lcs.rjof("soloset", cs); });
-                    srvctms = summaries;
-                    app.activity.displayThemes(); },
-                app.failf(function (code, errtxt) {
-                    jt.log("ctmstats retrieval call failed " + code + 
-                           ": " + errtxt); }),
-                jt.semaphore("coop.ctmstats"));
     },
 
 
@@ -597,4 +410,3 @@ return {
 
 }; //end of returned functions
 }());
-

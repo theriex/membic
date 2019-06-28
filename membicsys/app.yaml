@@ -117,11 +117,6 @@ handlers:
 ######################################################################
 ##        Reviews (membics)
 
-## Toggle the helpful mark on the specified review from the specified pen
-## GET params: revid, penid, authparams
-- url: .*/toghelpful.*
-  script: src.py.rev.app
-
 ## Write the given review and associated coop reviews
 ## POST params: authparams, rev, ctmids
 - url: .*/saverev.*
@@ -146,26 +141,6 @@ handlers:
 ## Rotate the uploaded pic for a review
 ## POST params: revid, authparams
 - url: .*/rotatepic.*
-  script: src.py.rev.app
-
-## Return reviews for a given pen within the given date range
-## GET params: penid, mindate, maxdate, qstr, authparams (,revtype)
-- url: .*/srchrevs.*
-  script: src.py.rev.app
-
-## Return the review for the given id.
-## GET params: revid
-- url: .*/revbyid.*
-  script: src.py.rev.app
-
-## Return pre-reviews for the given pen
-## GET params: penid, authparams
-- url: .*/fetchprerevs.*
-  script: src.py.rev.app
-
-## Return recent and top reviews for a coop or pen
-## GET params: ctmid or penid or authparams
-- url: .*/blockfetch.*
   script: src.py.rev.app
 
 ## Batch post one or more reviews

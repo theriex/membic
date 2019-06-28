@@ -1178,38 +1178,6 @@ class ToggleHelpful(webapp2.RequestHandler):
         moracct.returnJSON(self.response, [ review ])
 
 
-class FetchAllReviews(webapp2.RequestHandler):
-    def get(self):
-        try:
-            pct, pgid, mypen = find_pen_or_coop_type_and_id(self)
-            if pgid: # pgid may be zero if no pen name yet
-                if self.request.get('supp'):
-                    return supplemental_recent_reviews(self, pgid)
-                jstr = mblock.get_membics_json_for_profile(pct, pgid)
-            else:  # return empty array with no first item pen
-                jstr = "[]"
-            if jstr and mypen:  # replace first element with private pen data
-                i = 2 
-                brackets = 1
-                while i < len(jstr) and brackets > 0:
-                    if jstr[i] == '{':
-                        brackets += 1
-                    elif jstr[i] == '}':
-                        brackets -= 1
-                    i += 1
-                jstr = '[' + moracct.obj2JSON(mypen) + jstr[i:]
-            if not jstr:
-                srverr(handler, 404, pct + " " + str(pgid) + " not found")
-            else:
-                moracct.writeJSONResponse(jstr, self.response)
-            return
-        except Exception as e:
-            if str(e) == "Token expired":
-                return srverr(self, 401, "Your access token has expired, you will need to sign in again.")
-            logging.warn("FetchAllReviews failed: " + str(e))
-            return srverr(self, 500, "FetchAllReviews failed: " + str(e))
-
-
 class FetchPreReviews(webapp2.RequestHandler):
     def get(self):
         acc = muser.authenticated(self.request)
@@ -1262,10 +1230,5 @@ app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
                                ('.*/revpicupload', UploadReviewPic),
                                ('.*/revpic', GetReviewPic),
                                ('.*/rotatepic', RotateReviewPic),
-                               ('.*/srchrevs', SearchReviews),
-                               ('.*/revbyid', GetReviewById), 
-                               ('.*/toghelpful', ToggleHelpful),
-                               ('.*/blockfetch', FetchAllReviews),
-                               ('.*/fetchprerevs', FetchPreReviews),
                                ('.*/batchupload', BatchUpload)], debug=True)
 

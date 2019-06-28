@@ -1,6 +1,6 @@
 /*global app, jt, window, confirm, document */
 
-/*jslint browser, multivar, white, fudge, for */
+/*jslint browser, white, fudge, for, long */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Coop common display functions.
@@ -9,90 +9,77 @@
 app.pcd = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var //see verifyFunctionConnections for procesing switches
-        dst = { type: "", id: "", tab: "", obj: null,
-                profile: { desclabel: "About Me",
-                           descplace: "A message for visitors to your profile. Any links you want to share?",
-                           descfield: "aboutme",
-                           piclabel: "Profile Pic",
-                           picfield: "profpic",
-                           picsrc: "profpic?profileid=" },
-                coop: { desclabel: "Description",
-                        descplace: "What is this cooperative theme focused on? What's appropriate to post?",
-                        descfield: "description", 
-                        piclabel: "Theme Pic",
-                        picfield: "picture",
-                        picsrc: "ctmpic?coopid=" } },
-        srchst = { mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:"" },
-        setdispstate = { infomode: "" },
-        standardOverrideColors = [
-            {name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
-            {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
-             attr:"color"},
-            {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}],
-        ctmmsgs = [
-            {name: "Following",
-             levtxt: "Following shows you are interested in reading content from members writing on this theme.",
-             uptxt: "Only members may post.",
-             upbtn: "Apply for membership",
-             cantxt: "You are applying for membership.",
-             canbtn: "Withdraw membership application",
-             rejtxt: "Your membership application was rejected.",
-             rejbtn: "Ok rejection",
-             restxt: "",
-             resbtn: "Stop following",
-             resconf: "",
-             notice: "is applying for membership" },
-
-            {name: "Member",
-             levtxt: "As a member, you may post membics related to this theme.",
-             uptxt: "If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
-             upbtn: "Apply to become a Moderator",
-             cantxt: "You are applying to become a Moderator.",
-             canbtn: "Withdraw Moderator application",
-             rejtxt: "Your Moderator application was rejected.",
-             rejbtn: "Ok rejection",
-             restxt: "If you no longer wish to contribute, you can resign your membership and go back to just following.",
-             resbtn: "Resign membership",
-             resconf: "Are you sure you want to resign your membership?",
-             notice: "is applying to become a Moderator" },
-
-            {name: "Moderator",
-             levtxt: "As a Moderator, you can post, remove membics that don't belong, and approve membership applications.",
-             uptxt: "If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
-             upbtn: "Apply to become a Founder",
-             cantxt: "You are applying to become a Founder.",
-             canbtn: "Withdraw your Founder application",
-             rejtxt: "Your Founder application was rejected.",
-             rejbtn: "Ok rejection",
-             restxt: "If you no longer wish to help moderate, you can resign as a Moderator and go back to being a regular member.",
-             resbtn: "Resign as Moderator",
-             resconf: "Are you sure you want to resign as moderator?",
-             notice: "is applying to become a Founder" },
-
-            {name: "Founder",
-             levtxt: "As a Founder, you permanently have all privileges available.",
-             uptxt: "",
-             upbtn: "",
-             cantxt: "",
-             rejtxt: "",
-             rejbtn: "",
-             canbtn: "",
-             restxt: "If you no longer want ownership, you can resign as a Founder and allow others to continue the cooperative theme.",
-             resbtn: "Resign as Founder",
-             resconf: "Are you sure you want to resign as Founder?"}],
+    var dst = {type:"", id:"", tab:"", obj:null,
+               profile: {desclabel: "About Me",
+                         descplace: "A message for visitors to your profile. Any links you want to share?",
+                         descfield: "aboutme",
+                         piclabel: "Profile Pic",
+                         picfield: "profpic",
+                         picsrc: "profpic?profileid=" },
+               coop:    {desclabel: "Description",
+                         descplace: "What is this cooperative theme focused on? What's appropriate to post?",
+                         descfield: "description", 
+                         piclabel: "Theme Pic",
+                         picfield: "picture",
+                         picsrc: "ctmpic?coopid="} };
+    var srchst = {mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:""};
+    var setdispstate = {infomode:""};
+    var standardOverrideColors = [
+        {name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
+        {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
+         attr:"color"},
+        {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}];
+    var ctmmsgs = [
+        {name:"Following", //MUser.coops lev: -1
+         levtxt:"Following shows you are interested in reading content from members writing on this theme.",
+         uptxt:"Only members may post.",
+         upbtn:"Apply for membership",
+         cantxt:"You are applying for membership.",
+         canbtn:"Withdraw membership application",
+         rejtxt:"Your membership application was rejected.",
+         rejbtn:"Ok rejection",
+         restxt:"",
+         resbtn:"Stop following",
+         resconf:"",
+         notice:"is applying for membership" },
+        {name:"Member",    //MUser.coops lev: 1
+         levtxt:"As a member, you may post membics related to this theme.",
+         uptxt:"If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
+         upbtn:"Apply to become a Moderator",
+         cantxt:"You are applying to become a Moderator.",
+         canbtn:"Withdraw Moderator application",
+         rejtxt:"Your Moderator application was rejected.",
+         rejbtn:"Ok rejection",
+         restxt:"If you no longer wish to contribute, you can resign your membership and go back to just following.",
+         resbtn:"Resign membership",
+         resconf:"Are you sure you want to resign your membership?",
+         notice:"is applying to become a Moderator" },
+        {name:"Moderator", //MUser.coops lev: 2
+         levtxt:"As a Moderator, you can post, remove membics that don't belong, and approve membership applications.",
+         uptxt:"If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
+         upbtn:"Apply to become a Founder",
+         cantxt:"You are applying to become a Founder.",
+         canbtn:"Withdraw your Founder application",
+         rejtxt:"Your Founder application was rejected.",
+         rejbtn:"Ok rejection",
+         restxt:"If you no longer wish to help moderate, you can resign as a Moderator and go back to being a regular member.",
+         resbtn:"Resign as Moderator",
+         resconf:"Are you sure you want to resign as moderator?",
+         notice:"is applying to become a Founder" },
+        {name:"Founder",   //MUser.coops lev: 3
+         levtxt:"As a Founder, you permanently have all privileges available.",
+         uptxt:"",
+         upbtn:"",
+         cantxt:"",
+         rejtxt:"",
+         rejbtn:"",
+         canbtn:"",
+         restxt:"If you no longer want ownership, you can resign as a Founder and allow others to continue the cooperative theme.",
+         resbtn:"Resign as Founder",
+         resconf:"Are you sure you want to resign as Founder?"}];
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    getDirectLinkInfo = function (usehashtag) {
-        //var infobj = {title: "", url: "https://" + window.location.host};
+    function getDirectLinkInfo (usehashtag) {
         var infobj = {title: "", url: app.hardhome};
         if(dst.type === "profile") {
             infobj.url += "/" + dst.id;
@@ -104,20 +91,21 @@ app.pcd = (function () {
             infobj.url += "/" + dst.id;
             infobj.title = "Direct theme URL:"; }
         return infobj;
-    },
+    }
 
-    picImgSrc = function (obj) {
-        var defs = dst[dst.type], 
-            src = "img/nopicprof.png";
+
+    function picImgSrc (obj) {
+        var defs = dst[dst.type];
+        var src = "img/nopicprof.png";
         if(obj[defs.picfield]) {  //e.g. profile.profpic
             //fetch with mild cachebust in case modified
             src = defs.picsrc + jt.instId(obj) +
                 "&modified=" + obj.modified; }
         return src;
-    },
+    }
 
 
-    modButtonsHTML = function (obj) {
+    function modButtonsHTML (obj) {
         if(app.solopage()) {
             return ""; }
         var html = "";
@@ -141,19 +129,19 @@ app.pcd = (function () {
                                     onclick:jt.fs("app.pcd.follow()")},
                          "Follow"]]; } }
         return jt.tac2html(html);
-    },
+    }
 
 
-    accountInfoHTML = function () {
+    function accountInfoHTML () {
         var html = "";
         if(dst.type === "profile") {
             html = ["p", "Last modified " + 
                     jt.colloquialDate(jt.isoString2Day(dst.obj.modified))]; }
         return jt.tac2html(html);
-    },
+    }
 
 
-    isMyMembershipAction = function (entry) {
+    function isMyMembershipAction (entry) {
         if(entry.targid === app.profile.myProfId() &&
            (entry.action.indexOf("Rejected") >= 0 ||
             entry.action.indexOf("Denied") >= 0 ||
@@ -161,13 +149,12 @@ app.pcd = (function () {
             entry.action.indexOf("Demoted") >= 0)) {
             return true; }
         return false;
-    },
+    }
 
 
-    personalInfoButtonHTML = function () {
-        var les, html;
-        les = dst.obj.adminlog;
-        html = "";
+    function personalInfoButtonHTML () {
+        var les = dst.obj.adminlog;
+        var html = "";
         if(les && les.length) {
             les.every(function (action) {
                 if(isMyMembershipAction(action)) {
@@ -177,11 +164,11 @@ app.pcd = (function () {
                     return false; } //found my latest, end iteration
                 return true; }); }
         return html;
-    },
+    }
 
 
-    membershipButtonLine = function (msgtxt, buttondivid, buttondeco, 
-                                     buttonid, buttonfs, buttontxt) {
+    function membershipButtonLine (msgtxt, buttondivid, buttondeco, 
+                                   buttonid, buttonfs, buttontxt) {
         var html;
         html = ["div", {cla: "formline"},
                 [["div", {cla: "ctmlevtxt"},
@@ -192,10 +179,10 @@ app.pcd = (function () {
                                onclick: buttonfs},
                     buttontxt]]]]];
         return html;
-    },
+    }
 
 
-    membershipSettingsHTML = function () {
+    function membershipSettingsHTML () {
         var mlev = app.coop.membershipLevel(dst.obj);
         var seeking = app.coop.isSeeking(dst.obj);
         var rejected = app.coop.isRejected(dst.obj);
@@ -234,10 +221,10 @@ app.pcd = (function () {
                    ctmmsgs[mlev].levtxt],
                   html]]];
         return html;
-    },
+    }
 
 
-    membershipAppNoticeHTML = function (profid, name, mlev) {
+    function membershipAppNoticeHTML (profid, name, mlev) {
         var html;
         html = ["div", {cla: "ctmmemdiv"},
                 [["div", {cla: "fpprofdivsp"},
@@ -269,29 +256,27 @@ app.pcd = (function () {
                                               "','" + profid + "')")},
                     "Accept"]]]]];
         return html;
-    },
+    }
 
 
-    outstandingApplicationsHTML = function () {
-        var html, mlev, people;
+    function outstandingApplicationsHTML () {
         if(!dst.obj.seeking) {
             return ""; }
-        mlev = app.coop.membershipLevel(dst.obj);
+        var mlev = app.coop.membershipLevel(dst.obj);
         if(mlev < 2) {
             return ""; }
-        html = [];
-        people = dst.obj.people || {};
+        var html = [];
+        var people = dst.obj.people || {};
         dst.obj.seeking.csvarray().forEach(function (profid) {
-            var name, slev;
-            name = people[profid] || profid;
-            slev = app.coop.membershipLevel(dst.obj, profid);
+            var name = people[profid] || profid;
+            var slev = app.coop.membershipLevel(dst.obj, profid);
             if(mlev > slev || mlev === 3) {
                 html.push(membershipAppNoticeHTML(profid, name, slev)); } });
         return html;
-    },
+    }
 
 
-    adminLogTargetHTML = function (logentry) {
+    function adminLogTargetHTML (logentry) {
         var profid;
         if(logentry.action === "Removed Membic") {
             return logentry.tname; }
@@ -302,16 +287,15 @@ app.pcd = (function () {
                       onclick: jt.fs("app.profile.byprofid('" + profid + 
                                      "','adminlog')")},
                 logentry.tname];
-    },
+    }
 
 
-    coopLogHTML = function (filter) {
-        var les, html;
-        les = dst.obj.adminlog;
+    function coopLogHTML (filter) {
+        var les = dst.obj.adminlog;
         if(!les || !les.length) {
             return "No log entries"; }
         les = les.slice(0, 10);  //don't scroll forever
-        html = [];
+        var html = [];
         les.forEach(function (logentry) {
             var profid;
             if(!filter || (filter === "membership" &&
@@ -330,10 +314,10 @@ app.pcd = (function () {
                       adminLogTargetHTML(logentry),
                       (logentry.reason? ": " + logentry.reason : "")]]); } });
         return jt.tac2html(html);
-    },
+    }
 
 
-    coopMembershipLineHTML = function (field, profid, pname, mlev) {
+    function coopMembershipLineHTML (field, profid, pname, mlev) {
         var html;
         if(field === "founders" || (field === "moderators" && mlev < 3) ||
                                    (field === "members" && mlev <= 1)) {
@@ -368,55 +352,55 @@ app.pcd = (function () {
                                                    profid + "')")},
                          "Demote"]]]]]]; }
         return html;
-    },
+    }
 
 
-    coopMembershipHTML = function () {
-        var html, fields, mlev;
-        mlev = app.coop.membershipLevel(dst.obj);
-        html = [];
-        fields = ["founders", "moderators", "members"];
+    function coopMembershipHTML () {
+        var mlev = app.coop.membershipLevel(dst.obj);
+        var html = [];
+        var fields = ["founders", "moderators", "members"];
         fields.forEach(function (field) {
-            var people, profids = dst.obj[field].csvarruniq();
+            var profids = dst.obj[field].csvarruniq();
             if(profids.length) {
                 html.push(["div", {cla: "formline"}, field.capitalize()]); }
-            people = dst.obj.people || {};
+            var people = dst.obj.people || {};
             profids.forEach(function (profid) {
                 var pname = people[profid] || profid;
                 html.push(coopMembershipLineHTML(
                     field, profid, pname, mlev)); }); });
         html.push(["div", {cla: "formline"}, "&nbsp;"]); //final clear
         return jt.tac2html(html);
-    },
+    }
 
 
-    statSummaryHTML = function () {
-        var html, dat = dst.obj.mctr;
+    function statSummaryHTML () {
+        var dat = dst.obj.mctr;
         if(!dat) {
             return "No stats available."; }
-        html = ["table", {style: "margin:auto;"},
-                [["tr",
-                  [["td", {style: "text-align:right;padding-right:10px;"}, 
-                    "Visits Today:"],
-                   ["td", ["em", String((dat.sitev || 0) + (dat.sitek || 0) +
-                                        (dat.permv || 0) + (dat.permk || 0) +
-                                        (dat.rssv || 0))]]]],
-                 ["tr",
-                  [["td", {style: "text-align:right;padding-right:10px;"}, 
-                    "Membics:"],
-                   ["td", ["em", String(dat.membics || 0)]]]],
-                 ["tr",
-                  [["td", {style: "text-align:right;padding-right:10px;"}, 
-                    "Actions:"],
-                   ["td", ["em", String((dat.starred || 0) +
-                                 (dat.remembered || 0) +
-                                 (dat.responded || 0))]]]]]];
+        var html = ["table", {style:"margin:auto;"},
+                    [["tr",
+                      [["td", {style:"text-align:right;padding-right:10px;"}, 
+                        "Visits Today:"],
+                       ["td", 
+                        ["em", String((dat.sitev || 0) + (dat.sitek || 0) +
+                                      (dat.permv || 0) + (dat.permk || 0) +
+                                      (dat.rssv || 0))]]]],
+                     ["tr",
+                      [["td", {style:"text-align:right;padding-right:10px;"}, 
+                        "Membics:"],
+                       ["td", ["em", String(dat.membics || 0)]]]],
+                     ["tr",
+                      [["td", {style:"text-align:right;padding-right:10px;"}, 
+                        "Actions:"],
+                       ["td", ["em", String((dat.starred || 0) +
+                                            (dat.remembered || 0) +
+                                            (dat.responded || 0))]]]]]];
         return jt.tac2html(html);
-    },
+    }
 
 
-    statsDisplayHTML = function () {
-        var sumh, html;
+    function statsDisplayHTML () {
+        var sumh;
         if(dst.obj.mctr) { 
             sumh = statSummaryHTML(); }
         else {
@@ -435,23 +419,23 @@ app.pcd = (function () {
                                        code + ": " + errtxt); }),
                             jt.semaphore("pcd.fetchStats")); },
                 ms:200}); }
-        html = ["div", {id: "statsdisplaydiv"},
-                [["div", {id: "statsumdiv"}, sumh],
-                 ["div", {cla: "formbuttonsdiv", id: "statsvisbdiv"},
-                  ["button", {type:"button", onclick:jt.fs(
-                      "window.open('/docs/stat.html" +
-                          "?ctype=" + dst.type +
-                          "&parentid=" + dst.id + 
-                          "&" + app.login.authparams() +
-                          "&profid=" + app.profile.myProfId() +
-                          "&title=" + jt.enc(dst.obj.name) +
-                          "')")},
-                   "Visualize All"]]]];
+        var html = ["div", {id: "statsdisplaydiv"},
+                    [["div", {id: "statsumdiv"}, sumh],
+                     ["div", {cla: "formbuttonsdiv", id: "statsvisbdiv"},
+                      ["button", {type:"button", onclick:jt.fs(
+                          "window.open('/docs/stat.html" +
+                              "?ctype=" + dst.type +
+                              "&parentid=" + dst.id + 
+                              "&" + app.login.authparams() +
+                              "&profid=" + app.profile.myProfId() +
+                              "&title=" + jt.enc(dst.obj.name) +
+                              "')")},
+                       "Visualize All"]]]];
         return jt.tac2html(html);
-    },
+    }
 
 
-    adminSettingsHTML = function () {
+    function adminSettingsHTML () {
         var memsel = "";
         var oah = "";
         if(dst.type === "coop") {
@@ -487,10 +471,10 @@ app.pcd = (function () {
                     ["div", {cla: "formline", id: "midispdiv",
                              style: "display:none;"}]];
         return html;
-    },
+    }
 
 
-    getPicInfo = function () {
+    function getPicInfo () {
         var pi = {havepic: false, src: "img/nopicprof.png"};
         if(dst.type === "profile") {
             pi.lab = "Upload a profile picture!";
@@ -513,65 +497,64 @@ app.pcd = (function () {
         pi.src += jt.ts((pi.src.indexOf("?") >= 0? "&" : "?") + "cb=", 
                         dst.obj.modified);
         return pi;
-    },
+    }
 
 
-    picFileSelChange = function () {
+    function picFileSelChange () {
         var fv = jt.byId("picfilein").value;
         //chrome yields a value like "C:\\fakepath\\circuit.png"
         fv = fv.split("\\").pop();
         jt.out("picfilelab", fv);
         jt.byId("picfilelab").className = "filesellab2";
         jt.byId("upldsub").style.visibility = "visible";
-    },
+    }
 
 
-    picSettingsHTML = function () {
-        var pinf, html;
+    function picSettingsHTML () {
         if(!jt.hasId(dst.obj) ||
                (dst.type === "coop" && 
                 app.coop.membershipLevel(dst.obj) < 3)) {
             return ""; }  //not creating and not founder so not available
-        pinf = getPicInfo();
-        html = [["label", {fo: "picuploadform", cla: "overlab",
-                           style: (pinf.havepic? "display:none;" : "")},
-                 pinf.lab],
-                ["div", {id: "whypicdiv", cla: "formline", 
-                         style: "display:none;"},
-                 ["div", {cla: "fieldexpdiv"}, pinf.exp]],
-                ["form", {action: "/picupload", method: "post",
-                          enctype: "multipart/form-data", target: "tgif",
-                          id: "picuploadform"},
-                 [jt.paramsToFormInputs(app.login.authparams()),
-                  jt.paramsToFormInputs("picfor=" + dst.type + 
-                                        "&instid" + dst.obj.instid),
-                  ["div", {cla: "ptddiv"},
-                   [["img", {id: "upldpicimg", cla: "profimgdis",
-                             src: pinf.src}],
-                    ["div", {id: "upldpicform", cla: "picsideform"},
-                     [["div", {cla: "fileindiv"},
-                       [["input", {type: "file", cla: "hidefilein",
-                                   name: "picfilein", id: "picfilein"}],
-                        ["label", {fo: "picfilein", cla: "filesellab",
-                                   id: "picfilelab"},
-                         "Choose&nbsp;Image"],
-                        ["div", {cla: "picsideformbuttonsdiv"},
-                         ["input", {type: "submit", cla: "formbutton",
-                                    style: "visibility:hidden;",
-                                    onclick: jt.fs("app.pcd.upsub()"),
-                                    id: "upldsub", value: "Upload"}]]]]]],
-                    ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
-                ["iframe", {id: "tgif", name: "tgif", src: "/picupload",
-                            style: "display:none"}]];
+        var pinf = getPicInfo();
+        var html = [["label", {fo:"picuploadform", cla:"overlab",
+                               style:(pinf.havepic? "display:none;" : "")},
+                     pinf.lab],
+                    ["div", {id:"whypicdiv", cla:"formline", 
+                             style:"display:none;"},
+                     ["div", {cla:"fieldexpdiv"}, pinf.exp]],
+                    ["form", {action:"/picupload", method:"post",
+                              enctype:"multipart/form-data", target:"tgif",
+                              id:"picuploadform"},
+                     [jt.paramsToFormInputs(app.login.authparams()),
+                      jt.paramsToFormInputs("picfor=" + dst.type + 
+                                            "&instid" + dst.obj.instid),
+                      ["div", {cla:"ptddiv"},
+                       [["img", {id:"upldpicimg", cla:"profimgdis",
+                                 src:pinf.src}],
+                        ["div", {id:"upldpicform", cla:"picsideform"},
+                         [["div", {cla:"fileindiv"},
+                           [["input", {type:"file", cla:"hidefilein",
+                                       name:"picfilein", id:"picfilein"}],
+                            ["label", {fo:"picfilein", cla:"filesellab",
+                                       id:"picfilelab"},
+                             "Choose&nbsp;Image"],
+                            ["div", {cla:"picsideformbuttonsdiv"},
+                             ["input", {type:"submit", cla:"formbutton",
+                                        style:"visibility:hidden;",
+                                        onclick:jt.fs("app.pcd.upsub()"),
+                                        id:"upldsub", value:"Upload"}]]]]]],
+                        ["div", {id:"imgupstatdiv", cla:"formstatdiv"}]]]]],
+                    ["iframe", {id:"tgif", name:"tgif", src:"/picupload",
+                                style:"display:none"}]];
         return html;
-    },
-    picSettingsInit = function () {
+    }
+    function picSettingsInit () {
         jt.on("picfilein", "change", picFileSelChange);
         app.pcd.monitorPicUpload();
-    },
+    }
 
 
-    descripSettingsHTML = function () {
+    function descripSettingsHTML () {
         if(dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) {
             return ""; } //only founders can update the theme description
         var nameplace = "Theme name required";
@@ -601,34 +584,33 @@ app.pcd = (function () {
         var html = [nh,
                     //textarea label conflicts visually with placeholder
                     //text when empty.  Removed to reduce visual clutter.
-                    ["textarea", {id: "shouteditbox", cla: "dlgta"}],
+                    ["textarea", {id:"shouteditbox", cla:"dlgta"}],
                     ht,
                     ark,
-                    ["div", {id: "formstatdiv"}],
-                    ["div", {cla: "dlgbuttonsdiv"},
-                     ["button", {type: "button", id: "okbutton",
-                                 onclick: jt.fs("app.pcd.saveDescription()")},
+                    ["div", {id:"formstatdiv"}],
+                    ["div", {cla:"dlgbuttonsdiv"},
+                     ["button", {type:"button", id:"okbutton",
+                                 onclick:jt.fs("app.pcd.saveDescription()")},
                       btxt]]];
         return html;
-    },
-    descripSettingsInit = function () {
-        var defs, namein, shout;
-        defs = dst[dst.type];
-        shout = jt.byId("shouteditbox");
+    }
+    function descripSettingsInit () {
+        var defs = dst[dst.type];
+        var shout = jt.byId("shouteditbox");
         if(shout) {
             shout.readOnly = false;
             shout.value = dst.obj[defs.descfield];
             shout.placeholder = defs.descplace; }
         //set the focus only if not already filled in
-        namein = jt.byId("namein");
+        var namein = jt.byId("namein");
         if(namein && !namein.value) {
             namein.focus(); }
         else if(shout && !shout.value) {
             shout.focus(); }
-    },
+    }
 
 
-    personalSettingsHTML = function () {
+    function personalSettingsHTML () {
         if(dst.type !== "profile") {
             return ""; }
         var html = ["div", {cla:"formline"},
@@ -641,10 +623,10 @@ app.pcd = (function () {
                               style:"display:none;"},
                       app.login.accountSettingsHTML()]]];
         return html;
-    },
+    }
 
 
-    reviewTypeKeywordsHTML = function (prof) {
+    function reviewTypeKeywordsHTML (prof) {
         var html = [];
         app.profile.verifyStashKeywords(prof);
         var kwu = app.profile.getKeywordUse(prof);
@@ -665,23 +647,23 @@ app.pcd = (function () {
                     [["span", {cla:"kwcsvlabel"}, "Default:"],
                      jt.spacedCSV(kwu.system[rt.type])]]]]]); });
         return html;
-    },
+    }
 
 
-    themeKeywordsHTML = function () {
+    function themeKeywordsHTML () {
         var html;
-        html = ["div", {cla: "rtkwdiv", id: "themekwdiv"},
-                ["div", {cla: "formline"},
-                 [["img", {cla: "reviewbadge", src: picImgSrc(dst.obj)}],
-                  ["input", {id: "kwcsvin", cla: "keydefin",
-                             type: "text", 
-                             placeholder: "keywords separated by commas",
-                             value: dst.obj.keywords}]]]];
+        html = ["div", {cla:"rtkwdiv", id:"themekwdiv"},
+                ["div", {cla:"formline"},
+                 [["img", {cla:"reviewbadge", src:picImgSrc(dst.obj)}],
+                  ["input", {id:"kwcsvin", cla:"keydefin",
+                             type:"text", 
+                             placeholder:"keywords separated by commas",
+                             value:dst.obj.keywords}]]]];
         return html;
-    },
+    }
 
 
-    keywordSettingsHTML = function () {
+    function keywordSettingsHTML () {
         var label = "";
         var html = "";
         switch(dst.type) {
@@ -710,10 +692,10 @@ app.pcd = (function () {
                                 onclick:jt.fs("app.pcd.updateKeywords()")},
                      "Update Keywords"]]]]]];
         return html;
-    },
+    }
 
 
-    mailinSettingsHTML = function () {
+    function mailinSettingsHTML () {
         if(dst.type !== "profile" || !jt.hasId(dst.obj)) {
             return ""; }  //mail-in support for themes not supported yet
         dst.obj.stash = dst.obj.stash || {};
@@ -745,10 +727,10 @@ app.pcd = (function () {
                                      onclick:jt.fs("app.pcd.updateMailins()")},
                           "Update Mail-Ins"]]]]]]];
         return html;
-    },
+    }
 
 
-    rssSettingsHTML = function () {
+    function rssSettingsHTML () {
         if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
         var html = ["div", {cla:"formline"},
@@ -757,14 +739,13 @@ app.pcd = (function () {
                        ["span", {cla:"settingsexpandlinkspan"},
                         "RSS Feed"]]]]];
         return html;
-    },
-    fillRSSDialogAreas = function () {
-        var furl, ta;
-        furl = window.location.href;
+    }
+    function fillRSSDialogAreas () {
+        var furl = window.location.href;
         if(furl.endsWith("/")) {
             furl = furl.slice(0, -1); }
         furl += "/rssfeed?" + dst.type + "=" + jt.instId(dst.obj);
-        ta = jt.byId("rssbta");
+        var ta = jt.byId("rssbta");
         if(ta) {
             ta.readOnly = true;
             ta.value = furl; }
@@ -776,10 +757,10 @@ app.pcd = (function () {
         if(ta) {
             ta.readOnly = true;
             ta.value = furl + "&ts=sdvtvrk"; }
-    },
+    }
 
 
-    soloSettingsHTML = function () {
+    function soloSettingsHTML () {
         if(dst.type !== "coop" || !jt.hasId(dst.obj) || 
                app.coop.membershipLevel(dst.obj) < 3) {
             return ""; }
@@ -811,10 +792,10 @@ app.pcd = (function () {
                      "Update Colors"]],
                    ["div", {cla:"formline", id:"colorupderrdiv"}]]]]];
         return html;
-    },
+    }
 
 
-    embedSettingsHTML = function () {
+    function embedSettingsHTML () {
         if(!jt.hasId(dst.obj)) {
             return ""; }
         var html = ["div", {cla:"formline"},
@@ -824,8 +805,8 @@ app.pcd = (function () {
                        ["span", {cla:"settingsexpandlinkspan"},
                         "Embed Feed"]]]]];
         return html;
-    },
-    fillEmbedDialogAreas = function () {
+    }
+    function fillEmbedDialogAreas () {
         var site = window.location.href;
         var ta = jt.byId("embdlta");
         if(site.endsWith("/")) {
@@ -845,58 +826,22 @@ app.pcd = (function () {
             ta.readOnly = true;
             ta.value = site + "/rssfeed?" + dst.type + "=" + 
                 jt.instId(dst.obj); }
-    },
+    }
 
 
-    permalinkInfoHTML = function () {
-        var url, html;
-        if(dst.type !== "coop" || !dst.obj || !jt.hasId(dst.obj)) {
-            html = ""; }
-        else if(app.coop.membershipLevel(dst.obj) < 3) {
-            url = app.hardhome + "/rssfeed?" + dst.type + "=" + 
-                jt.instId(dst.obj);
-            html = ["a", {href:url, 
-                          onclick:jt.fs("window.open('" + url + "')")},
-                    ["img", {cla: "ctmsetimg", src: "img/rssicon.png"}]]; }
-        else {
-            html = ["a", {href:"#solopageinfo", 
-                          onclick: jt.fs("app.layout.displayDoc('" + 
-                                         "docs/themepage.html',true)")},
-                    ["img", {cla: "ctmsetimg", src: "img/info.png"}]]; }
-        return ["&nbsp;", html];
-    },
-
-
-    signInToFollowHTML = function () {
-        var html, url;
-        //if they are logged in, then they will know enough to click
-        //the membic icon to go to the main site.  No need for a message.
-        if(app.login.isLoggedIn() || (dst.type !== "coop")) {
-            return ""; }
-        html = "Sign in to follow or join.<br/>";
-        if(app.solopage()) {
-            url = app.hardhome + "?view=coop&coopid=" + dst.id;
-            html = ["a", {href: url, title: dst.obj.name + " full page",
-                          onclick: jt.fs("window.open('" + url + "')")},
-                    html]; }
-        return html;
-    },
-
-
-    historyCheckpoint = function () {
+    function historyCheckpoint () {
         var histrec = { view: dst.type };
         if(dst.type === "coop" && !dst.id) {
             //don't push a theme history with no id. Can't restore it.
             return; }
         histrec[dst.type + "id"] = dst.id;
         app.history.checkpoint(histrec);
-    },
+    }
 
 
-    getRecentReviews = function () {
-        var revs, rt;
-        revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
-        rt = app.layout.getType();
+    function getRecentReviews () {
+        var revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
+        var rt = app.layout.getType();
         if(rt !== "all") {
             revs = revs.filter(function (rev) {
                 if(rev.revtype === rt) {
@@ -906,12 +851,12 @@ app.pcd = (function () {
             if(a.modhist < b.modhist) { return 1; }
             return 0; });
         return revs;
-    },
+    }
 
 
-    getFavoriteReviews = function () {
-        var revids, rt, tops, revs;
-        tops = dst.obj.top20s || {};
+    function getFavoriteReviews () {
+        var revs;
+        var tops = dst.obj.top20s || {};
         if(!tops.all) {
             tops.all = [];
             app.review.getReviewTypes().forEach(function (rt) {
@@ -924,64 +869,32 @@ app.pcd = (function () {
                 if(a.modified > b.modified) { return -1; }
                 return 0; });
             tops.all = app.lcs.objArrayToIdArray(revs); }
-        rt = app.layout.getType();
-        revids = tops[rt] || [];
+        var rt = app.layout.getType();
+        var revids = tops[rt] || [];
         return app.lcs.resolveIdArrayToCachedObjs("rev", revids);
-    },
+    }
 
 
-    //Called from displayTab
-    displayFavorites = function () {
-        app.review.displayReviews("pcdcontdiv", "pcdf", getFavoriteReviews(),
-                                  "app.pcd.toggleRevExpansion", 
-                                  (dst.type === "coop"));
-    },
-
-
-    //Called from displayTab
-    displayRemembered = function (expid, action) {
-        //jt.log("pcd.displayRemembered expid:" + expid + ", action:" + action);
-        app.activity.displayRemembered("pcdcontdiv", expid, action);
-    },
-
-
-    //Called from displayTab
-    displaySearch = function () {
-        var html;
-        html = [["div", {id: "pcdkeysrchdiv"}],
-                ["div", {id: "pcdsrchdispdiv"}],
-                ["div", {id: "pcdsrvsrchdiv"}]];
-        jt.out("pcdcontdiv", jt.tac2html(html));
-        if(dst.obj.keywords) {
-            srchst.mode = "srchkey"; }
-        srchst.status = "initializing";
-        app.pcd.updateSearchInputDisplay();
-        app.pcd.searchReviews();
-        if(app.login.isLoggedIn() && jt.byId("pcdsrchin")) {
-            jt.byId("pcdsrchin").focus(); }
-    },
-
-
-    isKeywordMatch = function (membic) {
+    function isKeywordMatch (membic) {
         if(!srchst.kwrds) {  //not filtering by keyword
             return true; }
         //if the membic keywords include at least one of the specified
         //search keywords then it's a match.
         return srchst.kwrds.csvarray().some(function (keyword) {
             return membic.keywords.csvcontains(keyword); });
-    },
+    }
 
 
-    isTypeMatch = function (membic) {
+    function isTypeMatch (membic) {
         if(!srchst.mtypes) {  //not filtering by type
             return true; }
         if(srchst.mtypes.csvcontains(membic.revtype)) {
             return true; }
         return false;
-    },
+    }
 
 
-    isQueryStringMatch = function (membic) {
+    function isQueryStringMatch (membic) {
         if(!srchst.qstr) {  //not filtering by text search
             return true; }
         var revtxt = membic.text || "";
@@ -991,10 +904,19 @@ app.pcd = (function () {
         //ordering, then it's a match.
         return toks.every(function (token) {
             return revtxt.indexOf(token) >= 0; });
-    },
+    }
 
 
-    searchFilterReviews = function (membics) {
+    function isSearchableMembic (obj) {
+        if(!obj.revtype) {  //could be an overflow indicator
+            return false; }
+        if(dst.coop && obj.ctmid !== dst.obj.instid) {  //src ref
+            return false; }
+        return true;
+    }
+
+
+    function searchFilterReviews (membics) {
         var filtered = [];
         membics.forEach(function (membic) {
             if(isSearchableMembic(membic) && 
@@ -1003,10 +925,10 @@ app.pcd = (function () {
                isQueryStringMatch(membic)) {
                 filtered.push(membic); } });
         return filtered;
-    },
+    }
 
 
-    updateResultsEmailLink = function (sortedRevs) {
+    function updateResultsEmailLink (sortedRevs) {
         var eml = jt.byId("emaillink");
         if(!eml) {
             return; }
@@ -1020,10 +942,10 @@ app.pcd = (function () {
         var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body);
         eml.href = link;
-    },
+    }
 
 
-    displaySearchResults = function () {
+    function displaySearchResults () {
         var sortedRevs = srchst.revs;
         if(srchst.mode === "srchkey") {
             sortedRevs = srchst.revs.slice();  //copy recency ordered array
@@ -1033,98 +955,27 @@ app.pcd = (function () {
                 if(a.modified > b.modified) { return -1; }
                 if(a.modified < b.modified) { return 1; }
                 return 0; }); }
+        var includeAuthorsInRevs = (dst.type === "coop");
         app.review.displayReviews("pcdsrchdispdiv", "pcds", sortedRevs, 
-                                  "app.pcd.toggleRevExpansion", 
-                                  ((dst.type === "coop") && !app.solopage()));
+                                  "app.pcd.toggleRevExpansion",
+                                  includeAuthorsInRevs);
         updateResultsEmailLink(sortedRevs);
         srchst.disprevs = sortedRevs;
         srchst.status = "waiting";
-    },
+    }
 
 
-    defaultTabName = function () {
-        //not supporting search tab for standalone profile display right now
-        if(app.solopage() && dst.type === "coop") {
-            return "search"; }
-        return "latest";
-    },
-
-
-    showContentActions = function (tabname) {
-        var html, rssurl, actdiv = jt.byId("pcdactdiv");
-        if(!actdiv) {
-            return; }
-        actdiv.style.display = "none";
-        html = "";
-        if(tabname.match(/^(latest|favorites|memo|search)$/)) {
-            html = [["div", {id:"downloadmenudiv", 
-                             style:"display:inline-block;"},
-                     [["a", {href:"#Download", id: "downloadlink",
-                             title:"Download " + knowntabs[tabname].stitle,
-                             onclick:jt.fs("app.pcd.showDownloadDialog")},
-                       [["img", {src:"img/download.png", 
-                                 cla:"downloadlinkimg"}],
-                        "Download " + knowntabs[tabname].stitle]]]]]; }
-        if(tabname === "latest" && dst.type === "coop") {
-            rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
-            html.push([" | ",
-                       ["a", {href:rssurl, //support right click copy link 
-                              id:"rsslink",
-                              title:"Subscribe RSS",
-                              onclick:jt.fs("window.open('" + rssurl + "')")},
-                        [["img", {src:"img/rssicon.png", 
-                                  cla:"dlrssimg"}],
-                         "Subscribe RSS"]]]); }
-        if(tabname === "search") {
-            html.push([" | ",
-                       ["div", {id:"pcdsrchindiv",
-                                style:"display:inline-block;"},
-                        //Anything over 27 wraps on my phone, even though
-                        //it looks ok on Chrome dev simulation.
-                        ["input", {type:"text", id:"pcdsrchin", size:26,
-                                   placeholder: "Search for...",
-                                   value: srchst.qstr}]]]); }
-        if(html) {
-            html = ["div", {id:"pcdactcontentdiv"}, html];
-            actdiv.innerHTML = jt.tac2html(html);
-            actdiv.style.display = "inline-block"; }
-    },
-
-
-    displayTab = function (tabname, expid, action) {
-        var dispfunc;
-        // jt.log("pcd.displayTab " + tabname + ", expid: " + expid + 
-        //        ", action: " + action);
-        tabname = tabname || defaultTabName();
-        Object.keys(knowntabs).forEach(function (tabkey) {
-            var elem = jt.byId("tablink" + tabkey);
-            if(elem) {
-                elem.className = "tablink"; } });
-        jt.byId("tablink" + tabname).className = "tablinksel";
-        dst.tab = tabname;
-        historyCheckpoint();  //history collapses tab changes
-        showContentActions(tabname);
-        dispfunc = knowntabs[tabname].dispfunc;
-        if(jt.hasId(dst.obj)) {
-            return dispfunc(expid, action); }
-        //could be creating a new theme at this point. dialog may or may
-        //not be displayed
-        jt.out("pcdcontdiv", "Settings required.");
-        app.pcd.settings();
-    },
-
-
-    createStyleOverridesForEmbedding = function () {
+    function createStyleOverridesForEmbedding () {
         jt.byId("pcduppercontentdiv").style.display = "none";
         jt.byId("bodyid").style.paddingLeft = "0px";
         jt.byId("bodyid").style.paddingRight = "0px";
         //give a bit of space for the top of the tabs to not be truncated
-        tabvpad = 4;  //let other styling know we padded it down
+        var tabvpad = 4;  //let other styling know we padded it down
         jt.byId("tabsdiv").style.marginTop = String(tabvpad) + "px";
-    },
+    }
 
 
-    createColorOverrides = function () {
+    function createColorOverrides () {
         var sheet;
         if(!app.embedded) {
             return; }
@@ -1137,35 +988,35 @@ app.pcd = (function () {
                 soc.sel.csvarray().forEach(function (sel) {
                     var rule = sel + " { " + soc.attr + ": " + color + "; }";
                     sheet.insertRule(rule, sheet.cssRules.length); }); } });
-    },
+    }
 
 
-    changeSiteTabIcon = function () {
+    function changeSiteTabIcon () {
         var link = document.createElement("link");
         link.type = "image/x-icon";
         link.rel = "shortcut icon";
         link.href = "ctmpic?" + dst.type + "id=" + dst.id;
         document.getElementsByTagName("head")[0].appendChild(link);
-    },
+    }
 
 
-    customizeSoloPageDisplay = function () {
+    function customizeSoloPageDisplay () {
         if(app.embedded) {
             createStyleOverridesForEmbedding(); }
         createColorOverrides();
         changeSiteTabIcon();
-    },
+    }
 
 
-    shareButtonsHTML = function () {
+    function shareButtonsHTML () {
         return app.layout.shareButtonsHTML(
             {url:app.secsvr + "/" + dst.obj.instid,
              title:dst.obj.name,
              socmed:["tw", "fb"]});
-    },
+    }
 
 
-    writeTopContent = function (defs, obj) {
+    function writeTopContent (defs, obj) {
         var shtxt = obj[defs.descfield] || "";
         var fsz = "large";
         if(shtxt.length > 300) {
@@ -1196,10 +1047,10 @@ app.pcd = (function () {
                       ["div", {id: "pcdactdiv"}]],
                      ["div", {id: "pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
-    },
+    }
 
 
-    showContentControls = function () {
+    function showContentControls () {
         var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
         var html = [
             ["div", {id:"pcdactcontentdiv"}, 
@@ -1225,20 +1076,20 @@ app.pcd = (function () {
         html = [["div", {id:"pcdsrchdispdiv"}],
                 ["div", {id:"pcdovermorediv"}]];
         jt.out("pcdcontdiv", jt.tac2html(html));
-    },
+    }
         
 
-    initializeSearchState = function () {
+    function initializeSearchState () {
         srchst.status = "initializing";
         srchst.mtypes = "";
         srchst.kwrds = "";
         srchst.qstr = "";
         srchst.revs = [];
         srchst.disprevs = [];
-    },
+    }
 
 
-    resetDisplayStateFromObject = function (obj) {
+    function resetDisplayStateFromObject (obj) {
         if(typeof(obj.preb) === "object" && !obj.preb.length) {
             //just in case preb had a bad value like {}
             obj.preb = []; }
@@ -1246,11 +1097,10 @@ app.pcd = (function () {
         dst.obj = obj;
         dst.mtypes = "";
         dst.keywords = "";
-    },
+    }
 
 
-    displayObject = function (obj, expid, action) {
-        // jt.log("pcd.displayObject expid: " + expid + ", action: " + action);
+    function displayObject (obj) {
         obj = obj || dst.obj;
         resetDisplayStateFromObject(obj);
         app.layout.cancelOverlay();  //close user menu if open
@@ -1258,7 +1108,7 @@ app.pcd = (function () {
         historyCheckpoint();
         initializeSearchState();
         var defs = dst[dst.type];
-        writeTopContent(defs, obj)
+        writeTopContent(defs, obj);
         if(app.solopage()) {
             customizeSoloPageDisplay(); }
         if(dst.type === "coop" && dst.obj.instid) {
@@ -1269,107 +1119,13 @@ app.pcd = (function () {
         showContentControls();
         app.pcd.updateSearchInputDisplay();
         app.pcd.searchReviews();
-    },
+    }
 
 
-    displayRetrievalWaitMessage = function (divid, dtype, id) {
-        var mpi, msg;
-        mpi = app.profile.myProfId();
-        msg = "Retrieving " + dtype.capitalize() + " " + id + "...";
-        if(dtype === "coop") {
-            msg = "Retrieving theme " + id + "...";
-            if(app.coopnames[id]) {
-                msg = "Retrieving " + app.coopnames[id] + "..."; } }
-        else if(dtype === "profile") {
-            if((!id && !mpi) || (id && id === mpi)) {
-                msg = "Retrieving your membics..."; }
-            else if(app.pennames[id]) {
-                msg = "Retrieving " + app.pennames[id] + "..."; }
-            else {
-                msg = "Retrieving Pen Name " + id + "..."; } }
-        app.displayWaitProgress(0, 750, divid, msg);
-    },
-
-
-    shareInviteHTML = function () {
-        var html, mlev;
-        if(dst.type !== "coop") {
-            return ""; }
-        mlev = app.coop.membershipLevel(dst.obj, app.profile.myProfId());
-        //The solo page display uses the overlaydiv to provide RSS and 
-        //site return links, so no invite or similar dialogs that use it.
-        html = ["div", {id: "invitelinkdiv"},
-                ["a", {href: "#invite",
-                       onclick: jt.fs("app.coop.showInviteDialog(" + 
-                                      mlev + ")")},
-                 "Invite"]];
-        return html;
-    },
-
-
-    sourceRevIds = function (revs, dtype, id) {
-        var revids = [];
-        revs.forEach(function (rev) {
-            if(dtype !== "coop" || rev.ctmid === id) {
-                revids.push(jt.instId(rev)); } });
-        return revids;
-    },
-
-
-    currentTabMembics = function () {
-        var membics = [];
-        switch(dst.tab) {
-        case "latest": membics = getRecentReviews(); break;
-        case "favorites": membics = getFavoriteReviews(); break;
-        case "memo": membics = app.activity.getRememberedMembics(); break;
-        case "search": membics = srchst.revs; break; }
-        return membics;
-    },
-
-
-    verifyFunctionConnections = function () {
+    function verifyFunctionConnections () {
         if(!dst.profile.objupdate) {
             dst.profile.objupdate = app.profile.update;
             dst.coop.objupdate = app.coop.updateCoop; }
-    },
-
-
-    longestWord = function (str) {
-        var longest = "", words = str.split(/\s/);
-        words.forEach(function (word) {
-            if(word.length > longest.length) {
-                longest = word; } });
-        return longest;
-    },
-
-
-    updateRecentMembics = function (dtype, id, obj, supp, base) {
-        var oldest = null, ts = new Date().toISOString();
-        if(base.length) {
-            oldest = base[base.length - 1]; }
-        supp.forEach(function (membic) {
-            // if(jt.instId(membic) === "5011097258033152") {
-            //     jt.log("Processing it"); }
-            if(!membic.dispafter || membic.dispafter < ts ||
-                   membic.penid === app.pen.myPenId()) {
-                //ensure cached, and use newer version if already cached
-                membic = app.lcs.put("rev", membic).rev;
-                //supp membics are already in descending modified order
-                if(!oldest || oldest.modified > membic.modified ||
-                       (oldest.modified === membic.modified && 
-                        jt.instId(oldest) !== jt.instId(membic))) {
-                    base.push(membic);
-                    oldest = membic; } } });  //maintain DESC in case dupe found
-        obj.recent = sourceRevIds(base, dtype, id);
-    };
-
-
-    function isSearchableMembic (obj) {
-        if(!obj.revtype) {  //could be an overflow indicator
-            return false; }
-        if(dst.coop && obj.ctmid !== dst.obj.instid) {  //src ref
-            return false; }
-        return true;
     }
 
 
@@ -1436,17 +1192,28 @@ app.pcd = (function () {
     }
 
 
-    function displayLoadOverflow () {
+    function indicateAndHandleOverflow () {
         var preb = dst.obj.preb;
         if(!preb.length || !preb[preb.length - 1].overflow) {
             return jt.out("pcdovermorediv", ""); }
+        //indicate that the current display is missing overflowed info
+        //and they can click to get more
         jt.out("pcdovermorediv", jt.tac2html(
             ["a", {href:"#more",
-                   onclick:jt.fs("app.pcd.loadOverflow()")},
+                   onclick:jt.fs("app.pcd.searchReviews()")},
              "More..."]));
-        app.pcd.loadOverflow();  //auto load overflow
+        //fetch one more level of overflow so it will be available next time
+        //dst.obj.preb is copied/filtered/sorted before display, so generally
+        //no timing conflict updating preb here after fetch.
+        jt.call("GET", "ovrfbyid?overid=" + preb[preb.length].overflow, null,
+                function (overs) {
+                    dst.obj.preb = preb.slice(0, -1).concat(overs[0].preb); },
+                app.failf(function (code, errtxt) {
+                    jt.out("pcdovermorediv", "ovrfbyid " +
+                           preb[preb.length - 1].overflow + " " + code + " " +
+                           errtxt); }),
+                jt.semaphore("pcd.indicateAndHandleOverflow"));
     }
-
 
 
     ////////////////////////////////////////
@@ -1500,48 +1267,47 @@ return {
 
 
     rssHelp: function () {
-        var sr, html;
-        sr = "https://feedly.com";  //sample RSS reader
-        html = ["div", {id: "pcdembeddlgdiv"},
-                [["div", {cla: "bumpedupwards"},
-                  ["div", {cla: "headingtxt"}, "RSS for " + dst.obj.name]],
-                 //basic RSS (http or https)
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Standard RSS"],
-                   " for use with an ",
-                   ["a", {href: "#sampleRSSReader",
-                          onclick: jt.fs("window.open('" + sr + "')")},
-                    "RSS reader"],
-                   " or sidebar content:",
-                   ["div", {cla: "setplustdiv"},
-                    ["textarea", {id: "rssbta", cla: "setpldlgta"}]],
-                   "Either <em>http</em> or <em>https</em> can be used."]],
-                 //custom RSS
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Custom RSS"],
-                   " to specify how the summary is presented:",
-                   ["div", {cla: "setplustdiv"},
-                    ["textarea", {id: "rsscta", cla: "setpldlgta"}]],
-                   "Change the <em>ts</em> and <em>ds</em> parameter value letters to reflect what you want:",
-                   ["ul",
-                    [["li", "<b>s</b>: rating stars (as asterisks)"],
-                     ["li", "<b>r</b>: membic type (e.g. \"book\")"],
-                     ["li", "<b>t</b>: title or name"],
-                     ["li", "<b>k</b>: keywords"],
-                     ["li", "<b>d</b>: description why memorable"],
-                     ["li", "<b>v</b>: vertical bar delimiter"]]]]],
-                 //sample one line title
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Title only"],
-                   " example with all info in one line:",
-                   ["div", {cla: "setplustdiv"},
-                    ["textarea", {id: "rssota", cla: "setpldlgta"}]]]],
-                 //back
-                 ["div", {cla: "pcdsectiondiv"},
-                  ["a", {href: "#settings",
-                         onclick: jt.fs("app.pcd.settings()")},
-                   [["img", {src: "img/arrow18left.png"}],
-                    " Return to Settings"]]]]];
+        var sr = "https://feedly.com";  //sample RSS reader
+        var html = ["div", {id: "pcdembeddlgdiv"},
+                    [["div", {cla: "bumpedupwards"},
+                      ["div", {cla: "headingtxt"}, "RSS for " + dst.obj.name]],
+                     //basic RSS (http or https)
+                     ["div", {cla: "pcdsectiondiv"},
+                      [["span", {cla: "setpldlgmspan"}, "Standard RSS"],
+                       " for use with an ",
+                       ["a", {href: "#sampleRSSReader",
+                              onclick: jt.fs("window.open('" + sr + "')")},
+                        "RSS reader"],
+                       " or sidebar content:",
+                       ["div", {cla: "setplustdiv"},
+                        ["textarea", {id: "rssbta", cla: "setpldlgta"}]],
+                       "Either <em>http</em> or <em>https</em> can be used."]],
+                     //custom RSS
+                     ["div", {cla: "pcdsectiondiv"},
+                      [["span", {cla: "setpldlgmspan"}, "Custom RSS"],
+                       " to specify how the summary is presented:",
+                       ["div", {cla: "setplustdiv"},
+                        ["textarea", {id: "rsscta", cla: "setpldlgta"}]],
+                       "Change the <em>ts</em> and <em>ds</em> parameter value letters to reflect what you want:",
+                       ["ul",
+                        [["li", "<b>s</b>: rating stars (as asterisks)"],
+                         ["li", "<b>r</b>: membic type (e.g. \"book\")"],
+                         ["li", "<b>t</b>: title or name"],
+                         ["li", "<b>k</b>: keywords"],
+                         ["li", "<b>d</b>: description why memorable"],
+                         ["li", "<b>v</b>: vertical bar delimiter"]]]]],
+                     //sample one line title
+                     ["div", {cla: "pcdsectiondiv"},
+                      [["span", {cla: "setpldlgmspan"}, "Title only"],
+                       " example with all info in one line:",
+                       ["div", {cla: "setplustdiv"},
+                        ["textarea", {id: "rssota", cla: "setpldlgta"}]]]],
+                     //back
+                     ["div", {cla: "pcdsectiondiv"},
+                      ["a", {href: "#settings",
+                             onclick: jt.fs("app.pcd.settings()")},
+                       [["img", {src: "img/arrow18left.png"}],
+                        " Return to Settings"]]]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    fillRSSDialogAreas(); });
@@ -1586,11 +1352,10 @@ return {
 
 
     follow: function () {
-        var prof, ctmid;
         if(dst.type === "coop" && jt.hasId(dst.obj)) {
-            ctmid = jt.instId(dst.obj);
-            prof = app.profile.myProfile();
-            prof.coops = prof.coops || {}
+            var ctmid = jt.instId(dst.obj);
+            var prof = app.profile.myProfile();
+            prof.coops = prof.coops || {};
             if(!prof.coops[ctmid]) {
                 prof.coops[ctmid] = -1;
                 app.profile.update(prof, app.pcd.redisplay, app.failf); } }
@@ -1598,10 +1363,10 @@ return {
 
 
     saveDescription: function () {
-        var changed = false, defs, elem, val, okfunc, failfunc;
+        var changed = false; var val;
         jt.byId("okbutton").disabled = true;
-        defs = dst[dst.type];
-        elem = jt.byId("namein");
+        var defs = dst[dst.type];
+        var elem = jt.byId("namein");
         if(elem && elem.value && elem.value.trim()) {
             val = elem.value.trim();
             if(dst.obj.name !== val) {
@@ -1620,28 +1385,25 @@ return {
             changed = true; }
         elem = jt.byId("arkcb");
         if(elem) {
-            val = elem.checked? new Date().toISOString() : "";
+            val = "";
+            if(elem.checked) {
+                val = new Date().toISOString(); }
             if((app.coop.hasFlag(dst.obj, "archived") && !val) ||
                (!app.coop.hasFlag(dst.obj, "archived") && val)) {
                 changed = true; }
             app.coop.setFlag(dst.obj, "archived", val); }
         if(!changed) {
             return app.layout.cancelOverlay(); }
-        if(changed) {
-            okfunc = function (updobj) {
-                if(dst.type === "coop") {
-                    app.fork({
-                        descr:"verify theme profile stash",
-                        func:function () {
-                            app.coop.verifyPenStash(dst.obj); },
-                        ms:50}); }
-                dst.obj = updobj;
-                app.layout.cancelOverlay();
-                app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
-            failfunc = function (code, errtxt) {
-                jt.byId("okbutton").disabled = false;
-                jt.out("formstatdiv", jt.errhtml("Update", code, errtxt)); };
-            defs.objupdate(dst.obj, okfunc, failfunc); }
+        if(changed) {  //update functions handle cache and bookkeeping
+            defs.objupdate(dst.obj,
+                           function (updobj) {
+                               dst.obj = updobj;
+                               app.layout.cancelOverlay();
+                               app.pcd.redisplay(); },
+                           function (code, errtxt) {
+                               jt.byId("okbutton").disabled = false;
+                               jt.out("formstatdiv", 
+                                      jt.errhtml("Update", code, errtxt)); }); }
     },
 
 
@@ -1666,14 +1428,14 @@ return {
 
 
     monitorPicUpload: function () {
-        var tgif, txt, defs, mtag = "Done: ";
-        tgif = jt.byId("tgif");
+        var mtag = "Done: ";
+        var tgif = jt.byId("tgif");
         if(tgif) {
-            txt = tgif.contentDocument || tgif.contentWindow.document;
+            var txt = tgif.contentDocument || tgif.contentWindow.document;
             if(txt && txt.body) {
                 txt = txt.body.innerHTML;
                 if(txt.indexOf(mtag) === 0) {
-                    defs = dst[dst.type];
+                    var defs = dst[dst.type];
                     dst.obj[defs.picfield] = dst.id;
                     dst.obj.modified = txt.slice(mtag.length);
                     app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
@@ -1683,25 +1445,6 @@ return {
             app.fork({descr:"monitor pic upload",
                       func:app.pcd.monitorPicUpload,
                       ms:800}); }
-    },
-
-
-    saveCalEmbed: function () {
-        var defs, elem, okfunc, failfunc;
-        jt.byId("savecalbutton").disabled = true;
-        defs = dst[dst.type];
-        elem = jt.byId("calembedta");
-        if(elem && elem.value !== dst.obj.calembed) {
-            dst.obj.calembed = elem.value;
-            okfunc = function (upobj) {
-                dst.obj = upobj;
-                app.layout.cancelOverlay();
-                app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); };
-            failfunc = function (code, errtxt) {
-                jt.byId("savecalbutton").disabled = false;
-                jt.out("calembederrdiv", "Update failed code " + code +
-                       ": " + errtxt); };
-            defs.objupdate(dst.obj, okfunc, failfunc); }
     },
 
 
@@ -1735,12 +1478,11 @@ return {
 
 
     ctmdownlev: function () {
-        var mlev, confmsg, prof;
         if(!jt.hasId(dst.obj)) {  //creating new coop and not instantiated yet
             app.layout.cancelOverlay();
             return app.pcd.display("coop"); }
-        mlev = app.coop.membershipLevel(dst.obj);
-        confmsg = ctmmsgs[mlev].resconf;
+        var mlev = app.coop.membershipLevel(dst.obj);
+        var confmsg = ctmmsgs[mlev].resconf;
         if(confmsg && !confirm(confmsg)) {
             return; }
         if(mlev > 0) {
@@ -1750,9 +1492,9 @@ return {
                                        "", app.pcd.settings); }
         else {
             jt.out("rsbdiv", "Stopping");
-            prof = app.profile.myProfile();
-            prof.coops = prof.coops || {}
-            prof.coops[dst.id] = 0
+            var prof = app.profile.myProfile();
+            prof.coops = prof.coops || {};
+            prof.coops[dst.id] = 0;
             if(prof.stash && prof.stash["ctm" + dst.id]) {
                 prof.stash["ctm" + dst.id] = null; }
             app.profile.update(prof, app.pcd.redisplay, app.failf); }
@@ -1781,16 +1523,6 @@ return {
     },
 
 
-    togsrchmode: function () {
-        if(srchst.mode === "srchkey") {
-            srchst.mode = "srchtxt"; }
-        else if(srchst.mode === "srchtxt") {
-            srchst.mode = "srchkey"; }
-        //otherwise just leave as "nokeys"
-        app.pcd.updateSearchInputDisplay();
-    },
-
-
     keysrch: function () {
         srchst.kwrds = "";
         dst.keywords.csvarray().forEach(function (kwd, i) {
@@ -1812,8 +1544,8 @@ return {
 
 
     updateSearchInputDisplay: function () {
-        updateKeywordsSelectionArea()
-        updateTypesSelectionArea()
+        updateKeywordsSelectionArea();
+        updateTypesSelectionArea();
     },
 
 
@@ -1829,7 +1561,7 @@ return {
         srchst.qstr = srchin.value;
         srchst.revs = searchFilterReviews(dst.obj.preb);
         displaySearchResults();  //clears the display if none matching
-        displayLoadOverflow();
+        indicateAndHandleOverflow();
     },
 
 
@@ -1882,11 +1614,6 @@ return {
     },
 
 
-    showDownloadDialog: function () {
-        app.layout.showDownloadOptions(currentTabMembics);
-    },
-
-
     memapp: function (verb, profid) {
         var elem;
         switch(verb) {
@@ -1926,11 +1653,6 @@ return {
     },
 
 
-    tabsel: function (tabname) {
-        displayTab(tabname);
-    },
-
-
     display: function (dtype, id) {
         verifyFunctionConnections();
         if(dtype === "profile" && !id) {
@@ -1967,70 +1689,8 @@ return {
     },
 
 
-    updateSearchStateData: function (updrev) {
-        var rid, i;
-        //would use findIndex rather than for, but not fully supported..
-        if(srchst.revs && srchst.revs.length) {
-            rid = jt.instId(updrev);
-            for(i = 0; i < srchst.revs.length; i += 1) {
-                if(jt.instId(srchst.revs[i]) === rid) {
-                    srchst.revs[i] = updrev;
-                    break; } } }
-    },
-
-
     getDisplayState: function () {
         return dst;
-    },
-
-
-    blockfetch: function (dtype, id, callback, divid) {
-        var objref, url, time;
-        divid = divid || "contentdiv";
-        if(dtype === "profile" && !id) {
-            id = app.profile.myProfId() || ""; }
-        objref = app.lcs.getRef(dtype, id);
-        if(objref && objref[dtype]) {
-            return callback(objref[dtype]); }
-        if(divid !== "quiet") {
-            displayRetrievalWaitMessage(divid, dtype, id); }
-        url = "blockfetch?" + app.login.authparams();
-        if(dtype === "coop") {
-            if(!id) {
-                jt.log("blockfetch coop requires an id");
-                return callback(null); }
-            url += "&ctmid=" + id; }
-        else if(dtype === "profile") {
-            url += "&profid=" + id;
-            if(!id || id === app.profile.myProfId()) {  //looking for my pen
-                url += "&authorize=true"; } }      //include account info
-        url += jt.ts("&cb=", id? "hour" : "second");
-        time = Date.now();
-        jt.call("GET", url, null,
-                function (objs) {   //main obj + recent/top reviews
-                    var obj;
-                    time = Date.now() - time;
-                    jt.log("blockfetch " + dtype + " " + id  + 
-                           " returned in " + time/1000 + " seconds.");
-                    if(divid !== "quiet") {
-                        jt.out(divid, ""); }
-                    if(!objs.length || !objs[0]) {
-                        app.lcs.tomb(dtype, id, "blockfetch failed");
-                        return callback(null); }
-                    obj = objs[0];  //PenName or Coop instance
-                    app.lcs.put(dtype, obj);
-                    updateRecentMembics(dtype, id, obj, objs.slice(1), []);
-                    jt.log("blockfetch cached " + dtype + " " + jt.instId(obj));
-                    if(dtype === "coop") {
-                        app.coop.rememberThemeName(obj, true);
-                        app.coop.verifyPenStash(obj); }
-                    callback(obj); },
-                app.failf(function (code, errtxt) {
-                    jt.log("blockfetch " + code + ": " + errtxt);
-                    app.lcs.tomb(dtype, id, "blockfetch failed " + code + 
-                                 ": " + errtxt);
-                    callback(null); }),
-                jt.semaphore("pcd.blockfetch" + dtype + id));
     },
 
 
@@ -2047,70 +1707,9 @@ return {
     },
 
 
-    fetchmore: function (linkonly) {
-        var url, time, elem;
-        if(!jt.byId("fetchmorediv")) {
-            if((dst.tab === "latest" || dst.tab === "search") &&
-                   dst.type === "coop" && dst.obj.soloset && 
-                   dst.obj.soloset.stats && dst.obj.soloset.stats.mc &&
-                   dst.obj.soloset.stats.mc > dst.obj.recent.length &&
-                   !dst.obj.suppfetched) {
-                elem = document.createElement("div");
-                elem.innerHTML = jt.tac2html(
-                    ["div", {id: "fetchmorediv"},
-                     ["a", {href: "#fetchmore",
-                            onclick: jt.fs("app.pcd.fetchmore()")},
-                      "Fetch more..."]]);
-                jt.byId("pcdcontdiv").appendChild(elem); }
-            return; }
-        if(linkonly) {
-            return; }
-        jt.out("fetchmorediv", "Fetching...");
-        url = "blockfetch?" + app.login.authparams() + "&ctmid=" + dst.id +
-            "&supp=preb2" + jt.ts("&cb=", "second");
-        time = Date.now();
-        jt.call("GET", url, null,
-                function (membics) {  //contents of preb2 is just reviews
-                    time = Date.now() - time;
-                    jt.log("blockfetch supp " + dst.type + " " + dst.id  + 
-                           " returned in " + time/1000 + " seconds.");
-                    jt.out("fetchmorediv", "Redisplaying...");
-                    dst.obj.suppfetched = true;
-                    updateRecentMembics(dst.type, dst.id, dst.obj, membics, 
-                                        getRecentReviews());
-                    displayTab(dst.tab); },
-                function (code, errtxt) {
-                    jt.out("fetchmorediv", "Fetch failed " + code + 
-                           ": " + errtxt); },
-                jt.semaphore("pcd.fetchmore"));
-    },
-
-
-    membershipSettingsLink: function (theme) {
-        var html, stashid, prof, mlev;
-        stashid = "ctm" + theme.ctmid;
-        prof = app.profile.myProfile();
-        if(!prof || !prof.stash || !prof.stash[stashid]) {
-            return ""; }
-        //only have prof.stash[stashid] if at least following.  Verifying
-        //zero here only prevents crashing if the data is somehow corrupt.
-        mlev = prof.stash[stashid].memlev || 0;
-        html = ["a", {href:"#" + theme.name + " Settings",
-                      onclick:jt.fs("app.pcd.display('coop','" + theme.ctmid +
-                                    "',null,null,'settings')")},
-                ctmmsgs[mlev].name];
-        return jt.tac2html(html);
-    },
-
-
     cancelThemeCreate: function () {
         app.layout.cancelOverlay();
         app.pcd.display("profile", app.profile.myProfId(), "coops");
-    },
-
-
-    loadOverflow: function () {
-        jt.err("loadOverflow not implemented yet");
     }
 
 };  //end of returned functions

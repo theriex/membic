@@ -1,41 +1,29 @@
 /*global window, document, app, jt, a2a, a2a_config, d3, d3ckit */
 
-/*jslint browser, multivar, white, fudge, for */
+/*jslint browser, white, fudge, for, long */
 
 app.layout = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var typestate = {callback: null, typename: "all"},
-        dnld = {mf:null, opts:[{format:"html", name:"Document (HTML)"},
+    var typestate = {callback: null, typename: "all"};
+    var dnld = {mf:null, opts:[{format:"html", name:"Document (HTML)"},
                                {format:"pdf", name:"Document (PDF)"},
                                {format:"tsv", name:"Spreadsheet (TSV)"},
-                               {format:"json", name:"JavaScript (JSON)"}]},
-        dlgqueue = [],
-        siteroot = "",
-        addToAnyScriptLoaded = false,
-        decknames = [],
-        autoplay = false,
-        initialFadeIn = 1200,
-        tightLeftX = 10,
+                               {format:"json", name:"JavaScript (JSON)"}]};
+    var dlgqueue = [];
+    var siteroot = "";
+    var addToAnyScriptLoaded = false;
+    var decknames = [];
+    var autoplay = false;
+    var initialFadeIn = 1200;
+    var tightLeftX = 10;
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    replaceDocComments = function (html) {
-        var dst, txt;
-        //complaints from jslint about escaping the space character here,
-        //then if you get rid of it the complaint is to use \s instead.
-        //What I want is to match exactly the one space, since this is
-        //a known marker.  Generalizing doesn't seem good.  Leaving it.
-        html = html.replace(/\.<!--\ \$ABOUTCONTACT\ -->/g,
+    function replaceDocComments (html) {
+        var txt;
+        html = html.replace(/\.<!--\s\$ABOUTCONTACT\s-->/g,
             " or <a href=\"mailto:" + app.suppemail + "\">by email</a>.");
-        dst = app.pcd.getDisplayState();
+        var dst = app.pcd.getDisplayState();
         if(dst && dst.obj) {
             if(dst.type === "coop") {
                 if(dst.obj.hashtag) {
@@ -43,22 +31,22 @@ app.layout = (function () {
                         dst.obj.hashtag; }
                 else {
                     txt = "Theme hashtag not set"; }
-                html = html.replace(/<!--\ \$THEMEHASHURL\ -->/g, txt);
+                html = html.replace(/<!--\s\$THEMEHASHURL\s-->/g, txt);
                 txt = "https://" + window.location.host + "/t/" + dst.id;
-                html = html.replace(/<!--\ \$THEMEPERMALINK\ -->/g, txt);
+                html = html.replace(/<!--\s\$THEMEPERMALINK\s-->/g, txt);
                 txt = "https://" + window.location.host + 
                     "?view=coop&coopid=" + dst.id;
-                html = html.replace(/<!--\ \$MEMBICPARAMLINK\ -->/g, txt); }
+                html = html.replace(/<!--\s\$MEMBICPARAMLINK\s-->/g, txt); }
             txt = jt.tac2html(["a", {href: "#settings",
                                      onclick: jt.fs("app.pcd.settings()")},
                                "See Settings for RSS and embedding."]);
-            html = html.replace(/<!--\ \$SEEPCDSETTINGSLINK\ -->/g, txt); }
+            html = html.replace(/<!--\s\$SEEPCDSETTINGSLINK\s-->/g, txt); }
 
         return html;
-    },
+    }
 
 
-    noteDocSlideDecks = function (html) {
+    function noteDocSlideDecks (html) {
         var calls = html.split("app.layout.runSlideDeck");
         decknames = [];  //clear anything previously loaded
         autoplay = false;
@@ -68,10 +56,10 @@ app.layout = (function () {
                 call = call.slice(2);
                 deckname = call.slice(0, call.indexOf("'"));
                 decknames.push(deckname); } });
-    },
+    }
 
 
-    convertDocRef = function (href) {
+    function convertDocRef (href) {
         if(href.indexOf("docs/") < 0) {  //need to convert crawl relative link
             if(href.indexOf("/") >= 0) {
                 href = href.slice(0, href.lastIndexOf("/") + 1) +
@@ -79,41 +67,39 @@ app.layout = (function () {
             else {
                 href = "docs/" + href; } }
         return href;
-    },
+    }
 
 
-    shouldOpenInNewTab = function (link) {
-        var nt, matches,
-            lms = ["#", "https://membic.org", "https://membic.org",
+    function shouldOpenInNewTab (link) {
+        var nt;
+        var lms = ["#", "https://membic.org", "https://membic.org",
                    "https://www.membic.org", "https://www.membic.org",
                    "http://localhost", "mailto"];
         if(link.className.indexOf("externaldocslink") >= 0) {
             nt = true; }
         if(!nt) {
-            matches = lms.filter(function (substr) {
+            var matches = lms.filter(function (substr) {
                 if(link.href.indexOf(substr) >= 0) {
                     return substr; } });
             nt = !(matches && matches.length); }
         return nt;
-    },
+    }
 
 
-    convertDocLinks = function () {
-        var links, i, link;
-        links = document.getElementsByTagName("a");
-        for(i = 0; i < links.length; i += 1) {
-            link = links[i];
+    function convertDocLinks () {
+        var links = document.getElementsByTagName("a");
+        Array.prototype.forEach.call(links, function (link) {
             if(link.className.indexOf("localdocslink") >= 0) {
                 link.href = convertDocRef(link.href);
                 jt.on(link, "click", app.layout.docLinkClick); }
             else if(shouldOpenInNewTab(link)) {
                 //jt.log("new tab for: " + link.href);
-                jt.on(link, "click", app.layout.externalDocLinkClick); } }
-    },
+                jt.on(link, "click", app.layout.externalDocLinkClick); } });
+    }
 
 
-    getTitleForDocument = function (html, url) {
-        var title, idx;
+    function getTitleForDocument (html, url) {
+        var title; var idx;
         if(html.indexOf("<title>") >= 0 && html.indexOf("</title>") >= 0) {
             title = html.slice(html.indexOf("<title>") + 7,
                                html.indexOf("</title>")); }
@@ -130,15 +116,15 @@ app.layout = (function () {
            || title === "membic definition") {
             title = ""; }
         return title;
-    },
+    }
 
 
-    displayDocContent = function (url, html, overlay) {
-        var idx, title, bodystart = "<body>", coords, elem;
+    function displayDocContent (url, html, overlay) {
+        var bodystart = "<body>";
         if(!html || !html.trim()) {
             html = url + " contains no text"; }
-        title = getTitleForDocument(html, url);
-        idx = html.indexOf(bodystart);
+        var title = getTitleForDocument(html, url);
+        var idx = html.indexOf(bodystart);
         if(idx > 0) {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
@@ -147,9 +133,9 @@ app.layout = (function () {
         //display content
         if(overlay) {
             html = app.layout.dlgwrapHTML(title, html);
-            coords = {x: tightLeftX, y: 40};
+            var coords = {x: tightLeftX, y: 40};
             if(typeof overlay === "string") {
-                elem = jt.byId(overlay);
+                var elem = jt.byId(overlay);
                 if(elem) {
                     coords = jt.geoPos(elem);
                     //position content above element (footer links)
@@ -161,30 +147,30 @@ app.layout = (function () {
                 jt.byId("infoimg").style.display = "none"; }
             jt.out("contentdiv", html); }
         convertDocLinks();
-    },
+    }
 
 
     //relative paths don't work when you are running file://...
-    relativeToAbsolute = function (url) {
+    function relativeToAbsolute (url) {
         var loc = window.location.href;
         loc = loc.slice(0, loc.lastIndexOf("/") + 1);
         return loc + url;
-    },
+    }
 
 
     //hide the doc links as they are accessed from info link
-    localDocLinks = function () {
+    function localDocLinks () {
         var html = ["a", {href: "#community", title: "Community membics",
                            onclick: jt.fs("app.themes.display()")},
                      ["img", {id: "logoimg", 
                               src: "img/membiclogo.png?v=181127"}]];
         jt.out("logodiv", jt.tac2html(html));
         jt.byId("bottomnav").style.display = "none";
-    },
+    }
 
 
     //Minimum cell phone width is assumed to be 320px.
-    findDisplayHeightAndWidth = function () {
+    function findDisplayHeightAndWidth () {
         //most browsers (FF, safari, chrome, 
         if(window.innerWidth && window.innerHeight) {
             app.winw = window.innerWidth;
@@ -204,24 +190,24 @@ app.layout = (function () {
             app.winw = 800;
             app.winh = 800; }
         //jt.out("bottomnav", String(app.winw) + "x" + app.winh);
-    },
+    }
 
 
-    closeModalSeparator = function () {
+    function closeModalSeparator () {
         var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = "1px";
         mdiv.style.height = "1px";
-    },
+    }
 
 
-    openModalSeparator = function () {
+    function openModalSeparator () {
         var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = String(app.winw) + "px";
         mdiv.style.height = String(app.winh) + "px";
-    },
+    }
 
 
-    colorDeckLinkSpans = function (deckname, color, suffixes) {
+    function colorDeckLinkSpans (deckname, color, suffixes) {
         if(!suffixes) {
             suffixes = ["span", "slidesspan", "textspan"]; }
         if(typeof suffixes === "string") {
@@ -230,17 +216,17 @@ app.layout = (function () {
             var span = jt.byId(deckname + suffix);
             if(span) {
                 span.style.color = color; } });
-    },
+    }
 
 
-    ungrayKnownLinks = function () {
+    function ungrayKnownLinks () {
         if(decknames) {
             decknames.forEach(function (dn) {
                 colorDeckLinkSpans(dn, "#111111"); }); }
-    },
+    }
 
 
-    getHTMLDataURI = function (membics) {
+    function getHTMLDataURI (membics) {
         var txt;
         membics = membics || [];
         txt = "<!doctype html>\n<html>\n<head>\n" +
@@ -254,9 +240,9 @@ app.layout = (function () {
             "</style>\n" +
             "</head><body>";
         membics.forEach(function (membic) {
-            var type = app.review.getReviewTypeByValue(membic.revtype),
-                url = app.review.membicURL(type, membic),
-                pic = "";
+            var type = app.review.getReviewTypeByValue(membic.revtype);
+            var url = app.review.membicURL(type, membic);
+            var pic = "";
             if(membic.imguri) {
                 pic = ["img", {cla:"revimg", src:membic.imguri}]; }
             txt += "\n" + jt.tac2html(
@@ -268,14 +254,14 @@ app.layout = (function () {
                   jt.linkify(membic.text || "")]]); });
         txt += "</body></html>\n";
         return "data:text/html;charset=utf-8," + encodeURIComponent(txt);
-    },
+    }
 
 
-    getTSVDataURI = function (membics) {
-        var txt = "", keys = [];
+    function getTSVDataURI (membics) {
+        var txt = "";
         membics = membics || [];
         if(membics.length) {
-            keys = Object.keys(membics[0]);  //use same keys for all
+            var keys = Object.keys(membics[0]);  //use same keys for all
             keys.forEach(function (field, idx) {
                 if(idx) {
                     txt += "\t"; }
@@ -292,15 +278,15 @@ app.layout = (function () {
                     txt += fv; });
                 txt += "\n"; }); }
         return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
-    },
+    }
 
 
-    getJSONDataURI = function (membics) {
+    function getJSONDataURI (membics) {
         var txt;
         membics = membics || [];
         txt = JSON.stringify(membics);
         return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
-    };
+    }
 
 
     ////////////////////////////////////////
@@ -349,7 +335,7 @@ return {
         };
         jt.errhtml = function (actverb, code, errtxt) {
             if(code === 409) {
-                errtxt = errtxt.replace(/coop\ \d+/g, function (ctmref) {
+                errtxt = errtxt.replace(/coop\s\d+/g, function (ctmref) {
                     return jt.makelink("?view=coop&coopid=" + 
                                        ctmref.slice(5)); }); }
             return actverb + " failed code " + code + ": " + errtxt;
@@ -379,14 +365,16 @@ return {
                 return true; }  //numeric value may overflow js int
             return false;
         };
-        //lint wants to compare variables directly with === undefined
-        //but that crashes on mac ff 49.  Unfortunately it also dies
-        //passing an undefined parameter.  Leaving this commented out
-        //here to remember not to bother trying this approach.
+        //lint wants to compare variables directly using === undefined but
+        //that is incorrect as it will crash if testing for undefined global
+        //variables.  You also can't pass an undefined global variable to a
+        //function so the following won't work either:
         // jt.isUndefined = function (val) {
-        //     if(typeof val === "undefined") {  //required for mac ff
+        //     if(typeof val === "undefined") {  //glob var test
         //         return true; }
         //     return false; };
+        //In fact, even starting a comment with the word "global" causes
+        //lint to complain.  Hence the abbreviations in the comment text.
     },
 
 
@@ -455,11 +443,11 @@ return {
     loadSlideDecks: function () {
         var modnames = [];
         if(jt.byId("d3ckitdiv") && decknames && decknames.length) {
-            if(typeof d3 === "undefined") { //mac ff idiom
+            if(typeof d3 === "undefined") { //glob var test
                 app.loadScript("loadSlideDecks", 
                                "js/d3.v3.min.js", 
                                "d3script"); }
-            if(typeof d3ckit === "undefined") { //mac ff idiom
+            if(typeof d3ckit === "undefined") { //glob var test
                 app.loadScript("loadSlideDecks", 
                                "js/static/d3ckit.js?v=181127",
                                "d3ckitscript"); }
@@ -475,8 +463,8 @@ return {
                         bigArrowPlayColor:"#00af02",
                         deckStartFunc:app.layout.deckStart,
                         deckFinishFunc:app.layout.deckFinish};
-        if(typeof window.d3 === "undefined" ||   //mac ff idiom
-           typeof d3ckit === "undefined") {      //mac ff idiom
+        if(typeof window.d3 === "undefined" ||   //glob var test
+           typeof d3ckit === "undefined") {      //glob var test
             return app.fork({descr:"display slide decks",
                              func:app.layout.displaySlideDecks,
                              ms:300}); }
@@ -484,8 +472,8 @@ return {
         deckdisp.vidw = Math.min((app.winw - 40), 420);
         jt.byId(deckdisp.divid).style.width = deckdisp.vidw + "px";
         decknames.forEach(function (deckname) {
-            var deck = app[deckname], 
-            decktextdiv = jt.byId(deckname + "textdiv");
+            var deck = app[deckname];
+            var decktextdiv = jt.byId(deckname + "textdiv");
             deck.deckname = deckname;
             if(decktextdiv) {  //store text with deck
                 deck.texthtml = decktextdiv.innerHTML;
@@ -497,11 +485,10 @@ return {
 
 
     docLinkClick: function (event) {
-        var src, url;
         jt.evtend(event);
-        src = event.target || event.srcElement;
+        var src = event.target || event.srcElement;
         if(src) {
-            url = convertDocRef(src.href);
+            var url = convertDocRef(src.href);
             jt.log("docLinkClick: " + url);
             app.layout.displayDoc(url, true); }
     },
@@ -521,16 +508,6 @@ return {
             ["div", {id: "dlgborderdiv"},
              ["div", {id: "dlginsidediv"}, 
               html]]));
-    },
-
-
-    queueDialog: function (coords, html, initf, visf) {
-        var dlgdiv = jt.byId("dlgdiv");
-        if(dlgdiv.style.visibility === "visible") {
-            dlgqueue.push({coords: coords, html: html, 
-                           initf: initf, visf: visf}); }
-        else {
-            app.layout.openDialog(coords, html, initf, visf); }
     },
 
 
@@ -586,7 +563,8 @@ return {
 
 
     placerel: function (domid, xadj, yadj) {
-        var coords = null, elem = jt.byId(domid);
+        var coords = null; 
+        var elem = jt.byId(domid);
         if(elem) {
             coords = jt.geoPos(elem);
             if(xadj) {
@@ -594,16 +572,6 @@ return {
             if(yadj) {
                 coords.y += yadj; } }
         return coords;
-    },
-
-
-    scrollToVisible: function (domid) {
-        var elem, pos;
-        elem = jt.byId(domid);
-        if(elem) {
-            pos = jt.geoPos(elem);
-            if(pos.y > 0.8 * app.winh) {
-                window.scroll(0, pos.y); } }
     },
 
 
@@ -658,55 +626,11 @@ return {
     },
 
 
-    //Search for hashtags and return a CSV of any found in the text or
-    //in the descriptive fields of the referenced themes.  Themes are
-    //not loaded if they are not cached.
-    hashtagsCSV: function (text, ctmids) {
-        var hashes = "", matcharray, matchAndTest, regexp = /#\w+/g;
-        text = text || "";
-        ctmids = ctmids || "";
-        ctmids.csvarray().forEach(function (ctmid) {
-            var ref = app.lcs.getRef("coop", ctmid);
-            if(ref.coop) {
-                text += ref.coop.name + " " + ref.coop.description;
-                if(ref.coop.hashtag) {
-                    text += "#" + ref.coop.hashtag; } }
-            else {
-                if(app.coopnames[ctmid]) {
-                    text += " " + app.coopnames[ctmid]; }
-                if(app.cooptags[ctmid]) {
-                    text += "#" + app.cooptags[ctmid]; } } });
-        matchAndTest = function () {
-            matcharray = regexp.exec(text);
-            return matcharray; };
-        while(matchAndTest()) {
-            hashes = hashes.csvappend(matcharray[0].slice(1)); }
-        return hashes;
-    },
-
-
-    shareDivHTML: function (extraButtonHTML) {
-        var html;
-        extraButtonHTML = extraButtonHTML || "";
-        html = ["div", {cla: "a2a_kit a2a_kit_size_32 a2a_default_style",
-                        id: "a2abdiv"},
-                [["a", {cla: "a2a_dd",
-                        href: "https://www.addtoany.com/share_save"}],
-                 ["a", {cla: "a2a_button_tumblr"}],
-                 ["a", {cla: "a2a_button_pinterest"}],
-                 //["a", {cla: "a2a_button_google_plus"}],
-                 ["a", {cla: "a2a_button_facebook"}],
-                 ["a", {cla: "a2a_button_twitter"}],
-                 extraButtonHTML]];
-        return html;
-    },
-
-
     shareButtonsHTML: function (spec) {
         //thanks to https://sharingbuttons.io/
         var dca = "resp-sharing-button resp-sharing-button--small";
         var dcb = "resp-sharing-button__icon resp-sharing-button__icon--solid";
-        var urlp = jt.enc(spec.url)
+        var urlp = jt.enc(spec.url);
         var tlnp = jt.dquotenc(spec.title);
         var tac = [];
         spec.socmed = spec.socmed || ["tw", "fb", "em"];
@@ -747,48 +671,6 @@ return {
                              ["path", {d:"M22 4H2C.9 4 0 4.9 0 6v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM7.25 14.43l-3.5 2c-.08.05-.17.07-.25.07-.17 0-.34-.1-.43-.25-.14-.24-.06-.55.18-.68l3.5-2c.24-.14.55-.06.68.18.14.24.06.55-.18.68zm4.75.07c-.1 0-.2-.03-.27-.08l-8.5-5.5c-.23-.15-.3-.46-.15-.7.15-.22.46-.3.7-.14L12 13.4l8.23-5.32c.23-.15.54-.08.7.15.14.23.07.54-.16.7l-8.5 5.5c-.08.04-.17.07-.27.07zm8.93 1.75c-.1.16-.26.25-.43.25-.08 0-.17-.02-.25-.07l-3.5-2c-.24-.13-.32-.44-.18-.68s.44-.32.68-.18l3.5 2c.24.13.32.44.18.68z"}]]]]]);
                 break; } });
         return jt.tac2html(tac);
-    },
-
-
-    showShareButtons: function (title, url, tags, text) {
-        var js, hts = "";
-        tags = tags || "";
-        tags.csvarray().forEach(function (tag) {
-            if(!tag.startsWith("#")) {
-                tag = "#" + tag.trim(); }
-            hts = hts.csvappend(tag); });
-        hts = hts? " " + hts : "";
-        a2a_config.linkname = title;
-        a2a_config.linkurl = url;
-        a2a_config.templates = {
-            //The link title gets reconstructed from the url when
-            //displayed, so don't take up space here with that.
-            //Most important thing is why it was memorable.
-            twitter: text + hts + " ${link}" };
-        try {
-            if(!addToAnyScriptLoaded) {
-                //the script executes on load, so nothing left to do after
-                //adding the script tag to the document
-                js = document.createElement("script");
-                //js.async = true;
-                js.type = "text/javascript";
-                js.src = "//static.addtoany.com/menu/page.js";
-                document.body.appendChild(js);
-                jt.log("addtoany script loaded");
-                addToAnyScriptLoaded = true; }
-            else if(a2a) {
-                //script already loaded and have a2a object to work with
-                jt.log("resetting addtoany config variables and calling init");
-                a2a.init("page"); }
-        } catch(e) {
-            jt.log("shareViaAddToAny failed: " + e);
-        }
-        app.fork({
-            descr:"verify a2a loaded ok",
-            func:function () {
-                if(typeof a2a_config === "undefined") { //mac ff required
-                    jt.out("a2abdiv", "Browser history must be enabled for share buttons"); } },
-            ms:3500});
     },
 
 
@@ -860,18 +742,10 @@ return {
     },
 
 
-    setSiteRoot: function (sr) {
-        siteroot = sr;
-    },
-    getSiteRoot: function () {
-        return siteroot;
-    },
-
-
     rotateBackgroundPic: function () {
-        var body = jt.byId("bodyid"), picf,
-            //pic00 is reserved as a placeholder and is not in the rotation
-            pics = ["SnaefellsnesPenninsula.jpg", 
+        var body = jt.byId("bodyid");
+        //pic00 is reserved as a placeholder and is not in the rotation
+        var pics = ["SnaefellsnesPenninsula.jpg", 
                     "BigIslandKona.jpg",
                     "RedwoodMoss.jpg", 
                     "BlueHill.jpg",
@@ -885,7 +759,7 @@ return {
             app.bgpicidx = (new Date().getDate() % pics.length) + 1; }
         if(app.bgpicidx > pics.length) {  //one-based bgpicidx
             app.bgpicidx = 1; }
-        picf = "../img/sbg/" + pics[app.bgpicidx - 1];
+        var picf = "../img/sbg/" + pics[app.bgpicidx - 1];
         jt.log("switching background to " + picf);
         body.style.backgroundImage = "url('" + picf + "')";
         app.bgpicidx += 1;

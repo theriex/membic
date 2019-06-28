@@ -39,19 +39,7 @@ app.lcs = (function () {
                        return "profid=" + id; },
                    putprep: function (profobj) {
                        app.profile.deserializeFields(profobj); } },
-        pen: { refs: {},
-               fetchend: "penbyid",
-               fetchparamf: function (id) {
-                   return "penid=" + id; },
-               putprep: function (penobj) {
-                   app.pen.deserializeFields(penobj); } },
         rel: { refs: {} },
-        rev: { refs: {},
-               fetchend: "revbyid",
-               fetchparamf: function (id) {
-                   return "revid=" + id; },
-               putprep: function (revobj) {
-                   app.review.deserializeFields(revobj); } },
         coop: { refs: {},
                 fetchend: "ctmbyid",
                 fetchparamf: function (id) {

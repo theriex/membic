@@ -5,6 +5,7 @@ app.profile = (function () {
     "use strict";
 
     var mypid = "";
+    var ccfields = ["name", "hashtag", "description", "picture", "keywords"];
 
 
     function displayProfileForId (profid) {
@@ -85,6 +86,35 @@ app.profile = (function () {
     }
 
 
+    function updatedCachedCoopInfo (prof, coop) {
+        var cc = prof[coop.instid];
+        if(!cc) {
+            return false; }  //nothing to update
+        //prof.coops.lev managed by verifyMembership
+    }
+
+
+    function makeCachedCoop (coop, level) {
+        var cc = {lev:level};
+        ccfields.forEach(function (field) {
+            cc[field] = coop[field]; });
+        return cc;
+    }
+
+
+    function verifyCachedCoopInfo (prof, coop) {
+        //lev value is handled by verifyMembership, not checked here.
+        var changed = false;
+        var cc = prof.coops[coop.instid];
+        if(cc) {
+            ccfields.forEach(function (field) {
+                if(cc[field] !== coop[field]) {
+                    changed = true;
+                    cc[field] = coop[field]; } }); }
+        return changed;
+    }
+
+
     //The Coop membership update processing makes every effort to update
     //affected MUser objects, but it is not transactionally guaranteed, so
     //it is possible for profile to be out of sync.  Verify the membership
@@ -100,16 +130,17 @@ app.profile = (function () {
         //not previously noted and associated with the coop now
         if(!prof.coops[ctmid] && lev) {
             changed = true;
-            prof.coops[ctmid] = lev; }
+            prof.coops[ctmid] = makeCachedCoop(coop, lev); }
         //previously asociated
         else if(prof.coops[ctmid]) { //-1 or > 0
             if(lev) {  //new membership level supercedes previous value
                 changed = true;
-                prof.coops[ctmid] = lev; }
+                prof.coops[ctmid] = makeCachedCoop(coop, lev); }
             else {  //lev === 0 so resigned or kicked out
                 if(prof.coops[ctmid] > 0) {  //was member, switch to following
                     changed = true;
-                    prof.coops[ctmid] = -1; } } }
+                    prof.coops[ctmid] = makeCachedCoop(coop, -1); } } }
+        changed = changed || verifyCachedCoopInfo(prof, coop);
         if(changed) {  //note update, but not critical or time dependent
             updateProfile(prof); }
     }

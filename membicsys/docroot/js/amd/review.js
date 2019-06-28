@@ -1220,6 +1220,8 @@ app.review = (function () {
     }
 
 
+    //ctm may be a full Coop instance retrieved from lcs, or an abbreviated
+    //instance retrieved from MUser.coops.
     function displayThemeCheckboxes (ctm) {
         var html = []; var chk; var kwid;
         ctm.keywords = ctm.keywords || "";
@@ -1298,15 +1300,6 @@ app.review = (function () {
     }
 
 
-    function cacheNames (rev) {
-        app.pennames[rev.penid] = rev.penname;
-        convertOldThemePostLabel(rev);
-        if(rev.svcdata && rev.svcdata.postctms) {
-            rev.svcdata.postctms.forEach(function (ctm) {
-                app.coop.rememberThemeName(ctm, true); }); }
-    }
-
-
     function updateShareInfo () {
         notePostingCoops();  //populates rev.ctmids csv from checkboxes
         reviewTextValid();   //populates crev.text from input, shows any errors
@@ -1321,7 +1314,6 @@ app.review = (function () {
 
 
     function updateReviewDialogContents () {
-        app.coop.faultInPostableCoops();
         dlgRevTypeSelection();
         dlgKeyFieldEntry();
         dlgDetailsEntry();
@@ -1431,18 +1423,14 @@ return {
 
     start: function (source) {
         app.review.resetStateVars();
-        if(!app.pen.penReady()) {
-            return app.pen.promptFixPen(); }
         if(typeof source === "string") {  //passed in a url
             autourl = source; }
         if(typeof source === "object") {  //passed in another review
             orev = source;
             crev = copyReview(source);
-            if(source.penid === app.pen.myPenId()) {
-                app.coop.faultInPostThroughCoops(source); }
-            else {
+            if(source.penid !== app.profile.myProfId()) {
                 makeMine(crev, jt.instId(source)); } }
-        crev.penid = app.pen.myPenId();
+        crev.penid = app.profile.myProfId();
         displayMembicDialog();
     },
 
@@ -1629,13 +1617,11 @@ return {
         var cbox = jt.byId("dctmcb" + ctmid);
         if(cbox) {
             if(cbox.checked) {
-                //need the full reference for the checkbox definitions,
-                //but don't want to fault in just the coop without the
-                //supporting revs and other needed info.
-                app.pcd.blockfetch("coop", ctmid, function (coop) {
-                    app.coop.rememberThemeName(coop);  //backup if cache in flux
-                    updateShareInfo();  //note themes being posted to
-                    displayThemeCheckboxes(coop); }, "ctmkwdiv" + ctmid); }
+                var ctm = app.lcs.getRef("coop", ctmid);
+                if(!ctm.coop) {  //must at least be here if checkbox displayed
+                    ctm = app.profile.myProfile().coops[ctmid]; }
+                updateShareInfo();  //note themes being posted to
+                displayThemeCheckboxes(ctm); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
         displayAppropriateButton();
@@ -1754,7 +1740,7 @@ return {
 
     rotateupldpic: function () {
         var revid = jt.instId(crev);
-        var data = "revid=" + revid + "&penid=" + app.pen.myPenId();
+        var data = "revid=" + revid + "&penid=" + app.profile.myProfId();
         jt.out("pdtfbuttondiv", "Rotating...");
         jt.call("POST", "rotatepic?" + app.login.authparams(), data,
                 function (reviews) {
@@ -2006,13 +1992,13 @@ return {
             if(state.idx > 0) {
                 state.prev = state.revs[state.idx - 1]; }
             rev = state.revs[state.idx];
-            cacheNames(rev);
+            convertOldThemePostLabel(rev);
             revdivid = state.prefix + jt.instId(rev);
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
             if(rev.srcrev === "-604" || 
                    app.review.isDupeRev(rev, state.prev) || 
                    (state.author === "notself" && 
-                    rev.penid === app.pen.myPenId())) {
+                    rev.penid === app.profile.myProfId())) {
                 maindivattrs.style = "display:none"; }
             elem = document.createElement("div");
             elem.className = "fpcontdiv";
@@ -2030,8 +2016,6 @@ return {
                 func:function () {
                     app.review.revDispIterator(state); },
                 ms:200}); }
-        else {
-            app.pcd.fetchmore("linkonly"); }
     },
 
 

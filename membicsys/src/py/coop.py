@@ -300,8 +300,6 @@ def update_coop_and_bust_cache(coop):
     cached_put(coop)
     # force subsequent database retrievals to get the latest version
     Coop.get_by_id(coop.key().id())
-    # nuke blockfetch cached version to avoid stale data being returned
-    memcache.set("coop" + str(coop.key().id()), "")
 
 
 def membership_action_allowed(coop, action, pnm, role, seekerpen, seekrole):

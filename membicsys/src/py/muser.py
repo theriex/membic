@@ -14,7 +14,8 @@ import os
 import urllib
 
 # coops: {coopid:info, coopid2:info2, ...}
-#   info: {lev:N, name:str, hashtag:str, descrip:str, pic:idstr, keywords:CSV}
+#   info: {lev:N, name:str, hashtag:str, description:str, picture:idstr, 
+#          keywords:CSV}
 #   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
 # Any falsy value for lev means no association.  Maintained by client, updated
 # as available.  Used as a cache and may be out of date.
@@ -500,7 +501,7 @@ class ActivateAccount(webapp2.RequestHandler):
             muser.put()
             bust_cache_key(muser.email)
             self.response.headers['Content-Type'] = 'text/html'
-            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../?view=profsetpic\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
             return
         # no key, confirm account deactivation
         muser = authenticated(self.request)

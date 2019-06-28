@@ -1,68 +1,59 @@
 /*global confirm, window, document, history, app, jt */
 
-/*jslint browser, white, fudge, for, multivar */
+/*jslint browser, white, fudge, for, long */
 
 app.login = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var authname = "",
-        authtoken = "",
-        cookdelim = "..morauth..",
-        initialTopSectionHTML = "",
-        toprightdivcontents = "",
-        loginhtml = "",
-        actsent = null,
+    var authname = "";
+    var authtoken = "";
+    var cookdelim = "..membicauth..";
+    var initialTopSectionHTML = "";
+    var loginhtml = "";
+    var actsent = null;
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    secureURL = function (endpoint) {
-        var url = window.location.href,
-            sm = url.match(/^https:\/\//),
-            dm = url.match(/:\d080/),
-            //reject plain .com URL only, let subdirs and specific requests 
-            //through to support any older embeddings or permalinks.
-            cm = url.match(/^https?:\/\/(www\.)?(membic.com)\/?$/);
+    function secureURL (endpoint) {
+        var url = window.location.href;
+        var sm = url.match(/^https:\/\//);
+        var dm = url.match(/:\d080/);
+        //reject plain .com URL only, let subdirs and specific requests 
+        //through to support any older embeddings or permalinks.
+        var cm = url.match(/^https?:\/\/(www\.)?(membic.com)\/?$/);
         if((sm || dm) && !cm) {  //secure or dev but not .com
             url = endpoint; }  //relative path url ok, data is encrypted
         else {  //return secured URL for endpoint
             endpoint = endpoint || "";
             url = app.secsvr + "/" + endpoint; }
         return url;
-    },
+    }
 
 
-    authparams = function () {
+    function authparams () {
         var params = "an=" + jt.enc(authname) + "&at=" + authtoken;
         return params;
-    },
+    }
 
 
     //Produces less cryptic params to read
-    authparamsfull = function () {
+    function authparamsfull () {
         var params = "authname=" + jt.enc(authname) + 
                      "&authtoken=" + authtoken;
         return params;
-    },
+    }
 
 
-    logoutWithNoDisplayUpdate = function () {
+    function logoutWithNoDisplayUpdate () {
         //remove the cookie and reset the app vars
         jt.cookie(app.authcookname, "", -1);
         authtoken = "";
         authname = "";
         app.review.resetStateVars();
         app.profile.resetStateVars();
-    },
+    }
 
 
-    clearParams = function () {
+    function clearParams () {
         //this also clears any search parameters to leave a clean url.
         //that way a return call from someplace like twitter doesn't
         //keep token info and similar parameter stuff hanging around.
@@ -73,7 +64,7 @@ app.login = (function () {
         if(history && history.pushState && 
                       typeof history.pushState === "function") {
             history.pushState("", document.title, url); }
-    },
+    }
 
 
     //Cookie timeout is enforced both by the expiration setting here,
@@ -82,7 +73,7 @@ app.login = (function () {
     //regardless of the expiration set here.  This happens even if
     //directly using Cookie.set, or setting document.cookie directly.
     //On FF14 without noscript, all is normal.
-    setAuthentication = function (name, token) {
+    function setAuthentication (name, token) {
         var cval = name + cookdelim + token;
         jt.cookie(app.authcookname, cval, 365);
         authtoken = token;
@@ -90,10 +81,10 @@ app.login = (function () {
         if(authname) {
             authname = authname.replace("%40", "@"); }
         app.login.updateTopSection();
-    },
+    }
 
 
-    displayEmailSent = function () {
+    function displayEmailSent () {
         var html;
         html = [["p", 
                  [["Your account information has been emailed to "],
@@ -113,10 +104,10 @@ app.login = (function () {
         app.layout.openDialog({y:90}, jt.tac2html(html), null,
                               function () {
                                   jt.byId("okbutton").focus(); });
-    },
+    }
 
 
-    onLoginEmailChange = function (e) {
+    function onLoginEmailChange (e) {
         var passin;
         jt.evtend(e); 
         passin = jt.byId("passin");
@@ -125,19 +116,19 @@ app.login = (function () {
         //Don't create error noise in that case.
         if(passin) {
             passin.focus(); }
-    },
+    }
 
 
     //webkit likes to escape at signs
-    fixEmailAddress = function (emaddr) {
+    function fixEmailAddress (emaddr) {
         emaddr = emaddr.replace(/%40/g, "@");
         return emaddr;
-    },
+    }
 
 
     //safari displays "No%20match%20for%20those%20credentials"
     //and even "No%2520match%2520for%2520those%2520credentials"
-    fixServerText = function (text, email) {
+    function fixServerText (text, email) {
         if(!text) {
             text = ""; }
         text = text.replace(/%20/g, " ");
@@ -147,10 +138,10 @@ app.login = (function () {
                 email = fixEmailAddress(email); }
             text = (email || "Account") + " not found, click \"Create\""; }
         return text;
-    },
+    }
 
 
-    setFocusOnEmailInput = function () {
+    function setFocusOnEmailInput () {
         jt.retry(function () {  //setting the focus is not reliable
             var actel = document.activeElement;
             if(!actel || actel.id !== "emailin") {
@@ -161,41 +152,40 @@ app.login = (function () {
             else {
                 jt.log("emailin focus set already."); }
         }, [200, 400, 600]);
-    },
+    }
 
 
-
-    verifyCoreLoginForm = function () {
+    function verifyCoreLoginForm () {
         var html;
         if(!jt.byId("logindiv") || !jt.byId("loginform")) {
             html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
             jt.out("toprightdiv", html); }
-    },
+    }
 
 
-    addParamValuesToLoginForm = function (params) {
-        var state, returl, html = [];
+    function addParamValuesToLoginForm (params) {
+        var html = [];
         //add url parameters to pass through on form submit.  Except for
         //emailin, which should always be read from the form even if it
         //is passed back from the server for use in error handling.
-        Object.keys(params).forEach(function (name) {
-            if(name !== "emailin") {
-                html.push(["input", {type: "hidden", name: name,
-                                     value: params[name]}]); } });
+        Object.keys(params).forEach(function (key) {
+            if(key !== "emailin") {
+                html.push(["input", {type:"hidden", name:key,
+                                     value: params[key]}]); } });
         if(!params.returnto) { //window.location.origin is webkit only..
-            returl = window.location.protocol + "//" + 
+            var returl = window.location.protocol + "//" + 
                 window.location.host;
-            state = app.history.currState();
+            var state = app.history.currState();
             if(state.view === "coop") {
                 returl += "?view=coop&coopid=" + state.coopid; }
             html.push(["input", {type: "hidden", name: "returnto",
                                  value: returl}]); }
         jt.out("loginparaminputs", jt.tac2html(html));
-    },
+    }
 
 
     //prefer output in the login form if available, otherwise use main stat div
-    loginstat = function (txt) {
+    function loginstat (txt) {
         var loginstatformdiv = jt.byId("loginstatformdiv");
         if(loginstatformdiv) {
             jt.out("loginstatformdiv", jt.tac2html(
@@ -208,12 +198,12 @@ app.login = (function () {
             //wrap the text so it can be offset from the background
             jt.out("loginstatdiv", jt.tac2html(
                 ["span", {cla:"loginstatspan"}, txt])); }
-    },
+    }
 
 
     //The login form must already exist in index.html for saved passwords
     //to work on some browsers.  This adds the detail.
-    displayLoginForm = function (params) {
+    function displayLoginForm (params) {
         var html;
         verifyCoreLoginForm();
         addParamValuesToLoginForm(params);
@@ -235,29 +225,30 @@ app.login = (function () {
         //interferes with the Create Account button press.
         //jt.on("passin", "change", onLoginPasswordChange);
         setFocusOnEmailInput();
-    },
+    }
 
 
-    actSendContactHTML = function () {
-        var now, mins, subj, body, html;
-        now = new Date();
-        mins = ((now.getHours() - actsent.getHours()) * 60) +
+    function actSendContactHTML () {
+        var now = new Date();
+        var mins = ((now.getHours() - actsent.getHours()) * 60) +
             (now.getMinutes() - actsent.getMinutes());
-        subj = "Account activation email";
-        body = "Hey,\n\n" +
+        var subj = "Account activation email";
+        var body = "Hey,\n\n" +
             "I've been waiting over " + mins + " " +
             ((mins === 1) ? "minute" : "minutes") + 
             " for activation email to show up and still haven't received anything.  I've checked my spam folder and it's not there.  Would you please reply to this message and send me my activation code so I can post a membic?\n\n" +
-            "Thanks!\n" +
-            app.pen.myPenName().name + "\n";
-        html = ["a", {href: "mailto:" + app.suppemail + "?subject=" + 
-                      jt.dquotenc(subj) + "&body=" + jt.dquotenc(body)},
-                "Contact Support"];
+            "Thanks!\n"
+        var prof = app.profile.myProfile();
+        if(prof) {
+            body += prof.name + " (ProfileId: " + prof.instid + ")\n" }
+        var html = ["a", {href: "mailto:" + app.suppemail + "?subject=" + 
+                          jt.dquotenc(subj) + "&body=" + jt.dquotenc(body)},
+                    "Contact Support"];
         return html;
-    },
+    }
 
 
-    activateButtonOrNoticeHTML = function (prof) {
+    function activateButtonOrNoticeHTML (prof) {
         var html = ["button", {type:"button", id:"activatebutton",
                                onclick:jt.fs("app.login.sendActivation()")},
                     "Activate"];
@@ -287,10 +278,10 @@ app.login = (function () {
                            onclick: jt.fs("app.login.toggleactmaildet()")},
                      "mail sent"]]; }
         return html;
-    },
+    }
 
 
-    writeUsermenuAccountFormElements = function (prof) {
+    function writeUsermenuAccountFormElements (prof) {
         var html;
         if(prof.status === "Active") {
             html = [["span", {cla:"accstatvalspan"}, "Active"],
@@ -324,17 +315,17 @@ app.login = (function () {
                            value:2}, 
                 2]]],
              ["span", {cla:"accstatvalspan"}, "&nbsp;membic per day"]]));
-    },
+    }
 
 
-    logLoadTimes = function () {
-        var millis, timer = app.amdtimer;
-        millis = timer.load.end.getTime() - timer.load.start.getTime();
+    function logLoadTimes () {
+        var timer = app.amdtimer;
+        var millis = timer.load.end.getTime() - timer.load.start.getTime();
         jt.log("load app: " + millis);
-    },
+    }
 
 
-    loadThirdPartyUtilities = function () {
+    function loadThirdPartyUtilities () {
         //google fonts can occasionally be slow or unresponsive.  Load here to
         //avoid holding up app initialization
         var elem = document.createElement("link");
@@ -352,43 +343,10 @@ app.login = (function () {
         jt.log("added stylesheet " + elem.href);
         //The google places API doesn't like being loaded asynchronously so
         //leaving it last in the index file instead.
-    },
+    }
 
 
-    loggedInAuthentDisplay = function () {
-        var mypen, html;
-        mypen = app.pen.myPenName();
-        //if no pen name, then the app is prompting for that and there
-        //is no authenticated menu displayed.
-        if(mypen) {
-            html = ["div", {id:"infosignoutdiv"},
-                    [["a", {id: "introa", href: "#intro", title: "Information",
-                            onclick: jt.fs(
-                                "app.layout.displayDoc('docs/about.html')")},
-                      ["img", {id: "infoimg", src: "img/infotrim.png",
-                               style: "opacity:0.8;"}]],
-                     ["a", {href: "#SignOut",
-                            onclick: jt.fs("app.login.logout()")},
-                      ["span", {cla: "taslinkspan"},
-                       "Sign out"]]]];
-            jt.out("toprightdiv", jt.tac2html(html));
-            html = [["div", {id: "topbuttonsdiv"},
-                     [["a", {href: "#profile", cla: "topbuttonlink",
-                             title: "Your membics",
-                             onclick: jt.fs("app.login.topnav('mymembics')")},
-                       ["img", {cla: "topbuttonimg",
-                                src: "img/profile.png"}]],
-                      ["a", {href: "#write", cla: "topbuttonlink",
-                             title: "Make a membic",
-                             onclick: jt.fs("app.login.topnav('write')")},
-                       ["img", {cla: "topbuttonimg",
-                                src: "img/writenew.png"}]]]]];
-            jt.byId("topactionsdiv").style.display = "inline-block";
-            jt.out("topactionsdiv", jt.tac2html(html)); }
-    },
-
-
-    loggedInDoNextStep = function (params) {
+    function loggedInDoNextStep (params) {
         //On localhost, params are lost when the login form is
         //displayed.  On the server, they are passed to the secure
         //host and returned post-login.  These are separate flows.
@@ -397,10 +355,10 @@ app.login = (function () {
         //this comment and prevent running around in circles for hours
         //trying to debug authentication passthroughs.
         app.login.doNextStep(params);
-    },
+    }
 
 
-    applyCSSOverride = function (cssurl) {
+    function applyCSSOverride (cssurl) {
         var csselem = document.createElement("link");
         csselem.rel = "stylesheet";
         csselem.type = "text/css";
@@ -410,10 +368,10 @@ app.login = (function () {
             cssurl = "css/embed/" + cssurl + ".css"; }
         csselem.href = cssurl;
         document.head.appendChild(csselem);
-    },
+    }
 
 
-    handleInitialParamSideEffects = function (params) {
+    function handleInitialParamSideEffects (params) {
         if(params.an && params.at) {
             setAuthentication(params.an, params.at); }
         if(params.logout) {
@@ -423,8 +381,6 @@ app.login = (function () {
         if(params.css) {
             applyCSSOverride(params.css); }
         //handle specific context requests
-        if(params.view === "profsetpic") {
-            app.history.checkpoint({ view: "profsetpic" }); }
         else if(params.view === "about") {
             app.history.checkpoint({ view: "about" }); }
         else if(params.view && (params.coopid || params.hashtag || 
@@ -437,10 +393,10 @@ app.login = (function () {
                                      tab: params.tab,
                                      expid: params.expid,
                                      action: params.action }); }
-    },
+    }
 
 
-    handleRedirectOrStartWork = function () {
+    function handleRedirectOrStartWork () {
         var params = jt.parseParams();
         params.an = params.an || params.authname;
         params.at = params.at || params.authtoken;
@@ -455,7 +411,7 @@ app.login = (function () {
             if(app.haveReferrer()) {
                 params.referral = jt.enc(document.referrer); }
             app.redirectToSecureServer(params); }
-    };
+    }
 
 
     ////////////////////////////////////////
@@ -495,7 +451,7 @@ return {
 
 
     accountSettingsInit: function () {
-        var params, detdiv = jt.byId("accstatdetaildiv");
+        var detdiv = jt.byId("accstatdetaildiv");
         if(!detdiv) { //form fields no longer displayed so nothing to do
             return; }
         detdiv.style.display = "none";
@@ -505,16 +461,15 @@ return {
 
 
     displayActivationWaitTimer: function () {
-        var ascdiv = jt.byId("actsendcounterdiv"),
-            diff, hrs, mins, secs, txt;
+        var ascdiv = jt.byId("actsendcounterdiv");
         if(ascdiv) {
-            diff = Date.now() - actsent.getTime();
-            hrs = Math.floor(diff / (60 * 60 * 1000));
+            var diff = Date.now() - actsent.getTime();
+            var hrs = Math.floor(diff / (60 * 60 * 1000));
             diff -= hrs * 60 * 60 * 1000;
-            mins = Math.floor(diff / (60 * 1000));
+            var mins = Math.floor(diff / (60 * 1000));
             diff -= mins * 60 * 1000;
-            secs = Math.floor(diff / 1000);
-            txt = String(hrs) + " " + ((hrs === 1) ? "hour" : "hours") +
+            var secs = Math.floor(diff / 1000);
+            var txt = String(hrs) + " " + ((hrs === 1) ? "hour" : "hours") +
                 ", " + mins + " " + ((mins === 1) ? "minute" : "minutes") +
                 ", " + secs + " " + ((secs === 1) ? "second" : "seconds");
             jt.out("actsendcounterdiv", txt);
@@ -537,14 +492,14 @@ return {
 
 
     deactivateAcct: function () {
-        var params, emaddr = jt.byId("emailin").value;
+        var emaddr = jt.byId("emailin").value;
         if(emaddr !== authname) {
             jt.err("Please ok your email address change before deactivating.");
             return; }
         if(!confirm("If you want to re-activate your account after deactivating, you will need to confirm your email address again.")) {
             return; }
         jt.out("buttonornotespan", "Deactivating...");
-        params = app.login.authparams() + "&status=Inactive" + 
+        var params = app.login.authparams() + "&status=Inactive" + 
             jt.ts("&cb=", "second");
         jt.call("GET", "activate?" + params, null,
                 function (accounts) {
@@ -601,62 +556,6 @@ return {
     },
 
 
-    //create the logged-in display areas
-    updateAuthentDisplay: function (override) {
-        if(!toprightdivcontents) {
-            toprightdivcontents = jt.byId("toprightdiv").innerHTML; }
-        if(authtoken && override !== "hide") {
-            loggedInAuthentDisplay(); }
-        else if(override === "hide") { 
-            setTimeout(app.login.verifyAuthentHideOk, 8000);
-            jt.out("toprightdiv", ""); }
-        else {  //restore whatever was in index.html to begin with
-            jt.out("toprightdiv", toprightdivcontents); }
-    },
-
-
-    //Hiding the authent area permanently is a bad idea if app comms screw
-    //up and normal call flow is disrupted.  Only allowed if new pen.
-    verifyAuthentHideOk: function () {
-        jt.log("verifyAuthentHideOk called");
-        if(!jt.byId("infosignoutdiv") && !jt.byId("createpndiv") && 
-           !jt.byId("npaadiv")) {
-            jt.out("toprightdiv", jt.tac2html(
-                ["a", {href:"https://membic.org",
-                       onclick:jt.fs("window.location.reload()")},
-                 "&nbsp; Refresh Sign In &nbsp;"])); }
-    },
-
-
-    redirhome: function (e) {
-        var url = app.mainsvr;
-        jt.evtend(e);
-        if(window.location.href.indexOf("http://localhost:8080") === 0) {
-            url = "http://localhost:8080"; }
-        window.location.href = url;
-    },
-
-
-    topnav: function (bname) {
-        app.verifyHome();
-        jt.byId("infoimg").style.display = "initial";  //verify available
-        switch(bname) {
-        case "remembered":
-            return app.activity.displayRemembered();
-        case "write":
-            return app.review.start();
-        case "mymembics":
-            return app.pcd.display("pen"); }
-    },
-
-
-    nukeAppData: function () {
-        app.activity.resetAllFeeds();
-        app.pcd.resetState();
-        app.lcs.nukeItAll();
-    },
-
-
     updateAccount: function () {
         var emval = jt.byId("emailin").value.trim();
         if(!jt.isProbablyEmail(emval)) {
@@ -667,11 +566,12 @@ return {
             return jt.out("usermenustat", "Password needed for email change"); }
         if(emval !== emold && !confirm("You will need to re-activate your account from your new email address " + emval)) {
             return; }
-        maxpd = Number(mpdsel.options[mpdsel.selectedIndex].value);
+        var mpdsel = jt.byId("maxpdsel");
+        var maxpd = Number(mpdsel.options[mpdsel.selectedIndex].value);
         app.profile.setnu("maxPostsPerDay", maxpd);
         var updsettings = app.profile.myProfile().settings;
         jt.byId("accupdbutton").disabled = true;
-        jt.out("usermenustat", "Updating personal info...")
+        jt.out("usermenustat", "Updating personal info...");
         //account update also updates authent info.
         app.profile.update(
             {emailin:emval, passin:passval, settings:updsettings},
@@ -701,15 +601,14 @@ return {
         var prof = app.profile.myProfile();
         if(prof && prof.stash && prof.settings[fieldname]) {
             return prof.stash[fieldname]; }
-        return ""
+        return "";
     },
 
 
     readAuthCookie: function () {
-        var cval, mtn;
-        cval = jt.cookie(app.authcookname);
+        var cval = jt.cookie(app.authcookname);
         if(cval) {
-            mtn = cval.split(cookdelim);
+            var mtn = cval.split(cookdelim);
             authname = mtn[0].replace("%40", "@");
             authtoken = mtn[1]; }
         app.login.updateTopSection();
@@ -738,21 +637,9 @@ return {
     },
 
 
-    //Return point for 3rd party auth completion
-    authComplete: function () {
-        var params;
-        //any original params probably didn't make it through the 3rd
-        //party auth calls, but capture them in case they did.
-        params = jt.parseParams();
-        //kick off the pen access time update, hinter etc.
-        loggedInDoNextStep(params);
-    },
-
-
     createAccount: function () {
-        var emaddr, password, data, url, buttonhtml;
-        emaddr = jt.byId("emailin").value;
-        password = jt.byId("passin").value;
+        var emaddr = jt.byId("emailin").value;
+        var password = jt.byId("passin").value;
         if(!emaddr || !emaddr.trim()) {
             loginstat("Please specify an email and password");
             jt.byId("emailin").focus();
@@ -762,11 +649,11 @@ return {
             jt.byId("emailin").focus();
             return; }
         loginstat("");   //clear any previous message
-        buttonhtml = jt.byId("loginbuttonsdiv").innerHTML;
+        var buttonhtml = jt.byId("loginbuttonsdiv").innerHTML;
         jt.out("loginbuttonsdiv", "Creating new account...");
         emaddr = emaddr.toLowerCase();
-        data = jt.objdata({ emailin: emaddr, passin: password });
-        url = secureURL("newacct");
+        var data = jt.objdata({ emailin: emaddr, passin: password });
+        var url = secureURL("newacct");
         jt.call("POST", url, data, 
                  function (objs) {
                      var html = "<p>Your account has been created." + 
@@ -789,21 +676,20 @@ return {
 
 
     doNextStep: function (params) {
-        var state, redurl, xpara;
         if(!params) {
             params = jt.parseParams(); }
         if(params.returnto) {
             //if changing here, also check /redirlogin
-            redurl = decodeURIComponent(params.returnto) + "#" +
+            var redurl = decodeURIComponent(params.returnto) + "#" +
                 authparamsfull();
-            xpara = jt.objdata(params, ["logout", "returnto"]);
+            var xpara = jt.objdata(params, ["logout", "returnto"]);
             if(xpara) {
                 redurl += "&" + xpara; }
             window.location.href = redurl;
             return; }
         //no tag redirect so check current state.  State may be from history
         //pop or set by handleRedirectOrStartWork
-        state = app.history.currState();
+        var state = app.history.currState();
         if(!state || !state.view) {
             //if pfoj is a theme or profile, view it (specified by the URL)
             if(app.pfoj && app.pfoj.obtype === "Coop") {
@@ -815,20 +701,19 @@ return {
             else {
                 state = {view: "themes"}; } }
         if(params.url) {
-            app.activity.setURLToRead(params.url); }
-        app.login.updateTopSection()
+            app.urlToRead = params.url; }
+        app.login.updateTopSection();
         app.history.dispatchState(state);
     },
 
 
     resetPassword: function () {
-        var emaddr, data;
-        emaddr = jt.byId("emailin").value;
+        var emaddr = jt.byId("emailin").value;
         if(!jt.isProbablyEmail(emaddr)) {
             loginstat("Please fill in your email address...");
             return; }
         loginstat("Sending...");
-        data = "emailin=" + jt.enc(emaddr);
+        var data = "emailin=" + jt.enc(emaddr);
         jt.call("POST", "mailcred", data,
                 function (ignore /*objs*/) {
                     loginstat("");

@@ -91,28 +91,11 @@ return {
             return app.themes.display();
         case "about":
             return app.layout.displayDoc();
-        case "activity":
-            return app.activity.displayActive();
-        case "memo":  //not using anymore, memo tab for pen instead...
-            return app.activity.displayRemembered();
         case "coop":
             return app.coop.bycoopid(state.coopid, "history", state.tab, 
                                      state.expid);
-        case "profsetpic":
-            if(app.pen.myPenId()) {  //they are logged in
-                return app.pcd.display("pen", app.pen.myPenId(), "latest", 
-                                       app.pen.myPenName(), "settingspic"); }
-            //otherwise just do the main display
-            return app.profile.display();
         case "profile":
             return app.profile.byprofid(state.profid);
-        case "pen":
-            if(jt.isId(state.profid)) {
-                state.penid = state.profid; }
-            if(jt.isId(state.penid)) {
-                return app.pen.bypenid(state.penid, "history", state.tab,
-                                       state.expid, state.action); }
-            return app.pcd.display();
         default:
             jt.log("history.dispatchState unknown state: " + state);
         }
@@ -127,8 +110,8 @@ return {
         if(state && state.view) {
             app.history.dispatchState(state); }
         else if(app.login.isLoggedIn()) { 
-            jt.log("historyPop: no state, so displaying main feed by default");
-            app.activity.displayFeed("all"); }
+            jt.log("historyPop: no state. Displaying profile since signed-in");
+            app.profile.display(); }
         //no default action if not logged in.  A browser may pop the
         //history to attempt to return to the raw site in the event of
         //an autologin failure.
