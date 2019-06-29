@@ -134,6 +134,9 @@ app.pcd = (function () {
                           title:printType().capitalize() + " Settings",
                           onclick:jt.fs("app.pcd.settings()")},
                     ["img", {cla:"webjump", src:"img/settings.png"}]];
+        if(!app.profile.myProfile()) {  //not loaded yet, return placeholder
+            html = ["img", {cla:"webjump", src:"img/settings.png",
+                            style:"opacity:0.4;"}]; }
         return jt.tac2html(html);
     }
 
@@ -1099,14 +1102,22 @@ app.pcd = (function () {
         writeTopContent(defs, obj);
         if(app.solopage()) {
             customizeSoloPageDisplay(); }
-        if(dst.type === "coop" && dst.obj.instid) {
-            app.profile.verifyMembership(dst.obj); }
         if(!jt.hasId(dst.obj)) {  //creating a new theme
             jt.out("pcdcontdiv", "Settings required.");
             return app.pcd.settings(); }
+        if(dst.type === "coop" && dst.obj.instid) {
+            app.profile.verifyMembership(dst.obj); }
         showContentControls();
         app.pcd.updateSearchInputDisplay();
         app.pcd.searchReviews();
+        if(!app.solopage() && !app.profile.myProfile()) {
+            //This has to be significantly delayed or the browser thinks it
+            //should skip loading pics and otherwise finishing the display.
+            app.fork({descr:"pcd displayObject call profile.fetchProfile",
+                      ms:1800,
+                      func:function () {
+                          app.profile.fetchProfile(function () {
+                              displayObject(dst.obj); }); }}); }
     }
 
 
@@ -1282,7 +1293,7 @@ return {
             //custom param description.  Anyone who wants to know if https
             //is available will already know enough to just try it.
             ["div", {cla: "pcdsectiondiv"},
-             ["You can customize the <em>ts</em> (title summary) and <em>ds</em> (detail summary):",
+             ["You can customize the title summary <em>ts</em> and detail summary <em>ds</em> values:",
               ["ul",
                [["li", "<b>t</b>: title or name"],
                 ["li", "<b>s</b>: stars (as asterisks)"],
@@ -1337,17 +1348,6 @@ return {
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    fillEmbedDialogAreas(); });
-    },
-
-
-    follow: function () {
-        if(jt.hasId(dst.obj)) {
-            var ctmid = jt.instId(dst.obj);
-            var prof = app.profile.myProfile();
-            prof.coops = prof.coops || {};
-            if(!prof.coops[ctmid]) {
-                prof.coops[ctmid] = -1;
-                app.profile.update(prof, app.pcd.redisplay, app.failf); } }
     },
 
 

@@ -87,7 +87,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #sysnoticecontentdiv { padding:10px; background:#ffad51; border-radius:10px; }
 #topnavdiv { background-image:url('../img/e6e7e9p80.png'); font-size:small;
   display:table; margin:0 auto; padding:0px 5px 0px 0px; }
-.navimg { max-height:20px; }
+.navimg { max-height:28px; }
 
 /* >> main display area and contained elements */
 .disptitlediv { padding:0px 0px 5px 5px; background-color:#e6e7e9;

@@ -109,12 +109,11 @@ return {
         jt.log("historyPop: " + JSON.stringify(state));
         if(state && state.view) {
             app.history.dispatchState(state); }
-        else if(app.login.isLoggedIn()) { 
-            jt.log("historyPop: no state. Displaying profile since signed-in");
-            app.profile.display(); }
-        //no default action if not logged in.  A browser may pop the
-        //history to attempt to return to the raw site in the event of
-        //an autologin failure.
+        //if there is no state, then this was a call from the browser
+        //resulting from a script error or user action outside of the scope
+        //of the app (like trying to back-button to a previous site).  That
+        //should not be handled here or the site gets sticky in a not good
+        //way and errors cause weird display changes.
     },
 
 

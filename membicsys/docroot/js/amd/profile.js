@@ -32,6 +32,7 @@ app.profile = (function () {
         var params = app.login.authparams() + jt.ts("&cb=", "second");
         jt.call("GET", "/getacct?" + params, null,
                 function (accarr) {
+                    jt.log("fetchProfile loaded profile");
                     mypid = accarr[0].instid;
                     app.lcs.put("profile", accarr[0]);
                     callback(accarr[0]); },
