@@ -234,7 +234,7 @@ def synchronized_db_write(instance):
     instance = instance.__class__.get_by_id(instance.key().id())
     # update cache like cached_put if this is a pickle cached instance
     cname = instance.__class__.__name__
-    pcns = ["PenName", "Coop"]
+    pcns = ["MUser", "Coop"]
     if cname in pcns:
         memcache.set(cname + str(instance.key().id()), pickle.dumps(instance))
     # if this was a membic, bump the appropriate counter
@@ -261,9 +261,9 @@ class BumpCounter(webapp2.RequestHandler):
         profid = self.request.get("profid")
         if profid and int(profid):
             muser = muser.authenticated(self.request)
-        field = normalized_count_field(prof, self.request.get("field"))
+        field = normalized_count_field(muser, self.request.get("field"))
         refer = self.request.get("refer")
-        logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", penid: " + str(penid) + ", field: " + str(field) + ", refer: " + str(refer))
+        logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", profid: " + str(profid) + ", field: " + str(field) + ", refer: " + str(refer))
         counter = get_mctr(ctype, parid)
         if muser:  # note any new visitors
             name = re.sub(r",+", "", pnm.name)  # strip any commas

@@ -11,11 +11,8 @@ app.layout = (function () {
                                {format:"tsv", name:"Spreadsheet (TSV)"},
                                {format:"json", name:"JavaScript (JSON)"}]};
     var dlgqueue = [];
-    var siteroot = "";
-    var addToAnyScriptLoaded = false;
     var decknames = [];
     var autoplay = false;
-    var initialFadeIn = 1200;
     var tightLeftX = 10;
 
 
@@ -365,16 +362,6 @@ return {
                 return true; }  //numeric value may overflow js int
             return false;
         };
-        //lint wants to compare variables directly using === undefined but
-        //that is incorrect as it will crash if testing for undefined global
-        //variables.  You also can't pass an undefined global variable to a
-        //function so the following won't work either:
-        // jt.isUndefined = function (val) {
-        //     if(typeof val === "undefined") {  //glob var test
-        //         return true; }
-        //     return false; };
-        //In fact, even starting a comment with the word "global" causes
-        //lint to complain.  Hence the abbreviations in the comment text.
     },
 
 
@@ -443,11 +430,11 @@ return {
     loadSlideDecks: function () {
         var modnames = [];
         if(jt.byId("d3ckitdiv") && decknames && decknames.length) {
-            if(typeof d3 === "undefined") { //glob var test
+            if(window.d3 === undefined) { //glob var test
                 app.loadScript("loadSlideDecks", 
                                "js/d3.v3.min.js", 
                                "d3script"); }
-            if(typeof d3ckit === "undefined") { //glob var test
+            if(window.d3ckit === undefined) { //glob var test
                 app.loadScript("loadSlideDecks", 
                                "js/static/d3ckit.js?v=181127",
                                "d3ckitscript"); }
@@ -463,8 +450,8 @@ return {
                         bigArrowPlayColor:"#00af02",
                         deckStartFunc:app.layout.deckStart,
                         deckFinishFunc:app.layout.deckFinish};
-        if(typeof window.d3 === "undefined" ||   //glob var test
-           typeof d3ckit === "undefined") {      //glob var test
+        if(window.d3 === undefined ||   //glob var test
+           window.d3ckit === undefined) {   //glob var test
             return app.fork({descr:"display slide decks",
                              func:app.layout.displaySlideDecks,
                              ms:300}); }
@@ -626,7 +613,7 @@ return {
     },
 
 
-    shareButtonsHTML: function (spec) {
+    shareButtonsTAC: function (spec) {
         //thanks to https://sharingbuttons.io/
         var dca = "resp-sharing-button resp-sharing-button--small";
         var dcb = "resp-sharing-button__icon resp-sharing-button__icon--solid";
@@ -670,7 +657,7 @@ return {
                                      viewBox:"0 0 24 24"},
                              ["path", {d:"M22 4H2C.9 4 0 4.9 0 6v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM7.25 14.43l-3.5 2c-.08.05-.17.07-.25.07-.17 0-.34-.1-.43-.25-.14-.24-.06-.55.18-.68l3.5-2c.24-.14.55-.06.68.18.14.24.06.55-.18.68zm4.75.07c-.1 0-.2-.03-.27-.08l-8.5-5.5c-.23-.15-.3-.46-.15-.7.15-.22.46-.3.7-.14L12 13.4l8.23-5.32c.23-.15.54-.08.7.15.14.23.07.54-.16.7l-8.5 5.5c-.08.04-.17.07-.27.07zm8.93 1.75c-.1.16-.26.25-.43.25-.08 0-.17-.02-.25-.07l-3.5-2c-.24-.13-.32-.44-.18-.68s.44-.32.68-.18l3.5 2c.24.13.32.44.18.68z"}]]]]]);
                 break; } });
-        return jt.tac2html(tac);
+        return tac;
     },
 
 

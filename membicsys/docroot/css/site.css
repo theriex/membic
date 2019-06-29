@@ -110,7 +110,7 @@ button, .loginbutton, .formbutton, .filesellab {
 .penfont, .penflist { 
   font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
-.penbutton { padding-right:5px; vertical-align:top; }
+.penbutton { padding-right:12px; vertical-align:top; }
 #coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #bonkmain { clear:both; padding:10px; background:#ed8f8f; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
@@ -210,7 +210,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   font-size:small; }
 #tabtitlediv a { padding:0px; }
 #pcdactdiv { }
-#pcdacrssdiv { float:left; }
+#pcdacsharediv { float:left; }
 #pcdacsrchdiv { display:inline-block; }
 #pcdacemdiv { float:right; }
 #pcdactcontentdiv { font-size:small; text-align:center; padding:0px 5px; 
@@ -221,7 +221,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .dlrssimg { width:11px; height:12px; margin:0px 2px 2px 0px; }
 .dloptseldiv { background-image: url('../img/whitewash.png'); }
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
-#pcdkeysrchdiv, #pcdtypesrchdiv { background:#e6e7e9; opacity:0.8; clear:both; }
+#pcdkeysrchdiv, #pcdtypesrchdiv, #pcdsharediv { 
+  background:#e6e7e9; opacity:0.8; clear:both; }
 #fetchmorediv, #arxsidiv, #retrfaildiv, #fetchwaitdiv {
   margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
@@ -243,6 +244,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
+.pcdsectiondiv ul { list-style:none; margin:0; padding:0 0 0.5em 1em; }
 .embedexample { padding-left:10px; font-size:medium; }
 .embedexamptitle { font-style:italic; }
 .formline, .memlistdiv { clear:both; font-size:medium; 
@@ -390,7 +392,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
 .feedprefimg { width:16px; height:16px; padding: 2px; }
 .fpprefstatdiv { height:20px; font-size:12px; text-align:center; }
-.fparevdiv { margin: 0px 0px 0px 50px; }
+.fparevdiv { }  /* had a left margin to accomodate author, now inline */
 .fpnarevdiv { }
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
 .fpinrevdiv { background-image: url('../img/bleachscrub.png');
@@ -698,3 +700,8 @@ background-color: #FF6600
   border-color: #5e5e5e;
 }
 
+.resp-sharing-button--rss { 
+  background-color:#ffd6a8; border-color:#ffd6a8; }
+.resp-sharing-button--rss:hover,
+.resp-sharing-button--rss:active { 
+  background-color:#faca95; border-color:#faca95; }

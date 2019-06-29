@@ -1307,9 +1307,9 @@ app.review = (function () {
         jt.out("sharediv", "");
         if(jt.hasId(crev)) {
             jt.byId("closedlg").click = app.review.done;
-            jt.out("sharediv", app.layout.shareButtonsHTML(
+            jt.out("sharediv", jt.tac2html(app.layout.shareButtonsTAC(
                 {url:crev.url || app.secsvr + "/" + app.profile.myProfId(),
-                 title:crev.title || crev.name})); }
+                 title:crev.title || crev.name}))); }
     }
 
 

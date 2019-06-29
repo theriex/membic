@@ -29,7 +29,20 @@ app.pcd = (function () {
         {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
          attr:"color"},
         {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}];
-    var ctmmsgs = [
+    var noassoc =    //standardized messages if no Coop association
+        {name:"Not Connected", //MUser.coops lev: 0
+         levtxt:"You are not following this $obtype.",
+         uptxt:"Follow for membic notices.",
+         upbtn:"Follow",
+         cantxt:"",
+         canbtn:"",
+         rejtxt:"",
+         rejbtn:"",
+         restxt:"",
+         resbtn:"",
+         resconf:"",
+         notice:"" };
+    var ctmmsgs = [  //standardized messages organized by Coop level
         {name:"Following", //MUser.coops lev: -1
          levtxt:"Following shows you are interested in reading content from members writing on this theme.",
          uptxt:"Only members may post.",
@@ -79,6 +92,14 @@ app.pcd = (function () {
          resconf:"Are you sure you want to resign as Founder?"}];
 
 
+    function printType () {
+        var pt = "theme";
+        if(dst.type !== "coop") {
+            pt = "profile"; }
+        return pt;
+    }
+
+
     function getDirectLinkInfo (usehashtag) {
         var infobj = {title: "", url: app.hardhome};
         if(dst.type === "profile") {
@@ -105,29 +126,14 @@ app.pcd = (function () {
     }
 
 
-    function modButtonsHTML (obj) {
+    function modButtonsHTML () {
         if(app.solopage()) {
             return ""; }
-        var html = "";
-        if(dst.type === "profile") {
-            if(obj.instid === app.profile.myProfId()) {
-                html = ["a", {id:"pcdsettingslink", href:"#profilesettings",
-                              title:"Profile Settings",
-                              onclick:jt.fs("app.pcd.settings()")},
-                        ["img", {cla:"reviewbadge",
-                                 src:"img/settings.png"}]]; } }
-        else if(dst.type === "coop" && app.profile.myProfId()) {
-            if(obj.instid && app.profile.themeLevel(obj.instid)) {
-                html = ["a", {id:"pcdsettingslink", href:"#coopsettings",
-                              title: "Theme settings",
-                              onclick:jt.fs("app.pcd.settings()")},
-                        ["img", {cla:"reviewbadge",
-                                 src:"img/settings.png"}]]; }
-            else {
-                html = ["span", {id:"followbuttonspan"},
-                        ["button", {type:"button", id:"followbutton",
-                                    onclick:jt.fs("app.pcd.follow()")},
-                         "Follow"]]; } }
+        var html = ["a", {id:"pcdsettingslink", 
+                          href:"#" + printType() + "settings",
+                          title:printType().capitalize() + " Settings",
+                          onclick:jt.fs("app.pcd.settings()")},
+                    ["img", {cla:"webjump", src:"img/settings.png"}]];
         return jt.tac2html(html);
     }
 
@@ -182,43 +188,62 @@ app.pcd = (function () {
     }
 
 
+    function getAssociationMessages(prof, porc) {
+        var msgs = null;
+        if(porc.obtype === "Coop") {
+            var mlev = app.coop.membershipLevel(porc, prof.instid);
+            if(mlev) {
+                msgs = ctmmsgs[mlev]; } }
+        if(!msgs) {  //Use profile cache only if no Coop info
+            if(prof.coops[porc.instid]) {  //following
+                msgs = ctmmsgs[0]; }
+            else {  //no association
+                msgs = {};
+                var pt = printType();
+                Object.keys(noassoc).forEach(function (key) {
+                    msgs[key] = noassoc[key].replace(/\$obtype/g, pt); }); } }
+        return msgs;
+    }
+
+
     function membershipSettingsHTML () {
-        var mlev = app.coop.membershipLevel(dst.obj);
+        var msgs = getAssociationMessages(app.profile.myProfile(), dst.obj);
         var seeking = app.coop.isSeeking(dst.obj);
         var rejected = app.coop.isRejected(dst.obj);
         var html = [];
         //show application button if not in application process
-        if(ctmmsgs[mlev].uptxt && !seeking && !rejected) {
+        if(msgs.uptxt && !seeking && !rejected) {
             html.push(membershipButtonLine(
-                ctmmsgs[mlev].uptxt, "memappbdiv", personalInfoButtonHTML(),
+                msgs.uptxt, "memappbdiv", personalInfoButtonHTML(),
                 "uplevelbutton", jt.fs("app.pcd.ctmmem('apply')"),
-                ctmmsgs[mlev].upbtn)); }
+                msgs.upbtn)); }
         //show appropriate process button or default downlevel button
         if(rejected) {
             html.push(membershipButtonLine(
-                ctmmsgs[mlev].rejtxt, "memappbdiv", personalInfoButtonHTML(),
+                msgs.rejtxt, "memappbdiv", personalInfoButtonHTML(),
                 "accrejbutton", jt.fs("app.pcd.ctmmem('accrej')"),
-                ctmmsgs[mlev].rejbtn)); }
+                msgs.rejbtn)); }
         else if(seeking) {
             html.push(membershipButtonLine(
-                ctmmsgs[mlev].cantxt, "memappbdiv", "",
+                msgs.cantxt, "memappbdiv", "",
                 "withdrawbutton", jt.fs("app.pcd.ctmmem('withdraw')"),
-                ctmmsgs[mlev].canbtn)); }
-        else { //not seeking or rejected, show downlevel/resign button
+                msgs.canbtn)); }
+        //not seeking or rejected, show downlevel/resign button if relevant
+        else if(msgs.resbtn) {
             html.push(membershipButtonLine(
-                ctmmsgs[mlev].restxt, "rsbdiv", "",
+                msgs.restxt, "rsbdiv", "",
                 "downlevelbutton", jt.fs("app.pcd.ctmdownlev()"),
-                ctmmsgs[mlev].resbtn)); }
+                msgs.resbtn)); }
         html = [["div", {cla: "formline"},
                  [["label", {fo: "statval", cla: "liflab"}, "Status"],
                   ["a", {href: "#togglecoopstat",
                          onclick: jt.fs("app.layout.togdisp('ctmstatdetdiv')")},
                    ["span", {id: "memlevspan"},
-                    (seeking? "Applying" : ctmmsgs[mlev].name)]]]],
+                    (seeking? "Applying" : msgs.name)]]]],
                 ["div", {cla: "formline", id: "ctmstatdetdiv",
                          style: "display:none;"},
                  [["div", {cla: "formline"},
-                   ctmmsgs[mlev].levtxt],
+                   msgs.levtxt],
                   html]]];
         return html;
     }
@@ -734,7 +759,8 @@ app.pcd = (function () {
         if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
             return ""; }
         var html = ["div", {cla:"formline"},
-                    [["a", {href:"#rss", onclick:jt.fs("app.pcd.rssHelp()")},
+                    [["a", {href:"#rss", 
+                            onclick:jt.fs("app.pcd.rssHelp()")},
                       [["img", {cla:"ctmsetimg", src:"img/rssicon.png"}],
                        ["span", {cla:"settingsexpandlinkspan"},
                         "RSS Feed"]]]]];
@@ -744,19 +770,12 @@ app.pcd = (function () {
         var furl = window.location.href;
         if(furl.endsWith("/")) {
             furl = furl.slice(0, -1); }
-        furl += "/rssfeed?" + dst.type + "=" + jt.instId(dst.obj);
-        var ta = jt.byId("rssbta");
+        furl += "/rssfeed?" + dst.type + "=" + jt.instId(dst.obj) +
+            "&ts=st&ds=dvrk";
+        var ta = jt.byId("rsslinkta");
         if(ta) {
             ta.readOnly = true;
             ta.value = furl; }
-        ta = jt.byId("rsscta");
-        if(ta) {
-            ta.readOnly = true;
-            ta.value = furl + "&ts=st&ds=dvrk"; }
-        ta = jt.byId("rssota");
-        if(ta) {
-            ta.readOnly = true;
-            ta.value = furl + "&ts=sdvtvrk"; }
     }
 
 
@@ -808,9 +827,9 @@ app.pcd = (function () {
     }
     function fillEmbedDialogAreas () {
         var site = window.location.href;
-        var ta = jt.byId("embdlta");
         if(site.endsWith("/")) {
             site = site.slice(0, -1); }
+        var ta = jt.byId("embdlta");
         if(ta) {
             ta.readOnly = true;
             ta.value = getDirectLinkInfo().url; }
@@ -836,42 +855,6 @@ app.pcd = (function () {
             return; }
         histrec[dst.type + "id"] = dst.id;
         app.history.checkpoint(histrec);
-    }
-
-
-    function getRecentReviews () {
-        var revs = app.lcs.resolveIdArrayToCachedObjs("rev", dst.obj.recent);
-        var rt = app.layout.getType();
-        if(rt !== "all") {
-            revs = revs.filter(function (rev) {
-                if(rev.revtype === rt) {
-                    return true; } }); }
-        revs.sort(function (a, b) {
-            if(a.modhist > b.modhist) { return -1; }
-            if(a.modhist < b.modhist) { return 1; }
-            return 0; });
-        return revs;
-    }
-
-
-    function getFavoriteReviews () {
-        var revs;
-        var tops = dst.obj.top20s || {};
-        if(!tops.all) {
-            tops.all = [];
-            app.review.getReviewTypes().forEach(function (rt) {
-                tops.all = tops.all.concat(tops[rt.type] || []); });
-            revs = app.lcs.resolveIdArrayToCachedObjs("rev", tops.all);
-            revs.sort(function (a, b) {
-                if(a.rating < b.rating) { return 1; }
-                if(a.rating > b.rating) { return -1; }
-                if(a.modified < b.modified) { return 1; }
-                if(a.modified > b.modified) { return -1; }
-                return 0; });
-            tops.all = app.lcs.objArrayToIdArray(revs); }
-        var rt = app.layout.getType();
-        var revids = tops[rt] || [];
-        return app.lcs.resolveIdArrayToCachedObjs("rev", revids);
     }
 
 
@@ -969,9 +952,6 @@ app.pcd = (function () {
         jt.byId("pcduppercontentdiv").style.display = "none";
         jt.byId("bodyid").style.paddingLeft = "0px";
         jt.byId("bodyid").style.paddingRight = "0px";
-        //give a bit of space for the top of the tabs to not be truncated
-        var tabvpad = 4;  //let other styling know we padded it down
-        jt.byId("tabsdiv").style.marginTop = String(tabvpad) + "px";
     }
 
 
@@ -1008,11 +988,24 @@ app.pcd = (function () {
     }
 
 
-    function shareButtonsHTML () {
-        return app.layout.shareButtonsHTML(
+    function shareButtonsAndRSS () {
+        var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
+        var tac = app.layout.shareButtonsTAC(
             {url:app.secsvr + "/" + dst.obj.instid,
              title:dst.obj.name,
              socmed:["tw", "fb"]});
+        tac.push(["a", {href:rssurl,  //support right click to copy link
+                        cla:"resp-sharing-button__link",
+                        id:"rsslink", title:"RSS feed",
+                        onclick:jt.fs("app.pcd.rssHelp('standalone')")},
+                  ["div", {cla:"resp-sharing-button" + 
+                           " resp-sharing-button--small" +
+                           " resp-sharing-button--rss"},
+                   ["div", {cla:"resp-sharing-button__icon" + 
+                            " resp-sharing-button__icon--solid",
+                           "aria-hidden":"true"},
+                    ["img", {src:"img/rssicon.png"}]]]]);
+        return tac;
     }
 
 
@@ -1021,44 +1014,36 @@ app.pcd = (function () {
         var fsz = "large";
         if(shtxt.length > 300) {
             fsz = "medium"; }
-        var html = ["div", {id: "pcdouterdiv"},
-                    [["div", {id: "pcduppercontentdiv"},
-                      [["div", {id: "pcdpicdiv"},
-                        ["img", {cla: "pcdpic", src: picImgSrc(obj)}]],
-                       ["div", {id: "pcddescrdiv"},
-                        [["div", {id: "pcdnamediv"},
-                          [["a", {href: "/" + jt.instId(obj),
-                                  title:"Share",
-                                  onclick: jt.fs("app.pcd.togshare()")},
-                            [["span", {id:"pcdnamespan", cla:"penfont"},
-                              obj.name || obj.instid],
-                             ["span", {id: "namearrowspan", cla: "penbutton"}, 
-                              ["img", {id: "pnarw", src: "img/sharemenu.png",
-                                       cla: "webjump"}]]]],
-                           ["span", {cla: "penbutton"},
-                            modButtonsHTML(obj)]]],
-                         ["div", {id: "ppcdshoutdiv"},
-                          [["div", {id:"sharediv", style:"display:none;"}, 
-                            shareButtonsHTML()],
-                           ["span", {cla: "shoutspan",
-                                     style: "font-size:" + fsz + ";"}, 
-                            jt.linkify(shtxt)]]]]]]],
-                     ["div", {id: "pcdctrldiv"},
-                      ["div", {id: "pcdactdiv"}]],
-                     ["div", {id: "pcdcontdiv"}]]];
+        var html = ["div", {id:"pcdouterdiv"},
+                    [["div", {id:"pcduppercontentdiv"},
+                      [["div", {id:"pcdpicdiv"},
+                        ["img", {cla:"pcdpic", src:picImgSrc(obj)}]],
+                       ["div", {id:"pcddescrdiv"},
+                        [["div", {id:"pcdnamediv"},
+                          ["span", {id:"pcdnamespan", cla:"penfont"},
+                           obj.name || obj.instid]],
+                         ["div", {id:"ppcdshoutdiv"},
+                          ["span", {cla:"shoutspan",
+                                    style:"font-size:" + fsz + ";"}, 
+                           jt.linkify(shtxt)]]]]]],
+                     ["div", {id:"pcdctrldiv"},
+                      ["div", {id:"pcdactdiv"}]],
+                     ["div", {id:"pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
     }
 
 
     function showContentControls () {
-        var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
         var html = [
             ["div", {id:"pcdactcontentdiv"}, 
-             [["div", {id:"pcdacrssdiv"},
-               ["a", {href:rssurl, //support right click copy link 
-                      id:"rsslink", title:"Subscribe to RSS feed",
-                      onclick:jt.fs("window.open('" + rssurl + "')")},
-                ["img", {src:"img/rssicon.png", cla:"dlrssimg"}]]],
+             [["div", {id:"pcdacsharediv"},
+               [["a", {href: "/" + dst.id, title:"Share",
+                       onclick: jt.fs("app.pcd.togshare()")},
+                 ["span", {id:"namearrowspan", cla:"penbutton"},
+                  ["img", {id:"pnarw", cla:"webjump", 
+                           src:"img/sharemenu.png"}]]],
+                ["span", {cla:"penbutton"},
+                 modButtonsHTML()]]],
               ["div", {id:"pcdacsrchdiv"},
                [["a", {href:"#search", title:"Search Membics",
                        onclick:jt.fs("app.pcd.searchReviews()")},
@@ -1070,6 +1055,8 @@ app.pcd = (function () {
               ["div", {id:"pcdacemdiv"},
                ["a", {id:"emaillink", href:"#filledInByMembicsDisplay"},
                 ["img", {src:"img/emailbw22.png"}]]]]],
+            ["div", {id:"pcdsharediv", style:"display:none;"}, 
+             shareButtonsAndRSS()],
             ["div", {id:"pcdkeysrchdiv"}],
             ["div", {id:"pcdtypesrchdiv"}]];
         jt.out("pcdactdiv", jt.tac2html(html));
@@ -1093,7 +1080,8 @@ app.pcd = (function () {
         if(typeof(obj.preb) === "object" && !obj.preb.length) {
             //just in case preb had a bad value like {}
             obj.preb = []; }
-        jt.log("resetDisplayStateFromObject typeof preb: " + typeof(obj));
+        jt.log("resetDisplayStateFromObject " + obj.obtype + 
+               " id:" + obj.instid + " name:" + obj.name);
         dst.obj = obj;
         dst.mtypes = "";
         dst.keywords = "";
@@ -1266,48 +1254,49 @@ return {
     },
 
 
-    rssHelp: function () {
-        var sr = "https://feedly.com";  //sample RSS reader
-        var html = ["div", {id: "pcdembeddlgdiv"},
-                    [["div", {cla: "bumpedupwards"},
-                      ["div", {cla: "headingtxt"}, "RSS for " + dst.obj.name]],
-                     //basic RSS (http or https)
-                     ["div", {cla: "pcdsectiondiv"},
-                      [["span", {cla: "setpldlgmspan"}, "Standard RSS"],
-                       " for use with an ",
-                       ["a", {href: "#sampleRSSReader",
-                              onclick: jt.fs("window.open('" + sr + "')")},
-                        "RSS reader"],
-                       " or sidebar content:",
-                       ["div", {cla: "setplustdiv"},
-                        ["textarea", {id: "rssbta", cla: "setpldlgta"}]],
-                       "Either <em>http</em> or <em>https</em> can be used."]],
-                     //custom RSS
-                     ["div", {cla: "pcdsectiondiv"},
-                      [["span", {cla: "setpldlgmspan"}, "Custom RSS"],
-                       " to specify how the summary is presented:",
-                       ["div", {cla: "setplustdiv"},
-                        ["textarea", {id: "rsscta", cla: "setpldlgta"}]],
-                       "Change the <em>ts</em> and <em>ds</em> parameter value letters to reflect what you want:",
-                       ["ul",
-                        [["li", "<b>s</b>: rating stars (as asterisks)"],
-                         ["li", "<b>r</b>: membic type (e.g. \"book\")"],
-                         ["li", "<b>t</b>: title or name"],
-                         ["li", "<b>k</b>: keywords"],
-                         ["li", "<b>d</b>: description why memorable"],
-                         ["li", "<b>v</b>: vertical bar delimiter"]]]]],
-                     //sample one line title
-                     ["div", {cla: "pcdsectiondiv"},
-                      [["span", {cla: "setpldlgmspan"}, "Title only"],
-                       " example with all info in one line:",
-                       ["div", {cla: "setplustdiv"},
-                        ["textarea", {id: "rssota", cla: "setpldlgta"}]]]],
-                     //back
-                     ["div", {cla: "pcdsectiondiv"},
+    //There are lots of RSS feed plugins for WordPress, including at least
+    //one that will copy the content into the page.
+    rssHelp: function (standalone) {
+        var sampreader = "https://feedly.com";  //sample RSS reader
+        var samphub = "https://hootsuite.com";  //sample social media hub
+        var html = [
+            //title
+            ["div", {id: "pcdembeddlgdiv"},
+             [["div", {cla: "bumpedupwards"},
+               ["div", {cla: "headingtxt"}, 
+                printType().capitalize() + " Feed"]]]],
+            //rss link text area
+            ["div", {cla: "pcdsectiondiv"},
+             [["span", {cla: "setpldlgmspan"}, "RSS feed"],
+                       " (for ",
+              ["a", {href: "#sampleRSSReader",
+                     onclick: jt.fs("window.open('" + sampreader + "')")},
+               "RSS reader"],
+              ", site feed plugin, or ",
+              ["a", {href: "#socialMediaHub",
+                     onclick: jt.fs("window.open('" + samphub + "')")},
+               "social media hub"],
+              ")",
+              ["div", {cla: "setplustdiv"},
+               ["textarea", {id: "rsslinkta", cla: "setpldlgta", rows: 4}]]]],
+            //custom param description.  Anyone who wants to know if https
+            //is available will already know enough to just try it.
+            ["div", {cla: "pcdsectiondiv"},
+             ["You can customize the <em>ts</em> (title summary) and <em>ds</em> (detail summary):",
+              ["ul",
+               [["li", "<b>t</b>: title or name"],
+                ["li", "<b>s</b>: stars (as asterisks)"],
+                ["li", "<b>d</b>: why memorable"],
+                ["li", "<b>r</b>: membic type (e.g. \"book\")"],
+                ["li", "<b>k</b>: keywords"],
+                ["li", "<b>v</b>: vertical bar delimiter"]]]]]];
+        if(!standalone) {
+            //back link to return to settings
+            html.push(["div", {cla: "pcdsectiondiv"},
                       ["a", {href: "#settings",
                              onclick: jt.fs("app.pcd.settings()")},
                        [["img", {src: "img/arrow18left.png"}],
-                        " Return to Settings"]]]]];
+                        " Return to Settings"]]]); }
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    fillRSSDialogAreas(); });
@@ -1315,36 +1304,36 @@ return {
 
 
     embedHelp: function () {
-        var html;
-        html = ["div", {id: "pcdembeddlgdiv"},
-                [["div", {cla: "bumpedupwards"},
-                  ["div", {cla: "headingtxt"}, 
-                   "Embed " + dst.type.capitalize()]],
-                 //iframe
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
-                   " (replace EXAMPLE.COM with your domain)",
-                   ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embifta", cla: "setpldlgta", 
-                                  rows: 5}]]]],
-                 //Standalone URL
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "Standalone URL"],
-                   " for use with your own custom domain",
-                   ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embdlta", cla: "setpldlgta"}]]]],
-                 //wordpress
-                 ["div", {cla: "pcdsectiondiv"},
-                  [["span", {cla: "setpldlgmspan"}, "RSS Newsfeed"],
-                   " syndicated content display",
-                   ["div", {cla: "embdlgline"},
-                    ["textarea", {id: "embwpta", cla: "setpldlgta"}]]]],
-                 //back
-                 ["div", {cla: "pcdsectiondiv"},
-                  ["a", {href: "#settings",
-                         onclick: jt.fs("app.pcd.settings()")},
-                   [["img", {src: "img/arrow18left.png"}],
-                    " Return to Settings"]]]]];
+        var html = [
+            //title
+            ["div", {id: "pcdembeddlgdiv"},
+             [["div", {cla: "bumpedupwards"},
+               ["div", {cla: "headingtxt"},
+                "Embed " + printType().capitalize()]]]],
+            //iframe text area
+            ["div", {cla: "pcdsectiondiv"},
+             [["span", {cla: "setpldlgmspan"}, "Embed iframe"],
+              " (replace EXAMPLE.COM with your domain)",
+              ["div", {cla: "embdlgline"},
+               ["textarea", {id: "embifta", cla: "setpldlgta", rows: 5}]]]],
+            //Standalone URL text area
+            ["div", {cla: "pcdsectiondiv"},
+             [["span", {cla: "setpldlgmspan"}, "Standalone URL"],
+              " (for use with your own custom domain)",
+              ["div", {cla: "embdlgline"},
+               ["textarea", {id: "embdlta", cla: "setpldlgta"}]]]],
+            //use RSS feed for syndicated content wordpress and such
+            ["div", {cla: "pcdsectiondiv"},
+             ["If your site does not support frames, try including your " +
+              "syndicated content via ",
+              ["a", {href:"#RSS", onclick:jt.fs("app.pcd.rssHelp()")},
+               "RSS"]]],
+            //back link to return to settings
+            ["div", {cla: "pcdsectiondiv"},
+             ["a", {href: "#settings",
+                    onclick: jt.fs("app.pcd.settings()")},
+              [["img", {src: "img/arrow18left.png"}],
+               " Return to Settings"]]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    fillEmbedDialogAreas(); });
@@ -1352,7 +1341,7 @@ return {
 
 
     follow: function () {
-        if(dst.type === "coop" && jt.hasId(dst.obj)) {
+        if(jt.hasId(dst.obj)) {
             var ctmid = jt.instId(dst.obj);
             var prof = app.profile.myProfile();
             prof.coops = prof.coops || {};
@@ -1468,6 +1457,10 @@ return {
 
     ctmmem: function (action) {
         if(action === "apply") {
+            if(!app.profile.following(dst.id)) {
+                jt.out("memappbdiv", "Following");
+                return app.profile.follow(dst.obj, function () {
+                    app.pcd.settings(dst.obj); }); }
             jt.out("memappbdiv", "Applying..."); }
         else if(action === "withdraw") {
             jt.out("memappbdiv", "Withdrawing..."); }
@@ -1491,18 +1484,14 @@ return {
                                        app.profile.myProfId(),
                                        "", app.pcd.settings); }
         else {
-            jt.out("rsbdiv", "Stopping");
-            var prof = app.profile.myProfile();
-            prof.coops = prof.coops || {};
-            prof.coops[dst.id] = 0;
-            if(prof.stash && prof.stash["ctm" + dst.id]) {
-                prof.stash["ctm" + dst.id] = null; }
-            app.profile.update(prof, app.pcd.redisplay, app.failf); }
+            jt.out("rsbdiv", "Disconnecting");
+            app.profile.unfollow(dst.obj, function () {
+                app.pcd.settings(dst.obj); }); }
     },
 
 
     togshare: function () {
-        var sharediv = jt.byId("sharediv");
+        var sharediv = jt.byId("pcdsharediv");
         if(!sharediv) {
             return; }
         if(sharediv.style.display === "block") {

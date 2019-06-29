@@ -237,10 +237,10 @@ app.login = (function () {
             "I've been waiting over " + mins + " " +
             ((mins === 1) ? "minute" : "minutes") + 
             " for activation email to show up and still haven't received anything.  I've checked my spam folder and it's not there.  Would you please reply to this message and send me my activation code so I can post a membic?\n\n" +
-            "Thanks!\n"
+            "Thanks!\n";
         var prof = app.profile.myProfile();
         if(prof) {
-            body += prof.name + " (ProfileId: " + prof.instid + ")\n" }
+            body += prof.name + " (ProfileId: " + prof.instid + ")\n"; }
         var html = ["a", {href: "mailto:" + app.suppemail + "?subject=" + 
                           jt.dquotenc(subj) + "&body=" + jt.dquotenc(body)},
                     "Contact Support"];
@@ -607,10 +607,21 @@ return {
 
     readAuthCookie: function () {
         var cval = jt.cookie(app.authcookname);
+        if(cval && cval.indexOf(cookdelim) < 0) {  //invalid delimiter
+            jt.log("readAuthCookie bad cookdelim, nuked cookie.");
+            jt.cookie(app.authcookname, "", -1);
+            cval = ""; }
         if(cval) {
             var mtn = cval.split(cookdelim);
-            authname = mtn[0].replace("%40", "@");
-            authtoken = mtn[1]; }
+            mtn[0] = mtn[0].replace("%40", "@");
+            if(mtn[0].indexOf("@") < 0 || mtn[1].length < 20) {
+                //might have been "undefined" or other bad value
+                jt.log("readAuthCookie bad name/token, nuked cookie.");
+                jt.cookie(app.authcookname, "", -1);
+                cval = ""; }
+            else {
+                authname = mtn[0];
+                authtoken = mtn[1]; } }
         app.login.updateTopSection();
         return authtoken;  //true if set earlier
     },

@@ -14,9 +14,10 @@ import os
 import urllib
 
 # coops: {coopid:info, coopid2:info2, ...}
-#   info: {lev:N, name:str, hashtag:str, description:str, picture:idstr, 
-#          keywords:CSV}
+#   info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
+#          picture:idstr, keywords:CSV}
 #   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
+#   obtype: "MUser" or "Coop"
 # Any falsy value for lev means no association.  Maintained by client, updated
 # as available.  Used as a cache and may be out of date.
 
@@ -122,7 +123,7 @@ def authenticated(request):
     reqtok = request.get('at')
     muser = account_from_email(emaddr)
     if not muser:
-        logging.info("authenticated muser not found")
+        logging.info("authenticated muser not found emaddr: " + emaddr)
         return None
     srvtok = token_for_user(muser)
     if reqtok != srvtok:
@@ -168,56 +169,56 @@ def mailgun_send(handler, eaddr, subj, body):
 
 # Caller sets the actcode before calling, and updates the db after. Email
 # delivery can be delayed, so the code is not reset each time.
-def send_activation_code(handler, account):
-    if account.actsends:
-        account.actsends += ","
+def send_activation_code(handler, muser):
+    if muser.actsends:
+        muser.actsends += ","
     else:
-        account.actsends = ""
-    account.actsends += nowISO() + ";" + account.email
+        muser.actsends = ""
+    muser.actsends += nowISO() + ";" + muser.email
     # host_url is a field that Request inherits from WebOb
     url = handler.request.host_url + "/activate?key=" +\
-        str(account.key().id()) + "&code=" + account.actcode +\
-        "&an=" + account.email + "&at=" + token_for_user(account)
-    logging.info("Activate " + account.email + ": " + url)
-    mailtxt = "Hello,\n\nWelcome to membic.org! Please click this link to confirm your email address and activate your account:\n\n" + url + "\n\n"
-    mailgun_send(handler, account.email, "Account activation", mailtxt)
-    return account
+        str(muser.key().id()) + "&code=" + muser.actcode +\
+        "&an=" + muser.email + "&at=" + token_for_user(muser)
+    logging.info("Activate " + muser.email + ": " + url)
+    mailtxt = "Hello,\n\nWelcome to membic.org! Please click this link to confirm your email address and activate your profile:\n\n" + url + "\n\n"
+    mailgun_send(handler, muser.email, "Profile activation", mailtxt)
+    return muser
 
 
-def reset_email_verification(handler, account):
-    account.status = "Pending"
-    account.mailbounce = ""
-    account.actsends = ""
-    account.actcode = random_alphanumeric(30)
-    if not account.is_saved():
-        account.put()  # need account.key().id() for activation mail
-    send_activation_code(handler, account)
+def reset_email_verification(handler, muser):
+    muser.status = "Pending"
+    muser.mailbounce = ""
+    muser.actsends = ""
+    muser.actcode = random_alphanumeric(30)
+    if not muser.is_saved():
+        muser.put()  # need muser.key().id() for activation mail
+    send_activation_code(handler, muser)
 
 
 # Password is required for updating email since we need to rebuild phash
 # before rebuilding the access token.
-def update_email_and_password(handler, account):
+def update_email_and_password(handler, muser):
     req = handler.request
     emaddr = req.get('email') or req.get("emailin") or ""
     emaddr = normalize_email(emaddr)
     pwd = req.get("password") or req.get("passin") or ""
-    if not emaddr and not pwd and account.email != "placeholder":
+    if not emaddr and not pwd and muser.email != "placeholder":
         return True  # not updating credentials so done
     # updating email+password or password
-    if emaddr and emaddr != account.email and not pwd:
+    if emaddr and emaddr != muser.email and not pwd:
         morutil.srverr(handler, 400, "Password required to change email")
         return False
     if not valid_password_format(handler, pwd):
         return False  # error already reported
     changedemail = False
-    if emaddr != account.email:
+    if emaddr != muser.email:
         if not valid_new_email_address(handler, emaddr):
             return False  # error already reported
-        account.email = emaddr
+        muser.email = emaddr
         emailchanged = True
-    account.phash = make_password_hash(account.email, pwd, account.created)
+    muser.phash = make_password_hash(muser.email, pwd, muser.created)
     if emailchanged:
-        reset_email_verification(handler, account)
+        reset_email_verification(handler, muser)
     return True
 
 
@@ -279,7 +280,7 @@ def uncache_hashtag(dbobj):
 
 
 def cache_hashtag(dbobj):
-    if not dboj.hashtag:
+    if not dbobj.hashtag:
         return
     memcache.set(dbobj.hashtag, dbobj.kind() + ":" + str(dbobj.key().id()))
 
@@ -354,7 +355,7 @@ class GetToken(webapp2.RequestHandler):
         emaddr = normalize_email(self.request.get('emailin') or "")
         muser = account_from_email(emaddr)
         if not muser:
-            morutil.srverr(self, 401, "No account found for " + emaddr +  ".")
+            morutil.srverr(self, 401, "No muser found for " + emaddr +  ".")
             return
         password = self.request.get('passin')
         ph = make_password_hash(emaddr, password, muser.created)
@@ -381,7 +382,7 @@ class TokenAndRedirect(webapp2.RequestHandler):
             bust_cache_key(emaddr)  # autologin has already failed
             muser = account_from_email(emaddr)
             if not muser:
-                redurl += "emailin=" + email + "&loginerr=No account found"
+                redurl += "emailin=" + email + "&loginerr=No muser found"
             else:
                 password = self.request.get('passin') or ""
                 ph = make_password_hash(emaddr, password, muser.created)
@@ -418,46 +419,46 @@ class MailPasswordReset(webapp2.RequestHandler):
         eaddr = normalize_email(self.request.get('emailin') or "")
         if eaddr:
             content = "You requested your password be reset...\n\n"
-            vq = VizQuery(MORAccount, "WHERE email=:1 LIMIT 9", eaddr)
-            accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, 
+            vq = VizQuery(MUser, "WHERE email=:1 LIMIT 9", eaddr)
+            musers = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, 
                                 deadline=10)
-            if len(accounts) > 0:
-                muser = accounts[0]
-                content += "Use this link to access your account, then change "
+            if len(musers) > 0:
+                muser = musers[0]
+                content += "Use this link to access your profile, then change "
                 content += "your password in the settings: "
                 content += "https://www.membic.org?view=profile"
                 content += "&an=" + eaddr + "&at=" + token_for_user(muser)
                 content += "\n\n"
             else:
-                content += "The membic system found no account matching "
+                content += "The membic system found no profile matching "
                 content += eaddr + "\n"
                 content += "Either you have not signed up yet, or you used "
-                content += "a different email address.  To create an account "
+                content += "a different email address.  To create a profile "
                 content += "visit https://www.membic.org\n\n"
-            subj = "Membic.org account password reset"
+            subj = "Membic.org profile password reset"
             mailgun_send(self, eaddr, subj, content)
         morutil.srvJSON(self, "[]")
 
 
 class UpdateAccount(webapp2.RequestHandler):
     def post(self):
-        url = self.request.url;
+        requrl = self.request.url;
         if not verify_secure_comms(self, requrl):
             return  # error already reported
-        account = authenticated(self.request)
-        if not account:
+        muser = authenticated(self.request)
+        if not muser:
             return morutil.srverr(self, 401, "Authentication failed")
-        if not update_email_and_password(self, account):
+        if not update_email_and_password(self, muser):
             return  # error already reported
-        if not update_account_fields(self, account):
+        if not update_account_fields(self, muser):
             return  # error already reported
-        account.modified = nowISO()
-        account.put()  #nocache
-        bust_cache_key(account.email)
+        muser.modified = nowISO()
+        muser.put()  #nocache
+        bust_cache_key(muser.email)
         # retrieve updated version so subsequent calls get latest
-        account = MORAccount.get_by_id(account.key().id())
-        cache_hashtag(account)
-        token = token_for_user(account)
+        muser = MUser.get_by_id(muser.key().id())
+        cache_hashtag(muser)
+        token = token_for_user(muser)
         morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
@@ -480,7 +481,7 @@ class SendActivationCode(webapp2.RequestHandler):
             muser.actcode = random_alphanumeric(30)
         send_activation_code(self, muser)  # updates actsends
         muser.put()  #nocache
-        bust_cache_key(account.email)
+        bust_cache_key(muser.email)
         morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 
 
@@ -501,13 +502,13 @@ class ActivateAccount(webapp2.RequestHandler):
             muser.put()
             bust_cache_key(muser.email)
             self.response.headers['Content-Type'] = 'text/html'
-            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your account has been activated!</p><p><a href=\"../\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your profile has been activated!</p><p><a href=\"../\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
             return
         # no key, confirm account deactivation
         muser = authenticated(self.request)
         status = self.request.get('status')
         if not muser or status != "Inactive":
-            return morutil.srverr(self, 412, "Invalid account deactivation")
+            return morutil.srverr(self, 412, "Invalid profile deactivation")
         muser.status = status  # Inactive
         muser.actcode = ""
         muser.actsends = ""

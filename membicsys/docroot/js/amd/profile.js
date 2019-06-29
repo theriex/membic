@@ -5,7 +5,9 @@ app.profile = (function () {
     "use strict";
 
     var mypid = "";
+    //The coops entry lev field and obtype fields are set separately.
     var ccfields = ["name", "hashtag", "description", "picture", "keywords"];
+    var cpfields = ["name", "hashtag", "aboutme",     "profpic", ""];
 
 
     function displayProfileForId (profid) {
@@ -54,12 +56,19 @@ app.profile = (function () {
             if(failf) {
                 return failf(400, "No profile object to update"); }
             return; }  //nothing to do
-        var data = jt.objdata(obj) + "&" + app.login.authparams()
+        var updp = JSON.parse(JSON.stringify(obj));  //copy in case prof in use
+        app.profile.serializeFields(updp);
+        var skips = ["preb"];  //rebuilt server side as needed
+        if(!updp.password) {  //don't try to update email without password
+            skips.push("email"); }
+        var data = jt.objdata(updp, skips) + "&" + app.login.authparams();
         jt.call("POST", "/updacc", data,
-                function (updprof) {
-                    app.login.setAuth(updprof.email, updprof.token);
+                function (profs) {
+                    updp = profs[0];
+                    app.lcs.put("profile", updp);
+                    app.login.setAuth(updp.email, updp.token);
                     if(succf) {
-                        succf(updprof); } },
+                        succf(updp); } },
                 function (code, errtxt) {
                     jt.log("updateProfile " + code + " " + errtxt);
                     if(failf) {
@@ -86,18 +95,15 @@ app.profile = (function () {
     }
 
 
-    function updatedCachedCoopInfo (prof, coop) {
-        var cc = prof[coop.instid];
-        if(!cc) {
-            return false; }  //nothing to update
-        //prof.coops.lev managed by verifyMembership
-    }
-
-
-    function makeCachedCoop (coop, level) {
-        var cc = {lev:level};
-        ccfields.forEach(function (field) {
-            cc[field] = coop[field]; });
+    function makeCoopsEntry (cp, level) {
+        var cc = {lev:level, obtype:cp.obtype};
+        var mapfields = ccfields;
+        if(cp.obtype === "MUser") {
+            mapfields = cpfields; }
+        ccfields.forEach(function (field, idx) {
+            var mapfield = mapfields[idx];
+            if(mapfield) {
+                cc[field] = cp[mapfield]; } });
         return cc;
     }
 
@@ -130,16 +136,16 @@ app.profile = (function () {
         //not previously noted and associated with the coop now
         if(!prof.coops[ctmid] && lev) {
             changed = true;
-            prof.coops[ctmid] = makeCachedCoop(coop, lev); }
+            prof.coops[ctmid] = makeCoopsEntry(coop, lev); }
         //previously asociated
         else if(prof.coops[ctmid]) { //-1 or > 0
             if(lev) {  //new membership level supercedes previous value
                 changed = true;
-                prof.coops[ctmid] = makeCachedCoop(coop, lev); }
+                prof.coops[ctmid] = makeCoopsEntry(coop, lev); }
             else {  //lev === 0 so resigned or kicked out
                 if(prof.coops[ctmid] > 0) {  //was member, switch to following
                     changed = true;
-                    prof.coops[ctmid] = makeCachedCoop(coop, -1); } } }
+                    prof.coops[ctmid] = makeCoopsEntry(coop, -1); } } }
         changed = changed || verifyCachedCoopInfo(prof, coop);
         if(changed) {  //note update, but not critical or time dependent
             updateProfile(prof); }
@@ -191,6 +197,30 @@ app.profile = (function () {
     }
 
 
+    function setFollow (val, obj, succf, failf) {
+        var prof = myProfile();
+        if(val) {  //-1 indicates following but not member
+            prof.coops[obj.instid] = makeCoopsEntry(obj, val); }
+        else if(prof.coops[obj.instid]) {
+            //rather than setting lev to 0 and forcing explicit checking
+            //everywhere for no benefit, just remove the entry.
+            delete prof.coops[obj.instid]; }
+        updateProfile(prof, succf, failf);
+    }
+
+
+    function serializeFields (prof) {
+        if(typeof prof.settings === "object") {
+            prof.settings = JSON.stringify(prof.settings); }
+        if(typeof prof.coops === "object") {
+            prof.coops = JSON.stringify(prof.coops); }
+        //preb is never sent for update since it is maintained on server
+        //but serializing it here for symmetry
+        if(typeof prof.preb === "object") {
+            prof.preb = JSON.stringify(prof.preb); }
+    }
+
+
     function deserializeFields (prof) {
         app.lcs.reconstituteJSONObjectField("settings", prof);
         app.lcs.reconstituteJSONObjectField("coops", prof);
@@ -212,7 +242,11 @@ app.profile = (function () {
         getKeywordUse: function (prof) { return getKeywordUse(prof); },
         setnu: function (field, val) { setNoUpdate(field, val); },
         getwd: function (field, dval) { getWithDefault(field, dval); },
+        follow: function (obj, sf, xf) { setFollow(-1, obj, sf, xf); },
+        unfollow: function (obj, sf, xf) { setFollow(0, obj, sf, xf); },
+        following: function (id) { return myProfile().coops[id]; },
         resetStateVars: function () { mypid = ""; },
+        serializeFields: function (prof) { serializeFields(prof); },
         deserializeFields: function (prof) { deserializeFields(prof); }
     };
 }());
