@@ -551,7 +551,7 @@ return {
             ["a", {href:"#Membic",
                    onclick:jt.fs("app.review.start()")},
              [["img", {cla:"navimg", src:"img/writenew.png"}],
-              "Membic"]]]];
+              "Write"]]]];
         jt.out("topsectiondiv", jt.tac2html(html));
     },
 

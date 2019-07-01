@@ -257,15 +257,15 @@ class BumpCounter(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))
-        muser = None
+        acct = None
         profid = self.request.get("profid")
         if profid and int(profid):
-            muser = muser.authenticated(self.request)
-        field = normalized_count_field(muser, self.request.get("field"))
+            acct = muser.authenticated(self.request)
+        field = normalized_count_field(acct, self.request.get("field"))
         refer = self.request.get("refer")
         logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", profid: " + str(profid) + ", field: " + str(field) + ", refer: " + str(refer))
         counter = get_mctr(ctype, parid)
-        if muser:  # note any new visitors
+        if acct:  # note any new visitors
             name = re.sub(r",+", "", pnm.name)  # strip any commas
             name = morutil.safeURIEncode(name)
             val = profid + ":" + name
@@ -293,13 +293,13 @@ class GetCounters(webapp2.RequestHandler):
         if not ctype:
             return
         parid = intz(self.request.get("parentid"))  # sets to 0 if not found
-        muser = None
+        acct = None
         if not ctype == "Coop":
-            muser = muser.authenticated(self.request)
-            if not muser:
+            acct = muser.authenticated(self.request)
+            if not acct:
                 return srverr(self, "403", "Authentication failed")
         # Anyone following a theme has stats access, but profiles are private
-        if ctype == "Profile" and parid != muser.key().id():
+        if ctype == "Profile" and parid != acct.key().id():
             return srverr(self, "403", 
                           "You may only view stats for your own profile")
         elif (ctype == "Site" and 

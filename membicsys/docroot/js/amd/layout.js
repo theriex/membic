@@ -362,6 +362,18 @@ return {
                 return true; }  //numeric value may overflow js int
             return false;
         };
+        jt.trimval = function (val) {
+            val = val || "";
+            val = val.trim();
+            return val;
+        };
+        jt.changeSet = function (obj, field, val) {
+            var changed = false;
+            var currval = obj[field];
+            if(currval !== val) {
+                obj[field] = val;
+                changed = true; }
+            return changed; }
     },
 
 

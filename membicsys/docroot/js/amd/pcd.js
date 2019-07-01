@@ -11,7 +11,7 @@ app.pcd = (function () {
 
     var dst = {type:"", id:"", tab:"", obj:null,
                profile: {desclabel: "About Me",
-                         descplace: "A message for visitors to your profile. Any links you want to share?",
+                         descplace: "A message for visitors. Link to your site, or favorite quote?",
                          descfield: "aboutme",
                          piclabel: "Profile Pic",
                          picfield: "profpic",
@@ -447,17 +447,16 @@ app.pcd = (function () {
                                        code + ": " + errtxt); }),
                             jt.semaphore("pcd.fetchStats")); },
                 ms:200}); }
+        var vaurl = "docs/stat.html?ctype=" + dst.type + "&parentid=" + dst.id +
+            "&" + app.login.authparams() + "&profid=" + app.profile.myProfId() +
+            "&title=" + jt.embenc(dst.obj.name);
+        jt.log("Visualize All url: " + vaurl);
         var html = ["div", {id: "statsdisplaydiv"},
                     [["div", {id: "statsumdiv"}, sumh],
                      ["div", {cla: "formbuttonsdiv", id: "statsvisbdiv"},
-                      ["button", {type:"button", onclick:jt.fs(
-                          "window.open('/docs/stat.html" +
-                              "?ctype=" + dst.type +
-                              "&parentid=" + dst.id + 
-                              "&" + app.login.authparams() +
-                              "&profid=" + app.profile.myProfId() +
-                              "&title=" + jt.enc(dst.obj.name) +
-                              "')")},
+                      ["button", {type:"button", 
+                                  onclick:jt.fs("window.open('" + 
+                                                vaurl + "')")},
                        "Visualize All"]]]];
         return jt.tac2html(html);
     }
@@ -1031,6 +1030,7 @@ app.pcd = (function () {
                            jt.linkify(shtxt)]]]]]],
                      ["div", {id:"pcdctrldiv"},
                       ["div", {id:"pcdactdiv"}]],
+                     ["div", {id:"pcdnotidiv"}],
                      ["div", {id:"pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
     }
@@ -1050,7 +1050,7 @@ app.pcd = (function () {
               ["div", {id:"pcdacsrchdiv"},
                [["a", {href:"#search", title:"Search Membics",
                        onclick:jt.fs("app.pcd.searchReviews()")},
-                 ["img", {src:"img/search.png", cla:"dlrssimg"}]],
+                 ["img", {src:"img/search.png", cla:"webjump"}]],
                 ["input", {type:"text", id:"pcdsrchin", size:26,
                            placeholder: "Text search...",
                            value: srchst.qstr,
@@ -1109,6 +1109,7 @@ app.pcd = (function () {
             app.profile.verifyMembership(dst.obj); }
         showContentControls();
         app.pcd.updateSearchInputDisplay();
+        app.pcd.showNotices();
         app.pcd.searchReviews();
         if(!app.solopage() && !app.profile.myProfile()) {
             //This has to be significantly delayed or the browser thinks it
@@ -1188,6 +1189,43 @@ app.pcd = (function () {
                                     onclick:jt.fsd("app.pcd.typesrch()")}]],
                         ["label", {fo:"smt" + i}, mt]]]); });
         jt.out("pcdtypesrchdiv", jt.tac2html(html));
+    }
+
+
+    function addNotice (notice) {
+        jt.log("addNotice " + notice.text);
+        var imgsrc = "img/info.png";
+        switch(notice.type) {
+            case "settings": imgsrc = "img/settings.png"; break; }
+        var ndiv = document.createElement("div");
+        ndiv.className = "noticediv";
+        ndiv.id = notice.id;
+        ndiv.innerHTML = jt.tac2html([
+            ["div", {cla:"notimgdiv"},
+             ["a", {href:"#" + notice.id, onclick:notice.fstr,
+                    title:notice.text},
+              ["img", {cla:"noticeimg", src:imgsrc}]]],
+            ["div", {cla:"noticetxtdiv"},
+             ["a", {href:"#" + notice.id, onclick:notice.fstr},
+              notice.text]]]);
+        jt.byId("pcdnotidiv").appendChild(ndiv);
+    }
+
+
+    function showThemeNotices(prof, lev, coop) {
+        jt.log("showThemeNotices not implemented yet.");
+    }
+
+
+    function showProfileNotices(prof) {
+        if(!prof.name) {
+            addNotice({type:"settings", id:"profileName",
+                       text:"Set your Profile name...",
+                       fstr:jt.fs("app.pcd.settings()")}); }
+        if(!prof.profpic) {
+            addNotice({type:"settings", id:"profilePic",
+                       text:"Upload a profile pic for visual authorship.",
+                       fstr:jt.fs("app.pcd.settings()")}); }
     }
 
 
@@ -1356,22 +1394,19 @@ return {
         jt.byId("okbutton").disabled = true;
         var defs = dst[dst.type];
         var elem = jt.byId("namein");
-        if(elem && elem.value && elem.value.trim()) {
-            val = elem.value.trim();
-            if(dst.obj.name !== val) {
-                dst.obj.name = val;
-                changed = true; } }
+        if(elem) {  //can be changed back to "" so read even if no value
+            changed = jt.changeSet(dst.obj, "name", jt.trimval(elem.value)) ||
+                changed; }
         elem = jt.byId("shouteditbox");
-        if(elem && elem.value !== dst.obj[defs.descfield]) {
-            dst.obj[defs.descfield] = elem.value;
-            changed = true; }
+        if(elem) {
+            changed = jt.changeSet(dst.obj, defs.descfield, elem.value) ||
+                changed; }
         elem = jt.byId("hashin");
-        if(elem && elem.value && elem.value.trim()) {
-            val = elem.value.trim();
+        if(elem) {
+            val = jt.trimval(elem.value);
             if(val.indexOf("#") === 0) {
-                val = val.slice(1).trim(); }
-            dst.obj.hashtag = val;
-            changed = true; }
+                val = val.slice(1); }
+            changed = jt.changeSet(dst.obj, "hashtag", val) || changed; }
         elem = jt.byId("arkcb");
         if(elem) {
             val = "";
@@ -1535,6 +1570,20 @@ return {
     updateSearchInputDisplay: function () {
         updateKeywordsSelectionArea();
         updateTypesSelectionArea();
+    },
+
+
+    showNotices: function () {
+        jt.out("pcdnotidiv", "");
+        if(dst.obj) {
+            var prof = app.profile.myProfile();
+            if(dst.type === "profile" && dst.id === prof.instid) {
+                showProfileNotices(prof); }
+            else if(dst.type === "coop" && prof.coops && prof.coops[dst.id] &&
+                    prof.coops[dst.id].lev > 0) {
+                var lev = app.coop.membershipLevel(dst.obj, prof.instid);
+                if(lev > 0) {
+                    showThemeNotices(prof, lev, dst.obj); } } }
     },
 
 

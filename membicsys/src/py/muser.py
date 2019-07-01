@@ -286,6 +286,8 @@ def cache_hashtag(dbobj):
 
 
 def update_account_fields(handler, muser):
+    muser.name = handler.request.get("name") or ""
+    muser.aboutme = handler.request.get("aboutme") or ""
     hashtag = handler.request.get("hashtag") or ""
     hashtag = hashtag.lower()
     if hashtag and hashtag != muser.hashtag:
