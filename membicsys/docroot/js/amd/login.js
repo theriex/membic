@@ -9,7 +9,6 @@ app.login = (function () {
     var authtoken = "";
     var cookdelim = "..membicauth..";
     var initialTopSectionHTML = "";
-    var loginhtml = "";
     var actsent = null;
 
 
@@ -50,6 +49,7 @@ app.login = (function () {
         authname = "";
         app.review.resetStateVars();
         app.profile.resetStateVars();
+        //no history clear, each display reacts to login state
     }
 
 
@@ -155,14 +155,6 @@ app.login = (function () {
     }
 
 
-    function verifyCoreLoginForm () {
-        var html;
-        if(!jt.byId("logindiv") || !jt.byId("loginform")) {
-            html = jt.tac2html(["div", {id: "logindiv"}, loginhtml]);
-            jt.out("toprightdiv", html); }
-    }
-
-
     function addParamValuesToLoginForm (params) {
         var html = [];
         //add url parameters to pass through on form submit.  Except for
@@ -204,21 +196,15 @@ app.login = (function () {
     //The login form must already exist in index.html for saved passwords
     //to work on some browsers.  This adds the detail.
     function displayLoginForm (params) {
-        var html;
-        verifyCoreLoginForm();
         addParamValuesToLoginForm(params);
         //decorate contents and connect additional actions
         if(params.loginerr) {
             loginstat(fixServerText(params.loginerr, params.emailin)); }
-        html = ["a", {id:"resetpw", href:"#resetpassword",
-                      title:"Email a password reset link",
-                      onclick:jt.fs("app.login.resetPassword()")},
-                "reset password..."];
-        jt.out("resetpassdiv", jt.tac2html(html));
         if(authname) {
             jt.byId("emailin").value = authname; }
         if(params.emailin) {
             jt.byId("emailin").value = params.emailin; }
+        //topsectiondiv content is now changed, save the updated for restore
         jt.on("emailin", "change", onLoginEmailChange);
         //Since this is an actual form, the default form action is
         //already triggered on return, and setting a handler
@@ -396,6 +382,20 @@ app.login = (function () {
     }
 
 
+    function saveTopSectionHTML () {
+        if(initialTopSectionHTML) {
+            return; }  //already have it
+        //add any needed html to what was sourced from the server
+        var html = ["a", {id:"resetpw", href:"#resetpassword",
+                          title:"Email a password reset link",
+                          onclick:jt.fs("app.login.resetPassword()")},
+                    "reset password..."];
+        jt.out("resetpassdiv", jt.tac2html(html));
+        html = jt.byId("topsectiondiv").innerHTML;
+        initialTopSectionHTML = html;
+    }
+
+
     function handleRedirectOrStartWork () {
         var params = jt.parseParams();
         params.an = params.an || params.authname;
@@ -423,8 +423,7 @@ return {
         logLoadTimes();
         app.fork({descr:"dynamic fonts",
                   func:loadThirdPartyUtilities, ms:5});
-        if(!loginhtml) {  //save original html in case needed later
-            loginhtml = jt.byId("logindiv").innerHTML; }
+        saveTopSectionHTML();
         handleRedirectOrStartWork();
     },
 
@@ -532,10 +531,11 @@ return {
 
 
     updateTopSection: function () {
-        if(!initialTopSectionHTML) {
-            initialTopSectionHTML = jt.byId("topsectiondiv").innerHTML; }
         if(!app.login.isLoggedIn()) {
-            return jt.out("topsectiondiv", initialTopSectionHTML); }
+            if(initialTopSectionHTML && !jt.byId("loginform")) {
+                jt.out("topsectiondiv", initialTopSectionHTML); }
+            return; }
+        //logged in...
         var sep = "&nbsp;&nbsp;|&nbsp;&nbsp";
         var html = ["div", {id:"topnavdiv"}, [
             ["a", {href:"#Themes",
@@ -575,7 +575,9 @@ return {
         //account update also updates authent info.
         app.profile.update(
             {emailin:emval, passin:passval, settings:updsettings},
-            function () { //updated account already cached
+            function (prof) { //updated account already cached
+                //need to rebuild the displayed account info, status change..
+                writeUsermenuAccountFormElements(prof);
                 jt.byId("accupdbutton").disabled = false;
                 jt.out("usermenustat", "Personal info updated."); },
             function (code, errtxt) {
@@ -631,15 +633,12 @@ return {
         app.layout.closeDialog();
         app.layout.cancelOverlay();
         logoutWithNoDisplayUpdate();
-        app.history.checkpoint({ view: "profile", profid: 0 });
         app.login.updateTopSection();
         jt.out("sysnoticediv", "");
-        jt.out("topactionsdiv", "");
-        jt.byId("topactionsdiv").style.display = "none";
-        app.login.init();
+        app.verifyHome();
         if(errprompt) {
             jt.err(errprompt); }
-        app.verifyHome();
+        handleRedirectOrStartWork();
     },
 
 

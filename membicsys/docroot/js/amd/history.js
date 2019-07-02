@@ -1,6 +1,6 @@
 /*global window, document, history, JSON, app, jt */
 
-/*jslint browser, multivar, white, fudge */
+/*jslint browser, white, fudge */
 
 ////////////////////////////////////////
 // history utility methods
@@ -9,36 +9,25 @@
 app.history = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure data
-    ////////////////////////////////////////
-
-    var 
-
-
-    ////////////////////////////////////////
-    // closure helper funtions
-    ////////////////////////////////////////
-
-    getTitle = function (ignore /*state*/) {
+    function getTitle (ignore /*state*/) {
         var title = document.title;
         return title;
-    },
+    }
 
 
-    getURL = function (ignore /*state*/) {
+    function getURL (ignore /*state*/) {
         var url = window.location.href;
         return url;
-    },
+    }
 
 
-    indicateState = function (/*state*/) {
+    function indicateState (/*state*/) {
         //This used to display a "home" clickable icon if state.view
         //was anything other than "activity", but that looks like
         //visual graffiti.  Buttons need to remain static so they are
         //recognized as stable anchor points for navigation.
         jt.out("topdiv", "");
-    };
+    }
 
 
     ////////////////////////////////////////
@@ -51,10 +40,10 @@ return {
     //if anything else has changed, replace the current history record.
     //otherwise no effect.
     checkpoint: function (pstate) {
-        var hstate, title, url;
+        var title; var url;
         indicateState(pstate);
         if(history) {  //verify history object defined, otherwise skip
-            hstate = history.state;
+            var hstate = history.state;
             if(!hstate 
                || hstate.view !== pstate.view 
                || hstate.profid !== pstate.profid
@@ -124,8 +113,6 @@ return {
         return state;
     }
 
-
-    }; //end of returned functions
-
+}; //end of returned functions
 }());
 

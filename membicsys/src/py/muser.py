@@ -203,23 +203,23 @@ def update_email_and_password(handler, muser):
     emaddr = normalize_email(emaddr)
     pwd = req.get("password") or req.get("passin") or ""
     if not emaddr and not pwd and muser.email != "placeholder":
-        return True  # not updating credentials so done
+        return "nochange"  # not updating credentials so done
     # updating email+password or password
     if emaddr and emaddr != muser.email and not pwd:
         morutil.srverr(handler, 400, "Password required to change email")
         return False
     if not valid_password_format(handler, pwd):
         return False  # error already reported
-    changedemail = False
+    change = "password"
     if emaddr != muser.email:
         if not valid_new_email_address(handler, emaddr):
             return False  # error already reported
         muser.email = emaddr
-        emailchanged = True
+        change = "email"
     muser.phash = make_password_hash(muser.email, pwd, muser.created)
-    if emailchanged:
+    if change == "email":
         reset_email_verification(handler, muser)
-    return True
+    return change
 
 
 def asciienc(val):
@@ -335,8 +335,8 @@ class CreateAccount(webapp2.RequestHandler):
         muser.created = cretime
         muser.modified = cretime
         muser.accessed = cretime
-        token = update_email_and_password(self, muser)
-        if not token:
+        authupd = update_email_and_password(self, muser)
+        if not authupd:
             return  # error already reported
         if not update_account_fields(self, muser):
             return  # error already reported
@@ -384,12 +384,12 @@ class TokenAndRedirect(webapp2.RequestHandler):
             bust_cache_key(emaddr)  # autologin has already failed
             muser = account_from_email(emaddr)
             if not muser:
-                redurl += "emailin=" + email + "&loginerr=No muser found"
+                redurl += "emailin=" + emaddr + "&loginerr=Email not found"
             else:
                 password = self.request.get('passin') or ""
                 ph = make_password_hash(emaddr, password, muser.created)
                 if ph != muser.phash:
-                    redurl += "emailin=" + email + "&loginerr=Wrong password"
+                    redurl += "emailin=" + emaddr + "&loginerr=Wrong password"
                 else:
                     redurl += login_token_parameters(muser)
         # preserve any state information passed in the params so they can
@@ -450,9 +450,12 @@ class UpdateAccount(webapp2.RequestHandler):
         muser = authenticated(self.request)
         if not muser:
             return morutil.srverr(self, 401, "Authentication failed")
-        if not update_email_and_password(self, muser):
+        authupd = update_email_and_password(self, muser)
+        if not authupd:
             return  # error already reported
-        if not update_account_fields(self, muser):
+        # The account update info sent for email/passord change does not
+        # have the other fields in it.  Only update if not changing auth.
+        if authupd == "nochange" and not update_account_fields(self, muser):
             return  # error already reported
         muser.modified = nowISO()
         muser.put()  #nocache
