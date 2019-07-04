@@ -866,7 +866,8 @@ app.pcd = (function () {
         //if the membic keywords include at least one of the specified
         //search keywords then it's a match.
         return srchst.kwrds.csvarray().some(function (keyword) {
-            return membic.keywords.csvcontains(keyword); });
+            return (membic.keywords &&   //in case null rather than ""
+                    membic.keywords.csvcontains(keyword)); });
     }
 
 
@@ -1091,6 +1092,69 @@ app.pcd = (function () {
     }
 
 
+    function findKeywordsFromMembics () {
+        var keys = "";
+        dst.obj.preb.forEach(function (membic) {
+            //keywords are filtered based on type selections
+            if(isSearchableMembic(membic) && isTypeMatch(membic)) {
+                var keywords = membic.keywords || "";
+                keywords.csvarray().forEach(function (key) {
+                    key = key.trim();
+                    if(!keys.csvcontains(key)) {
+                        keys = keys.csvappend(key); } }); } });
+        return keys;
+    }
+
+
+    function updateKeywordsSelectionArea () {
+        dst.keywords = findKeywordsFromMembics();
+        // if(!dst.keywords) {
+        //     jt.byId("pcdkeysrchdiv").style.display = "none";
+        //     return; }
+        var html = [];
+        dst.keywords.csvarray().forEach(function (kwd, i) {
+            var chk = jt.toru(srchst.kwrds.indexOf(kwd) >= 0, "checked");
+            html.push(["div", {cla: "srchkwrbdiv"},
+                       [["div", {cla: "skbidiv"},
+                         ["input", {type: "checkbox", id: "skw" + i,
+                                    name: "srchkwds", value: kwd, 
+                                    checked: chk,
+                                    onclick: jt.fsd("app.pcd.keysrch()")}]],
+                        ["label", {fo: "skw" + i}, kwd.trim()]]]); });
+        jt.out("pcdkeysrchdiv", jt.tac2html(html));
+    }
+
+
+    function findTypesFromMembics () {
+        var types = "";
+        dst.obj.preb.forEach(function (membic) {
+            //types are filtered based on keyword selections
+            if(isSearchableMembic(membic) && isKeywordMatch(membic) &&
+               !types.csvcontains(membic.revtype)) {
+                types = types.csvappend(membic.revtype); } });
+        return types;
+    }
+
+
+    function updateTypesSelectionArea () {
+        dst.mtypes = findTypesFromMembics();
+        // if(dst.mtypes.csvarray().length < 2) {
+        //     jt.byId("pcdtypesrchdiv").style.display = "none";
+        //     return; }
+        var html = [];
+        dst.mtypes.csvarray().forEach(function (mt, i) {
+            var chk = jt.toru(srchst.mtypes.csvcontains(mt), "checked");
+            html.push(["div", {cla:"srchkwrbdiv"},
+                       [["div", {cla:"skbidiv"},
+                         ["input", {type:"checkbox", id:"smt" + i,
+                                    name:"srchtypes", value:mt,
+                                    checked:chk,
+                                    onclick:jt.fsd("app.pcd.typesrch()")}]],
+                        ["label", {fo:"smt" + i}, mt.capitalize()]]]); });
+        jt.out("pcdtypesrchdiv", jt.tac2html(html));
+    }
+
+
     function displayObject (obj) {
         obj = obj || dst.obj;
         resetDisplayStateFromObject(obj);
@@ -1108,7 +1172,8 @@ app.pcd = (function () {
         if(dst.type === "coop" && dst.obj.instid) {
             app.profile.verifyMembership(dst.obj); }
         showContentControls();
-        app.pcd.updateSearchInputDisplay();
+        updateKeywordsSelectionArea();
+        updateTypesSelectionArea();
         app.pcd.showNotices();
         app.pcd.searchReviews();
         //To show relevant notices for the theme, or do anything personal
@@ -1129,69 +1194,6 @@ app.pcd = (function () {
         if(!dst.profile.objupdate) {
             dst.profile.objupdate = app.profile.update;
             dst.coop.objupdate = app.coop.updateCoop; }
-    }
-
-
-    function findKeywordsFromMembics () {
-        var keys = "";
-        dst.obj.preb.forEach(function (membic) {
-            if(isSearchableMembic(membic)) {
-                var keywords = membic.keywords || "";
-                keywords.csvarray().forEach(function (key) {
-                    key = key.trim();
-                    if(!keys.csvcontains(key)) {
-                        keys = keys.csvappend(key); } }); } });
-        return keys;
-    }
-
-
-    function updateKeywordsSelectionArea () {
-        if(!dst.keywords) {
-            dst.keywords = findKeywordsFromMembics(); }
-        if(!dst.keywords) {
-            jt.byId("pcdkeysrchdiv").style.display = "none";
-            return; }
-        var html = [];
-        dst.keywords.csvarray().forEach(function (kwd, i) {
-            var chk = jt.toru(srchst.qstr.indexOf(kwd) >= 0, "checked");
-            html.push(["div", {cla: "srchkwrbdiv"},
-                       [["div", {cla: "skbidiv"},
-                         ["input", {type: "checkbox", id: "skw" + i,
-                                    name: "srchkwds", value: kwd, 
-                                    checked: chk,
-                                    onclick: jt.fsd("app.pcd.keysrch()")}]],
-                        ["label", {fo: "skw" + i}, kwd.trim()]]]); });
-        jt.out("pcdkeysrchdiv", jt.tac2html(html));
-    }
-
-
-    function findTypesFromMembics () {
-        var types = "";
-        dst.obj.preb.forEach(function (membic) {
-            if(isSearchableMembic(membic) &&
-               !types.csvcontains(membic.revtype)) {
-                types = types.csvappend(membic.revtype); } });
-        return types;
-    }
-
-
-    function updateTypesSelectionArea () {
-        if(!dst.mtypes) {
-            dst.mtypes = findTypesFromMembics(); }
-        if(dst.mtypes.csvarray().length < 2) {
-            jt.byId("pcdtypesrchdiv").style.display = "none";
-            return; }
-        var html = [];
-        dst.mtypes.csvarray().forEach(function (mt, i) {
-            var chk = jt.toru(srchst.mtypes.csvcontains(mt), "checked");
-            html.push(["div", {cla:"srchkwrbdiv"},
-                       [["div", {cla:"skbidiv"},
-                         ["input", {type:"checkbox", id:"smt" + i,
-                                    name:"srchtypes", value:mt,
-                                    checked:chk,
-                                    onclick:jt.fsd("app.pcd.typesrch()")}]],
-                        ["label", {fo:"smt" + i}, mt]]]); });
-        jt.out("pcdtypesrchdiv", jt.tac2html(html));
     }
 
 
@@ -1556,6 +1558,7 @@ return {
             var cb = jt.byId("skw" + i);
             if(cb.checked) {
                 srchst.kwrds = srchst.kwrds.csvappend(kwd); } });
+        updateTypesSelectionArea();  //update types in response to keys
         app.pcd.searchReviews();
     },
 
@@ -1566,13 +1569,8 @@ return {
             var cb = jt.byId("smt" + i);
             if(cb.checked) {
                 srchst.mtypes = srchst.mtypes.csvappend(mt); } });
+        updateKeywordsSelectionArea();  //update keys in response to types
         app.pcd.searchReviews();
-    },
-
-
-    updateSearchInputDisplay: function () {
-        updateKeywordsSelectionArea();
-        updateTypesSelectionArea();
     },
 
 

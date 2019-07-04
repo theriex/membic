@@ -223,6 +223,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcdsrchdiv { padding: 0px 0px 10px 0px; }
 #pcdkeysrchdiv, #pcdtypesrchdiv, #pcdsharediv { 
   background:#e6e7e9; opacity:0.8; clear:both; }
+#pcdtypesrchdiv { opacity:0.9; }
 #fetchmorediv, #arxsidiv, #retrfaildiv, #fetchwaitdiv {
   margin:-2px 2px 4px 2px; padding:0px 5px;
   background:#e6e7e9; opacity:0.8; border-radius: 10px; }
