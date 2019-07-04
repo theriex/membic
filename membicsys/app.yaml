@@ -299,6 +299,11 @@ handlers:
   script: src.py.mailsum.app
   login: admin
 
+## Convert from PenNames to MUsers
+- url: .*/pn2muconv.*
+  script: src.py.mailsum.app
+  login: admin
+
 ## Return automated agents whose use of the site should not be counted.
 - url: .*/botids.*
   script: src.py.mailsum.app

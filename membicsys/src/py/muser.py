@@ -13,7 +13,7 @@ import random
 import os
 import urllib
 
-# coops: {coopid:info, coopid2:info2, ...}
+# coops: {"coopid":info, "coopid2":info2, ...}
 #   info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
 #          picture:idstr, keywords:CSV}
 #   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
