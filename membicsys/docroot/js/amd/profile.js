@@ -33,9 +33,11 @@ app.profile = (function () {
         jt.call("GET", "/getacct?" + params, null,
                 function (accarr) {
                     jt.log("fetchProfile loaded profile");
-                    mypid = accarr[0].instid;
-                    app.lcs.put("profile", accarr[0]);
-                    callback(accarr[0]); },
+                    prof = accarr[0];
+                    mypid = prof.instid;
+                    app.profile.deserializeFields(prof);
+                    app.lcs.put("profile", prof);
+                    callback(prof); },
                 function (code, errtxt) {
                     jt.log("Account retrieval failed: " + code + " " + errtxt);
                     callback(null); },

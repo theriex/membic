@@ -282,7 +282,7 @@ handlers:
 
 
 ######################################################################
-# General config
+# General config and administration
 
 ## Inbound email handler
 - url: /_ah/mail/.+
@@ -301,6 +301,11 @@ handlers:
 
 ## Convert from PenNames to MUsers
 - url: .*/pn2muconv.*
+  script: src.py.mailsum.app
+  login: admin
+
+## Fill any empty preb values
+- url: .*/prebsweep.*
   script: src.py.mailsum.app
   login: admin
 

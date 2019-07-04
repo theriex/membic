@@ -61,6 +61,12 @@ indexes:
 - kind: Review
   properties:
   - name: penid
+  - name: modified
+    direction: desc
+
+- kind: Review
+  properties:
+  - name: penid
   - name: srcrev
   - name: modified
     direction: desc

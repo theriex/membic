@@ -7,6 +7,7 @@ import rev
 import coop
 import moracct
 import muser
+import morutil
 import consvc
 from morutil import *
 from google.appengine.api import mail
@@ -764,6 +765,45 @@ class PenNameConversion(webapp2.RequestHandler):
         moracct.writeTextResponse("\n".join(msgs), self.response)
 
 
+class SweepPrebuilt(webapp2.RequestHandler):
+    def get(self):
+        maxPerSweep = 20  # run repeatedly to get everything, db quotas...
+        msgs = []
+        clear = False
+        vq = VizQuery(coop.Coop, "")
+        themes = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
+                        batch_size=1000)
+        for theme in themes:
+            if len(msgs) > maxPerSweep:
+                break
+            if clear and theme.preb:
+                theme.preb = ""
+                msgs.append("Cleared Coop.preb " + str(theme.key().id()) +
+                            " " + theme.name)
+                cached_put(theme)
+            elif not clear and not theme.preb:
+                rev.rebuild_prebuilt(theme, None)
+                msgs.append("Rebuilt Coop.preb " + str(theme.key().id()) +
+                            " " + theme.name)
+        vq = VizQuery(muser.MUser, "")
+        users = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
+                       batch_size=1000)
+        for user in users:
+            if len(msgs) > maxPerSweep:
+                break
+            if clear and user.preb:
+                user.preb = ""
+                msgs.append("Cleared MUser.preb " + str(user.key().id()) +
+                            " " + user.email)
+                cached_put(user)
+            elif not clear and not user.preb:
+                rev.rebuild_prebuilt(user, None)
+                msgs.append("Rebuilt MUser.preb " + str(user.key().id()) +
+                            " " + user.email)
+        msgs.append("SweepPrebuilt completed")
+        morutil.srvText(self, "\n".join(msgs))
+
+
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       logging.info("BouncedEmailHandler called")
@@ -799,6 +839,7 @@ app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
                                ('.*/periodic', PeriodicProcessing),
                                ('.*/pn2muconv', PenNameConversion),
+                               ('.*/prebsweep', SweepPrebuilt),
                                ('/_ah/bounce', BounceHandler),
                                ('/_ah/mail/.+', InMailHandler)], debug=True)
 

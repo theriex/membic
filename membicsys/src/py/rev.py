@@ -939,28 +939,37 @@ def prepare_image(img):
 # GAE max object size is 1mb.  A unicode char is 2-4 bytes.  Guessing around
 # 3k chars of storage for text elements: 10k.  200x200 pic: 40k.  Double for
 # safety, so a max of 900k for preb.  Go with 800k for preb.  If all membics
-# won't fit, the last entry in the preb array will be {overflow:id}.  
-# Rebuilding all the preb each time is a database hit. Comfortable for now.
+# won't fit, the last entry in the preb array will be {overflow:id}.
+# Encoding the obect as JSON also encodes unicode chars, so standard len
+# testing gives an accurate count of the size.  Rebuilding all the preb each
+# time is a database hit. Comfortable for now.  The review is passed in
+# because otherwise it is likely the query will find an older copy.  If not
+# given, then just rebuild from scratch.
 def rebuild_prebuilt(instance, review):
-    priminst = instance
+    priminst = instance   # keep primary instance reference if overflow
     kind = priminst.kind()
     instid = priminst.key().id()
+    filts = ["mainfeed", "icwhen", "icdata", "altkeys", "orids",
+             "helpful", "remembered"]
     where = "WHERE penid = :1 ORDER BY modified DESC"
     if kind == "Coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
     vq = VizQuery(Review, where, instid)
-    sizemax = 800 * 1000  # 800k the short count way
-    preb = obj2JSON(review)  # encodes unicode characters, len testing accurate
-    currsize = len(jstr)
+    sizemax = 800 * 1000  # Dunno if counted 1024 or 1000, being conservative
+    preb = ""
+    if review:
+        preb = obj2JSON(review, filts)
+    currsize = len(preb)
     revcount = 1
     overcount = 0
-    revs = vq.run(read_policy=STRONG_CONSISTENCY, deadline=60, batch_size=1000)
+    revs = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
+                  batch_size=1000)
     for rev in revs:
-        if str(rev.key().id()) == str(review.key().id()):
+        if review and str(rev.key().id()) == str(review.key().id()):
             continue  # first entry was the latest version
         if rev.srcrev and rev.srcrev < 0:
             continue  # deleted or other ignorable
-        jstr = obj2JSON(rev)
+        jstr = obj2JSON(rev, filts)
         if currsize + 1 + len(jstr) > sizemax:
             overcount += 1
             overflow = ovrf.get_overflow(kind, instid, overcount)
@@ -971,9 +980,12 @@ def rebuild_prebuilt(instance, review):
             preb = jstr
             currsize = len(jstr)
         else:
-            preb += "," + jstr
+            if preb:
+                preb += ","
+            preb += jstr
             currsize += 1 + len(jstr)
         revcount += 1
+    instance.preb = "[" + preb + "]"
     cached_put(instance)
     logging.info("rebuild_prebuilt " + str(revcount) + " membics " + kind +
                  " " + str(instid) + " overcount: " + str(overcount))

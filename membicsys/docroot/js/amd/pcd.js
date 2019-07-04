@@ -895,7 +895,7 @@ app.pcd = (function () {
     function isSearchableMembic (obj) {
         if(!obj.revtype) {  //could be an overflow indicator
             return false; }
-        if(dst.coop && obj.ctmid !== dst.obj.instid) {  //src ref
+        if(dst.type === "coop" && obj.ctmid !== dst.obj.instid) {  //src ref
             return false; }
         return true;
     }
@@ -1111,7 +1111,10 @@ app.pcd = (function () {
         app.pcd.updateSearchInputDisplay();
         app.pcd.showNotices();
         app.pcd.searchReviews();
-        if(!app.solopage() && !app.profile.myProfile()) {
+        //To show relevant notices for the theme, or do anything personal
+        //with it, the profile needs to be available.  Fault in if needed
+        if(!app.solopage() && app.login.isLoggedIn() && 
+           !app.profile.myProfile()) {
             //This has to be significantly delayed or the browser thinks it
             //should skip loading pics and otherwise finishing the display.
             app.fork({descr:"pcd displayObject call profile.fetchProfile",
@@ -1577,6 +1580,8 @@ return {
         jt.out("pcdnotidiv", "");
         if(dst.obj) {
             var prof = app.profile.myProfile();
+            if(!prof) {  //not signed in, so no notices to display
+                return; }
             if(dst.type === "profile" && dst.id === prof.instid) {
                 showProfileNotices(prof); }
             else if(dst.type === "coop" && prof.coops && prof.coops[dst.id] &&

@@ -68,11 +68,16 @@ def srvJSON(handler, jsontxt):
     handler.response.out.write(jsontxt)
 
 
+# Filtered properties are removed from the dict before serializing it
+# because that reduces the size and complexity of preb data, and it's easier
+# to see that the value was omitted rather than filled out empty.
+# Dictionary properties cannot be popped while iterating over them, so
+# removing the props is done in a second pass.
 def obj2JSON(obj, filts=[]):
     """ Factored method return a database object as JSON text """
     props = db.to_dict(obj)
     # logging.info("props: " + str(props))
-    logging.info("filts: " + str(filts))
+    # logging.info("filts: " + str(filts))
     for prop, val in props.iteritems():
         # binary data like pics is fetched separately by id
         if(isinstance(val, Blob)):
@@ -81,9 +86,10 @@ def obj2JSON(obj, filts=[]):
         if((isinstance(val, (int, long)) and (prop.endswith("id"))) or
            (prop == "srcrev")):
             props[prop] = str(props[prop])
-        if prop in filts:
-            props[prop] = ""
         # logging.info(prop + ": " + str(props[prop]))
+    for prop in filts:
+        if prop in props:
+            props.pop(prop, None)
     jsontxt = json.dumps(props, True)
     # prepend object information
     jsontxt = "{\"_id\":\"" + str(obj.key().id()) + "\", " +\
