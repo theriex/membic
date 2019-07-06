@@ -531,7 +531,7 @@ class GetProfileById(webapp2.RequestHandler):
         prof = cached_get(profid, MUser)
         if not prof:
             return morutil.srverr(self, 404, "No profile for id " + pidstr)
-        morutil.srvJSON(self, "[" + safe_json(muser, "public") + "]");
+        morutil.srvJSON(self, "[" + safe_json(prof, "public") + "]");
 
 
 class UploadPic(webapp2.RequestHandler):

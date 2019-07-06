@@ -21,11 +21,11 @@ app.themes = (function () {
             //jt.log("fetching activetps");
             jt.call("GET", "/recentactive" + jt.ts("?cb=", "minute"), null,
                     function (racs) {
-                        app.lcs.put("activetps", racs[0])
+                        app.lcs.put("activetps", racs[0]);
                         app.themes.display(); },
                     app.failf(function (code, errtxt) {
                         jt.err("Fetching recent active failed " + code + ": " +
-                               errtxt)}),
+                               errtxt); }),
                     jt.semaphore("themes.initVars"));
             return false; }
         return true;
@@ -33,28 +33,62 @@ app.themes = (function () {
 
 
     function decorateAndSort () {
-        //if logged in, tag with "M" for member etc.
-        jt.log("themes.decorateAndSort not implemented yet");
+        var decos = tps;
+        var prof = app.profile.myProfile();
+        if(prof && prof.coops) {
+            decos = [];
+            tps.forEach(function (tp) {
+                var d = JSON.parse(JSON.stringify(tp));
+                if(prof.coops[d.instid]) {
+                    d.lev = prof.coops[d.instid].lev; }
+                decos.push(d); }); }
+        decos.sort(function (a, b) {
+            if(a.lev && !b.lev) { return -1; }  //lev val beats missing
+            if(!a.lev && b.lev) { return 1; }
+            if(a.lev && b.lev && a.lev !== b.lev) { return b.lev - a.lev; }
+            if(a.modified < b.modified) { return -1; }
+            if(a.modified > b.modified) { return 1; }
+            return 0; });
+        return decos;
+    }
+
+
+    function imgForAssocLev (tp) {
+        var img = "blank.png";
+        var prof = app.profile.myProfile();
+        if(prof && prof.coops) {
+            img = "tsnoassoc.png";
+            if(prof.coops[tp.instid]) {
+                switch(prof.coops[tp.instid].lev) {
+                case -1: img = "tsfollowing.png"; break;
+                case 1: img = "tsmember.png"; break;
+                case 2: img = "tsmoderator.png"; break;
+                case 3: img = "tsfounder.png"; break; } } }
+        img = "img/" + img;
+        return img;
     }
 
 
     function writeContent () {
         var html = [];
-        decorateAndSort();
-        tps.forEach(function (tp) {
+        decorateAndSort().forEach(function (tp) {
             var imgsrc = "img/blank.png";
             if(tp.pic) {
                 if(tp.obtype === "theme") {
                     imgsrc = "ctmpic?coopid=" + tp.instid; }
                 else if(tp.obtype === "profile") {
                     imgsrc = "profpic?profileid=" + tp.instid; } }
-            var oc = jt.fs("app.themes.show('" + tp.obtype + "','" + 
-                           tp.instid + "')");
+            var ocparams = "'" + tp.obtype + "','" + tp.instid + "'";
+            var oc = jt.fs("app.themes.show(" + ocparams + ")");
+            var mc = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
             var link = "/" + tp.hashtag;
             html.push(["div", {cla:"tplinkdiv", id:"tplinkdiv" + tp.instid},
                        [["div", {cla:"tplinkpicdiv"},
-                         ["a", {href:link, onclick:oc},
-                          ["img", {src:imgsrc}]]],
+                         [["a", {href:link, onclick:oc},
+                           ["img", {src:imgsrc, cla:"tplinkpicimg"}]],
+                          ["a", {href:link, onclick:mc, cla:"tpmemlink"},
+                           ["img", {src:imgForAssocLev(tp), 
+                                    cla:"tplinkmemimg"}]]]],
                         ["div", {cla:"tplinkdescdiv"},
                          [["span", {cla:"tplinknamespan"},
                            ["a", {href:link, onclick:oc}, tp.name]],
@@ -70,16 +104,16 @@ app.themes = (function () {
     }
 
 
-    function showListing (obtype, instid) {
+    function showListing (obtype, instid, command) {
         if(obtype === "profile") {
-            return app.profile.byprofid(instid); }
-        return app.coop.bycoopid(instid);
+            return app.profile.byprofid(instid, command); }
+        return app.coop.bycoopid(instid, "themes", command);
     }
 
 
     return {
         display: function display () { displayMainContent(); },
-        show: function show (obtype, instid) { showListing(obtype, instid); }
+        show: function show (ty, id, cmd) { showListing(ty, id, cmd); }
     };
 }());
 

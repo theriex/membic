@@ -10,10 +10,10 @@ app.profile = (function () {
     var cpfields = ["name", "hashtag", "aboutme",     "profpic", ""];
 
 
-    function displayProfileForId (profid) {
+    function displayProfileForId (profid, command) {
         if(!profid) {
             return app.profile.display(); }
-        app.pcd.fetchAndDisplay("profile", profid);
+        app.pcd.fetchAndDisplay("profile", profid, command);
     }
 
 
@@ -232,7 +232,7 @@ app.profile = (function () {
 
 
     return {
-        byprofid: function (profid) { displayProfileForId(profid); },
+        byprofid: function (id, cmd) { displayProfileForId(id, cmd); },
         myProfId: function () { return mypid; },
         myProfile: function () { return myProfile(); },
         fetchProfile: function (cbf) { fetchProfile(cbf); },

@@ -31,6 +31,7 @@ app.pcd = (function () {
         {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}];
     var noassoc =    //standardized messages if no Coop association
         {name:"Not Connected", //MUser.coops lev: 0
+         imgsrc: "img/tsnoassoc.png",
          levtxt:"You are not following this $obtype.",
          uptxt:"Follow for membic notices.",
          upbtn:"Follow",
@@ -44,7 +45,8 @@ app.pcd = (function () {
          notice:"" };
     var ctmmsgs = [  //standardized messages organized by Coop level
         {name:"Following", //MUser.coops lev: -1
-         levtxt:"Following shows you are interested in reading content from members writing on this theme.",
+         imgsrc: "img/tsfollowing.png",
+         levtxt:"Following shows you are interested in reading membics posted to this $obtype.",
          uptxt:"Only members may post.",
          upbtn:"Apply for membership",
          cantxt:"You are applying for membership.",
@@ -56,6 +58,7 @@ app.pcd = (function () {
          resconf:"",
          notice:"is applying for membership" },
         {name:"Member",    //MUser.coops lev: 1
+         imgsrc: "img/tsmember.png",
          levtxt:"As a member, you may post membics related to this theme.",
          uptxt:"If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
          upbtn:"Apply to become a Moderator",
@@ -68,6 +71,7 @@ app.pcd = (function () {
          resconf:"Are you sure you want to resign your membership?",
          notice:"is applying to become a Moderator" },
         {name:"Moderator", //MUser.coops lev: 2
+         imgsrc: "img/moderator.png",
          levtxt:"As a Moderator, you can post, remove membics that don't belong, and approve membership applications.",
          uptxt:"If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
          upbtn:"Apply to become a Founder",
@@ -80,6 +84,7 @@ app.pcd = (function () {
          resconf:"Are you sure you want to resign as moderator?",
          notice:"is applying to become a Founder" },
         {name:"Founder",   //MUser.coops lev: 3
+         imgsrc: "img/tsfounder.png",
          levtxt:"As a Founder, you permanently have all privileges available.",
          uptxt:"",
          upbtn:"",
@@ -201,11 +206,15 @@ app.pcd = (function () {
             if(prof.coops[porc.instid]) {  //following
                 msgs = ctmmsgs[0]; }
             else {  //no association
-                msgs = {};
-                var pt = printType();
-                Object.keys(noassoc).forEach(function (key) {
-                    msgs[key] = noassoc[key].replace(/\$obtype/g, pt); }); } }
-        return msgs;
+                msgs = noassoc; } }
+        var cm = {};
+        var pt = printType();
+        Object.keys(msgs).forEach(function (key) {
+            cm[key] = msgs[key].replace(/\$obtype/g, pt); });
+        if(prof.coops[porc.instid] && porc.obtype === "MUser") {
+            cm.uptxt = "";
+            cm.upbtn = ""; }  //no further up levels if following profile
+        return cm;
     }
 
 
@@ -237,10 +246,10 @@ app.pcd = (function () {
                 msgs.restxt, "rsbdiv", "",
                 "downlevelbutton", jt.fs("app.pcd.ctmdownlev()"),
                 msgs.resbtn)); }
-        html = [["div", {cla: "formline"},
-                 [["label", {fo: "statval", cla: "liflab"}, "Status"],
-                  ["a", {href: "#togglecoopstat",
-                         onclick: jt.fs("app.layout.togdisp('ctmstatdetdiv')")},
+        html = [["div", {cla: "formline", style:"text-align:center;"},
+                 ["a", {href: "#togglecoopstat",
+                        onclick: jt.fs("app.layout.togdisp('ctmstatdetdiv')")},
+                  [["img", {src:msgs.imgsrc}],
                    ["span", {id: "memlevspan"},
                     (seeking? "Applying" : msgs.name)]]]],
                 ["div", {cla: "formline", id: "ctmstatdetdiv",
@@ -473,7 +482,7 @@ app.pcd = (function () {
                           onclick: jt.fs("app.pcd.toggleCtmDet('members')")},
                     ["img", {cla: "ctmsetimg", src: "img/membership.png"}]]; } }
         var signout = "";
-        if(dst.type === "profile") {  //settings only available if your profile
+        if(dst.type === "profile" && dst.id === app.profile.myProfId()) {
             signout = ["button", {type:"button", 
                                   onclick:jt.fs("app.login.logout()")},
                        "Sign&nbsp;out"]; }
@@ -538,10 +547,10 @@ app.pcd = (function () {
 
 
     function picSettingsHTML () {
-        if(!jt.hasId(dst.obj) ||
-               (dst.type === "coop" && 
-                app.coop.membershipLevel(dst.obj) < 3)) {
-            return ""; }  //not creating and not founder so not available
+        if(!jt.hasId(dst.obj) ||  //need an instance to upload image into
+           (dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) ||
+           (dst.type === "profile" && dst.id !== app.profile.myProfId())) {
+            return ""; }
         var pinf = getPicInfo();
         var html = [["label", {fo:"picuploadform", cla:"overlab",
                                style:(pinf.havepic? "display:none;" : "")},
@@ -582,8 +591,9 @@ app.pcd = (function () {
 
 
     function descripSettingsHTML () {
-        if(dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) {
-            return ""; } //only founders can update the theme description
+        if((dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) ||
+           (dst.type === "profile" && dst.id !== app.profile.myProfId())) {
+            return ""; }
         var nameplace = "Theme name required";
         if(dst.type !== "coop") {
             nameplace = "Set a profile name!"; }
@@ -638,7 +648,7 @@ app.pcd = (function () {
 
 
     function personalSettingsHTML () {
-        if(dst.type !== "profile") {
+        if(dst.type !== "profile" || dst.id !== app.profile.myProfId()) {
             return ""; }
         var html = ["div", {cla:"formline"},
                     [["a", {href:"#togglepersonalinfo",
@@ -695,6 +705,8 @@ app.pcd = (function () {
         var html = "";
         switch(dst.type) {
         case "profile": 
+            if(dst.id !== app.profile.myProfId()) {
+                return ""; }
             label = "Checkbox Keywords";
             html = reviewTypeKeywordsHTML(dst.obj);
             break;
@@ -723,7 +735,8 @@ app.pcd = (function () {
 
 
     function mailinSettingsHTML () {
-        if(dst.type !== "profile" || !jt.hasId(dst.obj)) {
+        if(dst.type !== "profile" || dst.id !== app.profile.myProfId() ||
+           !jt.hasId(dst.obj)) {
             return ""; }  //mail-in support for themes not supported yet
         dst.obj.stash = dst.obj.stash || {};
         dst.obj.stash.mailins = dst.obj.stash.mailins || "";
@@ -758,7 +771,9 @@ app.pcd = (function () {
 
 
     function rssSettingsHTML () {
-        if(dst.type !== "coop" || !jt.hasId(dst.obj)) {
+        if(!jt.hasId(dst.obj) ||  //need an instid for rss url
+           (dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) ||
+           (dst.type === "profile" && dst.id !== app.profile.myProfId())) {
             return ""; }
         var html = ["div", {cla:"formline"},
                     [["a", {href:"#rss", 
@@ -1155,7 +1170,7 @@ app.pcd = (function () {
     }
 
 
-    function displayObject (obj) {
+    function displayObject (obj, command) {
         obj = obj || dst.obj;
         resetDisplayStateFromObject(obj);
         app.layout.cancelOverlay();  //close user menu if open
@@ -1176,6 +1191,8 @@ app.pcd = (function () {
         updateTypesSelectionArea();
         app.pcd.showNotices();
         app.pcd.searchReviews();
+        if(command === "Settings") {
+            app.pcd.settings(); }
         //To show relevant notices for the theme, or do anything personal
         //with it, the profile needs to be available.  Fault in if needed
         if(!app.solopage() && app.login.isLoggedIn() && 
@@ -1273,7 +1290,7 @@ return {
              ["div", {cla: "pcdsectiondiv"},
               adminSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
-              (dst.type === "coop"? membershipSettingsHTML() : "")],
+              membershipSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
               picSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
@@ -1467,7 +1484,7 @@ return {
                     var defs = dst[dst.type];
                     dst.obj[defs.picfield] = dst.id;
                     dst.obj.modified = txt.slice(mtag.length);
-                    app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
+                    app.pcd.display(dst.type, dst.id);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
                     jt.out("imgupstatdiv", txt); } }
@@ -1487,7 +1504,7 @@ return {
             function (updobj) {
                 dst.obj = updobj;
                 app.layout.cancelOverlay();
-                app.pcd.display(dst.type, dst.id, dst.tab, dst.obj); },
+                app.pcd.display(dst.type, dst.id); },
             function (code, errtxt) {
                 jt.byId("savecolorsbutton").disabled = false;
                 jt.out("colorupderrdiv", "Update failed code " + code +
@@ -1694,7 +1711,7 @@ return {
     },
 
 
-    display: function (dtype, id) {
+    display: function (dtype, id, command) {
         verifyFunctionConnections();
         if(dtype === "profile" && !id) {
             id = app.profile.myProfId(); }
@@ -1702,7 +1719,7 @@ return {
             dst.type = dtype;
             dst.id = id;
             dst.obj = app.lcs.getRef(dtype, id)[dtype];
-            return displayObject(dst.obj); }
+            return displayObject(dst.obj, command); }
         if(dtype === "coop") {  //creating new coop
             var profname = app.profile.myName();
             if(!profname) {
@@ -1716,14 +1733,13 @@ return {
 
 
     redisplay: function () {
-        app.pcd.display(dst.type, dst.id, dst.tab, dst.obj);
+        app.pcd.display(dst.type, dst.id);
     },
 
 
     resetState: function () {
         dst.type = "";
         dst.id = "";
-        dst.tab = "";
         dst.obj = null;
         srchst = { revtype: "all", qstr: "", status: "" };
         setdispstate = { infomode: "" };
@@ -1735,7 +1751,7 @@ return {
     },
 
 
-    fetchAndDisplay: function (dtype, id) {
+    fetchAndDisplay: function (dtype, id, command) {
         //jt.log("pcd.fetchAndDisplay " + dtype + " " + id);
         if(!id) {
             jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
@@ -1744,7 +1760,7 @@ return {
             if(!obj) {
                 jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
                 return app.themes.display(); }
-            app.pcd.display(dtype, id); });
+            app.pcd.display(dtype, id, command); });
     },
 
 

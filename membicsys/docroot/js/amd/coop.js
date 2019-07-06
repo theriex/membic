@@ -98,7 +98,7 @@ app.coop = (function () {
     ////////////////////////////////////////
 return {
 
-    bycoopid: function (coopid, src, tabname, expid) {
+    bycoopid: function (coopid, src, command) {
         var solopage = app.solopage();
         var cts = ["review", "membership"];
         if(cts.indexOf(src) >= 0 || solopage) {
@@ -109,7 +109,7 @@ return {
                                    field:ctype, profid:app.profile.myProfId(),
                                    refer:app.refer});
             app.fork({
-                descr:"bump counters theme solopage",
+                descr:"bump counters for access to theme " + coopid,
                 func:function () {
                     jt.call("POST", "bumpmctr?" + app.login.authparams(), data,
                             function () {
@@ -118,8 +118,8 @@ return {
                             function (code, errtxt) {
                                 jt.log("bumpmctr?" + data + " failed " + 
                                        code + ": " + errtxt); }); },
-                ms:20}); }
-        app.pcd.fetchAndDisplay("coop", coopid, tabname, expid);
+                ms:800}); }  //longish delay to avoid blocking current work
+        app.pcd.fetchAndDisplay("coop", coopid, command);
     },
 
 
@@ -234,7 +234,7 @@ return {
         jt.call("POST", "ctmmemapply?" + app.login.authparams(), data,
                 function (updcoops) {
                     app.lcs.put("coop", updcoops[0]);
-                    app.profile.verifyMembership(updobjs[0]);
+                    app.profile.verifyMembership(updcoops[0]);
                     contf(updcoops[0]); },
                 function (code, errtxt) {
                     jt.err(action + " membership application failed code: " +
@@ -251,7 +251,7 @@ return {
         jt.call("POST", "ctmmemprocess?" + app.login.authparams(), data,
                 function (updcoops) {
                     app.lcs.put("coop", updcoops[0]);
-                    app.profile.verifyMembership(updobjs[0]);
+                    app.profile.verifyMembership(updcoops[0]);
                     contf(updcoops[0]); },
                 function (code, errtxt) {
                     jt.err("Membership processing failed code: " + code +
