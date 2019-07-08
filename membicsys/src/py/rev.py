@@ -259,7 +259,7 @@ def set_review_srcrev(handler, review, acc):
         # but not really supported for much anymore.
         if ((val == -101 and not review.is_saved()) or val == -202):
             srcrev = val
-    if self.request.get('mode') == "batch":
+    if handler.request.get('mode') == "batch":
         srcrev = -202
         # batch upload overwrites svcdata since there isn't any yet
         review.svcdata = "{" + batch_flag_attrval(review) + "}"
@@ -755,44 +755,6 @@ def write_coop_reviews(review, pnm, ctmidscsv):
     return coops
 
 
-def update_access_time_if_needed(pen):
-    acctime = ISO2dt(pen.accessed)
-    now = datetime.datetime.utcnow()
-    diff = now - acctime
-    if diff.seconds > 2 * 60 * 60:
-        pen.accessed = nowISO()
-        cached_put(pen)
-    return pen
-
-
-def find_pen_or_coop_type_and_id(handler):
-    coopid = intz(handler.request.get('ctmid'))
-    if coopid:
-        return "coop", coopid, None
-    auth = handler.request.get('authorize')
-    penid = intz(handler.request.get('penid'))
-    # debuginfo("auth: " + str(auth) + ", " + "penid: " + str(penid))
-    if penid and not auth:
-        return "pen", penid, None
-    if auth:
-        acc = muser.authenticated(handler.request)
-        if not acc:  # error already reported
-            return "pen", 0, None
-        pens = pen.find_auth_pens(handler)
-        if not pens or len(pens) == 0:
-            return "pen", 0, None
-        mypen = pens[0]
-        debuginfo("fpoctai auth pen: " + str(mypen))
-        acc.lastpen = mypen.key().id()
-        put_cached_instance(acc.email, acc)
-        mypen = update_access_time_if_needed(mypen)
-        pen.add_account_info_to_pen_stash(acc, mypen)
-        return "pen", mypen.key().id(), mypen
-    # final case is no pen found because they haven't created one yet
-    # that's a normal condition and not an error return
-    return "pen", 0, None
-
-
 def append_review_jsoncsv(jstr, rev):
     jstr = jstr or ""
     if jstr:
@@ -946,6 +908,7 @@ def prepare_image(img):
 # because otherwise it is likely the query will find an older copy.  If not
 # given, then just rebuild from scratch.
 def rebuild_prebuilt(instance, review):
+    instance.lastwrite = nowISO();  # note preb recalculated
     priminst = instance   # keep primary instance reference if overflow
     kind = priminst.kind()
     instid = priminst.key().id()
@@ -1005,7 +968,7 @@ class SaveReview(webapp2.RequestHandler):
         logging.info("SaveReview wrote Review " + str(review.key().id()))
         acc = rebuild_prebuilt(acc, review)  # returns updated MUser
         logging.info("SaveReview updated MUser.preb " + str(acc.key().id()))
-        objs = write_coop_reviews(review, pnm, self.request.get('ctmids'))
+        objs = write_coop_reviews(review, acc, self.request.get('ctmids'))
         objs.insert(0, review)
         objs.insert(0, acc)
         morutil.srvObjs(self.response, objs)  # [acc, review, coop1, ...]

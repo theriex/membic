@@ -19,6 +19,7 @@ class Coop(db.Model):
     modified = db.StringProperty()               # iso date
     modhist = db.StringProperty()                # creation date, mod count
     hashtag = db.StringProperty()
+    lastwrite = db.StringProperty() # isodate (latest membic/preb rebuild)
     # non-indexed fields
     description = db.TextProperty()
     picture = db.BlobProperty()

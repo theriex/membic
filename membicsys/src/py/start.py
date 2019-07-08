@@ -178,6 +178,7 @@ def json_for_theme_prof(obj, obtype):
     sd = {"instid": str(obj.key().id()),
           "obtype": obtype,
           "modified": obj.modified,
+          "lastwrite": obj.lastwrite or obj.modified,
           "hashtag": obj.hashtag}
     if not sd["hashtag"]:
         sd["hashtag"] = sd["instid"]

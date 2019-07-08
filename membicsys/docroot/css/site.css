@@ -354,8 +354,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .rdkwcbdiv { display:inline-block; width:130px; font-size:small; 
   padding:0px 0px 10px 0px; }
 .rdctmdiv { padding:0px 0px 8px 0px; }
-.rdglpicdiv { display:inline-block; width:40px; margin:0px 2px 0px 5px; 
-  overflow:hidden; }
+.rdglpicdiv { float:left; width:40px; overflow:hidden; margin:0px 2px 0px 5px; }
 .rdglpic { vertical-align:middle; max-width:40px; max-height:40px; 
   font-size:small; }
 #rdokstatdiv { color:red; }

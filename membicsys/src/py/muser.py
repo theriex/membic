@@ -39,7 +39,7 @@ class MUser(db.Model):
     coops = db.TextProperty()       # JSON coopid map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
-    accessed = db.StringProperty()  # isodate
+    lastwrite = db.StringProperty() # isodate (latest membic/preb rebuild)
     preb = db.TextProperty()        # JSON membics for display, overflow link
 
 
@@ -334,7 +334,7 @@ class CreateAccount(webapp2.RequestHandler):
         cretime = nowISO()
         muser.created = cretime
         muser.modified = cretime
-        muser.accessed = cretime
+        muser.lastwrite = cretime
         authupd = update_email_and_password(self, muser)
         if not authupd:
             return  # error already reported

@@ -1222,13 +1222,13 @@ app.review = (function () {
 
     //ctm may be a full Coop instance retrieved from lcs, or an abbreviated
     //instance retrieved from MUser.coops.
-    function displayThemeCheckboxes (ctm) {
+    function displayThemeCheckboxes (ctmid, ctm) {
         var html = []; var chk; var kwid;
         ctm.keywords = ctm.keywords || "";
         ctm.keywords.csvarray().forEach(function (kwd, idx) {
             kwd = kwd.trim();  //keywords may be ", " separated
             chk = jt.toru(crev.keywords.indexOf(kwd) >= 0, "checked");
-            kwid = "ctm" + jt.instId(ctm) + "kw" + idx;
+            kwid = "ctm" + ctmid + "kw" + idx;
             html.push(["div", {cla: "rdkwcbdiv"},
                        [["input", {type: "checkbox", id: kwid, 
                                    cla: "keywordcheckbox",
@@ -1236,7 +1236,7 @@ app.review = (function () {
                                    onclick: jt.fsd("app.review.togkey('" +
                                                    kwid + "')")}],
                         ["label", {fo: kwid}, kwd]]]); });
-        jt.out("ctmkwdiv" + jt.instId(ctm), jt.tac2html(html));
+        jt.out("ctmkwdiv" + ctmid, jt.tac2html(html));
     }
 
 
@@ -1246,23 +1246,25 @@ app.review = (function () {
             return; }
         var html = [];
         var coops = app.profile.myProfile().coops;
-        Object.keys(coops).forEach(function (key) {
-            var ctm = coops[key];
-            var posted = jt.toru(postedCoopRevId(ctm.ctmid) || 
-                                 isPrecheckTheme(ctm.ctmid));
-            html.push(["div", {cla: "rdctmdiv"},
-                       [["div", {cla: "rdglpicdiv"},
-                         ["img", {cla: "rdglpic", alt: "",
-                                  src: "ctmpic?coopid=" + ctm.ctmid}]],
-                        ["input", {type: "checkbox", id: "dctmcb" + ctm.ctmid,
-                                   cla: "keywordcheckbox",
-                                   value: ctm.ctmid, checked: posted,
-                                   onclick: jt.fsd("app.review.togctmpost('" +
-                                                   ctm.ctmid + "')")}],
-                        ["label", {fo: "dctm" + ctm.ctmid, cla: "penflist"}, 
-                         ctm.name],
-                        ["div", {cla: "ctmkwdiv", 
-                                 id: "ctmkwdiv" + ctm.ctmid}]]]); });
+        Object.keys(coops).forEach(function (ctmid) {
+            var ctm = coops[ctmid];
+            if(ctm.lev > 0) {
+                var posted = jt.toru(postedCoopRevId(ctmid) || 
+                                     isPrecheckTheme(ctmid));
+                html.push(
+                    ["div", {cla: "rdctmdiv"},
+                     [["div", {cla: "rdglpicdiv"},
+                       ["img", {cla: "rdglpic", alt: "",
+                                src: "ctmpic?coopid=" + ctmid}]],
+                      ["input", {type: "checkbox", id: "dctmcb" + ctmid,
+                                 cla: "keywordcheckbox",
+                                 value: ctmid, checked: posted,
+                                 onclick: jt.fsd("app.review.togctmpost('" +
+                                                 ctmid + "')")}],
+                      ["label", {fo: "dctm" + ctmid, cla: "penflist"}, 
+                       ctm.name],
+                      ["div", {cla: "ctmkwdiv", 
+                               id: "ctmkwdiv" + ctmid}]]]); } });
         if(html.length > 0) {
             html.unshift(["div", {cla: "formline"}]);
             html.unshift(["div", {cla: "liflab"}, "Post To"]); }
@@ -1621,7 +1623,7 @@ return {
                 if(!ctm.coop) {  //must at least be here if checkbox displayed
                     ctm = app.profile.myProfile().coops[ctmid]; }
                 updateShareInfo();  //note themes being posted to
-                displayThemeCheckboxes(ctm); }
+                displayThemeCheckboxes(ctmid, ctm); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
         displayAppropriateButton();

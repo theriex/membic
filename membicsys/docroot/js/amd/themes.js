@@ -46,8 +46,8 @@ app.themes = (function () {
             if(a.lev && !b.lev) { return -1; }  //lev val beats missing
             if(!a.lev && b.lev) { return 1; }
             if(a.lev && b.lev && a.lev !== b.lev) { return b.lev - a.lev; }
-            if(a.modified < b.modified) { return -1; }
-            if(a.modified > b.modified) { return 1; }
+            if(a.lastwrite < b.lastwrite) { return 1; }
+            if(a.lastwrite > b.lastwrite) { return -1; }
             return 0; });
         return decos;
     }
