@@ -1624,6 +1624,20 @@ return {
 
 
     toggleRevExpansion: function (prefix, revid) {
+        var actspan = jt.byId(prefix + revid + "actspan");
+        if(!actspan) {
+            jt.log("pcd.toggleRevExpansion: no actspan to toggle");
+            return; }
+        if(!actspan.innerHTML) {
+            actspan.innerHTML = jt.tac2html([
+                ["a", {href:"#edit",
+                       onclick:jt.fs("app.pcd.editMembic('" + revid + "')")},
+                 ["img", {cla:"revedimg", src:"img/writereview.png"}]],
+                ["a", {href:"#remove",
+                       onclick:jt.fs("app.pcd.removeMembic('" + revid + "')")},
+                 ["img", {cla:"revedimg", src:"img/trash.png"}]]]); }
+        else {
+            actspan.innerHTML = ""; }
         app.review.toggleExpansion(srchst.disprevs, prefix, revid);
     },
 
@@ -1767,6 +1781,18 @@ return {
     cancelThemeCreate: function () {
         app.layout.cancelOverlay();
         app.pcd.display("profile", app.profile.myProfId(), "coops");
+    },
+
+
+    editMembic: function (revid) {
+        var rev = dst.obj.preb.find(function (r) { 
+            return r.instid === revid; });
+        app.review.start(rev);
+    },
+
+
+    removeMembic: function (revid) {
+        jt.err("removeMembic " + revid + " not implemented yet");
     }
 
 };  //end of returned functions

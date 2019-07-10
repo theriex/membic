@@ -155,6 +155,24 @@ def has_flag(coop, flagname):
     return False
 
 
+def may_write_review(acc, coop):
+    if not coop:
+        logging.info("coop.may_write_review: no Coop given")
+        return False
+    kind = coop.key().kind()
+    if kind != "Coop":
+        logging.info("coop.may_write_review: " + kind + " is not a Coop")
+    ctmid = coop.key().id()
+    if has_flag(coop, "archived"):
+        logging.info("coop.may_write_review: Coop " + str(ctmid) + " archived")
+        return False
+    accid = acc.key().id()
+    if not member_level(accid, coop):
+        logging.info("coop.may_write_review: Not member of Coop " + str(ctmid))
+        return False
+    return True
+
+
 def verify_soloset(coop, paramjson):
     srvdict = {}
     if coop.soloset:

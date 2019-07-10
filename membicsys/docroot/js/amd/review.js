@@ -391,7 +391,8 @@ app.review = (function () {
         crev.ctmids = "";
         var coops = app.profile.myProfile().coops;
         Object.keys(coops).forEach(function (key) {
-            if(coops[key] > 0) {
+            var ctmcb = jt.byId("dctmcb" + key);
+            if(ctmcb && ctmcb.checked) {
                 crev.ctmids = crev.ctmids.csvappend(key); } });
     }
 
@@ -452,7 +453,9 @@ app.review = (function () {
                            onclick:jt.fs(togfname + "('" + prefix + "','" + 
                                          revid + "')")},
                      ["span", {id:prefix + revid + "togmorespan",
-                               cla:"togglemoretextspan"}, "+"]]];
+                               cla:"togglemoretextspan"}, "+"]],
+                    ["span", {id:prefix + revid + "actspan", 
+                              cla:"revactspan"}]];
         return jt.tac2html(html);
     }
 
@@ -545,9 +548,11 @@ app.review = (function () {
         if(org.svcdata && org.svcdata.postctms) {
             org.svcdata.postctms.forEach(function (ctm) {
                 if(!newchecked.csvcontains(ctm.ctmid)) {
+                    jt.log("selectedThemesChanged: unchecked " + ctm.name);
                     changed = true; }  //was checked before and isn't now
                 newchecked = newchecked.csvremove(ctm.ctmid); }); }
-        //anything left in newchecked was not previously in postctms
+        if(newchecked) {
+            jt.log("selectedThemesChanged: checked " + newchecked); }
         return newchecked || changed;
     }
 
@@ -566,27 +571,26 @@ app.review = (function () {
 
 
     function haveChanges () {
-        if(jt.hasId(crev) && orev) {
+        if(jt.hasId(crev) && orev) {  //saved and have original to compare to
             validateCurrentReviewFields();  //verify crev updated
-            if(jt.fsame(crev.revtype, orev.revtype) &&
-               jt.fsame(crev.srcrev, orev.srcrev) &&  //unchecked future
-               jt.fsame(crev.rating, orev.rating) &&
-               jt.fsame(crev.keywords, orev.keywords) &&
-               jt.fsame(crev.text, orev.text) &&
-               //svcdata values checked separately
-               jt.fsame(crev.name, orev.name) &&
-               jt.fsame(crev.title, orev.title) &&
-               (jt.fsame(crev.url, orev.url) || 
-                jt.fsame(crev.url, jt.dec(orev.url))) &&
-               jt.fsame(crev.artist, orev.artist) &&
-               jt.fsame(crev.author, orev.author) &&
-               jt.fsame(crev.publisher, orev.publisher) &&
-               jt.fsame(crev.album, orev.album) &&
-               jt.fsame(crev.starring, orev.starring) &&
-               jt.fsame(crev.address, orev.address) &&
-               jt.fsame(crev.year, orev.year) &&
-               !selectedThemesChanged(orev) &&
-               !picChanged(orev)) {
+            var fields = ["revtype", "srcrev", "rating", "keywords", "text",
+                          "name", "title", "artist", "author", "publisher",
+                          "album", "starring", "address", "year"];
+            var fieldsmatch = fields.every(function (field) {
+                var matched = jt.fsame(crev[field], orev[field]);
+                if(!matched) {
+                    jt.log("haveChanges: field " + field + ": " + crev[field] +
+                           " | " + orev[field]); }
+                return matched; });
+            var urlmatch = (jt.fsame(crev.url, orev.url) || 
+                            jt.fsame(crev.url, jt.dec(orev.url)));
+            if(!urlmatch) {
+                jt.log("haveChanges: url changed"); }
+            var picmatch = !picChanged(orev);
+            if(!picmatch) {
+                jt.log("haveChanges: pic changed"); }
+            if(fieldsmatch && urlmatch && picmatch && 
+               !selectedThemesChanged(orev)) {
                 return false; } }
         return true;  //new membic or no changes detected
     }
@@ -606,10 +610,12 @@ app.review = (function () {
         if((statmsg && !messageWithButton) || !findReviewType(crev.revtype)) {
             jt.byId("rdokbuttondiv").style.display = "none"; }
         else if(haveChanges()) {
+            jt.byId("sharediv").style.display = "none";
             jt.byId("okbutton").style.display = "inline";
             jt.byId("donebutton").style.display = "none";
             jt.byId("rdokbuttondiv").style.display = "block"; }
         else {
+            jt.byId("sharediv").style.display = "block";
             jt.byId("okbutton").style.display = "none";
             jt.byId("donebutton").style.display = "inline";
             jt.byId("rdokbuttondiv").style.display = "block"; }
@@ -1383,7 +1389,9 @@ app.review = (function () {
 
 
     function postSaveProcessing (updobjs) {
+        app.lcs.uncache("activetps", "411");
         orev = updobjs[1];
+        app.review.deserializeFields(orev);
         crev = copyReview(orev);
         updobjs.forEach(function (updobj) {
             if(updobj.obtype === "MUser" || updobj.obtype === "Coop") {
@@ -1619,10 +1627,9 @@ return {
         var cbox = jt.byId("dctmcb" + ctmid);
         if(cbox) {
             if(cbox.checked) {
-                var ctm = app.lcs.getRef("coop", ctmid);
-                if(!ctm.coop) {  //must at least be here if checkbox displayed
-                    ctm = app.profile.myProfile().coops[ctmid]; }
                 updateShareInfo();  //note themes being posted to
+                var ctm = app.lcs.getRef("coop", ctmid);
+                ctm = ctm.coop || app.profile.myProfile().coops[ctmid];
                 displayThemeCheckboxes(ctmid, ctm); }
             else {
                 jt.out("ctmkwdiv" + ctmid, ""); } }
@@ -1671,6 +1678,7 @@ return {
         app.review.deserializeFields(crev); //in case update fail or interim use
         jt.call("POST", "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
+                    jt.log("saverev completed successfully");
                     displayAppropriateButton("Saved.");
                     postSaveProcessing(updobjs); },
                 app.failf(function (code, errtxt) {

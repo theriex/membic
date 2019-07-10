@@ -230,7 +230,7 @@ def recent_active_content(handler):
         memcache.set("activecontent", jtps)
     ods = json.loads(jtps)
     for od in ods:
-        logging.info(str(od))
+        # logging.info(str(od))
         # logging.info(od["obtype"] + od["instid"] + " " + od["hashtag"])
         th = tplinkhtml
         th = th.replace("$TPID", od["instid"])

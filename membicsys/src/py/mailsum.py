@@ -629,7 +629,10 @@ class SweepPrebuilt(webapp2.RequestHandler):
                 rev.rebuild_prebuilt(user, None)
                 msgs.append("Rebuilt MUser.preb " + str(user.key().id()) +
                             " " + user.email)
-        msgs.append("SweepPrebuilt completed")
+        if len(msgs) > maxPerSweep:
+            msgs.append("SweepPrebuilt pass completed, run again")
+        else:
+            msgs.append("SweepPrebuilt completed")
         morutil.srvText(self, "\n".join(msgs))
 
 

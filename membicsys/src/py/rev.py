@@ -649,6 +649,9 @@ def copy_rev_image_fields(fromrev, torev):
     torev.revpic = fromrev.revpic
     torev.imguri = fromrev.imguri
     torev.svcdata = None
+    # svcdata is JSON, but easier to look for the included flag values
+    # directly in the json text rather than unpacking and then checking
+    # each value to see if it's there and what it is.
     if "sitepic" in fromrev.svcdata:
         torev.svcdata = "{\"picdisp\": \"sitepic\"}"
     elif "upldpic" in fromrev.svcdata:
@@ -684,22 +687,6 @@ def coop_post_note(ctm, ctmrev):
     return postnote
 
 
-def update_review_caches(review):
-    mfeed.update_feed_caches(review)
-    update_prof_cache("pen" + str(review.penid), review)
-    if review.svcdata:
-        svcdict = json.loads(review.svcdata)
-        if "postctms" in svcdict:
-            for ctmpost in svcdict["postctms"]:
-                update_prof_cache("coop" + ctmpost["ctmid"], review)
-    # If the standard instance cached was used, update it, but do not
-    # generally cache individual Review instances.
-    mkey = "Review" + str(review.key().id())
-    cached = memcache.get(mkey)
-    if cached:
-        memcache.set(mkey, pickle.dumps(review))
-
-
 def write_coop_post_notes_to_svcdata(review, postnotes):
     svcdict = {}
     if review.svcdata:
@@ -712,44 +699,59 @@ def write_coop_post_notes_to_svcdata(review, postnotes):
     # the modhist ISO and the modified ISO should be the same.
     # review.modified = nowISO()
     review.put()  # not generally instance cached
-    update_review_caches(review)
 
 
-def write_coop_reviews(review, pnm, ctmidscsv):
-    ctmidscsv = ctmidscsv or ""
-    postnotes = []
-    coops = []
-    for ctmid in csv_list(ctmidscsv):
-        # get cooperative theme
-        ctm = cached_get(intz(ctmid), coop.Coop)
-        if not ctm:
-            logging.info("write_coop_reviews: no Coop " + ctmid)
-            continue
-        if coop.has_flag(ctm, "archived"):
-            logging.info("write_coop_reviews: Coop " + ctmid + " archived")
-            continue
-        penid = pnm.key().id()
-        if not coop.member_level(penid, ctm):
-            logging.info("write_coop_reviews: not member of " + ctmid)
-            continue
-        # get/create theme membic for update and write it to the db
-        ctmrev = None
+def find_coop_review_for_source_review(ctm, review):
+    ctmrev = None
+    # figure out id from cache to save a query
+    revidstr = str(review.key().id())
+    prs = json.loads(ctm.preb or "[]")
+    for pr in prs:
+        if pr["srcrev"] == revidstr:
+            ctmrev = Review.get_by_id(int(pr["instid"]))
+            break
+    # preb might have overflowed or been reset, query for it
+    if not ctmrev:
         where = "WHERE ctmid = :1 AND srcrev = :2"
-        vq = VizQuery(Review, where, int(ctmid), review.key().id())
+        vq = VizQuery(Review, where, ctm.key().id(), review.key().id())
         revs = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
         if len(revs) > 0:
             ctmrev = revs[0]
-        else:
-            ctmrev = Review(penid=penid, revtype=review.revtype)
-        debuginfo("    copying source review")
-        copy_source_review(review, ctmrev, ctmid)
-        mctr.synchronized_db_write(ctmrev)
-        logging.info("write_coop_reviews wrote review for: Coop " + ctmid + 
-                     " " + ctm.name)
-        ctm = rebuild_prebuilt(ctm, review)  # returns updated Coop
-        logging.info("    appending post note")
-        postnotes.append(coop_post_note(ctm, ctmrev))
-        coops.append(ctm)
+    return ctmrev
+
+
+def write_coop_reviews(review, acc, ctmidscsv, newlycreated):
+    ctmidscsv = ctmidscsv or ""
+    postnotes = []
+    coops = []
+    cd = json.loads(acc.coops or "{}")
+    # logging.info("write_coop_reviews: " + str(cd))
+    for ctmid in cd:
+        logging.info("    wrc checking " + ctmid + " " + cd[ctmid]["name"])
+        ctm = cached_get(intz(ctmid), coop.Coop)
+        if not coop.may_write_review(acc, ctm):
+            continue
+        posting = csv_contains(ctmid, ctmidscsv)
+        if posting:  # writing new or updating
+            ctmrev = find_coop_review_for_source_review(ctm, review)
+            if not ctmrev:  # no existing rev to update, adding new
+                ctmrev = Review(revtype=review.revtype, penid=acc.key().id())
+            copy_source_review(review, ctmrev, ctmid)
+            mctr.synchronized_db_write(ctmrev)
+            postnotes.append(coop_post_note(ctm, ctmrev))
+            logging.info("write_coop_reviews wrote review for: Coop " + ctmid +
+                         " " + ctm.name)
+            ctm = rebuild_prebuilt(ctm, ctmrev)  # add to prebuilt
+            coops.append(ctm)
+        if not posting and not newlycreated:  # check theme deletions
+            ctmrev = find_coop_review_for_source_review(ctm, review)
+            if ctmrev and not csv_contains(ctmid, ctmidscsv): # deleting
+                revid = ctmrev.key().id();
+                cached_delete(revid, Review)
+                logging.info("write_coop_reviews deleted Review " + str(revid) +
+                             " from Coop " + ctmid + " " + ctm.name)
+                ctm = rebuild_prebuilt(ctm, ctmrev, remove=True)
+                coops.append(ctm)
     logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_coop_post_notes_to_svcdata(review, postnotes)
     return coops
@@ -829,11 +831,11 @@ def is_matching_review(qstr, review):
     return True
 
 
-def delete_coop_post(review, pnm, handler):
+def delete_coop_post(review, acc, handler):
     ctm = coop.Coop.get_by_id(int(review.ctmid))
     if not ctm:
         return srverr(handler, 404, "Coop " + review.ctmid + " not found")
-    penid = pnm.key().id()
+    penid = acc.key().id()
     reason = handler.request.get('reason') or ""
     if review.penid != penid:
         if coop.member_level(penid, ctm) < 2:
@@ -854,7 +856,7 @@ def delete_coop_post(review, pnm, handler):
     ctm.top20s = json.dumps(topdict)
     # The reason here must be exactly "Removed Membic" so the client can
     # differentiate between removing a review and removing a member.
-    coop.update_coop_admin_log(ctm, pnm, "Removed Membic", srcrev, reason)
+    coop.update_coop_admin_log(ctm, acc, "Removed Membic", srcrev, reason)
     coop.update_coop_and_bust_cache(ctm)
     cached_delete(revid, Review)
     mctr.count_review_update("delete", review.penid, review.penname,
@@ -907,20 +909,20 @@ def prepare_image(img):
 # time is a database hit. Comfortable for now.  The review is passed in
 # because otherwise it is likely the query will find an older copy.  If not
 # given, then just rebuild from scratch.
-def rebuild_prebuilt(instance, review):
+def rebuild_prebuilt(instance, review, remove=False):
     instance.lastwrite = nowISO();  # note preb recalculated
-    priminst = instance   # keep primary instance reference if overflow
+    priminst = instance   # keep primary instance reference for overflow
     kind = priminst.kind()
     instid = priminst.key().id()
     filts = ["mainfeed", "icwhen", "icdata", "altkeys", "orids",
              "helpful", "remembered"]
-    where = "WHERE penid = :1 ORDER BY modified DESC"
+    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
     if kind == "Coop":
         where = "WHERE ctmid = :1 ORDER BY modified DESC"
     vq = VizQuery(Review, where, instid)
     sizemax = 800 * 1000  # Dunno if counted 1024 or 1000, being conservative
     preb = ""
-    if review:
+    if review and not remove:
         preb = obj2JSON(review, filts)
     currsize = len(preb)
     revcount = 1
@@ -950,8 +952,9 @@ def rebuild_prebuilt(instance, review):
         revcount += 1
     instance.preb = "[" + preb + "]"
     cached_put(instance)
-    logging.info("rebuild_prebuilt " + str(revcount) + " membics " + kind +
-                 " " + str(instid) + " overcount: " + str(overcount))
+    logging.info("rebuild_prebuilt " + str(revcount) + " membics, overcount " +
+                 str(overcount) + " " + kind + " " + str(instid) + " " +
+                 priminst.name)
     return priminst
 
 
@@ -963,15 +966,18 @@ class SaveReview(webapp2.RequestHandler):
         review = get_review_for_save(self, acc)
         if not review:
             return  # error already reported
+        add = not review.is_saved()
         read_review_values(self, review, acc)
         mctr.synchronized_db_write(review)
         logging.info("SaveReview wrote Review " + str(review.key().id()))
+        # get the updated prebuilt coops, updating acc.svcdata in the process
+        objs = write_coop_reviews(review, acc, self.request.get('ctmids'), add)
         acc = rebuild_prebuilt(acc, review)  # returns updated MUser
         logging.info("SaveReview updated MUser.preb " + str(acc.key().id()))
-        objs = write_coop_reviews(review, acc, self.request.get('ctmids'))
+        memcache.set("activecontent", "")  # force theme/profile refetch
         objs.insert(0, review)
         objs.insert(0, acc)
-        morutil.srvObjs(self.response, objs)  # [acc, review, coop1, ...]
+        srvObjs(self, objs)  # [acc, review, coop1, ...]
 
 
 class DeleteReview(webapp2.RequestHandler):
@@ -1002,28 +1008,30 @@ class UploadReviewPic(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write('Ready')
     def post(self):
-        pnm = review_modification_authorized(self)
-        if not pnm:
-            return
+        acc = muser.authenticated(self)
+        if not acc:
+            return  # error already reported
         review = None
         revid = intz(self.request.get("revid"))
         if revid:
             review = safe_get_review_for_update(self)
             if not review:
-                return
+                return  # error already reported
         else:
             revtype = self.request.get("revtype")
             if not revtype:
                 return srverr(self, 406, "failed: No membic type")
-            review = Review(penid=pnm.key().id(), revtype=revtype)
+            review = Review(penid=acc.key().id(), revtype=revtype)
         upfile = self.request.get("picfilein")
         if not upfile:
             return srverr(self, 406, "failed: No pic data")
         try:
             review.revpic = db.Blob(prepare_image(images.Image(upfile)))
             note_modified(review)
-            cached_put(review)  # use instance cache when uploaded images
-            update_review_caches(review)
+            cached_put(review)  # so GetReviewPic can quickly find it..
+            rebuild_prebuilt(acc, review)
+            # coop posted reviews use pic from source review, so don't need 
+            # to rebuild_prebuilt all the coops.
         except Exception as e:
             # Client looks for text containing "failed: " for error reporting
             return srverr(self, 409, "Pic upload processing failed: " + str(e))
@@ -1050,12 +1058,12 @@ class GetReviewPic(webapp2.RequestHandler):
 
 class RotateReviewPic(webapp2.RequestHandler):
     def post(self):
-        pnm = review_modification_authorized(self)
-        if not pnm:
-            return;
+        acc = muser.authenticated(self)
+        if not acc:
+            return  # error already reported
         revid = intz(self.request.get('revid'))
         review = Review.get_by_id(revid)  # pull database instance for update
-        if not review or review.penid != pnm.key().id():
+        if not review or review.penid != acc.key().id():
             return srverr(self, 403, "Review not found or not writeable")
         if not review.revpic:
             return srverr(self, 404, "No pic found for review " + str(revid))
@@ -1065,8 +1073,9 @@ class RotateReviewPic(webapp2.RequestHandler):
             img = img.execute_transforms(output_encoding=images.PNG)
             review.revpic = db.Blob(img)
             note_modified(review)
-            review.put()  # not generally instance cached
-            update_review_caches(review)
+            cached_put(review)  # so GetReviewPic can quickly find it..
+            rebuild_prebuilt(acc, review)
+            # same logic as UploadReviewPic for coop posted reviews..
         except Exception as e:
             return srverr(self, 409, "Pic rotate failed: " + str(e))
         moracct.returnJSON(self.response, [ review ])
@@ -1128,29 +1137,6 @@ class GetReviewById(webapp2.RequestHandler):
                 if review:
                     revs.append(review)
         moracct.returnJSON(self.response, revs)
-
-
-class ToggleHelpful(webapp2.RequestHandler):
-    def get(self):
-        pnm = review_modification_authorized(self)
-        if not pnm:  # caller does not control specified penid
-            return
-        revid = intz(self.request.get('revid'))
-        review = Review.get_by_id(revid)  # db inst not cached, need to update
-        if not review:
-            return srverr(self, 404, "Membic: " + str(revid) + " not found.")
-        if csv_elem_count(review.helpful) < 123:  # semi-arbitrary upper bound
-            penid = str(pnm.key().id())
-            if csv_contains(penid, review.helpful):  # toggle off
-                review.helpful = remove_from_csv(penid, review.helpful)
-            else:  # toggle on
-                disprevid = intz(self.request.get('disprevid'))
-                disprevsrc = intz(self.request.get('disprevsrc'))
-                mctr.bump_starred(review, disprevid, disprevsrc)
-                review.helpful = prepend_to_csv(penid, review.helpful)
-            review.put()  # no instance cache, not modified
-            update_review_caches(review)
-        moracct.returnJSON(self.response, [ review ])
 
 
 class FetchPreReviews(webapp2.RequestHandler):

@@ -266,7 +266,7 @@ class BumpCounter(webapp2.RequestHandler):
         logging.info("BumpCounter ctype: " + str(ctype) + ", parentid: " + str(parid) + ", profid: " + str(profid) + ", field: " + str(field) + ", refer: " + str(refer))
         counter = get_mctr(ctype, parid)
         if acct:  # note any new visitors
-            name = re.sub(r",+", "", pnm.name)  # strip any commas
+            name = re.sub(r",+", "", acct.name)  # strip any commas
             name = morutil.safeURIEncode(name)
             val = profid + ":" + name
             if not csv_contains(val, counter.logvis):

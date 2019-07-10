@@ -380,6 +380,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pdtfbuttondiv { padding:10px 0px 5px 0px; }
 .directionstextdiv { text-align:center; font-size:small; }
 #rdokdiv { clear:both; }
+.revedimg { max-height:28px; padding:0px 0px 0px 16px; }
 
 /* >> activity layout */
 #feedrevsdiv { padding:0px 0px 50px 0px; }
