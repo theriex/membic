@@ -730,7 +730,7 @@ def write_coop_reviews(review, acc, ctmidscsv, newlycreated):
         logging.info("    wrc checking " + ctmid + " " + cd[ctmid]["name"])
         ctm = cached_get(intz(ctmid), coop.Coop)
         if not coop.may_write_review(acc, ctm):
-            continue
+            continue  # acc.coops updated to avoid retry. Not an error.
         posting = csv_contains(ctmid, ctmidscsv)
         if posting:  # writing new or updating
             ctmrev = find_coop_review_for_source_review(ctm, review)

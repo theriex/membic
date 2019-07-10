@@ -155,6 +155,19 @@ def has_flag(coop, flagname):
     return False
 
 
+def update_acc_coops(acc, key, field, val):
+    coops = json.loads(acc.coops)
+    entry = coops[key]
+    entry[field] = val
+    acc.coops = json.dumps(coops)
+
+
+# Verify the acc may write, and reflect involuntary downleveling as needed.
+# Voluntary upleveling and downleveling is handled via client request
+# (e.g. follow, stop following, apply, resign, archive the theme etc).
+# Involuntary downleveling is when you got demoted, or someone else archived
+# the theme.  The acc must already have a corresponding coops entry, and
+# is written to the db by the caller.
 def may_write_review(acc, coop):
     if not coop:
         logging.info("coop.may_write_review: no Coop given")
@@ -162,13 +175,17 @@ def may_write_review(acc, coop):
     kind = coop.key().kind()
     if kind != "Coop":
         logging.info("coop.may_write_review: " + kind + " is not a Coop")
-    ctmid = coop.key().id()
-    if has_flag(coop, "archived"):
-        logging.info("coop.may_write_review: Coop " + str(ctmid) + " archived")
         return False
-    accid = acc.key().id()
-    if not member_level(accid, coop):
-        logging.info("coop.may_write_review: Not member of Coop " + str(ctmid))
+    coopdesc = "Coop " + str(coop.key().id()) + " " + coop.name
+    archflag = has_flag(coop, "archived")
+    if archflag:
+        update_acc_coops(acc, str(coop.key().id()), "inactive", archflag)
+        logging.info("coop.may_write_review: archived " + coopdesc)
+        return False
+    level = member_level(acc.key().id(), coop)
+    if not level:  # leave them following the theme
+        update_acc_coops(acc, str(coop.key().id()), "lev", -1)
+        logging.info("coop.may_write_review: not a member " + coopdesc)
         return False
     return True
 

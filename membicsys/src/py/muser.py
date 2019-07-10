@@ -15,9 +15,10 @@ import urllib
 
 # coops: {"coopid":info, "coopid2":info2, ...}
 #   info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
-#          picture:idstr, keywords:CSV}
+#          picture:idstr, keywords:CSV, inactive:str}
 #   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
 #   obtype: "MUser" or "Coop"
+#   inactive: only included if this was an archived Coop
 # Any falsy value for lev means no association.  Maintained by client, updated
 # as available.  Used as a cache and may be out of date.
 

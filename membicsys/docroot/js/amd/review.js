@@ -1254,7 +1254,7 @@ app.review = (function () {
         var coops = app.profile.myProfile().coops;
         Object.keys(coops).forEach(function (ctmid) {
             var ctm = coops[ctmid];
-            if(ctm.lev > 0) {
+            if(ctm.lev > 0 && !ctm.inactive) {
                 var posted = jt.toru(postedCoopRevId(ctmid) || 
                                      isPrecheckTheme(ctmid));
                 html.push(
