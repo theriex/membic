@@ -71,7 +71,7 @@ app.pcd = (function () {
          resconf:"Are you sure you want to resign your membership?",
          notice:"is applying to become a Moderator" },
         {name:"Moderator", //MUser.coops lev: 2
-         imgsrc: "img/moderator.png",
+         imgsrc: "img/tsmoderator.png",
          levtxt:"As a Moderator, you can post, remove membics that don't belong, and approve membership applications.",
          uptxt:"If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
          upbtn:"Apply to become a Founder",
@@ -354,40 +354,37 @@ app.pcd = (function () {
     }
 
 
-    function coopMembershipLineHTML (field, profid, pname, mlev) {
-        var html;
-        if(field === "founders" || (field === "moderators" && mlev < 3) ||
-                                   (field === "members" && mlev <= 1)) {
-            html = ["div", {cla: "memlistdiv"},
-                    [["div", {cla: "fpprofdivsp"},
-                      ["img", {cla: "fpprofpic",
-                               src: "profpic?profileid=" + profid,
-                               alt: "prof pic"}]],
-                     ["span", {cla: "proflist"}, pname]]]; }
-        else {  //display modifiable member listing
-            html = ["div", {cla: "formline", id: "memlistdiv" + profid},
-                    [["div", {cla: "fpprofdivsp"},
-                      ["img", {cla: "fpprofpic",
-                               src: "profpic?profileid=" + profid,
-                               alt: "prof pic"}]],
-                     ["a", {href: "#demote",
-                            onclick: jt.fs("app.layout.togdisp('memdemdiv" +
-                                           profid + "')")},
-                      ["span", {cla: "proflist"}, pname]],
-                     ["div", {cla: "formline", id: "memdemdiv" + profid,
-                              style: "display:none;"},
-                      [["label", {fo: "reasonin" + profid, cla: "liflab",
-                                  id: "reasonlab" + profid},
-                        "Reason"],
-                       ["input", {id: "reasonin" + profid, cla: "lifin",
-                                  placeholder: "Reason required",
-                                  type: "text"}],
-                       ["div", {cla: "formline formbuttonsdiv", 
-                                id: "memdembuttondiv" + profid},
-                        ["button", {type: "button", id: "demoteb" + profid,
-                                    onclick: jt.fs("app.pcd.memdem('" + 
-                                                   profid + "')")},
-                         "Demote"]]]]]]; }
+    function coopMembershipLineHTML (mlev, plev, pid, pname) {
+        var icons = ["", "tsmember.png", "tsmoderator.png", "tsfounder.png"];
+        var html = [["img", {src:"img/" + icons[plev],
+                             alt:icons[plev].slice(2, -4)}],
+                    ["img", {cla:"memberlistprofpic", 
+                             alt:"prof pic for " + pname,
+                             src:"profpic?profileid=" + pid}],
+                    ["span", {cla:"memberlistnamespan"}, pname]];
+        if(mlev > plev && pid !== app.profile.myProfId()) { //wrap for edit
+            html = [["div", {cla:"formline", id:"memlistdiv" + pid},
+                     ["a", {href:"#demote", 
+                            onclick:jt.fs("app.layout.togdisp('memdemdiv" +
+                                          pid + "')")},
+                      html]],
+                    ["div", {cla:"formline", id:"memdemdiv" + pid,
+                             style:"display:none;"},
+                     [["label", {fo:"reasonin" + pid, cla:"liflab",
+                                  id:"reasonlab" + pid},
+                       "Reason"],
+                      ["input", {id:"reasonin" + pid, cla:"lifin",
+                                  placeholder:"Reason required",
+                                  type:"text"}],
+                       ["div", {cla:"formline formbuttonsdiv",
+                                id:"memdembuttondiv" + pid},
+                        ["button", {type:"button", id:"demoteb" + pid,
+                                    onclick:jt.fs("app.pcd.memdem('" + 
+                                                  pid + "')")},
+                         "Demote"]]]]]; }
+        else {  //not modifiable, just wrap in plain enclosing div
+            html = ["div", {cla:"formline", id:"memlistdiv" + pid}, html]; }
+        html = ["div", {cla:"memberlistlinediv"}, html];
         return html;
     }
 
@@ -395,17 +392,10 @@ app.pcd = (function () {
     function coopMembershipHTML () {
         var mlev = app.coop.membershipLevel(dst.obj);
         var html = [];
-        var fields = ["founders", "moderators", "members"];
-        fields.forEach(function (field) {
-            var profids = dst.obj[field].csvarruniq();
-            if(profids.length) {
-                html.push(["div", {cla: "formline"}, field.capitalize()]); }
-            var people = dst.obj.people || {};
-            profids.forEach(function (profid) {
-                var pname = people[profid] || profid;
-                html.push(coopMembershipLineHTML(
-                    field, profid, pname, mlev)); }); });
-        html.push(["div", {cla: "formline"}, "&nbsp;"]); //final clear
+        app.coop.memberSummary(dst.obj).forEach(function (sum) {
+            html.push(coopMembershipLineHTML(
+                mlev, sum.lev, sum.profid, sum.name)); });
+        html.push(["div", {cla: "formline"}, ""]); //final clear
         return jt.tac2html(html);
     }
 
@@ -494,10 +484,6 @@ app.pcd = (function () {
                       ["div", {id: "meminfoseldiv",
                                style: (memsel? "" : "display:none;")}, 
                        memsel],
-                      ["div", {id: "reloaddiv",
-                               style: (memsel? "" : "display:none;")},
-                       ["a", {href: "?view=coop&coopid=" + jt.instId(dst.obj)},
-                        ["img", {cla: "ctmsetimg", src: "img/reload.png"}]]],
                       ["div", {id: "statsdiv"},
                        ["a", {href: "#stats",
                               onclick: jt.fs("app.pcd.toggleCtmDet('stats')")},
@@ -1628,16 +1614,30 @@ return {
         if(!actspan) {
             jt.log("pcd.toggleRevExpansion: no actspan to toggle");
             return; }
-        if(!actspan.innerHTML) {
-            actspan.innerHTML = jt.tac2html([
-                ["a", {href:"#edit",
-                       onclick:jt.fs("app.pcd.editMembic('" + revid + "')")},
-                 ["img", {cla:"revedimg", src:"img/writereview.png"}]],
-                ["a", {href:"#remove",
-                       onclick:jt.fs("app.pcd.removeMembic('" + revid + "')")},
-                 ["img", {cla:"revedimg", src:"img/trash.png"}]]]); }
+        if(!actspan.innerHTML) {  //initialize
+            var rev = dst.obj.preb.find(function (r) {
+                return r.instid === revid; });
+            if(rev.penid === app.profile.myProfId()) {
+                actspan.innerHTML = jt.tac2html(
+                    ["a", {href:"#edit",
+                           onclick:jt.fs("app.pcd.editMembic('" + rev.instid + 
+                                         "')")},
+                     ["img", {cla:"revedimg", src:"img/writereview.png"}]]); }
+            else {  //someone else's review
+                var prof = app.profile.myProfile();
+                if(prof && prof.coops && prof.coops[dst.id] && 
+                   dst.prof.coops[dst.id].lev >= 2) {
+                    actspan.innerHTML = jt.tac2html(
+                        ["a", {href:"#remove",
+                               onclick:jt.fs("app.pcd.removeMembic('" + 
+                                             rev.instid + "')")},
+                         ["img", {cla:"revedimg", src:"img/trash.png"}]]); }
+                else {  //fill with a space to avoid initializing again
+                    actspan.innerHTML = "&nbsp;"; } } }
+        if(actspan.style.display === "none") {
+            actspan.style.display = "inline"; }
         else {
-            actspan.innerHTML = ""; }
+            actspan.style.display = "none"; }
         app.review.toggleExpansion(srchst.disprevs, prefix, revid);
     },
 
@@ -1787,6 +1787,9 @@ return {
     editMembic: function (revid) {
         var rev = dst.obj.preb.find(function (r) { 
             return r.instid === revid; });
+        if(dst.type === "coop") {
+            rev = app.profile.myProfile().preb.find(function (r) {
+                return r.instid === rev.srcrev; }); }
         app.review.start(rev);
     },
 

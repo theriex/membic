@@ -454,8 +454,10 @@ app.review = (function () {
                                          revid + "')")},
                      ["span", {id:prefix + revid + "togmorespan",
                                cla:"togglemoretextspan"}, "+"]],
+                    //actions are filled out on request since they require
+                    //checking whether the review may be modified or not.
                     ["span", {id:prefix + revid + "actspan", 
-                              cla:"revactspan"}]];
+                              cla:"revactspan", style:"display:none;"}]];
         return jt.tac2html(html);
     }
 
@@ -2105,7 +2107,7 @@ return {
         if(typeof rev.svcdata === "object") {
             rev.svcdata = JSON.stringify(rev.svcdata); }
         else {
-            rev.svcdata = ""; }
+            rev.svcdata = rev.svcdata || ""; }
     },
 
 

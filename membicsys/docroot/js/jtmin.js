@@ -70,14 +70,14 @@
             var va = [], vo = {};
             if(this && this.trim()) {
                 va = this.split(",");
-                console.log("va: " + va);
+                //console.log("va: " + va);
                 va.forEach(function (val, idx) {
                     if (!vo[val]) {
                         console.log("  " + val + ": " + (idx + 1));
                         vo[val] = idx + 1; } });
                 va = [];
                 Object.keys(vo).forEach(function (key) {
-                    console.log("va: " + va);
+                    //console.log("va: " + va);
                     va.push(key); });
                 va.sort(function (a, b) { return vo[a] - vo[b]; }); }
             return va;

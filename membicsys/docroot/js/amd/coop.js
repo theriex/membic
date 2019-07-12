@@ -278,6 +278,17 @@ return {
     },
 
 
+    memberSummary: function (coop) {
+        var summary = [];
+        var fields = ["founders", "moderators", "members"];
+        fields.forEach(function (field, idx) {
+            coop[field].csvarruniq().forEach(function (pid) {
+                var pname = coop.people[pid] || pid;
+                summary.push({profid:pid, lev:(3 - idx), name:pname}); }); });
+        return summary;
+    },
+
+
     isSeeking: function (coop, profid) {
         if(!coop) {
             return 0; }
