@@ -219,6 +219,8 @@ app.pcd = (function () {
 
 
     function membershipSettingsHTML () {
+        if(dst.id === app.profile.myProfId()) {
+            return ""; }  //no membership settings for your own profile
         var msgs = getAssociationMessages(app.profile.myProfile(), dst.obj);
         var seeking = app.coop.isSeeking(dst.obj);
         var rejected = app.coop.isRejected(dst.obj);
