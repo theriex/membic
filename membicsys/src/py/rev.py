@@ -757,6 +757,18 @@ def write_coop_reviews(review, acc, ctmidscsv, newlycreated):
     return coops
 
 
+def ctmids_except_coop(review, ctm):
+    exid = str(ctm.key().id())
+    ctmids = []
+    svcdata = json.loads(review.svcdata or "{}")
+    if "postctms" in svcdata:
+        for pt in svcdata["postctms"]:
+            if pt["ctmid"] != exid:
+                ctmids.append(pt["ctmid"])
+    ctmids = ",".join(ctmids)
+    return ctmids
+
+
 def append_review_jsoncsv(jstr, rev):
     jstr = jstr or ""
     if jstr:
@@ -980,6 +992,36 @@ class SaveReview(webapp2.RequestHandler):
         srvObjs(self, objs)  # [acc, review, coop1, ...]
 
 
+class RemoveThemePost(webapp2.RequestHandler):
+    def post(self):
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return
+        theme, role = coop.fetch_coop_and_role(self, acc)
+        if not theme:
+            return
+        if role not in ["Founder", "Moderator"]:
+            return srverr(self, 401, "You are not authorized to remove membics")
+        themerev = noauth_get_review_for_update(self)
+        if not themerev:
+            return
+        reason = self.request.get("reason")
+        if not reason:
+            return srverr(self, 400, "A reason is required for the theme log")
+        # The source instance is always available, even if marked as deleted.
+        srcrev = Review.get_by_id(themerev.srcrev)
+        coop.update_coop_admin_log(theme, acc, "Removed Membic", srcrev, reason)
+        cached_put(theme)
+        ctmidcsv = ctmids_except_coop(srcrev, theme)
+        srcacc = muser.MUser.get_by_id(srcrev.penid)
+        # Same processing as SaveReview...
+        objs = write_coop_reviews(srcrev, srcacc, ctmidcsv, False)
+        srcacc = rebuild_prebuilt(srcacc, srcrev)  # returns updated MUser
+        memcache.set("activecontent", "")  # force theme/profile refetch
+        objs.insert(0, srcacc)
+        srvObjs(self, objs)  # [acc, coop1, coop2, ...]
+
+
 class DeleteReview(webapp2.RequestHandler):
     def post(self):
         acc = muser.authenticated(self.request)
@@ -1187,6 +1229,7 @@ class BatchUpload(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
+                               ('.*/remthpost', RemoveThemePost),
                                ('.*/delrev', DeleteReview),
                                ('.*/revpicupload', UploadReviewPic),
                                ('.*/revpic', GetReviewPic),

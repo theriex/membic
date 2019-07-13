@@ -1620,18 +1620,19 @@ return {
             if(rev.penid === app.profile.myProfId()) {
                 actspan.innerHTML = jt.tac2html(
                     ["a", {href:"#edit",
-                           onclick:jt.fs("app.pcd.editMembic('" + rev.instid + 
-                                         "')")},
+                           onclick:jt.fs("app.pcd.editMembic('" + 
+                                         rev.instid + "')")},
                      ["img", {cla:"revedimg", src:"img/writereview.png"}]]); }
             else {  //someone else's review
                 var prof = app.profile.myProfile();
                 if(prof && prof.coops && prof.coops[dst.id] && 
-                   dst.prof.coops[dst.id].lev >= 2) {
+                   prof.coops[dst.id].lev >= 2) {
                     actspan.innerHTML = jt.tac2html(
                         ["a", {href:"#remove",
                                onclick:jt.fs("app.pcd.removeMembic('" + 
                                              rev.instid + "')")},
-                         ["img", {cla:"revedimg", src:"img/trash.png"}]]); }
+                         ["img", {cla:"revedimg", src:"img/trash.png",
+                                  id:"trashmembic" + revid}]]); }
                 else {  //fill with a space to avoid initializing again
                     actspan.innerHTML = "&nbsp;"; } } }
         if(actspan.style.display === "none") {
@@ -1794,8 +1795,48 @@ return {
     },
 
 
-    removeMembic: function (revid) {
-        jt.err("removeMembic " + revid + " not implemented yet");
+    removeMembic: function (rtid) {
+        var rev = dst.obj.preb.find(function (r) { 
+            return r.instid === rtid; });
+        var rin = jt.byId("whyremovein");
+        if(!rin) {
+            var placetext = "Let " + rev.penname + 
+                " know why you are removing their Membic";
+            var html = ["div", {id:"removemembicdiv"},
+                        [["textarea", {id:"whyremovein", cla:"dlgta",
+                                       placeholder:placetext}],
+                         ["div", {cla:"formline errdiv", id:"removedlgerrdiv"}],
+                         ["div", {cla:"formline formbuttonsdiv",
+                                  id:"removedlgbuttonsdiv"},
+                          ["button", {type:"button", id:"removeb" + rtid,
+                                      onclick:jt.fs("app.pcd.removeMembic('" +
+                                                    rtid + "')")},
+                           "Remove"]]]];
+            html = app.layout.dlgwrapHTML("Remove Reason", html);
+            app.layout.openDialog(  //same x coordinate as review dialog
+                {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
+                 y: jt.geoPos(jt.byId("trashmembic" + rtid)).y - 40},
+                jt.tac2html(html));
+            return; }
+        if(!rin.value) {
+            jt.out("removedlgerrdiv", "Reason required to remove Membic");
+            return; }
+        //source membic is with author's profile, probably not loaded.
+        jt.byId("removeb" + rtid).disabled = true;
+        jt.out("removedlgerrdiv", "Removing...");
+        var data = jt.objdata({revid:rtid, coopid:dst.id, reason:rin.value});
+        jt.call("POST", "remthpost?" + app.login.authparams(), data,
+                function (updobjs) {
+                    jt.log("remthpost completed successfully");
+                    app.lcs.uncache("activetps", "411");
+                    updobjs.forEach(function (updobj) {
+                        app.lcs.put(updobj.obtype, updobj); });
+                    app.pcd.redisplay(); }, //refresh content, close dialog
+                function (code, errtxt) {
+                    jt.byId("removeb" + rtid).disabled = false;
+                    jt.out("removedlgerrdiv", "Remove failed. Code " + code +
+                           ": " + errtxt); },
+                jt.semaphore("pcd.removeMembic"));
     }
 
 };  //end of returned functions
