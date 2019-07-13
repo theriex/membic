@@ -1617,13 +1617,20 @@ return {
         if(!actspan.innerHTML) {  //initialize
             var rev = dst.obj.preb.find(function (r) {
                 return r.instid === revid; });
-            if(rev.penid === app.profile.myProfId()) {
-                actspan.innerHTML = jt.tac2html(
-                    ["a", {href:"#edit",
-                           onclick:jt.fs("app.pcd.editMembic('" + 
-                                         rev.instid + "')")},
-                     ["img", {cla:"revedimg", src:"img/writereview.png"}]]); }
-            else {  //someone else's review
+            if(rev.penid === app.profile.myProfId()) {  //my membic
+                var html = ["a", {href:"#edit",
+                                  onclick:jt.fs("app.pcd.editMembic('" + 
+                                                rev.instid + "')")},
+                            ["img", {cla:"revedimg", 
+                                     src:"img/writereview.png"}]];
+                if(dst.id === app.profile.myProfId()) {  //my profile
+                    html = [["a", {href:"#delete",
+                                   onclick:jt.fs("app.pcd.deleteMembic('" + 
+                                                 rev.instid + "')")},
+                             ["img", {cla:"revedimg", src:"img/trash.png"}]],
+                            html]; }
+                actspan.innerHTML = jt.tac2html(html); }
+            else {  //someone else's membic
                 var prof = app.profile.myProfile();
                 if(prof && prof.coops && prof.coops[dst.id] && 
                    prof.coops[dst.id].lev >= 2) {
@@ -1792,6 +1799,36 @@ return {
             rev = app.profile.myProfile().preb.find(function (r) {
                 return r.instid === rev.srcrev; }); }
         app.review.start(rev);
+    },
+
+
+    deleteMembic: function (revid) {
+        //delete is only available when viewing your own profile
+        var rev = dst.obj.preb.find(function (r) { 
+            return r.instid === revid; });
+        //not bringing up the review dialog since people might get confused
+        //and think they are editing, even if the button says "Delete".  A
+        //low-level looking confirmation warning is appropriate.
+        if(!confirm("Are you sure you want to delete this membic?")) {
+            return; }
+        var descrdiv = jt.byId("pcds" + revid + "descrdiv");
+        descrdiv.innerHTML = "Deleting...";
+        rev.srcrev = -604;  //mark as deleted.
+        rev.ctmids = "";    //no theme post-throughs, delete any existing.
+        app.review.serializeFields(rev);
+        jt.call("POST", "saverev?" + app.login.authparams(), jt.objdata(rev),
+                function (updobjs) {
+                    jt.log("delete completed successfully");
+                    app.lcs.uncache("activetps", "411");
+                    updobjs.forEach(function (updobj) {
+                        if(updobj.obtype === "MUser" || 
+                           updobj.obtype === "Coop") {
+                            app.lcs.put(updobj.obtype, updobj); } });
+                    app.pcd.redisplay(); },
+                app.failf(function (code, errtxt) {
+                    descrdiv.innerHTML = "Delete failed: " + code + " " + 
+                        errtxt; }),
+                jt.semaphore("pcd.deleteMembic"));
     },
 
 

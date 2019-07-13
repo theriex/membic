@@ -255,11 +255,11 @@ def set_review_srcrev(handler, review, acc):
     srcrevstr = handler.request.get('srcrev')
     if srcrevstr:
         val = intz(srcrevstr)
-        # Marking as deleted is done separately.  These values are allowed
-        # but not really supported for much anymore.
-        if ((val == -101 and not review.is_saved()) or val == -202):
+        if val == -101 and not review.is_saved():
+            srcrev = val  # marked as future (not really supported anymore)
+        elif val in [-202, -604]:  # batch or marked as deleted
             srcrev = val
-    if handler.request.get('mode') == "batch":
+    if handler.request.get('mode') == "batch" or srcrev == -202:
         srcrev = -202
         # batch upload overwrites svcdata since there isn't any yet
         review.svcdata = "{" + batch_flag_attrval(review) + "}"
