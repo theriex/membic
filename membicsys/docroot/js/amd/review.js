@@ -493,6 +493,18 @@ app.review = (function () {
     }
 
 
+    function fpMembicAuthPicHTML (rev) {
+        var clickfs = "app.profile.byprofid('" + rev.penid + "')";
+        if(app.solopage()) {
+            clickfs = "window.open('" + app.hardhome + "/" + rev.penid + "')"; }
+        var html = ["a", {href:"#author", title:rev.penname,
+                          onclick:jt.fs(clickfs)},
+                    ["img", {cla:"authpicimg", 
+                             src:"profpic?profileid=" + rev.penid}]];
+        return jt.tac2html(html);
+    }
+
+
     function fpSecondaryFieldsHTML (rev) {
         var html = [];
         findReviewType(rev.revtype).fields.forEach(function (field) {
@@ -1945,20 +1957,19 @@ return {
         var revdivid = prefix + revid;
         var type = app.review.getReviewTypeByValue(rev.revtype);
         fixReviewURL(rev);
-        var html = ["div", {cla:"fpinrevdiv"},
-                    [["div", {cla:"fptitlediv"},
-                      membicTitleLine(type, rev)],
-                     ["div", {cla:"fpbodydiv"},
-                      [["div", {cla:"fprevpicdiv"},
-                        app.review.picHTML(rev, type)],
-                       ["div", {cla:"fpdcontdiv"},
-                        membicDescripHTML(prefix, revid, rev, togfname, 
-                                          revdivid)],
-                       ["div", {cla:"fpsecfieldsdiv", id:revdivid + "secdiv"}],
-                       ["div", {cla:"fpdatediv", id:revdivid + "datediv"}],
-                       ["div", {cla:"fpkeywrdsdiv", id:revdivid + "keysdiv"}],
-                       ["div", {cla:"fpctmsdiv", id:revdivid + "ctmsdiv"},
-                        postedCoopLinksHTML(rev)]]]]];
+        var html = ["div", {cla:"fpinrevdiv"}, [
+            ["div", {cla:"fptitlediv"}, membicTitleLine(type, rev)],
+            ["div", {cla:"fpbodydiv"},
+             [["div", {cla:"fprevpicdiv"}, app.review.picHTML(rev, type)],
+              ["div", {cla:"fpdcontdiv"},
+               membicDescripHTML(prefix, revid, rev, togfname, 
+                                 revdivid)],
+              ["div", {cla:"fpauthpicdiv", id:revdivid + "authpicdiv"}],
+              ["div", {cla:"fpsecfieldsdiv", id:revdivid + "secdiv"}],
+              ["div", {cla:"fpdatediv", id:revdivid + "datediv"}],
+              ["div", {cla:"fpkeywrdsdiv", id:revdivid + "keysdiv"}],
+              ["div", {cla:"fpctmsdiv", id:revdivid + "ctmsdiv"},
+               postedCoopLinksHTML(rev)]]]]];
         return html;
     },
 
@@ -2053,11 +2064,13 @@ return {
         revdivid = prefix + revid;
         toggleDispRevText(prefix, revid, rev);
         if(app.review.displayingExpandedView(prefix, revid)) {
+            jt.out(revdivid + "authpicdiv", "");
             jt.out(revdivid + "secdiv", "");
             jt.out(revdivid + "datediv", "");
             jt.out(revdivid + "keysdiv", "");
             jt.out(revdivid + "ctmsdiv", postedCoopLinksHTML(rev)); }
         else {  //expand
+            jt.out(revdivid + "authpicdiv", fpMembicAuthPicHTML(rev));
             jt.out(revdivid + "secdiv", fpSecondaryFieldsHTML(rev));
             jt.out(revdivid + "datediv", 
                    jt.colloquialDate(jt.isoString2Day(rev.modified)));
