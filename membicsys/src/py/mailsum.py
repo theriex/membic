@@ -594,26 +594,12 @@ class PenNameConversion(webapp2.RequestHandler):
         moracct.writeTextResponse("\n".join(msgs), self.response)
 
 
+# sweep users first so themes are latest
 class SweepPrebuilt(webapp2.RequestHandler):
     def get(self):
         maxPerSweep = 20  # run repeatedly to get everything, db quotas...
         msgs = []
         clear = False
-        vq = VizQuery(coop.Coop, "")
-        themes = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
-                        batch_size=1000)
-        for theme in themes:
-            if len(msgs) > maxPerSweep:
-                break
-            if clear and theme.preb:
-                theme.preb = ""
-                msgs.append("Cleared Coop.preb " + str(theme.key().id()) +
-                            " " + theme.name)
-                cached_put(theme)
-            elif not clear and not theme.preb:
-                rev.rebuild_prebuilt(theme, None)
-                msgs.append("Rebuilt Coop.preb " + str(theme.key().id()) +
-                            " " + theme.name)
         vq = VizQuery(muser.MUser, "")
         users = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
                        batch_size=1000)
@@ -629,6 +615,21 @@ class SweepPrebuilt(webapp2.RequestHandler):
                 rev.rebuild_prebuilt(user, None)
                 msgs.append("Rebuilt MUser.preb " + str(user.key().id()) +
                             " " + user.email)
+        vq = VizQuery(coop.Coop, "")
+        themes = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
+                        batch_size=1000)
+        for theme in themes:
+            if len(msgs) > maxPerSweep:
+                break
+            if clear and theme.preb:
+                theme.preb = ""
+                msgs.append("Cleared Coop.preb " + str(theme.key().id()) +
+                            " " + theme.name)
+                cached_put(theme)
+            elif not clear and not theme.preb:
+                rev.rebuild_prebuilt(theme, None)
+                msgs.append("Rebuilt Coop.preb " + str(theme.key().id()) +
+                            " " + theme.name)
         if len(msgs) > maxPerSweep:
             msgs.append("SweepPrebuilt pass completed, run again")
         else:
