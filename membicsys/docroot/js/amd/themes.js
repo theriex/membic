@@ -1,4 +1,4 @@
-/*jslint browser, white, fudge, this, for */
+/*jslint browser, white, fudge, this, for, long */
 /*global app, jt */
 
 app.themes = (function () {
@@ -69,8 +69,94 @@ app.themes = (function () {
     }
 
 
+    function themesHeadingLineHTML () {
+        //The height of the heading line varies based on whether they are
+        //logged in or not, and is always smaller than the regular listings.
+        var html = ["div", {cla:"tplinkdiv", style:"min-height:50px;"}, [
+            ["div", {cla:"tplinkpicdiv"},
+             ["img", {src:"img/membiclogo.png", style:"max-height:50px;"}]],
+            ["div", {cla:"thdcontdiv", id:"thlanimdiv"},
+             [["b", "Read and feed"],
+              ["span", {id:"thlsitespan"}],
+              ["span", {id:"thlblogspan"}],
+              ["span", {id:"thlsmspan"}],
+              ["div", {id:"thlexdiv"}]]]]];
+        if(app.login.isLoggedIn()) {
+            var blogurl = "https://membic.wordpress.com/2018/12/08/multi-author-link-microblog-example/";
+            html = ["div", {cla:"tplinkdiv", style:"min-height:30px;"}, [
+                ["div", {cla:"tplinkpicdiv"},
+                 ["img", {src:"img/plus.png", style:"max-height:30px;"}]],
+                ["div", {cla:"thdcontdiv"},
+                 [["a", {href:"#NewTheme",
+                         onclick:jt.fs("app.pcd.display('coop')")},
+                   "Create Theme"],
+                  ["span", {cla:"moreinfospan"},
+                   ["a", {href:blogurl,
+                          onclick:jt.fs("window.open('" + blogurl + "')")},
+                    "more info"]]]]]]; }
+        return jt.tac2html(html);
+    }
+
+
+    function displayHeaderLineExamples () {
+        var exs = [{ext:"Site&nbsp;feed",
+                    exus:["https://epinova.com/?view=news",
+                          "https://klsuyemoto.net/index.html?sd=html&fn=links.html"],
+                    bt:"add a reading page",
+                    bu:"https://membic.wordpress.com/2017/03/16/using-a-membic-theme-for-references-on-your-website/"},
+                   {ext:"Blog&nbsp;feed",
+                    exus:["https://theriex.wordpress.com/"],
+                    bt:"add a blog feed",
+                    bu:"https://membic.wordpress.com"}, //Needs a good article!
+                   {ext:"Social&nbsp;feed",
+                    exus:["https://twitter.com/theriex"],
+                    bt:"connect social media",
+                    bu:"https://membic.wordpress.com/2017/01/23/connecting-membic-to-hootsuite/"}];
+        var html = [];
+        exs.forEach(function (ex) {
+            var url = ex.exus[Math.floor(Math.random() * ex.exus.length)];
+            html.push(["tr", [
+                ["td", ["a", {href:url,
+                              onclick:jt.fs("window.open('" + url + "')")},
+                        ex.ext]],
+                ["td", ["a", {href:ex.bu,
+                              onclick:jt.fs("window.open('" + ex.bu + "')")},
+                        ex.bt]]]]); });
+        html = [["table", {cla:"thlextable"},
+                 [["thead", ["tr", [["th", "examples"], ["th", "how to"]]]],
+                  ["tbody", html]]],
+                ["div", {cla:"thlhelpdiv"},
+                 ["For help setting up, or listing your site, ",
+                  ["a", {href:"mailto:eric@" + app.profdev + "?subject=" +
+                         jt.dquotenc("Help with membic feeds")},
+                   "email Eric"]]]];
+        jt.out("thlexdiv", jt.tac2html(html));
+    }
+
+
+    function animateThemesHeaderLine () {
+        var elem = jt.byId("thlanimdiv");
+        if(!elem) {  //animated header line not displayed
+            return; }
+        var spandat = [{id:"thlsitespan", html:", your site"},
+                       {id:"thlblogspan", html:", your blog"},
+                       {id:"thlsmspan", html:", social media."}];
+        var idx;
+        for(idx = 0; idx < spandat.length; idx += 1) {
+            elem = jt.byId(spandat[idx].id);
+            if(!elem.innerHTML) {
+                elem.innerHTML = spandat[idx].html;
+                app.fork({descr:"animate theme header line " + spandat[idx].id,
+                          func:animateThemesHeaderLine, ms:600});
+                return; } }
+        app.fork({descr:"animate theme header line examples",
+                  func:displayHeaderLineExamples, ms:800});
+    }
+
+
     function writeContent () {
         var html = [];
+        html.push(themesHeadingLineHTML());
         decorateAndSort().forEach(function (tp) {
             var imgsrc = "img/blank.png";
             if(tp.pic) {
@@ -94,6 +180,9 @@ app.themes = (function () {
                            ["a", {href:link, onclick:oc}, tp.name]],
                           jt.ellipsis(tp.description, 255)]]]]); });
         jt.out("contentdiv", jt.tac2html(html) + mdefhtml);
+        app.fork({descr:"animate themes header line",
+                  func:animateThemesHeaderLine,
+                  ms:1200});
     }
 
 

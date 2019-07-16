@@ -1,10 +1,9 @@
 /*global window, document, history, jtminjsDecorateWithUtilities */
 
-/*jslint browser, multivar, white, fudge, for */
+/*jslint browser, white, fudge, for, long */
 
-var app = {},  //Global container for application level funcs and values
-    jt = {},   //Global access to general utility methods
-    a2a_config = {};  //AddToAny script loaded when needed, config required
+var app = {};  //Global container for application level funcs and values
+var jt = {};   //Global access to general utility methods
 
 ////////////////////////////////////////
 // g l o
@@ -29,6 +28,7 @@ var app = {},  //Global container for application level funcs and values
     app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";
     app.suppemail = "membicsystem" + "@" + "gmail" + "." + "com";
+    app.profdev = "epinova.com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
     app.forks = [];  //tasks started through setTimeout
@@ -55,13 +55,13 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.fork = function (tobj) {
-        var ft, forks = app.forks;
         if(!tobj.descr || !tobj.func || !tobj.ms) {
             jt.log("app.fork bad object descr: " + tobj.descr +
                    ", func: " + tobj.func +
                    ", ms: " + tobj.ms); }
+        var forks = app.forks;
         if(forks.length && forks[forks.length - 1].descr === tobj.descr) {
-            ft = forks[forks.length - 1];
+            var ft = forks[forks.length - 1];
             ft.count = ft.count || 1;
             ft.count += 1; }
         else {
@@ -71,11 +71,10 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.redirectToSecureServer = function (params) {
-        var href, state;
-        state = {};
+        var state = {};
         if(history && history.state) {
             state = history.state; }
-        href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
+        var href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
             "&logout=true";
         href = href.replace(/membic.com/ig, "membic.org");
         if(state && state.view === "profile" && state.profid) {
@@ -131,14 +130,13 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.haveReferrer = function () {
-        var ref, refidx, 
-            knownaddrs = [{sub: "membic.org", maxidx: 12},
+        var knownaddrs = [{sub: "membic.org", maxidx: 12},
                           {sub: "membicsys.appspot.com", maxidx: 8}];
-        ref = document.referrer || "";
+        var ref = document.referrer || "";
         ref = ref.toLowerCase();
         if(ref) {
             knownaddrs.every(function (ka) {
-                refidx = ref.indexOf(ka.sub);
+                var refidx = ref.indexOf(ka.sub);
                 if(refidx >= 0 && refidx <= ka.maxidx) {
                     ref = "";
                     return false; }
@@ -170,10 +168,10 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.secureURL = function (url) {
-        var idx, secbase = app.hardhome;
+        var secbase = app.hardhome;
         if(url.indexOf(secbase) === 0 || url.search(/:\d080/) >= 0) {
             return url; }
-        idx = url.indexOf("/", 9);  //endpoint specified
+        var idx = url.indexOf("/", 9);  //endpoint specified
         if(idx >= 0) {
             return secbase + url.slice(idx); }
         idx = url.indexOf("?");  //query specified
@@ -187,14 +185,14 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.init = function () {
-        var securl, href = window.location.href,
-            modules = [ "js/amd/themes", "js/amd/profile",
+        var href = window.location.href;
+        var modules = [ "js/amd/themes", "js/amd/profile",
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/pcd",
                         "js/amd/review", "js/amd/coop",
                         "js/amd/ext/amazon",
                         "js/amd/ext/readurl" ];
-        securl = app.secureURL(href);
+        var securl = app.secureURL(href);
         if(securl !== href) {
             window.location.href = securl;  //redirect
             return; }  //don't fire anything else off
@@ -235,10 +233,9 @@ var app = {},  //Global container for application level funcs and values
 
 
     app.crash = function (code, errtxt, method, url, data) {
-        var html, now, subj, body, emref;
-        now = new Date();
-        subj = "App crash";
-        body = "method: " + method + "\n" +
+        var now = new Date();
+        var subj = "App crash";
+        var body = "method: " + method + "\n" +
             "url: " + url + "\n" +
             "data: " + data + "\n" +
             "code: " + code + "\n" +
@@ -252,9 +249,9 @@ var app = {},  //Global container for application level funcs and values
             "https://github.com/theriex/membic/issues for " +
             "tracking purposes.\n\n" +
             "thanks,\n";
-        emref = "mailto:" + app.suppemail + "?subject=" + jt.dquotenc(subj) + 
-            "&body=" + jt.dquotenc(body);
-        html = ["div", {id: "bonkmain"},
+        var emref = "mailto:" + app.suppemail + "?subject=" + 
+            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
+        var html = ["div", {id: "bonkmain"},
                 [["p", "The app just bonked."],
                  ["p", 
                   [["It would be awesome if you could ",
@@ -302,46 +299,6 @@ var app = {},  //Global container for application level funcs and values
     };
 
 
-    app.displayWaitProgress = function(count, millis, divid, msg, msg2) {
-        var html, i = 0, src;
-        if(jt.byId("loadstatusdiv")) {  //use status div id available
-            divid = "loadstatusdiv"; }
-        if(app.wait.divid && app.wait.divid !== divid) {
-            if(count) {  //this is an old thread that has been superseded
-                return; }
-            clearTimeout(app.wait.timeout); } //stop previous thread
-        app.wait.divid = divid;  //track this wait task as the currrent one
-        if(!count) {  //initial call, count is zero
-            html = ["div", {cla: "waitdiv"},
-                    [["div", {id: "waitmsgdiv"}, msg],
-                     ["div", {id: "waitserverdiv"}],
-                     ["div", {id: "waitprogdiv"}]]];
-            jt.out(divid, jt.tac2html(html)); }
-        if(jt.byId("waitprogdiv")) {
-            html = [];
-            while(i < 4) {
-                i += 1;
-                if(i <= count) {
-                    src = "waitblockfilled.png"; }
-                else {
-                    src = "waitblockopen.png"; }
-                html.push(["img", {src: "img/" + src}]); }
-            jt.out("waitprogdiv", jt.tac2html(html));
-            if(count > 6) {
-                msg2 = msg2 || "Server cache rebuild...";
-                jt.out("waitserverdiv", msg2); }
-            if(count > 10) {
-                msg2 = "Waiting for data...";
-                jt.out("waitserverdiv", msg2); }
-            app.wait.timeout = app.fork(
-                {descr:"wait progress " + divid,
-                 func:function () {
-                     app.displayWaitProgress(count + 1, millis, 
-                                             divid, msg, msg2); },
-                 ms:millis}); }
-    };
-
-
     app.toggledivdisp = function (divid) {
         var div = jt.byId(divid);
         if(div) {
@@ -357,20 +314,6 @@ var app = {},  //Global container for application level funcs and values
     ////////////////////////////////////////
 
     // see also: app.layout.commonUtilExtensions
-
-    jt.hex2rgb = function (hex) {
-        var r, g, b;
-        if(hex.indexOf("#") === 0) {
-            hex = hex.slice(1); }
-        r = hex.slice(0, 2);
-        g = hex.slice(2, 4);
-        b = hex.slice(4, 6);
-        r = parseInt(r, 16);
-        g = parseInt(g, 16);
-        b = parseInt(b, 16);
-        return String(r) + "," + g + "," + b;
-    };
-
 
     jt.retry = function (rfunc, times) {
         var i;
@@ -421,4 +364,5 @@ var app = {},  //Global container for application level funcs and values
         return url;
     };
 
-} () );
+}());
+

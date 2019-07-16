@@ -17,7 +17,7 @@ app.pcd = (function () {
                          picfield: "profpic",
                          picsrc: "profpic?profileid=" },
                coop:    {desclabel: "Description",
-                         descplace: "What is this cooperative theme focused on? What's appropriate to post?",
+                         descplace: "What is this theme focused on? What's appropriate to post?",
                          descfield: "description", 
                          piclabel: "Theme Pic",
                          picfield: "picture",
@@ -582,7 +582,7 @@ app.pcd = (function () {
         if((dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) ||
            (dst.type === "profile" && dst.id !== app.profile.myProfId())) {
             return ""; }
-        var nameplace = "Theme name required";
+        var nameplace = "Theme name required.";
         if(dst.type !== "coop") {
             nameplace = "Set a profile name!"; }
         var nh = ["div", {cla:"formline"},
@@ -594,10 +594,10 @@ app.pcd = (function () {
                   [["label", {fo:"hashin", cla:"liflab", id:"hashlab"},
                     "Hashtag&nbsp;#"],
                    ["input", {id:"hashin", cla:"lifin", type:"text",
-                              placeholder:"Easy access and share",
+                              placeholder:"uniqueandshort",
                               value:dst.obj.hashtag}]]];
         var ark = "";
-        if(dst.type === "coop") {
+        if(dst.type === "coop" && dst.instid) {
             ark = ["div", {cla:"formline"},
                    [["input", {type:"checkbox", id:"arkcb", value:"archived",
                                checked:jt.toru(
@@ -1745,13 +1745,14 @@ return {
             dst.obj = app.lcs.getRef(dtype, id)[dtype];
             return displayObject(dst.obj, command); }
         if(dtype === "coop") {  //creating new coop
-            var profname = app.profile.myName();
-            if(!profname) {
+            var prof = app.profile.myProfile();
+            if(!prof.name) {
                 jt.err("You need to have a name for your profile.");
                 return app.profile.displayProfile(); }
-            dst.obj = { name: "", description: "", 
-                        people: {}, founders: app.profile.myProfId() };
-            dst.obj.people[app.profile.myProfId()] = profname;
+            dst.type = "coop";
+            dst.obj = {name:"", description:"", 
+                       people:{}, founders:app.profile.myProfId()};
+            dst.obj.people[app.profile.myProfId()] = prof.name;
             return displayObject(dst.obj); }
     },
 

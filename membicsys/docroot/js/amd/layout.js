@@ -1,4 +1,4 @@
-/*global window, document, app, jt, a2a, a2a_config, d3, d3ckit */
+/*global window, document, app, jt, d3, d3ckit */
 
 /*jslint browser, white, fudge, for, long */
 
@@ -157,11 +157,7 @@ app.layout = (function () {
 
     //hide the doc links as they are accessed from info link
     function localDocLinks () {
-        var html = ["a", {href: "#community", title: "Community membics",
-                           onclick: jt.fs("app.themes.display()")},
-                     ["img", {id: "logoimg", 
-                              src: "img/membiclogo.png?v=181127"}]];
-        jt.out("logodiv", jt.tac2html(html));
+        jt.out("logodiv", "");
         jt.byId("bottomnav").style.display = "none";
     }
 
@@ -373,7 +369,7 @@ return {
             if(currval !== val) {
                 obj[field] = val;
                 changed = true; }
-            return changed; }
+            return changed; };
     },
 
 

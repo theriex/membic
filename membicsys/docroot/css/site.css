@@ -533,12 +533,21 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> themes page layout */
 .tplinkdiv { background-image:url('../img/e6e7e9p80.png'); clear:both; 
-  margin:5px 0px; min-height:90px; padding:0px 5px; }
+  margin:5px 0px; padding:1px 5px; min-height:90px; border-radius:5px; }
 .tplinkpicdiv { float:left; margin-right:5px; min-width:90px; 
-  position:relative; }
+  position:relative; text-align:center; }
 .tplinkpicimg { max-width:90px; max-height:90px; }
 .tpmemlink { position:absolute; top:0px; right:0px; }
 .tplinknamespan { margin-right:5px; }
+.thlexdiv { font-size:medium; }
+/* FF thinks th values should be bold, no matter what you say here. */
+.thlextable, .thlhelpdiv { margin:0 auto 0 10%; }
+.thlextable thead { font-size:small; font-style:italic; opacity:0.5; }
+.thlextable tbody tr td { text-align:center; }
+.thlextable tbody tr td:nth-child(odd) { padding-right:10px; }
+.thlextable tbody tr td:nth-child(even) { text-align:left; }
+.thlhelpdiv { font-size:small; padding-bottom:7px; display:table }
+.moreinfospan { font-size:small; padding-left:20px; }
 
 
 /* >> share buttons */

@@ -80,11 +80,6 @@ app.profile = (function () {
     }
 
 
-    function myName () {
-        jt.err("profile.myName not implemented yet.");
-    }
-
-
     function themeLevel (coopid) {
         if(!coopid) {
             jt.log("profile.themeLevel no coopid given");
@@ -238,7 +233,6 @@ app.profile = (function () {
         fetchProfile: function (cbf) { fetchProfile(cbf); },
         display: function () { displayProfile(); },
         update: function (obj, sf, xf) { updateProfile(obj, sf, xf); },
-        myName: function () { return myName(); },
         themeLevel: function (coopid) { return themeLevel(coopid); },
         verifyStashKeywords: function (prof) { verifyStashKeywords(prof); },
         verifyMembership: function (coop) { verifyMembership(coop); },

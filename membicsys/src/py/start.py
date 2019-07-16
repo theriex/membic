@@ -143,11 +143,7 @@ interimcont = """
 </div>
 
 <p>Visit the <a href="https://membic.wordpress.com/">Membic Blog</a> for
-details or the 
-<a href="https://membic.wordpress.com/2016/02/17/introducing-membic"
-         onclick="window.open('https://membic.wordpress.com/2016/02/17/introducing-membic');return false;">
-        Introduction</a>.
-       <br/>
+details. </p>
 """
 
 
