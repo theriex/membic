@@ -147,7 +147,7 @@ app.themes = (function () {
             if(!elem.innerHTML) {
                 elem.innerHTML = spandat[idx].html;
                 app.fork({descr:"animate theme header line " + spandat[idx].id,
-                          func:animateThemesHeaderLine, ms:600});
+                          func:animateThemesHeaderLine, ms:800});
                 return; } }
         app.fork({descr:"animate theme header line examples",
                   func:displayHeaderLineExamples, ms:800});

@@ -1,6 +1,6 @@
 /*global app, jt, window */
 
-/*jslint browser, multivar, white, fudge, for */
+/*jslint browser, white, fudge, for */
 
 //////////////////////////////////////////////////////////////////////
 // Local Cache Storage for pen names, relationships, reviews, etc.
@@ -27,10 +27,6 @@
 app.lcs = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
     var cache = {
         activetps: { refs: {} },
         profile: { refs: {},
@@ -45,20 +41,16 @@ app.lcs = (function () {
                 fetchparamf: function (id) {
                     return "coopid=" + id; },
                 putprep: function (ctmobj) {
-                    app.coop.deserializeFields(ctmobj); } } },
+                    app.coop.deserializeFields(ctmobj); } } };
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    idify = function (id) {
+    function idify (id) {
         if(typeof id === "object") {
             id = jt.instId(id); }
         if(typeof id === "number") {
             id = String(id); }
         return id;
-    };
+    }
 
 
     function typify (type) {
@@ -88,17 +80,16 @@ return {
 
 
     getFull: function (type, id, callback, debugmsg) {
-        var ref, url;
         id = idify(id);
         type = typify(type);
-        ref = app.lcs.getRef(type, id);
+        var ref = app.lcs.getRef(type, id);
         if(ref && ref.status !== "not cached") {
             if(debugmsg) {
                 jt.log("getFull cached " + type + id + " " + debugmsg); }
             return callback(ref); }
         if(debugmsg) {
             jt.log("getFull retrieving " + type + id + " " + debugmsg); }
-        url = "";
+        var url = "";
         if(window.location.href.split("/").length > 3) {  //on a sub-page
             url = "../"; }
         url += cache[type].fetchend + "?" + cache[type].fetchparamf(id) +
@@ -117,15 +108,14 @@ return {
 
 
     tomb: function (type, id, reason) {
-        var tombstone, ref;
         type = typify(type);
         if(!id) {
             jt.log("lcs.tomb " + type + " id required");
             return null; }
-        tombstone = { status: reason, updtime: new Date() };
+        var tombstone = { status: reason, updtime: new Date() };
         tombstone[type + "id"] = id;
         jt.setInstId(tombstone, id);
-        ref = app.lcs.put(type, tombstone);
+        var ref = app.lcs.put(type, tombstone);
         ref.status = reason;
         ref[type] = null;  //so caller can just test for ref.type...
         return tombstone;
@@ -165,6 +155,14 @@ return {
     },
 
 
+    addReplaceAll: function (objs) {
+        objs.forEach(function (obj) {
+            var type = typify(obj.obtype);
+            if(cache[type]) {  //cacheable object
+                app.lcs.put(type, obj); } });
+    },
+
+
     uncache: function (type, id) {
         type = typify(type);
         var ref = app.lcs.getRef(type, id);
@@ -193,16 +191,13 @@ return {
         app.lcs.reconstituteJSONObjectField(field, obj);
     },
     reconstituteJSONObjectField: function (field, obj) {
-        var text, parsedval, jsonobj = JSON || window.JSON;
-        if (!jsonobj) {
-            jt.err("JSON not supported, please use a modern browser");
-        }
+        var text;
         if(!obj[field]) {
             obj[field] = {}; }
         else if(typeof obj[field] !== "object") {
             try {
                 text = obj[field];
-                parsedval = jsonobj.parse(text);
+                var parsedval = JSON.parse(text);
                 obj[field] = parsedval;
             } catch (e) {
                 jt.log("reconstituteJSONObjectField " + e + ". Found " + 
@@ -217,12 +212,12 @@ return {
 
 
     resolveIdArrayToCachedObjs: function (type, ids) {
-        var ref, objs = [];
+        var objs = [];
         if(!ids) {
             jt.log("lcs.resolveIdArrayToCachedObjs undefined ids");
             return objs; }
         ids.forEach(function (oid) {
-            ref = cache[type].refs[oid];
+            var ref = cache[type].refs[oid];
             if(ref && ref[type]) {
                 objs.push(ref[type]); } });
         return objs;
@@ -234,30 +229,7 @@ return {
         objs.forEach(function (obj) {
             ids.push(jt.instId(obj)); });
         return ids;
-    },
-
-
-    ////////////////////////////////////////
-    // application-specific published funcs
-    ////////////////////////////////////////
-
-    getCachedRecentReviews: function (revtype, penid) {
-        var revcache, results = [];
-        revcache = cache.rev.refs || {};
-        if(revtype === "all") {
-            revtype = ""; }
-        Object.keys(revcache).forEach(function (revid) {
-            var rev, revref = revcache[revid];
-            if(revref && revref.rev) {
-                rev = revref.rev;
-                if((!revtype || rev.revtype === revtype) &&
-                       (!penid || rev.penid === penid) && 
-                       jt.strNonNeg(rev.srcrev) && 
-                       (!rev.ctmid || rev.ctmid === "0")) {
-                    results.push(rev); } } });
-        return results;
     }
-
 
 }; //end of returned functions
 }());

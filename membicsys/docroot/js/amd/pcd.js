@@ -759,9 +759,7 @@ app.pcd = (function () {
 
 
     function rssSettingsHTML () {
-        if(!jt.hasId(dst.obj) ||  //need an instid for rss url
-           (dst.type === "coop" && app.coop.membershipLevel(dst.obj) < 3) ||
-           (dst.type === "profile" && dst.id !== app.profile.myProfId())) {
+        if(!jt.hasId(dst.obj)) {  //need an instid for rss url
             return ""; }
         var html = ["div", {cla:"formline"},
                     [["a", {href:"#rss", 
@@ -1222,7 +1220,8 @@ app.pcd = (function () {
     }
 
 
-    function showThemeNotices(prof, lev, coop) {
+    function showThemeNotices(prof) {
+        //walk coops and dump membership status indicators
         jt.log("showThemeNotices not implemented yet.");
     }
 
@@ -1341,7 +1340,7 @@ return {
             //custom param description.  Anyone who wants to know if https
             //is available will already know enough to just try it.
             ["div", {cla: "pcdsectiondiv"},
-             ["You can customize the title summary <em>ts</em> and detail summary <em>ds</em> values:",
+             ["You can customize the <em>title summary</em> (ts) and <em>detail summary</em> (ds) values:",
               ["ul",
                [["li", "<b>t</b>: title or name"],
                 ["li", "<b>s</b>: stars (as asterisks)"],
@@ -1581,17 +1580,11 @@ return {
 
     showNotices: function () {
         jt.out("pcdnotidiv", "");
-        if(dst.obj) {
-            var prof = app.profile.myProfile();
-            if(!prof) {  //not signed in, so no notices to display
-                return; }
-            if(dst.type === "profile" && dst.id === prof.instid) {
-                showProfileNotices(prof); }
-            else if(dst.type === "coop" && prof.coops && prof.coops[dst.id] &&
-                    prof.coops[dst.id].lev > 0) {
-                var lev = app.coop.membershipLevel(dst.obj, prof.instid);
-                if(lev > 0) {
-                    showThemeNotices(prof, lev, dst.obj); } } }
+        var prof = app.profile.myProfile();
+        if(!prof || dst.type !== "profile" || dst.id !== prof.instid) {
+            return; }  //not viewing own profile
+        showProfileNotices(prof);
+        showThemeNotices(prof);
     },
 
 

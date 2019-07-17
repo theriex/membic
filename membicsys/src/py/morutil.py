@@ -151,6 +151,15 @@ def csv_contains(val, csv):
     return False
 
 
+def id_in_csv(idval, csv):
+    idval = str(idval)
+    csv = csv or ""
+    for elem in csv.split(","):
+        if idval == elem:
+            return elem
+    return None
+
+
 def remove_from_csv(val, csv):
     if not csv or csv == val:
         return ""
@@ -161,6 +170,30 @@ def remove_from_csv(val, csv):
     if index >= 0:
         return csv[0:index] + csv[index + len(val):]
     return csv
+
+
+def remove_id_from_csv(idval, csv):
+    if not csv:
+        return ""
+    ids = csv.split(",")
+    try:
+        ids.remove(str(idval))
+    except Exception:
+        pass  # not found is fine, as long as it's not in the list now
+    return ",".join(ids)
+
+
+def append_id_to_csv(idval, csv):
+    if not csv:
+        return str(idval)
+    return csv + "," + str(idval)
+
+
+def elem_count_csv(csv):
+    if not csv:
+        return 0
+    ids = csv.split(",")
+    return len(ids)
 
 
 # CSV strings longer than 1000 elements are cumbersome to the point of

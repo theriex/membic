@@ -5,6 +5,7 @@ from google.appengine.api import images
 from google.appengine.api import memcache
 import logging
 import moracct
+import muser
 from morutil import *
 from cacheman import *
 import pen
@@ -37,39 +38,6 @@ class Coop(db.Model):
     preb2 = db.TextProperty()       #JSON membics (overflow from preb)
     
 
-def id_in_csv(idval, csv):
-    idval = str(idval)
-    csv = csv or ""
-    for elem in csv.split(","):
-        if idval == elem:
-            return elem
-    return None
-
-
-def append_id_to_csv(idval, csv):
-    if not csv:
-        return str(idval)
-    return csv + "," + str(idval)
-
-
-def remove_id_from_csv(idval, csv):
-    if not csv:
-        return ""
-    ids = csv.split(",")
-    try:
-        ids.remove(str(idval))
-    except Exception:
-        pass  # not found is fine, as long as it's not in the list now
-    return ",".join(ids)
-
-
-def elem_count_csv(csv):
-    if not csv:
-        return 0
-    ids = csv.split(",")
-    return len(ids)
-
-
 def user_role(userid, coop):
     userid = str(userid)
     coop.founders = coop.founders or ""
@@ -81,7 +49,7 @@ def user_role(userid, coop):
     coop.members = coop.members or ""
     if id_in_csv(userid, coop.members):
         return "Member"
-    return "NotFound"
+    return "Follower"
 
 
 def member_level(penid, coop):
@@ -155,6 +123,9 @@ def has_flag(coop, flagname):
     return False
 
 
+# The MUser must be at least following the Coop to apply for membership, and
+# at least have been a member at some point in order to post.  So any Coop
+# being processed will have an entry accessible by its key.
 def update_acc_coops(acc, key, field, val):
     coops = json.loads(acc.coops)
     entry = coops[key]
@@ -241,7 +212,7 @@ def read_and_validate_descriptive_fields(handler, coop):
     return True
 
 
-def fetch_coop_and_role(handler, muser):
+def fetch_coop_and_role(handler, acc):
     coopid = intz(handler.request.get('coopid'))
     if not coopid:
         coopid = intz(handler.request.get('instid'))
@@ -255,7 +226,7 @@ def fetch_coop_and_role(handler, muser):
         handler.response.out.write("Cooperative theme" + str(coopid) + 
                                    " not found")
         return None, ""
-    role = user_role(muser.key().id(), coop)
+    role = user_role(acc.key().id(), coop)
     return coop, role
 
 
@@ -473,6 +444,108 @@ def mail_invite_notice(handler, pnm, coop, acc, invacc, invtoken):
     moracct.mailgun_send(handler, invacc.email, subj, content)
 
 
+def update_membership(seekacc, level, coop):
+    seekid = str(seekacc.key().id())
+    if level > 0:  # make sure we have their name cached if member
+        pdict = coop.people or "{}"
+        pdict = json.loads(pdict)
+        pdict[seekid] = seekacc.name
+        coop.people = json.dumps(pdict)
+    coop.founders = remove_id_from_csv(seekid, coop.founders)
+    coop.moderators = remove_id_from_csv(seekid, coop.moderators)
+    coop.members = remove_id_from_csv(seekid, coop.members)
+    coop.seeking = remove_id_from_csv(seekid, coop.seeking)
+    coop.rejects = remove_id_from_csv(seekid, coop.rejects)
+    if level == 3:
+        coop.founders = append_id_to_csv(seekid, coop.founders)
+    elif level == 2:
+        coop.moderators = append_id_to_csv(seekid, coop.moderators)
+    elif level == 1:
+        coop.members = append_id_to_csv(seekid, coop.members)
+    else:
+        level = -1
+    update_acc_coops(seekacc, str(coop.key().id()), "lev", level)
+
+
+def notice_for_user(coop, action, updnotice, acc):
+    coopsdict = json.loads(acc.coops or "{}")
+    coopkey = str(coop.key().id())
+    if coopkey not in coopsdict:
+        logging.warn("notice_for_user did not find Coop " + coopkey + " (" +
+                     coop.name + ") in MUser " + str(acc.key().id()))
+        return acc
+    coopinfo = coopsdict[coopkey]
+    resnotices = []
+    notices = []
+    if "notices" in coopinfo:
+        notices = coopinfo["notices"]
+    for notice in notices:
+        if notice["uid"] != updnotice["uid"]:
+            resnotices.append(notice)
+    # existing notice (if any) now removed, check if adding new
+    if action == "add" or action == "replace":
+        resnotices.append(updnotice)
+    coopinfo["notices"] = resnotices
+    acc.coops = json.dumps(coopsdict)
+    cached_put(acc)
+    return acc
+    
+
+def notices_for_users(coop, action, notice, accids):
+    for accid in csv_list(accids):
+        acc = muser.MUser.get_by_id(int(accid))
+        if not acc:
+            logging.warn("notices_for_users Coop " + str(coop.key().id()) +
+                         " no MUser for " + accid)
+            continue
+        notice_for_user(coop, action, notice, acc)
+
+
+# Process membership action, caller has authorized and validated
+def process_membership(action, seekid, reason, coop, acc):
+    notice = {"type":"application", "lev":member_level(seekid, coop) + 1,
+              "uid":seekid, "created":nowISO(), "status":"pending"}
+    if action == "apply":  # acc is applicant seeking membership
+        notice["uname"] = acc.name
+        coop.seeking = append_id_to_csv(seekid, coop.seeking)
+        cached_put(coop)
+        acc = notice_for_user(coop, "add", notice, acc)
+        notices_for_users(coop, "add", notice, coop.founders)
+    elif action == "withdraw":  # acc is applicant seeking membership
+        coop.seeking = remove_id_from_csv(seekid, coop.seeking)
+        cached_put(coop)
+        acc = notice_for_user(coop, "remove", notice, acc)
+        notices_for_users(coop, "remove", notice, coop.founders)
+    elif action == "accept":  # acc is founder
+        seekacc = muser.MUser.get_by_id(int(seekid))
+        update_membership(seekacc, notice["lev"], coop)  # clears seeking
+        msg = "Promoted membership to " + user_role(seekid, coop)
+        update_coop_admin_log(coop, acc, msg, seekacc, reason)
+        cached_put(coop)
+        acc = notice_for_user(coop, "remove", notice, acc)
+        notices_for_users(coop, "remove", notice, coop.founders)
+    elif action == "reject":  # acc is founder
+        coop.seeking = remove_id_from_csv(seekid, coop.seeking)
+        coop.rejects = append_id_to_csv(seekid, coop.rejects)
+        cached_put(coop)
+        notices_for_users(coop, "remove", notice, coop.founders)
+        seekacc = muser.MUser.get_by_id(int(seekid))
+        notice["status"] = "rejected"
+        acc = notice_for_user(coop, "replace", notice, seekacc)
+    elif action == "accrej":  # acc is applicant seeking membership
+        coop.rejects = remove_id_from_csv(pnm.key().id(), coop.rejects)
+        cached_put(coop)
+        acc = notice_for_user(coop, "remove", notice, acc)
+    elif action == "demote":  # acc is founder or resigning member
+        targacc = muser.MUser.get_by_id(int(seekid))
+        update_membership(targacc, notice["lev"] - 2, coop)
+        msg = "Demoted membership to " + user_role(seekid, coop)
+        update_coop_admin_log(coop, acc, msg, seekacc, reason)
+        cached_put(coop)
+        # no notices to clear or create when demoting/resigning
+    return coop, acc
+
+
 class UpdateDescription(webapp2.RequestHandler):
     def post(self):
         pnm = rev.review_modification_authorized(self)
@@ -556,61 +629,53 @@ class GetCoopPic(webapp2.RequestHandler):
 
 class ApplyForMembership(webapp2.RequestHandler):
     def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        coop, role = fetch_coop_and_role(self, pnm)
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
+        coop, role = fetch_coop_and_role(self, acc)
         if not coop:
             return   #error already reported
-        penid = pnm.key().id()
         action = self.request.get('action')
+        if not action or action not in ["apply", "withdraw", "accrej"]:
+            return srverr(self, 400, "Invalid application action " + action)
+        accid = acc.key().id()
         if action == "apply":
-            if role != "Founder"\
-                    and not id_in_csv(penid, coop.seeking)\
-                    and not id_in_csv(penid, coop.rejects):
-                coop.seeking = append_id_to_csv(penid, coop.seeking)
-                update_coop_and_bust_cache(coop)
-        elif action == "withdraw":
-            coop.seeking = remove_id_from_csv(pnm.key().id(), coop.seeking)
-            update_coop_and_bust_cache(coop)
-        elif action == "accrej":
-            coop.rejects = remove_id_from_csv(pnm.key().id(), coop.rejects)
-            update_coop_and_bust_cache(coop)
-        moracct.returnJSON(self.response, [ coop ])
+            if role == "Founder":
+                return srverr(self, 400, "You are already a Founder")
+            if id_in_csv(accid, coop.seeking):
+                return srverr(self, 400, "You are already seeking membership")
+            if id_in_csv(accid, coop.rejects):
+                return srverr(self, 400, "Your membership was rejected")
+        coop, acc = process_membership(action, accid, "", coop, acc)
+        srvObjs(self, [coop, acc])
 
 
 class ProcessMembership(webapp2.RequestHandler):
     def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:  #penid did not match a pen the caller controls
-            return   #error already reported
-        coop, role = fetch_coop_and_role(self, pnm)
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
+        coop, role = fetch_coop_and_role(self, acc)
         if not coop:
             return   #error already reported
         action = self.request.get('action')
-        if not action or action not in ['reject', 'accept', 'demote']:
-            return srverr(self, 400, "Valid action required")
+        if not action or action not in ["reject", "accept", "demote"]:
+            return srverr(self, 400, "Invalid membership action " + action)
         seekerid = self.request.get('seekerid')
         if not seekerid:
             return srverr(self, 400, "No seekerid specified")
-        penid = str(pnm.key().id())
-        reason = self.request.get('reason')
+        seekerid = int(seekerid)
+        accid = acc.key().id()
+        if action in ["reject", "accept"] and role != "Founder":
+            return srverr(self, 400, "Only founders may reject or accept")
+        if action == "demote" and role != "Founder" and seekerid != accid:
+            return srverr(self, 400, "Cannot demote, not Founder and not self")
+        reason = self.request.get('reason') or ""
         if not reason and (action == "reject" or 
-                           (action == "demote" and seekerid != penid)):
-            return srverr(self, 400, "Rejection reason required")
-        seekrole = user_role(seekerid, coop)
-        seekerpen = pen.PenName.get_by_id(int(seekerid))
-        if not seekerpen:
-            return srverr(self, 400, "No seeker PenName " + seekerid)
-        if not membership_action_allowed(coop, action, pnm, role,
-                                         seekerpen, seekrole):
-            return srverr(self, 400, "Membership modification not authorized")
-        if action == "demote" or csv_contains(seekerid, coop.seeking):
-            process_membership_action(coop, action, pnm, 
-                                      seekerpen, seekrole, reason)
-        else:
-            return srverr(self, 400, "Membership changed already")
-        moracct.returnJSON(self.response, [ coop ])
+                           (action == "demote" and seekerid != accid)):
+            return srverr(self, 400, "Reason required to reject or demote")
+        coop, acc = process_membership(action, seekerid, reason, coop, acc)
+        srvObjs(self, [coop, acc])
 
 
 class GetCoopStats(webapp2.RequestHandler):

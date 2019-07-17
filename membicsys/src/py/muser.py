@@ -14,13 +14,18 @@ import os
 import urllib
 
 # coops: {"coopid":info, "coopid2":info2, ...}
-#   info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
-#          picture:idstr, keywords:CSV, inactive:str}
-#   lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
-#   obtype: "MUser" or "Coop"
-#   inactive: only included if this was an archived Coop
-# Any falsy value for lev means no association.  Maintained by client, updated
-# as available.  Used as a cache and may be out of date.
+#  info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
+#         picture:idstr, keywords:CSV, inactive:str, 
+#         notices:[notice1, notice2..]}
+#    lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
+#         Any falsy value for lev means no association.
+#    obtype: "MUser" or "Coop"
+#    inactive: only included if the Coop is archived
+#    notice: {type:"application"|"invitation", lev:int, uid, uname,
+#             created:ISO, status:"pending"|"rejected"}
+#        Accepted or withdrawn applications clear out the notices
+# The coops data is maintained by the client and updated as available.  It
+# is considered cached computed data and may be out of date.
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """

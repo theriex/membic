@@ -228,16 +228,16 @@ return {
     },
 
 
-    applyForMembership: function (coop, action, contf) {
-        var data;
-        data = "profid=" + app.profile.myProfId() + "&coopid=" + jt.instId(coop) + "&action=" + action;
+    applyForMembership: function (coop, memact, contf) {
+        //action: apply, withdraw, accrej
+        var data = jt.objdata({profid:app.profile.myProfId(),
+                               action:memact, coopid:coop.instid});
         jt.call("POST", "ctmmemapply?" + app.login.authparams(), data,
-                function (updcoops) {
-                    app.lcs.put("coop", updcoops[0]);
-                    app.profile.verifyMembership(updcoops[0]);
-                    contf(updcoops[0]); },
+                function (updobjs) {
+                    app.lcs.addReplaceAll(updobjs);
+                    contf(updobjs[0]); },
                 function (code, errtxt) {
-                    jt.err(action + " membership application failed code: " +
+                    jt.err("membership " + memact + " failed code: " +
                            code + ": " + errtxt);
                     contf(); },
                 jt.semaphore("coop.applyForMembership"));
