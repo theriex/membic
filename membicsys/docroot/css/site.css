@@ -72,6 +72,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #loginstatformdiv { padding:0px 5px; }
 .loginstatspan { background-image:url('../img/e6e7e9p80.png'); 
                  font-size:small; }
+#logindiv p { padding:3px 10px; }
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
                transition:opacity 1s; 
                padding:2px 0px 5px 0px; }
@@ -722,7 +723,7 @@ background-color: #FF6600
 }
 
 .resp-sharing-button--rss { 
-  background-color:#ffd6a8; border-color:#ffd6a8; }
+  background-color:#fec27f; border-color:#fec27f; }
 .resp-sharing-button--rss:hover,
 .resp-sharing-button--rss:active { 
-  background-color:#faca95; border-color:#faca95; }
+  background-color:#ffb664; border-color:#ffb664; }

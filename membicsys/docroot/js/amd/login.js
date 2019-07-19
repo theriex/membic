@@ -73,14 +73,15 @@ app.login = (function () {
     //regardless of the expiration set here.  This happens even if
     //directly using Cookie.set, or setting document.cookie directly.
     //On FF14 without noscript, all is normal.
-    function setAuthentication (name, token) {
+    function setAuthentication (name, token, noupdate) {
         var cval = name + cookdelim + token;
         jt.cookie(app.authcookname, cval, 365);
         authtoken = token;
         authname = name;
         if(authname) {
             authname = authname.replace("%40", "@"); }
-        app.login.updateTopSection();
+        if(!noupdate) {
+            app.login.updateTopSection(); }
     }
 
 
@@ -163,16 +164,21 @@ app.login = (function () {
         Object.keys(params).forEach(function (key) {
             if(key !== "emailin") {
                 html.push(["input", {type:"hidden", name:key,
-                                     value: params[key]}]); } });
-        if(!params.returnto) { //window.location.origin is webkit only..
-            var returl = window.location.protocol + "//" + 
-                window.location.host;
-            var state = app.history.currState();
-            if(state.view === "coop") {
-                returl += "?view=coop&coopid=" + state.coopid; }
-            html.push(["input", {type: "hidden", name: "returnto",
-                                 value: returl}]); }
+                                     value:params[key]}]); } });
+        //The default display after login is what should happen, unless the
+        //app was started from a link with an action.
+        if(!params.returnto && app.originalhref.indexOf("action=follow") > 0) {
+            html.push(["input", {type:"hidden", name:"returnto",
+                                 value:app.originalhref}]); }
         jt.out("loginparaminputs", jt.tac2html(html));
+    }
+
+
+    function nextStepOrRestartAction () {
+        var params = "";
+        if(app.originalhref.indexOf("action=follow") > 0) {
+            params = {returnto:app.originalhref}; }
+        app.login.doNextStep(params);
     }
 
 
@@ -397,7 +403,7 @@ app.login = (function () {
 
 
     function handleRedirectOrStartWork () {
-        var params = jt.parseParams();
+        var params = jt.parseParams("String");
         params.an = params.an || params.authname;
         params.at = params.at || params.authtoken;
         handleInitialParamSideEffects(params);
@@ -642,8 +648,8 @@ return {
     },
 
 
-    setAuth: function (method, token, name) {
-        setAuthentication(method, token, name);
+    setAuth: function (name, token) {
+        setAuthentication(name, token);
     },
 
 
@@ -663,20 +669,19 @@ return {
         jt.out("loginbuttonsdiv", "Creating new account...");
         emaddr = emaddr.toLowerCase();
         var data = jt.objdata({ emailin: emaddr, passin: password });
-        var url = secureURL("newacct");
-        jt.call("POST", url, data, 
+        jt.call("POST", secureURL("newacct"), data, 
                  function (objs) {
                      var html = "<p>Your account has been created." + 
                          " Welcome to the Membic community!</p>" +
                          "<p>Signing you in for the first time now...</p>";
                      jt.out("logindiv", html);
-                     setAuthentication("mid", objs[0].token, emaddr);
+                     setAuthentication(emaddr, objs[0].token, "noupdate");
                      //Wait briefly to give the db a chance to stabilize.
                      //Without waiting, it won't work.  With waiting, it
                      //usually works, but not guaranteed.  User might have
                      //to login again, or reload the page if extreme lag.
                      app.fork({descr:"new account stabilization wait",
-                               func:app.login.doNextStep,
+                               func:nextStepOrRestartAction,
                                ms:3000}); },
                  app.failf(function (ignore /*code*/, errtxt) {
                      loginstat(errtxt);
@@ -687,7 +692,7 @@ return {
 
     doNextStep: function (params) {
         if(!params) {
-            params = jt.parseParams(); }
+            params = jt.parseParams("String"); }
         if(params.returnto) {
             //if changing here, also check /redirlogin
             var redurl = decodeURIComponent(params.returnto) + "#" +

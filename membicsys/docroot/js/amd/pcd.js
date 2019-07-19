@@ -992,12 +992,36 @@ app.pcd = (function () {
     }
 
 
-    function shareButtonsAndRSS () {
-        var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
+    function currentObjURL () {
+        var url = app.hardhome;
+        if(dst.type === "profile") {
+            url += "?view=profile&profid=" + dst.id; }
+        else if(dst.type === "coop") {
+            url += "?view=coop&coopid=" + dst.id; }
+        return url;
+    }
+
+
+    function shareMailLink () {
+        var url = currentObjURL() + "&action=follow";
+        var subj = "Invitation to " + dst.obj.name;
+        var body = "Hi,\n\n" +
+            "I'm writing to invite you to follow \"" + dst.obj.name + "\" on membic.org.  This link will connect you when you sign in or create an account:\n\n" +
+            url + "\n\n" +
+            "It's low noise, and I think you'll appreciate the links.";
+        var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+            jt.dquotenc(body) + "%0A%0A";
+        return link;
+    }
+
+
+    function shareAndFollowButtons () {
         var tac = app.layout.shareButtonsTAC(
             {url:app.secsvr + "/" + dst.obj.instid,
              title:dst.obj.name,
-             socmed:["tw", "fb"]});
+             mref:shareMailLink(),
+             socmed:["tw", "fb", "em"]});
+        var rssurl = app.hardhome + "/rssfeed?" + dst.type + "=" + dst.id;
         tac.push(["a", {href:rssurl,  //support right click to copy link
                         cla:"resp-sharing-button__link",
                         id:"rsslink", title:"RSS feed",
@@ -1008,7 +1032,8 @@ app.pcd = (function () {
                    ["div", {cla:"resp-sharing-button__icon" + 
                             " resp-sharing-button__icon--solid",
                            "aria-hidden":"true"},
-                    ["img", {src:"img/rssicon.png"}]]]]);
+                    ["img", {src:"img/rssiconwhite.png",
+                             style:"max-width:16px;"}]]]]);
         return tac;
     }
 
@@ -1035,6 +1060,11 @@ app.pcd = (function () {
                      ["div", {id:"pcdnotidiv"}],
                      ["div", {id:"pcdcontdiv"}]]];
         jt.out("contentdiv", jt.tac2html(html));
+        if(!app.solopage() && !app.login.isLoggedIn()) {
+            //provide a way back to the main themes display
+            jt.out("logodiv", jt.tac2html(
+                ["a", {href:"#home", onclick:jt.fs("app.themes.display()")},
+                 ["img", {id:"logoimg", src:"img/membiclogo.png"}]])); }
     }
 
 
@@ -1061,7 +1091,7 @@ app.pcd = (function () {
                ["a", {id:"emaillink", href:"#filledInByMembicsDisplay"},
                 ["img", {src:"img/emailbw22.png"}]]]]],
             ["div", {id:"pcdsharediv", style:"display:none;"}, 
-             shareButtonsAndRSS()],
+             shareAndFollowButtons()],
             ["div", {id:"pcdkeysrchdiv"}],
             ["div", {id:"pcdtypesrchdiv"}]];
         jt.out("pcdactdiv", jt.tac2html(html));
@@ -1156,11 +1186,30 @@ app.pcd = (function () {
     }
 
 
+    function handleCommand (cmd) {
+        if(!cmd || app.solopage()) {
+            return; }
+        if(!app.login.isLoggedIn()) {
+            jt.err("You need to sign in or create an account to " + cmd);
+            return; }
+        if(cmd === "Settings") {
+            return app.pcd.settings(); }
+        if(cmd.toLowerCase() === "follow") {
+            //they are logged in, but profile may not have been loaded yet
+            app.profile.fetchProfile(function (prof) {
+                if(!prof.coops[dst.id]) {  //not following
+                    app.profile.follow(dst.obj, function () {
+                        app.pcd.settings(); }); }
+                else {
+                    return app.pcd.settings(); } }); }
+    }
+
+
+    //Does not closeDialog or cancelOverlay.  action=follow processing
+    //requires the overlay stay up.
     function displayObject (obj, command) {
         obj = obj || dst.obj;
         resetDisplayStateFromObject(obj);
-        app.layout.cancelOverlay();  //close user menu if open
-        app.layout.closeDialog();    //close search dialog if open
         historyCheckpoint();
         initializeSearchState();
         var defs = dst[dst.type];
@@ -1177,8 +1226,7 @@ app.pcd = (function () {
         updateTypesSelectionArea();
         app.pcd.showNotices();
         app.pcd.searchReviews();
-        if(command === "Settings") {
-            app.pcd.settings(); }
+        handleCommand(command);
         //To show relevant notices for the theme, or do anything personal
         //with it, the profile needs to be available.  Fault in if needed
         if(!app.solopage() && app.login.isLoggedIn() && 
@@ -1499,12 +1547,32 @@ return {
     },
 
 
+    closeandprof: function () {
+        app.layout.cancelOverlay();
+        app.layout.closeDialog();
+        app.profile.display();
+    },
+
+
     ctmmem: function (action) {
         if(action === "apply") {
             if(!app.profile.following(dst.id)) {
                 jt.out("memappbdiv", "Following");
                 return app.profile.follow(dst.obj, function () {
                     app.pcd.settings(dst.obj); }); }
+            var prof = app.profile.myProfile();
+            if(prof && (!prof.name || !prof.profpic)) {
+                //prof is available if new account created, but may not be
+                //yet in other situations.  A complete profile is not
+                //strictly required, but it helps to try keep the
+                //application process clean for new accounts.
+                jt.out("memappbdiv", jt.tac2html(
+                    ["Please ",
+                     ["a", {href:"#profile",
+                            onclick:jt.fs("app.pcd.closeandprof()")},
+                      "complete your profile"],
+                     " before applying"]));
+                return; }
             jt.out("memappbdiv", "Applying..."); }
         else if(action === "withdraw") {
             jt.out("memappbdiv", "Withdrawing..."); }

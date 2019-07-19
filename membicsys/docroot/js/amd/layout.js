@@ -533,12 +533,11 @@ return {
 
 
     closeDialog: function (jumpref) {
-        var dlg;
         jt.out("dlgdiv", "");
         jt.byId("dlgdiv").style.visibility = "hidden";
         app.onescapefunc = app.escapefuncstack.pop();
         if(dlgqueue.length > 0) {
-            dlg = dlgqueue.pop();
+            var dlg = dlgqueue.pop();
             app.layout.openDialog(dlg.coords, dlg.html, dlg.initf, dlg.visf); }
         if(jumpref) {
             window.open(jumpref); }
@@ -655,9 +654,11 @@ return {
                              ["path", {d:"M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z"}]]]]]);
                 break;
             case "em":
+                spec.mref = spec.mref || 
+                    "mailto:?subject=" + tlnp + "&amp;body=" + urlp;
                 tac.push(["a", {
                     cla:"resp-sharing-button__link",
-                    href:"mailto:?subject=" + tlnp + "&amp;body=" + urlp,
+                    href:spec.mref,
                     target:"_self", rel:"noopener", "aria-label":""},
                           ["div", {cla:dca + " resp-sharing-button--email"},
                            ["div", {"aria-hidden":"true", cla:dcb},

@@ -81,10 +81,9 @@ return {
         case "about":
             return app.layout.displayDoc();
         case "coop":
-            return app.coop.bycoopid(state.coopid, "history", state.tab, 
-                                     state.expid);
+            return app.coop.bycoopid(state.coopid, "history", state.action);
         case "profile":
-            return app.profile.byprofid(state.profid);
+            return app.profile.byprofid(state.profid, state.action);
         default:
             jt.log("history.dispatchState unknown state: " + state);
         }

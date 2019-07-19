@@ -197,6 +197,7 @@ var jt = {};   //Global access to general utility methods
             window.location.href = securl;  //redirect
             return; }  //don't fire anything else off
         jtminjsDecorateWithUtilities(jt);
+        app.originalhref = href;
         if(href.indexOf("#") > 0) {
             href = href.slice(0, href.indexOf("#")); }
         if(href.indexOf("?") > 0) {

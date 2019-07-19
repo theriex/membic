@@ -98,7 +98,7 @@ app.coop = (function () {
     ////////////////////////////////////////
 return {
 
-    bycoopid: function (coopid, src, command) {
+    bycoopid: function (coopid, src, cmd) {
         var solopage = app.solopage();
         var cts = ["review", "membership"];
         if(cts.indexOf(src) >= 0 || solopage) {
@@ -119,7 +119,7 @@ return {
                                 jt.log("bumpmctr?" + data + " failed " + 
                                        code + ": " + errtxt); }); },
                 ms:800}); }  //longish delay to avoid blocking current work
-        app.pcd.fetchAndDisplay("coop", coopid, command);
+        app.pcd.fetchAndDisplay("coop", coopid, cmd);
     },
 
 
