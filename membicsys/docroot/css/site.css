@@ -409,7 +409,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv, .notimgdiv { float:left; padding:0px 10px 0px 3px; }
 .noticeimg { height:40px; }
-.noticediv { clear:both; min-height:40px; background:#ff9e30; opacity:0.8; }
+.noticediv { clear:both; min-height:40px; opacity:0.8; }
 .fpbuttonsdiv { margin-left:40px; padding-top:2px; }
 .fpbuttondiv { display:inline-block; margin:0px 10px; text-align:center; 
   min-width:40px; min-height:30px; }

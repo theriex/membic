@@ -137,13 +137,15 @@ app.profile = (function () {
             prof.coops[ctmid] = makeCoopsEntry(coop, lev); }
         //previously asociated
         else if(prof.coops[ctmid]) { //-1 or > 0
+            var notices = prof.coops[ctmid].notices || [];
             if(lev) {  //new membership level supercedes previous value
                 changed = true;
                 prof.coops[ctmid] = makeCoopsEntry(coop, lev); }
             else {  //lev === 0 so resigned or kicked out
                 if(prof.coops[ctmid] > 0) {  //was member, switch to following
                     changed = true;
-                    prof.coops[ctmid] = makeCoopsEntry(coop, -1); } } }
+                    prof.coops[ctmid] = makeCoopsEntry(coop, -1); } }
+            prof.coops[ctmid].notices = notices; }
         changed = changed || verifyCachedCoopInfo(prof, coop);
         if(changed) {  //note update, but not critical or time dependent
             updateProfile(prof); }

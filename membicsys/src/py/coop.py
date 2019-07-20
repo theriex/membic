@@ -471,22 +471,24 @@ def notice_for_user(coop, action, updnotice, acc):
     coopsdict = json.loads(acc.coops or "{}")
     coopkey = str(coop.key().id())
     if coopkey not in coopsdict:
+        # should never happen as the user was already at least following
         logging.warn("notice_for_user did not find Coop " + coopkey + " (" +
                      coop.name + ") in MUser " + str(acc.key().id()))
         return acc
-    coopinfo = coopsdict[coopkey]
+    # logging.info("notice_for_user " + action + " " + str(updnotice))
     resnotices = []
     notices = []
-    if "notices" in coopinfo:
-        notices = coopinfo["notices"]
-    for notice in notices:
+    if "notices" in coopsdict[coopkey]:
+        notices = coopsdict[coopkey]["notices"]
+    for notice in notices:  # copy all unrelated notices
         if notice["uid"] != updnotice["uid"]:
             resnotices.append(notice)
     # existing notice (if any) now removed, check if adding new
     if action == "add" or action == "replace":
         resnotices.append(updnotice)
-    coopinfo["notices"] = resnotices
+    coopsdict[coopkey]["notices"] = resnotices
     acc.coops = json.dumps(coopsdict)
+    # logging.info("notice_for_user result coops: " + acc.coops)
     cached_put(acc)
     return acc
     
@@ -504,7 +506,7 @@ def notices_for_users(coop, action, notice, accids):
 # Process membership action, caller has authorized and validated
 def process_membership(action, seekid, reason, coop, acc):
     notice = {"type":"application", "lev":member_level(seekid, coop) + 1,
-              "uid":seekid, "created":nowISO(), "status":"pending"}
+              "uid":str(seekid), "created":nowISO(), "status":"pending"}
     if action == "apply":  # acc is applicant seeking membership
         notice["uname"] = acc.name
         coop.seeking = append_id_to_csv(seekid, coop.seeking)
@@ -522,8 +524,9 @@ def process_membership(action, seekid, reason, coop, acc):
         msg = "Promoted membership to " + user_role(seekid, coop)
         update_coop_admin_log(coop, acc, msg, seekacc, reason)
         cached_put(coop)
-        acc = notice_for_user(coop, "remove", notice, acc)
+        notice_for_user(coop, "remove", notice, seekacc)
         notices_for_users(coop, "remove", notice, coop.founders)
+        acc = cached_get(acc.key().id(), muser.MUser)
     elif action == "reject":  # acc is founder
         coop.seeking = remove_id_from_csv(seekid, coop.seeking)
         coop.rejects = append_id_to_csv(seekid, coop.rejects)
@@ -531,9 +534,11 @@ def process_membership(action, seekid, reason, coop, acc):
         notices_for_users(coop, "remove", notice, coop.founders)
         seekacc = muser.MUser.get_by_id(int(seekid))
         notice["status"] = "rejected"
-        acc = notice_for_user(coop, "replace", notice, seekacc)
+        notice["reason"] = reason
+        notice_for_user(coop, "replace", notice, seekacc)
+        acc = cached_get(acc.key().id(), muser.MUser)
     elif action == "accrej":  # acc is applicant seeking membership
-        coop.rejects = remove_id_from_csv(pnm.key().id(), coop.rejects)
+        coop.rejects = remove_id_from_csv(seekid, coop.rejects)
         cached_put(coop)
         acc = notice_for_user(coop, "remove", notice, acc)
     elif action == "demote":  # acc is founder or resigning member

@@ -21,11 +21,10 @@ import urllib
 #         Any falsy value for lev means no association.
 #    obtype: "MUser" or "Coop"
 #    inactive: only included if the Coop is archived
-#    notice: {type:"application"|"invitation", lev:int, uid, uname,
-#             created:ISO, status:"pending"|"rejected"}
-#        Accepted or withdrawn applications clear out the notices
-# The coops data is maintained by the client and updated as available.  It
-# is considered cached computed data and may be out of date.
+#    notice: {type:"application", lev:int, uid, uname, created:ISO,
+#             status:"pending"|"rejected", reason}
+# The coops data is cached supplemental data, not authoritative.
+# See coop.py process_membership, profile.js verifyMembership
 
 class MUser(db.Model):
     """ Membic User account, authentication and data """

@@ -57,31 +57,6 @@ app.coop = (function () {
     }
 
 
-    function displayInviteDialog (invite, invidx) {
-        var html;
-        html = ["div", {id: "coopinvitedlgdiv"},
-                ["div", {cla: "pcdsectiondiv"},
-                 [["p", {cla: "dlgpara"},
-                   [["span", {cla: "profflist"}, invite.profname],
-                    " has invited you to become a member of ",
-                    ["em", invite.coopname],
-                    "."]],
-                  ["p", {cla: "dlgpara"},
-                   "Accept this membership invitation to access " + invite.coopname + " from the themes tab on your profile, and enable the option to post through to " + invite.coopname + " when you write or edit a membic."],
-                  ["div", {id: "errmsgdiv", cla: "dlgpara"}],
-                  ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
-                   [["button", {type: "button", id: "membrejectbutton",
-                                onclick: jt.fs("app.coop.accrejInvite(" +
-                                               invidx + ",'Reject')")},
-                     "Reject"],
-                    ["button", {type: "button", id: "membacceptbutton",
-                                onclick: jt.fs("app.coop.accrejInvite(" +
-                                               invidx + ",'Accept')")},
-                     "Accept"]]]]]];
-        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
-    }
-
-
     function historyCheckpointIfNeeded (coop) {
         //when creating a new theme, the history state will not have
         //been checkpointed because there was no id yet.
@@ -196,38 +171,6 @@ return {
     },
 
 
-    accrejInvite: function (invidx, action) {
-        var invite = app.login.accountInfo("invites")[invidx];
-        if(action === "Reject" && !confirm("You will need to re-apply or be invited again to become a member of " + invite.coopname + ". Are you sure you want to reject membership?")) {
-            return; }
-        invite.processed = true;  //don't loop forever
-        var data = "profid=" + app.profile.myProfId() + "&coopid=" + invite.coopid + "&inviterprofid=" + invite.profid + "&action=" + action;
-        jt.call("POST", "acceptinvite?" + app.login.authparams(), data,
-                function (updobjs) {
-                    if(action === "Accept") {
-                        app.lcs.put("profile", updobjs[0]);
-                        app.lcs.put("coop", updobjs[1]);
-                        app.profile.verifyMembership(updobjs[1]); }
-                    app.layout.cancelOverlay();
-                    app.coop.processInvites(); },  //in case there are more
-                app.failf(function (code, errtxt) {
-                    jt.out("errmsgdiv", "Invite processing failed " + code + 
-                           ": " + errtxt); }),
-                jt.semaphore("coop.accrejInvite"));
-    },
-
-
-    processInvites: function () {
-        var invites;
-        invites = app.login.accountInfo("invites") || [];
-        invites.some(function (invite, invidx) {
-            if(!invite.processed) {
-                displayInviteDialog(invite, invidx);
-                return true; }
-            return false; });
-    },
-
-
     applyForMembership: function (coop, memact, contf) {
         //action: apply, withdraw, accrej
         var data = jt.objdata({profid:app.profile.myProfId(),
@@ -235,6 +178,7 @@ return {
         jt.call("POST", "ctmmemapply?" + app.login.authparams(), data,
                 function (updobjs) {
                     app.lcs.addReplaceAll(updobjs);
+                    //No profile.verifyMembership. notices possibly removed.
                     contf(updobjs[0]); },
                 function (code, errtxt) {
                     jt.err("membership " + memact + " failed code: " +
@@ -245,14 +189,15 @@ return {
 
 
     processMembership: function (coop, pact, pseekid, preason, contf) {
+        //action: accept, reject, demote
         var data = jt.objdata({action:pact, profid:app.profile.myProfId(),
                                coopid:jt.instId(coop), seekerid:pseekid,
                                reason:preason});
         jt.call("POST", "ctmmemprocess?" + app.login.authparams(), data,
-                function (updcoops) {
-                    app.lcs.put("coop", updcoops[0]);
-                    app.profile.verifyMembership(updcoops[0]);
-                    contf(updcoops[0]); },
+                function (updobjs) {
+                    app.lcs.addReplaceAll(updobjs);
+                    //No profile.verifyMembership. notices possibly removed.
+                    contf(updobjs[0]); },
                 function (code, errtxt) {
                     jt.err("Membership processing failed code: " + code +
                            ": " + errtxt);

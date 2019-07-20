@@ -298,6 +298,22 @@ app.pcd = (function () {
     }
 
 
+    function applicantName (coop, profid) {
+        var people = dst.obj.people || {};
+        var name = people[profid];
+        if(!name) {
+            var prof = app.profile.myProfile();
+            if(prof && prof.coops && prof.coops[coop.instid]) {
+                var notices = prof.coops[coop.instid].notices || [];
+                notices.forEach(function (note) {
+                    if(note.uid === profid) {
+                        name = note.uname; } }); } }
+        if(!name) {
+            name = profid; }
+        return name;
+    }
+
+
     function outstandingApplicationsHTML () {
         if(!dst.obj.seeking) {
             return ""; }
@@ -305,9 +321,8 @@ app.pcd = (function () {
         if(mlev < 2) {
             return ""; }
         var html = [];
-        var people = dst.obj.people || {};
         dst.obj.seeking.csvarray().forEach(function (profid) {
-            var name = people[profid] || profid;
+            var name = applicantName(dst.obj, profid);
             var slev = app.coop.membershipLevel(dst.obj, profid);
             if(mlev > slev || mlev === 3) {
                 html.push(membershipAppNoticeHTML(profid, name, slev)); } });
@@ -1248,14 +1263,36 @@ app.pcd = (function () {
     }
 
 
+    function imgsrcForThemeId (ctmid) {
+        var imgsrc = "img/blank.png";
+        if(ctmid) {
+            imgsrc = "ctmpic?coopid=" + ctmid; }
+        return imgsrc;
+    }
+
+
     function addNotice (notice) {
         jt.log("addNotice " + notice.text);
-        var imgsrc = "img/info.png";
-        switch(notice.type) {
-            case "settings": imgsrc = "img/settings.png"; break; }
+        var bgs = {red:"#ff9e30", green:"#b5dcbf", yellow:"#fcfeaf"};
         var ndiv = document.createElement("div");
         ndiv.className = "noticediv";
         ndiv.id = notice.id;
+        var imgsrc = "img/info.png";
+        switch(notice.type) {
+        case "settings": 
+            imgsrc = "img/settings.png";
+            ndiv.style.background = bgs.red;
+            break;
+        case "theme":
+            imgsrc = imgsrcForThemeId(notice.pic);
+            ndiv.style.background = bgs.green;
+            ndiv.style.fontSize = "medium";
+            break;
+        case "threj":
+            imgsrc = imgsrcForThemeId(notice.pic);
+            ndiv.style.background = bgs.yellow;
+            ndiv.style.fontSize = "medium";
+            break; }
         ndiv.innerHTML = jt.tac2html([
             ["div", {cla:"notimgdiv"},
              ["a", {href:"#" + notice.id, onclick:notice.fstr,
@@ -1268,9 +1305,35 @@ app.pcd = (function () {
     }
 
 
+    function addThemeNotice (prof, ctm, note, appf) {
+        var levs = ["", "Member", "Moderator", "Founder"];
+        var txt;
+        if(note.type === "application") {
+            if(note.status === "pending") {
+                txt = note.uname + " is applying";
+                if(note.uid === prof.instid) {
+                    txt = "You are applying"; }
+                txt += " to become a " + levs[note.lev] + " of " + ctm.name;
+                addNotice({type:"theme", id:"app" + ctm.instid + note.uid,
+                           text:txt, fstr:appf, pic:ctm.picture}); }
+            else if(note.status === "rejected") {
+                txt = "Your " + levs[note.lev] + " application to " +
+                    ctm.name + " was rejected: " + note.reason;
+                addNotice({type:"threj", id:"app" + ctm.instid + note.uid,
+                           text:txt, fstr:appf, pic:ctm.picture}); } }
+    }
+
+
     function showThemeNotices(prof) {
-        //walk coops and dump membership status indicators
-        jt.log("showThemeNotices not implemented yet.");
+        prof.coops = prof.coops || {};
+        Object.keys(prof.coops).forEach(function (ctmid) {
+            var ctm = prof.coops[ctmid];
+            ctm.instid = ctmid;  //for ease of reference in making ids
+            var notices = ctm.notices || [];
+            var appf = jt.fs("app.pcd.fetchAndDisplay('coop','" + ctmid + 
+                             "','Settings')");
+            notices.forEach(function (note) {
+                addThemeNotice(prof, ctm, note, appf); }); });
     }
 
 
@@ -1771,9 +1834,9 @@ return {
                     jt.byId("reasonlab" + profid).style.color = "red"; }
                 else { //have reason
                     jt.out("abdiv" + profid, "Rejecting...");
-                    app.coop.processMembership(dst.obj, verb, profid, 
-                                                elem.value.trim(),
-                                                app.pcd.settings); } }
+                    app.coop.processMembership(dst.obj, verb, profid,
+                                               elem.value.trim(),
+                                               app.pcd.settings); } }
             break;
         case "accept":
             jt.out("abdiv" + profid, "Accepting...");
