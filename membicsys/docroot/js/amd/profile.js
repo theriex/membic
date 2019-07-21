@@ -142,7 +142,7 @@ app.profile = (function () {
                 changed = true;
                 prof.coops[ctmid] = makeCoopsEntry(coop, lev); }
             else {  //lev === 0 so resigned or kicked out
-                if(prof.coops[ctmid] > 0) {  //was member, switch to following
+                if(prof.coops[ctmid].lev > 0) {  //was member, now following
                     changed = true;
                     prof.coops[ctmid] = makeCoopsEntry(coop, -1); } }
             prof.coops[ctmid].notices = notices; }

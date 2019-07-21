@@ -198,17 +198,11 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.error(400)
         handler.response.out.write("A description is required")
         return False
-    coop.calembed = handler.request.get('calembed')
-    if coop.calembed and not coop.calembed.startswith("<iframe "):
-        handler.error(400)
-        handler.response.out.write("Embed code must be an iframe")
-        return False
     verify_soloset(coop, handler.request.get('soloset'))
     coop.keywords = handler.request.get('keywords')
     # picture is uploaded separately
-    # frequency not used anymore
-    # membership fields are handled separately
-    # review postings are handled separately
+    # membership, adminlog, people handled separately
+    # review posting fields are handled separately
     return True
 
 
@@ -242,27 +236,24 @@ def update_coop_admin_log(coop, pnm, action, target, reason):
         edict["targid"] = str(target.key().id())
         edict["tname"] = target.name or target.title
     edict["reason"] = reason or ""
-    entry = json.dumps(edict)
-    if not coop.adminlog:
-        coop.adminlog = "[]"
-    log = coop.adminlog[1:-1].strip()  # strip outer brackets and whitespace
-    if log:
-        entry += ","
-    coop.adminlog = "[" + entry + log + "]"
+    logentries = json.loads(coop.adminlog or "[]")
+    while len(logentries) and logentries[0]["action"] == action:
+        logentries = logentries[1:]
+    logentries.insert(0, edict)
+    coop.adminlog = json.dumps(logentries)
     
     
 def verify_people(coop):
     pdict = {}
     if coop.people:
         pdict = json.loads(coop.people)
-    penidcsvs = [coop.founders, coop.moderators, coop.members,
-                 coop.seeking, coop.rejects]
+    penidcsvs = [coop.founders, coop.moderators, coop.members]
     for penidcsv in penidcsvs:
         for penid in csv_list(penidcsv):
             if not penid in pdict:
-                pnm = pen.PenName.get_by_id(int(penid))
-                if pnm:
-                    pdict[penid] = pnm.name
+                acc = muser.MUser.get_by_id(int(penid))
+                if acc:
+                    pdict[penid] = acc.name
     coop.people = json.dumps(pdict)
 
 
@@ -544,8 +535,8 @@ def process_membership(action, seekid, reason, coop, acc):
     elif action == "demote":  # acc is founder or resigning member
         targacc = muser.MUser.get_by_id(int(seekid))
         update_membership(targacc, notice["lev"] - 2, coop)
-        msg = "Demoted membership to " + user_role(seekid, coop)
-        update_coop_admin_log(coop, acc, msg, seekacc, reason)
+        msg = "Reduced membership to " + user_role(seekid, coop)
+        update_coop_admin_log(coop, acc, msg, targacc, reason)
         cached_put(coop)
         # no notices to clear or create when demoting/resigning
     return coop, acc
@@ -553,40 +544,31 @@ def process_membership(action, seekid, reason, coop, acc):
 
 class UpdateDescription(webapp2.RequestHandler):
     def post(self):
-        pnm = rev.review_modification_authorized(self)
-        if not pnm:
-            return
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
         name = self.request.get('name')
         name_c = canonize(name)
         if not name_c:
-            self.error(401)
-            self.response.out.write("Invalid value for name")
-            return
-        ctmid = self.request.get('_id')
-        if ctmid:
-            coop = cached_get(intz(ctmid), Coop)
+            return srverr(self, 400, "Invalid value for name")
+        coop = Coop(name=name, name_c=name_c)
+        role = "Founder"
+        ctmid = intz(self.request.get("instid"))
+        if not ctmid:
+            coop.founders = str(acc.key().id())
+        else:  # modifying existing Coop
+            coop, role = fetch_coop_and_role(self, acc)
             if not coop:
-                self.error(404)
-                self.response.out.write("Cooperative Theme " + ctmid + 
-                                        " not found")
-                return
-            if user_role(pnm.key().id(), coop) != "Founder":
-                self.error(400)
-                self.response.out.write(
-                    "Only a Founder may change the theme description.")
-                return
-            coop.name = name
-            coop.name_c = name_c
-        else:
-            coop = Coop(name=name, name_c=name_c)
-            coop.founders = str(pnm.key().id())
+                return   #error already reported
+            if role != "Founder":
+                return srverr(self, 400, "Only Founders may change description")
         if not read_and_validate_descriptive_fields(self, coop):
-            return
+            return  # error already reported
         coop.modified = nowISO()
-        update_coop_admin_log(coop, pnm, "Updated Description", "", "")
-        coop.people = ""   # have to rebuild sometime and this is a good time
-        update_coop_and_bust_cache(coop)
-        moracct.returnJSON(self.response, [ coop ])
+        update_coop_admin_log(coop, acc, "Updated Description", "", "")
+        verify_people(coop)
+        cached_put(coop)
+        srvObjs(self, [ coop ])
 
 
 class GetCoopById(webapp2.RequestHandler):

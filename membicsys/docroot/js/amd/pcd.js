@@ -60,7 +60,7 @@ app.pcd = (function () {
         {name:"Member",    //MUser.coops lev: 1
          imgsrc: "img/tsmember.png",
          levtxt:"As a member, you may post membics related to this theme.",
-         uptxt:"If you would like to help make sure posts are relevant, and help approve new members, you can apply to become a Moderator.",
+         uptxt:"If you would like to help monitor new membics, you can apply to become a Moderator.",
          upbtn:"Apply to become a Moderator",
          cantxt:"You are applying to become a Moderator.",
          canbtn:"Withdraw Moderator application",
@@ -72,8 +72,8 @@ app.pcd = (function () {
          notice:"is applying to become a Moderator" },
         {name:"Moderator", //MUser.coops lev: 2
          imgsrc: "img/tsmoderator.png",
-         levtxt:"As a Moderator, you can post, remove membics that don't belong, and approve membership applications.",
-         uptxt:"If you think it would be appropriate for you to be recognized as a permanent co-owner of this cooperative theme, you can apply to become a Founder.",
+         levtxt:"As a moderator, you may remove any innapropriate membics from the theme.",
+         uptxt:"To become a permanent co-owner, with full control over membership and all descriptive information, you can apply to become a Founder.",
          upbtn:"Apply to become a Founder",
          cantxt:"You are applying to become a Founder.",
          canbtn:"Withdraw your Founder application",
@@ -714,7 +714,7 @@ app.pcd = (function () {
             html = reviewTypeKeywordsHTML(dst.obj);
             break;
         case "coop": 
-            if(!jt.hasId(dst.obj) || app.coop.membershipLevel(dst.obj) < 2) {
+            if(!jt.hasId(dst.obj) || app.coop.membershipLevel(dst.obj) < 3) {
                 return ""; }
             label = "Theme Keywords";
             html = themeKeywordsHTML();
@@ -730,9 +730,10 @@ app.pcd = (function () {
                           style:"display:none;"},
                   [html,
                    ["div", {cla:"dlgbuttonsdiv"},
-                    ["button", {type:"button", id:"updatekwdsdiv",
-                                onclick:jt.fs("app.pcd.updateKeywords()")},
-                     "Update Keywords"]]]]]];
+                    [["button", {type:"button", id:"updatekwdsb",
+                                 onclick:jt.fs("app.pcd.updateKeywords()")},
+                      "Update Keywords"],
+                     ["div", {id:"updatekwdserrdiv", cla:"errdiv"}]]]]]]];
         return html;
     }
 
@@ -766,9 +767,10 @@ app.pcd = (function () {
                                     placeholder:"myaccount@example.com",
                                     value:stash.mailins}]],
                         ["div", {cla:"dlgbuttonsdiv"},
-                         ["button", {type:"button", id:"updatemiab",
-                                     onclick:jt.fs("app.pcd.updateMailins()")},
-                          "Update Mail-Ins"]]]]]]];
+                         [["button", {type:"button", id:"updatemiab",
+                                      onclick:jt.fs("app.pcd.updateMailins()")},
+                           "Update Mail-Ins"],
+                          ["div", {id:"updmiserrdiv", cla:"errdiv"}]]]]]]]];
         return html;
     }
 
@@ -1553,21 +1555,26 @@ return {
 
     updateKeywords: function () {
         var val;
+        var failfunc = function (code, errtxt) {
+            jt.out("updatekwdserrdiv", "Description update failed " + code +
+                   " " + errtxt); };
         if(dst.type === "profile") {
             app.review.getReviewTypes().forEach(function (rt) {
                 val = jt.byId("kwcsvin" + rt.type).value;
                 dst.obj.stash.keywords[rt.type] = val; });
-            app.profile.update(dst.obj, app.pcd.redisplay, app.failf); }
+            app.profile.update(dst.obj, app.pcd.redisplay, failfunc); }
         else if(dst.type === "coop") {
             val = jt.byId("kwcsvin").value;
             dst.obj.keywords = val;
-            app.coop.updateCoop(dst.obj, app.pcd.redisplay, app.failf); }
+            app.coop.updateCoop(dst.obj, app.pcd.redisplay, failfunc); }
     },
 
 
     updateMailins: function () {
         dst.obj.stash.mailins = jt.byId("emaddrin").value;
-        app.profile.update(dst.obj, app.pcd.redisplay, app.failf);
+        app.profile.update(dst.obj, app.pcd.redisplay, function (code, errtxt) {
+            jt.out("updmiserrdiv", "Mail-Ins update failed " + code +
+                   " " + errtxt); });
     },
 
 
@@ -1882,6 +1889,8 @@ return {
 
 
     redisplay: function () {
+        app.layout.cancelOverlay();
+        app.layout.closeDialog();
         app.pcd.display(dst.type, dst.id);
     },
 

@@ -136,7 +136,7 @@ def authenticated(request):
         logging.info("  reqtok: " + reqtok)
         logging.info("  srvtok: " + srvtok)
         return None
-    logging.info("moracct.py authenticated " + emaddr)
+    logging.info("muser.py authenticated " + emaddr)
     return muser
 
 
