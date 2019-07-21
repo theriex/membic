@@ -408,98 +408,6 @@ app.readurl = (function () {
     }
 
 
-    function readAsRating (membic, ignore /*mimc*/, line) {
-        var match;
-        if(line) {
-            //start of line, followed by 1-5 asterisks, followed by space or
-            //end.  This does not use a {1,5} count match because that can
-            //also match more than 5 asterisks, which is more likely a sig
-            //line or other text separator and not a rating.
-            //lint wants the multiline 'm' modifier.  Doesn't matter.
-            match = line.match(/^(\*\*?\*?\*?\*?)(\s|$)/m);
-            if(match) {
-                membic.rating = match[1].length * 20;
-                line = ""; } }
-        return line;
-    }
-
-
-    function readAsURL (line) {
-        var match;
-        if(line) {
-            match = line.match(/https?:\/\/[^\s'"]+/);
-            if(match) {
-                //just note that the line was understood as a URL.  The
-                //membic url was already set and corrected earlier. This
-                //just clears any other URL lines.
-                line = ""; } }
-        return line;
-    }
-
-
-    function heuristicReadLine (membic, mimc, line) {
-        var title = membic.title || membic.name || "";
-        title = title.trim();
-        line = line || "";
-        line = line.trim();
-        if(title) {
-            line = line.replace(title, ""); }
-        line = readAsThemeName(membic, mimc, line);
-        line = readAsKeyword(membic, mimc, line);
-        line = readAsRating(membic, mimc, line);
-        line = readAsURL(line);
-        if(line && !membic.text) {
-            //First encountered text not understood as something else is
-            //assumed to be the reason why this link is memorable.  It would
-            //be great to understand multi-line reasons, but it's far more
-            //likely to be including signature lines and similar crap which
-            //is generally more annoying than helpful.
-            membic.text = line; }
-        return line;
-    }
-
-
-    function paragraphToLine (txt) {
-        var par = ""; var lines = txt.split("\n"); var i;
-        for(i = 0; i < lines.length; i += 1) {
-            if(!lines[i]) {
-                break; }
-            if(par) {
-                par += " "; }
-            par += lines[i].trim(); }
-        return par;
-    }
-
-
-    function heuristicParseMailInText (membic, mimc) {
-        var rectxt = "";  //reconstituted text lines
-        if(!mimc) {
-            return; }
-        mimc.themes = [];
-        mimc.keywords = "";
-        //If the original email subject was a theme name, or the title of of
-        //the article, then read that appropriately and unset the reason why
-        //it was memorable so that can be discovered from the email body.
-        membic.text = heuristicReadLine(membic, mimc, membic.text);
-        //Fill out any detail info provided, and rebuild the reason why this
-        //was memorable if that was previously cleared
-        mimc.text.split("\n").forEach(function (line) {
-            rectxt += heuristicReadLine(membic, mimc, line) + "\n"; });
-        //When reading plain text, long lines (aka paragraphs in typical
-        //mail) normally get linebreaks inserted as if there were a word
-        //wrap at 78 characters.  If the reason why a link was memorable was
-        //pulled from the body of the email, there is a good chance only the
-        //first line of text was captured.  Grab the rest from the rectxt.
-        var idx = rectxt.indexOf(membic.text);
-        if(idx >= 0) {
-            membic.text = paragraphToLine(rectxt.slice(idx)); }
-        app.review.precheckThemes(mimc.themes);
-        if(mimc.keywords) {
-            membic.keywords = mimc.keywords.replace(/,/g, ", "); }
-        app.review.updateRating(membic.rating);
-    }
-
-
     function getPlainURL (url) {
         //returns the url minus any query or hash parts.  In some instances
         //that may lead to completely different content, but the original
@@ -549,27 +457,6 @@ app.readurl = (function () {
     }
 
 
-    function readMailInMembicText (mim) {
-        //Need to parse independently of newlines that can be inserted
-        //pretty much anywhere, especially in a long subject that gets
-        //wrapped.  The body is probably text but may be html.
-        var mc = {};
-        var elems = mim.text.split("Subject: ");
-        mc.to = elems[0].match(/[^\s]+@membic.org/g)[0].slice(0, -11);
-        mc.received = elems[0].replace(/\n/g, "").slice(-20);
-        elems = elems[1].split("Body: ");
-        //autowrap preserves spaces, and lines can be wrapped mid-word.
-        mc.subj = elems[0].replace(/\n/g, "");  //just remove newlines
-        mc.subj = mc.subj.replace(/\s/g, " ");  //normalize whitespace
-        //Leave raw text intact, all smarts are in the heuristic processing.
-        mc.text = elems[1];
-        //Do clean up html however, since it's a mess to read.
-        if(mc.text.trim().toLowerCase().startsWith("<html")) {
-            mc.text = mc.text.replace(/<\/?[^>]+>/g, "\n"); }
-        return mc;
-    }
-
-
     ////////////////////////////////////////
     // published functions and attributes
     ////////////////////////////////////////
@@ -587,8 +474,7 @@ return {
                 function (json) {
                     var html = jt.dec(json[0].content);
                     setReviewFields(membic, html, url);
-                    heuristicParseMailInText(membic, mimc);
-                    app.review.updatedlg(); },
+                    app.review.updatedlg(membic.revtype); },
                 //do not call app.failf here as the error may be from
                 //the called site rather than the membicsys server.
                 function (code, errtxt) {
@@ -599,38 +485,9 @@ return {
                     if(url !== plainurl) {  //wasn't a permalink, retry basic
                         return app.readurl.fetchData(membic, plainurl, 
                                                      params, mimc); }
-                    heuristicParseMailInText(membic, mimc);
                     jt.err(getFetchErrorText(url, code, errtxt));
                     app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));
-    },
-
-
-    //The standard is that the mail subject is the reason why the link is
-    //memorable, while the body has the url.  The reason is that the body
-    //can get stuffed with various different things, while the subject is
-    //usually pretty clean.  That said, the idea is to do the best that can
-    //be done given whatever there is to work with.
-    automateMailInMembic: function (mim) {
-        var mc = readMailInMembicText(mim);
-        //grab the first URL as the source to read. No other option really.
-        mc.url = mc.text.match(/https?:\/\/[^\s'"]+/g);
-        if(!mc.url) {
-            mc.url = mc.subj.match(/https?:\/\/[^\s'"]+/g); }
-        if(mc.url) {
-            mc.url = mc.url[0];
-            mim.url = mc.url; }
-        //set the text of the mail-in membic to the mail subject so that in
-        //a worst case fetch and heuristic parse failure at least the
-        //standard case of why something is memorable will be kept.
-        mim.text = mc.subj;
-        //force text to be redisplayed.  Ordinarily edits are maintained
-        //during other updates like stars and checkboxes.  In this case it
-        //should be rebuilt.  Keep the working space for after the URL reads.
-        jt.out("rdtextdiv", "");
-        if(mc.url) {
-            return app.readurl.fetchData(mim, mc.url, null, mc); }
-        app.review.updatedlg();
     }
 
 };  //end of returned functions

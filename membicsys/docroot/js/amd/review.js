@@ -1134,6 +1134,19 @@ app.review = (function () {
     }
 
 
+    function setInputValueFromCurrent (field) {
+        //If for any reason the revtype changes and the display isn't
+        //updated (like coming back from reading a url) then it is possible
+        //for a field input to not be available.  Set defensively, and log
+        //it so there is some visibility into what is happening.
+        var input = jt.byId(field + "in");
+        if(!input) {
+            jt.log("setInputValueFromCurrent: no input for " + field); }
+        else {
+            input.value = crev[field] || ""; }
+    }
+
+
     function dlgDetailsEntry () {
         var rt = findReviewType(crev.revtype);
         if(!rt) {  //no type selected yet, so no key field entry yet.
@@ -1154,9 +1167,9 @@ app.review = (function () {
             dlgStarsActivate(); }
         jt.out("rdpicdiv", dlgPicHTML());
         if(rt.subkey) {
-            jt.byId(rt.subkey + "in").value = crev[rt.subkey] || ""; }
+            setInputValueFromCurrent(rt.subkey); }
         rt.fields.forEach(function (field) {
-            jt.byId(field + "in").value = crev[field] || ""; });
+            setInputValueFromCurrent(field); });
         var fldttl = (rt.subkey? 1 : 0) + rt.fields.length;
         if(fldttl <= 1) {
             jt.byId("rdpicdiv").style.height = "80px"; }
@@ -1360,16 +1373,6 @@ app.review = (function () {
     }
 
 
-    function automateMembicDialog () {
-        var rbc;
-        if(app.review.isMailInMembic(crev)) {
-            rbc = jt.byId("rdurlbuttonspan");
-            if(rbc) {
-                rbc.innerHTML = "reading..."; }
-            app.readurl.automateMailInMembic(crev); }
-    }
-
-
     function displayMembicDialog () {
         var html;
         html = ["div", {id: "revdlgdiv"},
@@ -1398,7 +1401,6 @@ app.review = (function () {
             {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, updateShareInfo);
-        automateMembicDialog();
     }
 
 

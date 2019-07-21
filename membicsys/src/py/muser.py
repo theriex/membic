@@ -35,12 +35,13 @@ class MUser(db.Model):
     mailbounce = db.TextProperty(required=False)   # isodate1,isodate2...
     actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
+    altinmail = db.EmailProperty(required=False)  # alt mail-in address
     # public app data
     name = db.StringProperty()      # optional but recommended public name
     aboutme = db.TextProperty()     # optional description, links to site etc
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
-    settings = db.TextProperty()    # JSON skin, key overrides, invites
+    settings = db.TextProperty()    # JSON: skin, keys, alt mail-in addrs
     coops = db.TextProperty()       # JSON coopid map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
@@ -303,6 +304,7 @@ def update_account_fields(handler, muser):
     # profpic uploaded separately
     muser.settings = handler.request.get("settings") or ""
     muser.coops = str(handler.request.get('coops')) or ""
+    muser.altinmail = str(handler.request.get("altinmail")) or ""
     return True
 
 
@@ -321,7 +323,8 @@ def make_redirect_url_base(returnto, requrl):
 
 
 def safe_json(muser, filtering):
-    hides = ["email", "phash", "status", "mailbounce", "actsends", "actcode"]
+    hides = ["email", "phash", "status", "mailbounce", "actsends", 
+             "actcode", "altinmail"]
     if filtering == "personal":
         hides = ["actcode"]  # activation code delivered by email only
     jsontxt = morutil.obj2JSON(muser, filts=hides)

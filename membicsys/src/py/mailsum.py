@@ -49,20 +49,20 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
-# Looking up URL information server side normally fails, either completely
+# Looking up URL information server side usually fails - either completely,
 # or poisonously with bad info.  It is not possible to fill out membic
 # details here in any way that is equivalent to what can be done
-# interactively.  The mailbody can be garbled HTML, and can include a sig
-# that should not be globally published.  While it is possible to consume
-# lines from the message body and guess if they are ratings, keywords, or
-# names of themes, that's also a bad idea.  Typos degrade search, and
-# automatically posting through a sketchy membic to a theme feeding a site
-# or social media makes membic look bad.  The only safe thing to do is a
-# clear and reliable mail-in, followed by an interaction.  Accept format:
+# interactively.  The mailbody can be garbled HTML, and may include a sig
+# that should probably not be globally published.  While it is possible to
+# consume lines from the message body guessing if each is describing a
+# rating, keywords, or names of themes, that's also a bad idea.  Typos
+# degrade search, and automatically posting a highly sketchy membic through
+# to a theme makes membic look bad.  The only safe thing to do is a clear
+# and reliable mail-in, followed by an interaction.  Accept format:
 #     subject: Why this link is important
 #     body: first url found gets used
-# Anything else that is sent will also be available in their receipt mail so
-# they can refer to it when editing later if needed.
+# Anything else that is sent will also be available in their receipt mail for
+# reference when they are editing later.
 def make_mailin_membic(acc, mailsubj, mailbody):
     murl = ""
     match = re.search(r'https?://\S+', mailbody)
@@ -81,7 +81,7 @@ def make_mailin_membic(acc, mailsubj, mailbody):
                      svcdata="",
                      penname=acc.name,
                      name="",
-                     title="",
+                     title=murl,
                      url=murl,
                      rurl="",
                      artist="",
@@ -92,22 +92,23 @@ def make_mailin_membic(acc, mailsubj, mailbody):
                      address="",
                      year="")
     rev.note_modified(mim)  # sets modified, modhist
-    rev.set_review_dispafter(mim, acc)
+    rev.set_review_dispafter(mim, acc)  # check queuing
     mim.put()
-    msg = "Membic " + str(mim.key().id()) + " created.\n" +\
-          "URL: " + murl + "\n" +\
-          "Why Memorable: " + mailsubj + "\n"
-    return msg
+    return mim;
 
 
-def send_mailin_receipt(acc, msg, mailsubj, mailbody):
-    editlink = "https://membic.org?an=" + acc.email + "&at=" + muser.token_for_user(acc)
+def send_mailin_receipt(acc, mim, mailsubj, mailbody):
     subj = "Membic created: " + mailsubj
-    body = msg +\
-           "\nYou can verify and edit this membic at " + editlink + "\n" +\
-           "For your reference, here is what you sent in:\n\n" +\
+    body = "Membic " + str(mim.key().id()) + " created.\n" +\
+           "URL: " + mim.url + "\n" +\
+           "Why Memorable: " + mailsubj + "\n" +\
+           "\n" +\
+           "To add detail or edit, go to https://membic.org?an=" + acc.email +\
+           "&at=" + muser.token_for_user(acc) + "\n" +\
+           "\n" +\
+           "For your reference, here is what you mailed in:\n\n" +\
            mailbody
-    mailgun_send(None, acc.email, subj, body)
+    muser.mailgun_send(None, acc.email, subj, body)
 
 
 class MembicSummary(object):
@@ -351,7 +352,7 @@ def find_penid_from_consvc(emaddr):
     return None
 
 
-def acc_for_email_address(emaddr):
+def acc_for_mailin_address(emaddr):
     # emaddr = "Some Person <whoever@example.com>"
     match = re.search(r'[\w.-]+@[\w.-]+', emaddr)
     if match:
@@ -363,11 +364,12 @@ def acc_for_email_address(emaddr):
     # mail-in address for an account that exists separately.
     acc = muser.account_from_email(emaddr)
     if not acc:
-        logging.info("No MailIn MUser found for " + emaddr)
-        accid = find_penid_from_consvc(emaddr)
-        if accid:
-            logging.info("Found MailIn MUser from connection service")
-            acc = muser.MUser.get_by_id(int(accid))
+        logging.info("No match on MUser.email " + emaddr)
+        where = "WHERE altinmail=:1 LIMIT 1"
+        vq = VizQuery(muser.MUser, where, emaddr)
+        qres = cached_query(emaddr, vq, "", 1, muser.MUser, True)
+        if len(qres.objects) > 0:
+            acc = qres.objects[0]
     return acc
 
 
@@ -659,12 +661,13 @@ class InMailHandler(InboundMailHandler):
         if not mailfrom:
             logging.info("No mailfrom found, nothing to do")
             return
-        acc = acc_for_email_address(mailfrom)
+        acc = acc_for_mailin_address(mailfrom)
         if not acc:
             logging.warn("InMailHandler apparent spam from " + mailfrom)
             return
-        msg = make_mailin_membic(acc, mailsubj, mailbody)
-        send_mailin_receipt(acc, msg, mailsubj, mailbody)
+        mim = make_mailin_membic(acc, mailsubj, mailbody)
+        rev.rebuild_prebuilt(acc, mim)
+        send_mailin_receipt(acc, mim, mailsubj, mailbody)
 
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),

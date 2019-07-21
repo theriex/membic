@@ -284,6 +284,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .memberlistnamespan { padding-left:5px; }
 .memberlistprofpic { width:50px; }
 .errdiv { font-size:small; }
+.mailindesctable { font-size:small; margin-left:16px; }
+.mailindesctable tbody tr td { text-align:right; }
+.mailindesctable tbody tr td:nth-child(odd) { padding-right:10px; }
+.mailindesctable tbody tr td:nth-child(even) { text-align:left; }
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel, .reviewbadgedis { 

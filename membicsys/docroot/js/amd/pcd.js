@@ -738,17 +738,27 @@ app.pcd = (function () {
     }
 
 
+    function mailInDescHTML () {
+        var inm = "me@membic.org";
+        var html = [["table", {cla:"mailindesctable"}, ["tbody", [
+            ["tr", [["td", "From:"], ["td", dst.obj.email]]],
+            ["tr", [["td", "To:"], ["td", ["a", {href:"mailto:" + inm}, inm]]]],
+            ["tr", [["td", "Subj:"], ["td", "Why memorable?"]]],
+            ["tr", [["td", "Body:"], ["td", "Link"], ["td", [
+                "a", {href:"#more", 
+                      onclick:jt.fs("app.toggledivdisp('mailindetdiv')")},
+                "more..."]]]]]]],
+                    ["div", {id:"mailindetdiv", cla:"formline", 
+                             style:"display:none;"},
+                     "If you want your profile to accept mail-in membics from an address other than your account login, you can specify a single alternate email here. All receipt confirmations will be sent to " + dst.obj.email + "."]];
+        return html;
+    }
+
+
     function mailinSettingsHTML () {
         if(dst.type !== "profile" || dst.id !== app.profile.myProfId() ||
            !jt.hasId(dst.obj)) {
-            return ""; }  //mail-in support for themes not supported yet
-        dst.obj.stash = dst.obj.stash || {};
-        dst.obj.stash.mailins = dst.obj.stash.mailins || "";
-        var stash = dst.obj.stash;
-        var subj = "Membic Title or URL or Description";
-        var body = "Membic URL and/or Description";
-        var mh = "mailto:membic@membicsys.appspotmail.com?subject=" + 
-            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
+            return ""; }  //Only for personal accounts. Edit to post through.
         var html = ["div", {cla:"formline"},
                     [["a", {href:"#togglemailinsettings",
                             onclick:jt.fs("app.layout.togdisp('mailinsdiv')")},
@@ -758,14 +768,13 @@ app.pcd = (function () {
                      ["div", {cla:"formline", id:"mailinsdiv",
                               style:"display:none;"},
                       ["div", {cla:"rtkwdiv", id:"mailinaccsdiv"},
-                       [["div", {cla:"formline"},
-                         ["Authorized ",
-                          ["a", {href:mh}, "mail-in membic "],
-                          "addresses (comma separated)"]],
+                       [["div", {cla:"mailindescdiv"}, mailInDescHTML()],
+                        ["div", {cla:"formline", style:"font-size:small;"},
+                         ["Alternate authorized email:"]],
                         ["div", {cla:"formline"},
                          ["input", {id:"emaddrin", cla:"keydefin", type:"text",
-                                    placeholder:"myaccount@example.com",
-                                    value:stash.mailins}]],
+                                    placeholder:"othermail@example.com",
+                                    value:dst.obj.altinmail || ""}]],
                         ["div", {cla:"dlgbuttonsdiv"},
                          [["button", {type:"button", id:"updatemiab",
                                       onclick:jt.fs("app.pcd.updateMailins()")},
@@ -1571,7 +1580,7 @@ return {
 
 
     updateMailins: function () {
-        dst.obj.stash.mailins = jt.byId("emaddrin").value;
+        dst.obj.altinmail = jt.byId("emaddrin").value.trim();
         app.profile.update(dst.obj, app.pcd.redisplay, function (code, errtxt) {
             jt.out("updmiserrdiv", "Mail-Ins update failed " + code +
                    " " + errtxt); });
