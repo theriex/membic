@@ -560,6 +560,8 @@ class PenNameConversion(webapp2.RequestHandler):
         for oldacc in oldaccs:
             if oldacc.status in ["ConvNoPen", "Converted"]:
                 continue
+            if not oldacc.email:
+                continue  # not convertible
             msgs.append("Converting MORAccount " + str(oldacc.key().id()) +
                         " " + oldacc.email)
             newacc = None
