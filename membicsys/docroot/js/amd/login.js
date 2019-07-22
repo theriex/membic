@@ -676,6 +676,7 @@ return {
                          "<p>Signing you in for the first time now...</p>";
                      jt.out("logindiv", html);
                      setAuthentication(emaddr, objs[0].token, "noupdate");
+                     app.history.checkpoint({view:"profile"});
                      //Wait briefly to give the db a chance to stabilize.
                      //Without waiting, it won't work.  With waiting, it
                      //usually works, but not guaranteed.  User might have
@@ -706,6 +707,7 @@ return {
         //pop or set by handleRedirectOrStartWork
         var state = app.history.currState();
         if(!state || !state.view) {
+            jt.log("login.doNextStep determining default state");
             //if pfoj is a theme or profile, view it (specified by the URL)
             if(app.pfoj && app.pfoj.obtype === "Coop") {
                 state = {view:"coop", coopid:app.pfoj.instid}; }
@@ -718,6 +720,7 @@ return {
         if(params.url) {
             app.urlToRead = params.url; }
         app.login.updateTopSection();
+        jt.log("login.doNextStep dispatching state " + JSON.stringify(state));
         app.history.dispatchState(state);
     },
 

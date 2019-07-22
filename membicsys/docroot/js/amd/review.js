@@ -478,21 +478,6 @@ app.review = (function () {
     }
 
 
-    function membicDescripHTML (prefix, revid, rev, togfname, revdivid) {
-        var html = "";
-        var dc = "fpdescrdiv";
-        if(rev.dispafter && rev.dispafter > new Date().toISOString()) {
-            html = ["div", {cla: "fpqoverdiv", id: revdivid + "fpqoverdiv"},
-                    jt.tz2human(jt.isoString2Time(rev.dispafter)) +
-                    " (queued)"];
-            dc = "fpdescrfadediv"; }
-        html = [html,
-                ["div", {cla: dc, id: revdivid + "descrdiv"},
-                 dispRevText(prefix, revid, rev, togfname)]];
-        return html;
-    }
-
-
     function fpMembicAuthPicHTML (rev) {
         var clickfs = "app.profile.byprofid('" + rev.penid + "')";
         if(app.solopage()) {
@@ -1006,7 +991,7 @@ app.review = (function () {
         html = "";
         if(!crev.revtype) {
             if(!crev.url) {
-                html = "&#x21E7; Read URL or select type &#x21E7;"; }
+                html = "Read site or select type"; }
             else {
                 var tpd = jt.byId("rdtypepromptdiv");
                 tpd.style.color = "#AB7300";
@@ -1317,20 +1302,31 @@ app.review = (function () {
     }
 
 
-    function membicTitleLine (type, rev) {
+    function membicTitleLine (type, rev, revdivid) {
         var url = app.review.membicURL(type, rev);
         var starstyle = "display:inline-block;";
         if(app.winw < 600) {
             starstyle = "float:right;"; }
-        var html = [["a", {href:url, title:url,
-                           onclick:jt.fs("window.open('" + url + "')")},
-                     [["img", {cla:"reviewbadge", src:"img/" + type.img,
-                               title:type.type, alt:type.type}],
-                      app.pcd.reviewItemNameHTML(type, rev)]],
-                    "&nbsp;",
-                    ["div", {cla:"starsnjumpdiv", style:starstyle},
-                     ["div", {cla: "fpstarsdiv"},
-                      app.review.starsImageHTML(rev)]]];
+        var dc = "membictitlenorm";
+        var qnh = "";
+        //rev.modified and rev.dispafter are set to UTC time, not local
+        var nowiso = new Date().toISOString();
+        if(rev.dispafter && rev.dispafter > nowiso) {
+            qnh = ["div", {cla: "fpqoverdiv", id: revdivid + "fpqoverdiv"},
+                   "Feeds after " + 
+                   jt.tz2human(jt.isoString2Time(rev.dispafter))];
+            dc = "membictitlefade"; }
+        var html = [qnh,
+                    ["div", {cla:dc},
+                     [["a", {href:url, title:url,
+                             onclick:jt.fs("window.open('" + url + "')")},
+                       [["img", {cla:"reviewbadge", src:"img/" + type.img,
+                                 title:type.type, alt:type.type}],
+                        app.pcd.reviewItemNameHTML(type, rev)]],
+                      "&nbsp;",
+                      ["div", {cla:"starsnjumpdiv", style:starstyle},
+                       ["div", {cla: "fpstarsdiv"},
+                        app.review.starsImageHTML(rev)]]]]];
         return html;
     }
 
@@ -1960,12 +1956,12 @@ return {
         var type = app.review.getReviewTypeByValue(rev.revtype);
         fixReviewURL(rev);
         var html = ["div", {cla:"fpinrevdiv"}, [
-            ["div", {cla:"fptitlediv"}, membicTitleLine(type, rev)],
+            ["div", {cla:"fptitlediv"}, membicTitleLine(type, rev, revdivid)],
             ["div", {cla:"fpbodydiv"},
              [["div", {cla:"fprevpicdiv"}, app.review.picHTML(rev, type)],
               ["div", {cla:"fpdcontdiv"},
-               membicDescripHTML(prefix, revid, rev, togfname, 
-                                 revdivid)],
+               ["div", {cla:"fpdescrdiv", id:revdivid + "descrdiv"},
+                dispRevText(prefix, revid, rev, togfname)]],
               ["div", {cla:"fpauthpicdiv", id:revdivid + "authpicdiv"}],
               ["div", {cla:"fpsecfieldsdiv", id:revdivid + "secdiv"}],
               ["div", {cla:"fpdatediv", id:revdivid + "datediv"}],

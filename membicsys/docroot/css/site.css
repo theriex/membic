@@ -406,9 +406,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fparevdiv { }  /* had a left margin to accomodate author, now inline */
 .fpnarevdiv { }
 .fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
-.fpinrevdiv { background-image: url('../img/bleachscrub.png');
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px; }
+.fpinrevdiv { background-image:url('../img/bleachscrub.png');
+    border-top-right-radius:10px; border-bottom-right-radius:10px; 
+    position:relative; }
 .fpmeminrevdiv { background-color:#ffbe74; }
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv, .notimgdiv { float:left; padding:0px 10px 0px 3px; }
@@ -428,7 +428,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   font-size:x-small; }
 .fpdatediv { margin-left:5px; font-size: xx-small; }
 .fpdcontdiv { position:relative; }
-.fpqoverdiv { position:absolute; top:0px; left:140px; font-style:italic; }
+.fpqoverdiv { position:absolute; top:0px; left:40px; 
+  background-image:url('../img/bleachscrub.png');
+  font-style:italic; font-size:medium; font-weight:bold; }
 .fpdescrdiv, .fpdescrfadediv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 2px 10px 0px 2px;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }

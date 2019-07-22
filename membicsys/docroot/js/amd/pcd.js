@@ -969,9 +969,13 @@ app.pcd = (function () {
                 if(a.modified < b.modified) { return 1; }
                 return 0; }); }
         var includeAuthorsInRevs = (dst.type === "coop");
+        var xem = "";
+        if(dst.type === "profile" && dst.id === app.profile.myProfId() &&
+           (!dst.obj.preb || !dst.obj.preb.length)) {
+            xem = "Click the write button above."; }
         app.review.displayReviews("pcdsrchdispdiv", "pcds", sortedRevs, 
                                   "app.pcd.toggleRevExpansion",
-                                  includeAuthorsInRevs);
+                                  includeAuthorsInRevs, xem);
         updateResultsEmailLink(sortedRevs);
         srchst.disprevs = sortedRevs;
         srchst.status = "waiting";
@@ -1598,6 +1602,7 @@ return {
                     var defs = dst[dst.type];
                     dst.obj[defs.picfield] = dst.id;
                     dst.obj.modified = txt.slice(mtag.length);
+                    app.layout.cancelOverlay();
                     app.pcd.display(dst.type, dst.id);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {

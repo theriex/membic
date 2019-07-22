@@ -448,13 +448,19 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
                   "November", "December" ];
 
     uo.tz2human = function (zd) {
-        var ds;
         if(typeof zd === "string") {
             zd = uo.ISOString2Time(zd); }
         zd = uo.tz2loc(zd);  //convert back to local time
-        ds = uo.days[zd.getDay()].slice(0, 3) + " " + 
-            zd.getDate() + " " + uo.months[zd.getMonth()].slice(0, 3) + " " +
-            zd.getFullYear() + " " + zd.getHours() + ":" + zd.getMinutes();
+        //having adjusted the time, have to fetch all the date components as
+        //UTC to avoid having them automatically adjusted again.
+        var minutes = String(zd.getUTCMinutes());
+        if(zd.getUTCMinutes() < 10) {
+            minutes = "0" + minutes; }
+        var ds = uo.days[zd.getUTCDay()].slice(0, 3) + " " +
+            zd.getUTCDate() + " " +
+            uo.months[zd.getUTCMonth()].slice(0, 3) + " " +
+            zd.getUTCFullYear() + " " +
+            zd.getUTCHours() + ":" + minutes;
         return ds;
     };
 

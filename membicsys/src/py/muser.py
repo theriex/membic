@@ -29,13 +29,13 @@ import urllib
 class MUser(db.Model):
     """ Membic User account, authentication and data """
     # private auth and setup, see safe_json
-    email = db.EmailProperty(required=True)
+    email = db.EmailProperty(required=True)  # EmailProperty cannot be empty
     phash = db.StringProperty(required=True)
     status = db.StringProperty()    # Pending|Active|Inactive|Unreachable
     mailbounce = db.TextProperty(required=False)   # isodate1,isodate2...
     actsends = db.TextProperty(required=False)  # isodate;emaddr,d2;e2...
     actcode = db.StringProperty(indexed=False)  # account activation code
-    altinmail = db.EmailProperty(required=False)  # alt mail-in address
+    altinmail = db.StringProperty(required=False)  # alt mail-in address
     # public app data
     name = db.StringProperty()      # optional but recommended public name
     aboutme = db.TextProperty()     # optional description, links to site etc
