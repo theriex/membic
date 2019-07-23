@@ -97,7 +97,7 @@ app.themes = (function () {
                  [["thead", ["tr", [["th", "examples"], ["th", "how to"]]]],
                   ["tbody", html]]],
                 ["div", {cla:"thlhelpdiv"},
-                 ["For help setting up, or listing your site, ",
+                 ["For help setting up, or listing your site in the examples, ",
                   ["a", {href:"mailto:eric@" + app.profdev + "?subject=" +
                          jt.dquotenc("Help with membic feeds")},
                    "email Eric"]]]];
