@@ -209,7 +209,9 @@ def fetch_recent_themes_and_profiles(handler):
     vq = VizQuery(muser.MUser, "ORDER BY modified DESC")
     objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for obj in objs:
-        if not obj.preb or not len(obj.preb):  # no membics
+        if not obj.preb or not len(obj.preb) or obj.preb == "[]":  # no membics
+            continue
+        if not obj.profpic: # not public facing in any serious way
             continue
         if jtxt:
             jtxt += ","

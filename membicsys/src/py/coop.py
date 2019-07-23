@@ -568,6 +568,7 @@ class UpdateDescription(webapp2.RequestHandler):
         update_coop_admin_log(coop, acc, "Updated Description", "", "")
         verify_people(coop)
         cached_put(coop)
+        memcache.set("activecontent", "")  # force theme/profile refetch
         srvObjs(self, [ coop ])
 
 

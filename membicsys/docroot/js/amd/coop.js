@@ -109,6 +109,7 @@ return {
                     app.lcs.put("coop", updcoops[0]);
                     app.profile.verifyMembership(updcoops[0]);
                     historyCheckpointIfNeeded(updcoops[0]);
+                    app.lcs.uncache("activetps", "411");
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {
                     callfail(code, errtxt); }),

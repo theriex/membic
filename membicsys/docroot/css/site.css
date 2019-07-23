@@ -545,6 +545,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   position:relative; text-align:center; }
 .tplinkpicimg { max-width:90px; max-height:90px; }
 .tpmemlink { position:absolute; top:0px; right:0px; }
+.tplinkdescdiv { max-height:80px; overflow:scroll; }
 .tplinknamespan { margin-right:5px; }
 .thlexdiv { font-size:medium; }
 /* FF thinks th values should be bold, no matter what you say here. */

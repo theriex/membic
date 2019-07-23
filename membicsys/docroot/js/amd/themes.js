@@ -190,7 +190,7 @@ app.themes = (function () {
                         ["div", {cla:"tplinkdescdiv"},
                          [["span", {cla:"tplinknamespan"},
                            ["a", {href:link, onclick:oc}, tp.name]],
-                          jt.ellipsis(tp.description, 255)]]]]); });
+                          jt.linkify(tp.description)]]]]); });
         jt.out("contentdiv", jt.tac2html(html) + mdefhtml);
         app.fork({descr:"animate themes header line",
                   func:animateThemesHeaderLine,
