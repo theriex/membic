@@ -439,7 +439,7 @@ def convert_reference(oaid, naid, csv):
 
 def verify_coop_people(theme, oaid, naid, name):
     # update people
-    pdict = json.loads(theme.people)
+    pdict = json.loads(theme.people or "{}")
     pdict.pop(oaid, None)  # remove the old key if it exists
     pdict[naid] = name     # set or reset the new key
     theme.people = json.dumps(pdict)
