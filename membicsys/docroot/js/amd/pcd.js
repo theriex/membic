@@ -1153,22 +1153,83 @@ app.pcd = (function () {
     }
 
 
+    function findTypesForKeyword (key) {
+        var res = "";
+        //PENDING: extend to also check user profile type overrides
+        var rts = app.review.getReviewTypes();
+        rts.forEach(function (rt) {
+            if(rt.dkwords.indexOf(key) >= 0) {
+                res = res.csvappend(rt.type); } });
+        return res;
+    }
+
+
+    function findThemesForKeyword (key) {
+        var res = "";
+        //Current theme should always be the first entry if matched
+        if(dst.type === "coop") {
+            if(dst.obj.keywords && dst.obj.keywords.csvcontains(key)) {
+                res = res.csvappend(dst.id); } }
+        var prof = app.profile.myProfile();
+        if(prof && prof.coops) {
+            Object.keys(prof.coops).forEach(function (ctmid) {
+                var ckws = prof.coops[ctmid].keywords;
+                if(ckws && ckws.csvcontains(key)) {
+                    res = res.csvappend(ctmid); } }); }
+        return res;
+    }
+
+
     function findKeywordsFromMembics () {
-        var keys = "";
+        var keys = {};
         dst.obj.preb.forEach(function (membic) {
             //keywords are filtered based on type selections
             if(isSearchableMembic(membic) && isTypeMatch(membic)) {
                 var keywords = membic.keywords || "";
                 keywords.csvarray().forEach(function (key) {
                     key = key.trim();
-                    if(!keys.csvcontains(key)) {
-                        keys = keys.csvappend(key); } }); } });
+                    if(!keys[key]) {
+                        keys[key] = {count:0,
+                                     types:findTypesForKeyword(key),
+                                     themes:findThemesForKeyword(key)}; }
+                    keys[key].count += 1; }); } });
         return keys;
     }
 
 
+    function filterAndSortKeys (keydict) {
+        var keys = [];
+        //Unofficial keywords are not included.  Text search only.
+        Object.keys(keydict).forEach(function (key) {
+            var kwd = keydict[key];
+            //if type-specific keyword and type selected, then include it
+            if(kwd.types && srchst.mtypes) {
+                srchst.mtypes.csvarray().forEach(function (selt) {
+                    if(kwd.types.csvcontains(selt)) {
+                        kwd.include = true; } }); }
+            //if theme-specific keyword and showing that theme, then include it
+            if(kwd.themes && dst.type === "coop") {
+                if(kwd.themes.csvcontains(dst.id)) {
+                    kwd.include = true; } }
+            if(kwd.include) {
+                kwd.keyword = key;
+                keys.push(kwd); } });
+        keys.sort(function (a, b) {
+            var akey = a.keyword.toLowerCase();
+            var bkey = b.keyword.toLowerCase();
+            if(akey > bkey) { return 1; }
+            if(akey < bkey) { return -1; }
+            return 0; });
+        var res = "";
+        keys.forEach(function (key) {
+            res = res.csvappend(key.keyword); });
+        return res;
+    }
+
+
     function updateKeywordsSelectionArea () {
-        dst.keywords = findKeywordsFromMembics();
+        var keys = findKeywordsFromMembics();
+        dst.keywords = filterAndSortKeys(keys);
         // if(!dst.keywords) {
         //     jt.byId("pcdkeysrchdiv").style.display = "none";
         //     return; }
