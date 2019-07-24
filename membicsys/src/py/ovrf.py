@@ -29,7 +29,7 @@ class GetOverflow(webapp2.RequestHandler):
     def get(self):
         overid = self.request.get('overid')
         over = cached_get(intz(overid), Overflow)
-        morutil.srvObjs(self.response, [ over ])
+        morutil.srvObjs(self, [ over ])
 
 
 app = webapp2.WSGIApplication([('.*/ovrfbyid', GetOverflow)], debug=True)

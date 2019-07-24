@@ -910,7 +910,12 @@ app.pcd = (function () {
     function isQueryStringMatch (membic) {
         if(!srchst.qstr) {  //not filtering by text search
             return true; }
-        var revtxt = membic.text || "";
+        var revtxt = "";
+        var fields = ["text", "name", "title", "url", "artist", "author", 
+                      "publisher", "album", "starring", "address",
+                      "keywords"];  //keywords may contain non-checkbox words
+        fields.forEach(function (field) {
+            revtxt += " " + (membic[field] || ""); });
         revtxt = revtxt.toLowerCase();
         var toks = srchst.qstr.toLowerCase().split(/\s+/);
         //if the membic text includes each of the search words regardless of
@@ -1438,13 +1443,15 @@ app.pcd = (function () {
         //fetch one more level of overflow so it will be available next time
         //dst.obj.preb is copied/filtered/sorted before display, so generally
         //no timing conflict updating preb here after fetch.
-        jt.call("GET", "ovrfbyid?overid=" + preb[preb.length].overflow, null,
+        var overid = preb[preb.length - 1].overflow;
+        jt.call("GET", "ovrfbyid?overid=" + overid, null,
                 function (overs) {
-                    dst.obj.preb = preb.slice(0, -1).concat(overs[0].preb); },
+                    var overflow = overs[0];
+                    app.lcs.reconstituteJSONObjectField("preb", overflow);
+                    dst.obj.preb = preb.slice(0, -1).concat(overflow.preb); },
                 app.failf(function (code, errtxt) {
-                    jt.out("pcdovermorediv", "ovrfbyid " +
-                           preb[preb.length - 1].overflow + " " + code + " " +
-                           errtxt); }),
+                    jt.out("pcdovermorediv", "ovrfbyid " + overid + " " +
+                           code + " " + errtxt); }),
                 jt.semaphore("pcd.indicateAndHandleOverflow"));
     }
 
