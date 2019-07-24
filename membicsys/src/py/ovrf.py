@@ -12,8 +12,11 @@ class Overflow(db.Model):
     preb = db.TextProperty()
 
 
-# Called to get an instance while iterating through reviews, so retrieved
-# instance is about to be updated.  No sense doing any caching.
+# Called to get an instance while iterating through reviews.  Since the
+# retrieved instance is about to be updated, there is no sense doing any
+# caching.  Amazingly, this type of query falls under access that Datastore
+# automatically builds indexes for, so there is no need to declare this in
+# index.yaml.  If there was an ORDER BY added then it would not work.
 def get_overflow(kind, instid, count):
     where = "WHERE dbkind = :1 AND dbkeyid = :2 and overcount = :3"
     vq = VizQuery(Overflow, where, kind, instid, count)
