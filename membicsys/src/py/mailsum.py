@@ -138,7 +138,7 @@ class PostingSummary(object):
     membics = None  # List of MembicSummary instances for recent posts
     penids = ""     # CSV of penids receiving notices for this theme
     def __init__(self, portob):
-        self.portob = port
+        self.portob = portob
         self.membics = []
         self.penids = ""
 
@@ -548,7 +548,7 @@ class PeriodicProcessing(webapp2.RequestHandler):
             logging.info(subj + "\n\n" + body)
             raise
         body += "\nPeriodicProcessing completed."
-        morutil.srvText(body, self.response)
+        morutil.srvText(self, body)
 
 
 class PenNameConversion(webapp2.RequestHandler):
