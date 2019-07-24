@@ -720,7 +720,10 @@ def find_coop_review_for_source_review(ctm, review):
     return ctmrev
 
 
-def write_coop_reviews(review, acc, ctmidscsv, newlycreated):
+def write_coop_reviews(review, acc, ctmidscsv, adding):
+    rebmode = "replace"
+    if adding:
+        rebmode = "add"
     ctmidscsv = ctmidscsv or ""
     postnotes = []
     coops = []
@@ -733,24 +736,26 @@ def write_coop_reviews(review, acc, ctmidscsv, newlycreated):
             continue  # acc.coops updated to avoid retry. Not an error.
         posting = csv_contains(ctmid, ctmidscsv)
         if posting:  # writing new or updating
-            ctmrev = find_coop_review_for_source_review(ctm, review)
-            if not ctmrev:  # no existing rev to update, adding new
+            ctmrev = None
+            if not adding:
+                ctmrev = find_coop_review_for_source_review(ctm, review)
+            if not ctmrev:  # either adding new or not found
                 ctmrev = Review(revtype=review.revtype, penid=acc.key().id())
             copy_source_review(review, ctmrev, ctmid)
             mctr.synchronized_db_write(ctmrev)
             postnotes.append(coop_post_note(ctm, ctmrev))
             logging.info("write_coop_reviews wrote review for: Coop " + ctmid +
                          " " + ctm.name)
-            ctm = rebuild_prebuilt(ctm, ctmrev)  # add to prebuilt
+            ctm = rebuild_prebuilt(ctm, ctmrev, mode=rebmode)
             coops.append(ctm)
-        if not posting and not newlycreated:  # check theme deletions
+        if not posting and not adding:  # check theme deletions
             ctmrev = find_coop_review_for_source_review(ctm, review)
             if ctmrev and not csv_contains(ctmid, ctmidscsv): # deleting
                 revid = ctmrev.key().id();
                 cached_delete(revid, Review)
                 logging.info("write_coop_reviews deleted Review " + str(revid) +
                              " from Coop " + ctmid + " " + ctm.name)
-                ctm = rebuild_prebuilt(ctm, ctmrev, remove=True)
+                ctm = rebuild_prebuilt(ctm, ctmrev, mode="remove")
                 coops.append(ctm)
     logging.info("    writing svcdata.postnotes " + str(postnotes))
     write_coop_post_notes_to_svcdata(review, postnotes)
@@ -912,44 +917,82 @@ def prepare_image(img):
     return img
 
 
+rev_json_skip_fields = ["mainfeed", "icwhen", "icdata", "altkeys", "orids",
+                        "helpful", "remembered"]
+
+
+def preb_query_generator(instance, review):
+    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
+    if instance.kind() == "Coop":
+        where = "WHERE ctmid = :1 ORDER BY modified DESC"
+    vq = VizQuery(Review, where, instance.key().id())
+    revs = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
+                  batch_size=1000)
+    for rev in revs:
+        if review and str(rev.key().id()) == str(review.key().id()):
+            continue  # given review has already been dealt with
+        if rev.srcrev and rev.srcrev < 0:
+            continue  # deleted or other ignorable
+        jstr = obj2JSON(rev, rev_json_skip_fields)
+        yield jstr
+
+
+# If adding a new review with a preb overflow, writing of the overflow will
+# start before iteration of the instance.preb is completed.  To avoid any
+# ambiguity with reading and writing at the same time, the overflow preb is
+# fetched immediately if it exists.
+def preb_preb_generator(instance, review):
+    prebstr = instance.preb
+    while prebstr:
+        revs = json.loads(prebstr)
+        prebstr = ""  # exit while unless overflow
+        if len(revs) and "overflow" in revs[len(revs) - 1]:
+            overid = int(revs[len(revs) - 1]["overflow"])
+            overflow = ovrf.Overflow.get_by_id(overid)
+            if not overflow:
+                logging.warn("Overflow " + str(overid) + " not found.")
+            if overflow and overflow.preb:
+                prebstr = overflow.preb
+        for rev in revs:
+            if "overflow" in rev:
+                break
+            if review and rev["instid"] == str(review.key().id()):
+                continue  # given review has already been dealt with
+            yield json.dumps(rev)
+
+
+def prebuilt_revs_iterable(instance, review, mode):
+    if instance.preb and mode in ["add", "replace", "remove"]:
+        return preb_preb_generator(instance, review)
+    return preb_query_generator(instance, review)
+
+
+# The review is in because otherwise it is likely the query will find an
+# older copy.  If not given, then rebuild from scratch.
+# mode can be "query" (fetch from database), "add" (newly created entry),
+# "replace" (modification of existing entry), or "remove" (delete entry)
 # GAE max object size is 1mb.  A unicode char is 2-4 bytes.  Guessing around
 # 3k chars of storage for text elements: 10k.  200x200 pic: 40k.  Double for
 # safety, so a max of 900k for preb.  Go with 800k for preb.  If all membics
 # won't fit, the last entry in the preb array will be {overflow:id}.
 # Encoding the obect as JSON also encodes unicode chars, so standard len
-# testing gives an accurate count of the size.  Rebuilding all the preb each
-# time is a database hit. Comfortable for now.  The review is passed in
-# because otherwise it is likely the query will find an older copy.  If not
-# given, then just rebuild from scratch.
-def rebuild_prebuilt(instance, review, remove=False):
-    instance.lastwrite = nowISO();  # note preb recalculated
+# testing gives an accurate count of the size.
+def rebuild_prebuilt(instance, review, mode="query"):
     priminst = instance   # keep primary instance reference for overflow
-    kind = priminst.kind()
-    instid = priminst.key().id()
-    filts = ["mainfeed", "icwhen", "icdata", "altkeys", "orids",
-             "helpful", "remembered"]
-    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    if kind == "Coop":
-        where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, instid)
+    priminst.lastwrite = nowISO();
     sizemax = 800 * 1000  # Dunno if counted 1024 or 1000, being conservative
     preb = ""
-    if review and not remove:
-        preb = obj2JSON(review, filts)
+    if review and mode != "remove":
+        preb = obj2JSON(review, rev_json_skip_fields)
     currsize = len(preb)
-    revcount = 1
-    overcount = 0
-    revs = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60,
-                  batch_size=1000)
-    for rev in revs:
-        if review and str(rev.key().id()) == str(review.key().id()):
-            continue  # first entry was the latest version
-        if rev.srcrev and rev.srcrev < 0:
-            continue  # deleted or other ignorable
-        jstr = obj2JSON(rev, filts)
+    revs = prebuilt_revs_iterable(priminst, review, mode)
+    revcount = 1    # just informational, remove still counted as 1
+    overcount = 0   # how many times the preb data has been overflowed
+    for jstr in revs:
         if currsize + 1 + len(jstr) > sizemax:
             overcount += 1
-            overflow = ovrf.get_overflow(kind, instid, overcount)
+            overflow = ovrf.get_overflow(priminst.kind(), priminst.key().id(), 
+                                         overcount)
             preb += ",{\"overflow\": \"" + str(overflow.key().id()) + "\"}"
             instance.preb = "[" + preb + "]"
             cached_put(instance)  # writes current MUser, Coop or Overflow
@@ -963,10 +1006,10 @@ def rebuild_prebuilt(instance, review, remove=False):
             currsize += 1 + len(jstr)
         revcount += 1
     instance.preb = "[" + preb + "]"
-    cached_put(instance)
+    cached_put(instance)  # priminst or last overflow object
     logging.info("rebuild_prebuilt " + str(revcount) + " membics, overcount " +
-                 str(overcount) + " " + kind + " " + str(instid) + " " +
-                 priminst.name)
+                 str(overcount) + " " + priminst.kind() + " " +
+                 str(priminst.key().id()) + " " + priminst.name)
     return priminst
 
 
@@ -984,7 +1027,10 @@ class SaveReview(webapp2.RequestHandler):
         logging.info("SaveReview wrote Review " + str(review.key().id()))
         # get the updated prebuilt coops, updating acc.svcdata in the process
         objs = write_coop_reviews(review, acc, self.request.get('ctmids'), add)
-        acc = rebuild_prebuilt(acc, review)  # returns updated MUser
+        rebmode = "replace"
+        if add:
+            rebmode = "add"
+        acc = rebuild_prebuilt(acc, review, mode=rebmode)
         logging.info("SaveReview updated MUser.preb " + str(acc.key().id()))
         memcache.set("activecontent", "")  # force theme/profile refetch
         objs.insert(0, review)
@@ -1016,7 +1062,7 @@ class RemoveThemePost(webapp2.RequestHandler):
         srcacc = muser.MUser.get_by_id(srcrev.penid)
         # Same processing as SaveReview...
         objs = write_coop_reviews(srcrev, srcacc, ctmidcsv, False)
-        srcacc = rebuild_prebuilt(srcacc, srcrev)  # returns updated MUser
+        srcacc = rebuild_prebuilt(srcacc, srcrev, mode="remove")
         memcache.set("activecontent", "")  # force theme/profile refetch
         objs.insert(0, srcacc)
         srvObjs(self, objs)  # [acc, coop1, coop2, ...]
@@ -1071,7 +1117,7 @@ class UploadReviewPic(webapp2.RequestHandler):
             review.revpic = db.Blob(prepare_image(images.Image(upfile)))
             note_modified(review)
             cached_put(review)  # so GetReviewPic can quickly find it..
-            rebuild_prebuilt(acc, review)
+            rebuild_prebuilt(acc, review, mode="replace")
             # coop posted reviews use pic from source review, so don't need 
             # to rebuild_prebuilt all the coops.
         except Exception as e:
@@ -1116,7 +1162,7 @@ class RotateReviewPic(webapp2.RequestHandler):
             review.revpic = db.Blob(img)
             note_modified(review)
             cached_put(review)  # so GetReviewPic can quickly find it..
-            rebuild_prebuilt(acc, review)
+            rebuild_prebuilt(acc, review, mode="replace")
             # same logic as UploadReviewPic for coop posted reviews..
         except Exception as e:
             return srverr(self, 409, "Pic rotate failed: " + str(e))
