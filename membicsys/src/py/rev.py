@@ -735,11 +735,15 @@ def write_coop_reviews(review, acc, ctmidscsv, adding):
     cd = json.loads(acc.coops or "{}")
     # logging.info("write_coop_reviews: " + str(cd))
     for ctmid in cd:
+        if cd[ctmid]["lev"] < 1:
+            continue  # just following, not posting
+        posting = csv_contains(ctmid, ctmidscsv)
+        if adding and not posting:
+            continue  # no need to check for deletions if adding new review
         logging.info("    wrc checking " + ctmid + " " + cd[ctmid]["name"])
         ctm = cached_get(intz(ctmid), coop.Coop)
         if not coop.may_write_review(acc, ctm):
             continue  # acc.coops updated to avoid retry. Not an error.
-        posting = csv_contains(ctmid, ctmidscsv)
         if posting:  # writing new or updating
             ctmrev = None
             if not adding:
