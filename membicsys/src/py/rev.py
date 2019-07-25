@@ -1013,6 +1013,20 @@ def rebuild_prebuilt(instance, review, mode="query"):
     return priminst
 
 
+# Each theme can be up to 1mb in size, which leads to a lot of download
+# time, especially on a phone.  Limit the returned themes to just the one
+# requested by the client (if any).
+def filter_themes_to_requested(handler, themes):
+    filtered = []
+    reqid = handler.request.get("editingtheme") or "0"
+    reqid = int(reqid)
+    if reqid:
+        for theme in themes:
+            if str(theme.key().id()) == str(reqid):
+                filtered.append(theme)
+    return filtered
+
+
 class SaveReview(webapp2.RequestHandler):
     def post(self):
         acc = muser.authenticated(self.request)
@@ -1027,6 +1041,7 @@ class SaveReview(webapp2.RequestHandler):
         logging.info("SaveReview wrote Review " + str(review.key().id()))
         # get the updated prebuilt coops, updating acc.svcdata in the process
         objs = write_coop_reviews(review, acc, self.request.get('ctmids'), add)
+        objs = filter_themes_to_requested(self, objs)
         rebmode = "replace"
         if add:
             rebmode = "add"
@@ -1035,7 +1050,7 @@ class SaveReview(webapp2.RequestHandler):
         memcache.set("activecontent", "")  # force theme/profile refetch
         objs.insert(0, review)
         objs.insert(0, acc)
-        srvObjs(self, objs)  # [acc, review, coop1, ...]
+        srvObjs(self, objs)  # [acc, review, coop?]
 
 
 class RemoveThemePost(webapp2.RequestHandler):
@@ -1062,32 +1077,11 @@ class RemoveThemePost(webapp2.RequestHandler):
         srcacc = muser.MUser.get_by_id(srcrev.penid)
         # Same processing as SaveReview...
         objs = write_coop_reviews(srcrev, srcacc, ctmidcsv, False)
-        srcacc = rebuild_prebuilt(srcacc, srcrev, mode="remove")
+        objs = filter_themes_to_requested(self, objs)
+        srcacc = rebuild_prebuilt(srcacc, srcrev, mode="replace")
         memcache.set("activecontent", "")  # force theme/profile refetch
         objs.insert(0, srcacc)
-        srvObjs(self, objs)  # [acc, coop1, coop2, ...]
-
-
-class DeleteReview(webapp2.RequestHandler):
-    def post(self):
-        acc = muser.authenticated(self.request)
-        if not acc:
-            return
-        pnm = acc_review_modification_authorized(acc, self)
-        if not pnm:
-            return
-        # logging.info("DeleteReview authorized PenName " + pnm.name)
-        review = noauth_get_review_for_update(self)
-        if not review:
-            return
-        obj = None
-        if review.ctmid:
-            obj = delete_coop_post(review, pnm, self)
-        else:
-            obj = mark_review_as_deleted(review, pnm, acc, self)
-        if not obj:  # error in processing
-            return   # error already reported
-        moracct.returnJSON(self.response, [ obj ])
+        srvObjs(self, objs)  # [acc, coop?]
 
 
 # Errors containing the string "failed: " are reported by the client
@@ -1276,7 +1270,6 @@ class BatchUpload(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
                                ('.*/remthpost', RemoveThemePost),
-                               ('.*/delrev', DeleteReview),
                                ('.*/revpicupload', UploadReviewPic),
                                ('.*/revpic', GetReviewPic),
                                ('.*/rotatepic', RotateReviewPic),

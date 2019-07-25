@@ -1991,6 +1991,13 @@ return {
     },
 
 
+    editingTheme: function () {
+        if(dst && dst.type === "coop" && dst.id) {
+            return dst.id; }
+        return 0;  //appends to parameters as "0", server evals that as false
+    },
+
+
     fetchAndDisplay: function (dtype, id, command) {
         //jt.log("pcd.fetchAndDisplay " + dtype + " " + id);
         if(!id) {
@@ -2079,7 +2086,8 @@ return {
         //source membic is with author's profile, probably not loaded.
         jt.byId("removeb" + rtid).disabled = true;
         jt.out("removedlgerrdiv", "Removing...");
-        var data = jt.objdata({revid:rtid, coopid:dst.id, reason:rin.value});
+        var data = jt.objdata({revid:rtid, coopid:dst.id, reason:rin.value,
+                               editingtheme:app.pcd.editingTheme()});
         jt.call("POST", "remthpost?" + app.login.authparams(), data,
                 function (updobjs) {
                     jt.log("remthpost completed successfully");

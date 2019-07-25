@@ -255,49 +255,6 @@ return {
     },
 
 
-    remove: function (ctmid, revid) {
-        var removebutton = jt.byId("rdremb");
-        if(removebutton) {
-            removebutton.disabled = true;
-            jt.out("rdremstatdiv", ""); }
-        else {
-            var html = ["div", {id:"revdlgdiv"},
-                        [["div", {id:"rdremstatdiv"}],
-                         ["label", {fo:"reasonin", cla:"liflab"}, "Reason"],
-                         ["input", {id:"reasonin", cla:"lifin", type:"text"}],
-                         ["div", {id:"rdrembdiv", cla:"dlgbuttonsdiv"},
-                          ["button", {type:"button", id:"rdremb",
-                                      onclick:jt.fs("app.coop.remove('" + 
-                                                     ctmid + "','" + revid + 
-                                                    "')")},
-                           "Remove"]]]];
-            html = app.layout.dlgwrapHTML("Remove Theme Post", html);
-            var pos = jt.geoPos(jt.byId("rbd" + revid));
-            return app.layout.openDialog(
-                {x: pos.x - 40 , y: pos.y - 30},
-                jt.tac2html(html), null, function() {
-                    jt.byId("reasonin").focus(); }); }
-        var rev = app.lcs.getRef("rev", revid).rev;
-        var reason = jt.byId("reasonin").value.trim();
-        if(!reason && rev.profid !== app.profile.myProfId()) {
-            removebutton.disabled = false;
-            return jt.out("rdremstatdiv", "Reason required"); }
-        jt.out("rdremstatdiv", "Removing...");
-        var data = "profid=" + app.profile.myProfId() + "&revid=" + revid + 
-            "&reason=" + jt.enc(reason);
-        jt.call("POST", "delrev?" + app.login.authparams(), data,
-                function (coops) {
-                    app.lcs.put("coop", coops[0]);
-                    app.layout.closeDialog();
-                    app.pcd.display("coop", ctmid, "", coops[0]); },
-                function (code, errtxt) {
-                    removebutton.disabled = false;
-                    jt.out("rdremstatdiv", "Removal failed code " + code +
-                           ": " + errtxt); },
-                jt.semaphore("coop.remove"));
-    },
-
-
     confirmPostThrough: function (rev) {
         var retval = true;
         if(!rev.ctmids) {  //not posting through, so nothing to check

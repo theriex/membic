@@ -1402,6 +1402,9 @@ app.review = (function () {
 
     function postSaveProcessing (updobjs) {
         app.lcs.uncache("activetps", "411");
+        if(crev.ctmids) {  //uncache stale themes data
+            crev.ctmids.csvarray().forEach(function (ctmid) {
+                app.lcs.uncache("coop", ctmid); }); }
         orev = updobjs[1];
         app.review.deserializeFields(orev);
         crev = copyReview(orev);
@@ -1688,6 +1691,7 @@ return {
         app.review.serializeFields(crev);
         var data = jt.objdata(crev);
         app.review.deserializeFields(crev); //in case update fail or interim use
+        data += "&editingtheme=" + app.pcd.editingTheme();
         jt.call("POST", "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
                     jt.log("saverev completed successfully");

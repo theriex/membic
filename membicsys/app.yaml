@@ -127,11 +127,6 @@ handlers:
 - url: .*/remthpost.*
   script: src.py.rev.app
 
-## Delete review for authorized pen name
-## POST params: rev, authparams
-- url: .*/delrev.*
-  script: src.py.rev.app
-
 ## Upload a review pic
 ## POST params: picfilein, _id, authparams
 ##   _id: The Review instance id
