@@ -210,7 +210,7 @@ var jt = {};   //Global access to general utility methods
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=190724");
+        jt.loadAppModules(app, modules, href, app.init2, "?v=190725");
     };
 
 
@@ -223,7 +223,7 @@ var jt = {};   //Global access to general utility methods
         if(!href.startsWith("http")) {
             href = jt.baseurl(window.location.href) + "/" + href; }
         if(href.indexOf("v=") < 0) {
-            href += "?v=190724"; }
+            href += "?v=190725"; }
         js = document.createElement("script");
         //js.async = true;
         js.type = "text/javascript";
