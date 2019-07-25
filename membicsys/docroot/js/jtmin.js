@@ -58,7 +58,7 @@
     if (!String.prototype.csvarray) {
         String.prototype.csvarray = function () {
             if (this && this.trim()) {
-                return this.split(/[\s,]+/);
+                return this.split(/,\s*/);
             }
             return [];
         };
