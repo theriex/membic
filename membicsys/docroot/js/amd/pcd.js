@@ -925,11 +925,20 @@ app.pcd = (function () {
     }
 
 
-    function isSearchableMembic (obj) {
-        if(!obj.revtype) {  //could be an overflow indicator
+    function isSearchableMembic (rev) {
+        if(!rev.revtype) {  //could be an overflow indicator
             return false; }
-        if(dst.type === "coop" && obj.ctmid !== dst.obj.instid) {  //src ref
-            return false; }
+        var nowiso = new Date().toISOString();
+        if(dst.type === "coop") {
+            if(rev.ctmid !== dst.obj.instid) {
+                return false; }  //source reference, not a coop rev
+            if(rev.dispafter && rev.dispafter > nowiso &&
+               !app.coop.membershipLevel(dst.obj)) {
+                return false; } }  //not a member and not showing yet
+        if(dst.type === "profile") {
+            if(rev.dispafter && rev.dispafter > nowiso &&
+               rev.penid !== app.profile.myProfId()) {
+                return false; } }  //not yours and not showing yet
         return true;
     }
 
