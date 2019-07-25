@@ -213,7 +213,7 @@ def create_cankey_for_review(review):
 def set_if_param_given(review, fieldname, handler, paramname):
     defaultval = "Membic_parameter_unspecified"
     val = handler.request.get(paramname, default_value=defaultval)
-    logging.info("set_if_param_given " + paramname + ": " + val)
+    # logging.info("set_if_param_given " + paramname + ": " + val)
     if val != defaultval:
         setattr(review, fieldname, val)
 
@@ -328,39 +328,44 @@ def read_review_values(handler, review, acc):
     review.ctmid = 0  # reading fields for a source review
     review.rating = read_review_rating(handler)
     set_review_srcrev(handler, review, acc)
-    # mainfeed and cankey set after other fields read
-    note_modified(review)  # sets modified and modhist
-    set_if_param_given(review, "keywords", handler, "keywords")
-    set_if_param_given(review, "text", handler, "text")
-    # review.revpic is uploaded separately, but deleted via flag:
-    val = handler.request.get("revpic", "")
-    if val == "DELETED":
+    val = handler.request.get("revpic", "")  # review.revpic uploaded separately
+    if val == "DELETED":                     # but deleted via flag
         review.revpic = None
-    set_if_param_given(review, "imguri", handler, "imguri")
-    # icwhen and icdata are for runtime relay tracking, managed by consvc
+    note_modified(review)  # sets modified and modhist
     set_review_dispafter(review, acc)
-    set_if_param_given(review, "altkeys", handler, "altkeys")
-    set_if_param_given(review, "svcdata", handler, "svcdata")
     review.penname = acc.name
-    set_if_param_given(review, "orids", handler, "orids")
-    # helpful is updated separately, not by review owner
-    # remembered is updated separately, not by review owner
-    # key/subkey fields are always read, others updated only if given:
-    review.name = onelinestr(handler.request.get('name'))
-    review.title = onelinestr(handler.request.get('title'))
-    set_if_param_given(review, "url", handler, "url")
-    set_if_param_given(review, "rurl", handler, "rurl")
-    review.artist = onelinestr(handler.request.get('artist'))
-    review.author = onelinestr(handler.request.get('author'))
-    set_if_param_given(review, "publisher", handler, "publisher")
-    set_if_param_given(review, "album", handler, "album")
-    set_if_param_given(review, "starring", handler, "starring")
-    set_if_param_given(review, "address", handler, "address")
-    set_if_param_given(review, "year", handler, "year")
-    # summary values
+    revfields = [{"field":"keywords", "op":"ifgiven"},
+                 {"field":"text", "op":"ifgiven"},
+                 {"field":"imguri", "op":"ifgiven"},
+                 # icwhen and icdata are for consvc runtime relay tracking only
+                 {"field":"altkeys", "op":"ifgiven"},
+                 {"field":"svcdata", "op":"ifgiven"},
+                 {"field":"orids", "op":"ifgiven"},
+                 {"field":"name", "op":"always"},
+                 {"field":"title", "op":"always"},
+                 {"field":"url", "op":"ifgiven"},
+                 {"field":"rurl", "op":"ifgiven"},
+                 {"field":"artist", "op":"always"},
+                 {"field":"author", "op":"always"},
+                 {"field":"publisher", "op":"ifgiven"},
+                 {"field":"album", "op":"ifgiven"},
+                 {"field":"starring", "op":"ifgiven"},
+                 {"field":"address", "op":"ifgiven"},
+                 {"field":"year", "op":"ifgiven"}]
+    for fspec in revfields:
+        if fspec["op"] == "ifgiven":
+            set_if_param_given(review, fspec["field"], handler, fspec["field"])
+        elif fspec["op"] == "always":
+            setattr(review, fspec["field"],
+                    onelinestr(handler.request.get(fspec["field"])))
     set_review_mainfeed(review, acc)
     review.cankey = create_cankey_for_review(review)  # server consistency
-
+    logdet = [review.penname, str(review.rating), review.revtype]
+    for fspec in revfields:
+        val = getattr(review, fspec["field"])
+        if val:
+            logdet.append(fspec["field"] + ":" + val)
+    logging.info(" ".join(logdet))
 
 
 def fetch_review_by_ptc(penid, revtype, cankey):
