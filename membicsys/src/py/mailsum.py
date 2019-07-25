@@ -236,7 +236,7 @@ def recipient_summaries_for_posts(pss):
                 pss[ctmid].penids = append_to_csv(penid, pss[ctmid].penids)
                 # set overall recipient summary info
                 rss[penid] = RecipientSummary(penid, pn.name, pn.email)
-        if penid in rss and not rss[penid].email:  # fill out the summary
+        if penid in rss and not rss[penid].emaddr:  # fill out the summary
             rss[penid] = RecipientSummary(penid, pn.name, pn.email)
     return rss
 

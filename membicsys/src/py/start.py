@@ -257,10 +257,10 @@ def membics_from_prebuilt(obj):
         rh = revhtml
         rh = rh.replace("$RID", membic["_id"])
         rh = rh.replace("$RTYPE", membic["revtype"])
-        rh = rh.replace("$RURL", membic["url"])
+        rh = rh.replace("$RURL", membic["url"] or "")
         rh = rh.replace("$RTIT", membic["title"] or membic["name"])
-        rh = rh.replace("$RAT", str(membic["rating"]))
-        rh = rh.replace("$DESCR", membic["text"])
+        rh = rh.replace("$RAT", str(membic["rating"]) or "75")
+        rh = rh.replace("$DESCR", membic["text"] or "")
         html += rh
     return html
 

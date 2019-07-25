@@ -1018,12 +1018,15 @@ def rebuild_prebuilt(instance, review, mode="query"):
 # requested by the client (if any).
 def filter_themes_to_requested(handler, themes):
     filtered = []
+    logmsg = "Filter themes"
     reqid = handler.request.get("editingtheme") or "0"
     reqid = int(reqid)
     if reqid:
+        logmsg += " to " + str(reqid)
         for theme in themes:
             if str(theme.key().id()) == str(reqid):
                 filtered.append(theme)
+    logging.info(logmsg + " len(filtered): " + str(len(filtered)))
     return filtered
 
 
