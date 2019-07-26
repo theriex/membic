@@ -444,12 +444,12 @@ return {
                                "d3script"); }
             if(window.d3ckit === undefined) { //glob var test
                 app.loadScript("loadSlideDecks", 
-                               "js/static/d3ckit.js?v=190725",
+                               "js/static/d3ckit.js?v=190726",
                                "d3ckitscript"); }
             decknames.forEach(function (deckname) {
                 modnames.push("js/static/" + deckname); });
             jt.loadAppModules(app, modnames, window.location.href,
-                              app.layout.displaySlideDecks, "?v=190725"); }
+                              app.layout.displaySlideDecks, "?v=190726"); }
     },
 
 
