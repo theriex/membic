@@ -1,8 +1,6 @@
 import webapp2
 import logging
-import moracct
 from morutil import *
-import mblock
 import coop
 import muser
 from cacheman import *
@@ -49,16 +47,16 @@ class FeedInfo(object):
 def revtxt_title(review):
     names = ["yum", "activity", "other"]
     if review["revtype"] in names:
-        return moracct.safestr(review["name"])
-    return moracct.safestr(review["title"])
+        return safestr(review["name"])
+    return safestr(review["title"])
 
 
 def revtxt_subkey(review):
     subkey = ""
     if review["revtype"] == "book":
-        subkey = moracct.safestr(review["author"])
+        subkey = safestr(review["author"])
     if review["revtype"] == "music":
-        subkey = moracct.safestr(review["artist"])
+        subkey = safestr(review["artist"])
     return subkey
 
 
@@ -101,9 +99,9 @@ def rev_text_from_spec(review, spec):
             txt = space_conc(txt, revtxt_title(review))
             txt = space_conc(txt, revtxt_subkey(review))
         elif cc == "k":
-            txt = space_conc(txt, moracct.safestr(review["keywords"]))
+            txt = space_conc(txt, safestr(review["keywords"]))
         elif cc == "d":
-            txt = space_conc(txt, moracct.safestr(review["text"]))
+            txt = space_conc(txt, safestr(review["text"]))
         elif cc == "v":
             txt = space_conc(txt, "|")
     return txt

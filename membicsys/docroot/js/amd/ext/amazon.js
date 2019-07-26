@@ -1,24 +1,16 @@
 /*global app, jt */
 
-/*jslint white, for */
+/*jslint browser, white, fudge, for */
 
 app.amazon = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
-
-    var svcName = "Amazon",    //ascii with no spaces, used as an id
+    var svcName = "Amazon";    //ascii with no spaces, used as an id
 
 
-    ////////////////////////////////////////
-    // helper functions
-    ////////////////////////////////////////
-
-    extractField = function (field, xml) {
-        var idx, tag = "<" + field + ">";
-        idx = xml.indexOf(tag);
+    function extractField (field, xml) {
+        var tag = "<" + field + ">";
+        var idx = xml.indexOf(tag);
         if(idx < 0) {  //simple tag not found
             tag = "<" + field + " ";
             idx = xml.indexOf(tag);
@@ -33,30 +25,32 @@ app.amazon = (function () {
         idx = xml.indexOf(tag);
         xml = xml.slice(0, idx);
         return xml;
-    },
+    }
 
 
-    setIfReturned = function (review, field, val) {
+    function setIfReturned (review, field, val) {
         if(val) {
             review[field] = val; }
-    },
+    }
 
 
-    setIfFound = function (review, field, vals) {
+    function setIfFound (review, field, vals) {
         if(vals && vals.length > 0) {
             review[field] = vals.join(", "); }
-    },
+    }
 
 
-    extractElements = function (field, xml) {
-        var fields, i, btag, etag, bidx, eidx, value, results = [];
-        fields = field.split(".");
+    function extractElements (field, xml) {
+        var results = [];
+        var fields = field.split(".");
+        var i;
         for(i = 0; i < fields.length - 1; i += 1) {
             xml = extractField(fields[i], xml); }
         field = fields[fields.length - 1];
-        btag = "<" + field + ">";
-        etag = "</" + field + ">";
-        bidx = xml.indexOf(btag);
+        var btag = "<" + field + ">";
+        var etag = "</" + field + ">";
+        var bidx = xml.indexOf(btag);
+        var eidx; var value;
         while(bidx >= 0) {
             eidx = xml.indexOf(etag);
             value = xml.slice(bidx + btag.length, eidx);
@@ -64,11 +58,11 @@ app.amazon = (function () {
             xml = xml.slice(eidx + etag.length);
             bidx = xml.indexOf(btag); }
         return results;
-    },
+    }
 
 
     //Clear annoying parentheticals to get a cleaner title
-    cleanReviewTitle = function (review) {
+    function cleanReviewTitle (review) {
         var parenyear = review.title.match(/\(\d\d\d\d\)/);
         if(parenyear) {
             review.year = parenyear[0].slice(1, -1);
@@ -80,10 +74,10 @@ app.amazon = (function () {
             review.title = review.title.replace(/\(.*Blu-ray.*\)/g, "");
             review.title = review.title.replace(/\[.*Blu-ray.*\]/g, ""); }
         review.title = review.title.trim();
-    },
+    }
 
 
-    setReviewFields = function (review, xml) {
+    function setReviewFields (review, xml) {
         review.revtype = extractField("ProductGroup", xml).toLowerCase();
         if((review.revtype.indexOf("book") >= 0) ||
            (review.revtype.indexOf("audible") >= 0) ||
@@ -129,18 +123,18 @@ app.amazon = (function () {
                    extractElements("ItemLookupResponse.Items.Item" + 
                                    ".ItemAttributes.Actor", xml));
         cleanReviewTitle(review);
-    },
+    }
 
 
     //Extract the ASIN assuming the format used in the autocomplete
     //links. General Amazon links may have arbitrary unknown
     //constructions that are not worth trying to guess.
-    extractASIN = function (url) {
+    function extractASIN (url) {
         var pieces = url.split("?");
         pieces = pieces[0].split("/");
         pieces = pieces[pieces.length - 1].split("%");
         return pieces[0];
-    };
+    }
 
 
     ////////////////////////////////////////
@@ -153,9 +147,10 @@ return {
 
     fetchData: function (review, url, ignore /*params*/) {
         var asin = extractASIN(url);
-        jt.out('revautodiv', "Reading details from Amazon...");
-        url = "amazoninfo?asin=" + asin + jt.ts("&cb=", "second");
-        jt.call('GET', url, null,
+        jt.out("revautodiv", "Reading details from Amazon...");
+        url = "amazoninfo?asin=" + asin + app.login.authparams("&") + 
+            jt.ts("&cb=", "second");
+        jt.call("GET", url, null,
                  function (json) {
                      setReviewFields(review, jt.dec(json[0].content));
                      app.review.updatedlg(); },

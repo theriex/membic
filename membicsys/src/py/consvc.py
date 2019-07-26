@@ -16,7 +16,8 @@ from base64 import b64encode
 from cacheman import *
 from google.appengine.api import memcache
 import rev
-import moracct
+import morutil
+import muser
 
 
 class ConnectionService(db.Model):
@@ -234,8 +235,8 @@ def interpreted_url_fetch_result(handler, result, geturl):
         errtxt = "url fetch failure: " + geturl + " " + str(code) + " " +\
                  str(content)
         logging.warn(errtxt)
-        moracct.mailgun_send(handler, "membicsystem@gmail.com", 
-                             "url fetch failure", errtxt)
+        muser.mailgun_send(handler, "membicsystem@gmail.com", 
+                           "url fetch failure", errtxt)
         code, content = interpreted_fetch_error(geturl, code, content)
         handler.error(code)
         handler.response.out.write(content)
@@ -411,11 +412,9 @@ class GitHubCallback(webapp2.RequestHandler):
 
 class AmazonInfo(webapp2.RequestHandler):
     def get(self):
-        # acc = moracct.authenticated(self.request)
-        # if not acc:
-        #     self.error(401)
-        #     self.response.out.write("Authentication failed")
-        #     return
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
         # logging.info("referer: " + self.request.referer)
         # logging.info("request: " + str(self.request))
         asin = self.request.get('asin')
@@ -436,11 +435,9 @@ class AmazonInfo(webapp2.RequestHandler):
 
 class AmazonSearch(webapp2.RequestHandler):
     def get(self):
-        # acc = moracct.authenticated(self.request)
-        # if not acc:
-        #     self.error(401)
-        #     self.response.out.write("Authentication failed")
-        #     return
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
         # logging.info("referer: " + self.request.referer)
         # logging.info("request: " + str(self.request))
         revtype = self.request.get('revtype')
@@ -453,10 +450,7 @@ class AmazonSearch(webapp2.RequestHandler):
         elif revtype == "music":
             amznidx = "Music"  # album oriented, but tolerable results
         if not amznidx:
-            json = "[{\"content\":\"\"}]"
-            self.response.headers['Content-Type'] = 'application/json'
-            self.response.out.write(json)
-            return
+            return morutil.srvJSON(self, "[{\"content\":\"\"}]")
         svc = get_connection_service("Amazon")
         # Params must be in sorted order with url encoded vals
         params = "AWSAccessKeyId=" + svc.ckey
@@ -472,11 +466,9 @@ class AmazonSearch(webapp2.RequestHandler):
 
 class URLContents(webapp2.RequestHandler):
     def get(self):
-        # acc = moracct.authenticated(self.request)
-        # if not acc:
-        #     self.error(401)
-        #     self.response.out.write("Authentication failed")
-        #     return
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
         logging.info("referer: " + str(self.request.referer))
         logging.info("request: " + str(self.request))
         result = simple_fetchurl(self, self.request.get('url'))

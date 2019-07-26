@@ -143,11 +143,6 @@ handlers:
 - url: .*/rotatepic.*
   script: src.py.rev.app
 
-## Batch post one or more reviews
-## POST params: email, password, revsjson
-- url: .*/batchupload.*
-  script: src.py.rev.app
-
 
 ######################################################################
 ##        Coops
@@ -185,12 +180,6 @@ handlers:
 ## Note membership invite for a cooperative theme
 ## POST params: penid, coopid, email, authparams
 - url: .*/invitebymail.*
-  script: src.py.coop.app
-
-## Accept an invitation for a cooperative theme
-## GET params: coopid, accountemail, invitetoken
-## POST params: coopid, accountemail, authparams
-- url: .*/acceptinvite.*
   script: src.py.coop.app
 
 ## Retrieve Overflow for Coop or MUser
@@ -296,11 +285,6 @@ handlers:
 
 ## Nightly periodic processing, reminders and such.
 - url: .*/periodic.*
-  script: src.py.mailsum.app
-  login: admin
-
-## Convert from PenNames to MUsers
-- url: .*/pn2muconv.*
   script: src.py.mailsum.app
   login: admin
 

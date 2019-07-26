@@ -1,7 +1,6 @@
 import webapp2
 import logging
 import datetime
-import pen
 import coop
 import muser
 from google.appengine.api import memcache

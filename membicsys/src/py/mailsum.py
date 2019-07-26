@@ -2,10 +2,8 @@ import webapp2
 import datetime
 from google.appengine.ext import db
 import logging
-import pen
 import rev
 import coop
-import moracct
 import muser
 import morutil
 import consvc
@@ -340,18 +338,6 @@ def note_inbound_mail(message):
     return mailfrom, mailto, mailsubj, mailbody
 
 
-def find_penid_from_consvc(emaddr):
-    svc = consvc.get_connection_service("MailIn")
-    empens = csv_list(svc.data)
-    for empen in empens:
-        empen = empen.strip()
-        address, penid = empen.split(":")
-        if address == emaddr:
-            return penid
-    logging.info("No MailIn ConnectionService mapping for " + emaddr)
-    return None
-
-
 def acc_for_mailin_address(emaddr):
     # emaddr = "Some Person <whoever@example.com>"
     match = re.search(r'[\w.-]+@[\w.-]+', emaddr)
@@ -373,152 +359,10 @@ def acc_for_mailin_address(emaddr):
     return acc
 
 
-def find_pen_for_moracct(oldacc, msgs):
-    accstr = "MORAccount " + str(oldacc.key().id()) + " " + oldacc.email
-    vq = VizQuery(pen.PenName, "WHERE mid = :1", oldacc.key().id())
-    pns = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-    if not len(pns):
-        msgs.append("No PenName found for " + accstr)
-        return None
-    if len(pns) > 1:
-        msgs.append("More than one PenName for " + accstr)
-        return None
-    msgs.append("Found PenName " + str(pns[0].key().id()) + " " + pns[0].name)
-    return pns[0]
-
-
-def make_muser(oldacc, pnm, msgs):
-    now = nowISO()
-    newacc = muser.MUser(email=oldacc.email,
-                         phash=muser.make_password_hash(oldacc.email,
-                                                        oldacc.password,
-                                                        now),
-                         status="Active",
-                         mailbounce="",
-                         actsends="",
-                         actcode=muser.random_alphanumeric(30),
-                         name=pnm.name,
-                         aboutme=pnm.shoutout,
-                         hashtag="",
-                         profpic=pnm.profpic,
-                         settings=pnm.settings,
-                         coops="{}",  # filled out later
-                         created=now,
-                         modified=now,
-                         lastwrite=now,
-                         preb="")  # filled out later
-    newacc.put()
-    msgs.append(oldacc.email + " created MUser " + str(newacc.key().id()))
-    return newacc
-
-
-def make_coop_reference(lev, theme):
-    pic = ""
-    if theme.picture:
-        pic = str(theme.key().id())
-    ref = {"lev":lev, "obtype":"Coop", "name":theme.name, 
-           "hashtag":(theme.hashtag or ""), "description":theme.description,
-           "picture":pic, "keywords":theme.keywords}
-    return ref
-
-
-def has_reference(csv, oaid, naid):
-    if csv_contains(oaid, csv) or csv_contains(naid, csv):
-        return True
-    return False
-
-
-def convert_reference(oaid, naid, csv):
-    if csv_contains(oaid, csv):
-        csv = remove_from_csv(oaid, csv)
-        csv = append_to_csv(naid, csv)
-    if not csv_contains(naid, csv):
-        csv = append_to_csv(naid, csv)
-    return csv
-
-
-def verify_coop_people(theme, oaid, naid, name):
-    # update people
-    pdict = json.loads(theme.people or "{}")
-    pdict.pop(oaid, None)  # remove the old key if it exists
-    pdict[naid] = name     # set or reset the new key
-    theme.people = json.dumps(pdict)
-    # update adminlog
-    logentries = json.loads(theme.adminlog) or []
-    for entry in logentries:
-        if entry["penid"] == oaid:
-            entry.pop(oaid, None)
-            entry["profid"] = naid
-            entry["pname"] = name
-    theme.adminlog = json.dumps(logentries)
-    # not worth tracking any in process applications.  Only one test reject..
-    theme.rejects = ""
-    theme.seeking = ""
-    # clear other fields to clean up
-    theme.preb = ""      # has source rev dupes and other info
-    theme.preb2 = ""     # going away
-    theme.calembed = ""  # going away
-    theme.top20s = ""    # going away
-
-
-
-def convert_coop_refs(oldacc, pnm, msgs):
-    cjs = {}  # updated coops JSON for new account
-    naid = str(oldacc.lastpen)  # new account id str for references
-    oaid = str(oldacc.key().id())
-    pnid = str(pnm.key().id())
-    coopcsv = pnm.coops or ""
-    vq = VizQuery(coop.Coop, "")
-    coops = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60, 
-                   batch_size=200)
-    for theme in coops:
-        cpid = str(theme.key().id())
-        cref = ""
-        coopmod = False
-        if csv_contains(cpid, coopcsv):
-            cref = make_coop_reference(-1, theme)
-        if has_reference(theme.members, pnid, naid):
-            cref = make_coop_reference(1, theme)
-            coopmod = True
-            theme.members = convert_reference(pnid, naid, theme.members)
-        if has_reference(theme.moderators, pnid, naid):
-            cref = make_coop_reference(2, theme)
-            coopmod = True
-            theme.moderators = convert_reference(pnid, naid, theme.moderators)
-        if has_reference(theme.founders, pnid, naid):
-            cref = make_coop_reference(3, theme)
-            coopmod = True
-            theme.founders = convert_reference(pnid, naid, theme.founders)
-        if coopmod:
-            verify_coop_people(theme, pnid, naid, pnm.name)
-            theme.put()
-            msgs.append("    Converted Coop " + cpid + " " + theme.name)
-            theme = coop.Coop.get_by_id(theme.key().id())
-        if cref:  # Coop was modified or following
-            cjs[cpid] = cref
-    ret = json.dumps(cjs)
-    msgs.append("convert_coop_refs returned " + ret)
-    return ret
-
-
-def review_authorship_converted(oldacc, pnm, msgs):
-    vq = VizQuery(rev.Review, "WHERE penid = :1", pnm.key().id())
-    revs = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60, 
-                  batch_size=1000)
-    count = 0
-    for review in revs:
-        review.penid = oldacc.lastpen  # new MUser id
-        review.put()
-        count += 1
-    msgs.append(str(count) + " Reviews converted")
-    return True
-
-
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
-        moracct.writeJSONResponse("[{\"botids\":\"" + csv +  "\"}]", 
-                                  self.response)
+        morutil.srvJSON(self, "[{\"botids\":\"" + csv +  "\"}]")
 
 
 class UserActivity(webapp2.RequestHandler):
@@ -529,7 +373,7 @@ class UserActivity(webapp2.RequestHandler):
         vq = VizQuery(ActivityStat, "WHERE day > :1", thresh)
         stats = vq.run(read_policy=db.EVENTUAL_CONSISTENCY,
                        batch_size=daysback)
-        moracct.returnJSON(self.response, stats)
+        morutil.srvObjs(self, stats)
 
 
 class PeriodicProcessing(webapp2.RequestHandler):
@@ -549,53 +393,6 @@ class PeriodicProcessing(webapp2.RequestHandler):
             raise
         body += "\nPeriodicProcessing completed."
         morutil.srvText(self, body)
-
-
-class PenNameConversion(webapp2.RequestHandler):
-    def get(self):
-        msgs = []
-        vq = VizQuery(moracct.MORAccount, "")
-        oldaccs = vq.run(read_policy=db.STRONG_CONSISTENCY, deadline=60, 
-                         batch_size=1000)
-        for oldacc in oldaccs:
-            if oldacc.status in ["ConvNoPen", "Converted"]:
-                continue
-            if not oldacc.email:
-                continue  # not convertible
-            msgs.append("Converting MORAccount " + str(oldacc.key().id()) +
-                        " " + oldacc.email)
-            newacc = None
-            pnm = None
-            if not oldacc.status or "Conv" not in oldacc.status:
-                pnm = find_pen_for_moracct(oldacc, msgs)
-                if not pnm:
-                    oldacc.status = "ConvNoPen"
-                else:
-                    newacc = make_muser(oldacc, pnm, msgs)
-                    oldacc.status = "ConvPen"
-                    oldacc.lastpen = newacc.key().id()
-                oldacc.put()
-            if oldacc.status == "ConvPen":
-                pnm = pnm or find_pen_for_moracct(oldacc, msgs)
-                coops = convert_coop_refs(oldacc, pnm, msgs)
-                if coops:  # have at least the empty object if call finished
-                    if coops != "{}":  # set the coops if have info
-                        if not newacc:
-                            newacc = muser.MUser.get_by_id(oldacc.lastpen)
-                        newacc.coops = coops
-                        newacc.put()
-                    oldacc.status = "ConvCoops"
-                    oldacc.put()
-            if oldacc.status == "ConvCoops":
-                pnm = pnm or find_pen_for_moracct(oldacc, msgs)
-                if review_authorship_converted(oldacc, pnm, msgs):
-                    oldacc.status = "Converted"
-                    oldacc.put()
-            if oldacc.status == "Converted":
-                msgs.append("Converted " + oldacc.email + "\n")
-            break  # just do one each time to start with
-        msgs.append("PenNameConversion completed")
-        moracct.writeTextResponse("\n".join(msgs), self.response)
 
 
 # sweep users first so themes are latest
@@ -643,17 +440,15 @@ class SweepPrebuilt(webapp2.RequestHandler):
 
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
-      logging.info("BouncedEmailHandler called")
       emaddr = notification.original['to']
-      logging.info("BouncedEmailHandler emaddr: " + emaddr)
-      # this uses the same access indexing as moracct.py MailCredentials
-      vq = VizQuery(moracct.MORAccount, "WHERE email=:1 LIMIT 9", emaddr)
-      accounts = vq.fetch(9, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-      for account in accounts:
-          bouncestr = nowISO()
-          if account.mailbounce:
-              bouncestr = account.mailbounce + "," + bouncestr
-          account.mailbounce = bouncestr
+      logging.warn("Email bounce emaddr: " + emaddr)
+      acc = muser.account_from_email(emaddr)
+      if not acc:
+          logging.info("No bounce account. notification: " + str(notification))
+      else:
+          if acc.mailbounce:
+              acc.mailbounce += ","
+          acc.mailbounce += nowISO()
           account.put()
 
 
@@ -675,7 +470,6 @@ class InMailHandler(InboundMailHandler):
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
                                ('.*/periodic', PeriodicProcessing),
-                               ('.*/pn2muconv', PenNameConversion),
                                ('.*/prebsweep', SweepPrebuilt),
                                ('/_ah/bounce', BounceHandler),
                                ('/_ah/mail/.+', InMailHandler)], debug=True)

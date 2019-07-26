@@ -8,12 +8,9 @@ import urllib
 import muser
 import ovrf
 from morutil import *
-import pen
 import coop
 import mailsum
 import mctr
-import mfeed
-import mblock
 import json
 from operator import attrgetter, itemgetter
 import re
@@ -78,32 +75,6 @@ class Review(db.Model):
 
 known_rev_types = ['book', 'article', 'movie', 'video', 
                    'music', 'yum', 'activity', 'other']
-
-
-def acc_review_modification_authorized(acc, handler):
-    penid = intz(handler.request.get('penid'))
-    if not penid:
-        srverr(handler, 401, "No penid specified")
-        return False
-    pnm = cached_get(penid, pen.PenName)
-    if not pnm:
-        srverr(handler, 404, "Pen " + str(penid) + " not found.")
-        return False
-    authok = pen.authorized(acc, pnm)
-    if not authok:
-        srverr(handler, 401, "Pen name not authorized.")
-        return False
-    return pnm
-
-
-def review_modification_authorized(handler):
-    """ Return the PenName if the penid matches a pen name the caller is 
-        authorized to modify, otherwise return False """
-    acc = muser.authenticated(handler.request)
-    if not acc:
-        srverr(handler, 401, "Authentication failed")
-        return False
-    return acc_review_modification_authorized(acc, handler)
 
 
 def noauth_get_review_for_update(handler):
@@ -178,22 +149,6 @@ def canonize_cankey(cankey):
     return cankey
 
 
-def create_cankey_from_request(handler):
-    cankey = ""
-    revtype = handler.request.get('revtype')
-    if revtype == 'book':
-        cankey = handler.request.get('title') + handler.request.get('author')
-    elif revtype == 'movie':
-        cankey = handler.request.get('title')
-    elif revtype == 'video':
-        cankey = handler.request.get('title')
-    elif revtype == 'music':
-        cankey = handler.request.get('title') + handler.request.get('artist')
-    else:
-        cankey = handler.request.get('name')
-    return canonize_cankey(cankey)
-
-
 def create_cankey_for_review(review):
     cankey = ""
     revtype = review.revtype
@@ -226,14 +181,6 @@ def note_modified(review):
         review.modhist = ";".join(elems)
     else:
         review.modhist = review.modified + ";1"
-
-
-def future_ok(review):
-    if not review.is_saved():
-        return True
-    if review.srcrev == -101:
-        return True
-    return False
 
 
 def read_review_rating(handler):
@@ -368,26 +315,6 @@ def read_review_values(handler, review, acc):
     logging.info(" ".join(logdet))
 
 
-def fetch_review_by_ptc(penid, revtype, cankey):
-    where = "WHERE penid = :1 AND revtype = :2 AND cankey = :3"
-    vq = VizQuery(Review, where, penid, revtype, cankey)
-    reviews = vq.fetch(2, read_policy=db.EVENTUAL_CONSISTENCY, deadline = 10)
-    if len(reviews) > 0:
-        return reviews[0]
-
-
-def prepend_to_main_feeds(review, pnm):
-    feedentry = str(review.key().id()) + ":" + str(review.penid)
-    allrevs = memcache.get("all") or ""
-    allrevs = remove_from_csv(feedentry, allrevs)
-    allrevs = prepend_to_csv(feedentry, allrevs)
-    memcache.set("all", allrevs)
-    typerevs = memcache.get(review.revtype) or ""
-    typerevs = remove_from_csv(feedentry, typerevs)
-    typerevs = prepend_to_csv(feedentry, typerevs)
-    memcache.set(review.revtype, typerevs)
-
-
 # The standard caching for the app uses pickle and works with db.Model
 # class instances that reconstitute as class instances.  This is a
 # block cache that holds an array of instances in json format, and
@@ -448,186 +375,6 @@ class ProfRevCache(object):
         mckey = self.prefix + str(self.publicprofinst["_id"])
         debuginfo("updating memcache " + mckey)
         memcache.set(mckey, self.cached_value())
-
-
-# Search some probable cache areas before falling back to db retrieval.
-def smart_retrieve_revinst(revid, penid, coopid=0):
-    jstr = memcache.get("allRevBlock0")
-    if jstr and str(revid) in jstr:  # skip loads if id not in string
-        revlist = json.loads(jstr)
-        for rev in revlist:
-            if rev["_id"] == str(revid):
-                return rev
-    if int(penid) > 0:  # typically pass zero for penid if already searched
-        jstr = memcache.get("pen" + str(penid))
-        if jstr and str(revid) in jstr:
-            revlist = json.loads(jstr)[1:]  # first element is PenName
-            for rev in revlist:
-                if rev["_id"] == str(revid):
-                    return rev
-    if int(coopid) > 0:  # coopid passed only if relevant
-        jstr = memcache.get("coop" + str(coopid))
-        if jstr and str(revid) in jstr:
-            revlist = json.loads(jstr)[1:]  # first element is Coop
-            for rev in revlist:
-                if rev["_id"] == str(revid):
-                    return rev
-    rev = visible_get_instance(Review, revid)
-    if rev:
-        rev = json.loads(moracct.obj2JSON(rev))  # return cache representation
-    return rev
-
-
-# query the db and accumulate the results in the given review cache
-def fetch_recent_membics(cacheprefix, pid, prc, fetchmax=50):
-    where = "WHERE ctmid = 0 AND penid = :1 ORDER BY modified DESC"
-    if cacheprefix == "coop":
-        where = "WHERE ctmid = :1 ORDER BY modified DESC"
-    vq = VizQuery(Review, where, pid)
-    revs = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY, deadline=60)
-    for rev in revs:
-        if rev.ctmid:  # only add coop rev if srcrev also available
-            srcrev = smart_retrieve_revinst(rev.srcrev, rev.penid)
-            if not srcrev:
-                logging.error("Missing srcrev Review " + str(rev.key().id()))
-                continue
-            prc.add_instance(rev)
-            prc.add_instance(srcrev, supporting=True)
-        else:
-            prc.add_instance(rev)
-
-
-def fetch_validated_instance(tidstr, prc, rev, prof):
-    inst = prc.get_cached_instance(tidstr)
-    if not inst:
-        inst = smart_retrieve_revinst(tidstr, 0)
-    if inst:
-        # Check for various bad data conditions. The inst may already be
-        # cached but its id won't be in the top list.
-        if inst and inst["revtype"] != rev.revtype:
-            inst = None
-        if inst and inst["srcrev"] == -604:  # marked as deleted
-            inst = None
-        if inst and prc.prefix == "coop":
-            if str(inst["ctmid"]) != str(prof.key().id()):
-                inst = None  # no longer part of this theme
-            if inst and not int(inst["srcrev"]):
-                inst = None  # original source membic not specified
-            if inst: # cache the srcrev for client reference
-                srcrev = smart_retrieve_revinst(inst["srcrev"], rev.penid)
-                if not srcrev:  # bad data reference
-                    logging.error("Bad srcrev Review " + str(inst["_id"]))
-                    inst = None
-                else:
-                    prc.add_instance(srcrev, supporting=True)
-    return inst
-
-
-def idlist_from_instlist(instlist, lenmax):
-    idlist = []
-    lastid = "-1"
-    for inst in instlist:             # skip dupes
-        if inst["_id"] != lastid:
-            idlist.append(int(inst["_id"]))
-        lastid = inst["_id"]
-    if len(idlist) > lenmax:          # truncate length if needed
-        idlist = idlist[0:lenmax]
-    return idlist
-
-
-# Returns updated json text if changed, None otherwise.
-def update_top_membics(cacheprefix, dbprofinst, rev, prc):
-    topmax = 30  # how many top membics of each type to keep
-    jstr = dbprofinst.top20s or "{}"
-    orgdict = json.loads(jstr)
-    newdict = json.loads(jstr)
-    # remove any references to rev id across all types in case type changed
-    ridstr = str(rev.key().id())
-    for mtype in newdict:
-        if newdict[mtype] and ridstr in newdict[mtype]:
-            newdict[mtype].remove(ridstr)
-    # rebuild the top id list for the current type
-    tids = []
-    if rev.revtype in newdict:
-        tids = newdict[rev.revtype]
-    trevs = []  # list of resolved top instances to sort
-    if rev.srcrev not in [-604, -101]:  # include rev unless deleted or future
-        cacherev = json.loads(moracct.obj2JSON(rev))  # cache dict repr
-        trevs = [cacherev]
-    for tidstr in tids:  # append instances for existing ids to trevs
-        inst = fetch_validated_instance(tidstr, prc, rev, dbprofinst)
-        if inst:
-            trevs.append(inst)
-    # debuginfo("update_top_membics about to sort trevs.")
-    # for idx in range(len(trevs)):
-    #     debuginfo("trevs[" + str(idx) + "] " + str(trevs[idx]))
-    trevs = sorted(trevs, key=itemgetter('rating', 'modified'), 
-                   reverse=True)
-    tids = idlist_from_instlist(trevs, topmax)
-    newdict[rev.revtype] = tids
-    if "latestrevtype" in orgdict:
-        newdict["latestrevtype"] = orgdict["latestrevtype"]
-    if "t20lastupdated" in orgdict:
-        newdict["t20lastupdated"] = orgdict["t20lastupdated"]
-    # debuginfo("orgdict: " + str(orgdict))
-    # debuginfo("newdict: " + str(newdict))
-    if newdict == orgdict:
-        logging.info("update_top_membics: no change")
-        return None
-    newdict["latestrevtype"] = rev.revtype
-    newdict["t20lastupdated"] = str(nowISO())
-    logging.info("update_top_membics: recalculated")
-    return json.dumps(newdict)
-
-
-def update_profile(cacheprefix, dbprofinst, rev, srcrev=None):
-    prc = ProfRevCache(cacheprefix, dbprofinst)
-    if len(prc.mainlist) == 0:  # cache uninitialized or no membics yet
-        fetch_recent_membics(cacheprefix, dbprofinst.key().id(), prc)
-    if srcrev:  # prepend source rev first so it ends up second in the list
-        prc.add_instance(srcrev, prepend=True) 
-    prc.add_instance(rev, prepend=True)  # ensure new rev instance is cached
-    updtop = update_top_membics(cacheprefix, dbprofinst, rev, prc)
-    if updtop:
-        dbprofinst.top20s = updtop
-        dbprofinst = mctr.synchronized_db_write(dbprofinst)
-        logging.info("update_profile wrote new top membics for " +
-                     cacheprefix + " " + str(dbprofinst.key().id()))
-        prc.set_db_prof_inst(dbprofinst)
-    if cacheprefix == "coop":
-        dbprofinst.preb = prc.cached_value()
-        dbprofinst = mctr.synchronized_db_write(dbprofinst)
-        logging.info("update_profile updated preb for " +
-                     cacheprefix + " " + str(dbprofinst.key().id()))
-        # prc.set_db_prof_inst(dbprofinst)  # not necessary
-    prc.update_memcache()
-
-
-def write_review(review, pnm, acc):
-    set_review_mainfeed(review, acc)
-    set_review_dispafter(review, pnm)
-    mctr.synchronized_db_write(review)
-    logging.info("write_review wrote Review " + str(review.key().id()))
-    # update all related cached data, or clear it for later rebuild
-    mfeed.update_feed_caches(review, addifnew=True)
-    update_profile("pen", pnm, review)
-
-
-def update_prof_cache(ckey, rev):
-    if isinstance(rev, db.Model):
-        rev = json.loads(moracct.obj2JSON(rev))
-    jstr = memcache.get(ckey)
-    if jstr and rev["_id"] in jstr:
-        debuginfo("update_prof_cache Review " + rev["_id"] + 
-                          " in " + ckey)
-        replist = []
-        cachelist = json.loads(jstr)
-        for idx, cached in enumerate(cachelist):
-            if idx > 0 and cached["_id"] == rev["_id"]:
-                replist.append(rev)
-            else:
-                replist.append(cached)
-        memcache.set(ckey, json.dumps(replist))
 
 
 def copy_rev_descrip_fields(fromrev, torev):
@@ -781,134 +528,6 @@ def ctmids_except_coop(review, ctm):
                 ctmids.append(pt["ctmid"])
     ctmids = ",".join(ctmids)
     return ctmids
-
-
-def append_review_jsoncsv(jstr, rev):
-    jstr = jstr or ""
-    if jstr:
-        jstr += ","
-    jstr += moracct.obj2JSON(rev)
-    if rev.ctmid:
-        # append coop srcrevs for client cache reference
-        srcrev = Review.get_by_id(int(rev.srcrev))
-        if not srcrev:
-            logging.error("Missing srcrev for Review " + str(rev.key().id()))
-        else:
-            jstr += "," + moracct.obj2JSON(srcrev)
-    return jstr
-
-
-def safe_dictattr(dictionary, fieldname):
-    val = ""
-    if dictionary and fieldname in dictionary:
-        val = dictionary[fieldname] or ""
-    return val
-
-
-def write_batch_reviews(pn, handler):
-    penid = pn.key().id()
-    revsjson = handler.request.get('revsjson')
-    revs = json.loads(revsjson)
-    for rdat in revs:
-        review = Review(penid=penid, revtype=rdat["revtype"])
-        review.penname = pn.name
-        review.rating = int(rdat["rating"])
-        review.keywords = safe_dictattr(rdat, "keywords")
-        review.text = safe_dictattr(rdat, "text")
-        review.name = onelinestr(safe_dictattr(rdat, "name"))
-        review.title = onelinestr(safe_dictattr(rdat, "title"))
-        review.url = safe_dictattr(rdat, "url")
-        review.rurl = safe_dictattr(rdat, "rurl")
-        review.artist = onelinestr(safe_dictattr(rdat, "artist"))
-        review.author = onelinestr(safe_dictattr(rdat, "author"))
-        review.publisher = safe_dictattr(rdat, "publisher")
-        review.album = safe_dictattr(rdat, "album")
-        review.starring = safe_dictattr(rdat, "starring")
-        review.address = safe_dictattr(rdat, "address")
-        review.year = str(safe_dictattr(rdat, "year"))
-        review.cankey = create_cankey_for_review(review)
-        existing = fetch_review_by_ptc(penid, review.revtype, review.cankey)
-        if existing:
-            copy_rev_descrip_fields(review, existing)
-            review = existing
-        review.srcrev = -202   # batch source flag
-        review.mainfeed = 0    # no batch updates in main display
-        note_modified(review)
-        review.put()
-        handler.response.out.write("updated by key: " + review.cankey + "\n")
-    handler.response.out.write("write_batch_reviews complete\n")
-
-
-# logic here needs to the same as pcd.js isMatchingReview
-def is_matching_review(qstr, review):
-    if not qstr:
-        return True
-    keywords = (review.keywords or "").lower()
-    text = (review.text or "").lower()
-    toks = qstr.lower().split()
-    for token in toks:
-        if token in review.cankey:
-            continue
-        if token in keywords:
-            continue
-        if token in text:
-            continue
-        return False
-    return True
-
-
-def delete_coop_post(review, acc, handler):
-    ctm = coop.Coop.get_by_id(int(review.ctmid))
-    if not ctm:
-        return srverr(handler, 404, "Coop " + review.ctmid + " not found")
-    penid = acc.key().id()
-    reason = handler.request.get('reason') or ""
-    if review.penid != penid:
-        if coop.member_level(penid, ctm) < 2:
-            return srverr(handler, 400, "You may only remove your own membic")
-        if not reason:
-            return srverr(handler, 400, "Reason required")
-    srcrev = Review.get_by_id(int(review.srcrev))
-    if not srcrev:
-        return srverr(handler, 400, "Source membic " + str(review.srcrev) +
-                      " not found")
-    rt = review.revtype
-    revid = str(review.key().id())
-    topdict = {}
-    if ctm.top20s:
-        topdict = json.loads(ctm.top20s)
-    if rt in topdict and topdict[rt] and revid in topdict[rt]:
-        topdict[rt].remove(revid)
-    ctm.top20s = json.dumps(topdict)
-    # The reason here must be exactly "Removed Membic" so the client can
-    # differentiate between removing a review and removing a member.
-    coop.update_coop_admin_log(ctm, acc, "Removed Membic", srcrev, reason)
-    coop.update_coop_and_bust_cache(ctm)
-    cached_delete(revid, Review)
-    mctr.count_review_update("delete", review.penid, review.penname,
-                             review.ctmid, review.srcrev)
-    return ctm
-
-
-def mark_review_as_deleted(review, pnm, acc, handler):
-    review.penname = pnm.name  # in case name modified since last update
-    review.srcrev = -604
-    # Marking a review as deleted shows up in the counters as an edit.
-    # Not worth duplicating
-    write_review(review, pnm, acc)
-    try:
-        pen.add_account_info_to_pen_stash(acc, pnm)
-    except Exception as e:
-        logging.info("Account info stash failed on membic delete: " + str(e))
-    return review
-
-
-def supplemental_recent_reviews(handler, pgid):
-    jstr = "[]"
-    pco = coop.Coop.get_by_id(int(pgid))
-    if pco and pco.preb2:
-        jstr = pco.preb2
-    moracct.writeJSONResponse(jstr, handler.response);
 
 
 # Returning raw image data directly to the browser doesn't work, it
@@ -1175,115 +794,9 @@ class RotateReviewPic(webapp2.RequestHandler):
         moracct.returnJSON(self.response, [ review ])
 
 
-class SearchReviews(webapp2.RequestHandler):
-    def get(self):
-        acc = muser.authenticated(self.request)
-        if not acc:
-            return srverr(self, 401, "Authentication failed")
-        penid = intz(self.request.get('penid'))
-        ctmid = intz(self.request.get('ctmid'))
-        mindate = self.request.get('mindate') or "2012-10-04T00:00:00Z"
-        maxdate = self.request.get('maxdate') or nowISO()
-        qstr = self.request.get('qstr')
-        revtype = self.request.get('revtype')
-        cursor = self.request.get('cursor')
-        ckey = "SearchReviewsG" + str(ctmid) + "P" + str(penid) +\
-            "D" + mindate + "M" + maxdate
-        where = "WHERE ctmid = " + str(ctmid)  # matches on zero if penid
-        if penid:
-            where += " AND penid = " + str(penid)
-        where += " AND modified >= :1 AND modified <= :2"
-        if revtype and revtype != "all":
-            where += " AND revtype = '" + revtype + "'"
-            ckey += revtype
-        where += " ORDER BY modified DESC"
-        logging.info("SearchReviews query: " + where + " " + 
-                     mindate + " - " + maxdate)
-        vq = VizQuery(Review, where, mindate, maxdate)
-        qres = []
-        reviter = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=30,
-                         batch_size=1000)
-        for review in reviter:
-            if is_matching_review(qstr, review):
-                qres.append(review)
-            if len(qres) >= 20:
-                break
-        moracct.returnJSON(self.response, qres)
-
-
-class GetReviewById(webapp2.RequestHandler):
-    def get(self):
-        revid = self.request.get('revid')
-        if revid:
-            logging.warn("Client cache miss fetch Review " + revid)
-            review = smart_retrieve_revinst(revid, 0)
-            if not review:
-                return srverr(self, 404, "No Review found for id " + revid)
-            moracct.returnJSON(self.response, [ review ])
-            return
-        revs = []
-        revids = self.request.get('revids')
-        if revids:
-            logging.warn("Client multiple revid fetch " + revid)
-            rids = revids.split(",")
-            for rid in rids:
-                review = smart_retrieve_revinst(rid, 0)
-                if review:
-                    revs.append(review)
-        moracct.returnJSON(self.response, revs)
-
-
-class FetchPreReviews(webapp2.RequestHandler):
-    def get(self):
-        acc = muser.authenticated(self.request)
-        if not acc:
-            return srverr(self, 401, "Authentication failed")
-        penid = intz(self.request.get('penid'))
-        if not penid:
-            return srverr(self, 400, "penid required")
-        where = "WHERE penid = :1 AND srcrev = -101 ORDER BY modified DESC"
-        vq = VizQuery(Review, where, penid)
-        fetchmax = 20
-        reviews = vq.fetch(fetchmax, read_policy=db.EVENTUAL_CONSISTENCY,
-                           deadline=10)
-        moracct.returnJSON(self.response, reviews)
-
-
-class BatchUpload(webapp2.RequestHandler):
-    def post(self):
-        # this needs to be rewritten to use the standard auth.
-        # Possibly cache-only (no batch unless you recently have
-        # logged in interactively).  Turning off for now...
-        return srverr(self, 403, "Batch uploading currently offline")
-        # this uses the same db access as moracct.py GetToken
-        emaddr = self.request.get('email') or ""
-        emaddr = moracct.normalize_email(emaddr)
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write("BatchUpload from " + emaddr + "\n")
-        password = self.request.get('password')
-        where = "WHERE email=:1 AND password=:2 LIMIT 1"
-        vq = VizQuery(moracct.MORAccount, where, emaddr, password)
-        accounts = vq.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        for account in accounts:
-            accid = account.key().id()
-            self.response.out.write("Account " + str(accid) + "\n")
-            # this uses the same db access as pen.py find_auth_pens
-            vq2 = VizQuery(pen.PenName, "WHERE mid=:1 LIMIT 1", accid)
-            pens = vq2.fetch(1, read_policy=db.EVENTUAL_CONSISTENCY, 
-                             deadline=10)
-            for pn in pens:
-                self.response.out.write("PenName " + pn.name + "\n")
-                try:
-                    write_batch_reviews(pn, self)
-                except Exception as e:
-                    self.response.out.write(str(e) + "\n")
-        self.response.out.write("BatchUpload complete\n")
-
-
 app = webapp2.WSGIApplication([('.*/saverev', SaveReview),
                                ('.*/remthpost', RemoveThemePost),
                                ('.*/revpicupload', UploadReviewPic),
                                ('.*/revpic', GetReviewPic),
-                               ('.*/rotatepic', RotateReviewPic),
-                               ('.*/batchupload', BatchUpload)], debug=True)
+                               ('.*/rotatepic', RotateReviewPic)], debug=True)
 

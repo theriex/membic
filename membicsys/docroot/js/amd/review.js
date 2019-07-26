@@ -786,7 +786,8 @@ app.review = (function () {
     function callAmazonForAutocomplete (acfunc) {
         var url;
         url = "amazonsearch?revtype=" + crev.revtype + "&search=" +
-            jt.enc(autocomptxt) + jt.ts("&cb=", "hour");
+            jt.enc(autocomptxt) + app.login.authparams("&") + 
+            jt.ts("&cb=", "hour");
         jt.call("GET", url, null,
                 function (json) {
                     writeAutocompLinks(jt.dec(json[0].content));

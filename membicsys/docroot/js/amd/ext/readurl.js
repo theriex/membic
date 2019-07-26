@@ -465,11 +465,12 @@ return {
     name: svcName,
 
 
-    //params are ignored for this reader.  mail-in membic context optional.
-    fetchData: function (membic, url, params, mimc) {
+    //params are ignored for this reader.
+    fetchData: function (membic, url) {
         var geturl;
         jt.out("revautodiv", "Reading details from " + url + " ...");
-        geturl = "urlcontents?url=" + jt.enc(url) + jt.ts("&cb=", "second");
+        geturl = "urlcontents?url=" + jt.enc(url) + app.login.authparams("&") +
+            jt.ts("&cb=", "second");
         jt.call("GET", geturl, null,
                 function (json) {
                     var html = jt.dec(json[0].content);
@@ -483,8 +484,7 @@ return {
                     //site may redirect http to https causing a loop.
                     plainurl = getPlainURL(url);
                     if(url !== plainurl) {  //wasn't a permalink, retry basic
-                        return app.readurl.fetchData(membic, plainurl, 
-                                                     params, mimc); }
+                        return app.readurl.fetchData(membic, plainurl); }
                     jt.err(getFetchErrorText(url, code, errtxt));
                     app.review.resetAutoURL(); },
                 jt.semaphore("readurl.fetchData"));

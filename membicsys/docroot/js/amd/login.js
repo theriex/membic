@@ -28,8 +28,9 @@ app.login = (function () {
     }
 
 
-    function authparams () {
-        var params = "an=" + jt.enc(authname) + "&at=" + authtoken;
+    function authparams (prefix) {
+        var params = prefix || "";
+        params += "an=" + jt.enc(authname) + "&at=" + authtoken;
         return params;
     }
 
@@ -593,8 +594,8 @@ return {
     },
 
 
-    authparams: function () {
-        return authparams();
+    authparams: function (prefix) {
+        return authparams(prefix);
     },
 
 
