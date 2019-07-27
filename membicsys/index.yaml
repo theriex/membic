@@ -18,21 +18,6 @@ indexes:
 - kind: Review
   properties:
   - name: ctmid
-  - name: mainfeed
-  - name: modhist
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: ctmid
-  - name: mainfeed
-  - name: revtype
-  - name: modhist
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: ctmid
   - name: modified
     direction: desc
 
@@ -43,36 +28,3 @@ indexes:
   - name: modified
     direction: desc
 
-- kind: Review
-  properties:
-  - name: ctmid
-  - name: penid
-  - name: revtype
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: ctmid
-  - name: revtype
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: penid
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: penid
-  - name: srcrev
-  - name: modified
-    direction: desc
-
-- kind: Review
-  properties:
-  - name: srcrev
-  - name: modified
-    direction: desc
