@@ -187,6 +187,7 @@ def callAmazon(handler, svc, params):
     url += "&Signature=" + enc(sig)
     headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
     try:
+        logging.info("fetching " + url)
         result = urlfetch.fetch(url, payload=None, method="GET",
                                 headers=headers,
                                 allow_truncated=False, 
@@ -198,9 +199,12 @@ def callAmazon(handler, svc, params):
             handler.response.headers['Content-Type'] = 'application/json'
             handler.response.out.write(json)
         else:
+            logging.warn("fetch failed: " + str(result.status_code) + " " +
+                         str(result.content))
             handler.error(result.status_code)
             handler.response.out.write(result.content)
     except Exception as e:
+        logging.warn("fetch exception: " + str(e))
         code = 409      # conflict
         if "Deadline" in str(e):
             code = 408  # request timeout

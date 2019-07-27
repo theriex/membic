@@ -195,15 +195,16 @@ app.review = (function () {
     }
 
 
-    function getURLReader (url, callfunc) {
-        if(url.indexOf(".amazon.") > 0) {
-            callfunc(app.amazon); }
+    function getURLReader (ignore, callfunc) {
         //app.youtube dies all the time due to the number of API calls
         //    being exhausted, and the standard reader does just as well.
         //app.netflix became nonfunctional when netflix retired the
         //    odata catalog on 08apr14.
-        else {
-            callfunc(app.readurl); }
+        //app.amazon is disabled until membic has enough traffic to sustain
+        //an advertiser relationship.
+        // if(url.indexOf(".amazon.") > 0) {
+        //     return callfunc(app.amazon); }
+        callfunc(app.readurl);
     }
 
 
@@ -1016,20 +1017,26 @@ app.review = (function () {
                       rt.key],
                      ["input", {id: "keyin", cla: "lifin", type: "text",
                                 oninput:jt.fs("app.review.buttoncheck()")}],
-                     ["div", {id: "rdacdiv"},
-                      ["input", {type: "checkbox", id: "rdaccb",
-                                 name: "autocompleteactivationcheckbox",
-                                 //<IE8 onchange only fires after onblur.
-                                 //check action nullified if return false.
-                                 onclick: jt.fsd("app.review.runAutoComp()"),
-                                 checked: jt.toru(crev.autocomp)}]],
+                     //There simply isn't enough traffic to maintain an
+                     //Amazon relationship right now.  If an advertiser
+                     //account is sustainable, update the access info and
+                     //uncomment here to bring the functionality back.
+                     // ["div", {id: "rdacdiv"},
+                     //  ["input", {type: "checkbox", id: "rdaccb",
+                     //             name: "autocompleteactivationcheckbox",
+                     //             //<IE8 onchange only fires after onblur.
+                     //             //check action nullified if return false.
+                     //             onclick: jt.fsd("app.review.runAutoComp()"),
+                     //             checked: jt.toru(crev.autocomp)}]],
                      ["div", {id: "revautodiv"}]]];
             jt.out("rdkeyindiv", jt.tac2html(html)); }
         jt.out("keylab", rt.key.capitalize());  //update label if type changed
         //when returning from autocomp selection, crev.title/name has been
         //updated and needs to be reflected in the form
         jt.byId("keyin").value = crev[rt.key] || jt.byId("keyin").value || "";
-        jt.byId("rdaccb").checked = crev.autocomp;
+        var rdaccb = jt.byId("rdaccb");
+        if(rdaccb) {
+            rdaccb.checked = crev.autocomp; }
         if(html) {  //just initialized the key input, set for entry
             jt.byId("keyin").focus(); }
         app.review.runAutoComp();

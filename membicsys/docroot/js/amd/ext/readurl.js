@@ -106,53 +106,74 @@ app.readurl = (function () {
     }
 
 
-    function setImageURI (review, html, url) {
-        var val;
-        var elem = elementForString(html, "image_src", "link");
-        if(elem) {
-            val = valueForField(elem, "href");
-            if(val) {
-                review.imguri = verifyFullURL(val, url);
-                return; } }
-        elem = elementForString(html, "og:image", "meta");
-        if(elem) {
-            val = valueForField(elem, "content");
-            if(val) {
-                review.imguri = verifyFullURL(val, url);
-                return; } }
-        elem = elementForString(html, "twitter:image", "meta");
-        if(elem) {
-            val = valueForField(elem, "content");
-            if(val) {
-                review.imguri = verifyFullURL(val, url);
-                return; } }
+    function findAmazonImage (review, html) {
+        var matches = html.match(/iUrl\s=\s"(\S+)"/);
+        if(matches) {
+            review.imguri = matches[1]; }
+    }
+
+
+    function findNetflixImage (review, html, url) {
+        //the alt for the image has the movie title, which isn't found
+        //conveniently anywhere else, so set it here.
         if(url.indexOf("netflix.") >= 0) {
-            elem = elementForString(html, "thumbnailUrl", "img");
+            var elem = elementForString(html, "thumbnailUrl", "img");
             if(elem) {
-                val = valueForField(elem, "src");
+                var val = valueForField(elem, "src");
                 if(val) {
                     review.imguri = val;
                     val = valueForField(elem, "alt");
-                    review.title = val;
-                    return; } } }
-        //try groping in the dark for some kind of logo...
+                    review.title = val; } } }
+    }
+
+
+    function findLogoImage (review, html, url) {
+        //A logo can be buried pretty much anywhere, but usually has "logo"
+        //somewhere in the name and is almost always a png.  Try find.
         var index = html.search(/src=[A-Za-z0-9'"\/]*logo\.png/i);
         if(index < 0) {  //try same regex again, but unescape the html
             index = unescape(html).search(/src=[A-Za-z0-9'"\/]*logo\.png/i);
             if(index >= 0) {
                 html = unescape(html); } }
         if(index > 0) {
-            val = html.slice(index + 5);
+            var val = html.slice(index + 5);
             val = val.slice(0, val.toLowerCase().indexOf(".png") + 4);
-            review.imguri = verifyFullURL(val, url);
-            return; }
-        //last ditch, try the favicon just to show we saw data and tried
-        elem = elementForString(html, "icon", "link");
+            review.imguri = verifyFullURL(val, url); }
+    }
+
+
+    function findFaviconImage (review, html, url) {
+        //The favicon invariably looks lame, but it shows that app analyzed
+        //the site, which is better than plain failure.  Better both in
+        //terms of looking like we tried, and in encouraging people to
+        //upload or find a better image if they want.  Last ditch effort.
+        var elem = elementForString(html, "icon", "link");
         if(elem) {
-            val = valueForField(elem, "href");
+            var val = valueForField(elem, "href");
             if(val) {
-                review.imguri = verifyFullURL(val, url);
-                return; } }
+                review.imguri = verifyFullURL(val, url); } }
+    }
+
+
+    function setImageURI (review, html, url) {
+        review.imguri = "";
+        var stds = [{t:"image_src",     e:"link", f:"href"},
+                    {t:"og:image",      e:"meta", f:"content"},
+                    {t:"twitter:image", e:"meta", f:"content"}];
+        stds.forEach(function (std) {
+            if(!review.imguri) {
+                var elem = elementForString(html, std.t, std.e);
+                if(elem) {
+                    var val = valueForField(elem, std.f);
+                    if(val) {
+                        review.imguri = verifyFullURL(val, url); } } } });
+        var hacks = [findAmazonImage,
+                     findNetflixImage,
+                     findLogoImage,
+                     findFaviconImage];
+        hacks.forEach(function (hack) {
+            if(!review.imguri) {
+                hack(review, html, url); } });
     }
 
 
