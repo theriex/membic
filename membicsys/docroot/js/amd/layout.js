@@ -11,8 +11,6 @@ app.layout = (function () {
                                {format:"tsv", name:"Spreadsheet (TSV)"},
                                {format:"json", name:"JavaScript (JSON)"}]};
     var dlgqueue = [];
-    var decknames = [];
-    var autoplay = false;
     var tightLeftX = 10;
 
 
@@ -40,19 +38,6 @@ app.layout = (function () {
             html = html.replace(/<!--\s\$SEEPCDSETTINGSLINK\s-->/g, txt); }
 
         return html;
-    }
-
-
-    function noteDocSlideDecks (html) {
-        var calls = html.split("app.layout.runSlideDeck");
-        decknames = [];  //clear anything previously loaded
-        autoplay = false;
-        calls.forEach(function (call) {
-            var deckname;
-            if(call.startsWith("('")) {
-                call = call.slice(2);
-                deckname = call.slice(0, call.indexOf("'"));
-                decknames.push(deckname); } });
     }
 
 
@@ -126,7 +111,6 @@ app.layout = (function () {
             html = html.slice(idx + bodystart.length,
                               html.indexOf("</body")); }
         html = replaceDocComments(html);
-        noteDocSlideDecks(html);
         //display content
         if(overlay) {
             html = app.layout.dlgwrapHTML(title, html);
@@ -195,25 +179,6 @@ app.layout = (function () {
         var mdiv = jt.byId("modalseparatordiv");
         mdiv.style.width = String(app.winw) + "px";
         mdiv.style.height = String(app.winh) + "px";
-    }
-
-
-    function colorDeckLinkSpans (deckname, color, suffixes) {
-        if(!suffixes) {
-            suffixes = ["span", "slidesspan", "textspan"]; }
-        if(typeof suffixes === "string") {
-            suffixes = [suffixes]; }
-        suffixes.forEach(function (suffix) {
-            var span = jt.byId(deckname + suffix);
-            if(span) {
-                span.style.color = color; } });
-    }
-
-
-    function ungrayKnownLinks () {
-        if(decknames) {
-            decknames.forEach(function (dn) {
-                colorDeckLinkSpans(dn, "#111111"); }); }
     }
 
 
@@ -373,39 +338,6 @@ return {
 
     getType: function () {
         return typestate.typename;
-    },
-
-
-    deckStart: function (dds) {
-        var deckname = dds.decks[dds.deckidx].deckname;
-        ungrayKnownLinks();
-        colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
-        if(autoplay) {
-            d3ckit.playpause(); }
-    },
-
-
-    deckFinish: function () {
-        autoplay = true;  //autoplay after the first one has been played
-        d3ckit.nextDeck();  //start next deck
-    },
-
-
-    runSlideDeck: function (deckname) {
-        jt.log("runSlideDeck " + deckname);
-        autoplay = true;
-        ungrayKnownLinks();
-        colorDeckLinkSpans(deckname, "gray", ["span", "slidesspan"]);
-        d3ckit.displayDeck(deckname);
-    },
-
-
-    deckText: function (deckname) {
-        var dds = d3ckit.getDisplay();
-        jt.log("deckText " + deckname);
-        ungrayKnownLinks();
-        colorDeckLinkSpans(deckname, "gray", "textspan");
-        jt.out(dds.divid, d3ckit.deckByName(deckname).texthtml);
     },
 
 

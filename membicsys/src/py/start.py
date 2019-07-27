@@ -89,8 +89,6 @@ indexHTML = """
 
   <div id="bottomnav">
     <div id="bottomstatdiv"></div>
-    <a href="docs/terms.html" class="footerlink">TERMS</a>
-    <a href="docs/privacy.html" class="footerlink">PRIVACY</a>
   </div>
 </div>
 
@@ -137,11 +135,14 @@ interimcont = """
     <div class="defdefdiv">
       1. A link with a reason why it is memorable.
     </div>
+    <div class="sitemetalinksdiv">
+      <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html',true);return false;">Privacy</a>
+      <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html',true);return false;">Terms</a>
+      <a href="https://membic.wordpress.com" onclick="window.open('https://membic.wordpress.com');return false;">Blog</a>
+    </div>
   </div>
 </div>
 
-<p>Visit the <a href="https://membic.wordpress.com/">Membic Blog</a> for
-details. </p>
 """
 
 

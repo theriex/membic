@@ -99,6 +99,8 @@ button, .loginbutton, .formbutton, .filesellab {
 #topdiv { position:absolute; left:0px; top:45px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #appspacediv { margin:0px 5px; clear:both; }
+.sitemetalinksdiv { font-size:xx-small; text-align:center; overflow:hidden;
+  word-spacing:35px; padding:20px 0px 0px 0px; }
 #bottomnav { font-size:xx-small; text-align:center; overflow:hidden;
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:30px; width:90%; }
