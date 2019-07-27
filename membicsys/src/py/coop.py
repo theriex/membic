@@ -22,7 +22,6 @@ class Coop(db.Model):
     # non-indexed fields
     description = db.TextProperty()
     picture = db.BlobProperty()
-    top20s = db.TextProperty()      # accumulated top 20 reviews of each type
     founders = db.TextProperty()    #CSV of founding member penids
     moderators = db.TextProperty()  #CSV of moderator member penids
     members = db.TextProperty()     #CSV of regular member penids
@@ -33,7 +32,6 @@ class Coop(db.Model):
     soloset = db.TextProperty()     #JSON settings for solo page display
     keywords = db.TextProperty()    #CSV of custom theme keywords
     preb = db.TextProperty()        #JSON membics for display (from query)
-    preb2 = db.TextProperty()       #JSON membics (overflow from preb)
     
 
 def user_role(userid, coop):

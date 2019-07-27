@@ -8,22 +8,6 @@ import coop
 head = """<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-  <loc>$DOCROOT/docs/HowToAddResourceLinksToYourSite.html</loc>
-  <lastmod>2017-11-07</lastmod>
-</url>
-<url>
-  <loc>$DOCROOT/docs/HowToMakeATheme.html</loc>
-  <lastmod>2017-08-22</lastmod>
-</url>
-<url>
-  <loc>$DOCROOT/docs/HowToWriteAMembic.html</loc>
-  <lastmod>2017-09-18</lastmod>
-</url>
-<url>
-  <loc>$DOCROOT/docs/about.html</loc>
-  <lastmod>2017-11-09</lastmod>
-</url>
-<url>
   <loc>$DOCROOT/docs/privacy.html</loc>
   <lastmod>2017-05-30</lastmod>
 </url>

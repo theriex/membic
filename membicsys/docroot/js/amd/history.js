@@ -78,8 +78,6 @@ return {
         switch(state.view) {
         case "themes":
             return app.themes.display();
-        case "about":
-            return app.layout.displayDoc();
         case "coop":
             return app.coop.bycoopid(state.coopid, "history", state.action);
         case "profile":

@@ -140,8 +140,6 @@ app.layout = (function () {
             //openDialog deals with the y scroll offset as needed.
             app.layout.openDialog(coords, html); }
         else {
-            if(url.indexOf("about.html") >= 0) {
-                jt.byId("infoimg").style.display = "none"; }
             jt.out("contentdiv", html); }
         convertDocLinks();
     }
@@ -412,9 +410,10 @@ return {
 
 
     displayDoc: function (url, overlay) {
-        var html;
-        url = url || "docs/about.html";
-        html = "Fetching " + url + " ...";
+        if(!url) {
+            jt.log("layout.displayDoc no url provided");
+            return; }
+        var html = "Fetching " + url + " ...";
         if(overlay) {
             app.layout.openDialog(null, html); }
         else {
@@ -425,57 +424,10 @@ return {
         url += jt.ts("?cb=", "day");
         jt.request("GET", url, null,
                    function (resp) {
-                       displayDocContent(url, resp, overlay);
-                       app.fork({descr:"slide deck load",
-                                 func:app.layout.loadSlideDecks,
-                                 ms:50}); },
+                       displayDocContent(url, resp, overlay); },
                    function (ignore /*code*/, errtxt) {
                        displayDocContent(url, errtxt, overlay); },
                    jt.semaphore("layout.displayDoc"));
-    },
-
-
-    loadSlideDecks: function () {
-        var modnames = [];
-        if(jt.byId("d3ckitdiv") && decknames && decknames.length) {
-            if(window.d3 === undefined) { //glob var test
-                app.loadScript("loadSlideDecks", 
-                               "js/d3.v3.min.js", 
-                               "d3script"); }
-            if(window.d3ckit === undefined) { //glob var test
-                app.loadScript("loadSlideDecks", 
-                               "js/static/d3ckit.js?v=190726",
-                               "d3ckitscript"); }
-            decknames.forEach(function (deckname) {
-                modnames.push("js/static/" + deckname); });
-            jt.loadAppModules(app, modnames, window.location.href,
-                              app.layout.displaySlideDecks, "?v=190726"); }
-    },
-
-
-    displaySlideDecks: function () {
-        var deckdisp = {divid:"d3ckitdiv", decks:[],
-                        bigArrowPlayColor:"#00af02",
-                        deckStartFunc:app.layout.deckStart,
-                        deckFinishFunc:app.layout.deckFinish};
-        if(window.d3 === undefined ||   //glob var test
-           window.d3ckit === undefined) {   //glob var test
-            return app.fork({descr:"display slide decks",
-                             func:app.layout.displaySlideDecks,
-                             ms:300}); }
-        //everything loaded and stable, set up and go
-        deckdisp.vidw = Math.min((app.winw - 40), 420);
-        jt.byId(deckdisp.divid).style.width = deckdisp.vidw + "px";
-        decknames.forEach(function (deckname) {
-            var deck = app[deckname];
-            var decktextdiv = jt.byId(deckname + "textdiv");
-            deck.deckname = deckname;
-            if(decktextdiv) {  //store text with deck
-                deck.texthtml = decktextdiv.innerHTML;
-                decktextdiv.style.display = "none"; }
-            deckdisp.decks.push(deck); });
-        d3ckit.initDisplay(deckdisp);
-        d3ckit.displayDeck("deckmembic");
     },
 
 

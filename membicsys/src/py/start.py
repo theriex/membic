@@ -87,11 +87,10 @@ indexHTML = """
     </div> <!-- interimcontentdiv -->
   </div> <!-- contentdiv -->
 
-  <div id="bottomnav"> <!-- equivalent links also in docs/about.html -->
+  <div id="bottomnav">
     <div id="bottomstatdiv"></div>
     <a href="docs/terms.html" class="footerlink">TERMS</a>
     <a href="docs/privacy.html" class="footerlink">PRIVACY</a>
-    <span style="word-spacing:5px;"><a href="docs/howto.html" class="footerlink">HOW TO</a></span>
   </div>
 </div>
 

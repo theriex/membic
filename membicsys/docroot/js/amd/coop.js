@@ -17,6 +17,9 @@
 app.coop = (function () {
     "use strict";
 
+    //Fields that need to be deserialized after fetching.
+    var serflds = ["adminlog", "people", "soloset", "preb"];
+
     function followerEmailLinkHTML (mlev) {
         var dst = app.pcd.getDisplayState();
         var subj = "Invitation to follow " + dst.obj.name;
@@ -101,7 +104,7 @@ return {
     updateCoop: function (coop, callok, callfail) {
         var data;
         app.coop.serializeFields(coop);
-        data = jt.objdata(coop, ["preb", "top20s", "revids"]) +
+        data = jt.objdata(coop, ["preb", "revids"]) +
             "&profid=" + app.profile.myProfId();
         app.coop.deserializeFields(coop);  //if update fails or interim use
         jt.call("POST", "ctmdesc?" + app.login.authparams(), data,
@@ -300,26 +303,17 @@ return {
 
 
     serializeFields: function (ctm) {
-        //top20s are maintained and rebuilt by the server, so
-        //serializing is not strictly necessary, but it doesn't hurt.
-        //ditto for adminlog and people
-        if(typeof ctm.top20s === "object") {
-            ctm.top20s = JSON.stringify(ctm.top20s); }
-        if(typeof ctm.adminlog === "object") {
-            ctm.adminlog = JSON.stringify(ctm.adminlog); }
-        if(typeof ctm.people === "object") {
-            ctm.people = JSON.stringify(ctm.people); }
-        if(typeof ctm.soloset === "object") {
-            ctm.soloset = JSON.stringify(ctm.soloset); }
+        //Server-maintained fields are ignored in POST.  They are serialized
+        //here for deserialize symmetry and informative transmission logs.
+        serflds.forEach(function (field) {
+            if(typeof ctm[field] === "object") {
+                ctm[field] = JSON.stringify(ctm[field]); } });
     },
 
 
     deserializeFields: function (ctm) {
-        app.lcs.reconstituteJSONObjectField("top20s", ctm);
-        app.lcs.reconstituteJSONObjectField("adminlog", ctm);
-        app.lcs.reconstituteJSONObjectField("people", ctm);
-        app.lcs.reconstituteJSONObjectField("soloset", ctm);
-        app.lcs.reconstituteJSONObjectField("preb", ctm);
+        serflds.forEach(function (field) {
+            app.lcs.reconstituteJSONObjectField(field, ctm); });
     }
 
 }; //end of returned functions
