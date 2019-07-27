@@ -118,10 +118,6 @@ app.review = (function () {
             mode = mode || (rating.srcrev === "-101" ? "prereview" : "read");
             rating = rating.rating; }
         rat = app.review.starRating(rating);
-        if(mode === "prereview") {
-            return jt.tac2html(
-                ["img", {cla: "starsimg", src: "img/future.png",
-                         title: rat.title, alt: rat.title}]); }
         width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = [];
         html.push(["img", {cla: "starsimg", src: "img/blank.png",
@@ -1059,10 +1055,6 @@ app.review = (function () {
         var imgfile = "img/stars18ptC.png"; 
         var greyfile = "img/stars18ptCg.png";
         var rat = app.review.starRating(crev.rating) || 0;
-        if(crev.srcrev === "-101") {
-            return jt.tac2html(
-                ["img", {cla: "starsimg", src: "img/future.png",
-                         title: rat.title, alt: rat.title}]); }
         var width = Math.floor(rat.step * (starimgw / rat.maxstep));
         var html = [];
         html.push(["img", {cla: "starsimg", src: "img/blank.png",

@@ -356,7 +356,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rddetsdiv { display:inline-block; }
 #rdstfudiv { }
 #rdstarsdiv { display:inline-block; height:35px; }
-#rdfutcbdiv { vertical-align:top; float:right; width:50px; background:url('../img/rdfuture.png'); }
 .rdfindiv { padding:0px 0px 6px 0px; }
 #rdtextdiv { clear:both; padding:5px 0px 0px 0px; }
 #rdta { width:275px; height:80px; padding:3px; overflow:auto;
