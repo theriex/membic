@@ -54,19 +54,11 @@ button, .loginbutton, .formbutton, .filesellab {
                  background-color:#ddd; 
                  border-top-right-radius:10px;
                  border-bottom-right-radius:10px; }
-#topbuttonsdiv { height:50px; vertical-align:top; }
-.topbuttonlink { }
-.topbuttonimg { padding:10px 16px 0px 0px; }
-#topproflinkdiv { }
-.taslinkspan { font-size:small; padding-left:5px; padding-right:10px; }
-#rememberedcountspan { font-size:small; display:inline-block; 
-  position:relative; top:-12px; left:-12px; }
 #toprightdiv { float:right; 
                padding:0px 2px 2px 0px; 
                margin:2px 0px 2px 0px;
                background-image:url('../img/e6e7e9p80.png');
                border-radius:20px; }
-#infosignoutdiv { margin-top:-2px; }
 #loginstatdiv, #formstatdiv, .formstatdiv { font-size:small; }
 #loginstatdiv { text-align:right; }
 #loginstatformdiv { padding:0px 5px; }
@@ -76,7 +68,7 @@ button, .loginbutton, .formbutton, .filesellab {
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
                transition:opacity 1s; 
                padding:2px 0px 5px 0px; }
-.revtypelink, .typeselect, .tablink, .tablinksel { 
+.typeselect, .tablink, .tablinksel { 
   margin:0px 3px; padding:0px 0px 2px 0px;
   background-color:#e6e7e9; opacity:0.8; border-radius:10px; }
 .typeselect { background-color:transparent; }
@@ -85,17 +77,12 @@ button, .loginbutton, .formbutton, .filesellab {
 #headingdivcontent { width:288px; margin:auto; }
 #loadstatusdiv { background-image:url('../img/e6e7e9p80.png'); }
 #sysnoticediv { font-size:small; }
-#sysnoticecontentdiv { padding:10px; background:#ffad51; border-radius:10px; }
 #topnavdiv { background-image:url('../img/e6e7e9p80.png'); font-size:small;
   display:table; margin:0 auto; padding:0px 5px 0px 0px; }
 .navimg { max-height:28px; }
 
 /* >> main display area and contained elements */
-.disptitlediv { padding:0px 0px 5px 5px; background-color:#e6e7e9;
-  font-size:x-small; font-weight:bold; color:#444; border-radius:10px; }
 .collapse { border-collapse:collapse; }
-#centerhdiv { font-size:x-large; font-weight:bold; }
-#centerhdiv { display:table; margin:0px auto; }
 #topdiv { position:absolute; left:0px; top:45px; padding:0px 10px;
   text-align:right; font-size:x-small; }
 #appspacediv { margin:0px 5px; clear:both; }
@@ -105,16 +92,14 @@ button, .loginbutton, .formbutton, .filesellab {
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:30px; width:90%; }
 #bottomstatdiv { height:15px; overflow:hidden; }
-.footerlink, .unselectedTab { background:#789897; 
+.unselectedTab { background:#789897; 
   background:-moz-linear-gradient(left top, #789897 0%, #8cb3b2 100%);
   background:-webkit-linear-gradient(left top, #789897 0%, #8cb3b2 100%); }
-.footerlink { padding:1px 3px; border-radius:3px; }
 #contentdiv { }
 .penfont, .penflist { 
   font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
 .penflist { font-size:medium; }
 .penbutton { padding-right:12px; vertical-align:top; }
-#coophbuttondiv { padding:0px 10px 0px 10px; min-width:20px; }
 #bonkmain { clear:both; padding:10px; background:#ed8f8f; }
 #overlaydiv { position:absolute; left:70px; top:80px; padding: 10px;
   visibility:hidden; background:#ffad51; 
@@ -160,14 +145,10 @@ button, .loginbutton, .formbutton, .filesellab {
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 
 /* >> intro layout */
-#bookslidediv { text-align:center; }
-.bookmarkletlinkdiv { padding:5px 20px; text-align:center; }
 /* padding:4px 2px 0px 2px; makes the "Keywords" entry in the membic
 dialog look ok, but breaks the Email input in the invite dialog. */
-.liflab, .liflabw { font-size:medium; font-weight:normal; text-align:right; 
+.liflab { font-size:medium; font-weight:normal; text-align:right; 
   padding:0px 2px 0px 2px; display:block; float:left; width:80px; }
-.liflabw { width:140px; padding:4px 4px 0px 2px; 
-  font-family:"Shadows Into Light Two", cursive; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
 .lifin { padding:0px; font-size:small; width:145px; }
 .lifsep { clear:both; }
@@ -178,11 +159,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #resetpassdiv { font-size:small; text-align:center; padding:0px 0px 4px 20px; }
 #resetpw { }
 #accountsettingsformdiv { }
-
-/* >> pen layout */
-#createpnintrodiv { font-size:medium; }
-#createpnformdiv { width:300px; }
-#createpndiv, #npaadiv, #nppcdiv { background-image:url('../img/e6e7e9p80.png'); }
 
 /* >> profile/coop display */
 #pcdcontdiv { padding:5px 0px 10px 0px; }
@@ -197,60 +173,29 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #pcdctrldiv { clear:both; }
-#tabsdiv { display:inline-block; }
-#tabsul { }
-#tabsdiv ul { list-style:none; padding:0; margin:0; }
-#tabsdiv ul li { display:inline; 
-  border-top-left-radius:5px; border-top-right-radius:5px;
-  border-top:  1px solid #666;
-  border-left: 1px solid #666;
-  border-right: 1px solid #666;
- }
-#tabsdiv a { padding:2px 12px 0px 12px; }
 .unselectedTab { border-bottom: 1px solid #666; }
-.tabico { width:20px; height:20px; vertical-align:top; }
-#tabtitlediv { border-left: 1px solid #666; padding-left:5px; 
-  font-size:small; }
-#tabtitlediv a { padding:0px; }
 #pcdactdiv { }
 #pcdacsharediv { float:left; }
 #pcdacsrchdiv { display:inline-block; }
 #pcdacemdiv { float:right; }
 #pcdactcontentdiv { font-size:small; text-align:center; padding:0px 5px; 
   background:#e6e7e9; opacity:0.9; border-radius:10px 10px 0px 0px; }
-#pcdsrchindiv {}
 #downloadlink { background-image: url('../img/whitewash.png'); }
-.downloadlinkimg { margin:0px 2px; }
-.dlrssimg { width:11px; height:12px; margin:0px 2px 2px 0px; }
 .dloptseldiv { background-image: url('../img/whitewash.png'); }
-#pcdsrchdiv { padding: 0px 0px 10px 0px; }
 #pcdkeysrchdiv, #pcdtypesrchdiv, #pcdsharediv { 
   background:#e6e7e9; opacity:0.8; clear:both; }
 #pcdtypesrchdiv { opacity:0.9; }
-#fetchmorediv, #arxsidiv, #retrfaildiv, #fetchwaitdiv {
-  margin:-2px 2px 4px 2px; padding:0px 5px;
-  background:#e6e7e9; opacity:0.8; border-radius: 10px; }
-#srchincontdiv { display:inline-block; padding-left:12px; 
-  max-width:80%; max-height:110px; overflow:scroll; vertical-align:middle; }
 .srchkwrbdiv { display:inline-block; width:100px; 
   font-size:small; background-image: url('../img/whitewash.png'); 
   margin:1px; border-radius:6px; overflow:visible; }
 .skbidiv { float:left; }
 .srchkwrbdiv label { display:inline-block; margin:0px; padding:0px; 
   width:48px; overflow:visible; }
-.cooplinkdiv { clear:both; padding: 0px 0px 5px 0px;
-  background:#e6e7e9; opacity:0.9; border-radius:10px; }
-.cooplinkdiv a { margin-left:10px; }
-.pcdtext { clear:both; padding:0px 5px 2px 5px; margin:5px 0px; display:table;
-  background:#e6e7e9; opacity:0.9; border-radius:10px; }
-.pcdtoggle { padding:0px 0px 5px 0px; }
-#findctmdiv, #createctmdiv { font-size:medium; background-color:#f9f9fc; }
+#createctmdiv { font-size:medium; background-color:#f9f9fc; }
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
 .pcdsectiondiv ul { list-style:none; margin:0; padding:0 0 0.5em 1em; }
-.embedexample { padding-left:10px; font-size:medium; }
-.embedexamptitle { font-style:italic; }
 .formline, .memlistdiv { clear:both; font-size:medium; 
   /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
@@ -259,29 +204,15 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .kwcsvspan { font-size:x-small; }
 .kwcsvlabel { font-weight:bold; padding-right:4px; }
 .kwhelpdlg { font-size:small; }
-#followbuttonspan { padding:0px 0px 0px 10px; }
 #memlevspan { font-size:medium; font-weight:bold; padding-left:5px; }
-#calicodiv { display:inline-block; border:1px solid #333; border-radius:4px; margin:1px; width:17px; height:18px; }
-#calicoheaddiv { background:#333; height:5px; }
-#caliconumdiv { text-align:center; font-size:10px; overflow:hidden; }
-#ctmembedta { height:100px; }
 #ctminfoseldiv { display:inline-block; margin-left:20px; width:50px; }
-#meminfoseldiv, #reloaddiv, #statsdiv { display:inline-block; width:50px; }
+#meminfoseldiv, #statsdiv { display:inline-block; width:50px; }
 #settingsinfolinediv { padding-bottom:8px; padding-top:2px; }
 .ctmsetimg, .myinfoimg { vertical-align:middle; }
 .myinfoimg { width:18px; height:18px; margin-right:5px; }
-.permalinkdiv { padding:0px 0px 10px 0px; }
-#shurlspan { font-size:small; font-family:monospace;
-  background-image: url('../img/whitewash.png'); }
 #midispdiv { max-height:200px; overflow:scroll; }
 .adminlogentrydiv { font-size: medium; }
 .logdatestampspan { font-size:small; font-family:monospace; }
-#invitelinkdiv { display:inline-block; margin:4px; padding:2px;
-  background-color: #ffae50;
-  border:1px solid #333; border-radius:4px; }
-.favcntrdiv { text-align:right; font-size:medium; font-weight:bold; 
-  padding:0px 5px 0px 0px; }
-.relatimediv { text-align:right; font-size:small; padding:0px 5px 0px 0px; }
 .memberlistlinediv { margin:0px 0px 5px 0px; }
 .memberlistnamespan { padding-left:5px; }
 .memberlistprofpic { width:50px; }
@@ -292,31 +223,24 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mailindesctable tbody tr td:nth-child(even) { text-align:left; }
 
 /* >> profile layout */
-.reviewbadge, .reviewbadgesel, .reviewbadgedis { 
+.reviewbadge, .reviewbadgesel { 
   width:30px; height:30px; vertical-align:middle; }
 .reviewbadgesel { background:#ffae50; border-radius:8px; 
   background:-moz-linear-gradient(left top, #ffae50 0%, #ffceb0 100%);
   background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
-.reviewbadgedis { opacity:0.3; filter:alpha(opacity=30); }
-#shouteditbox, .shoutout { text-align:left;
+#shouteditbox { text-align:left;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
-.shoutout { width:160px; min-height:100px; }
 .headingtxt { font-size:large; font-weight:bold; text-align:center; }
 .bumpedupwards { margin-top:-18px; margin-bottom:6px; }
 .revtitle { font-size:large; font-weight:bold; }
-.revauthor { font-size:large; font-style:italic; }
 .secondaryfield { font-style:italic; }
 .revimg, .revimgdis { max-width:125px; max-height:80px; }
 .profimgdis { max-width:125px; max-height:125px; }
 .revimgdis, .profimgdis { opacity:0.3; filter:alpha(opacity=30); }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none; }
-.rsslinkimg { width:15px; height:15px; vertical-align:middle; border:none; 
-  margin-top:-4px; }
 .buttondiv { padding:0px 5px; font-size:large; }
-.sharebuttondiv { display:inline; }  /* see shareico for padding */
 .starsimg { vertical-align:middle; }
-.leftspacelink { padding-left:10px; }
 
 /* >> coop layout */
 .tdnarrow { width:5%; padding:0px 5px 0px 0px; }
@@ -326,13 +250,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .inlinebuttonsdiv button { margin:0px 10px; }
 .dlgta { width:260px; height:80px; padding:5px 2px; overflow:auto; }
 .dlgpara { width:260px; font-size:small; }
-#rssurlta { height:40px; }
 #uploadbuttonsdiv { text-align:center; padding:0px 0px 5px 0px; }
-.searchbuttondiv { margin:0px 0px 0px 40px; }
 .inlineimg { vertical-align:middle; padding:0px 4px; }
 .setpldlgmspan { font-weight:bold; }
 .setpldlgta { width:90%; padding:10px 5px 0px 5px; margin:10px 0px 5px 0px; }
-#fetchmorediv { font-size:medium; padding:0px 0px 5px 10px; }
 #dloptseltitlediv { font-size:large; font-weight:bold; text-align:center; }
 .dloptseldiv { min-width:100px; padding:10px 10px 2px 2px; }
 .dlformatlabel { font-size:medium; padding-left:10px; }
@@ -349,12 +270,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rdkeyindiv { padding:0px 0px 10px 0px; }
 #rdacdiv { float:right; width:50px; background:url('../img/rdaclab.png'); }
 #rdaccb { margin:0px 0px 0px 5px; }
-#rdaccblab { font-size:xx-small; width:50px; }
 #rdpfdiv { padding:0px 0px 5px 0px; }
 #rdpicdiv { float:left; margin:0px 5px 0px 0px; width:125px; height:125px; 
   cursor:pointer; overflow:hidden; }
-#rddetsdiv { display:inline-block; }
-#rdstfudiv { }
 #rdstarsdiv { display:inline-block; height:35px; }
 .rdfindiv { padding:0px 0px 6px 0px; }
 #rdtextdiv { clear:both; padding:5px 0px 0px 0px; }
@@ -371,7 +289,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rdokstatdiv { color:red; }
 #revautodiv { clear:both; font-size:small; width:275px; }
 #revautodiv ul { list-style-image:url('../img/acbullet.png'); }
-#revmodifieddiv { padding:0px 0px 0px 10px; }
 #modalseparatordiv { position:absolute; left:0px; top:0px; 
   background-color:#666666; opacity:0.3; filter:alpha(opacity=30); }
 #revpicdlgdiv { width:220px; }
@@ -389,12 +306,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #ptdfdiv { padding:5px; }
 #ptduploadbuttonsdiv { text-align:center; padding:15px 0px 5px 0px; }
 #pdtfbuttondiv { padding:10px 0px 5px 0px; }
-.directionstextdiv { text-align:center; font-size:small; }
 #rdokdiv { clear:both; }
 .revedimg { max-height:28px; padding:0px 0px 0px 16px; }
 
 /* >> activity layout */
-#feedrevsdiv { padding:0px 0px 50px 0px; }
 .fpcontdiv { margin:0px 0px 8px 0px; padding:0; }
 .fpdiv { clear:both; padding:0; margin:0; min-height:100px;
          background-color:#e6e7e9; opacity:0.98; border-radius:10px; }
@@ -402,25 +317,16 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   overflow:hidden; float:left; padding-top:20px; }
 .fpprofdivsp { margin-right:5px; padding:0; max-height:50px; }
 .fpprofpic { max-width:50px; max-height:60px; vertical-align:middle; }
-.feedprefimg { width:16px; height:16px; padding: 2px; }
-.fpprefstatdiv { height:20px; font-size:12px; text-align:center; }
 .fparevdiv { }  /* had a left margin to accomodate author, now inline */
 .fpnarevdiv { }
-.fpinrevdiv, .fpmeminrevdiv { margin:0px 0px 0px 5px; }
+.fpinrevdiv { margin:0px 0px 0px 5px; }
 .fpinrevdiv { background-image:url('../img/bleachscrub.png');
     border-top-right-radius:10px; border-bottom-right-radius:10px; 
     position:relative; }
-.fpmeminrevdiv { background-color:#ffbe74; }
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
 .fprevpicdiv, .notimgdiv { float:left; padding:0px 10px 0px 3px; }
 .noticeimg { height:40px; }
 .noticediv { clear:both; min-height:40px; opacity:0.8; }
-.fpbuttonsdiv { margin-left:40px; padding-top:2px; }
-.fpbuttondiv { display:inline-block; margin:0px 10px; text-align:center; 
-  min-width:40px; min-height:30px; }
-.fpotherrevsdiv { display:inline-block; }
-.fpbuttonimg { max-height:40px; max-width:40px; vertical-align:middle; }
-.fpotherrevsdiv { }
 .fptitlediv { display:inline-block; padding:0px 10px 0px 5px; }
 .fpstarsdiv { display:inline-block; }
 .fpauthpicdiv { float:right; }
@@ -432,112 +338,20 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpqoverdiv { position:absolute; top:0px; left:40px; 
   background-image:url('../img/bleachscrub.png');
   font-style:italic; font-size:medium; font-weight:bold; }
-.fpdescrdiv, .fpdescrfadediv, .fpkeywrdsdiv, .fpctmsdiv { 
+.fpdescrdiv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 2px 10px 0px 2px;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }
-.fpdescrfadediv { opacity:0.2; }
 .fpctmlinkslab { font-style:italic; }
 .fpkeywrdsdiv { font-style:italic; }
-.fpjumpdiv { display:inline-block; padding: 0px 0px 0px 5px; }
 .togglemoretextspan { background:#ccc; }
-.fpinlinetextdiv { font-size:small; }
-#preflist { list-style:none; padding:0px 0px 0px 4px; margin:0; }
-.visprefimg { width:24px; height:24px; margin:0px 4px; }
-.visprefimgprof { width:30px; height:30px; margin:0px 4px 0px 10px; }
-.visprefnamespan { font-weight:bold; font-size:small; }
-.visprefdescrspan { padding-left:5px; font-size:small; }
-.visprefsuppdiv { padding-left:30px; font-size:small; }
-.themesdiv { }
-.themetilewrapper, .proftilewrapper { display:inline-block; 
-  margin:5px; padding:5px; border:1px solid #ccc;
-  background:#fff; vertical-align:top; }
-.themetilewrapper { box-shadow:5px 5px 3px #333; border-radius:10px; }
-.proftilewrapper { box-shadow:5px 5px 3px #888888; border-radius:5px; }
-.themetile, .proftile { margin:auto; }
-.themetilepicdiv { max-width:125px; max-height:125px; }
-.proftilepicdiv { max-width:60px; max-height:60px; }
-.themetiletitlediv, .proftiletitlediv { text-align:center;
-  font-family:"Shadows Into Light Two", cursive; }
-.themetiletitlediv { max-width:125px; }
-.proftiletitlediv { max-width:80px; font-size:small; }
-.themetilecountdiv { display:none; text-align:center; font-size:x-small; }
-.tilemstatdiv { text-align:center; font-size:x-small; background:#ffdab1;
-  border-radius:5px; padding-bottom:1px; margin:-4px 0px 2px 0px; }
 #membicliststatusdiv { background:#e6e7e9; opacity:0.8; border-radius:10px; }
 
 /* >> docs layout */
-.superscript { vertical-align:super; font-size:50%; line-height:normal; }
-.quotediv { font-size:small; padding:0px 0px 5px 5px; font-style:italic; }
-.aboutcontentdiv { text-align:center; }
-#aboutoverviewdiv { padding:5px; font-size:large; text-align:left;
-  display:inline-block; min-width:280px; /* small phone */
-  background-image:url('../img/e6e7e9p80.png');
-  border:10px solid #ffbe74; border-radius:10px; }
-.aboutdetailsheading { font-size:medium; font-weight:normal; font-style:italic; }
-#d3ckitdiv { position:relative; background-color:#fff; opacity:0.8; }
-#freedetdiv { font-size:medium; font-weight:normal; font-style:normal; }
-.aboutstatementsdiv, .aboutenddiv { margin:10px auto;
-  padding:0px 10px; font-size:small; text-align:left;
-  background-image:url('../img/e6e7e9p80.png'); border-radius:10px; }
-.aboutstatementsdiv { display:inline-block; }
-.aboutenddiv { max-width:420px; }
-.arrowul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
-  list-style-image: url('../img/arrow12right.png'); }
-.arrowul li { font-size:medium; margin:10px 0px 0px 0px;
-  padding:0px 0px 0px 5px;
-  background:#e6e7e9; opacity:0.8; border-radius:10px; }
-.nobulletul { list-style:none; margin:0px 4px; padding:0px 10px 2px; 10px; }
-.nobulletul li { font-size:medium; margin:8px 0px;
-  padding:2px 2px 2px 5px;
-  background:#e6e7e9; opacity:0.8; border-radius:10px; }
-.toplinediv { padding:5px 0px 0px 0px; }
-#aboutbottomdiv { font-size:xx-small; text-align:center; word-spacing:30px;
-  padding:0; max-width:420px; margin:auto; }
-.slidestextspan { font-size:small; display:none; }
-.decktextdiv { background-image: url('../img/bleachscrub.png');
-  padding:5px; margin:10px; height:213px; overflow:scroll; 
-  font-size:medium; }
-.decktextdiv ol { margin:0px; padding:0px 0px 0px 20px; }
-.decktextdiv ol li { margin:0px; padding:2px 2px 0px 0px; }
-.decktextdiv ul { margin:0px; padding:0px 0px 0px 20px; }
-.decktextdiv ul li { margin:0px; padding:5px 2px 0px 5px; }
-.decktextdiv p { margin:0px; padding:10px 0px 0px 0px; }
-.aboutfeaturespan { font-weight:bold; }
-#aboutfeaturesdiv, #aboutfaqdiv {}
-.aboutdetaildiv { display:none; padding:5px 0px; }
-#aboutcoopsdiv { display:none; padding:5px 0px; }
-.intxtico { width:18px; height:18px; }
-.howtocontentdiv { padding:10px; font-size:medium; }
-.howtocontentdiv ol li { padding:5px 0px; min-height:30px; }
-.tocdiv ul { margin:0px 0px 0px 4px; padding:0px 0px 0px 20px; 
-  list-style-image: url('../img/arrow12right.png'); }
-.tocdiv ul li { font-size:medium; padding:10px 0px 0px 0px; }
-.detailheadingspan {}
-.detailcontentdiv { font-size:small; padding: 10px; display:none; }
 .defcontentsdiv { display:table; margin:auto; padding:20px; }
 .defcontentinnerdiv { border:5px solid black; padding:20px;
   background-image:url('../img/e6e7e9p80.png'); }
 .defsyllabicdiv { font-weight:bold; }
 .defpartofspeachdiv { font-style:italic; font-size:medium; padding:5px; }
-
-.hthimg { width:30px; height:30px; vertical-align:middle; }
-.ilximg { max-width:25px; max-height:25px; vertical-align:middle; }
-.itximg { max-width:20px; max-height:20px; vertical-align:middle; }
-.isximg { max-width:15px; max-height:15px; vertical-align:middle; }
-.lititlespan { font-weight:bold; font-style:oblique; }
-
-.rectbb { fill:#ffd2a4; stroke:#271400; cursor:pointer; }
-.rectbt { cursor:pointer; }
-
-.waitdiv { background:#e6e7e9; opacity:0.8; border-radius:10px; }
-
-
-/* >> stats page layout */
-.statsecdiv { font-size:small; margin:20px 0px 0px 20px; }
-.statseclist { font-size:medium; margin:0px; }
-.statseclist li { font-size:small; padding:2px 0px; }
-.statblockul { list-style:none; padding:0px 0px 0px 4px; margin:0; }
-.statidul { list-style:none; padding:0px 0px 0px 8px; margin:0; }
 
 /* >> themes page layout */
 .tplinkdiv { background-image:url('../img/e6e7e9p80.png'); clear:both; 
