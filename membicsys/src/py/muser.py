@@ -12,6 +12,7 @@ import string
 import random
 import os
 import urllib
+import base64
 
 # coops: {"coopid":info, "coopid2":info2, ...}
 #  info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
