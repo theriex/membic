@@ -733,7 +733,7 @@ return {
             return; }
         loginstat("Sending...");
         var data = "emailin=" + jt.enc(emaddr);
-        jt.call("POST", "mailcred", data,
+        jt.call("POST", "mailpwr", data,
                 function (ignore /*objs*/) {
                     loginstat("");
                     displayEmailSent(); },
