@@ -170,7 +170,7 @@ app.profile = (function () {
         prof.preb.forEach(function (rev) {
             var kwds = rev.keywords || "";
             kwds.csvarray().forEach(function (kwd) {
-                var keycsv = kwu.recent[rev.revtype];
+                var keycsv = kwu.recent[rev.revtype] || "";
                 if(!keycsv.csvcontains(kwd)) {
                     keycsv = keycsv.csvappend(kwd);
                     kwu.recent[rev.revtype] = keycsv; } }); });
