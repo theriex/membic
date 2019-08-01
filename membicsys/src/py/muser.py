@@ -438,7 +438,7 @@ class MailPasswordReset(webapp2.RequestHandler):
                 muser = musers[0]
                 content += "Use this link to access your profile, then change "
                 content += "your password in the settings: "
-                content += "https://www.membic.org?view=profile"
+                content += "https://membic.org?view=profile"
                 content += "&an=" + eaddr + "&at=" + token_for_user(muser)
                 content += "\n\n"
             else:
@@ -446,7 +446,7 @@ class MailPasswordReset(webapp2.RequestHandler):
                 content += eaddr + "\n"
                 content += "Either you have not signed up yet, or you used "
                 content += "a different email address.  To create a profile "
-                content += "visit https://www.membic.org\n\n"
+                content += "visit https://membic.org\n\n"
             subj = "Membic.org profile password reset"
             mailgun_send(self, eaddr, subj, content)
         morutil.srvJSON(self, "[]")

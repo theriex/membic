@@ -20,46 +20,6 @@ app.coop = (function () {
     //Fields that need to be deserialized after fetching.
     var serflds = ["adminlog", "people", "soloset", "preb"];
 
-    function followerEmailLinkHTML (mlev) {
-        var dst = app.pcd.getDisplayState();
-        var subj = "Invitation to follow " + dst.obj.name;
-        var involv = "I've found";
-        if(mlev) {
-            involv = "I'm writing"; }
-        var body = "Hi,\n\n" +
-            involv + " a theme on membic.org called \"" + dst.obj.name + "\", that I thought you might be interested in. If you join membic.org, you can follow for easy access to the latest and greatest posts. Check out the theme at\n\n" +
-            app.secsvr + "?view=coop&coopid=" + dst.id + "\n\n" +
-            "Hope you like it!\n\n";
-        var link = "mailto:?subject=" + jt.dquotenc(subj) +
-            "&body=" + jt.dquotenc(body);
-        var html = ["a", {href:link},
-                    [["img", {src:"img/email.png", cla:"inlineimg"}],
-                     ["span", {cla:"emlinktext"},
-                      "Invite"]]];
-        return html;
-    }
-
-
-    function emailInviteLinkHTML (emaddr) {
-        var dst = app.pcd.getDisplayState();
-        var subj = "Invitation to join " + dst.obj.name;
-        var body = "Hi,\n\n" +
-            "I'm writing a cooperative theme on membic.org called \"" + dst.obj.name + "\", and I would like to invite you to join me as a contributing member. I value your thoughts and knowledge, and I think our combined membics would be useful to us and other people. You can check out the theme at\n\n" +
-            app.secsvr + "/t/" + dst.id + "\n\n" +
-            "I've approved your membership, and you should already have received an acceptance link and any other needed account information from " + app.suppemail + ". If you can't find that, use the \"reset password\" link on the login form to get in. I'm guessing you probably have some membics you could write just from recent memory, it would be awesome to see those included.\n\n" +
-            "A membic is a link plus a reason why it is memorable. \"" + dst.obj.name + "\" is a collaborative memory space where we control membership and all posted membics. My hope is this will grow into a highly useful resource for us and for others interested what we choose to post. For more info, go to https://www.membic.org\n\n" +
-            "Looking forward to building \"" + dst.obj.name + "\" with you!\n\n" +
-            "thanks,\n\n";
-        var link = "mailto:" + emaddr + "?subject=" + jt.dquotenc(subj) + 
-            "&body=" + jt.dquotenc(body);
-        var html = ["a", {href:link},
-                    [["img", {src:"img/email.png", cla:"inlineimg"}],
-                     ["span", {cla:"emlinktext"},
-                      "Send Invitation"]]];
-        return html;
-    }
-
-
     function historyCheckpointIfNeeded (coop) {
         //when creating a new theme, the history state will not have
         //been checkpointed because there was no id yet.
@@ -117,61 +77,6 @@ return {
                 app.failf(function (code, errtxt) {
                     callfail(code, errtxt); }),
                 jt.semaphore("coop.updateCoop"));
-    },
-
-
-    showInviteDialog: function (mlev, inviteobj) {
-        var email = ""; var action; var html = [];
-        //action is either the db update button or sending mail
-        if(!inviteobj) {
-            action = ["button", {type: "button", id: "memapprovebutton",
-                                 onclick: jt.fs("app.coop.updateInvite(" + 
-                                                mlev + ")")},
-                      "Pre-Approve Membership"]; }
-        else {
-            email = inviteobj.email;
-            action = emailInviteLinkHTML(inviteobj.email); }
-        html.push(["div", {cla: "pcdsectiondiv"},
-                  [["h4", "Invite Follower"],
-                   ["p", {cla: "dlgpara"},
-                    "To invite someone to follow <em>" + app.pcd.getDisplayState().obj.name + "</em>, send them a mail message with the theme name and link."],
-                   ["div", {cla: "dlgbuttonsdiv", id: "invitefollowdiv"},
-                    followerEmailLinkHTML(mlev)]]]);
-        if(mlev >= 2) { //Founder
-            html.push(["div", {cla: "pcdsectiondiv"},
-                       [["h4", "Invite Member"],
-                        ["p", {cla: "dlgpara"}, 
-                         "To invite someone as a contributing member, pre-approve their membership and then send them a mail message."],
-                        ["div", {cla: "formline"},
-                         [["label", {fo: "emailin", cla: "liflab"}, "Email"],
-                          ["input", {id: "emailin", cla: "lifin", type: "email",
-                                     value: email, disabled: jt.toru(inviteobj),
-                                     placeholder: "user@example.com"}]]],
-                        ["div", {id: "errmsgdiv", cla: "dlgpara"}],
-                        ["div", {cla: "dlgbuttonsdiv", id: "invitebuttondiv"},
-                         action]]]); }
-        html = ["div", {id: "coopinvitedlgdiv"}, html];
-        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html));
-    },
-
-
-    updateInvite: function (mlev) {
-        var email = jt.byId("emailin").value;
-        if(!jt.isProbablyEmail(email)) {
-            return; }
-        var buttonhtml = jt.byId("invitebuttondiv").innerHTML;
-        jt.out("invitebuttondiv", "Approving Membership...");
-        jt.byId("emailin").disabled = true;
-        var data = "profid=" + app.profile.myProfId() + "&email=" + email +
-            "&coopid=" + app.pcd.getDisplayState().id;
-        jt.call("POST", "invitebymail?" + app.login.authparams(), data,
-                function (invites) {
-                    app.coop.showInviteDialog(mlev, invites[0]); },
-                app.failf(function (code, errtxt) {
-                    jt.out("errmsgdiv", "Invite failed " + code + 
-                           ": " + errtxt);
-                    jt.out("invitebuttondiv", buttonhtml); }),
-                jt.semaphore("coop.updateInvite"));
     },
 
 
