@@ -473,6 +473,7 @@ class UpdateAccount(webapp2.RequestHandler):
         # retrieve updated version so subsequent calls get latest
         muser = MUser.get_by_id(muser.key().id())
         cache_hashtag(muser)
+        memcache.set("activecontent", "")  # force theme/profile refetch
         token = token_for_user(muser)
         morutil.srvJSON(self, "[" + safe_json(muser, "personal") + "]");
 

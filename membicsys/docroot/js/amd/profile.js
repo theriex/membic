@@ -70,6 +70,7 @@ app.profile = (function () {
                     updp = profs[0];
                     app.lcs.put("profile", updp);
                     app.login.setAuth(updp.email, updp.token);
+                    app.lcs.uncache("activetps", "411");
                     if(succf) {
                         succf(updp); } },
                 function (code, errtxt) {
