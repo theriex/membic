@@ -70,18 +70,18 @@ app.themes = (function () {
 
 
     function headerLineExampleHTML () {
-        var exs = [{ext:"Site&nbsp;feed",
+        var exs = [{ext:"Site",
                     exus:["https://epinova.com/?view=news",
                           "https://klsuyemoto.net/index.html?sd=html&fn=links.html"],
-                    bt:"add a reading page",
-                    bu:"https://membic.wordpress.com/2017/03/16/using-a-membic-theme-for-references-on-your-website/"},
-                   {ext:"Blog&nbsp;feed",
+                    bt:"Add a reading page",
+                    bu:"https://membic.wordpress.com/2019/08/02/adding-a-reading-page-to-your-site/"},
+                   {ext:"Blog",
                     exus:["https://theriex.wordpress.com/"],
-                    bt:"add a blog feed",
+                    bt:"Connect a blog feed",
                     bu:"https://membic.wordpress.com"}, //Needs a good article!
-                   {ext:"Social&nbsp;feed",
+                   {ext:"Social",
                     exus:["https://twitter.com/theriex"],
-                    bt:"connect social media",
+                    bt:"Post to social media",
                     bu:"https://membic.wordpress.com/2017/01/23/connecting-membic-to-hootsuite/"}];
         var html = [];
         exs.forEach(function (ex) {
@@ -94,10 +94,10 @@ app.themes = (function () {
                               onclick:jt.fs("window.open('" + ex.bu + "')")},
                         ex.bt]]]]); });
         html = [["table", {cla:"thlextable"},
-                 [["thead", ["tr", [["th", "examples"], ["th", "how to"]]]],
+                 [["thead", ["tr", [["th", "sample"], ["th", "how to"]]]],
                   ["tbody", html]]],
                 ["div", {cla:"thlhelpdiv"},
-                 ["For help setting up, or listing your site in the examples, ",
+                 ["For help setting up, or listing your site in the samples, ",
                   ["a", {href:"mailto:eric@" + app.profdev + "?subject=" +
                          jt.dquotenc("Help with membic feeds")},
                    "email Eric"]]]];

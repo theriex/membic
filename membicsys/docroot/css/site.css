@@ -364,10 +364,11 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .tplinknamespan { margin-right:5px; }
 .thlexdiv { font-size:medium; }
 /* FF thinks th values should be bold, no matter what you say here. */
-.thlextable, .thlhelpdiv { margin:0 auto 0 10%; }
-.thlextable thead { font-size:small; font-style:italic; opacity:0.5; }
-.thlextable tbody tr td { text-align:center; }
-.thlextable tbody tr td:nth-child(odd) { padding-right:10px; }
+.thlextable, .thlhelpdiv { margin:0 auto 0 7%; }
+.thlextable thead { font-size:small; font-style:italic; opacity:0.5; 
+  text-align:left; }
+.thlextable tbody tr td { text-align:left; }
+.thlextable tbody tr td:nth-child(odd) { padding-right:30px; }
 .thlextable tbody tr td:nth-child(even) { text-align:left; }
 .thlhelpdiv { font-size:small; padding-bottom:7px; display:table }
 .moreinfospan { font-size:small; padding-left:20px; }
