@@ -21,6 +21,7 @@ app.review = (function () {
     var starimgh = 15;
     var starPointingActive = false;  //true if star sliding active
     var monitor = null;
+    var ratingDefaultValue = 60;
     //The last value used for autocomplete checking
     var autocomptxt = "";
     var gautosvc = null;
@@ -952,7 +953,7 @@ app.review = (function () {
         jt.setInstId(review, undefined);
         review.penid = app.profile.myProfId();
         review.ctmid = 0;
-        review.rating = 0;
+        review.rating = ratingDefaultValue;
         review.srcrev = srcrevId;
         review.modified = now;
         review.modhist = "";
@@ -1054,7 +1055,7 @@ app.review = (function () {
     function dlgStarsHTML () {
         var imgfile = "img/stars18ptC.png"; 
         var greyfile = "img/stars18ptCg.png";
-        var rat = app.review.starRating(crev.rating) || 0;
+        var rat = app.review.starRating(crev.rating);
         var width = Math.floor(rat.step * (starimgw / rat.maxstep));
         var html = [];
         html.push(["img", {cla: "starsimg", src: "img/blank.png",
@@ -1814,7 +1815,7 @@ return {
         if(typeof rating === "string") { 
             rating = parseInt(rating, 10); }
         if(!rating || typeof rating !== "number" || rating < 0) { 
-            rating = 0; }
+            rating = ratingDefaultValue; }
         if(rating > 93) {  //compensate for floored math (number by feel)
             rating = 100; }
         var step = Math.floor((rating * (starTitles.length - 1)) / 100);
