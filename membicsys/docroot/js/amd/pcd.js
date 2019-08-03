@@ -1295,7 +1295,7 @@ app.pcd = (function () {
         if(!cmd || app.solopage()) {
             return; }
         if(!app.login.isLoggedIn()) {
-            jt.err("You need to sign in or create an account to " + cmd);
+            jt.log(cmd + " command not available unless signed in.");
             return; }
         if(cmd === "Settings") {
             return app.pcd.settings(); }
