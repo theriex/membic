@@ -6,6 +6,7 @@ app.themes = (function () {
 
     var mdefhtml = "";
     var tps = null;
+    var atfs = "";  //activetps fetch time stamp
 
 
     function initVars () {
@@ -13,9 +14,11 @@ app.themes = (function () {
         if(!mdefhtml && defdiv) {
             mdefhtml = defdiv.innerHTML; }
         tps = null;  //reset local cached array each time to use latest
+        atfs = "";
         var atr = app.lcs.getRef("activetps", "411");
         if(atr.activetps) {  //have cached recent
             //jt.log("using cached activetps");
+            atfs = atr.activetps.modified.replace(/[\-:]/g,"");  //friendlier
             tps = atr.activetps.jtps; }
         else {  //no recent, go get it
             //jt.log("fetching activetps");
@@ -166,16 +169,25 @@ app.themes = (function () {
     }
 
 
+    function imageSourceForListing (tp) {
+        var imgsrc = "img/blank.png";
+        if(tp.pic) {
+            if(tp.obtype === "theme") {
+                imgsrc = "ctmpic?coopid=" + tp.instid; }
+            else if(tp.obtype === "profile") {
+                imgsrc = "profpic?profileid=" + tp.instid; }
+            //Add a cache bust for the img source in case a new image was
+            //uploaded and the activetps refetched.  Otherwise stale.
+            if(atfs) {
+                imgsrc += "&cb=" + atfs; } }
+        return imgsrc;
+    }
+
+
     function writeContent () {
         var html = [];
         html.push(themesHeadingLineHTML());
         decorateAndSort().forEach(function (tp) {
-            var imgsrc = "img/blank.png";
-            if(tp.pic) {
-                if(tp.obtype === "theme") {
-                    imgsrc = "ctmpic?coopid=" + tp.instid; }
-                else if(tp.obtype === "profile") {
-                    imgsrc = "profpic?profileid=" + tp.instid; } }
             var ocparams = "'" + tp.obtype + "','" + tp.instid + "'";
             var oc = jt.fs("app.themes.show(" + ocparams + ")");
             var mc = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
@@ -183,7 +195,8 @@ app.themes = (function () {
             html.push(["div", {cla:"tplinkdiv", id:"tplinkdiv" + tp.instid},
                        [["div", {cla:"tplinkpicdiv"},
                          [["a", {href:link, onclick:oc},
-                           ["img", {src:imgsrc, cla:"tplinkpicimg"}]],
+                           ["img", {src:imageSourceForListing(tp), 
+                                    cla:"tplinkpicimg"}]],
                           ["a", {href:link, onclick:mc, cla:"tpmemlink"},
                            ["img", {src:imgForAssocLev(tp), 
                                     cla:"tplinkmemimg"}]]]],

@@ -8,6 +8,7 @@ from cacheman import *  # cached_* VizQuery
 from Crypto.Hash import HMAC, SHA512
 import consvc
 import morutil
+import coop
 import string
 import random
 import os

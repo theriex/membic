@@ -566,7 +566,7 @@ app.pcd = (function () {
                               id:"picuploadform"},
                      [jt.paramsToFormInputs(app.login.authparams()),
                       jt.paramsToFormInputs("picfor=" + dst.type + 
-                                            "&instid" + dst.obj.instid),
+                                            "&instid=" + dst.obj.instid),
                       ["div", {cla:"ptddiv"},
                        [["img", {id:"upldpicimg", cla:"profimgdis",
                                  src:pinf.src}],
@@ -581,8 +581,8 @@ app.pcd = (function () {
                              ["input", {type:"submit", cla:"formbutton",
                                         style:"visibility:hidden;",
                                         onclick:jt.fs("app.pcd.upsub()"),
-                                        id:"upldsub", value:"Upload"}]]]]]],
-                        ["div", {id:"imgupstatdiv", cla:"formstatdiv"}]]]]],
+                                        id:"upldsub", value:"Upload"}]]]],
+                          ["div", {id:"imgupstatdiv", cla:"formstatdiv"}]]]]]]],
                     ["iframe", {id:"tgif", name:"tgif", src:"/picupload",
                                 style:"display:none"}]];
         return html;
@@ -1680,9 +1680,13 @@ return {
                     dst.obj[defs.picfield] = dst.id;
                     dst.obj.modified = txt.slice(mtag.length);
                     app.layout.cancelOverlay();
+                    app.lcs.uncache("activetps", "411");  //refresh imgsrc cb
                     app.pcd.display(dst.type, dst.id);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
+                    var upldbutton = jt.byId("upldsub");
+                    upldbutton.disabled = false;
+                    upldbutton.value = "Upload";
                     jt.out("imgupstatdiv", txt); } }
             app.fork({descr:"monitor pic upload",
                       func:app.pcd.monitorPicUpload,
