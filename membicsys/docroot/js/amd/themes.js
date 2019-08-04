@@ -80,8 +80,8 @@ app.themes = (function () {
                     bu:"https://membic.wordpress.com/2019/08/02/adding-a-reading-page-to-your-site/"},
                    {ext:"Blog",
                     exus:["https://theriex.wordpress.com/"],
-                    bt:"Connect a blog feed",
-                    bu:"https://membic.wordpress.com"}, //Needs a good article!
+                    bt:"Feed your blog",
+                    bu:"https://membic.wordpress.com/2019/08/03/feed-your-blog/"},
                    {ext:"Social",
                     exus:["https://twitter.com/theriex"],
                     bt:"Post to social media",
