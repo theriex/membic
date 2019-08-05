@@ -100,7 +100,7 @@ app.themes = (function () {
                  [["thead", ["tr", [["th", "sample"], ["th", "how to"]]]],
                   ["tbody", html]]],
                 ["div", {cla:"thlhelpdiv"},
-                 ["For help setting up, or listing your site in the samples, ",
+                 ["To list your site in these samples, or get help setting up, ",
                   ["a", {href:"mailto:eric@" + app.profdev + "?subject=" +
                          jt.dquotenc("Help with membic feeds")},
                    "email Eric"]]]];
@@ -121,7 +121,7 @@ app.themes = (function () {
               ["span", {id:"thlsmspan"}],
               ["div", {id:"thlexdiv"}]]]]];
         if(app.login.isLoggedIn()) {
-            var blogurl = "https://membic.wordpress.com/2018/12/08/multi-author-link-microblog-example/";
+            var blogurl = "https://membic.wordpress.com/2019/08/05/when-to-make-a-membic-theme/";
             html = ["div", {cla:"tplinkdiv", style:"min-height:30px;"}, [
                 ["div", {cla:"tplinkpicdiv"},
                  ["img", {src:"img/plus.png", style:"max-height:30px;"}]],
@@ -132,13 +132,13 @@ app.themes = (function () {
                   ["span", {cla:"moreinfospan"},
                    ["a", {href:"#moreinfo",
                           onclick:jt.fs("app.toggledivdisp('moreinfodiv')")},
-                    "more info..."]],
+                    "more info"]],
                   ["div", {id:"moreinfodiv", style:"display:none;"},
-                   ["Read more about ",
-                    ["a", {href:blogurl,
+                   [["a", {href:blogurl,
                            onclick:jt.fs("window.open('" + blogurl + "')")},
-                     "creating a Membic Theme"],
-                    " and how to connect it.",
+                     "Read when and why you might want to create a theme"],
+                    ["div", {cla:"thlhelpdiv"},
+                     "Connect your membic feeds:"],
                     ["div", {id:"thlexdiv"}, headerLineExampleHTML()]]]]]]]; }
         return jt.tac2html(html);
     }
