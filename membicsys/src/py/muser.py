@@ -16,6 +16,13 @@ import urllib
 import httplib
 import base64
 
+# cliset: {flags:{archived:ISO},
+#          embcolors:{link:"#84521a", hover:"#a05705"},
+#          maxPostsPerDay:1,
+#          ctkeys:{book:"keyword1, keyword2...",
+#                  movie:"keyword4, keyword2...",
+#                  ...} }
+#
 # coops: {"coopid":info, "coopid2":info2, ...}
 #  info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
 #         picture:idstr, keywords:CSV, inactive:str, 
@@ -28,7 +35,6 @@ import base64
 #             status:"pending"|"rejected", reason}
 # The coops data is cached supplemental data, not authoritative.
 # See coop.py process_membership, profile.js verifyMembership
-
 class MUser(db.Model):
     """ Membic User account, authentication and data """
     # private auth and setup, see safe_json
@@ -44,7 +50,7 @@ class MUser(db.Model):
     aboutme = db.TextProperty()     # optional description, links to site etc
     hashtag = db.StringProperty()   # personal theme direct access
     profpic = db.BlobProperty()     # used for theme, and coop posts
-    settings = db.TextProperty()    # JSON: skin, keys, alt mail-in addrs
+    cliset = db.TextProperty()      # JSON dict of client settings, see note
     coops = db.TextProperty()       # JSON coopid map, see note
     created = db.StringProperty()   # isodate
     modified = db.StringProperty()  # isodate
@@ -275,7 +281,7 @@ def verify_valid_unique_hashtag(handler, dbobj):
             return False
         return True  # cached current object with hashtag so probably ok
     # not cached, look for matching Coop or MUser
-    if (not verify_hashtag_db(handler, dbobj, Coop) or
+    if (not verify_hashtag_db(handler, dbobj, coop.Coop) or
         not verify_hashtag_db(handler, dbobj, MUser)):
         morutil.srverr(handler, 400, "Hashtag already used by someone else.")
         return False
@@ -305,7 +311,7 @@ def update_account_fields(handler, muser):
         if not verify_valid_unique_hashtag(handler, muser):
             return False  # error already reported
     # profpic uploaded separately
-    muser.settings = handler.request.get("settings") or ""
+    muser.cliset = handler.request.get("cliset") or ""
     muser.coops = str(handler.request.get('coops')) or ""
     muser.altinmail = str(handler.request.get("altinmail")) or ""
     return True

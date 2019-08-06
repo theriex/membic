@@ -153,12 +153,12 @@ app.profile = (function () {
     }
 
 
-    function verifyStashKeywords (prof) {
-        prof.stash = prof.stash || {};
-        prof.stash.keywords = prof.stash.keywords || {};
-        app.review.getReviewTypes().forEach(function (rt) {
-            if(!prof.stash.keywords[rt.type]) {
-                prof.stash.keywords[rt.type] = rt.dkwords.join(", "); } });
+    function keywordsForRevType (rt) {
+        var kcsv = rt.dkwords.join(",");
+        var prof = myProfile();
+        if(prof && prof.cliset && prof.cliset.ctkeys) {
+            kcsv = prof.cliset.ctkeys[rt.type] || kcsv; }
+        return kcsv;
     }
 
 
@@ -183,8 +183,8 @@ app.profile = (function () {
         var prof = myProfile();
         if(!prof) {  //not logged in, so nothing to do
             return; }
-        prof.settings = prof.settings || {};
-        prof.settings[field] = val;
+        prof.cliset = prof.cliset || {};
+        prof.cliset[field] = val;
     }
 
 
@@ -193,8 +193,8 @@ app.profile = (function () {
         dval = dval || null;
         if(!prof) {  //not logged in, so nothing to do
             return dval; }
-        prof.settings = prof.settings || {};
-        return prof.settings[field] || dval;
+        prof.cliset = prof.cliset || {};
+        return prof.cliset[field] || dval;
     }
 
 
@@ -211,8 +211,8 @@ app.profile = (function () {
 
 
     function serializeFields (prof) {
-        if(typeof prof.settings === "object") {
-            prof.settings = JSON.stringify(prof.settings); }
+        if(typeof prof.cliset === "object") {
+            prof.cliset = JSON.stringify(prof.cliset); }
         if(typeof prof.coops === "object") {
             prof.coops = JSON.stringify(prof.coops); }
         //preb is never sent for update since it is maintained on server
@@ -223,7 +223,7 @@ app.profile = (function () {
 
 
     function deserializeFields (prof) {
-        app.lcs.reconstituteJSONObjectField("settings", prof);
+        app.lcs.reconstituteJSONObjectField("cliset", prof);
         app.lcs.reconstituteJSONObjectField("coops", prof);
         app.lcs.reconstituteJSONObjectField("preb", prof);
     }
@@ -237,9 +237,9 @@ app.profile = (function () {
         display: function () { displayProfile(); },
         update: function (obj, sf, xf) { updateProfile(obj, sf, xf); },
         themeLevel: function (coopid) { return themeLevel(coopid); },
-        verifyStashKeywords: function (prof) { verifyStashKeywords(prof); },
         verifyMembership: function (coop) { verifyMembership(coop); },
         getKeywordUse: function (prof) { return getKeywordUse(prof); },
+        keywordsForRevType: function (rt) { return keywordsForRevType(rt); },
         setnu: function (field, val) { setNoUpdate(field, val); },
         getwd: function (field, dval) { getWithDefault(field, dval); },
         follow: function (obj, sf, xf) { setFollow(-1, obj, sf, xf); },

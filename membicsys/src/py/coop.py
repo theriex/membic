@@ -29,7 +29,7 @@ class Coop(db.Model):
     rejects = db.TextProperty()     #CSV of rejected member application penids
     adminlog = db.TextProperty()    #JSON array of action entries
     people = db.TextProperty()      #JSON map of penids to display names
-    soloset = db.TextProperty()     #JSON settings for solo page display
+    cliset = db.TextProperty()      #JSON dict of client settings.  See MUser.
     keywords = db.TextProperty()    #CSV of custom theme keywords
     preb = db.TextProperty()        #JSON membics for display (from query)
     
@@ -109,11 +109,11 @@ def verify_valid_unique_hashtag(handler, coop):
 
 
 def has_flag(coop, flagname):
-    solodict = {}
-    if coop.soloset:
-        solodict = json.loads(coop.soloset)
-    if "flags" in solodict:
-        flagsdict = solodict["flags"]
+    clidict = {}
+    if coop.cliset:
+        clidict = json.loads(coop.cliset)
+    if "flags" in clidict:
+        flagsdict = clidict["flags"]
         if flagname in flagsdict:
             return flagsdict[flagname]
     return False
@@ -157,31 +157,6 @@ def may_write_review(acc, coop):
     return True
 
 
-def verify_soloset(coop, paramjson):
-    srvdict = {}
-    if coop.soloset:
-        srvdict = json.loads(coop.soloset)
-    usrdict = {}
-    if paramjson and len(paramjson):
-        usrdict = json.loads(paramjson)
-    usrflags = {}
-    if "flags" in usrdict:
-        usrflags = usrdict["flags"]
-    svrflags = {}
-    if "flags" in srvdict:
-        svrflags = srvdict["flags"]
-    # verify and restore any values that are maintained server side.  always
-    # make sure server values are present so they don't get toggled on
-    # client side by accident.
-    if "mainf" not in svrflags:
-        svrflags["mainf"] = ""
-    usrflags["mainf"] = svrflags["mainf"]
-    # put the data back together
-    usrdict["flags"] = usrflags
-    coop.soloset = json.dumps(usrdict)
-    # logging.info("verify_soloset coop.soloset: " + coop.soloset)
-
-
 def read_and_validate_descriptive_fields(handler, coop):
     # name/name_c field has a value and has been set already
     if not verify_unique_name(handler, coop):
@@ -194,7 +169,7 @@ def read_and_validate_descriptive_fields(handler, coop):
         handler.error(400)
         handler.response.out.write("A description is required")
         return False
-    verify_soloset(coop, handler.request.get('soloset'))
+    coop.cliset = handler.request.get('cliset')
     coop.keywords = handler.request.get('keywords')
     # picture is uploaded separately
     # membership, adminlog, people handled separately

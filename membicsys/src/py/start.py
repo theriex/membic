@@ -291,15 +291,11 @@ def sitetitle_for_object(obj):
     title = "Membic"
     if obj:
         if obj.key().kind() == "Coop":
-            title = obj.name
+            title = obj.name or "Membic Theme"
             title = title.replace("\"", "'")
         elif obj.key().kind() == "MUser":
-            title = "Membic Profile "
-            sd = obj.settings or "{}"
-            sd = json.loads(sd)
-            if "name" in sd:
-                title += sd["name"]
-                title = title.replace("\"", "'")
+            title = obj.name or "Membic Profile"
+            title = title.replace("\"", "'")
     return title
 
 
@@ -307,15 +303,11 @@ def sitedescr_for_object(obj):
     descr = "Membic helps people build reference link pages that can be added to other sites."
     if obj:
         if obj.key().kind() == "Coop":
-            descr = obj.description
+            descr = obj.description or ""
             descr = descr.replace("\"", "'")
         elif obj.key().kind() == "MUser":
-            descr = ""
-            sd = obj.settings or "{}"
-            sd = json.loads(sd)
-            if "description" in sd:
-                descr = sd["description"]
-                descr = descr.replace("\"", "'")
+            descr = obj.aboutme or ""
+            descr = descr.replace("\"", "'")
     return descr
 
 
@@ -372,9 +364,9 @@ def write_start_page(handler, obj, refer):
 
 
 def dbclass_for_obtype(obtype):
-    if obtype == "theme":
+    if obtype == "theme" or obtype == "Coop":
         return coop.Coop
-    if obtype == "profile":
+    if obtype == "profile" or obtype == "MUser":
         return muser.MUser
     return None
 
@@ -400,6 +392,7 @@ def instance_by_hashtag(hashtag):
     trans = memcache.get(hashtag)
     if trans:  # have a value like "theme:instid"
         trans = trans.split(":")
+        logging.info("cached hashtag value: " + str(trans))
         obtype = trans[0]
         instid = trans[1]
         obj = cached_get(int(instid), dbclass_for_obtype(obtype))

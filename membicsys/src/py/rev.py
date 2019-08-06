@@ -221,9 +221,9 @@ def set_review_dispafter(review, acc):
         return
     try:
         mpd = 1
-        asd = json.loads(acc.settings or "{}")
-        if "maxPostsPerDay" in asd:
-            mpd = int(asd["maxPostsPerDay"])
+        acs = json.loads(acc.cliset or "{}")
+        if "maxPostsPerDay" in acs:
+            mpd = int(acs["maxPostsPerDay"])
             mpd = max(1, mpd)
             mpd = min(2, mpd)
         wait = 24 / mpd  # every 24 hours or every 12 hours

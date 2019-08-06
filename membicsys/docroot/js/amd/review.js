@@ -1186,11 +1186,9 @@ app.review = (function () {
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
         crev.keywords = crev.keywords || "";
-        var prof = app.profile.myProfile();
-        app.profile.verifyStashKeywords(prof);
         var html = [];
-        prof.stash.keywords[rt.type].csvarray().forEach(function (dkword, i) {
-            dkword = dkword.trim();  //stashed keywords may be ", " separated
+        var rtkeywords = app.profile.keywordsForRevType(rt);
+        rtkeywords.csvarray().forEach(function (dkword, i) {
             var chk = jt.toru(crev.keywords.indexOf(dkword) >= 0, "checked");
             html.push(["div", {cla: "rdkwcbdiv"},
                        [["input", {type: "checkbox", id: "dkw" + i,
@@ -1412,6 +1410,10 @@ app.review = (function () {
         updobjs.forEach(function (updobj) {
             if(updobj.obtype === "MUser" || updobj.obtype === "Coop") {
                 app.lcs.put(updobj.obtype, updobj); } });
+        //need to rebuild the theme checkboxes in case they tried to post to
+        //a theme that was archived, or they lost membership.  coops data
+        //will have been updated server side (coop.py may_write_review)
+        dlgCoopPostSelection();  //rebuild checked themes from saved info
         updateShareInfo();
     }
 
@@ -1442,7 +1444,7 @@ return {
 
     resetStateVars: function () {
         autourl = "";
-        crev = { autocomp: true };
+        crev = {autocomp:true, rating:ratingDefaultValue };
         autocomptxt = "";
     },
 

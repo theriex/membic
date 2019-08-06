@@ -25,7 +25,8 @@ app.pcd = (function () {
     var srchst = {mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:""};
     var setdispstate = {infomode:""};
     var standardOverrideColors = [
-        {name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
+        //lower case for all colors defined here
+        //{name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
         {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
          attr:"color"},
         {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}];
@@ -668,16 +669,16 @@ app.pcd = (function () {
 
     function reviewTypeKeywordsHTML (prof) {
         var html = [];
-        app.profile.verifyStashKeywords(prof);
         var kwu = app.profile.getKeywordUse(prof);
         app.review.getReviewTypes().forEach(function (rt) {
+            var defkeys = app.profile.keywordsForRevType(rt);
             html.push(
                 ["div", {cla:"rtkwdiv", id:"rtkwdiv" + rt.type},
                  [["div", {cla:"formline"},
                    [["img", {cla:"reviewbadge", src:"img/" + rt.img}],
                     ["input", {id:"kwcsvin" + rt.type, cla:"keydefin", 
                                type:"text", placeholder:"Checkbox keywords",
-                               value:prof.stash.keywords[rt.type]}]]],
+                               value:jt.spacedCSV(defkeys)}]]],
                   ["div", {cla:"formline"},
                    ["span", {cla:"kwcsvspan"},
                     [["span", {cla:"kwcsvlabel"}, "Recent:"],
@@ -808,18 +809,21 @@ app.pcd = (function () {
     }
 
 
+    function getOverriddenColor(name, defcolor) {
+        var color = defcolor;
+        if(dst.obj.cliset && dst.obj.cliset.embcolors) {
+            color = dst.obj.cliset.embcolors[name] || defcolor; }
+        return color;
+    }
+
+
     function soloSettingsHTML () {
-        if(dst.type !== "coop" || !jt.hasId(dst.obj) || 
-               app.coop.membershipLevel(dst.obj) < 3) {
+        if(!jt.hasId(dst.obj) || (dst.type === "coop" &&
+                                  app.coop.membershipLevel(dst.obj) < 3)) {
             return ""; }
-        dst.obj.soloset = dst.obj.soloset || {};
-        if(!dst.obj.soloset.colors || Array.isArray(dst.obj.soloset.colors)) {
-            dst.obj.soloset.colors = {};
-            standardOverrideColors.forEach(function (soc) {
-                dst.obj.soloset.colors[soc.name] = soc.value; }); }
         var html = [];
         standardOverrideColors.forEach(function (soc) {
-            var colorval = dst.obj.soloset.colors[soc.name] || soc.value;
+            var colorval = getOverriddenColor(soc.name, soc.value);
             html.push(["div", {cla:"formline"},
                        [["label", {fo:soc.name + "in", cla:"liflab"},
                          soc.name],
@@ -830,7 +834,7 @@ app.pcd = (function () {
                         onclick:jt.fs("app.layout.togdisp('ctmcolordiv')")},
                   [["img", {cla:"ctmsetimg", src:"img/colors.png"}],
                    ["span", {cla:"settingsexpandlinkspan"},
-                    "Permalink Page Colors"]]],
+                    "Embed Colors"]]],
                  ["div", {cla:"formline", id:"ctmcolordiv",
                           style:"display:none;"},
                   [html,
@@ -1007,14 +1011,15 @@ app.pcd = (function () {
         var sheet;
         if(!app.embedded) {
             return; }
-        if(!dst || !dst.obj || !dst.obj.soloset || !dst.obj.soloset.colors) {
+        if(!dst || !dst.obj || !dst.obj.cliset || !dst.obj.cliset.embcolors) {
             return; }
         sheet = window.document.styleSheets[0];
         standardOverrideColors.forEach(function (soc) {
-            var color = dst.obj.soloset.colors[soc.name];
+            var color = getOverriddenColor(soc.name, "");
             if(color) {
                 soc.sel.csvarray().forEach(function (sel) {
                     var rule = sel + " { " + soc.attr + ": " + color + "; }";
+                    jt.log("createColoroverrides inserted rule: " + rule);
                     sheet.insertRule(rule, sheet.cssRules.length); }); } });
     }
 
@@ -1492,11 +1497,11 @@ return {
              ["div", {cla: "pcdsectiondiv"},
               mailinSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
-              soloSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
               rssSettingsHTML()],
              ["div", {cla: "pcdsectiondiv"},
-              embedSettingsHTML()]]];
+              embedSettingsHTML()],
+             ["div", {cla: "pcdsectiondiv"},
+              soloSettingsHTML()]]];
         app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
                                function () {
                                    app.login.accountSettingsInit();
@@ -1649,10 +1654,16 @@ return {
             jt.out("updatekwdserrdiv", "Description update failed " + code +
                    " " + errtxt); };
         if(dst.type === "profile") {
+            var custom = false;
             app.review.getReviewTypes().forEach(function (rt) {
                 val = jt.byId("kwcsvin" + rt.type).value;
-                dst.obj.stash.keywords[rt.type] = val; });
-            app.profile.update(dst.obj, app.pcd.redisplay, failfunc); }
+                val = val.csvarray().join(",");  //remove whitespace in CSV
+                if(val !== rt.dkwords.join(",")) {
+                    dst.obj.cliset.ctkeys = dst.obj.cliset.ctkeys || {};
+                    dst.obj.cliset.ctkeys[rt.type] = val;
+                    custom = true; } });
+            if(custom) {
+                app.profile.update(dst.obj, app.pcd.redisplay, failfunc); } }
         else if(dst.type === "coop") {
             val = jt.byId("kwcsvin").value;
             dst.obj.keywords = val;
@@ -1699,7 +1710,9 @@ return {
         jt.byId("savecolorsbutton").disabled = true;
         standardOverrideColors.forEach(function (soc) {
             var color = jt.byId(soc.name + "in").value;
-            dst.obj.soloset.colors[soc.name] = color; });
+            if(color && color.toLowerCase() !== soc.value) {
+                dst.obj.cliset.embcolors = dst.obj.cliset.embcolors || {};
+                dst.obj.cliset.embcolors[soc.name] = color.toLowerCase(); } });
         defs.objupdate(dst.obj,
             function (updobj) {
                 dst.obj = updobj;

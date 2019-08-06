@@ -2,10 +2,6 @@
 
 /*jslint browser, white, fudge, long */
 
-// prof.stash (maintained by client)
-//   key: ctm + coopid
-//     posts: CSV of revids, most recent first. Not an array.
-//     lastpost: ISO date string when most recent review was posted
 // coop.adminlog (array of entries maintained by server)
 //   when: ISO date
 //   profid: admin that took the action
@@ -18,7 +14,7 @@ app.coop = (function () {
     "use strict";
 
     //Fields that need to be deserialized after fetching.
-    var serflds = ["adminlog", "people", "soloset", "preb"];
+    var serflds = ["adminlog", "people", "cliset", "preb"];
 
     function historyCheckpointIfNeeded (coop) {
         //when creating a new theme, the history state will not have
@@ -194,16 +190,16 @@ return {
 
 
     hasFlag: function (ctm, flagname) {
-        if(ctm && ctm.soloset && ctm.soloset.flags) {
-            return ctm.soloset.flags[flagname]; }
+        if(ctm && ctm.cliset && ctm.cliset.flags) {
+            return ctm.cliset.flags[flagname]; }
         return false;
     },
 
 
     setFlag: function (ctm, flagname, value) {
-        ctm.soloset = ctm.soloset || {};
-        ctm.soloset.flags = ctm.soloset.flags || {};
-        ctm.soloset.flags[flagname] = value;
+        ctm.cliset = ctm.cliset || {};
+        ctm.cliset.flags = ctm.cliset.flags || {};
+        ctm.cliset.flags[flagname] = value;
     },
 
 

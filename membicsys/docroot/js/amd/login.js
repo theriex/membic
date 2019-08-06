@@ -576,12 +576,12 @@ return {
         var mpdsel = jt.byId("maxpdsel");
         var maxpd = Number(mpdsel.options[mpdsel.selectedIndex].value);
         app.profile.setnu("maxPostsPerDay", maxpd);
-        var updsettings = app.profile.myProfile().settings;
         jt.byId("accupdbutton").disabled = true;
         jt.out("usermenustat", "Updating personal info...");
         //account update also updates authent info.
         app.profile.update(
-            {emailin:emval, passin:passval, settings:updsettings},
+            {emailin:emval, passin:passval, 
+             cliset:(app.profile.myProfile().cliset || "")},
             function (prof) { //updated account already cached
                 //need to rebuild the displayed account info, status change..
                 writeUsermenuAccountFormElements(prof);
@@ -603,14 +603,6 @@ return {
         if(authname && authtoken) {
             return true; }
         return false;
-    },
-
-
-    accountInfo: function (fieldname) {
-        var prof = app.profile.myProfile();
-        if(prof && prof.stash && prof.settings[fieldname]) {
-            return prof.stash[fieldname]; }
-        return "";
     },
 
 
