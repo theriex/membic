@@ -3,6 +3,7 @@ import logging
 import datetime
 import coop
 import muser
+import consvc
 from google.appengine.api import memcache
 from morutil import *
 from cacheman import *
@@ -197,10 +198,13 @@ def json_for_theme_prof(obj, obtype):
 
 def fetch_recent_themes_and_profiles(handler):
     jtxt = ""
+    vios = consvc.get_connection_service("termsvio").data
     vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
     objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for obj in objs:
         if not obj.preb or len(obj.preb) < 10:  # no membics
+            continue
+        if csv_contains(obj.kind() + ":" + str(obj.key().id()), vios):
             continue
         if jtxt:
             jtxt += ","
@@ -211,6 +215,8 @@ def fetch_recent_themes_and_profiles(handler):
         if not obj.preb or not len(obj.preb) or obj.preb == "[]":  # no membics
             continue
         if not obj.profpic: # not public facing in any serious way
+            continue
+        if csv_contains(obj.kind() + ":" + str(obj.key().id()), vios):
             continue
         if jtxt:
             jtxt += ","

@@ -36,12 +36,12 @@ class GenObj:
 def get_connection_service(svcname):
     cskey = svcname
     vq = VizQuery(ConnectionService, "WHERE name = :1 LIMIT 1", svcname)
-    # The query max here should hold all the rows in the database
-    qres = cached_query(cskey, vq, "", 6, ConnectionService, False)
+    qres = cached_query(cskey, vq, "", 1, ConnectionService, False)
     for svc in qres.objects:
         return svc
     # no service found, create a stub instance for later editing
-    svc = ConnectionService(name=svcname, ckey="unknown", secret="unknown")
+    svc = ConnectionService(name=svcname, ckey="unknown", secret="unknown",
+                            data="")  # data needs a value to be editable
     cached_put(svc)
     reset_cached_query(cskey)
     return svc
