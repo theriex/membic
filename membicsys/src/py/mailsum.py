@@ -438,6 +438,18 @@ class SweepPrebuilt(webapp2.RequestHandler):
         morutil.srvText(self, "\n".join(msgs))
 
 
+class TechSupportHelp(webapp2.RequestHandler):
+    def get(self):
+        emaddr = self.request.get("user") or ""
+        suppurl = "No user found, emaddr: " + emaddr
+        if emaddr:
+            acc = muser.account_from_email(emaddr)
+            if acc:
+                suppurl = "https://membic.org?an=" + acc.email + "&at="
+                suppurl += muser.token_for_user(acc)
+        morutil.srvText(self, suppurl)
+
+
 class BounceHandler(BounceNotificationHandler):
   def receive(self, notification):  # BounceNotification class instance
       emaddr = notification.original['to']
@@ -471,6 +483,7 @@ app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/activity', UserActivity),
                                ('.*/periodic', PeriodicProcessing),
                                ('.*/prebsweep', SweepPrebuilt),
+                               ('.*/supphelp', TechSupportHelp),
                                ('/_ah/bounce', BounceHandler),
                                ('/_ah/mail/.+', InMailHandler)], debug=True)
 
