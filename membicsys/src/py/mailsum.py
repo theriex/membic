@@ -442,11 +442,15 @@ class TechSupportHelp(webapp2.RequestHandler):
     def get(self):
         emaddr = self.request.get("user") or ""
         suppurl = "No user found, emaddr: " + emaddr
+        acc = None
         if emaddr:
-            acc = muser.account_from_email(emaddr)
-            if acc:
-                suppurl = "https://membic.org?an=" + acc.email + "&at="
-                suppurl += muser.token_for_user(acc)
+            if "." in emaddr:  # @ may be escaped, look for domain dot
+                acc = muser.account_from_email(emaddr)
+            else:  # try looking up by id
+                acc = muser.MUser.get_by_id(int(emaddr))
+        if acc:
+            suppurl = "https://membic.org?an=" + acc.email + "&at="
+            suppurl += muser.token_for_user(acc)
         morutil.srvText(self, suppurl)
 
 
