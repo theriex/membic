@@ -525,7 +525,7 @@ class ActivateAccount(webapp2.RequestHandler):
             muser.put()
             bust_cache_key(muser.email)
             self.response.headers['Content-Type'] = 'text/html'
-            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your profile has been activated!</p><p><a href=\"../\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
+            self.response.out.write("<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n<title>membic.org Account Activation</title>\n</head>\n<body>\n<p>Your profile has been activated!</p><p><a href=\"../?an=" + self.request.get('an') + "&at=" + self.request.get('at') + "\"><h2>Return to membic.org site</h2></a></p>\n</body></html>")
             return
         # no key, confirm account deactivation
         muser = authenticated(self.request)
