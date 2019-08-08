@@ -352,6 +352,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   background-image:url('../img/e6e7e9p80.png'); }
 .defsyllabicdiv { font-weight:bold; }
 .defpartofspeachdiv { font-style:italic; font-size:medium; padding:5px; }
+.defdefdiv { font-size:medium; }
+.defdefdiv ol { margin:0; padding:0px 0px 0px 15px; }
 
 /* >> themes page layout */
 .tplinkdiv { background-image:url('../img/e6e7e9p80.png'); clear:both; 

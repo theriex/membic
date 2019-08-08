@@ -9,10 +9,14 @@ app.themes = (function () {
     var atfs = "";  //activetps fetch time stamp
 
 
-    function initVars () {
+    function keepMembicDef () {
         var defdiv = jt.byId("membicdefinitiondiv");
         if(!mdefhtml && defdiv) {
             mdefhtml = defdiv.innerHTML; }
+    }
+
+
+    function initVars () {
         tps = null;  //reset local cached array each time to use latest
         atfs = "";
         var atr = app.lcs.getRef("activetps", "411");
@@ -228,7 +232,8 @@ app.themes = (function () {
 
     return {
         display: function display () { displayMainContent(); },
-        show: function show (ty, id, cmd) { showListing(ty, id, cmd); }
+        show: function show (ty, id, cmd) { showListing(ty, id, cmd); },
+        keepdef: function keepdef () { keepMembicDef(); }
     };
 }());
 

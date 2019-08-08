@@ -134,7 +134,10 @@ interimcont = """
     <div class="defphoneticdiv">/'mem.b&#x026a;k/</div>
     <div class="defpartofspeachdiv">noun</div>
     <div class="defdefdiv">
-      1. A link with a reason why it is memorable.
+      <ol>
+      <li>A link with a reason why it is memorable.
+      <li>An <a href="https://github.com/theriex/membic" onclick="window.open('https://github.com/theriex/membic');return false;">open source</a> project available free at membic.org
+      <ol>
     </div>
     <div class="sitemetalinksdiv">
       <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html',true);return false;">Privacy</a>

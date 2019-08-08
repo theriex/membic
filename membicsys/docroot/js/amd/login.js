@@ -701,6 +701,7 @@ return {
         var state = app.history.currState();
         if(!state || !state.view) {
             jt.log("login.doNextStep determining default state");
+            app.themes.keepdef();  //save the definition for general use
             //if pfoj is a theme or profile, view it (specified by the URL)
             if(app.pfoj && app.pfoj.obtype === "Coop") {
                 state = {view:"coop", coopid:app.pfoj.instid}; }
