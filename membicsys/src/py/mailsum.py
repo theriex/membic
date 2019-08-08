@@ -20,27 +20,6 @@ import re
 import json
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
-class ActivityStat(db.Model):
-    """ Activity metrics for tracking purposes """
-    day = db.StringProperty(required=True)  # ISO start of day for this stat
-    visits = db.IntegerProperty(indexed=False)      # num app initializations
-    logins = db.IntegerProperty(indexed=False)      # num logged in app inits
-    liupens = db.TextProperty()       # logged in user access: pid-encnm:cnt,...
-    posters = db.IntegerProperty(indexed=False)     # num pens posting membics
-    postpens = db.TextProperty()      # who posted: penid:encname,...
-    membics = db.IntegerProperty(indexed=False)     # num membics posted
-    edits = db.IntegerProperty(indexed=False)       # num membics edited
-    themeposts = db.IntegerProperty(indexed=False)  # num theme post-throughs
-    starred = db.IntegerProperty(indexed=False)     # num membics starred
-    remembered = db.IntegerProperty(indexed=False)  # num membics remembered
-    responded = db.IntegerProperty(indexed=False)   # num membics responded
-    refers = db.TextProperty()        # srcA:3,srcB:12...
-    clickthru = db.IntegerProperty(indexed=False)   # num specific requests
-    ctreqs = db.TextProperty()        # theme/prof ext acc [t|p]id:count,...
-    rssacc = db.TextProperty()        # theme/prof acc rss [t|p]id:count,...
-    agents = db.TextProperty()        # CSV of accessing agents
-
-
 #substrings identifying web crawler agents.  No embedded commas.
 bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "netvibes.com", # not really a bot, but not a really a hit either
@@ -365,17 +344,6 @@ class ReturnBotIDs(webapp2.RequestHandler):
         morutil.srvJSON(self, "[{\"botids\":\"" + csv +  "\"}]")
 
 
-class UserActivity(webapp2.RequestHandler):
-    def get(self):
-        daysback = 70  # 10 weeks back
-        dtnow = datetime.datetime.utcnow()
-        thresh = dt2ISO(dtnow - datetime.timedelta(daysback))
-        vq = VizQuery(ActivityStat, "WHERE day > :1", thresh)
-        stats = vq.run(read_policy=db.EVENTUAL_CONSISTENCY,
-                       batch_size=daysback)
-        morutil.srvObjs(self, stats)
-
-
 class PeriodicProcessing(webapp2.RequestHandler):
     # Normally called from cron.yaml 30 minutes before quota reset. That
     # might look like an odd time from the local server perspective, but
@@ -484,7 +452,6 @@ class InMailHandler(InboundMailHandler):
 
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
-                               ('.*/activity', UserActivity),
                                ('.*/periodic', PeriodicProcessing),
                                ('.*/prebsweep', SweepPrebuilt),
                                ('.*/supphelp', TechSupportHelp),

@@ -340,20 +340,6 @@ class GetCounters(webapp2.RequestHandler):
         morutil.srvJSON(self, jsondat)
 
 
-class CurrentStat(webapp2.RequestHandler):
-    def get(self):
-        ctype = normalize_mctr_type(self)
-        if not ctype:
-            return
-        parid = intz(self.request.get("parentid"))  # sets to 0 if not found
-        counter = get_mctr(ctype, parid)
-        if not counter.modified:
-            put_mctr(counter)  # JSON processing needs an id
-        morutil.srvObjs(self, [ counter ]);
-        
-
-
 app = webapp2.WSGIApplication([('.*/bumpmctr', BumpCounter),
-                               ('.*/getmctrs', GetCounters),
-                               ('.*/currstats', CurrentStat)], debug=True)
+                               ('.*/getmctrs', GetCounters)], debug=True)
 

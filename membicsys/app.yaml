@@ -251,19 +251,10 @@ handlers:
 - url: .*/getmctrs.*
   script: src.py.mctr.app
 
-## Fetch current counter for profile or theme
-## GET params: authparams, ctype, parentid, penid
-- url: .*/currstat.*
-  script: src.py.mctr.app
-
 ## Fetch RSS feed content for the specified coop
 ## GET params: coop=instid or profile=instid
 - url: .*/rssfeed.*
   script: src.py.rssact.app
-
-## Fetch activity statistics for the site (used by actstat.js)
-- url: /activity.*
-  script: src.py.mailsum.app
 
 ## Fetch the sitemap for indexing crawler reference
 - url: .*/sitemap.xml

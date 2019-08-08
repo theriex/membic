@@ -418,67 +418,6 @@ app.pcd = (function () {
     }
 
 
-    function statSummaryHTML () {
-        var dat = dst.obj.mctr;
-        if(!dat) {
-            return "No stats available."; }
-        var html = ["table", {style:"margin:auto;"},
-                    [["tr",
-                      [["td", {style:"text-align:right;padding-right:10px;"}, 
-                        "Visits Today:"],
-                       ["td", 
-                        ["em", String((dat.sitev || 0) + (dat.sitek || 0) +
-                                      (dat.permv || 0) + (dat.permk || 0) +
-                                      (dat.rssv || 0))]]]],
-                     ["tr",
-                      [["td", {style:"text-align:right;padding-right:10px;"}, 
-                        "Membics:"],
-                       ["td", ["em", String(dat.membics || 0)]]]],
-                     ["tr",
-                      [["td", {style:"text-align:right;padding-right:10px;"}, 
-                        "Actions:"],
-                       ["td", ["em", String((dat.starred || 0) +
-                                            (dat.remembered || 0) +
-                                            (dat.responded || 0))]]]]]];
-        return jt.tac2html(html);
-    }
-
-
-    function statsDisplayHTML () {
-        var sumh;
-        if(dst.obj.mctr) { 
-            sumh = statSummaryHTML(); }
-        else {
-            sumh = "fetching stats...";
-            app.fork({
-                descr:"stats data retrieval",
-                func:function () {  //fetch after initial display finished
-                    var params = app.login.authparams() + "&ctype=" + dst.type +
-                        "&parentid=" + dst.id + jt.ts("&cb=", "minute");
-                    jt.call("GET", "currstats?" + params, null,
-                            function (mctrs) {
-                                dst.obj.mctr = mctrs[0];
-                                jt.out("statsumdiv", statSummaryHTML()); },
-                            app.failf(function (code, errtxt) {
-                                jt.out("statsumdiv", "currstats failed " +
-                                       code + ": " + errtxt); }),
-                            jt.semaphore("pcd.fetchStats")); },
-                ms:200}); }
-        var vaurl = "docs/stat.html?ctype=" + dst.type + "&parentid=" + dst.id +
-            "&" + app.login.authparams() + "&profid=" + app.profile.myProfId() +
-            "&title=" + jt.embenc(dst.obj.name);
-        jt.log("Visualize All url: " + vaurl);
-        var html = ["div", {id: "statsdisplaydiv"},
-                    [["div", {id: "statsumdiv"}, sumh],
-                     ["div", {cla: "formbuttonsdiv", id: "statsvisbdiv"},
-                      ["button", {type:"button", 
-                                  onclick:jt.fs("window.open('" + 
-                                                vaurl + "')")},
-                       "Visualize All"]]]];
-        return jt.tac2html(html);
-    }
-
-
     function adminSettingsHTML () {
         var memsel = "";
         var oah = "";
@@ -502,10 +441,6 @@ app.pcd = (function () {
                       ["div", {id: "meminfoseldiv",
                                style: (memsel? "" : "display:none;")}, 
                        memsel],
-                      ["div", {id: "statsdiv"},
-                       ["a", {href: "#stats",
-                              onclick: jt.fs("app.pcd.toggleCtmDet('stats')")},
-                        ["img", {cla: "ctmsetimg", src: "img/stats.png"}]]],
                       signout]],
                     ["div", {cla: "formline"}, oah],
                     ["div", {cla: "formline", id: "midispdiv",
@@ -1925,11 +1860,6 @@ return {
             setdispstate.infomode = "members";
             jt.byId("midispdiv").style.display = "block";
             jt.out("midispdiv", coopMembershipHTML()); }
-        else if(ctype === "stats" && (setdispstate.infomode !== "stats" ||
-                                      !midispdiv.innerHTML)) {
-            setdispstate.infomode = "stats";
-            jt.byId("midispdiv").style.display = "block";
-            jt.out("midispdiv", statsDisplayHTML()); }
         else {
             app.layout.togdisp("midispdiv"); }
     },
