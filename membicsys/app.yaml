@@ -279,6 +279,11 @@ handlers:
   script: src.py.mailsum.app
   login: admin
 
+## Send a general notice
+- url: .*/sendnote.*
+  script: src.py.mailsum.app
+  login: admin
+
 ## Fill any empty preb values
 - url: .*/prebsweep.*
   script: src.py.mailsum.app

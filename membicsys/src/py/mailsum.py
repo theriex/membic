@@ -5,7 +5,6 @@ import logging
 import rev
 import coop
 import muser
-import morutil
 import consvc
 from morutil import *
 from google.appengine.api import mail
@@ -19,6 +18,15 @@ from cacheman import *
 import re
 import json
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
+
+
+class MailNotice(db.Model):
+    """ Broadcast email notice tracking to avoid duplicate sends """
+    name = db.StringProperty(required=True)  # query access identifier
+    subject = db.TextProperty()    # the email subject for ease of reference
+    uidcsv = db.TextProperty()     # a csv of MUser ids that were sent to
+    lastupd = db.StringProperty()  # isodate of last recorded send
+
 
 #substrings identifying web crawler agents.  No embedded commas.
 bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
@@ -338,16 +346,28 @@ def acc_for_mailin_address(emaddr):
     return acc
 
 
+def get_mail_notice(mnm):
+    vq = VizQuery(MailNotice, "WHERE name = :1 LIMIT 1", mnm)
+    qres = cached_query(mnm, vq, "", 1, MailNotice, False)
+    for mno in qres.objects:
+        return mno
+    # no existing mail notice with the given name, create one for use
+    mno = MailNotice(name=mnm, subject="", uidcsv="", lastupd=nowISO())
+    cached_put(mno)
+    reset_cached_query(mnm)
+    return mno
+
+
 class ReturnBotIDs(webapp2.RequestHandler):
     def get(self):
         csv = ",".join(bot_ids)
-        morutil.srvJSON(self, "[{\"botids\":\"" + csv +  "\"}]")
+        srvJSON(self, "[{\"botids\":\"" + csv +  "\"}]")
 
 
 class PeriodicProcessing(webapp2.RequestHandler):
     # Normally called from cron.yaml 30 minutes before quota reset. That
     # might look like an odd time from the local server perspective, but
-    # since this is query load it makes sense to be close to reset.
+    # since this is a query load it makes sense to be close to reset.
     def get(self):
         body = "Periodic processing status messages:\n"
         body += "---- Recent membic notifications: ----\n"
@@ -360,7 +380,45 @@ class PeriodicProcessing(webapp2.RequestHandler):
             logging.info(subj + "\n\n" + body)
             raise
         body += "\nPeriodicProcessing completed."
-        morutil.srvText(self, body)
+        srvText(self, body)
+
+
+class SendNotices(webapp2.RequestHandler):
+    def get(self):
+        mno = get_mail_notice("muserconversion")
+        prevrecips = []
+        newrecips = []
+        mno.subject = "Your membic.org account has been converted"
+        msgbody = """
+Hi $NAME,
+
+Your existing account on membic.org has been converted as part of increased performance and security updates.  There have been no issues reported, but you are invited to update your password just for good measure.  To update your password, go to https://membic.org?an=$EMAIL&at=$TOKEN and click the settings icon, then select Personal Info.
+
+While you are visiting, you can find info on cool ways to use membic.org off the Themes page by clicking "more info".  I hope you will find the updated site to be the perfect solution for tracking your memorable links, both on your own and collaboratively.  If you have any questions/concerns/suggestions, just reply to this email.
+
+Thanks for supporting this open source project,
+Eric
+
+"""
+        vq = VizQuery(muser.MUser, "")
+        users = vq.run(read_policy=db.EVENTUAL_CONSISTENCY, deadline=60,
+                       batch_size=1000)
+        for user in users:
+            body = msgbody
+            body = body.replace("$NAME", user.name)
+            body = body.replace("$EMAIL", user.email)
+            body = body.replace("$TOKEN", muser.token_for_user(user))
+            uid = str(user.key().id())
+            if csv_contains(uid, mno.uidcsv):
+                prevrecips.append(user.email + "(" + uid + ")")
+                continue  # already sent
+            muser.mailgun_send(self, user.email, mno.subject, body)
+            mno.uidcsv = append_id_to_csv(uid, mno.uidcsv)
+            cached_put(mno)  # remember we sent it in case anything happens
+            newrecips.append(user.email + "(" + uid + ")")
+        srvText(self, "SendNotices " + mno.name + " " + str(len(newrecips)) +
+                " emails sent: " + ", ".join(newrecips) +
+                "\nPreviously sent: " + ", ".join(prevrecips))
 
 
 # sweep users first so themes are latest
@@ -403,7 +461,7 @@ class SweepPrebuilt(webapp2.RequestHandler):
             msgs.append("SweepPrebuilt pass completed, run again")
         else:
             msgs.append("SweepPrebuilt completed")
-        morutil.srvText(self, "\n".join(msgs))
+        srvText(self, "\n".join(msgs))
 
 
 class TechSupportHelp(webapp2.RequestHandler):
@@ -419,7 +477,7 @@ class TechSupportHelp(webapp2.RequestHandler):
         if acc:
             suppurl = "https://membic.org?an=" + acc.email + "&at="
             suppurl += muser.token_for_user(acc)
-        morutil.srvText(self, suppurl)
+        srvText(self, suppurl)
 
 
 class BounceHandler(BounceNotificationHandler):
@@ -453,6 +511,7 @@ class InMailHandler(InboundMailHandler):
 
 app = webapp2.WSGIApplication([('.*/botids', ReturnBotIDs),
                                ('.*/periodic', PeriodicProcessing),
+                               ('.*/sendnote', SendNotices),
                                ('.*/prebsweep', SweepPrebuilt),
                                ('.*/supphelp', TechSupportHelp),
                                ('/_ah/bounce', BounceHandler),
