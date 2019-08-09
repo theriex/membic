@@ -118,14 +118,16 @@ class MembicSummary(object):
         for pc in postctms:
             self.ctmcsv = append_to_csv(pc["ctmid"], self.ctmcsv)
 
+
 class PostingSummary(object):
     portob = None   # Coop or MUser object
     membics = None  # List of MembicSummary instances for recent posts
-    penids = ""     # CSV of penids receiving notices for this theme
+    penids = ""     # CSV of penids receiving notices for this theme/profile
     def __init__(self, portob):
         self.portob = portob
         self.membics = []
         self.penids = ""
+
 
 class RecipientSummary(object):
     penid = ""
@@ -193,6 +195,8 @@ def post_summaries_for_membics(membic_summaries):
     return pss
 
 
+# For any given posting id (Coop or MUser id), this will create one summary
+# for each recipient that should be notified.
 def recipient_summaries_for_posts(pss):
     rss = {}
     for key in pss:
@@ -204,7 +208,8 @@ def recipient_summaries_for_posts(pss):
             tp.penids = list_to_csv(penids)
             for penid in penids:
                 if penid not in rss:
-                    rss[penid] = RecipientSummary(penid)
+                    # email and name for stub summary filled out below
+                    rss[penid] = RecipientSummary(penid, key)
     # Followers have to be found by iterating through current active users.
     # Go back around 18 months to maximize the chance of pinging stragglers.
     since = dt2ISO(datetime.datetime.utcnow() - datetime.timedelta(545))
@@ -221,6 +226,9 @@ def recipient_summaries_for_posts(pss):
                 pss[ctmid].penids = append_to_csv(penid, pss[ctmid].penids)
                 # set overall recipient summary info
                 rss[penid] = RecipientSummary(penid, pn.name, pn.email)
+        if penid in rss and not rss[penid].emaddr:  # fill out the summary
+            rss[penid].emaddr = pn.email
+            rss[penid].name = pn.name
     return rss
 
 
@@ -255,7 +263,7 @@ def send_recent_membics_notice(recip, pss):
         ttb = ""
         ts = pss[tskey]
         for ms in ts.membics:
-            if ms.penid != recip.penid:  # not the recipients own post
+            if ms.penid in ts.penids and ms.penid != recip.penid:
                 mcount += 1
                 if not ttb:
                     tcount += 1
@@ -281,15 +289,33 @@ def send_recent_membics_notice(recip, pss):
         str(tcount) + " themes\n"
         
 
+def stat_summary_of_post_summaries(pss):
+    stat = "Postings (indexed by Coop/MUser id):\n"
+    for key in pss:
+        ps = pss[key]
+        stat += "  " + ps.portob.name + ": " + str(len(ps.membics)) + "\n"
+        for membic in ps.membics:
+            stat += "  - " + membic.url + "\n"
+            stat += "    " + membic.text + "\n"
+    return stat
+
+
+def stat_summary_of_recipient_summaries(rss):
+    stat = "Recipients (indexed by MUser id):\n"
+    for key in rss:
+        rs = rss[key]
+        stat += "  " + rs.emaddr + " " + rs.name + "\n"
+    return stat
+
+
 def recent_membic_notices():
     times, ms = fetch_daily_notice_membics()  # build MembicSummary list
     stat = str(len(ms)) + " membics since yesterday " + times["since"] + "\n"
     if len(ms):
         pss = post_summaries_for_membics(ms)
-        for key in pss:
-            tp = pss[key]
-            stat += "    " + tp.portob.name + ": " + str(len(tp.membics)) + "\n"
+        stat += stat_summary_of_post_summaries(pss)
         rss = recipient_summaries_for_posts(pss)
+        stat += stat_summary_of_recipient_summaries(rss)
         for key in rss:
             recip = rss[key]
             err = error_check_recipient_fields(recip)
