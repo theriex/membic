@@ -5,7 +5,7 @@ app.themes = (function () {
     "use strict";
 
     var mdefhtml = "";
-    var tps = null;
+    var tps = null;  //theme/prof summaries array, start.py json_for_theme_prof
     var atfs = "";  //activetps fetch time stamp
 
 
@@ -16,6 +16,33 @@ app.themes = (function () {
     }
 
 
+    function inSummary (ctmid, summaries) {
+        return summaries.find(function (tpsum) {
+            return tpsum.instid === ctmid; });
+    }
+
+
+    function mergePersonalThemesForAccess (summaries) {
+        var prof = app.profile.myProfile();
+        if(!prof) {
+            return summaries; }
+        Object.keys(prof.coops).forEach(function (ctmid) {
+            var pc = prof.coops[ctmid];
+            if(pc.obtype === "Coop" && pc.lev >= 1 &&
+               !inSummary(ctmid, summaries)) {
+                var pcsum = {instid:ctmid, obtype:"theme", modified:"",
+                             lastwrite:"", hashtag:pc.hashtag || ctmid,
+                             picture:pc.picture, name:pc.name, 
+                             description:pc.description};
+                switch(pc.lev) {
+                case 1: pcsum.members = prof.instid; break;
+                case 2: pcsum.moderators = prof.instid; break;
+                case 3: pcsum.founders = prof.instid; break; }
+                summaries.push(pcsum); } });
+        return summaries;
+    }
+
+
     function initVars () {
         tps = null;  //reset local cached array each time to use latest
         atfs = "";
@@ -23,13 +50,14 @@ app.themes = (function () {
         if(atr.activetps) {  //have cached recent
             //jt.log("using cached activetps");
             atfs = atr.activetps.modified.replace(/[\-:]/g,"");  //friendlier
-            tps = atr.activetps.jtps; }
+            tps = mergePersonalThemesForAccess(atr.activetps.jtps); }
         else {  //no recent, go get it
             //jt.log("fetching activetps");
             jt.call("GET", "/recentactive" + jt.ts("?cb=", "minute"), null,
                     function (racs) {
+                        jt.log("loaded activetps from /recentactive results");
                         app.lcs.put("activetps", racs[0]);
-                        app.themes.display(); },
+                        app.themes.display(); },  //calls back into initVars
                     app.failf(function (code, errtxt) {
                         jt.err("Fetching recent active failed " + code + ": " +
                                errtxt); }),
