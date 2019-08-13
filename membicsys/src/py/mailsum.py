@@ -416,7 +416,7 @@ class SendNotices(webapp2.RequestHandler):
         msgbody = """
 Hi $NAME,
 
-Your existing account on membic.org has been converted as part of increased performance and security updates.  There have been no issues reported, but you are invited to update your password just for good measure.  To update your password, go to https://membic.org?an=$EMAIL&at=$TOKEN and click the settings icon, then select Personal Info.
+Your existing account on membic.org has been converted as part of increased performance and security updates.  There haven't been any issues, but you are invited to update your password just for good measure.  To update your password, go to https://membic.org?an=$EMAIL&at=$TOKEN and click the settings icon, then select Personal Info.
 
 While you are visiting, you can find info on cool ways to use membic.org off the Themes page by clicking "more info".  I hope you will find the updated site to be the perfect solution for tracking your memorable links, both on your own and collaboratively.  If you have any questions/concerns/suggestions, just reply to this email.
 
