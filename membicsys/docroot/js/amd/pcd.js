@@ -1574,6 +1574,7 @@ return {
             defs.objupdate(dst.obj,
                            function (updobj) {
                                dst.obj = updobj;
+                               dst.id = updobj.instid;  //verify set if new
                                app.layout.cancelOverlay();
                                app.pcd.redisplay(); },
                            function (code, errtxt) {
