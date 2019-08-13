@@ -1980,10 +1980,15 @@ return {
 
 
     isDupeRev: function (rev, pr) {
-        if(rev && pr && ((jt.strPos(rev.srcrev) && rev.srcrev === pr.srcrev) ||
-                         (rev.cankey && rev.cankey === pr.cankey) ||
-                         (rev.url && rev.url === pr.url))) {
-            return true; }
+        //With a feed based design and inline text review expansion,
+        //collapsing duplicate reviews is confusing.  Leaving this code here
+        //for reference in case the collapse turns out to be useful as an
+        //embed setting.  Clean up if not. ep 13aug19.
+        // if(rev && pr &&
+        //    ((jt.strPos(rev.srcrev) && rev.srcrev === pr.srcrev) ||
+        //     (rev.cankey && rev.cankey === pr.cankey) ||
+        //     (rev.url && rev.url === pr.url))) {
+        //     return true; }
         return false;
     },
 
