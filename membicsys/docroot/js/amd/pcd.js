@@ -807,7 +807,7 @@ app.pcd = (function () {
             ta.value = "<iframe id=\"membiciframe\" src=\"" + app.hardhome +
                 "/" + dst.id + "?site=EXAMPLE.COM\" " +
                 "style=\"position:relative;height:100%;width:100%\" " +
-                "seamless=\"seamless\" frameborder=\"0\"/></iframe>"; }
+                "seamless=\"seamless\" frameborder=\"0\"></iframe>"; }
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
