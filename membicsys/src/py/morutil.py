@@ -1,4 +1,5 @@
 from google.appengine.ext import db
+from google.appengine.api import images
 from google.appengine.api.datastore_types import Blob
 import logging
 import datetime
@@ -120,6 +121,35 @@ def srvObjs(handler, queryResults, cursor="", fetched=-1, filts=[]):
     """ Write JSON given an array of db objs or a query result """
     result = qres2JSON(queryResults, cursor, fetched, filts=filts)
     srvJSON(handler, result)
+
+
+# hex values for a 4x4 transparent PNG created with GIMP:
+blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
+
+# social net min size resolution is 200x200.  Anything less and the image
+# won't show in the post, which is bad for sharing.
+imgstdminsize = 200
+
+
+def srvImg(handler, pic, minw=imgstdminsize):
+    img = images.Image(pic)
+    # By default, resize chooses the widest dimension, which can cause the
+    # short dimension to dip below the minimum.  Using crop_to_fit instructs
+    # the scaling to use the less restricting dimension and then chop off
+    # the extra. Best available solution to meet min width requirement.
+    img.resize(width=minw, height=minw, crop_to_fit=True)
+    # After working without a hitch for a long time, the server had a bad
+    # image conversion day and crapped out on half the images.  The try
+    # block is a slight improvement in terms of tracing and recovery.
+    # Returning the raw image data doesn't work, it has to be transformed
+    # first.  May as well standardize on PNG format.
+    try:
+        img = img.execute_transforms(output_encoding=images.PNG)
+    except Exception as e:
+        logging.warn("srvImg execute_transforms error: " + str(e))
+        return srverr(handler, 500, str(e))
+    handler.response.headers['Content-Type'] = "image/png"
+    handler.response.out.write(img)
 
 
 def suppemail():

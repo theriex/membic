@@ -1,7 +1,6 @@
 import webapp2
 import datetime
 from google.appengine.ext import db
-from google.appengine.api import images
 from google.appengine.api import memcache
 import logging
 import muser
@@ -389,23 +388,8 @@ class GetCoopPic(webapp2.RequestHandler):
         coop = cached_get(intz(coopid), Coop)
         havepic = coop and coop.picture
         if not havepic:
-            self.error(404)
-            self.response.out.write("Pic for coop " + str(coopid) + 
-                                    " not found.")
-            return
-        img = images.Image(coop.picture)
-        # social net min size constraint is 200x200.  Anything below
-        # that and the image won't show, which is bad for sharing
-        # themes.  By default, resize chooses the widest dimension,
-        # which can cause the short dimension to dip below the
-        # minimum.  Using crop_to_fit instructs the scaling to use the
-        # less restricting dimension and then chop off the extra.
-        # Might lead to some interesting rendering, but at least it
-        # will be accepted by the big socnets.
-        img.resize(width=200, height=200, crop_to_fit=True)
-        img = img.execute_transforms(output_encoding=images.PNG)
-        self.response.headers['Content-Type'] = "image/png"
-        self.response.out.write(img)
+            return srverr(self, 404, "No picture found for Coop " + str(coopid))
+        srvImg(self, coop.picture)
 
 
 class ApplyForMembership(webapp2.RequestHandler):
