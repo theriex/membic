@@ -229,6 +229,7 @@ def update_email_and_password(handler, muser):
     if emaddr != muser.email:
         if not valid_new_email_address(handler, emaddr):
             return False  # error already reported
+        bust_cache_key(emaddr)  # clear previously cached email address
         muser.email = emaddr
         change = "email"
     muser.phash = make_password_hash(muser.email, pwd, muser.created)
