@@ -347,6 +347,11 @@ class CreateAccount(webapp2.RequestHandler):
         url = self.request.url;
         if not verify_secure_comms(self, url):
             return
+        emaddr = self.request.get('email') or self.request.get("emailin") or ""
+        emaddr = normalize_email(emaddr)
+        muser = account_from_email(emaddr)
+        if muser:
+            return morutil.srverr(self, 400, "Account exists already")
         muser = MUser(email="placeholder", phash="whatever")  # corrected below
         cretime = nowISO()
         muser.created = cretime
