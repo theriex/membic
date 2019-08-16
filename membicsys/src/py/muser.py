@@ -141,6 +141,12 @@ def authenticated(request):
         logging.info("authenticated muser not found emaddr: " + emaddr)
         return None
     srvtok = token_for_user(muser)
+    if reqtok != srvtok:  # possible the TokenSvc secret changed, try password
+        pwd = request.get("password") or request.get("passin") or ""
+        if pwd:
+            phash = make_password_hash(emaddr, pwd, muser.created)
+            if phash == muser.phash:  # authenticated
+                reqtok = token_for_user(muser)
     if reqtok != srvtok:
         logging.info("authenticated token did not match")
         logging.info("  reqtok: " + reqtok)
