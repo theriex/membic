@@ -34,6 +34,18 @@ bot_ids = ["AhrefsBot", "Baiduspider", "ezooms.bot",
            "AppEngine-Google", "Googlebot", "YandexImages", "crawler.php"]
 
 
+def sanitize_url(url):
+    # remove any trailing html
+    htmlidx = url.find("<")
+    if htmlidx >= 0:
+        url = url[0:htmlidx]
+    # undpack horrible outlook url wrapping that includes senders email address
+    match = re.search(r'https?://\S+safelinks\S+outlook.com/\?url=([^&]+)', url)
+    if match:
+        url = urllib.unquote(match.group(1))
+    return url
+
+
 # Looking up URL information server side usually fails - either completely,
 # or poisonously with bad info.  It is not possible to fill out membic
 # details here in any way that is equivalent to what can be done
@@ -52,7 +64,10 @@ def make_mailin_membic(acc, mailsubj, mailbody):
     murl = ""
     match = re.search(r'https?://\S+', mailbody)
     if match:
-        murl = match.group()
+        murl = sanitize_url(match.group())
+    msubj = mailsubj or ""
+    # mail processing inserts newlines in the subject but preserves whitespace
+    msubj = msubj.replace("\n", "")
     mim = rev.Review(revtype='article',  # most mail-in membics are articles
                      penid=acc.key().id(),
                      ctmid=0,
@@ -61,7 +76,7 @@ def make_mailin_membic(acc, mailsubj, mailbody):
                      mainfeed=0,
                      cankey="",
                      keywords="",
-                     text=mailsubj,
+                     text=msubj,
                      altkeys="",
                      svcdata="",
                      penname=acc.name,
@@ -84,15 +99,19 @@ def make_mailin_membic(acc, mailsubj, mailbody):
 
 def send_mailin_receipt(acc, mim, mailsubj, mailbody):
     subj = "Membic created: " + mailsubj
-    body = "Membic " + str(mim.key().id()) + " created.\n" +\
-           "URL: " + mim.url + "\n" +\
-           "Why Memorable: " + mailsubj + "\n" +\
+    body = "Hi " + acc.name + ",\n" +\
            "\n" +\
-           "To add detail or edit, go to https://membic.org?an=" + acc.email +\
-           "&at=" + muser.token_for_user(acc) + "\n" +\
+           "Your mail-in membic has been created. To add detail, go to " +\
+           "https://membic.org?an=" + acc.email + "&at=" +\
+           muser.token_for_user(acc) + "\n" +\
            "\n" +\
            "For your reference, here is what you mailed in:\n\n" +\
-           mailbody
+           mailsubj + "\n" +\
+           "\n" +\
+           mailbody + "\n" +\
+           "\n" +\
+           "Membic " + str(mim.key().id()) + " created " + mim.modhist + "\n" +\
+           "Thanks!\n"
     muser.mailgun_send(None, acc.email, subj, body)
 
 
