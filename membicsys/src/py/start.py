@@ -395,6 +395,8 @@ def query_for_hashtag(obtype, hashtag):
 def instance_by_hashtag(hashtag):
     if hashtag.startswith("/"):
         hashtag = hashtag[1:]
+    if hashtag:
+        hashtag = hashtag.lower()
     obtype = ""  # "theme" or "profile"
     instid = ""  # db object key as a string
     obj = None   # the database object from cache or query
