@@ -1,8 +1,7 @@
 import webapp2
 import logging
-from cacheman import *
-from morutil import *
-import coop
+import start
+import json
 
 
 head = """<?xml version="1.0" encoding="UTF-8"?>
@@ -21,32 +20,21 @@ foot = """
 </urlset>
 """
 
-def baseStandaloneURL(ctm):
-    if ctm.hashtag:
-        return "$DOCROOT/" + ctm.hashtag
-    return "$DOCROOT/t/" + str(ctm.key().id())
-    
-
 class SitemapXML(webapp2.RequestHandler):
     def get(self):
         xml = head
-        vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
-        ctms = vq.fetch(100, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
-        for ctm in ctms:
-            if not ctm.preb:  #if no pre-built content, then not much to index
-                continue
-            # No longer listing ?tab=latest or ?tab=top even though they may
-            # show separate results.  Better with no params, can look like
-            # dupe listings, and top rated may get stale anyway.
+        ods = json.loads(start.get_recent_themes_and_profiles())
+        for od in ods:
+            hashtag = od["hashtag"] or od["instid"]
             xml += "<url>"
-            xml += "  <loc>" + baseStandaloneURL(ctm) + "</loc>"
-            xml += "  <lastmod>" + ctm.modified[0:10] + "</lastmod>"
+            xml += "  <loc>$DOCROOT/" + hashtag + "</loc>"
+            xml += "  <lastmod>" + od["modified"][0:10] + "</lastmod>"
             xml += "</url>"
         xml += foot
         xml = xml.replace("$DOCROOT", self.request.host_url)
         self.response.headers['Content-Type'] = 'text/xml'
         self.response.out.write(xml)
-
+            
 
 app = webapp2.WSGIApplication([('.*/sitemap.xml', SitemapXML)], debug=True)
 

@@ -199,7 +199,7 @@ def json_for_theme_prof(obj, obtype):
     return json.dumps(sd)
 
 
-def fetch_recent_themes_and_profiles(handler):
+def fetch_recent_themes_and_profiles():
     jtxt = ""
     vios = consvc.get_connection_service("termsvio").data
     vq = VizQuery(coop.Coop, "ORDER BY modified DESC")
@@ -228,12 +228,18 @@ def fetch_recent_themes_and_profiles(handler):
 
 
 # cache fetch most recently modified 50 themes and 50 profiles.
-def recent_active_content(handler):
-    content = ""
+def get_recent_themes_and_profiles():
     jtps = memcache.get("activecontent")
     if not jtps:
-        jtps = fetch_recent_themes_and_profiles(handler)
+        jtps = fetch_recent_themes_and_profiles()
         memcache.set("activecontent", jtps)
+    return jtps
+
+
+# Return content and pre-fetch object for recently active themes and profiles
+def recent_active_content(handler):
+    content = ""
+    jtps = get_recent_themes_and_profiles()
     ods = json.loads(jtps)
     for od in ods:
         # logging.info(str(od))
