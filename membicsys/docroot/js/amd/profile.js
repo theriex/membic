@@ -46,7 +46,6 @@ app.profile = (function () {
 
 
     function displayProfile () {
-        app.login.navselect(-1);
         fetchProfile(function () {  //prof object cached
             app.pcd.fetchAndDisplay("profile", mypid); });
     }

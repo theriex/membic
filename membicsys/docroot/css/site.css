@@ -77,9 +77,10 @@ button, .loginbutton, .formbutton, .filesellab {
 #headingdivcontent { width:288px; margin:auto; }
 #loadstatusdiv { background-image:url('../img/e6e7e9p80.png'); }
 #sysnoticediv { font-size:small; }
-#topnavdiv { background-image:url('../img/e6e7e9p80.png'); font-size:small;
+#topnavdiv { font-size:small;
   display:table; margin:0 auto; padding:0px 5px 0px 0px; }
-#topnavdiv a { font-weight:bold; }
+#topnavdiv button { font-weight:bold; background-color:transparent;
+  background-image:url('../img/e6e7e9p80.png'); }
 .navimg { max-height:28px; }
 
 /* >> main display area and contained elements */

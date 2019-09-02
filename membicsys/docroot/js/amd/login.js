@@ -10,10 +10,6 @@ app.login = (function () {
     var cookdelim = "..membicauth..";
     var initialTopSectionHTML = "";
     var actsent = null;
-    var navs = [
-        {name:"Themes", imgsrc:"img/membiclogo.png", f:app.themes.display},
-        {name:"Profile", imgsrc:"img/profile.png", f:app.profile.display},
-        {name:"Write", imgsrc:"img/writenew.png", f:app.review.start}];
 
 
     function secureURL (endpoint) {
@@ -541,31 +537,23 @@ return {
     },
 
 
-    navselect: function (idx) {
-        if(idx < 0 || idx >= navs.length) {
-            navs.forEach(function (nav) {
-                jt.byId(nav.name).style.fontStyle = "normal"; }); }
-        else {
-            var nav = navs[idx];
-            jt.byId(nav.name).style.fontStyle = "italic";
-            nav.f(); }
-    },
-
-
     updateTopSection: function () {
         if(!app.login.isLoggedIn()) {
             if(initialTopSectionHTML && !jt.byId("loginform")) {
                 jt.out("topsectiondiv", initialTopSectionHTML); }
             return; }
         //logged in...
+        var navs = [
+            {name:"Themes", im:"img/membiclogo.png", fs:"app.themes.display"},
+            {name:"Profile", im:"img/profile.png", fs:"app.profile.display"},
+            {name:"Write", im:"img/writenew.png", fs:"app.review.start"}];
         var html = [];
         navs.forEach(function (nav, idx) {
-            html.push(["a", {href:"#" + nav.name, id:nav.name,
-                             onclick:jt.fs("app.login.navselect(" + idx + ")")},
-                       [["img", {cla:"navimg", src:nav.imgsrc}],
+            html.push(["button", {type:"button", onclick:jt.fs(nav.fs + "()")},
+                       [["img", {cla:"navimg", src:nav.im}],
                         nav.name]]);
             if(idx < navs.length - 1) {
-                html.push("&nbsp;&nbsp;|&nbsp;&nbsp"); } });
+                html.push("&nbsp;&nbsp;&nbsp;&nbsp"); } });
         html = ["div", {id:"topnavdiv"}, html];
         jt.out("topsectiondiv", jt.tac2html(html));
     },

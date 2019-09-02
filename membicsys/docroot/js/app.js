@@ -186,6 +186,9 @@ var jt = {};   //Global access to general utility methods
 
     app.init = function () {
         var href = window.location.href;
+        //The ordering of the modules will encourage, but not guarantee, that
+        //earlier modules will be available for reference across modules.  So
+        //best not to reference other modules within top level module vars.
         var modules = [ "js/amd/themes", "js/amd/profile", "js/amd/review",
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
                         "js/amd/login", "js/amd/pcd", "js/amd/coop",

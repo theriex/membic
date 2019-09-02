@@ -1450,7 +1450,6 @@ return {
 
 
     start: function (source) {
-        app.login.navselect(-1);
         app.review.resetStateVars();
         if(typeof source === "string") {  //passed in a url
             autourl = source; }
