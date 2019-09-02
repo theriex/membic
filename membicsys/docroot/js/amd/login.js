@@ -10,6 +10,10 @@ app.login = (function () {
     var cookdelim = "..membicauth..";
     var initialTopSectionHTML = "";
     var actsent = null;
+    var navs = [
+        {name:"Themes", imgsrc:"img/membiclogo.png", f:app.themes.display},
+        {name:"Profile", imgsrc:"img/profile.png", f:app.profile.display},
+        {name:"Write", imgsrc:"img/writenew.png", f:app.review.start}];
 
 
     function secureURL (endpoint) {
@@ -537,28 +541,32 @@ return {
     },
 
 
+    navselect: function (idx) {
+        if(idx < 0 || idx >= navs.length) {
+            navs.forEach(function (nav) {
+                jt.byId(nav.name).style.fontStyle = "normal"; }); }
+        else {
+            var nav = navs[idx];
+            jt.byId(nav.name).style.fontStyle = "italic";
+            nav.f(); }
+    },
+
+
     updateTopSection: function () {
         if(!app.login.isLoggedIn()) {
             if(initialTopSectionHTML && !jt.byId("loginform")) {
                 jt.out("topsectiondiv", initialTopSectionHTML); }
             return; }
         //logged in...
-        var sep = "&nbsp;&nbsp;|&nbsp;&nbsp";
-        var html = ["div", {id:"topnavdiv"}, [
-            ["a", {href:"#Themes",
-                   onclick:jt.fs("app.themes.display()")},
-             [["img", {cla:"navimg", src:"img/membiclogo.png"}],
-              "Themes"]],
-            sep,
-            ["a", {href:"#Profile",
-                   onclick:jt.fs("app.profile.display()")},
-             [["img", {cla:"navimg", src:"img/profile.png"}],
-              "Profile"]],
-            sep,
-            ["a", {href:"#Membic",
-                   onclick:jt.fs("app.review.start()")},
-             [["img", {cla:"navimg", src:"img/writenew.png"}],
-              "Write"]]]];
+        var html = [];
+        navs.forEach(function (nav, idx) {
+            html.push(["a", {href:"#" + nav.name, id:nav.name,
+                             onclick:jt.fs("app.login.navselect(" + idx + ")")},
+                       [["img", {cla:"navimg", src:nav.imgsrc}],
+                        nav.name]]);
+            if(idx < navs.length - 1) {
+                html.push("&nbsp;&nbsp;|&nbsp;&nbsp"); } });
+        html = ["div", {id:"topnavdiv"}, html];
         jt.out("topsectiondiv", jt.tac2html(html));
     },
 

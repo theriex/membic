@@ -1450,6 +1450,7 @@ return {
 
 
     start: function (source) {
+        app.login.navselect(-1);
         app.review.resetStateVars();
         if(typeof source === "string") {  //passed in a url
             autourl = source; }
@@ -1979,7 +1980,7 @@ return {
     },
 
 
-    isDupeRev: function (rev, pr) {
+    isDupeRev: function (/* rev, pr */) {
         //With a feed based design and inline text review expansion,
         //collapsing duplicate reviews is confusing.  Leaving this code here
         //for reference in case the collapse turns out to be useful as an

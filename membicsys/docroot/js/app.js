@@ -186,10 +186,9 @@ var jt = {};   //Global access to general utility methods
 
     app.init = function () {
         var href = window.location.href;
-        var modules = [ "js/amd/themes", "js/amd/profile",
+        var modules = [ "js/amd/themes", "js/amd/profile", "js/amd/review",
                         "js/amd/layout", "js/amd/lcs", "js/amd/history",
-                        "js/amd/login", "js/amd/pcd",
-                        "js/amd/review", "js/amd/coop",
+                        "js/amd/login", "js/amd/pcd", "js/amd/coop",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/readurl" ];
         var securl = app.secureURL(href);

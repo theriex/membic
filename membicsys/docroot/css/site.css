@@ -79,6 +79,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #sysnoticediv { font-size:small; }
 #topnavdiv { background-image:url('../img/e6e7e9p80.png'); font-size:small;
   display:table; margin:0 auto; padding:0px 5px 0px 0px; }
+#topnavdiv a { font-weight:bold; }
 .navimg { max-height:28px; }
 
 /* >> main display area and contained elements */

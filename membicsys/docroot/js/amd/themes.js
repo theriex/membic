@@ -245,6 +245,7 @@ app.themes = (function () {
 
     function displayMainContent () {
         jt.out("logodiv", "");  //remove logo since displayed in nav
+        app.login.navselect(-1);
         if(initVars()) {  //have data to work with
             app.history.checkpoint({view:"themes"});
             writeContent(); }
