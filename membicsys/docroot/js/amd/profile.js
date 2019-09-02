@@ -40,7 +40,13 @@ app.profile = (function () {
                     callback(prof); },
                 function (code, errtxt) {
                     jt.log("Account retrieval failed: " + code + " " + errtxt);
-                    callback(null); },
+                    //With cached content and an expired cookie, code can get
+                    //to here before finding we're not actually logged in.
+                    //Best to stop what we are doing and logout.
+                    if(code === 401) {
+                        app.login.logout(); }
+                    else {  //no 
+                        callback(null); } },
                 jt.semaphore("profile.fetchProfile"));
     }
 
