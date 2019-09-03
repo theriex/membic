@@ -34,6 +34,7 @@ var jt = {};   //Global access to general utility methods
     app.forks = [];  //tasks started through setTimeout
     app.wait = {divid:"", timeout:null};
     app.urlToRead = "";
+    app.loopers = [];  //zero or more workhorse loop state objects
 
 
     ////////////////////////////////////////
@@ -67,6 +68,13 @@ var jt = {};   //Global access to general utility methods
         else {
             forks.push(tobj); }
         return setTimeout(tobj.func, tobj.ms);
+    };
+
+
+    //Cancel any ongoing registered loops with timeouts.
+    app.stopLoopers = function () {
+        while(app.loopers.length > 0) {
+            app.loopers.pop().cancelled = true; }
     };
 
 

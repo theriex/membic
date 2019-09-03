@@ -46,6 +46,7 @@ app.themes = (function () {
     function initVars () {
         tps = null;  //reset local cached array each time to use latest
         atfs = "";
+        jt.out("themedispstatdiv", "Fetching themes");
         var atr = app.lcs.getRef("activetps", "411");
         if(atr.activetps) {  //have cached recent
             //jt.log("using cached activetps");
@@ -171,7 +172,8 @@ app.themes = (function () {
                      "Read when and why you might want to create a theme"],
                     ["div", {cla:"thlhelpdiv"},
                      "Connect your membic feeds:"],
-                    ["div", {id:"thlexdiv"}, headerLineExampleHTML()]]]]]]]; }
+                    ["div", {id:"thlexdiv"}, headerLineExampleHTML()]]],
+                  ["div", {id:"themedispstatdiv"}]]]]]; }
         return jt.tac2html(html);
     }
 
@@ -216,38 +218,70 @@ app.themes = (function () {
     }
 
 
-    function writeContent () {
-        var html = [];
-        html.push(themesHeadingLineHTML());
-        decorateAndSort().forEach(function (tp) {
+    function writeThemeElements (state) {
+        var elem;
+        if(!state.cancelled && state.idx < state.tps.length) {
+            var tp = state.tps[state.idx];
             var ocparams = "'" + tp.obtype + "','" + tp.instid + "'";
             var oc = jt.fs("app.themes.show(" + ocparams + ")");
             var mc = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
             var link = "/" + tp.hashtag;
-            html.push(["div", {cla:"tplinkdiv", id:"tplinkdiv" + tp.instid},
-                       [["div", {cla:"tplinkpicdiv"},
-                         [["a", {href:link, onclick:oc},
-                           ["img", {src:imageSourceForListing(tp), 
-                                    cla:"tplinkpicimg"}]],
-                          ["a", {href:link, onclick:mc, cla:"tpmemlink"},
-                           ["img", {src:imgForAssocLev(tp), 
-                                    cla:"tplinkmemimg"}]]]],
-                        ["div", {cla:"tplinkdescdiv"},
-                         [["span", {cla:"tplinknamespan"},
-                           ["a", {href:link, onclick:oc}, tp.name]],
-                          jt.linkify(tp.description)]]]]); });
-        jt.out("contentdiv", jt.tac2html(html) + mdefhtml);
-        app.fork({descr:"animate themes header line",
-                  func:animateThemesHeaderLine,
-                  ms:1200});
+            elem = document.createElement("div");
+            elem.className = "tplinkdiv";
+            elem.id = "tplinkdiv" + tp.instid;
+            elem.innerHTML = jt.tac2html(
+                [["div", {cla:"tplinkpicdiv"},
+                  [["a", {href:link, onclick:oc},
+                    ["img", {src:imageSourceForListing(tp),
+                             cla:"tplinkpicimg"}]],
+                   ["a", {href:link, onclick:mc, cla:"tpmemlink"},
+                    ["img", {src:imgForAssocLev(tp),
+                             cla:"tplinkmemimg"}]]]],
+                 ["div", {cla:"tplinkdescdiv"},
+                  [["span", {cla:"tplinknamespan"},
+                    ["a", {href:link, onclick:oc}, tp.name]],
+                   jt.linkify(tp.description)]]]);
+            jt.byId("contentdiv").appendChild(elem);
+            state.idx += 1;
+            app.fork({descr:"writeThemeElements iteration",
+                      func:function () {
+                          writeThemeElements(state); },
+                      ms:50}); }
+        else if(!state.cancelled) {
+            elem = document.createElement("div");
+            elem.innerHTML = mdefhtml;
+            jt.byId("contentdiv").appendChild(elem);
+            if(jt.byId("thlanimdiv")) {  //only fork if animating
+                app.fork({descr:"animate themes header line",
+                          func:animateThemesHeaderLine,
+                          ms:1200}); } }
+    }
+
+
+    function writeContent () {
+        jt.out("themedispstatdiv", "Sorting themes");
+        var themes = decorateAndSort();
+        app.fork({descr:"Themes disp iterator start",
+                  func:function () {
+                      jt.out("themedispstatdiv", "");
+                      var state = {tps:themes, idx:0};
+                      app.loopers.push(state);
+                      writeThemeElements(state); },
+                  ms:50});
     }
 
 
     function displayMainContent () {
+        jt.log("themes.displayMainContent starting");
         jt.out("logodiv", "");  //remove logo since displayed in nav
-        if(initVars()) {  //have data to work with
-            app.history.checkpoint({view:"themes"});
-            writeContent(); }
+        app.stopLoopers();
+        jt.out("contentdiv", jt.tac2html(themesHeadingLineHTML()));
+        app.fork({descr:"themes display start",
+                  func:function () {
+                      if(initVars()) {  //have data to work with
+                          app.history.checkpoint({view:"themes"});
+                          writeContent(); } },
+                  ms:50});
     }
 
 

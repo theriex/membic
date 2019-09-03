@@ -2006,9 +2006,10 @@ return {
                 html = [html, xem]; }
             html = ["div", {id:"membicliststatusdiv"}, html]; }
         jt.out(pdvid, jt.tac2html(html));
-        var state = {divid:pdvid, prefix:pfx,
-                     idx:0, revs:membics, prev:null, paused:false,
-                     author:pauth, togcbn:ptogb};
+        app.stopLoopers();
+        var state = {divid:pdvid, prefix:pfx, idx:0, revs:membics, 
+                     prev:null, author:pauth, togcbn:ptogb};
+        app.loopers.push(state);
         app.fork({descr:"revDispIterator start",
                   func:function () {
                       app.review.revDispIterator(state); },
@@ -2018,10 +2019,8 @@ return {
 
     revDispIterator: function (state) {
         var rev; var revdivid; var maindivattrs; var elem;
-        while(state.idx < state.revs.length) {
-            if(state.idx >= 10 && !state.paused) {
-                state.paused = true;
-                break; }
+        var outdiv = jt.byId(state.divid);
+        if(outdiv && !state.cancelled && state.idx < state.revs.length) {
             if(state.idx > 0) {
                 state.prev = state.revs[state.idx - 1]; }
             rev = state.revs[state.idx];
@@ -2041,14 +2040,13 @@ return {
                           id: revdivid},
                   app.review.revdispHTML(state.prefix, jt.instId(rev), 
                                          rev, state.togcbn)]]);
-            jt.byId(state.divid).appendChild(elem); 
-            state.idx += 1; }
-        if(state.idx < state.revs.length) {  //resume after pause
+            outdiv.appendChild(elem); 
+            state.idx += 1;
             app.fork({
                 descr:"revDispIterator loop",
                 func:function () {
                     app.review.revDispIterator(state); },
-                ms:200}); }
+                ms:50}); }
     },
 
 
