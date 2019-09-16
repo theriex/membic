@@ -963,7 +963,7 @@ app.pcd = (function () {
         var link = document.createElement("link");
         link.type = "image/x-icon";
         link.rel = "shortcut icon";
-        link.href = "ctmpic?" + dst.type + "id=" + dst.id;
+        link.href = dst[dst.type].picsrc + dst.id;
         document.getElementsByTagName("head")[0].appendChild(link);
     }
 
