@@ -1237,7 +1237,7 @@ app.pcd = (function () {
         if(!app.login.isLoggedIn()) {
             jt.log(cmd + " command not available unless signed in.");
             return; }
-        if(cmd === "Settings") {
+        if(cmd.toLowerCase() === "settings" && app.profile.myProfile()) {
             return app.pcd.settings(); }
         if(cmd.toLowerCase() === "follow") {
             //they are logged in, but profile may not have been loaded yet
@@ -1282,7 +1282,7 @@ app.pcd = (function () {
                       ms:1800,
                       func:function () {
                           app.profile.fetchProfile(function () {
-                              displayObject(dst.obj); }); }}); }
+                              displayObject(dst.obj, command); }); }}); }
     }
 
 
