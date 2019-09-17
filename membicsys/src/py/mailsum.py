@@ -312,7 +312,10 @@ def stat_summary_of_post_summaries(pss):
     stat = "Postings (indexed by Coop/MUser id):\n"
     for key in pss:
         ps = pss[key]
-        stat += "  " + ps.portob.name + ": " + str(len(ps.membics)) + "\n"
+        stat += "  " + ps.portob.name + " /" + str(ps.portob.key().id())
+        if ps.portob.key().kind() == "MUser":
+            stat += " " + ps.portob.email
+        stat += ": " + str(len(ps.membics)) + "\n"
         for membic in ps.membics:
             stat += "  - " + membic.url + "\n"
             stat += "    " + membic.text + "\n"
