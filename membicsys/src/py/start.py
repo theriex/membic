@@ -212,11 +212,10 @@ def fetch_recent_themes_and_profiles():
         if jtxt:
             jtxt += ","
         jtxt += json_for_theme_prof(obj, "theme")
-    # With the system rebuild everyone's lastwrite was reset, so fetch 200
-    # rather than just 50 to make sure we show enough profiles.
     profcount = 0
     vq = VizQuery(muser.MUser, "ORDER BY lastwrite DESC")
-    objs = vq.fetch(50, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
+    # Fetch a few extra profiles to make sure we have enough with the rejects
+    objs = vq.fetch(200, read_policy=db.EVENTUAL_CONSISTENCY, deadline=10)
     for obj in objs:
         if not obj.preb or not len(obj.preb) or obj.preb == "[]":  # no membics
             continue
