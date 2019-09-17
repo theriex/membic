@@ -454,6 +454,7 @@ app.readurl = (function () {
         var errtxt = "Membic details were not filled out automatically" +
             " because of a problem accessing " + url + "\n\n" +
             "Details: Error code " + code + ": " + callerr;
+        jt.log("readurl.getFetchErrorText: " + errtxt);
         var manfill = " You may need to fill out the membic fields yourself.";
         var phrase = "urlfetch.Fetch() required more quota";  //too many calls
         if(code >= 400 && code < 500) {

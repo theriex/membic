@@ -266,6 +266,19 @@ def set_review_mainfeed(rev, acc):
     # debuginfo("set_review_mainfeed: " + str(rev.mainfeed))
 
 
+# Embedded HTML in review fields screws up everything including RSS, and can
+# even get the site in trouble with other sites' terms of use.  Not ok.
+def remove_HTML(review, revfields):
+    pattern = re.compile("<\S")
+    for fspec in revfields:
+        val = getattr(review, fspec["field"])
+        if val:
+            sr = pattern.search(val)
+            if sr:
+                val = val[0:sr.start()]
+                setattr(review, fspec["field"], val)
+
+
 # Read the field values for a source review.  Theme reviews are copied from
 # source reviews (post-through model) so not read directly.
 def read_review_values(handler, review, acc):
@@ -305,6 +318,7 @@ def read_review_values(handler, review, acc):
         elif fspec["op"] == "always":
             setattr(review, fspec["field"],
                     onelinestr(handler.request.get(fspec["field"])))
+    remove_HTML(review, revfields)
     set_review_mainfeed(review, acc)
     review.cankey = create_cankey_for_review(review)  # server consistency
     logdet = [review.penname, str(review.rating), review.revtype]

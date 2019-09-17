@@ -395,11 +395,22 @@ app.review = (function () {
     }
 
 
+    function verifyNoEmbeddedHTML (errors) {
+        var fields = ["keywords", "text", "imguri", "penname", "name", "title",
+                      "url", "rurl", "artist", "author", "publisher", "album", 
+                      "starring", "address", "year"];
+        fields.forEach(function (fld) {
+            if(crev[fld] && crev[fld].match(/<\S/)) {
+                errors.push(fld + " has HTML in it (found \"<\")"); } });
+    }
+
+
     function readAndValidateFieldValues (type, errors) {
         if(!type) {
             type = findReviewType(crev.revtype); }
         if(!errors) {
             errors = []; }
+        verifyNoEmbeddedHTML(errors);
         if(type) {
             keyFieldsValid(type, errors);
             keywordsValid(type, errors);

@@ -274,12 +274,14 @@ class URLFetcher(object):
                                           follow_redirects=False,
                                           deadline=10)
             except Exception as e:
-                logging.info("URLFetcher.fetch error: " + str(e))
+                logging.warn("URLFetcher.fetch error: " + str(e))
                 handler.error(400)
                 msg = "URLFetcher.fetch " + str(e) + " fetching " + geturl
                 if orgurl != geturl:
                     msg += "(redirected from " + orgurl + ")"
                 handler.response.out.write(msg)
+                muser.mailgun_send(handler, "membicsystem@gmail.com", 
+                           "URLFetcher.fetch failure", errtxt)
                 return None
             # Let the site set any cookies they require
             self.cookie.load(result.headers.get('set-cookie', ''))
