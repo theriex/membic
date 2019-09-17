@@ -15,13 +15,15 @@ app.pcd = (function () {
                          descfield: "aboutme",
                          piclabel: "Profile Pic",
                          picfield: "profpic",
-                         picsrc: "profpic?profileid=" },
+                         picsrc: "profpic?profileid=",
+                         idparam: "profid" },
                coop:    {desclabel: "Description",
                          descplace: "What is this theme focused on? What's appropriate to post?",
                          descfield: "description", 
                          piclabel: "Theme Pic",
                          picfield: "picture",
-                         picsrc: "ctmpic?coopid="} };
+                         picsrc: "ctmpic?coopid=",
+                         idparam: "coopid" } };
     var srchst = {mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:""};
     var setdispstate = {infomode:""};
     var standardOverrideColors = [
@@ -1018,6 +1020,21 @@ app.pcd = (function () {
                            "aria-hidden":"true"},
                     ["img", {src:"img/rssiconwhite.png",
                              style:"max-width:16px;"}]]]]);
+        if(app.solopage()) {
+            var membicurl = app.hardhome + "?view=" + dst.type + "&" +
+                dst[dst.type].idparam + "=" + dst.id + "&action=settings";
+            tac.push(["a", {href:membicurl, //support right click to copy
+                            cla:"resp-sharing-button__link",
+                            id:"membiclink", title:"Follow on Membic",
+                            onclick:jt.fs("window.open('" + membicurl + "')")},
+                      ["div", {cla:"resp-sharing-button" + 
+                               " resp-sharing-button--small" +
+                               " resp-sharing-button--membic"},
+                       ["div", {cla:"resp-sharing-button__icon" + 
+                                " resp-sharing-button__icon--solid",
+                                "aria-hidden":"true"},
+                        ["img", {src:"img/membiciconwhite.png",
+                                 style:"max-width:16px;"}]]]]); }
         return tac;
     }
 

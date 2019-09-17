@@ -388,7 +388,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .resp-sharing-button__link {
   text-decoration: none;
   color: #fff;
-  margin: 0.5em
+  margin: 0.5em 0.5em 0.5em 0.4em;
 }
 
 .resp-sharing-button {
@@ -554,3 +554,9 @@ background-color: #FF6600
 .resp-sharing-button--rss:hover,
 .resp-sharing-button--rss:active { 
   background-color:#ffb664; border-color:#ffb664; }
+
+.resp-sharing-button--membic {
+  background-color:#c3a7ca; border-color:#c3a7ca; }
+.resp-sharing-button--membic:hover,
+.resp-sharing-button-membic:active {
+  background-color:#b695be; border-color:#b695be; }
