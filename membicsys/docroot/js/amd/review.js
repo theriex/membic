@@ -1418,6 +1418,11 @@ app.review = (function () {
         orev = updobjs[1];
         app.review.deserializeFields(orev);
         crev = copyReview(orev);
+        //It's possible that with double encoding or escapes, the server
+        //might strip html that wasn't caught as an error on the client
+        //side.  To show "Done" after "Save" completed, the dlg contents
+        //needs to match the orev, so update it to ensure match.
+        app.review.updatedlg();
         updobjs.forEach(function (updobj) {
             if(updobj.obtype === "MUser" || updobj.obtype === "Coop") {
                 app.lcs.put(updobj.obtype, updobj); } });
