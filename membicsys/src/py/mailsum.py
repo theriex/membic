@@ -354,6 +354,8 @@ def note_inbound_mail(message):
     mailsubj = ""
     if hasattr(message, "subject"):
         mailsubj = message.subject
+    logging.info("note_inbound_mail from " + mailfrom + " to " + mailto +
+                 " subj: " + mailsubj)
     textbody = ""
     htmlbody = ""
     for bodtype, body in message.bodies():
