@@ -281,7 +281,7 @@ class URLFetcher(object):
                     msg += "(redirected from " + orgurl + ")"
                 handler.response.out.write(msg)
                 muser.mailgun_send(handler, "membicsystem@gmail.com", 
-                           "URLFetcher.fetch failure", errtxt)
+                           "URLFetcher.fetch failure", str(e) + " " + msg)
                 return None
             # Let the site set any cookies they require
             self.cookie.load(result.headers.get('set-cookie', ''))
