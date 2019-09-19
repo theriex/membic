@@ -1585,6 +1585,12 @@ return {
                (!app.coop.hasFlag(dst.obj, "archived") && val)) {
                 changed = true; }
             app.coop.setFlag(dst.obj, "archived", val); }
+        var errors = app.verifyNoEmbeddedHTML(
+            dst.obj, ["name", defs.descfield, "hashtag"], null, ["b", "i"]);
+        if(errors.length) {
+            jt.byId("okbutton").disabled = false;
+            jt.out("formstatdiv", errors[0]);
+            return; }
         if(!changed) {
             return app.layout.cancelOverlay(); }
         if(changed) {  //update functions handle cache and bookkeeping

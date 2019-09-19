@@ -91,30 +91,6 @@ handlers:
 
 
 ######################################################################
-##        Pen Names
-
-## Create new pen name for current authentication
-## POST params: pen, authparams
-- url: .*/newpen.*
-  script: src.py.pen.app
-
-## Update a pen name if authorized
-## POST params: pen, authparams
-- url: .*/updpen.*
-  script: src.py.pen.app
-
-## Toggle remembering a review
-## GET params: revid, penid, authparams
-- url: .*/togremember.*
-  script: src.py.pen.app
-
-## Return the pen name for the given id.
-## GET params: penid
-- url: .*/penbyid.*
-  script: src.py.pen.app
-
-
-######################################################################
 ##        Reviews (membics)
 
 ## Write the given review and associated coop reviews

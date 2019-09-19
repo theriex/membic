@@ -173,6 +173,8 @@ def read_and_validate_descriptive_fields(handler, coop):
     # picture is uploaded separately
     # membership, adminlog, people handled separately
     # review posting fields are handled separately
+    muser.remove_HTML(coop, ["name", "hashtag", "description", "keywords"],
+                      ["b", "i"])
     return True
 
 

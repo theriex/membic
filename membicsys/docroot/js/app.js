@@ -320,6 +320,21 @@ var jt = {};   //Global access to general utility methods
     };
 
 
+    app.verifyNoEmbeddedHTML = function (obj, fields, errors, allowed) {
+        errors = errors || [];
+        fields.forEach(function (fld) {
+            var val = obj[fld];
+            if(allowed) {  //remove basic tags from check.  No attributes
+                allowed.forEach(function (tag) {
+                    val = val.replace(new RegExp("<" + tag + ">","ig"), "");
+                    val = val.replace(new RegExp("</" + tag + ">", "ig"),
+                                      ""); }); }
+            if(val && val.match(/<\S/)) {
+                errors.push(fld + " has HTML in it (found \"<\")"); } });
+        return errors;
+    };
+
+
     ////////////////////////////////////////
     // supplemental utility funtions
     ////////////////////////////////////////

@@ -15,6 +15,7 @@ import os
 import urllib
 import httplib
 import base64
+import re
 
 # cliset: {flags:{archived:ISO},
 #          embcolors:{link:"#84521a", hover:"#a05705"},
@@ -307,6 +308,23 @@ def cache_hashtag(dbobj):
     memcache.set(dbobj.hashtag, dbobj.kind() + ":" + str(dbobj.key().id()))
 
 
+# Strip any html out since that can wreak havoc with displays.  Allow simple
+# inline no-attribute tags as specified, e.g "<b>something</b>".
+def remove_HTML(dbo, fields, oktags=[]):
+    pattern = re.compile("<\S")
+    for fldname in fields:
+        val = getattr(dbo, fldname)
+        if val:
+            vf = val  # copy with allowed html tags replaced by placeholders
+            for tag in oktags:
+                vf = vf.replace("<" + tag + ">", "." + tag + ".")
+                vf = vf.replace("</" + tag + ">", "." + tag + "..")
+            sr = pattern.search(vf)
+            if sr:
+                val = val[0:sr.start()]  # strip html from original value
+                setattr(dbo, fldname, val)
+
+
 def update_account_fields(handler, muser):
     muser.name = handler.request.get("name") or ""
     muser.aboutme = handler.request.get("aboutme") or ""
@@ -321,6 +339,7 @@ def update_account_fields(handler, muser):
     muser.cliset = handler.request.get("cliset") or ""
     muser.coops = str(handler.request.get('coops')) or ""
     muser.altinmail = str(handler.request.get("altinmail")) or ""
+    remove_HTML(muser, ["name", "aboutme", "hashtag"], ["b", "i"])
     return True
 
 
