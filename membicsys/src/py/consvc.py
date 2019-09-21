@@ -12,6 +12,7 @@ from google.appengine.api import urlfetch
 import urllib
 import Cookie
 import datetime
+import re
 from base64 import b64encode
 from cacheman import *
 from google.appengine.api import memcache
@@ -320,6 +321,26 @@ def simple_fetchurl(handler, geturl):
     return interpreted_url_fetch_result(handler, result, geturl)
 
 
+def json_api_call_info(handler, geturl):
+    # client should have already passed proper URL, but match to verify
+    match = re.match(r"https://api.vimeo.com/videos/\d+", geturl)
+    if match:
+        svc = get_connection_service("vimeoAPI")
+        return {"url": match.group(0),
+                "headers": { "Authorization": "bearer " + svc.secret }}
+    oldendpoints = ["https://www.googleapis.com",
+                    "https://api.github.com",
+                    "http://gdata.youtube.com",
+                    "http://odata.netflix.com"]
+    for endpoint in oldendpoints:
+        if geturl.startswith(endpoint):
+            srverr(handler, 400, "API call endpoint no longer supported: " +
+                   endpoint)
+            return None
+    srverr(handler, 400, "unknown or bad API call url " + geturl)
+    return None
+
+
 # params: name, oauth_callback, oauth_verifier
 class OAuth1Call(webapp2.RequestHandler):
     def post(self):
@@ -343,25 +364,34 @@ class OAuth1Call(webapp2.RequestHandler):
 
 
 class JSONGet(webapp2.RequestHandler):
-    # basically this is a server endpoint to enable cross-site calls
     def get(self):
+        acc = muser.authenticated(self.request)
+        if not acc:
+            return  # error already reported
         geturl = self.request.get('geturl')
-        whitelist = [ "https://www.googleapis.com",
-                      "https://api.github.com",
-                      "http://gdata.youtube.com",
-                      "http://odata.netflix.com" ]
-        whitelisted = False
-        for url in whitelist:
-            if geturl.startswith(url):
-                whitelisted = True
-        if not whitelisted:
-            self.error(403)
-            self.response.out.write("Not a recognized ok endpoint")
-            return
-        result = simple_fetchurl(self, geturl)
-        if result:
-            self.response.headers['Content-Type'] = 'application/json'
-            self.response.out.write(result.content)
+        ci = json_api_call_info(self, geturl)
+        if not ci:
+            return  # error already reported
+        logging.info("calling " + ci["url"] + " for " + acc.email + " MUser (" +
+                     str(acc.key().id()) + ")")
+        result = None
+        try:
+            result = urlfetch.fetch(ci["url"], payload=None, method="GET",
+                                    headers=ci["headers"],
+                                    allow_truncated=False,
+                                    follow_redirects=True,
+                                    deadline=12,
+                                    validate_certificate=False)
+        except Exception as e:
+            logging.warn("Exception: " + str(e))
+            return srverr(self, 406, str(e))
+        if not result:
+            logging.warn("No result returned")
+            return srverr(self, 406, "No result returned")
+        # returned JSON usually not huge and very helpful for debugging
+        logging.info("result.content: " + result.content)
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.out.write(result.content)
 
 
 class TwitterTokenCallback(webapp2.RequestHandler):
@@ -545,6 +575,6 @@ app = webapp2.WSGIApplication([('.*/oa1call', OAuth1Call),
                                ('.*/amazoninfo', AmazonInfo),
                                ('.*/amazonsearch', AmazonSearch),
                                ('.*/urlcontents', URLContents),
-                               ('.*/imagerelay', ImageRelay)], 
+                               ('.*/imagerelay', ImageRelay)],
                               debug=True)
 

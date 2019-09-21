@@ -192,7 +192,7 @@ app.review = (function () {
     }
 
 
-    function getURLReader (ignore, callfunc) {
+    function getURLReader (url, callfunc) {
         //app.youtube dies all the time due to the number of API calls
         //    being exhausted, and the standard reader does just as well.
         //app.netflix became nonfunctional when netflix retired the
@@ -201,6 +201,8 @@ app.review = (function () {
         //an advertiser relationship.
         // if(url.indexOf(".amazon.") > 0) {
         //     return callfunc(app.amazon); }
+        if(url.toLowerCase().indexOf("vimeo.") > 0) {  //https://vimeo.com/id
+            return callfunc(app.jsonapi); }
         callfunc(app.readurl);
     }
 
