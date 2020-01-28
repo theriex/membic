@@ -11,9 +11,9 @@ var puller = (function () {
     "use strict";
 
     var fs = require("fs");
-    var http = require("http");
+    var https = require("https");
 
-    var stats = {musersUpdated:0, themesUpdated:0, servercalls:0};
+    var stats = {pending:0, server: {}, files: {}};
 
     var uspec = [
         {attr:"gaeid", type:"String", ovrw:false},
@@ -56,44 +56,94 @@ var puller = (function () {
         {attr:"keywords", type:"String", ovrw:true},
         {attr:"preb", type:"JSON", ovrw:true}];
         
-        
-    function updateLocalData(tdfo, data, locf, dlspec) {
-        var srvo = JSON.parse(data)[0];
-        var updo = {dltag:dlspec.dltag};
-        dlspec.spec.forEach(function (fs) {
-            updo[fs.attr] = tdfo[fs.attr] || "";
-            if(fs.ovrw) {
-                updo[fs.attr] = srvo[fs.attr]; } });
-        fs.writeFileSync(locf, JSON.stringify(updo), "utf8");
-        stats[dlspec.folder + "Updated"] += 1;
-        console.log("updated " + locf);
+
+    function urlFetch (url, contf) {
+        https.request({host:"membic.org", path:url},
+                     function (res) {
+                         var data = []; //array of buffers from each chunk
+                         res.on("data", function (chunk) {
+                             data.push(chunk); });
+                         res.on("end", function () {
+                             //concat all the buffers into one and return that
+                             data = Buffer.concat(data);
+                             contf(data); }); })
+            .on("error", function (err) {
+                console.log(err.message); })
+            .end();  //signal request ready for processing
     }
 
 
-    function downloadAndUpdate (tdfo, locf, dlspec) {
-        if(stats.servercalls) {
-            return; }  //just call once to make sure things are working.
-        //console.log("downloadAndUpdate " + locf);
-        stats.servercalls += 1;
-        http.request(
-            {host:"membic.org",
-             path:"/" + dlspec.objsrc.url + "?" + dlspec.objsrc.idparam + "=" + 
-                 tdfo.gaeid},
-            function (res) {
-                var data = "";
-                res.on("data", function (chunk) {
-                    data += chunk; });
-                res.on("end", function () {
-                    updateLocalData(tdfo, data, locf, dlspec); }); })
-            .on("error", function (err) {
-                console.log(err.message); })
-            .end();
+    function srvrGet (endpt, qstr, contf) {
+        stats.server[endpt] = stats.server[endpt] || 0;
+        stats.server[endpt] += 1;
+        stats.pending += 1;
+        urlFetch(endpt + qstr, function (data) {
+            stats.pending -= 1;
+            contf(data); });
+    }
+
+
+    function locSave (filename, content) {
+        console.log("--> " + filename);
+        var folder = filename.slice(0, filename.lastIndexOf("/"));
+        stats.files[folder] = stats.files[folder] || 0;
+        stats.files[folder] += 1;
+        var format = "utf8";
+        if(filename.endsWith(".png")) {
+            format = "binary"; }
+        fs.writeFileSync(filename, content, format);
+    }
+
+
+    //Verify membic data files exist, with associated pics (if any).
+    function writeMembics(membics, overwrite) {
+        membics.forEach(function (membic) {
+            var membicwritten = false;
+            var mfn = "membics/" + membic.instid + ".json";
+            if(membic.overflow) {  //overflow marker membic
+                if(overwrite || membicwritten) {
+                    srvrGet("/ovrfbyid", "?overid=" + membic.overflow,
+                            function (data) {
+                                console.log("-|| ovrf " + membic.overflow);
+                                writeMembics(JSON.parse(data), 
+                                             overwrite); }); } }
+            else if(overwrite || !fs.existsSync(mfn)) {
+                membicwritten = true;
+                locSave(mfn, JSON.stringify(membic));
+                if(membic.svcdata && membic.svcdata.indexOf("upldpic") >= 0) {
+                    var fnm = "membics/pics" + membic.instid + ".png";
+                    srvrGet("/revpic", "?revid=" + membic.instid,
+                            function (data) {
+                                locSave(fnm, data); }); } } });
+    }
+
+
+    //Update the local data with the data from the server, fetching
+    //additional supporting data if needed.
+    function updateLocalData(data, tdfo, local, dlspec) {
+        var srvo = JSON.parse(data)[0];
+        var loco = local.obj;
+        //pull down the pic as needed
+        var picfn = dlspec.folder + "/pics/" + tdfo.gaeid + ".png";
+        if(srvo[dlspec.picsrc.fld] && (!fs.existsSync(picfn) ||
+                                       srvo.modified !== loco.modified)) {
+            srvrGet("/" + dlspec.picsrc.url, "?" + dlspec.picsrc.idparam +
+                     "=" + tdfo.gaeid,
+                     function (data) {
+                         locSave(picfn, data); }); }
+        //update local copies of membics as needed
+        writeMembics(JSON.parse(srvo.preb), srvo.modified !== loco.modified);
+        //update the local object and write it
+        dlspec.spec.forEach(function (fs) {
+            loco[fs.attr] = tdfo[fs.attr] || "";
+            if(fs.ovrw) {
+                loco[fs.attr] = srvo[fs.attr]; } });
+        loco.dltag = dlspec.dltag;
+        locSave(local.fname, JSON.stringify(loco));
     }
 
 
     function verifyDownloaded (dlspec) {
-        // console.log("verifyDownloaded " + dlspec.folder + ": " + 
-        //             JSON.stringify(dlspec.tdfdat[0]));
         var tdfo = dlspec.tdfdat[dlspec.index];
         if(tdfo.gaeid) {  //quit if we hit an empty row after main data
             tdfo.gaeid = tdfo.gaeid.trim();
@@ -101,10 +151,13 @@ var puller = (function () {
             if(!fs.existsSync(locf)) {
                 fs.writeFileSync(locf, "{}", "utf8"); }
             var loco = JSON.parse(fs.readFileSync(locf, "utf8"));
-            // console.log("verifyDownloaded " + locf + " " + loco.dltag + "/" +
-            //             dlspec.dltag);
-            if(loco.dltag !== dlspec.dltag) {
-                downloadAndUpdate(tdfo, locf, dlspec); }
+            if(loco.dltag !== dlspec.dltag && stats.pulled < stats.maxpull) {
+                stats.pulled += 1;
+                srvrGet("/" + dlspec.objsrc.url, "?" + dlspec.objsrc.idparam +
+                        "=" + tdfo.gaeid,
+                        function (data) {
+                            updateLocalData(data, tdfo, {fname:locf, obj:loco},
+                                            dlspec); }); }
             dlspec.index += 1;
             if(dlspec.index < dlspec.tdfdat.length) {
                 verifyDownloaded(dlspec); } }
@@ -132,34 +185,39 @@ var puller = (function () {
 
 
     function readTDF (dlspec) {
-        fs.readFile(dlspec.tdf, "utf8", function (err, data) {
-            if(err) { 
-                throw err; }
-            dlspec.tdfdat = tdf2jsonArray(data);
-            // fs.writeFileSync(dlspec.folder + ".json",
-            //                  JSON.stringify(dlspec.tdfdat, "utf8"));
-            verifyDownloaded(dlspec); });
+        dlspec.tdfdat = tdf2jsonArray(fs.readFileSync(dlspec.tdf, "utf8"));
+        verifyDownloaded(dlspec);
+    }
+
+
+    function writeStats () {
+        if(stats.pending) {
+            return setTimeout(writeStats, 500); }
+        console.log(JSON.stringify(stats));
     }
 
 
     //The tag is used to resume from where things left off in case all the
     //downloading causes the site to run out of resources and shut down.
-    function download (tag) {  //e.g. "28jan20"
+    function download (tag, maxpull) {  //e.g. "26jan20", 100
+        stats.pulled = 0;
+        stats.maxpull = maxpull || 1
         readTDF({dltag:tag, index:0,
                  tdf:"uids.tdf", folder:"musers", spec:uspec,
                  objsrc:{url:"profbyid", idparam:"profid"},
-                 picsrc:{url:"profpic", idparam:"profileid"}});
+                 picsrc:{fld:"profpic", url:"profpic", idparam:"profileid"}});
         readTDF({dltag:tag, index:0,
                  tdf:"tids.tdf", folder:"themes", spec:tspec,
                  objsrc:{url:"ctmbyid", idparam:"coopid"},
-                 picsrc:{url:"ctmpic", idparam:"coopid"}});
+                 picsrc:{fld:"picture", url:"ctmpic", idparam:"coopid"}});
+        writeStats();
     }
 
 
     return {
-        download: function (tag) { download(tag); }
+        download: function (tag, maxpull) { download(tag, maxpull); }
     };
 }());
 
-puller.download(process.argv[2]);
+puller.download(process.argv[2], process.argv[3]);
 
