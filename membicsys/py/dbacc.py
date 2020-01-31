@@ -25,7 +25,7 @@ class AppEntity(object):
 class AEFld(object):
 
 class MUser(Entity):
-    """ Membic User account, authentication and data """
+    """ Membic User account. """
     # private auth and setup, see safe_json
     email = AEFld("priv req index email")
     phash = AEFld("priv req string")
@@ -67,7 +67,7 @@ class MUser(Entity):
 
 
 class Theme(Entity):
-    """ A cooperative theme """
+    """ A cooperative theme. """
     name = AEFld("req string")
     name_c = AEFld("req index unique string")  # canonical name
     modhist = AEFld("isomod index")            # creation date and mod count
@@ -144,4 +144,48 @@ class Membic(Entity):
 #   might mark the membic as helpful or remembered.  Or they might select
 #   from a scalar view of emoticons to rate it.  Or flag as inappropriate.
 
+
+class Overflow(Entity):
+    """ MUser/Theme.preb overflow container. """
+    dbkind = AEFld("req index string")
+    dbkeyid = AEFld("req index dbid")
+    overcount = AEFld("req int")
+    preb = AEFld("json")         # membics for display w/opt overflow link
+
+
+class MailNotice(db.Model):
+    """ Broadcast email notice tracking to avoid duplicate sends. """
+    name = AEFld("req index string")  # query access identifier
+    subject = AEFld("string")         # the email subject for ease of reference
+    uidcsv = AEFld("idcsv")           # MUser ids that were sent to
+    lastupd = AEFld("isodate")        # last recorded send
+
+
+# Updated by cron job once per day.  Used for general reporting/history.
+class ActivitySummary
+    """ Daily summary activity information by profile/theme. """
+    refp = AEFld("req index string")  # e.g. MUSer1234 or Theme4567
+    tstart = AEFld("req index isod")  # daily summary start time
+    tuntil = AEFld("req index isod")  # daily summary end time
+    reqbyid = AEFld("req int")        # count of external requests via id
+    reqbyht = AEFld("req int")        # count of external requests via hashtag
+    reqbypm = AEFld("req int")        # count of external requests via params
+    reqbyrs = AEFld("req int")        # count of requests via RSS
+    reqdets = AEFld("json")           # dict of supplemental info, see note
+    created = AEFld("req int")        # how many new membics were created
+    edited = AEFld("req int")         # how many existing membics were edited
+    removed = AEFld("req int")        # deleted if MUser, removed if Theme
+# reqdets (request details dictionary):
+#   - How many of the requests were from known crawler programs
+#   - Map of known (signed in via cookie) users, each with counts and names.
+#   - Map of referering urls with counts for each
+#   - Map of user agent strings with counts for each
+
+
+class ConnectionService(Entity):
+    """ Connection tokens and info for supporting services. """
+    name = AEFld("req unique index string")   # service name
+    ckey = AEFld("string")                    # key e.g. oauth1 consumer key
+    secret = AEFld("string")                  # e.g. oauth1 consumer secret
+    data = AEFld("text")                      # service-specific data
 
