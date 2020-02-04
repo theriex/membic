@@ -1,5 +1,9 @@
 /*jslint node, white, fudge */
 
+//For porting to standard App Engine, queries are limited at most one
+//non-equality field specification, and there are no join operations.
+//Stored object instances are limited to a max size of 1mb.
+
 module.exports = (function () {
     "use strict";
 
