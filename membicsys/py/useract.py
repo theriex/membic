@@ -17,14 +17,16 @@ def secure(func):
     return srverr("Request must be over https", 405)
 
 
-def account_from_email(emaddr):  # requires a valid emaddr
-    return None
-
-
 def toklogin():
-    emaddr = dbacc.reqarg("emailin", "MUser.email", True)
-    logging.debug("Looking up " + emaddr);
-    muser = account_from_email(emaddr)
-    return "Not implemented yet"
+    muser = None
+    try:
+        emaddr = dbacc.reqarg("emailin", "MUser.email", True)
+        logging.debug("Looking up " + emaddr);
+        muser = dbacc.cfbk("MUser", "email", emaddr, True)
+        # password = dbacc.reqarg("passin", "string", True)
+
+    except ValueError as e:
+        return srverr(str(e))
+    return "[" + dbacc.safe_json(muser, "personal") + "]"
     
 

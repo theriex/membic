@@ -1,5 +1,5 @@
 CREATE TABLE MUser (  -- Membic User account.
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   importid BIGINT UNIQUE,
   email VARCHAR(256) NOT NULL UNIQUE,
   phash VARCHAR(256) NOT NULL,
@@ -18,11 +18,11 @@ CREATE TABLE MUser (  -- Membic User account.
   modified VARCHAR(256),
   lastwrite VARCHAR(256),
   preb LONGTEXT,
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE Theme (  -- A cooperative theme.
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   importid BIGINT UNIQUE,
   name VARCHAR(256) NOT NULL,
   name_c VARCHAR(256) NOT NULL UNIQUE,
@@ -42,13 +42,16 @@ CREATE TABLE Theme (  -- A cooperative theme.
   cliset LONGTEXT,
   keywords LONGTEXT,
   preb LONGTEXT,
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   importid BIGINT UNIQUE,
+  url LONGTEXT,
+  rurl LONGTEXT,
   revtype VARCHAR(256) NOT NULL,
+  details LONGTEXT,
   penid BIGINT NOT NULL,
   ctmid BIGINT NOT NULL,
   rating INT NOT NULL,
@@ -66,42 +69,31 @@ CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   dispafter VARCHAR(256),
   penname VARCHAR(256),
   reacdat LONGTEXT,
-  name VARCHAR(256),
-  title VARCHAR(256),
-  url LONGTEXT,
-  rurl LONGTEXT,
-  artist VARCHAR(256),
-  author VARCHAR(256),
-  publisher VARCHAR(256),
-  album VARCHAR(256),
-  starring VARCHAR(256),
-  address VARCHAR(256),
-  year VARCHAR(256),
   INDEX (ctmid, modified DESC),
   INDEX (ctmid, penid, modified DESC),
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE Overflow (  -- extra preb membics
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   dbkind VARCHAR(256) NOT NULL,
   dbkeyid BIGINT NOT NULL,
   overcount INT NOT NULL,
   preb LONGTEXT,
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE MailNotice (  -- Broadcast email tracking
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   name VARCHAR(256) NOT NULL UNIQUE,
   subject VARCHAR(256),
   uidcsv LONGTEXT,
   lastupd VARCHAR(256),
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE ActivitySummary (  -- Stats by profile/theme
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   refp VARCHAR(256) NOT NULL UNIQUE,
   tstart VARCHAR(256) NOT NULL,
   tuntil VARCHAR(256) NOT NULL,
@@ -114,15 +106,15 @@ CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   edited INT NOT NULL,
   removed INT NOT NULL,
   INDEX (refp, tuntil DESC),
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 
 CREATE TABLE ConnectionService (  -- Supporting service auth
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   name VARCHAR(256) NOT NULL UNIQUE,
   ckey VARCHAR(256),
   secret VARCHAR(256),
   data LONGTEXT,
-  PRIMARY KEY (id)
+  PRIMARY KEY (dsId)
 );
 

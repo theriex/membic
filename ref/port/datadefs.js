@@ -1,8 +1,15 @@
 /*jslint node, white, fudge */
 
-//For porting to standard App Engine, queries are limited at most one
+//If porting to standard App Engine, queries are limited at most one
 //non-equality field specification, and there are no join operations.
 //Stored object instances are limited to a max size of 1mb.
+
+//Fields required to support database search and retrieval are separate and
+//distinct.  Those are either declared unique, or listed within one or more
+//queries.  Fields needed primarily for server-side CRUD processing are
+//usually distinct for ease of coding.  Fields used mainly for analysis, or
+//client-side display filtering may be grouped into JSON for ease of
+//maintenance.
 
 module.exports = (function () {
     "use strict";
@@ -42,12 +49,13 @@ module.exports = (function () {
         {f:"aboutme", d:"text", c:"optional description, website link etc."},
         {f:"hashtag", d:"unique string", c:"personal theme direct access"},
         {f:"profpic", d:"image", c:"used for theme, and coop posts"},
-        {f:"cliset", d:"json", c:"dict of client settings, see note"},
+        {f:"cliset", d:"json", c:"dict of client settings, see note 1"},
         {f:"coops", d:"json", c:"coopid map, see note"},
         {f:"created", d:"isodate", c:"when the account was first created"},
         {f:"modified", d:"isod", c:"when account last modified"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
+        ////////// Notes:
         // cliset: {flags:{archived:ISO},
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          maxPostsPerDay:1,
@@ -91,9 +99,12 @@ module.exports = (function () {
 
     {entity:"Membic", descr:"A URL with a reason why it's memorable.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
+        {f:"url", d:"url", c:"canonical URL for item"},
+        {f:"rurl", d:"url", c:"original read URL"},
         {f:"revtype", d:"req string", c:"book, movie, music...",
          enumvals:["book", "article", "movie", "video", "music", "yum",
                    "activity", "other"]},
+        {f:"details", d:"json", c:"detail fields depending on type"},
         {f:"penid", d:"req dbid", c:"who wrote this membic"},
         {f:"ctmid", d:"req dbid", c:"Theme id, or 0 if source membic"},
         {f:"rating", d:"req int", c:"0-100"},
@@ -110,21 +121,23 @@ module.exports = (function () {
         {f:"icwhen", d:"isodate", c:"when icdata last pulled"},
         {f:"dispafter", d:"isodate", c:"visibility queued until"},
         {f:"penname", d:"string", c:"author name for easy UI ref"},
-        {f:"reacdat", d:"json", c:"reaction data, see note"},
-        //which of these fields is are used depends on the type
-        {f:"name", d:"string", c:"yum, activity, other"},
-        {f:"title", d:"string", c:"book, movie, video, music"},
-        {f:"url", d:"url", c:"canonical URL for item"},
-        {f:"rurl", d:"url", c:"original read URL"},
-        {f:"artist", d:"string", c:"video, music"},
-        {f:"author", d:"string", c:"book"},
-        {f:"publisher", d:"string", c:"book"},
-        {f:"album", d:"string", c:"music"},
-        {f:"starring", d:"string", c:"movie"},
-        {f:"address", d:"string", c:"yum, activity"},
-        {f:"year", d:"string", c:"values like \"80's\" are ok"}],
+        {f:"reacdat", d:"json", c:"reaction data, see note"}],
       queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
                 {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
+        // rurl/url:
+        //   rurl is always filled in with whatever was entered.  url may be
+        //   the same, or a sanitized value for general reference.  The url
+        //   may be updated later by the system as knowledge evolves.
+        // details:
+        //   - name: yum, activity, other
+        //   - title: book, movie, video, music
+        //   - artist: video, music
+        //   - author: book
+        //   - publisher: book
+        //   - album: music
+        //   - starring: movie
+        //   - address: yum, activity
+        //   - year: values like "80's" are ok"
         // srcrev is heavily utilized in different contexts:
         //   - if this membic is a Theme post (ctmid is filled in), srcrev
         //     holds the id of the original membic.
@@ -140,10 +153,11 @@ module.exports = (function () {
         //   theme, or for search.  The value is maintained server-side for
         //   consistency.  Multiple membics with the same cankey/penid/ctmid
         //   are allowed but discouraged.
-        // svcdata: 
-        //   Client setting of picdisp:sitepic|upldpic|nopic. On update, the
-        //   server writes a postctms dictionary field with info on the
-        //   themes the membic was posted through to.
+        // svcdata:
+        //   - picdisp: sitepic|upldpic|nopic (client setting).  For sitepics
+        //     not over https, the server internally caches a lowres copy of
+        //     the source image to serve over https.  Tracked in "ic" fields.
+        //   - postctms: server written info on posted through themes.
         // reacdat:
         //   Server maintained reaction data from other users.  For example
         //   a user might mark the membic as helpful or remembered.  Or they
@@ -156,7 +170,6 @@ module.exports = (function () {
         {f:"overcount", d:"req int", c:"overflow instance count"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
         
-
     {entity:"MailNotice", descr:"Broadcast email tracking", fields:[
         {f:"name", d:"req unique string", c:"query access identifier"},
         {f:"subject", d:"string", c:"the email subject for ease of reference"},
