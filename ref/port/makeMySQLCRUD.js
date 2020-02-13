@@ -111,6 +111,7 @@ function entityDefinitions () {
         if(eidx < definitions.length - 1) {
             ecomma = ","; }
         pyc += "    \"" + edef.entity + "\": {  # " + edef.descr + "\n";
+        pyc += "        \"dsId\": {\"pt\": \"dbid\", \"dv\": 0},\n";
         edef.fields.forEach(function (fd, fidx) {
             var fcomma = "";
             if(fidx < edef.fields.length - 1) {
@@ -140,7 +141,7 @@ function entityKeyFields () {
             if(ddefs.fieldIs(fd.d, "unique")) {
                 if(keyflds) {
                     keyflds += ", "; }
-                keyflds += fd.f; } });
+                keyflds += "\"" + fd.f + "\""; } });
         pyc += keyflds + "]" + ecomma + "\n"; });
     pyc += "}\n";
     return pyc;
@@ -189,7 +190,7 @@ function helperFunctions () {
     pyc += "    if field != 'dsId' and field not in entkeys[entity]:\n";
     pyc += "        raise ValueError(field + \" not a unique index for \" + entity)\n";
     pyc += "    # lookup in cache and return if found.  See notes on cache structure.\n";
-    pyc += "    var vstr = value\n";
+    pyc += "    vstr = str(value)\n";
     pyc += "    if entdefs[entity][field][\"pt\"] not in [\"dbid\", \"int\"]:\n";
     pyc += "        vstr = \"\\\"\" + value + \"\\\"\"\n";
     pyc += "    objs = query_entity(entity, \"WHERE \" + field + \"=\" + vstr + \" LIMIT 1\")\n";
@@ -204,6 +205,7 @@ function helperFunctions () {
     pyc += "    # lookup the cached instance, following to get to the primary key\n";
     pyc += "    # instance as needed.  If found, pickle.loads the instance, go through\n";
     pyc += "    # the entkeys fields and set all cache refs to \"\"\n"
+    pyc += "    return True\n"
     pyc += "\n";
     pyc += "\n";
     pyc += "# Get a connection to the database.  May throw mysql.connector.Error\n";
@@ -252,15 +254,15 @@ function writeInsertFunction (edef) {
 function writeUpdateFunction (edef) {
     var pyc = "";
     pyc += "# Update the specified " + edef.entity + " row with the given field values.\n";
-    pyc += "def update_new_" + edef.entity + "(cnx, cursor, fields):\n";
+    pyc += "def update_existing_" + edef.entity + "(cnx, cursor, fields):\n";
     pyc += "    dsId = int(fields[\"dsId\"])  # Verify int value\n";
     pyc += "    stmt = \"\"\n";
     pyc += "    for field in fields:\n";
     pyc += "        if field != \"dsId\":\n";
     pyc += "            if stmt:\n";
     pyc += "                stmt += \", \"\n";
-    pyc += "            stmt += field + \"=(%(\" + field + \")s\"\n";
-    pyc += "    stmt = \"UPDATE " + edef.entity + " SET \" + stmt + \" WHERE dsId=\" + dsId\n";
+    pyc += "            stmt += field + \"=(%(\" + field + \")s)\"\n";
+    pyc += "    stmt = \"UPDATE " + edef.entity + " SET \" + stmt + \" WHERE dsId=\" + str(dsId)\n";
     pyc += "    data = {}\n";
     pyc += "    for field in fields:\n";
     pyc += "        if field != \"dsId\":\n";
@@ -291,13 +293,13 @@ function entityWriteFunction () {
     pyc += "            if dsId:\n";
     definitions.forEach(function (edef) {
         pyc += "                if entity == \"" + edef.entity + "\":\n";
-        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, dsId, fields)\n"; });
+        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, fields)\n"; });
     pyc += "            # No existing instance to update.  Insert new.\n";
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
-        pyc += "                return return insert_new_" + edef.entity + "(cnx, cursor, fields)\n"; });
+        pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, fields)\n"; });
     pyc += "        except mysql.connector.Error as e:\n";
-    pyc += "            raise ValueException(\"write_entity failed: \" + str(e))\n";
+    pyc += "            raise ValueError from e\n";
     pyc += "        finally:\n";
     pyc += "            cursor.close()\n";
     pyc += "    finally:\n";
@@ -318,6 +320,7 @@ function writeQueryFunction (edef) {
     pyc += "    query += \"" + fcsv + "\"\n";
     pyc += "    query += \" FROM " + edef.entity + " \" + where\n";
     pyc += "    cursor.execute(query)\n";
+    pyc += "    res = []\n";
     pyc += "    for (dsId, " + fcsv + ") in cursor:\n";
     var oes = "";
     edef.fields.forEach(function (fd) {
@@ -340,7 +343,6 @@ function entityQueryFunction () {
     pyc += "# indexed fields and/or declared query indexes.  For speed and general\n";
     pyc += "# compatibility, only one inequality operator should be used in the match.\n";
     pyc += "def query_entity(entity, where):\n";
-    pyc += "    res = []\n";
     pyc += "    cnx = get_mysql_connector()\n";
     pyc += "    if not cnx:\n";
     pyc += "        raise ValueError(\"Database connection failed.\")\n";
@@ -353,7 +355,7 @@ function entityQueryFunction () {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
         pyc += "                return query_" + edef.entity + "(cnx, cursor, where)\n"; });
         pyc += "        except mysql.connector.Error as e:\n";
-        pyc += "            raise ValueException(\"query_entity failed: \" + str(e))\n";
+        pyc += "            raise ValueError from e\n";
         pyc += "        finally:\n";
         pyc += "            cursor.close()\n";
         pyc += "    finally:\n";
@@ -368,6 +370,7 @@ function createPythonDBAcc () {
     pyc += "logging.basicConfig(level=logging.DEBUG)\n";
     pyc += "import flask\n";
     pyc += "import re\n";
+    pyc += "import mysql.connector\n";
     pyc += "\n";
     pyc += entityDefinitions() + "\n\n";
     pyc += entityKeyFields() + "\n\n";

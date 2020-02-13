@@ -2,9 +2,11 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 import flask
 import re
+import mysql.connector
 
 entdefs = {
     "MUser": {  # Membic User account.
+        "dsId": {"pt": "dbid", "dv": 0},
         "importid": {"pt": "dbid", "dv": 0},
         "email": {"pt": "email", "dv": ""},
         "phash": {"pt": "string", "dv": ""},
@@ -25,6 +27,7 @@ entdefs = {
         "preb": {"pt": "string", "dv": ""}
     },
     "Theme": {  # A cooperative theme.
+        "dsId": {"pt": "dbid", "dv": 0},
         "importid": {"pt": "dbid", "dv": 0},
         "name": {"pt": "string", "dv": ""},
         "name_c": {"pt": "string", "dv": ""},
@@ -46,6 +49,7 @@ entdefs = {
         "preb": {"pt": "string", "dv": ""}
     },
     "Membic": {  # A URL with a reason why it's memorable.
+        "dsId": {"pt": "dbid", "dv": 0},
         "importid": {"pt": "dbid", "dv": 0},
         "url": {"pt": "string", "dv": ""},
         "rurl": {"pt": "string", "dv": ""},
@@ -70,18 +74,21 @@ entdefs = {
         "reacdat": {"pt": "string", "dv": ""}
     },
     "Overflow": {  # extra preb membics
+        "dsId": {"pt": "dbid", "dv": 0},
         "dbkind": {"pt": "string", "dv": ""},
         "dbkeyid": {"pt": "dbid", "dv": 0},
         "overcount": {"pt": "int", "dv": 0},
         "preb": {"pt": "string", "dv": ""}
     },
     "MailNotice": {  # Broadcast email tracking
+        "dsId": {"pt": "dbid", "dv": 0},
         "name": {"pt": "string", "dv": ""},
         "subject": {"pt": "string", "dv": ""},
         "uidcsv": {"pt": "string", "dv": ""},
         "lastupd": {"pt": "string", "dv": ""}
     },
     "ActivitySummary": {  # Stats by profile/theme
+        "dsId": {"pt": "dbid", "dv": 0},
         "refp": {"pt": "string", "dv": ""},
         "tstart": {"pt": "string", "dv": ""},
         "tuntil": {"pt": "string", "dv": ""},
@@ -95,6 +102,7 @@ entdefs = {
         "removed": {"pt": "int", "dv": 0}
     },
     "ConnectionService": {  # Supporting service auth
+        "dsId": {"pt": "dbid", "dv": 0},
         "name": {"pt": "string", "dv": ""},
         "ckey": {"pt": "string", "dv": ""},
         "secret": {"pt": "string", "dv": ""},
@@ -104,13 +112,13 @@ entdefs = {
 
 
 entkeys = {
-    "MUser": [importid, email, altinmail, hashtag],
-    "Theme": [importid, name_c, hashtag],
-    "Membic": [importid],
+    "MUser": ["importid", "email", "altinmail", "hashtag"],
+    "Theme": ["importid", "name_c", "hashtag"],
+    "Membic": ["importid"],
     "Overflow": [],
-    "MailNotice": [name],
-    "ActivitySummary": [refp],
-    "ConnectionService": [name]
+    "MailNotice": ["name"],
+    "ActivitySummary": ["refp"],
+    "ConnectionService": ["name"]
 }
 
 
@@ -154,7 +162,7 @@ def cfbk (entity, field, value):
     if field != 'dsId' and field not in entkeys[entity]:
         raise ValueError(field + " not a unique index for " + entity)
     # lookup in cache and return if found.  See notes on cache structure.
-    var vstr = value
+    vstr = str(value)
     if entdefs[entity][field]["pt"] not in ["dbid", "int"]:
         vstr = "\"" + value + "\""
     objs = query_entity(entity, "WHERE " + field + "=" + vstr + " LIMIT 1")
@@ -169,6 +177,7 @@ def bust_cache(entity, idvalue):
     # lookup the cached instance, following to get to the primary key
     # instance as needed.  If found, pickle.loads the instance, go through
     # the entkeys fields and set all cache refs to ""
+    return True
 
 
 # Get a connection to the database.  May throw mysql.connector.Error
@@ -211,15 +220,15 @@ def insert_new_MUser(cnx, cursor, fields):
 
 
 # Update the specified MUser row with the given field values.
-def update_new_MUser(cnx, cursor, fields):
+def update_existing_MUser(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE MUser SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE MUser SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -258,15 +267,15 @@ def insert_new_Theme(cnx, cursor, fields):
 
 
 # Update the specified Theme row with the given field values.
-def update_new_Theme(cnx, cursor, fields):
+def update_existing_Theme(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE Theme SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE Theme SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -308,15 +317,15 @@ def insert_new_Membic(cnx, cursor, fields):
 
 
 # Update the specified Membic row with the given field values.
-def update_new_Membic(cnx, cursor, fields):
+def update_existing_Membic(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE Membic SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE Membic SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -340,15 +349,15 @@ def insert_new_Overflow(cnx, cursor, fields):
 
 
 # Update the specified Overflow row with the given field values.
-def update_new_Overflow(cnx, cursor, fields):
+def update_existing_Overflow(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE Overflow SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE Overflow SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -372,15 +381,15 @@ def insert_new_MailNotice(cnx, cursor, fields):
 
 
 # Update the specified MailNotice row with the given field values.
-def update_new_MailNotice(cnx, cursor, fields):
+def update_existing_MailNotice(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE MailNotice SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE MailNotice SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -411,15 +420,15 @@ def insert_new_ActivitySummary(cnx, cursor, fields):
 
 
 # Update the specified ActivitySummary row with the given field values.
-def update_new_ActivitySummary(cnx, cursor, fields):
+def update_existing_ActivitySummary(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE ActivitySummary SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE ActivitySummary SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -443,15 +452,15 @@ def insert_new_ConnectionService(cnx, cursor, fields):
 
 
 # Update the specified ConnectionService row with the given field values.
-def update_new_ConnectionService(cnx, cursor, fields):
+def update_existing_ConnectionService(cnx, cursor, fields):
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
         if field != "dsId":
             if stmt:
                 stmt += ", "
-            stmt += field + "=(%(" + field + ")s"
-    stmt = "UPDATE ConnectionService SET " + stmt + " WHERE dsId=" + dsId
+            stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE ConnectionService SET " + stmt + " WHERE dsId=" + str(dsId)
     data = {}
     for field in fields:
         if field != "dsId":
@@ -473,36 +482,36 @@ def write_entity(entity, fields):
             dsId = fields.get("dsId", 0)
             if dsId:
                 if entity == "MUser":
-                    return update_existing_MUser(cnx, cursor, dsId, fields)
+                    return update_existing_MUser(cnx, cursor, fields)
                 if entity == "Theme":
-                    return update_existing_Theme(cnx, cursor, dsId, fields)
+                    return update_existing_Theme(cnx, cursor, fields)
                 if entity == "Membic":
-                    return update_existing_Membic(cnx, cursor, dsId, fields)
+                    return update_existing_Membic(cnx, cursor, fields)
                 if entity == "Overflow":
-                    return update_existing_Overflow(cnx, cursor, dsId, fields)
+                    return update_existing_Overflow(cnx, cursor, fields)
                 if entity == "MailNotice":
-                    return update_existing_MailNotice(cnx, cursor, dsId, fields)
+                    return update_existing_MailNotice(cnx, cursor, fields)
                 if entity == "ActivitySummary":
-                    return update_existing_ActivitySummary(cnx, cursor, dsId, fields)
+                    return update_existing_ActivitySummary(cnx, cursor, fields)
                 if entity == "ConnectionService":
-                    return update_existing_ConnectionService(cnx, cursor, dsId, fields)
+                    return update_existing_ConnectionService(cnx, cursor, fields)
             # No existing instance to update.  Insert new.
             if entity == "MUser":
-                return return insert_new_MUser(cnx, cursor, fields)
+                return insert_new_MUser(cnx, cursor, fields)
             if entity == "Theme":
-                return return insert_new_Theme(cnx, cursor, fields)
+                return insert_new_Theme(cnx, cursor, fields)
             if entity == "Membic":
-                return return insert_new_Membic(cnx, cursor, fields)
+                return insert_new_Membic(cnx, cursor, fields)
             if entity == "Overflow":
-                return return insert_new_Overflow(cnx, cursor, fields)
+                return insert_new_Overflow(cnx, cursor, fields)
             if entity == "MailNotice":
-                return return insert_new_MailNotice(cnx, cursor, fields)
+                return insert_new_MailNotice(cnx, cursor, fields)
             if entity == "ActivitySummary":
-                return return insert_new_ActivitySummary(cnx, cursor, fields)
+                return insert_new_ActivitySummary(cnx, cursor, fields)
             if entity == "ConnectionService":
-                return return insert_new_ConnectionService(cnx, cursor, fields)
+                return insert_new_ConnectionService(cnx, cursor, fields)
         except mysql.connector.Error as e:
-            raise ValueException("write_entity failed: " + str(e))
+            raise ValueError from e
         finally:
             cursor.close()
     finally:
@@ -514,6 +523,7 @@ def query_MUser(cnx, cursor, where):
     query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, created, modified, lastwrite, preb"
     query += " FROM MUser " + where
     cursor.execute(query)
+    res = []
     for (dsId, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, created, modified, lastwrite, preb) in cursor:
         res.append({"importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "created": created, "modified": modified, "lastwrite": lastwrite, "preb": preb})
     return res
@@ -524,6 +534,7 @@ def query_Theme(cnx, cursor, where):
     query += "importid, name, name_c, modhist, modified, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb"
     query += " FROM Theme " + where
     cursor.execute(query)
+    res = []
     for (dsId, importid, name, name_c, modhist, modified, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) in cursor:
         res.append({"importid": importid, "name": name, "name_c": name_c, "modhist": modhist, "modified": modified, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb})
     return res
@@ -534,6 +545,7 @@ def query_Membic(cnx, cursor, where):
     query += "importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, modified, modhist, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat"
     query += " FROM Membic " + where
     cursor.execute(query)
+    res = []
     for (dsId, importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, modified, modhist, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) in cursor:
         res.append({"importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "modified": modified, "modhist": modhist, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat})
     return res
@@ -544,6 +556,7 @@ def query_Overflow(cnx, cursor, where):
     query += "dbkind, dbkeyid, overcount, preb"
     query += " FROM Overflow " + where
     cursor.execute(query)
+    res = []
     for (dsId, dbkind, dbkeyid, overcount, preb) in cursor:
         res.append({"dbkind": dbkind, "dbkeyid": dbkeyid, "overcount": overcount, "preb": preb})
     return res
@@ -554,6 +567,7 @@ def query_MailNotice(cnx, cursor, where):
     query += "name, subject, uidcsv, lastupd"
     query += " FROM MailNotice " + where
     cursor.execute(query)
+    res = []
     for (dsId, name, subject, uidcsv, lastupd) in cursor:
         res.append({"name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd})
     return res
@@ -564,6 +578,7 @@ def query_ActivitySummary(cnx, cursor, where):
     query += "refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, created, edited, removed"
     query += " FROM ActivitySummary " + where
     cursor.execute(query)
+    res = []
     for (dsId, refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, created, edited, removed) in cursor:
         res.append({"refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "created": created, "edited": edited, "removed": removed})
     return res
@@ -574,6 +589,7 @@ def query_ConnectionService(cnx, cursor, where):
     query += "name, ckey, secret, data"
     query += " FROM ConnectionService " + where
     cursor.execute(query)
+    res = []
     for (dsId, name, ckey, secret, data) in cursor:
         res.append({"name": name, "ckey": ckey, "secret": secret, "data": data})
     return res
@@ -584,7 +600,6 @@ def query_ConnectionService(cnx, cursor, where):
 # indexed fields and/or declared query indexes.  For speed and general
 # compatibility, only one inequality operator should be used in the match.
 def query_entity(entity, where):
-    res = []
     cnx = get_mysql_connector()
     if not cnx:
         raise ValueError("Database connection failed.")
@@ -607,7 +622,7 @@ def query_entity(entity, where):
             if entity == "ConnectionService":
                 return query_ConnectionService(cnx, cursor, where)
         except mysql.connector.Error as e:
-            raise ValueException("query_entity failed: " + str(e))
+            raise ValueError from e
         finally:
             cursor.close()
     finally:
