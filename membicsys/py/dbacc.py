@@ -154,8 +154,14 @@ def cfbk (entity, field, value):
     if field != 'dsId' and field not in entkeys[entity]:
         raise ValueError(field + " not a unique index for " + entity)
     # lookup in cache and return if found.  See notes on cache structure.
-    # obj = SELECT ...
-    # put_cache(obj)
+    var vstr = value
+    if entdefs[entity][field]["pt"] not in ["dbid", "int"]:
+        vstr = "\"" + value + "\""
+    objs = query_entity(entity, "WHERE " + field + "=" + vstr + " LIMIT 1")
+    if len(objs):
+        # put_cache(obj)
+        return objs[0]
+    return None
 
 
 # preferably specify the primary key id as the field.
@@ -454,9 +460,9 @@ def update_new_ConnectionService(cnx, cursor, fields):
     cnx.commit()
 
 
-# Write the specified entity kind from the dictionary of field values.  For
-# any entity field not in the given dict, the existing entity field value
-# will not be updated, and a default value will be used for create.
+# Write the specified entity kind using the dictionary of field values.
+# Binary field values must be base64.b64encode.  Unspecified fields will be
+# set to their default values for a new instance, and left alone on update.
 def write_entity(entity, fields):
     cnx = get_mysql_connector()
     if not cnx:
@@ -573,8 +579,10 @@ def query_ConnectionService(cnx, cursor, where):
     return res
 
 
-# Fetch instances of the specified entity kind for the given WHERE clause
-# which will typically include ORDER BY and LIMIT clauses.
+# Fetch all instances of the specified entity kind for the given WHERE
+# clause.  The WHERE clause should include a LIMIT, and should only match on
+# indexed fields and/or declared query indexes.  For speed and general
+# compatibility, only one inequality operator should be used in the match.
 def query_entity(entity, where):
     res = []
     cnx = get_mysql_connector()

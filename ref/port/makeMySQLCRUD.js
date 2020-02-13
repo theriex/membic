@@ -189,8 +189,14 @@ function helperFunctions () {
     pyc += "    if field != 'dsId' and field not in entkeys[entity]:\n";
     pyc += "        raise ValueError(field + \" not a unique index for \" + entity)\n";
     pyc += "    # lookup in cache and return if found.  See notes on cache structure.\n";
-    pyc += "    # obj = SELECT ...\n";
-    pyc += "    # put_cache(obj)\n";
+    pyc += "    var vstr = value\n";
+    pyc += "    if entdefs[entity][field][\"pt\"] not in [\"dbid\", \"int\"]:\n";
+    pyc += "        vstr = \"\\\"\" + value + \"\\\"\"\n";
+    pyc += "    objs = query_entity(entity, \"WHERE \" + field + \"=\" + vstr + \" LIMIT 1\")\n";
+    pyc += "    if len(objs):\n";
+    pyc += "        # put_cache(obj)\n";
+    pyc += "        return objs[0]\n";
+    pyc += "    return None\n";
     pyc += "\n";
     pyc += "\n";
     pyc += "# preferably specify the primary key id as the field.\n";
@@ -271,9 +277,9 @@ function entityWriteFunction () {
     definitions.forEach(function (edef) {
         pyc += writeInsertFunction(edef) + "\n\n" +
             writeUpdateFunction(edef) + "\n\n"; });
-    pyc += "# Write the specified entity kind from the dictionary of field values.  For\n"
-    pyc += "# any entity field not in the given dict, the existing entity field value\n"
-    pyc += "# will not be updated, and a default value will be used for create.\n"
+    pyc += "# Write the specified entity kind using the dictionary of field values.\n";
+    pyc += "# Binary field values must be base64.b64encode.  Unspecified fields will be\n";
+    pyc += "# set to their default values for a new instance, and left alone on update.\n";
     pyc += "def write_entity(entity, fields):\n";
     pyc += "    cnx = get_mysql_connector()\n";
     pyc += "    if not cnx:\n";
@@ -329,8 +335,10 @@ function entityQueryFunction () {
     var definitions = ddefs.dataDefinitions();
     definitions.forEach(function (edef) {
         pyc += writeQueryFunction(edef) + "\n\n"; });
-    pyc += "# Fetch instances of the specified entity kind for the given WHERE clause\n";
-    pyc += "# which will typically include ORDER BY and LIMIT clauses.\n";
+    pyc += "# Fetch all instances of the specified entity kind for the given WHERE\n";
+    pyc += "# clause.  The WHERE clause should include a LIMIT, and should only match on\n";
+    pyc += "# indexed fields and/or declared query indexes.  For speed and general\n";
+    pyc += "# compatibility, only one inequality operator should be used in the match.\n";
     pyc += "def query_entity(entity, where):\n";
     pyc += "    res = []\n";
     pyc += "    cnx = get_mysql_connector()\n";
