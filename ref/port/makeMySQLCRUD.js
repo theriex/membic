@@ -69,7 +69,8 @@ function createDatabaseSQL() {
                 uniqueFlag(ed.d) + ",\n"; });
         sql += indexClauses(edef);
         sql += "  PRIMARY KEY (dsId)\n";
-        sql += ");\n\n"; });
+        sql += ");\n";
+        sql += "ALTER TABLE " + edef.entity + " AUTO_INCREMENT = 2020;\n\n"; });
     fs.writeFileSync("createMySQLTables.sql", sql, "utf8");
 }
 
@@ -102,6 +103,13 @@ function defValForPyType (pt) {
 }
 
 
+function pyboolstr (val) {
+    if(val) {
+        return "True"; }
+    return "False";
+}
+
+
 function entityDefinitions () {
     var pyc = "";
     pyc += "entdefs = {\n";
@@ -119,6 +127,7 @@ function entityDefinitions () {
             var pytype = pyTypeForField(fd);
             pyc += "        \"" + fd.f + "\": {" +
                 "\"pt\": \"" + pytype + "\", " +
+                "\"un\": " + pyboolstr(ddefs.fieldIs(fd.d, "unique")) + ", " +
                 "\"dv\": " + defValForPyType(pytype) + "}" +
                 fcomma + "\n"; });
         pyc += "    }" + ecomma + "\n"; });
@@ -217,6 +226,115 @@ function helperFunctions () {
     pyc += "                                  database=\"membic_database\")\n";
     pyc += "    return cnx\n";
     pyc += "\n";
+    pyc += "\n";
+    pyc += "# Given what should be a string value, remove preceding or trailing space.\n";
+    pyc += "# If unique is true, then treat values of \"null\" or \"None\" as \"\".\n";
+    pyc += "def trim_string_val(val, unique=False):\n";
+    pyc += "    val = val or \"\"\n";
+    pyc += "    val = val.strip()\n";
+    pyc += "    if val and unique:\n";
+    pyc += "        lowval = val.lower()\n";
+    pyc += "        if lowval in [\"null\", \"none\"]:\n";
+    pyc += "            val = \"\"\n";
+    pyc += "    return val\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "# Read the given field from the inst or the default values, then convert it\n";
+    pyc += "# from an app value to a db value.\n";
+    pyc += "def app2db_fieldval(entity, field, inst):\n";
+    pyc += "    pt = \"dbid\"       # if no entity specified, treat as dbid\n";
+    pyc += "    unique = True     # if no entity specified, assume unique\n";
+    pyc += "    val = \"\"          # default app value for a dbid\n";
+    pyc += "    if entity:\n";
+    pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
+    pyc += "        unique = entdefs[entity][field][\"un\"]\n";
+    pyc += "        val = entdefs[entity][field][\"dv\"]\n";
+    pyc += "    if field in inst:\n";
+    pyc += "        val = inst[field]\n";
+    pyc += "    # convert value based on type and whether the values are unique\n";
+    pyc += "    if pt in [\"email\", \"string\"]:\n";
+    pyc += "        if not val or not trim_string_val(val, unique):\n";
+    pyc += "            val = None\n";
+    pyc += "    elif pt == \"image\":\n";
+    pyc += "        if not val:  # Empty data gets set to null\n";
+    pyc += "            val = None\n";
+    pyc += "    elif pt == \"int\":\n";
+    pyc += "        val = val or 0\n";
+    pyc += "        val = int(val)  # convert possible \"0\" value\n";
+    pyc += "    elif pt == \"dbid\":\n";
+    pyc += "        try:\n";
+    pyc += "            val = int(val)  # will fail on \"\", \"null\" or other bad values\n";
+    pyc += "        except ValueError:\n";
+    pyc += "            val = 0\n";
+    pyc += "        if not val:\n";
+    pyc += "            val = None\n";
+    pyc += "    return val\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "# Read the given field from the inst or the default values, then convert it\n";
+    pyc += "# from a db value to an app value.\n";
+    pyc += "def db2app_fieldval(entity, field, inst):\n";
+    pyc += "    pt = \"dbid\"       # if no entity specified, treat as dbid\n";
+    pyc += "    val = None        # default db value for a dbid\n";
+    pyc += "    if entity:\n";
+    pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
+    pyc += "        val = entdefs[entity][field][\"dv\"]\n";
+    pyc += "    if field in inst:\n";
+    pyc += "        val = inst[field]\n";
+    pyc += "    # convert value based on type\n";
+    pyc += "    if pt in [\"email\", \"string\"]:\n";
+    pyc += "        if not val:  # A null value gets set to the empty string\n";
+    pyc += "            val = \"\"\n";
+    pyc += "    elif pt == \"image\":\n";
+    pyc += "        if not val:  # A null value gets set to the empty string\n";
+    pyc += "            val = \"\"\n";
+    pyc += "    elif pt == \"int\":\n";
+    pyc += "        if not val:  # Convert null values to 0\n";
+    pyc += "            val = 0\n";
+    pyc += "    elif pt == \"dbid\":\n";
+    pyc += "        if not val:  # A zero or null value gets set to falsey empty string\n";
+    pyc += "            val = \"\"\n";
+    pyc += "        else:\n";
+    pyc += "            val = str(val)\n";
+    pyc += "    return val\n";
+    pyc += "\n";
+    return pyc;
+}
+
+
+function writeApp2DB (edef) {
+    var pyc = "";
+    pyc += "# Convert the given " + edef.entity + " inst dict from app values to db values.\n";
+    pyc += "def app2db_" + edef.entity + "(inst):\n";
+    pyc += "    cnv = {}\n";
+    pyc += "    cnv[\"dsId\"] = None\n";
+    pyc += "    if \"dsId\" in inst:\n";
+    pyc += "        cnv[\"dsId\"] = app2db_fieldval(None, \"dsId\", inst)\n";
+    edef.fields.forEach(function (fd) {
+        pyc += "    cnv[\"" + fd.f + "\"] = app2db_fieldval(\"" + edef.entity + "\", \"" + fd.f + "\", inst)\n"; });
+    pyc += "    return cnv\n";
+    return pyc;
+}
+
+
+function writeDB2App (edef) {
+    var pyc = "";
+    pyc += "# Convert the given " + edef.entity + " inst dict from db values to app values.\n";
+    pyc += "def db2app_" + edef.entity + "(inst):\n";
+    pyc += "    cnv = {}\n";
+    pyc += "    cnv[\"dsId\"] = db2app_fieldval(None, \"dsId\", inst)\n";
+    edef.fields.forEach(function (fd) {
+        pyc += "    cnv[\"" + fd.f + "\"] = db2app_fieldval(\"" + edef.entity + "\", \"" + fd.f + "\", inst)\n"; });
+    pyc += "    return cnv\n";
+    return pyc;
+}
+
+
+function app2dbConversions () {
+    var pyc = "";
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        pyc += writeApp2DB(edef) + "\n\n" + writeDB2App(edef) + "\n\n"; });
     return pyc;
 }
 
@@ -225,6 +343,7 @@ function writeInsertFunction (edef) {
     var pyc = "";
     pyc += "# Write a new " + edef.entity + " row, using the given field values or defaults.\n";
     pyc += "def insert_new_" + edef.entity + "(cnx, cursor, fields):\n";
+    pyc += "    fields = app2db_" + edef.entity + "(fields)\n";
     pyc += "    stmt = (\n";
     pyc += "        \"INSERT INTO " + edef.entity + " (";
     edef.fields.forEach(function (fd, idx) {
@@ -255,6 +374,7 @@ function writeUpdateFunction (edef) {
     var pyc = "";
     pyc += "# Update the specified " + edef.entity + " row with the given field values.\n";
     pyc += "def update_existing_" + edef.entity + "(cnx, cursor, fields):\n";
+    pyc += "    fields = app2db_" + edef.entity + "(fields)\n";
     pyc += "    dsId = int(fields[\"dsId\"])  # Verify int value\n";
     pyc += "    stmt = \"\"\n";
     pyc += "    for field in fields:\n";
@@ -327,7 +447,9 @@ function writeQueryFunction (edef) {
         if(oes) {
             oes += ", "; }
         oes += "\"" + fd.f + "\": " + fd.f; });
-    pyc += "        res.append({" + oes + "})\n";
+    pyc += "        inst = {\"dsId\": dsId, " + oes + "}\n";
+    pyc += "        inst = db2app_" + edef.entity + "(inst)\n";
+    pyc += "        res.append(inst)\n";
     pyc += "    return res\n";
     return pyc;
 }
@@ -349,7 +471,6 @@ function entityQueryFunction () {
     pyc += "    try:\n";
     pyc += "        cursor = cnx.cursor()\n";
     pyc += "        try:\n";
-    pyc += "            query = \"SELECT dsId, \"\n";
     var definitions = ddefs.dataDefinitions();
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
@@ -366,6 +487,14 @@ function entityQueryFunction () {
 
 function createPythonDBAcc () {
     var pyc = "";
+    pyc += "########################################\n";
+    pyc += "#\n";
+    pyc += "#       D O   N O T   E D I T\n";
+    pyc += "#\n";
+    pyc += "# This file was written by makeMySQLCRUD.js.  Any changes should be made there.\n";
+    pyc += "#\n";
+    pyc += "########################################\n";
+    pyc += "\n";
     pyc += "import logging\n";
     pyc += "logging.basicConfig(level=logging.DEBUG)\n";
     pyc += "import flask\n";
@@ -375,6 +504,7 @@ function createPythonDBAcc () {
     pyc += entityDefinitions() + "\n\n";
     pyc += entityKeyFields() + "\n\n";
     pyc += helperFunctions() + "\n\n";
+    pyc += app2dbConversions() + "\n\n";
     pyc += entityWriteFunction() + "\n\n";
     pyc += entityQueryFunction() + "\n\n";
     pyc += "\n";

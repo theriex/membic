@@ -20,6 +20,7 @@ CREATE TABLE MUser (  -- Membic User account.
   preb LONGTEXT,
   PRIMARY KEY (dsId)
 );
+ALTER TABLE MUser AUTO_INCREMENT = 2020;
 
 CREATE TABLE Theme (  -- A cooperative theme.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -44,6 +45,7 @@ CREATE TABLE Theme (  -- A cooperative theme.
   preb LONGTEXT,
   PRIMARY KEY (dsId)
 );
+ALTER TABLE Theme AUTO_INCREMENT = 2020;
 
 CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -73,6 +75,7 @@ CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   INDEX (ctmid, penid, modified DESC),
   PRIMARY KEY (dsId)
 );
+ALTER TABLE Membic AUTO_INCREMENT = 2020;
 
 CREATE TABLE Overflow (  -- extra preb membics
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -82,6 +85,7 @@ CREATE TABLE Overflow (  -- extra preb membics
   preb LONGTEXT,
   PRIMARY KEY (dsId)
 );
+ALTER TABLE Overflow AUTO_INCREMENT = 2020;
 
 CREATE TABLE MailNotice (  -- Broadcast email tracking
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -91,6 +95,7 @@ CREATE TABLE MailNotice (  -- Broadcast email tracking
   lastupd VARCHAR(256),
   PRIMARY KEY (dsId)
 );
+ALTER TABLE MailNotice AUTO_INCREMENT = 2020;
 
 CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -108,6 +113,7 @@ CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   INDEX (refp, tuntil DESC),
   PRIMARY KEY (dsId)
 );
+ALTER TABLE ActivitySummary AUTO_INCREMENT = 2020;
 
 CREATE TABLE ConnectionService (  -- Supporting service auth
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
@@ -117,4 +123,5 @@ CREATE TABLE ConnectionService (  -- Supporting service auth
   data LONGTEXT,
   PRIMARY KEY (dsId)
 );
+ALTER TABLE ConnectionService AUTO_INCREMENT = 2020;
 

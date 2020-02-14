@@ -1,3 +1,11 @@
+########################################
+#
+#       D O   N O T   E D I T
+#
+# This file was written by makeMySQLCRUD.js.  Any changes should be made there.
+#
+########################################
+
 import logging
 logging.basicConfig(level=logging.DEBUG)
 import flask
@@ -7,106 +15,106 @@ import mysql.connector
 entdefs = {
     "MUser": {  # Membic User account.
         "dsId": {"pt": "dbid", "dv": 0},
-        "importid": {"pt": "dbid", "dv": 0},
-        "email": {"pt": "email", "dv": ""},
-        "phash": {"pt": "string", "dv": ""},
-        "status": {"pt": "string", "dv": ""},
-        "mailbounce": {"pt": "string", "dv": ""},
-        "actsends": {"pt": "string", "dv": ""},
-        "actcode": {"pt": "string", "dv": ""},
-        "altinmail": {"pt": "email", "dv": ""},
-        "name": {"pt": "string", "dv": ""},
-        "aboutme": {"pt": "string", "dv": ""},
-        "hashtag": {"pt": "string", "dv": ""},
-        "profpic": {"pt": "image", "dv": None},
-        "cliset": {"pt": "string", "dv": ""},
-        "coops": {"pt": "string", "dv": ""},
-        "created": {"pt": "string", "dv": ""},
-        "modified": {"pt": "string", "dv": ""},
-        "lastwrite": {"pt": "string", "dv": ""},
-        "preb": {"pt": "string", "dv": ""}
+        "importid": {"pt": "dbid", "un": True, "dv": 0},
+        "email": {"pt": "email", "un": True, "dv": ""},
+        "phash": {"pt": "string", "un": False, "dv": ""},
+        "status": {"pt": "string", "un": False, "dv": ""},
+        "mailbounce": {"pt": "string", "un": False, "dv": ""},
+        "actsends": {"pt": "string", "un": False, "dv": ""},
+        "actcode": {"pt": "string", "un": False, "dv": ""},
+        "altinmail": {"pt": "email", "un": True, "dv": ""},
+        "name": {"pt": "string", "un": False, "dv": ""},
+        "aboutme": {"pt": "string", "un": False, "dv": ""},
+        "hashtag": {"pt": "string", "un": True, "dv": ""},
+        "profpic": {"pt": "image", "un": False, "dv": None},
+        "cliset": {"pt": "string", "un": False, "dv": ""},
+        "coops": {"pt": "string", "un": False, "dv": ""},
+        "created": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "lastwrite": {"pt": "string", "un": False, "dv": ""},
+        "preb": {"pt": "string", "un": False, "dv": ""}
     },
     "Theme": {  # A cooperative theme.
         "dsId": {"pt": "dbid", "dv": 0},
-        "importid": {"pt": "dbid", "dv": 0},
-        "name": {"pt": "string", "dv": ""},
-        "name_c": {"pt": "string", "dv": ""},
-        "modhist": {"pt": "string", "dv": ""},
-        "modified": {"pt": "string", "dv": ""},
-        "lastwrite": {"pt": "string", "dv": ""},
-        "hashtag": {"pt": "string", "dv": ""},
-        "description": {"pt": "string", "dv": ""},
-        "picture": {"pt": "image", "dv": None},
-        "founders": {"pt": "string", "dv": ""},
-        "moderators": {"pt": "string", "dv": ""},
-        "members": {"pt": "string", "dv": ""},
-        "seeking": {"pt": "string", "dv": ""},
-        "rejects": {"pt": "string", "dv": ""},
-        "adminlog": {"pt": "string", "dv": ""},
-        "people": {"pt": "string", "dv": ""},
-        "cliset": {"pt": "string", "dv": ""},
-        "keywords": {"pt": "string", "dv": ""},
-        "preb": {"pt": "string", "dv": ""}
+        "importid": {"pt": "dbid", "un": True, "dv": 0},
+        "name": {"pt": "string", "un": False, "dv": ""},
+        "name_c": {"pt": "string", "un": True, "dv": ""},
+        "modhist": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "lastwrite": {"pt": "string", "un": False, "dv": ""},
+        "hashtag": {"pt": "string", "un": True, "dv": ""},
+        "description": {"pt": "string", "un": False, "dv": ""},
+        "picture": {"pt": "image", "un": False, "dv": None},
+        "founders": {"pt": "string", "un": False, "dv": ""},
+        "moderators": {"pt": "string", "un": False, "dv": ""},
+        "members": {"pt": "string", "un": False, "dv": ""},
+        "seeking": {"pt": "string", "un": False, "dv": ""},
+        "rejects": {"pt": "string", "un": False, "dv": ""},
+        "adminlog": {"pt": "string", "un": False, "dv": ""},
+        "people": {"pt": "string", "un": False, "dv": ""},
+        "cliset": {"pt": "string", "un": False, "dv": ""},
+        "keywords": {"pt": "string", "un": False, "dv": ""},
+        "preb": {"pt": "string", "un": False, "dv": ""}
     },
     "Membic": {  # A URL with a reason why it's memorable.
         "dsId": {"pt": "dbid", "dv": 0},
-        "importid": {"pt": "dbid", "dv": 0},
-        "url": {"pt": "string", "dv": ""},
-        "rurl": {"pt": "string", "dv": ""},
-        "revtype": {"pt": "string", "dv": ""},
-        "details": {"pt": "string", "dv": ""},
-        "penid": {"pt": "dbid", "dv": 0},
-        "ctmid": {"pt": "dbid", "dv": 0},
-        "rating": {"pt": "int", "dv": 0},
-        "srcrev": {"pt": "dbid", "dv": 0},
-        "cankey": {"pt": "string", "dv": ""},
-        "modified": {"pt": "string", "dv": ""},
-        "modhist": {"pt": "string", "dv": ""},
-        "text": {"pt": "string", "dv": ""},
-        "keywords": {"pt": "string", "dv": ""},
-        "svcdata": {"pt": "string", "dv": ""},
-        "revpic": {"pt": "image", "dv": None},
-        "imguri": {"pt": "string", "dv": ""},
-        "icdata": {"pt": "image", "dv": None},
-        "icwhen": {"pt": "string", "dv": ""},
-        "dispafter": {"pt": "string", "dv": ""},
-        "penname": {"pt": "string", "dv": ""},
-        "reacdat": {"pt": "string", "dv": ""}
+        "importid": {"pt": "dbid", "un": True, "dv": 0},
+        "url": {"pt": "string", "un": False, "dv": ""},
+        "rurl": {"pt": "string", "un": False, "dv": ""},
+        "revtype": {"pt": "string", "un": False, "dv": ""},
+        "details": {"pt": "string", "un": False, "dv": ""},
+        "penid": {"pt": "dbid", "un": False, "dv": 0},
+        "ctmid": {"pt": "dbid", "un": False, "dv": 0},
+        "rating": {"pt": "int", "un": False, "dv": 0},
+        "srcrev": {"pt": "dbid", "un": False, "dv": 0},
+        "cankey": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "modhist": {"pt": "string", "un": False, "dv": ""},
+        "text": {"pt": "string", "un": False, "dv": ""},
+        "keywords": {"pt": "string", "un": False, "dv": ""},
+        "svcdata": {"pt": "string", "un": False, "dv": ""},
+        "revpic": {"pt": "image", "un": False, "dv": None},
+        "imguri": {"pt": "string", "un": False, "dv": ""},
+        "icdata": {"pt": "image", "un": False, "dv": None},
+        "icwhen": {"pt": "string", "un": False, "dv": ""},
+        "dispafter": {"pt": "string", "un": False, "dv": ""},
+        "penname": {"pt": "string", "un": False, "dv": ""},
+        "reacdat": {"pt": "string", "un": False, "dv": ""}
     },
     "Overflow": {  # extra preb membics
         "dsId": {"pt": "dbid", "dv": 0},
-        "dbkind": {"pt": "string", "dv": ""},
-        "dbkeyid": {"pt": "dbid", "dv": 0},
-        "overcount": {"pt": "int", "dv": 0},
-        "preb": {"pt": "string", "dv": ""}
+        "dbkind": {"pt": "string", "un": False, "dv": ""},
+        "dbkeyid": {"pt": "dbid", "un": False, "dv": 0},
+        "overcount": {"pt": "int", "un": False, "dv": 0},
+        "preb": {"pt": "string", "un": False, "dv": ""}
     },
     "MailNotice": {  # Broadcast email tracking
         "dsId": {"pt": "dbid", "dv": 0},
-        "name": {"pt": "string", "dv": ""},
-        "subject": {"pt": "string", "dv": ""},
-        "uidcsv": {"pt": "string", "dv": ""},
-        "lastupd": {"pt": "string", "dv": ""}
+        "name": {"pt": "string", "un": True, "dv": ""},
+        "subject": {"pt": "string", "un": False, "dv": ""},
+        "uidcsv": {"pt": "string", "un": False, "dv": ""},
+        "lastupd": {"pt": "string", "un": False, "dv": ""}
     },
     "ActivitySummary": {  # Stats by profile/theme
         "dsId": {"pt": "dbid", "dv": 0},
-        "refp": {"pt": "string", "dv": ""},
-        "tstart": {"pt": "string", "dv": ""},
-        "tuntil": {"pt": "string", "dv": ""},
-        "reqbyid": {"pt": "int", "dv": 0},
-        "reqbyht": {"pt": "int", "dv": 0},
-        "reqbypm": {"pt": "int", "dv": 0},
-        "reqbyrs": {"pt": "int", "dv": 0},
-        "reqdets": {"pt": "string", "dv": ""},
-        "created": {"pt": "int", "dv": 0},
-        "edited": {"pt": "int", "dv": 0},
-        "removed": {"pt": "int", "dv": 0}
+        "refp": {"pt": "string", "un": True, "dv": ""},
+        "tstart": {"pt": "string", "un": False, "dv": ""},
+        "tuntil": {"pt": "string", "un": False, "dv": ""},
+        "reqbyid": {"pt": "int", "un": False, "dv": 0},
+        "reqbyht": {"pt": "int", "un": False, "dv": 0},
+        "reqbypm": {"pt": "int", "un": False, "dv": 0},
+        "reqbyrs": {"pt": "int", "un": False, "dv": 0},
+        "reqdets": {"pt": "string", "un": False, "dv": ""},
+        "created": {"pt": "int", "un": False, "dv": 0},
+        "edited": {"pt": "int", "un": False, "dv": 0},
+        "removed": {"pt": "int", "un": False, "dv": 0}
     },
     "ConnectionService": {  # Supporting service auth
         "dsId": {"pt": "dbid", "dv": 0},
-        "name": {"pt": "string", "dv": ""},
-        "ckey": {"pt": "string", "dv": ""},
-        "secret": {"pt": "string", "dv": ""},
-        "data": {"pt": "string", "dv": ""}
+        "name": {"pt": "string", "un": True, "dv": ""},
+        "ckey": {"pt": "string", "un": False, "dv": ""},
+        "secret": {"pt": "string", "un": False, "dv": ""},
+        "data": {"pt": "string", "un": False, "dv": ""}
     }
 }
 
@@ -190,9 +198,360 @@ def get_mysql_connector():
     return cnx
 
 
+# Given what should be a string value, remove preceding or trailing space.
+# If unique is true, then treat values of "null" or "None" as "".
+def trim_string_val(val, unique=False):
+    val = val or ""
+    val = val.strip()
+    if val and unique:
+        lowval = val.lower()
+        if lowval in ["null", "none"]:
+            val = ""
+    return val
+
+
+# Read the given field from the inst or the default values, then convert it
+# from an app value to a db value.
+def app2db_fieldval(entity, field, inst):
+    pt = "dbid"       # if no entity specified, treat as dbid
+    unique = True     # if no entity specified, assume unique
+    val = ""          # default app value for a dbid
+    if entity:
+        pt = entdefs[entity][field]["pt"]
+        unique = entdefs[entity][field]["un"]
+        val = entdefs[entity][field]["dv"]
+    if field in inst:
+        val = inst[field]
+    # convert value based on type and whether the values are unique
+    if pt in ["email", "string"]:
+        if not val or not trim_string_val(val, unique):
+            val = None
+    elif pt == "image":
+        if not val:  # Empty data gets set to null
+            val = None
+    elif pt == "int":
+        val = val or 0
+        val = int(val)  # convert possible "0" value
+    elif pt == "dbid":
+        try:
+            val = int(val)  # will fail on "", "null" or other bad values
+        except ValueError:
+            val = 0
+        if not val:
+            val = None
+    return val
+
+
+# Read the given field from the inst or the default values, then convert it
+# from a db value to an app value.
+def db2app_fieldval(entity, field, inst):
+    pt = "dbid"       # if no entity specified, treat as dbid
+    val = None        # default db value for a dbid
+    if entity:
+        pt = entdefs[entity][field]["pt"]
+        val = entdefs[entity][field]["dv"]
+    if field in inst:
+        val = inst[field]
+    # convert value based on type
+    if pt in ["email", "string"]:
+        if not val:  # A null value gets set to the empty string
+            val = ""
+    elif pt == "image":
+        if not val:  # A null value gets set to the empty string
+            val = ""
+    elif pt == "int":
+        if not val:  # Convert null values to 0
+            val = 0
+    elif pt == "dbid":
+        if not val:  # A zero or null value gets set to falsey empty string
+            val = ""
+        else:
+            val = str(val)
+    return val
+
+
+
+# Convert the given MUser inst dict from app values to db values.
+def app2db_MUser(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["importid"] = app2db_fieldval("MUser", "importid", inst)
+    cnv["email"] = app2db_fieldval("MUser", "email", inst)
+    cnv["phash"] = app2db_fieldval("MUser", "phash", inst)
+    cnv["status"] = app2db_fieldval("MUser", "status", inst)
+    cnv["mailbounce"] = app2db_fieldval("MUser", "mailbounce", inst)
+    cnv["actsends"] = app2db_fieldval("MUser", "actsends", inst)
+    cnv["actcode"] = app2db_fieldval("MUser", "actcode", inst)
+    cnv["altinmail"] = app2db_fieldval("MUser", "altinmail", inst)
+    cnv["name"] = app2db_fieldval("MUser", "name", inst)
+    cnv["aboutme"] = app2db_fieldval("MUser", "aboutme", inst)
+    cnv["hashtag"] = app2db_fieldval("MUser", "hashtag", inst)
+    cnv["profpic"] = app2db_fieldval("MUser", "profpic", inst)
+    cnv["cliset"] = app2db_fieldval("MUser", "cliset", inst)
+    cnv["coops"] = app2db_fieldval("MUser", "coops", inst)
+    cnv["created"] = app2db_fieldval("MUser", "created", inst)
+    cnv["modified"] = app2db_fieldval("MUser", "modified", inst)
+    cnv["lastwrite"] = app2db_fieldval("MUser", "lastwrite", inst)
+    cnv["preb"] = app2db_fieldval("MUser", "preb", inst)
+    return cnv
+
+
+# Convert the given MUser inst dict from db values to app values.
+def db2app_MUser(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["importid"] = db2app_fieldval("MUser", "importid", inst)
+    cnv["email"] = db2app_fieldval("MUser", "email", inst)
+    cnv["phash"] = db2app_fieldval("MUser", "phash", inst)
+    cnv["status"] = db2app_fieldval("MUser", "status", inst)
+    cnv["mailbounce"] = db2app_fieldval("MUser", "mailbounce", inst)
+    cnv["actsends"] = db2app_fieldval("MUser", "actsends", inst)
+    cnv["actcode"] = db2app_fieldval("MUser", "actcode", inst)
+    cnv["altinmail"] = db2app_fieldval("MUser", "altinmail", inst)
+    cnv["name"] = db2app_fieldval("MUser", "name", inst)
+    cnv["aboutme"] = db2app_fieldval("MUser", "aboutme", inst)
+    cnv["hashtag"] = db2app_fieldval("MUser", "hashtag", inst)
+    cnv["profpic"] = db2app_fieldval("MUser", "profpic", inst)
+    cnv["cliset"] = db2app_fieldval("MUser", "cliset", inst)
+    cnv["coops"] = db2app_fieldval("MUser", "coops", inst)
+    cnv["created"] = db2app_fieldval("MUser", "created", inst)
+    cnv["modified"] = db2app_fieldval("MUser", "modified", inst)
+    cnv["lastwrite"] = db2app_fieldval("MUser", "lastwrite", inst)
+    cnv["preb"] = db2app_fieldval("MUser", "preb", inst)
+    return cnv
+
+
+# Convert the given Theme inst dict from app values to db values.
+def app2db_Theme(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["importid"] = app2db_fieldval("Theme", "importid", inst)
+    cnv["name"] = app2db_fieldval("Theme", "name", inst)
+    cnv["name_c"] = app2db_fieldval("Theme", "name_c", inst)
+    cnv["modhist"] = app2db_fieldval("Theme", "modhist", inst)
+    cnv["modified"] = app2db_fieldval("Theme", "modified", inst)
+    cnv["lastwrite"] = app2db_fieldval("Theme", "lastwrite", inst)
+    cnv["hashtag"] = app2db_fieldval("Theme", "hashtag", inst)
+    cnv["description"] = app2db_fieldval("Theme", "description", inst)
+    cnv["picture"] = app2db_fieldval("Theme", "picture", inst)
+    cnv["founders"] = app2db_fieldval("Theme", "founders", inst)
+    cnv["moderators"] = app2db_fieldval("Theme", "moderators", inst)
+    cnv["members"] = app2db_fieldval("Theme", "members", inst)
+    cnv["seeking"] = app2db_fieldval("Theme", "seeking", inst)
+    cnv["rejects"] = app2db_fieldval("Theme", "rejects", inst)
+    cnv["adminlog"] = app2db_fieldval("Theme", "adminlog", inst)
+    cnv["people"] = app2db_fieldval("Theme", "people", inst)
+    cnv["cliset"] = app2db_fieldval("Theme", "cliset", inst)
+    cnv["keywords"] = app2db_fieldval("Theme", "keywords", inst)
+    cnv["preb"] = app2db_fieldval("Theme", "preb", inst)
+    return cnv
+
+
+# Convert the given Theme inst dict from db values to app values.
+def db2app_Theme(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["importid"] = db2app_fieldval("Theme", "importid", inst)
+    cnv["name"] = db2app_fieldval("Theme", "name", inst)
+    cnv["name_c"] = db2app_fieldval("Theme", "name_c", inst)
+    cnv["modhist"] = db2app_fieldval("Theme", "modhist", inst)
+    cnv["modified"] = db2app_fieldval("Theme", "modified", inst)
+    cnv["lastwrite"] = db2app_fieldval("Theme", "lastwrite", inst)
+    cnv["hashtag"] = db2app_fieldval("Theme", "hashtag", inst)
+    cnv["description"] = db2app_fieldval("Theme", "description", inst)
+    cnv["picture"] = db2app_fieldval("Theme", "picture", inst)
+    cnv["founders"] = db2app_fieldval("Theme", "founders", inst)
+    cnv["moderators"] = db2app_fieldval("Theme", "moderators", inst)
+    cnv["members"] = db2app_fieldval("Theme", "members", inst)
+    cnv["seeking"] = db2app_fieldval("Theme", "seeking", inst)
+    cnv["rejects"] = db2app_fieldval("Theme", "rejects", inst)
+    cnv["adminlog"] = db2app_fieldval("Theme", "adminlog", inst)
+    cnv["people"] = db2app_fieldval("Theme", "people", inst)
+    cnv["cliset"] = db2app_fieldval("Theme", "cliset", inst)
+    cnv["keywords"] = db2app_fieldval("Theme", "keywords", inst)
+    cnv["preb"] = db2app_fieldval("Theme", "preb", inst)
+    return cnv
+
+
+# Convert the given Membic inst dict from app values to db values.
+def app2db_Membic(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["importid"] = app2db_fieldval("Membic", "importid", inst)
+    cnv["url"] = app2db_fieldval("Membic", "url", inst)
+    cnv["rurl"] = app2db_fieldval("Membic", "rurl", inst)
+    cnv["revtype"] = app2db_fieldval("Membic", "revtype", inst)
+    cnv["details"] = app2db_fieldval("Membic", "details", inst)
+    cnv["penid"] = app2db_fieldval("Membic", "penid", inst)
+    cnv["ctmid"] = app2db_fieldval("Membic", "ctmid", inst)
+    cnv["rating"] = app2db_fieldval("Membic", "rating", inst)
+    cnv["srcrev"] = app2db_fieldval("Membic", "srcrev", inst)
+    cnv["cankey"] = app2db_fieldval("Membic", "cankey", inst)
+    cnv["modified"] = app2db_fieldval("Membic", "modified", inst)
+    cnv["modhist"] = app2db_fieldval("Membic", "modhist", inst)
+    cnv["text"] = app2db_fieldval("Membic", "text", inst)
+    cnv["keywords"] = app2db_fieldval("Membic", "keywords", inst)
+    cnv["svcdata"] = app2db_fieldval("Membic", "svcdata", inst)
+    cnv["revpic"] = app2db_fieldval("Membic", "revpic", inst)
+    cnv["imguri"] = app2db_fieldval("Membic", "imguri", inst)
+    cnv["icdata"] = app2db_fieldval("Membic", "icdata", inst)
+    cnv["icwhen"] = app2db_fieldval("Membic", "icwhen", inst)
+    cnv["dispafter"] = app2db_fieldval("Membic", "dispafter", inst)
+    cnv["penname"] = app2db_fieldval("Membic", "penname", inst)
+    cnv["reacdat"] = app2db_fieldval("Membic", "reacdat", inst)
+    return cnv
+
+
+# Convert the given Membic inst dict from db values to app values.
+def db2app_Membic(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["importid"] = db2app_fieldval("Membic", "importid", inst)
+    cnv["url"] = db2app_fieldval("Membic", "url", inst)
+    cnv["rurl"] = db2app_fieldval("Membic", "rurl", inst)
+    cnv["revtype"] = db2app_fieldval("Membic", "revtype", inst)
+    cnv["details"] = db2app_fieldval("Membic", "details", inst)
+    cnv["penid"] = db2app_fieldval("Membic", "penid", inst)
+    cnv["ctmid"] = db2app_fieldval("Membic", "ctmid", inst)
+    cnv["rating"] = db2app_fieldval("Membic", "rating", inst)
+    cnv["srcrev"] = db2app_fieldval("Membic", "srcrev", inst)
+    cnv["cankey"] = db2app_fieldval("Membic", "cankey", inst)
+    cnv["modified"] = db2app_fieldval("Membic", "modified", inst)
+    cnv["modhist"] = db2app_fieldval("Membic", "modhist", inst)
+    cnv["text"] = db2app_fieldval("Membic", "text", inst)
+    cnv["keywords"] = db2app_fieldval("Membic", "keywords", inst)
+    cnv["svcdata"] = db2app_fieldval("Membic", "svcdata", inst)
+    cnv["revpic"] = db2app_fieldval("Membic", "revpic", inst)
+    cnv["imguri"] = db2app_fieldval("Membic", "imguri", inst)
+    cnv["icdata"] = db2app_fieldval("Membic", "icdata", inst)
+    cnv["icwhen"] = db2app_fieldval("Membic", "icwhen", inst)
+    cnv["dispafter"] = db2app_fieldval("Membic", "dispafter", inst)
+    cnv["penname"] = db2app_fieldval("Membic", "penname", inst)
+    cnv["reacdat"] = db2app_fieldval("Membic", "reacdat", inst)
+    return cnv
+
+
+# Convert the given Overflow inst dict from app values to db values.
+def app2db_Overflow(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["dbkind"] = app2db_fieldval("Overflow", "dbkind", inst)
+    cnv["dbkeyid"] = app2db_fieldval("Overflow", "dbkeyid", inst)
+    cnv["overcount"] = app2db_fieldval("Overflow", "overcount", inst)
+    cnv["preb"] = app2db_fieldval("Overflow", "preb", inst)
+    return cnv
+
+
+# Convert the given Overflow inst dict from db values to app values.
+def db2app_Overflow(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["dbkind"] = db2app_fieldval("Overflow", "dbkind", inst)
+    cnv["dbkeyid"] = db2app_fieldval("Overflow", "dbkeyid", inst)
+    cnv["overcount"] = db2app_fieldval("Overflow", "overcount", inst)
+    cnv["preb"] = db2app_fieldval("Overflow", "preb", inst)
+    return cnv
+
+
+# Convert the given MailNotice inst dict from app values to db values.
+def app2db_MailNotice(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["name"] = app2db_fieldval("MailNotice", "name", inst)
+    cnv["subject"] = app2db_fieldval("MailNotice", "subject", inst)
+    cnv["uidcsv"] = app2db_fieldval("MailNotice", "uidcsv", inst)
+    cnv["lastupd"] = app2db_fieldval("MailNotice", "lastupd", inst)
+    return cnv
+
+
+# Convert the given MailNotice inst dict from db values to app values.
+def db2app_MailNotice(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["name"] = db2app_fieldval("MailNotice", "name", inst)
+    cnv["subject"] = db2app_fieldval("MailNotice", "subject", inst)
+    cnv["uidcsv"] = db2app_fieldval("MailNotice", "uidcsv", inst)
+    cnv["lastupd"] = db2app_fieldval("MailNotice", "lastupd", inst)
+    return cnv
+
+
+# Convert the given ActivitySummary inst dict from app values to db values.
+def app2db_ActivitySummary(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["refp"] = app2db_fieldval("ActivitySummary", "refp", inst)
+    cnv["tstart"] = app2db_fieldval("ActivitySummary", "tstart", inst)
+    cnv["tuntil"] = app2db_fieldval("ActivitySummary", "tuntil", inst)
+    cnv["reqbyid"] = app2db_fieldval("ActivitySummary", "reqbyid", inst)
+    cnv["reqbyht"] = app2db_fieldval("ActivitySummary", "reqbyht", inst)
+    cnv["reqbypm"] = app2db_fieldval("ActivitySummary", "reqbypm", inst)
+    cnv["reqbyrs"] = app2db_fieldval("ActivitySummary", "reqbyrs", inst)
+    cnv["reqdets"] = app2db_fieldval("ActivitySummary", "reqdets", inst)
+    cnv["created"] = app2db_fieldval("ActivitySummary", "created", inst)
+    cnv["edited"] = app2db_fieldval("ActivitySummary", "edited", inst)
+    cnv["removed"] = app2db_fieldval("ActivitySummary", "removed", inst)
+    return cnv
+
+
+# Convert the given ActivitySummary inst dict from db values to app values.
+def db2app_ActivitySummary(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["refp"] = db2app_fieldval("ActivitySummary", "refp", inst)
+    cnv["tstart"] = db2app_fieldval("ActivitySummary", "tstart", inst)
+    cnv["tuntil"] = db2app_fieldval("ActivitySummary", "tuntil", inst)
+    cnv["reqbyid"] = db2app_fieldval("ActivitySummary", "reqbyid", inst)
+    cnv["reqbyht"] = db2app_fieldval("ActivitySummary", "reqbyht", inst)
+    cnv["reqbypm"] = db2app_fieldval("ActivitySummary", "reqbypm", inst)
+    cnv["reqbyrs"] = db2app_fieldval("ActivitySummary", "reqbyrs", inst)
+    cnv["reqdets"] = db2app_fieldval("ActivitySummary", "reqdets", inst)
+    cnv["created"] = db2app_fieldval("ActivitySummary", "created", inst)
+    cnv["edited"] = db2app_fieldval("ActivitySummary", "edited", inst)
+    cnv["removed"] = db2app_fieldval("ActivitySummary", "removed", inst)
+    return cnv
+
+
+# Convert the given ConnectionService inst dict from app values to db values.
+def app2db_ConnectionService(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["name"] = app2db_fieldval("ConnectionService", "name", inst)
+    cnv["ckey"] = app2db_fieldval("ConnectionService", "ckey", inst)
+    cnv["secret"] = app2db_fieldval("ConnectionService", "secret", inst)
+    cnv["data"] = app2db_fieldval("ConnectionService", "data", inst)
+    return cnv
+
+
+# Convert the given ConnectionService inst dict from db values to app values.
+def db2app_ConnectionService(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["name"] = db2app_fieldval("ConnectionService", "name", inst)
+    cnv["ckey"] = db2app_fieldval("ConnectionService", "ckey", inst)
+    cnv["secret"] = db2app_fieldval("ConnectionService", "secret", inst)
+    cnv["data"] = db2app_fieldval("ConnectionService", "data", inst)
+    return cnv
+
+
+
 
 # Write a new MUser row, using the given field values or defaults.
 def insert_new_MUser(cnx, cursor, fields):
+    fields = app2db_MUser(fields)
     stmt = (
         "INSERT INTO MUser (importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, created, modified, lastwrite, preb) "
         "VALUES (%(importid)s, %(email)s, %(phash)s, %(status)s, %(mailbounce)s, %(actsends)s, %(actcode)s, %(altinmail)s, %(name)s, %(aboutme)s, %(hashtag)s, %(profpic)s, %(cliset)s, %(coops)s, %(created)s, %(modified)s, %(lastwrite)s, %(preb)s)")
@@ -221,6 +580,7 @@ def insert_new_MUser(cnx, cursor, fields):
 
 # Update the specified MUser row with the given field values.
 def update_existing_MUser(cnx, cursor, fields):
+    fields = app2db_MUser(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -239,6 +599,7 @@ def update_existing_MUser(cnx, cursor, fields):
 
 # Write a new Theme row, using the given field values or defaults.
 def insert_new_Theme(cnx, cursor, fields):
+    fields = app2db_Theme(fields)
     stmt = (
         "INSERT INTO Theme (importid, name, name_c, modhist, modified, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) "
         "VALUES (%(importid)s, %(name)s, %(name_c)s, %(modhist)s, %(modified)s, %(lastwrite)s, %(hashtag)s, %(description)s, %(picture)s, %(founders)s, %(moderators)s, %(members)s, %(seeking)s, %(rejects)s, %(adminlog)s, %(people)s, %(cliset)s, %(keywords)s, %(preb)s)")
@@ -268,6 +629,7 @@ def insert_new_Theme(cnx, cursor, fields):
 
 # Update the specified Theme row with the given field values.
 def update_existing_Theme(cnx, cursor, fields):
+    fields = app2db_Theme(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -286,6 +648,7 @@ def update_existing_Theme(cnx, cursor, fields):
 
 # Write a new Membic row, using the given field values or defaults.
 def insert_new_Membic(cnx, cursor, fields):
+    fields = app2db_Membic(fields)
     stmt = (
         "INSERT INTO Membic (importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, modified, modhist, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) "
         "VALUES (%(importid)s, %(url)s, %(rurl)s, %(revtype)s, %(details)s, %(penid)s, %(ctmid)s, %(rating)s, %(srcrev)s, %(cankey)s, %(modified)s, %(modhist)s, %(text)s, %(keywords)s, %(svcdata)s, %(revpic)s, %(imguri)s, %(icdata)s, %(icwhen)s, %(dispafter)s, %(penname)s, %(reacdat)s)")
@@ -318,6 +681,7 @@ def insert_new_Membic(cnx, cursor, fields):
 
 # Update the specified Membic row with the given field values.
 def update_existing_Membic(cnx, cursor, fields):
+    fields = app2db_Membic(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -336,6 +700,7 @@ def update_existing_Membic(cnx, cursor, fields):
 
 # Write a new Overflow row, using the given field values or defaults.
 def insert_new_Overflow(cnx, cursor, fields):
+    fields = app2db_Overflow(fields)
     stmt = (
         "INSERT INTO Overflow (dbkind, dbkeyid, overcount, preb) "
         "VALUES (%(dbkind)s, %(dbkeyid)s, %(overcount)s, %(preb)s)")
@@ -350,6 +715,7 @@ def insert_new_Overflow(cnx, cursor, fields):
 
 # Update the specified Overflow row with the given field values.
 def update_existing_Overflow(cnx, cursor, fields):
+    fields = app2db_Overflow(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -368,6 +734,7 @@ def update_existing_Overflow(cnx, cursor, fields):
 
 # Write a new MailNotice row, using the given field values or defaults.
 def insert_new_MailNotice(cnx, cursor, fields):
+    fields = app2db_MailNotice(fields)
     stmt = (
         "INSERT INTO MailNotice (name, subject, uidcsv, lastupd) "
         "VALUES (%(name)s, %(subject)s, %(uidcsv)s, %(lastupd)s)")
@@ -382,6 +749,7 @@ def insert_new_MailNotice(cnx, cursor, fields):
 
 # Update the specified MailNotice row with the given field values.
 def update_existing_MailNotice(cnx, cursor, fields):
+    fields = app2db_MailNotice(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -400,6 +768,7 @@ def update_existing_MailNotice(cnx, cursor, fields):
 
 # Write a new ActivitySummary row, using the given field values or defaults.
 def insert_new_ActivitySummary(cnx, cursor, fields):
+    fields = app2db_ActivitySummary(fields)
     stmt = (
         "INSERT INTO ActivitySummary (refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, created, edited, removed) "
         "VALUES (%(refp)s, %(tstart)s, %(tuntil)s, %(reqbyid)s, %(reqbyht)s, %(reqbypm)s, %(reqbyrs)s, %(reqdets)s, %(created)s, %(edited)s, %(removed)s)")
@@ -421,6 +790,7 @@ def insert_new_ActivitySummary(cnx, cursor, fields):
 
 # Update the specified ActivitySummary row with the given field values.
 def update_existing_ActivitySummary(cnx, cursor, fields):
+    fields = app2db_ActivitySummary(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -439,6 +809,7 @@ def update_existing_ActivitySummary(cnx, cursor, fields):
 
 # Write a new ConnectionService row, using the given field values or defaults.
 def insert_new_ConnectionService(cnx, cursor, fields):
+    fields = app2db_ConnectionService(fields)
     stmt = (
         "INSERT INTO ConnectionService (name, ckey, secret, data) "
         "VALUES (%(name)s, %(ckey)s, %(secret)s, %(data)s)")
@@ -453,6 +824,7 @@ def insert_new_ConnectionService(cnx, cursor, fields):
 
 # Update the specified ConnectionService row with the given field values.
 def update_existing_ConnectionService(cnx, cursor, fields):
+    fields = app2db_ConnectionService(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:
@@ -525,7 +897,9 @@ def query_MUser(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, created, modified, lastwrite, preb) in cursor:
-        res.append({"importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "created": created, "modified": modified, "lastwrite": lastwrite, "preb": preb})
+        inst = {"dsId": dsId, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "created": created, "modified": modified, "lastwrite": lastwrite, "preb": preb}
+        inst = db2app_MUser(inst)
+        res.append(inst)
     return res
 
 
@@ -536,7 +910,9 @@ def query_Theme(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, importid, name, name_c, modhist, modified, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) in cursor:
-        res.append({"importid": importid, "name": name, "name_c": name_c, "modhist": modhist, "modified": modified, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb})
+        inst = {"dsId": dsId, "importid": importid, "name": name, "name_c": name_c, "modhist": modhist, "modified": modified, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
+        inst = db2app_Theme(inst)
+        res.append(inst)
     return res
 
 
@@ -547,7 +923,9 @@ def query_Membic(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, modified, modhist, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) in cursor:
-        res.append({"importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "modified": modified, "modhist": modhist, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat})
+        inst = {"dsId": dsId, "importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "modified": modified, "modhist": modhist, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat}
+        inst = db2app_Membic(inst)
+        res.append(inst)
     return res
 
 
@@ -558,7 +936,9 @@ def query_Overflow(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, dbkind, dbkeyid, overcount, preb) in cursor:
-        res.append({"dbkind": dbkind, "dbkeyid": dbkeyid, "overcount": overcount, "preb": preb})
+        inst = {"dsId": dsId, "dbkind": dbkind, "dbkeyid": dbkeyid, "overcount": overcount, "preb": preb}
+        inst = db2app_Overflow(inst)
+        res.append(inst)
     return res
 
 
@@ -569,7 +949,9 @@ def query_MailNotice(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, name, subject, uidcsv, lastupd) in cursor:
-        res.append({"name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd})
+        inst = {"dsId": dsId, "name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd}
+        inst = db2app_MailNotice(inst)
+        res.append(inst)
     return res
 
 
@@ -580,7 +962,9 @@ def query_ActivitySummary(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, created, edited, removed) in cursor:
-        res.append({"refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "created": created, "edited": edited, "removed": removed})
+        inst = {"dsId": dsId, "refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "created": created, "edited": edited, "removed": removed}
+        inst = db2app_ActivitySummary(inst)
+        res.append(inst)
     return res
 
 
@@ -591,7 +975,9 @@ def query_ConnectionService(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, name, ckey, secret, data) in cursor:
-        res.append({"name": name, "ckey": ckey, "secret": secret, "data": data})
+        inst = {"dsId": dsId, "name": name, "ckey": ckey, "secret": secret, "data": data}
+        inst = db2app_ConnectionService(inst)
+        res.append(inst)
     return res
 
 
@@ -606,7 +992,6 @@ def query_entity(entity, where):
     try:
         cursor = cnx.cursor()
         try:
-            query = "SELECT dsId, "
             if entity == "MUser":
                 return query_MUser(cnx, cursor, where)
             if entity == "Theme":
