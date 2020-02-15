@@ -237,8 +237,8 @@ def app2db_fieldval(entity, field, inst):
             val = int(val)  # will fail on "", "null" or other bad values
         except ValueError:
             val = 0
-        if not val:
-            val = None
+        if unique and not val:  # null vals don't violate UNIQUE constraint
+            val = None          # otherwise use 0 as val may be required
     return val
 
 

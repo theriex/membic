@@ -58,7 +58,7 @@ CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   ctmid BIGINT NOT NULL,
   rating INT NOT NULL,
   srcrev BIGINT NOT NULL,
-  cankey VARCHAR(256) NOT NULL,
+  cankey VARCHAR(256),
   modified VARCHAR(256),
   modhist VARCHAR(256),
   text LONGTEXT,

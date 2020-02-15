@@ -28,7 +28,7 @@ module.exports = (function () {
             {dn:"isodcsv", h:"comma separated ISO date values"},
             {dn:"gencsv", h:"general comma separated values"},
             {dn:"url", h:"a URL, possibly longer than 128chars"}]},
-        {dn:"image", h:"opaque binary image data (max 1mb)"},
+        {dn:"image", h:"base64 encoded binary image data (max 1mb)"},
         {dn:"dbid", h:"long int db id translated to string for JSON"},
         {dn:"int", h:"low range integer value JavaScript can handle"}];
     var descrLookup = null;
@@ -109,7 +109,7 @@ module.exports = (function () {
         {f:"ctmid", d:"req dbid", c:"Theme id, or 0 if source membic"},
         {f:"rating", d:"req int", c:"0-100"},
         {f:"srcrev", d:"req dbid", c:"source membic, see note"},
-        {f:"cankey", d:"req string", c:"alt key, see note"},
+        {f:"cankey", d:"string", c:"alternative semi-key, see note"},
         {f:"modified", d:"isod", c:"when last updated"},
         {f:"modhist", d:"isomod", c:"creationDate;modCount"},
         {f:"text", d:"text", c:"why this link is memorable"},
@@ -152,7 +152,8 @@ module.exports = (function () {
         //   used to group multiple membics for the same thing within a
         //   theme, or for search.  The value is maintained server-side for
         //   consistency.  Multiple membics with the same cankey/penid/ctmid
-        //   are allowed but discouraged.
+        //   are allowed but discouraged.  Should always have a value, but
+        //   can end up empty if unreadable url.
         // svcdata:
         //   - picdisp: sitepic|upldpic|nopic (client setting).  For sitepics
         //     not over https, the server internally caches a lowres copy of

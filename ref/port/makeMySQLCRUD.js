@@ -266,8 +266,8 @@ function helperFunctions () {
     pyc += "            val = int(val)  # will fail on \"\", \"null\" or other bad values\n";
     pyc += "        except ValueError:\n";
     pyc += "            val = 0\n";
-    pyc += "        if not val:\n";
-    pyc += "            val = None\n";
+    pyc += "        if unique and not val:  # null vals don't violate UNIQUE constraint\n";
+    pyc += "            val = None          # otherwise use 0 as val may be required\n";
     pyc += "    return val\n";
     pyc += "\n";
     pyc += "\n";

@@ -1,11 +1,19 @@
 /*jslint node, white, fudge */
 
+//Use: 
+//
+//node pull.js "15feb20", 200
+//
+//Fetches at most 200 items.  Any existing items where the json has a dltag
+//matching "15feb20" will not be refetched.
+
 //Read uids.tdf and tids.tdf to download all users and themes.  The TDF
 //files were created by querying in the GAE console, selecting all, copying
-//into a file and then editing.  Editing consisted of fixing the header line
-//tag to be tab delimited, changing "Name/ID" to "gaeid", and getting rid of
-//the "id=" prefix in the values.  Membic uses "_id" as the identifier for
-//objects.  Mapping from gaeid to _id happens on import to new db.
+//into a file, and editing.  Editing consisted of fixing the header line tag
+//to be tab delimited, changing "Name/ID" to "gaeid", and getting rid of the
+//"id=" prefix in the values.  That's enough to query for the rest of the
+//data.  The MUser/Coop preb values are then unpacked to get the membics
+//data.  For the membics, the import id is "instid".
 
 var puller = (function () {
     "use strict";
@@ -105,13 +113,14 @@ var puller = (function () {
                     srvrGet("/ovrfbyid", "?overid=" + membic.overflow,
                             function (data) {
                                 console.log("-|| ovrf " + membic.overflow);
-                                writeMembics(JSON.parse(data), 
-                                             overwrite); }); } }
+                                var overflow = JSON.parse(data)[0];
+                                var marr = JSON.parse(overflow.preb);
+                                writeMembics(marr, overwrite); }); } }
             else if(overwrite || !fs.existsSync(mfn)) {
                 membicwritten = true;
                 locSave(mfn, JSON.stringify(membic));
                 if(membic.svcdata && membic.svcdata.indexOf("upldpic") >= 0) {
-                    var fnm = "membics/pics" + membic.instid + ".png";
+                    var fnm = "membics/pics/" + membic.instid + ".png";
                     srvrGet("/revpic", "?revid=" + membic.instid,
                             function (data) {
                                 locSave(fnm, data); }); } } });
