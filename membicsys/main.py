@@ -8,13 +8,21 @@ app = Flask(__name__)
 #  API:
 #
 
-@app.route('/api/toklogin', methods=['POST'])
-def toklogin():
-    # Get an access token from native credentials
-    # POST params: emailin, passin
-    # curl --data "emailin=test@example.com&passin=testing" localhost:8080/api/toklogin
-    return useract.secure(useract.toklogin)
+@app.route('/api/version')
+def appversion():
+    return "2.3"
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def startpage(path):
+    return "Start page path: /" + path
+
+# @app.route('/api/toklogin', methods=['POST'])
+# def toklogin():
+#     # Get an access token from native credentials
+#     # POST params: emailin, passin
+#     # curl --data "emailin=test@example.com&passin=testing" localhost:8080/api/toklogin
+#     return useract.secure(useract.toklogin)
 
 # ## Read native credentials and redirect back
 # ## POST params: emailin, passin (,returnto, command, view, objid)
