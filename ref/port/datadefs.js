@@ -35,6 +35,7 @@ module.exports = (function () {
 
 
     var ddefs = [ //data storage entity definitions
+    // The dsId, created, and modified fields are automatically added.
     {entity:"MUser", descr:"Membic User account.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
         {f:"email", d:"priv req unique email"},
@@ -51,8 +52,6 @@ module.exports = (function () {
         {f:"profpic", d:"image", c:"used for theme, and coop posts"},
         {f:"cliset", d:"json", c:"dict of client settings, see note 1"},
         {f:"coops", d:"json", c:"coopid map, see note"},
-        {f:"created", d:"isodate", c:"when the account was first created"},
-        {f:"modified", d:"isod", c:"when account last modified"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
         ////////// Notes:
@@ -80,8 +79,6 @@ module.exports = (function () {
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
         {f:"name", d:"req string", c:"Human readable name"},
         {f:"name_c", d:"req unique string", c:"canonical name for match"},
-        {f:"modhist", d:"isomod", c:"creation date and mod count"},
-        {f:"modified", d:"isod", c:"when last updated"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"hashtag", d:"unique string", c:"optional one word name"},
         {f:"description", d:"text", c:"optional description, site link etc."},
@@ -110,8 +107,6 @@ module.exports = (function () {
         {f:"rating", d:"req int", c:"0-100"},
         {f:"srcrev", d:"req dbid", c:"source membic, see note"},
         {f:"cankey", d:"string", c:"alternative semi-key, see note"},
-        {f:"modified", d:"isod", c:"when last updated"},
-        {f:"modhist", d:"isomod", c:"creationDate;modCount"},
         {f:"text", d:"text", c:"why this link is memorable"},
         {f:"keywords", d:"gencsv", c:"keywords for this membic"},
         {f:"svcdata", d:"json", c:"pic src, other info, see note"},
@@ -187,7 +182,7 @@ module.exports = (function () {
         {f:"reqbypm", d:"req int", c:"count of external requests via params"},
         {f:"reqbyrs", d:"req int", c:"count of requests via RSS"},
         {f:"reqdets", d:"json", c:"dict of supplemental info, see note"},
-        {f:"created", d:"req int", c:"how many new membics were created"},
+        {f:"newmembics", d:"req int", c:"how many new membics were created"},
         {f:"edited", d:"req int", c:"how many existing membics were edited"},
         {f:"removed", d:"req int", c:"deleted if MUser, removed if Theme"}],
       queries:[{q:[{f:"refp"}, {f:"tuntil", dir:"desc"}]}]},

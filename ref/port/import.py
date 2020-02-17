@@ -36,7 +36,7 @@ def import_basic(datdir, jd, entity, picfield, cfs):
     if picfield in jd and jd[picfield]:
         impd[picfield] = load_pic(datdir, jd[picfield])
         stats[entity + "_pics"] += 1
-    dbacc.write_entity(entity, impd)
+    dbacc.write_entity(entity, impd, vck="override")
     stats[entity] += 1
 
 
@@ -48,14 +48,29 @@ def import_MUser(datdir, jd):
         "created", "modified", "lastwrite"])
 
 
+def convert_modhist_modified(jd):
+    if "modhist" in jd and jd["modhist"]:
+        if ';' in jd["modhist"]:
+            mhs = jd["modhist"].split(";")
+            jd["created"] = mhs[0]
+            jd["modified"] = jd["modified"] + ";" + mhs[1]
+        else:
+            jd["modified"] = jd["modhist"]
+    # themes came in with modhist null, so copy created from modified
+    elif "modified" in jd and "created" not in jd:
+        jd["created"] = jd["modified"] + ";1"
+
+
 def import_Theme(datdir, jd):
+    convert_modhist_modified(jd)
     import_basic(datdir, jd, "Theme", "picture", [
-        "name", "name_c", "modhist", "modified", "lastwrite", "hashtag",
+        "name", "name_c", "created", "modified", "lastwrite", "hashtag",
         "description", "founders", "moderators", "members", "seeking",
         "rejects", "adminlog", "people", "cliset", "keywords"])
 
 
 def import_Membic(datdir, jd):
+    convert_modhist_modified(jd)
     impd = {}
     impd["importid"] = int(jd["instid"])
     msg = "  Adding Membic " + str(impd["importid"])
@@ -66,7 +81,7 @@ def import_Membic(datdir, jd):
         msg +=" --> " + str(existing["dsId"])
     logging.info(msg)
     cfs = ["url", "rurl", "revtype", "penid", "ctmid", "rating", "srcrev",
-           "cankey", "modified", "modhist", "text", "keywords", "svcdata",
+           "cankey", "modified", "created", "text", "keywords", "svcdata",
            "imguri", "dispafter", "penname"]
     for key in cfs:
         if key in jd:
@@ -83,7 +98,7 @@ def import_Membic(datdir, jd):
         if key in jd:
             dets[key] = jd[key]
     impd["details"] = json.dumps(dets)
-    dbacc.write_entity("Membic", impd)
+    dbacc.write_entity("Membic", impd, vck="override")
     stats["Membic"] += 1
 
 

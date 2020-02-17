@@ -17,6 +17,12 @@ def appversion():
 def startpage(path):
     return "Start page path: /" + path
 
+########## Admin interfaces
+@app.route('/api/prebsweep')
+def prebsweep():
+    ## Fill any empty/null preb values.
+    return util.secure(util.prebsweep())
+
 # @app.route('/api/toklogin', methods=['POST'])
 # def toklogin():
 #     # Get an access token from native credentials

@@ -64,6 +64,8 @@ function createDatabaseSQL() {
     ddefs.dataDefinitions().forEach(function (edef) {
         sql += "CREATE TABLE " + edef.entity + " (  -- " + edef.descr + "\n";
         sql += "  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,\n";
+        sql += "  created VARCHAR(256) NOT NULL,\n";
+        sql += "  modified VARCHAR(256) NOT NULL,\n";
         edef.fields.forEach(function (ed) {
             sql += "  " + ed.f + " " + sqlType(ed.d) + reqFlag(ed.d) +
                 uniqueFlag(ed.d) + ",\n"; });
@@ -119,7 +121,9 @@ function entityDefinitions () {
         if(eidx < definitions.length - 1) {
             ecomma = ","; }
         pyc += "    \"" + edef.entity + "\": {  # " + edef.descr + "\n";
-        pyc += "        \"dsId\": {\"pt\": \"dbid\", \"dv\": 0},\n";
+        pyc += "        \"dsId\": {\"pt\": \"dbid\", \"un\": True, \"dv\": 0},\n";
+        pyc += "        \"created\": {\"pt\": \"string\", \"un\": False, \"dv\": \"\"},\n";
+        pyc += "        \"modified\": {\"pt\": \"string\", \"un\": False, \"dv\": \"\"},\n";
         edef.fields.forEach(function (fd, fidx) {
             var fcomma = "";
             if(fidx < edef.fields.length - 1) {
@@ -242,13 +246,14 @@ function helperFunctions () {
     pyc += "# Read the given field from the inst or the default values, then convert it\n";
     pyc += "# from an app value to a db value.\n";
     pyc += "def app2db_fieldval(entity, field, inst):\n";
-    pyc += "    pt = \"dbid\"       # if no entity specified, treat as dbid\n";
-    pyc += "    unique = True     # if no entity specified, assume unique\n";
-    pyc += "    val = \"\"          # default app value for a dbid\n";
     pyc += "    if entity:\n";
     pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
     pyc += "        unique = entdefs[entity][field][\"un\"]\n";
     pyc += "        val = entdefs[entity][field][\"dv\"]\n";
+    pyc += "    else:\n";
+    pyc += "        pt = dbflds[field][\"pt\"]\n";
+    pyc += "        unique = dbflds[field][\"un\"]\n";
+    pyc += "        val = dbflds[field][\"dv\"]\n";
     pyc += "    if field in inst:\n";
     pyc += "        val = inst[field]\n";
     pyc += "    # convert value based on type and whether the values are unique\n";
@@ -274,11 +279,12 @@ function helperFunctions () {
     pyc += "# Read the given field from the inst or the default values, then convert it\n";
     pyc += "# from a db value to an app value.\n";
     pyc += "def db2app_fieldval(entity, field, inst):\n";
-    pyc += "    pt = \"dbid\"       # if no entity specified, treat as dbid\n";
-    pyc += "    val = None        # default db value for a dbid\n";
     pyc += "    if entity:\n";
     pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
     pyc += "        val = entdefs[entity][field][\"dv\"]\n";
+    pyc += "    else:\n";
+    pyc += "        pt = dbflds[field][\"pt\"]\n";
+    pyc += "        val = dbflds[field][\"dv\"]\n";
     pyc += "    if field in inst:\n";
     pyc += "        val = inst[field]\n";
     pyc += "    # convert value based on type\n";
@@ -298,6 +304,43 @@ function helperFunctions () {
     pyc += "            val = str(val)\n";
     pyc += "    return val\n";
     pyc += "\n";
+    pyc += "\n";
+    pyc += "def dt2ISO(dt):\n";
+    pyc += "    iso = str(dt.year) + \"-\" + str(dt.month).rjust(2, '0') + \"-\"\n";
+    pyc += "    iso += str(dt.day).rjust(2, '0') + \"T\" + str(dt.hour).rjust(2, '0')\n";
+    pyc += "    iso += \":\" + str(dt.minute).rjust(2, '0') + \":\"\n";
+    pyc += "    iso += str(dt.second).rjust(2, '0') + \"Z\"\n";
+    pyc += "    return iso\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "def nowISO():\n";
+    pyc += "    \"\"\" Return the current time as an ISO string \"\"\"\n";
+    pyc += "    return dt2ISO(datetime.datetime.utcnow())\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "def initialize_timestamp_fields(fields, vck):\n";
+    pyc += "    ts = nowISO()\n";
+    pyc += "    if \"created\" not in fields or not fields[\"created\"] or vck != \"override\":\n";
+    pyc += "        fields[\"created\"] = ts\n";
+    pyc += "    if \"modified\" not in fields or not fields[\"modified\"] or vck != \"override\":\n";
+    pyc += "        fields[\"modified\"] = ts + \";1\"\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "def verify_timestamp_fields(entity, dsId, fields, vck):\n";
+    pyc += "    if vck == \"override\" and \"created\" in fields and \"modified\" in fields:\n";
+    pyc += "        return  # skip query and use specified values\n";
+    pyc += "    existing = cfbk(entity, \"dsId\", dsId)\n";
+    pyc += "    if not existing:\n";
+    pyc += "        raise ValueError(\"Existing \" + entity + \" \" + str(dsId) + \" not found.\")\n";
+    pyc += "    if vck != \"override\" and existing[\"modified\"] != vck:\n";
+    pyc += "        raise ValueError(\"Update error. Outdated data given for \" + entity +\n";
+    pyc += "                         \" \" + str(dsId) + \".\")\n";
+    pyc += "    if \"created\" not in fields or not fields[\"created\"] or vck != \"override\":\n";
+    pyc += "        fields[\"created\"] = existing[\"created\"]\n";
+    pyc += "    mods = existing[\"modified\"].split(\";\")\n";
+    pyc += "    ver = int(mods[1]) + 1\n";
+    pyc += "    if \"modified\" not in fields or not fields[\"modified\"] or vck != \"override\":\n";
+    pyc += "        fields[\"modified\"] = nowISO() + \";\" + str(ver)\n";
     return pyc;
 }
 
@@ -310,6 +353,8 @@ function writeApp2DB (edef) {
     pyc += "    cnv[\"dsId\"] = None\n";
     pyc += "    if \"dsId\" in inst:\n";
     pyc += "        cnv[\"dsId\"] = app2db_fieldval(None, \"dsId\", inst)\n";
+    pyc += "    cnv[\"created\"] = app2db_fieldval(None, \"created\", inst)\n";
+    pyc += "    cnv[\"modified\"] = app2db_fieldval(None, \"modified\", inst)\n";
     edef.fields.forEach(function (fd) {
         pyc += "    cnv[\"" + fd.f + "\"] = app2db_fieldval(\"" + edef.entity + "\", \"" + fd.f + "\", inst)\n"; });
     pyc += "    return cnv\n";
@@ -323,6 +368,8 @@ function writeDB2App (edef) {
     pyc += "def db2app_" + edef.entity + "(inst):\n";
     pyc += "    cnv = {}\n";
     pyc += "    cnv[\"dsId\"] = db2app_fieldval(None, \"dsId\", inst)\n";
+    pyc += "    cnv[\"created\"] = db2app_fieldval(None, \"created\", inst)\n";
+    pyc += "    cnv[\"modified\"] = db2app_fieldval(None, \"modified\", inst)\n";
     edef.fields.forEach(function (fd) {
         pyc += "    cnv[\"" + fd.f + "\"] = db2app_fieldval(\"" + edef.entity + "\", \"" + fd.f + "\", inst)\n"; });
     pyc += "    return cnv\n";
@@ -345,23 +392,19 @@ function writeInsertFunction (edef) {
     pyc += "def insert_new_" + edef.entity + "(cnx, cursor, fields):\n";
     pyc += "    fields = app2db_" + edef.entity + "(fields)\n";
     pyc += "    stmt = (\n";
-    pyc += "        \"INSERT INTO " + edef.entity + " (";
+    pyc += "        \"INSERT INTO " + edef.entity + " (created, modified";
     edef.fields.forEach(function (fd, idx) {
-        if(idx) {
-            pyc += ", "; }
-        pyc += fd.f; });
+        pyc += ", " + fd.f; });
     pyc += ") \"\n";
-    pyc += "        \"VALUES (";
+    pyc += "        \"VALUES (%(created)s, %(modified)s";
     edef.fields.forEach(function (fd, idx) {
-        if(idx) {
-            pyc += ", "; }
-        pyc += "%(" + fd.f + ")s"; });
+        pyc += ", %(" + fd.f + ")s"; });
     pyc += ")\")\n";
     pyc += "    data = {\n";
+    pyc += "        'created': fields.get(\"created\"),\n";
+    pyc += "        'modified': fields.get(\"modified\")";
     edef.fields.forEach(function (fd, idx) {
-        if(idx) {
-            pyc += ",\n"; }
-        pyc += "        '" + fd.f + "': fields.get(\"" + fd.f + "\", " +
+        pyc += ",\n        '" + fd.f + "': fields.get(\"" + fd.f + "\", " +
             "entdefs[\"" + edef.entity + "\"][\"" + fd.f + "\"][\"dv\"])"; });
     pyc += "}\n";
     pyc += "    cursor.execute(stmt, data)\n";
@@ -373,21 +416,23 @@ function writeInsertFunction (edef) {
 function writeUpdateFunction (edef) {
     var pyc = "";
     pyc += "# Update the specified " + edef.entity + " row with the given field values.\n";
-    pyc += "def update_existing_" + edef.entity + "(cnx, cursor, fields):\n";
+    pyc += "def update_existing_" + edef.entity + "(cnx, cursor, fields, vck):\n";
     pyc += "    fields = app2db_" + edef.entity + "(fields)\n";
     pyc += "    dsId = int(fields[\"dsId\"])  # Verify int value\n";
     pyc += "    stmt = \"\"\n";
-    pyc += "    for field in fields:\n";
-    pyc += "        if field != \"dsId\":\n";
-    pyc += "            if stmt:\n";
-    pyc += "                stmt += \", \"\n";
-    pyc += "            stmt += field + \"=(%(\" + field + \")s)\"\n";
+    pyc += "    for field in fields:  # only updating the fields passed in\n";
+    pyc += "        if stmt:\n";
+    pyc += "            stmt += \", \"\n";
+    pyc += "        stmt += field + \"=(%(\" + field + \")s)\"\n";
     pyc += "    stmt = \"UPDATE " + edef.entity + " SET \" + stmt + \" WHERE dsId=\" + str(dsId)\n";
+    pyc += "    if vck != \"override\":\n";
+    pyc += "        stmt += \" AND modified=\\\"\" + vck + \"\\\"\"\n";
     pyc += "    data = {}\n";
     pyc += "    for field in fields:\n";
-    pyc += "        if field != \"dsId\":\n";
-    pyc += "            data[field] = fields[field]\n";
+    pyc += "        data[field] = fields[field]\n";
     pyc += "    cursor.execute(stmt, data)\n";
+    pyc += "    if cursor.rowcount < 1 and vck != \"override\":\n";
+    pyc += "        raise ValueError(\"" + edef.entity + " update received outdated data.\")\n";
     pyc += "    cnx.commit()\n";
     return pyc;
 }
@@ -402,7 +447,9 @@ function entityWriteFunction () {
     pyc += "# Write the specified entity kind using the dictionary of field values.\n";
     pyc += "# Binary field values must be base64.b64encode.  Unspecified fields will be\n";
     pyc += "# set to their default values for a new instance, and left alone on update.\n";
-    pyc += "def write_entity(entity, fields):\n";
+    pyc += "# For update, the verification check value must match the modified value of\n";
+    pyc += "# the existing instance.\n";
+    pyc += "def write_entity(entity, fields, vck=\"1234-12-12T00:00:00Z\"):\n";
     pyc += "    cnx = get_mysql_connector()\n";
     pyc += "    if not cnx:\n";
     pyc += "        raise ValueError(\"Database connection failed.\")\n";
@@ -411,10 +458,12 @@ function entityWriteFunction () {
     pyc += "        try:\n";
     pyc += "            dsId = fields.get(\"dsId\", 0)\n";
     pyc += "            if dsId:\n";
+    pyc += "                verify_timestamp_fields(entity, dsId, fields, vck)\n";
     definitions.forEach(function (edef) {
         pyc += "                if entity == \"" + edef.entity + "\":\n";
-        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, fields)\n"; });
+        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, fields, vck)\n"; });
     pyc += "            # No existing instance to update.  Insert new.\n";
+    pyc += "            initialize_timestamp_fields(fields, vck)\n";
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
         pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, fields)\n"; });
@@ -499,7 +548,18 @@ function createPythonDBAcc () {
     pyc += "logging.basicConfig(level=logging.DEBUG)\n";
     pyc += "import flask\n";
     pyc += "import re\n";
+    pyc += "import datetime\n";
     pyc += "import mysql.connector\n";
+    pyc += "\n";
+    pyc += "# Reserved database fields used for every instance:\n";
+    pyc += "#  - dsId: a long int, possibly out of range of a javascript integer,\n";
+    pyc += "#    possibly non-sequential, uniquely identifying an entity instance.\n";
+    pyc += "#    The entity type + dsId uniquely identifies an object in the system.\n";
+    pyc += "#  - created: An ISO timestamp when the instance was first written.\n";
+    pyc += "#  - modified: An ISO timestamp followed by ';' followed by mod count.\n";
+    pyc += "dbflds = {\"dsId\": {\"pt\": \"dbid\", \"un\": True, \"dv\": 0}, \n";
+    pyc += "          \"created\": {\"pt\": \"string\", \"un\": False, \"dv\": \"\"},\n";
+    pyc += "          \"modified\": {\"pt\": \"string\", \"un\": False, \"dv\": \"\"}}\n";
     pyc += "\n";
     pyc += entityDefinitions() + "\n\n";
     pyc += entityKeyFields() + "\n\n";

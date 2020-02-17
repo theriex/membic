@@ -1,5 +1,7 @@
 CREATE TABLE MUser (  -- Membic User account.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   importid BIGINT UNIQUE,
   email VARCHAR(256) NOT NULL UNIQUE,
   phash VARCHAR(256) NOT NULL,
@@ -14,8 +16,6 @@ CREATE TABLE MUser (  -- Membic User account.
   profpic LONGBLOB,
   cliset LONGTEXT,
   coops LONGTEXT,
-  created VARCHAR(256),
-  modified VARCHAR(256),
   lastwrite VARCHAR(256),
   preb LONGTEXT,
   PRIMARY KEY (dsId)
@@ -24,11 +24,11 @@ ALTER TABLE MUser AUTO_INCREMENT = 2020;
 
 CREATE TABLE Theme (  -- A cooperative theme.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   importid BIGINT UNIQUE,
   name VARCHAR(256) NOT NULL,
   name_c VARCHAR(256) NOT NULL UNIQUE,
-  modhist VARCHAR(256),
-  modified VARCHAR(256),
   lastwrite VARCHAR(256),
   hashtag VARCHAR(256) UNIQUE,
   description LONGTEXT,
@@ -49,6 +49,8 @@ ALTER TABLE Theme AUTO_INCREMENT = 2020;
 
 CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   importid BIGINT UNIQUE,
   url LONGTEXT,
   rurl LONGTEXT,
@@ -59,8 +61,6 @@ CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   rating INT NOT NULL,
   srcrev BIGINT NOT NULL,
   cankey VARCHAR(256),
-  modified VARCHAR(256),
-  modhist VARCHAR(256),
   text LONGTEXT,
   keywords LONGTEXT,
   svcdata LONGTEXT,
@@ -79,6 +79,8 @@ ALTER TABLE Membic AUTO_INCREMENT = 2020;
 
 CREATE TABLE Overflow (  -- extra preb membics
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   dbkind VARCHAR(256) NOT NULL,
   dbkeyid BIGINT NOT NULL,
   overcount INT NOT NULL,
@@ -89,6 +91,8 @@ ALTER TABLE Overflow AUTO_INCREMENT = 2020;
 
 CREATE TABLE MailNotice (  -- Broadcast email tracking
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   name VARCHAR(256) NOT NULL UNIQUE,
   subject VARCHAR(256),
   uidcsv LONGTEXT,
@@ -99,6 +103,8 @@ ALTER TABLE MailNotice AUTO_INCREMENT = 2020;
 
 CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   refp VARCHAR(256) NOT NULL UNIQUE,
   tstart VARCHAR(256) NOT NULL,
   tuntil VARCHAR(256) NOT NULL,
@@ -107,7 +113,7 @@ CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   reqbypm INT NOT NULL,
   reqbyrs INT NOT NULL,
   reqdets LONGTEXT,
-  created INT NOT NULL,
+  newmembics INT NOT NULL,
   edited INT NOT NULL,
   removed INT NOT NULL,
   INDEX (refp, tuntil DESC),
@@ -117,6 +123,8 @@ ALTER TABLE ActivitySummary AUTO_INCREMENT = 2020;
 
 CREATE TABLE ConnectionService (  -- Supporting service auth
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
   name VARCHAR(256) NOT NULL UNIQUE,
   ckey VARCHAR(256),
   secret VARCHAR(256),
