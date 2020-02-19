@@ -53,7 +53,8 @@ module.exports = (function () {
         {f:"cliset", d:"json", c:"dict of client settings, see note 1"},
         {f:"coops", d:"json", c:"coopid map, see note"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
-        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
+        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
+      logflds: ["email", "name"]},
         ////////// Notes:
         // cliset: {flags:{archived:ISO},
         //          embcolors:{link:"#84521a", hover:"#a05705"},
@@ -92,7 +93,9 @@ module.exports = (function () {
         {f:"people", d:"json", c:"map of ids to user names for fast display"},
         {f:"cliset", d:"json", c:"client settings (like MUser)"},
         {f:"keywords", d:"gencsv", c:"custom theme keywords"},
-        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
+        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
+      logflds: ["name"]},
+
 
     {entity:"Membic", descr:"A URL with a reason why it's memorable.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
@@ -117,6 +120,7 @@ module.exports = (function () {
         {f:"dispafter", d:"isodate", c:"visibility queued until"},
         {f:"penname", d:"string", c:"author name for easy UI ref"},
         {f:"reacdat", d:"json", c:"reaction data, see note"}],
+      logflds: ["url", "penname", "penid", "ctmid"],
       queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
                 {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
         // rurl/url:
@@ -163,7 +167,6 @@ module.exports = (function () {
     {entity:"Overflow", descr:"extra preb membics", fields:[
         {f:"dbkind", d:"req string", c:"MUser or Theme"},
         {f:"dbkeyid", d:"req dbid", c:"id of source MUser or Theme"},
-        {f:"overcount", d:"req int", c:"overflow instance count"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
         
     {entity:"MailNotice", descr:"Broadcast email tracking", fields:[
@@ -196,7 +199,8 @@ module.exports = (function () {
         {f:"name", d:"req unique string", c:"service name"},
         {f:"ckey", d:"string", c:"key e.g. oauth1 consumer key"},
         {f:"secret", d:"string", c:"e.g. oauth1 consumer secret"},
-        {f:"data", d:"text", c:"service-specific data"}]}];
+        {f:"data", d:"text", c:"service-specific data"}],
+      logflds: ["name"]}];
         
 
     function makeFieldDescriptionLookup (fds, aliasKey) {

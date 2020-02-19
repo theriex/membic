@@ -98,7 +98,6 @@ entdefs = {
         "modified": {"pt": "string", "un": False, "dv": ""},
         "dbkind": {"pt": "string", "un": False, "dv": ""},
         "dbkeyid": {"pt": "dbid", "un": False, "dv": 0},
-        "overcount": {"pt": "int", "un": False, "dv": 0},
         "preb": {"pt": "string", "un": False, "dv": ""}
     },
     "MailNotice": {  # Broadcast email tracking
@@ -230,7 +229,9 @@ def trim_string_val(val, unique=False):
 
 
 # Read the given field from the inst or the default values, then convert it
-# from an app value to a db value.
+# from an app value to a db value.  All string values are trimmed since
+# preceding or trailing space makes matching horrible and buggy.  The UI can
+# add a trailing newline for long text if it wants.
 def app2db_fieldval(entity, field, inst):
     if entity:
         pt = entdefs[entity][field]["pt"]
@@ -244,7 +245,9 @@ def app2db_fieldval(entity, field, inst):
         val = inst[field]
     # convert value based on type and whether the values are unique
     if pt in ["email", "string"]:
-        if not val or not trim_string_val(val, unique):
+        val = val or ""
+        val = trim_string_val(val, unique)  # trim all strings. See comment.
+        if not val:
             val = None
     elif pt == "image":
         if not val:  # Empty data gets set to null
@@ -315,6 +318,9 @@ def initialize_timestamp_fields(fields, vck):
 def verify_timestamp_fields(entity, dsId, fields, vck):
     if vck == "override" and "created" in fields and "modified" in fields:
         return  # skip query and use specified values
+    if not vck or not vck.strip():
+        raise ValueError("Version check required to update " + entity +
+                         " " + str(dsId))
     existing = cfbk(entity, "dsId", dsId)
     if not existing:
         raise ValueError("Existing " + entity + " " + str(dsId) + " not found.")
@@ -323,8 +329,10 @@ def verify_timestamp_fields(entity, dsId, fields, vck):
                          " " + str(dsId) + ".")
     if "created" not in fields or not fields["created"] or vck != "override":
         fields["created"] = existing["created"]
+    ver = 1
     mods = existing["modified"].split(";")
-    ver = int(mods[1]) + 1
+    if len(mods) > 1:
+        ver = int(mods[1]) + 1
     if "modified" not in fields or not fields["modified"] or vck != "override":
         fields["modified"] = nowISO() + ";" + str(ver)
 
@@ -379,8 +387,6 @@ def db2app_MUser(inst):
     cnv["lastwrite"] = db2app_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = db2app_fieldval("MUser", "preb", inst)
     return cnv
-
-
 # Convert the given Theme inst dict from app values to db values.
 def app2db_Theme(inst):
     cnv = {}
@@ -433,8 +439,6 @@ def db2app_Theme(inst):
     cnv["keywords"] = db2app_fieldval("Theme", "keywords", inst)
     cnv["preb"] = db2app_fieldval("Theme", "preb", inst)
     return cnv
-
-
 # Convert the given Membic inst dict from app values to db values.
 def app2db_Membic(inst):
     cnv = {}
@@ -493,8 +497,6 @@ def db2app_Membic(inst):
     cnv["penname"] = db2app_fieldval("Membic", "penname", inst)
     cnv["reacdat"] = db2app_fieldval("Membic", "reacdat", inst)
     return cnv
-
-
 # Convert the given Overflow inst dict from app values to db values.
 def app2db_Overflow(inst):
     cnv = {}
@@ -505,7 +507,6 @@ def app2db_Overflow(inst):
     cnv["modified"] = app2db_fieldval(None, "modified", inst)
     cnv["dbkind"] = app2db_fieldval("Overflow", "dbkind", inst)
     cnv["dbkeyid"] = app2db_fieldval("Overflow", "dbkeyid", inst)
-    cnv["overcount"] = app2db_fieldval("Overflow", "overcount", inst)
     cnv["preb"] = app2db_fieldval("Overflow", "preb", inst)
     return cnv
 
@@ -518,11 +519,8 @@ def db2app_Overflow(inst):
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
     cnv["dbkind"] = db2app_fieldval("Overflow", "dbkind", inst)
     cnv["dbkeyid"] = db2app_fieldval("Overflow", "dbkeyid", inst)
-    cnv["overcount"] = db2app_fieldval("Overflow", "overcount", inst)
     cnv["preb"] = db2app_fieldval("Overflow", "preb", inst)
     return cnv
-
-
 # Convert the given MailNotice inst dict from app values to db values.
 def app2db_MailNotice(inst):
     cnv = {}
@@ -549,8 +547,6 @@ def db2app_MailNotice(inst):
     cnv["uidcsv"] = db2app_fieldval("MailNotice", "uidcsv", inst)
     cnv["lastupd"] = db2app_fieldval("MailNotice", "lastupd", inst)
     return cnv
-
-
 # Convert the given ActivitySummary inst dict from app values to db values.
 def app2db_ActivitySummary(inst):
     cnv = {}
@@ -591,8 +587,6 @@ def db2app_ActivitySummary(inst):
     cnv["edited"] = db2app_fieldval("ActivitySummary", "edited", inst)
     cnv["removed"] = db2app_fieldval("ActivitySummary", "removed", inst)
     return cnv
-
-
 # Convert the given ConnectionService inst dict from app values to db values.
 def app2db_ConnectionService(inst):
     cnv = {}
@@ -621,6 +615,20 @@ def db2app_ConnectionService(inst):
     return cnv
 
 
+def dblogmsg(op, entity, res):
+    log_summary_flds = {
+        "MUser": ["email", "name"],
+        "Theme": ["name"],
+        "Membic": ["url", "penname", "penid", "ctmid"],
+        "ConnectionService": ["name"]}
+    if op != "QRY":
+        res = [res]
+    for obj in res:
+        msg = "db" + op + " " + entity + " " + obj["dsId"]
+        if entity in log_summary_flds:
+            for field in log_summary_flds[entity]:
+                msg += " " + obj[field]
+        logging.info(msg)
 
 
 # Write a new MUser row, using the given field values or defaults.
@@ -649,7 +657,11 @@ def insert_new_MUser(cnx, cursor, fields):
         'lastwrite': fields.get("lastwrite", entdefs["MUser"]["lastwrite"]["dv"]),
         'preb': fields.get("preb", entdefs["MUser"]["preb"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_MUser(fields)
+    dblogmsg("ADD", "MUser", fields)
+    return fields
 
 
 # Update the specified MUser row with the given field values.
@@ -671,6 +683,9 @@ def update_existing_MUser(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("MUser update received outdated data.")
     cnx.commit()
+    fields = db2app_MUser(fields)
+    dblogmsg("UPD", "MUser", fields)
+    return fields
 
 
 # Write a new Theme row, using the given field values or defaults.
@@ -700,7 +715,11 @@ def insert_new_Theme(cnx, cursor, fields):
         'keywords': fields.get("keywords", entdefs["Theme"]["keywords"]["dv"]),
         'preb': fields.get("preb", entdefs["Theme"]["preb"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_Theme(fields)
+    dblogmsg("ADD", "Theme", fields)
+    return fields
 
 
 # Update the specified Theme row with the given field values.
@@ -722,6 +741,9 @@ def update_existing_Theme(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("Theme update received outdated data.")
     cnx.commit()
+    fields = db2app_Theme(fields)
+    dblogmsg("UPD", "Theme", fields)
+    return fields
 
 
 # Write a new Membic row, using the given field values or defaults.
@@ -754,7 +776,11 @@ def insert_new_Membic(cnx, cursor, fields):
         'penname': fields.get("penname", entdefs["Membic"]["penname"]["dv"]),
         'reacdat': fields.get("reacdat", entdefs["Membic"]["reacdat"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_Membic(fields)
+    dblogmsg("ADD", "Membic", fields)
+    return fields
 
 
 # Update the specified Membic row with the given field values.
@@ -776,23 +802,29 @@ def update_existing_Membic(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("Membic update received outdated data.")
     cnx.commit()
+    fields = db2app_Membic(fields)
+    dblogmsg("UPD", "Membic", fields)
+    return fields
 
 
 # Write a new Overflow row, using the given field values or defaults.
 def insert_new_Overflow(cnx, cursor, fields):
     fields = app2db_Overflow(fields)
     stmt = (
-        "INSERT INTO Overflow (created, modified, dbkind, dbkeyid, overcount, preb) "
-        "VALUES (%(created)s, %(modified)s, %(dbkind)s, %(dbkeyid)s, %(overcount)s, %(preb)s)")
+        "INSERT INTO Overflow (created, modified, dbkind, dbkeyid, preb) "
+        "VALUES (%(created)s, %(modified)s, %(dbkind)s, %(dbkeyid)s, %(preb)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
         'dbkind': fields.get("dbkind", entdefs["Overflow"]["dbkind"]["dv"]),
         'dbkeyid': fields.get("dbkeyid", entdefs["Overflow"]["dbkeyid"]["dv"]),
-        'overcount': fields.get("overcount", entdefs["Overflow"]["overcount"]["dv"]),
         'preb': fields.get("preb", entdefs["Overflow"]["preb"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_Overflow(fields)
+    dblogmsg("ADD", "Overflow", fields)
+    return fields
 
 
 # Update the specified Overflow row with the given field values.
@@ -814,6 +846,9 @@ def update_existing_Overflow(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("Overflow update received outdated data.")
     cnx.commit()
+    fields = db2app_Overflow(fields)
+    dblogmsg("UPD", "Overflow", fields)
+    return fields
 
 
 # Write a new MailNotice row, using the given field values or defaults.
@@ -830,7 +865,11 @@ def insert_new_MailNotice(cnx, cursor, fields):
         'uidcsv': fields.get("uidcsv", entdefs["MailNotice"]["uidcsv"]["dv"]),
         'lastupd': fields.get("lastupd", entdefs["MailNotice"]["lastupd"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_MailNotice(fields)
+    dblogmsg("ADD", "MailNotice", fields)
+    return fields
 
 
 # Update the specified MailNotice row with the given field values.
@@ -852,6 +891,9 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("MailNotice update received outdated data.")
     cnx.commit()
+    fields = db2app_MailNotice(fields)
+    dblogmsg("UPD", "MailNotice", fields)
+    return fields
 
 
 # Write a new ActivitySummary row, using the given field values or defaults.
@@ -875,7 +917,11 @@ def insert_new_ActivitySummary(cnx, cursor, fields):
         'edited': fields.get("edited", entdefs["ActivitySummary"]["edited"]["dv"]),
         'removed': fields.get("removed", entdefs["ActivitySummary"]["removed"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_ActivitySummary(fields)
+    dblogmsg("ADD", "ActivitySummary", fields)
+    return fields
 
 
 # Update the specified ActivitySummary row with the given field values.
@@ -897,6 +943,9 @@ def update_existing_ActivitySummary(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("ActivitySummary update received outdated data.")
     cnx.commit()
+    fields = db2app_ActivitySummary(fields)
+    dblogmsg("UPD", "ActivitySummary", fields)
+    return fields
 
 
 # Write a new ConnectionService row, using the given field values or defaults.
@@ -913,7 +962,11 @@ def insert_new_ConnectionService(cnx, cursor, fields):
         'secret': fields.get("secret", entdefs["ConnectionService"]["secret"]["dv"]),
         'data': fields.get("data", entdefs["ConnectionService"]["data"]["dv"])}
     cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
     cnx.commit()
+    fields = db2app_ConnectionService(fields)
+    dblogmsg("ADD", "ConnectionService", fields)
+    return fields
 
 
 # Update the specified ConnectionService row with the given field values.
@@ -935,6 +988,9 @@ def update_existing_ConnectionService(cnx, cursor, fields, vck):
     if cursor.rowcount < 1 and vck != "override":
         raise ValueError("ConnectionService update received outdated data.")
     cnx.commit()
+    fields = db2app_ConnectionService(fields)
+    dblogmsg("UPD", "ConnectionService", fields)
+    return fields
 
 
 # Write the specified entity kind using the dictionary of field values.
@@ -991,93 +1047,100 @@ def write_entity(entity, fields, vck="1234-12-12T00:00:00Z"):
 
 
 def query_MUser(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb"
     query += " FROM MUser " + where
     cursor.execute(query)
     res = []
-    for (dsId, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb) in cursor:
-        inst = {"dsId": dsId, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "lastwrite": lastwrite, "preb": preb}
+    for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "lastwrite": lastwrite, "preb": preb}
         inst = db2app_MUser(inst)
         res.append(inst)
+    dblogmsg("QRY", "MUser", res)
     return res
 
 
 def query_Theme(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb"
     query += " FROM Theme " + where
     cursor.execute(query)
     res = []
-    for (dsId, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) in cursor:
-        inst = {"dsId": dsId, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
+    for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
         inst = db2app_Theme(inst)
         res.append(inst)
+    dblogmsg("QRY", "Theme", res)
     return res
 
 
 def query_Membic(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat"
     query += " FROM Membic " + where
     cursor.execute(query)
     res = []
-    for (dsId, importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) in cursor:
-        inst = {"dsId": dsId, "importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat}
+    for (dsId, created, modified, importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat}
         inst = db2app_Membic(inst)
         res.append(inst)
+    dblogmsg("QRY", "Membic", res)
     return res
 
 
 def query_Overflow(cnx, cursor, where):
-    query = "SELECT dsId, "
-    query += "dbkind, dbkeyid, overcount, preb"
+    query = "SELECT dsId, created, modified, "
+    query += "dbkind, dbkeyid, preb"
     query += " FROM Overflow " + where
     cursor.execute(query)
     res = []
-    for (dsId, dbkind, dbkeyid, overcount, preb) in cursor:
-        inst = {"dsId": dsId, "dbkind": dbkind, "dbkeyid": dbkeyid, "overcount": overcount, "preb": preb}
+    for (dsId, created, modified, dbkind, dbkeyid, preb) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "dbkind": dbkind, "dbkeyid": dbkeyid, "preb": preb}
         inst = db2app_Overflow(inst)
         res.append(inst)
+    dblogmsg("QRY", "Overflow", res)
     return res
 
 
 def query_MailNotice(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "name, subject, uidcsv, lastupd"
     query += " FROM MailNotice " + where
     cursor.execute(query)
     res = []
-    for (dsId, name, subject, uidcsv, lastupd) in cursor:
-        inst = {"dsId": dsId, "name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd}
+    for (dsId, created, modified, name, subject, uidcsv, lastupd) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd}
         inst = db2app_MailNotice(inst)
         res.append(inst)
+    dblogmsg("QRY", "MailNotice", res)
     return res
 
 
 def query_ActivitySummary(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, newmembics, edited, removed"
     query += " FROM ActivitySummary " + where
     cursor.execute(query)
     res = []
-    for (dsId, refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, newmembics, edited, removed) in cursor:
-        inst = {"dsId": dsId, "refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "newmembics": newmembics, "edited": edited, "removed": removed}
+    for (dsId, created, modified, refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, newmembics, edited, removed) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "newmembics": newmembics, "edited": edited, "removed": removed}
         inst = db2app_ActivitySummary(inst)
         res.append(inst)
+    dblogmsg("QRY", "ActivitySummary", res)
     return res
 
 
 def query_ConnectionService(cnx, cursor, where):
-    query = "SELECT dsId, "
+    query = "SELECT dsId, created, modified, "
     query += "name, ckey, secret, data"
     query += " FROM ConnectionService " + where
     cursor.execute(query)
     res = []
-    for (dsId, name, ckey, secret, data) in cursor:
-        inst = {"dsId": dsId, "name": name, "ckey": ckey, "secret": secret, "data": data}
+    for (dsId, created, modified, name, ckey, secret, data) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "name": name, "ckey": ckey, "secret": secret, "data": data}
         inst = db2app_ConnectionService(inst)
         res.append(inst)
+    dblogmsg("QRY", "ConnectionService", res)
     return res
 
 

@@ -1,5 +1,6 @@
 from flask import Flask
 import py.useract as useract
+import py.util as util
 
 # Create a default entrypoint for the app.
 app = Flask(__name__)
@@ -12,16 +13,21 @@ app = Flask(__name__)
 def appversion():
     return "2.3"
 
+@app.route('/api/mailpwr', methods=['GET', 'POST'])
+def mailpwr():  # params: emailin
+    return util.secure(util.mailpwr)
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def startpage(path):
     return "Start page path: /" + path
 
+
 ########## Admin interfaces
 @app.route('/api/prebsweep')
 def prebsweep():
     ## Fill any empty/null preb values.
-    return util.secure(util.prebsweep())
+    return util.secure(util.prebsweep)
 
 # @app.route('/api/toklogin', methods=['POST'])
 # def toklogin():
@@ -248,11 +254,6 @@ def prebsweep():
 
 # ## Send a general notice
 # - url: .*/sendnote.*
-#   script: src.py.mailsum.app
-#   login: admin
-
-# ## Fill any empty preb values
-# - url: .*/prebsweep.*
 #   script: src.py.mailsum.app
 #   login: admin
 

@@ -83,7 +83,6 @@ CREATE TABLE Overflow (  -- extra preb membics
   modified VARCHAR(256) NOT NULL,
   dbkind VARCHAR(256) NOT NULL,
   dbkeyid BIGINT NOT NULL,
-  overcount INT NOT NULL,
   preb LONGTEXT,
   PRIMARY KEY (dsId)
 );

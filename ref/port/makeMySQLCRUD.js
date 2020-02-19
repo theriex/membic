@@ -244,7 +244,9 @@ function helperFunctions () {
     pyc += "\n";
     pyc += "\n";
     pyc += "# Read the given field from the inst or the default values, then convert it\n";
-    pyc += "# from an app value to a db value.\n";
+    pyc += "# from an app value to a db value.  All string values are trimmed since\n";
+    pyc += "# preceding or trailing space makes matching horrible and buggy.  The UI can\n";
+    pyc += "# add a trailing newline for long text if it wants.\n";
     pyc += "def app2db_fieldval(entity, field, inst):\n";
     pyc += "    if entity:\n";
     pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
@@ -258,7 +260,9 @@ function helperFunctions () {
     pyc += "        val = inst[field]\n";
     pyc += "    # convert value based on type and whether the values are unique\n";
     pyc += "    if pt in [\"email\", \"string\"]:\n";
-    pyc += "        if not val or not trim_string_val(val, unique):\n";
+    pyc += "        val = val or \"\"\n";
+    pyc += "        val = trim_string_val(val, unique)  # trim all strings. See comment.\n";
+    pyc += "        if not val:\n";
     pyc += "            val = None\n";
     pyc += "    elif pt == \"image\":\n";
     pyc += "        if not val:  # Empty data gets set to null\n";
@@ -329,6 +333,9 @@ function helperFunctions () {
     pyc += "def verify_timestamp_fields(entity, dsId, fields, vck):\n";
     pyc += "    if vck == \"override\" and \"created\" in fields and \"modified\" in fields:\n";
     pyc += "        return  # skip query and use specified values\n";
+    pyc += "    if not vck or not vck.strip():\n";
+    pyc += "        raise ValueError(\"Version check required to update \" + entity +\n";
+    pyc += "                         \" \" + str(dsId))\n";
     pyc += "    existing = cfbk(entity, \"dsId\", dsId)\n";
     pyc += "    if not existing:\n";
     pyc += "        raise ValueError(\"Existing \" + entity + \" \" + str(dsId) + \" not found.\")\n";
@@ -337,8 +344,10 @@ function helperFunctions () {
     pyc += "                         \" \" + str(dsId) + \".\")\n";
     pyc += "    if \"created\" not in fields or not fields[\"created\"] or vck != \"override\":\n";
     pyc += "        fields[\"created\"] = existing[\"created\"]\n";
+    pyc += "    ver = 1\n";
     pyc += "    mods = existing[\"modified\"].split(\";\")\n";
-    pyc += "    ver = int(mods[1]) + 1\n";
+    pyc += "    if len(mods) > 1:\n";
+    pyc += "        ver = int(mods[1]) + 1\n";
     pyc += "    if \"modified\" not in fields or not fields[\"modified\"] or vck != \"override\":\n";
     pyc += "        fields[\"modified\"] = nowISO() + \";\" + str(ver)\n";
     return pyc;
@@ -381,8 +390,36 @@ function app2dbConversions () {
     var pyc = "";
     var definitions = ddefs.dataDefinitions();
     definitions.forEach(function (edef) {
-        pyc += writeApp2DB(edef) + "\n\n" + writeDB2App(edef) + "\n\n"; });
+        pyc += writeApp2DB(edef) + "\n\n" + writeDB2App(edef); });
     return pyc;
+}
+
+
+function dblogMessager () {
+    var pyc = "";
+    pyc += "def dblogmsg(op, entity, res):\n";
+    lfs = ""
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        if(edef.logflds) {
+            if(lfs) {
+                lfs += ","; }
+            lfs += "\n        \"" + edef.entity + "\": [";
+            edef.logflds.forEach(function (logfld, idx) {
+                if(idx) {
+                    lfs += ", "; }
+                lfs += "\"" + logfld + "\""; });
+            lfs += "]"; } });
+    pyc += "    log_summary_flds = {" + lfs + "}\n";
+    pyc += "    if op != \"QRY\":\n";
+    pyc += "        res = [res]\n";
+    pyc += "    for obj in res:\n";
+    pyc += "        msg = \"db\" + op + \" \" + entity + \" \" + obj[\"dsId\"]\n";
+    pyc += "        if entity in log_summary_flds:\n";
+    pyc += "            for field in log_summary_flds[entity]:\n";
+    pyc += "                msg += \" \" + obj[field]\n";
+    pyc += "        logging.info(msg)\n";
+    return pyc
 }
 
 
@@ -408,7 +445,11 @@ function writeInsertFunction (edef) {
             "entdefs[\"" + edef.entity + "\"][\"" + fd.f + "\"][\"dv\"])"; });
     pyc += "}\n";
     pyc += "    cursor.execute(stmt, data)\n";
+    pyc += "    fields[\"dsId\"] = cursor.lastrowid\n";
     pyc += "    cnx.commit()\n";
+    pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
+    pyc += "    dblogmsg(\"ADD\", \"" + edef.entity + "\", fields)\n";
+    pyc += "    return fields\n";
     return pyc;
 }
 
@@ -434,6 +475,9 @@ function writeUpdateFunction (edef) {
     pyc += "    if cursor.rowcount < 1 and vck != \"override\":\n";
     pyc += "        raise ValueError(\"" + edef.entity + " update received outdated data.\")\n";
     pyc += "    cnx.commit()\n";
+    pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
+    pyc += "    dblogmsg(\"UPD\", \"" + edef.entity + "\", fields)\n";
+    pyc += "    return fields\n";
     return pyc;
 }
 
@@ -480,7 +524,7 @@ function entityWriteFunction () {
 function writeQueryFunction (edef) {
     var pyc = "";
     pyc += "def query_" + edef.entity + "(cnx, cursor, where):\n";
-    pyc += "    query = \"SELECT dsId, \"\n";
+    pyc += "    query = \"SELECT dsId, created, modified, \"\n";
     var fcsv = "";
     edef.fields.forEach(function (fd) {
         if(fcsv) {
@@ -490,15 +534,16 @@ function writeQueryFunction (edef) {
     pyc += "    query += \" FROM " + edef.entity + " \" + where\n";
     pyc += "    cursor.execute(query)\n";
     pyc += "    res = []\n";
-    pyc += "    for (dsId, " + fcsv + ") in cursor:\n";
+    pyc += "    for (dsId, created, modified, " + fcsv + ") in cursor:\n";
     var oes = "";
     edef.fields.forEach(function (fd) {
         if(oes) {
             oes += ", "; }
         oes += "\"" + fd.f + "\": " + fd.f; });
-    pyc += "        inst = {\"dsId\": dsId, " + oes + "}\n";
+    pyc += "        inst = {\"dsId\": dsId, \"created\": created, \"modified\": modified, " + oes + "}\n";
     pyc += "        inst = db2app_" + edef.entity + "(inst)\n";
     pyc += "        res.append(inst)\n";
+    pyc += "    dblogmsg(\"QRY\", \"" + edef.entity + "\", res)\n";
     pyc += "    return res\n";
     return pyc;
 }
@@ -565,6 +610,7 @@ function createPythonDBAcc () {
     pyc += entityKeyFields() + "\n\n";
     pyc += helperFunctions() + "\n\n";
     pyc += app2dbConversions() + "\n\n";
+    pyc += dblogMessager() + "\n\n";
     pyc += entityWriteFunction() + "\n\n";
     pyc += entityQueryFunction() + "\n\n";
     pyc += "\n";
