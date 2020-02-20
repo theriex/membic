@@ -41,7 +41,7 @@ entdefs = {
         "hashtag": {"pt": "string", "un": True, "dv": ""},
         "profpic": {"pt": "image", "un": False, "dv": None},
         "cliset": {"pt": "string", "un": False, "dv": ""},
-        "coops": {"pt": "string", "un": False, "dv": ""},
+        "themes": {"pt": "string", "un": False, "dv": ""},
         "lastwrite": {"pt": "string", "un": False, "dv": ""},
         "preb": {"pt": "string", "un": False, "dv": ""}
     },
@@ -61,11 +61,24 @@ entdefs = {
         "members": {"pt": "string", "un": False, "dv": ""},
         "seeking": {"pt": "string", "un": False, "dv": ""},
         "rejects": {"pt": "string", "un": False, "dv": ""},
-        "adminlog": {"pt": "string", "un": False, "dv": ""},
         "people": {"pt": "string", "un": False, "dv": ""},
         "cliset": {"pt": "string", "un": False, "dv": ""},
         "keywords": {"pt": "string", "un": False, "dv": ""},
         "preb": {"pt": "string", "un": False, "dv": ""}
+    },
+    "AdminLog": {  # Administrative actions log.
+        "dsId": {"pt": "dbid", "un": True, "dv": 0},
+        "created": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "letype": {"pt": "string", "un": False, "dv": ""},
+        "leid": {"pt": "dbid", "un": False, "dv": 0},
+        "adminid": {"pt": "dbid", "un": False, "dv": 0},
+        "adminname": {"pt": "string", "un": False, "dv": ""},
+        "action": {"pt": "string", "un": False, "dv": ""},
+        "targent": {"pt": "string", "un": False, "dv": ""},
+        "targid": {"pt": "dbid", "un": False, "dv": 0},
+        "targname": {"pt": "string", "un": False, "dv": ""},
+        "reason": {"pt": "string", "un": False, "dv": ""}
     },
     "Membic": {  # A URL with a reason why it's memorable.
         "dsId": {"pt": "dbid", "un": True, "dv": 0},
@@ -140,6 +153,7 @@ entdefs = {
 entkeys = {
     "MUser": ["importid", "email", "altinmail", "hashtag"],
     "Theme": ["importid", "name_c", "hashtag"],
+    "AdminLog": [],
     "Membic": ["importid"],
     "Overflow": [],
     "MailNotice": ["name"],
@@ -358,7 +372,7 @@ def app2db_MUser(inst):
     cnv["hashtag"] = app2db_fieldval("MUser", "hashtag", inst)
     cnv["profpic"] = app2db_fieldval("MUser", "profpic", inst)
     cnv["cliset"] = app2db_fieldval("MUser", "cliset", inst)
-    cnv["coops"] = app2db_fieldval("MUser", "coops", inst)
+    cnv["themes"] = app2db_fieldval("MUser", "themes", inst)
     cnv["lastwrite"] = app2db_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = app2db_fieldval("MUser", "preb", inst)
     return cnv
@@ -383,7 +397,7 @@ def db2app_MUser(inst):
     cnv["hashtag"] = db2app_fieldval("MUser", "hashtag", inst)
     cnv["profpic"] = db2app_fieldval("MUser", "profpic", inst)
     cnv["cliset"] = db2app_fieldval("MUser", "cliset", inst)
-    cnv["coops"] = db2app_fieldval("MUser", "coops", inst)
+    cnv["themes"] = db2app_fieldval("MUser", "themes", inst)
     cnv["lastwrite"] = db2app_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = db2app_fieldval("MUser", "preb", inst)
     return cnv
@@ -407,7 +421,6 @@ def app2db_Theme(inst):
     cnv["members"] = app2db_fieldval("Theme", "members", inst)
     cnv["seeking"] = app2db_fieldval("Theme", "seeking", inst)
     cnv["rejects"] = app2db_fieldval("Theme", "rejects", inst)
-    cnv["adminlog"] = app2db_fieldval("Theme", "adminlog", inst)
     cnv["people"] = app2db_fieldval("Theme", "people", inst)
     cnv["cliset"] = app2db_fieldval("Theme", "cliset", inst)
     cnv["keywords"] = app2db_fieldval("Theme", "keywords", inst)
@@ -433,11 +446,46 @@ def db2app_Theme(inst):
     cnv["members"] = db2app_fieldval("Theme", "members", inst)
     cnv["seeking"] = db2app_fieldval("Theme", "seeking", inst)
     cnv["rejects"] = db2app_fieldval("Theme", "rejects", inst)
-    cnv["adminlog"] = db2app_fieldval("Theme", "adminlog", inst)
     cnv["people"] = db2app_fieldval("Theme", "people", inst)
     cnv["cliset"] = db2app_fieldval("Theme", "cliset", inst)
     cnv["keywords"] = db2app_fieldval("Theme", "keywords", inst)
     cnv["preb"] = db2app_fieldval("Theme", "preb", inst)
+    return cnv
+# Convert the given AdminLog inst dict from app values to db values.
+def app2db_AdminLog(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["created"] = app2db_fieldval(None, "created", inst)
+    cnv["modified"] = app2db_fieldval(None, "modified", inst)
+    cnv["letype"] = app2db_fieldval("AdminLog", "letype", inst)
+    cnv["leid"] = app2db_fieldval("AdminLog", "leid", inst)
+    cnv["adminid"] = app2db_fieldval("AdminLog", "adminid", inst)
+    cnv["adminname"] = app2db_fieldval("AdminLog", "adminname", inst)
+    cnv["action"] = app2db_fieldval("AdminLog", "action", inst)
+    cnv["targent"] = app2db_fieldval("AdminLog", "targent", inst)
+    cnv["targid"] = app2db_fieldval("AdminLog", "targid", inst)
+    cnv["targname"] = app2db_fieldval("AdminLog", "targname", inst)
+    cnv["reason"] = app2db_fieldval("AdminLog", "reason", inst)
+    return cnv
+
+
+# Convert the given AdminLog inst dict from db values to app values.
+def db2app_AdminLog(inst):
+    cnv = {}
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["created"] = db2app_fieldval(None, "created", inst)
+    cnv["modified"] = db2app_fieldval(None, "modified", inst)
+    cnv["letype"] = db2app_fieldval("AdminLog", "letype", inst)
+    cnv["leid"] = db2app_fieldval("AdminLog", "leid", inst)
+    cnv["adminid"] = db2app_fieldval("AdminLog", "adminid", inst)
+    cnv["adminname"] = db2app_fieldval("AdminLog", "adminname", inst)
+    cnv["action"] = db2app_fieldval("AdminLog", "action", inst)
+    cnv["targent"] = db2app_fieldval("AdminLog", "targent", inst)
+    cnv["targid"] = db2app_fieldval("AdminLog", "targid", inst)
+    cnv["targname"] = db2app_fieldval("AdminLog", "targname", inst)
+    cnv["reason"] = db2app_fieldval("AdminLog", "reason", inst)
     return cnv
 # Convert the given Membic inst dict from app values to db values.
 def app2db_Membic(inst):
@@ -635,8 +683,8 @@ def dblogmsg(op, entity, res):
 def insert_new_MUser(cnx, cursor, fields):
     fields = app2db_MUser(fields)
     stmt = (
-        "INSERT INTO MUser (created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb) "
-        "VALUES (%(created)s, %(modified)s, %(importid)s, %(email)s, %(phash)s, %(status)s, %(mailbounce)s, %(actsends)s, %(actcode)s, %(altinmail)s, %(name)s, %(aboutme)s, %(hashtag)s, %(profpic)s, %(cliset)s, %(coops)s, %(lastwrite)s, %(preb)s)")
+        "INSERT INTO MUser (created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb) "
+        "VALUES (%(created)s, %(modified)s, %(importid)s, %(email)s, %(phash)s, %(status)s, %(mailbounce)s, %(actsends)s, %(actcode)s, %(altinmail)s, %(name)s, %(aboutme)s, %(hashtag)s, %(profpic)s, %(cliset)s, %(themes)s, %(lastwrite)s, %(preb)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
@@ -653,7 +701,7 @@ def insert_new_MUser(cnx, cursor, fields):
         'hashtag': fields.get("hashtag", entdefs["MUser"]["hashtag"]["dv"]),
         'profpic': fields.get("profpic", entdefs["MUser"]["profpic"]["dv"]),
         'cliset': fields.get("cliset", entdefs["MUser"]["cliset"]["dv"]),
-        'coops': fields.get("coops", entdefs["MUser"]["coops"]["dv"]),
+        'themes': fields.get("themes", entdefs["MUser"]["themes"]["dv"]),
         'lastwrite': fields.get("lastwrite", entdefs["MUser"]["lastwrite"]["dv"]),
         'preb': fields.get("preb", entdefs["MUser"]["preb"]["dv"])}
     cursor.execute(stmt, data)
@@ -692,8 +740,8 @@ def update_existing_MUser(cnx, cursor, fields, vck):
 def insert_new_Theme(cnx, cursor, fields):
     fields = app2db_Theme(fields)
     stmt = (
-        "INSERT INTO Theme (created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) "
-        "VALUES (%(created)s, %(modified)s, %(importid)s, %(name)s, %(name_c)s, %(lastwrite)s, %(hashtag)s, %(description)s, %(picture)s, %(founders)s, %(moderators)s, %(members)s, %(seeking)s, %(rejects)s, %(adminlog)s, %(people)s, %(cliset)s, %(keywords)s, %(preb)s)")
+        "INSERT INTO Theme (created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb) "
+        "VALUES (%(created)s, %(modified)s, %(importid)s, %(name)s, %(name_c)s, %(lastwrite)s, %(hashtag)s, %(description)s, %(picture)s, %(founders)s, %(moderators)s, %(members)s, %(seeking)s, %(rejects)s, %(people)s, %(cliset)s, %(keywords)s, %(preb)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
@@ -709,7 +757,6 @@ def insert_new_Theme(cnx, cursor, fields):
         'members': fields.get("members", entdefs["Theme"]["members"]["dv"]),
         'seeking': fields.get("seeking", entdefs["Theme"]["seeking"]["dv"]),
         'rejects': fields.get("rejects", entdefs["Theme"]["rejects"]["dv"]),
-        'adminlog': fields.get("adminlog", entdefs["Theme"]["adminlog"]["dv"]),
         'people': fields.get("people", entdefs["Theme"]["people"]["dv"]),
         'cliset': fields.get("cliset", entdefs["Theme"]["cliset"]["dv"]),
         'keywords': fields.get("keywords", entdefs["Theme"]["keywords"]["dv"]),
@@ -743,6 +790,56 @@ def update_existing_Theme(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_Theme(fields)
     dblogmsg("UPD", "Theme", fields)
+    return fields
+
+
+# Write a new AdminLog row, using the given field values or defaults.
+def insert_new_AdminLog(cnx, cursor, fields):
+    fields = app2db_AdminLog(fields)
+    stmt = (
+        "INSERT INTO AdminLog (created, modified, letype, leid, adminid, adminname, action, targent, targid, targname, reason) "
+        "VALUES (%(created)s, %(modified)s, %(letype)s, %(leid)s, %(adminid)s, %(adminname)s, %(action)s, %(targent)s, %(targid)s, %(targname)s, %(reason)s)")
+    data = {
+        'created': fields.get("created"),
+        'modified': fields.get("modified"),
+        'letype': fields.get("letype", entdefs["AdminLog"]["letype"]["dv"]),
+        'leid': fields.get("leid", entdefs["AdminLog"]["leid"]["dv"]),
+        'adminid': fields.get("adminid", entdefs["AdminLog"]["adminid"]["dv"]),
+        'adminname': fields.get("adminname", entdefs["AdminLog"]["adminname"]["dv"]),
+        'action': fields.get("action", entdefs["AdminLog"]["action"]["dv"]),
+        'targent': fields.get("targent", entdefs["AdminLog"]["targent"]["dv"]),
+        'targid': fields.get("targid", entdefs["AdminLog"]["targid"]["dv"]),
+        'targname': fields.get("targname", entdefs["AdminLog"]["targname"]["dv"]),
+        'reason': fields.get("reason", entdefs["AdminLog"]["reason"]["dv"])}
+    cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
+    cnx.commit()
+    fields = db2app_AdminLog(fields)
+    dblogmsg("ADD", "AdminLog", fields)
+    return fields
+
+
+# Update the specified AdminLog row with the given field values.
+def update_existing_AdminLog(cnx, cursor, fields, vck):
+    fields = app2db_AdminLog(fields)
+    dsId = int(fields["dsId"])  # Verify int value
+    stmt = ""
+    for field in fields:  # only updating the fields passed in
+        if stmt:
+            stmt += ", "
+        stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE AdminLog SET " + stmt + " WHERE dsId=" + str(dsId)
+    if vck != "override":
+        stmt += " AND modified=\"" + vck + "\""
+    data = {}
+    for field in fields:
+        data[field] = fields[field]
+    cursor.execute(stmt, data)
+    if cursor.rowcount < 1 and vck != "override":
+        raise ValueError("AdminLog update received outdated data.")
+    cnx.commit()
+    fields = db2app_AdminLog(fields)
+    dblogmsg("UPD", "AdminLog", fields)
     return fields
 
 
@@ -1012,6 +1109,8 @@ def write_entity(entity, fields, vck="1234-12-12T00:00:00Z"):
                     return update_existing_MUser(cnx, cursor, fields, vck)
                 if entity == "Theme":
                     return update_existing_Theme(cnx, cursor, fields, vck)
+                if entity == "AdminLog":
+                    return update_existing_AdminLog(cnx, cursor, fields, vck)
                 if entity == "Membic":
                     return update_existing_Membic(cnx, cursor, fields, vck)
                 if entity == "Overflow":
@@ -1028,6 +1127,8 @@ def write_entity(entity, fields, vck="1234-12-12T00:00:00Z"):
                 return insert_new_MUser(cnx, cursor, fields)
             if entity == "Theme":
                 return insert_new_Theme(cnx, cursor, fields)
+            if entity == "AdminLog":
+                return insert_new_AdminLog(cnx, cursor, fields)
             if entity == "Membic":
                 return insert_new_Membic(cnx, cursor, fields)
             if entity == "Overflow":
@@ -1048,12 +1149,12 @@ def write_entity(entity, fields, vck="1234-12-12T00:00:00Z"):
 
 def query_MUser(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb"
+    query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb"
     query += " FROM MUser " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, coops, lastwrite, preb) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "coops": coops, "lastwrite": lastwrite, "preb": preb}
+    for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "themes": themes, "lastwrite": lastwrite, "preb": preb}
         inst = db2app_MUser(inst)
         res.append(inst)
     dblogmsg("QRY", "MUser", res)
@@ -1062,15 +1163,29 @@ def query_MUser(cnx, cursor, where):
 
 def query_Theme(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb"
+    query += "importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb"
     query += " FROM Theme " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, adminlog, people, cliset, keywords, preb) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "adminlog": adminlog, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
+    for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
         inst = db2app_Theme(inst)
         res.append(inst)
     dblogmsg("QRY", "Theme", res)
+    return res
+
+
+def query_AdminLog(cnx, cursor, where):
+    query = "SELECT dsId, created, modified, "
+    query += "letype, leid, adminid, adminname, action, targent, targid, targname, reason"
+    query += " FROM AdminLog " + where
+    cursor.execute(query)
+    res = []
+    for (dsId, created, modified, letype, leid, adminid, adminname, action, targent, targid, targname, reason) in cursor:
+        inst = {"dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "targent": targent, "targid": targid, "targname": targname, "reason": reason}
+        inst = db2app_AdminLog(inst)
+        res.append(inst)
+    dblogmsg("QRY", "AdminLog", res)
     return res
 
 
@@ -1159,6 +1274,8 @@ def query_entity(entity, where):
                 return query_MUser(cnx, cursor, where)
             if entity == "Theme":
                 return query_Theme(cnx, cursor, where)
+            if entity == "AdminLog":
+                return query_AdminLog(cnx, cursor, where)
             if entity == "Membic":
                 return query_Membic(cnx, cursor, where)
             if entity == "Overflow":

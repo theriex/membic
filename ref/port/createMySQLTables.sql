@@ -15,7 +15,7 @@ CREATE TABLE MUser (  -- Membic User account.
   hashtag VARCHAR(256) UNIQUE,
   profpic LONGBLOB,
   cliset LONGTEXT,
-  coops LONGTEXT,
+  themes LONGTEXT,
   lastwrite VARCHAR(256),
   preb LONGTEXT,
   PRIMARY KEY (dsId)
@@ -38,7 +38,6 @@ CREATE TABLE Theme (  -- A cooperative theme.
   members LONGTEXT,
   seeking LONGTEXT,
   rejects LONGTEXT,
-  adminlog LONGTEXT,
   people LONGTEXT,
   cliset LONGTEXT,
   keywords LONGTEXT,
@@ -46,6 +45,23 @@ CREATE TABLE Theme (  -- A cooperative theme.
   PRIMARY KEY (dsId)
 );
 ALTER TABLE Theme AUTO_INCREMENT = 2020;
+
+CREATE TABLE AdminLog (  -- Administrative actions log.
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
+  letype VARCHAR(256) NOT NULL,
+  leid BIGINT NOT NULL,
+  adminid BIGINT NOT NULL,
+  adminname VARCHAR(256),
+  action VARCHAR(256) NOT NULL,
+  targent VARCHAR(256),
+  targid BIGINT,
+  targname VARCHAR(256),
+  reason VARCHAR(256),
+  PRIMARY KEY (dsId)
+);
+ALTER TABLE AdminLog AUTO_INCREMENT = 2020;
 
 CREATE TABLE Membic (  -- A URL with a reason why it's memorable.
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,

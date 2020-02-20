@@ -1,12 +1,15 @@
 import logging
 logging.basicConfig(level=logging.DEBUG)
-import dbacc
 import os
 import json
 import base64
+# These imports require ln -s ../../membicsys/py py
+import py.dbacc as dbacc
+import py.util as util
 
 stats = {"MUser": 0, "MUser_pics": 0, "Theme": 0, "Theme_pics": 0,
          "Membic": 0, "Membic_pics": 0, "misspics":[]}
+idmaps = {"MUser": {}, "Theme": {}}
 
 def load_pic(datdir, oid):
     fspec = os.path.join(datdir, "pics", oid + ".png")
@@ -36,8 +39,10 @@ def import_basic(datdir, jd, entity, picfield, cfs):
     if picfield in jd and jd[picfield]:
         impd[picfield] = load_pic(datdir, jd[picfield])
         stats[entity + "_pics"] += 1
-    dbacc.write_entity(entity, impd, vck="override")
+    upd = dbacc.write_entity(entity, impd, vck="override")
+    idmaps[entity][upd["importid"]] = upd["dsId"]
     stats[entity] += 1
+    return upd
 
 
 def import_MUser(datdir, jd):
@@ -61,12 +66,27 @@ def convert_modhist_modified(jd):
         jd["created"] = jd["modified"] + ";1"
 
 
+def remap_idcsv(csv):
+    remapped = []
+    for impid in util.csv_to_list(csv):
+        if impid in idmaps["MUser"]:
+            remapped.append(idmaps["MUser"][impid])
+    return ",".join(remapped)
+
+
 def import_Theme(datdir, jd):
     convert_modhist_modified(jd)
-    import_basic(datdir, jd, "Theme", "picture", [
+    # not importing "people" since rebuilt below
+    upd = import_basic(datdir, jd, "Theme", "picture", [
         "name", "name_c", "created", "modified", "lastwrite", "hashtag",
         "description", "founders", "moderators", "members", "seeking",
-        "rejects", "adminlog", "people", "cliset", "keywords"])
+        "rejects", "cliset", "keywords"])
+    memcsvs = ["founders", "moderators", "members", "seeking", "rejects"]
+    for fld in memcsvs:
+        upd[fld] = remap_idcsv(upd[fld])
+        userids = util.csv_to_list(upd[fld])
+        for userid in userids:
+            upd = util.verify_theme_muser_info(upd, userid)
 
 
 def import_Membic(datdir, jd):
@@ -129,12 +149,8 @@ def data_import(datdir, entities):
                     import_Membic(datpath, jd)
                 else:
                     raise ValueError("Unknown entity type: " + entity)
-    # Convert references (walk memoized reference ids)
-    # Rebuild preb (separate module also used by main app)
     logging.info(str(stats))
 
 
 data_import("/general/dev/membicport", ["MUser", "Theme", "Membic"])
-
-
 

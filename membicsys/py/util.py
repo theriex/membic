@@ -54,6 +54,12 @@ def val_in_csv(val, csv):
     return False
 
 
+def csv_to_list(csv):
+    if not csv or not csv.strip():  # trim string val just in case
+        return []
+    return csv.split(",")
+
+
 def get_connection_service(svcname):
     cs = dbacc.cfbk("ConnectionService", "name", svcname)
     if not cs:
@@ -161,6 +167,44 @@ def rebuild_prebuilt(context):
     res = json.dumps(context["pbms"])
     logging.info("rebuild_prebuilt res: " + res[0:400])
     return context["pbms"]
+
+
+# lev -1 means following by email.  That's the default for a former theme
+# member, and a preferred option for first associating with a theme.
+# Preferable to update both the user and the theme as part of a single
+# transaction, but not worth the overhead given likelihood and severity.
+# This preserves any existing notices, but does not write or track them.
+def verify_theme_muser_info(theme, userid, lev=-1):
+    if val_in_csv(userid, theme["members"]):
+        lev = 1
+    elif val_in_csv(userid, theme["moderators"]):
+        lev = 2
+    elif val_in_csv(userid, theme["founders"]):
+        lev = 3
+    # Update the user
+    muser = dbacc.cfbk("MUser", "dsId", userid)
+    muser["themes"] = muser["themes"] or "{}"
+    mti = json.loads(muser["themes"])
+    currti = {}
+    if theme["dsId"] in mti:
+        currti = mti[theme["dsId"]]
+    currti["lev"] = lev
+    currti["obtype"] = "Theme"
+    currti["name"] = theme["name"]
+    currti["hashtag"] = theme["hashtag"]
+    currti["keywords"] = theme["keywords"]
+    if theme["picture"]:
+        currti["picture"] = theme["dsId"]
+    mti[theme["dsId"]] = currti
+    muser["themes"] = json.dumps(mti)
+    dbacc.write_entity("MUser", muser, vck=muser["modified"])
+    # Update the theme
+    theme["people"] = theme["people"] or "{}"
+    people = json.loads(theme["people"])
+    people[userid] = muser["name"]
+    theme["people"] = json.dumps(people)
+    theme = dbacc.write_entity("Theme", theme, vck=theme["modified"])
+    return theme
 
 
 def send_mail(emaddr, subj, body):

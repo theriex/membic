@@ -51,7 +51,7 @@ module.exports = (function () {
         {f:"hashtag", d:"unique string", c:"personal theme direct access"},
         {f:"profpic", d:"image", c:"used for theme, and coop posts"},
         {f:"cliset", d:"json", c:"dict of client settings, see note 1"},
-        {f:"coops", d:"json", c:"coopid map, see note"},
+        {f:"themes", d:"json", c:"theme reference info, see note"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
       logflds: ["email", "name"]},
@@ -63,18 +63,16 @@ module.exports = (function () {
         //                  movie:"keyword4, keyword2...",
         //                  ...} }
         //
-        // coops: {"coopid":info, "coopid2":info2, ...}
-        //  info: {lev:N, obtype:str, name:str, hashtag:str, description:str, 
-        //         picture:idstr, keywords:CSV, inactive:str, 
-        //         notices:[notice1, notice2..]}
+        // themes: {"themeid":info, "themeid2":info2, ...}
+        //  info: {lev:N, obtype:str, name:str, hashtag:str, description:str,
+        //         picture:idstr, keywords:CSV, notices:[notice1, notice2..]}
         //    lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
         //         Any falsy value for lev means no association.
-        //    obtype: "MUser" or "Coop"
-        //    inactive: only included if the Coop is archived
+        //    obtype: "MUser" or "Theme". (you can follow an MUser)
         //    notice: {type:"application", lev:int, uid, uname, created:ISO,
         //             status:"pending"|"rejected", reason}
-        // The coops data is cached supplemental data.  It is not authoritative.
-        // See python process_membership, profile.js verifyMembership
+        // The themes data is for ease of reference, it is not authoritative
+        // and may be out of date.  See util.verify_theme_muser_info
 
     {entity:"Theme", descr:"A cooperative theme.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
@@ -89,13 +87,22 @@ module.exports = (function () {
         {f:"members", d:"idcsv", c:"standard members"},
         {f:"seeking", d:"idcsv", c:"member applications (member ids)"},
         {f:"rejects", d:"idcsv", c:"rejected applications (member ids)"},
-        {f:"adminlog", d:"json", c:"latest first array of theme admin actions"},
         {f:"people", d:"json", c:"map of ids to user names for fast display"},
         {f:"cliset", d:"json", c:"client settings (like MUser)"},
         {f:"keywords", d:"gencsv", c:"custom theme keywords"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
       logflds: ["name"]},
 
+    {entity:"AdminLog", descr:"Administrative actions log.", fields:[
+        {f:"letype", d:"req string", c:"log entry type, e.g. 'Theme'"},
+        {f:"leid", d:"req dbid", c:"e.g. the dsId of the Theme"},
+        {f:"adminid", d:"req dbid", c:"dsId of the MUser who took action"},
+        {f:"adminname", d:"string", c:"The name of the admin for readability"},
+        {f:"action", d:"req string", c:"'Accepted Member', 'Removed Membic'"},
+        {f:"targent", d:"string", c:"Affected entity type e.g. MUser, Membic"},
+        {f:"targid", d:"dbid", c:"dsId of the affected entity"},
+        {f:"targname", d:"string", c:"name of user or url of membic"},
+        {f:"reason", d:"string", c:"text of why membic removed or whatever"}]},
 
     {entity:"Membic", descr:"A URL with a reason why it's memorable.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
