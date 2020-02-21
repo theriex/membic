@@ -9,7 +9,11 @@ import py.util as util
 
 stats = {"MUser": 0, "MUser_pics": 0, "Theme": 0, "Theme_pics": 0,
          "Membic": 0, "Membic_pics": 0, "misspics":[]}
-idmaps = {"MUser": {}, "Theme": {}}
+# A few straggling unconverted penids found in theme membics.  Convert now
+idmaps = {"MUser": {}, "Theme": {}, "Membic": {},
+          "altkey": {"10017": "6642146358591488"}}
+mcv = {"orphms":[], "remapped":0}
+
 
 def load_pic(datdir, oid):
     fspec = os.path.join(datdir, "pics", oid + ".png")
@@ -33,7 +37,7 @@ def import_basic(datdir, jd, entity, picfield, cfs):
         impd["dsId"] = existing["dsId"]
         msg = "Updating" + msg[8:]
         msg +=" --> " + str(existing["dsId"])
-    logging.info(msg)
+    # logging.info(msg)
     for key in cfs:
         impd[key] = jd[key]
     if picfield in jd and jd[picfield]:
@@ -89,17 +93,7 @@ def import_Theme(datdir, jd):
             upd = util.verify_theme_muser_info(upd, userid)
 
 
-def import_Membic(datdir, jd):
-    convert_modhist_modified(jd)
-    impd = {}
-    impd["importid"] = int(jd["instid"])
-    msg = "  Adding Membic " + str(impd["importid"])
-    existing = dbacc.cfbk("Membic", "importid", impd["importid"])
-    if existing:
-        impd["dsId"] = existing["dsId"]
-        msg = "Updating" + msg[8:]
-        msg +=" --> " + str(existing["dsId"])
-    logging.info(msg)
+def copy_membic_fields(impd, jd, datdir):
     cfs = ["url", "rurl", "revtype", "penid", "ctmid", "rating", "srcrev",
            "cankey", "modified", "created", "text", "keywords", "svcdata",
            "imguri", "dispafter", "penname"]
@@ -111,6 +105,9 @@ def import_Membic(datdir, jd):
         impd["revpic"] = load_pic(datdir, jd["revpic"])
         stats["Membic_pics"] += 1
     # icwhen and icdata are initially empty.
+
+
+def make_membic_details(impd, jd):
     dets = {}
     detfs = ["name", "title", "artist", "author", "publisher", "album", 
              "starring", "address", "year"]
@@ -118,8 +115,78 @@ def import_Membic(datdir, jd):
         if key in jd:
             dets[key] = jd[key]
     impd["details"] = json.dumps(dets)
-    dbacc.write_entity("Membic", impd, vck="override")
+
+
+def remap_membic_ctmid_penid(upd):
+    ctmid = upd["ctmid"]
+    if ctmid and not ctmid.startswith("0"):
+        upd["ctmid"] = idmaps["Theme"][ctmid]  # Themes already loaded
+    penid = upd["penid"]
+    if penid in idmaps["altkey"]:
+        penid = idmaps["altkey"][penid]
+    upd["penid"] = idmaps["MUser"][penid]
+    upd = dbacc.write_entity("Membic", upd, vck=upd["modified"])
+    idmaps["Membic"][upd["importid"]] = upd["dsId"]
+    mcv["remapped"] += 1
+
+
+def membic_desc_string(membic):
+    ms = "Membic " + membic["dsId"] + " importid: " + membic["importid"] +\
+         ", penid: " + membic["penid"] + ", ctmid: " + membic["ctmid"] +\
+         ", srcrev: " + membic["srcrev"]
+    return ms
+
+
+def show_orphans():
+    msg = "Remapped " + str(mcv["remapped"]) + " membics. " +\
+          str(len(mcv["orphms"])) + " orphan Membics left over:"
+    for om in mcv["orphms"]:
+        msg += "\n    " + membic_desc_string(om)
+    # msg += "\nmapped keys:"
+    # for key in idmaps["Membic"]:
+    #     msg += " " + key + ":" + idmaps["Membic"][key]
+    logging.info(msg + "\n")
+    # input("Press enter to continue")
+
+
+# Deal with srcrev, ctmid, penid field values.
+def remap_membic_refs(upd):
+    srcrev = upd["srcrev"]
+    if srcrev and not (srcrev.startswith("0") or srcrev.startswith("-")):
+        if srcrev not in idmaps["Membic"]:  # no remap available
+            mcv["orphms"].append(upd)   # orphaned for now
+            # show_orphans()
+            return  # try remap it again later
+        upd["srcrev"] = idmaps["Membic"][srcrev]
+    remap_membic_ctmid_penid(upd)
+    orphans = []
+    for om in mcv["orphms"]:
+        if om["srcrev"] in idmaps["Membic"]:
+            om["srcrev"] = idmaps["Membic"][om["srcrev"]]
+            logging.info("Fixing orphan " + membic_desc_string(om))
+            # input(str(len(mcv["orphms"])) + " to go...")
+            remap_membic_ctmid_penid(om)
+        else:
+            orphans.append(om)  # try again next time
+    mcv["orphms"] = orphans
+
+
+def import_Membic(datdir, jd):
+    convert_modhist_modified(jd)
+    impd = {}
+    impd["importid"] = int(jd["instid"])
+    msg = "  Adding Membic " + str(impd["importid"])
+    existing = dbacc.cfbk("Membic", "importid", impd["importid"])
+    if existing:
+        impd["dsId"] = existing["dsId"]
+        msg = "Updating" + msg[8:]
+        msg +=" --> " + str(existing["dsId"])
+    # logging.info(msg)
+    copy_membic_fields(impd, jd, datdir)
+    make_membic_details(impd, jd)
+    upd = dbacc.write_entity("Membic", impd, vck="override")
     stats["Membic"] += 1
+    remap_membic_refs(upd)
 
 
 def isfile (path, f):
@@ -149,6 +216,7 @@ def data_import(datdir, entities):
                     import_Membic(datpath, jd)
                 else:
                     raise ValueError("Unknown entity type: " + entity)
+    show_orphans()
     logging.info(str(stats))
 
 

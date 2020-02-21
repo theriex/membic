@@ -156,8 +156,9 @@ def rebuild_prebuilt(context):
         where = "WHERE ctmid=" + str(context["inst"]["dsId"])
     # Order by creation date, loading oldest first
     if context["creb"]:
-        where += " AND created > " + context["creb"]
+        where += " AND created > \"" + context["creb"] + "\""
     where += " ORDER BY modified ASC LIMIT " + str(chunk)
+    logging.info("reuild_prebuilt: " + where)
     membics = dbacc.query_entity("Membic", where)
     for membic in membics:
         add_membic_to_preb(context, membic)
@@ -166,7 +167,7 @@ def rebuild_prebuilt(context):
         rebuild_prebuilt(context)
     res = json.dumps(context["pbms"])
     logging.info("rebuild_prebuilt res: " + res[0:400])
-    return context["pbms"]
+    context["pbms"] = res
 
 
 # lev -1 means following by email.  That's the default for a former theme
@@ -247,7 +248,7 @@ def mailpwr():
 def prebsweep():
     try:
         admin = administrator_auth()
-        maxPerSweep = 1
+        maxPerSweep = 20
         where = "WHERE preb IS NULL LIMIT " + str(maxPerSweep)
         msgs = []
         musers = dbacc.query_entity("MUser", where)
@@ -256,8 +257,9 @@ def prebsweep():
                 break
             logging.info("prebsweep MUser " + muser["dsId"] + " " +
                          muser["modified"])
-            muser["preb"] = rebuild_prebuilt({"entity":"MUser", "inst":muser,
-                                              "pbms":[], "creb":""})
+            context = {"entity":"MUser", "inst":muser, "pbms":[], "creb":""}
+            rebuild_prebuilt(context)
+            muser["preb"] = context["pbms"]
             dbacc.write_entity("MUser", muser, vck=muser["modified"])
             msgs.append("Rebuilt MUser.preb " + str(muser["dsId"]) + " " +
                         muser["email"])
@@ -265,12 +267,13 @@ def prebsweep():
         for theme in themes:
             if len(msgs) >= maxPerSweep:
                 break
-            theme["preb"] = rebuild_prebuilt({"entity":"Theme", "inst":theme,
-                                              "pbms":[], "creb":""})
+            context = {"entity":"Theme", "inst":theme, "pbms":[], "creb":""}
+            rebuild_prebuilt(context)
+            theme["preb"] = context["pbms"]
             dbacc.write_entity("Theme", theme, vck=theme["modified"])
             msgs.append("Rebuilt Theme.preb " + str(theme["dsId"]) + " " +
                         theme["name"])
-        if len(msgs) > maxPerSweep:
+        if len(msgs) >= maxPerSweep:
             msgs.append("SweepPrebuilt pass completed, run again")
         else:
             msgs.append("SweepPrebuilt completed")
