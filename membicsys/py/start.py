@@ -2,6 +2,9 @@
 # the app.  This page has to be generated dynamically so a static fetch will
 # have the appropriate title, description and pic references.
 
+import flask
+import py.util as util
+
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
 # not edit it directly.
@@ -165,29 +168,230 @@ tplinkhtml = """
 """
 
 
+def pub_featurable(entity, obj, vios):
+    if not obj["preb"] or len(obj["preb"]) <= 3:
+        return False  # Only featuring if have posted Membics
+    if util.in_terms_vio(entity, obj["dsId"], vios):
+        return False
+    if entity == "MUser" and not obj["profpic"]:
+        return False  # Need to be able to differentiate featured people
+    return True
+
+
 def json_for_theme_prof(obj, obtype):
-    sd = {"instid": str(obj.key().id()),
+    sd = {"instid": obj["dsId"],
           "obtype": obtype,
-          "modified": obj.modified,
-          "lastwrite": obj.lastwrite or obj.modified,
-          "hashtag": obj.hashtag}
+          "modified": obj["modified"],
+          "lastwrite": obj["lastwrite"] or obj["modified"],
+          "hashtag": obj["hashtag"]}
     if not sd["hashtag"]:
         sd["hashtag"] = sd["instid"]
     if obtype == "theme":
-        if obj.picture:
-            sd["pic"] = str(obj.key().id())
-        sd["name"] = obj.name
-        sd["description"] = obj.description
-        sd["founders"] = obj.founders
-        sd["moderators"] = obj.moderators
-        sd["members"] = obj.members
-        sd["seeking"] = obj.seeking
-        sd["rejects"] = obj.rejects
+        if obj["picture"]:
+            sd["pic"] = obj["dsId"]
+        sd["name"] = obj["name"]
+        sd["description"] = obj["description"]
+        sd["founders"] = obj["founders"]
+        sd["moderators"] = obj["moderators"]
+        sd["members"] = obj["members"]
+        sd["seeking"] = obj["seeking"]
+        sd["rejects"] = obj["rejects"]
     elif obtype == "profile":
-        if obj.profpic:
-            sd["pic"] = str(obj.key().id())
-        sd["name"] = obj.name or sd["hashtag"]
-        sd["description"] = obj.aboutme
+        if obj["profpic"]:
+            sd["pic"] = obj["dsId"]
+        sd["name"] = obj["name"] or sd["hashtag"]
+        sd["description"] = obj["aboutme"]
     return json.dumps(sd)
 
-# TODO: remaining conversion requires .preb populated...
+
+def fetch_recent_themes_and_profiles():
+    jtxt = ""
+    vios = util.get_connection_service("termsvio")["data"]
+    where = "ORDER BY modified DESC LIMIT 50"
+    themes = dbacc.query_entity("Theme", where)
+    for theme in themes:
+        if not pub_featurable("Theme", theme, vios):
+            continue
+        if jtxt:
+            jtxt += ","
+        jtxt += json_for_theme_prof(theme, "theme")
+    profcount = 0
+    where = "ORDER BY lastwrite DESC LIMIT 200"
+    musers = dbacc.query_entity("MUser", where)
+    for muser in musers:
+        if not pub_featurable("MUser", muser, vios):
+            continue
+        profcount += 1
+        if jtxt:
+            jtxt += ","
+        jtxt += json_for_theme_prof(muser, "profile")
+        if profcount >= 50:
+            break
+    return "[" + jtxt + "]"
+
+    
+# cache fetch most recently modified 50 themes and 50 profiles.
+def get_recent_themes_and_profiles():
+    # Previously cached under "activecontent"
+    return fetch_recent_themes_and_profiles()
+
+
+# Return content and pre-fetch object for recently active themes and profiles
+def recent_active_content():
+    content = ""
+    jtps = get_recent_themes_and_profiles()
+    ods = json.loads(jtps)
+    for od in ods:
+        # logging.info(str(od))
+        # logging.info(od["obtype"] + od["instid"] + " " + od["hashtag"])
+        th = tplinkhtml
+        th = th.replace("$TPID", od["instid"])
+        th = th.replace("$HASHTAG", od["hashtag"])
+        th = th.replace("$NAME", od["name"])
+        th = th.replace("$DESCRIP", od["description"])
+        content += th
+    pfoj = {"obtype":"activetps", "instid":"411", "_id":"411", 
+            "modified":nowISO(), "jtps": ods}
+    pfoj = json.dumps(pfoj)
+    return content, pfoj
+
+
+def membics_from_prebuilt(obj):
+    html = ""
+    mems = obj.preb or "[]"
+    mems = json.loads(mems)
+    objidstr = obj["dsId"]
+    for membic in mems:
+        rh = revhtml
+        rh = rh.replace("$RID", membic["_id"])
+        rh = rh.replace("$RTYPE", membic["revtype"])
+        rh = rh.replace("$RURL", membic["url"] or "")
+        rh = rh.replace("$RTIT", membic["title"] or membic["name"])
+        rh = rh.replace("$RAT", str(membic["rating"]) or "75")
+        rh = rh.replace("$DESCR", membic["text"] or "")
+        html += rh
+    return html
+
+
+def content_and_prefetch(obj):
+    if obj:
+        content = membics_from_prebuilt(obj)
+        pfoj = util.safe_JSON(obj)
+    else:
+        content, pfoj = recent_active_content()
+    content += interimcont
+    return content, pfoj
+
+
+def sitepic_for_object(obj):
+    img = "/img/membiclogo.png?" + cachev
+    if obj:
+        if obj["dsType"] == "Theme" and obj.picture:
+            img = "/ctmpic?ctmid=" + obj["dsId"] + "&" + cachev
+        elif obj["dsType"] == "MUser" and obj.profpic:
+            img = "/profpic?profileid=" + obj["dsId"] + "&" + cachev
+    return img
+
+
+def sitetitle_for_object(obj):
+    title = "Membic"
+    if obj:
+        if obj["dsType"] == "Theme":
+            title = obj.name or "Membic Theme"
+            title = title.replace("\"", "'")
+        elif obj["dsType"] == "MUser":
+            title = obj.name or "Membic Profile"
+            title = title.replace("\"", "'")
+    return title
+
+
+def sitedescr_for_object(obj):
+    descr = "Membic blogs your memorable links."
+    if obj:
+        if obj["dsType"] == "Theme":
+            descr = obj["description"] or "Another Membic Theme"
+            descr = descr.replace("\"", "'")
+        elif obj["dsType"] == "MUser":
+            descr = obj.aboutme or "My Membic Link Blog"
+            descr = descr.replace("\"", "'")
+    return descr
+
+
+def embed_spec_objson(obj):
+    embed = dbacc.reqarg("site", "string")
+    if embed and obj:
+        embed = "{ctmid:\"" + str(obj.key().id()) +\
+                "\", site:\"" + embed + "\"}"
+    else:
+        embed = "null"
+    return embed
+
+
+def obidstr_or_empty(obj):
+    idstr = ""
+    if obj:
+        idstr = obj["dsId"]
+    return idstr
+
+
+def feed_link(ctm, apptype, feedformat):
+    ctmid = ctm["dsId"]
+    html = "<link rel=\"alternate\" type=\"" + apptype + "\""
+    html += " href=\"" + util.site_home + "/rsscoop?coop=" + ctmid
+    if feedformat:
+        html += "&format=" + feedformat
+    html += "\" />"
+    return html
+
+
+def feedlinks_for_object(obj):
+    if not obj or obj["dsType"] != "Theme":
+        return ""
+    linkhtml = feed_link(obj, "application/rss+xml", "")
+    linkhtml += "\n  " + feed_link(obj, "application/json", "json")
+    return linkhtml
+
+
+def write_start_page(obj, refer):
+    content, pfoj = content_and_prefetch(obj)
+    html = indexHTML
+    html = html.replace("$SITEPIC", sitepic_for_object(obj))
+    html = html.replace("$TITLE", sitetitle_for_object(obj))
+    html = html.replace("$DESCR", sitedescr_for_object(obj))
+    html = html.replace("$CACHEPARA", "?" + cachev)
+    html = html.replace("$REFER", refer)
+    html = html.replace("$EMBED", embed_spec_objson(obj))
+    html = html.replace("$VANID", obidstr_or_empty(obj))
+    html = html.replace("$INTERIMCONT", noscripthtml + content);
+    html = html.replace("$FEEDLINKS", feedlinks_for_object(obj))
+    html = html.replace("$PREFETCHOBJSON", pfoj)
+    return html
+
+
+# Aside from the index page, the following urls are accepted:
+#     /user/1234   Returns page for MUser 1234
+#     /theme/1234  Returns page for Theme 1234
+#     /myhashtag   Returns page for Theme or MUser #myhashtag
+def start_html_for_path(path, refer):
+    if not path or path.startswith("index.htm"):
+        # html = write_start_page(None, refer)
+        return "Default or explicit index page\n"
+    # dsIds are not unique across object types.  Hashtags are.  It should
+    # be possible to have a numeric hashtag.
+    dsId = util.first_group_match("user/(\d+)", path)
+    if dsId:
+        return "Start with MUser " + dsId + "\n"
+    dsId = util.first_group_match("theme/(\d+)", path)
+    if dsId:
+        return "Start with Theme " + dsId + "\n"
+    hashtag = util.first_group_match("(\w+)", path)
+    if hashtag:
+        return "Start with hashtag: " + hashtag + "\n"
+    return "Can't figure out what to start with\n"
+
+
+# path is everything *after* the root url slash.
+def startpage(path, refer):
+    path = path or ""
+    html = start_html_for_path(path.lower(), refer)
+    return util.respond(html)

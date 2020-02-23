@@ -1,9 +1,10 @@
-from flask import Flask
+import flask
 import py.useract as useract
 import py.util as util
+import py.start as start
 
 # Create a default entrypoint for the app.
-app = Flask(__name__)
+app = flask.Flask(__name__)
 
 ######################################################################
 #  API:
@@ -20,7 +21,8 @@ def mailpwr():  # params: emailin
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def startpage(path):
-    return "Start page path: /" + path
+    refer = flask.request.referrer or ""
+    return util.secure(lambda: start.startpage(path, refer))
 
 
 ########## Admin interfaces

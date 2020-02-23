@@ -16,6 +16,7 @@ module.exports = (function () {
 
     var fieldDescriptors = [
         {dn:"priv[ate]", h:"authorized access only e.g. owner personal info"},
+        {dn:"adm[in]", h:"administrative access only e.g. act codes"},
         {dn:"req[uired]", h:"Save error if null or empty"},
         {dn:"uniq[ue]", h:"Indexed. Save err if matches another's value"},
         {dn:"str[ing]", h:"Rough max 128 char text, truncation ok.", aliases:[
@@ -39,12 +40,12 @@ module.exports = (function () {
     {entity:"MUser", descr:"Membic User account.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
         {f:"email", d:"priv req unique email"},
-        {f:"phash", d:"priv req string"},
+        {f:"phash", d:"adm req string"},
         {f:"status", d:"priv string", c:"Only Active may post",
          enumvals:["Pending", "Active", "Inactive", "Unreachable"]},
-        {f:"mailbounce", d:"priv isodcsv", c:"latest bounce first"},
-        {f:"actsends", d:"priv gencsv", c:"latest first isod;emaddr vals"},
-        {f:"actcode", d:"priv string", c:"account activation code"},
+        {f:"mailbounce", d:"adm isodcsv", c:"latest bounce first"},
+        {f:"actsends", d:"adm gencsv", c:"latest first isod;emaddr vals"},
+        {f:"actcode", d:"adm string", c:"account activation code"},
         {f:"altinmail", d:"priv unique email", c:"alt mail-in address"},
         {f:"name", d:"string", c:"optional but recommended public name"},
         {f:"aboutme", d:"text", c:"optional description, website link etc."},

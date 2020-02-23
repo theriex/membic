@@ -7,6 +7,17 @@ import re
 import json
 import py.dbacc as dbacc
 
+site_home = "https://membic.org"
+
+def respond(contentstr, mimetype="text/html"):
+    # flask.Response defaults to HTML mimetype, so just returning a string
+    # from a flask endpoint will probably work.  Best to route everything
+    # through here and set it explicitely just in case
+    resp = flask.make_response(contentstr)
+    resp.mimetype = mimetype
+    return resp
+
+
 def srverr(msg, code=400):
     # 400 Bad Request
     # 405 Method Not Allowed
@@ -60,12 +71,19 @@ def csv_to_list(csv):
     return csv.split(",")
 
 
+def first_group_match(expr, text):
+    m = re.match(expr, text)
+    if m:
+        return m.group(1)
+    return None
+
+
 def get_connection_service(svcname):
     cs = dbacc.cfbk("ConnectionService", "name", svcname)
     if not cs:
         # create needed placeholder for administrators to update
-        dbacc.write_entity("ConnectionService", {"name": svcname})
-        cs = dbacc.cfbk("ConnectionService", "name", svcname)
+        cs = dbacc.write_entity({"dsType": "ConnectionService",
+                                 "name": svcname})
     return cs
 
 
@@ -126,6 +144,21 @@ def administrator_auth():
         raise ValueError("Not authorized as admin")
 
 
+def safe_JSON(obj, audience="public"):  # "private" includes personal info
+    filtobj = dbacc.visible_fields(obj, audience)
+    if obj["dsType"] == "MUser" and audience == "private":
+        filtobj["token"] = token_for_user(obj)
+    return json.dumps(filtobj)
+
+
+def in_terms_vio(entity, dsId, data=None):
+    if not data:
+        data = get_connection_service("termsvio")["data"]
+    if val_in_csv(entity + ":" + dsId, data):
+        return True
+    return False
+
+
 def add_membic_to_preb(context, membic):
     prebsize = 200
     memsum = {}
@@ -140,7 +173,8 @@ def add_membic_to_preb(context, membic):
         memsum["revpic"] = appmem["dsId"]
     context["pbms"].append(memsum)
     if len(context["pbms"]) >= 2 * prebsize:
-        ovrf = dbacc.write_entity("Overflow", {
+        ovrf = dbacc.write_entity({
+            "dsType": "Overflow",
             "dbkind": context["entity"],
             "dbkeyid": context["inst"]["dsId"],
             "preb": json.dumps(context["pbms"][:prebsize])})
@@ -198,13 +232,13 @@ def verify_theme_muser_info(theme, userid, lev=-1):
         currti["picture"] = theme["dsId"]
     mti[theme["dsId"]] = currti
     muser["themes"] = json.dumps(mti)
-    dbacc.write_entity("MUser", muser, vck=muser["modified"])
+    dbacc.write_entity(muser, vck=muser["modified"])
     # Update the theme
     theme["people"] = theme["people"] or "{}"
     people = json.loads(theme["people"])
     people[userid] = muser["name"]
     theme["people"] = json.dumps(people)
-    theme = dbacc.write_entity("Theme", theme, vck=theme["modified"])
+    theme = dbacc.write_entity(theme, vck=theme["modified"])
     return theme
 
 
@@ -260,7 +294,7 @@ def prebsweep():
             context = {"entity":"MUser", "inst":muser, "pbms":[], "creb":""}
             rebuild_prebuilt(context)
             muser["preb"] = context["pbms"]
-            dbacc.write_entity("MUser", muser, vck=muser["modified"])
+            dbacc.write_entity(muser, vck=muser["modified"])
             msgs.append("Rebuilt MUser.preb " + str(muser["dsId"]) + " " +
                         muser["email"])
         themes = dbacc.query_entity("Theme", where)
@@ -270,7 +304,7 @@ def prebsweep():
             context = {"entity":"Theme", "inst":theme, "pbms":[], "creb":""}
             rebuild_prebuilt(context)
             theme["preb"] = context["pbms"]
-            dbacc.write_entity("Theme", theme, vck=theme["modified"])
+            dbacc.write_entity(theme, vck=theme["modified"])
             msgs.append("Rebuilt Theme.preb " + str(theme["dsId"]) + " " +
                         theme["name"])
         if len(msgs) >= maxPerSweep:

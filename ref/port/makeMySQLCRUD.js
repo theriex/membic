@@ -488,29 +488,29 @@ function entityWriteFunction () {
     definitions.forEach(function (edef) {
         pyc += writeInsertFunction(edef) + "\n\n" +
             writeUpdateFunction(edef) + "\n\n"; });
-    pyc += "# Write the specified entity kind using the dictionary of field values.\n";
-    pyc += "# Binary field values must be base64.b64encode.  Unspecified fields will be\n";
-    pyc += "# set to their default values for a new instance, and left alone on update.\n";
-    pyc += "# For update, the verification check value must match the modified value of\n";
-    pyc += "# the existing instance.\n";
-    pyc += "def write_entity(entity, fields, vck=\"1234-12-12T00:00:00Z\"):\n";
+    pyc += "# Write the given dict/object based on the dsType.  Binary field values must\n";
+    pyc += "# be base64.b64encode.  Unspecified fields are set to default values for a\n";
+    pyc += "# new instance, and left alone on update.  For update, the verification\n";
+    pyc += "# check value must match the modified value of the existing instance.\n";
+    pyc += "def write_entity(inst, vck=\"1234-12-12T00:00:00Z\"):\n";
     pyc += "    cnx = get_mysql_connector()\n";
     pyc += "    if not cnx:\n";
     pyc += "        raise ValueError(\"Database connection failed.\")\n";
     pyc += "    try:\n";
     pyc += "        cursor = cnx.cursor()\n";
     pyc += "        try:\n";
-    pyc += "            dsId = fields.get(\"dsId\", 0)\n";
+    pyc += "            entity = inst.get(\"dsType\", None)\n";
+    pyc += "            dsId = inst.get(\"dsId\", 0)\n";
     pyc += "            if dsId:\n";
-    pyc += "                verify_timestamp_fields(entity, dsId, fields, vck)\n";
+    pyc += "                verify_timestamp_fields(entity, dsId, inst, vck)\n";
     definitions.forEach(function (edef) {
         pyc += "                if entity == \"" + edef.entity + "\":\n";
-        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, fields, vck)\n"; });
+        pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, inst, vck)\n"; });
     pyc += "            # No existing instance to update.  Insert new.\n";
-    pyc += "            initialize_timestamp_fields(fields, vck)\n";
+    pyc += "            initialize_timestamp_fields(inst, vck)\n";
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
-        pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, fields)\n"; });
+        pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, inst)\n"; });
     pyc += "        except mysql.connector.Error as e:\n";
     pyc += "            raise ValueError from e\n";
     pyc += "        finally:\n";
@@ -540,7 +540,7 @@ function writeQueryFunction (edef) {
         if(oes) {
             oes += ", "; }
         oes += "\"" + fd.f + "\": " + fd.f; });
-    pyc += "        inst = {\"dsId\": dsId, \"created\": created, \"modified\": modified, " + oes + "}\n";
+    pyc += "        inst = {\"dsType\": \"" + edef.entity + "\", \"dsId\": dsId, \"created\": created, \"modified\": modified, " + oes + "}\n";
     pyc += "        inst = db2app_" + edef.entity + "(inst)\n";
     pyc += "        res.append(inst)\n";
     pyc += "    dblogmsg(\"QRY\", \"" + edef.entity + "\", res)\n";
@@ -579,6 +579,46 @@ function entityQueryFunction () {
 }
 
 
+function writeObjFieldFilterFunc (edef) {
+    var pyc = ""
+    pyc += "def visible_" + edef.entity + "_fields(obj, audience):\n";
+    pyc += "    filtobj = {}\n";
+    pyc += "    for fld, val in obj.iteritems():\n";
+    edef.fields.forEach(function (fd) {
+        if(ddefs.fieldIs(fd.d, "admin")) {
+            pyc += "        if fld == \"" + fd.f + "\":\n";
+            pyc += "            continue\n"; }
+        if(ddefs.fieldIs(fd.d, "private")) {
+            pyc += "        if fld == \"" + fd.f + "\" and audience != \"private\":\n";
+            pyc += "            continue\n"; }
+        if(ddefs.fieldIs(fd.d, "image")) {
+            pyc += "        if fld == \"" + fd.f + "\":\n";
+            pyc += "            val = obj[\"dsId\"]\n"; } });
+    pyc += "        filtobj[fld] = val\n";
+    pyc += "    return filtobj\n";
+    pyc += "\n";
+    pyc += "\n";
+    return pyc;
+}
+
+
+function fieldVisibilityFunction () {
+    var pyc = ""
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        pyc += writeObjFieldFilterFunc(edef); });
+    pyc += "# Return a copied object with only the fields appropriate to the audience.\n";
+    pyc += "# Specifying audience=\"private\" includes peronal info.  The given obj is\n";
+    pyc += "# assumed to already have been through db2app conversion.\n";
+    pyc += "def visible_fields(obj, audience=\"public\"):\n";
+    definitions.forEach(function (edef) {
+        pyc += "    if obj[\"dsType\"] == \"" + edef.entity + "\":\n";
+        pyc += "        return visible_" + edef.entity + "_fields(obj, audience)\n"; });
+    pyc += "    raise ValueError(\"Unknown object dsType: \" + obj[\"dsType\"])\n";
+    return pyc;
+}
+
+
 function createPythonDBAcc () {
     var pyc = "";
     pyc += "########################################\n";
@@ -613,7 +653,7 @@ function createPythonDBAcc () {
     pyc += dblogMessager() + "\n\n";
     pyc += entityWriteFunction() + "\n\n";
     pyc += entityQueryFunction() + "\n\n";
-    pyc += "\n";
+    pyc += fieldVisibilityFunction() + "\n\n";
     fs.writeFileSync(srcdir + "/dbacc.py", pyc, "utf8");
 }
 

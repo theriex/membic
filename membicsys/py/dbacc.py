@@ -1090,55 +1090,55 @@ def update_existing_ConnectionService(cnx, cursor, fields, vck):
     return fields
 
 
-# Write the specified entity kind using the dictionary of field values.
-# Binary field values must be base64.b64encode.  Unspecified fields will be
-# set to their default values for a new instance, and left alone on update.
-# For update, the verification check value must match the modified value of
-# the existing instance.
-def write_entity(entity, fields, vck="1234-12-12T00:00:00Z"):
+# Write the given dict/object based on the dsType.  Binary field values must
+# be base64.b64encode.  Unspecified fields are set to default values for a
+# new instance, and left alone on update.  For update, the verification
+# check value must match the modified value of the existing instance.
+def write_entity(inst, vck="1234-12-12T00:00:00Z"):
     cnx = get_mysql_connector()
     if not cnx:
         raise ValueError("Database connection failed.")
     try:
         cursor = cnx.cursor()
         try:
-            dsId = fields.get("dsId", 0)
+            entity = inst.get("dsType", None)
+            dsId = inst.get("dsId", 0)
             if dsId:
-                verify_timestamp_fields(entity, dsId, fields, vck)
+                verify_timestamp_fields(entity, dsId, inst, vck)
                 if entity == "MUser":
-                    return update_existing_MUser(cnx, cursor, fields, vck)
+                    return update_existing_MUser(cnx, cursor, inst, vck)
                 if entity == "Theme":
-                    return update_existing_Theme(cnx, cursor, fields, vck)
+                    return update_existing_Theme(cnx, cursor, inst, vck)
                 if entity == "AdminLog":
-                    return update_existing_AdminLog(cnx, cursor, fields, vck)
+                    return update_existing_AdminLog(cnx, cursor, inst, vck)
                 if entity == "Membic":
-                    return update_existing_Membic(cnx, cursor, fields, vck)
+                    return update_existing_Membic(cnx, cursor, inst, vck)
                 if entity == "Overflow":
-                    return update_existing_Overflow(cnx, cursor, fields, vck)
+                    return update_existing_Overflow(cnx, cursor, inst, vck)
                 if entity == "MailNotice":
-                    return update_existing_MailNotice(cnx, cursor, fields, vck)
+                    return update_existing_MailNotice(cnx, cursor, inst, vck)
                 if entity == "ActivitySummary":
-                    return update_existing_ActivitySummary(cnx, cursor, fields, vck)
+                    return update_existing_ActivitySummary(cnx, cursor, inst, vck)
                 if entity == "ConnectionService":
-                    return update_existing_ConnectionService(cnx, cursor, fields, vck)
+                    return update_existing_ConnectionService(cnx, cursor, inst, vck)
             # No existing instance to update.  Insert new.
-            initialize_timestamp_fields(fields, vck)
+            initialize_timestamp_fields(inst, vck)
             if entity == "MUser":
-                return insert_new_MUser(cnx, cursor, fields)
+                return insert_new_MUser(cnx, cursor, inst)
             if entity == "Theme":
-                return insert_new_Theme(cnx, cursor, fields)
+                return insert_new_Theme(cnx, cursor, inst)
             if entity == "AdminLog":
-                return insert_new_AdminLog(cnx, cursor, fields)
+                return insert_new_AdminLog(cnx, cursor, inst)
             if entity == "Membic":
-                return insert_new_Membic(cnx, cursor, fields)
+                return insert_new_Membic(cnx, cursor, inst)
             if entity == "Overflow":
-                return insert_new_Overflow(cnx, cursor, fields)
+                return insert_new_Overflow(cnx, cursor, inst)
             if entity == "MailNotice":
-                return insert_new_MailNotice(cnx, cursor, fields)
+                return insert_new_MailNotice(cnx, cursor, inst)
             if entity == "ActivitySummary":
-                return insert_new_ActivitySummary(cnx, cursor, fields)
+                return insert_new_ActivitySummary(cnx, cursor, inst)
             if entity == "ConnectionService":
-                return insert_new_ConnectionService(cnx, cursor, fields)
+                return insert_new_ConnectionService(cnx, cursor, inst)
         except mysql.connector.Error as e:
             raise ValueError from e
         finally:
@@ -1154,7 +1154,7 @@ def query_MUser(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "themes": themes, "lastwrite": lastwrite, "preb": preb}
+        inst = {"dsType": "MUser", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "themes": themes, "lastwrite": lastwrite, "preb": preb}
         inst = db2app_MUser(inst)
         res.append(inst)
     dblogmsg("QRY", "MUser", res)
@@ -1168,7 +1168,7 @@ def query_Theme(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
+        inst = {"dsType": "Theme", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
         inst = db2app_Theme(inst)
         res.append(inst)
     dblogmsg("QRY", "Theme", res)
@@ -1182,7 +1182,7 @@ def query_AdminLog(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, letype, leid, adminid, adminname, action, targent, targid, targname, reason) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "targent": targent, "targid": targid, "targname": targname, "reason": reason}
+        inst = {"dsType": "AdminLog", "dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "targent": targent, "targid": targid, "targname": targname, "reason": reason}
         inst = db2app_AdminLog(inst)
         res.append(inst)
     dblogmsg("QRY", "AdminLog", res)
@@ -1196,7 +1196,7 @@ def query_Membic(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, importid, url, rurl, revtype, details, penid, ctmid, rating, srcrev, cankey, text, keywords, svcdata, revpic, imguri, icdata, icwhen, dispafter, penname, reacdat) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat}
+        inst = {"dsType": "Membic", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "url": url, "rurl": rurl, "revtype": revtype, "details": details, "penid": penid, "ctmid": ctmid, "rating": rating, "srcrev": srcrev, "cankey": cankey, "text": text, "keywords": keywords, "svcdata": svcdata, "revpic": revpic, "imguri": imguri, "icdata": icdata, "icwhen": icwhen, "dispafter": dispafter, "penname": penname, "reacdat": reacdat}
         inst = db2app_Membic(inst)
         res.append(inst)
     dblogmsg("QRY", "Membic", res)
@@ -1210,7 +1210,7 @@ def query_Overflow(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, dbkind, dbkeyid, preb) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "dbkind": dbkind, "dbkeyid": dbkeyid, "preb": preb}
+        inst = {"dsType": "Overflow", "dsId": dsId, "created": created, "modified": modified, "dbkind": dbkind, "dbkeyid": dbkeyid, "preb": preb}
         inst = db2app_Overflow(inst)
         res.append(inst)
     dblogmsg("QRY", "Overflow", res)
@@ -1224,7 +1224,7 @@ def query_MailNotice(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, name, subject, uidcsv, lastupd) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd}
+        inst = {"dsType": "MailNotice", "dsId": dsId, "created": created, "modified": modified, "name": name, "subject": subject, "uidcsv": uidcsv, "lastupd": lastupd}
         inst = db2app_MailNotice(inst)
         res.append(inst)
     dblogmsg("QRY", "MailNotice", res)
@@ -1238,7 +1238,7 @@ def query_ActivitySummary(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, newmembics, edited, removed) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "newmembics": newmembics, "edited": edited, "removed": removed}
+        inst = {"dsType": "ActivitySummary", "dsId": dsId, "created": created, "modified": modified, "refp": refp, "tstart": tstart, "tuntil": tuntil, "reqbyid": reqbyid, "reqbyht": reqbyht, "reqbypm": reqbypm, "reqbyrs": reqbyrs, "reqdets": reqdets, "newmembics": newmembics, "edited": edited, "removed": removed}
         inst = db2app_ActivitySummary(inst)
         res.append(inst)
     dblogmsg("QRY", "ActivitySummary", res)
@@ -1252,7 +1252,7 @@ def query_ConnectionService(cnx, cursor, where):
     cursor.execute(query)
     res = []
     for (dsId, created, modified, name, ckey, secret, data) in cursor:
-        inst = {"dsId": dsId, "created": created, "modified": modified, "name": name, "ckey": ckey, "secret": secret, "data": data}
+        inst = {"dsType": "ConnectionService", "dsId": dsId, "created": created, "modified": modified, "name": name, "ckey": ckey, "secret": secret, "data": data}
         inst = db2app_ConnectionService(inst)
         res.append(inst)
     dblogmsg("QRY", "ConnectionService", res)
@@ -1293,5 +1293,105 @@ def query_entity(entity, where):
     finally:
         cnx.close()
 
+
+def visible_MUser_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        if fld == "email" and audience != "private":
+            continue
+        if fld == "phash":
+            continue
+        if fld == "status" and audience != "private":
+            continue
+        if fld == "mailbounce":
+            continue
+        if fld == "actsends":
+            continue
+        if fld == "actcode":
+            continue
+        if fld == "altinmail" and audience != "private":
+            continue
+        if fld == "profpic":
+            val = obj["dsId"]
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_Theme_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        if fld == "picture":
+            val = obj["dsId"]
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_AdminLog_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_Membic_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        if fld == "revpic":
+            val = obj["dsId"]
+        if fld == "icdata":
+            val = obj["dsId"]
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_Overflow_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_MailNotice_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_ActivitySummary_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        filtobj[fld] = val
+    return filtobj
+
+
+def visible_ConnectionService_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.iteritems():
+        filtobj[fld] = val
+    return filtobj
+
+
+# Return a copied object with only the fields appropriate to the audience.
+# Specifying audience="private" includes peronal info.  The given obj is
+# assumed to already have been through db2app conversion.
+def visible_fields(obj, audience="public"):
+    if obj["dsType"] == "MUser":
+        return visible_MUser_fields(obj, audience)
+    if obj["dsType"] == "Theme":
+        return visible_Theme_fields(obj, audience)
+    if obj["dsType"] == "AdminLog":
+        return visible_AdminLog_fields(obj, audience)
+    if obj["dsType"] == "Membic":
+        return visible_Membic_fields(obj, audience)
+    if obj["dsType"] == "Overflow":
+        return visible_Overflow_fields(obj, audience)
+    if obj["dsType"] == "MailNotice":
+        return visible_MailNotice_fields(obj, audience)
+    if obj["dsType"] == "ActivitySummary":
+        return visible_ActivitySummary_fields(obj, audience)
+    if obj["dsType"] == "ConnectionService":
+        return visible_ConnectionService_fields(obj, audience)
+    raise ValueError("Unknown object dsType: " + obj["dsType"])
 
 
