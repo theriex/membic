@@ -161,6 +161,50 @@ function entityKeyFields () {
 }
 
 
+function entityCache () {
+    var pyc = "";
+    pyc += "def make_key(dsType, field, value):\n"
+    pyc += "    return dsType + \"_\" + field + \"_\" + value\n"
+    pyc += "\n"
+    pyc += "\n"
+    pyc += "def entkey_vals(inst):\n"
+    pyc += "    # dsId key holds the cached instance\n"
+    pyc += "    instkey = make_key(inst[\"dsType\"], \"dsId\", inst[\"dsId\"])\n"
+    pyc += "    keyvals = [{\"key\": instkey, \"val\": json.dumps(inst)}]\n"
+    pyc += "    # alternate entity keys point to the dsId key\n"
+    pyc += "    for field in entkeys[inst[\"dsType\"]]:\n"
+    pyc += "        keyvals.append({\"key\": make_key(inst[\"dsType\"], field, inst[field]),\n"
+    pyc += "                        \"val\": instkey})\n"
+    pyc += "    return keyvals\n"
+    pyc += "\n"
+    pyc += "\n"
+    pyc += "# Used to avoid repeated calls to the db for the same instance, especially\n"
+    pyc += "# within the same call to the webserver.  Time to live should be thought of\n"
+    pyc += "# as ranging from zero to at most a few minutes.\n"
+    pyc += "class EntityCache(object):\n"
+    pyc += "    entities = {}\n"
+    pyc += "    def cache_put(self, inst):\n"
+    pyc += "        if not inst or not inst[\"dsId\"]:\n"
+    pyc += "            raise ValueError(\"Uncacheable instance: \" + str(inst))\n"
+    pyc += "        for keyval in entkey_vals(inst):\n"
+    pyc += "            self.entities[keyval[\"key\"]] = keyval[\"val\"]\n"
+    pyc += "    def cache_get(self, entity, field, value):\n"
+    pyc += "        instkey = make_key(entity, field, value)\n"
+    pyc += "        if instkey not in self.entities:\n"
+    pyc += "            return None\n"
+    pyc += "        instval = self.entities[instkey]\n"
+    pyc += "        if field != \"dsId\":\n"
+    pyc += "            instval = self.entities[instval]\n"
+    pyc += "        return json.loads(instval)\n"
+    pyc += "    def cache_remove(self, inst):\n"
+    pyc += "        if inst:\n"
+    pyc += "            for keyval in entkey_vals(inst):\n"
+    pyc += "                self.entities.pop(keyval[\"key\"], None)\n"
+    pyc += "entcache = EntityCache()\n"
+    return pyc;
+}
+
+
 function helperFunctions () {
     var pyc = "";
     pyc += "def reqarg(argname, fieldtype=\"string\", required=False):\n";
@@ -192,33 +236,25 @@ function helperFunctions () {
     pyc += "    raise ValueError(\"Unknown type \" + fieldtype + \" for \" + argname)\n";
     pyc += "\n"
     pyc += "\n"
-    pyc += "# \"cached fetch by key\". Field must be primary key id or field declared to\n";
-    pyc += "# be unique.  entity name + the primary key id value = pcachekey\n";
-    pyc += "# memcache.set(cachekey, pickle.dumps(instance)\n";
-    pyc += "# for each of the entkey fields\n";
-    pyc += "#    memcache.set(entityname + obj.fieldval, cachekey)\n";
-    pyc += "# On cache_get, if the result is not a pickle serialized object then it is\n";
-    pyc += "# treated as a lookup key for secondary lookup to get to the cached obj.\n";
+    pyc += "# \"cached fetch by key\". Field must be dsId or one of the entkeys.\n"
     pyc += "def cfbk (entity, field, value):\n";
     pyc += "    if field != 'dsId' and field not in entkeys[entity]:\n";
     pyc += "        raise ValueError(field + \" not a unique index for \" + entity)\n";
-    pyc += "    # lookup in cache and return if found.  See notes on cache structure.\n";
+    pyc += "    ci = entcache.cache_get(entity, field, value)\n"
+    pyc += "    if ci:\n"
+    pyc += "        return ci\n"
     pyc += "    vstr = str(value)\n";
     pyc += "    if entdefs[entity][field][\"pt\"] not in [\"dbid\", \"int\"]:\n";
     pyc += "        vstr = \"\\\"\" + value + \"\\\"\"\n";
     pyc += "    objs = query_entity(entity, \"WHERE \" + field + \"=\" + vstr + \" LIMIT 1\")\n";
     pyc += "    if len(objs):\n";
-    pyc += "        # put_cache(obj)\n";
+    pyc += "        entcache.cache_put(objs[0])\n"
     pyc += "        return objs[0]\n";
     pyc += "    return None\n";
     pyc += "\n";
     pyc += "\n";
-    pyc += "# preferably specify the primary key id as the field.\n";
-    pyc += "def bust_cache(entity, idvalue):\n";
-    pyc += "    # lookup the cached instance, following to get to the primary key\n";
-    pyc += "    # instance as needed.  If found, pickle.loads the instance, go through\n";
-    pyc += "    # the entkeys fields and set all cache refs to \"\"\n"
-    pyc += "    return True\n"
+    pyc += "def bust_cache(inst):\n"
+    pyc += "    entcache.cache_remove(inst)\n"
     pyc += "\n";
     pyc += "\n";
     pyc += "# Get a connection to the database.  May throw mysql.connector.Error\n";
@@ -359,6 +395,7 @@ function writeApp2DB (edef) {
     pyc += "# Convert the given " + edef.entity + " inst dict from app values to db values.\n";
     pyc += "def app2db_" + edef.entity + "(inst):\n";
     pyc += "    cnv = {}\n";
+    pyc += "    cnv[\"dsType\"] = inst[\"dsType\"]\n";
     pyc += "    cnv[\"dsId\"] = None\n";
     pyc += "    if \"dsId\" in inst:\n";
     pyc += "        cnv[\"dsId\"] = app2db_fieldval(None, \"dsId\", inst)\n";
@@ -376,6 +413,7 @@ function writeDB2App (edef) {
     pyc += "# Convert the given " + edef.entity + " inst dict from db values to app values.\n";
     pyc += "def db2app_" + edef.entity + "(inst):\n";
     pyc += "    cnv = {}\n";
+    pyc += "    cnv[\"dsType\"] = inst[\"dsType\"]\n";
     pyc += "    cnv[\"dsId\"] = db2app_fieldval(None, \"dsId\", inst)\n";
     pyc += "    cnv[\"created\"] = db2app_fieldval(None, \"created\", inst)\n";
     pyc += "    cnv[\"modified\"] = db2app_fieldval(None, \"modified\", inst)\n";
@@ -449,6 +487,7 @@ function writeInsertFunction (edef) {
     pyc += "    cnx.commit()\n";
     pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
     pyc += "    dblogmsg(\"ADD\", \"" + edef.entity + "\", fields)\n";
+    pyc += "    bust_cache(fields)\n"
     pyc += "    return fields\n";
     return pyc;
 }
@@ -476,6 +515,7 @@ function writeUpdateFunction (edef) {
     pyc += "        raise ValueError(\"" + edef.entity + " update received outdated data.\")\n";
     pyc += "    cnx.commit()\n";
     pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
+    pyc += "    bust_cache(fields)\n"
     pyc += "    dblogmsg(\"UPD\", \"" + edef.entity + "\", fields)\n";
     pyc += "    return fields\n";
     return pyc;
@@ -634,6 +674,7 @@ function createPythonDBAcc () {
     pyc += "import flask\n";
     pyc += "import re\n";
     pyc += "import datetime\n";
+    pyc += "import json\n";
     pyc += "import mysql.connector\n";
     pyc += "\n";
     pyc += "# Reserved database fields used for every instance:\n";
@@ -648,6 +689,7 @@ function createPythonDBAcc () {
     pyc += "\n";
     pyc += entityDefinitions() + "\n\n";
     pyc += entityKeyFields() + "\n\n";
+    pyc += entityCache() + "\n\n";
     pyc += helperFunctions() + "\n\n";
     pyc += app2dbConversions() + "\n\n";
     pyc += dblogMessager() + "\n\n";

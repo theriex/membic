@@ -3,7 +3,9 @@
 # have the appropriate title, description and pic references.
 
 import flask
+import json
 import py.util as util
+import py.dbacc as dbacc
 
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
@@ -251,14 +253,14 @@ def recent_active_content():
         th = th.replace("$DESCRIP", od["description"])
         content += th
     pfoj = {"obtype":"activetps", "instid":"411", "_id":"411", 
-            "modified":nowISO(), "jtps": ods}
+            "modified":dbacc.nowISO(), "jtps": ods}
     pfoj = json.dumps(pfoj)
     return content, pfoj
 
 
 def membics_from_prebuilt(obj):
     html = ""
-    mems = obj.preb or "[]"
+    mems = obj["preb"] or "[]"
     mems = json.loads(mems)
     objidstr = obj["dsId"]
     for membic in mems:
@@ -374,20 +376,24 @@ def write_start_page(obj, refer):
 #     /myhashtag   Returns page for Theme or MUser #myhashtag
 def start_html_for_path(path, refer):
     if not path or path.startswith("index.htm"):
-        # html = write_start_page(None, refer)
-        return "Default or explicit index page\n"
+        return write_start_page(None, refer)
     # dsIds are not unique across object types.  Hashtags are.  It should
     # be possible to have a numeric hashtag.
     dsId = util.first_group_match("user/(\d+)", path)
     if dsId:
-        return "Start with MUser " + dsId + "\n"
+        return write_start_page(dbacc.cfbk("MUser", "dsId", dsId), refer)
     dsId = util.first_group_match("theme/(\d+)", path)
     if dsId:
-        return "Start with Theme " + dsId + "\n"
+        return write_start_page(dbacc.cfbk("Theme", "dsId", dsId), refer)
     hashtag = util.first_group_match("(\w+)", path)
     if hashtag:
-        return "Start with hashtag: " + hashtag + "\n"
-    return "Can't figure out what to start with\n"
+        inst = dbacc.cfbk("Theme", "hashtag", hashtag)
+        if not inst:
+            inst = dbacc.cfbk("MUser", "hashtag", hashtag)
+        if not inst:
+            return util.srverr("Unknown hashtag: " + hashtag, code="404")
+        return write_start_page(inst, refer)
+    return util.srverr("start_html_for_path fell through. path: " + path)
 
 
 # path is everything *after* the root url slash.

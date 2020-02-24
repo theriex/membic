@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 import flask
 import re
 import datetime
+import json
 import mysql.connector
 
 # Reserved database fields used for every instance:
@@ -162,6 +163,46 @@ entkeys = {
 }
 
 
+def make_key(dsType, field, value):
+    return dsType + "_" + field + "_" + value
+
+
+def entkey_vals(inst):
+    # dsId key holds the cached instance
+    instkey = make_key(inst["dsType"], "dsId", inst["dsId"])
+    keyvals = [{"key": instkey, "val": json.dumps(inst)}]
+    # alternate entity keys point to the dsId key
+    for field in entkeys[inst["dsType"]]:
+        keyvals.append({"key": make_key(inst["dsType"], field, inst[field]),
+                        "val": instkey})
+    return keyvals
+
+
+# Used to avoid repeated calls to the db for the same instance, especially
+# within the same call to the webserver.  Time to live should be thought of
+# as ranging from zero to at most a few minutes.
+class EntityCache(object):
+    entities = {}
+    def cache_put(self, inst):
+        if not inst or not inst["dsId"]:
+            raise ValueError("Uncacheable instance: " + str(inst))
+        for keyval in entkey_vals(inst):
+            self.entities[keyval["key"]] = keyval["val"]
+    def cache_get(self, entity, field, value):
+        instkey = make_key(entity, field, value)
+        if instkey not in self.entities:
+            return None
+        instval = self.entities[instkey]
+        if field != "dsId":
+            instval = self.entities[instval]
+        return json.loads(instval)
+    def cache_remove(self, inst):
+        if inst:
+            for keyval in entkey_vals(inst):
+                self.entities.pop(keyval["key"], None)
+entcache = EntityCache()
+
+
 def reqarg(argname, fieldtype="string", required=False):
     argval = flask.request.args.get(argname)  # None if not found
     if not argval:
@@ -191,33 +232,25 @@ def reqarg(argname, fieldtype="string", required=False):
     raise ValueError("Unknown type " + fieldtype + " for " + argname)
 
 
-# "cached fetch by key". Field must be primary key id or field declared to
-# be unique.  entity name + the primary key id value = pcachekey
-# memcache.set(cachekey, pickle.dumps(instance)
-# for each of the entkey fields
-#    memcache.set(entityname + obj.fieldval, cachekey)
-# On cache_get, if the result is not a pickle serialized object then it is
-# treated as a lookup key for secondary lookup to get to the cached obj.
+# "cached fetch by key". Field must be dsId or one of the entkeys.
 def cfbk (entity, field, value):
     if field != 'dsId' and field not in entkeys[entity]:
         raise ValueError(field + " not a unique index for " + entity)
-    # lookup in cache and return if found.  See notes on cache structure.
+    ci = entcache.cache_get(entity, field, value)
+    if ci:
+        return ci
     vstr = str(value)
     if entdefs[entity][field]["pt"] not in ["dbid", "int"]:
         vstr = "\"" + value + "\""
     objs = query_entity(entity, "WHERE " + field + "=" + vstr + " LIMIT 1")
     if len(objs):
-        # put_cache(obj)
+        entcache.cache_put(objs[0])
         return objs[0]
     return None
 
 
-# preferably specify the primary key id as the field.
-def bust_cache(entity, idvalue):
-    # lookup the cached instance, following to get to the primary key
-    # instance as needed.  If found, pickle.loads the instance, go through
-    # the entkeys fields and set all cache refs to ""
-    return True
+def bust_cache(inst):
+    entcache.cache_remove(inst)
 
 
 # Get a connection to the database.  May throw mysql.connector.Error
@@ -354,6 +387,7 @@ def verify_timestamp_fields(entity, dsId, fields, vck):
 # Convert the given MUser inst dict from app values to db values.
 def app2db_MUser(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -381,6 +415,7 @@ def app2db_MUser(inst):
 # Convert the given MUser inst dict from db values to app values.
 def db2app_MUser(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -404,6 +439,7 @@ def db2app_MUser(inst):
 # Convert the given Theme inst dict from app values to db values.
 def app2db_Theme(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -431,6 +467,7 @@ def app2db_Theme(inst):
 # Convert the given Theme inst dict from db values to app values.
 def db2app_Theme(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -454,6 +491,7 @@ def db2app_Theme(inst):
 # Convert the given AdminLog inst dict from app values to db values.
 def app2db_AdminLog(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -474,6 +512,7 @@ def app2db_AdminLog(inst):
 # Convert the given AdminLog inst dict from db values to app values.
 def db2app_AdminLog(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -490,6 +529,7 @@ def db2app_AdminLog(inst):
 # Convert the given Membic inst dict from app values to db values.
 def app2db_Membic(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -521,6 +561,7 @@ def app2db_Membic(inst):
 # Convert the given Membic inst dict from db values to app values.
 def db2app_Membic(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -548,6 +589,7 @@ def db2app_Membic(inst):
 # Convert the given Overflow inst dict from app values to db values.
 def app2db_Overflow(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -562,6 +604,7 @@ def app2db_Overflow(inst):
 # Convert the given Overflow inst dict from db values to app values.
 def db2app_Overflow(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -572,6 +615,7 @@ def db2app_Overflow(inst):
 # Convert the given MailNotice inst dict from app values to db values.
 def app2db_MailNotice(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -587,6 +631,7 @@ def app2db_MailNotice(inst):
 # Convert the given MailNotice inst dict from db values to app values.
 def db2app_MailNotice(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -598,6 +643,7 @@ def db2app_MailNotice(inst):
 # Convert the given ActivitySummary inst dict from app values to db values.
 def app2db_ActivitySummary(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -620,6 +666,7 @@ def app2db_ActivitySummary(inst):
 # Convert the given ActivitySummary inst dict from db values to app values.
 def db2app_ActivitySummary(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -638,6 +685,7 @@ def db2app_ActivitySummary(inst):
 # Convert the given ConnectionService inst dict from app values to db values.
 def app2db_ConnectionService(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -653,6 +701,7 @@ def app2db_ConnectionService(inst):
 # Convert the given ConnectionService inst dict from db values to app values.
 def db2app_ConnectionService(inst):
     cnv = {}
+    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -709,6 +758,7 @@ def insert_new_MUser(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_MUser(fields)
     dblogmsg("ADD", "MUser", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -732,6 +782,7 @@ def update_existing_MUser(cnx, cursor, fields, vck):
         raise ValueError("MUser update received outdated data.")
     cnx.commit()
     fields = db2app_MUser(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "MUser", fields)
     return fields
 
@@ -766,6 +817,7 @@ def insert_new_Theme(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Theme(fields)
     dblogmsg("ADD", "Theme", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -789,6 +841,7 @@ def update_existing_Theme(cnx, cursor, fields, vck):
         raise ValueError("Theme update received outdated data.")
     cnx.commit()
     fields = db2app_Theme(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "Theme", fields)
     return fields
 
@@ -816,6 +869,7 @@ def insert_new_AdminLog(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_AdminLog(fields)
     dblogmsg("ADD", "AdminLog", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -839,6 +893,7 @@ def update_existing_AdminLog(cnx, cursor, fields, vck):
         raise ValueError("AdminLog update received outdated data.")
     cnx.commit()
     fields = db2app_AdminLog(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "AdminLog", fields)
     return fields
 
@@ -877,6 +932,7 @@ def insert_new_Membic(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Membic(fields)
     dblogmsg("ADD", "Membic", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -900,6 +956,7 @@ def update_existing_Membic(cnx, cursor, fields, vck):
         raise ValueError("Membic update received outdated data.")
     cnx.commit()
     fields = db2app_Membic(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "Membic", fields)
     return fields
 
@@ -921,6 +978,7 @@ def insert_new_Overflow(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Overflow(fields)
     dblogmsg("ADD", "Overflow", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -944,6 +1002,7 @@ def update_existing_Overflow(cnx, cursor, fields, vck):
         raise ValueError("Overflow update received outdated data.")
     cnx.commit()
     fields = db2app_Overflow(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "Overflow", fields)
     return fields
 
@@ -966,6 +1025,7 @@ def insert_new_MailNotice(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_MailNotice(fields)
     dblogmsg("ADD", "MailNotice", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -989,6 +1049,7 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
         raise ValueError("MailNotice update received outdated data.")
     cnx.commit()
     fields = db2app_MailNotice(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "MailNotice", fields)
     return fields
 
@@ -1018,6 +1079,7 @@ def insert_new_ActivitySummary(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
     dblogmsg("ADD", "ActivitySummary", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -1041,6 +1103,7 @@ def update_existing_ActivitySummary(cnx, cursor, fields, vck):
         raise ValueError("ActivitySummary update received outdated data.")
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "ActivitySummary", fields)
     return fields
 
@@ -1063,6 +1126,7 @@ def insert_new_ConnectionService(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_ConnectionService(fields)
     dblogmsg("ADD", "ConnectionService", fields)
+    bust_cache(fields)
     return fields
 
 
@@ -1086,6 +1150,7 @@ def update_existing_ConnectionService(cnx, cursor, fields, vck):
         raise ValueError("ConnectionService update received outdated data.")
     cnx.commit()
     fields = db2app_ConnectionService(fields)
+    bust_cache(fields)
     dblogmsg("UPD", "ConnectionService", fields)
     return fields
 

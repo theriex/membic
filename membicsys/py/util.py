@@ -21,7 +21,10 @@ def respond(contentstr, mimetype="text/html"):
 def srverr(msg, code=400):
     # 400 Bad Request
     # 405 Method Not Allowed
-    return msg, code
+    resp = flask.make_response(msg)
+    resp.mimetype = "text/plain"
+    resp.status_code = int(code)
+    return resp
 
 
 def serveValueError(ve):
