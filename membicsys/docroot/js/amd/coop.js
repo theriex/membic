@@ -19,7 +19,7 @@ app.coop = (function () {
     function historyCheckpointIfNeeded (coop) {
         //when creating a new theme, the history state will not have
         //been checkpointed because there was no id yet.
-        var id = jt.instId(coop);
+        var id = coop.dsId;
         var hs = app.history.currState();
         if(id && hs.view !== "coop") {
             hs = { view: "coop", coopid: id };
@@ -96,7 +96,7 @@ return {
     processMembership: function (coop, pact, pseekid, preason, contf) {
         //action: accept, reject, demote
         var data = jt.objdata({action:pact, profid:app.profile.myProfId(),
-                               coopid:jt.instId(coop), seekerid:pseekid,
+                               coopid:coop.dsId, seekerid:pseekid,
                                reason:preason});
         jt.call("POST", "ctmmemprocess?" + app.login.authparams(), data,
                 function (updobjs) {
@@ -169,7 +169,7 @@ return {
             if(ref && ref.coop && ref.coop.adminlog) {
                 ref.coop.adminlog.every(function (logentry) {
                     if(logentry.action === "Removed Membic" &&
-                       logentry.targid === jt.instId(rev) &&
+                       logentry.targid === rev.dsId &&
                        logentry.profid !== app.profile.myProfId()) {
                         rejection = logentry;
                         return false; }

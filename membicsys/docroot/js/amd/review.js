@@ -270,7 +270,7 @@ app.review = (function () {
 
 
     function sourceRevId (review) {
-        var srcid = jt.instId(review);
+        var srcid = review.dsId;
         if(review.ctmid && review.ctmid !== "0") {
             srcid = review.srcrev; }
         return srcid;
@@ -283,13 +283,13 @@ app.review = (function () {
             return ""; }
         if(!type) {
             jt.log("Might show typed placeholders. Pass the type"); }
-        html = {id: "revimg" + jt.instId(review), cla: "revimg", 
+        html = {id: "revimg" + review.dsId, cla: "revimg", 
                 src: "img/nopicprof.png"};
         if(jt.isLowFuncBrowser()) {
             html.style = "width:125px;height:auto;"; }
         switch(verifyReviewImageDisplayType(review)) {
         case "sitepic":
-            html.src = sslSafeRef(jt.instId(review), review.imguri);
+            html.src = sslSafeRef(review.dsId, review.imguri);
             break;
         case "upldpic":
             //Use source rev img for theme posts to take advantage of caching.
@@ -913,7 +913,7 @@ app.review = (function () {
                       [["input", {type: "hidden", name: "penid",
                                   value: app.profile.myProfId()}],
                        ["input", {type: "hidden", name: "revid",
-                                  value: jt.instId(crev)}],
+                                  value: crev.dsId}],
                        ["input", {type: "hidden", name: "revtype",
                                   value: crev.revtype}],
                        jt.paramsToFormInputs(app.login.authparams()),
@@ -956,7 +956,7 @@ app.review = (function () {
 
     function makeMine (review, srcrevId) {
         var now = new Date().toISOString();
-        jt.setInstId(review, undefined);
+        review.dsId = undefined;
         review.penid = app.profile.myProfId();
         review.ctmid = 0;
         review.rating = ratingDefaultValue;
@@ -1050,10 +1050,10 @@ app.review = (function () {
         var imgsrc = "img/nopicrev.png";
         var type = verifyReviewImageDisplayType(crev);
         if(type === "upldpic") {
-            imgsrc = "revpic?revid=" + jt.instId(crev) + 
+            imgsrc = "revpic?revid=" + crev.dsId + 
                 jt.ts("&cb=", crev.modified); }
         else if(type === "sitepic") {
-            imgsrc = sslSafeRef(jt.instId(crev), crev.imguri); }
+            imgsrc = sslSafeRef(crev.dsId, crev.imguri); }
         return jt.tac2html(["img", {id:"dlgrevimg", cla:"revimg", src:imgsrc}]);
     }
 
@@ -1417,8 +1417,8 @@ app.review = (function () {
         //match the orev, so update the dlg to ensure they are the same.
         app.review.updatedlg();
         updobjs.forEach(function (updobj) {
-            if(updobj.obtype === "MUser" || updobj.obtype === "Coop") {
-                app.lcs.put(updobj.obtype, updobj); } });
+            if(updobj.dsType === "MUser" || updobj.dsType === "Theme") {
+                app.lcs.put(updobj.dsType, updobj); } });
         //need to rebuild the theme checkboxes in case they tried to post to
         //a theme that was archived, or they lost membership.  coops data
         //will have been updated server side (coop.py may_write_review)
@@ -1466,7 +1466,7 @@ return {
             orev = source;
             crev = copyReview(source);
             if(source.penid !== app.profile.myProfId()) {
-                makeMine(crev, jt.instId(source)); } }
+                makeMine(crev, source.dsId); } }
         crev.penid = app.profile.myProfId();
         displayMembicDialog();
     },
@@ -1506,7 +1506,7 @@ return {
                 var ridpre = "revid: ";
                 if(txt.indexOf(ridpre) === 0) {
                     var revid = txt.slice(ridpre.length);
-                    jt.setInstId(crev, revid);
+                    crev.dsId = revid;
                     crev.revpic = revid;
                     jt.byId("upldpicimg").src = "revpic?revid=" + revid +
                         jt.ts("&cb=", "second");  //crev.modified unchanged
@@ -1570,7 +1570,7 @@ return {
         if(!url) {  //reflect any other updates done in the interim.
             crev.autocomp = false;
             return app.review.updatedlg(); }
-        if(!jt.instId(crev) && editExistingMembicByURL(url)) {
+        if(!crev.dsId && editExistingMembicByURL(url)) {
             return app.review.updatedlg(); }
         if(crev.title && !crev.autocomp &&
            !confirm("Re-read title and other fields?")) {
@@ -1732,7 +1732,7 @@ return {
             crev.scvdata = crev.svcdata || {};
             crev.svcdata.picdisp = picdisp; }
         var dt = verifyReviewImageDisplayType(crev);
-        var revid = jt.instId(crev);
+        var revid = crev.dsId;
         var html = [
             "div", {id:"revpicdlgdiv"},
             [["ul", {cla:"revpictypelist"},
@@ -1777,7 +1777,7 @@ return {
 
 
     rotateupldpic: function () {
-        var revid = jt.instId(crev);
+        var revid = crev.dsId;
         var data = "revid=" + revid + "&penid=" + app.profile.myProfId();
         jt.out("pdtfbuttondiv", "Rotating...");
         jt.call("POST", "rotatepic?" + app.login.authparams(), data,
@@ -2034,7 +2034,7 @@ return {
                 state.prev = state.revs[state.idx - 1]; }
             rev = state.revs[state.idx];
             convertOldThemePostLabel(rev);
-            revdivid = state.prefix + jt.instId(rev);
+            revdivid = state.prefix + rev.dsId;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
             if(rev.srcrev === "-604" || 
                    app.review.isDupeRev(rev, state.prev) || 
@@ -2047,7 +2047,7 @@ return {
                 ["div", maindivattrs,
                  ["div", {cla: (state.author? "fparevdiv" : "fpnarevdiv"),
                           id: revdivid},
-                  app.review.revdispHTML(state.prefix, jt.instId(rev), 
+                  app.review.revdispHTML(state.prefix, rev.dsId, 
                                          rev, state.togcbn)]]);
             outdiv.appendChild(elem); 
             state.idx += 1;
@@ -2063,7 +2063,7 @@ return {
         var i; var rev; var elem; var revdivid;
         //locate the review and its associated index
         for(i = 0; i < revs.length; i += 1) {
-            if(jt.instId(revs[i]) === revid) {
+            if(revs[i].dsId === revid) {
                 rev = revs[i];
                 break; } }
         if(!rev) {  //bad revid or bad call, nothing to do
@@ -2073,7 +2073,7 @@ return {
             for(i += 1; i < revs.length; i += 1) {
                 if(!app.review.isDupeRev(rev, revs[i])) {  //no more children
                     break; }
-                elem = jt.byId(prefix + jt.instId(revs[i]) + "fpdiv");
+                elem = jt.byId(prefix + revs[i].dsId + "fpdiv");
                 if(app.review.displayingExpandedView(prefix, revid)) {
                     elem.style.display = "none"; }
                 else {

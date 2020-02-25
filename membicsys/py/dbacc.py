@@ -313,7 +313,10 @@ def app2db_fieldval(entity, field, inst):
 
 
 # Read the given field from the inst or the default values, then convert it
-# from a db value to an app value.
+# from a db value to an app value.  "app" means the server side module
+# calling this module, not the web client.  Image binary values and json
+# field values are not decoded, but get safe defaults if NULL.  dbids are
+# converted to strings.
 def db2app_fieldval(entity, field, inst):
     if entity:
         pt = entdefs[entity][field]["pt"]
@@ -384,10 +387,10 @@ def verify_timestamp_fields(entity, dsId, fields, vck):
         fields["modified"] = nowISO() + ";" + str(ver)
 
 
-# Convert the given MUser inst dict from app values to db values.
+# Convert the given MUser inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_MUser(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -412,10 +415,11 @@ def app2db_MUser(inst):
     return cnv
 
 
-# Convert the given MUser inst dict from db values to app values.
+# Convert the given MUser inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_MUser(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "MUser"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -436,10 +440,12 @@ def db2app_MUser(inst):
     cnv["lastwrite"] = db2app_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = db2app_fieldval("MUser", "preb", inst)
     return cnv
-# Convert the given Theme inst dict from app values to db values.
+
+
+# Convert the given Theme inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_Theme(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -464,10 +470,11 @@ def app2db_Theme(inst):
     return cnv
 
 
-# Convert the given Theme inst dict from db values to app values.
+# Convert the given Theme inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_Theme(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "Theme"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -488,10 +495,12 @@ def db2app_Theme(inst):
     cnv["keywords"] = db2app_fieldval("Theme", "keywords", inst)
     cnv["preb"] = db2app_fieldval("Theme", "preb", inst)
     return cnv
-# Convert the given AdminLog inst dict from app values to db values.
+
+
+# Convert the given AdminLog inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_AdminLog(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -509,10 +518,11 @@ def app2db_AdminLog(inst):
     return cnv
 
 
-# Convert the given AdminLog inst dict from db values to app values.
+# Convert the given AdminLog inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_AdminLog(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "AdminLog"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -526,10 +536,12 @@ def db2app_AdminLog(inst):
     cnv["targname"] = db2app_fieldval("AdminLog", "targname", inst)
     cnv["reason"] = db2app_fieldval("AdminLog", "reason", inst)
     return cnv
-# Convert the given Membic inst dict from app values to db values.
+
+
+# Convert the given Membic inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_Membic(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -558,10 +570,11 @@ def app2db_Membic(inst):
     return cnv
 
 
-# Convert the given Membic inst dict from db values to app values.
+# Convert the given Membic inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_Membic(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "Membic"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -586,10 +599,12 @@ def db2app_Membic(inst):
     cnv["penname"] = db2app_fieldval("Membic", "penname", inst)
     cnv["reacdat"] = db2app_fieldval("Membic", "reacdat", inst)
     return cnv
-# Convert the given Overflow inst dict from app values to db values.
+
+
+# Convert the given Overflow inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_Overflow(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -601,10 +616,11 @@ def app2db_Overflow(inst):
     return cnv
 
 
-# Convert the given Overflow inst dict from db values to app values.
+# Convert the given Overflow inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_Overflow(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "Overflow"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -612,10 +628,12 @@ def db2app_Overflow(inst):
     cnv["dbkeyid"] = db2app_fieldval("Overflow", "dbkeyid", inst)
     cnv["preb"] = db2app_fieldval("Overflow", "preb", inst)
     return cnv
-# Convert the given MailNotice inst dict from app values to db values.
+
+
+# Convert the given MailNotice inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_MailNotice(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -628,10 +646,11 @@ def app2db_MailNotice(inst):
     return cnv
 
 
-# Convert the given MailNotice inst dict from db values to app values.
+# Convert the given MailNotice inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_MailNotice(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "MailNotice"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -640,10 +659,12 @@ def db2app_MailNotice(inst):
     cnv["uidcsv"] = db2app_fieldval("MailNotice", "uidcsv", inst)
     cnv["lastupd"] = db2app_fieldval("MailNotice", "lastupd", inst)
     return cnv
-# Convert the given ActivitySummary inst dict from app values to db values.
+
+
+# Convert the given ActivitySummary inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_ActivitySummary(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -663,10 +684,11 @@ def app2db_ActivitySummary(inst):
     return cnv
 
 
-# Convert the given ActivitySummary inst dict from db values to app values.
+# Convert the given ActivitySummary inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_ActivitySummary(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "ActivitySummary"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
@@ -682,10 +704,12 @@ def db2app_ActivitySummary(inst):
     cnv["edited"] = db2app_fieldval("ActivitySummary", "edited", inst)
     cnv["removed"] = db2app_fieldval("ActivitySummary", "removed", inst)
     return cnv
-# Convert the given ConnectionService inst dict from app values to db values.
+
+
+# Convert the given ConnectionService inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
 def app2db_ConnectionService(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
@@ -698,10 +722,11 @@ def app2db_ConnectionService(inst):
     return cnv
 
 
-# Convert the given ConnectionService inst dict from db values to app values.
+# Convert the given ConnectionService inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
 def db2app_ConnectionService(inst):
     cnv = {}
-    cnv["dsType"] = inst["dsType"]
+    cnv["dsType"] = "ConnectionService"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)

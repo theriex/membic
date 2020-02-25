@@ -5,7 +5,7 @@ app.profile = (function () {
     "use strict";
 
     var mypid = "";
-    //The coops entry lev field and obtype fields are set separately.
+    //The coops entry lev field and dsType fields are set separately.
     var ccfields = ["name", "hashtag", "description", "picture", "keywords"];
     var cpfields = ["name", "hashtag", "aboutme",     "profpic", ""];
 
@@ -101,9 +101,9 @@ app.profile = (function () {
 
 
     function makeCoopsEntry (cp, level) {
-        var cc = {lev:level, obtype:cp.obtype};
+        var cc = {lev:level, dsType:cp.dsType};
         var mapfields = ccfields;
-        if(cp.obtype === "MUser") {
+        if(cp.dsType === "MUser") {
             mapfields = cpfields; }
         ccfields.forEach(function (field, idx) {
             var mapfield = mapfields[idx];

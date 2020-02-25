@@ -35,7 +35,7 @@ app.pcd = (function () {
     var noassoc =    //standardized messages if no Coop association
         {name:"Not Connected", //MUser.coops lev: 0
          imgsrc: "img/tsnoassoc.png",
-         levtxt:"You are not following this $obtype.",
+         levtxt:"You are not following this $dsType.",
          uptxt:"Follow for membic notices.",
          upbtn:"Follow",
          cantxt:"",
@@ -49,7 +49,7 @@ app.pcd = (function () {
     var ctmmsgs = [  //standardized messages organized by Coop level
         {name:"Following", //MUser.coops lev: -1
          imgsrc: "img/tsfollowing.png",
-         levtxt:"Following shows you are interested in reading membics posted to this $obtype.",
+         levtxt:"Following shows you are interested in reading membics posted to this $dsType.",
          uptxt:"Only members may post.",
          upbtn:"Apply for membership",
          cantxt:"You are applying for membership.",
@@ -128,8 +128,7 @@ app.pcd = (function () {
         var src = "img/nopicprof.png";
         if(obj[defs.picfield]) {  //e.g. profile.profpic
             //fetch with mild cachebust in case modified
-            src = defs.picsrc + jt.instId(obj) +
-                "&modified=" + obj.modified; }
+            src = defs.picsrc + obj.dsId + "&modified=" + obj.modified; }
         return src;
     }
 
@@ -201,7 +200,7 @@ app.pcd = (function () {
 
     function getAssociationMessages(prof, porc) {
         var msgs = null;
-        if(porc.obtype === "Coop") {
+        if(porc.dsType === "Theme") {
             var mlev = app.coop.membershipLevel(porc, prof.instid);
             if(mlev) {
                 msgs = ctmmsgs[mlev]; } }
@@ -213,8 +212,8 @@ app.pcd = (function () {
         var cm = {};
         var pt = printType();
         Object.keys(msgs).forEach(function (key) {
-            cm[key] = msgs[key].replace(/\$obtype/g, pt); });
-        if(prof.coops[porc.instid] && porc.obtype === "MUser") {
+            cm[key] = msgs[key].replace(/\$dsType/g, pt); });
+        if(prof.coops[porc.instid] && porc.dsType === "MUser") {
             cm.uptxt = "";
             cm.upbtn = ""; }  //no further up levels if following profile
         return cm;
@@ -737,7 +736,7 @@ app.pcd = (function () {
         var furl = window.location.href;
         if(furl.endsWith("/")) {
             furl = furl.slice(0, -1); }
-        furl += "/rssfeed?" + dst.type + "=" + jt.instId(dst.obj) +
+        furl += "/rssfeed?" + dst.type + "=" + dst.obj.dsId +
             "&ts=st&ds=dvrk";
         var ta = jt.byId("rsslinkta");
         if(ta) {
@@ -813,8 +812,7 @@ app.pcd = (function () {
         ta = jt.byId("embwpta");
         if(ta) {
             ta.readOnly = true;
-            ta.value = site + "/rssfeed?" + dst.type + "=" + 
-                jt.instId(dst.obj); }
+            ta.value = site + "/rssfeed?" + dst.type + "=" + dst.dsId; }
     }
 
 
@@ -1116,7 +1114,7 @@ app.pcd = (function () {
         if(typeof(obj.preb) === "object" && !obj.preb.length) {
             //just in case preb had a bad value like {}
             obj.preb = []; }
-        jt.log("resetDisplayStateFromObject " + obj.obtype + 
+        jt.log("resetDisplayStateFromObject " + obj.dsType + 
                " id:" + obj.instid + " name:" + obj.name);
         dst.obj = obj;
         dst.mtypes = "";
@@ -1426,6 +1424,17 @@ app.pcd = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    linkForThemeOrProfile: function (obj) {
+        var link = "/" + obj.hashtag;
+        if(!obj.hashtag) {
+            if(obj.dsType === "MUser" || obj.obtype === "profile") {
+                link = "/user/" + (obj.dsId || obj.instid); }
+            else if(obj.dsType === "Theme" || obj.obtype === "theme") {
+                link = "/theme/" + (obj.dsId || obj.instid); } }
+        return link;
+    },
+
 
     settings: function (obj) {
         if(obj) {
@@ -2026,9 +2035,9 @@ return {
                     jt.log("delete completed successfully");
                     app.lcs.uncache("activetps", "411");
                     updobjs.forEach(function (updobj) {
-                        if(updobj.obtype === "MUser" || 
-                           updobj.obtype === "Coop") {
-                            app.lcs.put(updobj.obtype, updobj); } });
+                        if(updobj.dsType === "MUser" || 
+                           updobj.dsType === "Theme") {
+                            app.lcs.put(updobj.dsType, updobj); } });
                     app.pcd.redisplay(); },
                 app.failf(function (code, errtxt) {
                     descrdiv.innerHTML = "Delete failed: " + code + " " + 
@@ -2073,7 +2082,7 @@ return {
                     jt.log("remthpost completed successfully");
                     app.lcs.uncache("activetps", "411");
                     updobjs.forEach(function (updobj) {
-                        app.lcs.put(updobj.obtype, updobj); });
+                        app.lcs.put(updobj.dsType, updobj); });
                     app.pcd.redisplay(); }, //refresh content, close dialog
                 function (code, errtxt) {
                     jt.byId("removeb" + rtid).disabled = false;

@@ -46,7 +46,7 @@ app.lcs = (function () {
 
     function idify (id) {
         if(typeof id === "object") {
-            id = jt.instId(id); }
+            id = id.dsId; }
         if(typeof id === "number") {
             id = String(id); }
         return id;
@@ -114,7 +114,7 @@ return {
             return null; }
         var tombstone = { status: reason, updtime: new Date() };
         tombstone[type + "id"] = id;
-        jt.setInstId(tombstone, id);
+        tombstone.dsId = id;
         var ref = app.lcs.put(type, tombstone);
         ref.status = reason;
         ref[type] = null;  //so caller can just test for ref.type...
@@ -125,11 +125,13 @@ return {
     put: function (type, obj) {
         var ref;
         type = typify(type);
+        if(!cache[type]) {
+            throw "Unknown type: " + type; }
         if(cache[type].putprep) {
             cache[type].putprep(obj); }
         ref = app.lcs.getRef(type, obj);
         if(!idify(obj)) {
-            jt.log("attempt to lcs.put unidentified object");
+            throw "Attempt to lcs.put unidentified object"
             return null; }
         if(ref[type] && ref[type].modified > obj.modified) {
             //attempting to put an older instance, return existing newer.
@@ -157,7 +159,7 @@ return {
 
     addReplaceAll: function (objs) {
         objs.forEach(function (obj) {
-            var type = typify(obj.obtype);
+            var type = typify(obj.dsType);
             if(cache[type]) {  //cacheable object
                 app.lcs.put(type, obj); } });
     },
@@ -227,7 +229,7 @@ return {
     objArrayToIdArray: function (objs) {
         var ids = [];
         objs.forEach(function (obj) {
-            ids.push(jt.instId(obj)); });
+            ids.push(obj.dsId); });
         return ids;
     }
 

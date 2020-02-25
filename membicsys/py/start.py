@@ -4,6 +4,7 @@
 
 import flask
 import json
+import logging
 import py.util as util
 import py.dbacc as dbacc
 
@@ -171,7 +172,10 @@ tplinkhtml = """
 
 
 def pub_featurable(entity, obj, vios):
-    if not obj["preb"] or len(obj["preb"]) <= 3:
+    preb = obj["preb"] or ""
+    # logging.debug("pub_featurable " + obj["dsType"] + obj["dsId"] + 
+    #               " len(preb): " + str(len(preb)))
+    if len(preb) <= 3:
         return False  # Only featuring if have posted Membics
     if util.in_terms_vio(entity, obj["dsId"], vios):
         return False
@@ -186,8 +190,6 @@ def json_for_theme_prof(obj, obtype):
           "modified": obj["modified"],
           "lastwrite": obj["lastwrite"] or obj["modified"],
           "hashtag": obj["hashtag"]}
-    if not sd["hashtag"]:
-        sd["hashtag"] = sd["instid"]
     if obtype == "theme":
         if obj["picture"]:
             sd["pic"] = obj["dsId"]
@@ -201,7 +203,7 @@ def json_for_theme_prof(obj, obtype):
     elif obtype == "profile":
         if obj["profpic"]:
             sd["pic"] = obj["dsId"]
-        sd["name"] = obj["name"] or sd["hashtag"]
+        sd["name"] = obj["name"] or sd["hashtag"] or sd["dsId"]
         sd["description"] = obj["aboutme"]
     return json.dumps(sd)
 
@@ -252,8 +254,10 @@ def recent_active_content():
         th = th.replace("$NAME", od["name"])
         th = th.replace("$DESCRIP", od["description"])
         content += th
-    pfoj = {"obtype":"activetps", "instid":"411", "_id":"411", 
-            "modified":dbacc.nowISO(), "jtps": ods}
+    # Return as a locally cacheable object for convenience.  By convention
+    # non-persistent interim objects like this use a lowercase dsType.
+    pfoj = {"dsType":"activetps", "dsId":"411", "modified":dbacc.nowISO(),
+            "jtps": ods}
     pfoj = json.dumps(pfoj)
     return content, pfoj
 
@@ -262,10 +266,11 @@ def membics_from_prebuilt(obj):
     html = ""
     mems = obj["preb"] or "[]"
     mems = json.loads(mems)
+    logging.debug("membics_from_prebuilt: " + str(mems))
     objidstr = obj["dsId"]
     for membic in mems:
         rh = revhtml
-        rh = rh.replace("$RID", membic["_id"])
+        rh = rh.replace("$RID", membic["dsId"])
         rh = rh.replace("$RTYPE", membic["revtype"])
         rh = rh.replace("$RURL", membic["url"] or "")
         rh = rh.replace("$RTIT", membic["title"] or membic["name"])
@@ -394,6 +399,17 @@ def start_html_for_path(path, refer):
             return util.srverr("Unknown hashtag: " + hashtag, code="404")
         return write_start_page(inst, refer)
     return util.srverr("start_html_for_path fell through. path: " + path)
+
+
+##################################################
+#
+# API entrypoints
+#
+##################################################
+
+def recentactive():
+    content, pfoj = recent_active_content()
+    return util.respJSON("[" + pfoj + "]")
 
 
 # path is everything *after* the root url slash.

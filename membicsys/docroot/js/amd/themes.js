@@ -28,10 +28,10 @@ app.themes = (function () {
             return summaries; }
         Object.keys(prof.coops).forEach(function (ctmid) {
             var pc = prof.coops[ctmid];
-            if(pc.obtype === "Coop" && pc.lev >= 1 &&
+            if(pc.dsType === "Theme" && pc.lev >= 1 &&
                !inSummary(ctmid, summaries)) {
                 var pcsum = {instid:ctmid, obtype:"theme", modified:"",
-                             lastwrite:"", hashtag:pc.hashtag || ctmid,
+                             lastwrite:"", hashtag:pc.hashtag,
                              picture:pc.picture, name:pc.name, 
                              description:pc.description};
                 switch(pc.lev) {
@@ -54,7 +54,7 @@ app.themes = (function () {
             tps = mergePersonalThemesForAccess(atr.activetps.jtps); }
         else {  //no recent, go get it
             //jt.log("fetching activetps");
-            jt.call("GET", "/recentactive" + jt.ts("?cb=", "minute"), null,
+            jt.call("GET", "/api/recentactive" + jt.ts("?cb=", "minute"), null,
                     function (racs) {
                         jt.log("loaded activetps from /recentactive results");
                         app.lcs.put("activetps", racs[0]);
@@ -206,14 +206,12 @@ app.themes = (function () {
     function imageSourceForListing (tp) {
         var imgsrc = "img/blank.png";
         if(tp.pic) {
-            if(tp.obtype === "theme") {
-                imgsrc = "ctmpic?coopid=" + tp.instid; }
-            else if(tp.obtype === "profile") {
-                imgsrc = "profpic?profileid=" + tp.instid; }
-            //Add a cache bust for the img source in case a new image was
-            //uploaded and the activetps refetched.  Otherwise stale.
-            if(atfs) {
-                imgsrc += "&cb=" + atfs; } }
+            var otm = {theme:"Theme", profile:"MUser"};
+            imgsrc = "/api/obimg?dt=" + otm[tp.obtype] + "&di=" + tp.instid
+            var mod = tp.modified;
+            if(atfs > mod) {
+                mod = atfs; }
+            imgsrc += "&cb=" + mod; }
         return imgsrc;
     }
 
@@ -225,7 +223,7 @@ app.themes = (function () {
             var ocparams = "'" + tp.obtype + "','" + tp.instid + "'";
             var oc = jt.fs("app.themes.show(" + ocparams + ")");
             var mc = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
-            var link = "/" + tp.hashtag;
+            var link = app.pcd.linkForThemeOrProfile(tp);
             elem = document.createElement("div");
             elem.className = "tplinkdiv";
             elem.id = "tplinkdiv" + tp.instid;

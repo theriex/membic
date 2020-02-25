@@ -316,8 +316,11 @@ function helperFunctions () {
     pyc += "    return val\n";
     pyc += "\n";
     pyc += "\n";
-    pyc += "# Read the given field from the inst or the default values, then convert it\n";
-    pyc += "# from a db value to an app value.\n";
+    pyc += "# Read the given field from the inst or the default values, then convert it\n"
+    pyc += "# from a db value to an app value.  \"app\" means the server side module\n"
+    pyc += "# calling this module, not the web client.  Image binary values and json\n"
+    pyc += "# field values are not decoded, but get safe defaults if NULL.  dbids are\n"
+    pyc += "# converted to strings.\n"
     pyc += "def db2app_fieldval(entity, field, inst):\n";
     pyc += "    if entity:\n";
     pyc += "        pt = entdefs[entity][field][\"pt\"]\n";
@@ -392,10 +395,10 @@ function helperFunctions () {
 
 function writeApp2DB (edef) {
     var pyc = "";
-    pyc += "# Convert the given " + edef.entity + " inst dict from app values to db values.\n";
+    pyc += "# Convert the given " + edef.entity + " inst dict from app values to db values.  Removes\n"
+    pyc += "# the dsType field to avoid trying to write it to the db.\n"
     pyc += "def app2db_" + edef.entity + "(inst):\n";
     pyc += "    cnv = {}\n";
-    pyc += "    cnv[\"dsType\"] = inst[\"dsType\"]\n";
     pyc += "    cnv[\"dsId\"] = None\n";
     pyc += "    if \"dsId\" in inst:\n";
     pyc += "        cnv[\"dsId\"] = app2db_fieldval(None, \"dsId\", inst)\n";
@@ -410,10 +413,11 @@ function writeApp2DB (edef) {
 
 function writeDB2App (edef) {
     var pyc = "";
-    pyc += "# Convert the given " + edef.entity + " inst dict from db values to app values.\n";
+    pyc += "# Convert the given " + edef.entity + " inst dict from db values to app values.  Adds the\n";
+    pyc += "# dsType field for general app processing.\n"
     pyc += "def db2app_" + edef.entity + "(inst):\n";
     pyc += "    cnv = {}\n";
-    pyc += "    cnv[\"dsType\"] = inst[\"dsType\"]\n";
+    pyc += "    cnv[\"dsType\"] = \"" + edef.entity + "\"\n";
     pyc += "    cnv[\"dsId\"] = db2app_fieldval(None, \"dsId\", inst)\n";
     pyc += "    cnv[\"created\"] = db2app_fieldval(None, \"created\", inst)\n";
     pyc += "    cnv[\"modified\"] = db2app_fieldval(None, \"modified\", inst)\n";
@@ -428,7 +432,7 @@ function app2dbConversions () {
     var pyc = "";
     var definitions = ddefs.dataDefinitions();
     definitions.forEach(function (edef) {
-        pyc += writeApp2DB(edef) + "\n\n" + writeDB2App(edef); });
+        pyc += writeApp2DB(edef) + "\n\n" + writeDB2App(edef) + "\n\n"; });
     return pyc;
 }
 
@@ -691,7 +695,7 @@ function createPythonDBAcc () {
     pyc += entityKeyFields() + "\n\n";
     pyc += entityCache() + "\n\n";
     pyc += helperFunctions() + "\n\n";
-    pyc += app2dbConversions() + "\n\n";
+    pyc += app2dbConversions();
     pyc += dblogMessager() + "\n\n";
     pyc += entityWriteFunction() + "\n\n";
     pyc += entityQueryFunction() + "\n\n";

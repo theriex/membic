@@ -18,6 +18,14 @@ def appversion():
 def mailpwr():  # params: emailin
     return util.secure(util.mailpwr)
 
+@app.route('/api/recentactive')
+def recentactive():
+    return start.recentactive()
+
+@app.route('/api/obimg')
+def obimg():  # params: dt (dsType), di (dsId)
+    return util.obimg()
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def startpage(path):

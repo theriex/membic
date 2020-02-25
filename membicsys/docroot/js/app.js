@@ -161,7 +161,7 @@ var jt = {};   //Global access to general utility methods
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
         if(app.pfoj) {
-            app.lcs.put(app.pfoj.obtype, app.pfoj); }
+            app.lcs.put(app.pfoj.dsType, app.pfoj); }
         //bootstrap completed, end this thread and begin next phase
         app.fork({descr:"initial authentication",
                   func:app.login.init, ms:10});

@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import re
 import json
+import base64
 import py.dbacc as dbacc
 
 site_home = "https://membic.org"
@@ -16,6 +17,10 @@ def respond(contentstr, mimetype="text/html"):
     resp = flask.make_response(contentstr)
     resp.mimetype = mimetype
     return resp
+
+
+def respJSON(jsontxt):
+    return respond(jsontxt, mimetype="application/json")
 
 
 def srverr(msg, code=400):
@@ -165,15 +170,14 @@ def in_terms_vio(entity, dsId, data=None):
 def add_membic_to_preb(context, membic):
     prebsize = 200
     memsum = {}
-    appmem = dbacc.db2app_Membic(membic)
     mflds = ["dsId", "created", "modified", "url", "rurl", "revtype",
              "details", "penid", "ctmid", "rating", "srcrev", "cankey",
              "text", "keywords", "svcdata", "imguri", "dispafter", 
              "penname", "reacdat"]
     for mfld in mflds:
-        memsum[mfld] = appmem[mfld]
-    if appmem["revpic"]:
-        memsum["revpic"] = appmem["dsId"]
+        memsum[mfld] = membic[mfld]
+    if membic["revpic"]:
+        memsum["revpic"] = membic["dsId"]
     context["pbms"].append(memsum)
     if len(context["pbms"]) >= 2 * prebsize:
         ovrf = dbacc.write_entity({
@@ -199,12 +203,9 @@ def rebuild_prebuilt(context):
     membics = dbacc.query_entity("Membic", where)
     for membic in membics:
         add_membic_to_preb(context, membic)
-    if len(membics) >= chunk:  # continue fetching more recent
+    if len(membics) >= chunk:  # probably more to go fetch
         context["creb"] = membics[len(membics) - 1]["created"]
         rebuild_prebuilt(context)
-    res = json.dumps(context["pbms"])
-    logging.info("rebuild_prebuilt res: " + res[0:400])
-    context["pbms"] = res
 
 
 # lev -1 means following by email.  That's the default for a former theme
@@ -245,6 +246,10 @@ def verify_theme_muser_info(theme, userid, lev=-1):
     return theme
 
 
+# hex values for a 4x4 transparent PNG created with GIMP:
+blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
+
+
 def send_mail(emaddr, subj, body):
     if is_development_server():
         logging.info("send_mail ignored dev server send to " + emaddr +
@@ -279,7 +284,7 @@ def mailpwr():
         send_mail(emaddr, subj, body)
     except ValueError as e:
         return serveValueError(e)
-    return "[]"
+    return respJSON("[]")
 
 
 def prebsweep():
@@ -296,7 +301,7 @@ def prebsweep():
                          muser["modified"])
             context = {"entity":"MUser", "inst":muser, "pbms":[], "creb":""}
             rebuild_prebuilt(context)
-            muser["preb"] = context["pbms"]
+            muser["preb"] = json.dumps(context["pbms"])
             dbacc.write_entity(muser, vck=muser["modified"])
             msgs.append("Rebuilt MUser.preb " + str(muser["dsId"]) + " " +
                         muser["email"])
@@ -306,7 +311,7 @@ def prebsweep():
                 break
             context = {"entity":"Theme", "inst":theme, "pbms":[], "creb":""}
             rebuild_prebuilt(context)
-            theme["preb"] = context["pbms"]
+            theme["preb"] = json.dumps(context["pbms"])
             dbacc.write_entity(theme, vck=theme["modified"])
             msgs.append("Rebuilt Theme.preb " + str(theme["dsId"]) + " " +
                         theme["name"])
@@ -317,4 +322,22 @@ def prebsweep():
     except ValueError as e:
         return serveValueError(e)
     return " <br>\n".join(msgs)
+
+
+def obimg():
+    imgdat = blank4x4imgstr
+    try:
+        dsType = dbacc.reqarg("dt", "string", required=True)
+        dsId = dbacc.reqarg("di", "string", required=True)
+        inst = dbacc.cfbk(dsType, "dsId", dsId)
+        if not inst:
+            raise ValueError(dsType + " " + dsId + " not found")
+        picfldmap = {"Theme": "picture", "MUser": "profpic"}
+        imgdat = inst[picfldmap[dsType]]
+        imgdat = base64.b64decode(imgdat)
+    except ValueError as e:
+        return serveValueError(e)
+    resp = flask.make_response(imgdat)
+    resp.mimetype = "image/png"
+    return resp
 
