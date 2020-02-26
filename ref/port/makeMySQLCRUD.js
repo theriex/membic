@@ -2,6 +2,7 @@
 
 var ddefs = require("./datadefs");
 var srcdir = "../../membicsys/py";
+var jsdir = "../../membicsys/docroot/js/amd";
 var fs = require("fs");
 
 ////////////////////////////////////////
@@ -705,7 +706,142 @@ function createPythonDBAcc () {
 
 
 ////////////////////////////////////////
+// JavaScript code
+
+function writeDeserializeFunction () {
+    jsc = "";
+    jsc += "    //All json fields are initialized to {} so they can be accessed directly.\n";
+    jsc += "    reconstituteFieldJSONObject: function (field, obj) {\n";
+    jsc += "        if(!obj[field]) {\n";
+    jsc += "            obj[field] = {}; }\n";
+    jsc += "        else {\n";
+    jsc += "            var text = obj[field];\n";
+    jsc += "            try {\n";
+    jsc += "                obj[field] = JSON.parse(text);\n";
+    jsc += "            } catch (e) {\n";
+    jsc += "                jt.log(\"reconstituteJSONObjectField \" + obj.dsType + \" \" +\n";
+    jsc += "                       obj.dsId + \" \" + field + \" reset to empty object from \" +\n";
+    jsc += "                       text + \" Error: \" + e);\n";
+    jsc += "                obj[field] = {};\n";
+    jsc += "            } }\n";
+    jsc += "    }\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    function deserialize (obj) {\n";
+    jsc += "        switch(obj.dsType) {\n";
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        jsc += "        case \"" + edef.entity + "\": \n";
+        edef.fields.forEach(function (fd) {
+            if(ddefs.fieldIs(fd.d, "json")) {
+                jsc += "            reconstituteFieldJSONObjectField(\"" +
+                    fd.f + "\", obj);\n"; } });
+        jsc += "            break;\n"; });
+    jsc += "        }\n";
+    jsc += "    }\n";
+    return jsc;
+}
+
+
+function writeClearPrivilegedFunction () {
+    var jsc = "";
+    jsc += "    function clearPrivilegedFields (obj) {\n";
+    jsc += "        switch(obj.dsType) {\n";
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        jsc += "        case \"" + edef.entity + "\": \n";
+        edef.fields.forEach(function (fd) {
+            if(ddefs.fieldIs(fd.d, "priv")) {  //adm fields never leave server
+                jsc += "            obj." + fd.f + " = \"\";\n"; } });
+        jsc += "            break;\n"; });
+    jsc += "        }\n";
+    jsc += "    }\n";
+    return jsc;
+}
+
+
+function createJSServerAcc () {
+    var jsc = "";
+    jsc += "//////////////////////////////////////////////////\n";
+    jsc += "//\n";
+    jsc += "//     D O   N O T   E D I T\n";
+    jsc += "//\n";
+    jsc += "// This file was written by makeMySQLCRUD.js.  Any changes should be made there.\n";
+    jsc += "//\n";
+    jsc += "//////////////////////////////////////////////////\n";
+    jsc += "// Local object reference cache and server persistence access.  Automatically\n";
+    jsc += "// serializes/deserializes JSON fields.\n";
+    jsc += "\n";
+    jsc += "/*global app, jt, window */\n";
+    jsc += "\n";
+    jsc += "/*jslint browser, white, fudge, for */\n";
+    jsc += "\n";
+    jsc += "app.refmgr = (function () {\n";
+    jsc += "    \"use strict\";\n";
+    jsc += "\n";
+    jsc += "    var cache = {};\n";
+    jsc += "\n";
+    jsc += writeDeserializeFunction() + "\n\n";
+    jsc += writeClearPrivilegedFunction() + "\n\n";
+    jsc += "return {\n";
+    jsc += "\n";
+    jsc += "    cached: function (dsType, dsId) {  //Returns the cached obj or null\n";
+    jsc += "        if(dsType && dsId && cache.dsType && cache.dsType.dsId) {\n";
+    jsc += "            return cache.dsType.dsId; }\n";
+    jsc += "        return null; }\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    put: function (obj) {\n";
+    jsc += "        clearPrivilegedFields(obj);  //no sensitive info here\n";
+    jsc += "        cache[obj.dsType] = cache[obj.dsType] || {};\n";
+    jsc += "        cache[obj.dsType][obj.dsId] = retobj;\n";
+    jsc += "    }\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    getFull: function (dsType, dsId, contf) {\n";
+    jsc += "        obj = cached(dsType, dsId);\n";
+    jsc += "        if(obj) {\n";
+    jsc += "            return contf(obj); }\n";
+    jsc += "        var url = app.refmgr.serverurl() + \"/fetchobj?dt=\" + dsType + \"&di=\" +\n";
+    jsc += "            dsId + jt.ts(\"&cb=\", \"second\");\n";
+    jsc += "        jt.call(\"GET\", url, null,\n";
+    jsc += "                function (objs) {\n";
+    jsc += "                    retobj = null;\n";
+    jsc += "                    if(objs.length > 0) {\n";
+    jsc += "                        retobj = deserialize(objs[0]);\n";
+    jsc += "                        app.refmgr.put(retobj); }\n";
+    jsc += "                    callback(retobj); },\n";
+    jsc += "                function (code, errtxt) {\n";
+    jsc += "                    jt.log(\"refmgr.getFull \" + dsType + \" \" + dsId + \" \" +\n";
+    jsc += "                           code + \": \" + errtxt);\n";
+    jsc += "                    callback(null); }\n";
+    jsc += "                jt.semaphore(\"refmgr.getFull\" + dsType + dsId));\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    uncache: function (dsType, dsId) {\n";
+    jsc += "        cache[dsType] = cache[dsType] || {};\n";
+    jsc += "        cache[dsType][dsId] = null;\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    serverurl: function () { \n";
+    jsc += "        var url = window.location.href;\n";
+    jsc += "        return url.split(\"/\").slice(0, 3).join(\"/\");\n";
+    jsc += "    }\n";
+    jsc += "\n";
+    jsc += "}; //end of returned functions\n";
+    jsc += "}());\n";
+    jsc += "\n";
+    fs.writeFileSync(jsdir + "/refmgr.js", jsc, "utf8");
+}
+
+
+////////////////////////////////////////
 // Write the files
 
 createDatabaseSQL();
 createPythonDBAcc();
+createJSServerAcc();
+
+
