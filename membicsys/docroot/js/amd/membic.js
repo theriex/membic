@@ -15,8 +15,6 @@ app.membic = (function () {
     var autourl = "";
     var orev = null;  //The original review before editing started
     var crev = {};    //The current review being displayed or edited.
-    //If changing the width or height of the stars img, also change
-    //profile.reviewItemHTML indent
     var starimgw = 85;
     var starimgh = 15;
     var starPointingActive = false;  //true if star sliding active
@@ -292,7 +290,7 @@ app.membic = (function () {
         html = ["img", html];
         if(mode === "edit") {
             html = ["a", {href: "#changepic", 
-                          onclick: jt.fs("app.review.picdlg()")},
+                          onclick: jt.fs("app.membic.picdlg()")},
                     html]; }
         else if(review.url) {
             html = ["a", {href: review.url,
@@ -477,8 +475,8 @@ app.membic = (function () {
             clickfs = "window.open('" + app.hardhome + "/" + rev.penid + "')"; }
         var html = ["a", {href:"#author", title:rev.penname,
                           onclick:jt.fs(clickfs)},
-                    ["img", {cla:"authpicimg", 
-                             src:"profpic?profileid=" + rev.penid}]];
+                    ["img", {cla:"authpicimg",
+                             src:"/api/obimg?dt=MUser&di=" + rev.penid}]];
         return jt.tac2html(html);
     }
 
@@ -592,10 +590,10 @@ app.membic = (function () {
         if(!jt.byId("rdokbuttondiv").innerHTML) {
             jt.out("rdokbuttondiv", jt.tac2html(
                 [["button", {type: "button", id: "okbutton",
-                             onclick: jt.fs("app.review.save()")},
+                             onclick: jt.fs("app.membic.save()")},
                   "Save"],
                  ["button", {type: "button", id: "donebutton",
-                             onclick: jt.fs("app.review.done()")},
+                             onclick: jt.fs("app.membic.done()")},
                   "Done"]])); }
         statmsg = statmsg || "";
         jt.out("rdokstatdiv", statmsg);
@@ -769,7 +767,7 @@ app.membic = (function () {
         items.forEach(function (item) {
             lis.push(["li",
                       ["a", {href: item.url, 
-                             onclick: jt.fs("app.review.readURL('" + 
+                             onclick: jt.fs("app.membic.readURL('" + 
                                             item.url + "')")},
                        item.title + " " + item.rest]]); });
         jt.out("revautodiv", jt.tac2html(["ul", lis]));
@@ -823,7 +821,7 @@ app.membic = (function () {
         var items = [];
         if(status === google.maps.places.PlacesServiceStatus.OK) {
             results.forEach(function (place) {
-                var selfunc = "app.review.selectLocation('" +
+                var selfunc = "app.membic.selectLocation('" +
                     jt.embenc(place.description) + "','" + 
                     place.reference + "')";
                 items.push(["li",
@@ -853,7 +851,7 @@ app.membic = (function () {
 
 
     function revfs (callstr) {
-        return jt.fs("app.review." + callstr);
+        return jt.fs("app.membic." + callstr);
     }
 
 
@@ -874,7 +872,7 @@ app.membic = (function () {
         jt.out("picfilelab", fv);
         jt.byId("picfilelab").className = "filesellab2";
         jt.byId("upldsub").style.visibility = "visible";
-        app.review.monitorPicUpload("Init");
+        app.membic.monitorPicUpload("Init");
     }
 
 
@@ -916,7 +914,7 @@ app.membic = (function () {
                            ["div", {id: "ptduploadbuttonsdiv"},
                             ["input", {type: "submit", cla: "formbutton",
                                        style: "visibility:hidden;",
-                                       onclick: jt.fs("app.review.upsub()"),
+                                       onclick: jt.fs("app.membic.upsub()"),
                                        id: "upldsub", value: "Upload"}]]]],
                          ["div", {id: "imgupstatdiv", cla: "formstatdiv"}]]]]],
                      ["iframe", {id: "ptdif", name: "ptdif", 
@@ -933,12 +931,12 @@ app.membic = (function () {
 
     function copyReview (review) {
         var copy = {};
-        app.review.serializeFields(review);
+        app.membic.serializeFields(review);
         Object.keys(review).forEach(function (field) {
             copy[field] = review[field]; });
-        app.review.deserializeFields(review);
+        app.membic.deserializeFields(review);
         if(copy.svcdata) {
-            app.review.deserializeFields(copy); }
+            app.membic.deserializeFields(copy); }
         return copy;
     }
 
@@ -964,7 +962,7 @@ app.membic = (function () {
 
     function dlgReadButtonHTML () {
         return ["button", {type: "button", id: "rdurlbutton",
-                           onclick: jt.fs("app.review.readURL()")},
+                           onclick: jt.fs("app.membic.readURL()")},
                 "Read"];
     }
 
@@ -976,7 +974,7 @@ app.membic = (function () {
             if(crev.revtype === rt.type) {
                 clt = "reviewbadgesel"; }
             html.push(["a", {href: "#" + rt.type, cla: "typeselect",
-                             onclick: jt.fs("app.review.updatedlg('" + 
+                             onclick: jt.fs("app.membic.updatedlg('" + 
                                             rt.type + "')")},
                        ["img", {cla: clt, src: "img/" + rt.img}]]); });
         html = ["div", {cla: "revtypesdiv", id: "revdlgtypesdiv"}, 
@@ -1008,7 +1006,7 @@ app.membic = (function () {
                     [["label", {fo: "keyin", cla: "liflab", id: "keylab"}, 
                       rt.key],
                      ["input", {id: "keyin", cla: "lifin", type: "text",
-                                oninput:jt.fs("app.review.buttoncheck()")}],
+                                oninput:jt.fs("app.membic.buttoncheck()")}],
                      //There simply isn't enough traffic to maintain an
                      //Amazon relationship right now.  If an advertiser
                      //account is sustainable, update the access info and
@@ -1018,7 +1016,7 @@ app.membic = (function () {
                      //             name: "autocompleteactivationcheckbox",
                      //             //<IE8 onchange only fires after onblur.
                      //             //check action nullified if return false.
-                     //             onclick: jt.fsd("app.review.runAutoComp()"),
+                     //             onclick: jt.fsd("app.membic.runAutoComp()"),
                      //             checked: jt.toru(crev.autocomp)}]],
                      ["div", {id: "revautodiv"}]]];
             jt.out("rdkeyindiv", jt.tac2html(html)); }
@@ -1031,7 +1029,7 @@ app.membic = (function () {
             rdaccb.checked = crev.autocomp; }
         if(html) {  //just initialized the key input, set for entry
             jt.byId("keyin").focus(); }
-        app.review.runAutoComp();
+        app.membic.runAutoComp();
     }
 
 
@@ -1111,7 +1109,7 @@ app.membic = (function () {
         return ["div", {id: fldn + "div", cla: "rdfindiv"},
                 ["input", {id: fldn + "in", type: "text", 
                            cla: "lifin", placeholder: fldn.capitalize(),
-                           oninput:jt.fs("app.review.buttoncheck()")}]];
+                           oninput:jt.fs("app.membic.buttoncheck()")}]];
     }
 
 
@@ -1141,7 +1139,7 @@ app.membic = (function () {
             //onclick the div in case the enclosing image is broken
             //and can't function as a link to bring up the dialog
             html = [["div", {id: "rdpicdiv",
-                             onclick: jt.fs("app.review.picdlg()")}, 
+                             onclick: jt.fs("app.membic.picdlg()")}, 
                      dlgPicHTML()],
                     html];
             jt.out("rdpfdiv", jt.tac2html(html));
@@ -1168,8 +1166,8 @@ app.membic = (function () {
             var html = [["div", {style:"height:2px;background-color:orange;",
                                  id:"txtlendiv"}],
                         ["textarea", {id:"rdta", placeholder:ptxt,
-                                      onkeyup:jt.fs("app.review.txtlenind()"),
-                                      onchange:jt.fs("app.review.revtxtchg()")},
+                                      onkeyup:jt.fs("app.membic.txtlenind()"),
+                                      onchange:jt.fs("app.membic.revtxtchg()")},
                          crev.text || ""]];
             jt.out("rdtextdiv", jt.tac2html(html)); }
         //text is not dynamically updated
@@ -1189,17 +1187,17 @@ app.membic = (function () {
                        [["input", {type: "checkbox", id: "dkw" + i,
                                    value: dkword, checked: chk,
                                    //onchange only fires onblur if <IE8
-                                   onclick: jt.fsd("app.review.togkey('dkw" + 
+                                   onclick: jt.fsd("app.membic.togkey('dkw" + 
                                                    i + "')")}],
                         ["label", {fo: "dkw" + i}, dkword]]]); });
         html = [["div", {id: "rdkwcbsdiv"}, html]];
         html.push(["div", {id: "rdkwindiv"},
                    [["label", {fo: "rdkwin", cla: "liflab", id: "rdkwlab"},
                      ["a", {href: "#keywordsdescription",
-                            onclick: jt.fs("app.review.kwhelpdlg()")},
+                            onclick: jt.fs("app.membic.kwhelpdlg()")},
                       "Keywords"]],
                     ["input", {id: "rdkwin", cla: "lifin", type: "text", 
-                               oninput: jt.fsd("app.review.togkey()"),
+                               oninput: jt.fsd("app.membic.togkey()"),
                                value: crev.keywords}]]]);
         jt.out("rdkwdiv", jt.tac2html(html));
     }
@@ -1245,7 +1243,7 @@ app.membic = (function () {
                        [["input", {type: "checkbox", id: kwid, 
                                    cla: "keywordcheckbox",
                                    value: kwd, checked: chk,
-                                   onclick: jt.fsd("app.review.togkey('" +
+                                   onclick: jt.fsd("app.membic.togkey('" +
                                                    kwid + "')")}],
                         ["label", {fo: kwid}, kwd]]]); });
         jt.out("ctmkwdiv" + ctmid, jt.tac2html(html));
@@ -1271,7 +1269,7 @@ app.membic = (function () {
                       ["input", {type: "checkbox", id: "dctmcb" + ctmid,
                                  cla: "keywordcheckbox",
                                  value: ctmid, checked: posted,
-                                 onclick: jt.fsd("app.review.togctmpost('" +
+                                 onclick: jt.fsd("app.membic.togctmpost('" +
                                                  ctmid + "')")}],
                       ["label", {fo: "dctm" + ctmid, cla: "penflist"}, 
                        ctm.name],
@@ -1282,7 +1280,7 @@ app.membic = (function () {
             html.unshift(["div", {cla: "liflab"}, "Post To"]); }
         jt.out("rdgdiv", jt.tac2html(html));
         Object.keys(coops).forEach(function (ctmid) {
-            app.review.togctmpost(ctmid); });
+            app.membic.togctmpost(ctmid); });
     }
 
 
@@ -1316,7 +1314,7 @@ app.membic = (function () {
                              onclick:jt.fs("window.open('" + url + "')")},
                        [["img", {cla:"reviewbadge", src:"img/" + type.img,
                                  title:type.type, alt:type.type}],
-                        app.pcd.reviewItemNameHTML(type, rev)]],
+                        app.pcd.membicItemNameHTML(type, rev)]],
                       "&nbsp;",
                       ["div", {cla:"starsnjumpdiv", style:starstyle},
                        ["div", {cla: "fpstarsdiv"},
@@ -1331,7 +1329,7 @@ app.membic = (function () {
         displayAppropriateButton();
         jt.out("sharediv", "");
         if(jt.hasId(crev)) {
-            jt.byId("closedlg").click = app.review.done;
+            jt.byId("closedlg").click = app.membic.done;
             jt.out("sharediv", jt.tac2html(app.layout.shareButtonsTAC(
                 {url:crev.url || app.secsvr + "/" + app.profile.myProfId(),
                  title:crev.title || crev.name}))); }
@@ -1372,7 +1370,7 @@ app.membic = (function () {
                   [["label", {fo: "urlin", cla: "liflab"}, "URL"],
                    ["input", {id: "urlin", cla: "lifin", type: "url",
                               placeholder: "Paste Link Here",
-                              oninput:jt.fs("app.review.buttoncheck()")}],
+                              oninput:jt.fs("app.membic.buttoncheck()")}],
                    ["span", {id: "rdurlbuttonspan"}, dlgReadButtonHTML()],
                    ["div", {id: "rdstat1"}]]],
                  ["div", {id: "rdkeyindiv"}],
@@ -1386,7 +1384,7 @@ app.membic = (function () {
                  ["div", {id: "sharediv"}],
                  ["div", {id: "rdextradiv"}]]];
         html = app.layout.dlgwrapHTML("Make Membic", html,
-                                      jt.fs("app.review.done()"));
+                                      jt.fs("app.membic.done()"));
         app.layout.openDialog(
             {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
@@ -1400,11 +1398,11 @@ app.membic = (function () {
             crev.ctmids.csvarray().forEach(function (ctmid) {
                 app.lcs.uncache("coop", ctmid); }); }
         orev = updobjs[1];
-        app.review.deserializeFields(orev);
+        app.membic.deserializeFields(orev);
         crev = copyReview(orev);
         //To show "Done" after "Save" completed, the dlg contents needs to
         //match the orev, so update the dlg to ensure they are the same.
-        app.review.updatedlg();
+        app.membic.updatedlg();
         updobjs.forEach(function (updobj) {
             if(updobj.dsType === "MUser" || updobj.dsType === "Theme") {
                 app.lcs.put(updobj.dsType, updobj); } });
@@ -1448,7 +1446,7 @@ return {
 
 
     start: function (source) {
-        app.review.resetStateVars();
+        app.membic.resetStateVars();
         if(typeof source === "string") {  //passed in a url
             autourl = source; }
         if(typeof source === "object") {  //passed in another review
@@ -1510,7 +1508,7 @@ return {
                     jt.byId("upldsub").style.visibility = "hidden";
                     return; } }
             app.fork({descr:"membic pic upload monitor",
-                      func:app.review.monitorPicUpload, ms:100}); }
+                      func:app.membic.monitorPicUpload, ms:100}); }
     },
 
 
@@ -1529,12 +1527,12 @@ return {
                 autocomptxt = srchtxt;
                 if(crev.revtype === "book" || crev.revtype === "movie" ||
                    crev.revtype === "music") {
-                    callAmazonForAutocomplete(app.review.autocompletion); }
+                    callAmazonForAutocomplete(app.membic.autocompletion); }
                 else if(crev.revtype === "yum" || crev.revtype === "activity") {
-                    callGooglePlacesAutocomplete(app.review.autocompletion); } }
+                    callGooglePlacesAutocomplete(app.membic.autocompletion); } }
             else {
                 app.fork({descr:"autocomp general start check",
-                          func:app.review.autocompletion, ms:750}); } }
+                          func:app.membic.autocompletion, ms:750}); } }
     },
 
 
@@ -1543,7 +1541,7 @@ return {
         crev.autocomp = cb && cb.checked;
         if(crev.autocomp) {
             autocomptxt = "";  //reset so search happens if toggling back on
-            app.review.autocompletion(); }
+            app.membic.autocompletion(); }
         else {
             jt.out("revautodiv", ""); }
     },
@@ -1558,9 +1556,9 @@ return {
                 url = urlin.value; } }
         if(!url) {  //reflect any other updates done in the interim.
             crev.autocomp = false;
-            return app.review.updatedlg(); }
+            return app.membic.updatedlg(); }
         if(!crev.dsId && editExistingMembicByURL(url)) {
-            return app.review.updatedlg(); }
+            return app.membic.updatedlg(); }
         if(crev.title && !crev.autocomp &&
            !confirm("Re-read title and other fields?")) {
             return; }
@@ -1581,7 +1579,7 @@ return {
             getURLReader(autourl, function (reader) {
                 reader.fetchData(crev, url, params); }); }
         else {
-            app.review.updatedlg(); }
+            app.membic.updatedlg(); }
     },
 
 
@@ -1633,7 +1631,7 @@ return {
         if(rdkwin.value && (rdkwin.value.trim() === crev.keywords ||
                             rdkwin.value.trim() === crev.keywords + ",")) {
             return; }
-        var keycsv = app.review.keywordcsv(kwid, rdkwin.value);
+        var keycsv = app.membic.keywordcsv(kwid, rdkwin.value);
         rdkwin.value = keycsv;
         displayAppropriateButton();
     },
@@ -1689,9 +1687,9 @@ return {
         crev.penid = crev.penid || app.profile.myProfId();  //verify
         app.layout.cancelOverlay(true);  //just in case it is still up
         app.onescapefunc = null;
-        app.review.serializeFields(crev);
+        app.membic.serializeFields(crev);
         var data = jt.objdata(crev);
-        app.review.deserializeFields(crev); //in case update fail or interim use
+        app.membic.deserializeFields(crev); //in case update fail or interim use
         data += "&editingtheme=" + app.pcd.editingTheme();
         jt.call("POST", "saverev?" + app.login.authparams(), data,
                 function (updobjs) {
@@ -1753,7 +1751,7 @@ return {
         validateCurrentReviewFields();  //don't lose input values on close
         app.layout.openOverlay(app.layout.placerel("dlgrevimg", -5, -80), 
                                html, null, picdlgModForm,
-                               jt.fs("app.review.updatedlg()"));
+                               jt.fs("app.membic.updatedlg()"));
     },
 
 
@@ -1867,7 +1865,7 @@ return {
                 app.fork({
                     descr:"selectLocLatLng retry",
                     func:function () {
-                        app.review.selectLocLatLng(latlng, ref, retry + 1,
+                        app.membic.selectLocLatLng(latlng, ref, retry + 1,
                                                    problem); },
                     ms:200 + (100 * retry)});
                 return;
@@ -1881,7 +1879,7 @@ return {
                         crev.name = crev.name.split(",")[0];
                         crev.acselkeyval = crev.name;
                         crev.url = crev.url || place.website || "";
-                        app.review.readURL(crev.url); }
+                        app.membic.readURL(crev.url); }
                     }); }
     },
 
@@ -1909,7 +1907,7 @@ return {
             try {
                 geoc.geocode({address: addr}, function (results, status) {
                     if(status === google.maps.places.PlacesServiceStatus.OK) {
-                        app.review.selectLocLatLng(
+                        app.membic.selectLocLatLng(
                             results[0].geometry.location, ref); }
                     else {
                         errlines.unshift("PlacesServiceStatus not OK");
@@ -2063,13 +2061,13 @@ return {
                 if(!app.membic.isDupe(rev, revs[i])) {  //no more children
                     break; }
                 elem = jt.byId(prefix + revs[i].dsId + "fpdiv");
-                if(app.review.displayingExpandedView(prefix, revid)) {
+                if(app.membic.displayingExpandedView(prefix, revid)) {
                     elem.style.display = "none"; }
                 else {
                     elem.style.display = "block"; } } }
         revdivid = prefix + revid;
         toggleDispRevText(prefix, revid, rev);
-        if(app.review.displayingExpandedView(prefix, revid)) {
+        if(app.membic.displayingExpandedView(prefix, revid)) {
             jt.out(revdivid + "authpicdiv", "");
             jt.out(revdivid + "secdiv", "");
             jt.out(revdivid + "datediv", "");

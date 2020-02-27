@@ -209,11 +209,11 @@ app.pcd = (function () {
     function getAssociationMessages(prof, porc) {
         var msgs = null;
         if(porc.dsType === "Theme") {
-            var mlev = app.coop.membershipLevel(porc, prof.instid);
+            var mlev = app.coop.membershipLevel(porc, prof.dsId);
             if(mlev) {
                 msgs = ctmmsgs[mlev]; } }
         if(!msgs) {  //Use profile cache only if no Coop info
-            if(prof.coops[porc.instid]) {  //following
+            if(prof.coops[porc.dsId]) {  //following
                 msgs = ctmmsgs[0]; }
             else {  //no association
                 msgs = noassoc; } }
@@ -221,7 +221,7 @@ app.pcd = (function () {
         var pt = printType();
         Object.keys(msgs).forEach(function (key) {
             cm[key] = msgs[key].replace(/\$dsType/g, pt); });
-        if(prof.coops[porc.instid] && porc.dsType === "MUser") {
+        if(prof.coops[porc.dsId] && porc.dsType === "MUser") {
             cm.uptxt = "";
             cm.upbtn = ""; }  //no further up levels if following profile
         return cm;
@@ -313,8 +313,8 @@ app.pcd = (function () {
         var name = people[profid];
         if(!name) {
             var prof = app.profile.myProfile();
-            if(prof && prof.coops && prof.coops[coop.instid]) {
-                var notices = prof.coops[coop.instid].notices || [];
+            if(prof && prof.coops && prof.coops[coop.dsId]) {
+                var notices = prof.coops[coop.dsId].notices || [];
                 notices.forEach(function (note) {
                     if(note.uid === profid) {
                         name = note.uname; } }); } }
@@ -511,7 +511,7 @@ app.pcd = (function () {
                               id:"picuploadform"},
                      [jt.paramsToFormInputs(app.login.authparams()),
                       jt.paramsToFormInputs("picfor=" + dst.type + 
-                                            "&instid=" + dst.obj.instid),
+                                            "&dsId=" + dst.obj.dsId),
                       ["div", {cla:"ptddiv"},
                        [["img", {id:"upldpicimg", cla:"profimgdis",
                                  src:pinf.src}],
@@ -557,7 +557,7 @@ app.pcd = (function () {
                               placeholder:"uniqueandshort",
                               value:dst.obj.hashtag}]]];
         var ark = "";
-        if(dst.type === "coop" && dst.instid) {
+        if(dst.type === "coop" && dst.dsId) {
             ark = ["div", {cla:"formline"},
                    [["input", {type:"checkbox", id:"arkcb", value:"archived",
                                checked:jt.toru(
@@ -614,7 +614,7 @@ app.pcd = (function () {
     function reviewTypeKeywordsHTML (prof) {
         var html = [];
         var kwu = app.profile.getKeywordUse(prof);
-        app.review.getReviewTypes().forEach(function (rt) {
+        app.membic.getMembicTypes().forEach(function (rt) {
             var defkeys = app.profile.keywordsForRevType(rt);
             html.push(
                 ["div", {cla:"rtkwdiv", id:"rtkwdiv" + rt.type},
@@ -730,7 +730,7 @@ app.pcd = (function () {
 
 
     function rssSettingsHTML () {
-        if(!jt.hasId(dst.obj)) {  //need an instid for rss url
+        if(!jt.hasId(dst.obj)) {  //need an dsId for rss url
             return ""; }
         var html = ["div", {cla:"formline"},
                     [["a", {href:"#rss", 
@@ -877,7 +877,7 @@ app.pcd = (function () {
             return false; }
         var nowiso = new Date().toISOString();
         if(dst.type === "coop") {
-            if(rev.ctmid !== dst.obj.instid) {
+            if(rev.ctmid !== dst.obj.dsId) {
                 return false; }  //source reference, not a coop rev
             if(rev.dispafter && rev.dispafter > nowiso &&
                !app.coop.membershipLevel(dst.obj)) {
@@ -909,7 +909,7 @@ app.pcd = (function () {
         var subj = "Selected links from " + dst.obj.name;
         var body = "Here are some links from " + dst.obj.name + ".\n" +
             "To select links yourself, go to https://membic.org/" +
-            dst.obj.instid;
+            dst.obj.dsId;
         sortedRevs.forEach(function (rev) {
             body += "\n\n" + rev.url + "\n" + (rev.title || rev.name) + "\n" +
                 rev.text; });
@@ -1009,7 +1009,7 @@ app.pcd = (function () {
 
     function shareAndFollowButtons () {
         var tac = app.layout.shareButtonsTAC(
-            {url:app.secsvr + "/" + dst.obj.instid,
+            {url:app.secsvr + "/" + dst.obj.dsId,
              title:dst.obj.name,
              mref:shareMailLink(),
              socmed:["tw", "fb", "em"]});
@@ -1057,7 +1057,7 @@ app.pcd = (function () {
                        ["div", {id:"pcddescrdiv"},
                         [["div", {id:"pcdnamediv"},
                           ["span", {id:"pcdnamespan", cla:"penfont"},
-                           obj.name || obj.instid]],
+                           obj.name || obj.dsId]],
                          ["div", {id:"ppcdshoutdiv"},
                           ["span", {cla:"shoutspan",
                                     style:"font-size:" + fsz + ";"}, 
@@ -1123,7 +1123,7 @@ app.pcd = (function () {
             //just in case preb had a bad value like {}
             obj.preb = []; }
         jt.log("resetDisplayStateFromObject " + obj.dsType + 
-               " id:" + obj.instid + " name:" + obj.name);
+               " id:" + obj.dsId + " name:" + obj.name);
         dst.obj = obj;
         dst.mtypes = "";
         dst.keywords = "";
@@ -1287,7 +1287,7 @@ app.pcd = (function () {
         if(!jt.hasId(dst.obj)) {  //creating a new theme
             jt.out("pcdcontdiv", "Settings required.");
             return app.pcd.settings(); }
-        if(dst.type === "coop" && dst.obj.instid) {
+        if(dst.type === "coop" && dst.obj.dsId) {
             app.profile.verifyMembership(dst.obj); }
         showContentControls();
         updateKeywordsSelectionArea();
@@ -1364,15 +1364,15 @@ app.pcd = (function () {
         if(note.type === "application") {
             if(note.status === "pending") {
                 txt = note.uname + " is applying";
-                if(note.uid === prof.instid) {
+                if(note.uid === prof.dsId) {
                     txt = "You are applying"; }
                 txt += " to become a " + levs[note.lev] + " of " + ctm.name;
-                addNotice({type:"theme", id:"app" + ctm.instid + note.uid,
+                addNotice({type:"theme", id:"app" + ctm.dsId + note.uid,
                            text:txt, fstr:appf, pic:ctm.picture}); }
             else if(note.status === "rejected") {
                 txt = "Your " + levs[note.lev] + " application to " +
                     ctm.name + " was rejected: " + note.reason;
-                addNotice({type:"threj", id:"app" + ctm.instid + note.uid,
+                addNotice({type:"threj", id:"app" + ctm.dsId + note.uid,
                            text:txt, fstr:appf, pic:ctm.picture}); } }
     }
 
@@ -1381,7 +1381,6 @@ app.pcd = (function () {
         prof.coops = prof.coops || {};
         Object.keys(prof.coops).forEach(function (ctmid) {
             var ctm = prof.coops[ctmid];
-            ctm.instid = ctmid;  //for ease of reference in making ids
             var notices = ctm.notices || [];
             var appf = jt.fs("app.pcd.fetchAndDisplay('coop','" + ctmid + 
                              "','Settings')");
@@ -1436,9 +1435,9 @@ return {
         var link = "/" + obj.hashtag;
         if(!obj.hashtag) {
             if(obj.dsType === "MUser" || obj.obtype === "profile") {
-                link = "/?u=" + (obj.dsId || obj.instid); }
+                link = "/?u=" + obj.dsId; }
             else if(obj.dsType === "Theme" || obj.obtype === "theme") {
-                link = "/?t=" + (obj.dsId || obj.instid); } }
+                link = "/?t=" + obj.dsId; } }
         return link;
     },
 
@@ -1613,7 +1612,7 @@ return {
             defs.objupdate(dst.obj,
                            function (updobj) {
                                dst.obj = updobj;
-                               dst.id = updobj.instid;  //verify set if new
+                               dst.id = updobj.dsId;  //verify set if new
                                app.layout.cancelOverlay();
                                app.pcd.redisplay(); },
                            function (code, errtxt) {
@@ -1630,7 +1629,7 @@ return {
                    " " + errtxt); };
         if(dst.type === "profile") {
             var custom = false;
-            app.review.getReviewTypes().forEach(function (rt) {
+            app.membic.getMembicTypes().forEach(function (rt) {
                 val = jt.byId("kwcsvin" + rt.type).value;
                 val = val.csvarray().join(",");  //remove whitespace in CSV
                 if(val !== rt.dkwords.join(",")) {
@@ -1766,13 +1765,16 @@ return {
     },
 
 
-    reviewItemNameHTML: function (type, revobj) {
+    membicItemNameHTML: function (type, membic) {
         var linktxt = "";
+        if(membic.details && typeof(membic.details) === "string") {
+            app.refmgr.deserialize(membic); }
+        var dets = membic.details || {};
         if(type.subkey) {
-            linktxt = "<i>" + jt.ellipsis(revobj[type.key], 60) + "</i> " +
-                jt.ellipsis(revobj[type.subkey], 40); }
+            linktxt = "<i>" + jt.ellipsis(dets[type.key], 60) + "</i> " +
+                jt.ellipsis(dets[type.subkey], 40); }
         else {
-            linktxt = jt.ellipsis(revobj[type.key], 60); }
+            linktxt = jt.ellipsis(dets[type.key], 60); }
         return linktxt;
     },
 
@@ -1802,7 +1804,7 @@ return {
     showNotices: function () {
         jt.out("pcdnotidiv", "");
         var prof = app.profile.myProfile();
-        if(!prof || dst.type !== "profile" || dst.id !== prof.instid) {
+        if(!prof || dst.type !== "profile" || dst.id !== prof.dsId) {
             return; }  //not viewing own profile
         showProfileNotices(prof);
         showThemeNotices(prof);
@@ -1832,17 +1834,17 @@ return {
             return; }
         if(!actspan.innerHTML) {  //initialize
             var rev = dst.obj.preb.find(function (r) {
-                return r.instid === revid; });
+                return r.dsId === revid; });
             if(rev.penid === app.profile.myProfId()) {  //my membic
                 var html = ["a", {href:"#edit",
                                   onclick:jt.fs("app.pcd.editMembic('" + 
-                                                rev.instid + "')")},
+                                                rev.dsId + "')")},
                             ["img", {cla:"revedimg", 
                                      src:"img/writereview.png"}]];
                 if(dst.id === app.profile.myProfId()) {  //my profile
                     html = [["a", {href:"#delete",
                                    onclick:jt.fs("app.pcd.deleteMembic('" + 
-                                                 rev.instid + "')")},
+                                                 rev.dsId + "')")},
                              ["img", {cla:"revedimg", src:"img/trash.png"}]],
                             html]; }
                 actspan.innerHTML = jt.tac2html(html); }
@@ -1853,7 +1855,7 @@ return {
                     actspan.innerHTML = jt.tac2html(
                         ["a", {href:"#remove",
                                onclick:jt.fs("app.pcd.removeMembic('" + 
-                                             rev.instid + "')")},
+                                             rev.dsId + "')")},
                          ["img", {cla:"revedimg", src:"img/trash.png",
                                   id:"trashmembic" + revid}]]); }
                 else {  //fill with a space to avoid initializing again
@@ -1862,7 +1864,7 @@ return {
             actspan.style.display = "inline"; }
         else {
             actspan.style.display = "none"; }
-        app.review.toggleExpansion(srchst.disprevs, prefix, revid);
+        app.membic.toggleExpansion(srchst.disprevs, prefix, revid);
     },
 
 
@@ -2015,18 +2017,18 @@ return {
 
     editMembic: function (revid) {
         var rev = dst.obj.preb.find(function (r) { 
-            return r.instid === revid; });
+            return r.dsId === revid; });
         if(dst.type === "coop") {
             rev = app.profile.myProfile().preb.find(function (r) {
-                return r.instid === rev.srcrev; }); }
-        app.review.start(rev);
+                return r.dsId === rev.srcrev; }); }
+        app.membic.start(rev);
     },
 
 
     deleteMembic: function (revid) {
         //delete is only available when viewing your own profile
         var rev = dst.obj.preb.find(function (r) { 
-            return r.instid === revid; });
+            return r.dsId === revid; });
         //not bringing up the review dialog since people might get confused
         //and think they are editing, even if the button says "Delete".  A
         //low-level looking confirmation warning is appropriate.
@@ -2055,7 +2057,7 @@ return {
 
     removeMembic: function (rtid) {
         var rev = dst.obj.preb.find(function (r) { 
-            return r.instid === rtid; });
+            return r.dsId === rtid; });
         var rin = jt.byId("whyremovein");
         if(!rin) {
             var placetext = "Let " + rev.penname + 

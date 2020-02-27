@@ -205,7 +205,7 @@ app.layout = (function () {
                 ["div", {cla:"printrevdiv"},
                  [["div", {cla:"fprevpicdiv"}, pic],
                   ["a", {href: url},
-                   app.pcd.reviewItemNameHTML(type, membic)],
+                   app.pcd.membicItemNameHTML(type, membic)],
                   ["br"],
                   jt.linkify(membic.text || "")]]); });
         txt += "</body></html>\n";

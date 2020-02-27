@@ -103,7 +103,7 @@ return {
         return null; },
 
 
-    put: function (obj) {
+    put: function (obj) {  //obj is already deserialized
         if(!obj) {
             jt.log("refmgr.put: Attempt to put null obj");
             console.trace(); }

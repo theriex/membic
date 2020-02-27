@@ -346,7 +346,7 @@ def sitedescr_for_object(obj):
 def embed_spec_objson(obj):
     embed = dbacc.reqarg("site", "string")
     if embed and obj:
-        embed = "{ctmid:\"" + str(obj.key().id()) +\
+        embed = "{dsType:\"" + obj["dsType"] + "\", dsId:\"" + obj["dsId"] +\
                 "\", site:\"" + embed + "\"}"
     else:
         embed = "null"

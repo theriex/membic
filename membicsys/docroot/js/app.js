@@ -161,6 +161,7 @@ var jt = {};   //Global access to general utility methods
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
         if(app.pfoj) {
+            app.refmgr.deserialize(app.pfoj);
             app.refmgr.put(app.pfoj); }
         //bootstrap completed, end this thread and begin next phase
         app.fork({descr:"initial authentication",

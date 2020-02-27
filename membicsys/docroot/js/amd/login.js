@@ -700,9 +700,9 @@ return {
             app.themes.keepdef();  //save the definition for general use
             //if pfoj is a theme or profile, view it (specified by the URL)
             if(app.pfoj && app.pfoj.dsType === "Theme") {
-                state = {view:"coop", coopid:app.pfoj.instid}; }
+                state = {view:"coop", coopid:app.pfoj.dsId}; }
             else if(app.pfoj && app.pfoj.dsType === "MUser") {
-                state = {view:"profile", profid:app.pfoj.instid}; }
+                state = {view:"profile", profid:app.pfoj.dsId}; }
             else if(app.login.isLoggedIn()) {  //your profile is your home
                 state = {view: "profile"}; }
             else {

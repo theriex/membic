@@ -802,7 +802,7 @@ function createJSServerAcc () {
     jsc += "        return null; },\n";
     jsc += "\n";
     jsc += "\n";
-    jsc += "    put: function (obj) {\n";
+    jsc += "    put: function (obj) {  //obj is already deserialized\n";
     jsc += "        if(!obj) {\n";
     jsc += "            jt.log(\"refmgr.put: Attempt to put null obj\");\n";
     jsc += "            console.trace(); }\n";
