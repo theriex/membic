@@ -47,17 +47,17 @@ app.themes = (function () {
         tps = null;  //reset local cached array each time to use latest
         atfs = "";
         jt.out("themedispstatdiv", "Fetching themes");
-        var atr = app.lcs.getRef("activetps", "411");
-        if(atr.activetps) {  //have cached recent
+        var atr = app.refmgr.cached("activetps", "411");
+        if(atr) {  //have cached recent
             //jt.log("using cached activetps");
-            atfs = atr.activetps.modified.replace(/[\-:]/g,"");  //friendlier
-            tps = mergePersonalThemesForAccess(atr.activetps.jtps); }
+            atfs = atr.modified.replace(/[\-:]/g,"");  //friendlier
+            tps = mergePersonalThemesForAccess(atr.jtps); }
         else {  //no recent, go get it
             //jt.log("fetching activetps");
             jt.call("GET", "/api/recentactive" + jt.ts("?cb=", "minute"), null,
                     function (racs) {
                         jt.log("loaded activetps from /recentactive results");
-                        app.lcs.put("activetps", racs[0]);
+                        app.refmgr.put(racs[0]);
                         app.themes.display(); },  //calls back into initVars
                     app.failf(function (code, errtxt) {
                         jt.err("Fetching recent active failed " + code + ": " +

@@ -108,6 +108,14 @@ app.pcd = (function () {
     }
 
 
+    function fetchType (dtype) {
+        switch(dtype) {
+        case "profile": return "MUser";
+        case "theme": return "Theme"; }
+        return dtype;
+    }
+
+
     function getDirectLinkInfo (usehashtag) {
         var infobj = {title: "", url: app.hardhome};
         if(dst.type === "profile") {
@@ -127,8 +135,8 @@ app.pcd = (function () {
         var defs = dst[dst.type];
         var src = "img/nopicprof.png";
         if(obj[defs.picfield]) {  //e.g. profile.profpic
-            //fetch with mild cachebust in case modified
-            src = defs.picsrc + obj.dsId + "&modified=" + obj.modified; }
+            src = "/api/obimg?dt=" + fetchType(dst.type) + "&di=" + dst.id +
+                "&cb=" + obj.modified.replace(/[\-:]/g,""); }
         return src;
     }
 
@@ -926,7 +934,7 @@ app.pcd = (function () {
         if(dst.type === "profile" && dst.id === app.profile.myProfId() &&
            (!dst.obj.preb || !dst.obj.preb.length)) {
             xem = "Click the write button above."; }
-        app.review.displayReviews("pcdsrchdispdiv", "pcds", sortedRevs, 
+        app.membic.displayMembics("pcdsrchdispdiv", "pcds", sortedRevs,
                                   "app.pcd.toggleRevExpansion",
                                   includeAuthorsInRevs, xem);
         updateResultsEmailLink(sortedRevs);
@@ -963,7 +971,7 @@ app.pcd = (function () {
         var link = document.createElement("link");
         link.type = "image/x-icon";
         link.rel = "shortcut icon";
-        link.href = dst[dst.type].picsrc + dst.id;
+        link.href = "/api/obimg?dt=" + fetchType(dst.type) + "&di=" + dst.id;
         document.getElementsByTagName("head")[0].appendChild(link);
     }
 
@@ -1125,7 +1133,7 @@ app.pcd = (function () {
     function findTypesForKeyword (key) {
         var res = "";
         //PENDING: extend to also check user profile type overrides
-        var rts = app.review.getReviewTypes();
+        var rts = app.membic.getMembicTypes();
         rts.forEach(function (rt) {
             if(rt.dkwords.indexOf(key) >= 0) {
                 res = res.csvappend(rt.type); } });
@@ -1396,7 +1404,7 @@ app.pcd = (function () {
 
     function indicateAndHandleOverflow () {
         var preb = dst.obj.preb;
-        if(!preb.length || !preb[preb.length - 1].overflow) {
+        if(!preb.length || preb[preb.length - 1].dsType !== "Overflow") {
             return jt.out("pcdovermorediv", ""); }
         //indicate that the current display is missing overflowed info
         //and they can click to get more
@@ -1404,19 +1412,18 @@ app.pcd = (function () {
             ["a", {href:"#more",
                    onclick:jt.fs("app.pcd.searchReviews()")},
              "More..."]));
-        //fetch one more level of overflow so it will be available next time
+        //fetch one more level of overflow so it will be available next time.
         //dst.obj.preb is copied/filtered/sorted before display, so generally
-        //no timing conflict updating preb here after fetch.
-        var overid = preb[preb.length - 1].overflow;
-        jt.call("GET", "ovrfbyid?overid=" + overid, null,
-                function (overs) {
-                    var overflow = overs[0];
-                    app.lcs.reconstituteJSONObjectField("preb", overflow);
-                    dst.obj.preb = preb.slice(0, -1).concat(overflow.preb); },
-                app.failf(function (code, errtxt) {
-                    jt.out("pcdovermorediv", "ovrfbyid " + overid + " " +
-                           code + " " + errtxt); }),
-                jt.semaphore("pcd.indicateAndHandleOverflow"));
+        //no timing conflict updating preb here after fetch.  Overflows are 
+        //rarely updated, and can be helpful to keep them for dereferencing 
+        //again after writing another membic.
+        var ovrsum = preb[preb.length - 1];  //no preb info in summary
+        app.refmgr.getFull(ovrsum.dsType, ovrsum.dsId, function (overflow) {
+            if(overflow) {
+                dst.obj.preb = preb.slice(0, -1).concat(overflow.preb); }
+            else {
+                jt.out("pcdovermorediv", app.failmsg(
+                    "Unable to load Overflow " + ovrsum.dsId)); } });
     }
 
 
@@ -1429,9 +1436,9 @@ return {
         var link = "/" + obj.hashtag;
         if(!obj.hashtag) {
             if(obj.dsType === "MUser" || obj.obtype === "profile") {
-                link = "/user/" + (obj.dsId || obj.instid); }
+                link = "/?u=" + (obj.dsId || obj.instid); }
             else if(obj.dsType === "Theme" || obj.obtype === "theme") {
-                link = "/theme/" + (obj.dsId || obj.instid); } }
+                link = "/?t=" + (obj.dsId || obj.instid); } }
         return link;
     },
 
@@ -1659,7 +1666,7 @@ return {
                     dst.obj[defs.picfield] = dst.id;
                     dst.obj.modified = txt.slice(mtag.length);
                     app.layout.cancelOverlay();
-                    app.lcs.uncache("activetps", "411");  //refresh imgsrc cb
+                    app.refmgr.uncache("activetps", "411");  //refresh imgsrc cb
                     app.pcd.display(dst.type, dst.id);
                     return; }
                 if(txt && txt.trim() && txt.trim() !== "Ready") {
@@ -1944,7 +1951,7 @@ return {
         if(dtype && id) {  //object should already be cached
             dst.type = dtype;
             dst.id = id;
-            dst.obj = app.lcs.getRef(dtype, id)[dtype];
+            dst.obj = app.refmgr.cached(fetchType(dtype), id);
             return displayObject(dst.obj, command); }
         if(dtype === "coop") {  //creating new coop
             var prof = app.profile.myProfile();
@@ -1992,7 +1999,7 @@ return {
         if(!id) {
             jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
             jt.log(new Error().stack); }
-        app.lcs.getFull(dtype, id, function (obj) {
+        app.refmgr.getFull(fetchType(dtype), id, function (obj) {
             if(!obj) {
                 jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
                 return app.themes.display(); }

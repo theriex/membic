@@ -22,6 +22,10 @@ def mailpwr():  # params: emailin
 def recentactive():
     return start.recentactive()
 
+@app.route('/api/fetchobj')
+def fetchobj():  # params: dt (dsType), di (dsId)
+    return util.fetchobj()
+
 @app.route('/api/obimg')
 def obimg():  # params: dt (dsType), di (dsId)
     return util.obimg()

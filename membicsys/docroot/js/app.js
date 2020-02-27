@@ -161,7 +161,7 @@ var jt = {};   //Global access to general utility methods
         jt.on(document, "keydown", app.globkey);
         jt.on(window, "popstate", app.history.pop);
         if(app.pfoj) {
-            app.lcs.put(app.pfoj.dsType, app.pfoj); }
+            app.refmgr.put(app.pfoj); }
         //bootstrap completed, end this thread and begin next phase
         app.fork({descr:"initial authentication",
                   func:app.login.init, ms:10});
@@ -197,8 +197,8 @@ var jt = {};   //Global access to general utility methods
         //The ordering of the modules will encourage, but not guarantee, that
         //earlier modules will be available for reference across modules.  So
         //best not to reference other modules within top level module vars.
-        var modules = [ "js/amd/themes", "js/amd/profile", "js/amd/review",
-                        "js/amd/layout", "js/amd/lcs", "js/amd/history",
+        var modules = [ "js/amd/themes", "js/amd/profile", "js/amd/membic",
+                        "js/amd/layout", "js/amd/refmgr", "js/amd/history",
                         "js/amd/login", "js/amd/pcd", "js/amd/coop",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/jsonapi",
@@ -301,6 +301,21 @@ var jt = {};   //Global access to general utility methods
                 return app.crash(code, errtxt, method, url, data);
             default: 
                 failfunc(code, errtxt, method, url, data); } };
+    };
+
+
+    app.failmsg = function (errmsg) {
+        var subj = errmsg;
+        var body = "Hey,\n\n" +
+            "At around server time " + (new Date().toISOString()) +
+            " I got the following error message: " + errmsg + 
+            "\n\nI'm sending it along so you can look into it.\n\n" +
+            "thanks,\n";
+        var emref = "mailto:" + app.suppemail + "?subject=" + 
+            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
+        return jt.tac2html(
+            [msg + ". ",
+             ["a", {href:emref}, "Please tell the dev team."]]);
     };
 
 

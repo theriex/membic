@@ -2,7 +2,7 @@
 
 /*jslint browser, white, fudge, for, long */
 
-app.review = (function () {
+app.membic = (function () {
     "use strict";
 
     ////////////////////////////////////////
@@ -28,26 +28,15 @@ app.review = (function () {
     var geoc = null;
     var gplacesvc = null;
     var maxabbrev = 400;
-    //             Review definitions:
-    //Review type definitions always include the url field, it is
-    //appended automatically if not explicitely listed elsewhere
-    //in the type definition.  Field names are converted to lower
-    //case with all spaces removed for use in storage, and
-    //capitalized for use as labels.  Fields defined here also
-    //need to be supported server side in the object model (rev.py)
-    //
-    //Definition guidelines:
-    // 1. Too many fields makes it tedious to enter a review.  The
-    //    goal here is to provide adequate identification for
-    //    someone reading a review, not to be an item database.
-    //    Links to item database entries can go in the url field.
-    // 2. Default keywords should be widely applicable across the
-    //    possible universe of reviews.  When practical, a keyword
-    //    should describe your perception rather than being
-    //    classificational (e.g. "Funny" rather than "Comedy").
+    // Membic Type Definition guidelines:
+    // 1. Too many fields makes entry tedious.  The goal is adequate
+    //    identification, not full database info.
+    // 2. Default keywords should be widely applicable across the possible 
+    //    universe of membics for a type.  They describe perceptions, not
+    //    classification (e.g. "Funny" rather than "Comedy").
     // 3. If something has a subkey, keep the primary key prompt
-    //    short so it doesn't cause bad formatting.
-    var reviewTypes = [
+    //    short so it doesn't cause ugly formatting.
+    var membicTypes = [
         { type: "book", plural: "books", img: "TypeBook50.png",
           keyprompt: "Title",
           key: "title", subkey: "author",
@@ -118,7 +107,7 @@ app.review = (function () {
         if(typeof rating !== "number") {
             mode = mode || (rating.srcrev === "-101" ? "prereview" : "read");
             rating = rating.rating; }
-        rat = app.review.starRating(rating);
+        rat = app.membic.starRating(rating);
         width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = [];
         html.push(["img", {cla: "starsimg", src: "img/blank.png",
@@ -151,13 +140,13 @@ app.review = (function () {
     }
 
 
-    function findReviewType (type) {
+    function findMembicType (type) {
         var revtype;
         if(!type) {
             return null; }
         type = type.toLowerCase();
-        revtype = reviewTypes[reviewTypes.length - 1];  // default is "other"
-        reviewTypes.every(function (rt) {
+        revtype = membicTypes[membicTypes.length - 1];  // default is "other"
+        membicTypes.every(function (rt) {
             if(rt.type === type || rt.plural === type) {
                 revtype = rt;
                 return false; }
@@ -216,23 +205,23 @@ app.review = (function () {
     }
 
 
-    function verifyReviewImageDisplayType (review) {
+    function verifyMembicImageDisplayType (membic) {
         var dt = "guess";
-        if(review.svcdata && typeof review.svcdata === "string") {
-            app.review.deserializeFields(review); }
-        if(review.svcdata && review.svcdata.picdisp) {
-            dt = review.svcdata.picdisp; }
+        if(membic.svcdata && typeof membic.svcdata === "string") {
+            app.refmgr.deserialize(membic); }
+        if(membic.svcdata && membic.svcdata.picdisp) {
+            dt = membic.svcdata.picdisp; }
         if(dt !== "nopic" && dt !== "sitepic" && dt !== "upldpic") {
             dt = "guess"; }
         if(dt === "guess") {
-            if(review.imguri) {
+            if(membic.imguri) {
                 dt = "sitepic"; }
-            else if(review.revpic) {
+            else if(membic.revpic) {
                 dt = "upldpic"; }
             else {
                 dt = "nopic"; } }
-        review.svcdata = review.svcdata || {};
-        review.svcdata.picdisp = dt;
+        membic.svcdata = membic.svcdata || {};
+        membic.svcdata.picdisp = dt;
         return dt;
     }
 
@@ -287,7 +276,7 @@ app.review = (function () {
                 src: "img/nopicprof.png"};
         if(jt.isLowFuncBrowser()) {
             html.style = "width:125px;height:auto;"; }
-        switch(verifyReviewImageDisplayType(review)) {
+        switch(verifyMembicImageDisplayType(review)) {
         case "sitepic":
             html.src = sslSafeRef(review.dsId, review.imguri);
             break;
@@ -399,7 +388,7 @@ app.review = (function () {
 
     function readAndValidateFieldValues (type, errors) {
         if(!type) {
-            type = findReviewType(crev.revtype); }
+            type = findMembicType(crev.revtype); }
         if(!errors) {
             errors = []; }
         var fields = ["keywords", "text", "imguri", "penname", "name", "title",
@@ -420,7 +409,7 @@ app.review = (function () {
 
     function validateCurrentReviewFields () {
         var errors = [];
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {
             errors.push("Need to choose a type");
             return errors; }
@@ -496,7 +485,7 @@ app.review = (function () {
 
     function fpSecondaryFieldsHTML (rev) {
         var html = [];
-        findReviewType(rev.revtype).fields.forEach(function (field) {
+        findMembicType(rev.revtype).fields.forEach(function (field) {
             var value = jt.ndq(rev[field]);
             if(value) {
                 if(field === "address") {
@@ -610,7 +599,7 @@ app.review = (function () {
                   "Done"]])); }
         statmsg = statmsg || "";
         jt.out("rdokstatdiv", statmsg);
-        if((statmsg && !messageWithButton) || !findReviewType(crev.revtype)) {
+        if((statmsg && !messageWithButton) || !findMembicType(crev.revtype)) {
             jt.byId("rdokbuttondiv").style.display = "none"; }
         else if(haveChanges()) {
             jt.byId("sharediv").style.display = "none";
@@ -639,7 +628,7 @@ app.review = (function () {
         var sval = Math.min(Math.round((relx / spanloc.w) * 100), 100);
         //jt.out("keyinlabeltd", "starDisplayAdjust sval: " + sval);  //debug
         if(roundup) {
-            sval = app.review.starRating(sval, true).value; }
+            sval = app.membic.starRating(sval, true).value; }
         crev.rating = sval;
         var html = starsImageHTML(crev, "edit");
         jt.out("stardisp", html);
@@ -982,7 +971,7 @@ app.review = (function () {
 
     function dlgRevTypeSelection () {
         var html = [];
-        reviewTypes.forEach(function (rt) {
+        membicTypes.forEach(function (rt) {
             var clt = "reviewbadge";
             if(crev.revtype === rt.type) {
                 clt = "reviewbadgesel"; }
@@ -1010,7 +999,7 @@ app.review = (function () {
 
 
     function dlgKeyFieldEntry () {
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {  //no type selected yet
             return; }
         var html = "";
@@ -1048,7 +1037,7 @@ app.review = (function () {
 
     function dlgPicHTML () {
         var imgsrc = "img/nopicrev.png";
-        var type = verifyReviewImageDisplayType(crev);
+        var type = verifyMembicImageDisplayType(crev);
         if(type === "upldpic") {
             imgsrc = "revpic?revid=" + crev.dsId + 
                 jt.ts("&cb=", crev.modified); }
@@ -1061,7 +1050,7 @@ app.review = (function () {
     function dlgStarsHTML () {
         var imgfile = "img/stars18ptC.png"; 
         var greyfile = "img/stars18ptCg.png";
-        var rat = app.review.starRating(crev.rating);
+        var rat = app.membic.starRating(crev.rating);
         var width = Math.floor(rat.step * (starimgw / rat.maxstep));
         var html = [];
         html.push(["img", {cla: "starsimg", src: "img/blank.png",
@@ -1140,7 +1129,7 @@ app.review = (function () {
 
 
     function dlgDetailsEntry () {
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {  //no type selected yet, so no key field entry yet.
             return; }
         if(!jt.byId("rdpfdiv").innerHTML) {
@@ -1171,7 +1160,7 @@ app.review = (function () {
 
 
     function dlgTextEntry () {
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {  //no type selected yet, so no text entry yet.
             return; }
         if(!jt.byId("rdtextdiv").innerHTML) {
@@ -1188,7 +1177,7 @@ app.review = (function () {
 
 
     function dlgKeywordEntry () {
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
         crev.keywords = crev.keywords || "";
@@ -1264,7 +1253,7 @@ app.review = (function () {
 
 
     function dlgCoopPostSelection () {
-        var rt = findReviewType(crev.revtype);
+        var rt = findMembicType(crev.revtype);
         if(!rt) {  //no type selected yet, so no keyword entry yet
             return; }
         var html = [];
@@ -1308,7 +1297,7 @@ app.review = (function () {
 
 
     function membicTitleLine (type, rev, revdivid) {
-        var url = app.review.membicURL(type, rev);
+        var url = app.membic.membicURL(type, rev);
         var starstyle = "display:inline-block;";
         if(app.winw < 600) {
             starstyle = "float:right;"; }
@@ -1331,7 +1320,7 @@ app.review = (function () {
                       "&nbsp;",
                       ["div", {cla:"starsnjumpdiv", style:starstyle},
                        ["div", {cla: "fpstarsdiv"},
-                        app.review.starsImageHTML(rev)]]]]];
+                        app.membic.starsImageHTML(rev)]]]]];
         return html;
     }
 
@@ -1596,13 +1585,13 @@ return {
     },
 
 
-    getReviewTypes: function () {
-        return reviewTypes;
+    getMembicTypes: function () {
+        return membicTypes;
     },
 
 
-    getReviewTypeByValue: function (val) {
-        return findReviewType(val);
+    getMembicTypeByValue: function (val) {
+        return findMembicType(val);
     },
 
 
@@ -1731,7 +1720,7 @@ return {
         if(picdisp) {
             crev.scvdata = crev.svcdata || {};
             crev.svcdata.picdisp = picdisp; }
-        var dt = verifyReviewImageDisplayType(crev);
+        var dt = verifyMembicImageDisplayType(crev);
         var revid = crev.dsId;
         var html = [
             "div", {id:"revpicdlgdiv"},
@@ -1967,14 +1956,14 @@ return {
 
 
     revdispHTML: function (prefix, revid, rev, togfname) {
-        togfname = togfname || "app.review.toggleExpansion";
+        togfname = togfname || "app.membic.toggleExpansion";
         var revdivid = prefix + revid;
-        var type = app.review.getReviewTypeByValue(rev.revtype);
+        var type = app.membic.getMembicTypeByValue(rev.revtype);
         fixReviewURL(rev);
         var html = ["div", {cla:"fpinrevdiv"}, [
             ["div", {cla:"fptitlediv"}, membicTitleLine(type, rev, revdivid)],
             ["div", {cla:"fpbodydiv"},
-             [["div", {cla:"fprevpicdiv"}, app.review.picHTML(rev, type)],
+             [["div", {cla:"fprevpicdiv"}, app.membic.picHTML(rev, type)],
               ["div", {cla:"fpdcontdiv"},
                ["div", {cla:"fpdescrdiv", id:revdivid + "descrdiv"},
                 dispRevText(prefix, revid, rev, togfname)]],
@@ -1988,7 +1977,7 @@ return {
     },
 
 
-    isDupeRev: function (/* rev, pr */) {
+    isDupe: function (/* rev, pr */) {
         //With a feed based design and inline text review expansion,
         //collapsing duplicate reviews is confusing.  Leaving this code here
         //for reference in case the collapse turns out to be useful as an
@@ -2002,14 +1991,14 @@ return {
     },
 
 
-    displayReviews: function (pdvid, pfx, membics, ptogb, pauth, xem) {
+    displayMembics: function (pdvid, pfx, membics, ptogb, pauth, xem) {
         var html = [];
         var rt = app.layout.getType();
         if(!membics || membics.length === 0) {
             if(rt === "all") {
                 html = "No membics to display."; }
             else {
-                rt = app.review.getReviewTypeByValue(rt);
+                rt = app.membic.getMembicTypeByValue(rt);
                 html = "No " + rt.plural + " found."; }
             if(xem) {  //display extra empty message (prompt to write)
                 html = [html, xem]; }
@@ -2021,7 +2010,7 @@ return {
         app.loopers.push(state);
         app.fork({descr:"revDispIterator start",
                   func:function () {
-                      app.review.revDispIterator(state); },
+                      app.membic.revDispIterator(state); },
                   ms:50});
     },
 
@@ -2037,7 +2026,7 @@ return {
             revdivid = state.prefix + rev.dsId;
             maindivattrs = {id: revdivid + "fpdiv", cla: "fpdiv"};
             if(rev.srcrev === "-604" || 
-                   app.review.isDupeRev(rev, state.prev) || 
+                   app.membic.isDupe(rev, state.prev) || 
                    (state.author === "notself" && 
                     rev.penid === app.profile.myProfId())) {
                 maindivattrs.style = "display:none"; }
@@ -2047,14 +2036,14 @@ return {
                 ["div", maindivattrs,
                  ["div", {cla: (state.author? "fparevdiv" : "fpnarevdiv"),
                           id: revdivid},
-                  app.review.revdispHTML(state.prefix, rev.dsId, 
+                  app.membic.revdispHTML(state.prefix, rev.dsId, 
                                          rev, state.togcbn)]]);
             outdiv.appendChild(elem); 
             state.idx += 1;
             app.fork({
                 descr:"revDispIterator loop",
                 func:function () {
-                    app.review.revDispIterator(state); },
+                    app.membic.revDispIterator(state); },
                 ms:50}); }
     },
 
@@ -2068,10 +2057,10 @@ return {
                 break; } }
         if(!rev) {  //bad revid or bad call, nothing to do
             return; }
-        if(i === 0 || !app.review.isDupeRev(revs[i - 1], rev)) {  //primary rev
+        if(i === 0 || !app.membic.isDupe(revs[i - 1], rev)) {  //primary rev
             //toggle expansion on any associated dupes
             for(i += 1; i < revs.length; i += 1) {
-                if(!app.review.isDupeRev(rev, revs[i])) {  //no more children
+                if(!app.membic.isDupe(rev, revs[i])) {  //no more children
                     break; }
                 elem = jt.byId(prefix + revs[i].dsId + "fpdiv");
                 if(app.review.displayingExpandedView(prefix, revid)) {
@@ -2115,7 +2104,8 @@ return {
             if(type.subkey) {
                 url += " " + membic[type.subkey]; }
             url = jt.enc(url);
-            url = "https://www.google.com/?q=" + url + "#q=" + url; }
+            //search for it. Use something vaguely privacy friendly.
+            url = "https://duckduckgo.com/?q=" + url; }
         return url;
     },
 

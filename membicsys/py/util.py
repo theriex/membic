@@ -86,6 +86,17 @@ def first_group_match(expr, text):
     return None
 
 
+def modcv(obj):  # cache bust value from object modified field
+    return re.sub(r"[\-:]", "", obj["modified"])
+
+
+def pdtdi(obj, cachev=""):  # parameterized dsType and dsId, with cache bust
+    dtdi = "dt=" + obj["dsType"] + "&di=" + obj["dsId"]
+    if not cachev:
+        dtdi += "&v=" + modcv(obj)
+    return dtdi
+
+
 def get_connection_service(svcname):
     cs = dbacc.cfbk("ConnectionService", "name", svcname)
     if not cs:
@@ -170,26 +181,30 @@ def in_terms_vio(entity, dsId, data=None):
 def add_membic_to_preb(context, membic):
     prebsize = 200
     memsum = {}
-    mflds = ["dsId", "created", "modified", "url", "rurl", "revtype",
-             "details", "penid", "ctmid", "rating", "srcrev", "cankey",
-             "text", "keywords", "svcdata", "imguri", "dispafter", 
-             "penname", "reacdat"]
+    mflds = ["dsId", "dsType", "created", "modified", "url", "rurl", "revtype",
+             "details", "penid", "ctmid", "rating", "srcrev", "cankey", "text", 
+             "keywords", "svcdata", "imguri", "dispafter", "penname", "reacdat"]
     for mfld in mflds:
         memsum[mfld] = membic[mfld]
     if membic["revpic"]:
         memsum["revpic"] = membic["dsId"]
-    context["pbms"].append(memsum)
+    # dequeue.appendleft is faster, but not worth the conversion
+    context["pbms"].insert(0, memsum)
     if len(context["pbms"]) >= 2 * prebsize:
         ovrf = dbacc.write_entity({
             "dsType": "Overflow",
             "dbkind": context["entity"],
             "dbkeyid": context["inst"]["dsId"],
-            "preb": json.dumps(context["pbms"][:prebsize])})
+            "preb": json.dumps(context["pbms"][prebsize:])})
         context["pbms"] = context["pbms"][0:prebsize]
-        context["pbms"].append(ovrf["dsId"])
+        ovrf["preb"] = ""  # Do not include in summary marker object
+        context["pbms"].append(ovrf)
 
 
-# page through the reviews for the given user or theme.
+# Page through the membics for the given user or theme, rebuilding the
+# context preb.  Normally each membic is added individually, this method
+# supports a complete rebuild, like when the preb and associated overflows
+# have been cleared from the database.
 def rebuild_prebuilt(context):
     chunk = 100
     where = "WHERE ctmid=0 AND penid=" + str(context["inst"]["dsId"])
@@ -340,4 +355,18 @@ def obimg():
     resp = flask.make_response(imgdat)
     resp.mimetype = "image/png"
     return resp
+
+
+def fetchobj():
+    oj = ""
+    try:
+        dsType = dbacc.reqarg("dt", "string", required=True)
+        dsId = dbacc.reqarg("di", "string", required=True)
+        inst = dbacc.cfbk(dsType, "dsId", dsId)
+        if not inst:
+            raise ValueError(dsType + " " + dsId + " not found")
+        oj = safe_JSON(inst)
+    except ValueError as e:
+        return serveValueError(e)
+    return respJSON("[" + oj + "]")
 

@@ -1386,7 +1386,7 @@ def query_entity(entity, where):
 
 def visible_MUser_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         if fld == "email" and audience != "private":
             continue
         if fld == "phash":
@@ -1409,7 +1409,7 @@ def visible_MUser_fields(obj, audience):
 
 def visible_Theme_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         if fld == "picture":
             val = obj["dsId"]
         filtobj[fld] = val
@@ -1418,14 +1418,14 @@ def visible_Theme_fields(obj, audience):
 
 def visible_AdminLog_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         filtobj[fld] = val
     return filtobj
 
 
 def visible_Membic_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         if fld == "revpic":
             val = obj["dsId"]
         if fld == "icdata":
@@ -1436,35 +1436,36 @@ def visible_Membic_fields(obj, audience):
 
 def visible_Overflow_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         filtobj[fld] = val
     return filtobj
 
 
 def visible_MailNotice_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         filtobj[fld] = val
     return filtobj
 
 
 def visible_ActivitySummary_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         filtobj[fld] = val
     return filtobj
 
 
 def visible_ConnectionService_fields(obj, audience):
     filtobj = {}
-    for fld, val in obj.iteritems():
+    for fld, val in obj.items():
         filtobj[fld] = val
     return filtobj
 
 
 # Return a copied object with only the fields appropriate to the audience.
 # Specifying audience="private" includes peronal info.  The given obj is
-# assumed to already have been through db2app conversion.
+# assumed to already have been through db2app conversion.  Image fields are
+# converted to dsId values for separate download.
 def visible_fields(obj, audience="public"):
     if obj["dsType"] == "MUser":
         return visible_MUser_fields(obj, audience)

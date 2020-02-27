@@ -262,18 +262,39 @@ def recent_active_content():
     return content, pfoj
 
 
+def title_for_membic(membic):
+    dets = membic["details"]
+    if type(dets) == str:
+        dets = json.loads(dets)
+    title = ""
+    if "title" in dets:
+        title = dets["title"]
+    elif "name" in dets:
+        title = dets["name"]
+    return title
+
+
 def membics_from_prebuilt(obj):
+    logmsg = "start.py membics_from_prebuilt " + obj["dsType"] + obj["dsId"]
     html = ""
     mems = obj["preb"] or "[]"
     mems = json.loads(mems)
-    logging.debug("membics_from_prebuilt: " + str(mems))
+    if type(mems) != list:
+        logging.warning(logmsg + " mems is " + str(type(mems)))
+    # logging.debug("membics_from_prebuilt: " + str(mems))
     objidstr = obj["dsId"]
-    for membic in mems:
+    for idx, membic in enumerate(mems):
+        if type(membic) != dict:
+            logging.warning(logmsg + " mems[" + str(idx) + "] type " +
+                            str(type(membic)) + " value " + str(membic))
+        if membic["dsType"] == "Overflow":
+            break  # Enough to start with. Client unpacks further on demand.
         rh = revhtml
         rh = rh.replace("$RID", membic["dsId"])
         rh = rh.replace("$RTYPE", membic["revtype"])
         rh = rh.replace("$RURL", membic["url"] or "")
-        rh = rh.replace("$RTIT", membic["title"] or membic["name"])
+        details = membic["details"]
+        rh = rh.replace("$RTIT", title_for_membic(membic))
         rh = rh.replace("$RAT", str(membic["rating"]) or "75")
         rh = rh.replace("$DESCR", membic["text"] or "")
         html += rh
@@ -292,11 +313,9 @@ def content_and_prefetch(obj):
 
 def sitepic_for_object(obj):
     img = "/img/membiclogo.png?" + cachev
-    if obj:
-        if obj["dsType"] == "Theme" and obj.picture:
-            img = "/ctmpic?ctmid=" + obj["dsId"] + "&" + cachev
-        elif obj["dsType"] == "MUser" and obj.profpic:
-            img = "/profpic?profileid=" + obj["dsId"] + "&" + cachev
+    if obj and ((obj["dsType"] == "Theme" and obj["picture"]) or
+                (obj["dsType"] == "MUser" and obj["profpic"])):
+        img = "/api/obimg?" + util.pdtdi(obj)
     return img
 
 
@@ -304,10 +323,10 @@ def sitetitle_for_object(obj):
     title = "Membic"
     if obj:
         if obj["dsType"] == "Theme":
-            title = obj.name or "Membic Theme"
+            title = obj["name"] or "Membic Theme"
             title = title.replace("\"", "'")
         elif obj["dsType"] == "MUser":
-            title = obj.name or "Membic Profile"
+            title = obj["name"] or "Membic Profile"
             title = title.replace("\"", "'")
     return title
 
@@ -319,7 +338,7 @@ def sitedescr_for_object(obj):
             descr = obj["description"] or "Another Membic Theme"
             descr = descr.replace("\"", "'")
         elif obj["dsType"] == "MUser":
-            descr = obj.aboutme or "My Membic Link Blog"
+            descr = obj["aboutme"] or "My Membic Link Blog"
             descr = descr.replace("\"", "'")
     return descr
 
@@ -375,21 +394,26 @@ def write_start_page(obj, refer):
     return html
 
 
-# Aside from the index page, the following urls are accepted:
-#     /user/1234   Returns page for MUser 1234
-#     /theme/1234  Returns page for Theme 1234
-#     /myhashtag   Returns page for Theme or MUser #myhashtag
+# Aside from the default index page, the following urls are accepted:
+#     /?u=1234     Returns start page for MUser 1234
+#     /?t=1234     Returns start page for Theme 1234
+#     /myhashtag  Returns start page for Theme or MUser #myhashtag
+# Subfolders (e.g. "/user/1234") are not used because they mess up relative
+# url references and that would make things more error prone.
 def start_html_for_path(path, refer):
     if not path or path.startswith("index.htm"):
+        obid = dbacc.reqarg("u", "string")
+        if obid:
+            logging.info("start_html_for_path MUser " + obid)
+            return write_start_page(dbacc.cfbk("MUser", "dsId", obid), refer)
+        obid = dbacc.reqarg("t", "string")
+        if obid:
+            logging.info("start_html_for_path Theme " + obid)
+            return write_start_page(dbacc.cfbk("Theme", "dsId", obid), refer)
+        logging.info("start_html_for_path writing default page")
         return write_start_page(None, refer)
     # dsIds are not unique across object types.  Hashtags are.  It should
     # be possible to have a numeric hashtag.
-    dsId = util.first_group_match("user/(\d+)", path)
-    if dsId:
-        return write_start_page(dbacc.cfbk("MUser", "dsId", dsId), refer)
-    dsId = util.first_group_match("theme/(\d+)", path)
-    if dsId:
-        return write_start_page(dbacc.cfbk("Theme", "dsId", dsId), refer)
     hashtag = util.first_group_match("(\w+)", path)
     if hashtag:
         inst = dbacc.cfbk("Theme", "hashtag", hashtag)

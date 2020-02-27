@@ -628,7 +628,7 @@ function writeObjFieldFilterFunc (edef) {
     var pyc = ""
     pyc += "def visible_" + edef.entity + "_fields(obj, audience):\n";
     pyc += "    filtobj = {}\n";
-    pyc += "    for fld, val in obj.iteritems():\n";
+    pyc += "    for fld, val in obj.items():\n";
     edef.fields.forEach(function (fd) {
         if(ddefs.fieldIs(fd.d, "admin")) {
             pyc += "        if fld == \"" + fd.f + "\":\n";
@@ -654,7 +654,8 @@ function fieldVisibilityFunction () {
         pyc += writeObjFieldFilterFunc(edef); });
     pyc += "# Return a copied object with only the fields appropriate to the audience.\n";
     pyc += "# Specifying audience=\"private\" includes peronal info.  The given obj is\n";
-    pyc += "# assumed to already have been through db2app conversion.\n";
+    pyc += "# assumed to already have been through db2app conversion.  Image fields are\n";
+    pyc += "# converted to dsId values for separate download.\n";
     pyc += "def visible_fields(obj, audience=\"public\"):\n";
     definitions.forEach(function (edef) {
         pyc += "    if obj[\"dsType\"] == \"" + edef.entity + "\":\n";
@@ -708,10 +709,19 @@ function createPythonDBAcc () {
 ////////////////////////////////////////
 // JavaScript code
 
+function writePersistentTypes () {
+    var types = [];
+    var definitions = ddefs.dataDefinitions();
+    definitions.forEach(function (edef) {
+        types.push("\"" + edef.entity + "\""); });
+    return "    var persistentTypes = [" + types.join(", ") + "];\n"
+}
+
+
 function writeDeserializeFunction () {
     jsc = "";
     jsc += "    //All json fields are initialized to {} so they can be accessed directly.\n";
-    jsc += "    reconstituteFieldJSONObject: function (field, obj) {\n";
+    jsc += "    function reconstituteFieldJSONObject (field, obj) {\n";
     jsc += "        if(!obj[field]) {\n";
     jsc += "            obj[field] = {}; }\n";
     jsc += "        else {\n";
@@ -719,7 +729,7 @@ function writeDeserializeFunction () {
     jsc += "            try {\n";
     jsc += "                obj[field] = JSON.parse(text);\n";
     jsc += "            } catch (e) {\n";
-    jsc += "                jt.log(\"reconstituteJSONObjectField \" + obj.dsType + \" \" +\n";
+    jsc += "                jt.log(\"reconstituteFieldJSONObject \" + obj.dsType + \" \" +\n";
     jsc += "                       obj.dsId + \" \" + field + \" reset to empty object from \" +\n";
     jsc += "                       text + \" Error: \" + e);\n";
     jsc += "                obj[field] = {};\n";
@@ -734,7 +744,7 @@ function writeDeserializeFunction () {
         jsc += "        case \"" + edef.entity + "\": \n";
         edef.fields.forEach(function (fd) {
             if(ddefs.fieldIs(fd.d, "json")) {
-                jsc += "            reconstituteFieldJSONObjectField(\"" +
+                jsc += "            reconstituteFieldJSONObject(\"" +
                     fd.f + "\", obj);\n"; } });
         jsc += "            break;\n"; });
     jsc += "        }\n";
@@ -772,49 +782,57 @@ function createJSServerAcc () {
     jsc += "// Local object reference cache and server persistence access.  Automatically\n";
     jsc += "// serializes/deserializes JSON fields.\n";
     jsc += "\n";
-    jsc += "/*global app, jt, window */\n";
+    jsc += "/*global app, jt, window, console */\n";
     jsc += "\n";
-    jsc += "/*jslint browser, white, fudge, for */\n";
+    jsc += "/*jslint browser, white, fudge, long */\n";
     jsc += "\n";
     jsc += "app.refmgr = (function () {\n";
     jsc += "    \"use strict\";\n";
     jsc += "\n";
     jsc += "    var cache = {};\n";
     jsc += "\n";
+    jsc += writePersistentTypes() + "\n\n";
     jsc += writeDeserializeFunction() + "\n\n";
     jsc += writeClearPrivilegedFunction() + "\n\n";
     jsc += "return {\n";
     jsc += "\n";
     jsc += "    cached: function (dsType, dsId) {  //Returns the cached obj or null\n";
-    jsc += "        if(dsType && dsId && cache.dsType && cache.dsType.dsId) {\n";
-    jsc += "            return cache.dsType.dsId; }\n";
-    jsc += "        return null; }\n";
+    jsc += "        if(dsType && dsId && cache[dsType] && cache[dsType][dsId]) {\n";
+    jsc += "            return cache[dsType][dsId]; }\n";
+    jsc += "        return null; },\n";
     jsc += "\n";
     jsc += "\n";
     jsc += "    put: function (obj) {\n";
+    jsc += "        if(!obj) {\n";
+    jsc += "            jt.log(\"refmgr.put: Attempt to put null obj\");\n";
+    jsc += "            console.trace(); }\n";
     jsc += "        clearPrivilegedFields(obj);  //no sensitive info here\n";
     jsc += "        cache[obj.dsType] = cache[obj.dsType] || {};\n";
-    jsc += "        cache[obj.dsType][obj.dsId] = retobj;\n";
-    jsc += "    }\n";
+    jsc += "        cache[obj.dsType][obj.dsId] = obj;\n";
+    jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";
     jsc += "    getFull: function (dsType, dsId, contf) {\n";
-    jsc += "        obj = cached(dsType, dsId);\n";
+    jsc += "        var obj = app.refmgr.cached(dsType, dsId);\n";
     jsc += "        if(obj) {\n";
     jsc += "            return contf(obj); }\n";
-    jsc += "        var url = app.refmgr.serverurl() + \"/fetchobj?dt=\" + dsType + \"&di=\" +\n";
-    jsc += "            dsId + jt.ts(\"&cb=\", \"second\");\n";
+    jsc += "        if(persistentTypes.indexOf(dsType) < 0) {\n";
+    jsc += "            jt.log(\"refmgr.getFull: unknown dsType \" + dsType);\n";
+    jsc += "            console.trace(); }\n";
+    jsc += "        var url = app.refmgr.serverurl() + \"/api/fetchobj?dt=\" + dsType +\n";
+    jsc += "            \"&di=\" + dsId + jt.ts(\"&cb=\", \"second\");\n";
     jsc += "        jt.call(\"GET\", url, null,\n";
     jsc += "                function (objs) {\n";
-    jsc += "                    retobj = null;\n";
+    jsc += "                    var retobj = null;\n";
     jsc += "                    if(objs.length > 0) {\n";
-    jsc += "                        retobj = deserialize(objs[0]);\n";
+    jsc += "                        retobj = objs[0];\n";
+    jsc += "                        deserialize(retobj);\n";
     jsc += "                        app.refmgr.put(retobj); }\n";
-    jsc += "                    callback(retobj); },\n";
+    jsc += "                    contf(retobj); },\n";
     jsc += "                function (code, errtxt) {\n";
     jsc += "                    jt.log(\"refmgr.getFull \" + dsType + \" \" + dsId + \" \" +\n";
     jsc += "                           code + \": \" + errtxt);\n";
-    jsc += "                    callback(null); }\n";
+    jsc += "                    contf(null); },\n";
     jsc += "                jt.semaphore(\"refmgr.getFull\" + dsType + dsId));\n";
     jsc += "    },\n";
     jsc += "\n";
@@ -822,6 +840,11 @@ function createJSServerAcc () {
     jsc += "    uncache: function (dsType, dsId) {\n";
     jsc += "        cache[dsType] = cache[dsType] || {};\n";
     jsc += "        cache[dsType][dsId] = null;\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    deserialize: function (obj) { \n";
+    jsc += "        deserialize(obj);\n";
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";
