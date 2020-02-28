@@ -213,7 +213,7 @@ def rebuild_prebuilt(context):
     # Order by creation date, loading oldest first
     if context["creb"]:
         where += " AND created > \"" + context["creb"] + "\""
-    where += " ORDER BY modified ASC LIMIT " + str(chunk)
+    where += " ORDER BY created ASC LIMIT " + str(chunk)
     logging.info("reuild_prebuilt: " + where)
     membics = dbacc.query_entity("Membic", where)
     for membic in membics:

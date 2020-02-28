@@ -165,13 +165,19 @@ function entityKeyFields () {
 function entityCache () {
     var pyc = "";
     pyc += "def make_key(dsType, field, value):\n"
+    pyc += "    # The value will always be a string or there is a problem elsewhere.\n"
     pyc += "    return dsType + \"_\" + field + \"_\" + value\n"
     pyc += "\n"
     pyc += "\n"
     pyc += "def entkey_vals(inst):\n"
     pyc += "    # dsId key holds the cached instance\n"
     pyc += "    instkey = make_key(inst[\"dsType\"], \"dsId\", inst[\"dsId\"])\n"
-    pyc += "    keyvals = [{\"key\": instkey, \"val\": json.dumps(inst)}]\n"
+    pyc += "    serd = {\"dsType\": inst[\"dsType\"]}\n";
+    pyc += "    entflds = entdefs[inst[\"dsType\"]]\n";
+    pyc += "    for key in entflds:\n";
+    pyc += "        if entflds[key][\"pt\"] != \"image\":\n";
+    pyc += "            serd[key] = inst[key]\n";
+    pyc += "    keyvals = [{\"key\": instkey, \"val\": json.dumps(serd)}]\n"
     pyc += "    # alternate entity keys point to the dsId key\n"
     pyc += "    for field in entkeys[inst[\"dsType\"]]:\n"
     pyc += "        keyvals.append({\"key\": make_key(inst[\"dsType\"], field, inst[field]),\n"

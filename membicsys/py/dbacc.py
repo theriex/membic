@@ -164,13 +164,19 @@ entkeys = {
 
 
 def make_key(dsType, field, value):
+    # The value will always be a string or there is a problem elsewhere.
     return dsType + "_" + field + "_" + value
 
 
 def entkey_vals(inst):
     # dsId key holds the cached instance
     instkey = make_key(inst["dsType"], "dsId", inst["dsId"])
-    keyvals = [{"key": instkey, "val": json.dumps(inst)}]
+    serd = {"dsType": inst["dsType"]}
+    entflds = entdefs[inst["dsType"]]
+    for key in entflds:
+        if entflds[key]["pt"] != "image":
+            serd[key] = inst[key]
+    keyvals = [{"key": instkey, "val": json.dumps(serd)}]
     # alternate entity keys point to the dsId key
     for field in entkeys[inst["dsType"]]:
         keyvals.append({"key": make_key(inst["dsType"], field, inst[field]),

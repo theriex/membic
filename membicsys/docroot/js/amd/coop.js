@@ -53,7 +53,7 @@ return {
                                 jt.log("bumpmctr?" + data + " failed " + 
                                        code + ": " + errtxt); }); },
                 ms:800}); }  //longish delay to avoid blocking current work
-        app.pcd.fetchAndDisplay("coop", coopid, cmd);
+        app.pcd.fetchAndDisplay("Theme", coopid, cmd);
     },
 
 
@@ -65,10 +65,10 @@ return {
         app.coop.deserializeFields(coop);  //if update fails or interim use
         jt.call("POST", "ctmdesc?" + app.login.authparams(), data,
                 function (updcoops) {
-                    app.lcs.put("coop", updcoops[0]);
+                    app.refmgr.put(updcoops[0]);
                     app.profile.verifyMembership(updcoops[0]);
                     historyCheckpointIfNeeded(updcoops[0]);
-                    app.lcs.uncache("activetps", "411");
+                    app.refmgr.uncache("activetps", "411");
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {
                     callfail(code, errtxt); }),
@@ -159,17 +159,17 @@ return {
     },
 
 
-    confirmPostThrough: function (rev) {
+    confirmPostThrough: function (membic) {
         var retval = true;
-        if(!rev.ctmids) {  //not posting through, so nothing to check
+        if(!membic.ctmids) {  //not posting through, so nothing to check
             return true; }
-        var ref; var rejection;
-        rev.ctmids.csvarray().every(function (ctmid) {
-            ref = app.lcs.getRef("coop", ctmid);  //cached on rev edit
-            if(ref && ref.coop && ref.coop.adminlog) {
-                ref.coop.adminlog.every(function (logentry) {
+        var theme; var rejection;
+        membic.ctmids.csvarray().every(function (ctmid) {
+            theme = app.refmgr.cached("Theme", ctmid);
+            if(theme && theme.adminlog) {
+                theme.adminlog.every(function (logentry) {
                     if(logentry.action === "Removed Membic" &&
-                       logentry.targid === rev.dsId &&
+                       logentry.targid === membic.dsId &&
                        logentry.profid !== app.profile.myProfId()) {
                         rejection = logentry;
                         return false; }
@@ -177,7 +177,7 @@ return {
             if(rejection) {
                 retval = confirm(rejection.pname + 
                                  " previously removed this membic from " + 
-                                 ref.coop.name + ". Reason: \"" + 
+                                 theme.name + ". Reason: \"" + 
                                  rejection.reason + "\". Repost anyway?"); }
             return retval; });  //stop on first non-confirmed rejection
         return retval;

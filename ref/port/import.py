@@ -13,6 +13,7 @@ stats = {"MUser": 0, "MUser_pics": 0, "Theme": 0, "Theme_pics": 0,
 idmaps = {"MUser": {}, "Theme": {}, "Membic": {},
           "altkey": {"10017": "6642146358591488"}}
 mcv = {"orphms":[], "remapped":0}
+mpt = {"ompts":[], "remapped":0}
 
 
 def load_pic(datdir, oid):
@@ -29,9 +30,8 @@ def load_pic(datdir, oid):
 
 
 def import_basic(datdir, jd, entity, picfield, cfs):
-    impd = {}
-    impd["importid"] = int(jd["gaeid"])
-    msg = "  Adding " + entity + " " + str(impd["importid"])
+    impd = {"dsType": entity, "importid": jd["gaeid"]}
+    msg = "  Adding " + entity + " " + impd["importid"]
     existing = dbacc.cfbk(entity, "importid", impd["importid"])
     if existing:
         impd["dsId"] = existing["dsId"]
@@ -43,7 +43,7 @@ def import_basic(datdir, jd, entity, picfield, cfs):
     if picfield in jd and jd[picfield]:
         impd[picfield] = load_pic(datdir, jd[picfield])
         stats[entity + "_pics"] += 1
-    upd = dbacc.write_entity(entity, impd, vck="override")
+    upd = dbacc.write_entity(impd, vck="override")
     idmaps[entity][upd["importid"]] = upd["dsId"]
     stats[entity] += 1
     return upd
@@ -117,6 +117,67 @@ def make_membic_details(impd, jd):
     impd["details"] = json.dumps(dets)
 
 
+def show_postctms_orphans():
+    msg = "Remapped postctms for " + str(mpt["remapped"]) + " membics. " +\
+          str(len(mpt["ompts"])) + " orphan Membics left over:"
+    for om in mpt["ompts"]:
+        msg += "\n    Membic " + om["dsId"] + " " + om["svcdata"]
+        svcdata = om["svcdata"] or "{}"
+        svcdata = json.loads(svcdata)
+        svcdata["postctms"] = []
+        om["svcdata"] = json.dumps(svcdata)
+        dbacc.write_entity(om, vck="override")
+    logging.info(msg + "\nCleared out the postctms info for those.")
+
+
+def can_convert_postctms(membic):
+    svcdata = membic["svcdata"] or "{}"
+    try:
+        svcdata = json.loads(svcdata)
+    except Exception as e:
+        return False  # leave it for orphan analysis later
+    if "postctms" not in svcdata:
+        return True
+    postctms = svcdata["postctms"] or []
+    for pt in postctms:
+        if((pt["ctmid"] not in idmaps["Theme"]) or 
+           (pt["revid"] not in idmaps["Membic"])):
+            return False  # mapped id not available
+    return True
+
+
+def do_postctms_conversion(membic):
+    svcdata = membic["svcdata"] or "{}"
+    svcdata = json.loads(svcdata)
+    if "postctms" not in svcdata or len(svcdata["postctms"]) == 0:
+        return  # nothing to convert
+    postctms = svcdata["postctms"] or []
+    for pt in postctms:
+        pt["ctmid"] = idmaps["Theme"][pt["ctmid"]]
+        pt["revid"] = idmaps["Membic"][pt["revid"]]
+    svcdata["postctms"] = postctms
+    membic["svcdata"] = json.dumps(svcdata)
+    # input("do_postctms_conversion converted: " + membic["svcdata"])
+    mpt["remapped"] += 1
+
+
+def convert_membic_postctms(membic):
+    if membic["svcdata"] == "[object Object]":
+        membic["svcdata"] = ""  # data was lost in original db
+    orphans = []
+    if can_convert_postctms(membic):
+        do_postctms_conversion(membic)
+    else:
+        orphans.append(membic)
+    for om in mpt["ompts"]:  # retry previous that couldn't be mapped
+        if can_convert_postctms(om):
+            do_postctms_conversion(om)
+            dbacc.write_entity(om, vck="override")
+        else:
+            orphans.append(om)
+    mpt["ompts"] = orphans
+
+
 def remap_membic_ctmid_penid(upd):
     ctmid = upd["ctmid"]
     if ctmid and not ctmid.startswith("0"):
@@ -125,7 +186,7 @@ def remap_membic_ctmid_penid(upd):
     if penid in idmaps["altkey"]:
         penid = idmaps["altkey"][penid]
     upd["penid"] = idmaps["MUser"][penid]
-    upd = dbacc.write_entity("Membic", upd, vck=upd["modified"])
+    upd = dbacc.write_entity(upd, vck=upd["modified"])
     idmaps["Membic"][upd["importid"]] = upd["dsId"]
     mcv["remapped"] += 1
 
@@ -137,9 +198,9 @@ def membic_desc_string(membic):
     return ms
 
 
-def show_orphans():
-    msg = "Remapped " + str(mcv["remapped"]) + " membics. " +\
-          str(len(mcv["orphms"])) + " orphan Membics left over:"
+def show_srcrev_orphans():
+    msg = "Remapped penid/ctmid/srcrev for " + str(mcv["remapped"]) +\
+          " membics. " + str(len(mcv["orphms"])) + " orphan Membics left over:"
     for om in mcv["orphms"]:
         msg += "\n    " + membic_desc_string(om)
     # msg += "\nmapped keys:"
@@ -155,7 +216,7 @@ def remap_membic_refs(upd):
     if srcrev and not (srcrev.startswith("0") or srcrev.startswith("-")):
         if srcrev not in idmaps["Membic"]:  # no remap available
             mcv["orphms"].append(upd)   # orphaned for now
-            # show_orphans()
+            # show_srcrev_orphans()
             return  # try remap it again later
         upd["srcrev"] = idmaps["Membic"][srcrev]
     remap_membic_ctmid_penid(upd)
@@ -173,9 +234,8 @@ def remap_membic_refs(upd):
 
 def import_Membic(datdir, jd):
     convert_modhist_modified(jd)
-    impd = {}
-    impd["importid"] = int(jd["instid"])
-    msg = "  Adding Membic " + str(impd["importid"])
+    impd = {"dsType": "Membic", "importid": jd["instid"]}
+    msg = "  Adding Membic " + impd["importid"]
     existing = dbacc.cfbk("Membic", "importid", impd["importid"])
     if existing:
         impd["dsId"] = existing["dsId"]
@@ -184,7 +244,8 @@ def import_Membic(datdir, jd):
     # logging.info(msg)
     copy_membic_fields(impd, jd, datdir)
     make_membic_details(impd, jd)
-    upd = dbacc.write_entity("Membic", impd, vck="override")
+    convert_membic_postctms(impd)
+    upd = dbacc.write_entity(impd, vck="override")
     stats["Membic"] += 1
     remap_membic_refs(upd)
 
@@ -216,7 +277,8 @@ def data_import(datdir, entities):
                     import_Membic(datpath, jd)
                 else:
                     raise ValueError("Unknown entity type: " + entity)
-    show_orphans()
+    show_srcrev_orphans()
+    show_postctms_orphans()
     logging.info(str(stats))
 
 
