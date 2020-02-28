@@ -170,14 +170,9 @@ function entityCache () {
     pyc += "\n"
     pyc += "\n"
     pyc += "def entkey_vals(inst):\n"
-    pyc += "    # dsId key holds the cached instance\n"
+    pyc += "    # dsId key holds the cached instance.  Need img data so pickle.\n"
     pyc += "    instkey = make_key(inst[\"dsType\"], \"dsId\", inst[\"dsId\"])\n"
-    pyc += "    serd = {\"dsType\": inst[\"dsType\"]}\n";
-    pyc += "    entflds = entdefs[inst[\"dsType\"]]\n";
-    pyc += "    for key in entflds:\n";
-    pyc += "        if entflds[key][\"pt\"] != \"image\":\n";
-    pyc += "            serd[key] = inst[key]\n";
-    pyc += "    keyvals = [{\"key\": instkey, \"val\": json.dumps(serd)}]\n"
+    pyc += "    keyvals = [{\"key\": instkey, \"val\": pickle.dumps(inst)}]\n"
     pyc += "    # alternate entity keys point to the dsId key\n"
     pyc += "    for field in entkeys[inst[\"dsType\"]]:\n"
     pyc += "        keyvals.append({\"key\": make_key(inst[\"dsType\"], field, inst[field]),\n"
@@ -202,7 +197,7 @@ function entityCache () {
     pyc += "        instval = self.entities[instkey]\n"
     pyc += "        if field != \"dsId\":\n"
     pyc += "            instval = self.entities[instval]\n"
-    pyc += "        return json.loads(instval)\n"
+    pyc += "        return pickle.loads(instval)\n"
     pyc += "    def cache_remove(self, inst):\n"
     pyc += "        if inst:\n"
     pyc += "            for keyval in entkey_vals(inst):\n"
@@ -686,7 +681,7 @@ function createPythonDBAcc () {
     pyc += "import flask\n";
     pyc += "import re\n";
     pyc += "import datetime\n";
-    pyc += "import json\n";
+    pyc += "import pickle\n";
     pyc += "import mysql.connector\n";
     pyc += "\n";
     pyc += "# Reserved database fields used for every instance:\n";

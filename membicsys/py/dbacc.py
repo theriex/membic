@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 import flask
 import re
 import datetime
-import json
+import pickle
 import mysql.connector
 
 # Reserved database fields used for every instance:
@@ -169,14 +169,9 @@ def make_key(dsType, field, value):
 
 
 def entkey_vals(inst):
-    # dsId key holds the cached instance
+    # dsId key holds the cached instance.  Need img data so pickle.
     instkey = make_key(inst["dsType"], "dsId", inst["dsId"])
-    serd = {"dsType": inst["dsType"]}
-    entflds = entdefs[inst["dsType"]]
-    for key in entflds:
-        if entflds[key]["pt"] != "image":
-            serd[key] = inst[key]
-    keyvals = [{"key": instkey, "val": json.dumps(serd)}]
+    keyvals = [{"key": instkey, "val": pickle.dumps(inst)}]
     # alternate entity keys point to the dsId key
     for field in entkeys[inst["dsType"]]:
         keyvals.append({"key": make_key(inst["dsType"], field, inst[field]),
@@ -201,7 +196,7 @@ class EntityCache(object):
         instval = self.entities[instkey]
         if field != "dsId":
             instval = self.entities[instval]
-        return json.loads(instval)
+        return pickle.loads(instval)
     def cache_remove(self, inst):
         if inst:
             for keyval in entkey_vals(inst):

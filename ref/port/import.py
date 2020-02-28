@@ -244,9 +244,11 @@ def import_Membic(datdir, jd):
     # logging.info(msg)
     copy_membic_fields(impd, jd, datdir)
     make_membic_details(impd, jd)
-    convert_membic_postctms(impd)
     upd = dbacc.write_entity(impd, vck="override")
     stats["Membic"] += 1
+    # these conversions have to happen after the initial write since they
+    # also do updates, so the dsId needs to already have been established.
+    convert_membic_postctms(upd)
     remap_membic_refs(upd)
 
 

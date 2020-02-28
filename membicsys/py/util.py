@@ -214,12 +214,12 @@ def rebuild_prebuilt(context):
     if context["creb"]:
         where += " AND created > \"" + context["creb"] + "\""
     where += " ORDER BY created ASC LIMIT " + str(chunk)
-    logging.info("reuild_prebuilt: " + where)
+    logging.info("rebuild_prebuilt: " + where)
     membics = dbacc.query_entity("Membic", where)
     for membic in membics:
         add_membic_to_preb(context, membic)
     if len(membics) >= chunk:  # probably more to go fetch
-        context["creb"] = membics[len(membics) - 1]["created"]
+        context["creb"] = context["pbms"][0]["created"]
         rebuild_prebuilt(context)
 
 
