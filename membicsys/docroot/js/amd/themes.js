@@ -18,7 +18,7 @@ app.themes = (function () {
 
     function inSummary (ctmid, summaries) {
         return summaries.find(function (tpsum) {
-            return tpsum.instid === ctmid; });
+            return tpsum.dsId === ctmid; });
     }
 
 
@@ -30,14 +30,14 @@ app.themes = (function () {
             var pc = prof.coops[ctmid];
             if(pc.dsType === "Theme" && pc.lev >= 1 &&
                !inSummary(ctmid, summaries)) {
-                var pcsum = {instid:ctmid, obtype:"theme", modified:"",
+                var pcsum = {dsId:ctmid, obtype:"theme", modified:"",
                              lastwrite:"", hashtag:pc.hashtag,
                              picture:pc.picture, name:pc.name, 
                              description:pc.description};
                 switch(pc.lev) {
-                case 1: pcsum.members = prof.instid; break;
-                case 2: pcsum.moderators = prof.instid; break;
-                case 3: pcsum.founders = prof.instid; break; }
+                case 1: pcsum.members = prof.dsId; break;
+                case 2: pcsum.moderators = prof.dsId; break;
+                case 3: pcsum.founders = prof.dsId; break; }
                 summaries.push(pcsum); } });
         return summaries;
     }
@@ -75,8 +75,8 @@ app.themes = (function () {
             decos = [];
             tps.forEach(function (tp) {
                 var d = JSON.parse(JSON.stringify(tp));
-                if(prof.coops[d.instid]) {
-                    d.lev = prof.coops[d.instid].lev; }
+                if(prof.coops[d.dsId]) {
+                    d.lev = prof.coops[d.dsId].lev; }
                 decos.push(d); }); }
         decos.sort(function (a, b) {
             if(a.lev && !b.lev) { return -1; }  //lev val beats missing
@@ -94,8 +94,8 @@ app.themes = (function () {
         var prof = app.profile.myProfile();
         if(prof && prof.coops) {
             img = "tsnoassoc.png";
-            if(prof.coops[tp.instid]) {
-                switch(prof.coops[tp.instid].lev) {
+            if(prof.coops[tp.dsId]) {
+                switch(prof.coops[tp.dsId].lev) {
                 case -1: img = "tsfollowing.png"; break;
                 case 1: img = "tsmember.png"; break;
                 case 2: img = "tsmoderator.png"; break;
@@ -207,7 +207,7 @@ app.themes = (function () {
         var imgsrc = "img/blank.png";
         if(tp.pic) {
             var otm = {theme:"Theme", profile:"MUser"};
-            imgsrc = "/api/obimg?dt=" + otm[tp.obtype] + "&di=" + tp.instid
+            imgsrc = "/api/obimg?dt=" + otm[tp.obtype] + "&di=" + tp.dsId
             var mod = tp.modified;
             if(atfs > mod) {
                 mod = atfs; }
@@ -220,13 +220,13 @@ app.themes = (function () {
         var elem;
         if(!state.cancelled && state.idx < state.tps.length) {
             var tp = state.tps[state.idx];
-            var ocparams = "'" + tp.obtype + "','" + tp.instid + "'";
+            var ocparams = "'" + tp.obtype + "','" + tp.dsId + "'";
             var oc = jt.fs("app.themes.show(" + ocparams + ")");
             var mc = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
             var link = app.pcd.linkForThemeOrProfile(tp);
             elem = document.createElement("div");
             elem.className = "tplinkdiv";
-            elem.id = "tplinkdiv" + tp.instid;
+            elem.id = "tplinkdiv" + tp.dsId;
             elem.innerHTML = jt.tac2html(
                 [["div", {cla:"tplinkpicdiv"},
                   [["a", {href:link, onclick:oc},
@@ -283,10 +283,10 @@ app.themes = (function () {
     }
 
 
-    function showListing (obtype, instid, command) {
+    function showListing (obtype, dsId, command) {
         if(obtype === "profile") {
-            return app.profile.byprofid(instid, command); }
-        return app.coop.bycoopid(instid, "themes", command);
+            return app.profile.byprofid(dsId, command); }
+        return app.coop.bycoopid(dsId, "themes", command);
     }
 
 

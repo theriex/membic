@@ -13,7 +13,7 @@ app.profile = (function () {
     function displayProfileForId (profid, command) {
         if(!profid) {
             return app.profile.display(); }
-        app.pcd.fetchAndDisplay("profile", profid, command);
+        app.pcd.fetchAndDisplay("MUser", profid, command);
     }
 
 

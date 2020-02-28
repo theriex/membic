@@ -185,7 +185,7 @@ def pub_featurable(entity, obj, vios):
 
 
 def json_for_theme_prof(obj, obtype):
-    sd = {"instid": obj["dsId"],
+    sd = {"dsId": obj["dsId"],
           "obtype": obtype,
           "modified": obj["modified"],
           "lastwrite": obj["lastwrite"] or obj["modified"],
@@ -249,7 +249,7 @@ def recent_active_content():
         # logging.info(str(od))
         # logging.info(od["obtype"] + od["instid"] + " " + od["hashtag"])
         th = tplinkhtml
-        th = th.replace("$TPID", od["instid"])
+        th = th.replace("$TPID", od["dsId"])
         th = th.replace("$HASHTAG", od["hashtag"])
         th = th.replace("$NAME", od["name"])
         th = th.replace("$DESCRIP", od["description"])

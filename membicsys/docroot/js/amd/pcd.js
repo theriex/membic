@@ -10,20 +10,18 @@ app.pcd = (function () {
     "use strict";
 
     var dst = {type:"", id:"", tab:"", obj:null,
-               profile: {desclabel: "About Me",
-                         descplace: "A message for visitors. Link to your site, or favorite quote?",
-                         descfield: "aboutme",
-                         piclabel: "Profile Pic",
-                         picfield: "profpic",
-                         picsrc: "profpic?profileid=",
-                         idparam: "profid" },
-               coop:    {desclabel: "Description",
-                         descplace: "What is this theme focused on? What's appropriate to post?",
-                         descfield: "description", 
-                         piclabel: "Theme Pic",
-                         picfield: "picture",
-                         picsrc: "ctmpic?coopid=",
-                         idparam: "coopid" } };
+               MUser: {desclabel: "About Me",
+                       descplace: "A message for visitors. Link to your site, or favorite quote?",
+                       descfield: "aboutme",
+                       piclabel: "Profile Pic",
+                       picfield: "profpic",
+                       dlparam: "u"},
+               Theme: {desclabel: "Description",
+                       descplace: "What is this theme focused on? What's appropriate to post?",
+                       descfield: "description", 
+                       piclabel: "Theme Pic",
+                       picfield: "picture",
+                       dlparam: "t"} };
     var srchst = {mtypes:"", kwrds:"", mode:"nokeys", qstr:"", status:""};
     var setdispstate = {infomode:""};
     var standardOverrideColors = [
@@ -1027,8 +1025,8 @@ app.pcd = (function () {
                     ["img", {src:"img/rssiconwhite.png",
                              style:"max-width:16px;"}]]]]);
         if(app.solopage()) {
-            var membicurl = app.hardhome + "?view=" + dst.type + "&" +
-                dst[dst.type].idparam + "=" + dst.id + "&action=settings";
+            var membicurl = app.hardhome + "?" + dst[dst.type].dlparam + "=" +
+                dst.id + "&action=settings";
             tac.push(["a", {href:membicurl, //support right click to copy
                             cla:"resp-sharing-button__link",
                             id:"membiclink", title:"Follow on Membic",
@@ -1310,9 +1308,9 @@ app.pcd = (function () {
 
 
     function verifyFunctionConnections () {
-        if(!dst.profile.objupdate) {
-            dst.profile.objupdate = app.profile.update;
-            dst.coop.objupdate = app.coop.updateCoop; }
+        if(!dst.MUser.objupdate) {
+            dst.MUser.objupdate = app.profile.update;
+            dst.Theme.objupdate = app.coop.updateCoop; }
     }
 
 
