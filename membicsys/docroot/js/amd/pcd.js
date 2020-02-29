@@ -1043,33 +1043,30 @@ app.pcd = (function () {
     }
 
 
-    function writeTopContent (defs, obj) {
+    function writeContentAreas (defs, obj) {
         var shtxt = obj[defs.descfield] || "";
         var fsz = "large";
         if(shtxt.length > 300) {
             fsz = "medium"; }
-        var html = ["div", {id:"pcdouterdiv"},
-                    [["div", {id:"pcduppercontentdiv"},
-                      [["div", {id:"pcdpicdiv"},
-                        ["img", {cla:"pcdpic", src:picImgSrc(obj)}]],
-                       ["div", {id:"pcddescrdiv"},
-                        [["div", {id:"pcdnamediv"},
-                          ["span", {id:"pcdnamespan", cla:"penfont"},
-                           obj.name || obj.dsId]],
-                         ["div", {id:"ppcdshoutdiv"},
-                          ["span", {cla:"shoutspan",
-                                    style:"font-size:" + fsz + ";"}, 
-                           jt.linkify(shtxt)]]]]]],
-                     ["div", {id:"pcdctrldiv"},
-                      ["div", {id:"pcdactdiv"}]],
-                     ["div", {id:"pcdnotidiv"}],
-                     ["div", {id:"pcdcontdiv"}]]];
-        jt.out("contentdiv", jt.tac2html(html));
-        if(!app.solopage() && !app.login.isLoggedIn()) {
-            //provide a way back to the main themes display
-            jt.out("logodiv", jt.tac2html(
-                ["a", {href:"#home", onclick:jt.fs("app.themes.display()")},
-                 ["img", {id:"logoimg", src:"img/membiclogo.png"}]])); }
+        jt.out("pgdescdiv", jt.tac2html(
+            ["div", {id:"pcduppercontentdiv"},
+             [["div", {id:"pcdpicdiv"},
+               ["img", {cla:"pcdpic", src:picImgSrc(obj)}]],
+              ["div", {id:"pcddescrdiv"},
+               [["div", {id:"pcdnamediv"},
+                 ["span", {id:"pcdnamespan", cla:"penfont"},
+                  obj.name || obj.dsId]],
+                ["div", {id:"ppcdshoutdiv"},
+                 ["span", {cla:"shoutspan",
+                           style:"font-size:" + fsz + ";"}, 
+                  jt.linkify(shtxt)]]]]]]));
+        jt.out("pgactdiv", jt.tac2html(
+            [["div", {id:"pcdctrldiv"},
+              ["div", {id:"pcdactdiv"}]],
+             ["div", {id:"pcdnotidiv"}]]));
+        jt.out("contentdiv", jt.tac2html(
+            ["div", {id:"pcdouterdiv"},
+             ["div", {id:"pcdcontdiv"}]]));
     }
 
 
@@ -1279,7 +1276,7 @@ app.pcd = (function () {
         historyCheckpoint();
         initializeSearchState();
         var defs = dst[dst.type];
-        writeTopContent(defs, obj);
+        writeContentAreas(defs, obj);
         if(app.solopage()) {
             customizeSoloPageDisplay(); }
         if(!jt.hasId(dst.obj)) {  //creating a new theme
@@ -2072,7 +2069,7 @@ return {
                            "Remove"]]]];
             html = app.layout.dlgwrapHTML("Remove Reason", html);
             app.layout.openDialog(  //same x coordinate as review dialog
-                {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
+                {x: Math.max(jt.byId("contentdiv").offsetLeft - 34, 20),
                  y: jt.geoPos(jt.byId("trashmembic" + rtid)).y - 40},
                 jt.tac2html(html));
             return; }

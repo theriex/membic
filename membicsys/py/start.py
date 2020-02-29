@@ -35,46 +35,30 @@ indexHTML = """
 <body id="bodyid">
 
 <div id="topsectiondiv">
-  <div id="topleftdiv">
-    <div id="logodiv">
-      <img src="img/membiclogo.png$CACHEPARA" id="logoimg"/></div>
-    <div id="topactionsdiv"></div>
-  </div> <!-- topleftdiv -->
-  <div id="toprightdiv">
-    <!-- login has to be an actual form to enable remembered passwords -->
-    <div id="logindiv">
-      <form id="loginform" method="post" action="redirlogin">
-        <div id="loginparaminputs"></div>
-        <div id="loginvisualelementsdiv">
-          <label for="emailin" class="liflab">Email</label>
-          <input type="email" class="lifin" name="emailin" id="emailin" 
-                 placeholder="nospam@example.com"/>
-          <div class="lifsep"></div>
-          <label for="passin" class="liflab">Password</label>
-          <!-- no onchange submit for password. breaks autoforms on safari -->
-          <input type="password" class="lifin" name="passin" id="passin"/> 
-          <div class="lifsep"></div>
-          <div id="loginstatformdiv"></div>
-          <div class="lifsep"></div>
-          <div id="loginbuttonsdiv" class="lifbuttonsdiv">
-            <button type="button" id="createAccountButton"
-                    onclick="app.login.createAccount();return false;">
-              Create Account</button>
-            <input value="Sign in" type="submit" class="loginbutton"/>
-          </div>
+  <div id="topmessagelinediv"></div>
+  <!-- login has to be an actual form to enable remembered passwords -->
+  <div id="logindiv">
+    <form id="loginform" method="post" action="redirlogin">
+      <div id="loginparaminputs"></div>
+      <div id="loginvisualelementsdiv">
+        <input type="email" class="lifin" name="emailin" id="emailin"
+               size="24" placeholder="nospam@example.com"/>
+        <!-- no onchange submit for password. breaks autoforms on safari -->
+        <input type="password" class="lifin" name="passin" id="passin"
+               size="10" placeholder="*password*"/>
+        <div id="loginbuttonsdiv" class="lifbuttonsdiv">
+          <button type="button" id="createAccountButton"
+                  onclick="app.login.createAccount();return false;">
+            Join</button>
           <div id="resetpassdiv"></div>
-        </div> <!-- loginvisualelementsdiv -->
-      </form>
-    </div> <!-- logindiv -->
-  </div> <!-- toprightdiv -->
+          <input value="Sign in" type="submit" class="loginbutton"/>
+        </div>
+      </div> <!-- loginvisualelementsdiv -->
+    </form>
+  </div> <!-- logindiv -->
+  <div id="pgdescdiv"></div>
+  <div id="pgactdiv"></div>
 </div>
-
-<div id="headingdiv">
-  <div id="loginstatdiv"></div>
-  <div id="headingdivcontent"></div>
-</div>
-
-<div id="sysnoticediv"></div>
 
 <div id="appspacediv">
   <div id="contentdiv">
@@ -134,13 +118,13 @@ interimcont = """
     <div class="defdefdiv">
       <ol>
       <li>A link with a reason why it is memorable.
-      <li>An <a href="https://github.com/theriex/membic" onclick="window.open('https://github.com/theriex/membic');return false;">open source</a> project available free at membic.org
       <ol>
     </div>
     <div class="sitemetalinksdiv">
       <a href="docs/privacy.html" onclick="app.layout.displayDoc('docs/privacy.html',true);return false;">Privacy</a>
       <a href="docs/terms.html" onclick="app.layout.displayDoc('docs/terms.html',true);return false;">Terms</a>
-      <a href="https://membic.wordpress.com" onclick="window.open('https://membic.wordpress.com');return false;">Blog</a>
+      <a href="https://github.com/theriex/membic" onclick="window.open('https://github.com/theriex/membic');return false;">Source</a>
+      <a href="https://epinova.com" onclick="window.open('https://epinova.com');return false;">Contact</a>
     </div>
   </div>
 </div>

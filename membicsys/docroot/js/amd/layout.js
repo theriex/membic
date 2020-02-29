@@ -139,7 +139,6 @@ app.layout = (function () {
 
     //hide the doc links as they are accessed from info link
     function localDocLinks () {
-        jt.out("logodiv", "");
         jt.byId("bottomnav").style.display = "none";
     }
 
@@ -255,7 +254,7 @@ return {
         findDisplayHeightAndWidth();
         app.layout.commonUtilExtensions();
         localDocLinks();
-        if(app.winw > 500) {  //easily fit max topleftdiv + toprightdiv
+        if(app.winw > 500) {
             body = jt.byId("bodyid");
             body.style.paddingLeft = "8%";
             body.style.paddingRight = "8%"; }
@@ -330,8 +329,7 @@ return {
         if(overlay) {
             app.layout.openDialog(null, html); }
         else {
-            jt.out("contentdiv", html);
-            jt.out("headingdivcontent", ""); } //remove the types filter display
+            jt.out("contentdiv", html); }
         if(url.indexOf(":") < 0) {
             url = relativeToAbsolute(url); }
         url += jt.ts("?cb=", "day");

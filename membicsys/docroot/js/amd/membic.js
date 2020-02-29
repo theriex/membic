@@ -1386,7 +1386,7 @@ app.membic = (function () {
         html = app.layout.dlgwrapHTML("Make Membic", html,
                                       jt.fs("app.membic.done()"));
         app.layout.openDialog(
-            {x: Math.max(jt.byId("headingdivcontent").offsetLeft - 34, 20),
+            {x: Math.max(jt.byId("contentdiv").offsetLeft - 34, 20),
              y: window.pageYOffset + 22},
             jt.tac2html(html), updateReviewDialogContents, updateShareInfo);
     }

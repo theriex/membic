@@ -271,7 +271,6 @@ app.themes = (function () {
 
     function displayMainContent () {
         jt.log("themes.displayMainContent starting");
-        jt.out("logodiv", "");  //remove logo since displayed in nav
         app.stopLoopers();
         jt.out("contentdiv", jt.tac2html(themesHeadingLineHTML()));
         app.fork({descr:"themes display start",

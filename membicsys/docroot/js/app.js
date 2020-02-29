@@ -210,38 +210,15 @@ var jt = {};   //Global access to general utility methods
             return; }  //don't fire anything else off
         jtminjsDecorateWithUtilities(jt);
         app.originalhref = href;
-        if(href.indexOf("#") > 0) {
-            href = href.slice(0, href.indexOf("#")); }
-        if(href.indexOf("?") > 0) {
-            href = href.slice(0, href.indexOf("?")); }
+        href = href.split("/").slice(0, 3).join("/");
         if(app.solopage()) {
             jt.byId("topsectiondiv").style.display = "none";
-            jt.byId("headingdiv").style.display = "none";
             jt.byId("bottomnav").style.display = "none";
             jt.byId("topsectiondiv").style.display = "none"; }
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
         jt.loadAppModules(app, modules, href, app.init2, "?v=190921");
-    };
-
-
-    app.loadScript = function (logsrc, href, id) {
-        var js;
-        if(jt.byId(id)) {
-            return; }  //already loaded. Might need to wait for it.
-        if(logsrc) {
-            jt.log(logsrc + " loading " + href); }
-        if(!href.startsWith("http")) {
-            href = jt.baseurl(window.location.href) + "/" + href; }
-        if(href.indexOf("v=") < 0) {
-            href += "?v=190921"; }
-        js = document.createElement("script");
-        //js.async = true;
-        js.type = "text/javascript";
-        js.id = id;
-        js.src = href;
-        document.body.appendChild(js);
     };
 
 

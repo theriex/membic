@@ -183,20 +183,9 @@ app.login = (function () {
     }
 
 
-    //prefer output in the login form if available, otherwise use main stat div
-    function loginstat (txt) {
-        var loginstatformdiv = jt.byId("loginstatformdiv");
-        if(loginstatformdiv) {
-            jt.out("loginstatformdiv", jt.tac2html(
-                ["span", {cla:"loginstatspan"}, txt]));
-            return; }
-        if(!txt) {
-            //keep some text in the div so it doesn't collapse
-            jt.out("loginstatdiv", "&nbsp;"); }
-        else {
-            //wrap the text so it can be offset from the background
-            jt.out("loginstatdiv", jt.tac2html(
-                ["span", {cla:"loginstatspan"}, txt])); }
+    function errmsg (txt) {
+        jt.out("topmessagelinediv", jt.tac2html(
+            ["span", {cla:"errmsgtextspan"}, txt]));
     }
 
 
@@ -206,7 +195,7 @@ app.login = (function () {
         addParamValuesToLoginForm(params);
         //decorate contents and connect additional actions
         if(params.loginerr) {
-            loginstat(fixServerText(params.loginerr, params.emailin)); }
+            errmsg(fixServerText(params.loginerr, params.emailin)); }
         if(authname) {
             jt.byId("emailin").value = authname; }
         if(params.emailin) {
@@ -351,19 +340,6 @@ app.login = (function () {
     }
 
 
-    function applyCSSOverride (cssurl) {
-        var csselem = document.createElement("link");
-        csselem.rel = "stylesheet";
-        csselem.type = "text/css";
-        cssurl = jt.dec(cssurl);
-        cssurl = cssurl.toLowerCase();
-        if(cssurl.indexOf("http") < 0) {
-            cssurl = "css/embed/" + cssurl + ".css"; }
-        csselem.href = cssurl;
-        document.head.appendChild(csselem);
-    }
-
-
     function handleInitialParamSideEffects (params) {
         if(params.an && params.at) {
             setAuthentication(params.an, params.at); }
@@ -371,8 +347,6 @@ app.login = (function () {
             logoutWithNoDisplayUpdate(); }
         if(!params.returnto) {  //clean up the URL display
             clearParams(); }
-        if(params.css) {
-            applyCSSOverride(params.css); }
         //handle specific context requests
         else if(params.view === "about") {
             app.history.checkpoint({ view: "about" }); }
@@ -396,7 +370,7 @@ app.login = (function () {
         var html = ["a", {id:"resetpw", href:"#resetpassword",
                           title:"Email a password reset link",
                           onclick:jt.fs("app.login.resetPassword()")},
-                    "reset password..."];
+                    "reset password"];
         jt.out("resetpassdiv", jt.tac2html(html));
         html = jt.byId("topsectiondiv").innerHTML;
         initialTopSectionHTML = html;
@@ -437,17 +411,17 @@ return {
 
     accountSettingsHTML: function () {
         var html = ["div", {id:"accountsettingsformdiv"},
-                    [["div", {cla:"lifsep"},
+                    [["div", {cla:"cbdiv"},
                       [["label", {fo:"emailin", cla:"liflab"}, "Email"],
                        ["input", {type:"email", cla:"lifin",
                                   name:"emailin", id:"emailin",
                                   value:authname,
                                   placeholder: "nospam@example.com"}]]],
-                     ["div", {cla:"lifsep", id:"accstatusupdatediv"}],
-                     ["div", {cla:"lifsep", id:"accstatdetaildiv"}],
-                     ["div", {cla:"lifsep", id:"accpassupdatediv"}],
-                     ["div", {cla:"lifsep", id:"maxpostperdaydiv"}],
-                     ["div", {cla:"lifsep", id:"usermenustat"}],
+                     ["div", {cla:"cbdiv", id:"accstatusupdatediv"}],
+                     ["div", {cla:"cbdiv", id:"accstatdetaildiv"}],
+                     ["div", {cla:"cbdiv", id:"accpassupdatediv"}],
+                     ["div", {cla:"cbdiv", id:"maxpostperdaydiv"}],
+                     ["div", {cla:"cbdiv", id:"usermenustat"}],
                      ["div", {cla:"dlgbuttonsdiv"},
                       [["button", {type:"button", id:"accupdbutton",
                                    onclick: jt.fs("app.login.updateAccount()")},
@@ -629,7 +603,6 @@ return {
         app.layout.cancelOverlay();
         logoutWithNoDisplayUpdate();
         app.login.updateTopSection();
-        jt.out("sysnoticediv", "");
         app.verifyHome();
         if(errprompt) {
             jt.err(errprompt); }
@@ -646,14 +619,14 @@ return {
         var emaddr = jt.byId("emailin").value;
         var password = jt.byId("passin").value;
         if(!emaddr || !emaddr.trim()) {
-            loginstat("Please specify an email and password");
+            errmsg("Please specify an email and password");
             jt.byId("emailin").focus();
             return; }
         if(!password || !password.trim()) {
-            loginstat("Please specify a password");
+            errmsg("Please specify a password");
             jt.byId("emailin").focus();
             return; }
-        loginstat("");   //clear any previous message
+        errmsg("");   //clear any previous message
         var buttonhtml = jt.byId("loginbuttonsdiv").innerHTML;
         jt.out("loginbuttonsdiv", "Creating new account...");
         emaddr = emaddr.toLowerCase();
@@ -674,7 +647,7 @@ return {
                                func:nextStepOrRestartAction,
                                ms:3000}); },
                  app.failf(function (ignore /*code*/, errtxt) {
-                     loginstat(errtxt);
+                     errmsg(errtxt);
                      jt.out("loginbuttonsdiv", buttonhtml); }),
                 jt.semaphore("login.createAccount"));
     },
@@ -718,16 +691,16 @@ return {
     resetPassword: function () {
         var emaddr = jt.byId("emailin").value;
         if(!jt.isProbablyEmail(emaddr)) {
-            loginstat("Please fill in your email address...");
+            errmsg("Please fill in your email address...");
             return; }
-        loginstat("Sending...");
+        errmsg("Sending...");
         var data = "emailin=" + jt.enc(emaddr);
         jt.call("POST", "mailpwr", data,
                 function (ignore /*objs*/) {
-                    loginstat("");
+                    errmsg("");
                     displayEmailSent(); },
                 app.failf(function (ignore /*code*/, errtxt) {
-                    loginstat(errtxt); }),
+                    errmsg(errtxt); }),
                 jt.semaphore("resetPassword"));
     }
 

@@ -184,11 +184,6 @@ return {
     },
 
 
-    clearSysNotices: function () {
-        jt.out("sysnoticediv", ""); 
-    },
-
-
     hasFlag: function (ctm, flagname) {
         if(ctm && ctm.cliset && ctm.cliset.flags) {
             return ctm.cliset.flags[flagname]; }
