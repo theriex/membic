@@ -99,8 +99,8 @@ app.membic = (function () {
     //results in 1px graphic hiccups as the rounding switches, and ceil
     //has similar issues coming off zero, so use floor.
     function starsImageHTML (rating, mode) {
-        var imgfile = "img/stars18ptC.png"; 
-        var greyfile = "img/stars18ptCg.png";
+        var imgfile = app.dr("img/stars18ptC.png");
+        var greyfile = app.dr("img/stars18ptCg.png");
         var width; var offset; var rat; var html;
         if(typeof rating !== "number") {
             mode = mode || (rating.srcrev === "-101" ? "prereview" : "read");
@@ -108,7 +108,7 @@ app.membic = (function () {
         rat = app.membic.starRating(rating);
         width = Math.floor(rat.step * (starimgw / rat.maxstep));
         html = [];
-        html.push(["img", {cla: "starsimg", src: "img/blank.png",
+        html.push(["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                            style: "width:" + width + "px;" + 
                                   "height:" + starimgh + "px;" +
                                   "background:url('" + imgfile + "');",
@@ -117,7 +117,7 @@ app.membic = (function () {
             if(rat.step % 2 === 1) {  //odd, use half star display
                 offset = Math.floor(starimgw / rat.maxstep);
                 html.push(
-                    ["img", {cla: "starsimg", src: "img/blank.png",
+                    ["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                              style: "width:" + (starimgw - width) + "px;" + 
                                     "height:" + starimgh + "px;" +
                                     "background:url('" + greyfile + "')" +
@@ -125,13 +125,13 @@ app.membic = (function () {
                              title: rat.title, alt: rat.title}]); }
             else { //even, use full star display
                 html.push(
-                    ["img", {cla: "starsimg", src: "img/blank.png",
+                    ["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                              style: "width:" + (starimgw - width) + "px;" + 
                                     "height:" + starimgh + "px;" +
                                     "background:url('" + greyfile + "');",
                              title: rat.title, alt: rat.title}]); } }
         else { //add blank space to left justify stars
-            html.push(["img", {cla: "starsimg", src: "img/blank.png",
+            html.push(["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                                style: "width:" + (starimgw - width) + "px;" +
                                       "height:" + starimgh + "px;"}]); }
         return jt.tac2html(html);
@@ -271,7 +271,7 @@ app.membic = (function () {
         if(!type) {
             jt.log("Might show typed placeholders. Pass the type"); }
         html = {id: "revimg" + review.dsId, cla: "revimg", 
-                src: "img/nopicprof.png"};
+                src:app.dr("img/nopicprof.png")};
         if(jt.isLowFuncBrowser()) {
             html.style = "width:125px;height:auto;"; }
         switch(verifyMembicImageDisplayType(review)) {
@@ -285,7 +285,7 @@ app.membic = (function () {
             break;
         case "nopic":
             if(mode !== "edit") {
-                html.src = "img/blank.png"; }
+                html.src = app.dr("img/blank.png"); }
             break; }
         html = ["img", html];
         if(mode === "edit") {
@@ -829,7 +829,7 @@ app.membic = (function () {
                                    onclick: jt.fs(selfunc)},
                              place.description]]); }); }
         var html = [["ul", items],
-                    ["img", {src: "img/poweredbygoogle.png"}]];
+                    ["img", {src:app.dr("img/poweredbygoogle.png")}]];
         jt.out("revautodiv", jt.tac2html(html));
         app.fork({descr:"Google places autocomp loop",
                   func:acfunc, ms:400});
@@ -976,7 +976,7 @@ app.membic = (function () {
             html.push(["a", {href: "#" + rt.type, cla: "typeselect",
                              onclick: jt.fs("app.membic.updatedlg('" + 
                                             rt.type + "')")},
-                       ["img", {cla: clt, src: "img/" + rt.img}]]); });
+                       ["img", {cla: clt, src:app.dr("img/" + rt.img)}]]); });
         html = ["div", {cla: "revtypesdiv", id: "revdlgtypesdiv"}, 
                 html];
         jt.out("rdtypesdiv", jt.tac2html(html));
@@ -1034,7 +1034,7 @@ app.membic = (function () {
 
 
     function dlgPicHTML () {
-        var imgsrc = "img/nopicrev.png";
+        var imgsrc = app.dr("img/nopicrev.png");
         var type = verifyMembicImageDisplayType(crev);
         if(type === "upldpic") {
             imgsrc = "revpic?revid=" + crev.dsId + 
@@ -1046,12 +1046,12 @@ app.membic = (function () {
 
 
     function dlgStarsHTML () {
-        var imgfile = "img/stars18ptC.png"; 
-        var greyfile = "img/stars18ptCg.png";
+        var imgfile = app.dr("img/stars18ptC.png");
+        var greyfile = app.dr("img/stars18ptCg.png");
         var rat = app.membic.starRating(crev.rating);
         var width = Math.floor(rat.step * (starimgw / rat.maxstep));
         var html = [];
-        html.push(["img", {cla: "starsimg", src: "img/blank.png",
+        html.push(["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                            style: "width:" + width + "px;" + 
                                   "height:" + starimgh + "px;" +
                                   "background:url('" + imgfile + "');",
@@ -1059,7 +1059,7 @@ app.membic = (function () {
         if(rat.step % 2 === 1) {  //odd, use half star display
             var offset = Math.floor(starimgw / rat.maxstep);
             html.push(
-                ["img", {cla: "starsimg", src: "img/blank.png",
+                ["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                          style: "width:" + (starimgw - width) + "px;" + 
                                 "height:" + starimgh + "px;" +
                                 "background:url('" + greyfile + "')" +
@@ -1067,7 +1067,7 @@ app.membic = (function () {
                          title: rat.title, alt: rat.title}]); }
         else { //even, use full star display
             html.push(
-                ["img", {cla: "starsimg", src: "img/blank.png",
+                ["img", {cla: "starsimg", src:app.dr("img/blank.png"),
                          style: "width:" + (starimgw - width) + "px;" + 
                                 "height:" + starimgh + "px;" +
                                 "background:url('" + greyfile + "');",
@@ -1312,7 +1312,8 @@ app.membic = (function () {
                     ["div", {cla:dc},
                      [["a", {href:url, title:url,
                              onclick:jt.fs("window.open('" + url + "')")},
-                       [["img", {cla:"reviewbadge", src:"img/" + type.img,
+                       [["img", {cla:"reviewbadge", 
+                                 src:app.dr("img/" + type.img),
                                  title:type.type, alt:type.type}],
                         app.pcd.membicItemNameHTML(type, rev)]],
                       "&nbsp;",
@@ -1729,7 +1730,7 @@ return {
                              onchange:revfs("picdlg('sitepic')")}],
                  ["div", {id:"sitepicdetaildiv", cla:"ptddiv"},
                   [["img", {id:"sitepicimg", cla:"revimgdis",
-                            src:crev.imguri || "img/nopicprof.png",
+                            src:crev.imguri || app.dr("img/nopicprof.png"),
                             onclick:revfs("picdlg('sitepic')")}],
                    ["div", {id:"sitepicform", cla:"overform"}]]]]],
                ["li",
@@ -1740,7 +1741,7 @@ return {
                   [["img", {id:"upldpicimg", cla:"revimgdis",
                             src:(crev.revpic ? ("revpic?revid=" + revid + 
                                                  jt.ts("&cb=", "second"))
-                                  : "img/nopicrev.png"),
+                                  : app.dr("img/nopicrev.png")),
                             onclick:revfs("picdlg('upldpic')")}],
                    ["div", {id:"upldpicform", cla:"overform"}]]]]],
                ["li",
@@ -2118,6 +2119,68 @@ return {
     updateRating: function (rating) {
         crev.rating = rating;
         jt.out("rdstarsdiv", jt.tac2html(dlgStarsHTML()));
+    },
+
+
+    mdTitleHTML: function (membic, fist) {
+        return jt.tac2html(
+            [["a", {href:"#toggleactions", title:"Toggle Membic Actions",
+                    onclick:jt.fs("app.membic.toggleMembic(" + fist.idx + ")")},
+              ["img", {cla:"mbtkebabimg", src:app.dr("img/kebab.png")}]],
+             ["a", {href:membic.url, title:membic.url,
+                    onclick:jt.fs("window.open('" + membic.url + "')")},
+              (membic.details.title || membic.details.name)]]);
+    },
+
+
+    mdPicHTML: function (membic) {
+        membic.svcdata = membic.svcdata || {};
+        if(!membic.svcdata.picdisp) {
+            if(membic.imguri) {
+                membic.svcdata.picdisp = "sitepic"; }
+            else if(membic.revpic) {
+                membic.svcdata.picdisp = "upldpic"; }
+            else {
+                membic.svcdata.picdisp = "nopic"; } }
+        var imgsrc = app.dr("img/blank.png");
+        switch(membic.svcdata.picdisp) {
+        case "sitepic":
+            imgsrc = membic.imguri;
+            if(imgsrc.startsWith("http:")) {
+                imgsrc = "/api/imagerelay?membicid=" + membic.dsId +
+                    "&url=" + jt.enc(imgsrc); }
+            break;
+        case "upldpic":
+            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId;
+            break; }
+        return jt.tac2html(
+            ["a", {href:membic.url, title:membic.url,
+                   onclick:jt.fs("window.open('" + membic.url + "')")},
+             ["img", {cla:"mdimg", src:imgsrc}]]);
+    },
+
+
+    mdDetsHTML: function (membic) {
+        var secflds = ["artist", "author", "publisher", "album", "starring",
+                       "address", "year"];
+        var html = []
+        secflds.forEach(function (field) {
+            var val = membic.details[field];
+            if(val) {
+                if(field === "address") {
+                    val = ["address", val]; }
+                html.push(["tr",
+                           [["td", {cla:"tdnarrow"},
+                             ["span", {cla:"secondaryfield"}, field]],
+                            ["td", {align:"left"}, val]]]); } });
+        return jt.tac2html(["table", {cla: "collapse"}, html]);
+    },
+
+
+    toggleMembic: function (idx) {
+        jt.log("toggleMembic not implemented yet");
+        //TODO: toggle mdactdiv, mdsharediv, mdptsdiv filling content as needed
+        //see postedCoopLinksHTML, authpic etc.
     },
 
 

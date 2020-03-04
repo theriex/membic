@@ -77,7 +77,7 @@ button, .loginbutton, .formbutton, .filesellab {
 .collapse { border-collapse:collapse; }
 #topdiv { position:absolute; left:0px; top:45px; padding:0px 10px;
   text-align:right; font-size:x-small; }
-#appspacediv { margin:0px 5px; clear:both; }
+#appspacediv { margin:5px 2px; clear:both; }
 .sitemetalinksdiv { font-size:xx-small; text-align:center; overflow:hidden;
   word-spacing:35px; padding:20px 0px 0px 0px; }
 #bottomnav { font-size:xx-small; text-align:center; overflow:hidden;
@@ -151,8 +151,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #accountsettingsformdiv { }
 .cbdiv { clear:both; }
 
-/* >> profile/coop display */
-#pcdcontdiv { padding:5px 0px 10px 0px; }
+/* >> profile/theme display */
+#pcdcontdiv { padding:0px 0px 10px 0px; }
+.pcditemdiv { clear:both; } /* main formatting in content display */
 #pcdpicdiv { width:110px; height:110px; padding:0px 5px 2px 0px; float:left; }
 .pcdpic { max-width:110px; max-height:110px; }
 #pcddescrdiv { height:110px; overflow:auto; }
@@ -165,7 +166,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #pcdctrldiv { clear:both; }
 .unselectedTab { border-bottom: 1px solid #666; }
-#pcdactdiv { }
+#pcdactdiv { padding:0px 0px 3px 0px; }
 #pcdacsharediv, #pcdacsrchdiv, #pcdacemdiv { display:inline-block; }
 #pcdactcontentdiv { font-size:small; text-align:center; }
 #downloadlink { background-image: url('../img/whitewash.png'); }
@@ -207,6 +208,24 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mailindesctable tbody tr td { text-align:right; }
 .mailindesctable tbody tr td:nth-child(odd) { padding-right:10px; }
 .mailindesctable tbody tr td:nth-child(even) { text-align:left; }
+
+/* >> membic content layout */
+.mdouterdiv { margin:0px 0px 6px 0px; padding:0; }
+.mdinnerdiv { padding:0px 2px; margin:0; min-height:100px; border-radius:10px;
+  background-image:url('../img/e6e7e9p80.png'); }
+.mdtitlediv { }
+.mdactdiv { }
+.mdsharediv { }
+.mdbodydiv { overflow:auto; padding:0px 3px 3px 3px;
+  font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }
+.mdpicdiv { float:left; padding:0px 10px 0px 3px; }
+.mdimg { max-width:125px; max-height:80px; }
+.mdtxtdiv { font-size:small; padding: 2px 10px 0px 2px; }
+.mddetdiv { font-size:x-small; margin-left:16px; }
+.mdkwsdiv { font-size:small; margin-left:5px; }
+.mbtkebabimg { padding:0px 5px 0px 8px; max-height:16px; 
+  vertical-align:middle; }
+
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel { 

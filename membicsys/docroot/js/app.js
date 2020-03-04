@@ -210,7 +210,7 @@ var jt = {};   //Global access to general utility methods
             return; }  //don't fire anything else off
         jtminjsDecorateWithUtilities(jt);
         app.originalhref = href;
-        href = href.split("/").slice(0, 3).join("/");
+        app.docroot = href.split("/").slice(0, 3).join("/") + "/";
         if(app.solopage()) {
             jt.byId("topsectiondiv").style.display = "none";
             jt.byId("bottomnav").style.display = "none";
@@ -218,7 +218,12 @@ var jt = {};   //Global access to general utility methods
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, href, app.init2, "?v=190921");
+        jt.loadAppModules(app, modules, app.docroot, app.init2, "?v=190921");
+    };
+
+
+    app.dr = function (relpath) {
+        return app.docroot + relpath;
     };
 
 

@@ -29,7 +29,7 @@ indexHTML = """
   <meta property="twitter:image" content="$SITEPIC" />
   <meta itemprop="image" content="$SITEPIC" />
   <title>$TITLE</title>
-  <link href="css/site.css$CACHEPARA" rel="stylesheet" type="text/css" />
+  <link href="$RDRcss/site.css$CACHEPARA" rel="stylesheet" type="text/css" />
   $FEEDLINKS
 </head>
 <body id="bodyid">
@@ -85,9 +85,9 @@ indexHTML = """
 <div id="modalseparatordiv"></div>
 <div id="overlaydiv"></div>
 
-<script src="js/jtmin.js$CACHEPARA"></script>
-<script src="js/app.js$CACHEPARA"></script>
-<!-- uncomment if compiling <script src="js/compiled.js$CACHEPARA"></script> -->
+<script src="$RDRjs/jtmin.js$CACHEPARA"></script>
+<script src="$RDRjs/app.js$CACHEPARA"></script>
+<!-- uncomment if compiling <script src="$RDRjs/compiled.js$CACHEPARA"></script> -->
 
 <script>
   app.pfoj = $PREFETCHOBJSON;
@@ -362,9 +362,10 @@ def feedlinks_for_object(obj):
     return linkhtml
 
 
-def write_start_page(obj, refer):
+def write_start_page(obj, refer, reldocroot=""):
     content, pfoj = content_and_prefetch(obj)
     html = indexHTML
+    html = html.replace("$RDR", reldocroot)
     html = html.replace("$SITEPIC", sitepic_for_object(obj))
     html = html.replace("$TITLE", sitetitle_for_object(obj))
     html = html.replace("$DESCR", sitedescr_for_object(obj))
@@ -386,20 +387,20 @@ def write_start_page(obj, refer):
 # url references and that would make things more error prone.
 def start_html_for_path(path, refer):
     if not path or path.startswith("index.htm"):
-        obid = dbacc.reqarg("u", "string")
-        if obid:
-            logging.info("start_html_for_path MUser " + obid)
-            return write_start_page(dbacc.cfbk("MUser", "dsId", obid), refer)
-        obid = dbacc.reqarg("t", "string")
-        if obid:
-            logging.info("start_html_for_path Theme " + obid)
-            return write_start_page(dbacc.cfbk("Theme", "dsId", obid), refer)
         logging.info("start_html_for_path writing default page")
         return write_start_page(None, refer)
     # dsIds are not unique across object types.  Hashtags are.  It should
     # be possible to have a numeric hashtag.
     hashtag = util.first_group_match("(\w+)", path)
-    if hashtag:
+    if(hashtag == "theme"):
+        obid = util.first_group_match("theme/(\d+)", path)
+        logging.info("start_html_for_path Theme " + obid)
+        return write_start_page(dbacc.cfbk("Theme", "dsId", obid), refer, "../")
+    elif(hashtag == "profile"):
+        obid = util.first_group_match("profile/(\d+)", path)
+        logging.info("start_html_for_path MUser " + obid)
+        return write_start_page(dbacc.cfbk("MUser", "dsId", obid), refer, "../")
+    else:
         inst = dbacc.cfbk("Theme", "hashtag", hashtag)
         if not inst:
             inst = dbacc.cfbk("MUser", "hashtag", hashtag)

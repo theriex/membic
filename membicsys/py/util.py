@@ -186,6 +186,10 @@ def add_membic_to_preb(context, membic):
              "keywords", "svcdata", "imguri", "dispafter", "penname", "reacdat"]
     for mfld in mflds:
         memsum[mfld] = membic[mfld]
+    jsonflds = ["details", "svcdata", "reacdat"]
+    for jsonfield in jsonflds:
+        memsum[jsonfield] = memsum[jsonfield] or "{}"
+        memsum[jsonfield] = json.loads(memsum[jsonfield])
     if membic["revpic"]:
         memsum["revpic"] = membic["dsId"]
     # dequeue.appendleft is faster, but not worth the conversion

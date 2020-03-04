@@ -78,10 +78,10 @@ return {
         switch(state.view) {
         case "themes":
             return app.themes.display();
-        case "coop":
-            return app.coop.bycoopid(state.coopid, "history", state.action);
+        case "theme":
+            return app.pcd.fetchAndDisplay("theme", state.dsId, state.action);
         case "profile":
-            return app.profile.byprofid(state.profid, state.action);
+            return app.pcd.fetchAndDisplay("profile", state.dsId, state.action);
         default:
             jt.log("history.dispatchState unknown state: " + state);
         }
