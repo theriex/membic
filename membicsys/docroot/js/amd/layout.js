@@ -244,26 +244,7 @@ app.layout = (function () {
     }
 
 
-    ////////////////////////////////////////
-    // published functions
-    ////////////////////////////////////////
-return {
-
-    init: function () {
-        var body;
-        findDisplayHeightAndWidth();
-        app.layout.commonUtilExtensions();
-        localDocLinks();
-        if(app.winw > 500) {
-            body = jt.byId("bodyid");
-            body.style.paddingLeft = "8%";
-            body.style.paddingRight = "8%"; }
-        if(!app.embedded) {
-            app.layout.rotateBackgroundPic(); }
-    },
-
-
-    commonUtilExtensions: function () {
+    function commonUtilExtensions () {
         jt.hasId = function (obj) {
             if(obj && obj.dsId && obj.dsId !== "0") {
                 return true; }
@@ -313,6 +294,48 @@ return {
                 obj[field] = val;
                 changed = true; }
             return changed; };
+    }
+
+
+    function loadThirdPartyUtilities () {
+        //google fonts can occasionally be slow or unresponsive.  Load here to
+        //avoid holding up app initialization
+        var elem = document.createElement("link");
+        elem.rel = "stylesheet";
+        elem.type = "text/css";
+        elem.href = "//fonts.googleapis.com/css?family=Open+Sans:400,700";
+        document.head.appendChild(elem);
+        jt.log("added stylesheet " + elem.href);
+        //handwriting font for pen name display
+        elem = document.createElement("link");
+        elem.rel = "stylesheet";
+        elem.type = "text/css";
+        elem.href = "//fonts.googleapis.com/css?family=Shadows+Into+Light+Two";
+        document.head.appendChild(elem);
+        jt.log("added stylesheet " + elem.href);
+        //The google places API doesn't like being loaded asynchronously so
+        //leaving it last in the index file instead.
+    }
+
+
+    ////////////////////////////////////////
+    // published functions
+    ////////////////////////////////////////
+return {
+
+    init: function () {
+        var body;
+        findDisplayHeightAndWidth();
+        commonUtilExtensions();
+        localDocLinks();
+        if(app.winw > 500) {
+            body = jt.byId("bodyid");
+            body.style.paddingLeft = "8%";
+            body.style.paddingRight = "8%"; }
+        if(!app.embedded) {
+            app.layout.rotateBackgroundPic(); }
+        app.fork({descr:"dynamic fonts",
+                  func:loadThirdPartyUtilities, ms:5});
     },
 
 

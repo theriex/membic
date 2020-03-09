@@ -16,7 +16,7 @@ module.exports = (function () {
 
     var fieldDescriptors = [
         {dn:"priv[ate]", h:"authorized access only e.g. owner personal info"},
-        {dn:"adm[in]", h:"administrative access only e.g. act codes"},
+        {dn:"adm[in]", h:"administrative access only e.g. activation codes"},
         {dn:"req[uired]", h:"Save error if null or empty"},
         {dn:"uniq[ue]", h:"Indexed. Save err if matches another's value"},
         {dn:"str[ing]", h:"Rough max 128 char text, truncation ok.", aliases:[

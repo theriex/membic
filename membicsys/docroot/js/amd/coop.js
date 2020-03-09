@@ -16,17 +16,6 @@ app.coop = (function () {
     //Fields that need to be deserialized after fetching.
     var serflds = ["adminlog", "people", "cliset", "preb"];
 
-    function historyCheckpointIfNeeded (coop) {
-        //when creating a new theme, the history state will not have
-        //been checkpointed because there was no id yet.
-        var id = coop.dsId;
-        var hs = app.history.currState();
-        if(id && hs.view !== "coop") {
-            hs = { view: "coop", coopid: id };
-            app.history.checkpoint(hs); }
-    }
-
-
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -67,7 +56,7 @@ return {
                 function (updcoops) {
                     app.refmgr.put(updcoops[0]);
                     app.profile.verifyMembership(updcoops[0]);
-                    historyCheckpointIfNeeded(updcoops[0]);
+                    app.statemgr.setState(updcoops[0]);
                     app.refmgr.uncache("activetps", "411");
                     callok(updcoops[0]); },
                 app.failf(function (code, errtxt) {

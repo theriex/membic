@@ -5,11 +5,55 @@
 app.login = (function () {
     "use strict";
 
-    var authname = "";
-    var authtoken = "";
-    var cookdelim = "..membicauth..";
     var initialTopSectionHTML = "";
+    var cookdelim = "..membicauth..";
+    var authobj = null;  //email, token, authId, status, altinmail, signInTS
     var actsent = null;
+
+
+    function displayAuthenticatedTopSection () {
+        //profile/connect access buttons, new membic creation form
+        jt.log("displayAuthenticatedTopSection not implemented yet");
+    }
+
+
+    function verifyUserInfo () {
+        if(!authobj) {
+            return jt.log("verifyUserInfo called without authentication"); }
+        //If the user was already loaded, no need to rebuild the displays
+        //since they already took that into consideration.
+        if(refmgr.cached("MUser", authobj.authId)) {
+            return jt.log("verifyUserInfo found MUser " + authobj.authId); }
+        //If the user info needed to be fetched, then what was showing was
+        //either a specific user/theme, or the connection display.  If it
+        //was a specific user/theme, then the display doesn't need to be
+        //updated.  If it was the default connection display, then it should
+        //be updated to reflect the user's own profile and theme membership.
+        app.refmgr.getFull("MUser", authobj.Id, function () {
+            if(statemgr.currState().dsType === "activetps") {
+                app.connect.display(); } });
+    }
+
+
+    function readAuthentCookie () {
+        var ret = null;
+        var cval = jt.cookie(app.authcookname);
+        if(cval && cval.indexOf(cookdelim) < 0) {  //invalid delimiter
+            jt.log("readAuthentCookie bad cookdelim, nuked cookie.");
+            jt.cookie(app.authcookname, "", -1);
+            cval = ""; }
+        if(cval) {
+            var mtn = cval.split(cookdelim);
+            mtn[0] = mtn[0].replace("%40", "@");
+            if(mtn[0].indexOf("@") < 0 || mtn[1].length < 20) {
+                //might have been "undefined" or other bad value
+                jt.log("readAuthentCookie bad name/token, nuked cookie.");
+                jt.cookie(app.authcookname, "", -1);
+                cval = ""; }
+            else {
+                ret = {authname:mtn[0], authtoken:mtn[1]}; } }
+        return ret;
+    }
 
 
     function secureURL (endpoint) {
@@ -300,34 +344,6 @@ app.login = (function () {
     }
 
 
-    function logLoadTimes () {
-        var timer = app.amdtimer;
-        var millis = timer.load.end.getTime() - timer.load.start.getTime();
-        jt.log("load app: " + millis);
-    }
-
-
-    function loadThirdPartyUtilities () {
-        //google fonts can occasionally be slow or unresponsive.  Load here to
-        //avoid holding up app initialization
-        var elem = document.createElement("link");
-        elem.rel = "stylesheet";
-        elem.type = "text/css";
-        elem.href = "//fonts.googleapis.com/css?family=Open+Sans:400,700";
-        document.head.appendChild(elem);
-        jt.log("added stylesheet " + elem.href);
-        //handwriting font for pen name display
-        elem = document.createElement("link");
-        elem.rel = "stylesheet";
-        elem.type = "text/css";
-        elem.href = "//fonts.googleapis.com/css?family=Shadows+Into+Light+Two";
-        document.head.appendChild(elem);
-        jt.log("added stylesheet " + elem.href);
-        //The google places API doesn't like being loaded asynchronously so
-        //leaving it last in the index file instead.
-    }
-
-
     function loggedInDoNextStep (params) {
         //On localhost, params are lost when the login form is
         //displayed.  On the server, they are passed to the secure
@@ -401,11 +417,48 @@ app.login = (function () {
 return {
 
     init: function () {
-        logLoadTimes();
-        app.fork({descr:"dynamic fonts",
-                  func:loadThirdPartyUtilities, ms:5});
+        //Secure site communications (https) are verified on init. Not
+        //checking that again here.  Save the initial login form so it
+        //can be restored on logout as needed.
         saveTopSectionHTML();
-        handleRedirectOrStartWork();
+        //Always make the call to sign in.  If bad cookie or other issues
+        //then deal with that immediately.
+        app.login.signIn();
+    },
+
+
+    signIn: function (createNewAccount) {
+        jt.out("topmessagelinediv", "");  //clear any previous login error
+        var sav = readAuthentCookie() || {};
+        var ps = {an:app.startParams.an || sav.authname || "",
+                  at:app.startParams.at || sav.authtoken || "",
+                  emailin:jt.safeget("emailin", "value") || "",
+                  passin:jt.safeget("passin", "value")};
+        if(createNewAccount) {
+            if(!jt.isProbablyEmail(ps.emailin)) {
+                return jt.out("topmessagelinediv", "Email address required"); }
+            ps.newacct = true; }
+        else if(!((ps.an || ps.emailin) && (ps.at || ps.passin))) {
+            return; }  //not trying to sign in yet.
+        //Regardless of whether the signin call works or not, clear any auth
+        //information passed in the URL parameters so it doesn't hang
+        //around.  Already cleared from the URL in initial state dispatch.
+        app.startParams.an = "";
+        app.startParams.at = "";
+        //This is a lighweight call to avoid the wait time associated with
+        //downloading a full MUser instance.  The goal is to switch out of
+        //the login form into the main interaction form to allow for writing
+        //a membic as quickly as possible.  If the call succeeds, the result
+        //object has the authentication token and privileged user info.
+        jt.call("POST", app.dr("api/signin"), jt.objdata(ps),
+                function (result) {
+                    authobj = result[0];
+                    displayAuthenticatedTopSection();
+                    verifyUserInfo(); },
+                function (code, errtxt) {
+                    jt.log("authentication failure " + code + ": " + errtxt);
+                    jt.out("topmessagelinediv", errtxt); },
+                jt.semaphore("login.signIn"));
     },
 
 
@@ -518,7 +571,7 @@ return {
             return; }
         //logged in...
         var navs = [
-            {name:"Themes", im:"img/membiclogo.png", fs:"app.themes.display"},
+            {name:"Themes", im:"img/membiclogo.png", fs:"app.connect.display"},
             {name:"Profile", im:"img/profile.png", fs:"app.profile.display"},
             {name:"Write", im:"img/writenew.png", fs:"app.review.start"}];
         var html = [];
@@ -670,7 +723,7 @@ return {
         var state = app.history.currState();
         if(!state || !state.view) {
             jt.log("login.doNextStep determining default state");
-            app.themes.keepdef();  //save the definition for general use
+            app.connect.keepdef();  //save the definition for general use
             //if pfoj is a theme or profile, view it (specified by the URL)
             if(app.pfoj && app.pfoj.dsType === "Theme") {
                 state = {view:"theme", dsId:app.pfoj.dsId}; }

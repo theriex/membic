@@ -223,7 +223,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdtxtdiv { font-size:small; padding: 2px 10px 0px 2px; }
 .mddetdiv { font-size:x-small; margin-left:16px; }
 .mdkwsdiv { font-size:small; margin-left:5px; }
-.mbtkebabimg { padding:0px 5px 0px 8px; max-height:16px; 
+.mbtkebabimg { padding:0px 5px 0px 6px; max-height:16px; 
   vertical-align:middle; }
 
 

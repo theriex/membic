@@ -830,16 +830,6 @@ app.pcd = (function () {
     }
 
 
-    function historyCheckpoint () {
-        var histrec = { view: dst.type };
-        if(dst.type === "coop" && !dst.id) {
-            //don't push a theme history with no id. Can't restore it.
-            return; }
-        histrec[dst.type + "id"] = dst.id;
-        app.history.checkpoint(histrec);
-    }
-
-
     function isKeywordMatch (membic) {
         if(!srchst.kwrds) {  //not filtering by keyword
             return true; }
@@ -1296,8 +1286,8 @@ app.pcd = (function () {
     //requires the overlay stay up.
     function displayObject (obj, command) {
         obj = obj || dst.obj;
+        app.statemgr.setState(obj, command);
         resetDisplayStateFromObject(obj);
-        historyCheckpoint();
         initializeSearchState();
         var defs = dst[dst.type];
         writeContentAreas(defs, obj);
@@ -1514,6 +1504,21 @@ app.pcd = (function () {
 
     function ptNoticesDisplay (obj) {
         jt.log("ptNoticesDisplay not implemented yet" + obj);
+    }
+
+
+    function displayPTObj (obj) {
+        app.pcd.setPageDescription({picsrc:picImgSrc(obj),
+                                    disptype:obacc[obj.dsType].disptype,
+                                    exturl:app.pcd.linkForThemeOrProfile(obj),
+                                    name:obj.name,
+                                    descr:obj.description || obj.aboutme});
+        app.pcd.setPageActions({itlist:obj.preb,
+                                itmatchf:membicSearchMatch,
+                                itdispf:membicDisplayHTML,
+                                contextobj:obj,
+                                settingsf:ptSettingsDisplay,
+                                notif:ptNoticesDisplay});
     }
 
 
@@ -2090,34 +2095,20 @@ return {
     },
 
 
-    displayPTObj: function (obj) {
-        app.pcd.setPageDescription({picsrc:picImgSrc(obj),
-                                    disptype:obacc[obj.dsType].disptype,
-                                    exturl:app.pcd.linkForThemeOrProfile(obj),
-                                    name:obj.name,
-                                    descr:obj.description || obj.aboutme});
-        if(obj.dsType && obj.dsId) {  //don't push if no dsId yet
-            app.history.checkpoint({view:obacc[obj.dsType].disptype,
-                                    dsId:obj.dsId}); }
-        app.pcd.setPageActions({itlist:obj.preb,
-                                itmatchf:membicSearchMatch,
-                                itdispf:membicDisplayHTML,
-                                contextobj:obj,
-                                settingsf:ptSettingsDisplay,
-                                notif:ptNoticesDisplay});
-    },
+    fetchType: function (dtype) { return fetchType(dtype); },
 
 
-    fetchAndDisplay: function (dtype, id, command) {
-        //jt.log("pcd.fetchAndDisplay " + dtype + " " + id);
-        if(!id) {
-            jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
-            jt.log(new Error().stack); }
-        app.refmgr.getFull(fetchType(dtype), id, function (obj) {
-            if(!obj) {
-                jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
-                return app.themes.display(); }
-            app.pcd.displayPTObj(obj, command); });
+    fetchAndDisplay: function (dtype, id, extra) {
+        var command = (extra && extra.command) || "";
+        app.statemgr.verifyState(dtype, id, extra, function () {
+            if(!id) {
+                jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
+                jt.log(new Error().stack); }
+            app.refmgr.getFull(fetchType(dtype), id, function (obj) {
+                if(!obj) {
+                    jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
+                    return app.connect.display(); }
+                displayPTObj(obj, command); }); });
     },
 
 
@@ -2242,7 +2233,9 @@ return {
                 contdiv.appendChild(elem);  //make available first, then fill
                 elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
                 if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
-                    ctx.fist.toid = setTimeout(app.pcd.filterContent, 50);
+                    ctx.fist.toid = app.fork(
+                        {descr:"pcd.filter", func:app.pcd.filterContent,
+                         ms:50});
                     break; } } }  //resume rendering after yielding to UI
     },
 

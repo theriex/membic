@@ -1,7 +1,7 @@
 /*jslint browser, white, fudge, this, for, long */
 /*global app, jt */
 
-app.themes = (function () {
+app.connect = (function () {
     "use strict";
 
     var mdefhtml = "";
@@ -46,7 +46,7 @@ app.themes = (function () {
     function initVars () {
         tps = null;  //reset local cached array each time to use latest
         atfs = "";
-        jt.out("contentdiv", "Fetching themes");
+        jt.out("contentdiv", "Fetching Themes and Profiles");
         var atr = app.refmgr.cached("activetps", "411");
         if(atr) {  //have cached recent
             //jt.log("using cached activetps");
@@ -58,11 +58,11 @@ app.themes = (function () {
                     function (racs) {
                         jt.log("activetps cached from api/recentactive");
                         app.refmgr.put(racs[0]);
-                        app.themes.display(); },  //calls back into initVars
+                        app.connect.display(); },  //calls back into initVars
                     app.failf(function (code, errtxt) {
                         jt.err("Fetching recent active failed " + code + ": " +
                                errtxt); }),
-                    jt.semaphore("themes.initVars"));
+                    jt.semaphore("connect.initVars"));
             return false; }
         return true;
     }
@@ -132,8 +132,8 @@ app.themes = (function () {
         if(item.dsType === "MembicDefinition") {
             return mdefhtml; }
         var ocparams = "'" + item.obtype + "','" + item.dsId + "'";
-        var ocfs = jt.fs("app.themes.show(" + ocparams + ")");
-        var sfs = jt.fs("app.themes.show(" + ocparams + ",'Settings')");
+        var ocfs = jt.fs("app.connect.show(" + ocparams + ")");
+        var sfs = jt.fs("app.connect.show(" + ocparams + ",'Settings')");
         var link = app.pcd.linkForThemeOrProfile(item);
         return jt.tac2html(
             ["div", {cla:"tplinkdiv"},
@@ -153,7 +153,7 @@ app.themes = (function () {
 
 
     function displayMainContent () {
-        jt.log("themes.displayMainContent starting");
+        jt.log("connect.displayMainContent starting");
         app.pcd.setPageDescription({picsrc:app.dr("img/membiclogo.png"),
                                     disptype:"app",
                                     exturl:"/",
@@ -162,15 +162,15 @@ app.themes = (function () {
         if(initVars()) {  //have data to work with
             var themes = decorateAndSort();
             themes.push({dsType:"MembicDefinition"});
-            app.history.checkpoint({view:"themes"});
+            app.statemgr.setState("activetps", "411");
             app.pcd.setPageActions({itlist:themes,
                                     itmatchf:searchMatch,
                                     itdispf:itemHTML}); }
     }
 
 
-    function showListing (obtype, dsId, command) {
-        app.pcd.fetchAndDisplay(app.pcd.fetchType(obtype), dsId, command);
+    function showListing (obtype, dsId, cmd) {
+        app.statemgr.setState(obtype, dsId, {command:cmd});
     }
 
 

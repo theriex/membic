@@ -31,7 +31,7 @@ var jt = {};   //Global access to general utility methods
     app.profdev = "epinova.com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
-    app.forks = [];  //tasks started through setTimeout
+    app.forks = {};  //tasks started through setTimeout
     app.wait = {divid:"", timeout:null};
     app.urlToRead = "";
     app.loopers = [];  //zero or more workhorse loop state objects
@@ -56,17 +56,18 @@ var jt = {};   //Global access to general utility methods
 
 
     app.fork = function (tobj) {
+        //By convention all the setTimeout calls are routed through here to
+        //provide an easy overview of all the async tasks invoked on
+        //startup.  Could add timing and hang recovery as needed.
         if(!tobj.descr || !tobj.func || !tobj.ms) {
             jt.log("app.fork bad object descr: " + tobj.descr +
                    ", func: " + tobj.func +
                    ", ms: " + tobj.ms); }
-        var forks = app.forks;
-        if(forks.length && forks[forks.length - 1].descr === tobj.descr) {
-            var ft = forks[forks.length - 1];
-            ft.count = ft.count || 1;
-            ft.count += 1; }
-        else {
-            forks.push(tobj); }
+        if(!app.forks[tobj.descr]) {
+            app.forks[tobj.descr] = {descr:tobj.descr, count:0}; }
+        var forknote = app.forks[tobj.descr];
+        forknote.count += 1;
+        forknote.latest = new Date().toISOString();
         return setTimeout(tobj.func, tobj.ms);
     };
 
@@ -118,22 +119,8 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    app.hashtaghref = function () {
-        var href = window.location.pathname;
-        href = href.slice(1);  //remove initial slash
-        if(href && href.indexOf(".") < 0 && href.indexOf("/") < 0) {
-            return href; }
-        return "";
-    };
-
-
     app.solopage = function () {
-        if(app.embedded ||
-               window.location.href.indexOf("/t/") > 0 ||
-               window.location.href.indexOf("/p/") > 0 ||
-               app.hashtaghref()) {
-            return true; }
-        return false;
+        return app.embedded;
     };
 
 
@@ -156,23 +143,32 @@ var jt = {};   //Global access to general utility methods
     //secondary initialization load since single monolithic is dog slow
     app.init2 = function () {
         app.amdtimer.load.end = new Date();
+        jt.log("load app: " + (app.amdtimer.load.end.getTime() - 
+                               app.amdtimer.load.start.getTime()));
         jt.out("loadstatusdiv", "");  //done loading
-        app.layout.init();
         jt.on(document, "keydown", app.globkey);
-        jt.on(window, "popstate", app.history.pop);
-        if(app.pfoj) {
+        jt.on(window, "popstate", app.statemgr.pop);
+        //break out dynamic processing to give the static content a chance
+        //to actually display. Just downloaded a bunch, show some screen.
+        app.fork({descr:"App Start", ms:80, func:function () {
+            //Any special processing, such as passing in a URL to make a
+            //membic, needs to be handled after initial login
+            //authentication.  Save the initial params for reference before
+            //clearing the URL through setState.
+            app.startParams = jt.parseParams("String")
+            app.layout.init();
+            app.fork({descr:"lightweight authentication",
+                      func:app.login.init, ms:10});
+            app.fork({descr:"fork summary", ms:10000, func:function () {
+                var txt = "app.fork work summary:";
+                Object.keys(app.forks).forEach(function (fkey) {
+                    var forknote = app.forks[fkey];
+                    txt += "\n    " + forknote.latest + " " + forknote.count +
+                        " " + forknote.descr; });
+                jt.log(txt); }});
             app.refmgr.deserialize(app.pfoj);
-            app.refmgr.put(app.pfoj); }
-        //bootstrap completed, end this thread and begin next phase
-        app.fork({descr:"initial authentication",
-                  func:app.login.init, ms:10});
-        setTimeout(function () {
-            jt.log("setTimeout forked tasks:");
-            app.forks.forEach(function (tobj) {
-                var txt = "    " + tobj.descr + " (" + tobj.ms + "ms)";
-                if(tobj.count) {
-                    txt += " " + tobj.count + "x"; }
-                jt.log(txt); }); }, 30000);
+            app.refmgr.put(app.pfoj);
+            app.statemgr.setState(app.pfoj, null, {forceReplace:true}); }});
     };
 
 
@@ -198,8 +194,8 @@ var jt = {};   //Global access to general utility methods
         //The ordering of the modules will encourage, but not guarantee, that
         //earlier modules will be available for reference across modules.  So
         //best not to reference other modules within top level module vars.
-        var modules = [ "js/amd/themes", "js/amd/profile", "js/amd/membic",
-                        "js/amd/layout", "js/amd/refmgr", "js/amd/history",
+        var modules = [ "js/amd/connect", "js/amd/profile", "js/amd/membic",
+                        "js/amd/layout", "js/amd/refmgr", "js/amd/statemgr",
                         "js/amd/login", "js/amd/pcd", "js/amd/coop",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/jsonapi",

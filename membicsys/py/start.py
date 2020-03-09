@@ -379,24 +379,29 @@ def write_start_page(obj, refer, reldocroot=""):
     return html
 
 
-# Aside from the default index page, the following urls are accepted:
-#     /?u=1234     Returns start page for MUser 1234
-#     /?t=1234     Returns start page for Theme 1234
-#     /myhashtag  Returns start page for Theme or MUser #myhashtag
-# Subfolders (e.g. "/user/1234") are not used because they mess up relative
-# url references and that would make things more error prone.
+# Aside from the default, the following urls are accepted:
+#   /profile/1234   Returns start page for MUser 1234
+#   /theme/1234     Returns start page for Theme 1234
+#   /connect        Returns the default start page
+#   /myhashtag      Returns start page for Theme or MUser #myhashtag
+# That means "myhashtag" can't be "profile", "theme", or "connect".  Permalink
+# style links are used rather than URL parameters to bookmarking/sharing.
+# The above links are not case sensitive.  They are stored and compared lower.
 def start_html_for_path(path, refer):
-    if not path or path.startswith("index.htm"):
-        logging.info("start_html_for_path writing default page")
+    if not path or path.lower().startswith("index.htm"):
+        logging.info("start_html_for_path writing default index page")
         return write_start_page(None, refer)
     # dsIds are not unique across object types.  Hashtags are.  It should
     # be possible to have a numeric hashtag.
-    hashtag = util.first_group_match("(\w+)", path)
-    if(hashtag == "theme"):
+    hashtag = util.first_group_match("(\w+)", path).lower()
+    if hashtag == "connect":
+        logging.info("start_html_for_path writing default connect page")
+        return write_start_page(None, refer)
+    elif hashtag == "theme":
         obid = util.first_group_match("theme/(\d+)", path)
         logging.info("start_html_for_path Theme " + obid)
         return write_start_page(dbacc.cfbk("Theme", "dsId", obid), refer, "../")
-    elif(hashtag == "profile"):
+    elif hashtag == "profile":
         obid = util.first_group_match("profile/(\d+)", path)
         logging.info("start_html_for_path MUser " + obid)
         return write_start_page(dbacc.cfbk("MUser", "dsId", obid), refer, "../")
