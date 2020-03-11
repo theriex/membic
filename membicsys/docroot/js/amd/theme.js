@@ -10,7 +10,7 @@
 //   target: revid or profid of what or was affected
 //   tname: name of profile or review that was affected
 //   reason: text given as to why (required for removals)
-app.coop = (function () {
+app.theme = (function () {
     "use strict";
 
     //Fields that need to be deserialized after fetching.
@@ -20,6 +20,30 @@ app.coop = (function () {
     // published functions
     ////////////////////////////////////////
 return {
+
+    memberlev: function (tid) {
+        if(!tid) {
+            return 0; }
+        var auth = app.login.authenticated();
+        if(!auth) {
+            return 0; }
+        var theme = app.refmgr.cached("Theme", tid);
+        if(theme) {
+            if(theme.founders.csvcontains(auth.authId)) {
+                return 3; }
+            if(theme.moderators.csvcontains(auth.authId)) {
+                return 2; }
+            if(theme.members.csvcontains(auth.authId)) {
+                return 1; } }
+        //possibly theme not cached, possibly just following.
+        var muser = app.refmgr.cached("MUser", auth.authId);
+        if(muser) {
+            theme = muser.themes[tid];
+            if(theme) {
+                return theme.lev || 0; } }
+        return 0;
+    },
+
 
     bycoopid: function (coopid, src, cmd) {
         var solopage = app.solopage();

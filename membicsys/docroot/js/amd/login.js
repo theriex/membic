@@ -462,6 +462,13 @@ return {
     },
 
 
+    //If they are not logged in, then authobj is null.  Can be used as an
+    //"isLoggedIn" check and/or for access to personal info.
+    authenticated: function () {
+        return authobj;
+    },
+
+
     accountSettingsHTML: function () {
         var html = ["div", {id:"accountsettingsformdiv"},
                     [["div", {cla:"cbdiv"},

@@ -196,7 +196,7 @@ var jt = {};   //Global access to general utility methods
         //best not to reference other modules within top level module vars.
         var modules = [ "js/amd/connect", "js/amd/profile", "js/amd/membic",
                         "js/amd/layout", "js/amd/refmgr", "js/amd/statemgr",
-                        "js/amd/login", "js/amd/pcd", "js/amd/coop",
+                        "js/amd/login", "js/amd/pcd", "js/amd/theme",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/jsonapi",
                         "js/amd/ext/readurl" ];

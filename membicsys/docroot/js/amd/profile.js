@@ -235,7 +235,42 @@ app.profile = (function () {
     }
 
 
+    function profimgsrc (muser) {
+        var userid = "";
+        if(!muser) {  //assume for self if nothing passed in
+            var auth = app.login.authenticated();
+            if(auth) {
+                muser = app.refmgr.cached("MUser", auth.authId); } }
+        else if(muser && typeof muser === "string") {
+            userid = muser;
+            muser = app.refmgr.cached("MUser", muser); }
+        //Not having a user for a given id may simply mean they're not
+        //cached.  Better to take a chance they have a pic uploaded.
+        if(userid) {
+            return "/api/obimg?dt=MUser&di=" + userid + jt.ts("&cb=", "hour"); }
+        return app.pcd.picImgSrc(muser);
+    }
+
+
+    function profname (muser, defaultval) {
+        if(!muser) {  //assume for self if nothing passed in
+            var auth = app.login.authenticated();
+            if(auth) {
+                name = auth.authId;  //better than nothing
+                muser = app.refmgr.cached("MUser", auth.authId); } }
+        else if(muser && typeof muser === "string") {
+            muser = app.refmgr.cached("MUser", muser); }
+        //If user not cached, use the given default or ""
+        if(!muser) {
+            return defaultval || ""; }
+        return muser.name || muser.dsId;
+    }
+
+
+
     return {
+        profimgsrc: function (muser) { return profimgsrc(muser); },
+        profname: function (muser) { return profname(muser); },
         byprofid: function (id, cmd) { displayProfileForId(id, cmd); },
         myProfId: function () { return mypid; },
         myProfile: function () { return myProfile(); },

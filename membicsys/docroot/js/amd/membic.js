@@ -1434,6 +1434,91 @@ app.membic = (function () {
     }
 
 
+    function membicActionButtonsHTML (membic, idx) {
+        var auth = app.login.authenticated();
+        var html = "";
+        if(auth && auth.authId === membic.penid) {  //my membic
+            html = jt.tac2html(
+                [["a", {href:"#edit", title:"Edit Membic",
+                        onclick:jt.fs("app.pcd.editMembic(" + idx + ")")},
+                  ["img", {cla:"masactbimg",
+                           src:app.dr("img/writereview.png")}]],
+                 ["a", {href:"#delete", title:"Delete Membic",
+                        onclick:jt.fs("app.pcd.deleteMembic(" + idx + ")")},
+                  ["img", {cla:"masactbimg",
+                           src:app.dr("img/trash.png")}]]]); }
+        else if(auth && app.theme.memberlev(membic.ctmid) >= 2) {
+            html = jt.tac2html(
+                ["a", {href:"#remove", title:"Remove Theme Post",
+                       onclick:jt.fs("app.pcd.removeMembic(" + idx + ")")},
+                 ["img", {cla:"masactbimg",
+                          src:app.dr("img/trash.png")}]]); }
+        return html;
+    }
+
+
+    //mtype, actions, profpic, name created ****
+    function membicActionsHTML (membic, idx) {
+        var mt = membicTypes.find((md) => md.type === membic.revtype);
+        var cretxt = jt.colloquialDate(membic.created, "compress");
+        //There's not really enough room on a phone to show a second date,
+        //and modified may be off due to porting updates.
+        // if(membic.modified > membic.created) {
+        //     var modtxt = jt.colloquialDate(membic.modified, "compress");
+        //     if(modtxt !== cretxt) {
+        //         cretxt += "/" + modtxt; } }
+        var profname = app.profile.profname(membic.penid, membic.penname);
+        return jt.tac2html(
+            [["img", {cla:"mastypeimg", src:app.dr("img/" + mt.img),
+                      title:mt.type, alt:mt.type}],
+             ["span", {cla:"masactspan"}, membicActionButtonsHTML(membic, idx)],
+             ["span", {cla:"masbyline"},
+              ["a", {href:"#" + membic.penid, title:"Visit " + profname,
+                     onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                   membic.penid + "')")},
+               [["img", {src:app.profile.profimgsrc(membic.penid)}],
+                ["span", {cla:"penlight"}, profname]]]],
+             ["span", {cla:"mascrespan"}, cretxt],
+             ["span", {cla:"masratspan"}, starsImageHTML(membic.rating)]]);
+    }
+
+
+    //Thought about adding membic share button to make your own membic off
+    //of an existing one, but that would add complexity, likely be of
+    //limited use, and detract from the externalization nature of sharing.
+    //The same thing can also be accomplished by mailing in the membic using
+    //the mail share.
+    function membicShareHTML (membic) {
+        var subj = membic.text;
+        var body = membic.url;
+        var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+            jt.dquotenc(body) + "%0A%0A";
+        return jt.tac2html(app.layout.shareButtonsTAC(
+            {url:membic.url,
+             title:membic.text,
+             mref:mlink,
+             socmed:["tw", "fb", "em"]}));
+    }
+
+
+    function membicThemePostsHTML (membic) {
+        if(!membic.svcdata || !membic.svcdata.postctms ||
+           !membic.svcdata.postctms.length) {
+            return ""; }
+        var links = [];
+        membic.svcdata.postctms.forEach(function (pn) {
+            links.push(jt.tac2html(
+                ["a", {href:app.dr("theme/" + pn.ctmid),
+                       onclick:jt.fs("app.statemgr.setState('Theme','" +
+                                     pn.ctmid + "')")},
+                 pn.name])); });
+        return jt.tac2html(
+            ["span", {cla:"masptspan"},
+             [["span", {cla:"masptlab"}, "Posted to: "],
+              links.join(" | ")]]);
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -2177,8 +2262,20 @@ return {
 
 
     toggleMembic: function (idx) {
-        jt.log("toggleMembic not implemented yet");
-        //TODO: toggle mdactdiv, mdsharediv, mdptsdiv filling content as needed
+        var tds = {mdactdiv:membicActionsHTML,
+                   mdsharediv:membicShareHTML,
+                   mdptsdiv:membicThemePostsHTML};
+        var xd = jt.byId("mdsharediv" + idx);  //share determines expand state
+        if(xd.innerHTML && xd.style.display === "block") {
+            Object.keys(tds).forEach(function (dk) {
+                jt.byId(dk + idx).style.display = "none"; });
+            return; }
+        var membic = app.pcd.getDisplayContext().actobj.itlist[idx];
+        Object.keys(tds).forEach(function (dk) {
+            //redraw expansion content each time. sign-in, modified, whatever
+            var div = jt.byId(dk + idx);
+            div.innerHTML = tds[dk](membic);
+            div.style.display = "block"; });
         //see postedCoopLinksHTML, authpic etc.
     },
 

@@ -134,7 +134,7 @@ app.pcd = (function () {
 
     function picImgSrc (obj) {
         var src = app.dr("img/nopicprof.png");
-        if(obj[obacc[obj.dsType].picfield]) {  //e.g. profile.profpic
+        if(obj && obj[obacc[obj.dsType].picfield]) {  //e.g. profile.profpic
             src = "/api/obimg?dt=" + obj.dsType + "&di=" + obj.dsId +
                 "&cb=" + obj.modified.replace(/[\-:]/g,""); }
         return src;
@@ -1468,7 +1468,7 @@ app.pcd = (function () {
            !fist.types.sel.some((type) => type === membic.revtype)) {
             return false; }  //did not match a specified type
         if(fist.qstr) {
-            var toks = srchst.qstr.toLowerCase().split(/\s+/);
+            var toks = fist.qstr.toLowerCase().split(/\s+/);
             verifySearchFilterText(membic);
             if(toks.some((token) => membic.srchFiltTxt.indexOf(token) >= 0)) {
                 return true; }  //have at least one text match
@@ -1486,14 +1486,14 @@ app.pcd = (function () {
              ["div", {cla:"mdinnerdiv"},
               [["div", {cla:"mdtitlediv"}, 
                 app.membic.mdTitleHTML(membic, fist)],
-               ["div", {cla:"mdactdiv", id:"mdactdiv" + fist.idx}],
                ["div", {cla:"mdsharediv", id:"mdsharediv" + fist.idx}],
+               ["div", {cla:"mdactdiv", id:"mdactdiv" + fist.idx}],
                ["div", {cla:"mdbodydiv"},
                  [["div", {cla:"mdpicdiv"}, app.membic.mdPicHTML(membic)],
                   ["div", {cla:"mdtxtdiv"}, jt.linkify(membic.text)],
                   ["div", {cla:"mddetdiv"}, app.membic.mdDetsHTML(membic)],
-                  ["div", {cla:"mdkwsdiv"}, membic.keywords]]],
-               ["div", {cla:"mdptsdiv", id:"mdptsdiv" + fist.idx}]]]]);
+                  ["div", {cla:"mdptsdiv", id:"mdptsdiv" + fist.idx}],
+                  ["div", {cla:"mdkwsdiv"}, membic.keywords]]]]]]);
     }
 
 
@@ -1508,6 +1508,9 @@ app.pcd = (function () {
 
 
     function displayPTObj (obj) {
+        var sf = null;
+        if(app.login.authenticated()) {
+            sf = ptSettingsDisplay; }
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
                                     exturl:app.pcd.linkForThemeOrProfile(obj),
@@ -1517,7 +1520,7 @@ app.pcd = (function () {
                                 itmatchf:membicSearchMatch,
                                 itdispf:membicDisplayHTML,
                                 contextobj:obj,
-                                settingsf:ptSettingsDisplay,
+                                settingsf:sf,
                                 notif:ptNoticesDisplay});
     }
 
@@ -2216,21 +2219,24 @@ return {
                             types:{disp:false, sel:[]}};
                 jt.byId("pcdsrchin").value = ""; }
             else if(mode === "change") {  //refiltering in response to change
-                ctx.fist.idx = 0; }
+                ctx.fist.qstr = jt.byId("pcdsrchin").value;
+                //update selected kwrds and/or types
+                ctx.fist.idx = 0; } //refilter all items from the beginning
+            //set the filtering on/off flag for ease of matching
             ctx.fist.matchCriteriaSpecified = (ctx.fist.qstr ||
                 (ctx.fist.kwrds.disp && ctx.fist.kwrds.sel.length) ||
                 (ctx.fist.types.disp && ctx.fist.types.sel.length)); }
-        ctx.fist.qstr = jt.byId("pcdsrchin").value;
-        var item; var contdiv; var elem;
+        //Append the next matching item to the content display
+        var item; var odiv; var elem;
         while(ctx.fist.idx < ctx.actobj.itlist.length) {
             item = ctx.actobj.itlist[ctx.fist.idx];
             ctx.fist.idx += 1;
             if(ctx.actobj.itmatchf(item, ctx.fist)) {
-                contdiv = jt.byId("pcdcontdiv");
+                odiv = jt.byId("pcdcontdiv");
                 elem = document.createElement("div");
                 elem.className = "pcditemdiv";
                 elem.id = "pcditemdiv" + ctx.fist.idx;
-                contdiv.appendChild(elem);  //make available first, then fill
+                odiv.appendChild(elem);  //make available first, then fill
                 elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
                 if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
                     ctx.fist.toid = app.fork(
@@ -2238,6 +2244,7 @@ return {
                          ms:50});
                     break; } } }  //resume rendering after yielding to UI
     },
+    getDisplayContext: function () { return ctx; },
 
 
     //descobj elements:
@@ -2284,9 +2291,10 @@ return {
              ["div", {id:"pcdcontdiv"}]]));   //display items container
         writeActionsArea();
         app.pcd.filterContent("init");
-    }
+    },
 
 
+    picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); }
 
 };  //end of returned functions
 }());

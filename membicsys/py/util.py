@@ -368,16 +368,19 @@ def prebsweep():
 
 
 def obimg():
+    # The client might make a call to get a pic for a profile which might
+    # not have one.  Better to return a blank than an error in that case.
     imgdat = blank4x4imgstr
     try:
         dsType = dbacc.reqarg("dt", "string", required=True)
         dsId = dbacc.reqarg("di", "string", required=True)
         inst = dbacc.cfbk(dsType, "dsId", dsId)
-        if not inst:
-            raise ValueError(dsType + " " + dsId + " not found")
-        picfldmap = {"Theme": "picture", "MUser": "profpic"}
-        imgdat = inst[picfldmap[dsType]]
-        imgdat = base64.b64decode(imgdat)
+        if inst:
+            picfldmap = {"Theme": "picture",
+                         "MUser": "profpic",
+                         "Membic": "revpic"}
+            imgdat = inst[picfldmap[dsType]]
+            imgdat = base64.b64decode(imgdat)
     except ValueError as e:
         return serveValueError(e)
     resp = flask.make_response(imgdat)
