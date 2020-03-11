@@ -7,6 +7,10 @@ import re
 import json
 import base64
 import py.dbacc as dbacc
+import requests         # Fetch things over http in a reasonable way
+import io               # Image.open/save requires file-like access
+from PIL import Image   # Only need Image from Pillow
+
 
 site_home = "https://membic.org"
 
@@ -269,6 +273,26 @@ def verify_theme_muser_info(theme, userid, lev=-1):
 blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
 
 
+# Fetch the image, convert to a thumbnail png, write base64 encoded
+# value to icdata, write timestamp to icwhen.
+def fetch_image_data(inst, imgsrc):
+    pre = inst["dsType"] + " " + str(inst["dsId"]) + " "
+    try:
+        resp = requests.get(imgsrc)
+        img = Image.open(io.BytesIO(resp.content))
+        sizemaxdims = 160, 160       # max allowed dim boundaries for thumbnail
+        img.thumbnail(sizemaxdims)   # modifies, preserving aspect ratio
+        bbuf = io.BytesIO()          # file-like object for save
+        img.save(bbuf, format="PNG")
+        bval = bbuf.getvalue()
+        inst["icdata"] = base64.b64encode(bval)
+        inst["icwhen"] = dbacc.nowISO()
+        dbacc.write_entity(inst, inst["modified"])
+    except Exception as e:
+        raise ValueError(pre + "fetch_image_data " + str(e))
+
+
+
 def send_mail(emaddr, subj, body):
     if is_development_server():
         logging.info("send_mail ignored dev server send to " + emaddr +
@@ -373,4 +397,36 @@ def fetchobj():
     except ValueError as e:
         return serveValueError(e)
     return respJSON("[" + oj + "]")
+
+
+def imagerelay():
+    imgdat = blank4x4imgstr
+    try:
+        mid = dbacc.reqarg("membicid", "dbid", required=True)
+        inst = dbacc.cfbk("Membic", "dsId", mid)
+        pre = "Membic " + str(mid) + " "
+        if not inst:
+            raise ValueError(pre + "not found")
+        if not inst["svcdata"]:
+            raise ValueError(pre + "no svcdata")
+        svcdata = json.loads(inst["svcdata"])
+        if "picdisp" not in svcdata:
+            raise ValueError(pre + "no svcdata.picdisp")
+        if svcdata["picdisp"] != "sitepic":
+            raise ValueError(pre + "picdisp not sitepic: " + svcdata["picdisp"])
+        imguri = inst["imguri"]
+        if not imguri.lower().startswith("http://"):
+            raise ValueError(pre + "imguri not plain http: " + imguri)
+        # refetch if either the cache timestamp or the data is missing
+        if not inst["icdata"] or not inst["icwhen"]:
+            fetch_image_data(inst, imguri)
+        if not inst["icdata"]:
+            raise ValueError(pre + "unable to relay data")
+        imgdat = inst["icdata"]
+        imgdat = base64.b64decode(imgdat)
+    except ValueError as e:
+        return serveValueError(e)
+    resp = flask.make_response(imgdat)
+    resp.mimetype = "image/png"
+    return resp
 

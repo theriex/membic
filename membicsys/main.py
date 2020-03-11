@@ -30,6 +30,10 @@ def fetchobj():  # params: dt (dsType), di (dsId)
 def obimg():  # params: dt (dsType), di (dsId)
     return util.obimg()
 
+@app.route('/api/imagerelay')
+def imagerelay():  #params: membicId
+    return util.imagerelay()
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def startpage(path):
@@ -217,11 +221,6 @@ def prebsweep():
 # ## Fetch the contents of the given URL
 # ## GET params: url, authparams
 # - url: .*/urlcontents.*
-#   script: src.py.consvc.app
-
-# ## Fetch the given image url and return it.
-# ## GET params: url, authparams
-# - url: .*/imagerelay.*
 #   script: src.py.consvc.app
 
 

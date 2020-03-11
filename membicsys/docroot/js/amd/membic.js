@@ -2147,8 +2147,7 @@ return {
         case "sitepic":
             imgsrc = membic.imguri;
             if(imgsrc.startsWith("http:")) {
-                imgsrc = "/api/imagerelay?membicid=" + membic.dsId +
-                    "&url=" + jt.enc(imgsrc); }
+                imgsrc = "/api/imagerelay?membicid=" + membic.dsId; }
             break;
         case "upldpic":
             imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId;

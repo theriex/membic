@@ -242,12 +242,12 @@ function helperFunctions () {
     pyc += "def cfbk (entity, field, value):\n";
     pyc += "    if field != 'dsId' and field not in entkeys[entity]:\n";
     pyc += "        raise ValueError(field + \" not a unique index for \" + entity)\n";
-    pyc += "    ci = entcache.cache_get(entity, field, value)\n"
+    pyc += "    vstr = str(value)\n";
+    pyc += "    ci = entcache.cache_get(entity, field, vstr)\n"
     pyc += "    if ci:\n"
     pyc += "        return ci\n"
-    pyc += "    vstr = str(value)\n";
     pyc += "    if entdefs[entity][field][\"pt\"] not in [\"dbid\", \"int\"]:\n";
-    pyc += "        vstr = \"\\\"\" + value + \"\\\"\"\n";
+    pyc += "        vstr = \"\\\"\" + vstr + \"\\\"\"\n";
     pyc += "    objs = query_entity(entity, \"WHERE \" + field + \"=\" + vstr + \" LIMIT 1\")\n";
     pyc += "    if len(objs):\n";
     pyc += "        entcache.cache_put(objs[0])\n"

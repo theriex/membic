@@ -237,12 +237,12 @@ def reqarg(argname, fieldtype="string", required=False):
 def cfbk (entity, field, value):
     if field != 'dsId' and field not in entkeys[entity]:
         raise ValueError(field + " not a unique index for " + entity)
-    ci = entcache.cache_get(entity, field, value)
+    vstr = str(value)
+    ci = entcache.cache_get(entity, field, vstr)
     if ci:
         return ci
-    vstr = str(value)
     if entdefs[entity][field]["pt"] not in ["dbid", "int"]:
-        vstr = "\"" + value + "\""
+        vstr = "\"" + vstr + "\""
     objs = query_entity(entity, "WHERE " + field + "=" + vstr + " LIMIT 1")
     if len(objs):
         entcache.cache_put(objs[0])
