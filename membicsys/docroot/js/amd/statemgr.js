@@ -30,7 +30,7 @@ return {
     urlForInstance: function (obj) {
         obj = obj || {};
         if(obj.hashtag) {
-            return "/" + hashtag; }
+            return "/" + obj.hashtag; }
         switch(obj.dsType) {
         case "Theme":
             return "/theme/" + obj.dsId;

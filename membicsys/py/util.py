@@ -273,23 +273,50 @@ def verify_theme_muser_info(theme, userid, lev=-1):
 blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
 
 
-# Fetch the image, convert to a thumbnail png, write base64 encoded
-# value to icdata, write timestamp to icwhen.
+# Fetch the image, convert to a thumbnail png, write base64 encoded value to
+# icdata, write timestamp to icwhen.  If the request fails, this writes a
+# tombstone marker to icwhen so we don't keep trying dead links.
+# Request error codes:
+#   400: You want what?  No clue.
+#   403: Unauthorized.  We don't like you.
+#   404: Reliably, permanently unavailable
+#   410: Literally gone.  Deleted.
+#   503: Archived, don't like your IP/agent whatever.  Unavailable.
+# PIL failures can happen if a request claims to have succeeded, but returns
+# error text instead of binary data. Regardless, if PIL can't figure it out,
+# it's not available.
+# The request processing crashes if the server is unknown, or the request is
+# redirected to a secure site with a bad cert, or it was a CDN or cached
+# static resource that is no longer being maintained.  These are issues that
+# would also cause a browser to complain.  While the situation may be due to
+# a network disruption or server outage, it's probably a dead link.  These
+# are flagged as "_unavailable_" rather than "_failed_", but they are
+# treated the same way.  If running the server offline during development,
+# it is possible to get a lot of these errors, but resource fetching works
+# differently when running locally anyway so that's tolerable.
 def fetch_image_data(inst, imgsrc):
     pre = inst["dsType"] + " " + str(inst["dsId"]) + " "
     try:
         resp = requests.get(imgsrc)
-        img = Image.open(io.BytesIO(resp.content))
-        sizemaxdims = 160, 160       # max allowed dim boundaries for thumbnail
-        img.thumbnail(sizemaxdims)   # modifies, preserving aspect ratio
-        bbuf = io.BytesIO()          # file-like object for save
-        img.save(bbuf, format="PNG")
-        bval = bbuf.getvalue()
-        inst["icdata"] = base64.b64encode(bval)
-        inst["icwhen"] = dbacc.nowISO()
-        dbacc.write_entity(inst, inst["modified"])
+        reqc = resp.status_code
+        if reqc == 200:
+            try:
+                img = Image.open(io.BytesIO(resp.content))
+                sizemaxdims = 160, 160       # max allowed dims for thumbnail
+                img.thumbnail(sizemaxdims)   # modify, preserving aspect ratio
+                bbuf = io.BytesIO()          # file-like object for save
+                img.save(bbuf, format="PNG")
+                bval = bbuf.getvalue()
+                inst["icdata"] = base64.b64encode(bval)
+                inst["icwhen"] = dbacc.nowISO()
+            except Exception as e2:
+                inst["icwhen"] = dbacc.nowISO() + "_failed_PIL_" + str(e2)
+        else:
+            inst["icwhen"] = dbacc.nowISO() + "_failed_" + str(reqc)
     except Exception as e:
-        raise ValueError(pre + "fetch_image_data " + str(e))
+        inst["icwhen"] = dbacc.nowISO() + "_unavailable_" + str(e)
+    inst["icwhen"] = inst["icwhen"][0:120];  # truncate long errors
+    dbacc.write_entity(inst, inst["modified"])
 
 
 
@@ -410,23 +437,22 @@ def imagerelay():
         pre = "Membic " + str(mid) + " "
         if not inst:
             raise ValueError(pre + "not found")
-        if not inst["svcdata"]:
-            raise ValueError(pre + "no svcdata")
-        svcdata = json.loads(inst["svcdata"])
-        if "picdisp" not in svcdata:
-            raise ValueError(pre + "no svcdata.picdisp")
-        if svcdata["picdisp"] != "sitepic":
-            raise ValueError(pre + "picdisp not sitepic: " + svcdata["picdisp"])
+        if inst["svcdata"]:
+            svcdata = json.loads(inst["svcdata"])
+            if "picdisp" in svcdata:
+                if svcdata["picdisp"] != "sitepic":
+                    raise ValueError(pre + "picdisp not sitepic: " + 
+                                     svcdata["picdisp"])
         imguri = inst["imguri"]
         if not imguri.lower().startswith("http://"):
             raise ValueError(pre + "imguri not plain http: " + imguri)
-        # refetch if either the cache timestamp or the data is missing
-        if not inst["icdata"] or not inst["icwhen"]:
+        if not inst["icdata"] and not ("_failed_" in inst["icwhen"] or
+                                       "_unavailable_" in inst["icwhen"]):
             fetch_image_data(inst, imguri)
-        if not inst["icdata"]:
-            raise ValueError(pre + "unable to relay data")
-        imgdat = inst["icdata"]
-        imgdat = base64.b64decode(imgdat)
+            if not inst["icdata"]:
+                raise ValueError(pre + "unable to relay data")
+            imgdat = inst["icdata"]
+            imgdat = base64.b64decode(imgdat)
     except ValueError as e:
         return serveValueError(e)
     resp = flask.make_response(imgdat)
