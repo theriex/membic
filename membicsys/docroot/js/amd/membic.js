@@ -2209,8 +2209,8 @@ return {
 
     mdTitleHTML: function (membic, fist) {
         return jt.tac2html(
-            [["a", {href:"#toggleactions", title:"Toggle Membic Actions",
-                    onclick:jt.fs("app.membic.toggleMembic(" + fist.idx + ")")},
+            [["a", {href:"#actions" + fist.cdx, title:"Toggle Membic Actions",
+                    onclick:jt.fs("app.membic.toggleMembic(" + fist.cdx + ")")},
               ["img", {cla:"mbtkebabimg", src:app.dr("img/kebab.png")}]],
              ["a", {href:membic.url, title:membic.url,
                     onclick:jt.fs("window.open('" + membic.url + "')")},

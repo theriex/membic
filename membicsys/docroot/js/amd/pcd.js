@@ -1103,11 +1103,11 @@ app.pcd = (function () {
                  ["span", {cla:"penbutton"},
                   settingsButtonHTML()]]],
                ["div", {id:"pcdacsrchdiv"},
-                [["a", {href:"#search", title:"Text Search",
+                [["a", {href:"#search", id:"srchlink", title:"Search items",
                         onclick:jt.fs("app.pcd.filterContent('change')")},
                   ["img", {src:app.dr("img/search.png"), cla:"webjump"}]],
                  ["input", {type:"text", id:"pcdsrchin", size:26,
-                            placeholder: "Text search...",
+                            placeholder: "Search text",
                             onchange:jt.fs("app.pcd.filterContent('change')"),
                             value: srchst.qstr}]]]]],
              ["div", {id:"pcdsharediv", style:"display:none;"}, 
@@ -1452,13 +1452,26 @@ app.pcd = (function () {
 
 
     function membicSearchMatch (membic, fist) {
+        var contextobj = fist.actobj.contextobj;
+        if(membic.dsType === "Overflow") {  //ran out of items, fault in more
+            var ctxts = fist.ts;
+            app.refmgr.getFull("Overflow", membic.dsId, function (ovrf) {
+                //overflows are cached to avoid refetch if container modified
+                if(ovrf) {  //fetch error already logged if not found
+                    var membics = contextobj.preb.slice(0, -1)
+                    contextobj.preb = membics.concat(ovrf.preb);
+                    fist.actobj.contextobj = contextobj;
+                    fist.actobj.itlist = contextobj.preb;
+                    app.pcd.updateSearchLabelText();
+                    app.pcd.resumeFilterContent(ctxts); } });
+            return false; }  //don't display overflow elements
         if(membic.srcrev === "-604") {
             return false; }  //marked as deleted
         if((membic.dispafter > fist.ts) &&
-           (!((membic.ctmid && app.coop.membershipLevel(fist.contextobj)) ||
+           (!((membic.ctmid && app.coop.membershipLevel(contextobj)) ||
               (membic.penid === app.profile.myProfId())))) {
             return false; }  //queued, and not visible to general public yet
-        if(!fist.matchCriteriaSpecified || membic.dsType === "Overflow") {
+        if(!fist.matchCriteriaSpecified) {
             return true; }  //nothing to match against, ok.
         if(fist.kwrds.disp &&
            !fist.kwrds.sel.some((keyword) => membic.keywords &&
@@ -1478,21 +1491,19 @@ app.pcd = (function () {
 
 
     function membicDisplayHTML (membic, fist) {
-        //expansion divs (fist.idx ids) are filled out later as needed.
-        if(membic.dsType === "Overflow") {
-            return "Overflow HTML goes here"; }
+        //expansion divs (with ids) are filled out later as needed.
         return jt.tac2html(
             ["div", {cla:"mdouterdiv"},
              ["div", {cla:"mdinnerdiv"},
-              [["div", {cla:"mdtitlediv"}, 
+              [["div", {cla:"mdtitlediv"},
                 app.membic.mdTitleHTML(membic, fist)],
-               ["div", {cla:"mdsharediv", id:"mdsharediv" + fist.idx}],
-               ["div", {cla:"mdactdiv", id:"mdactdiv" + fist.idx}],
+               ["div", {cla:"mdsharediv", id:"mdsharediv" + fist.cdx}],
+               ["div", {cla:"mdactdiv", id:"mdactdiv" + fist.cdx}],
                ["div", {cla:"mdbodydiv"},
                  [["div", {cla:"mdpicdiv"}, app.membic.mdPicHTML(membic)],
                   ["div", {cla:"mdtxtdiv"}, jt.linkify(membic.text)],
                   ["div", {cla:"mddetdiv"}, app.membic.mdDetsHTML(membic)],
-                  ["div", {cla:"mdptsdiv", id:"mdptsdiv" + fist.idx}],
+                  ["div", {cla:"mdptsdiv", id:"mdptsdiv" + fist.cdx}],
                   ["div", {cla:"mdkwsdiv"}, membic.keywords]]]]]]);
     }
 
@@ -1522,6 +1533,41 @@ app.pcd = (function () {
                                 contextobj:obj,
                                 settingsf:sf,
                                 notif:ptNoticesDisplay});
+    }
+
+
+    function appendNextMatchingItemToContent() {
+        var odiv = jt.byId("pcdcontdiv"); var elem; var item;
+        var maxitemdisp = ctx.fist.pgs * ctx.fist.pz;
+        while((ctx.fist.idx < ctx.actobj.itlist.length) &&
+              (ctx.fist.dc <= maxitemdisp)) {
+            ctx.fist.idx += 1;   //always update loop counter
+            ctx.fist.cdx = ctx.fist.idx - 1;  //content display index
+            if(ctx.fist.dc === maxitemdisp) {
+                elem = document.createElement("div");
+                elem.id = "pcdmorediv";
+                odiv.appendChild(elem);
+                elem.innerHTML = jt.tac2html(
+                    ["a", {href:"#more...", onclick:jt.fs("app.pcd.pgmore('" +
+                                                         ctx.fist.ts + "')")},
+                     "More<br/>&#x25BC;"]);
+                break; }
+            item = ctx.actobj.itlist[ctx.fist.cdx];
+            if(ctx.actobj.itmatchf(item, ctx.fist)) {
+                ctx.fist.dc += 1;  //update the display count
+                odiv = jt.byId("pcdcontdiv");
+                elem = document.createElement("div");
+                elem.className = "pcditemdiv";
+                elem.id = "pcditemdiv" + (ctx.fist.idx - 1);
+                odiv.appendChild(elem);  //make available first, then fill
+                elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
+                if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
+                    var ts = ctx.fist.ts;
+                    ctx.fist.toid = app.fork(
+                        {descr:"pcd.filter", func:function () {
+                            app.pcd.resumeFilterContent(ts); },
+                         ms:50});
+                    break; } } } //resume rendering after yielding to UI
     }
 
 
@@ -2207,44 +2253,65 @@ return {
     },
 
 
+    //Overflows are done in chunks of 200.  The display page size should be
+    //smaller than so when you click "more", you instantly get a few items
+    //to look at while you wait for the overflow retrieval call.  So a
+    //realistic max page display size (pz) would be around 180.  Meanwhile
+    //that many external pic references gets slow, and even on a big screen
+    //it is not massively helpful to scroll through more than about 40 at a
+    //time.  That's enough to see recent, and cover most search results.
     filterContent: function (mode) {
-        if(mode) {
-            jt.out("pcdcontdiv", "");  //refresh display content from scratch
+        if(mode) {  //react to setup or change of display iteration
             if(ctx.fist && ctx.fist.toid) {  //stop previous ongoing work
                 clearTimeout(ctx.fist.toid); }
+            jt.out("pcdcontdiv", "");  //refresh display content from scratch
             if(mode === "init") {  //refresh display from scratch
-                ctx.fist = {idx:0, ts:new Date().toISOString(),
-                            qstr:"", contextobj:ctx.actobj.contextobj,
+                ctx.fist = {idx:0, ts:new Date().toISOString(), pgs:1,
+                            pz:41, //off by one helps avoid pg/overflow sync
+                            qstr:"", dc:0, actobj:ctx.actobj,
                             kwrds:{disp:false, sel:[]},
                             types:{disp:false, sel:[]}};
                 jt.byId("pcdsrchin").value = ""; }
             else if(mode === "change") {  //refiltering in response to change
                 ctx.fist.qstr = jt.byId("pcdsrchin").value;
                 //update selected kwrds and/or types
-                ctx.fist.idx = 0; } //refilter all items from the beginning
+                ctx.fist.idx = 0; //refilter all items from the beginning
+                ctx.fist.ts = new Date().toISOString();
+                ctx.fist.pgs = 1; //single page of results to start
+                ctx.fist.dc = 0; }  //reset the display count
             //set the filtering on/off flag for ease of matching
             ctx.fist.matchCriteriaSpecified = (ctx.fist.qstr ||
                 (ctx.fist.kwrds.disp && ctx.fist.kwrds.sel.length) ||
                 (ctx.fist.types.disp && ctx.fist.types.sel.length)); }
-        //Append the next matching item to the content display
-        var item; var odiv; var elem;
-        while(ctx.fist.idx < ctx.actobj.itlist.length) {
-            item = ctx.actobj.itlist[ctx.fist.idx];
-            ctx.fist.idx += 1;
-            if(ctx.actobj.itmatchf(item, ctx.fist)) {
-                odiv = jt.byId("pcdcontdiv");
-                elem = document.createElement("div");
-                elem.className = "pcditemdiv";
-                elem.id = "pcditemdiv" + ctx.fist.idx;
-                odiv.appendChild(elem);  //make available first, then fill
-                elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
-                if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
-                    ctx.fist.toid = app.fork(
-                        {descr:"pcd.filter", func:app.pcd.filterContent,
-                         ms:50});
-                    break; } } }  //resume rendering after yielding to UI
+        appendNextMatchingItemToContent();
     },
     getDisplayContext: function () { return ctx; },
+    resumeFilterContent: function (ts) {
+        if(ctx.fist.ts === ts) {
+            app.pcd.filterContent(); }
+    },
+
+
+    pgmore: function (ts) {
+        var odiv = jt.byId("pcdcontdiv");
+        odiv.removeChild(odiv.lastChild);
+        ctx.fist.pgs += 1;
+        app.pcd.resumeFilterContent(ts);
+    },
+
+
+    updateSearchLabelText: function () {
+        var link = jt.byId("srchlink");
+        if(link && ctx.actobj) {
+            var elementslabel = "profiles";
+            var obj = ctx.actobj.contextobj;
+            if(obj && "MUser,Theme".csvcontains(obj.dsType)) {
+                elementslabel = "membics"; }
+            var qty = ctx.actobj.itlist.length;
+            link.title = "Search " + qty + " " + elementslabel; }
+        else {
+            link.title = "Search items"; }
+    },
 
 
     //descobj elements:
@@ -2275,7 +2342,7 @@ return {
 
     //actobj elements:
     //  itlist: array of items to be displayed (e.g. membics)
-    //  contextobj: optional, accessible from fist
+    //  contextobj: optional, accessible from fist.actobj
     //  itmatchf(item, fist): return true if match
     //  itdispf(item, fist): return HTML to display the given item
     //  settingsf(): null if settings unavailable, called settings click
@@ -2290,6 +2357,7 @@ return {
             ["div", {id:"pcdouterdiv"},       //outer wrapper for content
              ["div", {id:"pcdcontdiv"}]]));   //display items container
         writeActionsArea();
+        app.pcd.updateSearchLabelText();
         app.pcd.filterContent("init");
     },
 

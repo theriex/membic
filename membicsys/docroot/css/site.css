@@ -211,7 +211,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mailindesctable tbody tr td:nth-child(even) { text-align:left; }
 
 /* >> membic content layout */
-.mdouterdiv { margin:0px 0px 6px 0px; padding:0; }
+.mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }
 .mdinnerdiv { padding:0px 2px; margin:0; min-height:100px; border-radius:10px;
   background-image:url('../img/e6e7e9p80.png'); }
 .mdtitlediv { }
@@ -231,6 +231,15 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .masbyline img { max-width:25px; max-height:25px; vertical-align:middle; }
 .masbyline span { padding:0px 2px; }
 .mascrespan { font-size:small; padding:0px 2px; }
+#pcdmorediv { font-size:medium; text-align:center;
+  background-image:url('../img/e6e7e9p80.png');
+  border-top-left-radius:0px;
+  border-top-right-radius:0px;
+  border-bottom-right-radius:20px;
+  border-bottom-left-radius:20px;
+  margin:0px auto;
+  display:table;
+  padding:0px 10px; }
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel { 

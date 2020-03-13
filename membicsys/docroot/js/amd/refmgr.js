@@ -115,8 +115,8 @@ return {
 
     getFull: function (dsType, dsId, contf) {
         var obj = app.refmgr.cached(dsType, dsId);
-        if(obj) {
-            return contf(obj); }
+        if(obj) {  //force an async callback for consistent code flow
+            return setTimeout(function () { contf(obj); }, 50); }
         if(persistentTypes.indexOf(dsType) < 0) {
             jt.log("refmgr.getFull: unknown dsType " + dsType);
             console.trace(); }

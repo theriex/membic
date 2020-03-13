@@ -815,8 +815,8 @@ function createJSServerAcc () {
     jsc += "\n";
     jsc += "    getFull: function (dsType, dsId, contf) {\n";
     jsc += "        var obj = app.refmgr.cached(dsType, dsId);\n";
-    jsc += "        if(obj) {\n";
-    jsc += "            return contf(obj); }\n";
+    jsc += "        if(obj) {  //force an async callback for consistent code flow\n";
+    jsc += "            return setTimeout(function () { contf(obj); }, 50); }\n";
     jsc += "        if(persistentTypes.indexOf(dsType) < 0) {\n";
     jsc += "            jt.log(\"refmgr.getFull: unknown dsType \" + dsType);\n";
     jsc += "            console.trace(); }\n";
