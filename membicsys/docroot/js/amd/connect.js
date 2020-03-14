@@ -119,7 +119,7 @@ app.connect = (function () {
 
 
     function searchMatch (item, fist) {
-        if(!fist.matchCriteriaSpecified || item.dsType === "MembicDefinition") {
+        if(!fist.qstr || item.dsType === "MembicDefinition") {
             return true; }
         //item structure from start.py json_for_theme_prof
         var fields = ["dsId", "obtype", "modified", "lastwrite", "hashtag",

@@ -1092,6 +1092,25 @@ app.pcd = (function () {
 
 
     function writeActionsArea () {
+        var searchdivcontents = [
+            ["a", {href:"#search", id:"srchlink", title:"Search items",
+                   onclick:jt.fs("app.pcd.filterContent('change')")},
+             ["img", {src:app.dr("img/search.png"), cla:"webjump"}]]];
+        var srchinattrs = {type:"text", id:"pcdsrchin", size:26,
+                           placeholder:"Search text",
+                           onchange:jt.fs("app.pcd.filterContent('change')"),
+                           value:""};  //value set by UI interaction only
+        var dlos = [];  //datalist options from keywords, if defined
+        if(ctx.actobj.contextobj && ctx.actobj.contextobj.keywords) {
+            ctx.actobj.contextobj.keywords.csvarray().forEach(function (key) {
+                key = key.trim();
+                if(key) {
+                    dlos.push(["option", {value:key}]); } }); }
+        if(dlos.length) {
+            srchinattrs.list = "srchinoptsdl"; }
+        searchdivcontents.push(["input", srchinattrs]);
+        if(dlos.length) {
+            searchdivcontents.push(["datalist", {id:"srchinoptsdl"}, dlos]); }
         jt.out("pcdactdiv", jt.tac2html(
             [["div", {id:"pcdactcontentdiv"}, 
               [["div", {id:"pcdacsharediv"},
@@ -1102,14 +1121,7 @@ app.pcd = (function () {
                             src:app.dr("img/sharemenu.png")}]]],
                  ["span", {cla:"penbutton"},
                   settingsButtonHTML()]]],
-               ["div", {id:"pcdacsrchdiv"},
-                [["a", {href:"#search", id:"srchlink", title:"Search items",
-                        onclick:jt.fs("app.pcd.filterContent('change')")},
-                  ["img", {src:app.dr("img/search.png"), cla:"webjump"}]],
-                 ["input", {type:"text", id:"pcdsrchin", size:26,
-                            placeholder: "Search text",
-                            onchange:jt.fs("app.pcd.filterContent('change')"),
-                            value: srchst.qstr}]]]]],
+               ["div", {id:"pcdacsrchdiv"}, searchdivcontents]]],
              ["div", {id:"pcdsharediv", style:"display:none;"}, 
               shareAndFollowButtons()],
              ["div", {id:"pcdkeysrchdiv"}],
@@ -1471,15 +1483,6 @@ app.pcd = (function () {
            (!((membic.ctmid && app.coop.membershipLevel(contextobj)) ||
               (membic.penid === app.profile.myProfId())))) {
             return false; }  //queued, and not visible to general public yet
-        if(!fist.matchCriteriaSpecified) {
-            return true; }  //nothing to match against, ok.
-        if(fist.kwrds.disp &&
-           !fist.kwrds.sel.some((keyword) => membic.keywords &&
-                                   membic.keywords.csvcontains(keyword))) {
-            return false; }  //did not match specified keywords(s)
-        if(fist.types.disp &&
-           !fist.types.sel.some((type) => type === membic.revtype)) {
-            return false; }  //did not match a specified type
         if(fist.qstr) {
             var toks = fist.qstr.toLowerCase().split(/\s+/);
             verifySearchFilterText(membic);
@@ -2274,15 +2277,10 @@ return {
                 jt.byId("pcdsrchin").value = ""; }
             else if(mode === "change") {  //refiltering in response to change
                 ctx.fist.qstr = jt.byId("pcdsrchin").value;
-                //update selected kwrds and/or types
                 ctx.fist.idx = 0; //refilter all items from the beginning
                 ctx.fist.ts = new Date().toISOString();
                 ctx.fist.pgs = 1; //single page of results to start
-                ctx.fist.dc = 0; }  //reset the display count
-            //set the filtering on/off flag for ease of matching
-            ctx.fist.matchCriteriaSpecified = (ctx.fist.qstr ||
-                (ctx.fist.kwrds.disp && ctx.fist.kwrds.sel.length) ||
-                (ctx.fist.types.disp && ctx.fist.types.sel.length)); }
+                ctx.fist.dc = 0; } } //reset the display count
         appendNextMatchingItemToContent();
     },
     getDisplayContext: function () { return ctx; },
