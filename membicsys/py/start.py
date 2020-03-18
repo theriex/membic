@@ -37,7 +37,7 @@ indexHTML = """
 <div id="topsectiondiv">
   <div id="topmessagelinediv"></div>
   <!-- login has to be an actual form to enable remembered passwords -->
-  <div id="logindiv">
+  <div id="topactiondiv">
     <form id="loginform" method="post" action="redirlogin">
       <div id="loginparaminputs"></div>
       <div id="loginvisualelementsdiv">
@@ -55,7 +55,7 @@ indexHTML = """
         </div>
       </div> <!-- loginvisualelementsdiv -->
     </form>
-  </div> <!-- logindiv -->
+  </div>
   <div id="pgdescdiv"></div>
   <div id="pgactdiv"></div>
 </div>

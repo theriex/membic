@@ -36,8 +36,9 @@ def srverr(msg, code=400):
     return resp
 
 
-def serveValueError(ve):
-    logging.exception("serveValueError")
+def serveValueError(ve, quiet=False):
+    if not quiet:
+        logging.exception("serveValueError")
     return srverr(str(ve))
 
 
@@ -156,12 +157,12 @@ def authenticate():
         logging.info(muser["email"] + " authenticated token did not match")
         logging.info("  reqtok: " + reqtok)
         logging.info("  srvtok: " + srvtok)
-        raise ValueError("Invalid access credentials")
-    return muser
+        raise ValueError("Wrong password")
+    return muser, srvtok
 
 
 def administrator_auth():
-    muser = authenticate()
+    muser, srvtok = authenticate()
     cs = get_connection_service("Administrators")
     if not val_in_csv(muser["dsId"], cs["data"]):
         raise ValueError("Not authorized as admin")
@@ -458,4 +459,22 @@ def imagerelay():
     resp = flask.make_response(imgdat)
     resp.mimetype = "image/png"
     return resp
+
+
+def signin():
+    oj = ""
+    try:
+        muser, srvtok = authenticate()
+        authobj = {"email": muser["email"],
+                   "token": srvtok,
+                   "authId": muser["dsId"],
+                   "status": muser["status"],
+                   "altinmail": muser["altinmail"],
+                   "signInTS": dbacc.nowISO()}
+        oj = json.dumps(authobj)
+    except ValueError as e:
+        logging.info("signin failed: " + str(e));
+        return serveValueError(e, quiet=True)
+    return respJSON("[" + oj + "]")
+
 

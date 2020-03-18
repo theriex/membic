@@ -5,33 +5,38 @@
 app.login = (function () {
     "use strict";
 
-    var initialTopSectionHTML = "";
+    var initialTopActionHTML = "";
     var cookdelim = "..membicauth..";
     var authobj = null;  //email, token, authId, status, altinmail, signInTS
     var actsent = null;
 
 
     function displayAuthenticatedTopSection () {
-        //profile/connect access buttons, new membic creation form
-        jt.log("displayAuthenticatedTopSection not implemented yet");
+        jt.out("topactiondiv", jt.tac2html(
+            [["div", {id:"topnavdiv"},
+              [["div", {cla:"navicodiv"},
+                ["a", {href:"#profile", title:"My Profile",
+                       onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                     authobj.authId + "')")},
+                 ["img", {src:app.dr("img/profile.png")}]]],
+               ["div", {cla:"navicodiv"},
+                ["a", {href:"#connect", title:"Connect",
+                       onclick:jt.fs("app.statemgr.setState('activetps','" +
+                                     "411')")},
+                 ["img", {src:app.dr("img/connect.png")}]]]]],
+             ["div", {id:"newmembicdiv"}]]));
+        app.membic.addMembic();
     }
 
 
     function verifyUserInfo () {
         if(!authobj) {
             return jt.log("verifyUserInfo called without authentication"); }
-        //If the user was already loaded, no need to rebuild the displays
-        //since they already took that into consideration.
-        if(refmgr.cached("MUser", authobj.authId)) {
-            return jt.log("verifyUserInfo found MUser " + authobj.authId); }
-        //If the user info needed to be fetched, then what was showing was
-        //either a specific user/theme, or the connection display.  If it
-        //was a specific user/theme, then the display doesn't need to be
-        //updated.  If it was the default connection display, then it should
-        //be updated to reflect the user's own profile and theme membership.
-        app.refmgr.getFull("MUser", authobj.Id, function () {
-            if(statemgr.currState().dsType === "activetps") {
-                app.connect.display(); } });
+        //If the user info was already loaded, then the displays are
+        //probably up to date, but that's not guaranteed given server call
+        //timing.  Best to just just redraw.
+        app.refmgr.getFull("MUser", authobj.authId, function () {
+            app.statemgr.redispatch(); });
     }
 
 
@@ -53,6 +58,15 @@ app.login = (function () {
             else {
                 ret = {authname:mtn[0], authtoken:mtn[1]}; } }
         return ret;
+    }
+
+
+    function setAuthentCookie (remove) {
+        if(remove) {
+            jt.cookie(app.authcookname, "", -1); }
+        else {
+            var cval = authobj.email + cookdelim + authobj.token;
+            jt.cookie(app.authcookname, cval, 365); }
     }
 
 
@@ -379,17 +393,24 @@ app.login = (function () {
     }
 
 
-    function saveTopSectionHTML () {
-        if(initialTopSectionHTML) {
-            return; }  //already have it
-        //add any needed html to what was sourced from the server
-        var html = ["a", {id:"resetpw", href:"#resetpassword",
-                          title:"Email a password reset link",
-                          onclick:jt.fs("app.login.resetPassword()")},
-                    "reset password"];
-        jt.out("resetpassdiv", jt.tac2html(html));
-        html = jt.byId("topsectiondiv").innerHTML;
-        initialTopSectionHTML = html;
+    //This works in conjunction with the static undecorated form created by
+    //start.py, decorating to provide login without page reload.  Submission
+    //via the server is inneficient, but if necessary can be handled server
+    //side by setting a cookie.
+    function initLoginForm (restore) {
+        if(initialTopActionHTML && !restore) {
+            return; }  //login form was already set up, nothing to do.
+        if(!initialTopActionHTML) {  //save so it can be restored on logout
+            initialTopActionHTML = jt.byId("topactiondiv").innerHTML; }
+        else if(restore) {
+            jt.out("topactiondiv", initialTopActionHTML); }
+        //decorate the plain HTML for processing
+        jt.out("resetpassdiv", jt.tac2html(
+            ["a", {id:"resetpw", href:"#resetpassword",
+                   title:"Email a password reset link",
+                   onclick:jt.fs("app.login.resetPassword()")},
+             "reset password"]));
+        jt.on("loginform", "submit", app.login.formSubmitOverride);
     }
 
 
@@ -420,9 +441,15 @@ return {
         //Secure site communications (https) are verified on init. Not
         //checking that again here.  Save the initial login form so it
         //can be restored on logout as needed.
-        saveTopSectionHTML();
+        initLoginForm();
         //Always make the call to sign in.  If bad cookie or other issues
         //then deal with that immediately.
+        app.login.signIn();
+    },
+
+
+    formSubmitOverride: function (event) {
+        jt.evtend(event);
         app.login.signIn();
     },
 
@@ -440,19 +467,21 @@ return {
             ps.newacct = true; }
         else if(!((ps.an || ps.emailin) && (ps.at || ps.passin))) {
             return; }  //not trying to sign in yet.
+        jt.log("Signing in...");
         //Regardless of whether the signin call works or not, clear any auth
         //information passed in the URL parameters so it doesn't hang
         //around.  Already cleared from the URL in initial state dispatch.
         app.startParams.an = "";
         app.startParams.at = "";
-        //This is a lighweight call to avoid the wait time associated with
+        //This is a lightweight call to avoid the wait time associated with
         //downloading a full MUser instance.  The goal is to switch out of
         //the login form into the main interaction form to allow for writing
         //a membic as quickly as possible.  If the call succeeds, the result
         //object has the authentication token and privileged user info.
-        jt.call("POST", app.dr("api/signin"), jt.objdata(ps),
+        jt.call("POST", app.dr("/api/signin"), jt.objdata(ps),
                 function (result) {
                     authobj = result[0];
+                    setAuthentCookie();
                     displayAuthenticatedTopSection();
                     verifyUserInfo(); },
                 function (code, errtxt) {
@@ -466,6 +495,11 @@ return {
     //"isLoggedIn" check and/or for access to personal info.
     authenticated: function () {
         return authobj;
+    },
+
+
+    authURL: function (apiurl) {
+        return app.dr(apiurl) + "?an=" + authobj.email + "&at=" + authobj.token;
     },
 
 
@@ -573,9 +607,7 @@ return {
 
     updateTopSection: function () {
         if(!app.login.isLoggedIn()) {
-            if(initialTopSectionHTML && !jt.byId("loginform")) {
-                jt.out("topsectiondiv", initialTopSectionHTML); }
-            return; }
+            return initLoginForm("restore"); }
         //logged in...
         var navs = [
             {name:"Themes", im:"img/membiclogo.png", fs:"app.connect.display"},
@@ -696,7 +728,7 @@ return {
                      var html = "<p>Your account has been created." + 
                          " Welcome to the Membic community!</p>" +
                          "<p>Signing you in for the first time now...</p>";
-                     jt.out("logindiv", html);
+                     jt.out("topactiondiv", html);
                      setAuthentication(emaddr, objs[0].token, "noupdate");
                      app.history.checkpoint({view:"profile"});
                      //Wait briefly to give the db a chance to stabilize.

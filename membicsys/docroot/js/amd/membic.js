@@ -5,9 +5,9 @@
 app.membic = (function () {
     "use strict";
 
-    ////////////////////////////////////////
-    // closure variables
-    ////////////////////////////////////////
+    var addmem = null;  //The new membic being added
+    var savind = "";    //Ongoing save indicator
+    var expandedMembics = {};  //currently expanded membics (profile membics)
 
     //If a url was pasted or passed in as a parameter, then potentially
     //modified by automation, that "cleaned" value should be kept to
@@ -1519,6 +1519,108 @@ app.membic = (function () {
     }
 
 
+    //The profile membic dsId is used to indicate membic expansion.  The
+    //membic display is expanded or condensed across the profile and all
+    //themes to make it easier to track what you are focusing on.
+    function membicExpId (membic) {
+        var expid = membic.dsId;
+        if(membic.ctmid) {
+            expid = membic.srcrev; }
+        return expid;
+    }
+
+
+    function saveMembic (savemembic, contf, failf) {
+        savind = new Date().toISOString();  //indicate we are saving
+        var url = app.login.authURL("/api/membicsave");
+        var pcdo = app.pcd.getDisplayContext().contextobj;  //profile or theme
+        if(pcdo.dsType === "Theme") {
+            url += "&themecontext=" + pcdo.dsId; }
+        jt.call("POST", url, app.refmgr.postdata(savemembic),
+                //The updated MUser is always the first item returned,
+                //followed by the display context Theme if specified.
+                function (pots) {
+                    savind = "";
+                    pots.forEach(function (pot) {  //deserialize so ready to use
+                        app.refmgr.deserialize(pot); });
+                    var profmem = pots[0].preb[0];  //profile membic
+                    profmem.postnotes.forEach(function (pn) {  //clear outdated
+                        app.refmgr.uncache("Theme", pn.ctmid); });
+                    pots.forEach(function (pot) {  //update all given data
+                        app.refmgr.put(pot); });
+                    expandedMembics[profmem.dsId] = "expandedpostsave";
+                    var dispobj = pots[pots.length - 1];
+                    app.pcd.fetchAndDisplay(dispobj.dsType, dispobj.dsId);
+                    if(contf) {
+                        contf(profmem); } },
+                function (code, errtxt) {
+                    savind = "";
+                    jt.log("saveMembic " + savemembic.dsId + " " + code + ": " +
+                           errtxt);
+                    if(failf) {
+                        failf(code, errtxt); } },
+                jt.semaphore("membic.saveMembic"));
+    }
+
+
+    function mergeURLReadInfoIntoSavedMembic (membic) {
+        if(savind) {  //currently saving, wait and retry
+            return app.fork({descr:"Merge Details " + membic.rurl,
+                             ms:2000,
+                             func:function () {
+                                 mergeURLReadInfoIntoSavedMembic(membic); }}); }
+        //not currently saving, find target membic in profile
+        var tm = app.profile.myProfile()
+            .preb.find((cand) => cand.rurl === membic.rurl);
+        tm.url = membic.url || membic.rurl;
+        tm.details = membic.details || {};
+        tm.revtype = membic.revtype || "article";
+        tm.rating = ratingDefaultValue;
+        tm.keywords = "";
+        saveMembic(tm);
+    }
+
+
+    //Merge the retrieved membic details.  If this is a new membic, there
+    //may or may not be an outstanding save going on.
+    function readerFinished (membic, result, msg) {
+        var ur = membic.svcdata.urlreader;
+        ur.status = "complete";
+        ur.result = result;
+        var le = ur.log[ur.log = 1];
+        le.end = new Date().toISOString()
+        le.msg = msg;
+        if(addmem && !savind && //still working off addmem and not saved yet
+           addmem.rurl === membic.rurl) {  //and not way out of sync
+            return; }  //url read data will be recorded on save.
+        mergeURLReadInfoIntoSavedMembic(membic);
+    }
+
+
+    function startReader (membic) {
+        if(!membic.svcdata) {
+            membic.svcdata = {}; }
+        if(!membic.svcdata.picdisp) {
+            membic.svcdata.picdisp = "sitepic"; }  //reader sets imguri
+        if(!membic.svcdata.urlreader) {
+            membic.svcdata.urlreader = {log:[]}; }
+        membic.svcdata.urlreader.status = "reading";
+        membic.svcdata.urlreader.result = "";
+        membic.svcdata.urlreader.log.push({start:new Date().toISOString()});
+        app.fork({descr:"Read URL " + addmem.rurl, ms:100,
+                  func:function () {
+                      var reader = getReaderForURL(membic.rurl);
+                      reader.fetchData(addmem, readerFinished); }});
+    }
+
+
+    //Return the preb field index (iterator state index) for the membic.
+    function pfiForMembic (membic) {
+        return app.profile.myProfile()
+            .preb.findIndex((cand) => cand.dsId === membic.dsId);
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -2208,6 +2310,12 @@ return {
 
 
     mdTitleHTML: function (membic, fist) {
+        var expid = membicExpId(membic);
+        if(expandedMembics[expid]) {
+            app.fork({descr:"Expand Membic " + expid + " after draw",
+                      ms:300,
+                      func:function () {
+                          app.membic.toggleMembic(fist.cdx, "expand"); }}); }
         return jt.tac2html(
             [["a", {href:"#actions" + fist.cdx, title:"Toggle Membic Actions",
                     onclick:jt.fs("app.membic.toggleMembic(" + fist.cdx + ")")},
@@ -2261,17 +2369,20 @@ return {
     },
 
 
-    toggleMembic: function (idx) {
+    toggleMembic: function (idx, exp) {
+        var membic = app.pcd.getDisplayContext().actobj.itlist[idx];
+        var expid = membicExpId(membic);
         var tds = {mdactdiv:membicActionsHTML,
                    mdsharediv:membicShareHTML,
                    mdptsdiv:membicThemePostsHTML};
         var xd = jt.byId("mdsharediv" + idx);  //share determines expand state
-        if(xd.innerHTML && xd.style.display === "block") {
+        if(!exp && xd.innerHTML && xd.style.display === "block") {
+            expandedMembics[expid] = false;
             Object.keys(tds).forEach(function (dk) {
                 jt.byId(dk + idx).style.display = "none"; });
             return; }
-        var membic = app.pcd.getDisplayContext().actobj.itlist[idx];
         Object.keys(tds).forEach(function (dk) {
+            expandedMembics[expid] = "usertoggled";
             //redraw expansion content each time. sign-in, modified, whatever
             var div = jt.byId(dk + idx);
             div.innerHTML = tds[dk](membic);
@@ -2290,7 +2401,67 @@ return {
 
     deserializeFields: function (rev) {
         app.lcs.reconstituteJSONObjectField("svcdata", rev);
+    },
+
+
+    addMembic: function (step) {
+        step = step || "start";
+        switch(step) {
+        case "start":
+            jt.out("newmembicdiv", jt.tac2html(
+                ["form", {id:"newmembicform"},
+                 [["label", {fo:"urlinput"}, "URL to remember"],
+                  ["input", {type:"url", id:"urlinput", size:30,
+                             placeholder:"Paste Memorable Link Here",
+                             required:"required",
+                             oninput:jt.fs("app.membic.amformact(event)")}],
+                  ["div", {id:"ambuttonsdiv"},
+                   ["button", {type:"submit"}, "Make Membic"]]]]));
+            jt.on("newmembicform", "submit", app.membic.amformact);
+            break;
+        case "whymem":
+            if(!jt.byId("newmembicform").checkValidity()) {
+                return; }  //fill in the url properly first.
+            addmem = {rurl:jt.byId("urlinput")};
+            startReader(addmem);
+            jt.out("newmembicform", jt.tac2html(
+                [["div", {id:"newmembicurldiv"}, addmem.rurl],
+                 ["input", {type:"text", id:"whymemin", size:40,
+                            placeholder:"Why is this memorable?",
+                            oninput:jt.fs("app.membic.amformact(event)")}],
+                 ["div", {id:"amprocmsgdiv"}],
+                 ["div", {id:"ambuttonsdiv"},
+                  [["button", {type:"button",
+                               onclick:jt.fs("app.membic.addMembic()")},
+                    "Cancel"],
+                   //form submit action set up in first step
+                   ["button", {type:"submit"}, "Add"]]]]));
+            break;
+        case "addit":
+            if(!jt.byId("newmembicform").checkValidity()) {
+                return; }  //fix why memorable if needed
+            addmem.text = jt.byId("whymemin")
+            jt.out("amprocmsgdiv", "Writing membic...");
+            jt.byId("ambuttonsdiv").style.display = "none";
+            saveMembic(addmem, 
+                function (membic) {
+                    app.membic.toggleMembic(pfiForMembic(membic), "expand");
+                    app.membic.addMembic("start"); },
+                function (code, errtxt) {
+                    jt.out("amprocmsgdiv", errtxt);
+                    jt.byId("ambuttonsdiv").style.display = "block"; });
+            break;
+        default:
+            jt.log("addMembic unknown step: " + step); }
+    },
+    amformact: function (event) {
+        jt.evtend(event);
+        if(jt.byId("urlinput")) {
+            app.membic.addMembic("whymem"); }
+        else if(jt.byId("whymemin")) {
+            app.membic.addMembic("addit"); }
     }
+
 
 }; //end of returned functions
 }());

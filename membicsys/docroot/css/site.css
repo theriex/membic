@@ -67,11 +67,17 @@ button, .loginbutton, .formbutton, .filesellab {
 .typeselect { background-color:transparent; }
 .tablinksel { background-color:#ffae50; }
 #loadstatusdiv { background-image:url('../img/e6e7e9p80.png'); }
-#topnavdiv { font-size:small;
-  display:table; margin:0 auto; padding:0px 5px 0px 0px; }
 #topnavdiv button { font-weight:bold; background-color:transparent;
   background-image:url('../img/e6e7e9p80.png'); }
 .navimg { max-height:28px; }
+
+#topactiondiv { }
+#topnavdiv { font-size:small; display:table; float:right; }
+.navicodiv img { max-height:38px; }
+#newmembicdiv { display:inline-block; text-align:left; width:250px; }
+#newmembicform label { font-size:small; }
+#ambuttonsdiv { text-align:right; }
+
 
 /* >> main display area and contained elements */
 .collapse { border-collapse:collapse; }

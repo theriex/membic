@@ -750,6 +750,19 @@ function writeDeserializeFunction () {
         jsc += "            break;\n"; });
     jsc += "        }\n";
     jsc += "    }\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    function serialize (obj) {\n";
+    jsc += "        switch(obj.dsType) {\n";
+    definitions.forEach(function (edef) {
+        jsc += "        case \"" + edef.entity + "\": \n";
+        edef.fields.forEach(function (fd) {
+            if(ddefs.fieldIs(fd.d, "json")) {
+                jsc += "            obj." + fd.f + " = JSON.stringify(obj." +
+                    fd.f + ");\n" } });
+        jsc += "            break;\n"; });
+    jsc += "        }\n";
+    jsc += "    }\n";
     return jsc;
 }
 
@@ -846,6 +859,14 @@ function createJSServerAcc () {
     jsc += "\n";
     jsc += "    deserialize: function (obj) { \n";
     jsc += "        deserialize(obj);\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    postdata: function (obj) {\n";
+    jsc += "        serialize(obj);\n";
+    jsc += "        var dat = jt.objdata(obj);\n";
+    jsc += "        deserialize(obj);\n";
+    jsc += "        return dat;\n";
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";

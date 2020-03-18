@@ -5,8 +5,6 @@ app.connect = (function () {
     "use strict";
 
     var mdefhtml = "";
-    var tps = null;  //theme/prof summaries array, start.py json_for_theme_prof
-    var atfs = "";  //activetps fetch time stamp
 
 
     function keepMembicDef () {
@@ -44,15 +42,9 @@ app.connect = (function () {
 
 
     function initVars () {
-        tps = null;  //reset local cached array each time to use latest
-        atfs = "";
         jt.out("contentdiv", "Fetching Themes and Profiles");
         var atr = app.refmgr.cached("activetps", "411");
-        if(atr) {  //have cached recent
-            //jt.log("using cached activetps");
-            atfs = atr.modified.replace(/[\-:]/g,"");  //friendlier
-            tps = mergePersonalThemesForAccess(atr.jtps); }
-        else {  //no recent, go get it
+        if(!atr) {  //no recent, go get it
             //jt.log("fetching activetps");
             jt.call("GET", "/api/recentactive" + jt.ts("?cb=", "minute"), null,
                     function (racs) {
@@ -68,16 +60,66 @@ app.connect = (function () {
     }
 
 
+    //Return a display summary item built from the user theme association.
+    function themeSummaryItem (tid, uto, tso) {
+        var user = app.profile.myProfile();  //defintely available, have assocs
+        if(!tso) {
+            tso = app.refmgr.cached("Theme", tid);
+            if(!tso) {
+                tso = {description:"",
+                       founders:"",
+                       moderators:"",
+                       members:"",
+                       rejects:"",
+                       seeking:"",
+                       lastwrite:user.lastWrite,
+                       modified:user.modified};
+                switch(uto.lev) {
+                    case 3: tso.founders = user.dsId; break;
+                    case 2: tso.moderators = user.dsId; break;
+                    case 1: tso.members = user.dsId; break; } } }
+        return {descr:tso.description,
+                dsId:tid,
+                hashtag:uto.hashtag,
+                founders:tso.founders,
+                moderators:tso.moderators,
+                members:tso.members,
+                rejects:tso.rejects,
+                seeking:tso.seeking,
+                lastwrite:tso.lastwrite,
+                modified:tso.modified,
+                name:tso.name || uto.name,
+                obtype:"theme",
+                pic:tso.pic || uto.picture,
+                lev:uto.lev};
+    }
+
+
+    //The connect display is the primary path for seeing and accessing your
+    //themes, so they all have to be displayed first, even if they didn't
+    //make the main public list.  A founder should be able to mark the theme
+    //archived, at which point it would not be displayed unless they
+    //switched "show archived" in the settings.  Your themes are listed
+    //before your profile, because your profile can be directly accessed
+    //from the top button.  Your own profile goes after your themes, serving
+    //as a delimiter between you and everything you are not involved with.
     function decorateAndSort () {
+        var tps = app.refmgr.cached("activetps", "411").jtps;
         var decos = tps;
-        var prof = app.profile.myProfile();
-        if(prof && prof.coops) {
+        var user = app.profile.myProfile();
+        if(user && user.themes) {  //include personal stuff.  See note.
             decos = [];
-            tps.forEach(function (tp) {
-                var d = JSON.parse(JSON.stringify(tp));
-                if(prof.coops[d.dsId]) {
-                    d.lev = prof.coops[d.dsId].lev; }
-                decos.push(d); }); }
+            var allobjs = {};
+            tps.forEach(function (tp) {  //copy in all public listings
+                if(tp.dsType !== "MembicDefinition") {
+                    allobjs[tp.obtype + tp.dsId] = tp; } });
+            Object.keys(user.themes).forEach(function (key) {  //verify user's
+                var ident = "theme" + key;
+                allobjs[ident] = themeSummaryItem(key, user.themes[key],
+                                                  allobjs[ident]); });
+            allobjs["profile" + user.dsId].lev = 0.5;  //last before general
+            Object.keys(allobjs).forEach(function (key) {  //convert to array
+                decos.push(allobjs[key]); }); }
         decos.sort(function (a, b) {
             if(a.lev && !b.lev) { return -1; }  //lev val beats missing
             if(!a.lev && b.lev) { return 1; }
@@ -107,12 +149,13 @@ app.connect = (function () {
 
     function imageSourceForListing (tp) {
         var imgsrc = app.dr("img/blank.png");
+        var activitymod = app.refmgr.cached("activetps", "411").modified;
         if(tp.pic) {
             var otm = {theme:"Theme", profile:"MUser"};
             imgsrc = "/api/obimg?dt=" + otm[tp.obtype] + "&di=" + tp.dsId;
             var mod = tp.modified;
-            if(atfs > mod) {
-                mod = atfs; }
+            if(activitymod > mod) {   //use most recent known timestamp to
+                mod = activitymod; }  //avoid churn or stale
             imgsrc += "&cb=" + mod; }
         return imgsrc;
     }

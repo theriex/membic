@@ -2,6 +2,7 @@ import flask
 import py.useract as useract
 import py.util as util
 import py.start as start
+import py.useract as useract
 
 # Create a default entrypoint for the app.
 app = flask.Flask(__name__)
@@ -33,6 +34,14 @@ def obimg():  # params: dt (dsType), di (dsId)
 @app.route('/api/imagerelay')
 def imagerelay():  #params: membicId
     return util.imagerelay()
+
+@app.route('/api/signin', methods=['GET', 'POST'])
+def signin(): #params: emailin, passin, an, at
+    return util.signin()
+
+@app.route('/api/membicsave', methods=['GET', 'POST'])
+def membicsave(): #params an, at, Membic, (themecontext)
+    return useract.membicsave()
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

@@ -18,10 +18,10 @@ app.profile = (function () {
 
 
     function myProfile () {
-        if(!mypid) {
+        var authobj = app.login.authenticated();
+        if(!authobj) {
             return null; }
-        var pref = app.lcs.getRef("profile", mypid);
-        return pref.profile || null;
+        return app.refmgr.cached("MUser", authobj.authId);
     }
 
 

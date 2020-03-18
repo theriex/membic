@@ -70,6 +70,39 @@ app.refmgr = (function () {
     }
 
 
+    function serialize (obj) {
+        switch(obj.dsType) {
+        case "MUser": 
+            obj.cliset = JSON.stringify(obj.cliset);
+            obj.themes = JSON.stringify(obj.themes);
+            obj.preb = JSON.stringify(obj.preb);
+            break;
+        case "Theme": 
+            obj.people = JSON.stringify(obj.people);
+            obj.cliset = JSON.stringify(obj.cliset);
+            obj.preb = JSON.stringify(obj.preb);
+            break;
+        case "AdminLog": 
+            break;
+        case "Membic": 
+            obj.details = JSON.stringify(obj.details);
+            obj.svcdata = JSON.stringify(obj.svcdata);
+            obj.reacdat = JSON.stringify(obj.reacdat);
+            break;
+        case "Overflow": 
+            obj.preb = JSON.stringify(obj.preb);
+            break;
+        case "MailNotice": 
+            break;
+        case "ActivitySummary": 
+            obj.reqdets = JSON.stringify(obj.reqdets);
+            break;
+        case "ConnectionService": 
+            break;
+        }
+    }
+
+
     function clearPrivilegedFields (obj) {
         switch(obj.dsType) {
         case "MUser": 
@@ -146,6 +179,14 @@ return {
 
     deserialize: function (obj) { 
         deserialize(obj);
+    },
+
+
+    postdata: function (obj) {
+        serialize(obj);
+        var dat = jt.objdata(obj);
+        deserialize(obj);
+        return dat;
     },
 
 

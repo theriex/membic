@@ -162,10 +162,23 @@ module.exports = (function () {
         //   are allowed but discouraged.  Should always have a value, but
         //   can end up empty if unreadable url.
         // svcdata:
-        //   - picdisp: sitepic|upldpic|nopic (client setting).  For sitepics
-        //     not over https, the server internally caches a lowres copy of
-        //     the source image to serve over https.  Tracked in "ic" fields.
-        //   - postctms: server written info on posted through themes.
+        //   MUser and Theme membics:
+        //     - picdisp: sitepic|upldpic|nopic
+        //       Client setting. For sitepic, the server may cache a lowres
+        //       copy of the source image in the icdata field to avoid
+        //       degraded client server connections over https.
+        //   MUser membics only:
+        //     - postctms: [] zero or more theme postnotes
+        //           postnote: {ctmid, name, revid}
+        //     - urlreader: {status: reading|complete,
+        //                   result: success|partial|failure,
+        //                   log:[calldet, calldet2...]}
+        //           calldet:{start, end, msg}
+        //   Theme membics only:
+        //     - tdat: {disp:active|removed, user:dsId, reason:txt, ts:ISO}
+        //       No tdat is equivalent to tdat.disp active.  If user is src
+        //       membic author, then can switch back to active, provided src
+        //       membic is not marked as deleted.
         // reacdat:
         //   Server maintained reaction data from other users.  For example
         //   a user might mark the membic as helpful or remembered.  Or they
