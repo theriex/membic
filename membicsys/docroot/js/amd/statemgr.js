@@ -10,8 +10,31 @@ app.statemgr = (function () {
                    activetps:"activetps", connect:"activetps"};
 
 
+    function updateNavArea (state) {
+        var tndiv = jt.byId("topnavdiv");
+        if(!tndiv) {
+            return; }
+        var authobj = app.login.authenticated();
+        if(!authobj) {
+            return; }
+        state = state || history.state;
+        var nl = ["a", {href:"#profile", title:"My Profile",
+                        onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                      authobj.authId + "')")},
+                  ["img", {src:app.dr("img/navprofile.png")}]];
+        var prof = app.profile.myProfile()
+        if(state.dsType === "MUser" && prof && prof.dsId === state.dsId) {
+            nl = ["a", {href:"#connect", title:"Connect",
+                        onclick:jt.fs("app.statemgr.setState('activetps','" +
+                                      "411')")},
+                  ["img", {src:app.dr("img/navconnect.png")}]]; }
+        tndiv.innerHTML = jt.tac2html(["div", {cla:"navicodiv"}, nl]);
+    }
+
+
     function dispatchState (state, extra) {
         state = state || history.state;
+        updateNavArea(state);
         switch(state.dsType) {
         case "activetps":
             return app.connect.display(extra);
@@ -118,6 +141,11 @@ return {
     //system wide data change, like the user signing in.
     redispatch: function () {
         dispatchState(); 
+    },
+
+
+    updatenav: function () {
+        updateNavArea();
     }
         
 }; //end of returned functions

@@ -11,24 +11,6 @@ app.login = (function () {
     var actsent = null;
 
 
-    function displayAuthenticatedTopSection () {
-        jt.out("topactiondiv", jt.tac2html(
-            [["div", {id:"topnavdiv"},
-              [["div", {cla:"navicodiv"},
-                ["a", {href:"#profile", title:"My Profile",
-                       onclick:jt.fs("app.statemgr.setState('MUser','" +
-                                     authobj.authId + "')")},
-                 ["img", {src:app.dr("img/profile.png")}]]],
-               ["div", {cla:"navicodiv"},
-                ["a", {href:"#connect", title:"Connect",
-                       onclick:jt.fs("app.statemgr.setState('activetps','" +
-                                     "411')")},
-                 ["img", {src:app.dr("img/connect.png")}]]]]],
-             ["div", {id:"newmembicdiv"}]]));
-        app.membic.addMembic();
-    }
-
-
     function verifyUserInfo () {
         if(!authobj) {
             return jt.log("verifyUserInfo called without authentication"); }
@@ -482,7 +464,11 @@ return {
                 function (result) {
                     authobj = result[0];
                     setAuthentCookie();
-                    displayAuthenticatedTopSection();
+                    jt.out("topactiondiv", jt.tac2html(
+                        [["div", {id:"topnavdiv"}],
+                         ["div", {id:"newmembicdiv"}]]));
+                    app.statemgr.updatenav();
+                    app.membic.addMembic();
                     verifyUserInfo(); },
                 function (code, errtxt) {
                     jt.log("authentication failure " + code + ": " + errtxt);

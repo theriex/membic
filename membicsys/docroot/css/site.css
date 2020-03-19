@@ -42,7 +42,7 @@ button, .loginbutton, .formbutton, .filesellab {
  */
 
 /* >> topsectiondiv and contained elements */
-#topmessagelinediv { }
+#topmessagelinediv { font-size:medium; margin-left:5px; }
 .errmsgtextspan { font-size:small; }
 #topsectiondiv { display:table; margin:0px auto 2px auto; padding:0px 5px;
   background-image:url('../img/e6e7e9p80.png'); }
@@ -72,11 +72,16 @@ button, .loginbutton, .formbutton, .filesellab {
 .navimg { max-height:28px; }
 
 #topactiondiv { }
-#topnavdiv { font-size:small; display:table; float:right; }
-.navicodiv img { max-height:38px; }
-#newmembicdiv { display:inline-block; text-align:left; width:250px; }
-#newmembicform label { font-size:small; }
+#topnavdiv { font-size:small; display:table; float:left; }
+.navicodiv img { width:34px; }
+#newmembicdiv { display:inline-block; text-align:left; width:266px; }
+.nmformlinediv { width:266px; text-align:right; }
+#newmembicform label { display:inline-block; margin-right:3px; overflow:hidden;
+  width:36px; font-size:12px; vertical-align:middle; text-align:right; }
+#newmembicform input { width:218px; }
 #ambuttonsdiv { text-align:right; }
+#ambuttonsdiv button { margin-left:16px; }
+#newmembicurldiv { font-size:small; text-align:left; padding-left:39px; }
 
 
 /* >> main display area and contained elements */

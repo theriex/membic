@@ -2408,34 +2408,44 @@ return {
         step = step || "start";
         switch(step) {
         case "start":
+            var inval = "";
+            if(addmem && addmem.rurl) { //previous add not completed
+                inval = addmem.rurl; }
             jt.out("newmembicdiv", jt.tac2html(
                 ["form", {id:"newmembicform"},
-                 [["label", {fo:"urlinput"}, "URL to remember"],
-                  ["input", {type:"url", id:"urlinput", size:30,
-                             placeholder:"Paste Memorable Link Here",
-                             required:"required",
-                             oninput:jt.fs("app.membic.amformact(event)")}],
-                  ["div", {id:"ambuttonsdiv"},
-                   ["button", {type:"submit"}, "Make Membic"]]]]));
+                 [["div", {cla:"nmformlinediv"},
+                   [["label", {fo:"urlinput", title:"Memorable Link"}, "URL"],
+                    ["input", {type:"url", id:"urlinput", //no size, use CSS
+                               placeholder:"Paste Memorable Link Here",
+                               required:"required", value:inval,
+                               onchange:jt.fs("app.membic.amformact(evt)")}]]],
+                  ["div", {cla:"nmformlinediv"},
+                   ["div", {id:"ambuttonsdiv"},
+                    ["button", {type:"submit"}, "Make Membic"]]]]]));
             jt.on("newmembicform", "submit", app.membic.amformact);
             break;
         case "whymem":
             if(!jt.byId("newmembicform").checkValidity()) {
                 return; }  //fill in the url properly first.
-            addmem = {rurl:jt.byId("urlinput")};
+            addmem = {rurl:jt.byId("urlinput").value};
             startReader(addmem);
             jt.out("newmembicform", jt.tac2html(
-                [["div", {id:"newmembicurldiv"}, addmem.rurl],
-                 ["input", {type:"text", id:"whymemin", size:40,
-                            placeholder:"Why is this memorable?",
-                            oninput:jt.fs("app.membic.amformact(event)")}],
-                 ["div", {id:"amprocmsgdiv"}],
-                 ["div", {id:"ambuttonsdiv"},
-                  [["button", {type:"button",
-                               onclick:jt.fs("app.membic.addMembic()")},
-                    "Cancel"],
-                   //form submit action set up in first step
-                   ["button", {type:"submit"}, "Add"]]]]));
+                [["div", {id:"newmembicurldiv", cla:"nmformlinediv"},
+                  addmem.rurl],
+                 ["div", {cla:"nmformlinediv"},
+                  [["label", {fo:"whymemin", title:"Why memorable?"}, "Why?"],
+                   ["input", {type:"text", id:"whymemin", //no size, use CSS
+                              placeholder:"What makes this memorable for you?",
+                              onchange:jt.fs("app.membic.amformact(evt)")}]]],
+                 ["div", {cla:"nmformline", id:"amprocmsgdiv"}],
+                 ["div", {cla:"nmformline"},
+                  ["div", {id:"ambuttonsdiv"},
+                   [["button", {type:"button",
+                                onclick:jt.fs("app.membic.addMembic()")},
+                     "Cancel"],
+                    //form submit action set up in first step
+                    ["button", {type:"submit"}, "Add"]]]]]));
+            jt.byId("whymemin").focus();
             break;
         case "addit":
             if(!jt.byId("newmembicform").checkValidity()) {
@@ -2445,6 +2455,7 @@ return {
             jt.byId("ambuttonsdiv").style.display = "none";
             saveMembic(addmem, 
                 function (membic) {
+                    addmem = null;  //reset for next membic creation
                     app.membic.toggleMembic(pfiForMembic(membic), "expand");
                     app.membic.addMembic("start"); },
                 function (code, errtxt) {
