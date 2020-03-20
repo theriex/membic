@@ -302,6 +302,7 @@ def fetch_image_data(inst, imgsrc):
         reqc = resp.status_code
         if reqc == 200:
             try:
+                # resp.content will not open if b64decoded. Ok to read.
                 img = Image.open(io.BytesIO(resp.content))
                 sizemaxdims = 160, 160       # max allowed dims for thumbnail
                 img.thumbnail(sizemaxdims)   # modify, preserving aspect ratio
@@ -445,15 +446,13 @@ def imagerelay():
                     raise ValueError(pre + "picdisp not sitepic: " + 
                                      svcdata["picdisp"])
         imguri = inst["imguri"]
-        if not imguri.lower().startswith("http://"):
-            raise ValueError(pre + "imguri not plain http: " + imguri)
         if not inst["icdata"] and not ("_failed_" in inst["icwhen"] or
                                        "_unavailable_" in inst["icwhen"]):
             fetch_image_data(inst, imguri)
             if not inst["icdata"]:
                 raise ValueError(pre + "unable to relay data")
-            imgdat = inst["icdata"]
-            imgdat = base64.b64decode(imgdat)
+        imgdat = inst["icdata"]
+        imgdat = base64.b64decode(imgdat)
     except ValueError as e:
         return serveValueError(e)
     resp = flask.make_response(imgdat)

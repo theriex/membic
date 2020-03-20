@@ -8,6 +8,7 @@ app.statemgr = (function () {
     var typemap = {MUser:"MUser", profile:"MUser",
                    Theme:"Theme", theme:"Theme",
                    activetps:"activetps", connect:"activetps"};
+    var tagmap = {};  //dsType+dsId:hashtag entries for url mapping
 
 
     function updateNavArea (state) {
@@ -53,7 +54,11 @@ return {
     urlForInstance: function (obj) {
         obj = obj || {};
         if(obj.hashtag) {
+            app.statemgr.notehash(obj);
             return "/" + obj.hashtag; }
+        var lookuphash = tagmap[obj.dsType + obj.dsId];
+        if(lookuphash) {
+            return "/" + lookuphash; }
         switch(obj.dsType) {
         case "Theme":
             return "/theme/" + obj.dsId;
@@ -146,6 +151,12 @@ return {
 
     updatenav: function () {
         updateNavArea();
+    },
+
+
+    notehash: function (obj) {
+        if(obj && obj.dsType && obj.dsId && obj.hashtag) {
+            tagmap[obj.dsType + obj.dsId] = obj.hashtag; }
     }
         
 }; //end of returned functions

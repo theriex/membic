@@ -174,6 +174,8 @@ app.connect = (function () {
     function itemHTML (item) {
         if(item.dsType === "MembicDefinition") {
             return mdefhtml; }
+        item.dsType = item.dsType || app.pcd.fetchType(item.obtype);
+        app.statemgr.notehash(item);
         var ocparams = "'" + item.obtype + "','" + item.dsId + "'";
         var ocfs = jt.fs("app.connect.show(" + ocparams + ")");
         var sfs = jt.fs("app.connect.show(" + ocparams + ",'Settings')");

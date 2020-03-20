@@ -258,9 +258,12 @@ def bust_cache(inst):
 # https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html
 def get_mysql_connector():
     cnx = None
-    cnx = mysql.connector.connect(user="root", # password="",
-                                  host="127.0.0.1",
-                                  database="membic_database")
+    try:
+        cnx = mysql.connector.connect(user="root", # password="",
+                                      host="127.0.0.1",
+                                      database="membic_database")
+    except Exception as e:
+        raise ValueError("Connection failed: " + str(e))
     return cnx
 
 

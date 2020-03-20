@@ -263,9 +263,12 @@ function helperFunctions () {
     pyc += "# https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html\n"
     pyc += "def get_mysql_connector():\n";
     pyc += "    cnx = None\n";
-    pyc += "    cnx = mysql.connector.connect(user=\"root\", # password=\"\",\n";
-    pyc += "                                  host=\"127.0.0.1\",\n";
-    pyc += "                                  database=\"membic_database\")\n";
+    pyc += "    try:\n";
+    pyc += "        cnx = mysql.connector.connect(user=\"root\", # password=\"\",\n";
+    pyc += "                                      host=\"127.0.0.1\",\n";
+    pyc += "                                      database=\"membic_database\")\n";
+    pyc += "    except Exception as e:\n";
+    pyc += "        raise ValueError(\"Connection failed: \" + str(e))\n";
     pyc += "    return cnx\n";
     pyc += "\n";
     pyc += "\n";

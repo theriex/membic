@@ -1597,6 +1597,25 @@ app.membic = (function () {
     }
 
 
+    function getReaderForURL (url) {
+        //Pull general information to help identify the link.  A picture
+        //helps visually locate and differentiate the link.  A title helps
+        //identify the link when communicating about it, especially when
+        //combined with other detail fields like author or address.
+        //Site notes:
+        //  - youtube has an API, but it fails frequently due to limits on
+        //    the number of calls.  Standard reader works just as well.
+        //  - netflx retired their online data catalog 08apr14
+        //  - amazon has an API but it requires enough site traffic to
+        //    sustain an advertising relationship
+        //vimeo doesn't want to provide info about their videos except
+        //through their API.
+        if(url.toLowerCase().indexOf("vimeo.") > 0) {  //https://vimeo.com/id
+            return app.jsonapi; }
+        return app.readurl;
+    }
+
+
     function startReader (membic) {
         if(!membic.svcdata) {
             membic.svcdata = {}; }
@@ -2326,6 +2345,8 @@ return {
     },
 
 
+    //All site images are cached and relayed.  Not fair to repeatedly burden
+    //other sites for their images, even if the app is delivering clicks.
     mdPicHTML: function (membic) {
         membic.svcdata = membic.svcdata || {};
         if(!membic.svcdata.picdisp) {
@@ -2338,9 +2359,7 @@ return {
         var imgsrc = app.dr("img/blank.png");
         switch(membic.svcdata.picdisp) {
         case "sitepic":
-            imgsrc = membic.imguri;
-            if(imgsrc.startsWith("http:")) {
-                imgsrc = "/api/imagerelay?membicid=" + membic.dsId; }
+            imgsrc = "/api/imagerelay?membicid=" + membic.dsId;
             break;
         case "upldpic":
             imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId;
@@ -2418,11 +2437,11 @@ return {
                     ["input", {type:"url", id:"urlinput", //no size, use CSS
                                placeholder:"Paste Memorable Link Here",
                                required:"required", value:inval,
-                               onchange:jt.fs("app.membic.amformact(evt)")}]]],
+                               onchange:jt.fs("app.membic.amfact(event)")}]]],
                   ["div", {cla:"nmformlinediv"},
                    ["div", {id:"ambuttonsdiv"},
                     ["button", {type:"submit"}, "Make Membic"]]]]]));
-            jt.on("newmembicform", "submit", app.membic.amformact);
+            jt.on("newmembicform", "submit", app.membic.amfact);
             break;
         case "whymem":
             if(!jt.byId("newmembicform").checkValidity()) {
@@ -2435,8 +2454,8 @@ return {
                  ["div", {cla:"nmformlinediv"},
                   [["label", {fo:"whymemin", title:"Why memorable?"}, "Why?"],
                    ["input", {type:"text", id:"whymemin", //no size, use CSS
-                              placeholder:"What makes this memorable for you?",
-                              onchange:jt.fs("app.membic.amformact(evt)")}]]],
+                              placeholder:"What's memorable about it?",
+                              onchange:jt.fs("app.membic.amfact(event)")}]]],
                  ["div", {cla:"nmformline", id:"amprocmsgdiv"}],
                  ["div", {cla:"nmformline"},
                   ["div", {id:"ambuttonsdiv"},
@@ -2465,7 +2484,7 @@ return {
         default:
             jt.log("addMembic unknown step: " + step); }
     },
-    amformact: function (event) {
+    amfact: function (event) {
         jt.evtend(event);
         if(jt.byId("urlinput")) {
             app.membic.addMembic("whymem"); }
