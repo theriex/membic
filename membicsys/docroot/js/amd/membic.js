@@ -1472,13 +1472,13 @@ app.membic = (function () {
             [["img", {cla:"mastypeimg", src:app.dr("img/" + mt.img),
                       title:mt.type, alt:mt.type}],
              ["span", {cla:"masactspan"}, membicActionButtonsHTML(membic, idx)],
+             ["span", {cla:"mascrespan"}, cretxt],
              ["span", {cla:"masbyline"},
               ["a", {href:"#" + membic.penid, title:"Visit " + profname,
                      onclick:jt.fs("app.statemgr.setState('MUser','" +
                                    membic.penid + "')")},
                [["img", {src:app.profile.profimgsrc(membic.penid)}],
                 ["span", {cla:"penlight"}, profname]]]],
-             ["span", {cla:"mascrespan"}, cretxt],
              ["span", {cla:"masratspan"}, starsImageHTML(membic.rating)]]);
     }
 

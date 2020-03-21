@@ -1078,7 +1078,7 @@ app.pcd = (function () {
     function settingsButtonHTML () {
         if(app.solopage()) {
             return ""; }  //no settings button at all if page is embedded
-        if(!ctx.actobj.settingsf) {
+        if(!ctx.actobj.setfstr) {
             return jt.tac2html(  //no settings, return disabled placeholder
                 ["img", {cla:"webjump", src:app.dr("img/settings.png"),
                          style:"opacity:0.4;"}]); }
@@ -1086,7 +1086,7 @@ app.pcd = (function () {
             ["a", {id:"pcdsettingslink",
                    href:"#" + ctx.descobj.disptype + "settings",
                    title:ctx.descobj.disptype.capitalize() + " Settings",
-                   onclick:jt.fs("app.pcd.settings()")},
+                   onclick:jt.fs(ctx.actobj.setfstr)},
              ["img", {cla:"webjump", src:app.dr("img/settings.png")}]]);
     }
 
@@ -1511,20 +1511,15 @@ app.pcd = (function () {
     }
 
 
-    function ptSettingsDisplay (obj) {
-        jt.log("ptSettingsDisplay not implemented yet" + obj);
-    }
-
-
     function ptNoticesDisplay (obj) {
         jt.log("ptNoticesDisplay not implemented yet" + obj);
     }
 
 
     function displayPTObj (obj) {
-        var sf = null;
+        var sf = "";
         if(app.login.authenticated()) {
-            sf = ptSettingsDisplay; }
+            sf = "app.pcd.settings()"; }
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
                                     exturl:app.pcd.linkForThemeOrProfile(obj),
@@ -1534,7 +1529,7 @@ app.pcd = (function () {
                                 itmatchf:membicSearchMatch,
                                 itdispf:membicDisplayHTML,
                                 contextobj:obj,
-                                settingsf:sf,
+                                setfstr:sf,
                                 notif:ptNoticesDisplay});
     }
 
@@ -1593,6 +1588,7 @@ return {
 
 
     settings: function (obj) {
+        return jt.err("settings not converted yet");
         if(obj) {
             dst.obj = obj; }
         var html = [
@@ -2343,7 +2339,7 @@ return {
     //  contextobj: optional, accessible from fist.actobj
     //  itmatchf(item, fist): return true if match
     //  itdispf(item, fist): return HTML to display the given item
-    //  settingsf(): null if settings unavailable, called settings click
+    //  setfstr: onclick for settings button (string)
     //  notif(): Return zero or more notices to be displayed.
     setPageActions: function (actobj) {
         ctx.actobj = actobj;

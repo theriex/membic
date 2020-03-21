@@ -237,11 +237,13 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdkwsdiv, .mdptsdiv { font-size:small; margin-left:5px; }
 .mbtkebabimg { padding:0px 5px 0px 6px; max-height:16px; 
   vertical-align:middle; }
-.mastypeimg, masactbimg { width:30px; height:30px; vertical-align:middle; }
+.mastypeimg { width:30px; height:30px; vertical-align:middle; }
+.masactbimg { max-width:30px; max-height:30px; vertical-align:middle; 
+  padding:0px 5px; }
 .masbyline { }
 .masbyline img { max-width:25px; max-height:25px; vertical-align:middle; }
 .masbyline span { padding:0px 2px; }
-.mascrespan { font-size:small; padding:0px 2px; }
+.mascrespan { font-size:x-small; padding:0px 2px; }
 #pcdmorediv { font-size:medium; text-align:center;
   background-image:url('../img/e6e7e9p80.png');
   border-top-left-radius:0px;

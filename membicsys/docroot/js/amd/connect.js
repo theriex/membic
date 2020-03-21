@@ -78,7 +78,7 @@ app.connect = (function () {
                     case 3: tso.founders = user.dsId; break;
                     case 2: tso.moderators = user.dsId; break;
                     case 1: tso.members = user.dsId; break; } } }
-        return {descr:tso.description,
+        return {description:tso.description,
                 dsId:tid,
                 hashtag:uto.hashtag,
                 founders:tso.founders,
@@ -101,8 +101,8 @@ app.connect = (function () {
     //archived, at which point it would not be displayed unless they
     //switched "show archived" in the settings.  Your themes are listed
     //before your profile, because your profile can be directly accessed
-    //from the top button.  Your own profile goes after your themes, serving
-    //as a delimiter between you and everything you are not involved with.
+    //from the top button.  Your own profile goes after all the themes and
+    //other profiles you are associated with, serving as a delimiter.
     function decorateAndSort () {
         var tps = app.refmgr.cached("activetps", "411").jtps;
         var decos = tps;
@@ -112,6 +112,8 @@ app.connect = (function () {
             var allobjs = {};
             tps.forEach(function (tp) {  //copy in all public listings
                 if(tp.dsType !== "MembicDefinition") {
+                    if(user.themes[tp.dsId]) {
+                        tp.lev = user.themes[tp.dsId].lev; }
                     allobjs[tp.obtype + tp.dsId] = tp; } });
             Object.keys(user.themes).forEach(function (key) {  //verify user's
                 var ident = "theme" + key;
@@ -134,14 +136,15 @@ app.connect = (function () {
     function imgForAssocLev (tp) {
         var img = "blank.png";
         var prof = app.profile.myProfile();
-        if(prof && prof.coops) {
-            img = "tsnoassoc.png";
-            if(prof.coops[tp.dsId]) {
-                switch(prof.coops[tp.dsId].lev) {
+        if(prof) {
+            if(prof.themes && prof.themes[tp.dsId]) {
+                switch(prof.themes[tp.dsId].lev) {
                 case -1: img = "tsfollowing.png"; break;
                 case 1: img = "tsmember.png"; break;
                 case 2: img = "tsmoderator.png"; break;
-                case 3: img = "tsfounder.png"; break; } } }
+                case 3: img = "tsfounder.png"; break; } }
+            else if(tp.obtype === "profile" && prof.dsId === tp.dsId) {
+                img = "tsfounder.png"; } }
         img = app.dr("img/" + img);
         return img;
     }
@@ -204,13 +207,18 @@ app.connect = (function () {
                                     exturl:"/",
                                     name:"Membic",
                                     descr:"Blog your memorable links"});
+        var sf = "";
+        var authobj = app.login.authenticated();
+        if(authobj) {
+            sf = "app.pcd.settings(app.login.authenticated())"; }
         if(initVars()) {  //have data to work with
             var themes = decorateAndSort();
             themes.push({dsType:"MembicDefinition"});
             app.statemgr.setState("activetps", "411");
             app.pcd.setPageActions({itlist:themes,
                                     itmatchf:searchMatch,
-                                    itdispf:itemHTML}); }
+                                    itdispf:itemHTML,
+                                    setfstr:sf}); }
     }
 
 
