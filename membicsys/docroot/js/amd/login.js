@@ -479,34 +479,74 @@ return {
 
     //If they are not logged in, then authobj is null.  Can be used as an
     //"isLoggedIn" check and/or for access to personal info.
-    authenticated: function () {
-        return authobj;
+    authenticated: function () { return authobj; },
+    setAuthentication: function (obj) { 
+        authobj = obj;
+        setAuthentCookie();
     },
-
-
     authURL: function (apiurl) {
         return app.dr(apiurl) + "?an=" + authobj.email + "&at=" + authobj.token;
     },
 
 
+    //Themes have custom keywords, profiles don't.  Otherwise the keywords
+    //get restrictive and you end up wanting to create a separate account
+    //for more diverse links.  Better to create a theme earlier on.
     accountSettingsHTML: function () {
-        var html = ["div", {id:"accountsettingsformdiv"},
-                    [["div", {cla:"cbdiv"},
-                      [["label", {fo:"emailin", cla:"liflab"}, "Email"],
-                       ["input", {type:"email", cla:"lifin",
-                                  name:"emailin", id:"emailin",
-                                  value:authname,
-                                  placeholder: "nospam@example.com"}]]],
-                     ["div", {cla:"cbdiv", id:"accstatusupdatediv"}],
-                     ["div", {cla:"cbdiv", id:"accstatdetaildiv"}],
-                     ["div", {cla:"cbdiv", id:"accpassupdatediv"}],
-                     ["div", {cla:"cbdiv", id:"maxpostperdaydiv"}],
-                     ["div", {cla:"cbdiv", id:"usermenustat"}],
-                     ["div", {cla:"dlgbuttonsdiv"},
-                      [["button", {type:"button", id:"accupdbutton",
-                                   onclick: jt.fs("app.login.updateAccount()")},
-                        "Update Personal"]]]]];
-        return html;
+        var prof = app.profile.myProfile();
+        prof.cliset.embcolors = prof.cliset.embcolors || {};
+        var emboHTML = [];
+        var embcolors = prof.cliset.embcolors;
+        app.pcd.embOverrides().forEach(function (od) {
+            embcolors[od.name] = embcolors[od.name] || od.value;
+            emboHTML.push(["div", {cla:"colorselectdiv"},
+                           [["label", {fo:od.name + "in", cla:"colorlab"},
+                             od.name.capitalize()],
+                            ["input", {id:od.name + "in", cla:"colorin",
+                                       type:"color", 
+                                       value:embcolors[od.name]}]]]); });
+        var statusHTML = jt.tac2html(
+            [["span", {cla:"statlineval"}, authobj.status],
+             " updated " + jt.colloquialDate(prof.modified, "compress", 
+                                             "nodaily z2loc")]);
+        var emburl = app.statemgr.urlForInstance(prof) + "?site=YOURSITE.COM";
+        return jt.tac2html(
+            ["div", {id:"accountsettingsformdiv"},
+             [["div", {cla:"cbdiv"},
+               [["label", {fo:"emailin", cla:"liflab"}, "Email"],
+                ["input", {type:"email", cla:"lifin", id:"emailin",
+                           value:authobj.email,
+                           placeholder: "nospam@example.com"}]]],
+              ["div", {cla:"cbdiv"},  //"passin" is reserved for login form
+               [["label", {fo:"updpin", cla:"liflab"}, "Password"],
+                ["input", {type:"password", cla:"lifin", id:"updpin"}]]],
+              ["div", {cla:"cbdiv"},
+               [["label", {fo:"altemin", cla:"liflab"}, "Alt&nbsp;Email"],
+                ["input", {type:"email", cla:"lifin", id:"altemin",
+                           value:authobj.altinmail || "",
+                           placeholder:"alternate@example.com"}]]],
+              ["div", {cla:"cbdiv"},
+               ["div", {cla:"infolinediv"}, statusHTML]],
+              ["div", {cla:"cbdiv"},
+               [["label", {fo:"hashin", cla:"liflab"}, "Hashtag"],
+                ["input", {type:"text", cla:"lifin", id:"hashin",
+                           value:prof.hashtag || "",
+                           placeholder:"uniquetext"}]]],
+              ["div", {cla:"cbdiv"},
+               ["div", {cla:"infolinediv"},
+                ["Embed: ",
+                 ["a", {href:emburl, title:"Embed this page in your website",
+                        onclick:jt.fs("window.open('" + emburl + "')")},
+                  emburl]]]],
+              ["div", {cla:"cbdiv"},
+               ["div", {id:"colorchoicesdiv"},
+                emboHTML]],
+              ["div", {cla:"cbdiv"},
+               ["div", {cla:"infolinediv", id:"accsetinfdiv"}]],
+              ["div", {id:"accountsettingsbuttonsdiv"},
+               [["button", {type:"button", id:"accupdbutton",
+                            onclick: jt.fs("app.login.updateAccount()")},
+                 "Update"]]]]]);
     },
 
 
@@ -612,32 +652,35 @@ return {
 
 
     updateAccount: function () {
-        var emval = jt.byId("emailin").value.trim();
-        if(!jt.isProbablyEmail(emval)) {
-            return jt.out("usermenustat", "Invalid email address"); }
-        var emold = app.profile.myProfile().email;
-        var passval = jt.byId("passin").value.trim();
-        if(!passval && emval !== emold) {
-            return jt.out("usermenustat", "Password needed for email change"); }
-        if(emval !== emold && !confirm("You will need to re-activate your account from your new email address " + emval)) {
-            return; }
-        var mpdsel = jt.byId("maxpdsel");
-        var maxpd = Number(mpdsel.options[mpdsel.selectedIndex].value);
-        app.profile.setnu("maxPostsPerDay", maxpd);
+        var prof = app.profile.myProfile();
+        var pu = {dsType:"MUser", dsId:prof.dsId};
+        pu.email = jt.byId("emailin").value.trim();
+        if(!jt.isProbablyEmail(pu.email)) {
+            return jt.out("accsetinfdiv", "Invalid email address"); }
+        pu.password = jt.byId("updpin").value.trim();
+        if(pu.email !== prof.email && !pu.password) {
+            return jt.out("accsetinfdiv",
+                          "Password required to change email."); }
+        if(pu.email !== prof.email && !confirm("You will need to re-activate your account from your new email address " + pu.email)) {
+            return; }  //continue editing.
+        pu.altinmail = jt.byId("altemin").value.trim();
+        if(pu.altinmail && !jt.isProbablyEmail(pu.altinmail)) {
+            return jt.out("accsetinfdiv", "Invalid alternate email"); }
+        pu.altinmail = pu.altinmail || "UNSET_VALUE";
+        pu.hashtag = jt.byId("hashin").value.trim() || "UNSET_VALUE";
+        pu.cliset = prof.cliset;  //unsaved changes in cached prof are ok
+        app.pcd.embOverrides().forEach(function (od) {
+            pu.cliset[od.name] = jt.byId(od.name + "in").value; });
+        jt.out("accsetinfdiv", "Updating...");
         jt.byId("accupdbutton").disabled = true;
-        jt.out("usermenustat", "Updating personal info...");
-        //account update also updates authent info.
-        app.profile.update(
-            {emailin:emval, passin:passval, 
-             cliset:(app.profile.myProfile().cliset || "")},
+        app.profile.update(pu,
             function (prof) { //updated account already cached
-                //need to rebuild the displayed account info, status change..
-                writeUsermenuAccountFormElements(prof);
-                jt.byId("accupdbutton").disabled = false;
-                jt.out("usermenustat", "Personal info updated."); },
+                jt.out("accsetinfdiv", "Profile updated.");
+                app.fork({descr:"Close account settings display", ms:800,
+                          func:app.pcd.settings}); },
             function (code, errtxt) {
                 jt.byId("accupdbutton").disabled = false;
-                jt.byId("usermenustat", "Update failed code " + code + " " +
+                jt.out("accsetinfdiv", "Update failed code " + code + " " +
                         errtxt); });
     },
 
@@ -685,11 +728,6 @@ return {
         if(errprompt) {
             jt.err(errprompt); }
         handleRedirectOrStartWork();
-    },
-
-
-    setAuth: function (name, token) {
-        setAuthentication(name, token);
     },
 
 

@@ -43,6 +43,10 @@ def signin(): #params: emailin, passin, an, at
 def membicsave(): #params an, at, Membic, (themecontext)
     return useract.membicsave()
 
+@app.route('/api/accupd', methods=['GET', 'POST'])
+def accupd(): #params an, at, MUser update fields
+    return useract.accupd()
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def startpage(path):

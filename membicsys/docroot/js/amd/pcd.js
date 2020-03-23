@@ -1124,8 +1124,7 @@ app.pcd = (function () {
                ["div", {id:"pcdacsrchdiv"}, searchdivcontents]]],
              ["div", {id:"pcdsharediv", style:"display:none;"}, 
               shareAndFollowButtons()],
-             ["div", {id:"pcdkeysrchdiv"}],
-             ["div", {id:"pcdtypesrchdiv"}]]));
+             ["div", {id:"pcdsettingsdiv", style:"display:none;"}]]));
     }
         
 
@@ -1569,6 +1568,30 @@ app.pcd = (function () {
     }
 
 
+    function writePersonalSettings (divid) {
+        jt.out(divid, jt.tac2html(
+            [["div", {id:"settingsmenudiv"},
+              [["button", {id:"cntb", title:"Create New Theme",
+                           onclick:jt.fs("app.theme.createTheme('" + divid +
+                                         "')")},
+                "Create&nbsp;Theme"],
+               ["button", {title:"Sign Out And Clear Cookie",
+                           onclick:jt.fs("app.login.logout()")},
+                "Sign Out"]]],
+             ["div", {id:"cpidiv"},
+              app.login.accountSettingsHTML()]]));
+        if(app.login.authenticated().status !== "Active") {
+            var cntb = jt.byId("cntb");
+            cntb.disabled = true;
+            cntb.style.opacity = 0.4; }
+    }
+
+
+    function writeThemeProfSettings (divid) {
+        jt.out(divid, "Theme/Profile Settings go here");
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -1588,7 +1611,22 @@ return {
 
 
     settings: function (obj) {
-        return jt.err("settings not converted yet");
+        jt.byId("pcdsharediv").style.display = "none";
+        var setdiv = jt.byId("pcdsettingsdiv");
+        if(setdiv.style.display === "block") {
+            setdiv.style.display = "none"; }
+        else {
+            setdiv.style.display = "block"; }
+        var prof = app.profile.myProfile();
+        obj = obj || ctx.actobj.contextobj || prof;
+        if(obj === prof) {
+            writePersonalSettings("pcdsettingsdiv"); }
+        else {
+            writeThemeProfSettings("pcdsettingsdiv"); }
+    },
+
+
+    settingsOld: function (obj) {
         if(obj) {
             dst.obj = obj; }
         var html = [
@@ -1901,9 +1939,8 @@ return {
 
 
     togshare: function () {
+        jt.byId("pcdsettingsdiv").style.display = "none";
         var sharediv = jt.byId("pcdsharediv");
-        if(!sharediv) {
-            return; }
         if(sharediv.style.display === "block") {
             sharediv.style.display = "none"; }
         else {
@@ -2356,7 +2393,8 @@ return {
     },
 
 
-    picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); }
+    picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); },
+    embOverrides: function () { return standardOverrideColors; }
 
 };  //end of returned functions
 }());

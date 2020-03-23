@@ -67,6 +67,7 @@ app.refmgr = (function () {
         case "ConnectionService": 
             break;
         }
+        return obj;
     }
 
 
@@ -100,6 +101,7 @@ app.refmgr = (function () {
         case "ConnectionService": 
             break;
         }
+        return obj;
     }
 
 
@@ -177,8 +179,8 @@ return {
     },
 
 
-    deserialize: function (obj) { 
-        deserialize(obj);
+    deserialize: function (obj) {
+        return deserialize(obj);
     },
 
 

@@ -79,7 +79,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #newmembicform label { display:inline-block; margin-right:3px; overflow:hidden;
   width:36px; font-size:12px; vertical-align:middle; text-align:right; }
 #newmembicform input { width:218px; }
-#ambuttonsdiv { text-align:right; }
+#ambuttonsdiv { text-align:right; font-size:small; }
 #ambuttonsdiv button { margin-left:16px; }
 #newmembicurldiv { font-size:small; text-align:left; padding-left:39px; }
 
@@ -151,7 +151,7 @@ button, .loginbutton, .formbutton, .filesellab {
 /* >> intro layout */
 /* padding:4px 2px 0px 2px; makes the "Keywords" entry in the membic
 dialog look ok, but breaks the Email input in the invite dialog. */
-.liflab { font-size:medium; font-weight:normal; text-align:right; 
+.liflab { font-size:small; font-weight:normal; text-align:right; 
   padding:0px 2px 0px 2px; display:block; float:left; width:80px; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
 .lifin { padding:0px; font-size:small; width:145px; }
@@ -220,6 +220,18 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mailindesctable tbody tr td { text-align:right; }
 .mailindesctable tbody tr td:nth-child(odd) { padding-right:10px; }
 .mailindesctable tbody tr td:nth-child(even) { text-align:left; }
+
+/* >> settings layout */
+#settingsmenudiv { text-align:center; margin:0px 0px 5px 0px; }
+#settingsmenudiv button { margin:0px 10px; }
+.cbdiv { display:flex; vertical-align:middle; margin:5px 0px; }
+.infolinediv { font-size:small; margin:0px auto; }
+.statlineval { font-weight:bold; }
+#accountsettingsbuttonsdiv { text-align:center; padding:5px 0px 10px 0px; }
+#accountsettingsbuttonsdiv button { margin:0px 10px; }
+#colorchoicesdiv { font-size:small; text-align:center; margin:0px auto; }
+.colorselectdiv { display:inline-block; margin-left:5px; }
+
 
 /* >> membic content layout */
 .mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }

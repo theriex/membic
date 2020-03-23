@@ -10,6 +10,8 @@ import py.dbacc as dbacc
 import requests         # Fetch things over http in a reasonable way
 import io               # Image.open/save requires file-like access
 from PIL import Image   # Only need Image from Pillow
+import string
+import random
 
 
 site_home = "https://membic.org"
@@ -175,6 +177,12 @@ def safe_JSON(obj, audience="public"):  # "private" includes personal info
     return json.dumps(filtobj)
 
 
+def random_alphanumeric(length):
+    chars = string.ascii_letters + string.digits
+    val = "".join(random.choice(chars) for _ in range(length))
+    return val
+
+
 def in_terms_vio(entity, dsId, data=None):
     if not data:
         data = get_connection_service("termsvio")["data"]
@@ -321,7 +329,6 @@ def fetch_image_data(inst, imgsrc):
     dbacc.write_entity(inst, inst["modified"])
 
 
-
 def send_mail(emaddr, subj, body):
     if is_development_server():
         logging.info("send_mail ignored dev server send to " + emaddr +
@@ -330,6 +337,21 @@ def send_mail(emaddr, subj, body):
         return
     raise ValueError("send_mail not connected to server mail")
     
+
+def make_auth_obj(muser, srvtok):
+    authobj = {"email": muser["email"],
+               "token": srvtok,
+               "authId": muser["dsId"],
+               "status": muser["status"],
+               "altinmail": muser["altinmail"],
+               "signInTS": dbacc.nowISO()}
+    return authobj
+
+
+def my_profile_url(muser):
+    return (site_home + "/profile/" + muser.dsId + "?an=" + muser.email +
+            "&at=" + token_for_user(muser))
+
 
 
 ##################################################
@@ -345,13 +367,12 @@ def mailpwr():
         muser = dbacc.cfbk("MUser", "email", emaddr)
         if muser:
             body += "Use this link to access the settings for your profile: "
-            body += "https://membic.org?view=profile"
-            body += "&an=" + emaddr + "&at=" + token_for_user(muser) + "\n\n"
+            body += my_profile_url(muser) + "\n\n"
         else:
             body += "You do not have a profile set up for " + emaddr + ". "
             body += "Either you have not signed up yet, or you used "
             body += "a different email address.  To create a profile "
-            body += "visit https://membic.org\n\n"
+            body += "visit " + site_home + "\n\n"
         subj = "Membic.org profile password reset"
         send_mail(emaddr, subj, body)
     except ValueError as e:
@@ -464,12 +485,7 @@ def signin():
     oj = ""
     try:
         muser, srvtok = authenticate()
-        authobj = {"email": muser["email"],
-                   "token": srvtok,
-                   "authId": muser["dsId"],
-                   "status": muser["status"],
-                   "altinmail": muser["altinmail"],
-                   "signInTS": dbacc.nowISO()}
+        authobj = make_auth_obj(muser, srvtok)
         oj = json.dumps(authobj)
     except ValueError as e:
         logging.info("signin failed: " + str(e));

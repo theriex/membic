@@ -752,6 +752,7 @@ function writeDeserializeFunction () {
                     fd.f + "\", obj);\n"; } });
         jsc += "            break;\n"; });
     jsc += "        }\n";
+    jsc += "        return obj;\n";
     jsc += "    }\n";
     jsc += "\n";
     jsc += "\n";
@@ -765,6 +766,7 @@ function writeDeserializeFunction () {
                     fd.f + ");\n" } });
         jsc += "            break;\n"; });
     jsc += "        }\n";
+    jsc += "        return obj;\n";
     jsc += "    }\n";
     return jsc;
 }
@@ -860,8 +862,8 @@ function createJSServerAcc () {
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";
-    jsc += "    deserialize: function (obj) { \n";
-    jsc += "        deserialize(obj);\n";
+    jsc += "    deserialize: function (obj) {\n";
+    jsc += "        return deserialize(obj);\n";
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";

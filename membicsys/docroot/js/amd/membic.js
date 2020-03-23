@@ -1640,6 +1640,30 @@ app.membic = (function () {
     }
 
 
+    //If the account isn't active yet, replace the new membic form with 
+    //a message to activate the account.
+    function verifyMayPost (divid) {
+        var authobj = app.login.authenticated();
+        if(authobj && authobj.status === "Active") {
+            return; }  //ready to post membics
+        jt.out("newmembicdiv", jt.tac2html(
+                ["form", {id:"newmembicform"},  //same form so same CSS
+                 [["div", {cla:"nmformlinediv"},
+                   [["label", {fo:"actcin", title:"Activation Code"}, "code"],
+                    ["input", {type:"text", id:"actcin", //no size, use CSS
+                               placeholder:"Paste Activation Code from email",
+                               required:"required",
+                               onchange:jt.fs("app.membic.actcode(event)")}]]],
+                  ["div", {cla:"nmformlinediv"},
+                   ["div", {id:"ambuttonsdiv"},
+                    [["a", {href:"#codehelp", title:"Activation Code Help",
+                            onclick:jt.fs("app.profile.actCodeHelp()")},
+                      "no code?"],
+                     ["button", {type:"submit"}, "Activate Account"]]]]]]));
+        jt.on("newmembicform", "submit", app.membic.actcode);
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -2442,6 +2466,7 @@ return {
                    ["div", {id:"ambuttonsdiv"},
                     ["button", {type:"submit"}, "Make Membic"]]]]]));
             jt.on("newmembicform", "submit", app.membic.amfact);
+            verifyMayPost("newmembicdiv");
             break;
         case "whymem":
             if(!jt.byId("newmembicform").checkValidity()) {
@@ -2490,6 +2515,25 @@ return {
             app.membic.addMembic("whymem"); }
         else if(jt.byId("whymemin")) {
             app.membic.addMembic("addit"); }
+    },
+
+
+    actcode: function (event) {
+        jt.evtend(event);
+        var code = jt.byId("actcin").value;
+        if(!code) {
+            return; }  //not an error and doesn't require explanation
+        jt.out("amprocmsgdiv", "Activating account...");
+        jt.byId("ambuttonsdiv").style.display = "none";
+        app.profile.update({actcode:code},
+            function (prof) { //updated auth and account already cached
+                jt.out("amprocmsgdiv", "Account Activated!");
+                app.fork({descr:"End account activation form", ms:800,
+                          func:app.membic.addMembic}); },
+            function (code, errtxt) {
+                jt.out("amprocmsgdiv", "Activation failed: " + code + " " +
+                       errtxt);
+                jt.byId("ambuttonsdiv").style.display = "block"; });
     }
 
 
