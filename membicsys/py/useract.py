@@ -36,11 +36,11 @@ def verify_hashtag(hashtag):
 
 
 def send_activation_code(muser):
-    util.send_mail(muser.email, "Activation Code for Membic",
+    util.send_mail(muser["email"], "Activation Code for Membic",
                    "Welcome to Membic!\n\nYour activation code is\n\n" +
-                   muser.actcode + "\n\n" +
+                   muser["actcode"] + "\n\n" +
                    "Paste this code into the activation area or go to " +
-                   util.my_profile_url(muser) + "&actcode=" + muser.actcode)
+                   util.my_profile_url(muser) + "&actcode=" + muser["actcode"])
 
 
 # If a new email address is being specified, then a password is required so

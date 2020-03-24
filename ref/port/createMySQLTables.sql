@@ -55,7 +55,7 @@ CREATE TABLE AdminLog (  -- Administrative actions log.
   adminid BIGINT NOT NULL,
   adminname VARCHAR(256),
   action VARCHAR(256) NOT NULL,
-  targent VARCHAR(256),
+  target VARCHAR(256),
   targid BIGINT,
   targname VARCHAR(256),
   reason VARCHAR(256),

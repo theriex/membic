@@ -78,7 +78,7 @@ app.profile = (function () {
                     //might have changed profile/theme follow/membership
                     app.refmgr.uncache("activetps", "411");
                     if(succf) {
-                        succf(updp); } },
+                        succf(objs[1]); } },
                 function (code, errtxt) {
                     jt.log("updateProfile " + code + " " + errtxt);
                     if(failf) {

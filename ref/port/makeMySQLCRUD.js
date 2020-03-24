@@ -158,6 +158,34 @@ function entityKeyFields () {
                 keyflds += "\"" + fd.f + "\""; } });
         pyc += keyflds + "]" + ecomma + "\n"; });
     pyc += "}\n";
+    pyc += "\n"
+    pyc += "\n"
+    pyc += "cachedefs = {\n"
+    definitions.forEach(function (edef, eidx) {
+        var ecomma = "";
+        var mav = "False";
+        if(edef.cache.manualadd) {
+            mav = "True"; }
+        if(eidx < definitions.length - 1) {
+            ecomma = ","; }
+        pyc += "    \"" + edef.entity + "\": {\"minutes\": " + 
+            edef.cache.minutes + ", \"manualadd\": " + mav + "}" +
+            ecomma + "\n"; });
+    pyc += "}\n"
+    pyc += "\n"
+    pyc += "\n"
+    pyc += "def timestamp(offset):\n"
+    pyc += "    now = datetime.datetime.utcnow().replace(microsecond=0)\n"
+    pyc += "    return dt2ISO(now + datetime.timedelta(minutes=offset))\n"
+    pyc += "\n"
+    pyc += "\n"
+    pyc += "def expiration_for_inst(inst):\n"
+    pyc += "    if not inst or not inst[\"dsId\"]:\n"
+    pyc += "        raise ValueError(\"Uncacheable instance: \" + str(inst))\n"
+    pyc += "    cms = cachedefs[inst[\"dsType\"]]\n"
+    pyc += "    if not cms or not cms[\"minutes\"]:\n"
+    pyc += "        return \"\"  # not cached, no time to live\n"
+    pyc += "    return timestamp(cms[\"minutes\"])\n"
     return pyc;
 }
 
@@ -180,16 +208,22 @@ function entityCache () {
     pyc += "    return keyvals\n"
     pyc += "\n"
     pyc += "\n"
-    pyc += "# Used to avoid repeated calls to the db for the same instance, especially\n"
-    pyc += "# within the same call to the webserver.  Time to live should be thought of\n"
-    pyc += "# as ranging from zero to at most a few minutes.\n"
+    pyc += "# Avoids repeated calls to the db for the same instance, especially within\n"
+    pyc += "# the same call to the webserver.  Used sparingly to avoid chewing memory.\n"
+    pyc += "# Time to live can range from zero to whenever in actual runtime use.\n"
     pyc += "class EntityCache(object):\n"
     pyc += "    entities = {}\n"
     pyc += "    def cache_put(self, inst):\n"
-    pyc += "        if not inst or not inst[\"dsId\"]:\n"
-    pyc += "            raise ValueError(\"Uncacheable instance: \" + str(inst))\n"
-    pyc += "        for keyval in entkey_vals(inst):\n"
-    pyc += "            self.entities[keyval[\"key\"]] = keyval[\"val\"]\n"
+    pyc += "        expir = expiration_for_inst(inst)\n"
+    pyc += "        if expir:  # cacheable\n"
+    pyc += "            self.cache_remove(inst)  # clear any outdated entries\n"
+    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n"
+    pyc += "            cachekeys = [\"TTL_\" + expir]\n"
+    pyc += "            for keyval in entkey_vals(inst):\n"
+    pyc += "                cachekeys.append(keyval[\"key\"])\n"
+    pyc += "                self.entities[keyval[\"key\"]] = keyval[\"val\"]\n"
+    pyc += "            self.entities[kt] = \",\".join(cachekeys)\n"
+    pyc += "            # self.log_cache_entries()\n"
     pyc += "    def cache_get(self, entity, field, value):\n"
     pyc += "        instkey = make_key(entity, field, value)\n"
     pyc += "        if instkey not in self.entities:\n"
@@ -200,8 +234,25 @@ function entityCache () {
     pyc += "        return pickle.loads(instval)\n"
     pyc += "    def cache_remove(self, inst):\n"
     pyc += "        if inst:\n"
-    pyc += "            for keyval in entkey_vals(inst):\n"
-    pyc += "                self.entities.pop(keyval[\"key\"], None)\n"
+    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n"
+    pyc += "            cleankeys = self.entities.pop(kt, None)\n"
+    pyc += "            if cleankeys:\n"
+    pyc += "                for oldkey in cleankeys.split(\",\"):\n"
+    pyc += "                    self.entities.pop(oldkey, None)\n"
+    pyc += "    def cache_clean(self):\n"
+    pyc += "        now = nowISO()\n"
+    pyc += "        for key, value in self.entities.items():\n"
+    pyc += "            if key.endswith(\"_cleanup\"):\n"
+    pyc += "                ttl = value.split(\",\")[0][4:]\n"
+    pyc += "                if ttl < now:\n"
+    pyc += "                    kcs = key.split(\"_\")\n"
+    pyc += "                    inst = {\"dsType\": kcs[0], \"dsId\": kcs[1]}\n"
+    pyc += "                    self.cache_remove(inst)\n"
+    pyc += "    def log_cache_entries(self):\n"
+    pyc += "        txt = \"EntityCache entities:\\n\"\n"
+    pyc += "        for key, value in self.entities.items():\n"
+    pyc += "            txt += \"    \" + key + \": \" + str(self.entities[key])[0:74] + \"\\n\"\n"
+    pyc += "        logging.info(txt);\n"
     pyc += "entcache = EntityCache()\n"
     return pyc;
 }
@@ -245,18 +296,17 @@ function helperFunctions () {
     pyc += "    vstr = str(value)\n";
     pyc += "    ci = entcache.cache_get(entity, field, vstr)\n"
     pyc += "    if ci:\n"
+    pyc += "        dblogmsg(\"CAC\", entity, ci)\n"
     pyc += "        return ci\n"
     pyc += "    if entdefs[entity][field][\"pt\"] not in [\"dbid\", \"int\"]:\n";
     pyc += "        vstr = \"\\\"\" + vstr + \"\\\"\"\n";
     pyc += "    objs = query_entity(entity, \"WHERE \" + field + \"=\" + vstr + \" LIMIT 1\")\n";
     pyc += "    if len(objs):\n";
-    pyc += "        entcache.cache_put(objs[0])\n"
-    pyc += "        return objs[0]\n";
+    pyc += "        inst = objs[0]\n"
+    pyc += "        if not cachedefs[inst[\"dsType\"]][\"manualadd\"]:\n"
+    pyc += "            entcache.cache_put(inst)\n"
+    pyc += "        return inst\n"
     pyc += "    return None\n";
-    pyc += "\n";
-    pyc += "\n";
-    pyc += "def bust_cache(inst):\n"
-    pyc += "    entcache.cache_remove(inst)\n"
     pyc += "\n";
     pyc += "\n";
     pyc += "# Get a connection to the database.  May throw mysql.connector.Error\n";
@@ -496,7 +546,6 @@ function writeInsertFunction (edef) {
     pyc += "    cnx.commit()\n";
     pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
     pyc += "    dblogmsg(\"ADD\", \"" + edef.entity + "\", fields)\n";
-    pyc += "    bust_cache(fields)\n"
     pyc += "    return fields\n";
     return pyc;
 }
@@ -524,8 +573,9 @@ function writeUpdateFunction (edef) {
     pyc += "        raise ValueError(\"" + edef.entity + " update received outdated data.\")\n";
     pyc += "    cnx.commit()\n";
     pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
-    pyc += "    bust_cache(fields)\n"
     pyc += "    dblogmsg(\"UPD\", \"" + edef.entity + "\", fields)\n";
+    if(edef.cache.minutes && !edef.cache.manualadd) {
+        pyc += "    entcache.cache_put(fields)\n" }
     pyc += "    return fields\n";
     return pyc;
 }

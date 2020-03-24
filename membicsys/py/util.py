@@ -140,6 +140,7 @@ def authenticate():
     muser = dbacc.cfbk("MUser", "email", emaddr)
     if not muser:
         raise ValueError(emaddr + " not found")
+    dbacc.entcache.cache_put(muser)  # will likely reference this again soon
     reqtok = dbacc.reqarg("at", "string")
     if not reqtok:
         password = dbacc.reqarg("passin", "string")
@@ -349,7 +350,7 @@ def make_auth_obj(muser, srvtok):
 
 
 def my_profile_url(muser):
-    return (site_home + "/profile/" + muser.dsId + "?an=" + muser.email +
+    return (site_home + "/profile/" + muser["dsId"] + "?an=" + muser["email"] +
             "&at=" + token_for_user(muser))
 
 

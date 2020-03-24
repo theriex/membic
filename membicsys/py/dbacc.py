@@ -76,7 +76,7 @@ entdefs = {
         "adminid": {"pt": "dbid", "un": False, "dv": 0},
         "adminname": {"pt": "string", "un": False, "dv": ""},
         "action": {"pt": "string", "un": False, "dv": ""},
-        "targent": {"pt": "string", "un": False, "dv": ""},
+        "target": {"pt": "string", "un": False, "dv": ""},
         "targid": {"pt": "dbid", "un": False, "dv": 0},
         "targname": {"pt": "string", "un": False, "dv": ""},
         "reason": {"pt": "string", "un": False, "dv": ""}
@@ -163,6 +163,32 @@ entkeys = {
 }
 
 
+cachedefs = {
+    "MUser": {"minutes": 120, "manualadd": True},
+    "Theme": {"minutes": 0, "manualadd": False},
+    "AdminLog": {"minutes": 0, "manualadd": False},
+    "Membic": {"minutes": 0, "manualadd": False},
+    "Overflow": {"minutes": 0, "manualadd": False},
+    "MailNotice": {"minutes": 0, "manualadd": False},
+    "ActivitySummary": {"minutes": 0, "manualadd": False},
+    "ConnectionService": {"minutes": 240, "manualadd": False}
+}
+
+
+def timestamp(offset):
+    now = datetime.datetime.utcnow().replace(microsecond=0)
+    return dt2ISO(now + datetime.timedelta(minutes=offset))
+
+
+def expiration_for_inst(inst):
+    if not inst or not inst["dsId"]:
+        raise ValueError("Uncacheable instance: " + str(inst))
+    cms = cachedefs[inst["dsType"]]
+    if not cms or not cms["minutes"]:
+        return ""  # not cached, no time to live
+    return timestamp(cms["minutes"])
+
+
 def make_key(dsType, field, value):
     # The value will always be a string or there is a problem elsewhere.
     return dsType + "_" + field + "_" + value
@@ -179,16 +205,22 @@ def entkey_vals(inst):
     return keyvals
 
 
-# Used to avoid repeated calls to the db for the same instance, especially
-# within the same call to the webserver.  Time to live should be thought of
-# as ranging from zero to at most a few minutes.
+# Avoids repeated calls to the db for the same instance, especially within
+# the same call to the webserver.  Used sparingly to avoid chewing memory.
+# Time to live can range from zero to whenever in actual runtime use.
 class EntityCache(object):
     entities = {}
     def cache_put(self, inst):
-        if not inst or not inst["dsId"]:
-            raise ValueError("Uncacheable instance: " + str(inst))
-        for keyval in entkey_vals(inst):
-            self.entities[keyval["key"]] = keyval["val"]
+        expir = expiration_for_inst(inst)
+        if expir:  # cacheable
+            self.cache_remove(inst)  # clear any outdated entries
+            kt = inst["dsType"] + "_" + inst["dsId"] + "_cleanup"
+            cachekeys = ["TTL_" + expir]
+            for keyval in entkey_vals(inst):
+                cachekeys.append(keyval["key"])
+                self.entities[keyval["key"]] = keyval["val"]
+            self.entities[kt] = ",".join(cachekeys)
+            self.log_cache_entries()
     def cache_get(self, entity, field, value):
         instkey = make_key(entity, field, value)
         if instkey not in self.entities:
@@ -199,8 +231,25 @@ class EntityCache(object):
         return pickle.loads(instval)
     def cache_remove(self, inst):
         if inst:
-            for keyval in entkey_vals(inst):
-                self.entities.pop(keyval["key"], None)
+            kt = inst["dsType"] + "_" + inst["dsId"] + "_cleanup"
+            cleankeys = self.entities.pop(kt, None)
+            if cleankeys:
+                for oldkey in cleankeys.split(","):
+                    self.entities.pop(oldkey, None)
+    def cache_clean(self):
+        now = nowISO()
+        for key, value in self.entities.items():
+            if key.endswith("_cleanup"):
+                ttl = value.split(",")[0][4:]
+                if ttl < now:
+                    kcs = key.split("_")
+                    inst = {"dsType": kcs[0], "dsId": kcs[1]}
+                    self.cache_remove(inst)
+    def log_cache_entries(self):
+        txt = "EntityCache entities:\n"
+        for key, value in self.entities.items():
+            txt += "    " + key + ": " + str(self.entities[key])[0:74] + "\n"
+        logging.info(txt);
 entcache = EntityCache()
 
 
@@ -240,18 +289,17 @@ def cfbk (entity, field, value):
     vstr = str(value)
     ci = entcache.cache_get(entity, field, vstr)
     if ci:
+        dblogmsg("CAC", entity, ci)
         return ci
     if entdefs[entity][field]["pt"] not in ["dbid", "int"]:
         vstr = "\"" + vstr + "\""
     objs = query_entity(entity, "WHERE " + field + "=" + vstr + " LIMIT 1")
     if len(objs):
-        entcache.cache_put(objs[0])
-        return objs[0]
+        inst = objs[0]
+        if not cachedefs[inst["dsType"]]["manualadd"]:
+            entcache.cache_put(inst)
+        return inst
     return None
-
-
-def bust_cache(inst):
-    entcache.cache_remove(inst)
 
 
 # Get a connection to the database.  May throw mysql.connector.Error
@@ -515,7 +563,7 @@ def app2db_AdminLog(inst):
     cnv["adminid"] = app2db_fieldval("AdminLog", "adminid", inst)
     cnv["adminname"] = app2db_fieldval("AdminLog", "adminname", inst)
     cnv["action"] = app2db_fieldval("AdminLog", "action", inst)
-    cnv["targent"] = app2db_fieldval("AdminLog", "targent", inst)
+    cnv["target"] = app2db_fieldval("AdminLog", "target", inst)
     cnv["targid"] = app2db_fieldval("AdminLog", "targid", inst)
     cnv["targname"] = app2db_fieldval("AdminLog", "targname", inst)
     cnv["reason"] = app2db_fieldval("AdminLog", "reason", inst)
@@ -535,7 +583,7 @@ def db2app_AdminLog(inst):
     cnv["adminid"] = db2app_fieldval("AdminLog", "adminid", inst)
     cnv["adminname"] = db2app_fieldval("AdminLog", "adminname", inst)
     cnv["action"] = db2app_fieldval("AdminLog", "action", inst)
-    cnv["targent"] = db2app_fieldval("AdminLog", "targent", inst)
+    cnv["target"] = db2app_fieldval("AdminLog", "target", inst)
     cnv["targid"] = db2app_fieldval("AdminLog", "targid", inst)
     cnv["targname"] = db2app_fieldval("AdminLog", "targname", inst)
     cnv["reason"] = db2app_fieldval("AdminLog", "reason", inst)
@@ -745,7 +793,11 @@ def dblogmsg(op, entity, res):
     log_summary_flds = {
         "MUser": ["email", "name"],
         "Theme": ["name"],
+        "AdminLog": ["letype", "leid", "adminname", "action", "targid"],
         "Membic": ["url", "penname", "penid", "ctmid"],
+        "Overflow": ["dbkind", "dbkeyid", "penid", "ctmid"],
+        "MailNotice": ["name"],
+        "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}
     if op != "QRY":
         res = [res]
@@ -787,7 +839,6 @@ def insert_new_MUser(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_MUser(fields)
     dblogmsg("ADD", "MUser", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -811,7 +862,6 @@ def update_existing_MUser(cnx, cursor, fields, vck):
         raise ValueError("MUser update received outdated data.")
     cnx.commit()
     fields = db2app_MUser(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "MUser", fields)
     return fields
 
@@ -846,7 +896,6 @@ def insert_new_Theme(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Theme(fields)
     dblogmsg("ADD", "Theme", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -870,7 +919,6 @@ def update_existing_Theme(cnx, cursor, fields, vck):
         raise ValueError("Theme update received outdated data.")
     cnx.commit()
     fields = db2app_Theme(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "Theme", fields)
     return fields
 
@@ -879,8 +927,8 @@ def update_existing_Theme(cnx, cursor, fields, vck):
 def insert_new_AdminLog(cnx, cursor, fields):
     fields = app2db_AdminLog(fields)
     stmt = (
-        "INSERT INTO AdminLog (created, modified, letype, leid, adminid, adminname, action, targent, targid, targname, reason) "
-        "VALUES (%(created)s, %(modified)s, %(letype)s, %(leid)s, %(adminid)s, %(adminname)s, %(action)s, %(targent)s, %(targid)s, %(targname)s, %(reason)s)")
+        "INSERT INTO AdminLog (created, modified, letype, leid, adminid, adminname, action, target, targid, targname, reason) "
+        "VALUES (%(created)s, %(modified)s, %(letype)s, %(leid)s, %(adminid)s, %(adminname)s, %(action)s, %(target)s, %(targid)s, %(targname)s, %(reason)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
@@ -889,7 +937,7 @@ def insert_new_AdminLog(cnx, cursor, fields):
         'adminid': fields.get("adminid", entdefs["AdminLog"]["adminid"]["dv"]),
         'adminname': fields.get("adminname", entdefs["AdminLog"]["adminname"]["dv"]),
         'action': fields.get("action", entdefs["AdminLog"]["action"]["dv"]),
-        'targent': fields.get("targent", entdefs["AdminLog"]["targent"]["dv"]),
+        'target': fields.get("target", entdefs["AdminLog"]["target"]["dv"]),
         'targid': fields.get("targid", entdefs["AdminLog"]["targid"]["dv"]),
         'targname': fields.get("targname", entdefs["AdminLog"]["targname"]["dv"]),
         'reason': fields.get("reason", entdefs["AdminLog"]["reason"]["dv"])}
@@ -898,7 +946,6 @@ def insert_new_AdminLog(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_AdminLog(fields)
     dblogmsg("ADD", "AdminLog", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -922,7 +969,6 @@ def update_existing_AdminLog(cnx, cursor, fields, vck):
         raise ValueError("AdminLog update received outdated data.")
     cnx.commit()
     fields = db2app_AdminLog(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "AdminLog", fields)
     return fields
 
@@ -961,7 +1007,6 @@ def insert_new_Membic(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Membic(fields)
     dblogmsg("ADD", "Membic", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -985,7 +1030,6 @@ def update_existing_Membic(cnx, cursor, fields, vck):
         raise ValueError("Membic update received outdated data.")
     cnx.commit()
     fields = db2app_Membic(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "Membic", fields)
     return fields
 
@@ -1007,7 +1051,6 @@ def insert_new_Overflow(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_Overflow(fields)
     dblogmsg("ADD", "Overflow", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -1031,7 +1074,6 @@ def update_existing_Overflow(cnx, cursor, fields, vck):
         raise ValueError("Overflow update received outdated data.")
     cnx.commit()
     fields = db2app_Overflow(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "Overflow", fields)
     return fields
 
@@ -1054,7 +1096,6 @@ def insert_new_MailNotice(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_MailNotice(fields)
     dblogmsg("ADD", "MailNotice", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -1078,7 +1119,6 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
         raise ValueError("MailNotice update received outdated data.")
     cnx.commit()
     fields = db2app_MailNotice(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "MailNotice", fields)
     return fields
 
@@ -1108,7 +1148,6 @@ def insert_new_ActivitySummary(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
     dblogmsg("ADD", "ActivitySummary", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -1132,7 +1171,6 @@ def update_existing_ActivitySummary(cnx, cursor, fields, vck):
         raise ValueError("ActivitySummary update received outdated data.")
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "ActivitySummary", fields)
     return fields
 
@@ -1155,7 +1193,6 @@ def insert_new_ConnectionService(cnx, cursor, fields):
     cnx.commit()
     fields = db2app_ConnectionService(fields)
     dblogmsg("ADD", "ConnectionService", fields)
-    bust_cache(fields)
     return fields
 
 
@@ -1179,8 +1216,8 @@ def update_existing_ConnectionService(cnx, cursor, fields, vck):
         raise ValueError("ConnectionService update received outdated data.")
     cnx.commit()
     fields = db2app_ConnectionService(fields)
-    bust_cache(fields)
     dblogmsg("UPD", "ConnectionService", fields)
+    entcache.cache_put(fields)
     return fields
 
 
@@ -1271,12 +1308,12 @@ def query_Theme(cnx, cursor, where):
 
 def query_AdminLog(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "letype, leid, adminid, adminname, action, targent, targid, targname, reason"
+    query += "letype, leid, adminid, adminname, action, target, targid, targname, reason"
     query += " FROM AdminLog " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, letype, leid, adminid, adminname, action, targent, targid, targname, reason) in cursor:
-        inst = {"dsType": "AdminLog", "dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "targent": targent, "targid": targid, "targname": targname, "reason": reason}
+    for (dsId, created, modified, letype, leid, adminid, adminname, action, target, targid, targname, reason) in cursor:
+        inst = {"dsType": "AdminLog", "dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "target": target, "targid": targid, "targname": targname, "reason": reason}
         inst = db2app_AdminLog(inst)
         res.append(inst)
     dblogmsg("QRY", "AdminLog", res)

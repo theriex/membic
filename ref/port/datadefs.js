@@ -55,7 +55,8 @@ module.exports = (function () {
         {f:"themes", d:"json", c:"theme reference info, see note"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
-      logflds: ["email", "name"]},
+     cache:{minutes:2*60, manualadd:true}, //auth interactions
+     logflds:["email", "name"]},
         ////////// Notes:
         // cliset: {flags:{archived:ISO},
         //          embcolors:{link:"#84521a", hover:"#a05705"},
@@ -92,7 +93,8 @@ module.exports = (function () {
         {f:"cliset", d:"json", c:"client settings (like MUser)"},
         {f:"keywords", d:"gencsv", c:"custom theme keywords"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
-      logflds: ["name"]},
+     cache:{minutes:0},  //client cache for instance and pic is sufficient
+     logflds:["name"]},
 
     {entity:"AdminLog", descr:"Administrative actions log.", fields:[
         {f:"letype", d:"req string", c:"log entry type, e.g. 'Theme'"},
@@ -100,10 +102,13 @@ module.exports = (function () {
         {f:"adminid", d:"req dbid", c:"dsId of the MUser who took action"},
         {f:"adminname", d:"string", c:"The name of the admin for readability"},
         {f:"action", d:"req string", c:"'Accepted Member', 'Removed Membic'"},
-        {f:"targent", d:"string", c:"Affected entity type e.g. MUser, Membic"},
+        {f:"target", d:"string", c:"Affected entity type e.g. MUser, Membic"},
         {f:"targid", d:"dbid", c:"dsId of the affected entity"},
         {f:"targname", d:"string", c:"name of user or url of membic"},
-        {f:"reason", d:"string", c:"text of why membic removed or whatever"}]},
+        {f:"reason", d:"string", c:"text of why membic removed or whatever"}],
+     cache:{minutes:0},  //not referenced singly
+     logflds:["letype", "leid", "adminname", "action", "targid"]},
+
 
     {entity:"Membic", descr:"A URL with a reason why it's memorable.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
@@ -128,9 +133,10 @@ module.exports = (function () {
         {f:"dispafter", d:"isodate", c:"visibility queued until"},
         {f:"penname", d:"string", c:"author name for easy UI ref"},
         {f:"reacdat", d:"json", c:"reaction data, see note"}],
-      logflds: ["url", "penname", "penid", "ctmid"],
-      queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
-                {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
+     cache:{minutes:0},  //only referenced directly for image data
+     logflds: ["url", "penname", "penid", "ctmid"],
+     queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
+               {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
         // rurl/url:
         //   rurl is always filled in with whatever was entered.  url may be
         //   the same, or a sanitized value for general reference.  The url
@@ -188,13 +194,17 @@ module.exports = (function () {
     {entity:"Overflow", descr:"extra preb membics", fields:[
         {f:"dbkind", d:"req string", c:"MUser or Theme"},
         {f:"dbkeyid", d:"req dbid", c:"id of source MUser or Theme"},
-        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}]},
+        {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
+     cache:{minutes:0},  //not commonly referenced
+     logflds:["dbkind", "dbkeyid", "penid", "ctmid"]},
         
     {entity:"MailNotice", descr:"Broadcast email tracking", fields:[
         {f:"name", d:"req unique string", c:"query access identifier"},
         {f:"subject", d:"string", c:"the email subject for ease of reference"},
         {f:"uidcsv", d:"idcsv", c:"MUser ids that were sent to"},
-        {f:"lastupd", d:"isodate", c:"last recorded send"}]},
+        {f:"lastupd", d:"isodate", c:"last recorded send"}],
+     cache:{minutes:0},  //not generally referenced
+     logflds:["name"]},
         
     //Content updated by cron job.  General reporting/history use.
     {entity:"ActivitySummary", descr:"Stats by profile/theme", fields:[
@@ -209,7 +219,9 @@ module.exports = (function () {
         {f:"newmembics", d:"req int", c:"how many new membics were created"},
         {f:"edited", d:"req int", c:"how many existing membics were edited"},
         {f:"removed", d:"req int", c:"deleted if MUser, removed if Theme"}],
-      queries:[{q:[{f:"refp"}, {f:"tuntil", dir:"desc"}]}]},
+     cache:{minutes:0},  //not generally referenced
+     logflds:["refp", "tstart", "tuntil"],
+     queries:[{q:[{f:"refp"}, {f:"tuntil", dir:"desc"}]}]},
         //reqdets (request details dictionary):
         //  - How many of the requests were from known crawler programs
         //  - Map of known (signed in via cookie) users, with counts/names.
@@ -221,7 +233,8 @@ module.exports = (function () {
         {f:"ckey", d:"string", c:"key e.g. oauth1 consumer key"},
         {f:"secret", d:"string", c:"e.g. oauth1 consumer secret"},
         {f:"data", d:"text", c:"service-specific data"}],
-      logflds: ["name"]}];
+     cache:{minutes:4*60},  //small instances, minimum change, used a lot
+     logflds:["name"]}];
         
 
     function makeFieldDescriptionLookup (fds, aliasKey) {
