@@ -82,6 +82,7 @@ button, .loginbutton, .formbutton, .filesellab {
 #ambuttonsdiv { text-align:right; font-size:small; }
 #ambuttonsdiv button { margin-left:16px; }
 #newmembicurldiv { font-size:small; text-align:left; padding-left:39px; }
+#amprocmsgdiv { font-size:small; }
 
 
 /* >> main display area and contained elements */
@@ -288,7 +289,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> coop layout */
 .tdnarrow { width:5%; padding:0px 5px 0px 0px; }
-.dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; }
+.dlgbuttonsdiv { text-align:center; padding:20px 0px 10px 0px; 
+  font-size:small; }
 .dlgbuttonsdiv button { margin:0px 10px; }
 .inlinebuttonsdiv { text-align:center; padding:0px 0px 10px 0px; }
 .inlinebuttonsdiv button { margin:0px 10px; }

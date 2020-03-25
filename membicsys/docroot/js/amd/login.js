@@ -651,6 +651,12 @@ return {
     },
 
 
+    rebuildContext: function () {
+        app.membic.addMembic();    //update account activation area
+        app.statemgr.redispatch(); //rebuild pcd display and settings context
+    },
+
+
     updateAccount: function () {
         var prof = app.profile.myProfile();
         var pu = {dsType:"MUser", dsId:prof.dsId};
@@ -677,7 +683,7 @@ return {
             function (prof) { //updated account already cached
                 jt.out("accsetinfdiv", "Profile updated.");
                 app.fork({descr:"Close account settings display", ms:800,
-                          func:app.pcd.settings}); },
+                          func:app.login.rebuildContext}); },
             function (code, errtxt) {
                 jt.byId("accupdbutton").disabled = false;
                 jt.out("accsetinfdiv", "Update failed code " + code + " " +

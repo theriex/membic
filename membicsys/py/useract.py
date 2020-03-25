@@ -43,14 +43,36 @@ def send_activation_code(muser):
                    util.my_profile_url(muser) + "&actcode=" + muser["actcode"])
 
 
+def verify_active_account(muser):
+    if muser["status"] == "Active":
+        return
+    actcode = dbacc.reqarg("actcode")
+    if not actcode:
+        return  # not trying to activate
+    if actcode == "requestresend":
+        send_activation_code(muser)
+        return
+    if actcode == muser["actcode"]:
+        muser["status"] = "Active"
+        return
+    raise ValueError("Activation code did not match")
+
+
+##################################################
+#
+# API entrypoints
+#
+##################################################
+
 # If a new email address is being specified, then a password is required so
-# that there is something to build a new access token with.  It's not like
+# that there is something to build a new access token with, but it's not like
 # the password has to match what they previously entered.
 def accupd():
     res = ""
     inflds = ["email", "altinmail", "name", "aboutme", "hashtag", "cliset"]
     try:
         muser, srvtok = util.authenticate()
+        verify_active_account(muser)
         prevemail = muser["email"]
         prevalt = muser["altinmail"]
         prevhash = muser["hashtag"]
@@ -80,6 +102,7 @@ def accupd():
         # Could force caller to pass modified, but they are the only one
         # updating so more likely to get in the way if they image upload.
         muser = dbacc.write_entity(muser, vck=muser["modified"])
+        dbacc.entcache.cache_put(muser)  # will likely reference this again soon
         res = (json.dumps(util.make_auth_obj(muser, srvtok)) +
                "," + util.safe_JSON(muser))
     except ValueError as e:

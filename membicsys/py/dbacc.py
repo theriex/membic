@@ -220,7 +220,7 @@ class EntityCache(object):
                 cachekeys.append(keyval["key"])
                 self.entities[keyval["key"]] = keyval["val"]
             self.entities[kt] = ",".join(cachekeys)
-            self.log_cache_entries()
+            # self.log_cache_entries()
     def cache_get(self, entity, field, value):
         instkey = make_key(entity, field, value)
         if instkey not in self.entities:

@@ -1647,19 +1647,20 @@ app.membic = (function () {
         if(authobj && authobj.status === "Active") {
             return; }  //ready to post membics
         jt.out("newmembicdiv", jt.tac2html(
-                ["form", {id:"newmembicform"},  //same form so same CSS
-                 [["div", {cla:"nmformlinediv"},
-                   [["label", {fo:"actcin", title:"Activation Code"}, "code"],
-                    ["input", {type:"text", id:"actcin", //no size, use CSS
-                               placeholder:"Paste Activation Code from email",
-                               required:"required",
-                               onchange:jt.fs("app.membic.actcode(event)")}]]],
-                  ["div", {cla:"nmformlinediv"},
-                   ["div", {id:"ambuttonsdiv"},
-                    [["a", {href:"#codehelp", title:"Activation Code Help",
-                            onclick:jt.fs("app.profile.actCodeHelp()")},
-                      "no code?"],
-                     ["button", {type:"submit"}, "Activate Account"]]]]]]));
+            ["form", {id:"newmembicform"},  //same form so same CSS
+             [["div", {cla:"nmformlinediv"},
+               [["label", {fo:"actcin", title:"Activation Code"}, "code"],
+                ["input", {type:"text", id:"actcin", //no size, use CSS
+                           placeholder:"Paste Activation Code from email",
+                           required:"required",
+                           onchange:jt.fs("app.membic.actcode(event)")}]]],
+              ["div", {cla:"nmformlinediv", id:"amprocmsgdiv"}],
+              ["div", {cla:"nmformlinediv"},
+               ["div", {id:"ambuttonsdiv"},
+                [["a", {href:"#codehelp", title:"Activation Code Help",
+                        onclick:jt.fs("app.profile.actCodeHelp()")},
+                  "no code?"],
+                 ["button", {type:"submit"}, "Activate Account"]]]]]]));
         jt.on("newmembicform", "submit", app.membic.actcode);
     }
 
@@ -2462,6 +2463,7 @@ return {
                                placeholder:"Paste Memorable Link Here",
                                required:"required", value:inval,
                                onchange:jt.fs("app.membic.amfact(event)")}]]],
+                  ["div", {cla:"nmformlinediv", id:"amprocmsgdiv"}],
                   ["div", {cla:"nmformlinediv"},
                    ["div", {id:"ambuttonsdiv"},
                     ["button", {type:"submit"}, "Make Membic"]]]]]));
@@ -2481,8 +2483,8 @@ return {
                    ["input", {type:"text", id:"whymemin", //no size, use CSS
                               placeholder:"What's memorable about it?",
                               onchange:jt.fs("app.membic.amfact(event)")}]]],
-                 ["div", {cla:"nmformline", id:"amprocmsgdiv"}],
-                 ["div", {cla:"nmformline"},
+                 ["div", {cla:"nmformlinediv", id:"amprocmsgdiv"}],
+                 ["div", {cla:"nmformlinediv"},
                   ["div", {id:"ambuttonsdiv"},
                    [["button", {type:"button",
                                 onclick:jt.fs("app.membic.addMembic()")},
@@ -2529,7 +2531,7 @@ return {
             function (prof) { //updated auth and account already cached
                 jt.out("amprocmsgdiv", "Account Activated!");
                 app.fork({descr:"End account activation form", ms:800,
-                          func:app.membic.addMembic}); },
+                          func:app.login.rebuildContext}); },
             function (code, errtxt) {
                 jt.out("amprocmsgdiv", "Activation failed: " + code + " " +
                        errtxt);

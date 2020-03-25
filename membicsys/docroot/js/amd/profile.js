@@ -304,7 +304,7 @@ app.profile = (function () {
         //trigger an activation message.
         jt.byId("suppbuttonsdiv").style.display = "none";
         jt.out("dlgmsgdiv", "Resending activation code...");
-        app.profile.update({},
+        app.profile.update({actcode:"requestresend"},
             function (prof) { //updated auth and account already cached
                 jt.out("dlgmsgdiv", "Activation code sent to " + 
                        app.login.authenticated().email);
