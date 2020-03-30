@@ -1517,7 +1517,7 @@ app.pcd = (function () {
 
     function displayPTObj (obj) {
         var sf = "";
-        if(app.login.authenticated()) {
+        if(app.profile.myProfile()) {  //signed in and user info loaded
             sf = "app.pcd.settings()"; }
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
@@ -1568,6 +1568,85 @@ app.pcd = (function () {
     }
 
 
+    function personalInfoSettingsHTML () {
+        var fp = app.login.fullProfile();
+        return jt.tac2html(
+            [["div", {cla:"cbdiv"},
+              [["label", {fo:"emailin", cla:"liflab"}, "Email"],
+               ["input", {type:"email", cla:"lifin", id:"emailin",
+                          value:fp.email, placeholder:"nospam@example.com"}]]],
+             ["div", {cla:"cbdiv"},  //"passin" is reserved for login form
+              [["label", {fo:"updpin", cla:"liflab"}, "Password"],
+               ["input", {type:"password", cla:"lifin", id:"updpin"}]]],
+             ["div", {cla:"cbdiv"},
+              [["label", {fo:"altemin", cla:"liflab"}, "Alt&nbsp;Email"],
+               ["input", {type:"email", cla:"lifin", id:"altemin",
+                          value:fp.altinmail || "",
+                          placeholder:"alternate@example.com"}]]],
+             ["div", {cla:"cbdiv"},
+              ["div", {cla:"infolinediv"},
+               [["span", {cla:"statlineval"}, fp.status],
+                " updated " + jt.colloquialDate(fp.modified, "compress",
+                                                "nodaily z2loc")]]]]);
+    }
+
+
+    //Themes have custom keywords, profiles don't.  Otherwise the keywords
+    //can become restrictive and the only way out is to create another
+    //account. Better to encourage creating a theme earlier on.
+    function generalSettingsHTML () {
+        var prof = app.profile.myProfile();
+        var kwrdsHTML = "";
+        var embobj = ctx.actobj.contextobj || prof;
+        if(embobj.dsType === "Theme") {
+            kwrdsHTML = jt.tac2html(
+                ["div", {cla:"cbdiv"},
+                 [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
+                  ["input", {type:"text", cla:"lifin", id:"kwrdsin",
+                             value:embobj.keywords || "",
+                             placeholder:"Comma separated keywords"}]]]); }
+        var emburl = app.statemgr.urlForInstance(embobj) + "?site=YOURSITE.COM";
+        prof.cliset.embcolors = prof.cliset.embcolors || {};
+        var emboHTML = [];
+        var embcolors = prof.cliset.embcolors;
+        app.pcd.embOverrides().forEach(function (od) {
+            embcolors[od.name] = embcolors[od.name] || od.value;
+            emboHTML.push(["div", {cla:"colorselectdiv"},
+                           [["label", {fo:od.name + "in", cla:"colorlab"},
+                             od.name.capitalize()],
+                            ["input", {id:od.name + "in", cla:"colorin",
+                                       type:"color", 
+                                       value:embcolors[od.name]}]]]); });
+        return jt.tac2html(
+            [["div", {cla:"cbdiv"},
+              [["label", {fo:"hashin", cla:"liflab"}, "Hashtag"],
+               ["input", {type:"text", cla:"lifin", id:"hashin",
+                          value:prof.hashtag || "",
+                          placeholder:"uniquetext"}]]],
+             kwrdsHTML,
+             ["div", {cla:"cbdiv"},
+              ["div", {cla:"infolinediv"},
+               ["Embed: ",
+                ["a", {href:emburl, title:"Embed this page in your website",
+                       onclick:jt.fs("window.open('" + emburl + "')")},
+                 emburl]]]],
+             ["div", {cla:"cbdiv"},
+              ["div", {id:"colorchoicesdiv"},
+               emboHTML]]]);
+    }
+
+
+    function settingsInfoAndUpdateButtonHTML () {
+        return jt.tac2html(
+            [["div", {cla:"cbdiv"},
+              ["div", {cla:"infolinediv", id:"accsetinfdiv"}]],
+             ["div", {id:"accountsettingsbuttonsdiv"},
+              [["button", {type:"button", id:"accupdbutton",
+                           onclick: jt.fs("app.login.updateAccount()")},
+                "Update"]]]]);
+    }
+
+
     function writePersonalSettings (divid) {
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"},
@@ -1579,7 +1658,10 @@ app.pcd = (function () {
                            onclick:jt.fs("app.login.logout()")},
                 "Sign Out"]]],
              ["div", {id:"cpidiv"},
-              app.login.accountSettingsHTML()]]));
+              [personalInfoSettingsHTML(),
+               generalSettingsHTML()]],
+             settingsInfoAndUpdateButtonHTML()]));
+        //dim and disable the Create Theme button if account is not active
         if(app.login.authenticated().status !== "Active") {
             var cntb = jt.byId("cntb");
             cntb.disabled = true;
@@ -1587,8 +1669,14 @@ app.pcd = (function () {
     }
 
 
-    function writeThemeProfSettings (divid) {
-        jt.out(divid, "Theme/Profile Settings go here");
+    function writeThemeProfSettings (divid, obj) {
+        jt.out(divid, jt.tac2html(
+            [["div", {id:"settingsmenudiv"}],
+             ["div", {id:"cpidiv"},
+              [["div", {id:"memberactdiv"}],
+               generalSettingsHTML()]],
+             settingsInfoAndUpdateButtonHTML()]));
+        app.theme.memberset(obj, "settingsmenudiv", "memberactdiv");
     }
 
 
@@ -1610,19 +1698,19 @@ return {
     },
 
 
-    settings: function (obj) {
+    settings: function () {
         jt.byId("pcdsharediv").style.display = "none";
         var setdiv = jt.byId("pcdsettingsdiv");
         if(setdiv.style.display === "block") {
             setdiv.style.display = "none"; }
         else {
             setdiv.style.display = "block"; }
-        var prof = app.profile.myProfile();
-        obj = obj || ctx.actobj.contextobj || prof;
-        if(obj === prof) {
+        var auth = app.login.authenticated();  //must be signed in for settings
+        var obj = ctx.actobj.contextobj;
+        if(!obj || (obj.dsType === "MUser" && obj.dsId === auth.authId)) {
             writePersonalSettings("pcdsettingsdiv"); }
         else {
-            writeThemeProfSettings("pcdsettingsdiv"); }
+            writeThemeProfSettings("pcdsettingsdiv", obj); }
     },
 
 

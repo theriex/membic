@@ -2,19 +2,157 @@
 
 /*jslint browser, white, fudge, long */
 
-// coop.adminlog (array of entries maintained by server)
-//   when: ISO date
-//   profid: admin that took the action
-//   pname: name of admin that took the action
-//   action: e.g. "Accepted Membership", "Removed Membic", "Removed Member"
-//   target: revid or profid of what or was affected
-//   tname: name of profile or review that was affected
-//   reason: text given as to why (required for removals)
 app.theme = (function () {
     "use strict";
 
     //Fields that need to be deserialized after fetching.
     var serflds = ["adminlog", "people", "cliset", "preb"];
+
+
+    //context for settings dialog and processing.  Set at start of display.
+    var setctx = null;
+
+
+    function profassoc (dsType, dsId) {
+        var prof = app.profile.myProfile() || {};
+        var themes = prof.themes || {};
+        var tid = dsId;
+        if(dsType === "MUser") {
+            tid = "P" + dsId; }
+        return themes[tid] || {};
+    }
+
+
+    function association (tpo) {
+        if(!tpo || !tpo.dsId) {  //no association with undefined theme/prof
+            return ""; }
+        var authobj = app.login.authenticated()
+        if(!authobj) {  //can't figure out any association if no user
+            return ""; }
+        var uid = authobj.authId;
+        if(tpo.dsType === "Theme") {  //use authoritative lists if given
+            if(tpo.founders.csvcontains(uid)) { return "Founder"; }
+            if(tpo.moderators.csvcontains(uid)) { return "Moderator"; }
+            if(tpo.members.csvcontains(uid)) { return "Member"; } }
+        //not a theme, or uid not recorded in theme
+        switch(profassoc(tpo.dsType, tpo.dsId).lev) {
+        case 3: return "Founder";
+        case 2: return "Moderator";
+        case 1: return "Member";
+        case -1: return "Following";
+        default: return "Unknown"; }
+    }
+
+
+    function levelForAssoc (assoc) {
+        switch(assoc) {
+        case "Founder": return 3;
+        case "Moderator": return 2;
+        case "Member": return 1;
+        case "Following": return -1;
+        default: return 0; }
+    }
+
+
+    function subtoken (str, tok) {
+        return jt.enc(str).split("")
+            .map((c) => tok.charAt(c.codePointAt(0) % tok.length))
+            .join("");
+    }
+
+
+    function sendThemeSummaryLink () {
+        var subj = "Summary for " + setctx.tpo.name;
+        var body = setctx.tpo.name + "\n" +
+            app.dr(app.pcd.linkForThemeOrProfile(setctx.tpo)) + "\n\n" +
+            setctx.tpo.description + "\n\n";
+        if(setctx.tpo.keywords) {
+            body += "Keywords: " + setctx.tpo.keywords + "\n"; }
+        body += "Last Write: " + setctx.tpo.lastwrite + "\n" +
+            "Membership:\n";
+        var mfs = ["founders", "moderators", "members"]
+        mfs.forEach(function (field) {
+            setctx.tpo[field].csvarray().forEach(function (pid) {
+                body += field.capitalize().slice(0, field.length - 1) +
+                    (setctx.tpo.people[pid] || pid) + "\n" +
+                    app.dr("/profile/" + pid) + "\n\n"; }); });
+        if(setctx.tpo.cliset && setctx.tpo.cliset.flags && 
+           setctx.tpo.cliset.flags.archived) {
+            body += "Archived " + setctx.tpo.cliset.flags.archived + "\n"; }
+        return "mailto:" + app.login.authenticated().email + "?subject=" +
+            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body) + "%0A%0A";
+    }
+
+
+    function emailOrRSSFollowHTML () {
+        return jt.tac2html(
+            [["label", {fo:"fmemin", title:"Follow new membics via email"},
+              "Email"],
+             ["input", {type:"radio", name:"followmechins", value:"email",
+                        checked:jt.toru(setctx.fm === "email"),
+                        onchange:jt.fs("relupd('','email')")}],
+             ["label", {fo:"fmrssin", title:"Follow new membics via RSS"},
+              "RSS"],
+             ["input", {type:"radio", name:"followmechins", value:"RSS",
+                        checked:jt.toru(setctx.fm === "RSS"),
+                        onchange:jt.fs("relupd('','RSS')")}]]);
+    }
+
+
+    function founderSettingsHTML () {
+        return jt.tac2html(
+            [["div", {id:"inviteformdiv"},
+              [["label", {fo:"invemin", 
+                          title:"Member email for invite authentication"},
+                "Email"],
+               ["input", {type:"email", id:"invemin", size:"24",
+                          onchange:jt.fs("app.theme.inviteMemberLink()"),
+                          placeholder:"authorized@example.com"}],
+               ["div", {id:"inviteformbuttonsdiv", cla:"lifbuttonsdiv"},
+                [["button", {type:"button",
+                             onclick:"app.theme.inviteMemberLink()"},
+                  "Make Invite"],
+                 ["span", {id:"invlinkspan"}]]]]],
+             ["div", {id:"tinfoformdiv"},
+              ["div", {id:"tinfoformbuttonsdiv", cla:"lifbuttonsdiv"},
+               ["span", {id:"tsumlinkspan"},
+                ["a", {href:sendThemeSummaryLink(),
+                       title:"Send Theme Summary"},
+                 "Send&nbsp;Summary"]]]]]);
+    }
+
+
+    function memberSettingsHTML () {
+        return jt.tac2html(
+            [emailOrRSSFollowHTML(),
+             ["div", {id:"assocbuttonsdiv"},
+              [["button", {type:"button",
+                           onclick:jt.fs("app.theme.relupd('Unknown')")},
+                "Resign"]]]]);
+    }
+
+
+    //Possible to update immediately to following when they click the link,
+    //but important for the user to confirm receiving email.
+    function followSettingsHTML () {
+        var bh = [
+            ["button", {type:"button",
+                        onclick:jt.fs("app.theme.relupd('Following')")},
+             "Follow"]];
+        if(setctx.assoc === "Following") {
+            bh = [
+                ["button", {type:"button",
+                            onclick:jt.fs("app.theme.relupd('Unknown')")},
+                 "Stop&nbsp;Following"],
+                ["button", {type:"button",
+                            onclick:jt.fs("app.theme.relupd('Following')")},
+                 "Update&nbsp;Follow"]]; }
+        return jt.tac2html(
+            [emailOrRSSFollowHTML(),
+             ["div", {id:"assocbuttonsdiv"}, bh]]);
+    }
+
+
 
     ////////////////////////////////////////
     // published functions
@@ -223,7 +361,93 @@ return {
     deserializeFields: function (ctm) {
         serflds.forEach(function (field) {
             app.lcs.reconstituteJSONObjectField(field, ctm); });
-    }
+    },
 
+
+    //Called from settings, which are enabled only if profile is available.
+    memberset: function (tpobj, mendiv, detdiv) {
+        setctx = {tpo:tpobj, divid:detdiv, assoc:association(tpobj),
+                  ao:profassoc(tpobj.dsType, tpobj.dsId), fm:"email"}
+        if(setctx.ao.followmech === "RSS") {
+            setctx.fm = "RSS"; }
+        var link = {title:setctx.assoc,
+                    src:"ts" + setctx.assoc.toLowerCase() + ".png"};
+        if(setctx.assoc === "Unknown") {
+            link.title = "Follow " + setctx.tpo.name;
+            link.src = "blank.png"}
+        jt.out(mendiv, jt.tac2html(
+            ["a", {href:"#relationship",
+                   title:"Relationship to " + setctx.tpo.name,
+                   onclick:jt.fs("app.theme.connopt()")},
+             [["img", {cla:"setassocimg", src:app.dr("img/" + link.src)}],
+              ["span", {cla:"setassocspan"}, link.title]]]));
+        jt.out(detdiv, "");  //start with no content
+    },
+
+
+    connopt: function (show) {
+        var div = jt.byId(divid);
+        if(!show && div.innerHTML && div.style.display === "block") {
+            div.style.display = "none";  //toggle off
+            return; }
+        var html = "";
+        switch(setctx.assoc) {
+        case "Founder": html = founderSettingsHTML(); break;
+        case "Moderator":  //fall through to Member
+        case "Member": html = memberSettingsHTML(); break;
+        case "Following":  //fall through to Unknown
+        case "Unknown": html = followSettingsHTML(); }
+        jt.out(divid, jt.tac2html(html));
+        div.style.display = "block";
+    },
+
+
+    //Update and save the account only if an association is specified.  All
+    //associations are authorized and maintained server side.  If the follow
+    //mechanism is specified, update it in the context.
+    relupd: function (assoc, fmech) {
+        if(assoc) {    //update association if provided, otherwise use same
+            setctx.assoc = assoc; }
+        if(fmech) {    //update follow mechanism if provided, otherwise use same
+            setctx.fm = fmech; }
+        if(!assoc) {   //only call server if association was specified
+            return; }  //otherwise interim UI update
+        jt.out("assocbuttonsdiv", "Updating...");
+        var authobj = app.login.authenticated();
+        var data = jt.objdata(
+            {an:authobj.email, at:authobj.token,          //user ident
+             aot:setctx.tpo.dsType, aoi:setctx.tpo.dsId,  //association obj
+             pid:app.profile.myProfile().dsId,            //association prof
+             assoc:setctx.assoc, fm:setctx.fm});          //assoc and mech
+        jt.call("POST", app.dr("/api/associate"), data,
+                function (result) {  //prof, followed by theme if updated
+                    result.forEach(function (obj) {
+                        app.refmgr.put(app.refmgr.deserialize(obj)); });
+                    app.theme.connopt(); },
+                function (code, errtxt) {
+                    jt.log("theme.relupd " + code + ": " + errtxt);
+                    app.theme.connopt("show"); },
+                jt.semaphore("theme.relupd"));
+    },
+
+
+    inviteMemberLink: function () {
+        var subj = "Membership invitation for " + setctx.tpo.name;
+        var body = "This is an invitation from $MYNAME to join $MYTHEME as a contributing member.  As a member, you will be able to post membics from your own account to MYTHEME.  Click this link to get membership access: $ACCLINK"
+        body.replace(/\$MYNAME/g, app.profile.myProfile().name);
+        body.replace(/\$MYTHEME/g, setctx.tpo.name);
+        var authobj = app.login.authenticated();
+        var email = jt.byId("invemin").value;
+        body.replace(/\$ACCLINK/g, app.dr(
+            "?cmd=membership&tid=" + setctx.tpo.dsId +
+                "&fid=" + authobj.authId +  //Founder dsId
+                "&mtok=" + subtoken(email, authobj.token)));
+        jt.out("invlinkspan", jt.tac2html(
+            ["a", {href:"mailto:" + email + "?subject=" + jt.dquotenc(subj) +
+                   "&body=" + jt.dquotenc(body) + "%0A%0A",
+                   title:"Invite New Member"},
+             "Send Invitation"]));
+    }
+            
 }; //end of returned functions
 }());

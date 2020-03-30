@@ -36,8 +36,6 @@ CREATE TABLE Theme (  -- A cooperative theme.
   founders LONGTEXT,
   moderators LONGTEXT,
   members LONGTEXT,
-  seeking LONGTEXT,
-  rejects LONGTEXT,
   people LONGTEXT,
   cliset LONGTEXT,
   keywords LONGTEXT,

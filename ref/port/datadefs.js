@@ -58,19 +58,21 @@ module.exports = (function () {
      cache:{minutes:2*60, manualadd:true}, //auth interactions
      logflds:["email", "name"]},
         ////////// Notes:
-        // cliset: {flags:{archived:ISO},
+        // cliset: {flags:{archived:ISO},  //no new membics for theme if set
         //          embcolors:{link:"#84521a", hover:"#a05705"},
-        //          maxPostsPerDay:1,
-        //          ctkeys:{book:"keyword1, keyword2...",
-        //                  movie:"keyword4, keyword2...",
+        //          //No longer supported:
+        //          maxPostsPerDay:1,  //prev max of 2
+        //          ctkeys: {book:"keyword1, keyword2...",  //custom keywords
+        //                  movie:"keyword4, keyword2...",  //by type
         //                  ...} }
         //
-        // themes: {"themeid":info, "themeid2":info2, ...}
-        //  info: {lev:N, obtype:str, name:str, hashtag:str, description:str,
-        //         picture:idstr, keywords:CSV, notices:[notice1, notice2..]}
+        // themes: {"themeid":info, "themeid2":info2, "Pprofid":info3, ...}
+        //  MUser ids are prefixed with 'P' to avoid id collisions
+        //  info: {lev:N, name:str, hashtag:str, description:str,
+        //         picture:idstr, keywords:CSV, followmech:email|RSS,
+        //         notices:[notice1, notice2..]}
         //    lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
         //         Any falsy value for lev means no association.
-        //    obtype: "MUser" or "Theme". (you can follow an MUser)
         //    notice: {type:"application", lev:int, uid, uname, created:ISO,
         //             status:"pending"|"rejected", reason}
         // The themes data is for ease of reference, it is not authoritative
@@ -87,8 +89,6 @@ module.exports = (function () {
         {f:"founders", d:"idcsv", c:"founding members"},
         {f:"moderators", d:"idcsv", c:"moderator members"},
         {f:"members", d:"idcsv", c:"standard members"},
-        {f:"seeking", d:"idcsv", c:"member applications (member ids)"},
-        {f:"rejects", d:"idcsv", c:"rejected applications (member ids)"},
         {f:"people", d:"json", c:"map of ids to user names for fast display"},
         {f:"cliset", d:"json", c:"client settings (like MUser)"},
         {f:"keywords", d:"gencsv", c:"custom theme keywords"},
@@ -112,8 +112,8 @@ module.exports = (function () {
 
     {entity:"Membic", descr:"A URL with a reason why it's memorable.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
-        {f:"url", d:"url", c:"canonical URL for item"},
-        {f:"rurl", d:"url", c:"original read URL"},
+        {f:"url", d:"url", c:"sanitized URL derived from rurl"},
+        {f:"rurl", d:"url", c:"original read URL as entered by the user"},
         {f:"revtype", d:"req string", c:"book, movie, music...",
          enumvals:["book", "article", "movie", "video", "music", "yum",
                    "activity", "other"]},
@@ -137,10 +137,6 @@ module.exports = (function () {
      logflds: ["url", "penname", "penid", "ctmid"],
      queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
                {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
-        // rurl/url:
-        //   rurl is always filled in with whatever was entered.  url may be
-        //   the same, or a sanitized value for general reference.  The url
-        //   may be updated later by the system as knowledge evolves.
         // details:
         //   - name: yum, activity, other
         //   - title: book, movie, video, music

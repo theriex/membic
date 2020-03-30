@@ -182,8 +182,6 @@ def json_for_theme_prof(obj, obtype):
         sd["founders"] = obj["founders"]
         sd["moderators"] = obj["moderators"]
         sd["members"] = obj["members"]
-        sd["seeking"] = obj["seeking"]
-        sd["rejects"] = obj["rejects"]
     elif obtype == "profile":
         if obj["profpic"]:
             sd["pic"] = obj["dsId"]

@@ -5,6 +5,7 @@ import py.dbacc as dbacc
 import py.util as util
 import re
 import json
+import urllib.parse  # to be able to use urllib.parse.quote
 
 def membicsave():
     res = ""
@@ -58,6 +59,117 @@ def verify_active_account(muser):
     raise ValueError("Activation code did not match")
 
 
+memberassocs = ["Founder", "Moderator", "Member"]
+followassocs = ["Following", "Unknown"]
+
+def theme_association(theme, pid):
+    if util.val_in_csv(pid, theme["founders"]):
+        return "Founder"
+    elif util.val_in_csv(pid, theme["moderators"]):
+        return "Moderator"
+    elif util.val_in_csv(pid, theme["members"]):
+        return "Member"
+    return "Unknown"
+
+
+def assoc_level(assocstr):
+    mls = {"Founder": 3,
+           "Moderator": 2,
+           "Member": 1,
+           "Unknown": 0,
+           "Following": -1}
+    return mls[assocstr]
+
+
+def subtoken(src, token):
+    src = list(urllib.parse.quote(src))
+    for i, c in enumerate(src):
+        src[i] = token[ord(c) % len(token)]
+    return ''.join(src)
+
+
+# ras["assoc"] is a changed and valid association string.  prof["dsId"] is
+# becoming a member or being removed as a member.
+def verify_authorized_theme_member_change(muser, theme, prof, ras):
+    ua = theme_association(theme, muser["dsId"])
+    personal = muser["dsId"] == prof["dsId"]
+    if ua == "Founder" and not personal:
+        return True  # Founders can do anything with other members
+    if ua != "Founder" and personal:
+        if assoc_level(ras["assoc"]) <= 0:
+            return True  # Any member can resign if they want
+        if ras["assoc"] == "Member" and ras["fid"]:
+            # check membership accept with founder authorization
+            if theme_association(theme, ras["fid"]) != "Founder":
+                raise ValueError("fid " + ras["fid"] + " is not a founder.")
+            founder = dbacc.cfbk("MUser", "dsId", ras["fid"], required=True)
+            if subtoken(prof.email, token_for_user(founder)) != ras["mtok"]:
+                raise ValueError("mtok authorization value did not match")
+            return True
+    raise ValueError("Unauthorized Theme member change.")
+
+
+def update_theme_membership(updt, prof, assoc):
+    for an in memberassocs:
+        field = an.lower() + "s"
+        ids = util.csv_to_list(updt[field])
+        try:
+            ids.remove(prof["dsId"])
+        except Exception:
+            pass  # not found is ok, anything else is ok, not in list now.
+        if an == assoc:
+            ids.append(prof["dsId"])
+        updt[field] = ",".join(ids)
+    # logging.info("update_theme_membership Theme " + updt["dsId"] + 
+    #              "\n  Founders: " + updt["founders"] +
+    #              "\n  Moderators: " + updt["moderators"] +
+    #              "\n  Members: " + updt["members"]);
+
+
+def update_profile_association(prof, ao, ras):
+    tid = ao["dsId"]
+    # probably no need to preserve existing notices, so just create a
+    # new association info object to store in the profile
+    inf = {
+        "lev": assoc_level(ras["assoc"]),
+        "followmech": ras["fm"],
+        "name": ao["name"],
+        "hashtag": ao["hashtag"],
+        "picture": ""}
+    if ao["dsType"] == "Theme":
+        inf["description"] = ao["description"];
+        if ao["picture"]:
+            inf["picture"] = ao["dsId"]
+        inf["keywords"] = ao["keywords"]
+    elif ao["dsType"] == "MUser":
+        inf["description"] = ao["aboutme"]
+        if ao["profpic"]:
+            inf["picture"] = ao["dsId"]
+        tid = "P" + tid
+    ts = json.loads(prof["themes"] or "{}")
+    ts[tid] = inf
+    prof.themes = json.dumps(ts)
+    return prof
+
+
+def update_association(muser, ao, prof, ras):
+    if not (ras["assoc"] in memberassocs or ras["assoc"] in followassocs):
+        raise ValueError("Unknown association " + ras["assoc"])
+    updt = None
+    if ao["dsType"] == "Theme":
+        prevassoc = theme_association(ao, prof["dsId"])
+        if prevassoc != assoc and (prevassoc in memberassocs or
+                                   assoc in memberassocs):
+            verify_authorized_theme_member_change(muser, ao, prof, ras)
+            updt = update_theme_membership(updt, prof, assoc)
+            updt = dbacc.write_entity(updt, vck=updt["modified"])
+    if not updt and prof["dsId"] != muser["dsId"]:  # Not Founder and not self
+        raise ValueError("Not authorized to update MUser " + prof["dsId"])
+    prof = update_profile_association(prof, ao, ras)
+    prof = dbacc.write_entity(prof, vck=prof["modified"])
+    return prof, updt
+
+
 ##################################################
 #
 # API entrypoints
@@ -108,3 +220,30 @@ def accupd():
     except ValueError as e:
         return util.srverr(str(e))
     return "[" + res + "]"
+
+
+def associate():
+    res = ""
+    try:
+        muser, srvtok = util.authenticate()
+        verify_active_account(muser)
+        aot = dbacc.reqarg("aot", "string", required=True)
+        aoi = dbacc.reqarg("aoi", "dbid", required=True)
+        ao = dbacc.cfbk(aot, "dsId", aoi, required=True)
+        pid = dbacc.reqarg("pid", "dbid", required=True)
+        prof = dbacc.cfbk("MUser", "dbid", pid, required=True)
+        ras = {"assoc": dbacc.reqarg("assoc", "string", required=True),
+               "fm": dbacc.reqarg("fm", "string", required=True),
+               # member invite authorization request attributes
+               "fid": dbacc.reqarg("fid", "dbid"),
+               "mtok": dbacc.reqarg("mtok", "string")}
+        prof, theme = update_association(muser, ao, prof, ras)
+        res = util.safe_JSON(prof)
+        if theme:
+            res += "," + util.safe_JSON(theme)
+    except ValueError as e:
+        return util.srverr(str(e))
+    return "[" + res + "]"
+
+
+

@@ -210,7 +210,7 @@ app.connect = (function () {
         var sf = "";
         var authobj = app.login.authenticated();
         if(authobj) {
-            sf = "app.pcd.settings(app.login.authenticated())"; }
+            sf = "app.pcd.settings()"; }
         if(initVars()) {  //have data to work with
             var themes = decorateAndSort();
             themes.push({dsType:"MembicDefinition"});

@@ -290,7 +290,7 @@ function helperFunctions () {
     pyc += "\n"
     pyc += "\n"
     pyc += "# \"cached fetch by key\". Field must be dsId or one of the entkeys.\n"
-    pyc += "def cfbk (entity, field, value):\n";
+    pyc += "def cfbk (entity, field, value, required=False):\n";
     pyc += "    if field != 'dsId' and field not in entkeys[entity]:\n";
     pyc += "        raise ValueError(field + \" not a unique index for \" + entity)\n";
     pyc += "    vstr = str(value)\n";
@@ -306,6 +306,8 @@ function helperFunctions () {
     pyc += "        if not cachedefs[inst[\"dsType\"]][\"manualadd\"]:\n"
     pyc += "            entcache.cache_put(inst)\n"
     pyc += "        return inst\n"
+    pyc += "    if required:\n"
+    pyc += "        raise ValueError(entity + \" \" + value + \" not found.\")\n"
     pyc += "    return None\n";
     pyc += "\n";
     pyc += "\n";

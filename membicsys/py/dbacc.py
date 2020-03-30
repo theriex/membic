@@ -60,8 +60,6 @@ entdefs = {
         "founders": {"pt": "string", "un": False, "dv": ""},
         "moderators": {"pt": "string", "un": False, "dv": ""},
         "members": {"pt": "string", "un": False, "dv": ""},
-        "seeking": {"pt": "string", "un": False, "dv": ""},
-        "rejects": {"pt": "string", "un": False, "dv": ""},
         "people": {"pt": "string", "un": False, "dv": ""},
         "cliset": {"pt": "string", "un": False, "dv": ""},
         "keywords": {"pt": "string", "un": False, "dv": ""},
@@ -283,7 +281,7 @@ def reqarg(argname, fieldtype="string", required=False):
 
 
 # "cached fetch by key". Field must be dsId or one of the entkeys.
-def cfbk (entity, field, value):
+def cfbk (entity, field, value, required=False):
     if field != 'dsId' and field not in entkeys[entity]:
         raise ValueError(field + " not a unique index for " + entity)
     vstr = str(value)
@@ -299,6 +297,8 @@ def cfbk (entity, field, value):
         if not cachedefs[inst["dsType"]]["manualadd"]:
             entcache.cache_put(inst)
         return inst
+    if required:
+        raise ValueError(entity + " " + value + " not found.")
     return None
 
 
@@ -513,8 +513,6 @@ def app2db_Theme(inst):
     cnv["founders"] = app2db_fieldval("Theme", "founders", inst)
     cnv["moderators"] = app2db_fieldval("Theme", "moderators", inst)
     cnv["members"] = app2db_fieldval("Theme", "members", inst)
-    cnv["seeking"] = app2db_fieldval("Theme", "seeking", inst)
-    cnv["rejects"] = app2db_fieldval("Theme", "rejects", inst)
     cnv["people"] = app2db_fieldval("Theme", "people", inst)
     cnv["cliset"] = app2db_fieldval("Theme", "cliset", inst)
     cnv["keywords"] = app2db_fieldval("Theme", "keywords", inst)
@@ -540,8 +538,6 @@ def db2app_Theme(inst):
     cnv["founders"] = db2app_fieldval("Theme", "founders", inst)
     cnv["moderators"] = db2app_fieldval("Theme", "moderators", inst)
     cnv["members"] = db2app_fieldval("Theme", "members", inst)
-    cnv["seeking"] = db2app_fieldval("Theme", "seeking", inst)
-    cnv["rejects"] = db2app_fieldval("Theme", "rejects", inst)
     cnv["people"] = db2app_fieldval("Theme", "people", inst)
     cnv["cliset"] = db2app_fieldval("Theme", "cliset", inst)
     cnv["keywords"] = db2app_fieldval("Theme", "keywords", inst)
@@ -870,8 +866,8 @@ def update_existing_MUser(cnx, cursor, fields, vck):
 def insert_new_Theme(cnx, cursor, fields):
     fields = app2db_Theme(fields)
     stmt = (
-        "INSERT INTO Theme (created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb) "
-        "VALUES (%(created)s, %(modified)s, %(importid)s, %(name)s, %(name_c)s, %(lastwrite)s, %(hashtag)s, %(description)s, %(picture)s, %(founders)s, %(moderators)s, %(members)s, %(seeking)s, %(rejects)s, %(people)s, %(cliset)s, %(keywords)s, %(preb)s)")
+        "INSERT INTO Theme (created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, people, cliset, keywords, preb) "
+        "VALUES (%(created)s, %(modified)s, %(importid)s, %(name)s, %(name_c)s, %(lastwrite)s, %(hashtag)s, %(description)s, %(picture)s, %(founders)s, %(moderators)s, %(members)s, %(people)s, %(cliset)s, %(keywords)s, %(preb)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
@@ -885,8 +881,6 @@ def insert_new_Theme(cnx, cursor, fields):
         'founders': fields.get("founders", entdefs["Theme"]["founders"]["dv"]),
         'moderators': fields.get("moderators", entdefs["Theme"]["moderators"]["dv"]),
         'members': fields.get("members", entdefs["Theme"]["members"]["dv"]),
-        'seeking': fields.get("seeking", entdefs["Theme"]["seeking"]["dv"]),
-        'rejects': fields.get("rejects", entdefs["Theme"]["rejects"]["dv"]),
         'people': fields.get("people", entdefs["Theme"]["people"]["dv"]),
         'cliset': fields.get("cliset", entdefs["Theme"]["cliset"]["dv"]),
         'keywords': fields.get("keywords", entdefs["Theme"]["keywords"]["dv"]),
@@ -1294,12 +1288,12 @@ def query_MUser(cnx, cursor, where):
 
 def query_Theme(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb"
+    query += "importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, people, cliset, keywords, preb"
     query += " FROM Theme " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, seeking, rejects, people, cliset, keywords, preb) in cursor:
-        inst = {"dsType": "Theme", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "seeking": seeking, "rejects": rejects, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
+    for (dsId, created, modified, importid, name, name_c, lastwrite, hashtag, description, picture, founders, moderators, members, people, cliset, keywords, preb) in cursor:
+        inst = {"dsType": "Theme", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "name": name, "name_c": name_c, "lastwrite": lastwrite, "hashtag": hashtag, "description": description, "picture": picture, "founders": founders, "moderators": moderators, "members": members, "people": people, "cliset": cliset, "keywords": keywords, "preb": preb}
         inst = db2app_Theme(inst)
         res.append(inst)
     dblogmsg("QRY", "Theme", res)

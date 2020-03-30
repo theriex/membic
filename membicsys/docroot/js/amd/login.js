@@ -11,6 +11,15 @@ app.login = (function () {
     var actsent = null;
 
 
+    function fullProfile() {
+        var prof = app.profile.myProfile();
+        prof.email = authobj.email;
+        prof.status = authobj.status;
+        prof.altinmail = authobj.altinmail;
+        return prof;
+    }
+
+
     function verifyUserInfo () {
         if(!authobj) {
             return jt.log("verifyUserInfo called without authentication"); }
@@ -467,8 +476,8 @@ return {
                     jt.out("topactiondiv", jt.tac2html(
                         [["div", {id:"topnavdiv"}],
                          ["div", {id:"newmembicdiv"}]]));
-                    app.statemgr.updatenav();
-                    app.membic.addMembic();
+                    app.statemgr.updatenav();  //display appropriate nav button
+                    app.membic.addMembic();    //kick off the new membic process
                     verifyUserInfo(); },
                 function (code, errtxt) {
                     jt.log("authentication failure " + code + ": " + errtxt);
@@ -477,7 +486,7 @@ return {
     },
 
 
-    //If they are not logged in, then authobj is null.  Can be used as an
+    //If you are not logged in, then authobj is null.  Can be used as an
     //"isLoggedIn" check and/or for access to personal info.
     authenticated: function () { return authobj; },
     setAuthentication: function (obj) { 
@@ -487,67 +496,7 @@ return {
     authURL: function (apiurl) {
         return app.dr(apiurl) + "?an=" + authobj.email + "&at=" + authobj.token;
     },
-
-
-    //Themes have custom keywords, profiles don't.  Otherwise the keywords
-    //get restrictive and you end up wanting to create a separate account
-    //for more diverse links.  Better to create a theme earlier on.
-    accountSettingsHTML: function () {
-        var prof = app.profile.myProfile();
-        prof.cliset.embcolors = prof.cliset.embcolors || {};
-        var emboHTML = [];
-        var embcolors = prof.cliset.embcolors;
-        app.pcd.embOverrides().forEach(function (od) {
-            embcolors[od.name] = embcolors[od.name] || od.value;
-            emboHTML.push(["div", {cla:"colorselectdiv"},
-                           [["label", {fo:od.name + "in", cla:"colorlab"},
-                             od.name.capitalize()],
-                            ["input", {id:od.name + "in", cla:"colorin",
-                                       type:"color", 
-                                       value:embcolors[od.name]}]]]); });
-        var statusHTML = jt.tac2html(
-            [["span", {cla:"statlineval"}, authobj.status],
-             " updated " + jt.colloquialDate(prof.modified, "compress", 
-                                             "nodaily z2loc")]);
-        var emburl = app.statemgr.urlForInstance(prof) + "?site=YOURSITE.COM";
-        return jt.tac2html(
-            ["div", {id:"accountsettingsformdiv"},
-             [["div", {cla:"cbdiv"},
-               [["label", {fo:"emailin", cla:"liflab"}, "Email"],
-                ["input", {type:"email", cla:"lifin", id:"emailin",
-                           value:authobj.email,
-                           placeholder: "nospam@example.com"}]]],
-              ["div", {cla:"cbdiv"},  //"passin" is reserved for login form
-               [["label", {fo:"updpin", cla:"liflab"}, "Password"],
-                ["input", {type:"password", cla:"lifin", id:"updpin"}]]],
-              ["div", {cla:"cbdiv"},
-               [["label", {fo:"altemin", cla:"liflab"}, "Alt&nbsp;Email"],
-                ["input", {type:"email", cla:"lifin", id:"altemin",
-                           value:authobj.altinmail || "",
-                           placeholder:"alternate@example.com"}]]],
-              ["div", {cla:"cbdiv"},
-               ["div", {cla:"infolinediv"}, statusHTML]],
-              ["div", {cla:"cbdiv"},
-               [["label", {fo:"hashin", cla:"liflab"}, "Hashtag"],
-                ["input", {type:"text", cla:"lifin", id:"hashin",
-                           value:prof.hashtag || "",
-                           placeholder:"uniquetext"}]]],
-              ["div", {cla:"cbdiv"},
-               ["div", {cla:"infolinediv"},
-                ["Embed: ",
-                 ["a", {href:emburl, title:"Embed this page in your website",
-                        onclick:jt.fs("window.open('" + emburl + "')")},
-                  emburl]]]],
-              ["div", {cla:"cbdiv"},
-               ["div", {id:"colorchoicesdiv"},
-                emboHTML]],
-              ["div", {cla:"cbdiv"},
-               ["div", {cla:"infolinediv", id:"accsetinfdiv"}]],
-              ["div", {id:"accountsettingsbuttonsdiv"},
-               [["button", {type:"button", id:"accupdbutton",
-                            onclick: jt.fs("app.login.updateAccount()")},
-                 "Update"]]]]]);
-    },
+    fullProfile: function () { return fullProfile(); },
 
 
     accountSettingsInit: function () {
@@ -658,7 +607,7 @@ return {
 
 
     updateAccount: function () {
-        var prof = app.profile.myProfile();
+        var prof = fullProfile();
         var pu = {dsType:"MUser", dsId:prof.dsId};
         pu.email = jt.byId("emailin").value.trim();
         if(!jt.isProbablyEmail(pu.email)) {
