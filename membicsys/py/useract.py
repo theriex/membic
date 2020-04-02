@@ -248,5 +248,3 @@ def associate():
         return util.srverr(str(e))
     return "[" + res + "]"
 
-
-

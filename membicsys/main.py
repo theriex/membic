@@ -3,6 +3,7 @@ import py.useract as useract
 import py.util as util
 import py.start as start
 import py.useract as useract
+import py.feed as feed
 
 # Create a default entrypoint for the app.
 app = flask.Flask(__name__)
@@ -50,6 +51,11 @@ def accupd(): #params an, at, MUser update fields
 @app.route('/api/associate', methods=['GET', 'POST'])
 def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
     return useract.associate()
+
+@app.route('/feed/', defaults={'path': ''})
+@app.route('/feed/<path:path>')
+def webfeed(path):
+    return util.secure(lambda: feed.webfeed(path))
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

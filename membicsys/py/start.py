@@ -381,7 +381,7 @@ def write_start_page(obj, refer, reldocroot=""):
 #   /connect        Returns the default start page
 #   /myhashtag      Returns start page for Theme or MUser #myhashtag
 # That means "myhashtag" can't be "profile", "theme", or "connect".  Permalink
-# style links are used rather than URL parameters to bookmarking/sharing.
+# style links are used rather than URL parameters for bookmarking/sharing.
 # The above links are not case sensitive.  They are stored and compared lower.
 def start_html_for_path(path, refer):
     if not path or path.lower().startswith("index.htm"):

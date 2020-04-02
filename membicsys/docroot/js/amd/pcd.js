@@ -1001,7 +1001,8 @@ app.pcd = (function () {
             tac.push(["a", {href:ctx.descobj.rssurl,  //right click to copy
                             cla:"resp-sharing-button__link",
                             id:"rsslink", title:"RSS feed",
-                            onclick:jt.fs("app.pcd.rssHelp('standalone')")},
+                            onclick:jt.fs("window.open('" + ctx.descobj.rssurl +
+                                          "')")},
                       ["div", {cla:"resp-sharing-button" + 
                                " resp-sharing-button--small" +
                                " resp-sharing-button--rss"},
@@ -1523,6 +1524,11 @@ app.pcd = (function () {
     }
 
 
+    function RSSURLForObj (obj) {
+        return "/feed" + app.statemgr.urlForInstance(obj);
+    }
+
+
     function displayPTObj (obj, extra) {
         var sf = "";
         if(app.profile.myProfile()) {  //signed in and user info loaded
@@ -1530,6 +1536,7 @@ app.pcd = (function () {
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
                                     exturl:app.pcd.linkForThemeOrProfile(obj),
+                                    rssurl:RSSURLForObj(obj),
                                     name:obj.name,
                                     descr:obj.description || obj.aboutme});
         app.pcd.setPageActions({itlist:obj.preb,
@@ -1600,7 +1607,7 @@ app.pcd = (function () {
 
 
     function webfeedSetting (embobj) {
-        var rssurl = app.statemgr.urlForInstance(embobj) + "/feed";
+        var rssurl = RSSURLForObj(embobj);
         return jt.tac2html(
             ["div", {cla:"cblinediv"},
              ["div", {cla:"infolinediv"},
