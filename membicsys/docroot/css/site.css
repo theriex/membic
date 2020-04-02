@@ -155,7 +155,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .liflab { font-size:small; font-weight:normal; text-align:right; 
   padding:0px 2px 0px 2px; display:block; float:left; width:80px; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
-.lifin { padding:0px; font-size:small; width:145px; }
+.lifin { padding:0px; font-size:small; width:160px; }
 .lifbuttonsdiv { text-align:center; }
 .accstatvalspan { font-size:small; font-style:italic; padding:0px 4px 0px 0px; }
 #accstatdetaildiv { font-size:small; padding:5px 5px 0px 5px; }
@@ -223,16 +223,28 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mailindesctable tbody tr td:nth-child(even) { text-align:left; }
 
 /* >> settings layout */
-#settingsmenudiv { text-align:center; margin:0px 0px 5px 0px; }
+#pcdsetcontdiv { display:table; margin:0px auto; }
+#settingsmenudiv { margin:0px 0px 5px 5px; }
 #settingsmenudiv button { margin:0px 10px; }
-.cbdiv { display:flex; vertical-align:middle; margin:5px 0px; }
+#settingsmenudiv img { max-height:24px; max-width:24px; padding-right:5px; }
+.cblinediv, .cbdiv { margin:5px 0px; }
+.cbdiv { display:flex; vertical-align:middle; }
+.cbdiv span { font-size:small; }
 .infolinediv { font-size:small; margin:0px auto; }
 .statlineval { font-weight:bold; }
 #accountsettingsbuttonsdiv { text-align:center; padding:5px 0px 10px 0px; }
 #accountsettingsbuttonsdiv button { margin:0px 10px; }
 #colorchoicesdiv { font-size:small; text-align:center; margin:0px auto; }
 .colorselectdiv { display:inline-block; margin-left:5px; }
-
+#memberactdiv { background-image:url('../img/bleachscrub.png'); }
+#inviteformbuttonsdiv { padding-bottom:12px; }
+#tmemlistdiv { padding-bottom:10px; }
+.tmemlineimg { max-height:18px; margin:0px 5px; }
+#invlinkspan { margin-left:10px; font-size:small; }
+#followseldiv { font-size:small; }
+#followseldiv input { margin-left:12px; }
+#followseldiv a { margin-left:3px; }
+#assocbuttonsdiv button { margin:0px 10px; }
 
 /* >> membic content layout */
 .mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }

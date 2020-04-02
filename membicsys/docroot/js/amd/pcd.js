@@ -1124,9 +1124,17 @@ app.pcd = (function () {
                ["div", {id:"pcdacsrchdiv"}, searchdivcontents]]],
              ["div", {id:"pcdsharediv", style:"display:none;"}, 
               shareAndFollowButtons()],
-             ["div", {id:"pcdsettingsdiv", style:"display:none;"}]]));
+             ["div", {id:"pcdsettingsdiv", style:"display:none;"},
+              ["div", {id:"pcdsetcontdiv"}]]]));
     }
         
+
+    //process any extra information from login.verifyUserInfo
+    function processExtraObject (extraobj) {
+        if(extraobj && extraobj.cmd === "membership") {
+            app.theme.addMember(extraobj); }
+    }
+
 
     function initializeSearchState () {
         srchst.status = "initializing";
@@ -1515,7 +1523,7 @@ app.pcd = (function () {
     }
 
 
-    function displayPTObj (obj) {
+    function displayPTObj (obj, extra) {
         var sf = "";
         if(app.profile.myProfile()) {  //signed in and user info loaded
             sf = "app.pcd.settings()"; }
@@ -1527,7 +1535,7 @@ app.pcd = (function () {
         app.pcd.setPageActions({itlist:obj.preb,
                                 itmatchf:membicSearchMatch,
                                 itdispf:membicDisplayHTML,
-                                contextobj:obj,
+                                contextobj:obj, extraobj:extra,
                                 setfstr:sf,
                                 notif:ptNoticesDisplay});
     }
@@ -1591,43 +1599,70 @@ app.pcd = (function () {
     }
 
 
+    function webfeedSetting (embobj) {
+        var rssurl = app.statemgr.urlForInstance(embobj) + "/feed";
+        return jt.tac2html(
+            ["div", {cla:"cblinediv"},
+             ["div", {cla:"infolinediv"},
+              ["Web Feed: ",
+                ["a", {href:rssurl, title:"Subscribe to " + embobj.name,
+                       onclick:jt.fs("window.open('" + rssurl + "')")},
+                 rssurl]]]]);
+    }
+
+
+    function hashtagSetting (embobj, canmod) {
+        var rhs = ["span", {id:"hashin"}, embobj.hashtag];
+        if(canmod) {
+            rhs = ["input", {type:"text", cla:"lifin", id:"hashin",
+                             value:embobj.hashtag || "",
+                             placeholder:"uniquetext"}]; }
+        return jt.tac2html(
+            ["div", {cla:"cbdiv"},
+              [["label", {fo:"hashin", cla:"liflab"}, "Hashtag#"],
+               rhs]]);
+    }
+
+
     //Themes have custom keywords, profiles don't.  Otherwise the keywords
-    //can become restrictive and the only way out is to create another
-    //account. Better to encourage creating a theme earlier on.
-    function generalSettingsHTML () {
-        var prof = app.profile.myProfile();
-        var kwrdsHTML = "";
-        var embobj = ctx.actobj.contextobj || prof;
-        if(embobj.dsType === "Theme") {
-            kwrdsHTML = jt.tac2html(
-                ["div", {cla:"cbdiv"},
-                 [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
-                  ["input", {type:"text", cla:"lifin", id:"kwrdsin",
+    //can become restrictive, and the only way out is to create another
+    //account.  Better to encourage creating a theme earlier on.
+    function keywordsSetting (embobj, canmod) {
+        if((embobj.dsType !== "Theme") || (!canmod && !embobj.keywords)) {
+            return ""; }
+        var rhs = ["span", {id:"kwrdsin"}, embobj.keywords];
+        if(canmod) {
+            rhs = ["input", {type:"text", cla:"lifin", id:"kwrdsin",
                              value:embobj.keywords || "",
-                             placeholder:"Comma separated keywords"}]]]); }
+                             placeholder:"Comma separated values"}]; }
+        return jt.tac2html(
+            ["div", {cla:"cbdiv"},
+             [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
+              rhs]]);
+    }
+
+
+    function embedSetting (embobj, canmod) {
         var emburl = app.statemgr.urlForInstance(embobj) + "?site=YOURSITE.COM";
-        prof.cliset.embcolors = prof.cliset.embcolors || {};
-        var emboHTML = [];
-        var embcolors = prof.cliset.embcolors;
-        app.pcd.embOverrides().forEach(function (od) {
-            embcolors[od.name] = embcolors[od.name] || od.value;
-            emboHTML.push(["div", {cla:"colorselectdiv"},
-                           [["label", {fo:od.name + "in", cla:"colorlab"},
-                             od.name.capitalize()],
-                            ["input", {id:od.name + "in", cla:"colorin",
-                                       type:"color", 
-                                       value:embcolors[od.name]}]]]); });
+        var colors = "";
+        if(canmod) {
+            embobj.cliset.embcolors = embobj.cliset.embcolors || {};
+            var embcolors = embobj.cliset.embcolors;
+            var emboHTML = [];
+            app.pcd.embOverrides().forEach(function (od) {
+                embcolors[od.name] = embcolors[od.name] || od.value;
+                emboHTML.push(["div", {cla:"colorselectdiv"},
+                               [["label", {fo:od.name + "in", cla:"colorlab"},
+                                 od.name.capitalize()],
+                                ["input", {id:od.name + "in", cla:"colorin",
+                                           type:"color", 
+                                           value:embcolors[od.name]}]]]); }); }
         return jt.tac2html(
             [["div", {cla:"cbdiv"},
-              [["label", {fo:"hashin", cla:"liflab"}, "Hashtag"],
-               ["input", {type:"text", cla:"lifin", id:"hashin",
-                          value:prof.hashtag || "",
-                          placeholder:"uniquetext"}]]],
-             kwrdsHTML,
-             ["div", {cla:"cbdiv"},
               ["div", {cla:"infolinediv"},
                ["Embed: ",
-                ["a", {href:emburl, title:"Embed this page in your website",
+                ["a", {href:emburl,
+                       title:"Embed " + embobj.name + " in your website",
                        onclick:jt.fs("window.open('" + emburl + "')")},
                  emburl]]]],
              ["div", {cla:"cbdiv"},
@@ -1636,7 +1671,18 @@ app.pcd = (function () {
     }
 
 
-    function settingsInfoAndUpdateButtonHTML () {
+    function generalSettingsHTML (embobj, canmod) {
+        return jt.tac2html(
+            [webfeedSetting(embobj),
+             hashtagSetting(embobj, canmod),
+             keywordsSetting(embobj, canmod),
+             embedSetting(embobj, canmod)]);
+    }
+
+
+    function settingsInfoAndUpdateButtonHTML (canmod) {
+        if(!canmod) {
+            return ""; }
         return jt.tac2html(
             [["div", {cla:"cbdiv"},
               ["div", {cla:"infolinediv", id:"accsetinfdiv"}]],
@@ -1648,6 +1694,7 @@ app.pcd = (function () {
 
 
     function writePersonalSettings (divid) {
+        obj = app.profile.myProfile();
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"},
               [["button", {id:"cntb", title:"Create New Theme",
@@ -1659,8 +1706,8 @@ app.pcd = (function () {
                 "Sign Out"]]],
              ["div", {id:"cpidiv"},
               [personalInfoSettingsHTML(),
-               generalSettingsHTML()]],
-             settingsInfoAndUpdateButtonHTML()]));
+               generalSettingsHTML(prof, true)]],
+             settingsInfoAndUpdateButtonHTML(true)]));
         //dim and disable the Create Theme button if account is not active
         if(app.login.authenticated().status !== "Active") {
             var cntb = jt.byId("cntb");
@@ -1670,12 +1717,13 @@ app.pcd = (function () {
 
 
     function writeThemeProfSettings (divid, obj) {
+        var canmod = (app.theme.association(obj) === "Founder");
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"}],
              ["div", {id:"cpidiv"},
               [["div", {id:"memberactdiv"}],
-               generalSettingsHTML()]],
-             settingsInfoAndUpdateButtonHTML()]));
+               generalSettingsHTML(obj, canmod)]],
+             settingsInfoAndUpdateButtonHTML(canmod)]));
         app.theme.memberset(obj, "settingsmenudiv", "memberactdiv");
     }
 
@@ -1708,9 +1756,9 @@ return {
         var auth = app.login.authenticated();  //must be signed in for settings
         var obj = ctx.actobj.contextobj;
         if(!obj || (obj.dsType === "MUser" && obj.dsId === auth.authId)) {
-            writePersonalSettings("pcdsettingsdiv"); }
+            writePersonalSettings("pcdsetcontdiv"); }
         else {
-            writeThemeProfSettings("pcdsettingsdiv", obj); }
+            writeThemeProfSettings("pcdsetcontdiv", obj); }
     },
 
 
@@ -2272,7 +2320,6 @@ return {
 
 
     fetchAndDisplay: function (dtype, id, extra) {
-        var command = (extra && extra.command) || "";
         app.statemgr.verifyState(dtype, id, extra, function () {
             if(!id) {
                 jt.log("pcd.fetchAndDisplay " + dtype + " required an id");
@@ -2281,7 +2328,7 @@ return {
                 if(!obj) {
                     jt.log("pcd.fetchAndDisplay no obj " + dtype + " " + id);
                     return app.connect.display(); }
-                displayPTObj(obj, command); }); });
+                displayPTObj(obj, extra); }); });
     },
 
 
@@ -2462,6 +2509,7 @@ return {
     //actobj elements:
     //  itlist: array of items to be displayed (e.g. membics)
     //  contextobj: optional, accessible from fist.actobj
+    //  extraobj: optional, used for additional setup before filtering content
     //  itmatchf(item, fist): return true if match
     //  itdispf(item, fist): return HTML to display the given item
     //  setfstr: onclick for settings button (string)
@@ -2477,6 +2525,7 @@ return {
              ["div", {id:"pcdcontdiv"}]]));   //display items container
         writeActionsArea();
         app.pcd.updateSearchLabelText();
+        processExtraObject(actobj.extraobj);
         app.pcd.filterContent("init");
     },
 

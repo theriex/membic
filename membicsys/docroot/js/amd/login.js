@@ -27,7 +27,13 @@ app.login = (function () {
         //probably up to date, but that's not guaranteed given server call
         //timing.  Best to just just redraw.
         app.refmgr.getFull("MUser", authobj.authId, function () {
-            app.statemgr.redispatch(); });
+            if(app.startParams.cmd === "membership" && app.startParams.tid) {
+                app.statemgr.setState("Theme", app.startParams.tid, 
+                                      {cmd:"membership",
+                                       fid:app.startParams.fid,
+                                       mtok:app.startParams.mtok}); }
+            else {  //redisplay now that user info is available
+                app.statemgr.redispatch(); } });
     }
 
 

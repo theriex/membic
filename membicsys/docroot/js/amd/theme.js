@@ -61,64 +61,75 @@ app.theme = (function () {
     }
 
 
-    function sendThemeSummaryLink () {
-        var subj = "Summary for " + setctx.tpo.name;
-        var body = setctx.tpo.name + "\n" +
-            app.dr(app.pcd.linkForThemeOrProfile(setctx.tpo)) + "\n\n" +
-            setctx.tpo.description + "\n\n";
-        if(setctx.tpo.keywords) {
-            body += "Keywords: " + setctx.tpo.keywords + "\n"; }
-        body += "Last Write: " + setctx.tpo.lastwrite + "\n" +
-            "Membership:\n";
-        var mfs = ["founders", "moderators", "members"]
-        mfs.forEach(function (field) {
-            setctx.tpo[field].csvarray().forEach(function (pid) {
-                body += field.capitalize().slice(0, field.length - 1) +
-                    (setctx.tpo.people[pid] || pid) + "\n" +
-                    app.dr("/profile/" + pid) + "\n\n"; }); });
-        if(setctx.tpo.cliset && setctx.tpo.cliset.flags && 
-           setctx.tpo.cliset.flags.archived) {
-            body += "Archived " + setctx.tpo.cliset.flags.archived + "\n"; }
-        return "mailto:" + app.login.authenticated().email + "?subject=" +
-            jt.dquotenc(subj) + "&body=" + jt.dquotenc(body) + "%0A%0A";
+    function emailOrRSSFollowHTML () {
+        var rsshelpurl = "https://en.wikipedia.org/wiki/Web_feed";
+        return jt.tac2html(
+            ["div", {id:"followseldiv"},
+             [["span", {id:"followselspan"}, "Follow via"],
+              ["input", {type:"radio", name:"followmechins", value:"email",
+                         checked:jt.toru(setctx.fm === "email"),
+                         onchange:jt.fs("app.theme.relupd('','email')")}],
+              ["label", {fo:"fmemin", title:"Follow new membics via email"},
+               "Email"],
+              ["input", {type:"radio", name:"followmechins", value:"RSS",
+                         checked:jt.toru(setctx.fm === "RSS"),
+                         onchange:jt.fs("app.theme.relupd('','RSS')")}],
+              ["label", {fo:"fmrssin", title:"Follow new membics via RSS"},
+              "RSS"],
+              //not good to make labels into links, so provide as extra
+              ["a", {href:rsshelpurl,
+                     onclick:jt.fs("window.open('" + rsshelpurl + "')")},
+               "web feed"]]]);
     }
 
 
-    function emailOrRSSFollowHTML () {
-        return jt.tac2html(
-            [["label", {fo:"fmemin", title:"Follow new membics via email"},
-              "Email"],
-             ["input", {type:"radio", name:"followmechins", value:"email",
-                        checked:jt.toru(setctx.fm === "email"),
-                        onchange:jt.fs("relupd('','email')")}],
-             ["label", {fo:"fmrssin", title:"Follow new membics via RSS"},
-              "RSS"],
-             ["input", {type:"radio", name:"followmechins", value:"RSS",
-                        checked:jt.toru(setctx.fm === "RSS"),
-                        onchange:jt.fs("relupd('','RSS')")}]]);
+    function memberSummaryHTML () {
+        var html = []
+        var mfs = ["founders", "moderators", "members"];
+        mfs.forEach(function (field) {
+            var misrc = app.dr("img/ts" + field.slice(0, field.length - 1) +
+                               ".png");
+            setctx.tpo[field].csvarray().forEach(function (pid) {
+                //No relevant &cb= value for profile img. Using plain.
+                var pisrc = app.dr("/api/obimg?dt=MUser&di=" + pid);
+                var name = setctx.tpo.people[pid] || pid;
+                var fst = jt.fs("app.statemgr.setState('MUser','" + pid + "')");
+                if(pid !== app.profile.myProfile().dsId) {
+                    html.push(["div", {cla:"tmemlinediv"},
+                               ["a", {href:"#profile",
+                                      title:"View profile for " + name,
+                                      onclick:fst},
+                                [["img", {cla:"tmemlineimg", src:misrc}],
+                                 ["img", {cla:"tmemlineimg", src:pisrc}],
+                                 name]]]); } }); });
+        return jt.tac2html(html);
     }
 
 
     function founderSettingsHTML () {
+        var ah = "";
+        if(setctx.tpo.cliset && setctx.tpo.cliset.flags && 
+           setctx.tpo.cliset.flags.archived) {
+            ah = ["div", {cla:"tinfolinediv"},
+                  "Archived " + setctx.tpo.cliset.flags.archived]; }
         return jt.tac2html(
-            [["div", {id:"inviteformdiv"},
-              [["label", {fo:"invemin", 
-                          title:"Member email for invite authentication"},
-                "Email"],
-               ["input", {type:"email", id:"invemin", size:"24",
-                          onchange:jt.fs("app.theme.inviteMemberLink()"),
-                          placeholder:"authorized@example.com"}],
+            [["div", {id:"tmemlistdiv"},
+              memberSummaryHTML()],
+             ["div", {id:"tinfodiv"},
+              ah],
+             ["div", {id:"inviteformdiv"},
+              [["div", {cla:"cbdiv"},
+                [["label", {fo:"invemin", cla:"liflab",
+                            title:"Member email for invite authentication"},
+                  "Email"],
+                 ["input", {type:"email", id:"invemin", cla:"lifin",
+                            onchange:jt.fs("app.theme.inviteMemberLink()"),
+                            placeholder:"authorized@example.com"}]]],
                ["div", {id:"inviteformbuttonsdiv", cla:"lifbuttonsdiv"},
                 [["button", {type:"button",
                              onclick:"app.theme.inviteMemberLink()"},
                   "Make Invite"],
-                 ["span", {id:"invlinkspan"}]]]]],
-             ["div", {id:"tinfoformdiv"},
-              ["div", {id:"tinfoformbuttonsdiv", cla:"lifbuttonsdiv"},
-               ["span", {id:"tsumlinkspan"},
-                ["a", {href:sendThemeSummaryLink(),
-                       title:"Send Theme Summary"},
-                 "Send&nbsp;Summary"]]]]]);
+                 ["span", {id:"invlinkspan"}]]]]]]);
     }
 
 
@@ -152,6 +163,23 @@ app.theme = (function () {
              ["div", {id:"assocbuttonsdiv"}, bh]]);
     }
 
+
+    function updateSettingsMenuHeading () {
+        var link = {text:setctx.assoc + " Settings",
+                    title:"Actions for " + setctx.assoc + " " + setctx.tpo.name,
+                    src:"ts" + setctx.assoc.toLowerCase() + ".png"};
+        if(setctx.assoc === "Unknown") {
+            link.text = "Follow " + setctx.tpo.name;
+            link.title = link.text;
+            link.src = "blank.png"}
+        else if(setctx.assoc === "Following") {
+            link.text = "Following"; }  //"Settings" on the end gets confusing
+        jt.out(setctx.mendivid, jt.tac2html(
+            ["a", {href:"#relationship", title:link.title,
+                   onclick:jt.fs("app.theme.connopt()")},
+             [["img", {cla:"setassocimg", src:app.dr("img/" + link.src)}],
+              ["span", {cla:"setassocspan"}, link.text]]]));
+    }
 
 
     ////////////////////////////////////////
@@ -364,29 +392,24 @@ return {
     },
 
 
+    association: function (pto) { return association(pto); },
+
+
     //Called from settings, which are enabled only if profile is available.
     memberset: function (tpobj, mendiv, detdiv) {
-        setctx = {tpo:tpobj, divid:detdiv, assoc:association(tpobj),
+        setctx = {tpo:tpobj, assoc:association(tpobj),
+                  mendivid:mendiv, divid:detdiv,
                   ao:profassoc(tpobj.dsType, tpobj.dsId), fm:"email"}
         if(setctx.ao.followmech === "RSS") {
             setctx.fm = "RSS"; }
-        var link = {title:setctx.assoc,
-                    src:"ts" + setctx.assoc.toLowerCase() + ".png"};
-        if(setctx.assoc === "Unknown") {
-            link.title = "Follow " + setctx.tpo.name;
-            link.src = "blank.png"}
-        jt.out(mendiv, jt.tac2html(
-            ["a", {href:"#relationship",
-                   title:"Relationship to " + setctx.tpo.name,
-                   onclick:jt.fs("app.theme.connopt()")},
-             [["img", {cla:"setassocimg", src:app.dr("img/" + link.src)}],
-              ["span", {cla:"setassocspan"}, link.title]]]));
+        updateSettingsMenuHeading();
         jt.out(detdiv, "");  //start with no content
     },
 
 
     connopt: function (show) {
-        var div = jt.byId(divid);
+        updateSettingsMenuHeading();
+        var div = jt.byId(setctx.divid);
         if(!show && div.innerHTML && div.style.display === "block") {
             div.style.display = "none";  //toggle off
             return; }
@@ -397,7 +420,7 @@ return {
         case "Member": html = memberSettingsHTML(); break;
         case "Following":  //fall through to Unknown
         case "Unknown": html = followSettingsHTML(); }
-        jt.out(divid, jt.tac2html(html));
+        div.innerHTML = jt.tac2html(html);
         div.style.display = "block";
     },
 
@@ -423,22 +446,28 @@ return {
                 function (result) {  //prof, followed by theme if updated
                     result.forEach(function (obj) {
                         app.refmgr.put(app.refmgr.deserialize(obj)); });
+                    if(app.samePO(setctx.tpo, result[result.length - 1])) {
+                        setctx.tpo = result[result.length - 1]; }
                     app.theme.connopt(); },
                 function (code, errtxt) {
-                    jt.log("theme.relupd " + code + ": " + errtxt);
-                    app.theme.connopt("show"); },
+                    //show the error occurred. User will have to toggle 
+                    //settings to try again, which is what should happen.
+                    jt.out("assocbuttonsdiv", "Update failed " + code + ": " +
+                           errtxt); },
                 jt.semaphore("theme.relupd"));
     },
 
 
     inviteMemberLink: function () {
-        var subj = "Membership invitation for " + setctx.tpo.name;
-        var body = "This is an invitation from $MYNAME to join $MYTHEME as a contributing member.  As a member, you will be able to post membics from your own account to MYTHEME.  Click this link to get membership access: $ACCLINK"
-        body.replace(/\$MYNAME/g, app.profile.myProfile().name);
-        body.replace(/\$MYTHEME/g, setctx.tpo.name);
-        var authobj = app.login.authenticated();
         var email = jt.byId("invemin").value;
-        body.replace(/\$ACCLINK/g, app.dr(
+        if(!jt.isProbablyEmail(email)) {
+            return jt.out("invlinkspan", ""); }
+        var subj = "Membership invitation for " + setctx.tpo.name;
+        var body = "This is an invitation from $MYNAME to join $MYTHEME as a contributing member.  As a member, you will be able to post membics from your own account to $MYTHEME.  Click this link to get membership access:\n\n$ACCLINK"
+        body = body.replace(/\$MYNAME/g, app.profile.myProfile().name);
+        body = body.replace(/\$MYTHEME/g, setctx.tpo.name);
+        var authobj = app.login.authenticated();
+        body = body.replace(/\$ACCLINK/g, app.dr(
             "?cmd=membership&tid=" + setctx.tpo.dsId +
                 "&fid=" + authobj.authId +  //Founder dsId
                 "&mtok=" + subtoken(email, authobj.token)));
@@ -447,6 +476,27 @@ return {
                    "&body=" + jt.dquotenc(body) + "%0A%0A",
                    title:"Invite New Member"},
              "Send Invitation"]));
+    },
+
+
+    //Called while displaying the appropriate theme and after the new
+    //member's profile has been loaded.
+    addMember: function (extraobj) {
+        var authobj = app.login.authenticated();
+        var dispctx = app.pcd.getDisplayContext();
+        var theme = dispctx.actobj.contextobj;
+        var data = jt.objdata(
+            {an:authobj.email, at:authobj.token, aot:"Theme", aoi:theme.dsId,
+             pid:authobj.authId, assoc:"Member", fm:"email", 
+             fid:extraobj.fid, mtok:extraobj.mtok});
+        jt.call("POST", app.dr("/api/associate"), data,
+                function (result) {  //prof, followed by theme if updated
+                    result.forEach(function (obj) {
+                        app.refmgr.put(app.refmgr.deserialize(obj)); });
+                    app.theme.connopt("show"); },
+                function (code, errtxt) {
+                    jt.err("Membership failed " + code + ": " + errtxt); },
+                jt.semaphore("theme.addMember"));
     }
             
 }; //end of returned functions

@@ -223,6 +223,13 @@ var jt = {};   //Global access to general utility methods
     };
 
 
+    app.samePO = function (a, b) {
+        if(a.dsType === b.dsType && a.dsId === b.dsId) {
+            return true; }
+        return false;
+    };
+
+
     app.crash = function (code, errtxt, method, url, data) {
         var now = new Date();
         var subj = "App crash";

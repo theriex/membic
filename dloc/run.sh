@@ -7,4 +7,4 @@
 gunicorn -b :8081 --pythonpath 'membicsys/' main:app &
 echo "gunicorn main process: $!"
 nginx -c /general/membic/dloc/nginx.conf
-# mysql.server start
+echo "# mysql.server start"

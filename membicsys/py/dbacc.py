@@ -855,7 +855,7 @@ def update_existing_MUser(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("MUser update received outdated data.")
+        raise ValueError("MUser" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_MUser(fields)
     dblogmsg("UPD", "MUser", fields)
@@ -910,7 +910,7 @@ def update_existing_Theme(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("Theme update received outdated data.")
+        raise ValueError("Theme" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_Theme(fields)
     dblogmsg("UPD", "Theme", fields)
@@ -960,7 +960,7 @@ def update_existing_AdminLog(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("AdminLog update received outdated data.")
+        raise ValueError("AdminLog" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_AdminLog(fields)
     dblogmsg("UPD", "AdminLog", fields)
@@ -1021,7 +1021,7 @@ def update_existing_Membic(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("Membic update received outdated data.")
+        raise ValueError("Membic" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_Membic(fields)
     dblogmsg("UPD", "Membic", fields)
@@ -1065,7 +1065,7 @@ def update_existing_Overflow(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("Overflow update received outdated data.")
+        raise ValueError("Overflow" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_Overflow(fields)
     dblogmsg("UPD", "Overflow", fields)
@@ -1110,7 +1110,7 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("MailNotice update received outdated data.")
+        raise ValueError("MailNotice" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_MailNotice(fields)
     dblogmsg("UPD", "MailNotice", fields)
@@ -1162,7 +1162,7 @@ def update_existing_ActivitySummary(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("ActivitySummary update received outdated data.")
+        raise ValueError("ActivitySummary" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
     dblogmsg("UPD", "ActivitySummary", fields)
@@ -1207,7 +1207,7 @@ def update_existing_ConnectionService(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("ConnectionService update received outdated data.")
+        raise ValueError("ConnectionService" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
     fields = db2app_ConnectionService(fields)
     dblogmsg("UPD", "ConnectionService", fields)

@@ -70,6 +70,7 @@ def normalize_email(emaddr):
 def val_in_csv(val, csv):
     if not csv:
         return False
+    val = str(val)
     if csv == val:
         return True
     if csv.startswith(val + ","):

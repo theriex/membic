@@ -572,7 +572,7 @@ function writeUpdateFunction (edef) {
     pyc += "        data[field] = fields[field]\n";
     pyc += "    cursor.execute(stmt, data)\n";
     pyc += "    if cursor.rowcount < 1 and vck != \"override\":\n";
-    pyc += "        raise ValueError(\"" + edef.entity + " update received outdated data.\")\n";
+    pyc += "        raise ValueError(\"" + edef.entity + "\" + str(dsId) + \" update received outdated version check value \" + vck + \".\")\n";
     pyc += "    cnx.commit()\n";
     pyc += "    fields = db2app_" + edef.entity + "(fields)\n";
     pyc += "    dblogmsg(\"UPD\", \"" + edef.entity + "\", fields)\n";

@@ -97,8 +97,6 @@ indexHTML = """
   app.init();
 </script>
 
-<script id="placesapiscript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAktj-Nnv7dP6MTCisi6QVBWr-sS5iekXc&libraries=places"></script>
-
 </body>
 </html>
 """

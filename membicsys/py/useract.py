@@ -103,7 +103,8 @@ def verify_authorized_theme_member_change(muser, theme, prof, ras):
             if theme_association(theme, ras["fid"]) != "Founder":
                 raise ValueError("fid " + ras["fid"] + " is not a founder.")
             founder = dbacc.cfbk("MUser", "dsId", ras["fid"], required=True)
-            if subtoken(prof.email, token_for_user(founder)) != ras["mtok"]:
+            ftok = util.token_for_user(founder)
+            if subtoken(prof["email"], ftok) != ras["mtok"]:
                 raise ValueError("mtok authorization value did not match")
             return True
     raise ValueError("Unauthorized Theme member change.")
@@ -148,25 +149,27 @@ def update_profile_association(prof, ao, ras):
         tid = "P" + tid
     ts = json.loads(prof["themes"] or "{}")
     ts[tid] = inf
-    prof.themes = json.dumps(ts)
+    prof["themes"] = json.dumps(ts)
     return prof
 
 
 def update_association(muser, ao, prof, ras):
-    if not (ras["assoc"] in memberassocs or ras["assoc"] in followassocs):
-        raise ValueError("Unknown association " + ras["assoc"])
+    assoc = ras["assoc"]
+    if not (assoc in memberassocs or assoc in followassocs):
+        raise ValueError("Unknown association " + assoc)
     updt = None
     if ao["dsType"] == "Theme":
         prevassoc = theme_association(ao, prof["dsId"])
         if prevassoc != assoc and (prevassoc in memberassocs or
                                    assoc in memberassocs):
             verify_authorized_theme_member_change(muser, ao, prof, ras)
-            updt = update_theme_membership(updt, prof, assoc)
-            updt = dbacc.write_entity(updt, vck=updt["modified"])
+            update_theme_membership(ao, prof, assoc)
+            updt = dbacc.write_entity(ao, vck=ao["modified"])
     if not updt and prof["dsId"] != muser["dsId"]:  # Not Founder and not self
         raise ValueError("Not authorized to update MUser " + prof["dsId"])
     prof = update_profile_association(prof, ao, ras)
     prof = dbacc.write_entity(prof, vck=prof["modified"])
+    dbacc.entcache.cache_put(prof)  # so subsequent updates have correct vck
     return prof, updt
 
 
@@ -231,7 +234,7 @@ def associate():
         aoi = dbacc.reqarg("aoi", "dbid", required=True)
         ao = dbacc.cfbk(aot, "dsId", aoi, required=True)
         pid = dbacc.reqarg("pid", "dbid", required=True)
-        prof = dbacc.cfbk("MUser", "dbid", pid, required=True)
+        prof = dbacc.cfbk("MUser", "dsId", pid, required=True)
         ras = {"assoc": dbacc.reqarg("assoc", "string", required=True),
                "fm": dbacc.reqarg("fm", "string", required=True),
                # member invite authorization request attributes

@@ -77,7 +77,7 @@ return {
     //will reflect either the new dsId or the appropriate state after
     //abandoning creation.
     //
-    //The extra param is passed through in the dispatch call if the state
+    //The "extra" param is passed through in the dispatch call if the state
     //was changed.  It is not saved with the state.  A typical use might be
     //to automatically open the settings when switching to display a theme.
     //Within the extra param, forceReplace replaces the state and calls
