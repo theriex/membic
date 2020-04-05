@@ -224,6 +224,8 @@ var jt = {};   //Global access to general utility methods
 
 
     app.samePO = function (a, b) {
+        if(!a || !b) {
+            return false; }
         if(a.dsType === b.dsType && a.dsId === b.dsId) {
             return true; }
         return false;

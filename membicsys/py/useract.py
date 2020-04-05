@@ -173,6 +173,51 @@ def update_association(muser, ao, prof, ras):
     return prof, updt
 
 
+# Simple in this case means bold and italic tags only.  That allows some
+# minor visual interest.  Can expand later if really necessary.
+# test = "Try <i>this</i> as <br/><em>one</em>\n<b>test</b> case."
+# re.sub(r"<(/?)([^>]*)>", r"<\1\2>", test)
+def tagrepl(matchobj):
+    tag = "<" + matchobj.group(1) + matchobj.group(2) + ">"
+    if matchobj.group(2) == "i": return tag
+    elif matchobj.group(2) == "b": return tag
+    else: return ""
+
+def verify_simple_html(val):
+    return re.sub(r"<(/?)([^>]*)>", tagrepl, val)
+
+
+# Read the specified argument values into the given object.
+def read_values(obj, fldspec):
+    obtype = obj["dsType"]
+    for fld in fldspec["inflds"]:
+        val = dbacc.reqarg(fld, obtype + "." + fld)
+        if "special" in fldspec:
+            if fld in fldspec["special"]:
+                if fldspec["special"][fld] == "simplehtml":
+                    val = verify_simple_html(val)
+        logging.debug("   read_values " + fld + ": " + val)
+        if val and val.lower() == "unset_value":
+            obj[fld] = ""
+        elif val:  # Unchanged unless value given
+            obj[fld] = val
+
+
+def verify_theme_name(prevnamec, theme):
+    if not theme["name"]:
+        raise ValueError("Theme name required.")
+    # Remove all whitespace from name and convert to lower case
+    cn = re.sub(r"\s+", "", theme["name"]).lower()
+    if not cn:
+        raise ValueError("Theme name must have a value.")
+    if cn != prevnamec:
+        othertheme = dbacc.cfbk("Theme", "name_c", cn)
+        if othertheme:
+            raise ValueError("Another theme is already using that name.")
+    theme["name_c"] = cn
+
+
+
 ##################################################
 #
 # API entrypoints
@@ -184,20 +229,15 @@ def update_association(muser, ao, prof, ras):
 # the password has to match what they previously entered.
 def accupd():
     res = ""
-    inflds = ["email", "altinmail", "name", "aboutme", "hashtag", "cliset"]
     try:
         muser, srvtok = util.authenticate()
         verify_active_account(muser)
         prevemail = muser["email"]
         prevalt = muser["altinmail"]
         prevhash = muser["hashtag"]
-        for fld in inflds:
-            val = dbacc.reqarg(fld, "MUser." + fld)
-            logging.debug("   accupd " + fld + ": " + val)
-            if val and val.lower() == "unset_value":
-                muser[fld] = ""
-            elif val:  # Unchanged unless value given
-                muser[fld] = val
+        read_values(muser, {"inflds": ["email", "altinmail", "name", "aboutme",
+                                       "hashtag", "cliset"],
+                            "special": {"aboutme": "simplehtml"}});
         val = dbacc.reqarg("password")
         if not val and muser["email"] != prevemail:
             raise ValueError("Password required to change email address.")
@@ -220,6 +260,35 @@ def accupd():
         dbacc.entcache.cache_put(muser)  # will likely reference this again soon
         res = (json.dumps(util.make_auth_obj(muser, srvtok)) +
                "," + util.safe_JSON(muser))
+    except ValueError as e:
+        return util.srverr(str(e))
+    return "[" + res + "]"
+
+
+def themeupd():
+    res = ""
+    try:
+        muser, srvtok = util.authenticate()
+        verify_active_account(muser)
+        dsId = dbacc.reqarg("dsId", "dbid")
+        if dsId:
+            theme = dbacc.cfbk("Theme", "dsId", dsId, required=True)
+            if theme_association(theme, muser["dsId"]) != "Founder":
+                raise ValueError("Not Founder of " + theme["name"])
+        else:  # making a new instance
+            theme = {"dbType":"Theme", "hashtag":"", "name":"", "name_c":"",
+                     "modified":""}
+        prevhash = theme["hashtag"]
+        prevnamec = theme["name_c"]
+        read_values(theme, {"inflds": ["name", "hashtag", "description",
+                                       "cliset", "keywords"],
+                            "special": {"description": "simplehtml"}});
+        verify_theme_name(prevnamec, theme)
+        if theme["hashtag"] and theme["hashtag"] != prevhash:
+            verify_hashtag(theme["hashtag"])
+        # Only founder is updating, so not bothering with version check
+        theme = dbacc.write_entity(theme, vck=theme["modified"])
+        res = util.safe_JSON(theme)
     except ValueError as e:
         return util.srverr(str(e))
     return "[" + res + "]"

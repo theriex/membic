@@ -497,6 +497,45 @@ return {
                 function (code, errtxt) {
                     jt.err("Membership failed " + code + ": " + errtxt); },
                 jt.semaphore("theme.addMember"));
+    },
+
+
+    update: function (obj, succf, failf) {
+        if(!obj) {
+            jt.log("theme.update called without update object");
+            if(failf) {
+                return failf(400, "No theme object to update"); }
+            return; }  //nothing to do
+        obj.dsType = "Theme";  //verify set in case creating new
+        var url = app.login.authURL("/api/themeupd");
+        jt.call("POST", url, app.refmgr.postdata(obj),
+                function (objs) {
+                    app.refmgr.put(app.refmgr.deserialize(objs[0]));
+                    app.refmgr.uncache("activetps", "411");
+                    if(succf) {
+                        succf(objs[0]); } },
+                function (code, errtxt) {
+                    jt.log("app.theme.update " + code + " " + errtxt);
+                    if(failf) {
+                        failf(code, errtxt); } },
+                jt.semaphore("theme.update"))
+    },
+
+
+    settingsUpdate: function () {
+        var theme = app.pcd.getDisplayContext().actobj.contextobj;
+        var tu = {dsType:"Theme", dsId:theme.dsId};
+        app.pcd.readCommonSettingsFields(tu, theme);  //hashtag, colors
+        tu.keywords = jt.byId("kwrdsin").value.trim() || "UNSET_VALUE";
+        app.theme.update(tu,
+            function (theme) { //updated theme already cached
+                jt.out("settingsinfdiv", "Updated " + theme.name + ".");
+                app.fork({descr:"Close theme settings display", ms:800,
+                          func:app.statemgr.redispatch}); },
+            function (code, errtxt) {
+                jt.byId("settingsupdbutton").disabled = false;
+                jt.out("settingsinfdiv", "Update failed code " + code + " " +
+                        errtxt); });
     }
             
 }; //end of returned functions

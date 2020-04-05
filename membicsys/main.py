@@ -48,6 +48,10 @@ def membicsave(): #params an, at, Membic, (themecontext)
 def accupd(): #params an, at, MUser update fields
     return useract.accupd()
 
+@app.route('/api/themeupd', methods=['GET', 'POST'])
+def themeupd(): #params an, at, Theme update fields
+    return useract.themeupd()
+
 @app.route('/api/associate', methods=['GET', 'POST'])
 def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
     return useract.associate()

@@ -617,31 +617,28 @@ return {
         var pu = {dsType:"MUser", dsId:prof.dsId};
         pu.email = jt.byId("emailin").value.trim();
         if(!jt.isProbablyEmail(pu.email)) {
-            return jt.out("accsetinfdiv", "Invalid email address"); }
+            return jt.out("settingsinfdiv", "Invalid email address"); }
         pu.password = jt.byId("updpin").value.trim();
         if(pu.email !== prof.email && !pu.password) {
-            return jt.out("accsetinfdiv",
+            return jt.out("settingsinfdiv",
                           "Password required to change email."); }
         if(pu.email !== prof.email && !confirm("You will need to re-activate your account from your new email address " + pu.email)) {
             return; }  //continue editing.
         pu.altinmail = jt.byId("altemin").value.trim();
         if(pu.altinmail && !jt.isProbablyEmail(pu.altinmail)) {
-            return jt.out("accsetinfdiv", "Invalid alternate email"); }
+            return jt.out("settingsinfdiv", "Invalid alternate email"); }
         pu.altinmail = pu.altinmail || "UNSET_VALUE";
-        pu.hashtag = jt.byId("hashin").value.trim() || "UNSET_VALUE";
-        pu.cliset = prof.cliset;  //unsaved changes in cached prof are ok
-        app.pcd.embOverrides().forEach(function (od) {
-            pu.cliset[od.name] = jt.byId(od.name + "in").value; });
-        jt.out("accsetinfdiv", "Updating...");
-        jt.byId("accupdbutton").disabled = true;
+        app.pcd.readCommonSettingsFields(pu, prof);
+        jt.out("settingsinfdiv", "Updating...");
+        jt.byId("settingsupdbutton").disabled = true;
         app.profile.update(pu,
             function (prof) { //updated account already cached
-                jt.out("accsetinfdiv", "Profile updated.");
+                jt.out("settingsinfdiv", "Profile updated.");
                 app.fork({descr:"Close account settings display", ms:800,
                           func:app.login.rebuildContext}); },
             function (code, errtxt) {
-                jt.byId("accupdbutton").disabled = false;
-                jt.out("accsetinfdiv", "Update failed code " + code + " " +
+                jt.byId("settingsupdbutton").disabled = false;
+                jt.out("settingsinfdiv", "Update failed code " + code + " " +
                         errtxt); });
     },
 

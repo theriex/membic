@@ -66,7 +66,7 @@ app.profile = (function () {
             if(failf) {
                 return failf(400, "No profile object to update"); }
             return; }  //nothing to do
-        obj.dsType = "MUser";
+        obj.dsType = "MUser";   //verify set in case creating new
         var authobj = app.login.authenticated();
         if(authobj) {
             obj.dsId = authobj.authId; }

@@ -1656,7 +1656,7 @@ app.pcd = (function () {
             embobj.cliset.embcolors = embobj.cliset.embcolors || {};
             var embcolors = embobj.cliset.embcolors;
             var emboHTML = [];
-            app.pcd.embOverrides().forEach(function (od) {
+            standardOverrideColors.forEach(function (od) {
                 embcolors[od.name] = embcolors[od.name] || od.value;
                 emboHTML.push(["div", {cla:"colorselectdiv"},
                                [["label", {fo:od.name + "in", cla:"colorlab"},
@@ -1687,21 +1687,24 @@ app.pcd = (function () {
     }
 
 
-    function settingsInfoAndUpdateButtonHTML (canmod) {
+    function settingsInfoAndUpdateButtonHTML (obj, canmod) {
         if(!canmod) {
             return ""; }
+        var clickstr = jt.fs("app.login.updateAccount()");
+        if(obj.dsType === "Theme") {
+            clickstr = jt.fs("app.theme.settingsUpdate()"); }
         return jt.tac2html(
             [["div", {cla:"cbdiv"},
-              ["div", {cla:"infolinediv", id:"accsetinfdiv"}]],
-             ["div", {id:"accountsettingsbuttonsdiv"},
-              [["button", {type:"button", id:"accupdbutton",
-                           onclick: jt.fs("app.login.updateAccount()")},
+              ["div", {cla:"infolinediv", id:"settingsinfdiv"}]],
+             ["div", {id:"settingsbuttonsdiv"},
+              [["button", {type:"button", id:"settingsupdbutton",
+                           onclick:clickstr},
                 "Update"]]]]);
     }
 
 
     function writePersonalSettings (divid) {
-        obj = app.profile.myProfile();
+        var prof = app.profile.myProfile();
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"},
               [["button", {id:"cntb", title:"Create New Theme",
@@ -1714,7 +1717,7 @@ app.pcd = (function () {
              ["div", {id:"cpidiv"},
               [personalInfoSettingsHTML(),
                generalSettingsHTML(prof, true)]],
-             settingsInfoAndUpdateButtonHTML(true)]));
+             settingsInfoAndUpdateButtonHTML(prof, true)]));
         //dim and disable the Create Theme button if account is not active
         if(app.login.authenticated().status !== "Active") {
             var cntb = jt.byId("cntb");
@@ -1730,8 +1733,37 @@ app.pcd = (function () {
              ["div", {id:"cpidiv"},
               [["div", {id:"memberactdiv"}],
                generalSettingsHTML(obj, canmod)]],
-             settingsInfoAndUpdateButtonHTML(canmod)]));
+             settingsInfoAndUpdateButtonHTML(obj, canmod)]));
         app.theme.memberset(obj, "settingsmenudiv", "memberactdiv");
+    }
+
+
+    function verifyDescripSave () {
+        var changed = false;
+        ctx.descobj.owneredit.forEach(function (edo) {
+            var dval = ctx.descobj[edo.dfld];
+            var ival = jt.byId(edo.eid).innerHTML;
+            if(dval !== ival) {
+                changed = true; } });
+        var savdiv = jt.byId("pcduppersavediv");
+        if(!changed && savdiv.innerHTML) {
+            savdiv.innerHTML = ""; }
+        else if(changed && !savdiv.innerHTML) {
+            savdiv.innerHTML = jt.tac2html(
+                ["button", {type:"button", id:"descrupdbutton",
+                            onclick:jt.fs("app.pcd.saveDescripChanges()")},
+                 "Save changes"]); }
+    }
+
+
+    function ownerEnableEdit () {
+        var obj = ctx.actobj.contextobj;
+        if(obj && ((app.samePO(obj, app.profile.myProfile())) ||
+                   (app.theme.association(obj) === "Founder"))) {
+            ctx.descobj.owneredit.forEach(function (edo) {
+                var elem = jt.byId(edo.eid);
+                elem.contentEditable = true;
+                jt.on(elem, "input", verifyDescripSave); }); }
     }
 
 
@@ -1750,6 +1782,14 @@ return {
             else if(obj.dsType === "Theme" || obj.obtype === "theme") {
                 link = "/theme/" + obj.dsId; } }
         return link;
+    },
+
+
+    readCommonSettingsFields: function (obj, src) {
+        obj.hashtag = jt.byId("hashin").value.trim() || "UNSET_VALUE";
+        obj.cliset = src.cliset;  //unsaved changes in cached obj are ok
+        standardOverrideColors.forEach(function (od) {
+            obj.cliset[od.name] = jt.byId(od.name + "in").value; });
     },
 
 
@@ -2487,6 +2527,33 @@ return {
     },
 
 
+    saveDescripChanges: function () {
+        jt.out("pcduppersavediv", "Saving...");
+        var updobj = ctx.actobj.contextobj;
+        ctx.descobj.owneredit.forEach(function (edo) {
+            if(edo.dfld === "name") {
+                updobj.name = jt.byId(edo.eid).innerHTML; }
+            else if(edo.dfld === "descr") {
+                if(updobj.dsType === "MUser") {
+                    updobj.aboutme = jt.byId(edo.eid).innerHTML; }
+                else {
+                    updobj.description = jt.byId(edo.eid).innerHTML; } } });
+        //Rebuilding everything via app.statemgr.redispatch is heavyhanded,
+        //but it doesn't happen often, and rebuilding ensures editable
+        //displays are returned to their original state with proper info.
+        var updfs = {"MUser":app.profile.update, "Theme":app.theme.update}
+        updfs[updobj.dsType](updobj,
+            function () {
+                app.fork({descr:"saveDesripChanges success", ms:100,
+                          func:app.statemgr.redispatch}); },
+            function (code, errtxt) {
+                jt.log("saveDescripChanges " + code + ": " + errtxt);
+                jt.out("pcduppersavediv", code + ": " + errtxt);
+                app.fork({descr:"saveDesripChanges failed", ms:800,
+                          func:app.statemgr.redispatch}); });
+    },
+
+
     //descobj elements:
     //  picsrc: display page img src url, may include cachebust param
     //  disptype: profile|theme|app
@@ -2500,16 +2567,19 @@ return {
         if(descobj.descr.length > 300) {
             fsz = "medium"; }
         jt.out("pgdescdiv", jt.tac2html(
-            ["div", {id:"pcduppercontentdiv"},
-             [["div", {id:"pcdpicdiv"},
-               ["img", {cla:"pcdpic", src:descobj.picsrc}]],
-              ["div", {id:"pcddescrdiv"},
-               [["div", {id:"pcdnamediv"},
-                 ["span", {id:"pcdnamespan", cla:"penfont"}, descobj.name]],
-                ["div", {id:"ppcdshoutdiv"},
-                 ["span", {cla:"shoutspan",
-                           style:"font-size:" + fsz + ";"}, 
-                  jt.linkify(descobj.descr)]]]]]]));
+            [["div", {id:"pcduppercontentdiv"},
+              [["div", {id:"pcdpicdiv"},
+                ["img", {cla:"pcdpic", src:descobj.picsrc}]],
+               ["div", {id:"pcddescrdiv"},
+                [["div", {id:"pcdnamediv"},
+                  ["span", {id:"pcdnamespan", cla:"penfont"}, descobj.name]],
+                 ["div", {id:"pcddescrdiv"},
+                  ["span", {cla:"descrspan", id:"pcddescrspan",
+                            style:"font-size:" + fsz + ";"},
+                   jt.linkify(descobj.descr)]]]]]],
+             ["div", {id:"pcduppersavediv"}]]));
+        ctx.descobj.owneredit = [{eid:"pcdnamespan", dfld:"name"},
+                                 {eid:"pcddescrspan", dfld:"descr"}];
     },
 
 
@@ -2533,12 +2603,12 @@ return {
         writeActionsArea();
         app.pcd.updateSearchLabelText();
         processExtraObject(actobj.extraobj);
+        ownerEnableEdit();
         app.pcd.filterContent("init");
     },
 
 
     picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); },
-    embOverrides: function () { return standardOverrideColors; }
 
 };  //end of returned functions
 }());
