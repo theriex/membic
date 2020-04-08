@@ -5,7 +5,11 @@ import py.dbacc as dbacc
 import py.util as util
 import re
 import json
-import urllib.parse  # to be able to use urllib.parse.quote
+import urllib.parse     # to be able to use urllib.parse.quote
+import io               # Image.open/save requires file-like access
+from PIL import Image   # Only need Image from Pillow
+import base64
+
 
 def membicsave():
     res = ""
@@ -262,7 +266,7 @@ def accupd():
                "," + util.safe_JSON(muser))
     except ValueError as e:
         return util.srverr(str(e))
-    return "[" + res + "]"
+    return util.respJSON("[" + res + "]")
 
 
 def themeupd():
@@ -291,7 +295,7 @@ def themeupd():
         res = util.safe_JSON(theme)
     except ValueError as e:
         return util.srverr(str(e))
-    return "[" + res + "]"
+    return util.respJSON("[" + res + "]")
 
 
 def associate():
@@ -315,5 +319,41 @@ def associate():
             res += "," + util.safe_JSON(theme)
     except ValueError as e:
         return util.srverr(str(e))
-    return "[" + res + "]"
+    return util.respJSON("[" + res + "]")
 
+
+# flask.request.method always returns "GET".  Test for file content.
+def uploadimg():
+    picfile = flask.request.files.get("picfilein")
+    if not picfile:
+        logging.debug("uploadimg Ready")
+        return util.respond("Ready", mimetype="text/plain")
+    try:
+        muser, srvtok = util.authenticate()
+        dsType = dbacc.reqarg("dsType", "string", required=True)
+        dsId = dbacc.reqarg("dsId", "dbid", required=True)
+        logging.debug(muser["email"] + " uploadimg image for " + dsType +
+                      " " + str(dsId))
+        if dsType == "MUser" and str(dsId) == muser["dsId"]:
+            updobj = muser
+            # account does not need to be active to upload a profile pic
+            picfld = "profpic"
+        else:  # treat as Theme
+            verify_active_account(muser)
+            updobj = dbacc.cfbk("Theme", "dsId", dsId, required=True)
+            if theme_association(updobj, muser["dsId"]) != "Founder":
+                raise ValueError("Only Founders may upload an image")
+            picfld = "picture"
+        # nginx local dev: picfile is a FileStorage object.
+        img = Image.open(picfile)
+        sizemaxdims = 400, 400   # max allowed width/height for thumbnail resize
+        img.thumbnail(sizemaxdims)   # modify, preserving aspect ratio
+        bbuf = io.BytesIO()          # file-like object for save
+        img.save(bbuf, format="PNG")
+        updobj[picfld] = base64.b64encode(bbuf.getvalue())
+        updobj = dbacc.write_entity(updobj, updobj["modified"])
+        if dsType == "MUser":
+            dbacc.entcache.cache_put(muser)  # update cached reference
+    except ValueError as e:
+        return util.srverr(str(e))
+    return util.respond("Done: " + updobj["modified"], mimetype="text/plain")

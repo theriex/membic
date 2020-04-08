@@ -298,7 +298,7 @@ def cfbk (entity, field, value, required=False):
             entcache.cache_put(inst)
         return inst
     if required:
-        raise ValueError(entity + " " + value + " not found.")
+        raise ValueError(entity + " " + vstr + " not found.")
     return None
 
 

@@ -36,6 +36,10 @@ def obimg():  # params: dt (dsType), di (dsId)
 def imagerelay():  #params: membicId
     return util.imagerelay()
 
+@app.route('/api/uploadimg', methods=['GET', 'POST'])
+def uploadimg():  #params: an, at, dsType, dsId, picfilein
+    return useract.uploadimg()
+
 @app.route('/api/signin', methods=['GET', 'POST'])
 def signin(): #params: emailin, passin, an, at
     return util.signin()

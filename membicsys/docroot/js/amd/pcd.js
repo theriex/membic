@@ -1756,10 +1756,84 @@ app.pcd = (function () {
     }
 
 
+    function monitorImageUpload (cmd) {
+        var iframe = jt.byId("pumif");
+        if(!iframe) {
+            return; }
+        var picstatdiv = jt.byId("picuploadstatusdiv");
+        if(cmd === "start") {
+            jt.byId("picuploadbutton").disabled = true;
+            picstatdiv.innerHTML = "Uploading"; }
+        var txt = iframe.contentDocument || iframe.contentWindow.document;
+        if(txt && txt.body) {
+            txt = txt.body.innerHTML;
+            var doneprefix = "Done: ";
+            //server text may be surrounded by HTML tags added by default.
+            var idx = txt.indexOf(doneprefix);
+            if(idx >= 0) {
+                jt.out("pcdpicuploaddiv", "");  //clear image upload form
+                var mod = txt.slice(idx + doneprefix.length);
+                idx = mod.indexOf("<");
+                if(idx > 0) {
+                    mod = mod.slice(0, idx); }
+                ctx.actobj.contextobj.modified = mod;  //note modification time
+                var img = jt.byId("pcdpicimg");
+                img.src = picImgSrc(ctx.actobj.contextobj);  //display image
+                return; }  //done monitoring
+            idx = txt.indexOf("Ready");
+            if(idx < 0) {  //not Done and not Ready.  Report error.
+                jt.err(txt);
+                jt.out("pcdpicuploaddiv", "");  //clear out image upload form
+                return; } }
+        picstatdiv.innerHTML = picstatdiv.innerHTML + ".";  //add a monitor dot
+        app.fork({descr:"monitor pic upload", ms:1000,
+                  func:monitorImageUpload});
+    }
+
+
+    function togglePicUpload () {
+        var div = jt.byId("pcdpicuploaddiv");
+        if(div.innerHTML) {
+            div.innerHTML = "";
+            return; }
+        var cob = ctx.actobj.contextobj;
+        var oa = obacc[cob.dsType]
+        var auth = app.login.authenticated()
+        div.innerHTML = jt.tac2html(
+            ["div", {id:"picuploadformdiv"},
+             //target form submission to iframe to avoid page reload
+             [["div", {id:"cancelxdiv"},
+               ["a", {href:"#close", title:"Close pic upload",
+                      onclick:jt.fs("app.pcd.togglePicUpload()")}, "x"]],
+              ["form", {id:"picupldform", action:"/api/uploadimg",
+                        method:"post", target:"pumif",
+                        enctype:"multipart/form-data"},
+               [["input", {type:"hidden", name:"an", value:auth.email}],
+                ["input", {type:"hidden", name:"at", value:auth.token}],
+                ["input", {type:"hidden", name:"dsType", value:cob.dsType}],
+                ["input", {type:"hidden", name:"dsId", value:cob.dsId}],
+                ["label", {fo:"picfilein"},
+                 "Set " + oa.disptype + " image"],
+                ["input", {type:"file", id:"picfilein", name:"picfilein",
+                           accept:"image/*", 
+                           onchange:jt.fs("app.pcd.enableUploadButton()")}],
+                ["div", {id:"picuploadstatusdiv"}],
+                ["div", {id:"picuploadformbuttonsdiv"},
+                 ["button", {type:"submit", id:"picuploadbutton",
+                             onclick:jt.fsd( //hook but do not intercept
+                                 "app.pcd.monitorImageUpload('start')")},
+                  "Upload"]]]],
+              ["iframe", {id:"pumif", name:"pumif", src:"/api/uploadimg",
+                          style:"display:none"}]]]);
+        jt.byId("picuploadbutton").disabled = true;
+    }
+
+
     function ownerEnableEdit () {
         var obj = ctx.actobj.contextobj;
         if(obj && ((app.samePO(obj, app.profile.myProfile())) ||
                    (app.theme.association(obj) === "Founder"))) {
+            jt.on("pcdpicdiv", "click", togglePicUpload);
             ctx.descobj.owneredit.forEach(function (edo) {
                 var elem = jt.byId(edo.eid);
                 elem.contentEditable = true;
@@ -2569,7 +2643,7 @@ return {
         jt.out("pgdescdiv", jt.tac2html(
             [["div", {id:"pcduppercontentdiv"},
               [["div", {id:"pcdpicdiv"},
-                ["img", {cla:"pcdpic", src:descobj.picsrc}]],
+                ["img", {id:"pcdpicimg", src:descobj.picsrc}]],
                ["div", {id:"pcddescrdiv"},
                 [["div", {id:"pcdnamediv"},
                   ["span", {id:"pcdnamespan", cla:"penfont"}, descobj.name]],
@@ -2577,7 +2651,8 @@ return {
                   ["span", {cla:"descrspan", id:"pcddescrspan",
                             style:"font-size:" + fsz + ";"},
                    jt.linkify(descobj.descr)]]]]]],
-             ["div", {id:"pcduppersavediv"}]]));
+             ["div", {id:"pcduppersavediv"}],
+             ["div", {id:"pcdpicuploaddiv"}]]));
         ctx.descobj.owneredit = [{eid:"pcdnamespan", dfld:"name"},
                                  {eid:"pcddescrspan", dfld:"descr"}];
     },
@@ -2608,7 +2683,11 @@ return {
     },
 
 
+    enableUploadButton: function () {
+        jt.byId("picuploadbutton").disabled = false; },
     picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); },
+    monitorImageUpload: function (cmd) { monitorImageUpload(cmd); },
+    togglePicUpload: function () { togglePicUpload(); }
 
 };  //end of returned functions
 }());

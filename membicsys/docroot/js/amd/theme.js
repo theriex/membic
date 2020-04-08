@@ -34,7 +34,8 @@ app.theme = (function () {
             if(tpo.founders.csvcontains(uid)) { return "Founder"; }
             if(tpo.moderators.csvcontains(uid)) { return "Moderator"; }
             if(tpo.members.csvcontains(uid)) { return "Member"; } }
-        //not a theme, or uid not recorded in theme
+        //Either tpo is not a theme, or they are no longer listed as a
+        //member. Treat as a profile lookup in either case.
         switch(profassoc(tpo.dsType, tpo.dsId).lev) {
         case 3: return "Founder";
         case 2: return "Moderator";

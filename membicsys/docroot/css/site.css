@@ -165,10 +165,17 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .cbdiv { clear:both; }
 
 /* >> profile/theme display */
+#pgdescdiv { position:relative; }
 #pcdcontdiv { padding:0px 0px 10px 0px; }
 .pcditemdiv { clear:both; } /* main formatting in content display */
 #pcdpicdiv { width:110px; height:110px; padding:0px 5px 2px 0px; float:left; }
-.pcdpic { max-width:110px; max-height:110px; }
+#pcdpicimg { max-width:110px; max-height:110px; }
+#pcdpicuploaddiv { position:absolute; left:0px; top:12px; display:table; }
+#picuploadformdiv { background-image:url('../img/white85percent.png');
+  padding:10px; border-radius:5px; border:2px solid #999; }
+#cancelxdiv { float:right; }
+#picuploadformbuttonsdiv { text-align:center; padding:5px 0px 20px 0px; }
+#picuploadstatusdiv { font-size:medium; }
 #pcddescrdiv { height:110px; overflow:auto; }
 #pcdouterdiv { position:relative; }
 #pcduppercontentdiv { }
@@ -237,7 +244,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #settingsbuttonsdiv button { margin:0px 10px; }
 #colorchoicesdiv { font-size:small; text-align:center; margin:0px auto; }
 .colorselectdiv { display:inline-block; margin-left:5px; }
-#memberactdiv { background-image:url('../img/bleachscrub.png'); }
+#memberactdiv { background-image:url('../img/white60percent.png'); }
 #inviteformbuttonsdiv { padding-bottom:12px; }
 #tmemlistdiv { padding-bottom:10px; }
 .tmemlineimg { max-height:18px; margin:0px 5px; }
@@ -379,7 +386,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fparevdiv { }  /* had a left margin to accomodate author, now inline */
 .fpnarevdiv { }
 .fpinrevdiv { margin:0px 0px 0px 5px; }
-.fpinrevdiv { background-image:url('../img/bleachscrub.png');
+.fpinrevdiv { background-image:url('../img/white60percent.png');
     border-top-right-radius:10px; border-bottom-right-radius:10px; 
     position:relative; }
 .fpbodydiv { overflow:auto; padding:0px 3px 3px 3px; }
@@ -395,7 +402,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpdatediv { margin-left:5px; font-size: xx-small; }
 .fpdcontdiv { position:relative; }
 .fpqoverdiv { position:absolute; top:0px; left:40px; 
-  background-image:url('../img/bleachscrub.png');
+  background-image:url('../img/white60percent.png');
   font-style:italic; font-size:medium; font-weight:bold; }
 .fpdescrdiv, .fpkeywrdsdiv, .fpctmsdiv { 
   font-size:small; padding: 2px 10px 0px 2px;

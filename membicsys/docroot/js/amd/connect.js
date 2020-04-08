@@ -20,27 +20,6 @@ app.connect = (function () {
     }
 
 
-    function mergePersonalThemesForAccess (summaries) {
-        var prof = app.profile.myProfile();
-        if(!prof) {
-            return summaries; }
-        Object.keys(prof.coops).forEach(function (ctmid) {
-            var pc = prof.coops[ctmid];
-            if(pc.dsType === "Theme" && pc.lev >= 1 &&
-               !inSummary(ctmid, summaries)) {
-                var pcsum = {dsId:ctmid, obtype:"theme", modified:"",
-                             lastwrite:"", hashtag:pc.hashtag,
-                             picture:pc.picture, name:pc.name, 
-                             description:pc.description};
-                switch(pc.lev) {
-                case 1: pcsum.members = prof.dsId; break;
-                case 2: pcsum.moderators = prof.dsId; break;
-                case 3: pcsum.founders = prof.dsId; break; }
-                summaries.push(pcsum); } });
-        return summaries;
-    }
-
-
     function initVars () {
         jt.out("contentdiv", "Fetching Themes and Profiles");
         var atr = app.refmgr.cached("activetps", "411");
@@ -60,38 +39,46 @@ app.connect = (function () {
     }
 
 
-    //Return a display summary item built from the user theme association.
-    function themeSummaryItem (tid, uto, tso) {
-        var user = app.profile.myProfile();  //defintely available, have assocs
-        if(!tso) {
-            tso = app.refmgr.cached("Theme", tid);
-            if(!tso) {
-                tso = {description:"",
-                       founders:"",
-                       moderators:"",
-                       members:"",
-                       rejects:"",
-                       seeking:"",
-                       lastwrite:user.lastWrite,
-                       modified:user.modified};
-                switch(uto.lev) {
-                    case 3: tso.founders = user.dsId; break;
-                    case 2: tso.moderators = user.dsId; break;
-                    case 1: tso.members = user.dsId; break; } } }
-        return {description:tso.description,
-                dsId:tid,
-                hashtag:uto.hashtag,
-                founders:tso.founders,
-                moderators:tso.moderators,
-                members:tso.members,
-                rejects:tso.rejects,
-                seeking:tso.seeking,
-                lastwrite:tso.lastwrite,
-                modified:tso.modified,
-                name:tso.name || uto.name,
-                obtype:"theme",
-                pic:tso.pic || uto.picture,
-                lev:uto.lev};
+    function verifyUserSummaryItem (user, key, allobjs) {
+        var obinf = {obtype:"theme", dsType:"Theme", dsId:key};
+        if(key.startsWith("P")) {
+            obinf = {obtype:"profile", dsType:"MUser", dsId:key.slice(1)}; }
+        var uinf = user.themes[key];
+        var si = allobjs[obinf.obtype + obinf.dsId];
+        if(!si) {  //build a summary item object from user info
+            si = {dsId:obinf.dsId,
+                  dsType:obinf.dsType,
+                  obtype:obinf.obtype,
+                  modified:user.modified,
+                  lastwrite:user.lastWrite,
+                  hashtag:uinf.hashtag || "",
+                  pic:uinf.pic,
+                  name:uinf.name,
+                  description:""}  //no description in user info
+            if(obtype === "theme") {
+                si.founders = "";
+                si.moderators = "";
+                si.members = "";
+                switch(uinf.lev) {
+                case 3: si.founders = user.dsId; break;
+                case 2: si.moderators = user.dsId; break;
+                case 1: si.members = user.dsId; break; } }
+            var cached = app.refmgr.cached(dsType, dsId);
+            if(cached) {  //override the guessed values with cached values
+                var copyfields = ["picture", "modified", "lastwrite", 
+                                  "hashtag", "name", "description"];
+                if(obinf.dsType === "MUser") {
+                    copyfields[0] = "profpic"; }
+                copyfields.forEach(function (fld) {
+                    si[fld] = cached[fld]; }); }
+            allobjs[obinf.obtype + obinf.dsId] = si; }
+        si.sprio = 0;  //In case still in uinf and no longer associated
+        if(uinf.lev) { //-1 (following) or positive value
+            si.sprio = 1;  //convert lev -1 (following) to sort priority 1
+            switch(uinf.lev) {  //bump other lev values up to match
+            case 1: si.sprio = 2; break;
+            case 2: si.sprio = 3; break;
+            case 3: si.sprio = 4; break; } }
     }
 
 
@@ -110,22 +97,19 @@ app.connect = (function () {
         if(user && user.themes) {  //include personal stuff.  See note.
             decos = [];
             var allobjs = {};
-            tps.forEach(function (tp) {  //copy in all public listings
+            tps.forEach(function (tp) {  //copy in all listed themes/profiles
                 if(tp.dsType !== "MembicDefinition") {
-                    if(user.themes[tp.dsId]) {
-                        tp.lev = user.themes[tp.dsId].lev; }
+                    tp.sprio = 0;
                     allobjs[tp.obtype + tp.dsId] = tp; } });
-            Object.keys(user.themes).forEach(function (key) {  //verify user's
-                var ident = "theme" + key;
-                allobjs[ident] = themeSummaryItem(key, user.themes[key],
-                                                  allobjs[ident]); });
-            allobjs["profile" + user.dsId].lev = 0.5;  //last before general
+            //verify everything the user knows about is included and prioritized
+            Object.keys(user.themes).forEach(function (key) {
+                verifyUserSummaryItem(user, key, allobjs); });
+            allobjs["profile" + user.dsId].sprio = 0.5;  //last before general
             Object.keys(allobjs).forEach(function (key) {  //convert to array
                 decos.push(allobjs[key]); }); }
         decos.sort(function (a, b) {
-            if(a.lev && !b.lev) { return -1; }  //lev val beats missing
-            if(!a.lev && b.lev) { return 1; }
-            if(a.lev && b.lev && a.lev !== b.lev) { return b.lev - a.lev; }
+            if(a.sprio !== b.sprio) {
+                return b.sprio - a.sprio; }
             if(a.lastwrite < b.lastwrite) { return 1; }
             if(a.lastwrite > b.lastwrite) { return -1; }
             return 0; });
@@ -135,16 +119,14 @@ app.connect = (function () {
 
     function imgForAssocLev (tp) {
         var img = "blank.png";
+        switch(app.theme.association(tp)) {
+        case "Founder": img = "tsfounder.png"; break;
+        case "Moderator": img ="tsmoderator.png"; break;
+        case "Member": img = "tsmember.png"; break;
+        case "Following": img = "tsfollowing.png"; break; }
         var prof = app.profile.myProfile();
-        if(prof) {
-            if(prof.themes && prof.themes[tp.dsId]) {
-                switch(prof.themes[tp.dsId].lev) {
-                case -1: img = "tsfollowing.png"; break;
-                case 1: img = "tsmember.png"; break;
-                case 2: img = "tsmoderator.png"; break;
-                case 3: img = "tsfounder.png"; break; } }
-            else if(tp.obtype === "profile" && prof.dsId === tp.dsId) {
-                img = "tsfounder.png"; } }
+        if(prof && prof.dsId === tp.dsId && tp.obtype === "profile") {
+            img = "tsfounder.png"; }
         img = app.dr("img/" + img);
         return img;
     }

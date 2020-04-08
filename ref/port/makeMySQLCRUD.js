@@ -307,7 +307,7 @@ function helperFunctions () {
     pyc += "            entcache.cache_put(inst)\n"
     pyc += "        return inst\n"
     pyc += "    if required:\n"
-    pyc += "        raise ValueError(entity + \" \" + value + \" not found.\")\n"
+    pyc += "        raise ValueError(entity + \" \" + vstr + \" not found.\")\n"
     pyc += "    return None\n";
     pyc += "\n";
     pyc += "\n";
