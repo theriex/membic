@@ -12,6 +12,7 @@ import io               # Image.open/save requires file-like access
 from PIL import Image   # Only need Image from Pillow
 import string
 import random
+import urllib.parse     # to be able to use urllib.parse.quote
 
 
 site_home = "https://membic.org"
@@ -193,8 +194,7 @@ def in_terms_vio(entity, dsId, data=None):
     return False
 
 
-def add_membic_to_preb(context, membic):
-    prebsize = 200
+def make_preb_membic(membic):
     memsum = {}
     mflds = ["dsId", "dsType", "created", "modified", "url", "rurl", "revtype",
              "details", "penid", "ctmid", "rating", "srcrev", "cankey", "text", 
@@ -207,8 +207,13 @@ def add_membic_to_preb(context, membic):
         memsum[jsonfield] = json.loads(memsum[jsonfield])
     if membic["revpic"]:
         memsum["revpic"] = membic["dsId"]
-    # dequeue.appendleft is faster, but not worth the conversion
-    context["pbms"].insert(0, memsum)
+    return memsum
+
+
+def add_membic_to_preb(context, membic):
+    pm = make_preb_membic(membic)
+    prebsize = 200
+    context["pbms"].insert(0, pm)  # dequeue.appendleft not worth convert
     if len(context["pbms"]) >= 2 * prebsize:
         ovrf = dbacc.write_entity({
             "dsType": "Overflow",
@@ -494,4 +499,18 @@ def signin():
         return serveValueError(e, quiet=True)
     return respJSON("[" + oj + "]")
 
+
+def urlcontents():
+    ench = ""
+    try:
+        muser, srvtok = authenticate()  # must be signed in to fetch url info
+        url = dbacc.reqarg("url", "string", required=True)
+        resp = requests.get(url)
+        if resp.status_code != 200:
+            srverr(resp.text, resp.status_code)
+        ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
+    except ValueError as e:
+        logging.info("urlcontents failed: " + str(e));
+        return serveValueError(e)
+    return respJSON("[" + ench + "]")
 

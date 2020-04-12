@@ -4,20 +4,19 @@
 
 
 //////////////////////////////////////////////////////////////////////
-// This is a catchall reader that does the best it can to fill out
-// some of the review fields using information generally available
-// from any url.  If there are standards for declaring media that are
-// in general use then this is the place to support them.  Anything
-// seriously specific to a particular URL probably indicates the need
-// for a separate reader.
-//////////////////////////////////////////////////////////////////////
+// A catchall reader that fills membic details using general page
+// information typically provided for reference sharing purposes.  Other
+// readers work the same way, providing a callable getInfo function which is
+// called from app.membic.
+//
+// When a membic URL is given, app.membic selects a reader, initializes the
+// urlreader context, and calls getInfo.  The reader works in the background
+// getting summary information from the url into the given membic, then calls
+// app.membic.readerFinish to merge that data back in, along with a result
+// status and any message to be saved.
 
 app.readurl = (function () {
     "use strict";
-
-    var svcName = "URLReader";  //ascii with no spaces, used as an id.
-    //no attribution since no API provided.
-
 
     function valueForField (elem, field) {
         var idx = elem.indexOf(field);
@@ -106,14 +105,14 @@ app.readurl = (function () {
     }
 
 
-    function findAmazonImage (review, html) {
+    function findAmazonImage (membic, html) {
         var matches = html.match(/iUrl\s=\s"(\S+)"/);
         if(matches) {
-            review.imguri = matches[1]; }
+            membic.imguri = matches[1]; }
     }
 
 
-    function findNetflixImage (review, html, url) {
+    function findNetflixImage (membic, html, url) {
         //the alt for the image has the movie title, which isn't found
         //conveniently anywhere else, so set it here.
         if(url.indexOf("netflix.") >= 0) {
@@ -121,13 +120,13 @@ app.readurl = (function () {
             if(elem) {
                 var val = valueForField(elem, "src");
                 if(val) {
-                    review.imguri = val;
+                    membic.imguri = val;
                     val = valueForField(elem, "alt");
-                    review.title = val; } } }
+                    membic.details.title = val; } } }
     }
 
 
-    function findLogoImage (review, html, url) {
+    function findLogoImage (membic, html, url) {
         //A logo can be buried pretty much anywhere, but usually has "logo"
         //somewhere in the name and is almost always a png.  Try find.
         var index = html.search(/src=[A-Za-z0-9'"\/]*logo\.png/i);
@@ -138,11 +137,11 @@ app.readurl = (function () {
         if(index > 0) {
             var val = html.slice(index + 5);
             val = val.slice(0, val.toLowerCase().indexOf(".png") + 4);
-            review.imguri = verifyFullURL(val, url); }
+            membic.imguri = verifyFullURL(val, url); }
     }
 
 
-    function findFaviconImage (review, html, url) {
+    function findFaviconImage (membic, html, url) {
         //The favicon invariably looks lame, but it shows that app analyzed
         //the site, which is better than plain failure.  Better both in
         //terms of looking like we tried, and in encouraging people to
@@ -151,29 +150,29 @@ app.readurl = (function () {
         if(elem) {
             var val = valueForField(elem, "href");
             if(val) {
-                review.imguri = verifyFullURL(val, url); } }
+                membic.imguri = verifyFullURL(val, url); } }
     }
 
 
-    function setImageURI (review, html, url) {
-        review.imguri = "";
+    function setImageURI (membic, html, url) {
+        membic.imguri = "";
         var stds = [{t:"image_src",     e:"link", f:"href"},
                     {t:"og:image",      e:"meta", f:"content"},
                     {t:"twitter:image", e:"meta", f:"content"}];
         stds.forEach(function (std) {
-            if(!review.imguri) {
+            if(!membic.imguri) {
                 var elem = elementForString(html, std.t, std.e);
                 if(elem) {
                     var val = valueForField(elem, std.f);
                     if(val) {
-                        review.imguri = verifyFullURL(val, url); } } } });
+                        membic.imguri = verifyFullURL(val, url); } } } });
         var hacks = [findAmazonImage,
                      findNetflixImage,
                      findLogoImage,
                      findFaviconImage];
         hacks.forEach(function (hack) {
-            if(!review.imguri) {
-                hack(review, html, url); } });
+            if(!membic.imguri) {
+                hack(membic, html, url); } });
     }
 
 
@@ -214,22 +213,20 @@ app.readurl = (function () {
     }
 
 
-    //Set the type if it is unambigous, and there is no specific
-    //supporting extension module other than this general reader.
-    function setReviewType (review, ignore /*html*/, url) {
-        var typemaps = [
-            { urltxt: "imdb.", revtype: "movie" },
-            { urltxt: "netflix.", revtype: "movie" },
-            { urltxt: "rottentomatoes.", revtype: "movie" },
-            { urltxt: "soundcloud.", revtype: "music" },
-            { urltxt: "vimeo.", revtype: "video" },
-            { urltxt: "youtube.", revtype: "video" } ];
+    function setType (membic, url) {
+        membic.revtype = "article";
+        var typeflags = [
+            {s:"imdb.", t:"movie"},
+            {s:"netflix.", t:"movie"},
+            {s:"rottentomatoes.", t:"movie"},
+            {s:"soundcloud.", t:"music"},
+            {s:"vimeo.", t:"video"},
+            {s:"youtu.be", t:"video"},
+            {s:"youtube.", t:"video"}];
         url = url.toLowerCase();
-        typemaps.every(function (typemap) {
-            if(url.indexOf(typemap.urltxt) >= 0) {
-                review.revtype = typemap.revtype;
-                return false; }
-            return true; });
+        typeflags.forEach(function (tf) {
+            if(url.indexOf(tf.s) >= 0) {
+                membic.revtype = tf.t; } });
     }
     
 
@@ -272,13 +269,15 @@ app.readurl = (function () {
     }
 
 
-
-    function setTitle (review, html, url) {
-        var val;
-        if(review.acselkeyval) {  //if the name was selected from an 
-            review.title = val;   //autocomplete display listing, then
-            review.name = val;    //don't change it here
+    //Set both the title and the name in the membic details.  If the revtype
+    //is changed later, having the other value filled in makes things easier.
+    function setTitle (membic, html, url) {
+        membic.details = membic.details || {};
+        if(membic.acselkeyval) {  //name selected from verified autocomplete.
+            membic.details.name = membic.acselkeyval;
+            membic.details.title = membic.acselkeyval;
             return; }
+        var val;
         //the Facebook title is frequently better than the default tag title
         var elem = elementForString(html, "og:title", "meta");
         if(elem) {
@@ -299,43 +298,56 @@ app.readurl = (function () {
             //matches crap like "&raquo;"
             val = val.replace(/&#?x?\S\S\S?\S?\S?;/g, "");
             val = commonUnicodeConversions(val);
-            review.title = val.trim();
-            review.name = val; }
+            val = val.trim();
+            membic.details.name = val;
+            membic.details.title = val; }
     }
 
 
-    //Attempt to parse the title.  Add smarts on case basis.  In
+    //You might think that text.split(delim, 2) would give you the first
+    //element of the split, followed by the rest of the string, but in fact
+    //it works like text.split(delim).slice(0, 2).
+    function splitFirstAndRemainder (text, delim) {
+        text = text || "";
+        text = text.trim();
+        var subs = text.split(delim);
+        if(subs.length < 2) {
+            return [text, ""]; }
+        var first = subs[0].trim();
+        var second = subs.slice(1).join(delim).trim();
+        return [first, second];
+    }
+
+
+    //Music and video players tend to organize on artist/album/track, but
+    //album info is frequently omitted, especially for music videos.  This
+    //is just a heuristic, but it is helpful when it works.  Some samples:
+    //  https://www.youtube.com/watch?v=KnIJOO__jVo
+    //  http://www.youtube.com/watch?v=tHOn093r-Ak
+    function parseArtistWorkTitle (membic) {
+        var text = membic.details.title;
+        var delims = [" - ", ": "];
+        delims.forEach(function (delim) {
+            if(!membic.details.artist && text.indexOf(delim) >= 0) {
+                var subs = splitFirstAndRemainder(text, delim);
+                membic.details.artist = subs[0];
+                membic.details.title = subs[1]; } });
+    }
+
+
     //general, guessing artist, title is most likely due to players
     //organizing music by artist, then album, then title
-    function parseTitle (review) {
-        if(!review.title) {
-            return; }
-        var text = review.title;
-        //case: "artist - title"
-        //e.g. http://www.youtube.com/watch?v=KnIJOO__jVo
-        if(text.indexOf(" - ") > 0) {
-            //text.split(" - ", 2) is supposed to give you the first element
-            //and then the rest of the string as the second, but it doesn't
-            text = text.split(" - ");
-            review.artist = text[0].trim();
-            review.title = "";
-            var i;
-            for(i = 1; i < text.length; i += 1) {
-                if(review.title) {
-                    review.title += " - "; }
-                review.title += text[i].trim(); } }
-        //case: "artist: title"
-        //e.g. http://www.youtube.com/watch?v=tHOn093r-Ak
-        else if(text.indexOf(": ") > 0) {
-            text = text.split(": ", 2);
-            review.artist = text[0].trim();
-            review.title = text[1].trim(); }
+    function parseTitle (membic) {
+        if(!membic.details.title) {
+            return; }  //nothing to parse
+        if(membic.revtype === "music" || membic.revtype === "video") {
+            parseArtistWorkTitle(membic); }
     }
 
 
-    function setPublisher (review, html) {
-        var elem; var val;
-        if(!review.publisher) {
+    function setPublisher (membic, html) {
+        if(!membic.details.publisher) {
+            var elem; var val;
             if(!val) {
                 elem = elementForString(html, "og:site_name", "meta");
                 if(elem) {
@@ -345,17 +357,17 @@ app.readurl = (function () {
                 if(elem) {
                     val = valueForField(elem, "content"); } }
             if(val) {
-                review.publisher = val; } }
+                membic.details.publisher = val; } }
     }
 
 
-    function setAuthor (review, html, url) {
+    function setAuthor (membic, html, url) {
         var val;
         var brokens = [
-                {src: "washingtonpost", reg: /author:\["([^"]+)/},
-                {src: "huffingtonpost", reg: /author":\{[^}]*name":"([^"]+)/},
-                {src: "politi.co", reg: /content_author":"([^"]+)/}];
-        if(!review.author) {
+                {src:"washingtonpost", reg:/author:\["([^"]+)/},
+                {src:"huffingtonpost", reg:/author":\{[^}]*name":"([^"]+)/},
+                {src:"politi.co", reg:/content_author":"([^"]+)/}];
+        if(!membic.details.author) {
             //looking for "author" should pick up either 
             //<meta content="whoever" name="author">
             //<meta itemprop="author" content="whoever">
@@ -369,63 +381,28 @@ app.readurl = (function () {
                         if(elem && elem.length > 1) {
                             val = elem[1]; } } }); }
             if(val) {
-                review.author = val; } }
+                membic.details.author = val; } }
     }
 
 
-    function setReviewFields (review, html, url) {
-        setReviewType(review, html, url);
-        setTitle(review, html, url);
-        if(review.revtype === "video") {  //try to be smart about music vids
-            parseTitle(review); }
-        setPublisher(review, html);
-        setAuthor(review, html, url);
-        setImageURI(review, html, url);
-        if(review.imguri) {
-            review.svcdata = review.svcdata || {};
-            review.svcdata.picdisp = "sitepic"; }
-        setCanonicalURL(review, html, url);
-    }
-
-
-    function readAsThemeName (membic, mimc, line) {
-        var cm = "themes:";
-        if(line) {
-            if(line.toLowerCase().startsWith(cm)) {
-                line.slice(cm.length).csvarray().forEach(function (thn) {
-                    readAsThemeName(membic, mimc, thn.trim()); });
-                line = ""; }
-            var prof = app.profile.myProfile();
-            if(line && prof) {
-                Object.keys(prof.coops).forEach(function (ctmid) {
-                    var theme = prof.coops[ctmid];
-                    if(theme.name.toLowerCase() === line.toLowerCase()) {
-                        mimc.themes.push(ctmid);
-                        line = ""; } }); } }
-        return line;
-    }
-
-
-    function readAsKeyword (membic, mimc, line, addIfNotFound) {
-        var cm = "keywords:";
-        if(line) {
-            if(line.toLowerCase().startsWith(cm)) {
-                line.slice(cm.length).csvarray().forEach(function (kwl) {
-                    readAsKeyword(membic, mimc, kwl.trim(), true); });
-                line = ""; }
-            mimc.themes.forEach(function (ctm) {
-                var theme = app.lcs.getRef("coop", ctm.ctmid);
-                if(theme && theme.coop) {
-                    theme = theme.coop;
-                    theme.keywords.csvarray().forEach(function (kw) {
-                        if(kw.toLowerCase() === line.toLowerCase()) {
-                            if(!mimc.keywords.csvcontains(kw)) {
-                                mimc.keywords = mimc.keywords.csvappend(kw);
-                                line = ""; } } }); } }); }
-        if(line && addIfNotFound) {
-            mimc.keywords = mimc.keywords.csvappend(line);
-            line = ""; }
-        return line;
+    function setMembicFields (ctx) {
+        setType(ctx.m, ctx.u);
+        setTitle(ctx.m, ctx.html, ctx.u);
+        if(ctx.m.revtype === "video") {  //try to be smart about music vids
+            parseTitle(ctx.m); }
+        setPublisher(ctx.m, ctx.html);
+        setAuthor(ctx.m, ctx.html, ctx.u);
+        setImageURI(ctx.m, ctx.html, ctx.u);
+        setCanonicalURL(ctx.m, ctx.html, ctx.u);
+        var rfs = [];
+        if(ctx.m.imguri) {
+            rfs.push("imguri"); }
+        var detfields = ["title", /*name,*/ "artist", "author", "publisher",
+                         "album", "starring", "address", "year"];
+        detfields.forEach(function (detfld) {
+            if(ctx.m.details[detfld]) {
+                rfs.push(detfld); } });
+        ctx.msgs.push("Filled out: " + rfs.join(", "));
     }
 
 
@@ -450,68 +427,36 @@ app.readurl = (function () {
     }
 
 
-    function getFetchErrorText (url, code, callerr) {
-        var errtxt = "Membic details were not filled out automatically" +
-            " because of a problem accessing " + url + "\n\n" +
-            "Details: Error code " + code + ": " + callerr;
-        jt.log("readurl.getFetchErrorText: " + errtxt);
-        var manfill = " You may need to fill out the membic fields yourself.";
-        var phrase = "urlfetch.Fetch() required more quota";  //too many calls
-        if(code >= 400 && code < 500) {
-            errtxt = "The server for " + url + " is not allowing automated" +
-                " access." + manfill; }
-        switch(code) {
-        case 400:
-            if(callerr.indexOf(phrase) >= 0) {
-                errtxt = "Tried to fetch " + url + ", but there was too much" +
-                    " traffic. You can try reading again to see if things" +
-                    " have gotten less busy, or you can fill out the membic" +
-                    " fields directly."; }
-            break;
-        case 401: //fall through
-        case 403:
-            errtxt = "The server for " + url + " is not allowing automation" +
-                " to read the page." + manfill; break;
-        case 404:
-            errtxt = "The server for " + url + " could not find the page." +
-                " Double check the url is correct."; break; }
-        return errtxt;
-    }
-
-
     ////////////////////////////////////////
     // published functions and attributes
     ////////////////////////////////////////
 return {
 
-    name: svcName,
-
-
-    //params are ignored for this reader.
-    fetchData: function (membic, url) {
-        var geturl;
-        jt.out("revautodiv", "Reading details from " + url + " ...");
-        geturl = "urlcontents?url=" + jt.enc(url) + app.login.authparams("&") +
-            jt.ts("&cb=", "second");
-        jt.call("GET", geturl, null,
+    getInfo: function  (membic, url) {
+        jt.log("app.readurl fetching " + url);
+        var apiurl = app.login.authURL("/api/urlcontents") +
+            "&url=" + jt.enc(url) + jt.ts("&cb=", "second");
+        jt.call("GET", apiurl, null,
                 function (json) {
-                    var html = jt.dec(json[0].content);
-                    setReviewFields(membic, html, url);
-                    app.review.updatedlg(membic.revtype); },
-                //do not call app.failf here as the error may be from
-                //the called site rather than the membicsys server.
+                    jt.log("app.readurl success: " + url);
+                    var ctx = {m:membic, u:url, msgs:[],
+                               html:jt.dec(json[0].content)};
+                    setMembicFields(ctx);
+                    app.membic.readerFinish(membic, "success",
+                                            ctx.msgs.join("|")); },
+                //Error may be from call to url, not a local server error
                 function (code, errtxt) {
+                    jt.log("app.readurl failed " + code + ": " + errtxt);
                     var plainurl;
-                    //Do not retry http if the original was https since the
+                    //Do not retry http if the original was https, since the
                     //site may redirect http to https causing a loop.
                     plainurl = getPlainURL(url);
                     if(url !== plainurl) {  //wasn't a permalink, retry basic
-                        return app.readurl.fetchData(membic, plainurl); }
-                    jt.err(getFetchErrorText(url, code, errtxt));
-                    app.review.resetAutoURL(); },
-                jt.semaphore("readurl.fetchData"));
+                        return app.readurl.getInfo(membic, plainurl); }
+                    app.membic.readerFinish(membic, "failure",
+                                            String(code) + ": " + errtxt); },
+                jt.semaphore("readurl.getInfo"));
     }
 
 };  //end of returned functions
 }());
-

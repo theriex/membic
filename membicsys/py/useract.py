@@ -11,16 +11,6 @@ from PIL import Image   # Only need Image from Pillow
 import base64
 
 
-def membicsave():
-    res = ""
-    try:
-        muser, srvtok = util.authenticate()
-        raise ValueError("membicsave not implemented yet")
-    except ValueError as e:
-        return srverr(str(e))
-    return "[" + res + "]"
-    
-
 def verify_unused_email_address(emaddr, fpn="Email"):
     if(dbacc.cfbk("MUser", "email", emaddr) or 
        dbacc.cfbk("MUser", "altinmail", emaddr)):
@@ -221,6 +211,200 @@ def verify_theme_name(prevnamec, theme):
     theme["name_c"] = cn
 
 
+def set_dispafter(newmbc, muser):
+    if newmbc.get("dsId") and newmbc.get("dispafter"):
+        raise ValueError("set_dispafter reset of existing value")
+    preb = json.loads(muser.get("preb", "[]"))
+    if not len(preb):  # first membic, no wait.
+        newmbc.dispafter = dbacc.nowISO()
+    else:  # set dispafter to be 24 hours after next most recent post
+        disp = preb[0]["dispafter"] or preb[0]["created"]
+        disp = dbacc.ISO2dt(disp)
+        disp += datetime.timedelta(hours=24)
+        disp = dbacc.dt2ISO(disp)
+        newmbc.dispafter = max(disp, dbacc.nowISO())
+
+
+def cankey_for_membic(newmbc):
+    cankey = ""
+    if newmbc["details"]:
+        dets = json.loads(newmbc["details"])
+        if "title" in dets:
+            cankey = dets["title"]
+        if not cankey and "name" in dets:
+            cankey = dets["name"]
+        if newmbc["revtype"] == "book" and "author" in dets:
+            cankey += dets["author"]
+        if newmbc["revtype"] == "music" and "artist" in dets:
+            cankey += dets["artist"]
+    if cankey:
+        # whitespace and generally problematic characters
+        cankey = re.sub(r'\s', '', cankey)
+        cankey = re.sub(r'\"', '', cankey)
+        cankey = re.sub(r'\.', '', cankey)
+        # URI reserved delimiters
+        cankey = re.sub(r'\:', '', cankey)
+        cankey = re.sub(r'\/', '', cankey)
+        cankey = re.sub(r'\?', '', cankey)
+        cankey = re.sub(r'\#', '', cankey)
+        cankey = re.sub(r'\[', '', cankey)
+        cankey = re.sub(r'\]', '', cankey)
+        cankey = re.sub(r'\@', '', cankey)
+        # URI reserved sub delimiters
+        cankey = re.sub(r'\!', '', cankey)
+        cankey = re.sub(r'\$', '', cankey)
+        cankey = re.sub(r'\&', '', cankey)
+        cankey = re.sub(r'\'', '', cankey)
+        cankey = re.sub(r'\(', '', cankey)
+        cankey = re.sub(r'\)', '', cankey)
+        cankey = re.sub(r'\*', '', cankey)
+        cankey = re.sub(r'\+', '', cankey)
+        cankey = re.sub(r'\,', '', cankey)
+        cankey = re.sub(r'\;', '', cankey)
+        cankey = re.sub(r'\=', '', cankey)
+        cankey = cankey.lower()
+    return cankey
+
+
+def read_membic_data(muser):
+    penname = muser["name"] or ("user" + muser["dsId"])
+    newmbc = {"dsType": "Membic", "penid": muser["dsId"], "ctmid": 0,
+              "penname": penname}
+    oldmbc = None
+    dsId = dbacc.reqarg("dsId", "dbid")
+    if dsId:
+        oldmbc = dbacc.cfbk("Membic", "dsId", dsId)
+        if oldmbc:
+            copyflds = ["dsId", "importid", "revpic", "icdata", "icwhen",
+                        "dispafter", "reacdat"]
+            for fld in copyflds:
+                newmbc[fld] = oldmc[fld]
+    else: # new membic instance
+        set_dispafter(newmbc, muser)
+    read_values(newmbc, {"inflds": ["url", "rurl", "revtype", "details",
+                                    "rating", "srcrev", "text", "keywords",
+                                    "svcdata", "imguri"]})
+    newmbc["cankey"] = cankey_for_membic(newmbc)
+    return newmbc, oldmbc
+
+
+# Walk the old and new svcdata postctms to determine which themes should be
+# affected and how.  If adding a new membic, and the themecontext parameter
+# is specified, it is treated as an implicit add.
+def make_theme_plan(newmbc, oldmbc):
+    plan = {}
+    if oldmbc and oldmbc["svcdata"]:
+        sd = json.loads(oldmbc["svcdata"])
+        pts = sd.get("postctms", [])
+        for postnote in pts:
+            plan[str(postnote["ctmid"])] = "delete"
+    sd = json.loads(newmbc.get("svcdata"), "{}")
+    pts = sd.get("postctms", [])
+    for postnote in pts:
+        ctmid = str(postnote["ctmid"])
+        if plan.get(ctmid):
+            plan[ctmid] = "edit"
+        else:
+            plan[ctmid] = "add"
+    ctxid = 0
+    if not oldmbc:  # adding a new membic
+        ctxid = dbacc.reqarg("themecontext", "dbid")
+        if ctxid:
+            plan[str(ctxid)] = "add"
+    return plan, ctxid
+
+
+# The source membic will already have been written to the db.  There may or
+# may not be a corresponding theme membic.
+def theme_membic_from_source_membic(theme, srcmbc):
+    ctmid = theme["dsId"]
+    srcrev = srcmbc["dsId"]
+    tmbc = {"dsType":"Membic", "ctmid":ctmid, "srcrev":srcrev}
+    where = "WHERE ctmid=" + str(ctmid) + " AND srcrev=" + str(srcrev)
+    membics = dbacc.query_entity("Membic", where)
+    if len(membics):
+        tmbc = membics[0]
+    tmbc["svcdata"] = ""   # srcrev not updated yet. Not used for theme display
+    tmbc["icdata"] = None  # all image caching is off the source membic
+    tmbc["icwhen"] = ""
+    flds = ["importid", "url", "rurl", "revtype", "details", "penid",
+            "rating", "cankey", "text", "keywords",
+            "revpic", # copied for backward compatibility in case used
+            "imguri"  # used as indicator, client display references srcrev id
+            "dispafter", "penname", "reacdat"]
+    for fld in flds:
+        tmbc[fld] = srcmbc.get(fld)
+    return tmbc
+
+
+# The themeplan provides the themes and actions as described by the data
+# passed from the client.  The id of the theme membic needs to be looked up
+# because it's not reasonable practice to simply trust what was sent from
+# the client.  Also not reasonable to use the theme preb for reference
+# because it is constructed from the source db records, so relying on it
+# here would be circular and potentially invalid.
+#
+# If a theme membic is being deleted or edited, then the user had write
+# access to the theme and is allowed to modify the content they previously
+# posted.  If they are adding, verify their theme membership first.
+def write_theme_membics(themeplan, newmbc):
+    for themeid, action in themeplan.items():
+        if action == "add":
+            theme = dbacc.cfbk("Theme", "dsId", int(themeid))
+            if theme_association(theme, newmbc["penid"]) == "Unknown":
+                raise ValueError("Not a member, so cannot post to Theme " + 
+                                 themeid + " " + theme["name"])
+    postctms = []
+    memos = {}  # remember themes and added theme membics for preb update
+    for themeid, action in themeplan.items():
+        theme = dbacc.cfbk("Theme", "dsId", int(themeid))
+        tmbc = theme_membic_from_source_membic(theme, newmbc)  # existing or new
+        if action == "delete" and tmbc.get("dsId"):
+            dbacc.delete_entity("Membic", tmbc.get("dsId"))
+        else: # edit or add
+            tmbc = dbacc.write_entity(tmbc, vck=tmbc["modified"])
+            postctms.append({"ctmid": themeid, "name": theme["name"],
+                             "revid": str(tmbc["dsId"])})
+        memos[themeid] = {"theme":theme, "membic":tmbc}
+    svcdata = json.loads(newmbc.get("svcdata", "{}"))
+    svcdata["postctms"] = postctms
+    newmbc["svcdata"] = json.dumps(svcdata)
+    newmbc = dbacc.write_entity(newmbc, vck=newmbc["modified"])
+    return newmbc, memos
+
+
+# unpack the preb, find existing instance and update accordingly.  Not
+# expecting to have to walk into overflows much for this, but recurse into
+# those if found.  Create new overflow only if prepending, otherwise just
+# insert in place.
+def update_preb(obj, membic, verb):
+    pm = util.make_preb_membic(membic)
+    pbms = json.loads(obj.get("preb", "[]"))
+    idx = 0
+    while idx < len(pbms):
+        pbm = pbms[idx]
+        if pbm["dsType"] == "Overflow":  # Continue searching older stuff
+            obj = dbacc.cfbk("Overflow", "dsId", pbm["dsId"])
+            return update_preb(obj, membic, verb)
+        if pbm["dsId"] == pm["dsId"] or pm["created"] > pbm["created"]:
+            break  # at insertion point
+        idx += 1
+    if pbm and pbm["dsId"] == pm["dsId"]:  # found existing instance
+        if verb == "delete":
+            pbms.pop(idx)  # modify pbms removing indexed element
+        else:  # "edit". Should not have found anything if "add" but treat same
+            pbms[idx] = pm
+    else:  # no existing instance found
+        if verb == "add" or verb == "edit":
+            if idx > 0:
+                pbms.insert(idx, pm)
+            else:
+                util.add_membic_to_preb({"entity": obj["dsType"],
+                                         "inst": obj,
+                                         "pbms": pbms}, membic)
+    obj["preb"] = json.dumps(pbms)
+    return dbacc.write_entity(obj, vck=obj["modified"])
+
 
 ##################################################
 #
@@ -357,3 +541,44 @@ def uploadimg():
     except ValueError as e:
         return util.srverr(str(e))
     return util.respond("Done: " + updobj["modified"], mimetype="text/plain")
+
+
+# This endpoint returns the authorized MUser with their updated preb.  If
+# the "themecontext" parameter is passed in, the Theme matching that dsId is
+# also returned.  It is up to the caller to refetch any other themes that
+# may have been affected.  It's not performant to send back more than two
+# objects given the size of the preb data.
+#
+# The Themes to be posted to (if any) are read from svcdata.postctms, which
+# is then completely rebuilt to ensure it accurately reflects the state of
+# the db after the updates have been written.
+#
+# To minimize risk to data integrity, the algo first updates the Membic
+# data, then updates the affected MUser/Theme/Overflow preb data.  The preb
+# data can be rebuilt by a db admin if necessary.
+def membicsave():
+    res = ""
+    try:
+        muser, srvtok = util.authenticate()
+        newmbc, oldmbc = read_membic_data(muser)
+        themeplan, ctxid = make_theme_plan(newmbc, oldmbc)
+        vck = None
+        if oldmbc:
+            vck = oldmbc["modified"]
+        newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
+        newmbc, memos = write_theme_membics(themeplan, newmbc)
+        userprebv = "add"
+        if oldmbc:
+            userprebv = "edit"
+        prof = update_preb(muser, newmbc, userprebv)
+        res = util.safe_JSON(prof)
+        for themeid, action in themeplan.items():
+            memo = memos[themeid]
+            theme = update_preb(memo["theme"], memo["membic"], action)
+            if ctxid and themeid == str(ctxid):
+                res += "," + util.safe_JSON(theme)
+    except ValueError as e:
+        return srverr(str(e))
+    return "[" + res + "]"
+    
+

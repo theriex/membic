@@ -1533,7 +1533,7 @@ app.membic = (function () {
     function saveMembic (savemembic, contf, failf) {
         savind = new Date().toISOString();  //indicate we are saving
         var url = app.login.authURL("/api/membicsave");
-        var pcdo = app.pcd.getDisplayContext().contextobj;  //profile or theme
+        var pcdo = app.pcd.getDisplayContext().actobj.contextobj;
         if(pcdo.dsType === "Theme") {
             url += "&themecontext=" + pcdo.dsId; }
         jt.call("POST", url, app.refmgr.postdata(savemembic),
@@ -1581,55 +1581,37 @@ app.membic = (function () {
     }
 
 
-    //Merge the retrieved membic details.  If this is a new membic, there
-    //may or may not be an outstanding save going on.
-    function readerFinished (membic, result, msg) {
-        var ur = membic.svcdata.urlreader;
-        ur.status = "complete";
-        ur.result = result;
-        var le = ur.log[ur.log = 1];
-        le.end = new Date().toISOString()
-        le.msg = msg;
-        if(addmem && !savind && //still working off addmem and not saved yet
-           addmem.rurl === membic.rurl) {  //and not way out of sync
-            return; }  //url read data will be recorded on save.
-        mergeURLReadInfoIntoSavedMembic(membic);
-    }
-
-
-    function getReaderForURL (url) {
-        //Pull general information to help identify the link.  A picture
-        //helps visually locate and differentiate the link.  A title helps
-        //identify the link when communicating about it, especially when
-        //combined with other detail fields like author or address.
+    //Return a reader appropriate for the given URL.  Looking forward to the
+    //day when a link title and image becomes standard web protocol.  Bonus
+    //points for detail info like author/artist, address etc.
+    function readerModuleForURL (url) {
         //Site notes:
-        //  - youtube has an API, but it fails frequently due to limits on
-        //    the number of calls.  Standard reader works just as well.
-        //  - netflx retired their online data catalog 08apr14
-        //  - amazon has an API but it requires enough site traffic to
-        //    sustain an advertising relationship
-        //vimeo doesn't want to provide info about their videos except
+        //  - YouTube has an API, but it fails frequently due to limits on
+        //    the number of calls.  Standard reader works much better.
+        //  - Netflx retired their online data catalog 08apr14.
+        //  - Amazon has an API, but it requires enough site traffic to
+        //    sustain an advertising relationship.
+        //Vimeo doesn't want to provide any info about their videos except
         //through their API.
         if(url.toLowerCase().indexOf("vimeo.") > 0) {  //https://vimeo.com/id
-            return app.jsonapi; }
-        return app.readurl;
+            return "jsonapi"; }
+        return "readurl";
     }
 
 
     function startReader (membic) {
-        if(!membic.svcdata) {
-            membic.svcdata = {}; }
-        if(!membic.svcdata.picdisp) {
-            membic.svcdata.picdisp = "sitepic"; }  //reader sets imguri
-        if(!membic.svcdata.urlreader) {
-            membic.svcdata.urlreader = {log:[]}; }
-        membic.svcdata.urlreader.status = "reading";
-        membic.svcdata.urlreader.result = "";
-        membic.svcdata.urlreader.log.push({start:new Date().toISOString()});
-        app.fork({descr:"Read URL " + addmem.rurl, ms:100,
+        var readername = readerModuleForURL(membic.rurl);
+        membic.svcdata = membic.svcdata || {};
+        membic.svcdata.urlreader = membic.svcdata.urlreader || {};
+        var reader = membic.svcdata.urlreader;
+        reader.name = readername;
+        reader.status = "reading"
+        reader.result = "partial"
+        reader.log = reader.log || [];  //could be a log from a previous read
+        reader.log.push({start:new Date().toISOString()});
+        app.fork({descr:"app." + readername + ": " + addmem.rurl, ms:100,
                   func:function () {
-                      var reader = getReaderForURL(membic.rurl);
-                      reader.fetchData(addmem, readerFinished); }});
+                      app[readername].getInfo(membic, membic.rurl); }});
     }
 
 
@@ -2459,7 +2441,7 @@ return {
                 ["form", {id:"newmembicform"},
                  [["div", {cla:"nmformlinediv"},
                    [["label", {fo:"urlinput", title:"Memorable Link"}, "URL"],
-                    ["input", {type:"url", id:"urlinput", //no size, use CSS
+                    ["input", {type:"url", id:"urlinput", //size via CSS
                                placeholder:"Paste Memorable Link Here",
                                required:"required", value:inval,
                                onchange:jt.fs("app.membic.amfact(event)")}]]],
@@ -2514,6 +2496,9 @@ return {
     amfact: function (event) {
         jt.evtend(event);
         if(jt.byId("urlinput")) {
+            var urlin = jt.byId("urlinput");
+            if(!urlin.value.startsWith("http")) {
+                urlin.value = "https://" + urlin.value; }
             app.membic.addMembic("whymem"); }
         else if(jt.byId("whymemin")) {
             app.membic.addMembic("addit"); }
@@ -2536,8 +2521,23 @@ return {
                 jt.out("amprocmsgdiv", "Activation failed: " + code + " " +
                        errtxt);
                 jt.byId("ambuttonsdiv").style.display = "block"; });
-    }
+    },
 
+
+    //Merge the retrieved membic details.  If this is a new membic, there
+    //may or may not be an outstanding save going on.
+    readerFinish: function (membic, result, msg) {
+        var ur = membic.svcdata.urlreader;
+        ur.status = "finished";
+        ur.result = result;
+        var le = ur.log[ur.log.length - 1];
+        le.end = new Date().toISOString()
+        le.msg = msg;
+        if(addmem && !savind && //still working off addmem and not saved yet
+           addmem.rurl === membic.rurl) {  //and not way out of sync
+            return; }  //url read data will be recorded on save.
+        mergeURLReadInfoIntoSavedMembic(membic);
+    }
 
 }; //end of returned functions
 }());

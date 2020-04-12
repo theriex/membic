@@ -42,10 +42,10 @@ def uploadimg():  #params: an, at, dsType, dsId, picfilein
 
 @app.route('/api/signin', methods=['GET', 'POST'])
 def signin(): #params: emailin, passin, an, at
-    return util.signin()
+    return util.secure(util.signin)
 
 @app.route('/api/membicsave', methods=['GET', 'POST'])
-def membicsave(): #params an, at, Membic, (themecontext)
+def membicsave(): #params an, at, Membic(, themecontext)
     return useract.membicsave()
 
 @app.route('/api/accupd', methods=['GET', 'POST'])
@@ -59,6 +59,10 @@ def themeupd(): #params an, at, Theme update fields
 @app.route('/api/associate', methods=['GET', 'POST'])
 def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
     return useract.associate()
+
+@app.route('/api/urlcontents')
+def urlcontents():  # params: an, at, url
+    return util.urlcontents()
 
 @app.route('/feed/', defaults={'path': ''})
 @app.route('/feed/<path:path>')

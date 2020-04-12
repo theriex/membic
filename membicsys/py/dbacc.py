@@ -396,6 +396,12 @@ def db2app_fieldval(entity, field, inst):
     return val
 
 
+def ISO2dt(isostr):
+    dt = datetime.datetime.utcnow()
+    dt = dt.strptime(isostr, "%Y-%m-%dT%H:%M:%SZ")
+    return dt
+
+
 def dt2ISO(dt):
     iso = str(dt.year) + "-" + str(dt.month).rjust(2, '0') + "-"
     iso += str(dt.day).rjust(2, '0') + "T" + str(dt.hour).rjust(2, '0')
@@ -1264,6 +1270,25 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                 return insert_new_ActivitySummary(cnx, cursor, inst)
             if entity == "ConnectionService":
                 return insert_new_ConnectionService(cnx, cursor, inst)
+        except mysql.connector.Error as e:
+            raise ValueError from e
+        finally:
+            cursor.close()
+    finally:
+        cnx.close()
+
+
+def delete_entity(entity, dsId):
+    cnx = get_mysql_connector()
+    if not cnx:
+        raise ValueError("Database connection failed.")
+    try:
+        cursor = cnx.cursor()
+        try:
+            stmt = "DELETE FROM " + entity + " WHERE dsId=" + str(dsId)
+            cursor.execute(stmt, data)
+            cnx.commit()
+            dblogmsg("DEL", entity + " " + str(dsId))
         except mysql.connector.Error as e:
             raise ValueError from e
         finally:

@@ -165,17 +165,21 @@ module.exports = (function () {
         //   can end up empty if unreadable url.
         // svcdata:
         //   MUser and Theme membics:
-        //     - picdisp: sitepic|upldpic|nopic
+        //     - picdisp: sitepic|upldpic|nopic  (no longer used)
         //       Client setting. For sitepic, the server may cache a lowres
         //       copy of the source image in the icdata field to avoid
         //       degraded client server connections over https.
         //   MUser membics only:
         //     - postctms: [] zero or more theme postnotes
         //           postnote: {ctmid, name, revid}
-        //     - urlreader: {status: reading|complete,
+        //     - urlreader: {name: primary reader module name (e.g. "readurl")
+        //                   status: reading|finished,
         //                   result: success|partial|failure,
-        //                   log:[calldet, calldet2...]}
+        //                   log: [calldet, calldet2...]}
         //           calldet:{start, end, msg}
+        //       A specific API reader may failover to calling general
+        //       reader processing, but that is situation specific and still
+        //       logged within the primary reader info listing.
         //   Theme membics only:
         //     - tdat: {disp:active|removed, user:dsId, reason:txt, ts:ISO}
         //       No tdat is equivalent to tdat.disp active.  If user is src

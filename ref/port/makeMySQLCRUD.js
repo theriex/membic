@@ -405,6 +405,12 @@ function helperFunctions () {
     pyc += "    return val\n";
     pyc += "\n";
     pyc += "\n";
+    pyc += "def ISO2dt(isostr):\n";
+    pyc += "    dt = datetime.datetime.utcnow()\n";
+    pyc += "    dt = dt.strptime(isostr, \"%Y-%m-%dT%H:%M:%SZ\")\n";
+    pyc += "    return dt\n";
+    pyc += "\n";
+    pyc += "\n";
     pyc += "def dt2ISO(dt):\n";
     pyc += "    iso = str(dt.year) + \"-\" + str(dt.month).rjust(2, '0') + \"-\"\n";
     pyc += "    iso += str(dt.day).rjust(2, '0') + \"T\" + str(dt.hour).rjust(2, '0')\n";
@@ -622,6 +628,29 @@ function entityWriteFunction () {
 }
 
 
+function entityDeleteFunction () {
+    var pyc = "";
+    pyc += "def delete_entity(entity, dsId):\n"
+    pyc += "    cnx = get_mysql_connector()\n"
+    pyc += "    if not cnx:\n"
+    pyc += "        raise ValueError(\"Database connection failed.\")\n"
+    pyc += "    try:\n"
+    pyc += "        cursor = cnx.cursor()\n"
+    pyc += "        try:\n"
+    pyc += "            stmt = \"DELETE FROM \" + entity + \" WHERE dsId=\" + str(dsId)\n"
+    pyc += "            cursor.execute(stmt, data)\n"
+    pyc += "            cnx.commit()\n"
+    pyc += "            dblogmsg(\"DEL\", entity + \" \" + str(dsId))\n"
+    pyc += "        except mysql.connector.Error as e:\n"
+    pyc += "            raise ValueError from e\n"
+    pyc += "        finally:\n"
+    pyc += "            cursor.close()\n"
+    pyc += "    finally:\n"
+    pyc += "        cnx.close()\n"
+    return pyc;
+}
+
+
 function writeQueryFunction (edef) {
     var pyc = "";
     pyc += "def query_" + edef.entity + "(cnx, cursor, where):\n";
@@ -756,6 +785,7 @@ function createPythonDBAcc () {
     pyc += app2dbConversions();
     pyc += dblogMessager() + "\n\n";
     pyc += entityWriteFunction() + "\n\n";
+    pyc += entityDeleteFunction() + "\n\n";
     pyc += entityQueryFunction() + "\n\n";
     pyc += fieldVisibilityFunction() + "\n\n";
     fs.writeFileSync(srcdir + "/dbacc.py", pyc, "utf8");
