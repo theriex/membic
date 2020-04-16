@@ -7,7 +7,9 @@ app.membic = (function () {
 
     var addmem = null;  //The new membic being added
     var savind = "";    //Ongoing save indicator
-    var expandedMembics = {};  //currently expanded membics (profile membics)
+    var expandedMembics = {};  //currently expanded membics (by src membic id)
+    var formElements = null;  //forward declare to avoid circular func refs
+    var rto = null;  //input reaction timeout
 
     //If a url was pasted or passed in as a parameter, then potentially
     //modified by automation, that "cleaned" value should be kept to
@@ -1484,10 +1486,10 @@ app.membic = (function () {
 
 
     //Thought about adding membic share button to make your own membic off
-    //of an existing one, but that would add complexity, likely be of
-    //limited use, and detract from the externalization nature of sharing.
-    //The same thing can also be accomplished by mailing in the membic using
-    //the mail share.
+    //of an existing one, but that adds complexity, would likely be of very
+    //limited use, and detract from the external nature of sharing.  To make
+    //a membic off an existing membic you can always use the mail share and
+    //mail it in.
     function membicShareHTML (membic) {
         var subj = membic.text;
         var body = membic.url;
@@ -1501,6 +1503,8 @@ app.membic = (function () {
     }
 
 
+    //As you accumulate themes over time, you don't want to keep seeing
+    //suggestions for older archives.
     function membicThemePostsHTML (membic) {
         if(!membic.svcdata || !membic.svcdata.postctms ||
            !membic.svcdata.postctms.length) {
@@ -1644,6 +1648,327 @@ app.membic = (function () {
                   "no code?"],
                  ["button", {type:"submit"}, "Activate Account"]]]]]]));
         jt.on("newmembicform", "submit", app.membic.actcode);
+    }
+
+
+    function mayEdit (membic) {
+        var prof = app.profile.myProfile();
+        if(prof && prof.dsId === membic.penid) {
+            return true; }
+        return false;
+    }
+
+
+    function mayRemove (membic) {
+        var auth = app.login.authenticated();
+        if(auth && app.theme.memberlev(membic.ctmid) >= 2) {
+            return true; }
+        return false;
+    }
+
+
+    function formButton (name, ocstr, disabled) {
+        var bas = {type:"button", cla:"membicformbutton", onclick:ocstr};
+        if(disabled) {
+            bas.disabled = true;
+            bas.cla = "membicformbuttondisabled" }
+        return jt.tac2html(["button", bas, name]);
+    }
+
+
+    function membicImgSrc (membic) {
+        //upldpic is not supported anymore except for compatibility
+        membic.svcdata = membic.svcdata || {};
+        if(!membic.svcdata.picdisp) {
+            if(membic.imguri) {
+                membic.svcdata.picdisp = "sitepic"; }
+            else if(membic.revpic) {
+                membic.svcdata.picdisp = "upldpic"; }
+            else {
+                membic.svcdata.picdisp = "nopic"; } }
+        var imgsrc = app.dr("img/blank.png");
+        switch(membic.svcdata.picdisp) {
+        case "sitepic":
+            imgsrc = "/api/imagerelay?membicid=" + membic.dsId;
+            break;
+        case "upldpic":
+            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId;
+            break; }
+        return imgsrc;
+    }
+
+
+    function dispatchFStr (cdx, formfuncstr) {
+        formfuncstr = formfuncstr.split(".");
+        return jt.fs("app.membic.formDispatch('" + formfuncstr[0] + "','" +
+                     formfuncstr[1] + "'," + cdx);
+    }
+
+
+    //Return a new object with the fields used for the details area of
+    //membic display and editing form.  The name/title fields are handled
+    //separately so they are not included here.
+    function initNewDetailsObject () {
+        return {artist:"", author:"", publisher:"", album:"",
+                starring:"", address:"", year:""};
+    }
+
+
+    //Custom detail fields are allowed, but lower case letters only.
+    //Removing the value from a detail attribute effectively removes it from
+    //the display when saved.  Slightly clunky, but not expecting heavy use
+    //and want to minimize the number of controls on screen.
+    function detailsHTML (cdx, membic, edit) {
+        var detobj = initNewDetailsObject();
+        membic.details = membic.details || {};
+        Object.keys(membic.details).forEach(function (key) {
+            if(key !== "title" && key !== "name") {
+                detobj[key] = membic.details[key]; } });
+        var chgfstr = jt.fs("app.membic.formInput(" + cdx + ")");
+        var dlos = [];  //datalist options for adding other detail fields
+        var html = [];
+        Object.keys(detobj).forEach(function (key) {
+            if(detobj[key]) { html.push(
+                ["tr",
+                 [["td", {cla:"detailattrtd"}, key],
+                  ["td", {cla:"detailvaltd", 
+                          id:"detail" + key + "valtd" + cdx,
+                          contenteditable:jt.toru(edit, "true"),
+                          oninput:jt.toru(edit, chgfstr)}, 
+                   detobj[key]]]]); } });
+        if(edit) {
+            Object.keys(detobj).forEach(function (key) {
+                if(!detobj[key]) {
+                    dlos.push(["option", {value:key}]); } });
+            html.push(
+                ["tr",
+                 [["td", {cla:"detailattrtd"},
+                   ["input", {type:"text", cla:"detnewattrin",
+                              id:"detnewattrin" + cdx,
+                              placeholder:"attribute", value:"",
+                              list:"detnewattroptsdl" + cdx,
+                              onchange:chgfstr}]],
+                  ["td", {cla:"detailvaltd"},
+                   ["input", {type:"text", cla:"detnewvalin",
+                              id:"detnewvalin" + cdx,
+                              placeholder:"value", value:"",
+                              onchange:chgfstr}]]]]); }
+        html = jt.tac2html(["table", {cla: "collapse"}, html]);
+        if(edit && dlos.length) {
+            html += jt.tac2html(["datalist", {id:"detnewattroptsdl" + cdx},
+                                 dlos]); }
+        return jt.tac2html(["div", {cla:"mddetdiv"}, html]);
+    }
+
+
+    //Construct a details object from the interface display.  The resulting
+    //object can be used for comparison or update.  The user may enter a
+    //custom detail attribute, and they can change or remove the value for
+    //any existing attribute, but they cannot change the name of an existing
+    //attribute, so it is sufficient to walk the displayed attributes to
+    //construct the details object.
+    function detailsValues (cdx, membic) {
+        var valobj = {};
+        Object.keys(initNewDetailsObject()).forEach(function (key) {
+            var td = jt.byId("detail" + key + "valtd" + cdx);
+            if(td) {
+                valobj[key] = td.innerHTML.trim(); } });
+        var input = jt.byId("detnewattrin" + cdx);
+        if(input && input.value.trim()) {  //adding a detail attribute
+            var valin = jt.byId("detnewvalin" + cdx);
+            if(valin && valin.value.trim()) {
+                valobj[input.value.trim()] = valin.value.trim(); } }
+        return valobj;
+    }
+
+
+    //Check the values of the keys in the source object against those in the
+    //comparison object.  Return true if they are all equal.  The cmp object
+    //may have additional keys not found in the src.
+    function objKVEq (src, cmp) {
+        return Object.keys(src).every((key) => src[key] === cmp[key]);
+    }
+
+
+    //Unlike theme posts, it's easier to see all the available keywords and
+    //use checkboxes.  It's not great if the accumulated total gets really
+    //long, but that's under their control if they don't want to scroll.
+    function keywordsHTML (cdx, membic, edit) {
+        return jt.tac2html(["div", {cla:"mdkwsdiv"}, membic.keywords]);
+    }
+
+
+    //If anything has been edited, return true.
+    function membicEdited (cdx, membic) {
+        var changed = [];
+        Object.keys(formElements).forEach(function (key) {
+            if(formElements[key].changed(cdx, membic)) {
+                changed.push(key); } });
+        changed = changed.join(",");
+        jt.log("membicEdited: " + changed);
+        return changed;
+    }
+
+
+    formElements = {
+        title: {
+            closed: function (cdx, membic) {
+                var html = jt.tac2html(
+                    ["a", {href:membic.url, title:membic.url,
+                           onclick:jt.fs("window.open('" + membic.url + "')")},
+                     (membic.details.title || membic.details.name)]);
+                return html; },
+            expanded: function (cdx, membic) {
+                if(!mayEdit(membic)) {
+                    return formElements.title.closed(cdx, membic); }
+                return jt.tac2html(
+                    ["span", {id:"mftitlespan" + cdx, contenteditable:"true",
+                              oninput:jt.fs("app.membic.formInput(" + cdx +
+                                            ")")},
+                     (membic.details.title || membic.details.name)]); },
+            changed: function (cdx, membic) {
+                var mt = (membic.details.title || membic.details.name).trim();
+                var st = jt.byId("mftitlespan" + cdx).innerHTML.trim();
+                return mt !== st; } },
+        share: {
+            closed: function () { return ""; },
+            expanded: function (ignore /*cdx*/, membic) {
+                return membicShareHTML(membic); },
+            changed: function () { return false; } },
+        revtype: {
+            closed: function () { return ""; },
+            expanded: function (cdx, membic) {
+                var mt = membicTypes.find((md) => md.type === membic.revtype);
+                return jt.tac2html(
+                    ["a", {href:"#changetype", title:"Change Membic Type",
+                           onclick:dispatchFStr(cdx, "revtype.showsel")},
+                     ["img", {cla:"revtypeimg", src:app.dr("img/" + mt.img),
+                              id:"revtypeimg" + cdx, title:mt.type,
+                              alt:mt.type}]]); },
+            changed: function (cdx, membic) {
+                return membic.revtype !== jt.byId("revtypeimg" + cdx).title; },
+            showsel: function (cdx) {
+                jt.err("Not implemented yet"); } },
+        byline: {
+            closed: function () { return ""; },
+            expanded: function (ignore /*cdx*/, membic) {
+                var cretxt = jt.colloquialDate(membic.created, "compress");
+                return jt.tac2html(
+                    [["span", {cla:"mascrespan"}, cretxt],
+                     ["span", {cla:"masbyline"},
+                      ["a", {href:"#" + membic.penid,
+                             title:"Visit " + membic.penname,
+                             onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                           membic.penid + "')")},
+                       [["img", {src:app.profile.profimgsrc(membic.penid)}],
+                        ["span", {cla:"penlight"}, membic.penname]]]]]); },
+            changed: function () { return false; } },
+        stars: {
+            closed: function () { return ""; },
+            expanded: function (ignore /*cdx*/, membic) {
+                return jt.tac2html(
+                    ["span", {cla:"masratspan"},
+                     starsImageHTML(membic.rating)]); },
+            changed: function (cdx, membic) {
+                //compare membic.rating to ???
+                return false; } },
+        dlgbs: {
+            closed: function () { return ""; },
+            expanded: function (cdx, membic) {
+                if(mayEdit(membic)) {
+                    var edited = membicEdited(cdx, membic);
+                    return jt.tac2html(
+                        [["a", {href:"#delete", title:"Delete Membic",
+                                onclick:dispatchFStr(cdx, "dlgbs.delete")},
+                          ["img", {cla:"masactbimg",
+                                   src:app.dr("img/trash.png")}]],
+                         formButton("Cancel", jt.fs("app.membic.toggleMembic(" +
+                                                    cdx + ")"), !edited),
+                         formButton("Save", dispatchFStr(cdx, "dlgbs.save"),
+                                    !edited)]); }
+                if(mayRemove(membic)) {
+                    return jt.tac2html(
+                        ["a", {href:"#remove", title:"Remove Theme Post",
+                               onclick:dispatchFStr(cdx, "dlgbs.remove")},
+                         ["img", {cla:"masactbimg",
+                                  src:app.dr("img/trash.png")}]]); }
+                return ""; },
+            changed: function () { return false; } },
+        picture: {
+            closed: function (cdx, membic) {
+                return jt.tac2html(
+                    ["div", {cla:"mdpicdiv"},
+                     ["a", {href:membic.url, title:membic.url,
+                            onclick:jt.fs("window.open('" + membic.url + "')")},
+                      ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]]); },
+            expanded: function (cdx, membic) {
+                if(mayEdit(membic)) { //no link, too many clickables
+                    return jt.tac2html(
+                        ["div", {cla:"mdpicdiv"},
+                         ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]); }
+                return formElements.picture.closed(cdx, membic); },
+            changed: function () { return false; } },
+        text: {
+            closed: function (cdx, membic) {
+                return jt.tac2html(
+                    ["div", {cla:"mdtxtdiv", id:"mdtxtdiv" + cdx,
+                             onclick:jt.toru(mayEdit(membic), jt.fs(
+                                 "app.membic.toggleMembic(" + cdx + ")"))},
+                     jt.linkify(membic.text)]); },
+            expanded: function (cdx, membic) {
+                if(!mayEdit(membic)) {
+                    return formElements.text.closed(cdx, membic); }
+                return jt.tac2html(
+                    ["div", {cla:"mdtxtdiv", contenteditable:"true",
+                             id:"mdtxtdiv" + cdx,
+                             oninput:jt.fs("app.membic.formInput(" + cdx +
+                                           ")")}, membic.text]); },
+            changed: function (cdx, membic) {
+                var mt = membic.text.trim();
+                var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();
+                return mt !== dt; } },
+        details: {
+            closed: function (cdx, membic) {
+                return detailsHTML(cdx, membic, false); },
+            expanded: function (cdx, membic) {
+                return detailsHTML(cdx, membic, mayEdit(membic)); },
+            changed: function (cdx, membic) {
+                return !objKVEq(detailsValues(cdx, membic),
+                                membic.details); } },
+        themes: {
+            closed: function () { return ""; },
+            expanded: function (cdx, membic) {
+                return jt.tac2html(
+                    ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
+                     membicThemePostsHTML(membic)]); },
+            changed: function (cdx, membic) {
+                //implement after theme selection...
+                //return objKVEq(themesValues(cdx, membic), membic.themes);
+                return false; } },
+        keywords: {
+            closed: function (cdx, membic) {
+                return keywordsHTML(cdx, membic, false); },
+            expanded: function (cdx, membic) {
+                return keywordsHTML(cdx, membic, mayEdit(membic)); },
+            changed: function (cdx, membic) {
+                //implement after keywords selection...
+                return false; } }
+    }
+
+
+    function formElementsVerb (expid) {
+        if(expandedMembics[expid]) {
+            return "expanded"; }
+        return "closed";
+    }
+
+
+    function formElementHTML (name, cdx, membic) {
+        var disp = formElementsVerb(membicExpId(membic));
+        var html = formElements[name][disp](cdx, membic);
+        //several elements are inline, but don't want divs inside spans
+        return jt.tac2html(
+            ["div", {cla:"mf" + name, id:"mf" + name + cdx}, html]);
     }
 
 
@@ -2335,23 +2660,6 @@ return {
     },
 
 
-    mdTitleHTML: function (membic, fist) {
-        var expid = membicExpId(membic);
-        if(expandedMembics[expid]) {
-            app.fork({descr:"Expand Membic " + expid + " after draw",
-                      ms:300,
-                      func:function () {
-                          app.membic.toggleMembic(fist.cdx, "expand"); }}); }
-        return jt.tac2html(
-            [["a", {href:"#actions" + fist.cdx, title:"Toggle Membic Actions",
-                    onclick:jt.fs("app.membic.toggleMembic(" + fist.cdx + ")")},
-              ["img", {cla:"mbtkebabimg", src:app.dr("img/kebab.png")}]],
-             ["a", {href:membic.url, title:membic.url,
-                    onclick:jt.fs("window.open('" + membic.url + "')")},
-              (membic.details.title || membic.details.name)]]);
-    },
-
-
     //All site images are cached and relayed.  Not fair to repeatedly burden
     //other sites for their images, even if the app is delivering clicks.
     mdPicHTML: function (membic) {
@@ -2398,22 +2706,10 @@ return {
     toggleMembic: function (idx, exp) {
         var membic = app.pcd.getDisplayContext().actobj.itlist[idx];
         var expid = membicExpId(membic);
-        var tds = {mdactdiv:membicActionsHTML,
-                   mdsharediv:membicShareHTML,
-                   mdptsdiv:membicThemePostsHTML};
-        var xd = jt.byId("mdsharediv" + idx);  //share determines expand state
-        if(!exp && xd.innerHTML && xd.style.display === "block") {
-            expandedMembics[expid] = false;
-            Object.keys(tds).forEach(function (dk) {
-                jt.byId(dk + idx).style.display = "none"; });
-            return; }
-        Object.keys(tds).forEach(function (dk) {
-            expandedMembics[expid] = "usertoggled";
-            //redraw expansion content each time. sign-in, modified, whatever
-            var div = jt.byId(dk + idx);
-            div.innerHTML = tds[dk](membic);
-            div.style.display = "block"; });
-        //see postedCoopLinksHTML, authpic etc.
+        expandedMembics[expid] = exp || !expandedMembics[expid];
+        var disp = formElementsVerb(expid);
+        Object.keys(formElements).forEach(function (key) {
+            jt.out("mf" + key + idx, formElements[key][disp](idx, membic)); });
     },
 
 
@@ -2537,6 +2833,50 @@ return {
            addmem.rurl === membic.rurl) {  //and not way out of sync
             return; }  //url read data will be recorded on save.
         mergeURLReadInfoIntoSavedMembic(membic);
+    },
+
+
+    formHTML: function (cdx, membic) {
+        return jt.tac2html(
+            ["div", {cla:"mdouterdiv"},
+             ["div", {cla:"mdinnerdiv"},
+              [["a", {href:"#expand" + cdx, title:"Toggle Membic Expansion",
+                    onclick:jt.fs("app.membic.toggleMembic(" + cdx + ")")},
+                ["img", {cla:"mbtkebabimg", src:app.dr("img/kebab.png")}]],
+               formElementHTML("title", cdx, membic),
+               formElementHTML("share", cdx, membic),
+               ["div", {cla:"mdheaderline"},
+                [formElementHTML("revtype", cdx, membic),
+                 formElementHTML("byline", cdx, membic),
+                 formElementHTML("stars", cdx, membic)]],
+               ["div", {cla:"mddlgbsdiv"},
+                formElementHTML("dlgbs", cdx, membic)],
+               ["div", {cla:"mdbodydiv"},
+                [formElementHTML("picture", cdx, membic),
+                 formElementHTML("text", cdx, membic),
+                 formElementHTML("details", cdx, membic),
+                 formElementHTML("themes", cdx, membic),
+                 formElementHTML("keywords", cdx, membic)]]]]]);
+    },
+
+
+    formDispatch: function (formpartname, funcname, cdx) {
+        formElements[formpartname][funcname](cdx);
+    },
+
+
+    //It is conceivable to be editing one membic and then clobber the
+    //timeout by quickly editing another, but that is extremely unlikely and
+    //trivial to recover.  Just tracking the one timeout sweep.
+    formInput: function (cdx) {
+        if(rto) {  //already waiting to react to changes
+            return; }
+        //avoid redrawing any edits that haven't been saved yet.
+        rto = app.fork({descr:"Check Membic changes", ms:800, func:function () {
+            rto = null;
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var disp = formElementsVerb(membicExpId(membic));
+            jt.out("mfdlgbs" + cdx, formElements.dlgbs[disp](cdx, membic)); }});
     }
 
 }; //end of returned functions

@@ -258,6 +258,16 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }
 .mdinnerdiv { padding:0px 2px; margin:0; min-height:100px; border-radius:10px;
   background-image:url('../img/e6e7e9p80.png'); }
+.mftitle { display:inline; }
+.mdheaderline { text-align:center; }
+.mfrevtype { float:left; }
+.mfbyline { display:inline; }
+.mfstars { float:right; }
+.mddlgbsdiv { clear:both; text-align:center; }
+.mddlgbsdiv button { margin:0px 12px 0px 5px; }
+.detailattrtd { font-style:italic; }
+.detnewattrin { width:64px; }
+
 .mdtitlediv { }
 .mdactdiv { }
 .mdsharediv { }
@@ -270,7 +280,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdkwsdiv, .mdptsdiv { font-size:small; margin-left:5px; }
 .mbtkebabimg { padding:0px 5px 0px 6px; max-height:16px; 
   vertical-align:middle; }
-.mastypeimg { width:30px; height:30px; vertical-align:middle; }
+.revtypeimg { width:30px; height:30px; vertical-align:middle; }
 .masactbimg { max-width:30px; max-height:30px; vertical-align:middle; 
   padding:0px 5px; }
 .masbyline { }

@@ -1502,20 +1502,7 @@ app.pcd = (function () {
 
 
     function membicDisplayHTML (membic, fist) {
-        //expansion divs (with ids) are filled out later as needed.
-        return jt.tac2html(
-            ["div", {cla:"mdouterdiv"},
-             ["div", {cla:"mdinnerdiv"},
-              [["div", {cla:"mdtitlediv"},
-                app.membic.mdTitleHTML(membic, fist)],
-               ["div", {cla:"mdsharediv", id:"mdsharediv" + fist.cdx}],
-               ["div", {cla:"mdactdiv", id:"mdactdiv" + fist.cdx}],
-               ["div", {cla:"mdbodydiv"},
-                 [["div", {cla:"mdpicdiv"}, app.membic.mdPicHTML(membic)],
-                  ["div", {cla:"mdtxtdiv"}, jt.linkify(membic.text)],
-                  ["div", {cla:"mddetdiv"}, app.membic.mdDetsHTML(membic)],
-                  ["div", {cla:"mdptsdiv", id:"mdptsdiv" + fist.cdx}],
-                  ["div", {cla:"mdkwsdiv"}, membic.keywords]]]]]]);
+        return app.membic.formHTML(fist.cdx, membic);
     }
 
 
