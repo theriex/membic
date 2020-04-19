@@ -1503,23 +1503,105 @@ app.membic = (function () {
     }
 
 
+    function mayEdit (membic) {
+        var prof = app.profile.myProfile();
+        if(prof && prof.dsId === membic.penid) {
+            return true; }
+        return false;
+    }
+
+
+    function safeInner (tagid) {
+        var elem = jt.byId(tagid);
+        if(!elem) {
+            return ""; }
+        return elem.innerHTML;
+    }
+
+
+    //If the theme is not cached, then there is no modified value to use as
+    //an appropriate cache bust parameter.  Since a plain img src reference
+    //can hang around for a potentially really long time, this uses a one
+    //hour time slug with minutes removed.  That provides for re-use across
+    //multiple display uses with eventual refresh.
+    function themeImgSrc(tid) {
+        var theme = app.refmgr.cached("Theme", tid);
+        if(theme) {
+            return app.pcd.picImgSrc(theme); }
+        return app.dr("/api/obimg?dt=Theme&di=" + tid + jt.ts("&cb=", "hour"));
+    }
+
+
     //As you accumulate themes over time, you don't want to keep seeing
     //suggestions for older archives.
-    function membicThemePostsHTML (membic) {
-        if(!membic.svcdata || !membic.svcdata.postctms ||
-           !membic.svcdata.postctms.length) {
+    function membicThemePostsHTML (cdx, membic) {
+        membic.svcdata = membic.svcdata || {};
+        membic.svcdata.postctms = membic.svcdata.postctms || [];
+        if(!mayEdit(membic) && !membic.svcdata.postctms.length) {
             return ""; }
         var links = [];
+        var tidcsv = "";
         membic.svcdata.postctms.forEach(function (pn) {
-            links.push(jt.tac2html(
+            tidcsv = tidcsv.csvappend(pn.ctmid);
+            var html = [
                 ["a", {href:app.dr("theme/" + pn.ctmid),
                        onclick:jt.fs("app.statemgr.setState('Theme','" +
                                      pn.ctmid + "')")},
-                 pn.name])); });
+                 [["img", {src:themeImgSrc(pn.ctmid)}],
+                  pn.name]]];
+            if(mayEdit(membic)) {
+                //onclick of the '+' it changes to a select with options
+                //built from preferred themes minus those already selected.
+                //onchange of theme selection, it converts to a postnote
+                //with a remove.
+                html.push(
+                    ["button", {type:"button", title:"Remove membic from theme",
+                                onclick:jt.fs("app.membic.removepost(" + cdx +
+                                              ",'" + pn.ctmid + "')")},
+                     "x"]); }
+            links.push(jt.tac2html(
+                ["div", {cla:"postnotediv"}, html])); });
+        if(mayEdit(membic)) {
+            links.push(jt.tac2html(
+                ["div", {cla:"postnotediv", id:"addthemepostdiv" + cdx},
+                 ["button", {type:"button", title:"Add Theme Post",
+                             onclick:jt.fs("app.membic.themeselect(" + cdx + 
+                                           ")")},
+                  "+"]])); }
         return jt.tac2html(
-            ["span", {cla:"masptspan"},
-             [["span", {cla:"masptlab"}, "Posted to: "],
+            ["div", {cla:"postnotescontainerdiv"},
+             [["span", {id:"postedthemeids" + cdx, style:"display:none"},
+               tidcsv],
+              ["span", {cla:"masptlab"}, "Posted to: "],
               links.join(" | ")]]);
+    }
+
+
+    function selectedPostThemes (cdx, membic) {
+        var postctms = membic.svcdata.postctms;
+        var pns = [];
+        var tids = jt.byId("postedthemeids" + cdx);
+        if(!tids) {  //checking if changed before csv written to HTML
+            return postctms; }
+        tids = tids.innerHTML;
+        tids.csvarray().forEach(function (tid) {
+            var currpn = postctms.find((pn) => pn.ctmid === tid);
+            if(currpn) {  //existing post
+                pns.push(currpn); }
+            else {  //new post
+                var proftheme = app.profile.myProfile().themes[tid];
+                pns.push({ctmid:tid, name:proftheme.name, revid:0}); } });
+        return pns;
+    }
+
+
+    function themePostsChanged (membic, tps) {
+        var postctms = membic.svcdata.postctms;
+        function postin (entry, posts) {
+            return posts.find((post) => post.ctmid === entry.ctmid); };
+        var same = (postctms.every((pn) => postin(pn, tps)) &&
+                    tps.every((tp) => postin(tp, postctms)));
+        return !same;
     }
 
 
@@ -1651,28 +1733,11 @@ app.membic = (function () {
     }
 
 
-    function mayEdit (membic) {
-        var prof = app.profile.myProfile();
-        if(prof && prof.dsId === membic.penid) {
-            return true; }
-        return false;
-    }
-
-
     function mayRemove (membic) {
         var auth = app.login.authenticated();
         if(auth && app.theme.memberlev(membic.ctmid) >= 2) {
             return true; }
         return false;
-    }
-
-
-    function formButton (name, ocstr, disabled) {
-        var bas = {type:"button", cla:"membicformbutton", onclick:ocstr};
-        if(disabled) {
-            bas.disabled = true;
-            bas.cla = "membicformbuttondisabled" }
-        return jt.tac2html(["button", bas, name]);
     }
 
 
@@ -1701,7 +1766,7 @@ app.membic = (function () {
     function dispatchFStr (cdx, formfuncstr) {
         formfuncstr = formfuncstr.split(".");
         return jt.fs("app.membic.formDispatch('" + formfuncstr[0] + "','" +
-                     formfuncstr[1] + "'," + cdx);
+                     formfuncstr[1] + "'," + cdx + ")");
     }
 
 
@@ -1728,36 +1793,46 @@ app.membic = (function () {
         var dlos = [];  //datalist options for adding other detail fields
         var html = [];
         Object.keys(detobj).forEach(function (key) {
-            if(detobj[key]) { html.push(
+            if(detobj[key]) { html.push(jt.tac2html(
                 ["tr",
                  [["td", {cla:"detailattrtd"}, key],
                   ["td", {cla:"detailvaltd", 
                           id:"detail" + key + "valtd" + cdx,
                           contenteditable:jt.toru(edit, "true"),
                           oninput:jt.toru(edit, chgfstr)}, 
-                   detobj[key]]]]); } });
+                   detobj[key]]]])); } });
         if(edit) {
             Object.keys(detobj).forEach(function (key) {
                 if(!detobj[key]) {
                     dlos.push(["option", {value:key}]); } });
-            html.push(
+            var dlh = "";
+            if(dlos.length) {
+                dlh = jt.tac2html(["datalist", {id:"detnewattroptsdl" + cdx},
+                                   dlos]); }
+            html.push(jt.tac2html(
                 ["tr",
                  [["td", {cla:"detailattrtd"},
-                   ["input", {type:"text", cla:"detnewattrin",
-                              id:"detnewattrin" + cdx,
-                              placeholder:"attribute", value:"",
-                              list:"detnewattroptsdl" + cdx,
-                              onchange:chgfstr}]],
+                   [["input", {type:"text", cla:"detnewattrin",
+                               id:"detnewattrin" + cdx,
+                               placeholder:"attribute", value:"",
+                               list:"detnewattroptsdl" + cdx,
+                               onchange:chgfstr}],
+                    dlh]],
                   ["td", {cla:"detailvaltd"},
                    ["input", {type:"text", cla:"detnewvalin",
                               id:"detnewvalin" + cdx,
                               placeholder:"value", value:"",
-                              onchange:chgfstr}]]]]); }
-        html = jt.tac2html(["table", {cla: "collapse"}, html]);
-        if(edit && dlos.length) {
-            html += jt.tac2html(["datalist", {id:"detnewattroptsdl" + cdx},
-                                 dlos]); }
-        return jt.tac2html(["div", {cla:"mddetdiv"}, html]);
+                              onchange:chgfstr}]]]])); }
+        return jt.tac2html(["div", {cla:"mddetdiv"},
+                            ["table", {cla: "collapse"}, html]]);
+    }
+
+
+    //Check the values of the keys in the source object against those in the
+    //comparison object.  Return true if they are all equal.  The cmp object
+    //may have additional keys not found in the src.
+    function objKVEq (src, cmp) {
+        return Object.keys(src).every((key) => src[key] === cmp[key]);
     }
 
 
@@ -1782,19 +1857,103 @@ app.membic = (function () {
     }
 
 
-    //Check the values of the keys in the source object against those in the
-    //comparison object.  Return true if they are all equal.  The cmp object
-    //may have additional keys not found in the src.
-    function objKVEq (src, cmp) {
-        return Object.keys(src).every((key) => src[key] === cmp[key]);
+    //Return all the possible keywords grouped by source.
+    function keywordGroups (cdx, membic, selkwcsv) {
+        selkwcsv = selkwcsv || membic.keywords;
+        var mt = membicTypes.find((md) => md.type === membic.revtype);
+        var keygrps = [{name:"", kwcsv:mt.dkwords.join(",")}];
+        selectedPostThemes(cdx, membic).forEach(function (pn) {
+            var proftheme = app.profile.myProfile().themes[pn.ctmid];
+            keygrps.push({name:proftheme.name, kwcsv:proftheme.keywords}); });
+        var knownkws = keygrps.reduce((acc, kg) => acc.csvappend(kg.kwcsv), "");
+        knownkws = knownkws.toLowerCase();
+        var akws = selkwcsv.csvarray()
+            .filter((kw) => !knownkws.csvcontains(kw.toLowerCase()));
+        keygrps.push({name:"Additional", kwcsv:akws.join(",")});
+        return keygrps;
     }
 
 
     //Unlike theme posts, it's easier to see all the available keywords and
     //use checkboxes.  It's not great if the accumulated total gets really
-    //long, but that's under their control if they don't want to scroll.
-    function keywordsHTML (cdx, membic, edit) {
-        return jt.tac2html(["div", {cla:"mdkwsdiv"}, membic.keywords]);
+    //long, but it's still way better than clicking a pulldown for each one.
+    function keywordsHTML (cdx, membic, edit, selkwcsv) {
+        if(!edit) {
+            return jt.tac2html(["div", {cla:"mdkwsdiv"}, membic.keywords]); }
+        selkwcsv = selkwcsv || membic.keywords;
+        var html = [];
+        keywordGroups(cdx, membic, selkwcsv).forEach(function (kg, idx) {
+            if(kg.kwcsv) {
+                var kwshtml = [];
+                kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
+                    var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
+                    var bchk = selkwcsv.csvcontains(kwd);
+                    kwshtml.push(
+                        ["div", {cla:"mdkwdiv"},
+                         [["input", {type:"checkbox", cla:"keywordcheckbox",
+                                     id:kwid, value:kwd, checked:jt.toru(bchk),
+                                     onclick:jt.fsd("app.membic.formInput(" +
+                                                    cdx + ")")}],
+                          ["label", {fo:kwid, id:kwid + "label"}, kwd]]]); });
+                html.push(jt.tac2html(
+                    ["div", {cla:"mdkwsectiondiv"},
+                     [["div", {cla:"mdkwgnamediv"}, kg.name],
+                      ["div", {cla:"mdkwcbsdiv"}, kwshtml]]])); } });
+        html.push(jt.tac2html(
+            ["div", {cla:"mdkwaddnewdiv"},
+             [["label", {fo:"newkwin" + cdx}, "Add Keyword"],
+              ["input", {type:"text", id:"newkwin" + cdx,
+                         placeholder:"New Keyword"}],
+              ["button", {type:"button", title:"Add Keyword",
+                          onclick:dispatchFStr(cdx, "keywords.addnew")},
+               "+"]]]));
+        return jt.tac2html(
+            ["div", {cla:"mdkwsdiv"},
+             ["div", {id:"mdkwscontentdiv" + cdx}, html]]);
+    }
+
+
+    function selectedKeywords (cdx, membic) {
+        var skws = "";
+        var kwgs = keywordGroups(cdx, membic);
+        kwgs.forEach(function (kg, idx) {
+            kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
+                var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
+                var kwi = jt.byId(kwid);
+                if(!kwi) {  //UI not set up, return original keywords
+                    skws = membic.keywords; }
+                else if(kwi.checked) {
+                    skws = skws.csvappend(kwd); } }); });
+        var agi = kwgs.length - 1;  //additional keywords group index
+        var pui = kwgs[agi].kwcsv.length;  //previously unknown index
+        var newKeywordInput;
+        do {
+            var kwid = "m" + cdx + "g" + agi + "c" + pui;
+            newKeywordInput = jt.byId(kwid);
+            if(newKeywordInput && newKeywordInput.checked) {
+                skws = skws.csvappend(safeInner(kwid + "label")); }
+            pui += 1;
+        } while(newKeywordInput);
+        return skws;
+    }
+
+
+    function equivKeywords (kwsa, kwsb) {
+        kwsa = kwsa.toLowerCase().csvarray().sort().join(",");
+        kwsb = kwsb.toLowerCase().csvarray().sort().join(",");
+        return (kwsa === kwsb);
+    }
+
+
+    function addNewKeywordOption (cdx) {
+        var nkin = jt.byId("newkwin" + cdx);
+        if(nkin && nkin.value) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var currkws = selectedKeywords(cdx, membic);
+            currkws = currkws.csvappend(nkin.value);
+            jt.out("mdkwscontentdiv" + cdx,
+                   keywordsHTML(cdx, membic, true, currkws));
+            app.membic.formInput(cdx); }
     }
 
 
@@ -1807,6 +1966,42 @@ app.membic = (function () {
         changed = changed.join(",");
         jt.log("membicEdited: " + changed);
         return changed;
+    }
+
+
+    //Update the changed membic elements and redisplay closed to show
+    //completion.  When the update was just a fix to the title or text,
+    //redisplaying closed is the most intuitive, and provides more of a
+    //"just works" kind of feel.  In cases where more editing is needed,
+    //re-expanding still provides a sense of confirmation that the edits
+    //took effect.  If an error occurs, then leave expanded with message.
+    function saveMembic (cdx) {
+        jt.out("dlgbsmsgdiv" + cdx, "");
+        jt.out("dlgbsbdiv" + cdx, "Saving...");
+        var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+        var updm = {dsType:"Membic", dsId:membic.dsId};
+        Object.keys(formElements).forEach(function (key) {
+            var chgval = formElements[key].changed(cdx, membic);
+            if(chgval) {
+                formElements[key].write(chgval, updm); } });
+        jt.log("saveMembic: " + JSON.stringify(updm));
+    }
+
+
+    function formActionButtonsHTML (tac) {
+        return jt.tac2html(
+            [["div", {cla:"dlgbsmsgdiv", id:"dlgbsmsgdiv" + cdx}]
+             ["div", {cla:"dlgbsbdiv", id:"dlgbsbdiv" + cdx},
+              tac]]);
+    }
+
+
+    function formButton (name, ocstr, disabled) {
+        var bas = {type:"button", cla:"membicformbutton", onclick:ocstr};
+        if(disabled) {
+            bas.disabled = true;
+            bas.cla = "membicformbuttondisabled" }
+        return jt.tac2html(["button", bas, name]);
     }
 
 
@@ -1828,13 +2023,18 @@ app.membic = (function () {
                      (membic.details.title || membic.details.name)]); },
             changed: function (cdx, membic) {
                 var mt = (membic.details.title || membic.details.name).trim();
-                var st = jt.byId("mftitlespan" + cdx).innerHTML.trim();
-                return mt !== st; } },
+                var st = safeInner("mftitlespan" + cdx).trim();
+                return jt.toru(mt !== st, st); },
+            write: function (chgval, updobj) {
+                updobj.details = updobj.details || {};
+                updobj.details.title = chgval;
+                updobj.details.name = chgval; } },
         share: {
             closed: function () { return ""; },
             expanded: function (ignore /*cdx*/, membic) {
                 return membicShareHTML(membic); },
-            changed: function () { return false; } },
+            changed: function () { return false; },
+            write: function () { return; } },
         revtype: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
@@ -1846,7 +2046,10 @@ app.membic = (function () {
                               id:"revtypeimg" + cdx, title:mt.type,
                               alt:mt.type}]]); },
             changed: function (cdx, membic) {
-                return membic.revtype !== jt.byId("revtypeimg" + cdx).title; },
+                var rt = jt.byId("revtypeimg" + cdx).title;
+                return jt.toru(membic.revtype !== rt, rt); },
+            write: function (chgval, updobj) {
+                updobj.revtype = chgval; },
             showsel: function (cdx) {
                 jt.err("Not implemented yet"); } },
         byline: {
@@ -1862,7 +2065,8 @@ app.membic = (function () {
                                            membic.penid + "')")},
                        [["img", {src:app.profile.profimgsrc(membic.penid)}],
                         ["span", {cla:"penlight"}, membic.penname]]]]]); },
-            changed: function () { return false; } },
+            changed: function () { return false; },
+            write: function () { return; } },
         stars: {
             closed: function () { return ""; },
             expanded: function (ignore /*cdx*/, membic) {
@@ -1870,8 +2074,9 @@ app.membic = (function () {
                     ["span", {cla:"masratspan"},
                      starsImageHTML(membic.rating)]); },
             changed: function (cdx, membic) {
-                //compare membic.rating to ???
-                return false; } },
+                return 0; },
+            write: function (chgval, updobj) {
+                updobj.rating = chgval; } },
         dlgbs: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
@@ -1887,13 +2092,15 @@ app.membic = (function () {
                          formButton("Save", dispatchFStr(cdx, "dlgbs.save"),
                                     !edited)]); }
                 if(mayRemove(membic)) {
-                    return jt.tac2html(
+                    formActionButtonsHTML(
                         ["a", {href:"#remove", title:"Remove Theme Post",
                                onclick:dispatchFStr(cdx, "dlgbs.remove")},
                          ["img", {cla:"masactbimg",
                                   src:app.dr("img/trash.png")}]]); }
                 return ""; },
-            changed: function () { return false; } },
+            changed: function () { return false; },
+            write: function () { return; },
+            save: function (cdx) { saveMembic(cdx); } },
         picture: {
             closed: function (cdx, membic) {
                 return jt.tac2html(
@@ -1907,7 +2114,8 @@ app.membic = (function () {
                         ["div", {cla:"mdpicdiv"},
                          ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]); }
                 return formElements.picture.closed(cdx, membic); },
-            changed: function () { return false; } },
+            changed: function () { return false; },
+            write: function () { return; } },
         text: {
             closed: function (cdx, membic) {
                 return jt.tac2html(
@@ -1926,33 +2134,45 @@ app.membic = (function () {
             changed: function (cdx, membic) {
                 var mt = membic.text.trim();
                 var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();
-                return mt !== dt; } },
+                return jt.toru(mt !== dt, dt); },
+            write: function (chgval, updobj) {
+                updobj.text = chgval; } },
         details: {
             closed: function (cdx, membic) {
                 return detailsHTML(cdx, membic, false); },
             expanded: function (cdx, membic) {
                 return detailsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                return !objKVEq(detailsValues(cdx, membic),
-                                membic.details); } },
+                var dvo = detailsValues(cdx, membic);
+                return jt.toru(!objKVEq(dvo, membic.details), dvo); },
+            write: function (chgval, updobj) {
+                updobj.details = updobj.details || {};
+                Object.keys(chgval).forEach(function (key) {
+                    updobj.details[key] = chgval[key]; }); } },
         themes: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
                 return jt.tac2html(
                     ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
-                     membicThemePostsHTML(membic)]); },
+                     membicThemePostsHTML(cdx, membic)]); },
             changed: function (cdx, membic) {
-                //implement after theme selection...
-                //return objKVEq(themesValues(cdx, membic), membic.themes);
-                return false; } },
+                var tps = selectedPostThemes(cdx, membic);
+                return jt.toru(themePostsChanged(membic, tps), tps); },
+            write: function (chgval, updobj) {
+                updobj.svcdata = updobj.svcdata || {};
+                updobj.svcdata.postctms = chgval; } },
         keywords: {
             closed: function (cdx, membic) {
                 return keywordsHTML(cdx, membic, false); },
             expanded: function (cdx, membic) {
                 return keywordsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                //implement after keywords selection...
-                return false; } }
+                var kws = selectedKeywords(cdx, membic);
+                return jt.toru(!equivKeywords(membic.keywords, kws), kws); },
+            write: function (chgval, updobj) {
+                updobj.keywords = chgval; },
+            addnew: function (cdx) {
+                addNewKeywordOption(cdx); } }
     }
 
 

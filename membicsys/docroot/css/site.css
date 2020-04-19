@@ -267,6 +267,10 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mddlgbsdiv button { margin:0px 12px 0px 5px; }
 .detailattrtd { font-style:italic; }
 .detnewattrin { width:64px; }
+.postnotediv { display:inline-block; margin-left:4px; }
+.postnotediv img { max-width:25px; max-height:25px; vertical-align:middle; }
+.postnotediv button { vertical-align:middle; margin:2px; padding:0px 4px 1px;
+  background:url('../img/white60percent.png'); font-weight:bold; }
 
 .mdtitlediv { }
 .mdactdiv { }
@@ -278,6 +282,13 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdtxtdiv { font-size:small; padding: 2px 10px 0px 2px; }
 .mddetdiv { font-size:x-small; margin-left:16px; }
 .mdkwsdiv, .mdptsdiv { font-size:small; margin-left:5px; }
+.mdkwdiv { display:inline-block; width:140px; padding:0px 0px 10px 0px; }
+.mdkwgnamediv { font-size:x-small; padding:0px 6px; color:#999; }
+.mdkwaddnewdiv { font-size:small; padding:0px 6px; }
+.mdkwaddnewdiv label { font-size:x-small; color:#999; }
+.mdkwaddnewdiv input { margin:0px 5px; }
+.mdkwaddnewdiv button { vertical-align:middle; margin:2px; padding:0px 4px 1px;
+  background:url('../img/white60percent.png'); font-weight:bold; }
 .mbtkebabimg { padding:0px 5px 0px 6px; max-height:16px; 
   vertical-align:middle; }
 .revtypeimg { width:30px; height:30px; vertical-align:middle; }
