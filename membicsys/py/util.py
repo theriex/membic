@@ -343,7 +343,7 @@ def send_mail(emaddr, subj, body):
                      "\nbody: " + body)
         return
     raise ValueError("send_mail not connected to server mail")
-    
+
 
 def make_auth_obj(muser, srvtok):
     authobj = {"email": muser["email"],
@@ -358,6 +358,23 @@ def make_auth_obj(muser, srvtok):
 def my_profile_url(muser):
     return (site_home + "/profile/" + muser["dsId"] + "?an=" + muser["email"] +
             "&at=" + token_for_user(muser))
+
+
+def send_activation_code(muser):
+    send_mail(muser["email"], "Activation Code for Membic",
+              "Welcome to Membic!\n\nYour activation code is\n\n" +
+              muser["actcode"] + "\n\n" +
+              "Paste this code into the activation area or go to " +
+              my_profile_url(muser) + "&actcode=" + muser["actcode"])
+    sendnote = dbacc.nowISO() + ";" + muser["email"]
+    if muser["actsends"]:
+        muser["actsends"] = sendnote + "," + muser["actsends"]
+        if len(muser["actsends"]) > 3000:  # don't grow forever
+            muser["actsends"] = muser["actsends"][0:3000] + "..."
+    else:
+        muser["actsends"] = sendnote
+    muser = dbacc.write_entity(muser, vck=muser["modified"])
+    return muser
 
 
 
@@ -496,6 +513,36 @@ def signin():
         oj = json.dumps(authobj)
     except ValueError as e:
         logging.info("signin failed: " + str(e));
+        return serveValueError(e, quiet=True)
+    return respJSON("[" + oj + "]")
+
+
+def newacct():
+    oj = ""
+    try:
+        emaddr = dbacc.reqarg("emailin", "MUser.email", required=True)
+        existing = dbacc.cfbk("MUser", "email", emaddr)
+        if existing:
+            raise ValueError("Already have an account with that email")
+        existing = dbacc.cfbk("MUser", "altinmail", emaddr)
+        if existing:
+            raise ValueError("An account has this alternate email")
+        pwd = dbacc.reqarg("passin", "string", required=True)
+        muser = {"dsType":"MUser", "email":emaddr, "phash":"temporary",
+                 "status":"Pending", "actcode":random_alphanumeric(6)}
+        logging.info("newacct creating MUser for " + emaddr)
+        muser = dbacc.write_entity(muser)    # sets created timestamp
+        logging.info("newacct timestamps initialized MUser " + muser["dsId"])
+        muser["phash"] = make_password_hash(emaddr, pwd, muser["created"])
+        # write updated phash so it is preserved if email goes wrong
+        muser = dbacc.write_entity(muser, vck=muser["modified"])
+        logging.info("newacct phash set MUser " + muser["dsId"])
+        muser = send_activation_code(muser)  # must activate before writing
+        logging.info("newacct activation mail sent MUser " + muser["dsId"])
+        authobj = make_auth_obj(muser, token_for_user(muser))
+        oj = json.dumps(authobj)
+    except ValueError as e:
+        logging.info("newacct failed: " + str(e));
         return serveValueError(e, quiet=True)
     return respJSON("[" + oj + "]")
 

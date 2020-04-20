@@ -723,7 +723,10 @@ function writeObjFieldFilterFunc (edef) {
             pyc += "            continue\n"; }
         if(ddefs.fieldIs(fd.d, "image")) {
             pyc += "        if fld == \"" + fd.f + "\":\n";
-            pyc += "            val = obj[\"dsId\"]\n"; } });
+            pyc += "            if obj[\"" + fd.f + "\"]:\n";
+            pyc += "                val = obj[\"dsId\"]\n";
+            pyc += "            else:\n";
+            pyc += "                val = \"\"\n"; } });
     pyc += "        filtobj[fld] = val\n";
     pyc += "    return filtobj\n";
     pyc += "\n";

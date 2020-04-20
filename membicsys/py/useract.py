@@ -30,14 +30,6 @@ def verify_hashtag(hashtag):
         raise ValueError("Hashtag " + hashtag + " already in use")
 
 
-def send_activation_code(muser):
-    util.send_mail(muser["email"], "Activation Code for Membic",
-                   "Welcome to Membic!\n\nYour activation code is\n\n" +
-                   muser["actcode"] + "\n\n" +
-                   "Paste this code into the activation area or go to " +
-                   util.my_profile_url(muser) + "&actcode=" + muser["actcode"])
-
-
 def verify_active_account(muser):
     if muser["status"] == "Active":
         return
@@ -45,7 +37,7 @@ def verify_active_account(muser):
     if not actcode:
         return  # not trying to activate
     if actcode == "requestresend":
-        send_activation_code(muser)
+        util.send_activation_code(muser)
         return
     if actcode == muser["actcode"]:
         muser["status"] = "Active"
@@ -433,7 +425,7 @@ def accupd():
             verify_unused_email_address(muser["email"])
             muser["status"] = "Pending"
             muser["actcode"] = util.random_alphanumeric(6)
-            send_activation_code(muser)
+            util.send_activation_code(muser)
         if val:  # update the hash so they can login with new password
             muser["phash"] = util.make_password_hash(muser["email"], val,
                                                      muser["created"])

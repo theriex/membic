@@ -82,6 +82,22 @@ app.connect = (function () {
     }
 
 
+    //The user's own profile is only included in allobjs if they are in good
+    //standing and have written something recently.  Always use the info
+    //from their own profile to ensure the display is up to date.
+    //Prioritize their profile summary item higher than zero but lower than
+    //everything else.
+    function verifyPersonalProfileSummaryItem (user, allobjs) {
+        allobjs["profile" + user.dsId] = {
+            obtype:"profile", dsType:"MUser", dsId:user.dsId,
+            modified:user.modified, lastwrite:user.lastWrite,
+            name:user.name || "New User " + user.dsId,
+            description:user.aboutme || "No description provided",
+            hashtag:user.hashtag || "", pic:user.profpic,
+            sprio:0.5};
+    }
+
+
     //The connect display is the primary path for seeing and accessing your
     //themes, so they all have to be displayed first, even if they didn't
     //make the main public list.  A founder should be able to mark the theme
@@ -104,7 +120,8 @@ app.connect = (function () {
             //verify everything the user knows about is included and prioritized
             Object.keys(user.themes).forEach(function (key) {
                 verifyUserSummaryItem(user, key, allobjs); });
-            allobjs["profile" + user.dsId].sprio = 0.5;  //last before general
+            //verify the user's own profile is included and prioritized
+            verifyPersonalProfileSummaryItem(user, allobjs);
             Object.keys(allobjs).forEach(function (key) {  //convert to array
                 decos.push(allobjs[key]); }); }
         decos.sort(function (a, b) {

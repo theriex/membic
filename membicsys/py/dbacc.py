@@ -1462,7 +1462,10 @@ def visible_MUser_fields(obj, audience):
         if fld == "altinmail" and audience != "private":
             continue
         if fld == "profpic":
-            val = obj["dsId"]
+            if obj["profpic"]:
+                val = obj["dsId"]
+            else:
+                val = ""
         filtobj[fld] = val
     return filtobj
 
@@ -1471,7 +1474,10 @@ def visible_Theme_fields(obj, audience):
     filtobj = {}
     for fld, val in obj.items():
         if fld == "picture":
-            val = obj["dsId"]
+            if obj["picture"]:
+                val = obj["dsId"]
+            else:
+                val = ""
         filtobj[fld] = val
     return filtobj
 
@@ -1487,9 +1493,15 @@ def visible_Membic_fields(obj, audience):
     filtobj = {}
     for fld, val in obj.items():
         if fld == "revpic":
-            val = obj["dsId"]
+            if obj["revpic"]:
+                val = obj["dsId"]
+            else:
+                val = ""
         if fld == "icdata":
-            val = obj["dsId"]
+            if obj["icdata"]:
+                val = obj["dsId"]
+            else:
+                val = ""
         filtobj[fld] = val
     return filtobj
 

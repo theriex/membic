@@ -1743,6 +1743,18 @@ app.pcd = (function () {
     }
 
 
+    //After a pic has been uploaded, the local profile/theme information is
+    //up to date except for the modified time.  Just set directly.
+    function notePicUploadMod (mod) {
+        ctx.actobj.contextobj.modified = mod;  //note modification time
+        //If no previous pic, then indicate pic now available
+        if(ctx.actobj.contextobj.dsType === "MUser") {
+            ctx.actobj.contextobj.profpic = ctx.actobj.contextobj.dsId; }
+        else if(ctx.actobj.contextobj.dsType === "Theme") {
+            ctx.actobj.contextobj.picture = ctx.actobj.contextobj.dsId; }
+    }
+
+
     function monitorImageUpload (cmd) {
         var iframe = jt.byId("pumif");
         if(!iframe) {
@@ -1763,7 +1775,7 @@ app.pcd = (function () {
                 idx = mod.indexOf("<");
                 if(idx > 0) {
                     mod = mod.slice(0, idx); }
-                ctx.actobj.contextobj.modified = mod;  //note modification time
+                notePicUploadMod(mod);
                 var img = jt.byId("pcdpicimg");
                 img.src = picImgSrc(ctx.actobj.contextobj);  //display image
                 return; }  //done monitoring
@@ -1821,9 +1833,11 @@ app.pcd = (function () {
         if(obj && ((app.samePO(obj, app.profile.myProfile())) ||
                    (app.theme.association(obj) === "Founder"))) {
             jt.on("pcdpicdiv", "click", togglePicUpload);
+            jt.byId("pcdpicdiv").style.cursor = "pointer";
             ctx.descobj.owneredit.forEach(function (edo) {
                 var elem = jt.byId(edo.eid);
                 elem.contentEditable = true;
+                elem.style.cursor = "pointer";
                 jt.on(elem, "input", verifyDescripSave); }); }
     }
 
@@ -1867,43 +1881,6 @@ return {
             writePersonalSettings("pcdsetcontdiv"); }
         else {
             writeThemeProfSettings("pcdsetcontdiv", obj); }
-    },
-
-
-    settingsOld: function (obj) {
-        if(obj) {
-            dst.obj = obj; }
-        var html = [
-            "div", {id: "pcdsettingsdlgdiv"},
-            [["div", {cla: "bumpedupwards"},
-              ["div", {cla: "headingtxt"}, "Settings"]],
-             ["div", {cla: "pcdsectiondiv"},
-              adminSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              membershipSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              picSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              descripSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              personalSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              keywordSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              mailinSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              rssSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              embedSettingsHTML()],
-             ["div", {cla: "pcdsectiondiv"},
-              soloSettingsHTML()]]];
-        app.layout.openOverlay({x:10, y:80}, jt.tac2html(html), null,
-                               function () {
-                                   app.login.accountSettingsInit();
-                                   picSettingsInit();
-                                   descripSettingsInit(); },
-                               jt.hasId(dst.obj)? "" : 
-                                   jt.fs("app.pcd.cancelThemeCreate()"));
     },
 
 
@@ -2633,11 +2610,12 @@ return {
                 ["img", {id:"pcdpicimg", src:descobj.picsrc}]],
                ["div", {id:"pcddescrdiv"},
                 [["div", {id:"pcdnamediv"},
-                  ["span", {id:"pcdnamespan", cla:"penfont"}, descobj.name]],
+                  ["span", {id:"pcdnamespan", cla:"penfont"},
+                   (descobj.name || "Write Name Here")]],
                  ["div", {id:"pcddescrdiv"},
                   ["span", {cla:"descrspan", id:"pcddescrspan",
                             style:"font-size:" + fsz + ";"},
-                   jt.linkify(descobj.descr)]]]]]],
+                   jt.linkify(descobj.descr || "Write description here")]]]]]],
              ["div", {id:"pcduppersavediv"}],
              ["div", {id:"pcdpicuploaddiv"}]]));
         ctx.descobj.owneredit = [{eid:"pcdnamespan", dfld:"name"},

@@ -44,6 +44,10 @@ def uploadimg():  #params: an, at, dsType, dsId, picfilein
 def signin(): #params: emailin, passin, an, at
     return util.secure(util.signin)
 
+@app.route('/api/newacct', methods=['GET', 'POST'])
+def newacct(): #params: emailin, passin
+    return util.secure(util.newacct)
+
 @app.route('/api/membicsave', methods=['GET', 'POST'])
 def membicsave(): #params an, at, Membic(, themecontext)
     return useract.membicsave()
