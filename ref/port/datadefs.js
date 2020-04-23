@@ -95,6 +95,8 @@ module.exports = (function () {
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
      cache:{minutes:0},  //client cache for instance and pic is sufficient
      logflds:["name"]},
+        ////////// Notes:
+        // name: bootstrap name is "Theme " + id of first founder
 
     {entity:"AdminLog", descr:"Administrative actions log.", fields:[
         {f:"letype", d:"req string", c:"log entry type, e.g. 'Theme'"},
@@ -120,7 +122,7 @@ module.exports = (function () {
         {f:"details", d:"json", c:"detail fields depending on type"},
         {f:"penid", d:"req dbid", c:"who wrote this membic"},
         {f:"ctmid", d:"req dbid", c:"Theme id, or 0 if source membic"},
-        {f:"rating", d:"req int", c:"0-100"},
+        {f:"rating", d:"req int", c:"0 for no value, otherwise 1-100"},
         {f:"srcrev", d:"req dbid", c:"source membic, see note"},
         {f:"cankey", d:"string", c:"alternative semi-key, see note"},
         {f:"text", d:"text", c:"why this link is memorable"},

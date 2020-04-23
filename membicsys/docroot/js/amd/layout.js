@@ -18,25 +18,6 @@ app.layout = (function () {
         var txt;
         html = html.replace(/\.<!--\s\$ABOUTCONTACT\s-->/g,
             " or <a href=\"mailto:" + app.suppemail + "\">by email</a>.");
-        var dst = app.pcd.getDisplayState();
-        if(dst && dst.obj) {
-            if(dst.type === "coop") {
-                if(dst.obj.hashtag) {
-                    txt = "https://" + window.location.host + "/" + 
-                        dst.obj.hashtag; }
-                else {
-                    txt = "Theme hashtag not set"; }
-                html = html.replace(/<!--\s\$THEMEHASHURL\s-->/g, txt);
-                txt = "https://" + window.location.host + "/t/" + dst.id;
-                html = html.replace(/<!--\s\$THEMEPERMALINK\s-->/g, txt);
-                txt = "https://" + window.location.host + 
-                    "?view=coop&coopid=" + dst.id;
-                html = html.replace(/<!--\s\$MEMBICPARAMLINK\s-->/g, txt); }
-            txt = jt.tac2html(["a", {href: "#settings",
-                                     onclick: jt.fs("app.pcd.settings()")},
-                               "See Settings for RSS and embedding."]);
-            html = html.replace(/<!--\s\$SEEPCDSETTINGSLINK\s-->/g, txt); }
-
         return html;
     }
 

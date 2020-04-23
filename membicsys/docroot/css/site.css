@@ -256,8 +256,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 
 /* >> membic content layout */
 .mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }
-.mdinnerdiv { padding:0px 2px; margin:0; min-height:100px; border-radius:10px;
+.mdinnerdiv, #mdnoitemsdiv { padding:0px 2px; margin:0; border-radius:10px;
   background-image:url('../img/e6e7e9p80.png'); }
+.mdinnerdiv { min-height:100px; }
 .mftitle { display:inline; }
 .mdheaderline { text-align:center; }
 .mfrevtype { float:left; }
@@ -307,6 +308,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   margin:0px auto;
   display:table;
   padding:0px 10px; }
+#mdnoitemsdiv { font-size:small; text-align:center; }
 
 /* >> profile layout */
 .reviewbadge, .reviewbadgesel { 
