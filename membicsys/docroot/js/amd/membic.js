@@ -620,6 +620,47 @@ app.membic = (function () {
     }
 
 
+    var typemgr = {
+        findType: function (typename) {
+            return membicTypes.find((md) => md.type === typename); },
+        imgHTMLForType: function (cdx, mt, idsuf) {
+            idsuf = idsuf || "";
+            return jt.tac2html(
+                ["img", {cla:"revtypeimg", src:app.dr("img/" + mt.img),
+                         id:"revtypeimg" + cdx + idsuf, title:mt.type,
+                         alt:mt.type}]); },
+        clickHTMLForType: function (cdx, mt) {
+            return jt.tac2html(
+                ["div", {cla:"revtseldiv", id:"revtseldiv" + cdx,
+                         "data-state":"collapsed"},
+                 typemgr.typesHTML(cdx, mt)]); },
+        openClickHTML: function (cdx, mt) {
+            return jt.tac2html(
+                ["a", {href:"#changetype", title:"Change Membic Type",
+                       onclick:jt.fs("app.membic.typesel(" + cdx + ",'" +
+                                     mt.type + "',true)")},
+                 typemgr.imgHTMLForType(cdx, mt)]); },
+        selectClickHTML: function (cdx, mt, idsuf) {
+            return jt.tac2html(
+                ["a", {href:"#" + mt.type, title:"Select " + mt.type,
+                       onclick:jt.fs("app.membic.typesel(" + cdx + ",'" +
+                                     mt.type + "',false)")},
+                 typemgr.imgHTMLForType(cdx, mt, idsuf)]); },
+        typesHTML: function (cdx, mt, expanded) {
+            if(!expanded) {
+                return typemgr.openClickHTML(cdx, mt); }
+            var html = [typemgr.selectClickHTML(cdx, mt)];
+            membicTypes.forEach(function (ot) {
+                if(ot.type !== mt.type) {
+                    html.push(typemgr.selectClickHTML(cdx, ot, ot.type)); } });
+            return jt.tac2html(html); },
+        typesel: function (cdx, typename, expanded) {
+            var mt = typemgr.findType(typename);
+            jt.out("revtseldiv" + cdx, typemgr.typesHTML(cdx, mt, expanded));
+            app.membic.formInput(cdx); }
+    };
+
+
     var ratmgr = {
         imgi: {i:app.dr("img/stars18ptC.png"),
                g:app.dr("img/stars18ptCg.png"),
@@ -761,20 +802,16 @@ app.membic = (function () {
         revtype: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
-                var mt = membicTypes.find((md) => md.type === membic.revtype);
-                return jt.tac2html(
-                    ["a", {href:"#changetype", title:"Change Membic Type",
-                           onclick:dispatchFStr(cdx, "revtype.showsel")},
-                     ["img", {cla:"revtypeimg", src:app.dr("img/" + mt.img),
-                              id:"revtypeimg" + cdx, title:mt.type,
-                              alt:mt.type}]]); },
+                var mt = typemgr.findType(membic.revtype);
+                if(mayEdit(membic)) {
+                    return typemgr.clickHTMLForType(cdx, mt); }
+                else {
+                    return typemgr.imgHTMLForType(mt); } },
             changed: function (cdx, membic) {
                 var rt = jt.byId("revtypeimg" + cdx).title;
                 return jt.toru(membic.revtype !== rt, rt); },
             write: function (chgval, updobj) {
-                updobj.revtype = chgval; },
-            showsel: function (cdx) {
-                jt.err("showsel " + cdx + " not implemented yet"); } },
+                updobj.revtype = chgval; } },
         byline: {
             closed: function () { return ""; },
             expanded: function (ignore /*cdx*/, membic) {
@@ -1089,9 +1126,8 @@ return {
     },
 
 
-    ratingEventDispatch: function (event) {
-        ratmgr.handleEvent(event);
-    }
+    ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
+    typesel: function (c, t, e) { typemgr.typesel(c, t, e); }
 
 }; //end of returned functions
 }());

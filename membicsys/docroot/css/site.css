@@ -262,6 +262,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mftitle { display:inline; }
 .mdheaderline { text-align:center; }
 .mfrevtype { float:left; }
+.revtseldiv a { padding:0px 5px 0px 0px; }
 .mfbyline { display:inline; }
 .mfstars { float:right; }
 .mddlgbsdiv { clear:both; text-align:center; }
